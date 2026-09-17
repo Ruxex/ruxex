@@ -1,7 +1,12 @@
-# Codex (Rust)
+# General-purpose AI Agent Foundation (Rust)
 
-This fork keeps the Rust implementation in a root Cargo workspace. Member crates
-live under `crates/`; shared utility and extension crates retain their existing
+This repository is derived from Codex and is being developed as a general-purpose
+AI agent foundation. OpenAI-specific features and assumptions are removed so the
+runtime can provide a provider-neutral base for building a wide range of AI
+agents.
+
+The Rust implementation remains in a root Cargo workspace. Member crates live
+under `crates/`; shared utility and extension crates retain their existing
 subdirectories. Vendored bubblewrap sources live in `crates/vendor/` to preserve
 the crate's build-time relative paths.
 
@@ -36,5 +41,3 @@ generated TypeScript and JSON schemas remain in
 Use `just write-app-server-schema` to regenerate only the app-server schemas.
 `just fmt` formats repository sources; `just test -p <crate>` runs selected tests
 with cargo-nextest. Python and uv remain development dependencies for the helpers.
-
-The Rust implementation's install detection and update behavior are unchanged.
