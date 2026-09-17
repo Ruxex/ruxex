@@ -1,4 +1,4 @@
-set working-directory := "codex-rs"
+set working-directory := "."
 set positional-arguments
 export CODEX_REPO_ROOT := justfile_directory()
 export JUST_SHELL := justfile_directory() / "scripts/just-shell.py"
@@ -36,23 +36,18 @@ file-search *args:
 code-mode-host *args:
     cargo run --bin codex-code-mode-host -- {args}
 
-# Assemble a local Codex package.
-[no-cd]
-assemble-codex-package *args:
-    {{ python }} {{ justfile_directory() }}/scripts/build_codex_package.py {args}
-
 # Build the CLI and run the app-server test client
 app-server-test-client *args:
     cargo build -p codex-cli
     cargo run -p codex-app-server-test-client -- --codex-bin ./target/debug/codex {args}
 
-# Format the justfile, Rust, Bazel/Starlark, Python SDK code, and Python scripts.
+# Format the justfile, Rust, and Python development scripts.
 fmt:
-    @{{ python }} ../scripts/format.py
+    @{{ python }} scripts/format.py
 
 # Check formatting without modifying files.
 fmt-check:
-    @{{ python }} ../scripts/format.py --check
+    @{{ python }} scripts/format.py --check
 
 fix *args:
     cargo clippy --fix --tests --allow-dirty {args}
@@ -91,12 +86,6 @@ test *args:
 test *args:
     $env:RUST_MIN_STACK = "{{ rust_min_stack }}"; $env:NEXTEST_PROFILE = "local"; cargo nextest run --no-fail-fast @($args | Select-Object -Skip 1)
 
-# Run from the repository root so scripts that resolve paths from `cwd` see
-# the same layout they use in GitHub Actions.
-[no-cd]
-test-github-scripts:
-    {{ python }} -m unittest discover -s {{ justfile_directory() }}/.github/scripts -p 'test_*.py'
-
 # Run explicit workspace benchmark targets.
 bench *args:
     cargo bench --workspace --bench '*' {args}
@@ -105,91 +94,22 @@ bench *args:
 bench-smoke:
     just bench -- --test
 
-# Run Bazel-backed end-to-end macrobenchmarks with optimized binaries.
-bench-e2e:
-    # Keep measured binaries comparable to production-style optimized builds.
-    bazel test --compilation_mode=opt --cache_test_results=no --test_output=streamed //codex-rs:e2e-benchmarks
-
-# Run Bazel-backed end-to-end macrobenchmarks once per case with release-like
-# Rust cfg paths but fastbuild codegen.
-bench-e2e-smoke:
-    # Avoid optimizer cost because smoke runs only check that benchmarks work.
-    # Compile target Rust code through the same release-only cfg paths as opt.
-    # Compile exec-platform Rust tools through those release-only cfg paths too.
-    bazel test --compilation_mode=fastbuild --@rules_rust//rust/settings:extra_rustc_flag=-Cdebug-assertions=no --@rules_rust//rust/settings:extra_exec_rustc_flag=-Cdebug-assertions=no --cache_test_results=no --test_output=streamed --test_arg=--test //codex-rs:e2e-benchmarks
-
-# Build and run Codex from source using Bazel.
-# On Unix, use `[no-cd]` and `--run_under="cd $PWD &&"` to ensure Bazel runs
-# the command in the current working directory.
-[no-cd]
-[unix]
-bazel-codex *args:
-    bazel run //codex-rs/cli:codex --run_under="cd $PWD &&" -- "$@"
-
-[windows]
-bazel-codex *args:
-    bazel run //codex-rs/cli:codex --run_under='cd /d "{{ invocation_directory_native() }}" &&' -- @($args | Select-Object -Skip 1)
-
-# Build and run the standalone code-mode host from source using Bazel.
-[no-cd]
-[unix]
-bazel-code-mode-host *args:
-    bazel run //codex-rs/code-mode-host:codex-code-mode-host --run_under="cd $PWD &&" -- "$@"
-
-[windows]
-bazel-code-mode-host *args:
-    bazel run //codex-rs/code-mode-host:codex-code-mode-host --run_under='cd /d "{{ invocation_directory_native() }}" &&' -- @($args | Select-Object -Skip 1)
-
-[no-cd]
-bazel-lock-update:
-    bazel mod deps --lockfile_mode=update
-
-[no-cd]
-[unix]
-bazel-lock-check:
-    {{ justfile_directory() }}/scripts/check-module-bazel-lock.sh
-
-[windows]
-bazel-lock-check:
-    bazel mod deps --lockfile_mode=error; if ($LASTEXITCODE -ne 0) { Write-Error "MODULE.bazel.lock is out of date. Run 'just bazel-lock-update' and commit the updated lockfile."; exit 1 }
-
-bazel-test:
-    bazel test --test_tag_filters=-argument-comment-lint //... --keep_going
-
-[no-cd]
-[unix]
-bazel-clippy:
-    bazel_targets="$({{ justfile_directory() }}/scripts/list-bazel-clippy-targets.sh)" && bazel build --config=clippy -- ${bazel_targets}
-
-[no-cd]
-[unix]
-bazel-argument-comment-lint:
-    bazel build --config=argument-comment-lint -- $({{ justfile_directory() }}/tools/argument-comment-lint/list-bazel-targets.sh)
-
-build-for-release:
-    bazel build //codex-rs/cli:release_binaries
-
 # Regenerate the json schema for config.toml from the current config types.
 write-config-schema:
     cargo run -p codex-config-schema --bin codex-write-config-schema
 
-# Regenerate app-server protocol schemas and the Python SDK derived from them.
+# Regenerate app-server protocol schemas.
 write-app-server-schema *args:
-    {{ python }} app-server-protocol/scripts/write_schema_fixtures.py {args}
+    {{ python }} scripts/write_app_server_schema.py {args}
 
 [no-cd]
 write-hooks-schema:
-    cargo run --manifest-path {{ justfile_directory() }}/codex-rs/Cargo.toml -p codex-hooks --bin write_hooks_schema_fixtures
+    cargo run --manifest-path {{ justfile_directory() }}/Cargo.toml -p codex-hooks --bin write_hooks_schema_fixtures
 
-# Run the argument-comment Dylint checks across codex-rs.
+# Run argument-comment Dylint checks from source.
 [no-cd]
-[unix]
 argument-comment-lint *args:
-    if [ "$#" -eq 0 ]; then \
-      bazel build --config=argument-comment-lint -- $({{ justfile_directory() }}/tools/argument-comment-lint/list-bazel-targets.sh); \
-    else \
-      {{ justfile_directory() }}/tools/argument-comment-lint/run-prebuilt-linter.py "$@"; \
-    fi
+    {{ python }} {{ justfile_directory() }}/tools/argument-comment-lint/run.py {args}
 
 [no-cd]
 argument-comment-lint-from-source *args:

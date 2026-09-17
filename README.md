@@ -1,81 +1,40 @@
-<p align="center"><strong>Codex CLI</strong> is a coding agent from OpenAI that runs locally on your computer.
-<p align="center">
-  <img src="https://github.com/openai/codex/blob/main/.github/codex-cli-splash.png" alt="Codex CLI splash" width="80%" />
-</p>
-</br>
-If you want Codex in your code editor (VS Code, Cursor, Windsurf), <a href="https://developers.openai.com/codex/ide">install in your IDE.</a>
-</br>If you want the desktop app experience, run <code>codex app</code> or visit <a href="https://chatgpt.com/codex?app-landing-page=true">the Codex App page</a>.
-</br>If you are looking for the <em>cloud-based agent</em> from OpenAI, <strong>Codex Web</strong>, go to <a href="https://chatgpt.com/codex">chatgpt.com/codex</a>.</p>
+# Codex (Rust)
 
----
+This fork keeps the Rust implementation in a root Cargo workspace. Member crates
+live under `crates/`; shared utility and extension crates retain their existing
+subdirectories. Vendored bubblewrap sources live in `crates/vendor/` to preserve
+the crate's build-time relative paths.
 
-## Quickstart
+## Build locally
 
-### Installing and running Codex CLI
+Install Rust with rustup and the native build dependencies for your platform.
+The pinned toolchain is selected by `rust-toolchain.toml`.
 
-Run the following on Mac or Linux to install Codex CLI:
-
-```shell
-curl -fsSL https://chatgpt.com/codex/install.sh | sh
+```sh
+cargo check --locked -p codex-cli
+cargo build --locked --release -p codex-cli --bin codex
+./target/release/codex
 ```
 
-Run the following on Windows to install Codex CLI:
+On Windows, the executable is `target/release/codex.exe`.
+Release artifacts are built locally and attached to releases manually. Features
+that launch helper executables or use native resources still need those resources
+beside the CLI; building the CLI alone does not assemble a complete runtime package.
 
-```shell
-powershell -ExecutionPolicy ByPass -c "irm https://chatgpt.com/codex/install.ps1 | iex"
-```
+## Repository layout
 
-The standalone installers download from `https://releases.openai.com/codex` by default and fall back to GitHub Releases if a metadata or asset download is unavailable. To force GitHub Releases, set `CODEX_INSTALLER_USE_RELEASES_OPENAI_COM` to `false` (`0` and `no` are also accepted):
+- `Cargo.toml`, `Cargo.lock`: workspace definition and locked dependencies.
+- `crates/`: Rust crates and their unchanged source, tests, and generated schemas.
+- `scripts/`, `tools/`: local development helpers.
+- `third_party/`: native dependency sources, metadata, and development helpers.
 
-```shell
-curl -fsSL https://chatgpt.com/codex/install.sh | CODEX_INSTALLER_USE_RELEASES_OPENAI_COM=false sh
-```
+Standalone TypeScript/Python SDKs, package publishing, GitHub Actions, and Bazel
+build infrastructure are not maintained in this fork. The app-server protocol's
+generated TypeScript and JSON schemas remain in
+`crates/app-server-protocol/schema/`.
 
-```powershell
-$env:CODEX_INSTALLER_USE_RELEASES_OPENAI_COM='false'; irm https://chatgpt.com/codex/install.ps1 | iex
-```
+Use `just write-app-server-schema` to regenerate only the app-server schemas.
+`just fmt` formats repository sources; `just test -p <crate>` runs selected tests
+with cargo-nextest. Python and uv remain development dependencies for the helpers.
 
-Codex CLI can also be installed via the following package managers:
-
-```shell
-# Install using npm
-npm install -g @openai/codex
-```
-
-```shell
-# Install using Homebrew
-brew install --cask codex
-```
-
-Then simply run `codex` to get started.
-
-<details>
-<summary>You can also go to the <a href="https://github.com/openai/codex/releases/latest">latest GitHub Release</a> and download the appropriate binary for your platform.</summary>
-
-Each GitHub Release contains many executables, but in practice, you likely want one of these:
-
-- macOS
-  - Apple Silicon/arm64: `codex-aarch64-apple-darwin.tar.gz`
-  - x86_64 (older Mac hardware): `codex-x86_64-apple-darwin.tar.gz`
-- Linux
-  - x86_64: `codex-x86_64-unknown-linux-musl.tar.gz`
-  - arm64: `codex-aarch64-unknown-linux-musl.tar.gz`
-
-Each archive contains a single entry with the platform baked into the name (e.g., `codex-x86_64-unknown-linux-musl`), so you likely want to rename it to `codex` after extracting it.
-
-</details>
-
-### Using Codex with your ChatGPT plan
-
-Run `codex` and select **Sign in with ChatGPT**. We recommend signing into your ChatGPT account to use Codex as part of your Plus, Pro, Business, Edu, or Enterprise plan. [Learn more about what's included in your ChatGPT plan](https://help.openai.com/en/articles/11369540-codex-in-chatgpt).
-
-You can also use Codex with an API key, but this requires [additional setup](https://developers.openai.com/codex/auth#sign-in-with-an-api-key).
-
-## Docs
-
-- [**Codex Documentation**](https://developers.openai.com/codex)
-- [**Contributing**](./docs/contributing.md)
-- [**Installing & building**](./docs/install.md)
-- [**Open source fund**](./docs/open-source-fund.md)
-
-This repository is licensed under the [Apache-2.0 License](LICENSE).
+The Rust implementation's install detection and update behavior are unchanged.

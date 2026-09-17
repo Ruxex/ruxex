@@ -6,5 +6,5 @@
 
 set -euo pipefail
 
-CODEX_RS_DIR=$(realpath "$(dirname "$0")/../codex-rs")
+CODEX_RS_DIR=$(realpath "$(dirname "$0")/..")
 (cd "$CODEX_RS_DIR" && cargo run --quiet --bin codex -- "$@")

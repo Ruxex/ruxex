@@ -1,6 +1,6 @@
-# Rust/codex-rs
+# Rust workspace
 
-In the codex-rs folder where the rust code lives:
+The Cargo workspace is at the repository root; Rust crates live in `crates/`:
 
 - Crate names are prefixed with `codex-`. For example, the `core` folder's crate is named `codex-core`
 - When using format! and you can inline variables into {}, always do that.
@@ -17,7 +17,6 @@ In the codex-rs folder where the rust code lives:
   - A method's sole non-self argument is exempt when the method and parameter names match, such as `.enabled(false)` for `fn enabled(&self, enabled: bool)`.
   - Do not add these comments for string or char literals unless the comment adds real clarity; those literals are intentionally exempt from the lint.
   - The parameter name in the comment must exactly match the callee signature.
-  - You can run `just argument-comment-lint` to run the lint check locally. This is powered by Bazel, so running it the first time can be slow if Bazel is not warmed up, though incremental invocations should take <15s. Most of the time, it is best to update the PR and let CI take responsibility for checking this (or run it asynchronously in the background after submitting the PR). Note CI checks all three platforms, which the local run does not.
 - When possible, make `match` statements exhaustive and avoid wildcard arms.
 - Newly added traits should include doc comments that explain their role and how implementations are expected to use them.
 - Discourage both `#[async_trait]` and `#[allow(async_fn_in_trait)]` in Rust traits.
@@ -31,16 +30,9 @@ In the codex-rs folder where the rust code lives:
 - Do not add negative tests for logic that was removed.
 - Do not add general product or user-facing documentation to the `docs/` folder. The official Codex documentation lives elsewhere. The exception is app-server API documentation, which is covered by the app-server guidance below.
 - Prefer private modules and explicitly exported public crate API.
-- If you change `ConfigToml` or nested config types, run `just write-config-schema` to update `codex-rs/core/config.schema.json`.
-- When working with MCP tool calls, prefer using `codex-rs/codex-mcp/src/mcp_connection_manager.rs` to handle mutation of tools and tool calls. Aim to minimize the footprint of changes and leverage existing abstractions rather than plumbing code through multiple levels of function calls.
+- If you change `ConfigToml` or nested config types, run `just write-config-schema` to update `crates/core/config.schema.json`.
+- When working with MCP tool calls, prefer using `crates/codex-mcp/src/mcp_connection_manager.rs` to handle mutation of tools and tool calls. Aim to minimize the footprint of changes and leverage existing abstractions rather than plumbing code through multiple levels of function calls.
 - Do not call `reset_client_session` unnecessarily; let the incremental check logic decide whether to reuse the previous request.
-- If you change Rust dependencies (`Cargo.toml` or `Cargo.lock`), run `just bazel-lock-update` from the
-  repo root to refresh `MODULE.bazel.lock`, and include that lockfile update in the same change. CI
-  verifies lockfile drift.
-- Bazel does not automatically make source-tree files available to compile-time Rust file access. If
-  you add `include_str!`, `include_bytes!`, `sqlx::migrate!`, or similar build-time file or
-  directory reads, update the crate's `BUILD.bazel` (`compile_data`, `build_script_data`, or test
-  data) or Bazel may fail even when Cargo passes.
 - Do not create small helper methods that are referenced only once.
 - For tracing async work, instrument the function or method definition with
   `#[tracing::instrument(...)]` instead of attaching spans to futures with
@@ -52,26 +44,26 @@ In the codex-rs folder where the rust code lives:
   - If a file exceeds roughly 800 LoC, add new functionality in a new module instead of extending
     the existing file unless there is a strong documented reason not to.
   - This rule applies especially to high-touch files that already attract unrelated changes, such
-    as `codex-rs/tui/src/app.rs`, `codex-rs/tui/src/bottom_pane/chat_composer.rs`,
-    `codex-rs/tui/src/bottom_pane/footer.rs`, `codex-rs/tui/src/chatwidget.rs`,
-    `codex-rs/tui/src/bottom_pane/mod.rs`, and similarly central orchestration modules.
+    as `crates/tui/src/app.rs`, `crates/tui/src/bottom_pane/chat_composer.rs`,
+    `crates/tui/src/bottom_pane/footer.rs`, `crates/tui/src/chatwidget.rs`,
+    `crates/tui/src/bottom_pane/mod.rs`, and similarly central orchestration modules.
   - When extracting code from a large module, move the related tests and module/type docs toward
     the new implementation so the invariants stay close to the code that owns them.
-  - Avoid adding new standalone methods to `codex-rs/tui/src/chatwidget.rs` unless the change is
+  - Avoid adding new standalone methods to `crates/tui/src/chatwidget.rs` unless the change is
     trivial; prefer new modules/files and keep `chatwidget.rs` focused on orchestration.
 - When running Rust commands (e.g. `just fix` or `just test`) be patient with the command and never try to kill them using the PID. Rust lock can make the execution slow, this is expected.
 
-Run `just fmt` (in the `codex-rs` directory) automatically after you have finished making code changes anywhere in this repository; do not ask for approval to run it. Additionally, run the tests:
+Run `just fmt` (at the repository root) automatically after you have finished making code changes anywhere in this repository; do not ask for approval to run it. Additionally, run the tests:
 
 1. Do not run `cargo test` directly. Use `just test` so test execution follows the repo defaults.
-2. Run the test for the specific project that was changed. For example, if changes were made in `codex-rs/tui`, run `just test -p codex-tui`.
+2. Run the test for the specific project that was changed. For example, if changes were made in `crates/tui`, run `just test -p codex-tui`.
 3. Once those pass, if any changes were made in common, core, or protocol, run the complete test suite with `just test`. Avoid `--all-features` for routine local runs because it expands the build matrix and can significantly increase `target/` disk usage; use it only when you specifically need full feature coverage. project-specific or individual tests can be run without asking the user, but do ask the user before running the complete test suite.
 
-Before finalizing a large change to `codex-rs`, run `just fix -p <project>` (in `codex-rs` directory) to fix any linter issues in the code. Prefer scoping with `-p` to avoid slow workspace‑wide Clippy builds; only run `just fix` without `-p` if you changed shared crates. Do not re-run tests after running `fix` or `fmt`.
+Before finalizing a large change to the Rust workspace, run `just fix -p <project>` at the repository root to fix any linter issues in the code. Prefer scoping with `-p` to avoid slow workspace‑wide Clippy builds; only run `just fix` without `-p` if you changed shared crates. Do not re-run tests after running `fix` or `fmt`.
 
 ## The `codex-core` crate
 
-Over time, the `codex-core` crate (defined in `codex-rs/core/`) has become bloated because it is the largest crate, so it is often easier to add something new to `codex-core` rather than refactor out the library code you need so your new code neither takes a dependency on, nor contributes to the size of, `codex-core`.
+Over time, the `codex-core` crate (defined in `crates/core/`) has become bloated because it is the largest crate, so it is often easier to add something new to `codex-core` rather than refactor out the library code you need so your new code neither takes a dependency on, nor contributes to the size of, `codex-core`.
 
 To that end: **resist adding code to codex-core**!
 
@@ -132,7 +124,7 @@ Base the staging suggestion on the actual diff, dependencies, and affected call 
 
 ## TUI style conventions
 
-See `codex-rs/tui/styles.md`.
+See `crates/tui/styles.md`.
 
 ## TUI code conventions
 
@@ -179,7 +171,7 @@ See `codex-rs/tui/styles.md`.
 
 ### Snapshot tests
 
-This repo uses snapshot tests (via `insta`), especially in `codex-rs/tui`, to validate rendered output.
+This repo uses snapshot tests (via `insta`), especially in `crates/tui`, to validate rendered output.
 
 **Requirement:** any change that affects user-visible UI (including adding new UI) must include
 corresponding `insta` snapshot coverage (add a new snapshot test if one doesn't exist yet, or
@@ -213,11 +205,10 @@ Use `just bench-smoke` to dry-run the benchmark for a single iteration to ensure
 - Prefer deep equals comparisons whenever possible. Perform `assert_eq!()` on entire objects, rather than individual fields.
 - Avoid mutating process environment in tests; prefer passing environment-derived flags or dependencies from above.
 
-### Spawning workspace binaries in tests (Cargo vs Bazel)
+### Spawning workspace binaries in tests
 
 - Prefer `codex_utils_cargo_bin::cargo_bin("...")` over `assert_cmd::Command::cargo_bin(...)` or `escargot` when tests need to spawn first-party binaries.
-  - Under Bazel, binaries and resources may live under runfiles; use `codex_utils_cargo_bin::cargo_bin` to resolve absolute paths that remain stable after `chdir`.
-- When locating fixture files or test resources under Bazel, avoid `env!("CARGO_MANIFEST_DIR")`. Prefer `codex_utils_cargo_bin::find_resource!` so paths resolve correctly under both Cargo and Bazel runfiles.
+- Prefer `codex_utils_cargo_bin::find_resource!` when locating fixture files or test resources.
 
 ### Integration tests
 
@@ -259,7 +250,7 @@ Use `just bench-smoke` to dry-run the benchmark for a single iteration to ensure
 
 ## App-server API Development Best Practices
 
-These guidelines apply to app-server protocol work in `codex-rs`, especially:
+These guidelines apply to app-server protocol work in `crates/`, especially:
 
 - `app-server-protocol/src/protocol/common.rs`
 - `app-server-protocol/src/protocol/v2.rs`

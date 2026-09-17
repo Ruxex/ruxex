@@ -8,16 +8,11 @@
 | Git (optional, recommended) | 2.23+ for built-in PR helpers                                   |
 | RAM                         | 4-GB minimum (8-GB recommended)                                 |
 
-### DotSlash
-
-The GitHub Release also contains a [DotSlash](https://dotslash-cli.com/) file for the Codex CLI named `codex`. Using a DotSlash file makes it possible to make a lightweight commit to source control to ensure all contributors use the same version of an executable, regardless of what platform they use for development.
-
 ### Build from source
 
 ```bash
 # Clone the repository and navigate to the root of the Cargo workspace.
-git clone https://github.com/openai/codex.git
-cd codex/codex-rs
+cd /path/to/your/checkout
 
 # Install the Rust toolchain, if necessary.
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -26,18 +21,16 @@ rustup component add rustfmt
 rustup component add clippy
 # Install helper tools used by the workspace justfile:
 cargo install --locked just
-# DotSlash fetches pinned development tools such as buildifier on first use.
-cargo install --locked dotslash
 # Install nextest for the `just test` helper.
 cargo install --locked cargo-nextest
 
 # Build Codex.
-cargo build
+cargo build -p codex-cli --bin codex
 
 # Launch the TUI with a sample prompt.
 cargo run --bin codex -- "explain this codebase to me"
 
-# After making changes, use the root justfile helpers (they default to codex-rs):
+# After making changes, use the root justfile helpers (they run at the repository root):
 just fmt
 just fix -p <crate-you-touched>
 

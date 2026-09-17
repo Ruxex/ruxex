@@ -4,19 +4,11 @@ node_modules
 .pnpm-store
 .pnpm-debug.log
 
-# Keep pnpm-lock.yaml
-!pnpm-lock.yaml
-
 # build
 dist/
-bazel-*
-user.bazelrc
 build/
 out/
 storybook-static/
-
-# ignore README for publishing
-codex-cli/README.md
 
 # ignore Nix derivation results
 result
@@ -60,7 +52,6 @@ yarn-error.log*
 # ci
 .vercel/
 .netlify/
-/.tmp/sdk-ci/
 /upstream-rusty-v8/
 
 # patches
@@ -94,3 +85,6 @@ CHANGELOG.ignore.md
 # Python bytecode files
 __pycache__/
 *.pyc
+
+/target/
+/target-*/
