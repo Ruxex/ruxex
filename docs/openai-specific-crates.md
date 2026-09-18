@@ -26,9 +26,9 @@
 | 順位 | クレート | 直接 / 推移 | 固有性 | 推奨 | 難易度 | 主なリスク |
 | ---: | --- | ---: | --- | --- | --- | --- |
 | 1 | `codex-responses-api-proxy` | 1 / 1 | OpenAI Responses API 専用 | 削除 | 低 | 隠し CLI と専用バイナリの削除漏れ |
-| 2 | `codex-cloud-tasks` | 1 / 1 | Codex Cloud タスク UI/CLI | 削除 | 中 | `codex cloud` の help、dispatch、補完への残存 |
-| 3 | `codex-cloud-tasks-mock-client` | 1 / 2 | Cloud Tasks 専用 mock | 削除 | 低 | 通常依存に置かれており単独では削除不能 |
-| 4 | `codex-cloud-tasks-client` | 2 / 3 | Codex Cloud Tasks API 専用 | 削除 | 中 | mock と CLI の同時処理が必要 |
+| 2 | `codex-cloud-tasks` | 1 / 1 | Codex Cloud タスク UI/CLI | 削除済み | 中 | `codex cloud` の help、dispatch、補完への残存 |
+| 3 | `codex-cloud-tasks-mock-client` | 1 / 2 | Cloud Tasks 専用 mock | 削除済み | 低 | 通常依存に置かれており単独では削除不能 |
+| 4 | `codex-cloud-tasks-client` | 2 / 3 | Codex Cloud Tasks API 専用 | 削除済み | 中 | mock と CLI の同時処理が必要 |
 | 5 | `codex-chatgpt` | 2 / 6 | ChatGPT backend 専用 | 分割後に削除 | 中 | apply と connectors で削除時期が異なる |
 | 6 | `codex-cloud-config` | 5 / 7 | ChatGPT 配信設定と組織要件 | 隔離 | 高 | 起動時設定ロードと enterprise 制約に影響 |
 | 7 | `codex-backend-client` | 6 / 13 | ChatGPT/Codex backend API | 隔離 | 高 | TUI、app-server、memory、git attribution が利用 |
@@ -234,7 +234,7 @@ Phase 2 は次の順序で行い、一単位ごとに依存グラフを再生成
 
 1. **`codex-responses-api-proxy` の削除（完了）**
    - 依存元が `codex-cli` だけで、代替や責務移動を必要としない。
-2. **Cloud Tasks 3 クレートの削除**
+2. **Cloud Tasks 3 クレートの削除（完了）**
    - `codex-cloud-tasks`、client、mock をまとめ、`codex cloud` の専用到達経路だけを外す。
 3. **`codex-chatgpt` の責務分割**
    - 明示的な workspace member として得た依存グラフを基に、apply と connectors を別々に評価する。これは分割作業であり、Phase 2 の削除と同じ変更に含めない。
