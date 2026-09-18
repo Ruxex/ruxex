@@ -111,6 +111,10 @@ write-config-schema:
 write-app-server-schema *args:
     {{ python }} scripts/write_app_server_schema.py {args}
 
+# Generate JSON and HTML for workspace member crate dependencies.
+crate-dependency-graph *args:
+    {{ python }} scripts/generate_crate_dependency_graph.py {args}
+
 [no-cd]
 write-hooks-schema:
     cargo run --manifest-path {{ justfile_directory() }}/Cargo.toml -p codex-hooks --bin write_hooks_schema_fixtures
