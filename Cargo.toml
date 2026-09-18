@@ -24,6 +24,7 @@ members = [
     "crates/features",
     "crates/install-context",
     "crates/codex-backend-openapi-models",
+    "crates/chatgpt",
     "crates/code-mode",
     "crates/code-mode-host",
     "crates/code-mode-protocol",

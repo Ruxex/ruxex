@@ -58,6 +58,8 @@ Python 3.11 以降を使用する。既定では `target/crate-dependency-graph/
 
 OpenAI 固有の機能を担うクレートを列挙し、Level 0 の依存グラフを使って影響範囲を整理する。
 
+調査結果は [OpenAI 固有クレート候補と影響範囲](openai-specific-crates.md) に記録する。
+
 各候補について、少なくとも次を記録する。
 
 - OpenAI 固有と判断した根拠
