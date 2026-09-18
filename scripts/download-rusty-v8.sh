@@ -20,7 +20,7 @@ case "${target}" in
     ;;
 esac
 
-mirror_root="${repo_root}/target/rusty-v8"
+mirror_root="${repo_root}/.build-cache/rusty-v8"
 download_dir="${mirror_root}/v${v8_version}"
 release_url="https://github.com/openai/codex/releases/download/rusty-v8-v${v8_version}"
 release_manifest="${repo_root}/third_party/v8/rusty_v8_${v8_version//./_}_release_manifests.sha256"

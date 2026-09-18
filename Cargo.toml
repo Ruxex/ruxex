@@ -97,7 +97,6 @@ members = [
     "crates/rollout",
     "crates/rollout-trace",
     "crates/rmcp-client",
-    "crates/responses-api-proxy",
     "crates/response-debug-context",
     "crates/sandboxing",
     "crates/stdio-to-uds",
@@ -257,7 +256,6 @@ codex-process-hardening = { path = "crates/process-hardening" }
 codex-protocol = { path = "crates/protocol" }
 codex-prompts = { path = "crates/prompts" }
 codex-queue-extension = { path = "crates/ext/queue" }
-codex-responses-api-proxy = { path = "crates/responses-api-proxy" }
 codex-response-debug-context = { path = "crates/response-debug-context" }
 codex-rmcp-client = { path = "crates/rmcp-client" }
 codex-rollout = { path = "crates/rollout" }

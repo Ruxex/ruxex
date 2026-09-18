@@ -40,7 +40,7 @@ sha256() {
 }
 
 manifest_hash="$(sha256 "${manifest}")"
-cache_root="${repo_root}/target/gstreamer"
+cache_root="${repo_root}/.build-cache/gstreamer"
 archives="${cache_root}/archives"
 if [[ -n "${build_qualifier}" ]]; then
   build_root="${cache_root}/${target}-${build_qualifier}-${manifest_hash}"

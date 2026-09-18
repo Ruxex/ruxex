@@ -27,6 +27,7 @@ CLAUDE.md
 AGENTS.override.md
 
 # caches
+/.build-cache/
 .cache/
 .turbo/
 .parcel-cache/
