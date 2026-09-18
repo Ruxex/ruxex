@@ -80,11 +80,20 @@ install:
 # there should be no need to add `--all-features`.
 [unix]
 test *args:
-    RUST_MIN_STACK={{ rust_min_stack }} NEXTEST_PROFILE=local cargo nextest run --no-fail-fast "$@"
+    RUST_MIN_STACK={{ rust_min_stack }} NEXTEST_PROFILE=local {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- cargo nextest run --no-fail-fast "$@"
 
 [windows]
 test *args:
     $env:RUST_MIN_STACK = "{{ rust_min_stack }}"; $env:NEXTEST_PROFILE = "local"; cargo nextest run --no-fail-fast @($args | Select-Object -Skip 1)
+
+# Type-check with the same native V8 and GStreamer inputs used by `just test`.
+[unix]
+check *args:
+    {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- cargo check "$@"
+
+[windows]
+check *args:
+    cargo check @($args | Select-Object -Skip 1)
 
 # Run explicit workspace benchmark targets.
 bench *args:

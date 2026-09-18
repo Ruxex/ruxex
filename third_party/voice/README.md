@@ -13,3 +13,10 @@ versions and `NOTICE.md` and `licenses/` for attribution.
 
 Use each script's `--help` for its inputs. These helpers are retained for local
 native development; there are no automatic builds or publishing workflows.
+
+On GNU Linux and macOS, `just check` and `just test` invoke
+`scripts/setup-gstreamer.sh` to download the pinned sources, build a cached
+native prefix under `target/gstreamer`, and expose it to Cargo. The initial
+build requires Python 3.12+, CMake, pkg-config, make, and a native C/C++
+toolchain. macOS builds default to a deployment target of 11.0; set
+`CODEX_MACOSX_DEPLOYMENT_TARGET` to override it explicitly.
