@@ -232,7 +232,7 @@
 
 Phase 2 は次の順序で行い、一単位ごとに依存グラフを再生成する。
 
-1. **`codex-responses-api-proxy` の削除**
+1. **`codex-responses-api-proxy` の削除（完了）**
    - 依存元が `codex-cli` だけで、代替や責務移動を必要としない。
 2. **Cloud Tasks 3 クレートの削除**
    - `codex-cloud-tasks`、client、mock をまとめ、`codex cloud` の専用到達経路だけを外す。
