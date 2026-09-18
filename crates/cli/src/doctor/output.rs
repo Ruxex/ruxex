@@ -1266,7 +1266,7 @@ mod tests {
                 "token expired",
             )
             .detail("OPENAI_API_KEY: present")
-            .remediation("Run `codex login`."),
+            .remediation("Update the configured provider credentials."),
             DoctorCheck::new(
                 "updates.status",
                 "updates",
@@ -1316,7 +1316,7 @@ Codex Doctor v0.0.0
 
 Notes
    ⚠ terminal     narrow terminal
-   ✗ auth         token expired - Run `codex login`.
+   ✗ auth         token expired - Update the configured provider credentials.
 ─────────────────────────────────────────────────────────────
 
 Environment
@@ -1345,7 +1345,7 @@ Environment
   ✓ state        state paths inspectable
 
 Configuration
-  ✗ auth         token expired — Run `codex login`.
+  ✗ auth         token expired — Update the configured provider credentials.
       OPENAI_API_KEY           present
 
 Updates
@@ -1447,7 +1447,7 @@ Codex Doctor v0.0.0
 
 Notes
    ⚠ terminal     narrow terminal
-   ✗ auth         token expired - Run `codex login`.
+   ✗ auth         token expired - Update the configured provider credentials.
 ─────────────────────────────────────────────────────────────
 
 Environment
@@ -1461,7 +1461,7 @@ Environment
   ✓ state        state paths inspectable
 
 Configuration
-  ✗ auth         token expired — Run `codex login`.
+  ✗ auth         token expired — Update the configured provider credentials.
 
 Updates
   ✓ updates      update configuration is locally consistent
@@ -1555,7 +1555,7 @@ Codex Doctor v0.0.0
 
 Notes
    [!!] terminal     narrow terminal
-   [XX] auth         token expired - Run `codex login`.
+   [XX] auth         token expired - Update the configured provider credentials.
 -------------------------------------------------------------
 
 Environment
@@ -1569,7 +1569,7 @@ Environment
   [ok] state        state paths inspectable
 
 Configuration
-  [XX] auth         token expired - Run `codex login`.
+  [XX] auth         token expired — Update the configured provider credentials.
 
 Updates
   [ok] updates      update configuration is locally consistent
