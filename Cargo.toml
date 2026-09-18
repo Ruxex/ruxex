@@ -24,7 +24,6 @@ members = [
     "crates/features",
     "crates/install-context",
     "crates/codex-backend-openapi-models",
-    "crates/chatgpt",
     "crates/code-mode",
     "crates/code-mode-host",
     "crates/code-mode-protocol",
@@ -182,7 +181,6 @@ codex-arg0 = { path = "crates/arg0" }
 codex-async-utils = { path = "crates/async-utils" }
 codex-backend-client = { path = "crates/backend-client" }
 codex-build-info = { path = "crates/build-info" }
-codex-chatgpt = { path = "crates/chatgpt" }
 codex-client = { path = "crates/codex-client" }
 codex-collaboration-mode-templates = { path = "crates/collaboration-mode-templates" }
 codex-cloud-config = { path = "crates/cloud-config" }

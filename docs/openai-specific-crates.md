@@ -29,7 +29,7 @@
 | 2 | `codex-cloud-tasks` | 1 / 1 | Codex Cloud タスク UI/CLI | 削除済み | 中 | `codex cloud` の help、dispatch、補完への残存 |
 | 3 | `codex-cloud-tasks-mock-client` | 1 / 2 | Cloud Tasks 専用 mock | 削除済み | 低 | 通常依存に置かれており単独では削除不能 |
 | 4 | `codex-cloud-tasks-client` | 2 / 3 | Codex Cloud Tasks API 専用 | 削除済み | 中 | mock と CLI の同時処理が必要 |
-| 5 | `codex-chatgpt` | 2 / 6 | ChatGPT backend 専用 | 分割後に削除 | 中 | apply と connectors で削除時期が異なる |
+| 5 | `codex-chatgpt` | 2 / 5 | ChatGPT backend 専用 | 削除済み | 中 | apply と connectors を別の削除単位として処理 |
 | 6 | `codex-cloud-config` | 5 / 7 | ChatGPT 配信設定と組織要件 | 隔離 | 高 | 起動時設定ロードと enterprise 制約に影響 |
 | 7 | `codex-backend-client` | 6 / 13 | ChatGPT/Codex backend API | 隔離 | 高 | TUI、app-server、memory、git attribution が利用 |
 | 8 | `codex-backend-openapi-models` | 1 / 14 | Codex backend の生成モデル | 隔離 | 中 | 直接依存は少ないが backend client 経由の影響が広い |
@@ -71,6 +71,8 @@
 - **難易度・リスク:** 中。CLI 表面を Level 2 まで維持する方針と競合するため、Phase 2 で実施する場合は、Level 1 のクレート削除に伴う最小限の CLI 到達経路削除として明記する。
 
 ### 5. `codex-chatgpt`
+
+**進捗:** 削除済み。`codex apply` と ChatGPT backend の connector directory / metadata fetch を削除した。app-server の provider-neutral な app protocol、plugin 宣言、MCP tool から得られる connector 情報は共有クレート側に残した。
 
 - **根拠:** README が first-party ChatGPT APIs/products 専用と明記し、実装も ChatGPT backend auth、cookie、`/wham` API を前提とする。
 - **機能:** hosted task の diff を取得する `apply`、ChatGPT connector directory、ChatGPT 用 HTTP client。
@@ -236,14 +238,14 @@ Phase 2 は次の順序で行い、一単位ごとに依存グラフを再生成
    - 依存元が `codex-cli` だけで、代替や責務移動を必要としない。
 2. **Cloud Tasks 3 クレートの削除（完了）**
    - `codex-cloud-tasks`、client、mock をまとめ、`codex cloud` の専用到達経路だけを外す。
-3. **`codex-chatgpt` の責務分割**
-   - 明示的な workspace member として得た依存グラフを基に、apply と connectors を別々に評価する。これは分割作業であり、Phase 2 の削除と同じ変更に含めない。
+3. **`codex-chatgpt` の削除（完了）**
+   - `codex apply` と ChatGPT backend connector 経路を分けて処理し、共有の plugin/MCP connector 表現を残してクレート本体を削除した。
 4. **backend integration の隔離計画**
    - backend models/client、cloud config の利用機能を列挙して個別に外す。Level 1 Phase 2 では一括削除しない。
 5. **共有クレートの provider 境界設計**
    - image generation、web search、plugins、analytics、feedback、response debug、login、agent identity、model-provider-info、codex-api は後続の汎用化作業として扱う。
 
-Phase 2 の確定対象は 1 と 2 のみとする。3 以降は影響範囲または汎用責務が大きく、現時点で削除対象にすると「小さな単位でビルド可能な状態を保つ」という共通方針を満たさない。
+Phase 2 の削除対象 1〜3 は完了した。4 以降は影響範囲または汎用責務が大きいため、Level 2 以降で到達経路を縮小してから扱う。
 
 ## 調査したがクレート削除候補から除外したもの
 

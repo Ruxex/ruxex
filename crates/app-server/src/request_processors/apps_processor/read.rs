@@ -1,5 +1,6 @@
 use super::*;
 use crate::app_info::connector_metadata_to_api;
+use codex_connectors::ConnectorMetadata;
 
 pub(in crate::request_processors) const APP_READ_MAX_IDS: usize = 100;
 const APPS_READ_DURATION_METRIC: &str = "codex.apps.read.duration_ms";
@@ -39,16 +40,6 @@ impl AppsRequestProcessor {
             record_apps_read_duration(started_at, include_tools);
             return Ok(Some(response.into()));
         }
-        let auth = auth
-            .as_ref()
-            .ok_or_else(|| internal_error("app/read requires ChatGPT auth".to_string()))?;
-
-        let connectors::ConnectorMetadataReadResult {
-            apps,
-            missing_app_ids,
-        } = connectors::read_connector_metadata(&config, auth, &app_ids, include_tools)
-            .await
-            .map_err(|err| internal_error(format!("failed to read app metadata: {err}")))?;
         let loaded_plugins = self
             .thread_manager
             .plugins_manager()
@@ -58,10 +49,28 @@ impl AppsRequestProcessor {
             codex_connectors::ConnectorSnapshot::from_plugin_capability_summaries(
                 loaded_plugins.capability_summaries(),
             );
+        let known_app_ids = connector_snapshot
+            .connector_ids()
+            .iter()
+            .map(|connector_id| connector_id.0.as_str())
+            .collect::<HashSet<_>>();
+        let (apps, missing_app_ids): (Vec<_>, Vec<_>) = app_ids
+            .into_iter()
+            .partition(|app_id| known_app_ids.contains(app_id.as_str()));
         let apps = apps
             .into_iter()
-            .map(|metadata| {
+            .map(|app_id| {
+                let metadata = ConnectorMetadata {
+                    id: app_id.clone(),
+                    name: app_id,
+                    description: None,
+                    icon_url: None,
+                    icon_url_dark: None,
+                    distribution_channel: None,
+                    tool_summaries: None,
+                };
                 let mut app = connector_metadata_to_api(metadata);
+                app.install_url = None;
                 app.plugin_display_names = connector_snapshot
                     .plugin_display_names_for_connector_id(app.id.as_str())
                     .to_vec();

@@ -2184,7 +2184,6 @@ dependencies = [
  "codex-arg0",
  "codex-aws-auth",
  "codex-backend-client",
- "codex-chatgpt",
  "codex-cloud-config",
  "codex-code-mode",
  "codex-config",
@@ -2559,28 +2558,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "codex-chatgpt"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "clap",
- "codex-connectors",
- "codex-core",
- "codex-git-utils",
- "codex-http-client",
- "codex-login",
- "codex-model-provider",
- "codex-plugin",
- "codex-utils-cargo-bin",
- "codex-utils-cli",
- "pretty_assertions",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
-]
-
-[[package]]
 name = "codex-cli"
 version = "0.0.0"
 dependencies = [
@@ -2599,7 +2576,6 @@ dependencies = [
  "codex-arg0",
  "codex-aws-auth",
  "codex-build-info",
- "codex-chatgpt",
  "codex-cloud-config",
  "codex-config",
  "codex-core",

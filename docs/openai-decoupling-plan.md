@@ -75,7 +75,7 @@ OpenAI 固有の機能を担うクレートを列挙し、Level 0 の依存グ�
 
 ### Phase 2: 影響範囲の小さいクレートの削除
 
-**進捗:** `codex-responses-api-proxy` と Cloud Tasks 3 クレートは削除済み。
+**進捗:** 完了。`codex-responses-api-proxy`、Cloud Tasks 3 クレート、`codex-chatgpt` は削除済み。
 
 Phase 1 で整理した候補から、依存元が少なく、代替や責務移動が不要または限定的なクレートを削除する。
 

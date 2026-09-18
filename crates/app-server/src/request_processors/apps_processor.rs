@@ -5,8 +5,6 @@ use codex_connectors::AppToolPolicyEvaluator;
 mod installed;
 mod read;
 
-pub(super) use read::APP_READ_MAX_IDS;
-
 pub(crate) struct AppsRequestProcessor {
     auth_manager: Arc<AuthManager>,
     thread_manager: Arc<ThreadManager>,
@@ -194,138 +192,34 @@ impl AppsRequestProcessor {
             codex_connectors::ConnectorSnapshot::from_plugin_capability_summaries(
                 loaded_plugins.capability_summaries(),
             );
-        let plugin_apps = connector_snapshot.connector_ids().to_vec();
-        let (mut accessible_connectors, mut all_connectors) = tokio::join!(
-            connectors::list_cached_accessible_connectors_from_mcp_tools(&config),
-            connectors::list_cached_all_connectors(&config, &plugin_apps)
-        );
-        let cached_all_connectors = all_connectors.clone();
-
-        let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
-
-        let accessible_config = config.clone();
-        let accessible_tx = tx.clone();
-        tokio::spawn(async move {
-            let result = connectors::list_accessible_connectors_from_mcp_tools_with_mcp_manager(
-                &accessible_config,
-                force_refetch,
-                Arc::clone(&environment_manager),
-                mcp_manager,
-            )
-            .await
-            .map_err(|err| format!("failed to load accessible apps: {err}"));
-            let _ = accessible_tx.send(AppListLoadResult::Accessible(result));
-        });
-
-        let all_config = config.clone();
-        let all_plugin_apps = plugin_apps.clone();
-        tokio::spawn(async move {
-            let result = connectors::list_all_connectors_with_options(
-                &all_config,
-                force_refetch,
-                &all_plugin_apps,
-            )
-            .await
-            .map_err(|err| format!("failed to list apps: {err}"));
-            let _ = tx.send(AppListLoadResult::Directory(result));
-        });
-
-        let app_list_deadline = tokio::time::Instant::now() + APP_LIST_LOAD_TIMEOUT;
-        let mut accessible_loaded = false;
-        let mut all_loaded = false;
-        let mut codex_apps_ready = true;
-        let mut last_notified_apps = None;
-        let mut sent_app_list_update = false;
+        let plugin_connectors = plugin_connectors_from_snapshot(&connector_snapshot);
         let app_policy = AppToolPolicyEvaluator::new(&config.config_layer_stack);
+        let cached_accessible =
+            connectors::list_cached_accessible_connectors_from_mcp_tools(&config)
+                .await
+                .unwrap_or_default();
+        let cached = app_policy.apply_app_enabled_state(codex_connectors::merge::merge_connectors(
+            plugin_connectors.clone(),
+            cached_accessible,
+        ));
 
-        if accessible_connectors.is_some() || all_connectors.is_some() {
-            let merged = app_policy.apply_app_enabled_state(merge_loaded_apps(
-                all_connectors.as_deref(),
-                accessible_connectors.as_deref(),
-            ));
-            if !force_refetch {
-                last_notified_apps = Some(merged);
-            } else if should_send_app_list_updated_notification(
-                merged.as_slice(),
-                accessible_loaded,
-                all_loaded,
-            ) {
-                send_app_list_updated_notification(outgoing, merged.clone()).await;
-                last_notified_apps = Some(merged);
-                sent_app_list_update = true;
-            }
+        let status = connectors::list_accessible_connectors_from_mcp_tools_with_mcp_manager(
+            &config,
+            force_refetch,
+            environment_manager,
+            mcp_manager,
+        )
+        .await
+        .map_err(|err| internal_error(format!("failed to load accessible apps: {err}")))?;
+        let merged = app_policy.apply_app_enabled_state(codex_connectors::merge::merge_connectors(
+            plugin_connectors,
+            status.connectors,
+        ));
+        if cached != merged {
+            send_app_list_updated_notification(outgoing, merged.clone()).await;
         }
-
-        loop {
-            let result = match tokio::time::timeout_at(app_list_deadline, rx.recv()).await {
-                Ok(Some(result)) => result,
-                Ok(None) => {
-                    return Err(internal_error("failed to load app lists"));
-                }
-                Err(_) => {
-                    let timeout_seconds = APP_LIST_LOAD_TIMEOUT.as_secs();
-                    return Err(internal_error(format!(
-                        "timed out waiting for app lists after {timeout_seconds} seconds"
-                    )));
-                }
-            };
-
-            match result {
-                AppListLoadResult::Accessible(Ok(status)) => {
-                    accessible_connectors = Some(status.connectors);
-                    accessible_loaded = true;
-                    codex_apps_ready = status.codex_apps_ready;
-                }
-                AppListLoadResult::Accessible(Err(err)) => {
-                    return Err(internal_error(err));
-                }
-                AppListLoadResult::Directory(Ok(connectors)) => {
-                    all_connectors = Some(connectors);
-                    all_loaded = true;
-                }
-                AppListLoadResult::Directory(Err(err)) => {
-                    return Err(internal_error(err));
-                }
-            }
-
-            let showing_interim_force_refetch = force_refetch && !(accessible_loaded && all_loaded);
-            let all_connectors_for_update =
-                if showing_interim_force_refetch && cached_all_connectors.is_some() {
-                    cached_all_connectors.as_deref()
-                } else {
-                    all_connectors.as_deref()
-                };
-            let accessible_connectors_for_update =
-                if showing_interim_force_refetch && !accessible_loaded {
-                    None
-                } else {
-                    accessible_connectors.as_deref()
-                };
-            let merged = app_policy.apply_app_enabled_state(merge_loaded_apps(
-                all_connectors_for_update,
-                accessible_connectors_for_update,
-            ));
-            if should_send_app_list_updated_notification(
-                merged.as_slice(),
-                accessible_loaded,
-                all_loaded,
-            ) && (last_notified_apps.as_ref() != Some(&merged)
-                || (!force_refetch
-                    && start == 0
-                    && accessible_loaded
-                    && all_loaded
-                    && !sent_app_list_update))
-            {
-                send_app_list_updated_notification(outgoing, merged.clone()).await;
-                last_notified_apps = Some(merged.clone());
-                sent_app_list_update = true;
-            }
-
-            if accessible_loaded && all_loaded {
-                let response = paginate_apps(merged.as_slice(), start, limit)?;
-                return Ok((response, codex_apps_ready));
-            }
-        }
+        let response = paginate_apps(merged.as_slice(), start, limit)?;
+        Ok((response, status.codex_apps_ready))
     }
 
     async fn load_thread(
@@ -370,7 +264,6 @@ impl AppsRequestProcessor {
     }
 }
 
-const APP_LIST_LOAD_TIMEOUT: Duration = Duration::from_secs(90);
 // `app/list` is the legacy request-path baseline for the `app/installed` endpoint;
 // `path=legacy` keeps it separate from the new snapshot-backed implementation in dashboards.
 const APPS_INSTALLED_DURATION_METRIC: &str = "codex.apps.installed.duration_ms";
@@ -385,27 +278,18 @@ fn record_legacy_apps_installed_duration(started_at: Instant, reload: bool) {
         );
     }
 }
-enum AppListLoadResult {
-    Accessible(Result<AccessibleConnectorsStatus, String>),
-    Directory(Result<Vec<AppInfo>, String>),
-}
-
-fn merge_loaded_apps(
-    all_connectors: Option<&[AppInfo]>,
-    accessible_connectors: Option<&[AppInfo]>,
-) -> Vec<AppInfo> {
-    let all_connectors_loaded = all_connectors.is_some();
-    let all = all_connectors.map_or_else(Vec::new, <[AppInfo]>::to_vec);
-    let accessible = accessible_connectors.map_or_else(Vec::new, <[AppInfo]>::to_vec);
-    connectors::merge_connectors_with_accessible(all, accessible, all_connectors_loaded)
-}
-
-fn should_send_app_list_updated_notification(
-    connectors: &[AppInfo],
-    accessible_loaded: bool,
-    all_loaded: bool,
-) -> bool {
-    connectors.iter().any(|connector| connector.is_accessible) || (accessible_loaded && all_loaded)
+fn plugin_connectors_from_snapshot(snapshot: &codex_connectors::ConnectorSnapshot) -> Vec<AppInfo> {
+    let mut connectors = codex_connectors::merge::merge_plugin_connectors(
+        Vec::new(),
+        snapshot.connector_ids().iter().map(|id| id.0.clone()),
+    );
+    for connector in &mut connectors {
+        connector.install_url = None;
+        connector.plugin_display_names = snapshot
+            .plugin_display_names_for_connector_id(&connector.id)
+            .to_vec();
+    }
+    connectors
 }
 
 fn paginate_apps(

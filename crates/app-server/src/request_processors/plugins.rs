@@ -1,4 +1,3 @@
-use super::apps_processor::APP_READ_MAX_IDS;
 use super::config_processor::reload_user_config;
 use super::*;
 use crate::error_code::internal_error;
@@ -1092,8 +1091,6 @@ impl PluginRequestProcessor {
                     None => None,
                 };
                 let app_summaries = load_plugin_app_summaries(
-                    &config,
-                    auth.as_ref(),
                     &outcome.plugin.apps,
                     &outcome.plugin.app_category_by_id,
                 )
@@ -1183,13 +1180,8 @@ impl PluginRequestProcessor {
                     .as_ref()
                     .map(plugin_app_category_by_id_from_value)
                     .unwrap_or_default();
-                let app_summaries = load_plugin_app_summaries(
-                    &config,
-                    auth.as_ref(),
-                    &plugin_apps,
-                    &app_category_by_id,
-                )
-                .await;
+                let app_summaries =
+                    load_plugin_app_summaries(&plugin_apps, &app_category_by_id).await;
                 remote_plugin_detail_to_info(remote_detail, app_summaries)
             }
         };
@@ -1667,8 +1659,7 @@ impl PluginRequestProcessor {
                     .as_ref()
                     .map(plugin_app_category_by_id_from_value)
                     .unwrap_or_default();
-                load_plugin_app_summaries(&config, auth.as_ref(), &plugin_apps, &app_category_by_id)
-                    .await
+                load_plugin_app_summaries(&plugin_apps, &app_category_by_id).await
             }
         } else {
             let plugin_app_declarations = load_plugin_apps(result.installed_path.as_path()).await;
@@ -1750,7 +1741,7 @@ impl PluginRequestProcessor {
             .collect();
         let environment_manager = self.thread_manager.environment_manager();
         let (app_summaries, accessible_connectors_result) = tokio::join!(
-            load_plugin_app_summaries(config, auth, &plugin_apps, &app_category_by_id),
+            load_plugin_app_summaries(&plugin_apps, &app_category_by_id),
             connectors::list_accessible_connectors_from_mcp_tools_with_mcp_manager(
                 config,
                 /*force_refetch*/ true,
@@ -2065,8 +2056,6 @@ impl PluginRequestProcessor {
 }
 
 async fn load_plugin_app_summaries(
-    config: &Config,
-    auth: Option<&CodexAuth>,
     plugin_apps: &[codex_plugin::AppConnectorId],
     app_category_by_id: &HashMap<String, String>,
 ) -> Vec<AppSummary> {
@@ -2076,56 +2065,16 @@ async fn load_plugin_app_summaries(
         .map(|app| app.0.clone())
         .filter(|app_id| seen_app_ids.insert(app_id.clone()))
         .collect::<Vec<_>>();
-    let mut metadata_by_id = HashMap::new();
-    if let Some(auth) = auth.filter(|auth| {
-        config
-            .features
-            .apps_enabled_for_auth(auth.uses_codex_backend())
-    }) {
-        metadata_by_id.extend(
-            codex_connectors::ConnectorMetadataStore::new(
-                config.chatgpt_base_url.clone(),
-                auth.get_account_id(),
-                auth.get_chatgpt_user_id(),
-                auth.is_workspace_account(),
-            )
-            .fresh_records(&app_ids, /*include_tools*/ false),
-        );
-        for app_ids in app_ids.chunks(APP_READ_MAX_IDS) {
-            match connectors::read_connector_metadata(
-                config, auth, app_ids, /*include_tools*/ false,
-            )
-            .await
-            {
-                Ok(result) => metadata_by_id.extend(
-                    result
-                        .apps
-                        .into_iter()
-                        .map(|metadata| (metadata.id.clone(), metadata)),
-                ),
-                Err(err) => {
-                    warn!("failed to load app metadata for plugin: {err:#}");
-                    break;
-                }
-            }
-        }
-    }
-
     app_ids
         .into_iter()
         .map(|app_id| {
-            let (name, description) = metadata_by_id
-                .remove(&app_id)
-                .map(|metadata| (metadata.name, metadata.description))
-                .unwrap_or_else(|| (app_id.clone(), None));
+            let name = app_id.clone();
             let category = app_category_by_id.get(&app_id).cloned();
             AppSummary {
-                install_url: Some(codex_connectors::metadata::connector_install_url(
-                    &name, &app_id,
-                )),
+                install_url: None,
                 id: app_id,
                 name,
-                description,
+                description: None,
                 category,
             }
         })
