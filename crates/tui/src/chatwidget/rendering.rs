@@ -175,17 +175,6 @@ impl ChatWidget {
             );
         }
 
-        if let Some(cell) = self.pending_rate_limit_reset_hint() {
-            flex.push(
-                /*flex*/ 1,
-                RenderableItem::Owned(Box::new(TranscriptAreaRenderable {
-                    child: cell,
-                    top: 1,
-                    right: active_cell_right_reserve,
-                    persistent_layout: None,
-                })),
-            );
-        }
         let bottom = if self.external_writer_view && !self.bottom_pane.has_active_view() {
             RenderableItem::Owned(Box::new(ExternalWriterNotice {
                 command_center_available: self.remote_connection.is_some(),

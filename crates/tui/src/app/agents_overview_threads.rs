@@ -57,16 +57,7 @@ impl App {
             .get_mut(&thread_id)
             .and_then(Option::as_mut);
         match notification {
-            ServerNotification::ThreadTokenUsageUpdated(usage) => {
-                if self.agents_overview.threads.contains_key(&thread_id) {
-                    self.agents_overview
-                        .usage
-                        .entry(thread_id)
-                        .or_default()
-                        .tokens = Some(usage.token_usage.total.clone());
-                    self.repaint_agents_overview();
-                }
-            }
+            ServerNotification::ThreadTokenUsageUpdated(_) => {}
             ServerNotification::ThreadStarted(started) => {
                 if started.thread.ephemeral {
                     return;
@@ -81,15 +72,11 @@ impl App {
                     .remove(&thread_id);
                 self.agents_overview.activity.remove(&thread_id);
                 self.agents_overview.last_messages.remove(&thread_id);
-                self.agents_overview.usage.remove(&thread_id);
                 self.agents_overview.threads.remove(&thread_id);
                 self.agents_overview.refresh_thread_ids.remove(&thread_id);
             }
             ServerNotification::ThreadClosed(_) => {
                 self.agents_overview.activity.remove(&thread_id);
-                if let Some(usage) = self.agents_overview.usage.get_mut(&thread_id) {
-                    usage.tokens = None;
-                }
                 if let Some(thread) = thread {
                     thread.status = ThreadStatus::NotLoaded;
                 }
@@ -97,9 +84,6 @@ impl App {
             ServerNotification::ThreadReverted(_) => {
                 self.agents_overview.activity.remove(&thread_id);
                 self.agents_overview.last_messages.remove(&thread_id);
-                if let Some(usage) = self.agents_overview.usage.get_mut(&thread_id) {
-                    usage.tokens = None;
-                }
                 self.repaint_agents_overview();
             }
             ServerNotification::ThreadStatusChanged(status) => {

@@ -1,5 +1,4 @@
 mod account;
-mod account_thread_usage;
 mod analytics;
 mod app_installed;
 mod app_list;
@@ -55,7 +54,6 @@ mod hooks_list;
 mod host_skills;
 mod imagegen_extension;
 mod initialize;
-mod luna_reserve;
 mod marketplace_add;
 mod marketplace_remove;
 mod marketplace_upgrade;
@@ -88,10 +86,6 @@ mod plugin_share;
 mod plugin_uninstall;
 mod process_exec;
 mod projects;
-mod rate_limit_reset_credits;
-mod rate_limits;
-#[path = "rate_limits_identity_tests.rs"]
-mod rate_limits_identity;
 mod realtime_conversation;
 mod recommended_plugins;
 mod remote_control;

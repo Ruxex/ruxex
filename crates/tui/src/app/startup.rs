@@ -743,7 +743,6 @@ See the Codex keymap documentation for supported actions and examples."
             last_thread_usage_status_cell: None,
             pending_thread_usage_history_refresh: false,
             overlay: None,
-            retained_analytics: None,
             deferred_history_lines: Vec::new(),
             has_emitted_history_lines: false,
             transcript_reflow: TranscriptReflowState::default(),
@@ -810,8 +809,6 @@ See the Codex keymap documentation for supported actions and examples."
             pending_managed_worktree_attach: None,
             startup_protected_input_boundary: true,
             startup_pending_protected_request: false,
-            rate_limit_hard_stop_generation: 0,
-            rate_limit_refresh_state: Default::default(),
             pending_plugin_enabled_writes: HashMap::new(),
             pending_hook_enabled_writes: HashMap::new(),
             recap: recap::RecapState::default(),
@@ -941,21 +938,11 @@ See the Codex keymap documentation for supported actions and examples."
             "tui startup initial frame scheduled"
         );
         app.refresh_startup_skills(&app_server);
-        // Kick off a non-blocking rate-limit prefetch so the first `/status`
-        // already has data and available reset credits can be surfaced, without
-        // delaying the initial frame render.
         if requires_openai_auth && has_chatgpt_account {
             crate::daybreak::prefetch_notice(
                 &app.config,
                 &app_server,
                 app.chat_widget.cyber_policy_notice.clone(),
-            );
-            let reset_hint_request_id = app.chat_widget.start_rate_limit_reset_startup_check();
-            app.refresh_rate_limits(
-                &app_server,
-                RateLimitRefreshOrigin::StartupPrefetch {
-                    reset_hint_request_id,
-                },
             );
         }
 
@@ -1052,10 +1039,6 @@ See the Codex keymap documentation for supported actions and examples."
                             && has_pending_app_events
                         || (!waiting_for_initial_session_configured
                             && app.has_queued_startup_protected_request());
-                let rate_limit_poll_deadline = app
-                    .chat_widget
-                    .rate_limit_refresh_interval()
-                    .and_then(|interval| app.rate_limit_refresh_state.poll_deadline(interval));
                 let control = select! {
                     Some(event) = app_event_rx.recv() => {
                         let is_initial_session_header = matches!(
@@ -1163,17 +1146,6 @@ See the Codex keymap documentation for supported actions and examples."
                                 }
                             }
                         }
-                        AppRunControl::Continue
-                    }
-                    () = async {
-                        match rate_limit_poll_deadline {
-                            Some(deadline) => {
-                                tokio::time::sleep_until(tokio::time::Instant::from_std(deadline)).await;
-                            }
-                            None => std::future::pending().await,
-                        }
-                    }, if listen_for_app_server_events => {
-                        app.refresh_rate_limits(&app_server, RateLimitRefreshOrigin::Periodic);
                         AppRunControl::Continue
                     }
                     () = async {

@@ -480,29 +480,6 @@ macro_rules! client_response_payload_from_impl {
     ($variant:ident, $response:ty, manual) => {};
 }
 
-/// Preserve explicit `undefined` accepted by the original stable usage request.
-///
-/// A Rust-based TypeScript proxy retains dependency discovery; a raw `#[ts(type = ...)]`
-/// override would silently omit the generated params import and schema fixture.
-#[allow(dead_code)]
-#[derive(TS)]
-#[ts(untagged)]
-enum GetAccountTokenUsageParamsTypeScript {
-    Params(v2::GetAccountTokenUsageParams),
-    #[ts(type = "undefined")]
-    Undefined,
-}
-
-/// Preserve omitted/undefined params while exporting the new usage capability type.
-#[allow(dead_code)]
-#[derive(TS)]
-#[ts(untagged)]
-enum GetAccountRateLimitsParamsTypeScript {
-    Params(v2::GetAccountRateLimitsParams),
-    #[ts(type = "undefined")]
-    Undefined,
-}
-
 client_request_definitions! {
     Initialize => "initialize" {
         params: v1::InitializeParams,
@@ -1297,36 +1274,6 @@ client_request_definitions! {
         params: #[ts(type = "undefined")] #[serde(skip_serializing_if = "Option::is_none")] Option<()>,
         serialization: global("account-auth"),
         response: v2::LogoutAccountResponse,
-    },
-
-    GetAccountRateLimits => "account/rateLimits/read" {
-        params: #[ts(optional, as = "Option<GetAccountRateLimitsParamsTypeScript>", inline)] #[serde(default, skip_serializing_if = "Option::is_none")] v2::NullableGetAccountRateLimitsParams,
-        serialization: None,
-        response: v2::GetAccountRateLimitsResponse,
-    },
-
-    ConsumeAccountRateLimitResetCredit => "account/rateLimitResetCredit/consume" {
-        params: v2::ConsumeAccountRateLimitResetCreditParams,
-        serialization: global("account-auth"),
-        response: v2::ConsumeAccountRateLimitResetCreditResponse,
-    },
-
-    GetAccountTokenUsage => "account/usage/read" {
-        params: #[ts(optional, as = "Option<GetAccountTokenUsageParamsTypeScript>", inline)] #[serde(default, skip_serializing_if = "Option::is_none")] v2::NullableGetAccountTokenUsageParams,
-        serialization: None,
-        response: v2::GetAccountTokenUsageResponse,
-    },
-
-    GetWorkspaceMessages => "account/workspaceMessages/read" {
-        params: #[ts(type = "undefined")] #[serde(skip_serializing_if = "Option::is_none")] Option<()>,
-        serialization: None,
-        response: v2::GetWorkspaceMessagesResponse,
-    },
-
-    SendAddCreditsNudgeEmail => "account/sendAddCreditsNudgeEmail" {
-        params: v2::SendAddCreditsNudgeEmailParams,
-        serialization: global("account-auth"),
-        response: v2::SendAddCreditsNudgeEmailResponse,
     },
 
     FeedbackUpload => "feedback/upload" {
@@ -3076,107 +3023,6 @@ mod tests {
         let payload = ServerRequestPayload::McpServerElicitationRequest(params);
         assert_eq!(request.id(), &RequestId::Integer(9));
         assert_eq!(payload.request_with_id(RequestId::Integer(9)), request);
-        Ok(())
-    }
-
-    #[test]
-    fn serialize_get_account_rate_limits() -> Result<()> {
-        let request = ClientRequest::GetAccountRateLimits {
-            request_id: RequestId::Integer(1),
-            params: None,
-        };
-        assert_eq!(request.id(), &RequestId::Integer(1));
-        assert_eq!(
-            json!({
-                "method": "account/rateLimits/read",
-                "id": 1,
-            }),
-            serde_json::to_value(&request)?,
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn serialize_get_account_token_usage() -> Result<()> {
-        let request = ClientRequest::GetAccountTokenUsage {
-            request_id: RequestId::Integer(1),
-            params: None,
-        };
-        assert_eq!(request.id(), &RequestId::Integer(1));
-        assert_eq!(
-            json!({
-                "method": "account/usage/read",
-                "id": 1,
-            }),
-            serde_json::to_value(&request)?,
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn serialize_get_account_thread_usage() -> Result<()> {
-        let request = ClientRequest::GetAccountTokenUsage {
-            request_id: RequestId::Integer(1),
-            params: Some(v2::GetAccountTokenUsageParams {
-                thread_id: Some("thread-123".to_string()),
-            }),
-        };
-        assert_eq!(
-            json!({
-                "method": "account/usage/read",
-                "id": 1,
-                "params": { "threadId": "thread-123" },
-            }),
-            serde_json::to_value(&request)?,
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn deserialize_legacy_get_account_token_usage_response() -> Result<()> {
-        let response: v2::GetAccountTokenUsageResponse = serde_json::from_value(json!({
-            "summary": {
-                "lifetimeTokens": null,
-                "peakDailyTokens": null,
-                "longestRunningTurnSec": null,
-                "currentStreakDays": null,
-                "longestStreakDays": null,
-            },
-            "dailyUsageBuckets": null,
-        }))?;
-
-        assert_eq!(
-            response,
-            v2::GetAccountTokenUsageResponse {
-                summary: v2::AccountTokenUsageSummary {
-                    lifetime_tokens: None,
-                    peak_daily_tokens: None,
-                    longest_running_turn_sec: None,
-                    current_streak_days: None,
-                    longest_streak_days: None,
-                },
-                daily_usage_buckets: None,
-                thread_usage: None,
-            },
-        );
-        assert_eq!(serde_json::to_value(response)?["threadUsage"], json!(null));
-        Ok(())
-    }
-
-    #[test]
-    fn serialize_get_workspace_messages() -> Result<()> {
-        let request = ClientRequest::GetWorkspaceMessages {
-            request_id: RequestId::Integer(1),
-            params: None,
-        };
-        assert_eq!(request.id(), &RequestId::Integer(1));
-        assert_eq!(
-            json!({
-                "method": "account/workspaceMessages/read",
-                "id": 1,
-            }),
-            serde_json::to_value(&request)?,
-        );
         Ok(())
     }
 

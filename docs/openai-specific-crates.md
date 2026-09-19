@@ -41,8 +41,8 @@
 | 4 | `codex-cloud-tasks-client` | 2 / 3 | Codex Cloud Tasks API 専用 | 削除済み | 中 | mock と CLI の同時処理が必要 |
 | 5 | `codex-chatgpt` | 2 / 5 | ChatGPT backend 専用 | 削除済み | 中 | apply と connectors を別の削除単位として処理 |
 | 6 | `codex-cloud-config` | 5 / 7 | ChatGPT 配信設定と組織要件 | 隔離 | 高 | 起動時設定ロードと enterprise 制約に影響 |
-| 7 | `codex-backend-client` | 6 / 13 | ChatGPT/Codex backend API | 隔離 | 高 | TUI、app-server、memory、git attribution が利用 |
-| 8 | `codex-backend-openapi-models` | 1 / 14 | Codex backend の生成モデル | 隔離 | 中 | 直接依存は少ないが backend client 経由の影響が広い |
+| 7 | `codex-backend-client` | 6 / 13 | ChatGPT/Codex backend API | 削除済み | 高 | account/usage、workspace、hosted analytics、turn-cost の同時撤去が必要 |
+| 8 | `codex-backend-openapi-models` | 1 / 14 | Codex backend の生成モデル | 削除済み | 中 | backend client の削除後に同時撤去 |
 | 9 | `codex-image-generation-extension` | 3 / 49 | OpenAI Images API と固定モデル専用 | 隔離 | 高 | core の tool/event/history と app-server に波及 |
 | 10 | `codex-web-search-extension` | 2 / 49 | OpenAI web search と互換 provider が混在 | 汎用化 | 高 | hosted/standalone の二経路を分ける必要がある |
 | 11 | `codex-core-plugins` | 7 / 49 | 汎用 plugin 管理と OpenAI marketplace が混在 | 汎用化 | 高 | local plugin と third-party marketplace を維持する必要がある |
@@ -61,7 +61,7 @@
 | --- | --- | --- |
 | `codex-responses-api-proxy`、Cloud Tasks 3 クレート、`codex-chatgpt` | なし | 削除済み。専用到達経路を含めて削除する判断を維持する。 |
 | `codex-cloud-config`、`codex-git-attribution`、remote memory rate-limit guard | なし | 削除済み。hosted policy、backend attribution、backend rate-limit guard を残さない。 |
-| `codex-backend-client`、`codex-backend-openapi-models` | なし | workspace message の endpoint と DTO、および `/accounts/check` を使う workspace account routing は削除済み。analytics のプラン判定専用だった `/accounts/check` endpoint と DTO も削除し、ローカル認証情報の plan claim を利用する。残る account/usage などを capability 単位で除去し、依存元がなくなり次第両クレートを削除する。 |
+| `codex-backend-client`、`codex-backend-openapi-models` | なし | workspace message、`/accounts/check`、account usage/rate-limit 読み取り、リセット credit、workspace owner nudge、hosted analytics dashboard、backend turn-cost collection を capability 単位で削除し、両クレートも削除済み。 |
 | ImageGen | image artifact、tool invocation、履歴表現 | OpenAI Images API、固定モデル、OpenAI auth の adapter を削除し、共通表現だけを残す。 |
 | Web Search | standalone search を実行できる互換 provider の経路 | OpenAI hosted search を削除する。共通 tool と standalone executor は残す。 |
 | Realtime voice | なし | Realtime API adapter に限らず、`codex-realtime-webrtc`、`codex-voice-host`、voice UI を含む capability 全体を削除する。 |

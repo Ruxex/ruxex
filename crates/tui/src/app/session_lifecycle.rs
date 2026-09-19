@@ -884,17 +884,10 @@ impl App {
                 if started.blocks_direct_input {
                     self.mark_primary_thread_parent_owned(thread_id);
                 }
-                // A full usage read can finish before thread/start. Apply its cached fallback
-                // after attachment but before the initial prompt or queued draft is submitted.
-                let recovery_was_pending = self.chat_widget.hold_rate_limit_recovery();
                 self.enqueue_primary_thread_session(started.session, started.turns)
                     .await?;
-                self.apply_backend_banner_fallback(app_server).await;
                 if let Some(notice) = self.pending_server_version_notice.take() {
                     self.chat_widget.add_server_version_warning(notice);
-                }
-                if !recovery_was_pending {
-                    self.chat_widget.finish_rate_limit_recovery();
                 }
                 self.chat_widget.maybe_send_next_queued_input();
             }

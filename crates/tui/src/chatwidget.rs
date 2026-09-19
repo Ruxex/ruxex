@@ -78,8 +78,6 @@ use crate::text_formatting::proper_join;
 use crate::token_usage::TokenUsage;
 use crate::token_usage::TokenUsageInfo;
 use crate::version::CODEX_CLI_VERSION;
-use codex_app_server_protocol::AddCreditsNudgeCreditType;
-use codex_app_server_protocol::AddCreditsNudgeEmailStatus;
 use codex_app_server_protocol::AppSummary;
 use codex_app_server_protocol::CodexErrorInfo as AppServerCodexErrorInfo;
 use codex_app_server_protocol::CollabAgentTool;
@@ -254,7 +252,6 @@ fn normalize_thread_name(name: &str) -> Option<String> {
 use crate::app_event::AppEvent;
 use crate::app_event::ExitMode;
 use crate::app_event::PermissionProfileSelection;
-use crate::app_event::RateLimitRefreshOrigin;
 use crate::app_event_sender::AppEventSender;
 use crate::auto_review_denials;
 use crate::auto_review_denials::RecentAutoReviewDenials;
@@ -404,7 +401,6 @@ use self::rate_limits::app_server_rate_limit_error_kind;
 pub(crate) use self::rate_limits::fallback_limit_label;
 use self::rate_limits::is_app_server_cyber_policy_error;
 mod recap;
-mod reset_credits;
 pub(crate) use self::rate_limits::limit_label_for_window;
 mod completion;
 mod realtime;
@@ -456,7 +452,6 @@ use self::transcript::TranscriptState;
 mod turn_lifecycle;
 mod turn_runtime;
 use self::turn_lifecycle::TurnLifecycleState;
-mod usage;
 mod user_messages;
 mod working_directory;
 use self::user_messages::PendingSteer;
@@ -632,7 +627,6 @@ pub(crate) struct ChatWidget {
     luna_reserve_notice_account_id: Option<String>,
     warning_display_state: WarningDisplayState,
     rate_limit_switch_prompt: RateLimitSwitchPromptState,
-    add_credits_nudge_email_in_flight: Option<rate_limits::PendingCreditsNudge>,
     adaptive_chunking: AdaptiveChunkingPolicy,
     // Stream lifecycle controller
     stream_controller: Option<StreamController>,
@@ -803,16 +797,6 @@ pub(crate) struct ChatWidget {
     status_line_git_summary_pending: bool,
     // True once we've attempted a Git summary lookup for the current CWD.
     status_line_git_summary_lookup_complete: bool,
-    // Cached workspace notification headline for the status line.
-    status_line_workspace_headline: Option<String>,
-    // Request ID for the async workspace headline fetch currently in flight.
-    status_line_workspace_headline_pending_request_id: Option<u64>,
-    // Request ID to assign to the next workspace headline fetch.
-    next_status_line_workspace_headline_request_id: u64,
-    // Last time a workspace headline fetch was requested.
-    status_line_workspace_headline_last_requested_at: Option<Instant>,
-    // Set after the backend reports the workspace-message feature gate is disabled.
-    status_line_workspace_messages_disabled: bool,
     // Cached backend-estimated cost and bounded refresh state for the current thread.
     thread_usage: thread_usage::ThreadUsageState,
     // Current thread-goal status shown in the status line when plan mode is inactive.
@@ -1218,7 +1202,6 @@ impl ChatWidget {
         {
             self.refresh_terminal_title();
         }
-        self.refresh_status_line_if_workspace_headline_due();
         self.refresh_thread_usage_if_settlement_due();
     }
 
@@ -1986,7 +1969,6 @@ impl ChatWidget {
     pub(crate) fn active_cell_transcript_key(&self) -> Option<ActiveCellTranscriptKey> {
         let cell = self.transcript.active_cell.as_ref();
         let mut realtime_cells = self.realtime_conversation.live_transcript_cells();
-        let rate_limit_reset_hint = self.pending_rate_limit_reset_hint();
         if cell.is_none()
             && self
                 .realtime_conversation
@@ -1994,7 +1976,6 @@ impl ChatWidget {
                 .next()
                 .is_none()
             && self.realtime_conversation.pending_history_cells.is_empty()
-            && rate_limit_reset_hint.is_none()
         {
             return None;
         }
@@ -2034,13 +2015,6 @@ impl ChatWidget {
                 lines.push(HyperlinkLine::from(""));
             }
             lines.extend(realtime_lines);
-        }
-        if let Some(rate_limit_reset_hint) = self.pending_rate_limit_reset_hint() {
-            let hint_lines = rate_limit_reset_hint.transcript_hyperlink_lines(width);
-            if !hint_lines.is_empty() && !lines.is_empty() {
-                lines.push(HyperlinkLine::from(""));
-            }
-            lines.extend(hint_lines);
         }
         (!lines.is_empty()).then_some(lines)
     }

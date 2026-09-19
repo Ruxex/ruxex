@@ -2598,8 +2598,6 @@ fn trust_fixture_folders(app: &mut App) {
     ));
 }
 
-#[path = "agents_overview_usage_tests.rs"]
-mod usage;
 
 #[tokio::test]
 async fn command_center_escape_cancels_editors_and_never_closes_list() {

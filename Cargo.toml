@@ -5,7 +5,6 @@ members = [
     "crates/agent-graph-store",
     "crates/agent-identity",
     "crates/agent-roles",
-    "crates/backend-client",
     "crates/bwrap",
     "crates/build-info",
     "crates/ansi-escape",
@@ -23,7 +22,6 @@ members = [
     "crates/feedback",
     "crates/features",
     "crates/install-context",
-    "crates/codex-backend-openapi-models",
     "crates/code-mode",
     "crates/code-mode-host",
     "crates/code-mode-protocol",
@@ -177,7 +175,6 @@ codex-app-server-test-client = { path = "crates/app-server-test-client" }
 codex-apply-patch = { path = "crates/apply-patch" }
 codex-arg0 = { path = "crates/arg0" }
 codex-async-utils = { path = "crates/async-utils" }
-codex-backend-client = { path = "crates/backend-client" }
 codex-build-info = { path = "crates/build-info" }
 codex-client = { path = "crates/codex-client" }
 codex-collaboration-mode-templates = { path = "crates/collaboration-mode-templates" }

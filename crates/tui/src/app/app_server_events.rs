@@ -7,7 +7,6 @@ use super::app_server_event_targets::server_notification_thread_target;
 use super::app_server_event_targets::server_request_thread_id;
 use crate::app_command::AppCommand;
 use crate::app_event::AppEvent;
-use crate::app_event::RateLimitRefreshOrigin;
 #[cfg(any(target_os = "windows", test))]
 use crate::app_event::WindowsSandboxEnableMode;
 use crate::app_info::app_info_from_api;
@@ -16,7 +15,6 @@ use crate::app_server_session::status_account_display_from_auth_mode;
 use codex_app_server_client::AppServerEvent;
 use codex_app_server_protocol::AuthMode;
 use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::RateLimitReachedType;
 use codex_app_server_protocol::RequestId;
 use codex_app_server_protocol::ServerNotification;
 use codex_app_server_protocol::ServerRequest;
@@ -78,9 +76,6 @@ impl App {
                 self.agents_overview.refresh_notifications.clear();
                 self.agents_overview.activity.clear();
                 self.agents_overview.last_messages.clear();
-                self.agents_overview.usage.clear();
-                self.agents_overview.pending_usage = None;
-                self.agents_overview.usage_disabled = false;
                 self.repaint_agents_overview();
                 self.refresh_agents_overview_threads(app_server_client);
             }
@@ -207,43 +202,13 @@ impl App {
                 self.refresh_mcp_startup_expected_servers_from_config();
             }
             ServerNotification::AccountRateLimitsUpdated(notification) => {
-                let workspace_hard_stop = matches!(
-                    notification.rate_limits.rate_limit_reached_type,
-                    Some(
-                        RateLimitReachedType::WorkspaceOwnerCreditsDepleted
-                            | RateLimitReachedType::WorkspaceMemberCreditsDepleted
-                            | RateLimitReachedType::WorkspaceOwnerUsageLimitReached
-                            | RateLimitReachedType::WorkspaceMemberUsageLimitReached
-                    )
-                ) || notification.rate_limits.spend_control_reached
-                    == Some(true);
-                if workspace_hard_stop {
-                    self.rate_limit_hard_stop_generation =
-                        self.rate_limit_hard_stop_generation.wrapping_add(1);
-                }
                 self.chat_widget
                     .on_rolling_rate_limit_snapshot(notification.rate_limits.clone());
-                if workspace_hard_stop && self.chat_widget.has_chatgpt_account() {
-                    // Background inference may publish a hard stop without a foreground Error.
-                    self.refresh_rate_limits(app_server_client, RateLimitRefreshOrigin::Recovery);
-                }
                 return;
             }
             ServerNotification::AccountUpdated(notification) => {
-                self.agents_overview.usage.clear();
-                self.agents_overview.pending_usage = None;
-                self.agents_overview.usage_disabled = false;
                 self.repaint_agents_overview();
                 self.chat_widget.cyber_policy_notice = Default::default();
-                if let Some(crate::pager_overlay::Overlay::Analytics(view)) = &mut self.overlay {
-                    view.refresh();
-                }
-                if let Some(view) = &mut self.retained_analytics {
-                    view.cancel_loads();
-                }
-                self.rate_limit_hard_stop_generation =
-                    self.rate_limit_hard_stop_generation.wrapping_add(1);
-                self.rate_limit_refresh_state.invalidate_recovery();
                 // Deferred terminal writes must never carry the previous account's billing into
                 // the newly authenticated identity, even when both accounts share one thread.
                 self.last_thread_usage_status_cell = None;

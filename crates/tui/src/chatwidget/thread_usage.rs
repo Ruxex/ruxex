@@ -328,30 +328,7 @@ impl ChatWidget {
     }
 
     fn request_thread_usage(&mut self) {
-        let Some(thread_id) = self.thread_id else {
-            return;
-        };
-        if !self.thread_usage_is_available() || self.thread_usage.pending_request_id.is_some() {
-            return;
-        }
-
-        let request_id = self.thread_usage.next_request_id;
-        self.thread_usage.next_request_id =
-            self.thread_usage.next_request_id.wrapping_add(/*rhs*/ 1);
-        self.thread_usage.pending_request_id = Some(request_id);
         self.thread_usage.requested = true;
-        self.thread_usage.thread_id = Some(thread_id);
-        if self
-            .thread_usage
-            .settlement_baseline_credits_micros
-            .is_some()
-        {
-            self.thread_usage.settlement_request_id = Some(request_id);
-        }
-        self.app_event_tx.send(AppEvent::RefreshThreadUsage {
-            thread_id,
-            request_id,
-        });
     }
 
     pub(super) fn thread_usage_is_available(&self) -> bool {

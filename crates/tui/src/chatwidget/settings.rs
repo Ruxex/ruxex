@@ -202,12 +202,10 @@ impl ChatWidget {
         self.model_popup_request_id = None;
         self.invalidate_permission_discovery();
         self.invalidate_connector_scope();
-        self.clear_pending_rate_limit_reset_requests();
         self.clear_backend_banner();
         self.luna_reserve_notice_account_id = None;
         self.automatic_model_switch_state = backend_banners::AutomaticModelSwitchState::default();
         self.input_queue.rate_limit_recovery_pending = false;
-        self.add_credits_nudge_email_in_flight = None;
         self.codex_rate_limit_reached_type = None;
         self.codex_spend_control_reached = None;
         self.rate_limit_warnings = RateLimitWarningState::default();
@@ -222,10 +220,6 @@ impl ChatWidget {
         if had_refreshing_status_outputs {
             self.request_redraw();
         }
-        self.status_line_workspace_headline = None;
-        self.status_line_workspace_headline_pending_request_id = None;
-        self.status_line_workspace_headline_last_requested_at = None;
-        self.status_line_workspace_messages_disabled = false;
         self.clear_thread_usage_state();
         self.status_account_display = status_account_display;
         self.plan_type = plan_type;

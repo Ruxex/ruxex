@@ -11,12 +11,6 @@ mod advanced_reasoning_tests;
 mod agents_navigation_tests;
 #[path = "tests/approvals_reviewer_error_tests.rs"]
 mod approvals_reviewer_error_tests;
-#[path = "tests/backend_banner_fallback_tests.rs"]
-mod backend_banner_fallback_tests;
-#[path = "tests/backend_banner_recovery_tests.rs"]
-mod backend_banner_recovery_tests;
-#[path = "tests/backend_banner_startup_tests.rs"]
-mod backend_banner_startup_tests;
 #[path = "tests/background_exit_tests.rs"]
 mod background_exit_tests;
 #[path = "tests/background_task_defaults_tests.rs"]
@@ -31,8 +25,6 @@ mod disconnect;
 mod fresh_sparkle_tests;
 #[path = "tests/key_chords.rs"]
 mod key_chords;
-#[path = "tests/luna_reserve_recovery_tests.rs"]
-mod luna_reserve_recovery_tests;
 #[path = "tests/mcp_startup.rs"]
 mod mcp_startup;
 #[path = "tests/misalignment_policy_tests.rs"]
@@ -50,7 +42,6 @@ mod permission_selection_tests;
 #[path = "tests/permission_shortcuts_tests.rs"]
 mod permission_shortcuts_tests;
 mod plugin_catalog;
-mod rate_limits;
 #[path = "tests/realtime_handoff_e2e.rs"]
 mod realtime_handoff_e2e;
 #[path = "tests/realtime_requests.rs"]
@@ -70,8 +61,6 @@ mod startup;
 mod startup_warnings_tests;
 #[path = "tests/stream_animation_tests.rs"]
 mod stream_animation_tests;
-#[path = "tests/thread_usage.rs"]
-mod thread_usage;
 #[path = "tests/transcript_composer.rs"]
 mod transcript_composer;
 #[path = "tests/turn_submission.rs"]

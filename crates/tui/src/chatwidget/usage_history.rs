@@ -1,7 +1,6 @@
 //! Defer reset hints until active transcript output and stream consolidation have settled.
 
 use super::ChatWidget;
-use crate::app_event::AppEvent;
 
 impl ChatWidget {
     /// Reports whether completed asynchronous usage output must wait before insertion.
@@ -35,20 +34,8 @@ impl ChatWidget {
             self.pending_stream_consolidations.saturating_sub(/*rhs*/ 1);
     }
 
-    /// Requests another insertion attempt when completed usage output is waiting.
-    ///
-    /// This is used after stream or history lifecycle events that may have cleared
-    /// the insertion barriers without directly owning the completed output.
-    pub(crate) fn request_pending_usage_output_insertion(&self) {
-        if self.pending_rate_limit_reset_hint().is_some() {
-            self.app_event_tx.send(AppEvent::CommitPendingUsageOutput);
-        }
-    }
+    pub(crate) fn request_pending_usage_output_insertion(&self) {}
 
-    pub(crate) fn request_pending_usage_output_insertion_after_stream_shutdown(&self) {
-        if self.pending_rate_limit_reset_hint().is_some() {
-            self.app_event_tx
-                .send(AppEvent::CommitPendingUsageOutputAfterStreamShutdown);
-        }
-    }
+    pub(crate) fn request_pending_usage_output_insertion_after_stream_shutdown(&self) {}
+
 }

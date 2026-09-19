@@ -14,7 +14,6 @@ use crate::app_event::HistoryLookupResponse;
 use crate::app_event::PermissionProfileSelection;
 use crate::app_event::PluginLocation;
 use crate::app_event::PluginRemoteSectionError;
-use crate::app_event::RateLimitRefreshOrigin;
 use crate::app_event::RunningTaskExitAction;
 use crate::app_event::ThreadTitleDestination;
 #[cfg(target_os = "windows")]
@@ -24,7 +23,6 @@ use crate::app_server_session::AppServerBootstrap;
 use crate::app_server_session::AppServerSession;
 use crate::app_server_session::AppServerStartedThread;
 use crate::app_server_session::TurnPermissionsOverride;
-use crate::app_server_session::app_server_rate_limit_snapshots;
 use crate::bottom_pane::AppLinkViewParams;
 use crate::bottom_pane::ApplyPatchApprovalRequest;
 use crate::bottom_pane::ApprovalRequest;
@@ -93,7 +91,6 @@ use crate::workspace_command::WorkspaceCommandRunner;
 use codex_ansi_escape::ansi_escape_line;
 use codex_app_server_client::AppServerRequestHandle;
 use codex_app_server_client::TypedRequestError;
-use codex_app_server_protocol::AddCreditsNudgeCreditType;
 use codex_app_server_protocol::AskForApproval;
 use codex_app_server_protocol::ClientRequest;
 use codex_app_server_protocol::CodexErrorInfo as AppServerCodexErrorInfo;
@@ -103,7 +100,6 @@ use codex_app_server_protocol::ConfigValueWriteParams;
 use codex_app_server_protocol::ConfigWriteResponse;
 use codex_app_server_protocol::FeedbackUploadParams;
 use codex_app_server_protocol::FeedbackUploadResponse;
-use codex_app_server_protocol::GetAccountRateLimitsResponse;
 use codex_app_server_protocol::HooksListEntry;
 use codex_app_server_protocol::ListMcpServerStatusParams;
 use codex_app_server_protocol::ListMcpServerStatusResponse;
@@ -123,7 +119,6 @@ use codex_app_server_protocol::PluginReadResponse;
 use codex_app_server_protocol::PluginUninstallParams;
 use codex_app_server_protocol::PluginUninstallResponse;
 use codex_app_server_protocol::SandboxMode as AppServerSandboxMode;
-use codex_app_server_protocol::SendAddCreditsNudgeEmailParams;
 use codex_app_server_protocol::ServerNotification;
 use codex_app_server_protocol::ServerRequest;
 use codex_app_server_protocol::SkillErrorInfo;
@@ -203,13 +198,11 @@ mod agents_overview;
 mod agents_overview_actions;
 mod agents_overview_details;
 mod agents_overview_threads;
-mod agents_overview_usage;
 mod agents_overview_view;
 pub(crate) use agents_overview::AGENTS_OVERVIEW_VIEW_ID;
 mod app_server_event_targets;
 mod app_server_events;
 pub(crate) mod app_server_requests;
-mod backend_banner_fallback;
 mod background_requests;
 mod config_persistence;
 mod connector_mentions;
@@ -232,7 +225,6 @@ mod permission_shortcuts;
 mod pets;
 mod platform_actions;
 mod plugin_mentions;
-mod rate_limit_refresh;
 mod realtime_delivery;
 mod realtime_settings;
 mod reasoning_replay;
@@ -569,9 +561,8 @@ pub(crate) struct App {
     last_thread_usage_status_cell: Option<history_ui::ThreadUsageStatusHistory>,
     pub(crate) pending_thread_usage_history_refresh: bool,
 
-    // Alternate-screen overlays: transcript, diff, and analytics.
+    // Alternate-screen overlays: transcript and diff.
     pub(crate) overlay: Option<Overlay>,
-    pub(crate) retained_analytics: Option<Box<crate::analytics::AnalyticsView>>,
     pub(crate) deferred_history_lines: Vec<crate::terminal_hyperlinks::HyperlinkLine>,
     has_emitted_history_lines: bool,
     transcript_reflow: TranscriptReflowState,
@@ -662,8 +653,6 @@ pub(crate) struct App {
     /// Keeps that boundary armed while a startup approval waits for the typing-idle timer.
     startup_pending_protected_request: bool,
     /// Invalidates in-flight full rate-limit reads when a newer rolling hard stop arrives.
-    rate_limit_hard_stop_generation: u64,
-    rate_limit_refresh_state: rate_limit_refresh::RateLimitRefreshState,
     // Serialize plugin enablement writes per plugin so stale completions cannot
     // overwrite a newer toggle, even if the plugin is toggled from different
     // cwd contexts.
@@ -955,7 +944,6 @@ impl App {
                     // Allow widgets to process any pending timers before rendering.
                     let had_active_view = self.chat_widget.has_active_view();
                     self.chat_widget.pre_draw_tick();
-                    self.refresh_agents_overview_usage(app_server, tui.frame_requester());
                     let rendered_area = self.render_chat_widget_frame(tui, screen_size)?;
                     if !had_active_view
                         && self.chat_widget.has_active_view()

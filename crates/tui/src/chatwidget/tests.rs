@@ -232,8 +232,6 @@ fn next_goal_draft(
 
 mod app_server;
 mod approval_requests;
-#[path = "tests/backend_banners_tests.rs"]
-mod backend_banners_tests;
 #[path = "tests/bedrock_catalog_tests.rs"]
 mod bedrock_catalog_tests;
 #[path = "tests/collaboration_catalog_tests.rs"]
@@ -253,8 +251,6 @@ mod goal_validation;
 mod guardian;
 pub(crate) mod helpers;
 mod history_replay;
-#[path = "tests/luna_reserve_usage_tests.rs"]
-mod luna_reserve_usage_tests;
 mod mcp_startup;
 #[path = "tests/misalignment_policy_tests.rs"]
 mod misalignment_policy;

@@ -197,9 +197,6 @@ impl App {
     }
 
     fn insert_pending_usage_output(&mut self, tui: &mut tui::Tui) {
-        if let Some(cell) = self.chat_widget.take_pending_rate_limit_reset_hint() {
-            self.insert_history_cell(tui, Box::new(cell));
-        }
     }
 
     pub(super) fn insert_pending_usage_output_if_ready(&mut self, tui: &mut tui::Tui) {
@@ -321,7 +318,6 @@ impl App {
         self.deferred_history_lines.clear();
         self.has_emitted_history_lines = false;
         self.transcript_reflow.clear();
-        self.chat_widget.clear_pending_rate_limit_reset_hint();
         self.initial_history_replay_buffer = None;
         self.scrollback_has_older_history = false;
         self.backtrack = BacktrackState::default();

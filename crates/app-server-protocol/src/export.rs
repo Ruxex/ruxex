@@ -2177,22 +2177,6 @@ mod tests {
             client_request_ts.contains("MockExperimentalMethodParams"),
             false
         );
-        const LEGACY_ACCOUNT_USAGE_REQUEST: &str = concat!(
-            "{ \"method\": \"account/usage/read\", id: RequestId, ",
-            "params?: GetAccountTokenUsageParams | undefined, }"
-        );
-        assert!(client_request_ts.contains(LEGACY_ACCOUNT_USAGE_REQUEST));
-        const LEGACY_ACCOUNT_RATE_LIMITS_REQUEST: &str = concat!(
-            "{ \"method\": \"account/rateLimits/read\", id: RequestId, ",
-            "params?: GetAccountRateLimitsParams | undefined, }"
-        );
-        assert!(client_request_ts.contains(LEGACY_ACCOUNT_RATE_LIMITS_REQUEST));
-        let account_usage_response_ts = std::str::from_utf8(
-            fixture_tree
-                .get(Path::new("v2/GetAccountTokenUsageResponse.ts"))
-                .ok_or_else(|| anyhow::anyhow!("missing account usage response fixture"))?,
-        )?;
-        assert!(account_usage_response_ts.contains("threadUsage?: ThreadUsage | null"));
         let server_request_ts = std::str::from_utf8(
             fixture_tree
                 .get(Path::new("ServerRequest.ts"))
@@ -2265,16 +2249,7 @@ mod tests {
                 });
 
             let contents = std::str::from_utf8(contents)?;
-            // Both stable usage RPCs originally required `params: undefined`. Preserve that
-            // source compatibility only for these exact envelopes, not arbitrary new fields.
-            let checked_contents = if path == Path::new("ClientRequest.ts") {
-                contents
-                    .replace(LEGACY_ACCOUNT_USAGE_REQUEST, "")
-                    .replace(LEGACY_ACCOUNT_RATE_LIMITS_REQUEST, "")
-            } else {
-                contents.to_owned()
-            };
-            if checked_contents.contains("| undefined") {
+            if contents.contains("| undefined") {
                 undefined_offenders.push(path.clone());
             }
 
@@ -2386,14 +2361,8 @@ mod tests {
 
                 // If the last non-whitespace before ':' is '?', then this is an
                 // optional field with a nullable type (i.e., "?: T | null").
-                // These are only allowed in *Params types, except the additive stable usage
-                // response field, which older servers omit and newer servers return as null.
-                let legacy_account_usage_response = path
-                    == Path::new("v2/GetAccountTokenUsageResponse.ts")
-                    && field_prefix.trim() == "threadUsage?";
                 if field_prefix.chars().rev().find(|c| !c.is_whitespace()) == Some('?')
                     && !allow_optional_nullable
-                    && !legacy_account_usage_response
                 {
                     let line_number =
                         contents[..abs_idx].chars().filter(|c| *c == '\n').count() + 1;
@@ -2994,7 +2963,6 @@ permissionProfile?: string | null};
             .collect();
         let missing_client_request_methods: Vec<String> = [
             "account/logout",
-            "account/rateLimits/read",
             "config/mcpServer/reload",
             "configRequirements/read",
             "fuzzyFileSearch",
