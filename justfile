@@ -89,7 +89,7 @@ test *args:
 # Type-check with the same native V8 and GStreamer inputs used by `just test`.
 [unix]
 check *args:
-    {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- cargo check "$@"
+    {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- rtk cargo check "$@"
 
 [windows]
 check *args:

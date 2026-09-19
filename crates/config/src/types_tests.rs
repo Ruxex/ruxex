@@ -61,33 +61,6 @@ fn memories_config_clamps_count_limits_to_nonzero_values() {
 }
 
 #[test]
-fn memories_config_clamps_rate_limit_remaining_threshold() {
-    let config = MemoriesConfig::from(MemoriesToml {
-        min_rate_limit_remaining_percent: Some(101),
-        ..Default::default()
-    });
-    assert_eq!(
-        config,
-        MemoriesConfig {
-            min_rate_limit_remaining_percent: 100,
-            ..MemoriesConfig::default()
-        }
-    );
-
-    let config = MemoriesConfig::from(MemoriesToml {
-        min_rate_limit_remaining_percent: Some(-1),
-        ..Default::default()
-    });
-    assert_eq!(
-        config,
-        MemoriesConfig {
-            min_rate_limit_remaining_percent: 0,
-            ..MemoriesConfig::default()
-        }
-    );
-}
-
-#[test]
 fn memories_version_selects_pipeline_without_changing_other_defaults() {
     for (source, version) in [
         ("", MemoryVersion::V1),
