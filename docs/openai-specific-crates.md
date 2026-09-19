@@ -149,7 +149,7 @@
 
 ### 9. `codex-image-generation-extension`
 
-**進捗:** 削除済み。専用 crate、Images API endpoint/types、extension 登録、image-generation feature/capability の live advertisement、専用テストを削除した。保存済み `ImageGenerationItem`、Responses item、rollout migration、app-server/TUI の履歴表示は互換性のため維持している。
+**進捗:** adapter は削除済み。専用 crate、Images API endpoint/types、extension 登録、image-generation feature/capability の live advertisement、専用テストを削除した。保存済み `ImageGenerationItem`、Responses item、rollout migration、app-server/TUI の履歴表示は、pre-release fork の全般的な互換性クリーンアップ計画 `docs/superpowers/plans/2026-09-19-remove-pre-release-compatibility-layers.md` の一部として削除する。
 
 - **根拠:** OpenAI auth を利用可能条件とし、`gpt-image-2` と Images API の request/response に固定されている。
 - **機能:** `image_gen` tool、画像生成・編集 request、data URL と artifact の変換。
@@ -157,7 +157,7 @@
 - **依存元:** 直接は app-server、core、core-api、推移は 49 クレート。
 - **到達経路:** core/app-server の extension install、`features.image_generation`、model tool call、TUI/app-server の履歴表示。
 - **影響:** image generation feature と capability、固定モデル名、Images API 型、tool/event/history、extension tests。専用 README はない。
-- **推奨:** **削除済み**。tool/event の provider-neutral な表現と履歴表示を残し、OpenAI Images backend と固定モデル、live tool 到達経路を削除した。
+- **推奨:** **削除済み（互換性層は全般 cleanup の一部として削除）**。OpenAI Images backend、固定モデル、live tool 到達経路に続き、pre-release では不要な旧 tool/event/history/protocol/migration/UI 到達経路も削除する。汎用画像入力・表示処理は残す。
 - **難易度・リスク:** 高。クレート削除だけでは protocol と UI に image item が残るため、到達不能コードの扱いを Level 3 と調整する必要がある。
 
 ### 10. `codex-web-search-extension`
