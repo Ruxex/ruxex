@@ -121,107 +121,11 @@ fn test_model_client_with_thread_id(
         /*concurrent_reasoning_summaries_enabled*/ false,
         /*attestation_provider*/ None,
         HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-        codex_model_provider::WorkspaceRoutingContext::new(
-            "https://chatgpt.com/backend-api".into(),
-        ),
     )
 }
 
 fn test_model_provider() -> SharedModelProvider {
     test_model_client(SessionSource::Cli).state.provider.clone()
-}
-
-#[tokio::test]
-async fn workspace_routed_http_rejects_redirects_without_a_routing_header() {
-    use codex_client::HttpTransport;
-    use codex_login::WorkspaceRouting;
-    use codex_login::WorkspaceRoutingRequest;
-    use codex_login::WorkspaceRoutingResolver;
-
-    struct Routing(Option<&'static str>);
-    impl WorkspaceRoutingResolver for Routing {
-        fn resolve(
-            &self,
-            _request: WorkspaceRoutingRequest,
-        ) -> Pin<
-            Box<
-                dyn std::future::Future<Output = std::io::Result<Option<WorkspaceRouting>>>
-                    + Send
-                    + '_,
-            >,
-        > {
-            Box::pin(async move {
-                Ok(self.0.map(|override_value| WorkspaceRouting {
-                    chatgpt_account_id: "account_id".into(),
-                    backend_origin: "https://gov.chatgpt.com".into(),
-                    account_routing_override: override_value.into(),
-                }))
-            })
-        }
-    }
-
-    for routing_override in [Some("NO_CONSTRAINT"), Some("us_cr"), None] {
-        let origin = MockServer::start().await;
-        let destination = MockServer::start().await;
-        Mock::given(method("POST"))
-            .respond_with(
-                ResponseTemplate::new(/*status*/ 307)
-                    .insert_header("location", format!("{}/responses", destination.uri())),
-            )
-            .mount(&origin)
-            .await;
-        Mock::given(method("POST"))
-            .respond_with(ResponseTemplate::new(/*status*/ 200))
-            .mount(&destination)
-            .await;
-        let manager =
-            AuthManager::from_auth_for_testing(CodexAuth::create_dummy_chatgpt_auth_for_testing());
-        let resolver: Arc<dyn WorkspaceRoutingResolver> = Arc::new(Routing(routing_override));
-        manager.set_workspace_routing_resolver(Arc::downgrade(&resolver));
-        let mut client = test_model_client(SessionSource::Exec);
-        Arc::get_mut(&mut client.state).unwrap().provider = create_model_provider(
-            ModelProviderInfo::create_openai_provider(/*base_url*/ None),
-            Some(manager),
-        );
-        let mut setup = client
-            .current_client_setup(super::ClientRouting::Workspace)
-            .await
-            .unwrap();
-        if routing_override.is_some() {
-            assert_eq!(
-                setup.api_provider.base_url,
-                "https://gov.chatgpt.com/backend-api/codex"
-            );
-        }
-        // Exercise the resolved route's redirect policy against loopback HTTP servers.
-        setup.api_provider.base_url = origin.uri();
-        let transport = client
-            .build_api_transport(&setup.api_provider, "/responses", setup.redirect_policy)
-            .unwrap();
-        let request = setup
-            .api_provider
-            .build_request(http::Method::POST, "/responses")
-            .with_json(&json!({"input": "workspace content"}));
-        let result = transport.execute(request).await;
-        if routing_override.is_some() {
-            assert!(
-                matches!(
-                    result,
-                    Err(TransportError::Http {
-                        status: http::StatusCode::TEMPORARY_REDIRECT,
-                        ..
-                    })
-                ),
-                "workspace redirect must be rejected: {routing_override:?}"
-            );
-        } else {
-            assert_eq!(result.unwrap().status, http::StatusCode::OK);
-        }
-        assert_eq!(
-            destination.received_requests().await.unwrap().len(),
-            usize::from(routing_override.is_none())
-        );
-    }
 }
 
 #[derive(Debug)]
@@ -298,10 +202,7 @@ impl ModelProvider for SetupRefreshProvider {
 
 #[tokio::test]
 async fn client_setup_accepts_command_credential_refresh() {
-    for routing in [
-        super::ClientRouting::Workspace,
-        super::ClientRouting::ConfiguredProvider,
-    ] {
+    {
         let tempdir = TempDir::new().unwrap();
         let token_path = tempdir.path().join("token.txt");
         std::fs::write(&token_path, "initial-token").unwrap();
@@ -329,7 +230,7 @@ async fn client_setup_accepts_command_credential_refresh() {
         let mut client = test_model_client(SessionSource::Exec);
         Arc::get_mut(&mut client.state).unwrap().provider = provider;
 
-        let setup = client.current_client_setup(routing).await.unwrap();
+        let setup = client.current_client_setup().await.unwrap();
         let mut headers = http::HeaderMap::new();
         setup.api_auth.add_auth_headers(&mut headers);
         assert_eq!(
@@ -388,9 +289,7 @@ async fn client_setup_rebuilds_chatgpt_refresh_but_rejects_account_switches() {
         });
         let mut client = test_model_client(SessionSource::Exec);
         Arc::get_mut(&mut client.state).unwrap().provider = provider.clone();
-        let result = client
-            .current_client_setup(super::ClientRouting::ConfiguredProvider)
-            .await;
+        let result = client.current_client_setup().await;
         if expected_calls == 2 {
             let setup = result.unwrap();
             let mut headers = http::HeaderMap::new();
@@ -1639,9 +1538,6 @@ fn model_client_with_counting_attestation(
             calls: attestation_calls.clone(),
         })),
         HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-        codex_model_provider::WorkspaceRoutingContext::new(
-            "https://chatgpt.com/backend-api".into(),
-        ),
     );
     (model_client, attestation_calls)
 }

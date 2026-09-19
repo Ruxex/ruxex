@@ -6,11 +6,22 @@ mod models_identity;
 mod provider;
 mod shared_state;
 pub mod test_support;
-mod workspace_routing;
-pub use workspace_routing::ACCOUNT_ROUTING_HEADER;
-pub use workspace_routing::ResolvedResponsesProvider;
-pub use workspace_routing::ResponsesConnectionKey;
-pub use workspace_routing::WorkspaceRoutingContext;
+
+/// Effective destination and credentials that permit reusing a Responses socket.
+#[derive(Debug, PartialEq, Eq)]
+pub struct ResponsesConnectionKey {
+    base_url: String,
+    auth_revision: Option<u64>,
+}
+
+impl ResponsesConnectionKey {
+    pub fn new(provider: &codex_api::Provider, auth_revision: Option<u64>) -> Self {
+        Self {
+            base_url: provider.base_url.clone(),
+            auth_revision,
+        }
+    }
+}
 
 pub use amazon_bedrock::is_supported_amazon_bedrock_region;
 pub use auth::AgentIdentitySessionFallback;
@@ -36,7 +47,3 @@ pub use provider::ProviderUnauthorizedRecovery;
 pub use provider::RemoteCompactionSupport;
 pub use provider::SharedModelProvider;
 pub use provider::create_model_provider;
-
-#[cfg(test)]
-#[path = "workspace_routing_tests.rs"]
-mod workspace_routing_tests;

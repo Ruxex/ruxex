@@ -61,7 +61,7 @@
 | --- | --- | --- |
 | `codex-responses-api-proxy`、Cloud Tasks 3 クレート、`codex-chatgpt` | なし | 削除済み。専用到達経路を含めて削除する判断を維持する。 |
 | `codex-cloud-config`、`codex-git-attribution`、remote memory rate-limit guard | なし | 削除済み。hosted policy、backend attribution、backend rate-limit guard を残さない。 |
-| `codex-backend-client`、`codex-backend-openapi-models` | なし | workspace message の endpoint と DTO は削除済み。残る account/usage などを capability 単位で除去し、依存元がなくなり次第両クレートを削除する。 |
+| `codex-backend-client`、`codex-backend-openapi-models` | なし | workspace message の endpoint と DTO、および `/accounts/check` を使う workspace account routing は削除済み。残る account/usage などを capability 単位で除去し、依存元がなくなり次第両クレートを削除する。 |
 | ImageGen | image artifact、tool invocation、履歴表現 | OpenAI Images API、固定モデル、OpenAI auth の adapter を削除し、共通表現だけを残す。 |
 | Web Search | standalone search を実行できる互換 provider の経路 | OpenAI hosted search を削除する。共通 tool と standalone executor は残す。 |
 | Realtime voice | なし | Realtime API adapter に限らず、`codex-realtime-webrtc`、`codex-voice-host`、voice UI を含む capability 全体を削除する。 |

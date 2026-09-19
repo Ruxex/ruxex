@@ -1989,7 +1989,6 @@ impl TestAppServerBuilder {
                 None
             } else {
                 let settings_server = MockServer::start().await;
-                crate::mount_workspace_routing(&settings_server).await;
                 Mock::given(method("GET"))
                     .and(path("/backend-api/wham/config/bundle"))
                     .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({})))

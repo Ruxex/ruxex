@@ -7,15 +7,17 @@ use crate::auth_mode::auth_mode_to_api;
 use crate::external_auth::ExternalAuthBridge;
 use crate::outgoing_message::AccountNotification;
 use chrono::DateTime;
+use codex_app_server_protocol::Account;
 use codex_app_server_protocol::DesktopOnboardingEntrypoint;
 use codex_app_server_protocol::GetAccountRateLimitsParams;
+use codex_app_server_protocol::GetAccountResponse;
 use codex_login::LoginOnboardingEntrypoint;
 use codex_login::login_with_bedrock_access_keys;
+use codex_model_provider::create_model_provider;
 use codex_model_provider::is_supported_amazon_bedrock_region;
 
 mod bedrock_setup;
 mod rate_limit_resets;
-mod workspace_routing;
 
 // Duration before a browser ChatGPT login attempt is abandoned.
 const LOGIN_CHATGPT_TIMEOUT: Duration = Duration::from_secs(10 * 60);
@@ -91,9 +93,6 @@ pub(crate) struct AccountRequestProcessor {
     config: Arc<Config>,
     config_manager: ConfigManager,
     active_login: Arc<Mutex<Option<ActiveLogin>>>,
-    workspace_routing: Arc<Mutex<Option<workspace_routing::CachedWorkspaceRouting>>>,
-    workspace_routing_fetch: Arc<Semaphore>,
-    workspace_routing_shutdown: CancellationToken,
 }
 
 impl AccountRequestProcessor {
@@ -111,9 +110,6 @@ impl AccountRequestProcessor {
             config,
             config_manager,
             active_login: Arc::new(Mutex::new(None)),
-            workspace_routing: Arc::new(Mutex::new(None)),
-            workspace_routing_fetch: Arc::new(Semaphore::new(/*permits*/ 1)),
-            workspace_routing_shutdown: CancellationToken::new(),
         };
         let startup = processor.clone();
         tokio::spawn(async move {
@@ -157,6 +153,29 @@ impl AccountRequestProcessor {
         self.get_account_response(params)
             .await
             .map(|response| Some(response.into()))
+    }
+
+    async fn get_account_response(
+        &self,
+        params: GetAccountParams,
+    ) -> Result<GetAccountResponse, JSONRPCErrorError> {
+        self.refresh_token_if_requested(params.refresh_token).await;
+        let config = self
+            .config_manager
+            .load_latest_config(/*fallback_cwd*/ None)
+            .await
+            .unwrap_or_else(|_| self.config.as_ref().clone());
+        let provider = create_model_provider(
+            config.model_provider.clone(),
+            Some(Arc::clone(&self.auth_manager)),
+        );
+        let account_state = provider
+            .account_state()
+            .map_err(|err| invalid_request(err.to_string()))?;
+        Ok(GetAccountResponse {
+            account: account_state.account.map(Account::from),
+            requires_openai_auth: account_state.requires_openai_auth,
+        })
     }
 
     pub(crate) async fn get_auth_status(
@@ -211,7 +230,6 @@ impl AccountRequestProcessor {
     }
 
     pub(crate) fn clear_external_auth(&self) {
-        self.workspace_routing_shutdown.cancel();
         self.auth_manager.clear_external_auth();
     }
 
@@ -972,8 +990,6 @@ impl AccountRequestProcessor {
             clear_user_model_provider_if_bedrock(&self.config_manager, &config).await?;
         }
 
-        *self.workspace_routing.lock().await = None;
-
         Self::maybe_refresh_plugin_caches_for_current_config(
             &self.config_manager,
             &self.thread_manager,
@@ -1393,7 +1409,6 @@ mod tests {
     use super::*;
     use codex_backend_client::TokenUsageProfileDailyBucket;
     use codex_backend_client::TokenUsageProfileStats;
-    use http::StatusCode;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -1430,5 +1445,4 @@ mod tests {
             }
         );
     }
-
 }

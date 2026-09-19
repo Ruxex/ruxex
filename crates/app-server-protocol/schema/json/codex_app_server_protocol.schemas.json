@@ -6705,15 +6705,6 @@
         "title": "AccountRateLimitsUpdatedNotification",
         "type": "object"
       },
-      "AccountRoutingOverride": {
-        "description": "Backend routing policy. Wire values match the accounts/check contract.",
-        "enum": [
-          "NO_CONSTRAINT",
-          "us",
-          "us_cr"
-        ],
-        "type": "string"
-      },
       "AccountTokenUsageDailyBucket": {
         "properties": {
           "startDate": {
@@ -26075,25 +26066,6 @@
           "unknown"
         ],
         "type": "string"
-      },
-      "WorkspaceRouting": {
-        "properties": {
-          "accountRoutingOverride": {
-            "$ref": "#/definitions/v2/AccountRoutingOverride"
-          },
-          "backendOrigin": {
-            "type": "string"
-          },
-          "chatgptAccountId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "accountRoutingOverride",
-          "backendOrigin",
-          "chatgptAccountId"
-        ],
-        "type": "object"
       },
       "WriteStatus": {
         "enum": [

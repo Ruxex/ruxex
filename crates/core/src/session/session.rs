@@ -1684,7 +1684,6 @@ impl Session {
                         .enabled(Feature::ConcurrentReasoningSummaries),
                     attestation_provider,
                     config.http_client_factory(),
-                    config.workspace_routing_context(),
                 )
                 .with_restored_history(matches!(
                     &initial_history,
