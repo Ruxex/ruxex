@@ -1,4 +1,3 @@
-use crate::types::AccountsCheckResponse;
 use crate::types::CodeTaskDetailsResponse;
 use crate::types::CodexUserSettingsResponse;
 use crate::types::ConfigBundleResponse;
@@ -339,19 +338,6 @@ impl Client {
 
     pub async fn get_rate_limits_many(&self) -> Result<Vec<RateLimitSnapshot>> {
         Ok(self.get_rate_limits_with_reset_credits().await?.rate_limits)
-    }
-
-    pub async fn get_accounts_check(
-        &self,
-    ) -> std::result::Result<AccountsCheckResponse, RequestError> {
-        let url = match self.path_style {
-            PathStyle::CodexApi => format!("{}/api/codex/accounts/check", self.base_url),
-            PathStyle::ChatGptApi => format!("{}/wham/accounts/check", self.base_url),
-        };
-        let req = self.request(Method::GET, &url).headers(self.headers());
-        let (body, _) = self.exec_request_detailed(req, "GET", &url).await?;
-        serde_json::from_str(&body)
-            .map_err(|_| RequestError::Other(anyhow::anyhow!("Invalid accounts response.")))
     }
 
     pub async fn get_token_usage_profile(&self) -> Result<TokenUsageProfile> {

@@ -22,8 +22,6 @@ pub use client::profile::ProfileStats;
 pub use client::turn_usage::ApiKeyResponseCost;
 pub use client::turn_usage::ApiKeyTurnCost;
 pub use client::turn_usage::ApiKeyTurnCostStatus;
-pub use types::AccountEntry;
-pub use types::AccountsCheckResponse;
 pub use types::CodeTaskDetailsResponse;
 pub use types::CodeTaskDetailsResponseExt;
 pub use types::CodexUserSettingsResponse;
