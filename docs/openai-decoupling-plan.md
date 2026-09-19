@@ -95,6 +95,21 @@ Phase 1 で整理した候補から、依存元が少なく、代替や責務移
 - 依存関係 JSON と HTML が更新されている。
 - 影響が大きい候補は無理に同じ Phase へ含めず、理由とともに保留されている。
 
+### Phase 3: 残存 integration の段階的な隔離・削除
+
+**進捗:** 未着手。`codex-cloud-config`、backend integration、image generation など、OpenAI 固有の機能と汎用責務が混在する残存候補を、小さな機能単位で隔離・削除する。
+
+**方針:** 全バイナリを起点にした Hawk の全面解析は、現時点では実行時間に対して得られる判断材料が少ないため後続へ延期する。まず依存グラフと参照検索を用いて、直接依存元が少ない hosted integration から削除可能な境界を作る。各変更では、対象クレートの公開 API と利用箇所を列挙し、OpenAI 固有の利用機能を一つだけ外す。依存元がなくなったクレートだけを削除し、汎用責務を含むクレートは先に provider-neutral な境界へ分離する。
+
+**実施順序:**
+
+1. `codex-cloud-config` の hosted policy source をローカル設定読み込みから切り離す。
+2. `codex-backend-client` の account/usage/workspace、remote memory、git attribution などを機能単位で外し、依存元がなくなった後に `codex-backend-openapi-models` とともに削除する。
+3. image generation、web search、plugin marketplace、analytics、feedback を、共通の tool/event/diagnostic 処理を残して provider adapter 単位へ分離する。
+4. `codex-login`、`codex-agent-identity`、`codex-model-provider-info`、`codex-api` は、認証・provider registry・transport の汎用境界を設計できる段階まで保留する。
+
+各実施単位では、`just crate-dependency-graph` による依存辺の確認、対象 API と利用箇所の参照検索、`just check` を行う。Hawk は、対象クレートの直接依存元に関係する少数のバイナリだけを補助的に解析し、全バイナリ起点の結果合成は残存候補を十分に減らした後に実施する。
+
 ## Level 2: `codex-cli` の OpenAI 固有コマンドの削除
 
 ### Phase 1: CLI 表面だけを縮小
@@ -119,9 +134,11 @@ Phase 1 で整理した候補から、依存元が少なく、代替や責務移
 
 ## Level 3: 追加削除候補と公開未使用コードの調査
 
-Level 1 と Level 2 の完了後に依存グラフを再生成し、さらに削除可能なクレートがないか検討する。
+Level 1 Phase 3 と Level 2 の完了後に依存グラフを再生成し、さらに削除可能なクレートがないか検討する。
 
 あわせて Hawk を使用し、依存グラフの最上位クレート（現時点では `codex-cli` を想定）から到達性を解析して、Dead and Public なコードを列挙する。最上位クレートは固定せず、Level 0 の結果と実際のエントリーポイントに基づいて確定する。
+Hawk の起点となるバイナリ一覧と、複数起点の結果を合成する判断基準は
+[Hawk 解析のバイナリ起点](hawk-entrypoints.md) に記録する。
 
 調査結果は、少なくとも次の区分で整理する。
 
@@ -149,8 +166,9 @@ Hawk の結果だけで自動的に削除を決めず、feature 構成、複数�
 4. 依存グラフを更新し、削除による変化を確認する。
 5. Level 2 で `codex-cli` 内の OpenAI 固有コマンドと同クレート内の dead code を削除する。
 6. 再度依存グラフを更新する。
-7. Level 3 で追加のクレート削除候補と Dead and Public なコードを調査する。
-8. 調査結果を、次の段階的な削除計画へ反映する。
+7. Level 1 Phase 3 で残存 integration を小単位で隔離・削除する。
+8. Level 3 で追加のクレート削除候補と Dead and Public なコードを調査する。
+9. 調査結果を、次の段階的な削除計画へ反映する。
 
 各ゲートでは、ビルドが通らない状態のまま次の Level へ進めない。また、想定より影響範囲が広い場合は対象を分割または保留し、一括修正へ拡大しない。
 
