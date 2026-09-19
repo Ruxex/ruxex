@@ -160,6 +160,11 @@
 - **推奨:** **削除済み（互換性層は全般 cleanup の一部として削除）**。OpenAI Images backend、固定モデル、live tool 到達経路に続き、pre-release では不要な旧 tool/event/history/protocol/migration/UI 到達経路も削除する。汎用画像入力・表示処理は残す。
 - **難易度・リスク:** 高。クレート削除だけでは protocol と UI に image item が残るため、到達不能コードの扱いを Level 3 と調整する必要がある。
 
+互換性層の削除対象は、専用 adapter の削除とは別に
+`docs/pre-release-compatibility-inventory.md` の image-generation history and
+protocol slice として扱う。generic image input、local media、`view_image` は
+削除対象に含めない。
+
 ### 10. `codex-web-search-extension`
 
 - **根拠:** OpenAI auth/actor authorization の hosted search を実装する一方、`supports_standalone_web_search` を持つ互換 provider も利用できる。

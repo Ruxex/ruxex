@@ -1,5 +1,8 @@
 # Superseded: Pre-release Image-generation Compatibility Removal Implementation Plan
 
+> Status: superseded before implementation. Use the repository-wide inventory
+> and its persisted-data/protocol/UI slices; do not execute this plan directly.
+
 > This image-generation-only plan is retained as historical context. Its scope is now covered by `docs/superpowers/plans/2026-09-19-remove-pre-release-compatibility-layers.md`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans (recommended) to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

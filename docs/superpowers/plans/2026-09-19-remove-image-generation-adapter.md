@@ -2,6 +2,10 @@
 
 > Follow-up policy: this plan recorded the initial adapter removal while retaining history compatibility. Because this fork is pre-release with zero external users, the retained compatibility layer is superseded by the repository-wide `docs/superpowers/plans/2026-09-19-remove-pre-release-compatibility-layers.md`.
 
+> Status: completed and superseded. Do not resume this plan; its retained-history
+> assumption is replaced by the repository-wide inventory and ordered cleanup
+> slices.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Remove the OpenAI Images API image-generation adapter and its live tool registration while preserving provider-neutral image history, protocol, and display compatibility.

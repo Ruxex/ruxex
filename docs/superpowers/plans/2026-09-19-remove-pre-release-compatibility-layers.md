@@ -46,19 +46,19 @@
 - Modify: `docs/superpowers/plans/2026-09-19-remove-image-generation-adapter.md`
 - Modify: `docs/superpowers/plans/2026-09-19-remove-pre-release-image-generation-compatibility.md`
 
-- [ ] Run the searches below and record each production match in the inventory:
+- [x] Run the searches below and record each production match in the inventory:
 
 ```bash
 rg -n -i 'legacy|compatib|deprecated|deprecat|migration|fallback|historical|serde\(alias' crates docs --glob '*.rs' --glob '*.md' --glob '*.toml' --glob '*.json'
 rg -n -i 'image_generation|image_generation_call|image_gen' crates --glob '*.rs' --glob '*.json' --glob '*.ts'
 ```
 
-- [ ] For every candidate, record the exact symbol, current producer/consumer, canonical replacement, decision (`remove`, `retain`, or `migrate-in-place`), and verification command.
-- [ ] Mark image-generation history cleanup as one inventory slice, not the whole compatibility project.
-- [ ] Add the inventory path and ordering rule to `AGENTS.md`.
-- [ ] Update the decoupling documents to require this cleanup before the next OpenAI-specific integration.
-- [ ] Mark the image-specific compatibility plan as superseded by this repository-wide plan.
-- [ ] Run `git diff --check` and review the inventory for candidates classified solely by name rather than call-site evidence.
+- [x] For every candidate, record the exact symbol, current producer/consumer, canonical replacement, decision (`remove`, `retain`, or `migrate-in-place`), and verification command.
+- [x] Mark image-generation history cleanup as one inventory slice, not the whole compatibility project.
+- [x] Add the inventory path and ordering rule to `AGENTS.md`.
+- [x] Update the decoupling documents to require this cleanup before the next OpenAI-specific integration.
+- [x] Mark the image-specific compatibility plan as superseded by this repository-wide plan.
+- [x] Run `git diff --check` and review the inventory for candidates classified solely by name rather than call-site evidence.
 
 ### Task 2: Remove obsolete persisted-data compatibility
 
