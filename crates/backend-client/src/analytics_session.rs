@@ -1,5 +1,4 @@
-//! Local analytics authentication, server plan discovery, and account/user identity checks.
-//! Each new session fetches its plan once; token plan claims do not select reports.
+//! Local analytics authentication and account/user identity checks.
 
 use crate::Client;
 use crate::RequestError;
@@ -49,39 +48,20 @@ impl AnalyticsSession {
         let account = AnalyticsAccount {
             id,
             email: auth.get_account_email(),
-            plan_type: None,
+            plan_type: auth.account_plan_type(),
         };
         let client = Client::new_without_redirects(config.chatgpt_base_url(), http_client_factory)
             .with_auth_provider(codex_model_provider::auth_provider_from_auth_manager(
                 Arc::clone(&auth_manager),
                 &auth,
             ));
-        let mut session = Self {
+        let session = Self {
             client,
             auth_manager,
             auth,
             account,
         };
-        let accounts = session
-            .request(|client| async move { client.get_accounts_check().await })
-            .await;
-        // Preserve account-switch guidance even when it interrupts account discovery.
         session.ensure_identity().await?;
-        let accounts = accounts.map_err(|error| {
-            if error.is_unauthorized() {
-                "Sign in again to load Analytics."
-            } else {
-                "Couldn't load account plan. Press R to retry Analytics."
-            }
-        })?;
-        session.account.plan_type = Some(
-            accounts
-                .accounts
-                .into_iter()
-                .find(|account| account.id == session.account.id)
-                .and_then(|account| account.plan_type)
-                .ok_or("Couldn't load account plan. Press R to retry Analytics.")?,
-        );
         Ok(session)
     }
 
