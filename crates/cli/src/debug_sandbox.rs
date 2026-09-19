@@ -1,4 +1,3 @@
-mod cloud_config;
 #[cfg(target_os = "macos")]
 mod pid_tracker;
 #[cfg(target_os = "macos")]
@@ -8,13 +7,11 @@ use std::path::PathBuf;
 use std::process::Stdio;
 
 use anyhow::Context as _;
-use codex_config::CloudConfigBundleLoader;
 use codex_config::LoaderOverrides;
 use codex_core::config::Config;
 use codex_core::config::ConfigBuilder;
 use codex_core::config::ConfigOverrides;
 use codex_core::config::NetworkProxyAuditMetadata;
-use codex_core::config::find_codex_home;
 use codex_core::exec_env::create_env;
 #[cfg(target_os = "macos")]
 use codex_core::spawn::CODEX_SANDBOX_ENV_VAR;
@@ -635,20 +632,11 @@ async fn load_debug_sandbox_config(
     options: DebugSandboxConfigOptions,
     strict_config: bool,
 ) -> anyhow::Result<Config> {
-    let cloud_config_bundle = cloud_config::bootstrap_cloud_config_bundle(
-        &cli_overrides,
-        &options,
-        find_codex_home,
-        strict_config,
-    )
-    .await?;
-
     load_debug_sandbox_config_with_codex_home(
         cli_overrides,
         codex_linux_sandbox_exe,
         options,
         /*codex_home*/ None,
-        cloud_config_bundle,
         strict_config,
     )
     .await
@@ -659,7 +647,6 @@ async fn load_debug_sandbox_config_with_codex_home(
     codex_linux_sandbox_exe: Option<PathBuf>,
     options: DebugSandboxConfigOptions,
     codex_home: Option<PathBuf>,
-    cloud_config_bundle: CloudConfigBundleLoader,
     strict_config: bool,
 ) -> anyhow::Result<Config> {
     let DebugSandboxConfigOptions {
@@ -693,7 +680,6 @@ async fn load_debug_sandbox_config_with_codex_home(
         codex_home.clone(),
         managed_requirements_mode,
         loader_overrides.clone(),
-        cloud_config_bundle.clone(),
         strict_config,
     )
     .await?;
@@ -713,7 +699,6 @@ async fn load_debug_sandbox_config_with_codex_home(
         codex_home,
         managed_requirements_mode,
         loader_overrides,
-        cloud_config_bundle,
         strict_config,
     )
     .await
@@ -726,13 +711,11 @@ async fn build_debug_sandbox_config_with_loader_overrides(
     codex_home: Option<PathBuf>,
     managed_requirements_mode: ManagedRequirementsMode,
     mut loader_overrides: LoaderOverrides,
-    cloud_config_bundle: CloudConfigBundleLoader,
     strict_config: bool,
 ) -> std::io::Result<Config> {
     let mut builder = ConfigBuilder::default()
         .cli_overrides(cli_overrides)
         .harness_overrides(harness_overrides)
-        .cloud_config_bundle(cloud_config_bundle)
         .strict_config(strict_config);
     if matches!(managed_requirements_mode, ManagedRequirementsMode::Ignore) {
         loader_overrides.ignore_managed_requirements = true;

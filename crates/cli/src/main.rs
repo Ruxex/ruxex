@@ -10,7 +10,6 @@ use codex_arg0::Arg0DispatchPaths;
 use codex_arg0::arg0_dispatch_or_else;
 use codex_cli::run_login_status;
 use codex_cli::run_logout;
-use codex_cloud_config::cloud_config_bundle_loader_for_storage;
 use codex_exec::Cli as ExecCli;
 use codex_exec::Command as ExecCommand;
 use codex_exec::ReviewArgs;
@@ -78,12 +77,9 @@ use codex_config::LoaderOverrides;
 use codex_core::build_models_manager;
 use codex_core::config::Config;
 use codex_core::config::ConfigBuilder;
-use codex_core::config::ConfigLoadOptions;
 use codex_core::config::ConfigOverrides;
-use codex_core::config::bootstrap_auth_config;
 use codex_core::config::edit::ConfigEditsBuilder;
 use codex_core::config::find_codex_home;
-use codex_core::config::load_config_toml_with_layer_stack;
 use codex_core::config::resolve_profile_v2_config_path;
 use codex_features::FEATURES;
 use codex_features::Stage;
@@ -2113,32 +2109,10 @@ async fn load_exec_server_config(
     let cli_kv_overrides = root_config_overrides
         .parse_overrides()
         .map_err(anyhow::Error::msg)?;
-    let bootstrap_cli_overrides = cli_kv_overrides.clone();
-    let mut builder = ConfigBuilder::default()
+    let builder = ConfigBuilder::default()
         .cli_overrides(cli_kv_overrides)
         .strict_config(strict_config);
-    if enable_workload_identity && is_workload_identity_selected() {
-        let codex_home = find_codex_home()?;
-        let bootstrap_cwd = AbsolutePathBuf::current_dir()?;
-        let bootstrap_config = load_config_toml_with_layer_stack(
-            &codex_home,
-            Some(&bootstrap_cwd),
-            bootstrap_cli_overrides,
-            ConfigLoadOptions {
-                loader_overrides: LoaderOverrides::default(),
-                strict_config,
-                cloud_config_bundle: Default::default(),
-            },
-        )
-        .await?;
-        let bootstrap_auth_config = bootstrap_auth_config(&codex_home, &bootstrap_config)?;
-        let cloud_config_bundle = cloud_config_bundle_loader_for_storage(
-            bootstrap_auth_config,
-            /*enable_codex_api_key_env*/ false,
-        )
-        .await?;
-        builder = builder.cloud_config_bundle(cloud_config_bundle);
-    }
+    let _ = enable_workload_identity;
     Ok(builder.build().await?)
 }
 

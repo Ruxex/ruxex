@@ -527,7 +527,6 @@ pub async fn run_main_with_transport_options(
         cli_kv_overrides.clone(),
         loader_overrides,
         strict_config,
-        Default::default(),
         arg0_paths.clone(),
         Arc::new(NoopThreadConfigLoader),
     );
@@ -535,17 +534,7 @@ pub async fn run_main_with_transport_options(
         .load_latest_config(/*fallback_cwd*/ None)
         .await
     {
-        Ok(config) => {
-            let auth_manager =
-                AuthManager::shared_from_config(&config, /*enable_codex_api_key_env*/ false)
-                    .await
-                    .map_err(std::io::Error::other)?;
-            config_manager.replace_cloud_config_bundle_loader(
-                auth_manager,
-                config.chatgpt_base_url.clone(),
-                config.http_client_factory(),
-            );
-        }
+        Ok(_) => {}
         Err(err) if is_unsupported_untrusted_approval_policy_error(&err) => {
             return Err(err);
         }

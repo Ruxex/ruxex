@@ -1,6 +1,4 @@
 use codex_arg0::Arg0DispatchPaths;
-use codex_cloud_config::cloud_config_bundle_loader;
-use codex_config::CloudConfigBundleLoader;
 use codex_config::ConfigLayerStack;
 use codex_config::LoaderOverrides;
 use codex_config::ThreadConfigLoader;
@@ -11,7 +9,6 @@ use codex_core::config::ConfigBuilder;
 use codex_core::config::ConfigOverrides;
 use codex_exec_server::LOCAL_FS;
 use codex_features::feature_for_key;
-use codex_login::AuthManager;
 use codex_login::default_client::set_default_client_residency_requirement;
 use codex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
 use codex_model_provider_info::AMAZON_BEDROCK_RUNTIME_PROVIDER_ID;
@@ -44,7 +41,6 @@ pub(crate) struct ConfigManager {
     runtime_feature_enablement: Arc<RwLock<BTreeMap<String, bool>>>,
     loader_overrides: LoaderOverrides,
     strict_config: bool,
-    cloud_config_bundle: Arc<RwLock<CloudConfigBundleLoader>>,
     arg0_paths: Arg0DispatchPaths,
     thread_config_loader: Arc<dyn ThreadConfigLoader>,
 }
@@ -55,7 +51,6 @@ impl ConfigManager {
         cli_overrides: Vec<(String, TomlValue)>,
         loader_overrides: LoaderOverrides,
         strict_config: bool,
-        cloud_config_bundle: CloudConfigBundleLoader,
         arg0_paths: Arg0DispatchPaths,
         thread_config_loader: Arc<dyn ThreadConfigLoader>,
     ) -> Self {
@@ -65,7 +60,6 @@ impl ConfigManager {
             runtime_feature_enablement: Arc::new(RwLock::new(BTreeMap::new())),
             loader_overrides,
             strict_config,
-            cloud_config_bundle: Arc::new(RwLock::new(cloud_config_bundle)),
             arg0_paths,
             thread_config_loader,
         }
@@ -86,13 +80,6 @@ impl ConfigManager {
             .unwrap_or_default()
     }
 
-    pub(crate) fn current_cloud_config_bundle(&self) -> CloudConfigBundleLoader {
-        self.cloud_config_bundle
-            .read()
-            .map(|guard| guard.clone())
-            .unwrap_or_default()
-    }
-
     pub(crate) fn extend_runtime_feature_enablement<I>(&self, enablement: I) -> Result<(), ()>
     where
         I: IntoIterator<Item = (String, bool)>,
@@ -101,33 +88,6 @@ impl ConfigManager {
             self.runtime_feature_enablement.write().map_err(|_| ())?;
         runtime_feature_enablement.extend(enablement);
         Ok(())
-    }
-
-    pub(crate) fn replace_cloud_config_bundle_loader(
-        &self,
-        auth_manager: Arc<AuthManager>,
-        chatgpt_base_url: String,
-        http_client_factory: codex_http_client::HttpClientFactory,
-    ) {
-        let loader = cloud_config_bundle_loader(
-            auth_manager,
-            chatgpt_base_url,
-            self.codex_home.clone(),
-            http_client_factory,
-        );
-        if let Ok(mut guard) = self.cloud_config_bundle.write() {
-            *guard = loader;
-        } else {
-            warn!("failed to update cloud config bundle loader");
-        }
-    }
-
-    pub(crate) fn clear_cloud_config_bundle_loader(&self) {
-        if let Ok(mut guard) = self.cloud_config_bundle.write() {
-            *guard = CloudConfigBundleLoader::default();
-        } else {
-            warn!("failed to clear cloud config bundle loader");
-        }
     }
 
     pub(crate) async fn sync_default_client_residency_requirement(&self) {
@@ -193,7 +153,6 @@ impl ConfigManager {
             codex_config::ConfigLoadOptions {
                 loader_overrides: self.loader_overrides.clone(),
                 strict_config: self.strict_config,
-                cloud_config_bundle: self.current_cloud_config_bundle(),
             },
         )
         .await?;
@@ -244,7 +203,6 @@ impl ConfigManager {
             .cli_overrides(self.current_cli_overrides())
             .loader_overrides(loader_overrides)
             .fallback_cwd(Some(self.codex_home.clone()))
-            .cloud_config_bundle(CloudConfigBundleLoader::default())
             .build()
             .await?;
         self.apply_runtime_feature_enablement(&mut config);
@@ -353,7 +311,6 @@ impl ConfigManager {
             .strict_config(self.strict_config)
             .harness_overrides(typesafe_overrides)
             .fallback_cwd(fallback_cwd)
-            .cloud_config_bundle(self.current_cloud_config_bundle())
             .thread_config_loader(Arc::clone(&self.thread_config_loader))
             .build()
             .await?;
@@ -381,7 +338,6 @@ impl ConfigManager {
             codex_config::ConfigLoadOptions {
                 loader_overrides: self.loader_overrides.clone(),
                 strict_config: self.strict_config,
-                cloud_config_bundle: self.current_cloud_config_bundle(),
             },
             self.thread_config_loader.as_ref(),
         )
@@ -410,14 +366,12 @@ impl ConfigManager {
         codex_home: PathBuf,
         cli_overrides: Vec<(String, TomlValue)>,
         loader_overrides: LoaderOverrides,
-        cloud_config_bundle: CloudConfigBundleLoader,
     ) -> Self {
         Self::new(
             codex_home,
             cli_overrides,
             loader_overrides,
             /*strict_config*/ false,
-            cloud_config_bundle,
             Arg0DispatchPaths::default(),
             Arc::new(codex_config::NoopThreadConfigLoader),
         )
@@ -429,7 +383,6 @@ impl ConfigManager {
             codex_home,
             Vec::new(),
             LoaderOverrides::without_managed_config_for_tests(),
-            CloudConfigBundleLoader::default(),
         )
     }
 }

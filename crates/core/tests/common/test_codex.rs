@@ -15,7 +15,6 @@ use anyhow::Result;
 use anyhow::anyhow;
 use codex_analytics::AnalyticsEventsClient;
 use codex_attachment_store::AttachmentStore;
-use codex_config::CloudConfigBundleLoader;
 use codex_core::CodexThread;
 pub use codex_core::StartThreadOptions;
 use codex_core::ThreadManager;
@@ -76,7 +75,6 @@ use wiremock::MockServer;
 use crate::TempDirExt;
 use crate::TestEnvironment;
 use crate::load_default_config_for_test;
-use crate::load_default_config_for_test_with_cloud_config_bundle;
 use crate::responses::WebSocketTestServer;
 use crate::responses::output_value_to_text;
 use crate::responses::start_mock_server;
@@ -334,7 +332,6 @@ pub struct TestCodexBuilder {
     pre_build_hooks: Vec<Box<PreBuildHook>>,
     workspace_setups: Vec<Box<WorkspaceSetup>>,
     home: Option<Arc<TempDir>>,
-    cloud_config_bundle: Option<CloudConfigBundleLoader>,
     user_shell_override: Option<Shell>,
     exec_server_url: Option<String>,
     extensions: Arc<ExtensionRegistry<Config>>,
@@ -451,14 +448,6 @@ impl TestCodexBuilder {
 
     pub fn with_home(mut self, home: Arc<TempDir>) -> Self {
         self.home = Some(home);
-        self
-    }
-
-    pub fn with_cloud_config_bundle(
-        mut self,
-        cloud_config_bundle: CloudConfigBundleLoader,
-    ) -> Self {
-        self.cloud_config_bundle = Some(cloud_config_bundle);
         self
     }
 
@@ -876,11 +865,7 @@ impl TestCodexBuilder {
         for hook in self.pre_build_hooks.drain(..) {
             hook(home.path());
         }
-        let mut config = if let Some(cloud_config_bundle) = self.cloud_config_bundle.take() {
-            load_default_config_for_test_with_cloud_config_bundle(home, cloud_config_bundle).await
-        } else {
-            load_default_config_for_test(home).await
-        };
+        let mut config = load_default_config_for_test(home).await;
         // Keep generic tests stable when the bundled catalog default changes. Tests that need a
         // specific model can still override this with a config mutator.
         config.model = Some("gpt-5.5".to_string());
@@ -1407,7 +1392,6 @@ pub fn test_codex() -> TestCodexBuilder {
         pre_build_hooks: vec![],
         workspace_setups: vec![],
         home: None,
-        cloud_config_bundle: None,
         user_shell_override: None,
         exec_server_url: None,
         extensions: empty_extension_registry(),

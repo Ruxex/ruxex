@@ -138,7 +138,6 @@ use codex_app_server_protocol::Turn;
 use codex_app_server_protocol::TurnError as AppServerTurnError;
 use codex_app_server_protocol::TurnStatus;
 use codex_app_server_protocol::WriteStatus;
-use codex_config::CloudConfigBundleLoader;
 use codex_config::LoaderOverrides;
 use codex_config::types::ApprovalsReviewer;
 use codex_config::types::MemoriesToml;
@@ -558,7 +557,6 @@ pub(crate) struct App {
     cli_kv_overrides: Vec<(String, TomlValue)>,
     harness_overrides: ConfigOverrides,
     loader_overrides: LoaderOverrides,
-    cloud_config_bundle: CloudConfigBundleLoader,
     runtime_approval_policy_override: Option<RuntimeApprovalPolicyOverride>,
     runtime_permission_profile_override: Option<RuntimePermissionProfileOverride>,
     /// In-flight remote selections; confirmed settings live in each task's server snapshot.

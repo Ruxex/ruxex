@@ -3,11 +3,9 @@
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
-use codex_cloud_config::cloud_config_bundle_loader_for_storage_without_cache;
 use codex_config::ConfigLoadOptions;
 use codex_config::ConfigRequirementsToml;
 use codex_config::types::WindowsSandboxModeToml;
-use codex_core::config::bootstrap_auth_config;
 use codex_core::config::load_config_toml_with_layer_stack;
 use codex_windows_sandbox::WindowsSandboxProvisioningSettings;
 use codex_windows_sandbox::WindowsSandboxProxyListeners;
@@ -53,28 +51,7 @@ pub(crate) fn validate_provisioning_settings(
                 )
                 .await
                 .context("load bootstrap configuration")?;
-                // Use the default cloud-policy endpoint unless managed requirements override it.
-                bootstrap_config.config_toml.chatgpt_base_url = None;
-                let cloud_config_bundle = cloud_config_bundle_loader_for_storage_without_cache(
-                    bootstrap_auth_config(codex_home, &bootstrap_config)
-                        .context("resolve cloud configuration authentication")?,
-                    /*enable_codex_api_key_env*/ false,
-                )
-                .await
-                .context("initialize cloud configuration authentication")?;
-                let config = load_config_toml_with_layer_stack(
-                    codex_home,
-                    /*cwd*/ None,
-                    Vec::new(),
-                    ConfigLoadOptions {
-                        cloud_config_bundle,
-                        ..Default::default()
-                    },
-                )
-                .await
-                .context("load managed configuration")?;
-
-                Ok::<_, anyhow::Error>(config.config_layer_stack.requirements_toml().clone())
+                Ok::<_, anyhow::Error>(bootstrap_config.config_layer_stack.requirements_toml().clone())
             } => result,
         }
     })?;

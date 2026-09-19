@@ -2184,7 +2184,6 @@ dependencies = [
  "codex-arg0",
  "codex-aws-auth",
  "codex-backend-client",
- "codex-cloud-config",
  "codex-code-mode",
  "codex-config",
  "codex-connectors",
@@ -2576,7 +2575,6 @@ dependencies = [
  "codex-arg0",
  "codex-aws-auth",
  "codex-build-info",
- "codex-cloud-config",
  "codex-config",
  "codex-core",
  "codex-core-plugins",
@@ -2658,31 +2656,6 @@ dependencies = [
  "futures",
  "http 1.4.0",
  "rand 0.9.3",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "codex-cloud-config"
-version = "0.0.0"
-dependencies = [
- "base64 0.22.1",
- "chrono",
- "codex-agent-identity",
- "codex-backend-client",
- "codex-config",
- "codex-core",
- "codex-http-client",
- "codex-login",
- "codex-otel",
- "codex-protocol",
- "hmac 0.12.1",
- "pretty_assertions",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "tempfile",
- "thiserror 2.0.18",
  "tokio",
  "tracing",
 ]
@@ -3115,7 +3088,6 @@ dependencies = [
  "codex-app-server-protocol",
  "codex-apply-patch",
  "codex-arg0",
- "codex-cloud-config",
  "codex-config",
  "codex-core",
  "codex-features",
@@ -4672,7 +4644,6 @@ dependencies = [
  "codex-arg0",
  "codex-backend-client",
  "codex-build-info",
- "codex-cloud-config",
  "codex-config",
  "codex-connectors",
  "codex-context-fragments",
@@ -5177,7 +5148,6 @@ name = "codex-windows-sandbox-service"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "codex-cloud-config",
  "codex-config",
  "codex-core",
  "codex-windows-sandbox",

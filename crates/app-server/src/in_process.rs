@@ -81,7 +81,6 @@ use codex_app_server_protocol::ServerNotification;
 use codex_app_server_protocol::ServerRequest;
 use codex_app_server_protocol::ThreadItem;
 use codex_arg0::Arg0DispatchPaths;
-use codex_config::CloudConfigBundleLoader;
 use codex_config::LoaderOverrides;
 use codex_config::ThreadConfigLoader;
 use codex_core::check_execpolicy_for_warnings;
@@ -142,8 +141,6 @@ pub struct InProcessStartArgs {
     pub loader_overrides: LoaderOverrides,
     /// Whether config API paths should reject unknown config fields.
     pub strict_config: bool,
-    /// Preloaded cloud config bundle provider.
-    pub cloud_config_bundle: CloudConfigBundleLoader,
     /// Loader used to fetch typed thread config sources before a thread starts.
     pub thread_config_loader: Arc<dyn ThreadConfigLoader>,
     /// Feedback sink used by app-server/core telemetry and logs.
@@ -469,7 +466,6 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
             args.cli_overrides,
             args.loader_overrides,
             args.strict_config,
-            args.cloud_config_bundle,
             args.arg0_paths.clone(),
             args.thread_config_loader,
         );
@@ -849,7 +845,6 @@ mod tests {
             cli_overrides: Vec::new(),
             loader_overrides: LoaderOverrides::default(),
             strict_config: false,
-            cloud_config_bundle: CloudConfigBundleLoader::default(),
             thread_config_loader: Arc::new(codex_config::NoopThreadConfigLoader),
             feedback: CodexFeedback::new(),
             log_db: None,

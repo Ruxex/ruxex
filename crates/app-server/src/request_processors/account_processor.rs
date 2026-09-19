@@ -449,7 +449,6 @@ impl AccountRequestProcessor {
         ) {
             Ok(()) => {
                 self.auth_manager.reload().await;
-                self.config_manager.clear_cloud_config_bundle_loader();
                 Ok(())
             }
             Err(err) => Err(internal_error(format!("failed to save api key: {err}"))),
@@ -545,7 +544,6 @@ impl AccountRequestProcessor {
             }
             .map_err(|err| internal_error(format!("failed to save Amazon Bedrock auth: {err}")))?;
             self.auth_manager.reload().await;
-            self.config_manager.clear_cloud_config_bundle_loader();
             Ok(LoginAccountResponse::AmazonBedrock {})
         }
         .await;
@@ -867,11 +865,6 @@ impl AccountRequestProcessor {
             )))
             .await
             .map_err(|err| internal_error(format!("failed to set external auth: {err}")))?;
-        self.config_manager.replace_cloud_config_bundle_loader(
-            self.auth_manager.clone(),
-            self.config.chatgpt_base_url.clone(),
-            self.config.http_client_factory(),
-        );
         self.config_manager
             .sync_default_client_residency_requirement()
             .await;
@@ -945,11 +938,6 @@ impl AccountRequestProcessor {
             self.auth_manager.reload().await;
             let auth_changes = self.auth_manager.auth_change_state_receiver();
             let owner_generation = auth_changes.borrow().owner_generation;
-            self.config_manager.replace_cloud_config_bundle_loader(
-                self.auth_manager.clone(),
-                self.config.chatgpt_base_url.clone(),
-                self.config.http_client_factory(),
-            );
             self.config_manager
                 .sync_default_client_residency_requirement()
                 .await;
@@ -986,7 +974,6 @@ impl AccountRequestProcessor {
             clear_user_model_provider_if_bedrock(&self.config_manager, &config).await?;
         }
 
-        self.config_manager.clear_cloud_config_bundle_loader();
         *self.workspace_routing.lock().await = None;
 
         Self::maybe_refresh_plugin_caches_for_current_config(

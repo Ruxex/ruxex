@@ -9,7 +9,6 @@ pub(super) async fn fork_source(
     arg0_paths: &Arg0DispatchPaths,
     cli_overrides: &[(String, codex_config::TomlValue)],
     loader_overrides: &LoaderOverrides,
-    cloud_config_bundle: CloudConfigBundleLoader,
     strict_config: bool,
 ) -> anyhow::Result<std::path::PathBuf> {
     let state_db = codex_core::init_state_db(config).await;
@@ -31,7 +30,6 @@ pub(super) async fn fork_source(
             ..loader_overrides.clone()
         },
         strict_config,
-        cloud_config_bundle,
         feedback: CodexFeedback::new(),
         log_db: None,
         state_db: state_db.clone(),

@@ -29,7 +29,6 @@ members = [
     "crates/code-mode-protocol",
     "crates/code-mode-runtime",
     "crates/codex-home",
-    "crates/cloud-config",
     "crates/cli",
     "crates/collaboration-mode-templates",
     "crates/connectors",
@@ -183,7 +182,6 @@ codex-backend-client = { path = "crates/backend-client" }
 codex-build-info = { path = "crates/build-info" }
 codex-client = { path = "crates/codex-client" }
 codex-collaboration-mode-templates = { path = "crates/collaboration-mode-templates" }
-codex-cloud-config = { path = "crates/cloud-config" }
 codex-code-mode = { path = "crates/code-mode" }
 codex-code-mode-protocol = { path = "crates/code-mode-protocol" }
 codex-code-mode-runtime = { path = "crates/code-mode-runtime" }

@@ -115,19 +115,8 @@ pub(super) async fn run_main_inner(
             cli_kv_overrides.clone(),
             validation_loader_overrides.clone(),
             strict_config,
-            CloudConfigBundleLoader::default(),
         )
         .await;
-        let validation_cloud_config_bundle = if workload_identity_selected {
-            cloud_config_bundle_for_app_server_target(
-                &validation_target,
-                &validation_bootstrap,
-                &codex_home,
-            )
-            .await?
-        } else {
-            CloudConfigBundleLoader::default()
-        };
         load_config_or_exit(
             cli_kv_overrides.clone(),
             ConfigOverrides {
@@ -149,7 +138,6 @@ pub(super) async fn run_main_inner(
                 ..Default::default()
             },
             validation_loader_overrides,
-            validation_cloud_config_bundle,
             strict_config,
         )
         .await;
@@ -258,7 +246,6 @@ pub(super) async fn run_main_inner(
             cli_kv_overrides.clone(),
             loader_overrides.clone(),
             strict_config,
-            CloudConfigBundleLoader::default(),
         ))
         .await?;
     let screen_reader_result = if !loader_overrides.ignore_user_config {
@@ -270,13 +257,6 @@ pub(super) async fn run_main_inner(
     } else {
         Ok(())
     };
-    let cloud_config_bundle = startup_draft
-        .run_until(cloud_config_bundle_for_app_server_target(
-            &app_server_target,
-            &bootstrap_config,
-            &codex_home,
-        ))
-        .await??;
     let bootstrap_config_toml = &bootstrap_config.config_toml;
 
     let cwd_override = if app_server_target.uses_remote_workspace() {
@@ -287,25 +267,7 @@ pub(super) async fn run_main_inner(
 
     let mut manually_selected_oss_provider = None;
     let model_provider_override = if cli.oss {
-        let bootstrap_config_with_cloud_config;
-        let config_toml_for_oss = if cli.oss_provider.is_none() {
-            // The first load intentionally skips cloud config so we can read
-            // auth/base-url settings needed to fetch the bundle. If OSS mode
-            // needs a default provider from config, reload with the bundle.
-            bootstrap_config_with_cloud_config = startup_draft
-                .run_until(load_bootstrap_config_or_exit(
-                    &codex_home,
-                    config_cwd.as_ref(),
-                    cli_kv_overrides.clone(),
-                    loader_overrides.clone(),
-                    strict_config,
-                    cloud_config_bundle.clone(),
-                ))
-                .await?;
-            &bootstrap_config_with_cloud_config.config_toml
-        } else {
-            bootstrap_config_toml
-        };
+        let config_toml_for_oss = bootstrap_config_toml;
 
         let resolved = resolve_oss_provider(cli.oss_provider.as_deref(), config_toml_for_oss);
 
@@ -380,7 +342,6 @@ pub(super) async fn run_main_inner(
             cli_kv_overrides.clone(),
             overrides.clone(),
             loader_overrides.clone(),
-            cloud_config_bundle.clone(),
             strict_config,
         ))
         .await?;
@@ -436,18 +397,8 @@ pub(super) async fn run_main_inner(
     }
     startup_draft.apply_config(&config);
 
-    let mut cloud_config_bundle = if workload_identity_selected {
-        cloud_config_bundle
-    } else {
-        startup_draft
-            .run_until(cloud_config_bundle_loader_for_storage(
-                app_server_target.auth_config_for_cloud_loader(config.auth_config()),
-                /*enable_codex_api_key_env*/ false,
-            ))
-            .await??
-    };
     let managed_worktree = if cli.shared.worktree {
-        let (destination, bundle, worktree) = startup_draft
+        let (destination, worktree) = startup_draft
             .run_until(worktree_startup::prepare(
                 &mut cli,
                 config.clone(),
@@ -457,12 +408,10 @@ pub(super) async fn run_main_inner(
                 strict_config,
                 &app_server_target,
                 &arg0_paths,
-                cloud_config_bundle.clone(),
             ))
             .await?
             .map_err(|err| std::io::Error::other(err.to_string()))?;
         config = destination;
-        cloud_config_bundle = bundle;
         startup_draft.apply_config(&config);
         Some(worktree)
     } else {
@@ -756,7 +705,6 @@ pub(super) async fn run_main_inner(
         manually_selected_oss_provider,
         overrides,
         cli_kv_overrides,
-        cloud_config_bundle,
         feedback,
         log_db,
         state_db,

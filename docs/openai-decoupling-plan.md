@@ -97,13 +97,13 @@ Phase 1 で整理した候補から、依存元が少なく、代替や責務移
 
 ### Phase 3: 残存 integration の段階的な隔離・削除
 
-**進捗:** 未着手。`codex-cloud-config`、backend integration、image generation など、OpenAI 固有の機能と汎用責務が混在する残存候補を、小さな機能単位で隔離・削除する。
+**進捗:** 進行中。最初の対象である `codex-cloud-config` は削除済み。backend integration、image generation など、OpenAI 固有の機能と汎用責務が混在する残存候補を、引き続き小さな機能単位で隔離・削除する。
 
 **方針:** 全バイナリを起点にした Hawk の全面解析は、現時点では実行時間に対して得られる判断材料が少ないため後続へ延期する。まず依存グラフと参照検索を用いて、直接依存元が少ない hosted integration から削除可能な境界を作る。各変更では、対象クレートの公開 API と利用箇所を列挙し、OpenAI 固有の利用機能を一つだけ外す。依存元がなくなったクレートだけを削除し、汎用責務を含むクレートは先に provider-neutral な境界へ分離する。
 
 **実施順序:**
 
-1. `codex-cloud-config` の hosted policy source をローカル設定読み込みから切り離す。
+1. `codex-cloud-config` の hosted policy source をローカル設定読み込みから切り離す。**完了**
 2. `codex-backend-client` の account/usage/workspace、remote memory、git attribution などを機能単位で外し、依存元がなくなった後に `codex-backend-openapi-models` とともに削除する。
 3. image generation、web search、plugin marketplace、analytics、feedback を、共通の tool/event/diagnostic 処理を残して provider adapter 単位へ分離する。
 4. `codex-login`、`codex-agent-identity`、`codex-model-provider-info`、`codex-api` は、認証・provider registry・transport の汎用境界を設計できる段階まで保留する。

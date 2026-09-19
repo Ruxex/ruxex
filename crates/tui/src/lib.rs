@@ -8,7 +8,6 @@ use crate::legacy_core::config::Config;
 use crate::legacy_core::config::ConfigBuilder;
 use crate::legacy_core::config::ConfigOverrides;
 use crate::legacy_core::config::ConfigTomlLoadResult;
-use crate::legacy_core::config::bootstrap_auth_config;
 use crate::legacy_core::config::load_config_toml_with_layer_stack;
 #[cfg(test)]
 use crate::legacy_core::config::resolve_bootstrap_http_client_factory;
@@ -45,8 +44,6 @@ use codex_app_server_protocol::ThreadListCwdFilter;
 use codex_app_server_protocol::ThreadListParams;
 use codex_app_server_protocol::ThreadSortKey as AppServerThreadSortKey;
 use codex_app_server_protocol::ThreadSourceKind;
-use codex_cloud_config::cloud_config_bundle_loader_for_storage;
-use codex_config::CloudConfigBundleLoader;
 use codex_config::ConfigLoadError;
 use codex_config::LoaderOverrides;
 use codex_config::format_config_error_with_source;
@@ -54,7 +51,6 @@ use codex_config::types::ResumeCwdMode;
 use codex_exec_server::EnvironmentManager;
 use codex_exec_server::ExecServerRuntimePaths;
 use codex_features::Feature;
-use codex_login::AuthConfig;
 use codex_login::default_client::originator;
 use codex_login::default_client::set_default_client_residency_requirement;
 use codex_login::enforce_login_restrictions;
@@ -274,7 +270,6 @@ async fn start_embedded_app_server(
     cli_kv_overrides: Vec<(String, toml::Value)>,
     loader_overrides: LoaderOverrides,
     strict_config: bool,
-    cloud_config_bundle: CloudConfigBundleLoader,
     feedback: codex_feedback::CodexFeedback,
     log_db: Option<log_db::LogDbLayer>,
     state_db: Option<StateDbHandle>,
@@ -286,7 +281,6 @@ async fn start_embedded_app_server(
         cli_kv_overrides,
         loader_overrides,
         strict_config,
-        cloud_config_bundle,
         feedback,
         log_db,
         state_db,
@@ -311,17 +305,6 @@ pub(crate) enum AppServerTarget {
 impl AppServerTarget {
     pub(crate) fn uses_remote_workspace(&self) -> bool {
         matches!(self, Self::Remote { .. })
-    }
-
-    fn auth_config_for_cloud_loader(&self, mut auth_config: AuthConfig) -> AuthConfig {
-        if self.uses_remote_workspace() {
-            // Remove local auth restrictions before loading credentials for a remote
-            // workspace; the remote app server enforces its own authentication policy.
-            auth_config.forced_login_method = None;
-            auth_config.forced_chatgpt_workspace_id = None;
-            auth_config.managed_auth_policy = Default::default();
-        }
-        auth_config
     }
 
     fn thread_params_mode(&self) -> ThreadParamsMode {
@@ -508,7 +491,6 @@ async fn start_app_server(
     cli_kv_overrides: Vec<(String, toml::Value)>,
     loader_overrides: LoaderOverrides,
     strict_config: bool,
-    cloud_config_bundle: CloudConfigBundleLoader,
     feedback: codex_feedback::CodexFeedback,
     log_db: Option<log_db::LogDbLayer>,
     state_db: &mut Option<StateDbHandle>,
@@ -550,7 +532,6 @@ async fn start_app_server(
         cli_kv_overrides,
         loader_overrides,
         strict_config,
-        cloud_config_bundle,
         feedback,
         log_db,
         state_db.clone(),
@@ -575,7 +556,6 @@ pub(crate) async fn start_app_server_for_picker(
         Vec::new(),
         LoaderOverrides::default(),
         /*strict_config*/ false,
-        CloudConfigBundleLoader::default(),
         codex_feedback::CodexFeedback::new(),
         /*log_db*/ None,
         &mut state_db,
@@ -609,7 +589,6 @@ async fn start_embedded_app_server_with<F, Fut>(
     cli_kv_overrides: Vec<(String, toml::Value)>,
     loader_overrides: LoaderOverrides,
     strict_config: bool,
-    cloud_config_bundle: CloudConfigBundleLoader,
     feedback: codex_feedback::CodexFeedback,
     log_db: Option<log_db::LogDbLayer>,
     state_db: Option<StateDbHandle>,
@@ -636,7 +615,6 @@ where
         cli_overrides: cli_kv_overrides,
         loader_overrides,
         strict_config,
-        cloud_config_bundle,
         feedback,
         log_db,
         state_db,
@@ -976,19 +954,6 @@ fn app_server_target_for_launch(
     })
 }
 
-async fn cloud_config_bundle_for_app_server_target(
-    app_server_target: &AppServerTarget,
-    bootstrap_config: &ConfigTomlLoadResult,
-    codex_home: &Path,
-) -> std::io::Result<CloudConfigBundleLoader> {
-    cloud_config_bundle_loader_for_storage(
-        app_server_target
-            .auth_config_for_cloud_loader(bootstrap_auth_config(codex_home, bootstrap_config)?),
-        /*enable_codex_api_key_env*/ false,
-    )
-    .await
-}
-
 fn loader_overrides_are_default(loader_overrides: &LoaderOverrides) -> bool {
     let loader_overrides_are_default = loader_overrides.user_config_path.is_none()
         && loader_overrides.user_config_profile.is_none()
@@ -1054,7 +1019,6 @@ async fn run_ratatui_app(
     manually_selected_oss_provider: Option<String>,
     overrides: ConfigOverrides,
     cli_kv_overrides: Vec<(String, toml::Value)>,
-    mut cloud_config_bundle: CloudConfigBundleLoader,
     feedback: codex_feedback::CodexFeedback,
     log_db: Option<log_db::LogDbLayer>,
     mut state_db: Option<StateDbHandle>,
@@ -1119,7 +1083,6 @@ async fn run_ratatui_app(
                 cli_kv_overrides.clone(),
                 loader_overrides.clone(),
                 strict_config,
-                cloud_config_bundle.clone(),
                 feedback.clone(),
                 log_db.clone(),
                 &mut state_db,
@@ -1268,17 +1231,6 @@ async fn run_ratatui_app(
         }
         let reloaded_config = startup_draft
             .run_until(&mut tui, async {
-                // If this onboarding run included the login step, always refresh the cloud config
-                // bundle and rebuild config. This avoids missing newly available cloud-managed
-                // policy due to login status detection edge cases.
-                if show_login_screen && !uses_remote_workspace && !workload_identity_selected {
-                    cloud_config_bundle = cloud_config_bundle_loader_for_storage(
-                        initial_config.auth_config(),
-                        /*enable_codex_api_key_env*/ false,
-                    )
-                    .await?;
-                }
-
                 // Reload config when persisted trust or auth changes alter the current process.
                 Ok::<_, std::io::Error>(
                     if !uses_remote_workspace
@@ -1288,7 +1240,6 @@ async fn run_ratatui_app(
                             cli_kv_overrides.clone(),
                             overrides.clone(),
                             loader_overrides.clone(),
-                            cloud_config_bundle.clone(),
                             strict_config,
                             /*fallback_cwd*/ None,
                             managed_worktree.as_ref(),
@@ -1624,7 +1575,6 @@ async fn run_ratatui_app(
                         cli_kv_overrides.clone(),
                         overrides.clone(),
                         loader_overrides.clone(),
-                        cloud_config_bundle.clone(),
                         strict_config,
                         fallback_cwd,
                         managed_worktree.as_ref(),
@@ -1640,7 +1590,6 @@ async fn run_ratatui_app(
                         cli_kv_overrides.clone(),
                         overrides.clone(),
                         loader_overrides.clone(),
-                        cloud_config_bundle.clone(),
                         strict_config,
                     ),
                 )
@@ -1677,7 +1626,6 @@ async fn run_ratatui_app(
                     cli_kv_overrides.clone(),
                     loader_overrides.clone(),
                     strict_config,
-                    cloud_config_bundle.clone(),
                     feedback.clone(),
                     log_db.clone(),
                     &mut state_db,
@@ -1743,7 +1691,6 @@ async fn run_ratatui_app(
                 cli_kv_overrides.clone(),
                 overrides.clone(),
                 loader_overrides.clone(),
-                cloud_config_bundle.clone(),
                 strict_config,
                 Some(config.cwd.to_path_buf()),
                 managed_worktree.as_ref(),
@@ -1760,7 +1707,6 @@ async fn run_ratatui_app(
                     cli_kv_overrides.clone(),
                     loader_overrides.clone(),
                     strict_config,
-                    cloud_config_bundle.clone(),
                     feedback.clone(),
                     log_db.clone(),
                     &mut state_db,
@@ -1791,7 +1737,6 @@ async fn run_ratatui_app(
                     cli_kv_overrides.clone(),
                     overrides.clone(),
                     loader_overrides.clone(),
-                    cloud_config_bundle.clone(),
                     strict_config,
                     Some(current_cwd.to_path_buf()),
                     managed_worktree.as_ref(),
@@ -1906,7 +1851,6 @@ async fn run_ratatui_app(
         cli_kv_overrides.clone(),
         overrides.clone(),
         loader_overrides.clone(),
-        cloud_config_bundle,
         prompt,
         images,
         session_selection,
@@ -2015,14 +1959,12 @@ async fn load_config_or_exit(
     cli_kv_overrides: Vec<(String, toml::Value)>,
     overrides: ConfigOverrides,
     loader_overrides: LoaderOverrides,
-    cloud_config_bundle: CloudConfigBundleLoader,
     strict_config: bool,
 ) -> Config {
     load_config_or_exit_with_fallback_cwd(
         cli_kv_overrides,
         overrides,
         loader_overrides,
-        cloud_config_bundle,
         strict_config,
         /*fallback_cwd*/ None,
         /*worktree*/ None,
@@ -2035,7 +1977,6 @@ async fn load_config_or_exit_with_fallback_cwd(
     cli_kv_overrides: Vec<(String, toml::Value)>,
     overrides: ConfigOverrides,
     loader_overrides: LoaderOverrides,
-    cloud_config_bundle: CloudConfigBundleLoader,
     strict_config: bool,
     fallback_cwd: Option<PathBuf>,
     worktree: Option<&ManagedTuiWorktree>,
@@ -2045,7 +1986,6 @@ async fn load_config_or_exit_with_fallback_cwd(
         cli_kv_overrides,
         overrides,
         loader_overrides,
-        cloud_config_bundle,
         strict_config,
         fallback_cwd,
         worktree,
@@ -2069,7 +2009,6 @@ async fn load_config_with_worktree_source_policy(
     cli_kv_overrides: Vec<(String, toml::Value)>,
     overrides: ConfigOverrides,
     loader_overrides: LoaderOverrides,
-    cloud_config_bundle: CloudConfigBundleLoader,
     strict_config: bool,
     fallback_cwd: Option<PathBuf>,
     worktree: Option<&ManagedTuiWorktree>,
@@ -2079,7 +2018,6 @@ async fn load_config_with_worktree_source_policy(
         .harness_overrides(overrides.clone())
         .loader_overrides(loader_overrides.clone())
         .strict_config(strict_config)
-        .cloud_config_bundle(cloud_config_bundle.clone())
         .fallback_cwd(fallback_cwd)
         .build()
         .await
@@ -2090,7 +2028,6 @@ async fn load_config_with_worktree_source_policy(
                 &cli_kv_overrides,
                 &overrides,
                 &loader_overrides,
-                &cloud_config_bundle,
                 strict_config,
             )
             .await?;
@@ -2105,7 +2042,6 @@ async fn load_bootstrap_config_or_exit(
     cli_kv_overrides: Vec<(String, codex_config::TomlValue)>,
     loader_overrides: LoaderOverrides,
     strict_config: bool,
-    cloud_config_bundle: CloudConfigBundleLoader,
 ) -> ConfigTomlLoadResult {
     match load_config_toml_with_layer_stack(
         codex_home,
@@ -2114,7 +2050,6 @@ async fn load_bootstrap_config_or_exit(
         codex_config::ConfigLoadOptions {
             loader_overrides,
             strict_config,
-            cloud_config_bundle,
         },
     )
     .await
