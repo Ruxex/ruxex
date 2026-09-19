@@ -62,6 +62,13 @@ rg -n -i 'image_generation|image_generation_call|image_gen' crates --glob '*.rs'
 
 ### Task 2: Remove obsolete persisted-data compatibility
 
+**Progress:** The first obsolete slice is complete: rollout `ghost_snapshot`
+filtering/config/schema compatibility and the deprecated conversation-path
+re-export were removed in `cb46dfc8c` and `fee5762c7`. `ThreadHistoryMode::Legacy`
+and the legacy-to-paginated migration state machine remain in scope for a
+separate migrate-in-place decision because the current store interface still
+defaults to them.
+
 **Files:**
 - Modify or delete files selected in the inventory under `crates/thread-store/src/local/rollout_migration/`, `crates/thread-store/src/local/thread_history/`, `crates/rollout/src/`, and `crates/cli/src/migrate_rollouts.rs`.
 - Modify: related thread-store, rollout, CLI, and app-server migration tests.
