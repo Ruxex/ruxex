@@ -11,6 +11,16 @@
 - `codex-cli`、`codex-tui`、`codex-app-server` からの import と dispatch
 - OpenAI/ChatGPT の URL、認証方式、設定名、機能名を参照するコード
 
+## OpenAI 固有機能の判定基準
+
+削除判断の単位はクレート名や内部実装の一般性ではなく、現行で利用可能な **capability** とする。capability が OpenAI/ChatGPT の認証、固定 endpoint・wire protocol・モデル名・専用 header・hosted service 契約のいずれかなしには成立しない場合、OpenAI 固有機能である。
+
+- 非 OpenAI provider またはローカルだけで同じ capability を利用できる経路がある場合、その共通処理は残す。OpenAI 固有 adapter のみを隔離・削除する。
+- 非 OpenAI 経路がない場合、WebRTC、音声 device、codec、HTTP、tool schema などに一般性があっても、当該 capability の実装と専用補助クレートを削除対象に含める。将来の provider のためだけにコードは温存しない。
+- 一つのクレートに両者が混在する場合、クレート全体のラベルで結論を出さない。呼び出し元、設定、wire contract、テストを capability ごとに追い、削除・隔離・保持を決める。
+
+この基準により、ImageGen は OpenAI Images adapter を削除する隔離対象、Web Search は hosted OpenAI search だけを外す汎用化対象、Realtime voice は capability 全体を削除する対象である。
+
 表中の「直接 / 推移」は、そのクレートへ依存する内部クレート数であり、通常依存、開発依存、ビルド依存、target 条件付き依存を含む。推移依存元の全一覧は Level 0 の JSON を正とし、ここでは判断に必要な直接依存元と主要な到達経路を記載する。
 
 ## Workspace member の扱い
@@ -43,6 +53,23 @@
 | 16 | `codex-agent-identity` | 3 / 57 | ChatGPT issuer/JWKS と agent identity が一体 | 汎用化 | 高 | login、model provider、cloud config の認証境界 |
 | 17 | `codex-model-provider-info` | 16 / 60 | 汎用 provider 設定に OpenAI 既定値が混在 | 汎用化 | 非常に高 | 非 OpenAI provider も同じ型を利用 |
 | 18 | `codex-api` | 16 / 71 | OpenAI/Codex wire API と汎用 transport 境界 | 汎用化 | 非常に高 | core を含む最大の推移影響範囲 |
+| 19 | Realtime voice capability（`codex-realtime-webrtc`、`codex-voice-host` を含む） | TUI 経由 | OpenAI Realtime API のみが現行の起動経路 | 削除 | 高 | core、app-server、TUI の会話・音声・履歴を同時に外す必要がある |
+
+### 新基準による再評価
+
+| 対象 | 現行の非 OpenAI capability | 判断 |
+| --- | --- | --- |
+| `codex-responses-api-proxy`、Cloud Tasks 3 クレート、`codex-chatgpt` | なし | 削除済み。専用到達経路を含めて削除する判断を維持する。 |
+| `codex-cloud-config`、`codex-git-attribution`、remote memory rate-limit guard | なし | 削除済み。hosted policy、backend attribution、backend rate-limit guard を残さない。 |
+| `codex-backend-client`、`codex-backend-openapi-models` | なし | workspace message の endpoint と DTO は削除済み。残る account/usage などを capability 単位で除去し、依存元がなくなり次第両クレートを削除する。 |
+| ImageGen | image artifact、tool invocation、履歴表現 | OpenAI Images API、固定モデル、OpenAI auth の adapter を削除し、共通表現だけを残す。 |
+| Web Search | standalone search を実行できる互換 provider の経路 | OpenAI hosted search を削除する。共通 tool と standalone executor は残す。 |
+| Realtime voice | なし | Realtime API adapter に限らず、`codex-realtime-webrtc`、`codex-voice-host`、voice UI を含む capability 全体を削除する。 |
+| `codex-core-plugins` | local / third-party plugin の load と管理 | OpenAI curated marketplace と ChatGPT remote service だけを削除する。 |
+| `codex-analytics`、`codex-feedback` | local event/reducer、diagnostic bundle | OpenAI/ChatGPT backend sink とそれに専用の metadata を削除する。 |
+| `codex-response-debug-context` | 標準 HTTP/API の診断情報 | OpenAI 固有 header・URL の extractor を削除する。 |
+| `codex-login`、`codex-agent-identity` | credential storage、鍵・署名 primitive、他 provider の auth | ChatGPT/OpenAI login、issuer/JWKS policy、専用 token flow を隔離後に削除する。 |
+| `codex-model-provider-info`、`codex-api` | provider registry、互換 provider transport、共通 HTTP client | OpenAI built-in 定義と OpenAI wire adapter を隔離後に削除する。 |
 
 ## 削除候補
 
@@ -230,9 +257,17 @@
 - **推奨:** **汎用化**。汎用 transport/client は `codex-client` / `codex-http-client` に維持し、OpenAI wire protocol を provider adapter として隔離する。互換 provider が使う protocol を「OpenAI 固有」という理由だけで削除しない。
 - **難易度・リスク:** 非常に高。core protocol と多数の extension が wire type を直接共有している。
 
-## Phase 2 の推奨実施単位
+### 19. Realtime voice capability
 
-Phase 2 は次の順序で行い、一単位ごとに依存グラフを再生成する。
+- **根拠:** 現行の realtime conversation は OpenAI/ChatGPT の Realtime WebSocket と `realtime/calls` の WebRTC 契約、`gpt-realtime-*` モデル、専用 session event を前提とする。`codex-realtime-webrtc` と `codex-voice-host` の実装は WebRTC や音声 device を扱うが、実行時の利用元はこの TUI voice capability だけである。
+- **対象:** `codex-api` の Realtime call / WebSocket adapter、core の realtime conversation・context・prompt・history、app-server protocol と request processor、TUI の voice UI・音声 session・設定、`codex-realtime-webrtc`、`codex-voice-host`、専用設定・prompt・テスト・snapshot。
+- **非対象:** 通常のテキスト会話、thread history、一般の audio utility は、Realtime voice 専用の到達経路でない限り残す。
+- **推奨:** **削除**。将来の provider が使う可能性だけでは WebRTC / audio helper を維持しない。将来 provider-neutral な voice capability を導入する場合は、その provider の契約と共に新設する。
+- **難易度・リスク:** 高。複数 entrypoint にまたがるため、Realtime voice の public protocol、設定、UI、worker、保存済み履歴を一単位として除去し、通常の TUI・app-server・テキスト会話が維持されることを確認する。
+
+## 実施単位の履歴と Phase 3 の後続候補
+
+Phase 2 で完了した削除と、Phase 3 で扱う後続候補を次の順序で記録する。一単位ごとに依存グラフを再生成する。
 
 1. **`codex-responses-api-proxy` の削除（完了）**
    - 依存元が `codex-cli` だけで、代替や責務移動を必要としない。
@@ -240,16 +275,17 @@ Phase 2 は次の順序で行い、一単位ごとに依存グラフを再生成
    - `codex-cloud-tasks`、client、mock をまとめ、`codex cloud` の専用到達経路だけを外す。
 3. **`codex-chatgpt` の削除（完了）**
    - `codex apply` と ChatGPT backend connector 経路を分けて処理し、共有の plugin/MCP connector 表現を残してクレート本体を削除した。
-4. **backend integration の隔離計画**
-   - backend models/client、cloud config の利用機能を列挙して個別に外す。Level 1 Phase 2 では一括削除しない。
-5. **共有クレートの provider 境界設計**
+4. **backend integration の隔離**
+   - backend models/client、cloud config の利用機能を列挙して個別に外す。Level 1 Phase 3 で一括削除せずに進める。
+5. **Realtime voice capability の削除（Phase 3 の新しい実施単位）**
+   - OpenAI Realtime API に依存する会話・WebRTC・音声 host・UI を一つの実施単位で削除する。`codex-realtime-webrtc` と `codex-voice-host` は現行で非 OpenAI の利用経路がないため、補助クレートも含める。
+6. **共有クレートの provider 境界設計**
    - image generation、web search、plugins、analytics、feedback、response debug、login、agent identity、model-provider-info、codex-api は後続の汎用化作業として扱う。
 
-Phase 2 の削除対象 1〜3 は完了した。4 以降は影響範囲または汎用責務が大きいため、Level 2 以降で到達経路を縮小してから扱う。
+Phase 2 の削除対象 1〜3 は完了した。4 以降は影響範囲または汎用責務が大きいため、Level 1 Phase 3 で capability ごとに到達経路を縮小してから扱う。
 
 ## 調査したがクレート削除候補から除外したもの
 
-- `codex-realtime-webrtc` と `codex-voice-host`: OpenAI API key を除去するテストや `oai-events` という protocol 名はあるが、責務は provider-neutral な helper lifecycle、WebRTC、audio device/codec 処理である。OpenAI の session/API は `codex-api` と core 側にあり、両クレート自体は削除候補にしない。
 - `codex-http-client` と `codex-client`: ChatGPT cookie pool や request policy の一部に固有処理はあるが、共有 HTTP transport が主責務である。固有 module を adapter 側へ移す対象であり、クレート削除候補ではない。
 - `codex-protocol`、`codex-core`、`codex-tui`、`codex-app-server`: 多数の OpenAI/ChatGPT 到達経路を含むが、エージェント基盤と主要 entrypoint そのものである。Level 1 のクレート削除ではなく、上記 integration の依存を外した後に Level 2/3 で到達不能コードを調べる。
 

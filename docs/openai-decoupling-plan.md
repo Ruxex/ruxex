@@ -10,8 +10,9 @@
 
 - 各 Level と Phase は順番に実施し、前段階の成果物と検証結果を次段階の判断根拠にする。
 - 一度の変更範囲を小さく保ち、各 Phase の完了時点でビルドと関連テストが通る状態に戻す。
-- OpenAI 固有かどうかは、名前だけでなく、認証、API、ホスト型サービス、クラウド機能、プロトコル、設定、UI からの到達経路を含めて判断する。
-- 汎用化できる処理は削除対象とせず、プロバイダー非依存の境界へ移すことを検討する。
+- OpenAI 固有かどうかは、名前だけでなく、認証、API、ホスト型サービス、クラウド機能、プロトコル、設定、UI からの到達経路を含めて判断する。現行の capability が OpenAI 固有の外部契約なしに成立しないなら、その capability と、それだけを支える補助クレートは OpenAI 固有機能として扱う。
+- 実装が一般的な WebRTC、音声入出力、HTTP transport、tool schema などを含むことだけを理由に残さない。現行の非 OpenAI provider 到達経路またはローカル利用がある部分だけを provider-neutral な基盤として残す。
+- 一つのクレートに固有 adapter と汎用処理が混在する場合は、capability 単位で判定する。非 OpenAI 経路がなければクレートを含めて削除し、ある場合は固有 adapter を隔離・削除して汎用部分を残す。
 - 削除対象と、その対象に依存する側を区別して記録する。依存されているという理由だけで同時に削除しない。
 - 各変更では、削除した機能、残した互換性、既知の未対応事項を記録する。
 
@@ -97,7 +98,7 @@ Phase 1 で整理した候補から、依存元が少なく、代替や責務移
 
 ### Phase 3: 残存 integration の段階的な隔離・削除
 
-**進捗:** 進行中。最初の対象である `codex-cloud-config` と、backend の user-settings による commit/PR attribution を担う `codex-git-attribution` は削除済み。backend integration、image generation など、OpenAI 固有の機能と汎用責務が混在する残存候補を、引き続き小さな機能単位で隔離・削除する。
+**進捗:** 進行中。最初の対象である `codex-cloud-config` と、backend の user-settings による commit/PR attribution を担う `codex-git-attribution` は削除済み。workspace message の backend endpoint と DTO も削除済みで、app-server はこの hosted capability を呼び出さない。backend integration、image generation など、OpenAI 固有の機能と汎用責務が混在する残存候補を、引き続き小さな機能単位で隔離・削除する。
 
 **方針:** 全バイナリを起点にした Hawk の全面解析は、現時点では実行時間に対して得られる判断材料が少ないため後続へ延期する。まず依存グラフと参照検索を用いて、直接依存元が少ない hosted integration から削除可能な境界を作る。各変更では、対象クレートの公開 API と利用箇所を列挙し、OpenAI 固有の利用機能を一つだけ外す。依存元がなくなったクレートだけを削除し、汎用責務を含むクレートは先に provider-neutral な境界へ分離する。
 
@@ -106,7 +107,8 @@ Phase 1 で整理した候補から、依存元が少なく、代替や責務移
 1. `codex-cloud-config` の hosted policy source をローカル設定読み込みから切り離す。**完了**
 2. `codex-backend-client` の account/usage/workspace、remote memory、git attribution などを機能単位で外し、依存元がなくなった後に `codex-backend-openapi-models` とともに削除する。
 3. image generation、web search、plugin marketplace、analytics、feedback を、共通の tool/event/diagnostic 処理を残して provider adapter 単位へ分離する。
-4. `codex-login`、`codex-agent-identity`、`codex-model-provider-info`、`codex-api` は、認証・provider registry・transport の汎用境界を設計できる段階まで保留する。
+4. Realtime voice capability を削除する。OpenAI Realtime の WebSocket / WebRTC call 契約、core の会話管理、app-server / TUI の voice UI・protocol・設定・履歴を外し、現行ではその capability 専用である `codex-realtime-webrtc` と `codex-voice-host` も削除する。WebRTC や音声処理を将来の provider のためだけに温存しない。
+5. `codex-login`、`codex-agent-identity`、`codex-model-provider-info`、`codex-api` は、認証・provider registry・transport の汎用境界を設計できる段階まで保留する。
 
 各実施単位では、`just crate-dependency-graph` による依存辺の確認、対象 API と利用箇所の参照検索、`just check` を行う。Hawk は、対象クレートの直接依存元に関係する少数のバイナリだけを補助的に解析し、全バイナリ起点の結果合成は残存候補を十分に減らした後に実施する。
 

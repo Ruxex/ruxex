@@ -21,8 +21,6 @@ mod workspace_routing;
 const LOGIN_CHATGPT_TIMEOUT: Duration = Duration::from_secs(10 * 60);
 const ACCOUNT_TOKEN_USAGE_FETCH_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 10);
 const THREAD_USAGE_FETCH_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 60);
-const ACCOUNT_WORKSPACE_MESSAGES_FETCH_TIMEOUT: Duration =
-    Duration::from_millis(/*millis*/ 1000);
 // Packaged clients use this together with the OAuth client ID override for staging login.
 const LOGIN_ISSUER_OVERRIDE_ENV_VAR: &str = "CODEX_APP_SERVER_LOGIN_ISSUER";
 // The development success-page redirect remains debug-only.
@@ -1308,46 +1306,10 @@ impl AccountRequestProcessor {
     async fn get_workspace_messages_response(
         &self,
     ) -> Result<GetWorkspaceMessagesResponse, JSONRPCErrorError> {
-        let Some(auth) = self.auth_manager.auth().await else {
-            return Err(invalid_request(
-                "codex account authentication required to read workspace messages",
-            ));
-        };
-
-        if !auth.uses_codex_backend() {
-            return Err(invalid_request(
-                "chatgpt authentication required to read workspace messages",
-            ));
-        }
-
-        let client = BackendClient::from_auth(
-            self.config.chatgpt_base_url.clone(),
-            &auth,
-            self.config.http_client_factory(),
-        );
-        let messages = tokio::time::timeout(
-            ACCOUNT_WORKSPACE_MESSAGES_FETCH_TIMEOUT,
-            client.list_workspace_messages(),
-        )
-        .await
-        .map_err(|_| internal_error("workspace messages fetch timed out"))?;
-
-        match messages {
-            Ok(messages) => {
-                Self::workspace_messages_response(messages, /*feature_enabled*/ true)
-            }
-            Err(err) if workspace_messages_feature_disabled(&err) => {
-                Self::workspace_messages_response(
-                    BackendWorkspaceMessagesResponse {
-                        messages: Vec::new(),
-                    },
-                    /*feature_enabled*/ false,
-                )
-            }
-            Err(err) => Err(internal_error(format!(
-                "failed to fetch workspace messages: {err}"
-            ))),
-        }
+        Ok(GetWorkspaceMessagesResponse {
+            feature_enabled: false,
+            messages: Vec::new(),
+        })
     }
 
     fn account_token_usage_response(profile: TokenUsageProfile) -> GetAccountTokenUsageResponse {
@@ -1371,20 +1333,6 @@ impl AccountRequestProcessor {
             }),
             thread_usage: None,
         }
-    }
-
-    fn workspace_messages_response(
-        messages: BackendWorkspaceMessagesResponse,
-        feature_enabled: bool,
-    ) -> Result<GetWorkspaceMessagesResponse, JSONRPCErrorError> {
-        Ok(GetWorkspaceMessagesResponse {
-            feature_enabled,
-            messages: messages
-                .messages
-                .into_iter()
-                .map(workspace_message_from_backend)
-                .collect::<Result<Vec<_>, _>>()?,
-        })
     }
 
     async fn send_add_credits_nudge_email_response(
@@ -1440,48 +1388,6 @@ impl AccountRequestProcessor {
     }
 }
 
-fn workspace_message_from_backend(
-    message: BackendWorkspaceMessage,
-) -> Result<WorkspaceMessage, JSONRPCErrorError> {
-    Ok(WorkspaceMessage {
-        message_id: message.message_id,
-        message_type: workspace_message_type_from_backend(message.message_type),
-        message_body: message.message_body,
-        created_at: workspace_message_timestamp_from_backend(message.created_at)?,
-        archived_at: workspace_message_timestamp_from_backend(message.archived_at)?,
-    })
-}
-
-fn workspace_message_timestamp_from_backend(
-    timestamp: Option<String>,
-) -> Result<Option<i64>, JSONRPCErrorError> {
-    timestamp
-        .map(|timestamp| {
-            DateTime::parse_from_rfc3339(&timestamp)
-                .map(|timestamp| timestamp.timestamp())
-                .map_err(|err| {
-                    internal_error(format!(
-                        "failed to parse workspace message timestamp `{timestamp}`: {err}"
-                    ))
-                })
-        })
-        .transpose()
-}
-
-fn workspace_message_type_from_backend(
-    message_type: BackendWorkspaceMessageType,
-) -> WorkspaceMessageType {
-    match message_type {
-        BackendWorkspaceMessageType::Headline => WorkspaceMessageType::Headline,
-        BackendWorkspaceMessageType::Announcement => WorkspaceMessageType::Announcement,
-        BackendWorkspaceMessageType::Unknown => WorkspaceMessageType::Unknown,
-    }
-}
-
-fn workspace_messages_feature_disabled(err: &BackendRequestError) -> bool {
-    err.status().is_some_and(|status| status.as_u16() == 404)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1525,54 +1431,4 @@ mod tests {
         );
     }
 
-    #[test]
-    fn workspace_messages_response_maps_backend_messages() {
-        let response = AccountRequestProcessor::workspace_messages_response(
-            BackendWorkspaceMessagesResponse {
-                messages: vec![BackendWorkspaceMessage {
-                    message_id: "headline-id".to_string(),
-                    message_type: BackendWorkspaceMessageType::Headline,
-                    message_body: "Headline body".to_string(),
-                    created_at: Some("2026-06-14T00:00:00Z".to_string()),
-                    archived_at: Some("2026-06-15T00:00:00Z".to_string()),
-                }],
-            },
-            /*feature_enabled*/ true,
-        )
-        .expect("workspace message timestamps should parse");
-
-        assert_eq!(
-            response,
-            GetWorkspaceMessagesResponse {
-                feature_enabled: true,
-                messages: vec![WorkspaceMessage {
-                    message_id: "headline-id".to_string(),
-                    message_type: WorkspaceMessageType::Headline,
-                    message_body: "Headline body".to_string(),
-                    created_at: Some(1_781_395_200),
-                    archived_at: Some(1_781_481_600),
-                }],
-            }
-        );
-    }
-
-    #[test]
-    fn workspace_messages_feature_disabled_only_for_not_found() {
-        let cases = [
-            (StatusCode::NOT_FOUND, true),
-            (StatusCode::UNAUTHORIZED, false),
-            (StatusCode::FORBIDDEN, false),
-        ];
-
-        for (status, expected) in cases {
-            let err = BackendRequestError::UnexpectedStatus {
-                method: "GET".to_string(),
-                url: "https://example.test/api/codex/workspace-messages".to_string(),
-                status,
-                content_type: "application/json".to_string(),
-                body: "{}".to_string(),
-            };
-            assert_eq!(workspace_messages_feature_disabled(&err), expected);
-        }
-    }
 }
