@@ -92,7 +92,7 @@ For complete documentation of the `Op` and `EventMsg` variants, refer to [protoc
 - `skill` – Explicit skill selection (`name`, `path` to `SKILL.md`).
 - `mention` – Explicit app/connector selection (`name`, `path` in `app://{connector_id}` form).
 
-Note: For v1 wire compatibility, `EventMsg::TurnStarted` and `EventMsg::TurnComplete` serialize as `task_started` / `task_complete`. The deserializer accepts both `task_*` and `turn_*` tags.
+For the v1 wire format, `EventMsg::TurnStarted` and `EventMsg::TurnComplete` serialize as `task_started` / `task_complete`.
 
 The `response_id` returned from each turn matches the OpenAI `response_id` stored in the API's `/responses` endpoint. It can be stored and used in future `Sessions` to resume threads of work.
 

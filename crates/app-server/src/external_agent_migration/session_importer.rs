@@ -485,7 +485,7 @@ impl ExternalAgentSessionImporter {
             selected_capability_roots: Vec::new(),
             runtime_workspace_roots: None,
             multi_agent_version: Some(MultiAgentVersion::V1),
-            history_mode: ThreadHistoryMode::Legacy,
+            history_mode: ThreadHistoryMode::Paginated,
             history_base: None,
             subagent_history_start_ordinal: None,
             initial_window_id: uuid::Uuid::now_v7().to_string(),
@@ -495,7 +495,7 @@ impl ExternalAgentSessionImporter {
                 memory_mode,
             },
         };
-        rollout_items.retain(|item| is_persisted_rollout_item(item, ThreadHistoryMode::Legacy));
+        rollout_items.retain(|item| is_persisted_rollout_item(item, ThreadHistoryMode::Paginated));
         let (created_at, updated_at) = rollout_items
             .iter()
             .filter_map(|item| match item {

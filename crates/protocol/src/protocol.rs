@@ -1404,8 +1404,8 @@ pub enum EventMsg {
     ThreadRolledBack(ThreadRolledBackEvent),
 
     /// Agent has started a turn.
-    /// v1 wire format uses `task_started`; accept `turn_started` for v2 interop.
-    #[serde(rename = "task_started", alias = "turn_started")]
+    /// v1 wire format uses `task_started`.
+    #[serde(rename = "task_started")]
     TurnStarted(TurnStartedEvent),
 
     /// Persistent thread-settings overrides from the correlated submission have
@@ -1413,8 +1413,8 @@ pub enum EventMsg {
     ThreadSettingsApplied(ThreadSettingsAppliedEvent),
 
     /// Agent has completed all actions.
-    /// v1 wire format uses `task_complete`; accept `turn_complete` for v2 interop.
-    #[serde(rename = "task_complete", alias = "turn_complete")]
+    /// v1 wire format uses `task_complete`.
+    #[serde(rename = "task_complete")]
     TurnComplete(TurnCompleteEvent),
 
     /// Usage update for the current session, including totals and last turn.
@@ -4534,6 +4534,31 @@ mod tests {
         }))
         .unwrap();
         assert_eq!(event.root_turn_id, None);
+    }
+
+    #[test]
+    fn turn_boundary_events_use_canonical_wire_tags() -> Result<()> {
+        let started = EventMsg::TurnStarted(TurnStartedEvent {
+            turn_id: "turn-1".to_string(),
+            root_turn_id: None,
+            trace_id: None,
+            started_at: None,
+            model_context_window: None,
+            collaboration_mode_kind: ModeKind::default(),
+        });
+        let completed = EventMsg::TurnComplete(TurnCompleteEvent {
+            turn_id: "turn-1".to_string(),
+            last_agent_message: None,
+            error: None,
+            started_at: None,
+            completed_at: None,
+            duration_ms: None,
+            time_to_first_token_ms: None,
+        });
+
+        assert_eq!(serde_json::to_value(started)?["type"], "task_started");
+        assert_eq!(serde_json::to_value(completed)?["type"], "task_complete");
+        Ok(())
     }
 
     #[test]

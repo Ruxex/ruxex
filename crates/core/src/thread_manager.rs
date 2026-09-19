@@ -442,29 +442,11 @@ pub fn thread_store_from_config(
             let compression_enabled = config
                 .features
                 .enabled(Feature::LocalThreadStoreCompression);
-            let background_migration_enabled = config
-                .features
-                .enabled(Feature::BackgroundPaginatedRolloutMigration);
-            let has_state_db = state_db.is_some();
             let store = Arc::new(LocalThreadStore::new(
                 LocalThreadStoreConfig::from_config(config),
                 state_db,
             ));
-            if has_state_db && background_migration_enabled {
-                let startup_store = Arc::clone(&store);
-                let codex_home = config.codex_home.to_path_buf();
-                tokio::spawn(async move {
-                    if let Err(err) = startup_store.migrate_rollouts_on_startup().await {
-                        warn!("failed to migrate legacy rollouts on startup: {err}");
-                    }
-                    if compression_enabled {
-                        codex_rollout::spawn_rollout_compression_worker(
-                            codex_home,
-                            codex_rollout::RolloutCompressionTrigger::Startup,
-                        );
-                    }
-                });
-            } else if compression_enabled {
+            if compression_enabled {
                 codex_rollout::spawn_rollout_compression_worker(
                     config.codex_home.to_path_buf(),
                     codex_rollout::RolloutCompressionTrigger::Startup,
@@ -746,27 +728,6 @@ impl ThreadManager {
 
     pub fn image_store(&self) -> Arc<dyn AttachmentStore> {
         Arc::clone(&self.state.image_store)
-    }
-
-    /// Starts the local rollout migration path after a runtime feature enablement.
-    ///
-    /// Startup config handles the initial launch in [`thread_store_from_config`]. This covers
-    /// clients that decide to enable background migration after constructing the app-server.
-    pub fn start_background_rollout_migration(&self) {
-        let Some(store) = self
-            .state
-            .thread_store
-            .as_any()
-            .downcast_ref::<LocalThreadStore>()
-        else {
-            return;
-        };
-        let store = store.clone();
-        tokio::spawn(async move {
-            if let Err(err) = store.migrate_rollouts_on_startup().await {
-                warn!("failed to migrate legacy rollouts on startup: {err}");
-            }
-        });
     }
 
     /// Refreshes every loaded thread and marks threads that are still being created.

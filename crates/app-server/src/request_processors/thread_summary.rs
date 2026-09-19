@@ -272,7 +272,7 @@ pub(crate) fn summary_to_thread(
         section: None,
         section_entered_at: None,
         project_id: None,
-        history_mode: ThreadHistoryMode::Legacy,
+        history_mode: ThreadHistoryMode::Paginated,
         model_provider,
         created_at: created_at.map(|dt| dt.timestamp()).unwrap_or(0),
         model: None,

@@ -91,10 +91,11 @@ pub trait ThreadStore: Any + Send + Sync {
 
     /// Returns the history mode to use when history does not carry a persisted mode.
     ///
-    /// The default is legacy so existing stores stay compatible. Stores whose durable contract is
-    /// already paginated should override this instead of relying on core to infer storage behavior.
+    /// New stores use the canonical paginated history contract. Existing rollout metadata keeps
+    /// its persisted mode and is handled by the transition readers until the compatibility slice
+    /// is removed.
     fn default_history_mode(&self) -> ThreadHistoryMode {
-        ThreadHistoryMode::Legacy
+        ThreadHistoryMode::Paginated
     }
 
     /// Creates a new live thread.

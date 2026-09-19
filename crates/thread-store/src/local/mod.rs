@@ -11,7 +11,6 @@ mod pending_thread_metadata;
 mod projects;
 mod read_thread;
 mod revert_thread;
-mod rollout_migration;
 // This lands before the reader PRs that consume the shared lineage resolver.
 #[allow(dead_code)]
 mod rollout_lineage;
@@ -111,14 +110,6 @@ use crate::TurnPage;
 use crate::UpdateProjectParams;
 use crate::UpdateThreadMetadataParams;
 use crate::UpdatedProject;
-
-pub use rollout_migration::RolloutMigrationFailureReason;
-pub use rollout_migration::RolloutMigrationMode;
-pub use rollout_migration::RolloutMigrationOptions;
-pub use rollout_migration::RolloutMigrationOutcome;
-pub use rollout_migration::RolloutMigrationProgress;
-pub use rollout_migration::RolloutMigrationReport;
-pub use rollout_migration::RolloutMigrationStatus;
 
 /// Local filesystem/SQLite-backed implementation of [`ThreadStore`].
 ///
@@ -795,6 +786,14 @@ mod tests {
     use crate::local::test_support::write_archived_session_file;
     use crate::local::test_support::write_session_file;
     use crate::local::test_support::write_session_file_with_history_mode;
+
+    #[test]
+    fn default_history_mode_is_paginated() {
+        let home = TempDir::new().expect("temp dir");
+        let store = LocalThreadStore::new(test_config(home.path()), /*state_db*/ None);
+
+        assert_eq!(store.default_history_mode(), ThreadHistoryMode::Paginated);
+    }
 
     #[tokio::test]
     async fn live_writer_lifecycle_writes_and_closes() {
@@ -1915,7 +1914,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn paginated_threads_allow_metadata_reads_and_resume_but_reject_legacy_history_paths() {
+    async fn paginated_threads_allow_metadata_and_history_reads_and_resume() {
         let home = TempDir::new().expect("temp dir");
         let store = LocalThreadStore::new(test_config(home.path()), /*state_db*/ None);
         let uuid = uuid::Uuid::from_u128(408);
@@ -1950,35 +1949,32 @@ mod tests {
         assert_eq!(thread.history_mode, ThreadHistoryMode::Paginated);
         assert!(thread.history.is_none());
 
-        assert_paginated_threads_unsupported(
-            store
-                .read_thread(ReadThreadParams {
-                    thread_id,
-                    include_archived: false,
-                    include_history: true,
-                })
-                .await
-                .expect_err("full history read should fail"),
-        );
-        assert_paginated_threads_unsupported(
-            store
-                .read_thread_by_rollout_path(
-                    rollout_path.clone(),
-                    /*include_archived*/ true,
-                    /*include_history*/ true,
-                )
-                .await
-                .expect_err("full history path read should fail"),
-        );
-        assert_paginated_threads_unsupported(
-            store
-                .load_history(LoadThreadHistoryParams {
-                    thread_id,
-                    include_archived: false,
-                })
-                .await
-                .expect_err("history load should fail"),
-        );
+        let thread = store
+            .read_thread(ReadThreadParams {
+                thread_id,
+                include_archived: false,
+                include_history: true,
+            })
+            .await
+            .expect("full history read");
+        assert!(thread.history.is_some());
+        let thread = store
+            .read_thread_by_rollout_path(
+                rollout_path.clone(),
+                /*include_archived*/ true,
+                /*include_history*/ true,
+            )
+            .await
+            .expect("full history path read");
+        assert!(thread.history.is_some());
+        let history = store
+            .load_history(LoadThreadHistoryParams {
+                thread_id,
+                include_archived: false,
+            })
+            .await
+            .expect("history load");
+        assert!(!history.items.is_empty());
         store
             .resume_thread(ResumeThreadParams {
                 thread_id,
@@ -2067,15 +2063,6 @@ mod tests {
             runtime_workspace_roots: None,
             metadata: thread_metadata(),
         }
-    }
-
-    fn assert_paginated_threads_unsupported(err: ThreadStoreError) {
-        assert!(matches!(
-            err,
-            ThreadStoreError::Unsupported {
-                operation: "paginated_threads"
-            }
-        ));
     }
 
     fn thread_metadata() -> ThreadPersistenceMetadata {

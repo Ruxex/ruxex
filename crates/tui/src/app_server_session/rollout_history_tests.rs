@@ -7,10 +7,8 @@ use crate::legacy_core::config::ConfigBuilder;
 use app_test_support::create_fake_paginated_rollout;
 use app_test_support::create_fake_rollout;
 use codex_app_server_protocol::ThreadHistoryMode;
-use codex_features::Feature;
 use codex_protocol::ThreadId;
 use color_eyre::eyre::Result;
-use futures::FutureExt;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -278,70 +276,6 @@ async fn legacy_resume_preserves_history_mode_after_picker_server_replacement() 
     assert_eq!(app_server.next_request_id, next_request_id + 2);
     assert!(!resumed.turns.is_empty());
     app_server.shutdown().await?;
-    Ok(())
-}
-
-#[tokio::test]
-async fn cached_legacy_resume_revalidates_history_across_migration_settings() -> Result<()> {
-    for (startup_enabled, workspace_enabled) in
-        [(false, false), (false, true), (true, false), (true, true)]
-    {
-        let codex_home = tempfile::tempdir().expect("tempdir");
-        // Keep the large setup futures off the test thread's stack.
-        let config = Box::pin(build_config(&codex_home)).await;
-        let legacy_thread_id = ThreadId::from_string(
-            &create_fake_rollout(
-                codex_home.path(),
-                "2025-01-05T12-00-00",
-                "2025-01-05T12:00:00Z",
-                "Saved legacy user message",
-                Some(config.model_provider_id.as_str()),
-                /*git_info*/ None,
-            )
-            .expect("create legacy rollout"),
-        )?;
-        let mut startup_config = config.clone();
-        if startup_enabled {
-            startup_config
-                .features
-                .enable(Feature::BackgroundPaginatedRolloutMigration)?;
-        }
-        let mut resume_config = config;
-        if workspace_enabled {
-            resume_config
-                .features
-                .enable(Feature::BackgroundPaginatedRolloutMigration)?;
-        }
-        // Keep the real startup worker from migrating the legacy fixture before selection.
-        let maintenance_guard =
-            codex_rollout::try_acquire_rollout_maintenance_lock(codex_home.path())?
-                .expect("acquire rollout maintenance lock");
-        let mut app_server =
-            Box::pin(crate::start_embedded_app_server_for_picker(&startup_config)).await?;
-        app_server.remember_thread_history_mode(legacy_thread_id, ThreadHistoryMode::Legacy);
-        let local_settings = crate::local_settings::LocalSettings::from(&resume_config);
-        let next_request_id = app_server.next_request_id;
-        let legacy = {
-            // Keep the large resume future off the Windows test thread's stack.
-            let mut resume = Box::pin(app_server.resume_thread(
-                &local_settings,
-                resume_config.clone(),
-                legacy_thread_id,
-                ResumeModelSettings::RestoreFromThread,
-            ));
-            drop(maintenance_guard);
-            // This current-thread test polls resume before yielding to the startup worker.
-            // Resume must acquire its guard before waiting for metadata revalidation.
-            assert!(resume.as_mut().now_or_never().is_none());
-            assert!(
-                codex_rollout::try_acquire_rollout_maintenance_lock(codex_home.path())?.is_none()
-            );
-            resume.await?
-        };
-        assert_eq!(app_server.next_request_id, next_request_id + 2);
-        assert!(!legacy.turns.is_empty());
-        app_server.shutdown().await?;
-    }
     Ok(())
 }
 

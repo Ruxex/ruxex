@@ -185,8 +185,6 @@ pub enum Feature {
     LocalThreadStoreCompression,
     /// Removed compatibility flag; local_thread_store_compression controls all rollout files.
     LocalThreadStoreSharedCompression,
-    /// Migrate legacy local rollout files to paginated history in the background.
-    BackgroundPaginatedRolloutMigration,
     /// Enable the Chronicle sidecar for passive screen-context memories.
     Chronicle,
     /// Compress request bodies (zstd) when sending streaming requests to codex-backend.
@@ -1147,12 +1145,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         id: Feature::LocalThreadStoreSharedCompression,
         key: "local_thread_store_shared_compression",
         stage: Stage::Removed,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::BackgroundPaginatedRolloutMigration,
-        key: "background_paginated_rollout_migration",
-        stage: Stage::UnderDevelopment,
         default_enabled: false,
     },
     FeatureSpec {

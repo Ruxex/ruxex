@@ -25,7 +25,6 @@ use crate::StoredThread;
 use crate::StoredThreadHistory;
 use crate::ThreadStoreError;
 use crate::ThreadStoreResult;
-use crate::error::reject_paginated_history_mode;
 
 pub(super) async fn read_thread(
     store: &LocalThreadStore,
@@ -83,7 +82,6 @@ pub(super) async fn read_thread(
             );
             thread = rollout_thread;
         }
-        reject_paginated_history(&thread, params.include_history)?;
         attach_history_if_requested(&mut thread, params.include_history).await?;
         return Ok(thread);
     }
@@ -111,7 +109,6 @@ pub(super) async fn read_thread(
             message: format!("thread {} is archived", thread.thread_id),
         });
     }
-    reject_paginated_history(&thread, params.include_history)?;
     attach_history_if_requested(&mut thread, params.include_history).await?;
     Ok(thread)
 }
@@ -186,16 +183,8 @@ pub(super) async fn read_thread_by_rollout_path(
             );
         }
     }
-    reject_paginated_history(&thread, include_history)?;
     attach_history_if_requested(&mut thread, include_history).await?;
     Ok(thread)
-}
-
-fn reject_paginated_history(thread: &StoredThread, include_history: bool) -> ThreadStoreResult<()> {
-    if include_history {
-        reject_paginated_history_mode(thread.history_mode)?;
-    }
-    Ok(())
 }
 
 async fn resolve_requested_rollout_path(
