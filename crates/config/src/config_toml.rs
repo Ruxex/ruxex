@@ -488,11 +488,6 @@ pub struct ConfigToml {
     /// Suppress warnings about unstable (under development) features.
     pub suppress_unstable_features_warning: Option<bool>,
 
-    /// Compatibility-only settings retained so legacy `ghost_snapshot`
-    /// config still loads.
-    #[serde(default)]
-    pub ghost_snapshot: Option<GhostSnapshotToml>,
-
     /// Markers used to detect the project root when searching parent
     /// directories for `.codex` folders. Defaults to [".git"] when unset.
     #[serde(default)]
@@ -734,19 +729,6 @@ pub struct AgentRoleToml {
 
     /// Candidate nicknames for agents spawned with this role.
     pub nickname_candidates: Option<Vec<String>>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, JsonSchema)]
-#[schemars(deny_unknown_fields)]
-pub struct GhostSnapshotToml {
-    /// Legacy no-op setting retained for compatibility.
-    #[serde(alias = "ignore_untracked_files_over_bytes")]
-    pub ignore_large_untracked_files: Option<i64>,
-    /// Legacy no-op setting retained for compatibility.
-    #[serde(alias = "large_untracked_dir_warning_threshold")]
-    pub ignore_large_untracked_dirs: Option<i64>,
-    /// Legacy no-op setting retained for compatibility.
-    pub disable_warnings: Option<bool>,
 }
 
 impl ConfigToml {

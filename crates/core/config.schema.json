@@ -1557,26 +1557,6 @@
       ],
       "type": "string"
     },
-    "GhostSnapshotToml": {
-      "additionalProperties": false,
-      "properties": {
-        "disable_warnings": {
-          "description": "Legacy no-op setting retained for compatibility.",
-          "type": "boolean"
-        },
-        "ignore_large_untracked_dirs": {
-          "description": "Legacy no-op setting retained for compatibility.",
-          "format": "int64",
-          "type": "integer"
-        },
-        "ignore_large_untracked_files": {
-          "description": "Legacy no-op setting retained for compatibility.",
-          "format": "int64",
-          "type": "integer"
-        }
-      },
-      "type": "object"
-    },
     "GoalsToml": {
       "additionalProperties": false,
       "properties": {
@@ -6800,15 +6780,6 @@
       ],
       "default": null,
       "description": "When set, restricts the login mechanism users may use."
-    },
-    "ghost_snapshot": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/GhostSnapshotToml"
-        }
-      ],
-      "default": null,
-      "description": "Compatibility-only settings retained so legacy `ghost_snapshot` config still loads."
     },
     "goals": {
       "allOf": [

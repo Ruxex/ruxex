@@ -3781,24 +3781,6 @@ mod tests {
     }
 
     #[test]
-    fn deserializes_legacy_ghost_snapshot_as_other() -> Result<()> {
-        let json = r#"{
-            "type":"ghost_snapshot",
-            "ghost_commit":{
-                "id":"ghost-1",
-                "parent":null,
-                "preexisting_untracked_files":[],
-                "preexisting_untracked_dirs":[]
-            }
-        }"#;
-
-        let item: ResponseItem = serde_json::from_str(json)?;
-
-        assert_eq!(item, ResponseItem::Other);
-        Ok(())
-    }
-
-    #[test]
     fn roundtrips_web_search_call_actions() -> Result<()> {
         let cases = vec![
             (

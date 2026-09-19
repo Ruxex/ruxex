@@ -209,20 +209,3 @@ fn skips_only_known_retired_events() {
     let unknown = line("event_msg", json!({"type": "unknown_legacy_event"}));
     assert!(parse_legacy_rollout_line(&unknown).is_err());
 }
-
-#[test]
-fn skips_legacy_ghost_snapshots() {
-    let ghost_snapshot = line(
-        "response_item",
-        json!({
-            "type": "ghost_snapshot",
-            "ghost_commit": {"id": "legacy"},
-        }),
-    );
-
-    assert!(
-        parse_legacy_rollout_line(&ghost_snapshot)
-            .expect("inspect ghost snapshot")
-            .is_none()
-    );
-}

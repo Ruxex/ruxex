@@ -216,32 +216,10 @@ pub use token_budget_startup::TokenBudgetStartupConfig;
 pub use windows_sandbox_config::PreparedWindowsSandboxConfig;
 pub use windows_sandbox_config::prepare_windows_sandbox_config;
 
-const DEFAULT_IGNORE_LARGE_UNTRACKED_DIRS: i64 = 200;
-const DEFAULT_IGNORE_LARGE_UNTRACKED_FILES: i64 = 10 * 1024 * 1024;
-
 /// Signals that a public config selected the retired `untrusted` approval policy.
 #[derive(Debug, thiserror::Error)]
 #[error("approval_policy = \"untrusted\" is no longer supported; remove this setting")]
 pub struct UnsupportedUntrustedApprovalPolicyError;
-
-/// Compatibility-only config retained so legacy `ghost_snapshot` settings
-/// continue to load even though snapshots are no longer produced.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct GhostSnapshotConfig {
-    pub ignore_large_untracked_files: Option<i64>,
-    pub ignore_large_untracked_dirs: Option<i64>,
-    pub disable_warnings: bool,
-}
-
-impl Default for GhostSnapshotConfig {
-    fn default() -> Self {
-        Self {
-            ignore_large_untracked_files: Some(DEFAULT_IGNORE_LARGE_UNTRACKED_FILES),
-            ignore_large_untracked_dirs: Some(DEFAULT_IGNORE_LARGE_UNTRACKED_DIRS),
-            disable_warnings: false,
-        }
-    }
-}
 
 /// Maximum number of bytes of the documentation that will be embedded. Larger
 /// files are *silently truncated* to this size so we do not take up too much of
@@ -1055,10 +1033,6 @@ pub struct Config {
 
     /// Idle timeout for unsubscribed app-server threads, resolved at server startup.
     pub thread_unload_delay: Duration,
-
-    /// Compatibility-only settings retained for legacy `ghost_snapshot`
-    /// config loading.
-    pub ghost_snapshot: GhostSnapshotConfig,
 
     /// Settings specific to the task-path-based multi-agent tool surface.
     pub multi_agent_v2: MultiAgentV2Config,
@@ -3803,31 +3777,6 @@ impl Config {
             ));
         }
 
-        let ghost_snapshot = {
-            let mut config = GhostSnapshotConfig::default();
-            if let Some(ghost_snapshot) = cfg.ghost_snapshot.as_ref()
-                && let Some(ignore_over_bytes) = ghost_snapshot.ignore_large_untracked_files
-            {
-                config.ignore_large_untracked_files = if ignore_over_bytes > 0 {
-                    Some(ignore_over_bytes)
-                } else {
-                    None
-                };
-            }
-            if let Some(ghost_snapshot) = cfg.ghost_snapshot.as_ref()
-                && let Some(threshold) = ghost_snapshot.ignore_large_untracked_dirs
-            {
-                config.ignore_large_untracked_dirs =
-                    if threshold > 0 { Some(threshold) } else { None };
-            }
-            if let Some(ghost_snapshot) = cfg.ghost_snapshot.as_ref()
-                && let Some(disable_warnings) = ghost_snapshot.disable_warnings
-            {
-                config.disable_warnings = disable_warnings;
-            }
-            config
-        };
-
         let forced_chatgpt_workspace_id = cfg
             .forced_chatgpt_workspace_id
             .clone()
@@ -4308,7 +4257,6 @@ impl Config {
             code_mode,
             background_terminal_max_timeout,
             thread_unload_delay,
-            ghost_snapshot,
             multi_agent_v2,
             token_budget,
             token_budget_startup_config: None,

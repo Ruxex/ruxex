@@ -27,7 +27,6 @@ use codex_core_api::EventMsg;
 use codex_core_api::ExecServerRuntimePaths;
 use codex_core_api::ExtensionRegistryBuilder;
 use codex_core_api::Features;
-use codex_core_api::GhostSnapshotConfig;
 use codex_core_api::History;
 use codex_core_api::MemoriesConfig;
 use codex_core_api::ModelAvailabilityNuxConfig;
@@ -303,7 +302,6 @@ fn new_config(model: Option<String>, arg0_paths: Arg0DispatchPaths) -> anyhow::R
         code_mode: Default::default(),
         background_terminal_max_timeout: 300_000,
         thread_unload_delay: std::time::Duration::from_secs(60),
-        ghost_snapshot: GhostSnapshotConfig::default(),
         multi_agent_v2: MultiAgentV2Config::default(),
         max_goal_token_budget: None,
         token_budget: None,

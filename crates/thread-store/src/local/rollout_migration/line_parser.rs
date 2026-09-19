@@ -48,13 +48,7 @@ fn should_skip_retired_record(value: &Value) -> bool {
     matches!(
         event_type(value),
         Some("guardian_assessment" | "thread_name_updated" | "undo_completed")
-    ) || (rollout_type(value) == Some("response_item")
-        && value
-            .get("payload")
-            .and_then(Value::as_object)
-            .and_then(|payload| payload.get("type"))
-            .and_then(Value::as_str)
-            == Some("ghost_snapshot"))
+    )
 }
 
 fn normalize_legacy_turn_context(value: &mut Value) {
