@@ -7,7 +7,6 @@ use super::fingerprint::record_origins;
 use super::fingerprint::version_for_toml;
 use super::key_aliases::normalized_with_key_aliases;
 use super::merge::merge_toml_values;
-use crate::CloudConfigBundleLoader;
 use crate::ConfigLayer;
 use crate::ConfigLayerMetadata;
 use crate::ConfigLayerSource;
@@ -25,7 +24,6 @@ use toml::Value as TomlValue;
 pub struct ConfigLoadOptions {
     pub loader_overrides: LoaderOverrides,
     pub strict_config: bool,
-    pub cloud_config_bundle: CloudConfigBundleLoader,
 }
 
 impl From<LoaderOverrides> for ConfigLoadOptions {
@@ -33,7 +31,6 @@ impl From<LoaderOverrides> for ConfigLoadOptions {
         Self {
             loader_overrides,
             strict_config: false,
-            cloud_config_bundle: CloudConfigBundleLoader::default(),
         }
     }
 }

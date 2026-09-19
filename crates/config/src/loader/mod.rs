@@ -11,7 +11,6 @@ mod windows;
 
 use self::layer_io::LoadedConfigLayers;
 use crate::CONFIG_TOML_FILE;
-use crate::CloudConfigBundleLayers;
 use crate::ConfigLayerSource;
 use crate::ProfileV2Name;
 use crate::RequirementsLayerEntry;
@@ -103,7 +102,6 @@ async fn first_layer_config_error_from_entries(layers: &[ConfigLayerEntry]) -> O
 ///
 /// - system    `/etc/codex/requirements.toml` (Unix) or
 ///   `%ProgramData%\OpenAI\Codex\requirements.toml` (Windows)
-/// - cloud:    enterprise-managed cloud config bundle requirements
 /// - legacy:   `/etc/codex/managed_config.toml` (Unix) reinterpreted as
 ///   requirements.toml
 /// - admin:    managed preferences (*)
@@ -117,7 +115,6 @@ async fn first_layer_config_error_from_entries(layers: &[ConfigLayerEntry]) -> O
 /// - admin:    managed preferences (*)
 /// - system    `/etc/codex/config.toml` (Unix) or
 ///   `%ProgramData%\OpenAI\Codex\config.toml` (Windows)
-/// - cloud     enterprise-managed cloud config bundle fragments
 /// - user      `${CODEX_HOME}/config.toml`
 /// - profile   `${CODEX_HOME}/<name>.config.toml`, when selected
 /// - cwd       `${PWD}/config.toml` (loaded but disabled when the directory is untrusted)
@@ -145,7 +142,6 @@ pub async fn load_config_layers_state(
     let ConfigLoadOptions {
         loader_overrides: overrides,
         strict_config,
-        cloud_config_bundle,
     } = options.into();
     let packaged_defaults_layer = if let Some(file) = &overrides.packaged_defaults_path {
         let config = layer_io::read_config_from_path(
@@ -195,33 +191,12 @@ pub async fn load_config_layers_state(
     let ignore_project_config = overrides.ignore_project_config;
     let ignore_user_and_project_exec_policy_rules =
         overrides.ignore_user_and_project_exec_policy_rules;
-    let mut bundle_requirements_layers = Vec::new();
-    let mut cloud_config_layers = Vec::new();
-
-    if !overrides.ignore_managed_requirements
-        && let Some(bundle) = cloud_config_bundle.get().await.map_err(io::Error::other)?
-    {
-        let cloud_config_base_dir = AbsolutePathBuf::from_absolute_path(codex_home)?;
-        let bundle_layers = if strict_config {
-            CloudConfigBundleLayers::from_bundle_strict_config(bundle, &cloud_config_base_dir)?
-        } else {
-            CloudConfigBundleLayers::from_bundle(bundle, &cloud_config_base_dir)?
-        };
-        let CloudConfigBundleLayers {
-            enterprise_managed_config,
-            enterprise_managed_requirements,
-        } = bundle_layers;
-        bundle_requirements_layers = enterprise_managed_requirements;
-        cloud_config_layers = enterprise_managed_config;
-    }
-
     let (config_requirements_toml, loaded_config_layers, requirements_layers) =
         managed_requirements::load_requirements_from_sources(
             fs,
             codex_home,
             &overrides,
             strict_config,
-            bundle_requirements_layers,
         )
         .await?;
     let mut startup_warnings = loaded_config_layers.startup_warnings.clone();
@@ -273,7 +248,6 @@ pub async fn load_config_layers_state(
     )
     .await?;
     layers.push(system_layer);
-    layers.extend(cloud_config_layers);
 
     // Add the base user config layer. When profile-v2 is selected, add the
     // profile config as a second user layer on top so the profile only needs to

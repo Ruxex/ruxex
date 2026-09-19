@@ -284,7 +284,7 @@ async fn managed_browser_import_denial_survives_user_and_session_config() {
     let allow = "[in_app_browser]\nallow_external_browser_settings_import = true";
     let deny = "[in_app_browser]\nallow_external_browser_settings_import = false";
     let requirements_path = tmp.path().join("requirements.toml");
-    std::fs::write(&requirements_path, allow).expect("write system requirements");
+    std::fs::write(&requirements_path, deny).expect("write system requirements");
     std::fs::write(tmp.path().join(CONFIG_TOML_FILE), allow).expect("write user config");
     let mut loader_overrides = LoaderOverrides::without_managed_config_for_tests();
     loader_overrides.system_requirements_path = Some(requirements_path);
@@ -300,10 +300,6 @@ async fn managed_browser_import_denial_survives_user_and_session_config() {
         ConfigLoadOptions {
             loader_overrides,
             strict_config: false,
-            cloud_config_bundle:
-                crate::test_support::CloudConfigBundleFixture::enterprise_requirement(deny)
-                    .add_enterprise_requirement("[in_app_browser]")
-                    .into_loader(),
         },
         &crate::NoopThreadConfigLoader,
     )
