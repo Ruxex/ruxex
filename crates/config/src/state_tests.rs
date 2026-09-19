@@ -8,7 +8,7 @@ fn test_user_config_path(temp_dir: &TempDir, file_name: &str) -> AbsolutePathBuf
 }
 
 #[test]
-fn origins_use_canonical_key_aliases() {
+fn origins_do_not_materialize_removed_key_aliases() {
     let layer = ConfigLayerEntry::new(
         ConfigLayerSource::SessionFlags,
         toml::from_str(
@@ -30,12 +30,12 @@ no_memories_if_mcp_or_web_search = true
     let origins = stack.origins();
 
     assert_eq!(
-        origins.get("memories.disable_on_external_context"),
+        origins.get("memories.no_memories_if_mcp_or_web_search"),
         Some(&metadata)
     );
     assert!(
-        !origins.contains_key("memories.no_memories_if_mcp_or_web_search"),
-        "legacy key should be canonicalized before origin recording"
+        !origins.contains_key("memories.disable_on_external_context"),
+        "removed key alias should not create a canonical origin"
     );
 }
 

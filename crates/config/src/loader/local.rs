@@ -153,10 +153,6 @@ pub(super) async fn load_local_config_layers_with_overrides(
     if trust_context.credential_broker != CredentialBrokerProjectState::Unconfigured {
         let broker_requirements = requirements.clone().project(&[
             vec!["features".to_string(), "network_proxy".to_string()],
-            vec![
-                "feature_requirements".to_string(),
-                "network_proxy".to_string(),
-            ],
             vec!["experimental_network".to_string(), "enabled".to_string()],
         ]);
         let effective_requirements =

@@ -554,32 +554,12 @@ approval_mode = "approve"
 }
 
 #[test]
-fn feature_aliases_merge_with_layer_precedence() {
-    for (low_key, high_key) in [
-        ("features", "feature_requirements"),
-        ("feature_requirements", "features"),
-    ] {
-        let composed = compose(vec![
-            layer(
-                "req_low",
-                "Low",
-                &format!("[{low_key}]\nchronicle = true\nshell_snapshot = false"),
-            ),
-            layer(
-                "req_high",
-                "High",
-                &format!("[{high_key}]\nchronicle = false\napps = false"),
-            ),
-        ])
-        .expect("compose mixed feature aliases");
+fn removed_feature_requirements_alias_is_not_deserialized() {
+    let requirements: ConfigRequirementsToml =
+        toml::from_str("[feature_requirements]\npersonality = true\n")
+            .expect("unknown compatibility table should remain harmless");
 
-        assert_eq!(
-            composed,
-            Some(expected_requirements(
-                "[features]\nchronicle = false\nshell_snapshot = false\napps = false"
-            ))
-        );
-    }
+    assert_eq!(requirements.feature_requirements, None);
 }
 
 #[test]

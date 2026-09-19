@@ -1,7 +1,6 @@
 use super::*;
 use crate::config_toml::AgentsToml;
 use crate::config_toml::ConfigToml;
-use crate::types::MemoriesToml;
 use pretty_assertions::assert_eq;
 
 fn parse_toml(value: &str) -> TomlValue {
@@ -9,156 +8,18 @@ fn parse_toml(value: &str) -> TomlValue {
 }
 
 #[test]
-fn merge_toml_values_normalizes_legacy_key_from_base_layer() {
-    let mut base = parse_toml(
-        r#"
-[memories]
-no_memories_if_mcp_or_web_search = false
-"#,
-    );
-    let overlay = parse_toml(
-        r#"
-[memories]
-disable_on_external_context = true
-"#,
-    );
+fn removed_config_aliases_are_not_deserialized() {
+    let config: ConfigToml = parse_toml("[memories]\nno_memories_if_mcp_or_web_search = true\n")
+        .try_into()
+        .expect("unknown compatibility keys should remain harmless");
 
-    merge_toml_values(&mut base, &overlay);
-
-    let expected = parse_toml(
-        r#"
-[memories]
-disable_on_external_context = true
-"#,
-    );
-    assert_eq!(base, expected);
-
-    let config: ConfigToml = base.try_into().expect("merged config should deserialize");
     assert_eq!(
-        config.memories,
-        Some(MemoriesToml {
-            disable_on_external_context: Some(true),
-            ..Default::default()
-        })
+        config
+            .memories
+            .and_then(|memories| memories.disable_on_external_context),
+        None
     );
-}
-
-#[test]
-fn merge_toml_values_normalizes_legacy_key_from_overlay_layer() {
-    let mut base = parse_toml(
-        r#"
-[memories]
-disable_on_external_context = false
-"#,
-    );
-    let overlay = parse_toml(
-        r#"
-[memories]
-no_memories_if_mcp_or_web_search = true
-"#,
-    );
-
-    merge_toml_values(&mut base, &overlay);
-
-    let expected = parse_toml(
-        r#"
-[memories]
-disable_on_external_context = true
-"#,
-    );
-    assert_eq!(base, expected);
-
-    let config: ConfigToml = base.try_into().expect("merged config should deserialize");
-    assert_eq!(
-        config.memories,
-        Some(MemoriesToml {
-            disable_on_external_context: Some(true),
-            ..Default::default()
-        })
-    );
-}
-
-#[test]
-fn merge_toml_values_prefers_canonical_key_when_one_layer_has_both_names() {
-    let mut base = TomlValue::Table(toml::map::Map::new());
-    let overlay = parse_toml(
-        r#"
-[memories]
-disable_on_external_context = true
-no_memories_if_mcp_or_web_search = false
-"#,
-    );
-
-    merge_toml_values(&mut base, &overlay);
-
-    let expected = parse_toml(
-        r#"
-[memories]
-disable_on_external_context = true
-"#,
-    );
-    assert_eq!(base, expected);
-}
-
-#[test]
-fn merge_toml_values_normalizes_legacy_agents_key_across_layers() {
-    let mut base = parse_toml(
-        r#"
-[agents]
-max_threads = 4
-"#,
-    );
-    let overlay = parse_toml(
-        r#"
-[agents]
-max_concurrent_threads_per_session = 7
-"#,
-    );
-
-    merge_toml_values(&mut base, &overlay);
-
-    let expected = parse_toml(
-        r#"
-[agents]
-max_concurrent_threads_per_session = 7
-"#,
-    );
-    assert_eq!(base, expected);
-
-    let config: ConfigToml = base.try_into().expect("merged config should deserialize");
-    assert_eq!(
-        config.agents,
-        Some(AgentsToml {
-            max_concurrent_threads_per_session: Some(7),
-            ..Default::default()
-        })
-    );
-}
-
-#[test]
-fn merge_toml_values_normalizes_legacy_agents_key_from_overlay() {
-    let mut base = parse_toml(
-        r#"
-[agents]
-max_concurrent_threads_per_session = 4
-"#,
-    );
-    let overlay = parse_toml(
-        r#"
-[agents]
-max_threads = 7
-"#,
-    );
-
-    merge_toml_values(&mut base, &overlay);
-
-    let expected = parse_toml(
-        r#"
-[agents]
-max_concurrent_threads_per_session = 7
-"#,
-    );
-    assert_eq!(base, expected);
+    assert!(toml::from_str::<AgentsToml>("max_threads = 4").is_err());
 }
 
 /// Feature tables added above legacy toggles retain the lower layer's enabled state.

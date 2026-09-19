@@ -294,7 +294,7 @@ fn populate_merged_regular_fields_with_sources(
     set_sourced!(browser_use, &["browser_use"]);
     set_sourced!(in_app_browser, &["in_app_browser"]);
     set_sourced!(windows, &["windows"]);
-    set_sourced!(feature_requirements, &["features", "feature_requirements"]);
+    set_sourced!(feature_requirements, &["features"]);
     set_sourced!(mcp_servers, &["mcp_servers"]);
     set_sourced!(plugins, &["plugins"]);
     set_sourced!(marketplaces, &["marketplaces"]);
