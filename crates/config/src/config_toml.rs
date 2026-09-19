@@ -329,14 +329,6 @@ pub struct ConfigToml {
     /// unloads it. Defaults to 60; zero unloads immediately. Changes require a server restart.
     pub thread_unload_delay_secs: Option<u64>,
 
-    /// Deprecated: ignored.
-    #[schemars(skip)]
-    pub js_repl_node_path: Option<AbsolutePathBuf>,
-
-    /// Deprecated: ignored.
-    #[schemars(skip)]
-    pub js_repl_node_module_dirs: Option<Vec<AbsolutePathBuf>>,
-
     /// Profile to use from the `profiles` map.
     pub profile: Option<String>,
 
@@ -695,9 +687,6 @@ pub struct AgentsToml {
     pub default_subagent_model: Option<String>,
     /// Default reasoning effort for spawned subagents when the spawn call does not select one.
     pub default_subagent_reasoning_effort: Option<ReasoningEffort>,
-    /// Removed agent-job setting retained as a no-op for compatibility.
-    #[schemars(skip)]
-    pub job_max_runtime_seconds: Option<u64>,
     /// Whether to record a model-visible message when an agent turn is interrupted.
     /// Defaults to true.
     pub interrupt_message: Option<bool>,

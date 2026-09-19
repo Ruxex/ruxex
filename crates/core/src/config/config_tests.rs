@@ -8403,7 +8403,6 @@ async fn load_config_rejects_missing_agent_role_config_file() -> std::io::Result
             max_depth: None,
             default_subagent_model: None,
             default_subagent_reasoning_effort: None,
-            job_max_runtime_seconds: None,
             interrupt_message: None,
             roles: BTreeMap::from([(
                 "researcher".to_string(),
@@ -9326,25 +9325,6 @@ model = "gpt-5-mini"
     Ok(())
 }
 
-#[test]
-fn legacy_agent_job_max_runtime_seconds_is_accepted_as_noop() {
-    let parsed = toml::from_str::<ConfigToml>(
-        r#"
-[agents]
-job_max_runtime_seconds = 900
-"#,
-    )
-    .expect("legacy agent job setting should deserialize");
-
-    assert_eq!(
-        parsed.agents,
-        Some(AgentsToml {
-            job_max_runtime_seconds: Some(900),
-            ..Default::default()
-        })
-    );
-}
-
 #[tokio::test]
 async fn load_config_resolves_agent_controls() -> std::io::Result<()> {
     let codex_home = TempDir::new()?;
@@ -9418,7 +9398,6 @@ async fn load_config_normalizes_agent_role_nickname_candidates() -> std::io::Res
             max_depth: None,
             default_subagent_model: None,
             default_subagent_reasoning_effort: None,
-            job_max_runtime_seconds: None,
             interrupt_message: None,
             roles: BTreeMap::from([(
                 "researcher".to_string(),
@@ -9464,7 +9443,6 @@ async fn load_config_rejects_empty_agent_role_nickname_candidates() -> std::io::
             max_depth: None,
             default_subagent_model: None,
             default_subagent_reasoning_effort: None,
-            job_max_runtime_seconds: None,
             interrupt_message: None,
             roles: BTreeMap::from([(
                 "researcher".to_string(),
@@ -9504,7 +9482,6 @@ async fn load_config_rejects_duplicate_agent_role_nickname_candidates() -> std::
             max_depth: None,
             default_subagent_model: None,
             default_subagent_reasoning_effort: None,
-            job_max_runtime_seconds: None,
             interrupt_message: None,
             roles: BTreeMap::from([(
                 "researcher".to_string(),
@@ -9544,7 +9521,6 @@ async fn load_config_rejects_unsafe_agent_role_nickname_candidates() -> std::io:
             max_depth: None,
             default_subagent_model: None,
             default_subagent_reasoning_effort: None,
-            job_max_runtime_seconds: None,
             interrupt_message: None,
             roles: BTreeMap::from([(
                 "researcher".to_string(),
