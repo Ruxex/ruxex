@@ -127,11 +127,13 @@ fn write_session_file(root: &Path, ts: &str, uuid: Uuid) -> std::io::Result<Path
             "cli_version": "test_version",
             "source": "cli",
             "model_provider": "test-provider",
+            "history_mode": "paginated",
         },
     });
     writeln!(file, "{meta}")?;
     let user_event = serde_json::json!({
         "timestamp": ts,
+        "ordinal": 1,
         "type": "event_msg",
         "payload": {
             "type": "user_message",
@@ -691,7 +693,7 @@ async fn rollout_id_preserves_session_meta_thread_id() -> std::io::Result<()> {
 }
 
 #[tokio::test]
-async fn recorder_omits_ordinals_from_legacy_rollouts() -> std::io::Result<()> {
+async fn recorder_writes_ordinals_for_new_rollouts() -> std::io::Result<()> {
     let home = TempDir::new().expect("temp dir");
     let config = test_config(home.path());
     let recorder = RolloutRecorder::new(
@@ -718,31 +720,7 @@ async fn recorder_omits_ordinals_from_legacy_rollouts() -> std::io::Result<()> {
         .lines()
         .map(serde_json::from_str::<serde_json::Value>)
         .collect::<Result<Vec<_>, _>>()?;
-    assert!(values.iter().all(|value| value.get("ordinal").is_none()));
-
-    recorder.shutdown().await
-}
-
-#[tokio::test]
-async fn resumed_empty_rollout_omits_ordinals() -> std::io::Result<()> {
-    let home = TempDir::new().expect("temp dir");
-    let config = test_config(home.path());
-    let rollout_path = home.path().join("rollout.jsonl");
-    File::create(&rollout_path)?;
-
-    let recorder =
-        RolloutRecorder::new(&config, RolloutRecorderParams::resume(rollout_path.clone())).await?;
-    recorder
-        .record_canonical_items(&[agent_message_item("legacy")])
-        .await?;
-    recorder.flush().await?;
-
-    let text = fs::read_to_string(rollout_path)?;
-    let values = text
-        .lines()
-        .map(serde_json::from_str::<serde_json::Value>)
-        .collect::<Result<Vec<_>, _>>()?;
-    assert!(values.iter().all(|value| value.get("ordinal").is_none()));
+    assert!(values.iter().all(|value| value.get("ordinal").is_some()));
 
     recorder.shutdown().await
 }
@@ -819,7 +797,7 @@ async fn writer_state_retries_write_error_before_reporting_flush_success() -> st
         meta: None,
         cwd: home.path().to_path_buf(),
         rollout_path: rollout_path.clone(),
-        ordinal_state: RolloutOrdinalState::Legacy,
+        ordinal_state: RolloutOrdinalState::Paginated { next: Some(0) },
         last_logged_error: None,
     };
     state.add_items(vec![RolloutItem::EventMsg(EventMsg::AgentMessage(

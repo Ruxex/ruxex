@@ -5,6 +5,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::process::Stdio;
 
+use codex_protocol::items::TurnItem;
 use codex_protocol::models::ContentItem;
 use codex_protocol::models::ResponseItem;
 use codex_protocol::protocol::EventMsg;
@@ -280,6 +281,14 @@ fn conversation_text_from_item(item: &RolloutItem) -> Option<String> {
                 Some(text.to_string())
             }
         }
+        RolloutItem::EventMsg(EventMsg::ItemCompleted(event)) => match &event.item {
+            TurnItem::UserMessage(user) => {
+                let legacy = user.as_legacy_user_message_event();
+                let text = strip_user_message_prefix(legacy.message.as_str());
+                (!text.is_empty()).then(|| text.to_string())
+            }
+            _ => None,
+        },
         RolloutItem::EventMsg(EventMsg::AgentMessage(agent)) => {
             if agent.message.trim().is_empty() {
                 None

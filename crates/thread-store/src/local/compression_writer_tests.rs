@@ -23,10 +23,8 @@ use super::LocalThreadStore;
 use super::test_support::test_config;
 use super::test_support::write_session_file;
 use crate::ResumeThreadParams;
-use crate::ThreadMetadataPatch;
 use crate::ThreadPersistenceMetadata;
 use crate::ThreadStore;
-use crate::UpdateThreadMetadataParams;
 
 type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
@@ -139,62 +137,5 @@ async fn idle_recorder_retains_stable_thread_ownership_after_store_drop() -> Tes
     expected.push(message());
     let (actual, _, _) = RolloutRecorder::load_rollout_items(&path).await?;
     assert_eq!(json!(actual), json!(expected));
-    Ok(())
-}
-
-#[tokio::test]
-async fn metadata_updates_share_ownership_and_resume_compressed_rollouts() -> TestResult<()> {
-    let (home, thread_id, path) = fixture()?;
-    let config = test_config(home.path());
-    let db = codex_state::StateRuntime::init(
-        config.sqlite.clone(),
-        config.default_model_provider_id.clone(),
-    )
-    .await?;
-    let owner = LocalThreadStore::new(config.clone(), Some(db.clone()));
-    owner
-        .resume_thread(resume(thread_id, &path, home.path()))
-        .await?;
-    let competitor = LocalThreadStore::new(config, Some(db.clone()));
-    let mut patch = UpdateThreadMetadataParams {
-        thread_id,
-        include_archived: true,
-        patch: ThreadMetadataPatch {
-            memory_mode: Some(ThreadMemoryMode::Enabled),
-            ..Default::default()
-        },
-    };
-    owner.update_thread_metadata(patch.clone()).await?;
-    let original = fs::read(&path)?;
-    let indexed_mode = db.get_thread_memory_mode(thread_id).await?;
-    patch.patch.memory_mode = Some(ThreadMemoryMode::Disabled);
-    let error = competitor
-        .update_thread_metadata(patch.clone())
-        .await
-        .unwrap_err();
-    assert!(matches!(error, crate::ThreadStoreError::Conflict { .. }));
-    assert_eq!(fs::read(&path)?, original);
-    assert_eq!(db.get_thread_memory_mode(thread_id).await?, indexed_mode);
-    owner.update_thread_metadata(patch.clone()).await?;
-    owner.shutdown_thread(thread_id).await?;
-    let (items, _, _) = RolloutRecorder::load_rollout_items(&path).await?;
-    let mut expected = codex_rollout::read_session_meta_line(&path).await?;
-    expected.meta.memory_mode = Some("disabled".into());
-    expected.git = None;
-    assert_eq!(
-        json!(items.last()),
-        json!(Some(RolloutItem::SessionMeta(expected.clone())))
-    );
-
-    age(&path)?;
-    compress(home.path()).await?;
-    patch.patch.memory_mode = Some(ThreadMemoryMode::Enabled);
-    competitor.update_thread_metadata(patch).await?;
-    expected.meta.memory_mode = Some("enabled".into());
-    let (items, _, _) = RolloutRecorder::load_rollout_items(&path).await?;
-    assert_eq!(
-        json!(items.last()),
-        json!(Some(RolloutItem::SessionMeta(expected)))
-    );
     Ok(())
 }

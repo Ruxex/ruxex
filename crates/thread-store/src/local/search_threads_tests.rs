@@ -59,7 +59,7 @@ async fn search_matches_selected_rollout_across_path_spellings_and_compression()
             uuid,
             "needle in selected rollout",
             Some("test-provider"),
-            ThreadHistoryMode::Legacy,
+            ThreadHistoryMode::Paginated,
         )
         .expect("write selected rollout");
         // Reverting a thread leaves its previous rollout on disk with the same thread ID.
@@ -70,7 +70,7 @@ async fn search_matches_selected_rollout_across_path_spellings_and_compression()
             uuid,
             "obsolete needle in previous rollout",
             Some("test-provider"),
-            ThreadHistoryMode::Legacy,
+            ThreadHistoryMode::Paginated,
         )
         .expect("write unselected rollout");
 

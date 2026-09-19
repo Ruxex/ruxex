@@ -76,7 +76,7 @@ fn update_for_batch(
     state: &mut TurnMeasurementState,
     items: &[RolloutItem],
 ) -> super::TurnMeasurementUpdate {
-    let (_, measurement) = measure_and_filter_rollout_items(items, ThreadHistoryMode::Legacy);
+    let (_, measurement) = measure_and_filter_rollout_items(items, ThreadHistoryMode::Paginated);
     update_turn_measurements(state, items, &measurement)
 }
 
@@ -112,7 +112,7 @@ fn mixed_batch_reports_exact_policy_counts_and_bytes() {
     let items = vec![kept.clone(), dropped.clone()];
 
     let (persisted, measurement) =
-        measure_and_filter_rollout_items(&items, ThreadHistoryMode::Legacy);
+        measure_and_filter_rollout_items(&items, ThreadHistoryMode::Paginated);
     let kept_bytes = serde_json::to_vec(&kept)
         .expect("serialize kept item")
         .len() as u64;
@@ -141,7 +141,7 @@ fn mixed_batch_reports_exact_policy_counts_and_bytes() {
 fn retained_items_are_byte_identical() {
     let item = retained_message("a moderately sized payload");
     let (persisted, measurement) =
-        measure_and_filter_rollout_items(std::slice::from_ref(&item), ThreadHistoryMode::Legacy);
+        measure_and_filter_rollout_items(std::slice::from_ref(&item), ThreadHistoryMode::Paginated);
 
     assert_eq!(
         serde_json::to_vec(&persisted[0]).expect("serialize persisted item"),
@@ -169,9 +169,9 @@ fn turn_measurements_span_batches_and_include_items_before_start() {
         turn_aborted("turn-2"),
     ];
     let (_, first_expected) =
-        measure_and_filter_rollout_items(&first_turn, ThreadHistoryMode::Legacy);
+        measure_and_filter_rollout_items(&first_turn, ThreadHistoryMode::Paginated);
     let (_, second_expected) =
-        measure_and_filter_rollout_items(&second_turn, ThreadHistoryMode::Legacy);
+        measure_and_filter_rollout_items(&second_turn, ThreadHistoryMode::Paginated);
     let batches = [
         first_turn[..1].to_vec(),
         first_turn[1..3].to_vec(),
@@ -233,7 +233,7 @@ fn invalid_turn_boundaries_reset_partial_measurements() {
         turn_complete("turn-2"),
     ];
     let (_, expected) =
-        measure_and_filter_rollout_items(&replacement[2..], ThreadHistoryMode::Legacy);
+        measure_and_filter_rollout_items(&replacement[2..], ThreadHistoryMode::Paginated);
     let update = update_for_batch(&mut state, &replacement);
 
     assert_eq!(
@@ -251,7 +251,7 @@ fn invalid_turn_boundaries_reset_partial_measurements() {
 }
 
 #[test]
-fn item_completion_persistence_depends_on_history_mode() {
+fn item_completion_persistence_is_canonical() {
     let item = RolloutItem::EventMsg(EventMsg::ItemCompleted(ItemCompletedEvent {
         thread_id: ThreadId::default(),
         turn_id: "turn".to_string(),
@@ -263,18 +263,6 @@ fn item_completion_persistence_depends_on_history_mode() {
         started_at_ms: Some(0),
         completed_at_ms: 0,
     }));
-
-    let (_, legacy_measurement) =
-        measure_and_filter_rollout_items(std::slice::from_ref(&item), ThreadHistoryMode::Legacy);
-
-    assert_eq!(
-        legacy_measurement.items[0].rollout_item_type,
-        "event.item_completed.user_message"
-    );
-    assert_eq!(
-        legacy_measurement.items[0].decision,
-        super::PersistenceDecision::Dropped
-    );
 
     let (persisted, paginated_measurement) =
         measure_and_filter_rollout_items(std::slice::from_ref(&item), ThreadHistoryMode::Paginated);
@@ -290,7 +278,7 @@ fn item_completion_persistence_depends_on_history_mode() {
 }
 
 #[test]
-fn review_mode_persistence_depends_on_history_mode() {
+fn review_mode_persistence_is_canonical() {
     let completed_items = vec![
         RolloutItem::EventMsg(EventMsg::ItemCompleted(ItemCompletedEvent {
             thread_id: ThreadId::default(),
@@ -336,12 +324,6 @@ fn review_mode_persistence_depends_on_history_mode() {
         .chain(&legacy_events)
         .cloned()
         .collect::<Vec<_>>();
-
-    let (persisted_legacy, _) = measure_and_filter_rollout_items(&items, ThreadHistoryMode::Legacy);
-    assert_eq!(
-        serde_json::to_value(persisted_legacy).expect("serialize persisted items"),
-        serde_json::to_value(legacy_events).expect("serialize expected items")
-    );
 
     let (persisted_paginated, _) =
         measure_and_filter_rollout_items(&items, ThreadHistoryMode::Paginated);

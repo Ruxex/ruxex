@@ -631,7 +631,7 @@ async fn paginated_realtime_items_materialize_separately_in_rollout_order() {
         .await
         .expect("load legacy rollout");
     assert!(
-        !legacy_items
+        legacy_items
             .iter()
             .any(|item| matches!(item, RolloutItem::RealtimeItem(_)))
     );
@@ -642,7 +642,7 @@ async fn paginated_realtime_items_materialize_separately_in_rollout_order() {
     .fetch_one(&pool)
     .await
     .expect("count legacy realtime items");
-    assert_eq!(legacy_realtime_count, 0);
+    assert_eq!(legacy_realtime_count, 1);
 }
 
 #[tokio::test]

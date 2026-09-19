@@ -7,7 +7,6 @@
 use std::path::PathBuf;
 
 use codex_protocol::ThreadId;
-use codex_protocol::protocol::ThreadHistoryMode;
 use codex_rollout::find_archived_thread_path_by_id_str;
 use codex_rollout::find_thread_path_by_id_str;
 
@@ -88,10 +87,9 @@ async fn resolve(
     if let Some(state_db_ctx) = state_db_ctx.as_deref() {
         match state_db_ctx.get_thread(thread_id).await {
             Ok(Some(metadata)) => {
-                // Once SQLite identifies a thread as paginated, its rollout path is
-                // authoritative: after `thread/revert`, a scan could find an older immutable
-                // rollout for the same thread. Filesystem fallback remains available when SQLite
-                // has no row or identifies the thread as legacy.
+                // Once SQLite identifies a thread, its rollout path is authoritative: after
+                // `thread/revert`, a scan could find an older immutable rollout for the same
+                // thread. Filesystem fallback remains available only when SQLite has no row.
                 if let Some(path) =
                     codex_rollout::existing_rollout_path(metadata.rollout_path.as_path()).await
                 {
@@ -104,9 +102,7 @@ async fn resolve(
                         return resolve_path_in_scope(store, thread_id, path, scope).await;
                     }
                 }
-                if metadata.history_mode == ThreadHistoryMode::Paginated {
-                    return Ok(None);
-                }
+                return Ok(None);
             }
             Ok(None) => {}
             Err(err) => {
@@ -175,14 +171,12 @@ async fn resolve_path(
     let rollout_id = match codex_rollout::rollout_id_from_path(path.as_path()) {
         Some(rollout_id) => rollout_id,
         None => {
-            let history_mode = codex_rollout::read_session_meta_line(path.as_path())
-                .await
-                .map_err(|err| ThreadStoreError::Internal {
-                    message: format!("failed to read session metadata {}: {err}", path.display()),
-                })?
-                .meta
-                .history_mode;
-            rollout_id_from_path_or_legacy_thread_id(path.as_path(), thread_id, history_mode)?
+            return Err(ThreadStoreError::InvalidRequest {
+                message: format!(
+                    "rollout path `{}` does not have a canonical rollout filename",
+                    path.display()
+                ),
+            });
         }
     };
     Ok(ResolvedThreadRollout {
@@ -190,27 +184,5 @@ async fn resolve_path(
         rollout_id,
         path,
         location,
-    })
-}
-
-/// Returns the immutable rollout ID for a path while preserving legacy noncanonical filenames.
-pub(super) fn rollout_id_from_path_or_legacy_thread_id(
-    path: &std::path::Path,
-    thread_id: ThreadId,
-    history_mode: ThreadHistoryMode,
-) -> ThreadStoreResult<ThreadId> {
-    Ok(match codex_rollout::rollout_id_from_path(path) {
-        Some(rollout_id) => rollout_id,
-        None => {
-            if history_mode == ThreadHistoryMode::Paginated {
-                return Err(ThreadStoreError::InvalidRequest {
-                    message: format!(
-                        "paginated rollout path `{}` does not have a canonical rollout filename",
-                        path.display()
-                    ),
-                });
-            }
-            thread_id
-        }
     })
 }

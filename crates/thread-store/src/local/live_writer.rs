@@ -100,11 +100,15 @@ pub(super) async fn resume_thread(
         model_provider_id: params.metadata.model_provider.clone(),
         generate_memories: matches!(params.metadata.memory_mode, ThreadMemoryMode::Enabled),
     };
-    let rollout_id = super::thread_rollout_resolver::rollout_id_from_path_or_legacy_thread_id(
-        rollout_path.as_path(),
-        params.thread_id,
-        history_mode,
-    )?;
+    let rollout_id =
+        codex_rollout::rollout_id_from_path(rollout_path.as_path()).ok_or_else(|| {
+            ThreadStoreError::InvalidRequest {
+                message: format!(
+                    "rollout path `{}` does not have a canonical rollout filename",
+                    rollout_path.display()
+                ),
+            }
+        })?;
     let recorder = RolloutRecorder::new_with_writer_lock(
         &config,
         RolloutRecorderParams::resume(rollout_path),
@@ -162,21 +166,17 @@ pub(super) async fn shutdown_thread(
 ) -> ThreadStoreResult<()> {
     let mut pending_metadata = store.pending_thread_metadata.lock(thread_id).await;
     let _live_writer_guard = store.live_writer_locks.lock(thread_id).await;
-    let (recorder, rollout_id, history_mode) = live_writer_parts(store, thread_id).await?;
+    let (recorder, rollout_id, _history_mode) = live_writer_parts(store, thread_id).await?;
     let rollout_path = recorder.rollout_path().to_path_buf();
-    if matches!(history_mode, ThreadHistoryMode::Legacy) {
-        recorder.shutdown().await.map_err(thread_store_io_error)?;
-    } else {
-        recorder.shutdown().await.map_err(thread_store_io_error)?;
-        if let Err(err) = super::thread_history_materialization::materialize_to_sqlite(
-            store,
-            rollout_id,
-            rollout_path.as_path(),
-        )
-        .await
-        {
-            warn!("failed to project durable rollout during shutdown for {thread_id}: {err}");
-        }
+    recorder.shutdown().await.map_err(thread_store_io_error)?;
+    if let Err(err) = super::thread_history_materialization::materialize_to_sqlite(
+        store,
+        rollout_id,
+        rollout_path.as_path(),
+    )
+    .await
+    {
+        warn!("failed to project durable rollout during shutdown for {thread_id}: {err}");
     }
     sync_materialized_rollout_path(store, thread_id, rollout_path.as_path()).await?;
     if let Some(metrics) = codex_otel::global()
@@ -336,22 +336,18 @@ async fn write_and_project(
         RolloutWriteOp::Persist => RolloutWriteOp::Persist,
         RolloutWriteOp::Flush => RolloutWriteOp::Flush,
     };
-    if matches!(history_mode, ThreadHistoryMode::Legacy) {
-        durable_write(&recorder, write_op).await?;
-    } else {
-        let rollout_path = recorder.rollout_path();
-        // SQLite is a rebuildable view. The flush barrier must win before projection starts so it
-        // can lag JSONL after failure, but can never get ahead of canonical history.
-        durable_write(&recorder, write_op).await?;
-        if let Err(err) = super::thread_history_materialization::materialize_to_sqlite(
-            store,
-            rollout_id,
-            rollout_path,
-        )
-        .await
-        {
-            warn!("failed to project durable rollout for {thread_id}: {err}");
-        }
+    let rollout_path = recorder.rollout_path();
+    // SQLite is a rebuildable view. The flush barrier must win before projection starts so it
+    // can lag JSONL after failure, but can never get ahead of canonical history.
+    durable_write(&recorder, write_op).await?;
+    if let Err(err) = super::thread_history_materialization::materialize_to_sqlite(
+        store,
+        rollout_id,
+        rollout_path,
+    )
+    .await
+    {
+        warn!("failed to project durable rollout for {thread_id}: {err}");
     }
     if sync_rollout_path {
         sync_materialized_rollout_path(store, thread_id, recorder.rollout_path()).await?;

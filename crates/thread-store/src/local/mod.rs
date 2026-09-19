@@ -776,6 +776,7 @@ mod tests {
     use codex_protocol::protocol::TurnContextItem;
     use codex_protocol::protocol::TurnStartedEvent;
     use codex_protocol::protocol::UserMessageEvent;
+    use codex_protocol::user_input::UserInput;
     use codex_rollout::RolloutItem;
     use tempfile::TempDir;
 
@@ -1238,7 +1239,7 @@ mod tests {
                 .expect("sqlite metadata read")
                 .expect("sqlite metadata")
                 .history_mode,
-            ThreadHistoryMode::Legacy
+            ThreadHistoryMode::Paginated
         );
         assert_eq!(
             runtime
@@ -1311,7 +1312,7 @@ mod tests {
             write_session_file(home.path(), "2025-01-03T17-00-00", uuid).expect("session file");
         let live_thread = LiveThread::resume(
             store,
-            ThreadHistoryMode::Legacy,
+            ThreadHistoryMode::Paginated,
             ResumeThreadParams {
                 thread_id,
                 rollout_path: Some(rollout_path),
@@ -1366,7 +1367,7 @@ mod tests {
             .expect("external session file");
         let live_thread = LiveThread::resume(
             store,
-            ThreadHistoryMode::Legacy,
+            ThreadHistoryMode::Paginated,
             ResumeThreadParams {
                 thread_id,
                 rollout_path: Some(rollout_path),
@@ -1562,7 +1563,7 @@ mod tests {
         let primary = LocalThreadStore::new(config.clone(), /*state_db*/ None);
         let secondary = LocalThreadStore::new(config, /*state_db*/ None);
 
-        for history_mode in [ThreadHistoryMode::Legacy, ThreadHistoryMode::Paginated] {
+        for history_mode in [ThreadHistoryMode::Paginated] {
             let thread_id = ThreadId::default();
             let mut create_params = create_thread_params(thread_id);
             create_params.history_mode = history_mode;
@@ -1743,12 +1744,12 @@ mod tests {
             .await
             .expect("load external live history");
 
-        assert!(history.items.iter().any(|item| {
-            matches!(
-                item,
-                RolloutItem::EventMsg(EventMsg::UserMessage(event)) if event.message == "external history item"
-            )
-        }));
+        assert!(
+            history
+                .items
+                .iter()
+                .any(|item| { contains_user_message(item, "external history item") })
+        );
     }
 
     #[tokio::test]
@@ -1782,12 +1783,14 @@ mod tests {
             .expect("read external live thread");
 
         assert_eq!(thread.rollout_path, Some(rollout_path));
-        assert!(thread.history.expect("history").items.iter().any(|item| {
-            matches!(
-                item,
-                RolloutItem::EventMsg(EventMsg::UserMessage(event)) if event.message == "Hello from user"
-            )
-        }));
+        assert!(
+            thread
+                .history
+                .expect("history")
+                .items
+                .iter()
+                .any(|item| { contains_user_message(item, "Hello from user") })
+        );
 
         let error = store
             .prepare_fork(PrepareForkParams {
@@ -1858,12 +1861,12 @@ mod tests {
             .await
             .expect("load archived live history");
 
-        assert!(history.items.iter().any(|item| {
-            matches!(
-                item,
-                RolloutItem::EventMsg(EventMsg::UserMessage(event)) if event.message == "archived live history item"
-            )
-        }));
+        assert!(
+            history
+                .items
+                .iter()
+                .any(|item| { contains_user_message(item, "archived live history item") })
+        );
     }
 
     #[tokio::test]
@@ -1899,7 +1902,7 @@ mod tests {
             .expect("read thread by rollout path");
 
         assert_eq!(thread.thread_id, thread_id);
-        assert_eq!(thread.history_mode, ThreadHistoryMode::Legacy);
+        assert_eq!(thread.history_mode, ThreadHistoryMode::Paginated);
         assert_eq!(
             thread
                 .history
@@ -1907,7 +1910,13 @@ mod tests {
                 .expect("history")
                 .items
                 .iter()
-                .filter(|item| matches!(item, RolloutItem::EventMsg(EventMsg::UserMessage(_))))
+                .filter(|item| {
+                    matches!(
+                        item,
+                        RolloutItem::EventMsg(EventMsg::ItemCompleted(event))
+                            if matches!(event.item, TurnItem::UserMessage(_))
+                    )
+                })
                 .count(),
             1
         );
@@ -2013,7 +2022,7 @@ mod tests {
             .append_items(AppendThreadItemsParams {
                 thread_id,
                 items: vec![
-                    user_message_item("legacy event should not persist"),
+                    legacy_user_message_item("legacy event should not persist"),
                     paginated_item,
                 ],
             })
@@ -2056,7 +2065,7 @@ mod tests {
             dynamic_tools: Vec::new(),
             selected_capability_roots: Vec::new(),
             multi_agent_version: None,
-            history_mode: ThreadHistoryMode::Legacy,
+            history_mode: ThreadHistoryMode::Paginated,
             history_base: None,
             subagent_history_start_ordinal: None,
             initial_window_id: uuid::Uuid::now_v7().to_string(),
@@ -2074,6 +2083,19 @@ mod tests {
     }
 
     fn user_message_item(message: &str) -> RolloutItem {
+        RolloutItem::EventMsg(EventMsg::ItemCompleted(ItemCompletedEvent {
+            thread_id: ThreadId::default(),
+            turn_id: format!("test-turn-{message}"),
+            item: TurnItem::UserMessage(UserMessageItem::new(&[UserInput::Text {
+                text: message.to_string(),
+                text_elements: Vec::new(),
+            }])),
+            started_at_ms: Some(0),
+            completed_at_ms: 1,
+        }))
+    }
+
+    fn legacy_user_message_item(message: &str) -> RolloutItem {
         RolloutItem::EventMsg(EventMsg::UserMessage(UserMessageEvent {
             client_id: None,
             message: message.to_string(),
@@ -2088,11 +2110,19 @@ mod tests {
         let (items, _, _) = RolloutRecorder::load_rollout_items(path)
             .await
             .expect("load rollout items");
-        assert!(items.iter().any(|item| {
-            matches!(
-                item,
-                RolloutItem::EventMsg(EventMsg::UserMessage(event)) if event.message == expected
-            )
-        }));
+        assert!(
+            items
+                .iter()
+                .any(|item| { contains_user_message(item, expected) })
+        );
+    }
+
+    fn contains_user_message(item: &RolloutItem, expected: &str) -> bool {
+        matches!(
+            item,
+            RolloutItem::EventMsg(EventMsg::ItemCompleted(event))
+                if matches!(&event.item, TurnItem::UserMessage(user)
+                    if user.content.iter().any(|input| matches!(input, UserInput::Text { text, .. } if text == expected)))
+        )
     }
 }

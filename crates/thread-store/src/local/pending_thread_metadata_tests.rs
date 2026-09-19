@@ -1,23 +1,22 @@
-use std::sync::Arc;
-use std::time::Duration;
-
 use codex_protocol::ThreadId;
+use codex_protocol::items::TurnItem;
+use codex_protocol::items::UserMessageItem;
 use codex_protocol::models::BaseInstructions;
 use codex_protocol::protocol::EventMsg;
+use codex_protocol::protocol::ItemCompletedEvent;
 use codex_protocol::protocol::SessionSource;
 use codex_protocol::protocol::ThreadHistoryMode;
 use codex_protocol::protocol::ThreadMemoryMode;
-use codex_protocol::protocol::UserMessageEvent;
+use codex_protocol::user_input::UserInput;
 use codex_rollout::RolloutItem;
-use codex_rollout::RolloutRecorder;
 use pretty_assertions::assert_eq;
+use std::sync::Arc;
 use tempfile::TempDir;
 
 use super::*;
 use crate::CreateThreadParams;
 use crate::LiveThread;
 use crate::ThreadPersistenceMetadata;
-use crate::UpdateThreadMetadataParams;
 use crate::local::test_support::test_config;
 
 #[tokio::test]
@@ -53,96 +52,6 @@ async fn pending_thread_metadata_is_consumed_by_first_metadata_update() {
             .canonicalize()
             .expect("canonical current directory")
     );
-    assert_pending_metadata_consumed(&store, thread_id).await;
-}
-
-#[tokio::test]
-async fn pending_rollout_compatible_metadata_does_not_deadlock() {
-    let (_home, store, runtime) = store_with_runtime().await;
-    let thread_id = ThreadId::new();
-
-    store
-        .stage_pending_thread_metadata(
-            thread_id,
-            ThreadMetadataPatch {
-                name: Some(Some("staged-name".to_string())),
-                model_provider: Some("staged-provider".to_string()),
-                ..Default::default()
-            },
-        )
-        .await
-        .expect("stage pending metadata");
-    let live_thread = LiveThread::create(store.clone(), create_thread_params(thread_id))
-        .await
-        .expect("create live thread");
-    tokio::time::timeout(
-        Duration::from_secs(5),
-        live_thread.update_metadata(
-            ThreadMetadataPatch {
-                model: Some("updated-model".to_string()),
-                ..Default::default()
-            },
-            /*include_archived*/ false,
-        ),
-    )
-    .await
-    .expect("pending metadata update should not deadlock")
-    .expect("update metadata before rollout materialization");
-
-    let metadata = runtime
-        .get_thread(thread_id)
-        .await
-        .expect("sqlite metadata read")
-        .expect("sqlite metadata");
-    assert_eq!(metadata.title, "staged-name");
-    assert_eq!(metadata.model_provider, "test-provider");
-    assert_eq!(metadata.model.as_deref(), Some("updated-model"));
-    assert_pending_metadata_consumed(&store, thread_id).await;
-}
-
-#[tokio::test]
-async fn pending_rollout_compatible_metadata_is_written_with_observed_update() {
-    let (_home, store, _runtime) = store_with_runtime().await;
-    let thread_id = ThreadId::new();
-
-    store
-        .stage_pending_thread_metadata(
-            thread_id,
-            ThreadMetadataPatch {
-                memory_mode: Some(ThreadMemoryMode::Disabled),
-                ..Default::default()
-            },
-        )
-        .await
-        .expect("stage pending metadata");
-    let _live_thread = LiveThread::create(store.clone(), create_thread_params(thread_id))
-        .await
-        .expect("create live thread");
-    store
-        .update_thread_metadata(UpdateThreadMetadataParams {
-            thread_id,
-            patch: ThreadMetadataPatch {
-                model: Some("observed-model".to_string()),
-                ..Default::default()
-            },
-            include_archived: false,
-        })
-        .await
-        .expect("apply observed metadata");
-
-    let rollout_path = store
-        .live_rollout_path(thread_id)
-        .await
-        .expect("rollout path");
-    let (items, _, _) = RolloutRecorder::load_rollout_items(rollout_path.as_path())
-        .await
-        .expect("load durable rollout");
-    let memory_mode = items.iter().rev().find_map(|item| match item {
-        RolloutItem::SessionMeta(session_meta) => session_meta.meta.memory_mode.as_deref(),
-        _ => None,
-    });
-
-    assert_eq!(memory_mode, Some("disabled"));
     assert_pending_metadata_consumed(&store, thread_id).await;
 }
 
@@ -273,7 +182,7 @@ fn create_thread_params(thread_id: ThreadId) -> CreateThreadParams {
         dynamic_tools: Vec::new(),
         selected_capability_roots: Vec::new(),
         multi_agent_version: None,
-        history_mode: ThreadHistoryMode::Legacy,
+        history_mode: ThreadHistoryMode::Paginated,
         history_base: None,
         subagent_history_start_ordinal: None,
         initial_window_id: uuid::Uuid::now_v7().to_string(),
@@ -287,12 +196,14 @@ fn create_thread_params(thread_id: ThreadId) -> CreateThreadParams {
 }
 
 fn user_message_item(message: &str) -> RolloutItem {
-    RolloutItem::EventMsg(EventMsg::UserMessage(UserMessageEvent {
-        client_id: None,
-        message: message.to_string(),
-        images: None,
-        local_images: Vec::new(),
-        text_elements: Vec::new(),
-        ..Default::default()
+    RolloutItem::EventMsg(EventMsg::ItemCompleted(ItemCompletedEvent {
+        thread_id: ThreadId::default(),
+        turn_id: "pending-test-turn".to_string(),
+        item: TurnItem::UserMessage(UserMessageItem::new(&[UserInput::Text {
+            text: message.to_string(),
+            text_elements: Vec::new(),
+        }])),
+        started_at_ms: Some(0),
+        completed_at_ms: 1,
     }))
 }

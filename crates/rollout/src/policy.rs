@@ -1,19 +1,16 @@
 use crate::RolloutItem;
 use crate::protocol::EventMsg;
-use codex_extension_items::ExtensionItem;
-use codex_protocol::items::TurnItem;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::SubAgentActivityKind;
 use codex_protocol::protocol::ThreadHistoryMode;
 
 /// Whether a rollout `item` should be persisted in rollout files.
-pub fn is_persisted_rollout_item(item: &RolloutItem, history_mode: ThreadHistoryMode) -> bool {
+pub fn is_persisted_rollout_item(item: &RolloutItem, _history_mode: ThreadHistoryMode) -> bool {
     match item {
         RolloutItem::ResponseItem(item) => should_persist_response_item(&item.item),
         RolloutItem::InterAgentCommunication(_)
         | RolloutItem::InterAgentCommunicationMetadata { .. } => true,
-        RolloutItem::EventMsg(ev) => should_persist_event_msg(ev, history_mode),
-        RolloutItem::RealtimeItem(_) => matches!(history_mode, ThreadHistoryMode::Paginated),
+        RolloutItem::EventMsg(ev) => should_persist_event_msg(ev, _history_mode),
+        RolloutItem::RealtimeItem(_) => true,
         // Persist Codex executive markers so we can analyze flows (e.g., compaction, API turns).
         RolloutItem::Compacted(_)
         | RolloutItem::TurnContext(_)
@@ -91,25 +88,10 @@ pub fn should_persist_response_item_for_memories(item: &ResponseItem) -> bool {
 
 /// Whether an `EventMsg` should be persisted in rollout files.
 #[inline]
-pub fn should_persist_event_msg(ev: &EventMsg, history_mode: ThreadHistoryMode) -> bool {
+pub fn should_persist_event_msg(ev: &EventMsg, _history_mode: ThreadHistoryMode) -> bool {
     match ev {
-        EventMsg::ItemCompleted(event) => {
-            // Paginated rollouts store TurnItems.
-            // Legacy rollouts keep only items with no lossless raw ResponseItem or legacy
-            // equivalent.
-            matches!(history_mode, ThreadHistoryMode::Paginated)
-                || matches!(
-                    event.item,
-                    TurnItem::FunctionCallOutput(_)
-                        | TurnItem::Plan(_)
-                        | TurnItem::Extension(ExtensionItem::Sleep(_))
-                )
-                || matches!(
-                    &event.item,
-                    TurnItem::SubAgentActivity(item)
-                        if item.kind == SubAgentActivityKind::Completed
-                )
-        }
+        // Current rollouts persist the canonical TurnItem representation.
+        EventMsg::ItemCompleted(_) => true,
         EventMsg::TokenCount(_)
         | EventMsg::ThreadGoalUpdated(_)
         | EventMsg::ThreadRolledBack(_)
@@ -118,8 +100,8 @@ pub fn should_persist_event_msg(ev: &EventMsg, history_mode: ThreadHistoryMode) 
         | EventMsg::TurnComplete(_)
         | EventMsg::ThreadSettingsApplied(_) => true,
 
-        // Only persist these legacy events when the thread's history mode is Legacy.
-        // New, paginated rollouts persist ItemCompleted events with TurnItems.
+        // These pre-paginated event projections are no longer written. Current
+        // producers persist the canonical ResponseItem or TurnItem instead.
         EventMsg::UserMessage(_)
         | EventMsg::AgentMessage(_)
         | EventMsg::AgentReasoning(_)
@@ -130,13 +112,8 @@ pub fn should_persist_event_msg(ev: &EventMsg, history_mode: ThreadHistoryMode) 
         | EventMsg::ContextCompacted(_)
         | EventMsg::McpToolCallEnd(_)
         | EventMsg::WebSearchEnd(_)
-        | EventMsg::ImageGenerationEnd(_) => {
-            matches!(history_mode, ThreadHistoryMode::Legacy)
-        }
-        EventMsg::SubAgentActivity(event) => {
-            matches!(history_mode, ThreadHistoryMode::Legacy)
-                && event.kind != SubAgentActivityKind::Completed
-        }
+        | EventMsg::ImageGenerationEnd(_)
+        | EventMsg::SubAgentActivity(_) => false,
 
         // Transient, non-durable events.
         EventMsg::Error(_)

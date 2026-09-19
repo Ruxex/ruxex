@@ -15,7 +15,6 @@ use crate::reverse_jsonl_scanner::ScanOutcome;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum RolloutOrdinalState {
-    Legacy,
     Paginated { next: Option<u64> },
 }
 
@@ -24,17 +23,14 @@ impl RolloutOrdinalState {
         history_mode: ThreadHistoryMode,
         history_base: Option<HistoryPosition>,
     ) -> Self {
-        match history_mode {
-            ThreadHistoryMode::Legacy => Self::Legacy,
-            ThreadHistoryMode::Paginated => Self::Paginated {
-                next: Some(history_base.map_or(0, |base| base.end_ordinal_exclusive)),
-            },
+        let _ = history_mode;
+        Self::Paginated {
+            next: Some(history_base.map_or(0, |base| base.end_ordinal_exclusive)),
         }
     }
 
     pub(crate) fn current(&self) -> io::Result<Option<u64>> {
         match self {
-            Self::Legacy => Ok(None),
             Self::Paginated { next } => {
                 let ordinal = (*next)
                     .ok_or_else(|| io::Error::other("paginated rollout record ordinal overflow"))?;
@@ -44,9 +40,8 @@ impl RolloutOrdinalState {
     }
 
     pub(crate) fn advance(&mut self) {
-        if let Self::Paginated { next } = self
-            && let Some(ordinal) = *next
-        {
+        let Self::Paginated { next } = self;
+        if let Some(ordinal) = *next {
             *next = ordinal.checked_add(1);
         }
     }
@@ -58,10 +53,16 @@ pub(crate) fn ordinal_state_for_rollout(
 ) -> io::Result<RolloutOrdinalState> {
     let Some((history_mode, subagent_history_start_ordinal)) = read_history_metadata(file, path)?
     else {
-        return Ok(RolloutOrdinalState::Legacy);
+        return Err(io::Error::other(format!(
+            "rollout at {} has no session metadata",
+            path.display()
+        )));
     };
     if matches!(history_mode, ThreadHistoryMode::Legacy) {
-        return Ok(RolloutOrdinalState::Legacy);
+        return Err(io::Error::other(format!(
+            "rollout at {} is not a paginated rollout",
+            path.display()
+        )));
     }
 
     let mut scanner = ReverseJsonlScanner::new(file)?;

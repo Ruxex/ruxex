@@ -19,7 +19,7 @@ pub(super) fn test_config(codex_home: &Path) -> LocalThreadStoreConfig {
 }
 
 pub(super) fn write_session_file(root: &Path, ts: &str, uuid: Uuid) -> std::io::Result<PathBuf> {
-    write_session_file_with_history_mode(root, ts, uuid, ThreadHistoryMode::Legacy)
+    write_session_file_with_history_mode(root, ts, uuid, ThreadHistoryMode::Paginated)
 }
 
 pub(super) fn write_session_file_with_history_mode(
@@ -51,7 +51,7 @@ pub(super) fn write_archived_session_file(
         uuid,
         "Archived user message",
         Some("test-provider"),
-        ThreadHistoryMode::Legacy,
+        ThreadHistoryMode::Paginated,
     )
 }
 
@@ -111,21 +111,30 @@ pub(super) fn write_session_file_with_fork(
             }
         },
     });
-    if matches!(history_mode, ThreadHistoryMode::Paginated) {
-        meta["ordinal"] = serde_json::json!(0);
-    }
+    meta["ordinal"] = serde_json::json!(0);
     writeln!(file, "{meta}")?;
-    if matches!(history_mode, ThreadHistoryMode::Legacy) {
-        let user_event = serde_json::json!({
-            "timestamp": ts,
-            "type": "event_msg",
-            "payload": {
-                "type": "user_message",
-                "message": first_user_message,
-                "kind": "plain",
+    let user_event = serde_json::json!({
+        "timestamp": ts,
+        "ordinal": 1,
+        "type": "event_msg",
+        "payload": {
+            "type": "item_completed",
+            "thread_id": uuid,
+            "turn_id": "test-turn",
+            "item": {
+                "type": "UserMessage",
+                "id": "user-test-turn",
+                "client_id": null,
+                "content": [{
+                    "type": "text",
+                    "text": first_user_message,
+                    "text_elements": []
+                }]
             },
-        });
-        writeln!(file, "{user_event}")?;
-    }
+            "started_at_ms": 0,
+            "completed_at_ms": 1
+        },
+    });
+    writeln!(file, "{user_event}")?;
     Ok(path)
 }

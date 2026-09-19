@@ -11,7 +11,6 @@ use chrono::DateTime;
 use chrono::Utc;
 use codex_protocol::ThreadId;
 use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::ThreadHistoryMode;
 pub use codex_state::LogEntry;
 use codex_state::SqliteConfig;
 use codex_state::ThreadMetadataBuilder;
@@ -568,8 +567,7 @@ pub async fn reconcile_rollout(
     }
     // Paginated metadata updates are SQLite-only. Use the rollout mode to seed a
     // missing row, then keep the value from SQLite.
-    let restore_memory_mode_from_rollout =
-        existing_metadata.is_none() || matches!(metadata.history_mode, ThreadHistoryMode::Legacy);
+    let restore_memory_mode_from_rollout = existing_metadata.is_none();
     if let Some(existing_metadata) = existing_metadata.as_ref() {
         metadata.prefer_existing_git_info(existing_metadata);
         metadata.prefer_existing_explicit_title(existing_metadata);

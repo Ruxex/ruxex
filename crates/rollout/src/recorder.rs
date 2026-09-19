@@ -217,7 +217,7 @@ impl RolloutRecorderParams {
             selected_capability_roots: Vec::new(),
             runtime_workspace_roots: None,
             multi_agent_version: None,
-            history_mode: Default::default(),
+            history_mode: ThreadHistoryMode::Paginated,
             history_base: None,
             subagent_history_start_ordinal: None,
             initial_window_id: None,

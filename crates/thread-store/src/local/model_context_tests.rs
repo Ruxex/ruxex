@@ -655,6 +655,7 @@ fn write_paginated_rollout<const N: usize>(
     let path =
         write_session_file_with_history_mode(home, timestamp, uuid, ThreadHistoryMode::Paginated)
             .expect("write session file");
+    remove_fixture_user_event(&path);
     append_items(path.as_path(), items);
     path
 }
@@ -668,6 +669,7 @@ fn write_ordinaled_paginated_rollout<const N: usize>(
     let path =
         write_session_file_with_history_mode(home, timestamp, uuid, ThreadHistoryMode::Paginated)
             .expect("write session file");
+    remove_fixture_user_event(&path);
     let mut file = OpenOptions::new()
         .append(true)
         .open(path.as_path())
@@ -686,6 +688,16 @@ fn write_ordinaled_paginated_rollout<const N: usize>(
         .expect("append rollout line");
     }
     path
+}
+
+fn remove_fixture_user_event(path: &Path) {
+    let head = std::fs::read_to_string(path)
+        .expect("read session file")
+        .lines()
+        .next()
+        .expect("session metadata line")
+        .to_string();
+    std::fs::write(path, format!("{head}\n")).expect("rewrite session file");
 }
 
 fn set_history_base(path: &Path, history_base: HistoryPosition) {

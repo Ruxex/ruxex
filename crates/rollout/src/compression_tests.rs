@@ -695,7 +695,7 @@ fn write_rollout(path: &std::path::Path, thread_id: ThreadId, message: &str) -> 
             dynamic_tools: None,
             selected_capability_roots: Vec::new(),
             memory_mode: None,
-            history_mode: Default::default(),
+            history_mode: codex_protocol::protocol::ThreadHistoryMode::Paginated,
             history_base: None,
             subagent_history_start_ordinal: None,
             multi_agent_version: None,
@@ -706,12 +706,12 @@ fn write_rollout(path: &std::path::Path, thread_id: ThreadId, message: &str) -> 
     let lines = [
         RolloutLine {
             timestamp: "2025-01-03T12:00:00Z".to_string(),
-            ordinal: None,
+            ordinal: Some(0),
             item: RolloutItem::SessionMeta(session_meta_line),
         },
         RolloutLine {
             timestamp: "2025-01-03T12:00:01Z".to_string(),
-            ordinal: None,
+            ordinal: Some(1),
             item: RolloutItem::EventMsg(EventMsg::UserMessage(UserMessageEvent {
                 message: message.to_string(),
                 ..Default::default()
