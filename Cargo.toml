@@ -57,7 +57,6 @@ members = [
     "crates/ext/connectors",
     "crates/ext/extension-api",
     "crates/ext/goal",
-    "crates/ext/git-attribution",
     "crates/ext/guardian-reviewer",
     "crates/ext/guardian-v2",
     "crates/ext/history-notes",
@@ -206,7 +205,6 @@ codex-execpolicy = { path = "crates/execpolicy" }
 codex-extension-api = { path = "crates/ext/extension-api" }
 codex-extension-items = { path = "crates/ext/items" }
 codex-goal-extension = { path = "crates/ext/goal" }
-codex-git-attribution = { path = "crates/ext/git-attribution" }
 codex-guardian-reviewer = { path = "crates/ext/guardian-reviewer" }
 codex-guardian-v2 = { path = "crates/ext/guardian-v2" }
 codex-history-notes-extension = { path = "crates/ext/history-notes" }

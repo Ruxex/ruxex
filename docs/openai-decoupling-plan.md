@@ -97,7 +97,7 @@ Phase 1 で整理した候補から、依存元が少なく、代替や責務移
 
 ### Phase 3: 残存 integration の段階的な隔離・削除
 
-**進捗:** 進行中。最初の対象である `codex-cloud-config` は削除済み。backend integration、image generation など、OpenAI 固有の機能と汎用責務が混在する残存候補を、引き続き小さな機能単位で隔離・削除する。
+**進捗:** 進行中。最初の対象である `codex-cloud-config` と、backend の user-settings による commit/PR attribution を担う `codex-git-attribution` は削除済み。backend integration、image generation など、OpenAI 固有の機能と汎用責務が混在する残存候補を、引き続き小さな機能単位で隔離・削除する。
 
 **方針:** 全バイナリを起点にした Hawk の全面解析は、現時点では実行時間に対して得られる判断材料が少ないため後続へ延期する。まず依存グラフと参照検索を用いて、直接依存元が少ない hosted integration から削除可能な境界を作る。各変更では、対象クレートの公開 API と利用箇所を列挙し、OpenAI 固有の利用機能を一つだけ外す。依存元がなくなったクレートだけを削除し、汎用責務を含むクレートは先に provider-neutral な境界へ分離する。
 
@@ -109,6 +109,8 @@ Phase 1 で整理した候補から、依存元が少なく、代替や責務移
 4. `codex-login`、`codex-agent-identity`、`codex-model-provider-info`、`codex-api` は、認証・provider registry・transport の汎用境界を設計できる段階まで保留する。
 
 各実施単位では、`just crate-dependency-graph` による依存辺の確認、対象 API と利用箇所の参照検索、`just check` を行う。Hawk は、対象クレートの直接依存元に関係する少数のバイナリだけを補助的に解析し、全バイナリ起点の結果合成は残存候補を十分に減らした後に実施する。
+
+`codex-git-attribution` の削除では、app-server と CLI の extension 登録、backend user-settings の取得、専用テスト、workspace member と依存宣言を取り除いた。保存済み rollout から旧 attribution state を除去する互換処理は維持する。
 
 ## Level 2: `codex-cli` の OpenAI 固有コマンドの削除
 

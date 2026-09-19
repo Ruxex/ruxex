@@ -49,7 +49,6 @@ mod external_agent_config;
 mod external_agent_import_sync;
 mod feedback;
 mod fs;
-mod git_attribution;
 mod guardian_v2;
 mod history_notes_extension;
 mod hooks_list;
