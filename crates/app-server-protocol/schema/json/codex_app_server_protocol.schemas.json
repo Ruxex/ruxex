@@ -15377,9 +15377,6 @@
       "ModelProviderCapabilitiesReadResponse": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "properties": {
-          "imageGeneration": {
-            "type": "boolean"
-          },
           "namespaceTools": {
             "type": "boolean"
           },
@@ -15388,7 +15385,6 @@
           }
         },
         "required": [
-          "imageGeneration",
           "namespaceTools",
           "webSearch"
         ],

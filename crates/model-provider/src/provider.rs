@@ -45,7 +45,6 @@ pub enum RemoteCompactionSupport {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ProviderCapabilities {
     pub namespace_tools: bool,
-    pub image_generation: bool,
     pub web_search: bool,
     pub external_web_access: bool,
     pub remote_compaction: RemoteCompactionSupport,
@@ -55,7 +54,6 @@ impl Default for ProviderCapabilities {
     fn default() -> Self {
         Self {
             namespace_tools: true,
-            image_generation: true,
             web_search: true,
             external_web_access: true,
             remote_compaction: RemoteCompactionSupport::Unsupported,

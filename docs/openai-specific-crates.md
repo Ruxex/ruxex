@@ -43,7 +43,7 @@
 | 6 | `codex-cloud-config` | 5 / 7 | ChatGPT 配信設定と組織要件 | 隔離 | 高 | 起動時設定ロードと enterprise 制約に影響 |
 | 7 | `codex-backend-client` | 6 / 13 | ChatGPT/Codex backend API | 削除済み | 高 | account/usage、workspace、hosted analytics、turn-cost の同時撤去が必要 |
 | 8 | `codex-backend-openapi-models` | 1 / 14 | Codex backend の生成モデル | 削除済み | 中 | backend client の削除後に同時撤去 |
-| 9 | `codex-image-generation-extension` | 3 / 49 | OpenAI Images API と固定モデル専用 | 隔離 | 高 | core の tool/event/history と app-server に波及 |
+| 9 | `codex-image-generation-extension` | 3 / 49 | OpenAI Images API と固定モデル専用 | 削除済み | 高 | core の tool/event/history と app-server に波及 |
 | 10 | `codex-web-search-extension` | 2 / 49 | OpenAI web search と互換 provider が混在 | 汎用化 | 高 | hosted/standalone の二経路を分ける必要がある |
 | 11 | `codex-core-plugins` | 7 / 49 | 汎用 plugin 管理と OpenAI marketplace が混在 | 汎用化 | 高 | local plugin と third-party marketplace を維持する必要がある |
 | 12 | `codex-analytics` | 10 / 49 | 汎用収集と OpenAI backend 送信が混在 | 汎用化 | 高 | 多数の拡張機能と core に波及 |
@@ -149,13 +149,15 @@
 
 ### 9. `codex-image-generation-extension`
 
+**進捗:** 削除済み。専用 crate、Images API endpoint/types、extension 登録、image-generation feature/capability の live advertisement、専用テストを削除した。保存済み `ImageGenerationItem`、Responses item、rollout migration、app-server/TUI の履歴表示は互換性のため維持している。
+
 - **根拠:** OpenAI auth を利用可能条件とし、`gpt-image-2` と Images API の request/response に固定されている。
 - **機能:** `image_gen` tool、画像生成・編集 request、data URL と artifact の変換。
 - **内部依存先:** `codex-api`、`codex-core`、`codex-exec-server`、`codex-extension-api`、`codex-extension-items`、`codex-login`、`codex-model-provider`、`codex-model-provider-info`、`codex-protocol`、`codex-tools`、absolute-path/image/path-uri utility。
 - **依存元:** 直接は app-server、core、core-api、推移は 49 クレート。
 - **到達経路:** core/app-server の extension install、`features.image_generation`、model tool call、TUI/app-server の履歴表示。
 - **影響:** image generation feature と capability、固定モデル名、Images API 型、tool/event/history、extension tests。専用 README はない。
-- **推奨:** **隔離**。tool/event の provider-neutral な表現は残し、OpenAI Images backend と固定モデルを provider adapter に移す。
+- **推奨:** **削除済み**。tool/event の provider-neutral な表現と履歴表示を残し、OpenAI Images backend と固定モデル、live tool 到達経路を削除した。
 - **難易度・リスク:** 高。クレート削除だけでは protocol と UI に image item が残るため、到達不能コードの扱いを Level 3 と調整する必要がある。
 
 ### 10. `codex-web-search-extension`

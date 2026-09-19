@@ -214,7 +214,6 @@ impl ModelProvider for AmazonBedrockModelProvider {
     fn capabilities(&self) -> ProviderCapabilities {
         ProviderCapabilities {
             namespace_tools: true,
-            image_generation: false,
             web_search: self.endpoint == BedrockEndpoint::Mantle,
             external_web_access: false,
             remote_compaction: RemoteCompactionSupport::V2,
@@ -610,7 +609,7 @@ mod tests {
     }
 
     #[test]
-    fn capabilities_enable_web_search_but_disable_image_generation() {
+    fn capabilities_enable_web_search() {
         let provider = AmazonBedrockModelProvider::new(
             ModelProviderInfo::create_amazon_bedrock_provider(/*aws*/ None),
             /*auth_manager*/ None,
@@ -620,7 +619,6 @@ mod tests {
             provider.capabilities(),
             ProviderCapabilities {
                 namespace_tools: true,
-                image_generation: false,
                 web_search: true,
                 external_web_access: false,
                 remote_compaction: RemoteCompactionSupport::V2,
@@ -639,7 +637,6 @@ mod tests {
             provider.capabilities(),
             ProviderCapabilities {
                 namespace_tools: true,
-                image_generation: false,
                 web_search: false,
                 external_web_access: false,
                 remote_compaction: RemoteCompactionSupport::V2,

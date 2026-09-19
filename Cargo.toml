@@ -58,7 +58,6 @@ members = [
     "crates/ext/guardian-reviewer",
     "crates/ext/guardian-v2",
     "crates/ext/history-notes",
-    "crates/ext/image-generation",
     "crates/ext/items",
     "crates/ext/memories",
     "crates/ext/mcp",
@@ -205,7 +204,6 @@ codex-goal-extension = { path = "crates/ext/goal" }
 codex-guardian-reviewer = { path = "crates/ext/guardian-reviewer" }
 codex-guardian-v2 = { path = "crates/ext/guardian-v2" }
 codex-history-notes-extension = { path = "crates/ext/history-notes" }
-codex-image-generation-extension = { path = "crates/ext/image-generation" }
 codex-external-agent-migration = { path = "crates/external-agent-migration" }
 codex-experimental-api-macros = { path = "crates/codex-experimental-api-macros" }
 codex-features = { path = "crates/features" }
