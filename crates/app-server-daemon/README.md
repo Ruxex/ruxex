@@ -56,7 +56,7 @@ default. Edit `CODEX_HOME/app-server-daemon/settings.json` to change this:
 
 Positive minute intervals have no configured cap. `daemon restart` applies the
 enabled state; the next updater wait reads a new interval. The preference does
-not affect an explicit `codex update` command or `daemon update`.
+not affect an explicit `daemon update`.
 
 `daemon update` selects the latest stable release, even with automatic updates
 disabled. It also returns pinned or local managed packages to production update

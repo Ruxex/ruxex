@@ -192,7 +192,7 @@
 - **機能:** login server/device flow、token refresh、API key、keyring/storage、AuthManager。
 - **内部依存先:** `codex-agent-identity`、`codex-config`、`codex-http-client`、`codex-keyring-store`、`codex-model-provider-info`、`codex-otel`、`codex-protocol`、`codex-secrets`、`codex-terminal-detection`、`codex-utils-template`、`codex-workload-identity`。
 - **依存元:** 直接 26、推移 56。CLI/TUI/app-server/core と大半の hosted integration が直接利用する。
-- **到達経路:** `codex login/logout`、TUI onboarding、app-server account API、model request auth。
+- **到達経路:** `codex login status` と `codex logout`、TUI onboarding、app-server account API、model request auth。CLI からの ChatGPT OAuth、device auth、OpenAI API key、access token の各 login 経路は削除済み。
 - **影響:** `OPENAI_API_KEY`、forced login method、ChatGPT auth modes、credential files/keyring、非常に多数の fixture とテスト、認証文書。
 - **推奨:** **汎用化**。provider-neutral credential interface、API-key provider、ChatGPT login provider に責務分割する。即時削除はしない。
 - **難易度・リスク:** 非常に高。認証、保存形式、後方互換性、非 OpenAI provider の利用を同時に扱う必要がある。

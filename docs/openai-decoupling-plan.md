@@ -101,7 +101,7 @@ Phase 1 で整理した候補から、依存元が少なく、代替や責務移
 
 **進捗:** 完了。`codex app` とトップレベルの `codex update`、および `codex login` の ChatGPT OAuth、device auth、OpenAI API key、access token の各経路は削除済み。旧トップレベルコマンド名は対話プロンプトとして誤実行されないよう、CLI 入口で明示的に拒否する。provider-neutral な認証状態確認に利用できる `codex login status` と、Amazon Bedrock の設定解除にも利用する `codex logout` は残している。TUI 終了時の更新処理と app-server daemon の更新処理は、この Phase の対象外として残している。
 
-**既知の後続対応:** `codex-cli` 外にある TUI の Desktop app tooltip と status card、app-server daemon README、exec-server README には旧 `codex app`、`codex update`、`codex login` への案内が残る。Level 2 の変更範囲を `codex-cli` に限定するため、この Phase では変更せず、共有クレートの OpenAI 固有 UI・文書を扱う後続作業で除去する。
+**後続対応:** `codex-cli` 外に残っていた TUI の Desktop app tooltip と status card、app-server daemon README、exec-server README の旧 `codex app`、`codex update`、`codex login` への案内も削除済み。
 
 `codex-cli` クレートが公開するコマンドのうち、OpenAI 固有機能に関わるものを削除する。この Level では変更範囲を `codex-cli` クレート内に限定し、依存クレートの実装は削除・変更しない。
 
