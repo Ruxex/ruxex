@@ -100,17 +100,38 @@ Phase 1 で整理した候補から、依存元が少なく、代替や責務移
 
 **進捗:** 進行中。`codex-cloud-config`、backend の user-settings による commit/PR attribution を担う `codex-git-attribution`、および remote-memory の backend rate-limit guard は削除済みである。workspace message、`/accounts/check` による workspace account routing、account usage/rate-limit 読み取り、リセット credit、workspace owner nudge、hosted analytics dashboard、backend turn-cost collection の API・UI・テスト到達経路を削除した。依存元がなくなったため、`codex-backend-client` と `codex-backend-openapi-models` も削除済みである。OpenAI Images adapter、専用 Images API endpoint、Realtime voice capability の API・transport・protocol・履歴・core・app-server・TUI 到達経路、OpenAI hosted web-search adapter の自動 `web.run` 到達経路、および analytics の OpenAI hosted sink も削除済みである。`codex-core-plugins` の OpenAI curated plugin startup sync（GitHub Git/HTTP/export archive producer、同期スレッド、専用 telemetry）と、同期結果だけを読むローカル curated marketplace キャッシュ経路も削除済みである。feedback capability についても、設定・protocol・app-server upload・TUI/exec UI・Guardian 失敗レビュー保持・専用クレート・Sentry/backend sink を削除し、provider-neutral なログ保存と hook feedback は保持した。外部ユーザー0のpre-release forkであるため、`docs/pre-release-compatibility-inventory.md` の互換性棚卸しと producer/consumer 根拠の記録を継続する。現行 runtime に必要な platform fallback、active client、security behavior、provider-neutral capability は個別根拠を記録して残す。
 
+**機能単位の再監査:** Feedback の削除で確認した基準を、残存する Hosted capability にも適用する。クレート名ではなく、認証、固定 endpoint、hosted protocol、設定、feature、protocol、UI までを一つの到達可能な機能として監査する。現時点では次の機能を、Phase 3 の独立した実施単位として追加する。
+
+- ChatGPT Remote Control は、ChatGPT 専用 URL・認証・enrollment 永続化・WebSocket・CLI・app-server protocol を含むため、機能全体を削除する。汎用 remote transport は現行 capability として存在しないため、この機能のためだけに抽象化を残さない。
+- Hosted Plugin Marketplace / Sharing / Runtime は、OpenAI curated catalog、ChatGPT backend の検索・共有・mutation・bundle・remote runtime を削除する。ローカル、bundled、Git/npm などの provider-neutral な plugin loader、hook、tool、marketplace root は保持する。
+- ChatGPT Apps / Connectors / host-owned Apps MCP は、connector directory、ChatGPT account/auth、Apps protocol、Apps UI、OpenAI 固有 MCP extension を削除する。通常の MCP server、汎用 OAuth/elicitation、provider-neutral な tool metadata は保持する。
+- ChatGPT 認証と Agent Identity は、`codex-agent-identity` を全体削除候補とし、`codex-login` から ChatGPT OAuth/device/access-token とそれに依存する protocol/UI を削除する。Bedrock、workload identity、汎用 credential storage/keyring は保持する。
+
+`codex-model-provider-info`、`codex-api`、`codex-http-client`、`codex-mcp` は、上記 capability を外した後に OpenAI 固有 adapter と現行の互換 transport を再監査する。Responses-compatible な非 OpenAI provider、標準 MCP、汎用 HTTP transport を利用する経路があるため、クレート全体の削除は先行して決めない。
+
 **方針:** 全バイナリを起点にした Hawk の全面解析は、現時点では実行時間に対して得られる判断材料が少ないため後続へ延期する。まず依存グラフと参照検索を用いて、直接依存元が少ない hosted integration から削除可能な境界を作る。各変更では、対象クレートの公開 API と利用箇所を列挙し、OpenAI 固有の利用機能を一つだけ外す。依存元がなくなったクレートだけを削除し、汎用責務を含むクレートは先に provider-neutral な境界へ分離する。
 
 **実施順序:**
 
 1. `codex-cloud-config` の hosted policy source をローカル設定読み込みから切り離す。**完了**
-2. `codex-backend-client` の account/usage/workspace、remote memory、git attribution などを機能単位で外し、依存元がなくなった後に `codex-backend-openapi-models` とともに削除する。
-3. image generation の OpenAI adapter と、旧 rollout/protocol/config/CLI/import/UI 互換層を削除済み。その後、web search の OpenAI hosted adapter と analytics の OpenAI hosted sink を削除し、plugin marketplace を共通の tool/event/diagnostic 処理を残して provider adapter 単位へ分離した。feedback capability は専用 upload/retention/UI とクレートを削除し、provider-neutral なログ保存と hook feedback を保持した。**完了**
+2. `codex-backend-client` の account/usage/workspace、remote memory、git attribution などを機能単位で外し、依存元がなくなった後に `codex-backend-openapi-models` とともに削除する。**完了**
+3. image generation、web search、analytics hosted sink、OpenAI curated plugin startup sync/cache、feedback の各 capability を整理する。OpenAI 固有部分を削除し、provider-neutral なログ、tool、plugin、media 表現を保持する。**完了**
 4. Realtime voice capability を削除する。OpenAI Realtime の WebSocket / WebRTC call 契約、core の会話管理、app-server / TUI の voice UI・protocol・設定・履歴、および専用の `codex-realtime-webrtc` と `codex-voice-host` を削除した。通常のテキスト会話、汎用 audio utility、provider-neutral な media 処理は保持する。**完了**
-5. `codex-login`、`codex-agent-identity`、`codex-model-provider-info`、`codex-api` は、認証・provider registry・transport の汎用境界を設計できる段階まで保留する。
+5. ChatGPT Remote Control capability を削除する。transport、app-server protocol、daemon、CLI、state persistence、設定、ドキュメントを一単位として扱う。
+6. Hosted Plugin Marketplace / Sharing / Runtime を削除する。`codex-core-plugins` は remote service 部分だけを外し、local/bundled/Git/npm plugin foundation は保持する。
+7. ChatGPT Apps / Connectors / host-owned Apps MCP を削除する。`codex-connectors` と専用 extension の依存元・汎用 MCP 利用を監査し、不要になったクレートは同じ単位で削除する。
+8. ChatGPT 認証と Agent Identity を削除する。`codex-agent-identity` は全体削除を先に検証し、`codex-login` は ChatGPT 専用 branch と protocol/UI だけを外して汎用 credential 経路を残す。
+9. 上記を反映した依存グラフを再生成し、`codex-model-provider-info`、`codex-api`、`codex-http-client`、`codex-mcp` の OpenAI adapter と provider-neutral な共有部分を再評価する。
 
-各実施単位では、`just crate-dependency-graph` による依存辺の確認、対象 API と利用箇所の参照検索、`just check` を行う。Hawk は、対象クレートの直接依存元に関係する少数のバイナリだけを補助的に解析し、全バイナリ起点の結果合成は残存候補を十分に減らした後に実施する。
+### Phase 3 の完了ゲート
+
+- `Feature::RemoteControl`、`Feature::RemotePlugin`、`Feature::Apps` などの stable/default feature と、それらを有効にする設定・protocol・UI・CLI の producer/consumer 監査が完了している。
+- ChatGPT/OpenAI が所有する hosted service へ到達する本番経路が、明示的に保持した provider-compatible transport と区別されている。
+- `codex-agent-identity`、`codex-login`、`codex-connectors`、`codex-core-plugins`、`codex-mcp` の削除/分割判断が、クレート名ではなく capability ごとに記録されている。
+- `docs/pre-release-compatibility-inventory.md` の各行に producer、consumer、`remove`/`retain`/`migrate-in-place`、検証コマンドがある。
+- 非 OpenAI provider、ローカル実行、標準 MCP、platform fallback、security behavior を意図せず削除していない。
+
+各実施単位では、`just crate-dependency-graph` による依存辺の確認、対象 API と利用箇所の参照検索、`just check` を行う。この cleanup ではテストを追加・実行せず、`just check` と生成物・参照差分を主な検証手段とする。Hawk は、対象クレートの直接依存元に関係する少数のバイナリだけを補助的に解析し、全バイナリ起点の結果合成は残存候補を十分に減らした後に実施する。
 
 `codex-git-attribution` の削除では、app-server と CLI の extension 登録、backend user-settings の取得、専用テスト、workspace member と依存宣言を取り除いた。保存済み rollout から旧 attribution state を除去する互換処理は、現行 consumer の棚卸し後に pre-release compatibility inventory の対象として扱う。
 
@@ -170,7 +191,7 @@ Hawk の結果だけで自動的に削除を決めず、feature 構成、複数�
 4. 依存グラフを更新し、削除による変化を確認する。
 5. Level 2 で `codex-cli` 内の OpenAI 固有コマンドと同クレート内の dead code を削除する。
 6. 再度依存グラフを更新する。
-7. Level 1 Phase 3 で残存 integration を小単位で隔離・削除する。
+7. Level 1 Phase 3 で capability 単位の hosted integration を監査し、小単位で隔離・削除する。
 8. Level 3 で追加のクレート削除候補と Dead and Public なコードを調査する。
 9. 調査結果を、次の段階的な削除計画へ反映する。
 
@@ -178,10 +199,10 @@ Hawk の結果だけで自動的に削除を決めず、feature 構成、複数�
 
 ## 検証の基本単位
 
-各変更では、変更対象に応じて次を実施する。
+各変更では、変更対象に応じて次を実施する。pre-release compatibility cleanup と crate removal では `just check` を主検証とし、テスト実行は行わない。
 
 - Rust のフォーマットと静的検査
-- 変更対象クレートのビルドとテスト
+- 変更対象クレートの `cargo check` または `just check`
 - ワークスペース全体のビルドまたはチェック
 - CLI の help と代表的な非 OpenAI コマンドのスモークテスト
 - 依存関係 JSON と HTML の再生成、および差分確認

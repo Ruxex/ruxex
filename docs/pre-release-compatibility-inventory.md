@@ -138,6 +138,49 @@ the listed verification commands have run.
 
 ## Phase 3 integration handoff
 
+The following rows are capability-level cleanup units. They are intentionally
+larger than a single compatibility symbol: each row must be audited from its
+hosted producer through protocol, configuration, UI, and runtime consumers
+before code is removed.
+
+### ChatGPT Remote Control capability
+
+| Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |
+|---|---|---|---|---|
+| `crates/app-server-transport/src/transport/remote_control/` including `auth`, `clients`, `enroll`, `persistence`, `protocol`, and `websocket` | The transport allowlists `chatgpt.com`/`chatgpt-staging.com`, calls `/wham/remote/control`, and requires ChatGPT account/OpenAI headers. No current non-OpenAI Remote Control producer/consumer was identified. | Current app-server transport and localhost/platform transport; no compatibility reader for remote-control enrollment | `remove` (planned capability slice) | `rg -n 'remote_control|/wham/remote/control|chatgpt-account-id|x-openai-fedramp' crates --glob '*.rs'; just check` |
+| `crates/app-server-protocol/src/protocol/v2/remote_control.rs`, v2 exports, generated schemas, and request/notification types | App-server protocol exposes the Remote Control contract, but the only producer/consumer is the hosted ChatGPT transport and its clients. | Active app-server protocol without Remote Control types | `remove` (planned capability slice) | `rg -n 'RemoteControl|remote_control' crates/app-server-protocol crates/app-server crates/app-server-daemon crates/cli crates/state --glob '*.rs'; just check` |
+| `crates/app-server-daemon/src/remote_control_client.rs`, `crates/cli/src/remote_control_cmd.rs`, `crates/state/src/runtime/remote_control.rs`, and remote-control config | Daemon, CLI, and state persistence exist only to enroll, pair, refresh, and run the hosted Remote Control session. | Current daemon/CLI/state surface without Remote Control | `remove` (planned capability slice) | `rg -n 'allow_remote_control|remote_control_url|remote_control' crates/cli crates/app-server-daemon crates/state crates/config crates/core --glob '*.rs' --glob '*.toml'; just check` |
+
+### ChatGPT Apps / Connectors / host-owned Apps MCP capability
+
+| Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |
+|---|---|---|---|---|
+| `crates/connectors/src/lib.rs`, `ConnectorDirectoryCacheKey`, `/connectors/directory/list`, `/connectors/directory/list_workspace`, and `codex-connectors-extension` | Connector metadata is produced by ChatGPT backend directory endpoints and cached with ChatGPT base URL/account/user identifiers. Apps and connector UI consume the results. | Configured MCP/plugin metadata and ordinary provider-neutral tool discovery | `remove` (planned capability slice; verify crate-wide consumers first) | `rg -n 'ConnectorDirectory|connectors/directory|codex-connectors|chatgpt_base_url' crates --glob '*.rs'; just check` |
+| `Feature::Apps`, `Feature::Psp`, Apps-related feature specs, `apps_mcp_product_sku`, and Apps config | Apps are enabled through ChatGPT-authenticated paths and PSP/Apps product configuration; no non-OpenAI Apps producer was identified. | Ordinary MCP configuration and current provider-neutral feature set | `remove` (planned capability slice) | `rg -n 'Feature::Apps|Feature::Psp|apps_mcp_product_sku|apps_enabled|EnableMcpApps|CodexAppsMcp' crates --glob '*.rs' --glob '*.toml'; just check` |
+| `crates/app-server-protocol/src/protocol/v2/apps.rs`, Apps request processors, core Apps instructions, and TUI Apps/app mentions | App-server, core, and TUI expose and consume the ChatGPT Apps/connector product surface. | Active app-server/core/TUI protocol and UI without Apps product types | `remove` (planned capability slice) | `rg -n 'AppsRequestProcessor|AppsList|app://|AppsRequest|AppsList' crates --glob '*.rs' --glob '*.json' --glob '*.ts'; just check` |
+| `crates/codex-mcp/src/codex_apps.rs`, host-owned Apps MCP configuration, OpenAI `fileParams`/elicitation/source-attribution adapters, and ChatGPT MCP auth | These adapters materialize ChatGPT-hosted app connector/tool metadata and require ChatGPT trust/auth. Generic MCP runtime and standard OAuth/elicitation have separate consumers. | Standard MCP runtime, generic OAuth/elicitation, and provider-neutral tool metadata | `remove` for Apps/OpenAI adapters; `retain` for generic MCP | `rg -n 'codex_apps|host_owned_codex_apps|CODEX_APPS_MCP|fileParams|openai/elicitation|McpServerAuth::ChatGpt' crates/codex-mcp crates --glob '*.rs'; just check` |
+
+### Hosted Plugin Marketplace / Sharing / Runtime capability
+
+| Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |
+|---|---|---|---|---|
+| `crates/core-plugins/src/remote.rs`, `remote_legacy.rs`, `remote_bundle.rs`, `remote_mutations.rs`, remote search/share modules, and remote installed-plugin sync | The modules call OpenAI curated/ChatGPT remote catalog, search, share, mutation, bundle, and installed-plugin endpoints. This is distinct from the already removed startup sync/cache producer. | Local, bundled, Git/npm, and user-configured marketplace roots | `remove` (planned Hosted capability slice) | `rg -n 'openai-curated-remote|created-by-me|shared-with-me|RemotePluginServiceConfig|chatgpt_base_url|hosted_plugin' crates/core-plugins crates/app-server crates/cli crates/core --glob '*.rs'; just check` |
+| `Feature::RemotePlugin`, plugin search/share/install request processors, CLI plugin remote commands, and Hosted Plugin Runtime MCP routing | These surfaces expose the hosted remote marketplace/runtime and depend on ChatGPT auth or base URL. Local plugin install, hooks, tools, skills, and trust policy remain active consumers. | Provider-neutral local/plugin management surface | `remove` for Hosted surfaces; `retain` for local/plugin foundation | `rg -n 'Feature::RemotePlugin|remote_plugin_enabled|plugin.*(search|share|install)|hosted_plugin_runtime|apps_route_available' crates --glob '*.rs' --glob '*.toml'; just check` |
+
+### ChatGPT authentication / Agent Identity capability
+
+| Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |
+|---|---|---|---|---|
+| `crates/agent-identity/src/lib.rs`: ChatGPT issuer/JWKS/auth URLs, `ChatGptEnvironment`, `chatgpt_user_id`, and `chatgpt_account_is_fedramp` | All observed production behavior is tied to ChatGPT/Codex backend identity policy; login and model-provider code are the direct consumers. | No identity crate unless a current non-OpenAI identity producer/consumer remains; retain generic keyring/credential primitives elsewhere | `remove` (planned; confirm direct consumers before deletion) | `rg -n 'codex-agent-identity|ChatGptEnvironment|chatgpt_user_id|chatgpt_account_is_fedramp|CHATGPT_CODEX' crates --glob '*.rs'; just check` |
+| `crates/login/src/server.rs`, `auth/manager.rs`, `auth/agent_identity.rs`, ChatGPT OAuth/device/access-token branches, and ChatGPT auth token protocol/UI | These branches implement ChatGPT OAuth/device login and token refresh; Bedrock, workload identity, external bearer, and generic storage have separate consumers. | Provider-neutral credential state plus Bedrock/workload/external provider auth | `remove` for ChatGPT branch; `retain` for other auth | `rg -n 'auth\.openai\.com|Chatgpt|ChatGPT|login_with_chatgpt_auth_tokens|OPENAI_API_KEY' crates/login crates/app-server crates/app-server-protocol crates/tui --glob '*.rs'; just check` |
+
+### Residual hosted-specific code after capability removal
+
+| Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |
+|---|---|---|---|---|
+| `crates/app-server/src/turn_cost_worker_chatgpt.rs` and ChatGPT-only turn-cost imports | The active `turn_cost_worker.rs` is a disabled no-op; the ChatGPT worker source is not referenced by the current module graph and has no current producer. | No turn-cost worker; provider-neutral usage accounting only if a current producer is introduced | `remove` | `rg -n 'turn_cost_worker_chatgpt|query_chatgpt_turn_costs|WorkerRuntime' crates/app-server --glob '*.rs'; just check` |
+| PSP cookies, `chatgpt_base_url`, `forced_chatgpt_workspace_id`, `apps_mcp_product_sku`, and ChatGPT Cloudflare host modules after the above slices | These settings/modules may become orphaned once Remote Control, Apps, Hosted Plugins, and ChatGPT auth are removed; OpenAI-compatible custom provider base URLs must be audited separately. | Provider-neutral provider URL/config and generic HTTP client | `remove` for orphaned hosted fields/modules; `retain` for active compatible-provider URL handling | `rg -n 'chatgpt_base_url|forced_chatgpt_workspace_id|apps_mcp_product_sku|with_chatgpt_cloudflare_cookies|chatgpt_hosts|oai-chat-psp' crates --glob '*.rs' --glob '*.toml'; just check` |
+
 | Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |
 |---|---|---|---|---|
 | `crates/core-plugins/src/startup_sync.rs`, `startup_sync/http_client.rs`, `startup_sync_tests.rs`, `CURATED_PLUGINS_STARTUP_SYNC_*`, and `PluginsManager::start_curated_repo_sync` | The producer only synchronized OpenAI's curated plugin repository from GitHub or the ChatGPT export archive during startup; no provider-neutral marketplace producer consumed it. | User-configured local/Git/npm marketplace sources and the existing bundled plugin loader | `remove` (completed) | `cargo check -p codex-core-plugins`; `git diff --check`; `just check` |

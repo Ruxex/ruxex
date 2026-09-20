@@ -4,9 +4,9 @@
 
 この文書は、[OpenAI 固有機能の段階的な分離計画](openai-decoupling-plan.md) の Level 1 Phase 1 の成果物である。OpenAI または ChatGPT の認証、API、ホスト型サービス、クラウド機能を直接実装するクレートと、汎用責務の中にそれらを含むクレートを分け、Phase 2 で安全に削除できる単位を決める。
 
-調査はコミット `f7affd3a0` を基準に、次の情報を照合した。
+調査は現行 HEAD `72c8f5844` を基準に、次の情報を照合した。過去のクレート一覧だけでは Hosted capability の境界を見落とすため、機能・feature・protocol・設定・UI の到達経路も再監査する。
 
-- `just crate-dependency-graph` で生成した Level 0 の JSON（150 クレート、894 依存辺）
+- `just crate-dependency-graph` で生成した Level 0 の JSON（137 クレート、802 依存辺）
 - 各候補の `Cargo.toml`、README、公開 API、テスト
 - `codex-cli`、`codex-tui`、`codex-app-server` からの import と dispatch
 - OpenAI/ChatGPT の URL、認証方式、設定名、機能名を参照するコード
@@ -21,7 +21,21 @@
 
 この基準により、ImageGen は OpenAI Images adapter を削除する隔離対象、Web Search は hosted OpenAI search だけを外す汎用化対象、Realtime voice は capability 全体を削除する対象である。
 
+## 機能単位で追加した再監査対象
+
+Feedback の削除で確認したように、OpenAI 固有性はクレート単位ではなく、現行の producer から consumer まで到達できる capability 単位で判定する。次の機能は、既存のクレート候補表とは別の一括監査・削除単位として扱う。
+
+| capability | OpenAI 固有と判断する根拠 | 削除対象 | 残すもの | 判断 |
+|---|---|---|---|---|
+| ChatGPT Remote Control | ChatGPT 専用 host allowlist、`/wham/remote/control` endpoint、ChatGPT account header、enrollment/pairing persistence | `app-server-transport` の remote-control transport、app-server protocol、daemon client、CLI、state runtime、設定、関連 UI/文書 | 現行の通常 app-server transport と localhost/platform transport | **capability 全体を削除** |
+| ChatGPT Apps / Connectors / host-owned Apps MCP | connector directory が ChatGPT backend を producer とし、Apps が ChatGPT auth/account と Apps protocolを要求する | `codex-connectors` と専用 extension の到達経路、Apps feature/config/protocol/UI、`codex_apps`、OpenAI 固有 MCP adapter | 通常の MCP server、標準 OAuth/elicitation、provider-neutral な tool/plugin metadata | **capability 全体を削除** |
+| Hosted Plugin Marketplace / Sharing / Runtime | `openai-curated-remote`、ChatGPT base URL、remote catalog/mutation/bundle、Hosted Plugin Runtime に固定 | `core-plugins` の remote service、remote legacy/mutation/bundle/search/share、RemotePlugin feature と専用 CLI/app-server surface | local/bundled/Git/npm plugin loader、hook、tool、marketplace root | **Hosted 部分を削除、基盤は保持** |
+| ChatGPT 認証 / Agent Identity | issuer/JWKS、environment、JWT claims、OAuth/device/access-token が `chatgpt.com` と `auth.openai.com` に固定 | `codex-agent-identity` 全体候補、`codex-login` の ChatGPT branch、login protocol/UI、ChatGPT token consumer | Bedrock、workload identity、汎用 credential storage/keyring、他 provider auth | **Identity は全体削除候補、login は分割** |
+
+これらを削除した後に、`codex-model-provider-info`、`codex-api`、`codex-http-client`、`codex-mcp` の残存 OpenAI adapter を再評価する。Responses-compatible な非 OpenAI provider、標準 MCP、汎用 HTTP transport が現行 consumer を持つため、クレート全体を先に削除しない。
+
 表中の「直接 / 推移」は、そのクレートへ依存する内部クレート数であり、通常依存、開発依存、ビルド依存、target 条件付き依存を含む。推移依存元の全一覧は Level 0 の JSON を正とし、ここでは判断に必要な直接依存元と主要な到達経路を記載する。
+個別の件数はこの調査時点のスナップショットであり、各 capability の削除単位ごとに `just crate-dependency-graph` を再実行して更新する。
 
 ## Workspace member の扱い
 
@@ -45,12 +59,12 @@
 | 8 | `codex-backend-openapi-models` | 1 / 14 | Codex backend の生成モデル | 削除済み | 中 | backend client の削除後に同時撤去 |
 | 9 | `codex-image-generation-extension` | 3 / 49 | OpenAI Images API と固定モデル専用 | 削除済み | 高 | core の tool/event/history と app-server に波及 |
 | 10 | `codex-web-search-extension` | 2 / 49 | OpenAI web search と互換 provider が混在 | 汎用化 | 高 | hosted/standalone の二経路を分ける必要がある |
-| 11 | `codex-core-plugins` | 7 / 49 | 汎用 plugin 管理と OpenAI marketplace が混在 | 汎用化 | 高 | local plugin と third-party marketplace を維持する必要がある |
+| 11 | `codex-core-plugins` | 7 / 49 | 汎用 plugin 管理と OpenAI marketplace が混在 | Hosted 部分を削除 | 高 | local plugin と third-party marketplace を維持する必要がある |
 | 12 | `codex-analytics` | 10 / 49 | 汎用収集と OpenAI backend 送信が混在 | 汎用化 | 高 | 多数の拡張機能と core に波及 |
 | 13 | `codex-feedback` | 7 / 54 | OpenAI/Sentry 向けフィードバック送信 | 削除済み | 高 | ログ layer、app-server API、TUI に波及した |
 | 14 | `codex-response-debug-context` | 2 / 54 | 汎用デバッグ情報と OpenAI header が混在 | 汎用化 | 中 | model error の診断情報欠落 |
-| 15 | `codex-login` | 26 / 56 | ChatGPT OAuth と汎用 credential 管理が混在 | 汎用化 | 非常に高 | ほぼ全エントリーポイントの認証に波及 |
-| 16 | `codex-agent-identity` | 3 / 57 | ChatGPT issuer/JWKS と agent identity が一体 | 汎用化 | 高 | login、model provider、cloud config の認証境界 |
+| 15 | `codex-login` | 26 / 56 | ChatGPT OAuth と汎用 credential 管理が混在 | ChatGPT 部分を削除 | 非常に高 | ほぼ全エントリーポイントの認証に波及 |
+| 16 | `codex-agent-identity` | 3 / 57 | ChatGPT issuer/JWKS と agent identity が一体 | クレート削除候補 | 高 | login、model provider、cloud config の認証境界 |
 | 17 | `codex-model-provider-info` | 16 / 60 | 汎用 provider 設定に OpenAI 既定値が混在 | 汎用化 | 非常に高 | 非 OpenAI provider も同じ型を利用 |
 | 18 | `codex-api` | 16 / 71 | Responses/WebSocket wire API と汎用 transport 境界 | 汎用化 | 非常に高 | core を含む最大の推移影響範囲 |
 | 19 | Realtime voice capability（`codex-realtime-webrtc`、`codex-voice-host` を含む） | なし（削除済み） | OpenAI Realtime API のみが現行の起動経路 | 削除済み | 高 | API、protocol、履歴、core、app-server、TUI、専用補助クレートを一単位で削除した |
@@ -68,7 +82,7 @@
 | `codex-core-plugins` | local / third-party plugin の load と管理 | OpenAI curated marketplace と ChatGPT remote service だけを削除する。 |
 | `codex-analytics` | local event/reducer、diagnostic bundle | OpenAI/ChatGPT backend sink とそれに専用の metadata を削除する。 |
 | `codex-response-debug-context` | 標準 HTTP/API の診断情報 | OpenAI 固有 header・URL の extractor を削除する。 |
-| `codex-login`、`codex-agent-identity` | credential storage、鍵・署名 primitive、他 provider の auth | ChatGPT/OpenAI login、issuer/JWKS policy、専用 token flow を隔離後に削除する。 |
+| `codex-login`、`codex-agent-identity` | credential storage、鍵・署名 primitive、Bedrock、workload identity、他 provider の auth | `codex-agent-identity` は全体削除を先に検証する。`codex-login` は ChatGPT/OpenAI login、issuer/JWKS policy、専用 token flow だけを削除し、汎用 credential 経路を残す。 |
 | `codex-model-provider-info`、`codex-api` | provider registry、互換 provider transport、共通 HTTP client | OpenAI built-in 定義と OpenAI wire adapter を隔離後に削除する。 |
 
 ## 削除候補
@@ -109,6 +123,40 @@
 - **影響:** `apply` command、app-server connector API、`apps` feature/config、ChatGPT auth/cookie、クレート内テストと README。
 - **推奨:** **分割後に削除**。`apply` と connectors は独立した到達経路なので、一括削除ではなく二つの実施単位に分ける。
 - **難易度・リスク:** 中。汎用の git patch 適用処理と connector model は残し、ChatGPT backend fetch だけを削除する必要がある。
+
+## 追加する capability 実施単位
+
+### ChatGPT Remote Control
+
+- **根拠:** `crates/app-server-transport/src/transport/remote_control/protocol.rs` は `chatgpt.com` / `chatgpt-staging.com` の host allowlist と `/wham/remote/control` endpoint を持ち、auth は ChatGPT account header と OpenAI 固有の backend 条件を要求する。feature は `Removed` だが、実装・protocol・CLI・daemon・state persistence は現行ソースに残っている。
+- **対象:** `app-server-transport` の remote-control transport/auth/client/enroll/websocket、`app-server-protocol` の v2 remote-control types、`app-server-daemon` client、`codex-cli` の `remote-control` command、`codex-state` runtime、`chatgpt_base_url` と remote-control 設定、関連 schema/UI/documentation。
+- **非対象:** 通常の app-server transport、localhost/platform transport、provider-neutral な WebSocket/HTTP utility。現行の非 OpenAI Remote Control consumer は確認できていない。
+- **推奨:** **capability 全体を削除**。将来 generic remote control が必要になった場合は、OpenAI endpoint と persistence contract を持ち込まず新しい provider-neutral capability として設計する。
+- **難易度・リスク:** 高。protocol、daemon、保存済み enrollment、設定を一つの単位で外し、通常の app-server 起動を維持する必要がある。
+
+### ChatGPT Apps / Connectors / host-owned Apps MCP
+
+- **根拠:** `crates/connectors/src/lib.rs` は ChatGPT backend の connector directory endpoint と account/user cache を実装する。`crates/features` の Apps は ChatGPT auth を要求し、`codex-mcp` の `codex_apps`、host-owned Apps MCP、OpenAI file/elicitation extension と結合している。
+- **対象:** `codex-connectors`、`codex-connectors-extension` とその専用 consumer、`Feature::Apps` / Apps-related feature、`app-server-protocol` の Apps types、core/TUI/app-server の Apps instruction/UI/processor、`codex-mcp` の `codex_apps`・host-owned Apps MCP・OpenAI 固有 adapter、`chatgpt_base_url` / `apps_mcp_product_sku` と専用 schema/config。
+- **非対象:** 通常の設定済み MCP server、標準 MCP OAuth/elicitation、provider-neutral な plugin/tool metadata、通常の MCP runtime。
+- **推奨:** **capability 全体を削除**。まず全 consumer を producer/consumer inventory に記録し、`codex-connectors` が汎用 metadata を実際に供給していないことを確認した後、クレート削除を決める。
+- **難易度・リスク:** 非常に高。Apps protocol と通常の MCP protocol を混同せず、ChatGPT 専用の auth/account/UI だけを一括で除去する必要がある。
+
+### Hosted Plugin Marketplace / Sharing / Runtime
+
+- **根拠:** `crates/core-plugins/src/remote.rs` と `remote_legacy.rs` は `openai-curated-remote`、ChatGPT base URL、remote catalog/search/share/mutation/bundle endpoint、Hosted Plugin Runtime を実装する。これは削除済みの startup sync/cache とは別の、現行 Hosted service 経路である。
+- **対象:** `core-plugins` の remote service、remote legacy/mutation/bundle/search/share/sync、`Feature::RemotePlugin`、CLI plugin search/share/install surface、app-server plugin request processors、Hosted Plugin Runtime の MCP routing、専用設定・protocol・文書。
+- **非対象:** local/bundled/Git/npm plugin loader、hooks、tools、skills、trust/security policy、provider-neutral marketplace roots。
+- **推奨:** **Hosted 部分を削除**。`codex-core-plugins` 全体は削除せず、remote service の依存元がなくなった場合に限り補助クレートを再評価する。
+- **難易度・リスク:** 高。既に削除した startup sync/cache と残存する remote catalog/install を混同せず、ローカル plugin foundation を維持する必要がある。
+
+### ChatGPT 認証 / Agent Identity
+
+- **根拠:** `crates/agent-identity/src/lib.rs` の issuer、JWKS/auth URL、environment、JWT claims は ChatGPT/Codex backend に固定されており、現行の非 OpenAI identity consumer は確認できない。`codex-login` はこの機能と、Bedrock・workload identity・汎用 credential storage を混在させている。
+- **対象:** `codex-agent-identity` 全体候補、`codex-login` の ChatGPT OAuth/device/access-token/AuthManager branch、ChatGPT login protocol/UI、app-server/TUI の ChatGPT auth token types と consumer、ChatGPT 専用 config/headers。
+- **非対象:** Bedrock access key、workload identity、external bearer、汎用 keyring/credential storage、provider-neutral な auth state と他 provider の credential flow。
+- **推奨:** **Agent Identity はクレート全体削除を先に検証し、login は分割削除**。依存元がなくなった場合のみ `codex-agent-identity` を workspace から外す。
+- **難易度・リスク:** 非常に高。ChatGPT login の削除を理由に、非 OpenAI provider の認証や credential storage を削除しないこと。
 
 ## 隔離候補
 
@@ -189,7 +237,7 @@ protocol slice として扱う。generic image input、local media、`view_image
 - **依存元:** 直接 7、推移 49。app-server、CLI、core、TUI と connector/MCP extension が利用する。
 - **到達経路:** 起動時 plugin load、CLI plugin command、app-server plugin API、TUI と extension registration。
 - **影響:** OpenAI marketplace 名、startup sync URL、`chatgpt_base_url`、remote plugin API、marketplace/cache/policy tests。汎用 plugin 文書と設定は残す必要がある。
-- **推奨:** **汎用化**。local plugin loader と一般 marketplace interface を残し、OpenAI curated policy と ChatGPT remote service を別 integration に移す。
+- **推奨:** **Hosted 部分を削除**。local plugin loader と一般 marketplace interface を残し、OpenAI curated policy と ChatGPT remote service の到達経路を削除する。
 - **難易度・リスク:** 高。クレート全体を削除すると provider-neutral な plugin foundation まで失う。
 
 ### 12. `codex-analytics`
@@ -230,7 +278,7 @@ protocol slice として扱う。generic image input、local media、`view_image
 - **依存元:** 直接 26、推移 56。CLI/TUI/app-server/core と大半の hosted integration が直接利用する。
 - **到達経路:** `codex login status` と `codex logout`、TUI onboarding、app-server account API、model request auth。CLI からの ChatGPT OAuth、device auth、OpenAI API key、access token の各 login 経路は削除済み。
 - **影響:** `OPENAI_API_KEY`、forced login method、ChatGPT auth modes、credential files/keyring、非常に多数の fixture とテスト、認証文書。
-- **推奨:** **汎用化**。provider-neutral credential interface、API-key provider、ChatGPT login provider に責務分割する。即時削除はしない。
+- **推奨:** **ChatGPT 部分を削除して汎用 credential 部分を保持**。provider-neutral credential interface、Bedrock、workload identity、keyring/storage を残し、ChatGPT login provider と専用 token consumer を削除する。クレート全体は即時削除しない。
 - **難易度・リスク:** 非常に高。認証、保存形式、後方互換性、非 OpenAI provider の利用を同時に扱う必要がある。
 
 ### 16. `codex-agent-identity`
@@ -241,8 +289,8 @@ protocol slice として扱う。generic image input、local media、`view_image
 - **依存元:** 直接は cloud config、login、model provider、推移は 57。
 - **到達経路:** login と model provider を介して CLI/TUI/app-server/core へ到達する。
 - **影響:** ChatGPT environment、backend URL、identity cache/credential、認証テスト。feature flag、専用 README はない。
-- **推奨:** **汎用化**。鍵管理・署名 primitive と ChatGPT issuer policy を分離する。
-- **難易度・リスク:** 高。認証境界の変更であり、fail-open を起こさない設計とテストが必要である。
+- **推奨:** **クレート全体を削除候補**。現行 consumer が ChatGPT login/model provider のみであることを確認し、汎用に見える鍵・署名処理も将来 provider のためだけなら保持しない。
+- **難易度・リスク:** 高。認証境界の変更であり、ChatGPT branch を外しても非 OpenAI provider の credential flow が fail-open/fail-closed の意図を変えないことを確認する。
 
 ### 17. `codex-model-provider-info`
 
@@ -294,8 +342,16 @@ Phase 2 で完了した削除と、Phase 3 で扱う後続候補を次の順序�
    - image generation、web search、plugins、response debug、login、agent identity、model-provider-info、codex-api は後続の汎用化作業として扱う。analytics hosted sink と feedback capability は削除済みである。
 8. **`codex-analytics` hosted sink の削除（完了）**
    - OpenAI/ChatGPT endpoint への analytics 送信と auth/provider adapter を削除し、event/fact/reducer と debug capture を残した。
+9. **ChatGPT Remote Control capability の削除（後続）**
+   - ChatGPT 専用 host、remote-control endpoint、enrollment/pairing、app-server protocol、daemon、CLI、state persistence を一つの単位で削除する。通常の app-server transport は保持する。
+10. **Hosted Plugin Marketplace / Sharing / Runtime の削除（後続）**
+   - startup sync/cache の削除とは別に、remote catalog、search/share/mutation/bundle、Hosted Plugin Runtime を削除する。local/bundled/Git/npm plugin foundation は保持する。
+11. **ChatGPT Apps / Connectors / host-owned Apps MCP の削除（後続）**
+   - connector directory、Apps protocol/UI/config、ChatGPT auth/account、OpenAI 固有 MCP adapter を一つの capability として削除する。通常の MCP runtime は保持する。
+12. **ChatGPT 認証 / Agent Identity の削除（後続）**
+   - `codex-agent-identity` は全体削除を検証し、`codex-login` は ChatGPT login branch と protocol/UI だけを削除する。Bedrock、workload identity、汎用 credential storage は保持する。
 
-Phase 2 の削除対象 1〜3 は完了した。4 以降は影響範囲または汎用責務が大きいため、Level 1 Phase 3 で capability ごとに到達経路を縮小してから扱う。
+Phase 2 の削除対象 1〜3 は完了した。4 以降は影響範囲または汎用責務が大きいため、Level 1 Phase 3 で capability ごとに到達経路を縮小してから扱う。特に 9〜12 は、既存の「共有クレートの汎用化」より先に Hosted capability の本体を削除し、その後に残存 adapter と共有境界を再評価する。
 
 ## 調査したがクレート削除候補から除外したもの
 
