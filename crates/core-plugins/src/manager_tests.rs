@@ -16,7 +16,7 @@ use crate::remote::REMOTE_WORKSPACE_MARKETPLACE_NAME;
 use crate::remote::REMOTE_WORKSPACE_SHARED_WITH_ME_MARKETPLACE_NAME;
 use crate::remote::RecommendedPlugin;
 use crate::remote::RemoteInstalledPlugin;
-use crate::startup_sync::curated_plugins_repo_path;
+use crate::curated_marketplace::curated_plugins_repo_path;
 use crate::test_support::TEST_CURATED_PLUGIN_CACHE_VERSION;
 use crate::test_support::TEST_CURATED_PLUGIN_SHA;
 use crate::test_support::load_plugins_config as load_plugins_config_input;
@@ -170,11 +170,6 @@ fn curated_repo_sync_stays_deferred_for_remote_chatgpt_catalog() {
         Some(AuthMode::Chatgpt),
     ));
 
-    manager.maybe_start_curated_repo_sync_for_config(
-        &config, /*on_effective_plugins_changed*/ None,
-    );
-
-    assert!(!CURATED_REPO_SYNC_STARTED.load(std::sync::atomic::Ordering::SeqCst));
 }
 
 #[test]

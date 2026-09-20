@@ -132,3 +132,9 @@ producer/consumer, canonical replacement, decision, and verification command.
 No row may be classified from its name alone. A slice is complete only when
 its production matches are either removed or explicitly retained/migrated and
 the listed verification commands have run.
+
+## Phase 3 integration handoff
+
+| Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |
+|---|---|---|---|---|
+| `crates/core-plugins/src/startup_sync.rs`, `startup_sync/http_client.rs`, `startup_sync_tests.rs`, `CURATED_PLUGINS_STARTUP_SYNC_*`, and `PluginsManager::start_curated_repo_sync` | The producer only synchronized OpenAI's curated plugin repository from GitHub or the ChatGPT export archive during startup; no provider-neutral marketplace producer consumed it. The remaining cached curated-marketplace readers are a separate boundary and are intentionally audited next. | User-configured local/Git/npm marketplace sources and the existing bundled plugin loader | `remove` (current work) | `cargo check -p codex-core-plugins`; `git diff --check`; `just check` |

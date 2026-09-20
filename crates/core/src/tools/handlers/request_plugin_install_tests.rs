@@ -14,7 +14,7 @@ use codex_config::types::ToolSuggestDisabledTool;
 use codex_config::types::ToolSuggestDiscoverable;
 use codex_config::types::ToolSuggestDiscoverableType;
 use codex_core_plugins::PluginInstallRequest;
-use codex_core_plugins::startup_sync::curated_plugins_repo_path;
+use codex_core_plugins::curated_marketplace::curated_plugins_repo_path;
 use codex_login::test_support::auth_manager_from_optional_auth;
 use codex_protocol::ThreadId;
 use codex_protocol::protocol::SessionSource;

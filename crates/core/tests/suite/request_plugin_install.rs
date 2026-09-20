@@ -9,7 +9,7 @@ use codex_core::NewThread;
 use codex_core::StartThreadOptions;
 use codex_core::TurnInputRequest;
 use codex_core::config::Config;
-use codex_core_plugins::startup_sync::curated_plugins_repo_path;
+use codex_core_plugins::curated_marketplace::curated_plugins_repo_path;
 use codex_extension_api::ExtensionFuture;
 use codex_extension_api::ExtensionRegistryBuilder;
 use codex_extension_api::McpServerContribution;

@@ -1,6 +1,7 @@
 mod app_mcp_routing;
 mod artifact_operation;
 mod command_migration;
+pub mod curated_marketplace;
 mod discoverable;
 mod error_subtype;
 mod executor_hooks;
@@ -28,7 +29,6 @@ pub mod remote_legacy;
 mod remote_plugin_id_resolver;
 mod script_attribution;
 mod skill_snapshots;
-pub mod startup_sync;
 pub mod store;
 #[cfg(test)]
 mod test_support;

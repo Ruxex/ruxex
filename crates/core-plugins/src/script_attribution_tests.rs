@@ -3,7 +3,7 @@ use crate::LoadedPlugin;
 use crate::PluginMeasurementDefinition;
 use crate::loader::curated_plugin_cache_version;
 use crate::remote::REMOTE_GLOBAL_MARKETPLACE_NAME;
-use crate::startup_sync::curated_plugins_repo_path;
+use crate::curated_marketplace::curated_plugins_repo_path;
 use crate::store::DEFAULT_PLUGIN_VERSION;
 use crate::store::PluginStore;
 use crate::test_support::TEST_CURATED_PLUGIN_SHA;

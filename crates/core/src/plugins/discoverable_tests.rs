@@ -2,7 +2,7 @@ use crate::plugins::plugins_manager_for_config;
 use crate::plugins::test_support::load_plugins_config;
 use crate::plugins::test_support::write_file;
 use crate::plugins::test_support::write_openai_api_curated_marketplace;
-use codex_core_plugins::startup_sync::curated_plugins_repo_path;
+use codex_core_plugins::curated_marketplace::curated_plugins_repo_path;
 use codex_login::test_support::auth_manager_from_optional_auth;
 use codex_tools::DiscoverablePluginInfo;
 use pretty_assertions::assert_eq;

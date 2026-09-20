@@ -7,7 +7,7 @@ use crate::PluginsManager;
 use crate::remote::REMOTE_GLOBAL_MARKETPLACE_NAME;
 use crate::remote::RemotePluginServiceConfig;
 use crate::remote::fetch_and_cache_global_remote_plugin_catalog;
-use crate::startup_sync::curated_plugins_repo_path;
+use crate::curated_marketplace::curated_plugins_repo_path;
 use crate::test_support::TEST_CURATED_PLUGIN_SHA;
 use crate::test_support::load_plugins_config;
 use crate::test_support::set_test_auth_mode;
