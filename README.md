@@ -5,6 +5,29 @@ AI agent foundation. OpenAI-specific features and assumptions are removed so the
 runtime can provide a provider-neutral base for building a wide range of AI
 agents.
 
+## Repository snapshot
+
+- Snapshot commit: `fe8228b3d945a857502e1981e9e7d57f17fe3ae6`
+- Approximate size: 1,958,791 lines across 7,207 Git-tracked files
+
+Approximate line count by file type:
+
+| Category | Lines |
+| --- | ---: |
+| Rust | 1,678,472 |
+| TypeScript | 7,502 |
+| Python | 25,438 |
+| SQL | 806 |
+| Shell/PowerShell | 2,746 |
+| C/C headers | 6,265 |
+| Protocol Buffers | 383 |
+| Markdown | 14,274 |
+| Config/data (JSON, TOML, YAML, XML, lockfiles) | 178,104 |
+| Other tracked files | 44,801 |
+
+The line count includes source, tests, documentation, and generated files, and
+excludes untracked and ignored files. Categories are grouped by file extension.
+
 The Rust implementation remains in a root Cargo workspace. Member crates live
 under `crates/`; shared utility and extension crates retain their existing
 subdirectories. Vendored bubblewrap sources live in `crates/vendor/` to preserve
