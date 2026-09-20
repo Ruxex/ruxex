@@ -297,7 +297,7 @@ async fn thread_fork_creates_new_thread_and_emits_started() -> Result<()> {
 
 #[tokio::test]
 async fn thread_fork_preserves_persisted_approvals_reviewer() -> Result<()> {
-    assert_thread_fork_preserves_persisted_approvals_reviewer(ThreadHistoryMode::Legacy).await
+    assert_thread_fork_preserves_persisted_approvals_reviewer(ThreadHistoryMode::Paginated).await
 }
 
 #[tokio::test]
@@ -309,7 +309,7 @@ async fn paginated_thread_fork_preserves_persisted_approvals_reviewer() -> Resul
 async fn thread_fork_preserves_persisted_permission_profile_and_honors_overrides() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    for history_mode in [ThreadHistoryMode::Legacy, ThreadHistoryMode::Paginated] {
+    for history_mode in [ThreadHistoryMode::Paginated] {
         let codex_home = TempDir::new()?;
         MockResponsesConfig::new(&server.uri())
             .with_root_config("default_permissions = \":danger-full-access\"")
@@ -571,7 +571,8 @@ async fn assert_thread_fork_preserves_persisted_approvals_reviewer(
 
 #[tokio::test]
 async fn thread_fork_at_last_turn_id_keeps_only_terminal_prefix() -> Result<()> {
-    assert_thread_fork_at_named_boundary_keeps_only_terminal_prefix(ThreadHistoryMode::Legacy).await
+    assert_thread_fork_at_named_boundary_keeps_only_terminal_prefix(ThreadHistoryMode::Paginated)
+        .await
 }
 
 #[tokio::test]
@@ -785,7 +786,7 @@ async fn assert_thread_fork_at_named_boundary_keeps_only_terminal_prefix(
             .all(|turn| turn.status == TurnStatus::Completed)
     );
     assert_eq!(forked_thread.forked_from_id, Some(source_thread_id.clone()));
-    if history_mode == ThreadHistoryMode::Legacy {
+    if history_mode == ThreadHistoryMode::Paginated {
         assert_eq!(forked_thread.preview, "first");
     }
     assert_eq!(
@@ -2327,7 +2328,8 @@ async fn thread_fork_surfaces_cloud_config_bundle_load_errors() -> Result<()> {
 
 #[tokio::test]
 async fn thread_fork_ephemeral_remains_pathless_and_omits_listing() -> Result<()> {
-    assert_thread_fork_ephemeral_remains_pathless_and_omits_listing(ThreadHistoryMode::Legacy).await
+    assert_thread_fork_ephemeral_remains_pathless_and_omits_listing(ThreadHistoryMode::Paginated)
+        .await
 }
 
 #[tokio::test]
@@ -2344,10 +2346,7 @@ async fn assert_thread_fork_ephemeral_remains_pathless_and_omits_listing(
     MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
 
     let preview = "Saved user message";
-    let create_rollout = match history_mode {
-        ThreadHistoryMode::Legacy => create_fake_rollout,
-        ThreadHistoryMode::Paginated => create_fake_paginated_rollout,
-    };
+    let create_rollout = create_fake_paginated_rollout;
     let conversation_id = create_rollout(
         codex_home.path(),
         "2025-01-05T12-00-00",

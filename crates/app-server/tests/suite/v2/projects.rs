@@ -1039,7 +1039,7 @@ async fn assigned_forks_inherit_projects_for_persistent_and_ephemeral_children()
     let started = server
         .start_thread(ThreadStartParams {
             project_id: Some(project.project.id.clone()),
-            history_mode: Some(ThreadHistoryMode::Legacy),
+            history_mode: Some(ThreadHistoryMode::Paginated),
             ..Default::default()
         })
         .await?;

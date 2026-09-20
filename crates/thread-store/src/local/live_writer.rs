@@ -323,11 +323,11 @@ async fn write_and_project(
     // shutdown/discard/delete removes it. Keep the lookup defensive so late writes fail after
     // teardown.
     let _live_writer_guard = store.live_writer_locks.lock(thread_id).await;
-    let (recorder, rollout_id, history_mode) = live_writer_parts(store, thread_id).await?;
+    let (recorder, rollout_id, _history_mode) = live_writer_parts(store, thread_id).await?;
     let sync_rollout_path = matches!(&write_op, RolloutWriteOp::Persist | RolloutWriteOp::Flush);
     let write_op = match write_op {
         RolloutWriteOp::AppendItems(mut items) => {
-            items.retain(|item| is_persisted_rollout_item(item, history_mode));
+            items.retain(is_persisted_rollout_item);
             if items.is_empty() {
                 return Ok(());
             }

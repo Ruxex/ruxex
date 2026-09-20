@@ -2402,7 +2402,7 @@ async fn code_mode_resumed_wait_does_not_certify_a_reused_runtime_cell() -> Resu
     };
     let mut builder = test_codex()
         .with_model("test-gpt-5.1-codex")
-        .with_history_mode(ThreadHistoryMode::Legacy)
+        .with_history_mode(ThreadHistoryMode::Paginated)
         .with_config(configure);
     let initial = builder.build(&server).await?;
     let seed = responses::mount_sse_sequence(

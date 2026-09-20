@@ -30,8 +30,8 @@ enum SourceState {
     Unloaded,
 }
 
-#[test_case::test_case(ThreadHistoryMode::Legacy, SourceState::Loaded; "legacy_loaded")]
-#[test_case::test_case(ThreadHistoryMode::Legacy, SourceState::Unloaded; "legacy_unloaded")]
+#[test_case::test_case(ThreadHistoryMode::Paginated, SourceState::Loaded; "legacy_loaded")]
+#[test_case::test_case(ThreadHistoryMode::Paginated, SourceState::Unloaded; "legacy_unloaded")]
 #[test_case::test_case(ThreadHistoryMode::Paginated, SourceState::Loaded; "paginated_loaded")]
 #[test_case::test_case(ThreadHistoryMode::Paginated, SourceState::Unloaded; "paginated_unloaded")]
 #[tokio::test]

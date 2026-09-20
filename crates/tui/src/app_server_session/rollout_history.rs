@@ -38,7 +38,7 @@ impl AppServerSession {
     ) -> Result<(AppServerStartedThread, Option<&'static str>)> {
         let mut thread = self.thread_read(thread_id, /*include_turns*/ false).await?;
         let mut history_notice = None;
-        if let Err(error) = self
+        if let Err(_error) = self
             .hydrate_initial_thread_history(
                 &mut thread,
                 /*turn_cursor*/ None,
@@ -49,9 +49,6 @@ impl AppServerSession {
             )
             .await
         {
-            if thread.history_mode == ThreadHistoryMode::Legacy {
-                return Err(error);
-            }
             // Summary pages retain user messages and final replies without scanning
             // every tool item when the item-paging endpoint is unavailable.
             tracing::warn!("Failed to page read-only thread history; trying summary pages");
@@ -155,34 +152,7 @@ impl AppServerSession {
         );
         self.thread_tool_transport()
             .configure_mcp(&mut params.config);
-        let mut rollout_maintenance_guard = None;
-        params.exclude_turns = if self.history_support == ThreadHistorySupport::Paginated {
-            let known_legacy_history = self
-                .history_pagination
-                .get(&thread_id)
-                .is_some_and(|state| state.history_mode == ThreadHistoryMode::Legacy)
-                && (!self.uses_embedded_app_server()
-                    || ({
-                        // The guard prevents migration through the full resume,
-                        // regardless of the server's migration feature settings.
-                        rollout_maintenance_guard =
-                            codex_rollout::try_acquire_rollout_maintenance_lock(
-                                config.codex_home.as_path(),
-                            )
-                            .ok()
-                            .flatten();
-                        rollout_maintenance_guard.is_some()
-                    } && self
-                        .thread_read(thread_id, /*include_turns*/ false)
-                        .await
-                        .is_ok_and(|thread| thread.history_mode == ThreadHistoryMode::Legacy)));
-            !known_legacy_history
-        } else {
-            false
-        };
-        if params.exclude_turns {
-            rollout_maintenance_guard = None;
-        }
+        params.exclude_turns = self.history_support == ThreadHistorySupport::Paginated;
         let request_id = self.next_request_id();
         let resume_response = self
             .client
@@ -191,7 +161,6 @@ impl AppServerSession {
                 params: params.clone(),
             })
             .await;
-        drop(rollout_maintenance_guard);
         let mut response: ThreadResumeResponse = match resume_response {
             Ok(response) => response,
             Err(TypedRequestError::Server { source, .. })

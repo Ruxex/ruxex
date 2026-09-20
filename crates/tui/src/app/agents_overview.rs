@@ -949,7 +949,7 @@ impl App {
                             .await?
                             .data
                     }
-                    ThreadHistoryMode::Legacy | ThreadHistoryMode::Paginated => {
+                    ThreadHistoryMode::Paginated => {
                         app_server
                             .thread_read(thread_id, /*include_turns*/ true)
                             .await?

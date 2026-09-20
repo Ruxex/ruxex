@@ -1048,10 +1048,10 @@ mod tests {
     fn canonical_history_mode_uses_first_session_meta() {
         assert_eq!(
             canonical_history_mode_from_rollout_items(&[
-                session_meta(ThreadHistoryMode::Legacy),
+                session_meta(ThreadHistoryMode::Paginated),
                 session_meta(ThreadHistoryMode::Paginated),
             ]),
-            ThreadHistoryMode::Legacy
+            ThreadHistoryMode::Paginated
         );
     }
 

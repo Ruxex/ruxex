@@ -1410,7 +1410,7 @@ mod tests {
         let store = LocalThreadStore::new(test_config(home.path()), /*state_db*/ None);
         let competing_store =
             LocalThreadStore::new(test_config(home.path()), /*state_db*/ None);
-        for history_mode in [ThreadHistoryMode::Legacy, ThreadHistoryMode::Paginated] {
+        for history_mode in [ThreadHistoryMode::Paginated] {
             let thread_id = ThreadId::default();
             let mut params = create_thread_params(thread_id);
             params.history_mode = history_mode;
@@ -1440,7 +1440,7 @@ mod tests {
     async fn discard_thread_drops_unmaterialized_live_writer() {
         let home = TempDir::new().expect("temp dir");
         let store = LocalThreadStore::new(test_config(home.path()), /*state_db*/ None);
-        for history_mode in [ThreadHistoryMode::Legacy, ThreadHistoryMode::Paginated] {
+        for history_mode in [ThreadHistoryMode::Paginated] {
             let thread_id = ThreadId::default();
             let mut params = create_thread_params(thread_id);
             params.history_mode = history_mode;

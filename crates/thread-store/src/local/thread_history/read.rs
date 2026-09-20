@@ -1,5 +1,4 @@
 use codex_protocol::ThreadId;
-use codex_protocol::protocol::ThreadHistoryMode;
 use serde::Deserialize;
 use serde::Serialize;
 use sqlx::Row;
@@ -197,10 +196,7 @@ pub(super) async fn validate_thread_for_paginated_reads(
             message: format!("thread {thread_id} is archived"),
         });
     }
-    match metadata.history_mode {
-        ThreadHistoryMode::Legacy => Err(ThreadStoreError::Unsupported { operation }),
-        ThreadHistoryMode::Paginated => Ok(()),
-    }
+    Ok(())
 }
 
 async fn load_inherited_summary_items(

@@ -77,25 +77,18 @@ impl From<SessionSource> for CoreSessionSource {
 #[ts(rename_all = "lowercase", export_to = "v2/")]
 pub enum ThreadHistoryMode {
     #[default]
-    Legacy,
     Paginated,
 }
 
 impl From<CoreThreadHistoryMode> for ThreadHistoryMode {
-    fn from(value: CoreThreadHistoryMode) -> Self {
-        match value {
-            CoreThreadHistoryMode::Legacy => Self::Legacy,
-            CoreThreadHistoryMode::Paginated => Self::Paginated,
-        }
+    fn from(_value: CoreThreadHistoryMode) -> Self {
+        Self::Paginated
     }
 }
 
 impl From<ThreadHistoryMode> for CoreThreadHistoryMode {
-    fn from(value: ThreadHistoryMode) -> Self {
-        match value {
-            ThreadHistoryMode::Legacy => Self::Legacy,
-            ThreadHistoryMode::Paginated => Self::Paginated,
-        }
+    fn from(_value: ThreadHistoryMode) -> Self {
+        CoreThreadHistoryMode::Paginated
     }
 }
 

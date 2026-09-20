@@ -163,8 +163,12 @@ async fn try_init_times_out_waiting_for_stuck_startup_backfill() -> anyhow::Resu
 async fn reconcile_rollout_preserves_existing_explicit_title() -> anyhow::Result<()> {
     let home = TempDir::new().expect("temp dir");
     let thread_id = ThreadId::new();
-    let rollout_path =
-        write_rollout_with_user_message(home.path(), thread_id, "Hey", ThreadHistoryMode::Legacy)?;
+    let rollout_path = write_rollout_with_user_message(
+        home.path(),
+        thread_id,
+        "Hey",
+        ThreadHistoryMode::Paginated,
+    )?;
     let runtime = codex_state::StateRuntime::init(
         codex_state::SqliteConfig::new_for_testing(home.path().abs()),
         "test-provider".to_string(),

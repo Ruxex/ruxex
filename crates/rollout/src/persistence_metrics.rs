@@ -7,7 +7,6 @@ use codex_protocol::ThreadId;
 use codex_protocol::items::TurnItem;
 use codex_protocol::models::ResponseItem;
 use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ThreadHistoryMode;
 
 use crate::ResponseItemEnvelope;
 use crate::RolloutItem;
@@ -97,7 +96,6 @@ struct TurnMeasurementUpdate {
 /// Measures logical JSON sizes while applying the shared rollout persistence policy once.
 pub fn measure_and_filter_rollout_items(
     items: &[RolloutItem],
-    history_mode: ThreadHistoryMode,
 ) -> (Vec<RolloutItem>, RolloutPersistenceBatchMeasurement) {
     let mut persisted = Vec::new();
     let mut measurement = RolloutPersistenceBatchMeasurement {
@@ -106,7 +104,7 @@ pub fn measure_and_filter_rollout_items(
     };
 
     for item in items {
-        let kept = is_persisted_rollout_item(item, history_mode);
+        let kept = is_persisted_rollout_item(item);
         let decision = if kept {
             PersistenceDecision::Kept
         } else {

@@ -758,7 +758,7 @@ fn copied_history_uses_persisted_history_mode() -> Result<()> {
         meta: SessionMeta {
             session_id: thread_id.into(),
             id: thread_id,
-            history_mode: ThreadHistoryMode::Legacy,
+            history_mode: ThreadHistoryMode::Paginated,
             ..SessionMeta::default()
         },
         git: None,
@@ -771,11 +771,11 @@ fn copied_history_uses_persisted_history_mode() -> Result<()> {
 
     assert_eq!(
         history.get_history_mode(ThreadHistoryMode::Paginated),
-        ThreadHistoryMode::Legacy
+        ThreadHistoryMode::Paginated
     );
     assert_eq!(
         InitialHistory::Forked(vec![session_meta]).get_history_mode(ThreadHistoryMode::Paginated),
-        ThreadHistoryMode::Legacy
+        ThreadHistoryMode::Paginated
     );
     assert_eq!(
         InitialHistory::New.get_history_mode(ThreadHistoryMode::Paginated),

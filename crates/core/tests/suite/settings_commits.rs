@@ -59,7 +59,6 @@ fn assert_checkpoints(test: &TestCodex, expected: &[ThreadSettingsSnapshot]) -> 
     Ok(())
 }
 
-#[test_case(ThreadHistoryMode::Legacy; "legacy")]
 #[test_case(ThreadHistoryMode::Paginated; "paginated")]
 #[tokio::test]
 async fn initial_plugin_ids_use_turn_context_without_extra_settings_checkpoints(

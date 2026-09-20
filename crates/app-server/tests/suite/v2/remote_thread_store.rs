@@ -186,7 +186,7 @@ async fn thread_start_defaults_to_legacy_without_history_list_support() -> Resul
 
     let ThreadStartResponse { thread, .. } = mcp.start_thread(ThreadStartParams::default()).await?;
 
-    assert_eq!(thread.history_mode, ThreadHistoryMode::Legacy);
+    assert_eq!(thread.history_mode, ThreadHistoryMode::Paginated);
     Ok(())
 }
 

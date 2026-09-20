@@ -16,7 +16,6 @@ use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::SessionContextWindow;
 use codex_protocol::protocol::SessionMeta;
 use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::ThreadHistoryMode;
 use codex_protocol::protocol::ThreadMemoryMode;
 use codex_rollout::RolloutItem;
 use codex_rollout::persisted_rollout_items;
@@ -65,6 +64,7 @@ mod tests {
     use crate::ThreadSortKey;
     use codex_protocol::models::BaseInstructions;
     use codex_protocol::protocol::SessionSource;
+    use codex_protocol::protocol::ThreadHistoryMode;
 
     #[tokio::test]
     async fn deletion_cleans_associated_sqlite_and_shared_memory()
@@ -82,7 +82,10 @@ mod tests {
         let store = shared.with_state_db(Some(state_db.clone()));
         let thread_id = ThreadId::new();
         shared
-            .create_thread(create_thread_params(thread_id, ThreadHistoryMode::Legacy))
+            .create_thread(create_thread_params(
+                thread_id,
+                ThreadHistoryMode::Paginated,
+            ))
             .await?;
         let metadata = codex_state::ThreadMetadataBuilder::new(
             thread_id,
@@ -176,7 +179,7 @@ mod tests {
                     dynamic_tools: Vec::new(),
                     selected_capability_roots: Vec::new(),
                     multi_agent_version: None,
-                    history_mode: ThreadHistoryMode::Legacy,
+                    history_mode: ThreadHistoryMode::Paginated,
                     history_base: None,
                     subagent_history_start_ordinal: None,
                     initial_window_id: uuid::Uuid::now_v7().to_string(),
@@ -324,7 +327,10 @@ mod tests {
         let rollout_path = PathBuf::from("/tmp/paginated-thread.jsonl");
 
         store
-            .create_thread(create_thread_params(thread_id, ThreadHistoryMode::Legacy))
+            .create_thread(create_thread_params(
+                thread_id,
+                ThreadHistoryMode::Paginated,
+            ))
             .await
             .expect("create legacy thread");
         store
@@ -426,7 +432,10 @@ mod tests {
         let store = InMemoryThreadStore::default();
         let thread_id = ThreadId::default();
         store
-            .create_thread(create_thread_params(thread_id, ThreadHistoryMode::Legacy))
+            .create_thread(create_thread_params(
+                thread_id,
+                ThreadHistoryMode::Paginated,
+            ))
             .await
             .expect("create thread");
 
@@ -638,8 +647,7 @@ impl InMemoryThreadStore {
             return Ok(());
         }
         let mut state = self.state.lock().await;
-        let history_mode = history_mode_from_state(&state, params.thread_id);
-        let persisted_items = persisted_rollout_items(params.items.as_slice(), history_mode);
+        let persisted_items = persisted_rollout_items(params.items.as_slice());
         if persisted_items.is_empty() {
             return Ok(());
         }
@@ -1147,17 +1155,6 @@ fn stored_thread_from_state(
         first_user_message: metadata.and_then(|metadata| metadata.first_user_message.clone()),
         history,
     })
-}
-
-fn history_mode_from_state(
-    state: &InMemoryThreadStoreState,
-    thread_id: ThreadId,
-) -> ThreadHistoryMode {
-    state
-        .created_threads
-        .get(&thread_id)
-        .map(|thread| thread.history_mode)
-        .unwrap_or_default()
 }
 
 fn git_info_from_patch(patch: &ThreadMetadataPatch) -> Option<codex_protocol::protocol::GitInfo> {

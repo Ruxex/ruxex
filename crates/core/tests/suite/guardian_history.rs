@@ -53,7 +53,7 @@ use test_case::test_case;
 #[test_case(ThreadHistoryMode::Paginated, ThreadStoreConfig::Local; "paginated")]
 // The pathless test store only supports Legacy mode; this case tests the store interface,
 // not legacy rollout compatibility.
-#[test_case(ThreadHistoryMode::Legacy, ThreadStoreConfig::InMemory {
+#[test_case(ThreadHistoryMode::Paginated, ThreadStoreConfig::InMemory {
     id: uuid::Uuid::new_v4().to_string(),
 }; "pathless")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

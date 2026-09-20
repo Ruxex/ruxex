@@ -169,9 +169,20 @@ async fn attach_history_if_requested(
             message: format!("failed to load thread history for thread {thread_id}"),
         });
     };
-    let items = load_history_items(&path).await?;
+    let items = load_rollout_history_items(&path).await?;
     thread.history = Some(StoredThreadHistory { thread_id, items });
     Ok(())
+}
+
+async fn load_rollout_history_items(
+    path: &std::path::Path,
+) -> ThreadStoreResult<Vec<codex_rollout::RolloutItem>> {
+    let (items, _, _) = RolloutRecorder::load_rollout_items(path)
+        .await
+        .map_err(|err| ThreadStoreError::Internal {
+            message: format!("failed to load thread history {}: {err}", path.display()),
+        })?;
+    Ok(items)
 }
 
 async fn read_thread_from_rollout_path(
@@ -203,17 +214,6 @@ async fn read_thread_from_rollout_path(
         thread.model_provider = model_provider;
     }
     Ok(thread)
-}
-
-pub(super) async fn load_history_items(
-    path: &std::path::Path,
-) -> ThreadStoreResult<Vec<codex_rollout::RolloutItem>> {
-    let (items, _, _) = RolloutRecorder::load_rollout_items(path)
-        .await
-        .map_err(|err| ThreadStoreError::Internal {
-            message: format!("failed to load thread history {}: {err}", path.display()),
-        })?;
-    Ok(items)
 }
 
 async fn read_sqlite_metadata(
@@ -670,7 +670,7 @@ mod tests {
             "Forked user message",
             Some("test-provider"),
             Some(parent_uuid),
-            ThreadHistoryMode::Legacy,
+            ThreadHistoryMode::Paginated,
         )
         .expect("forked session file");
 

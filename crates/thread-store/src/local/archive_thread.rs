@@ -216,7 +216,7 @@ mod tests {
             (
                 Uuid::from_u128(203),
                 Uuid::from_u128(204),
-                ThreadHistoryMode::Legacy,
+                ThreadHistoryMode::Paginated,
             ),
             (
                 Uuid::from_u128(206),

@@ -67,7 +67,7 @@ async fn thread_shell_command_history_responses_exclude_persisted_command_execut
         .request(|request_id| ClientRequest::ThreadStart {
             request_id,
             params: ThreadStartParams {
-                history_mode: Some(ThreadHistoryMode::Legacy),
+                history_mode: Some(ThreadHistoryMode::Paginated),
                 ..Default::default()
             },
         })
@@ -249,7 +249,7 @@ async fn check_thread_shell_command_in_active_turn(timeout_ms: Option<i64>) -> R
         .request(|request_id| ClientRequest::ThreadStart {
             request_id,
             params: ThreadStartParams {
-                history_mode: Some(ThreadHistoryMode::Legacy),
+                history_mode: Some(ThreadHistoryMode::Paginated),
                 ..Default::default()
             },
         })

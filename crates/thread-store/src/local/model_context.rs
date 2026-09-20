@@ -4,7 +4,6 @@ use std::io;
 
 use codex_protocol::protocol::HistoryPosition;
 use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::ThreadHistoryMode;
 use codex_rollout::ModelContextScan;
 use codex_rollout::ModelContextScanProgress;
 use codex_rollout::ReverseJsonlScanner;
@@ -12,7 +11,6 @@ use codex_rollout::RolloutItem;
 use codex_rollout::ScanOutcome;
 
 use super::LocalThreadStore;
-use super::read_thread;
 use super::rollout_lineage::RolloutLineage;
 use super::thread_rollout_resolver;
 use crate::LoadThreadHistoryParams;
@@ -32,8 +30,7 @@ mod tests;
 /// bounded cutoff is available, the scan continues to the beginning and returns the complete
 /// replay it already accumulated.
 ///
-/// Compressed segments are decoded before applying their original JSONL offsets. Legacy rollouts
-/// keep the existing full-history path.
+/// Compressed segments are decoded before applying their original JSONL offsets.
 pub(super) async fn load_latest_model_context(
     store: &LocalThreadStore,
     params: LoadThreadHistoryParams,
@@ -66,12 +63,8 @@ pub(super) async fn load_latest_model_context(
         });
     }
 
-    let items = if matches!(session_meta.meta.history_mode, ThreadHistoryMode::Paginated) {
-        let lineage = store.resolve_rollout_lineage(params.thread_id).await?;
-        scan_model_context_from_lineage(lineage, session_meta).await?
-    } else {
-        read_thread::load_history_items(path.as_path()).await?
-    };
+    let lineage = store.resolve_rollout_lineage(params.thread_id).await?;
+    let items = scan_model_context_from_lineage(lineage, session_meta).await?;
 
     Ok(StoredModelContext {
         thread_id: params.thread_id,

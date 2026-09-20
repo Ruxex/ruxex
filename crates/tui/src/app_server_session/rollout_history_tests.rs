@@ -295,7 +295,7 @@ async fn rollout_maintenance_contention_disables_cached_legacy_resume_shortcut()
         .expect("create paginated rollout"),
     )?;
     let mut app_server = crate::start_embedded_app_server_for_picker(&config).await?;
-    app_server.remember_thread_history_mode(thread_id, ThreadHistoryMode::Legacy);
+    app_server.remember_thread_history_mode(thread_id, ThreadHistoryMode::Paginated);
     let _maintenance_guard =
         codex_rollout::try_acquire_rollout_maintenance_lock(codex_home.path())?
             .expect("acquire rollout maintenance lock");
@@ -340,7 +340,7 @@ async fn stale_legacy_history_mode_is_revalidated_before_resume() -> Result<()> 
         .expect("create paginated rollout"),
     )?;
     let mut app_server = crate::start_embedded_app_server_for_picker(&config).await?;
-    app_server.remember_thread_history_mode(thread_id, ThreadHistoryMode::Legacy);
+    app_server.remember_thread_history_mode(thread_id, ThreadHistoryMode::Paginated);
     let next_request_id = app_server.next_request_id;
 
     let resumed = app_server
@@ -362,7 +362,7 @@ async fn stale_legacy_history_mode_is_revalidated_before_resume() -> Result<()> 
     );
 
     let missing_thread_id = ThreadId::new();
-    app_server.remember_thread_history_mode(missing_thread_id, ThreadHistoryMode::Legacy);
+    app_server.remember_thread_history_mode(missing_thread_id, ThreadHistoryMode::Paginated);
     let next_request_id = app_server.next_request_id;
     assert!(
         app_server

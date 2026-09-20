@@ -1936,7 +1936,7 @@ async fn spawn_agent_can_fork_parent_thread_history_with_sanitized_items() {
     assert_ne!(child_thread_id, parent_thread_id);
     assert_eq!(
         child_thread.config_snapshot().await.history_mode,
-        ThreadHistoryMode::Legacy
+        ThreadHistoryMode::Paginated
     );
     let history = child_thread.session.clone_history().await;
     let history_items = history.raw_items().cloned().collect::<Vec<_>>();

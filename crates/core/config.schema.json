@@ -682,9 +682,6 @@
             "auth_elicitation": {
               "type": "boolean"
             },
-            "background_paginated_rollout_migration": {
-              "type": "boolean"
-            },
             "bedrock_setup_wizard": {
               "type": "boolean"
             },
@@ -6304,9 +6301,6 @@
           ]
         },
         "auth_elicitation": {
-          "type": "boolean"
-        },
-        "background_paginated_rollout_migration": {
           "type": "boolean"
         },
         "bedrock_setup_wizard": {

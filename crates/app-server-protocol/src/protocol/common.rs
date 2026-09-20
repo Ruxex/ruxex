@@ -3105,7 +3105,7 @@ mod tests {
                         "section": null,
                         "sectionEnteredAt": null,
                         "projectId": null,
-                        "historyMode": "legacy",
+                        "historyMode": "paginated",
                         "modelProvider": "openai",
                         "model": null,
                         "reasoningEffort": null,

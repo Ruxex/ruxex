@@ -778,14 +778,12 @@ pub enum ThreadMemoryMode {
 #[ts(rename_all = "lowercase")]
 pub enum ThreadHistoryMode {
     #[default]
-    Legacy,
     Paginated,
 }
 
 impl ThreadHistoryMode {
     pub const fn as_str(self) -> &'static str {
         match self {
-            Self::Legacy => "legacy",
             Self::Paginated => "paginated",
         }
     }
@@ -796,7 +794,6 @@ impl FromStr for ThreadHistoryMode {
 
     fn from_str(value: &str) -> Result<Self, Self::Err> {
         match value {
-            "legacy" => Ok(Self::Legacy),
             "paginated" => Ok(Self::Paginated),
             _ => Err(format!("unknown thread history mode `{value}`")),
         }
@@ -6148,31 +6145,6 @@ mod tests {
             _ => panic!("expected turn_aborted event"),
         }
 
-        Ok(())
-    }
-
-    #[test]
-    fn session_meta_defaults_legacy_history_mode() -> Result<()> {
-        let session_meta: SessionMeta = serde_json::from_value(json!({
-            "session_id": "00000000-0000-0000-0000-000000000001",
-            "id": "00000000-0000-0000-0000-000000000001",
-            "timestamp": "2026-01-01T00:00:00Z",
-            "cwd": "/tmp",
-            "originator": "codex",
-            "cli_version": "0.0.0",
-            "model_provider": null,
-            "base_instructions": null
-        }))?;
-
-        assert_eq!(session_meta.history_mode, ThreadHistoryMode::Legacy);
-        assert_eq!(session_meta.history_base, None);
-        assert_eq!(session_meta.forked_from_ordinal_exclusive, None);
-        let serialized = serde_json::to_value(&session_meta)?;
-        assert!(serialized.get("forked_from_ordinal_exclusive").is_none());
-        assert_eq!(serialized["history_mode"], json!("legacy"));
-        let mut unknown = serialized;
-        unknown["history_mode"] = json!("future");
-        assert!(serde_json::from_value::<SessionMeta>(unknown).is_err());
         Ok(())
     }
 

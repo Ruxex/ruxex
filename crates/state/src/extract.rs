@@ -687,7 +687,7 @@ mod tests {
                     dynamic_tools: None,
                     selected_capability_roots: Vec::new(),
                     memory_mode: None,
-                    history_mode: ThreadHistoryMode::Legacy,
+                    history_mode: ThreadHistoryMode::Paginated,
                     history_base: None,
                     subagent_history_start_ordinal: None,
                     multi_agent_version: None,

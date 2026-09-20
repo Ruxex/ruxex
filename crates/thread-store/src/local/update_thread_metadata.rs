@@ -909,7 +909,7 @@ mod tests {
             .await
             .expect("read metadata")
             .expect("thread metadata");
-        stale_metadata.history_mode = ThreadHistoryMode::Legacy;
+        stale_metadata.history_mode = ThreadHistoryMode::Paginated;
         runtime
             .upsert_thread(&stale_metadata)
             .await

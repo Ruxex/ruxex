@@ -63,12 +63,6 @@ pub(super) async fn revert(
             message: format!("current rollout for {thread_id} belongs to another thread"),
         });
     }
-    if source_meta.history_mode != ThreadHistoryMode::Paginated {
-        return Err(ThreadStoreError::InvalidRequest {
-            message: format!("thread {thread_id} does not use paginated history"),
-        });
-    }
-
     // Preserve old-reader compatibility when introducing the first reference to a standalone
     // source. Already-shared ancestors stay read-only; their offsets address decoded JSONL bytes.
     let mut lineage = store.resolve_rollout_lineage(thread_id).await?;

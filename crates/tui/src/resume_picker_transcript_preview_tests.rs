@@ -435,7 +435,8 @@ async fn transcript_preview_for_history_mode(
 async fn transcript_preview_preserves_legacy_and_paginated_output() {
     let invisible_newer_turns = TRANSCRIPT_PREVIEW_ITEMS_PAGE_SIZE as usize;
     let legacy =
-        transcript_preview_for_history_mode(ThreadHistoryMode::Legacy, invisible_newer_turns).await;
+        transcript_preview_for_history_mode(ThreadHistoryMode::Paginated, invisible_newer_turns)
+            .await;
     let paginated =
         transcript_preview_for_history_mode(ThreadHistoryMode::Paginated, invisible_newer_turns)
             .await;

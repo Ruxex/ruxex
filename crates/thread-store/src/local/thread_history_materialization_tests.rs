@@ -595,7 +595,7 @@ async fn paginated_realtime_items_materialize_separately_in_rollout_order() {
             dynamic_tools: Vec::new(),
             selected_capability_roots: Vec::new(),
             multi_agent_version: None,
-            history_mode: ThreadHistoryMode::Legacy,
+            history_mode: ThreadHistoryMode::Paginated,
             history_base: None,
             subagent_history_start_ordinal: None,
             initial_window_id: "window-1".to_string(),

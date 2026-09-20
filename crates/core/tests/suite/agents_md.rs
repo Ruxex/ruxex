@@ -1421,7 +1421,7 @@ async fn fork_preserves_thread_instructions(source: InstructionForkSource) -> Re
     .await;
     let history_mode = match source {
         InstructionForkSource::LiveRollout | InstructionForkSource::OfflineHistory => {
-            ThreadHistoryMode::Legacy
+            ThreadHistoryMode::Paginated
         }
         InstructionForkSource::OfflinePrepared => ThreadHistoryMode::Paginated,
     };

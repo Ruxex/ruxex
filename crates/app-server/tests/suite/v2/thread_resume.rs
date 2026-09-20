@@ -311,7 +311,7 @@ async fn thread_resume_paginated_model_context_preserves_original_metadata() -> 
 
 #[tokio::test]
 async fn thread_resume_rejects_legacy_writer_owned_by_another_process() -> Result<()> {
-    assert_thread_resume_rejects_writer_owned_by_another_process(ThreadHistoryMode::Legacy).await
+    assert_thread_resume_rejects_writer_owned_by_another_process(ThreadHistoryMode::Paginated).await
 }
 
 #[tokio::test]
@@ -1049,7 +1049,7 @@ async fn thread_resume_preserves_persisted_approvals_reviewer() -> Result<()> {
 #[tokio::test]
 async fn thread_resume_restores_persisted_approval_policy() -> Result<()> {
     assert_thread_resume_approval_policy(
-        ThreadHistoryMode::Legacy,
+        ThreadHistoryMode::Paginated,
         /*approval_policy*/ None,
         AskForApproval::Never,
     )
@@ -1069,7 +1069,7 @@ async fn paginated_thread_resume_restores_persisted_approval_policy() -> Result<
 #[tokio::test]
 async fn thread_resume_approval_policy_override_wins_over_persisted_policy() -> Result<()> {
     assert_thread_resume_approval_policy(
-        ThreadHistoryMode::Legacy,
+        ThreadHistoryMode::Paginated,
         Some(AskForApproval::OnRequest),
         AskForApproval::OnRequest,
     )
@@ -1193,7 +1193,7 @@ async fn thread_resume_preserves_goal_first_and_fork_approvals_reviewer() -> Res
             .send_thread_start_request_with_auto_env(ThreadStartParams {
                 model: Some("gpt-5.2-codex".to_string()),
                 approvals_reviewer: Some(ApprovalsReviewer::AutoReview),
-                history_mode: Some(ThreadHistoryMode::Legacy),
+                history_mode: Some(ThreadHistoryMode::Paginated),
                 ..Default::default()
             })
             .await?;
@@ -1330,7 +1330,7 @@ async fn thread_resume_preserves_acknowledged_model_effort_and_approvals_reviewe
         let start_id = mcp
             .send_thread_start_request_with_auto_env(ThreadStartParams {
                 model: Some("gpt-5.4".to_string()),
-                history_mode: Some(ThreadHistoryMode::Legacy),
+                history_mode: Some(ThreadHistoryMode::Paginated),
                 ..Default::default()
             })
             .await?;
@@ -1580,7 +1580,7 @@ async fn thread_resume_restores_collaboration_mode_from_legacy_turn_context() ->
 #[tokio::test]
 async fn cold_resume_reresolves_persisted_active_permission_profile() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    for history_mode in [ThreadHistoryMode::Legacy, ThreadHistoryMode::Paginated] {
+    for history_mode in [ThreadHistoryMode::Paginated] {
         let codex_home = TempDir::new()?;
         let previous_workspace_root = TempDir::new()?;
         let profile_workspace = TempDir::new()?;
@@ -1655,7 +1655,7 @@ async fn cold_resume_reresolves_persisted_active_permission_profile() -> Result<
 #[tokio::test]
 async fn cold_resume_with_removed_permission_profile_uses_configured_default() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    for history_mode in [ThreadHistoryMode::Legacy, ThreadHistoryMode::Paginated] {
+    for history_mode in [ThreadHistoryMode::Paginated] {
         let codex_home = TempDir::new()?;
         write_dev_permission_config(&server.uri(), codex_home.path(), ":workspace")?;
         let thread_id = {
@@ -1711,7 +1711,7 @@ async fn cold_resume_permission_overrides_win_over_persisted_profile() -> Result
             .without_managed_config()
             .build_initialized()
             .await?;
-        materialize_dev_permission_thread(&mut mcp, ThreadHistoryMode::Legacy).await?
+        materialize_dev_permission_thread(&mut mcp, ThreadHistoryMode::Paginated).await?
     };
 
     for params in [

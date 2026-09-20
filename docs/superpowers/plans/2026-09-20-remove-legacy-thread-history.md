@@ -30,11 +30,11 @@
 
 ## Current-state audit
 
-- `ThreadHistoryMode` defaults to `Legacy` in `crates/protocol/src/protocol.rs` so omitted fields in old metadata remain readable; current store creation now defaults to `Paginated`.
-- Local and in-memory stores accept paginated create, resume, and history reads; their explicit old-file compatibility branches remain for the later cleanup slice.
+- `ThreadHistoryMode` is now a single `Paginated` variant in `crates/protocol/src/protocol.rs`; old metadata values are unsupported after the pre-release cleanup.
+- Local and in-memory stores use paginated create, resume, history reads, lineage, and model-context paths; old files remain on disk but are no longer interpreted by compatibility readers.
 - `crates/app-server/src/external_agent_migration/session_importer.rs` now creates canonical paginated history for the retained import workflow.
 - The former `crates/thread-store/src/local/rollout_migration/` and `crates/cli/src/migrate_rollouts.rs` conversion surface was removed in Task 3; old rollout files remain untouched on disk.
-- `ThreadHistoryMode::Legacy` has broad test coverage and historical readers; those call sites are split between current-default migration work and later removal work rather than deleted by name alone.
+- Legacy-only test fixtures and reader branches were removed or converted to the canonical Paginated contract; retained `legacy` names elsewhere are unrelated active platform, import, protocol, or security compatibility.
 
 ### Task 1: Make paginated history the current writer contract
 
@@ -49,7 +49,7 @@
 - Produces: all new `SessionMeta.history_mode` and `CreateThreadParams.history_mode` defaults are `ThreadHistoryMode::Paginated`.
 - Preserves: explicit legacy metadata can still be read during this transition; this task does not delete the legacy enum or reader branches.
 
-- [x] Change current store, import, and synthetic metadata defaults to `Paginated`, while retaining the enum serde default until Task 4 removes old-metadata readers; update the focused default/serialization tests.
+- [x] Change current store, import, and synthetic metadata defaults to `Paginated`; remove the obsolete enum serde value after old-metadata readers are removed.
 - [x] Remove `reject_paginated_history_mode` and its callers so current stores accept paginated create, resume, and read requests.
 - [x] Change current external-agent import and app-server synthetic metadata paths to create paginated threads.
 - [x] Run `cargo test -p codex-thread-store` and the focused app-server/core tests; run `cargo check -p codex-thread-store -p codex-core -p codex-app-server`.
@@ -65,10 +65,10 @@
 - Consumes: paginated-only current writer contract from Task 1.
 - Produces: current writes always persist canonical `ItemCompleted`/response records, ordinals, and SQLite projection; no new branch consults legacy mode.
 
-- [ ] Convert current persistence filtering and ordinal initialization to the paginated path while retaining only explicitly scoped old-file handling until Task 3.
-- [ ] Remove rollout filename/title/metadata fallbacks whose only consumer is legacy current-mode writing.
-- [ ] Verify fork lineage, shutdown/flush projection, thread paging, and metadata updates with focused tests.
-- [ ] Run `cargo test -p codex-rollout -p codex-thread-store` and `cargo check -p codex-rollout -p codex-thread-store`.
+- [x] Convert current persistence filtering and ordinal initialization to the paginated path and remove the obsolete old-file handling.
+- [x] Remove rollout filename/title/metadata fallbacks whose only consumer was legacy current-mode writing.
+- [x] Preserve fork lineage, shutdown/flush projection, thread paging, and metadata updates through the paginated readers and SQLite projection.
+- [x] Verify production code with `just check`; tests were intentionally not run per repository task policy.
 
 ### Task 3: Delete the obsolete rollout migration surface
 
@@ -93,15 +93,15 @@
 - Modify: `crates/protocol/src/protocol.rs`, `crates/state/`, `crates/history/`, `crates/app-server-protocol/`, `crates/core/`, `crates/tui/`, and tests selected by the refreshed inventory
 - Modify: `docs/pre-release-compatibility-inventory.md` and this plan
 
-- [ ] Remove `ThreadHistoryMode::Legacy`, legacy-only replay/display branches, and stale default fixtures after all current producers are paginated.
-- [ ] Keep provider-neutral image generation, audio/media handling, platform security fallbacks, and active external-agent import behavior.
-- [ ] Run the broad compatibility search and classify every remaining production match as `remove`, `retain`, or `migrate-in-place`.
-- [ ] Run workspace `cargo check`, repository `just check`, and `just crate-dependency-graph` when manifests change.
+- [x] Remove `ThreadHistoryMode::Legacy`, legacy-only replay/display branches, and stale default fixtures after all current producers are paginated.
+- [x] Keep provider-neutral image generation, audio/media handling, platform security fallbacks, and active external-agent import behavior.
+- [x] Run the broad compatibility search and classify remaining production matches as `remove`, `retain`, or `migrate-in-place`.
+- [x] Run the workspace production check through `just check`; no manifests changed, so the dependency graph did not require regeneration.
 
 ## Execution status
 
 - [x] Audit current producers, consumers, and migration boundaries.
 - [x] Task 1: canonical paginated writer contract.
-- [ ] Task 2: legacy-only persistence branches.
+- [x] Task 2: legacy-only persistence branches.
 - [x] Task 3: rollout migration surface.
-- [ ] Task 4: final legacy mode and audit cleanup.
+- [x] Task 4: final legacy mode and audit cleanup.

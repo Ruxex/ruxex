@@ -386,7 +386,7 @@ mod tests {
             Uuid::from_u128(102),
             "Hello from user",
             /*model_provider*/ None,
-            ThreadHistoryMode::Legacy,
+            ThreadHistoryMode::Paginated,
         )
         .expect("session file");
 

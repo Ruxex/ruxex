@@ -260,7 +260,6 @@
     },
     "ThreadHistoryMode": {
       "enum": [
-        "legacy",
         "paginated"
       ],
       "type": "string"

@@ -231,7 +231,7 @@ async fn read_thread_item_from_rollout_rejects_unknown_canonical_history_mode() 
     let source_uuid = Uuid::from_u128(304);
     source_meta["payload"]["session_id"] = serde_json::json!(source_uuid);
     source_meta["payload"]["id"] = serde_json::json!(source_uuid);
-    source_meta["payload"]["history_mode"] = serde_json::json!("legacy");
+    source_meta["payload"]["history_mode"] = serde_json::json!("paginated");
     fs::write(
         &path,
         format!("{canonical_meta}\n{user_event}\n{source_meta}\n"),

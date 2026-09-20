@@ -4054,7 +4054,7 @@ mod tests {
             .expect("indexed thread page should be available");
         listed_page
             .history_modes
-            .insert(thread_id, ThreadHistoryMode::Legacy);
+            .insert(thread_id, ThreadHistoryMode::Paginated);
         deliver_page(&mut state, &db_request, Ok(listed_page)).await;
 
         let selection = state
@@ -4066,7 +4066,7 @@ mod tests {
             Some(SessionSelection::Resume(SessionTarget {
                 thread_id: selected_thread_id,
                 cwd: Some(cwd),
-                history_mode: Some(ThreadHistoryMode::Legacy),
+                history_mode: Some(ThreadHistoryMode::Paginated),
                 ..
             })) if selected_thread_id == thread_id && cwd == Path::new("/tmp/saved-cwd")
         ));

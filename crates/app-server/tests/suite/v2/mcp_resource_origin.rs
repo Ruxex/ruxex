@@ -88,9 +88,9 @@ async fn widget_reads_survive_history_modes_compaction_restarts_and_app_only_vis
 
     let mut persistent_thread_ids = Vec::new();
     for (history_mode, ephemeral) in [
-        (ThreadHistoryMode::Legacy, false),
         (ThreadHistoryMode::Paginated, false),
-        (ThreadHistoryMode::Legacy, true),
+        (ThreadHistoryMode::Paginated, false),
+        (ThreadHistoryMode::Paginated, true),
         (ThreadHistoryMode::Paginated, true),
     ] {
         let ThreadStartResponse { thread, .. } = app_server

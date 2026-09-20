@@ -1,15 +1,14 @@
 use crate::RolloutItem;
 use crate::protocol::EventMsg;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::ThreadHistoryMode;
 
 /// Whether a rollout `item` should be persisted in rollout files.
-pub fn is_persisted_rollout_item(item: &RolloutItem, _history_mode: ThreadHistoryMode) -> bool {
+pub fn is_persisted_rollout_item(item: &RolloutItem) -> bool {
     match item {
         RolloutItem::ResponseItem(item) => should_persist_response_item(&item.item),
         RolloutItem::InterAgentCommunication(_)
         | RolloutItem::InterAgentCommunicationMetadata { .. } => true,
-        RolloutItem::EventMsg(ev) => should_persist_event_msg(ev, _history_mode),
+        RolloutItem::EventMsg(ev) => should_persist_event_msg(ev),
         RolloutItem::RealtimeItem(_) => true,
         // Persist Codex executive markers so we can analyze flows (e.g., compaction, API turns).
         RolloutItem::Compacted(_)
@@ -23,13 +22,10 @@ pub fn is_persisted_rollout_item(item: &RolloutItem, _history_mode: ThreadHistor
 }
 
 /// Return the rollout items that should be persisted for a live append.
-pub fn persisted_rollout_items(
-    items: &[RolloutItem],
-    history_mode: ThreadHistoryMode,
-) -> Vec<RolloutItem> {
+pub fn persisted_rollout_items(items: &[RolloutItem]) -> Vec<RolloutItem> {
     let mut persisted = Vec::new();
     for item in items {
-        if is_persisted_rollout_item(item, history_mode) {
+        if is_persisted_rollout_item(item) {
             persisted.push(item.clone());
         }
     }
@@ -88,7 +84,7 @@ pub fn should_persist_response_item_for_memories(item: &ResponseItem) -> bool {
 
 /// Whether an `EventMsg` should be persisted in rollout files.
 #[inline]
-pub fn should_persist_event_msg(ev: &EventMsg, _history_mode: ThreadHistoryMode) -> bool {
+pub fn should_persist_event_msg(ev: &EventMsg) -> bool {
     match ev {
         // Current rollouts persist the canonical TurnItem representation.
         EventMsg::ItemCompleted(_) => true,

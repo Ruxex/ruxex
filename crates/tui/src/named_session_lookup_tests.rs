@@ -186,7 +186,7 @@ async fn resolves_name_and_preview_from_server_list() -> color_eyre::Result<()> 
         "2025-02-01T10:00:00Z",
         "preview text",
         SessionSource::Cli,
-        ThreadHistoryMode::Legacy,
+        ThreadHistoryMode::Paginated,
     )?;
     upsert_thread(
         &runtime,
@@ -200,7 +200,7 @@ async fn resolves_name_and_preview_from_server_list() -> color_eyre::Result<()> 
         "2025-02-02T10:00:00Z",
         "preview text",
         SessionSource::Cli,
-        ThreadHistoryMode::Legacy,
+        ThreadHistoryMode::Paginated,
     )?;
     upsert_thread(
         &runtime,
@@ -216,7 +216,7 @@ async fn resolves_name_and_preview_from_server_list() -> color_eyre::Result<()> 
         "2025-02-03T10:00:00Z",
         "preview text",
         SessionSource::Cli,
-        ThreadHistoryMode::Legacy,
+        ThreadHistoryMode::Paginated,
     )?;
     upsert_thread(
         &runtime,
@@ -290,7 +290,7 @@ async fn rejects_duplicate_labels_across_server_pages() -> color_eyre::Result<()
             "2025-02-01T10:00:00Z",
             "preview text",
             SessionSource::Cli,
-            ThreadHistoryMode::Legacy,
+            ThreadHistoryMode::Paginated,
         )?;
         let name = if index == 0 || index == 101 {
             "same-label".to_string()
@@ -359,7 +359,7 @@ async fn skips_stale_listed_thread_before_valid_label() -> color_eyre::Result<()
         "2025-02-01T10:00:00Z",
         "same-label",
         SessionSource::Cli,
-        ThreadHistoryMode::Legacy,
+        ThreadHistoryMode::Paginated,
     )?;
     upsert_thread(
         &runtime,
@@ -375,7 +375,7 @@ async fn skips_stale_listed_thread_before_valid_label() -> color_eyre::Result<()
         "2025-02-01T10:00:00Z",
         "same-label",
         SessionSource::Cli,
-        ThreadHistoryMode::Legacy,
+        ThreadHistoryMode::Paginated,
     )?;
     upsert_thread(
         &runtime,
@@ -391,7 +391,7 @@ async fn skips_stale_listed_thread_before_valid_label() -> color_eyre::Result<()
         "2025-02-01T10:00:01Z",
         "same-label",
         SessionSource::Cli,
-        ThreadHistoryMode::Legacy,
+        ThreadHistoryMode::Paginated,
     )?;
     upsert_thread(
         &runtime,
@@ -429,7 +429,7 @@ async fn uses_listed_thread_when_older_server_cannot_read_it() -> color_eyre::Re
         "2025-02-01T10:00:00Z",
         "preview text",
         SessionSource::Cli,
-        ThreadHistoryMode::Legacy,
+        ThreadHistoryMode::Paginated,
     )?;
     upsert_thread(
         &runtime,

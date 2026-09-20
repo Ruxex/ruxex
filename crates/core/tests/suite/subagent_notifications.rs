@@ -979,7 +979,6 @@ async fn subagent_notification_is_included_without_wait() -> Result<()> {
     Ok(())
 }
 
-#[test_case(ThreadHistoryMode::Legacy; "legacy")]
 #[test_case(ThreadHistoryMode::Paginated; "paginated")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn spawned_child_receives_forked_parent_context(
@@ -1189,13 +1188,13 @@ enum GrandchildParentContext {
     Compacted,
 }
 
-#[test_case(GrandchildParentContext::FullHistory, ThreadHistoryMode::Legacy; "legacy full history")]
-#[test_case(GrandchildParentContext::LastTurn, ThreadHistoryMode::Legacy; "legacy last turn")]
-#[test_case(GrandchildParentContext::NoHistory, ThreadHistoryMode::Legacy; "legacy no history")]
+#[test_case(GrandchildParentContext::FullHistory, ThreadHistoryMode::Paginated; "legacy full history")]
+#[test_case(GrandchildParentContext::LastTurn, ThreadHistoryMode::Paginated; "legacy last turn")]
+#[test_case(GrandchildParentContext::NoHistory, ThreadHistoryMode::Paginated; "legacy no history")]
 #[test_case(GrandchildParentContext::FullHistory, ThreadHistoryMode::Paginated; "paginated full history")]
 #[test_case(GrandchildParentContext::LastTurn, ThreadHistoryMode::Paginated; "paginated last turn")]
 #[test_case(GrandchildParentContext::NoHistory, ThreadHistoryMode::Paginated; "paginated no history")]
-#[test_case(GrandchildParentContext::Compacted, ThreadHistoryMode::Legacy; "legacy full history after compaction")]
+#[test_case(GrandchildParentContext::Compacted, ThreadHistoryMode::Paginated; "legacy full history after compaction")]
 #[test_case(GrandchildParentContext::Compacted, ThreadHistoryMode::Paginated; "paginated full history after compaction")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn grandchild_full_fork_preserves_context_baseline(
@@ -2443,7 +2442,7 @@ enum CompletionScenario {
 )]
 #[test_case(
     CompletionScenario::Completed,
-    ThreadHistoryMode::Legacy;
+    ThreadHistoryMode::Paginated;
     "completed_legacy"
 )]
 #[test_case(

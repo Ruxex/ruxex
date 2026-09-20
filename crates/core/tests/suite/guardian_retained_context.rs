@@ -251,11 +251,11 @@ enum InstructionSize {
     Oversized,
 }
 
-#[test_case(ThreadHistoryMode::Legacy, true, InstructionSize::Normal; "enabled legacy rollback replay")]
+#[test_case(ThreadHistoryMode::Paginated, true, InstructionSize::Normal; "enabled legacy rollback replay")]
 #[test_case(ThreadHistoryMode::Paginated, true, InstructionSize::Normal; "enabled paginated resume")]
-#[test_case(ThreadHistoryMode::Legacy, false, InstructionSize::Normal; "disabled legacy rollback replay")]
+#[test_case(ThreadHistoryMode::Paginated, false, InstructionSize::Normal; "disabled legacy rollback replay")]
 #[test_case(ThreadHistoryMode::Paginated, false, InstructionSize::Normal; "disabled paginated resume")]
-#[test_case(ThreadHistoryMode::Legacy, true, InstructionSize::Oversized; "oversized instruction rollback replay")]
+#[test_case(ThreadHistoryMode::Paginated, true, InstructionSize::Oversized; "oversized instruction rollback replay")]
 #[test_case(ThreadHistoryMode::Paginated, true, InstructionSize::Oversized; "oversized instruction resume")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn retained_instructions_keep_identity_across_compaction_and_resume(
@@ -273,11 +273,7 @@ async fn retained_instructions_keep_identity_across_compaction_and_resume(
             "Project detail. ".repeat(2_000)
         ),
     };
-    // Legacy rollouts can contain rollback markers; paginated histories use checkpoint resume.
-    let rollback_counts: &[usize] = match history_mode {
-        ThreadHistoryMode::Legacy => &[1, 0],
-        ThreadHistoryMode::Paginated => &[],
-    };
+    let rollback_counts: &[usize] = &[];
     let server = start_mock_server().await;
     let test = test_codex()
         .with_history_mode(history_mode)
@@ -533,7 +529,7 @@ async fn retained_instructions_keep_identity_across_compaction_and_resume(
     let requests = response_mock.requests();
     assert_eq!(requests.len(), 4 + rollback_counts.len());
     assert!(requests[3].has_message_with_input_texts("user", |texts| texts == [STEER]));
-    if history_mode == ThreadHistoryMode::Legacy {
+    if history_mode == ThreadHistoryMode::Paginated {
         assert!(
             requests[4].has_message_with_input_texts("user", |texts| texts == [initial.as_str()])
         );
@@ -552,11 +548,11 @@ enum LegacyInstructionSource {
     Missing,
 }
 
-#[test_case(ThreadHistoryMode::Legacy, LegacyInstructionSource::GuardianHistory; "legacy backup")]
+#[test_case(ThreadHistoryMode::Paginated, LegacyInstructionSource::GuardianHistory; "legacy backup")]
 #[test_case(ThreadHistoryMode::Paginated, LegacyInstructionSource::GuardianHistory; "paginated backup")]
-#[test_case(ThreadHistoryMode::Legacy, LegacyInstructionSource::ModelWindow; "legacy window")]
+#[test_case(ThreadHistoryMode::Paginated, LegacyInstructionSource::ModelWindow; "legacy window")]
 #[test_case(ThreadHistoryMode::Paginated, LegacyInstructionSource::ModelWindow; "paginated window")]
-#[test_case(ThreadHistoryMode::Legacy, LegacyInstructionSource::Missing; "legacy missing source")]
+#[test_case(ThreadHistoryMode::Paginated, LegacyInstructionSource::Missing; "legacy missing source")]
 #[test_case(ThreadHistoryMode::Paginated, LegacyInstructionSource::Missing; "paginated missing source")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn legacy_checkpoint_recovers_root_excerpt_before_discarding_backup(
@@ -777,7 +773,7 @@ async fn legacy_rollback_replay_retains_only_surviving_steered_answers() -> Resu
     skip_if_no_network!(Ok(()));
     let server = start_mock_server().await;
     let test = test_codex()
-        .with_history_mode(ThreadHistoryMode::Legacy)
+        .with_history_mode(ThreadHistoryMode::Paginated)
         .with_config(|config| {
             config.experimental_thread_store = ThreadStoreConfig::Local;
             // Legacy saved answers use their source calls, not acceptance-order metadata.
@@ -930,7 +926,7 @@ enum LifecycleBoundary {
 
 // Cover live copied history and a truncated referenced checkpoint. Parent-answer
 // omission is already exercised by retained_answers_cross_real_session_boundaries.
-#[test_case(ThreadHistoryMode::Legacy; "copied worker history")]
+#[test_case(ThreadHistoryMode::Paginated; "copied worker history")]
 #[test_case(ThreadHistoryMode::Paginated; "referenced truncated checkpoint")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn standalone_fork_retains_inherited_user_instructions(
@@ -1158,7 +1154,7 @@ async fn forked_parent_instructions_do_not_become_local_authorization(
     extensions.thread_lifecycle_contributor(child_gate.clone());
     let test = test_codex()
         .with_extensions(Arc::new(extensions.build()))
-        .with_history_mode(ThreadHistoryMode::Legacy)
+        .with_history_mode(ThreadHistoryMode::Paginated)
         .with_config(move |config| {
             config.experimental_thread_store = ThreadStoreConfig::Local;
             config.update_plan_enabled = true;
@@ -1343,8 +1339,8 @@ async fn forked_parent_instructions_do_not_become_local_authorization(
     Ok(())
 }
 
-#[test_case(ThreadHistoryMode::Legacy, LifecycleBoundary::LegacyRollbackReplay; "legacy rollback replay")]
-#[test_case(ThreadHistoryMode::Legacy, LifecycleBoundary::ChildFork; "legacy child fork")]
+#[test_case(ThreadHistoryMode::Paginated, LifecycleBoundary::LegacyRollbackReplay; "legacy rollback replay")]
+#[test_case(ThreadHistoryMode::Paginated, LifecycleBoundary::ChildFork; "legacy child fork")]
 #[test_case(ThreadHistoryMode::Paginated, LifecycleBoundary::ChildFork; "paginated child fork")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn retained_answers_cross_real_session_boundaries(

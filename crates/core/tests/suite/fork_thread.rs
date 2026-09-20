@@ -243,7 +243,7 @@ async fn fork_thread_restores_history_selection_and_preserves_explicit_clear() -
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fork_thread_from_history_does_not_require_source_rollout_path() {
-    assert_copied_fork_persists_inherited_history(ThreadHistoryMode::Legacy).await;
+    assert_copied_fork_persists_inherited_history(ThreadHistoryMode::Paginated).await;
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

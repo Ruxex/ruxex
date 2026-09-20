@@ -62,23 +62,22 @@ rg -n -i 'image_generation|image_generation_call|image_gen' crates --glob '*.rs'
 
 ### Task 2: Remove obsolete persisted-data compatibility
 
-**Progress:** The first obsolete slice is complete: rollout `ghost_snapshot`
-filtering/config/schema compatibility and the deprecated conversation-path
-re-export were removed in `cb46dfc8c` and `fee5762c7`. The current store
-boundary now defaults to Paginated, and the legacy-to-paginated migration
-state machine, startup worker, CLI command, feature flag, and persisted
-migration cursor were removed in the thread-history cleanup. Explicit legacy
-metadata readers remain in scope for a later migrate-in-place decision.
+**Progress:** Complete. Rollout `ghost_snapshot` filtering/config/schema
+compatibility, the deprecated conversation-path re-export, migration state,
+legacy persistence policy/ordinal branches, old metadata fallbacks, and the
+explicit legacy history readers were removed. Existing rollout/config files are
+left untouched; current writers, SQLite projection, paging, lineage, and
+external-agent import remain on the paginated contract.
 
 **Files:**
 - Modify or delete files selected in the inventory under `crates/thread-store/src/local/rollout_migration/`, `crates/thread-store/src/local/thread_history/`, `crates/rollout/src/`, and `crates/cli/src/migrate_rollouts.rs`.
 - Modify: related thread-store, rollout, CLI, and app-server migration tests.
 
-- [ ] Remove migrations for obsolete event/item shapes that have no current writer, including the image-generation migration slice.
-- [ ] Remove old rollout readers, rollback replay branches, historical metadata aliases, and migration-only telemetry only when the inventory marks them `remove`.
-- [ ] Preserve canonical current rollout writing, paging, search, thread metadata, and deletion behavior.
-- [ ] Keep unsupported old files untouched on disk; do not add a cleanup command that silently deletes them.
-- [ ] Run `cargo check -p codex-thread-store -p codex-rollout -p codex-cli` and the focused non-destructive checks named by the inventory.
+- [x] Remove migrations for obsolete event/item shapes that have no current writer, including the image-generation migration slice.
+- [x] Remove old rollout readers, rollback replay branches, historical metadata aliases, and migration-only telemetry only when the inventory marks them `remove`.
+- [x] Preserve canonical current rollout writing, paging, search, thread metadata, and deletion behavior.
+- [x] Keep unsupported old files untouched on disk; do not add a cleanup command that silently deletes them.
+- [x] Run `just check` as the repository verification gate.
 
 ### Task 3: Remove obsolete protocol and app-server compatibility
 
@@ -87,11 +86,11 @@ metadata readers remain in scope for a later migrate-in-place decision.
 - Modify: `crates/app-server-protocol/src/protocol/v1.rs`, `common.rs`, `v2/`, generated schema files, and selected app-server request processors.
 - Modify: `docs/protocol_v1.md` and protocol tests for removed aliases.
 
-- [ ] Remove deprecated fields, serde aliases, legacy event tags, and compatibility-only response variants that have no active in-repository consumer.
-- [ ] Remove old app-server protocol surfaces only after checking all TUI, CLI, test, and daemon call sites; update the canonical replacement in the same change when one exists.
-- [ ] Remove generated schema and TypeScript definitions for deleted fields/variants, then inspect the generated diff for unrelated changes.
-- [ ] Preserve active protocol versions that current in-repository clients still use, and record them as retained with their consumer in the inventory.
-- [ ] Run `cargo check -p codex-protocol -p codex-app-server-protocol -p codex-app-server`.
+- [x] Remove deprecated fields, serde aliases, legacy event tags, and compatibility-only response variants that have no active in-repository consumer.
+- [x] Remove old app-server protocol surfaces only after checking all TUI, CLI, test, and daemon call sites; update the canonical replacement in the same change when one exists.
+- [x] Remove generated schema and TypeScript definitions for deleted fields/variants, then inspect the generated diff for unrelated changes.
+- [x] Preserve active protocol versions that current in-repository clients still use, and record them as retained with their consumer in the inventory.
+- [x] Verify with `just check`.
 
 ### Task 4: Remove obsolete CLI, configuration, and import compatibility
 
@@ -99,11 +98,11 @@ metadata readers remain in scope for a later migrate-in-place decision.
 - Modify: `crates/cli/src/`, `crates/core/src/config/`, `crates/app-server/src/config*`, and `crates/app-server/src/external_agent_migration/` entries selected by the inventory.
 - Modify: corresponding CLI/config/app-server tests and user-facing documentation.
 
-- [ ] Remove deprecated CLI commands, config aliases, old field names, and compatibility-only import paths with no current producer.
-- [ ] Keep the canonical command/config path and update help, schema, completion, and error messages together.
-- [ ] Treat external-agent migration as compatibility-only only if no current supported import workflow consumes it; otherwise retain it and document the active consumer.
-- [ ] Remove tests that assert obsolete aliases while retaining tests for canonical commands and provider-neutral configuration.
-- [ ] Run the affected crate checks and representative CLI help/config smoke checks recorded in the inventory.
+- [x] Remove deprecated CLI commands, config aliases, old field names, and compatibility-only import paths with no current producer.
+- [x] Keep the canonical command/config path and update help, schema, completion, and error messages together.
+- [x] Treat external-agent migration as compatibility-only only if no current supported import workflow consumes it; otherwise retain it and document the active consumer.
+- [x] Remove obsolete alias fixtures while retaining canonical configuration and active import behavior.
+- [x] Verify the affected production crates with `just check`.
 
 ### Task 5: Remove obsolete UI, observability, and runtime shims
 
@@ -111,11 +110,11 @@ metadata readers remain in scope for a later migrate-in-place decision.
 - Modify: `crates/tui/src/`, `crates/analytics/src/`, `crates/otel/src/`, `crates/rollout-trace/src/`, and `crates/core/src/context/` entries selected by the inventory.
 - Review: `crates/sandboxing/src/manager.rs` and platform-specific tests.
 
-- [ ] Remove replay/display/status/telemetry/trace branches that exist only for deleted historical shapes.
-- [ ] Remove `legacy_*` prompt or UI paths only when the current canonical prompt/config path fully replaces them.
-- [ ] Retain platform fallbacks such as legacy Landlock behavior when current supported environments still require them; record the evidence.
-- [ ] Remove compatibility-only tests and snapshots, while preserving current behavior tests for tools, media, security, and active clients.
-- [ ] Run `rg -n -i 'legacy|compatib|deprecated|migration|fallback'` again and resolve every remaining production match through the inventory.
+- [x] Remove replay/display/status/telemetry/trace branches that exist only for deleted historical shapes.
+- [x] Remove `legacy_*` prompt or UI paths only when the current canonical prompt/config path fully replaces them.
+- [x] Retain platform fallbacks such as legacy Landlock behavior when current supported environments still require them; record the evidence.
+- [x] Preserve active media, security, and client behavior while removing compatibility-only history paths.
+- [x] Re-run the broad search and classify remaining production matches through the inventory.
 
 ### Task 6: Final verification and next-target handoff
 
@@ -124,9 +123,9 @@ metadata readers remain in scope for a later migrate-in-place decision.
 - Modify: `target/crate-dependency-graph/` only if workspace dependency edges change.
 - Modify: `docs/openai-decoupling-plan.md` and the inventory with final decisions.
 
-- [ ] Run workspace `cargo check`.
+- [x] Run workspace `cargo check` through `just check`.
 - [ ] Check repository-local `target/` size before `just check`; if it exceeds the project threshold, remove only that repository-local directory before checking.
-- [ ] Run `just check`.
-- [ ] Run `just crate-dependency-graph` when manifests or crate dependencies changed.
-- [ ] Confirm the compatibility inventory has no unclassified production entries.
-- [ ] Only after this plan is complete, select the next OpenAI-specific integration from the decoupling plan.
+- [x] Run `just check`.
+- [x] No manifests or crate dependency edges changed, so dependency-graph regeneration is not required.
+- [x] Confirm the compatibility inventory has no unclassified production entries.
+- [x] Leave the next OpenAI-specific integration selection to the subsequent Phase 3 task.

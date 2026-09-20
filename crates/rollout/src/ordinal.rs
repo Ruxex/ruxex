@@ -51,20 +51,13 @@ pub(crate) fn ordinal_state_for_rollout(
     file: &mut File,
     path: &Path,
 ) -> io::Result<RolloutOrdinalState> {
-    let Some((history_mode, subagent_history_start_ordinal)) = read_history_metadata(file, path)?
+    let Some((_history_mode, subagent_history_start_ordinal)) = read_history_metadata(file, path)?
     else {
         return Err(io::Error::other(format!(
             "rollout at {} has no session metadata",
             path.display()
         )));
     };
-    if matches!(history_mode, ThreadHistoryMode::Legacy) {
-        return Err(io::Error::other(format!(
-            "rollout at {} is not a paginated rollout",
-            path.display()
-        )));
-    }
-
     let mut scanner = ReverseJsonlScanner::new(file)?;
     let record = loop {
         match scanner.scan_next_rollout_line()? {

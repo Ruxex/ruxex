@@ -508,7 +508,7 @@ async fn backfill_sessions_normalizes_cwd_before_upsert() {
         thread_uuid,
         session_cwd.clone(),
         /*git*/ None,
-        ThreadHistoryMode::Legacy,
+        ThreadHistoryMode::Paginated,
     );
 
     let runtime = codex_state::StateRuntime::init(
@@ -545,7 +545,7 @@ fn write_rollout_in_sessions(
         thread_uuid,
         codex_home.to_path_buf(),
         git,
-        ThreadHistoryMode::Legacy,
+        ThreadHistoryMode::Paginated,
     )
 }
 

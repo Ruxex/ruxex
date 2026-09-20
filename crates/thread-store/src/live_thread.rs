@@ -37,7 +37,6 @@ use crate::thread_metadata_sync::ThreadMetadataSync;
 #[derive(Clone)]
 pub struct LiveThread {
     thread_id: ThreadId,
-    history_mode: ThreadHistoryMode,
     thread_store: Arc<dyn ThreadStore>,
     metadata_sync: Arc<Mutex<ThreadMetadataSync>>,
     persistence_telemetry: RolloutPersistenceTelemetry,
@@ -138,12 +137,10 @@ impl LiveThread {
         params: CreateThreadParams,
     ) -> ThreadStoreResult<Self> {
         let thread_id = params.thread_id;
-        let history_mode = params.history_mode;
         let metadata_sync = ThreadMetadataSync::for_create(&params).await;
         thread_store.create_thread(params).await?;
         Ok(Self {
             thread_id,
-            history_mode,
             thread_store,
             metadata_sync: Arc::new(Mutex::new(metadata_sync)),
             persistence_telemetry: RolloutPersistenceTelemetry::new(thread_id),
@@ -160,8 +157,7 @@ impl LiveThread {
         inherited_model_context: &[RolloutItem],
         guard: &mut LiveThreadInitGuard,
     ) -> ThreadStoreResult<Self> {
-        let persisted_prefix_item_count =
-            persisted_rollout_items(inherited_model_context, params.history_mode).len();
+        let persisted_prefix_item_count = persisted_rollout_items(inherited_model_context).len();
         params.subagent_history_start_ordinal = Some(
             u64::try_from(persisted_prefix_item_count)
                 .map_err(|_| ThreadStoreError::Internal {
@@ -181,14 +177,14 @@ impl LiveThread {
 
     pub async fn resume(
         thread_store: Arc<dyn ThreadStore>,
-        history_mode: ThreadHistoryMode,
+        _history_mode: ThreadHistoryMode,
         params: ResumeThreadParams,
     ) -> ThreadStoreResult<Self> {
         let thread_id = params.thread_id;
         let should_load_history = params.history.is_none();
         let include_archived = params.include_archived;
-        let metadata = if history_mode == ThreadHistoryMode::Paginated
-            && let Some(local_store) = thread_store.as_any().downcast_ref::<LocalThreadStore>()
+        let metadata = if let Some(local_store) =
+            thread_store.as_any().downcast_ref::<LocalThreadStore>()
             && let Some(state_db) = local_store.state_db().await
         {
             state_db
@@ -223,7 +219,6 @@ impl LiveThread {
         }
         Ok(Self {
             thread_id,
-            history_mode,
             thread_store,
             metadata_sync: Arc::new(Mutex::new(metadata_sync)),
             persistence_telemetry: RolloutPersistenceTelemetry::new(thread_id),
@@ -270,11 +265,10 @@ impl LiveThread {
             return Ok(Vec::new());
         }
         let (items, measurement) = if self.persistence_telemetry.is_enabled() {
-            let (items, measurement) =
-                measure_and_filter_rollout_items(raw_items, self.history_mode);
+            let (items, measurement) = measure_and_filter_rollout_items(raw_items);
             (items, Some(measurement))
         } else {
-            (persisted_rollout_items(raw_items, self.history_mode), None)
+            (persisted_rollout_items(raw_items), None)
         };
         self.thread_store
             .append_items(AppendThreadItemsParams {

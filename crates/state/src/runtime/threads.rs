@@ -64,33 +64,6 @@ WHERE threads.id = ?
             .transpose()
     }
 
-    /// Permanently promote a thread, preserving its canonical name or a legacy-visible fallback.
-    pub async fn mark_thread_paginated(
-        &self,
-        thread_id: ThreadId,
-        legacy_name: Option<&str>,
-    ) -> anyhow::Result<bool> {
-        // Legacy threads display `title`, then fall back to the name index. Paginated threads
-        // display `name`; `title` remains derived metadata used for search. Preserve an existing
-        // `name`, otherwise carry over the legacy display name.
-        let result = sqlx::query(
-            r#"
-UPDATE threads
-SET
-    history_mode = 'paginated',
-    name = CASE
-        WHEN name IS NULL OR trim(name) = '' THEN ?
-        ELSE name
-    END
-WHERE id = ?
-            "#,
-        )
-        .bind(legacy_name)
-        .bind(thread_id.to_string())
-        .execute(self.pool.as_ref())
-        .await?;
-        Ok(result.rows_affected() > 0)
-    }
     pub async fn get_thread_memory_mode(&self, id: ThreadId) -> anyhow::Result<Option<String>> {
         let row = sqlx::query("SELECT memory_mode FROM threads WHERE id = ?")
             .bind(id.to_string())
@@ -956,11 +929,7 @@ ON CONFLICT(id) DO UPDATE SET
     recency_at_ms = threads.recency_at_ms,
     source = excluded.source,
     originator = COALESCE(threads.originator, excluded.originator),
-    -- Paginated history is a one-way promotion; stale legacy metadata must not downgrade it.
-    history_mode = CASE
-        WHEN threads.history_mode = 'paginated' THEN threads.history_mode
-        ELSE excluded.history_mode
-    END,
+    history_mode = excluded.history_mode,
     thread_source = excluded.thread_source,
     agent_nickname = excluded.agent_nickname,
     agent_role = excluded.agent_role,
@@ -1623,55 +1592,6 @@ mod tests {
                 .await
                 .expect("memory mode should remain readable");
         assert_eq!(memory_mode, "disabled");
-    }
-
-    #[tokio::test]
-    async fn thread_metadata_history_mode_does_not_downgrade() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
-            "test-provider".to_string(),
-        )
-        .await
-        .expect("state db should initialize");
-        let thread_id =
-            ThreadId::from_string("00000000-0000-0000-0000-000000000124").expect("valid thread id");
-        let metadata = test_thread_metadata(&codex_home, thread_id, codex_home.clone());
-
-        runtime
-            .upsert_thread(&metadata)
-            .await
-            .expect("upsert should succeed");
-
-        assert!(
-            runtime
-                .mark_thread_paginated(thread_id, /*legacy_name*/ None)
-                .await
-                .expect("mark paginated history")
-        );
-
-        let metadata = runtime
-            .get_thread(thread_id)
-            .await
-            .expect("thread should load")
-            .expect("thread should exist");
-        assert_eq!(metadata.history_mode, ThreadHistoryMode::Paginated);
-
-        let mut stale_metadata = metadata;
-        stale_metadata.history_mode = ThreadHistoryMode::Legacy;
-        runtime
-            .upsert_thread(&stale_metadata)
-            .await
-            .expect("upsert stale legacy metadata");
-        assert_eq!(
-            runtime
-                .get_thread(thread_id)
-                .await
-                .expect("read migrated thread")
-                .expect("thread should exist")
-                .history_mode,
-            ThreadHistoryMode::Paginated
-        );
     }
 
     #[tokio::test]

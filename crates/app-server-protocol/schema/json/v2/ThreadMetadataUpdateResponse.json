@@ -1163,7 +1163,7 @@
               "$ref": "#/definitions/ThreadHistoryMode"
             }
           ],
-          "default": "legacy",
+          "default": "paginated",
           "description": "Persisted thread history contract selected when this thread was created."
         },
         "id": {
@@ -1357,7 +1357,6 @@
     },
     "ThreadHistoryMode": {
       "enum": [
-        "legacy",
         "paginated"
       ],
       "type": "string"

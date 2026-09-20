@@ -168,7 +168,7 @@ async fn steered_input_checkpoint_controls_next_request(
     let config_server = responses::start_mock_server().await;
     let test = test_codex()
         .with_thread_store(store.clone())
-        .with_history_mode(ThreadHistoryMode::Legacy)
+        .with_history_mode(ThreadHistoryMode::Paginated)
         .with_config(move |config| config.model_provider.base_url = Some(base_url))
         .build_with_auto_env(&config_server)
         .await?;

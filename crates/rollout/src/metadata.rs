@@ -15,7 +15,6 @@ use codex_protocol::protocol::SandboxPolicy;
 use codex_protocol::protocol::SessionMeta;
 use codex_protocol::protocol::SessionMetaLine;
 use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::ThreadHistoryMode;
 use codex_state::BackfillState;
 use codex_state::BackfillStats;
 use codex_state::BackfillStatus;
@@ -312,8 +311,7 @@ pub(crate) async fn backfill_sessions_with_lease(
                     let existing_metadata = runtime.get_thread(metadata.id).await.ok().flatten();
                     // Paginated metadata updates are SQLite-only. Use the rollout mode to seed a
                     // missing row, then keep the value from SQLite.
-                    let restore_memory_mode_from_rollout = existing_metadata.is_none()
-                        || matches!(metadata.history_mode, ThreadHistoryMode::Legacy);
+                    let restore_memory_mode_from_rollout = existing_metadata.is_none();
                     if let Some(existing_metadata) = existing_metadata.as_ref() {
                         metadata.prefer_existing_git_info(existing_metadata);
                         metadata.prefer_existing_explicit_title(existing_metadata);

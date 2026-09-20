@@ -1,8 +1,8 @@
 //! Coordinates maintenance jobs that replace local rollout files.
 //!
-//! Rollout compression and legacy rollout migration both publish by renaming a replacement over an
-//! existing rollout path. They must not do that at the same time for one Codex home, so they share
-//! this process-scoped, nonblocking file lock.
+//! Rollout compression publishes by renaming a replacement over an existing rollout path. It must
+//! not race with another replacement for one Codex home, so it uses this process-scoped,
+//! nonblocking file lock.
 //!
 //! This is separate from per-thread writer locks, which protect live rollout appenders. It is also
 //! separate from compression's durable run marker, which throttles how often compression scans.
@@ -20,7 +20,7 @@ pub struct RolloutMaintenanceGuard {
     _file: File,
 }
 
-/// Try to exclude rollout compression and migration for one Codex home.
+/// Try to exclude rollout replacement operations for one Codex home.
 pub fn try_acquire_rollout_maintenance_lock(
     codex_home: &Path,
 ) -> io::Result<Option<RolloutMaintenanceGuard>> {

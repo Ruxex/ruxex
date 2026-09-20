@@ -638,10 +638,7 @@ fn create_history_rollout(
     history_mode: ThreadHistoryMode,
     preview: &str,
 ) -> Result<ThreadId> {
-    let create_rollout = match history_mode {
-        ThreadHistoryMode::Legacy => create_fake_rollout,
-        ThreadHistoryMode::Paginated => create_fake_paginated_rollout,
-    };
+    let create_rollout = create_fake_paginated_rollout;
     let thread_id = create_rollout(
         config.codex_home.as_path(),
         "2026-01-02T00-00-00",
@@ -685,7 +682,7 @@ async fn delete_current_thread_navigates_only_after_success() -> Result<()> {
     ] {
         let (mut app, _codex_home) = make_history_test_app().await?;
         let thread_id =
-            create_history_rollout(&app.config, ThreadHistoryMode::Legacy, "delete me")?;
+            create_history_rollout(&app.config, ThreadHistoryMode::Paginated, "delete me")?;
         let (mut server, requests, proxy) = start_recording_app_server(
             &app.config,
             /*blocked_thread_list*/ None,
@@ -992,7 +989,7 @@ async fn archive_current_thread_returns_shared_servers_to_agents() -> Result<()>
     ] {
         let (mut app, _codex_home) = make_history_test_app().await?;
         let thread_id =
-            create_history_rollout(&app.config, ThreadHistoryMode::Legacy, "archive me")?;
+            create_history_rollout(&app.config, ThreadHistoryMode::Paginated, "archive me")?;
         let (mut server, requests, proxy) = start_recording_app_server(
             &app.config,
             /*blocked_thread_list*/ None,
@@ -1188,7 +1185,7 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
         .set(codex_protocol::config_types::WebSearchMode::Disabled)?;
     let delegation_source = create_history_rollout(
         &app.config,
-        ThreadHistoryMode::Legacy,
+        ThreadHistoryMode::Paginated,
         "Approved task source",
     )?;
     Box::pin(app_server.resume_thread(
@@ -1698,7 +1695,7 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
 
     let creation_source = create_history_rollout(
         &app.config,
-        ThreadHistoryMode::Legacy,
+        ThreadHistoryMode::Paginated,
         "Background task source",
     )?;
     app_server
@@ -2305,7 +2302,7 @@ async fn transcript_home_loads_every_older_history_page() -> Result<()> {
 async fn remote_legacy_history_start_negotiates_once_for_resume_and_fork() -> Result<()> {
     let (app, _codex_home) = make_history_test_app().await?;
     let legacy_thread_id =
-        create_history_rollout(&app.config, ThreadHistoryMode::Legacy, "legacy history")?;
+        create_history_rollout(&app.config, ThreadHistoryMode::Paginated, "legacy history")?;
     let paginated_thread_id = create_history_rollout(
         &app.config,
         ThreadHistoryMode::Paginated,
@@ -2435,7 +2432,7 @@ enum LegacyHistoryRequest {
 async fn assert_remote_legacy_history_retry(request: LegacyHistoryRequest) -> Result<()> {
     let (app, _codex_home) = make_history_test_app().await?;
     let legacy_thread_id =
-        create_history_rollout(&app.config, ThreadHistoryMode::Legacy, "legacy history")?;
+        create_history_rollout(&app.config, ThreadHistoryMode::Paginated, "legacy history")?;
     let (mut app_server, requests, proxy) = start_recording_app_server_with_history(
         &app.config,
         HistoryCapabilities::LegacyOnly,
@@ -2733,7 +2730,7 @@ async fn paginated_workflows_never_request_full_thread_history() -> Result<()> {
     )?;
     let legacy_thread_id = create_history_rollout(
         &app.config,
-        ThreadHistoryMode::Legacy,
+        ThreadHistoryMode::Paginated,
         "legacy visible history",
     )?;
     let (mut app_server, requests, proxy) = start_recording_app_server(
@@ -2743,7 +2740,7 @@ async fn paginated_workflows_never_request_full_thread_history() -> Result<()> {
     )
     .await?;
 
-    app_server.remember_thread_history_mode(paginated_thread_id, ThreadHistoryMode::Legacy);
+    app_server.remember_thread_history_mode(paginated_thread_id, ThreadHistoryMode::Paginated);
     let resumed = Box::pin(app_server.resume_thread(
         &app.local_settings,
         app.config.clone(),
@@ -2834,7 +2831,7 @@ async fn agents_overview_stop_uses_history_mode_for_turn_lookup() -> Result<()> 
         (
             create_history_rollout(
                 &app.config,
-                ThreadHistoryMode::Legacy,
+                ThreadHistoryMode::Paginated,
                 "legacy background task",
             )?,
             vec![false, true],
@@ -4442,7 +4439,7 @@ async fn external_writer_escape_preserves_snapshot_and_explicit_quits() -> Resul
     ] {
         let (mut app, _codex_home) = make_history_test_app().await?;
         let thread_id =
-            create_history_rollout(&app.config, ThreadHistoryMode::Legacy, "owned elsewhere")?;
+            create_history_rollout(&app.config, ThreadHistoryMode::Paginated, "owned elsewhere")?;
         let (mut server, requests, proxy) = start_recording_app_server(
             &app.config,
             /*blocked_thread_list*/ None,
@@ -4541,7 +4538,7 @@ async fn command_center_read_only_open_requests_and_failure_preservation() -> Re
         ) {
             ThreadHistoryMode::Paginated
         } else {
-            ThreadHistoryMode::Legacy
+            ThreadHistoryMode::Paginated
         };
         let thread_id = create_history_rollout(&app.config, history_mode, "Locked task")?;
         if history_mode == ThreadHistoryMode::Paginated {

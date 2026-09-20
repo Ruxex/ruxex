@@ -5,7 +5,6 @@ use std::path::Path;
 use crate::app_server_session::AppServerSession;
 use codex_app_server_client::TypedRequestError;
 use codex_app_server_protocol::Thread;
-use codex_app_server_protocol::ThreadHistoryMode;
 use codex_app_server_protocol::ThreadListParams;
 use codex_app_server_protocol::ThreadSortKey;
 use codex_app_server_protocol::ThreadSourceKind;
@@ -100,8 +99,7 @@ pub(super) async fn lookup(
                             SessionCollection::Archived => codex_rollout::ARCHIVED_SESSIONS_SUBDIR,
                         });
                         if !path.starts_with(expected_root)
-                            || (thread.history_mode == ThreadHistoryMode::Legacy
-                                && codex_rollout::existing_rollout_path(path).await.is_none())
+                            || codex_rollout::existing_rollout_path(path).await.is_none()
                         {
                             continue;
                         }

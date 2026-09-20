@@ -495,7 +495,7 @@ impl ExternalAgentSessionImporter {
                 memory_mode,
             },
         };
-        rollout_items.retain(|item| is_persisted_rollout_item(item, ThreadHistoryMode::Paginated));
+        rollout_items.retain(is_persisted_rollout_item);
         let (created_at, updated_at) = rollout_items
             .iter()
             .filter_map(|item| match item {

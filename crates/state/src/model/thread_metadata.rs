@@ -254,7 +254,7 @@ impl ThreadMetadataBuilder {
             recency_at: None,
             originator: None,
             source,
-            history_mode: ThreadHistoryMode::Legacy,
+            history_mode: ThreadHistoryMode::Paginated,
             thread_source: None,
             agent_nickname: None,
             agent_role: None,
@@ -332,27 +332,12 @@ impl ThreadMetadataBuilder {
 impl ThreadMetadata {
     /// Preserve SQLite-owned Git fields when rollout-derived metadata is reconciled.
     pub fn prefer_existing_git_info(&mut self, existing: &Self) {
-        if matches!(self.history_mode, ThreadHistoryMode::Paginated)
-            && matches!(existing.history_mode, ThreadHistoryMode::Paginated)
-        {
-            // `self` was rebuilt from the rollout's initial SessionMeta. `existing` is the
-            // current SQLite row. Once that row says paginated, metadata updates are SQLite-only,
-            // so a NULL is an explicit clear, not missing data. Copy the whole tuple or the stale
-            // rollout value would be written back during reconciliation.
-            self.git_sha = existing.git_sha.clone();
-            self.git_branch = existing.git_branch.clone();
-            self.git_origin_url = existing.git_origin_url.clone();
-            return;
-        }
-        if existing.git_sha.is_some() {
-            self.git_sha = existing.git_sha.clone();
-        }
-        if existing.git_branch.is_some() {
-            self.git_branch = existing.git_branch.clone();
-        }
-        if existing.git_origin_url.is_some() {
-            self.git_origin_url = existing.git_origin_url.clone();
-        }
+        // `self` was rebuilt from the rollout's initial SessionMeta. `existing` is the current
+        // SQLite row, so a NULL is an explicit clear, not missing data. Copy the whole tuple or
+        // the stale rollout value would be written back during reconciliation.
+        self.git_sha = existing.git_sha.clone();
+        self.git_branch = existing.git_branch.clone();
+        self.git_origin_url = existing.git_origin_url.clone();
     }
 
     /// Preserve an existing user-facing title when reconciling rollout-derived metadata.
@@ -734,7 +719,7 @@ mod tests {
             updated_at: 1_700_000_100,
             recency_at: 1_700_000_100,
             source: "cli".to_string(),
-            history_mode: "legacy".to_string(),
+            history_mode: "paginated".to_string(),
             thread_source: None,
             agent_nickname: None,
             agent_role: None,
@@ -775,7 +760,7 @@ mod tests {
             updated_at: DateTime::<Utc>::from_timestamp(1_700_000_100, 0).expect("timestamp"),
             recency_at: DateTime::<Utc>::from_timestamp(1_700_000_100, 0).expect("timestamp"),
             source: "cli".to_string(),
-            history_mode: ThreadHistoryMode::Legacy,
+            history_mode: ThreadHistoryMode::Paginated,
             thread_source: None,
             agent_nickname: None,
             agent_role: None,

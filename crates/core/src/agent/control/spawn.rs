@@ -148,28 +148,17 @@ fn retain_forked_developer_message(
 async fn load_agent_model_context(
     state: &ThreadManagerState,
     thread_id: ThreadId,
-    history_mode: ThreadHistoryMode,
+    _history_mode: ThreadHistoryMode,
 ) -> CodexResult<Option<Vec<RolloutItem>>> {
-    match history_mode {
-        ThreadHistoryMode::Legacy => Ok(state
-            .read_stored_thread(ReadThreadParams {
+    Ok(Some(
+        state
+            .load_latest_model_context(LoadThreadHistoryParams {
                 thread_id,
                 include_archived: true,
-                include_history: true,
             })
             .await?
-            .history
-            .map(|history| history.items)),
-        ThreadHistoryMode::Paginated => Ok(Some(
-            state
-                .load_latest_model_context(LoadThreadHistoryParams {
-                    thread_id,
-                    include_archived: true,
-                })
-                .await?
-                .items,
-        )),
-    }
+            .items,
+    ))
 }
 
 impl AgentControl {

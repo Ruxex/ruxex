@@ -90,8 +90,8 @@ async fn disabled_plugin_ids_replace_preserve_and_clear_without_inference() -> R
     Ok(())
 }
 
-#[test_case(ThreadHistoryMode::Legacy, true; "cold legacy parent")]
-#[test_case(ThreadHistoryMode::Legacy, false; "loaded legacy parent")]
+#[test_case(ThreadHistoryMode::Paginated, true; "cold legacy parent")]
+#[test_case(ThreadHistoryMode::Paginated, false; "loaded legacy parent")]
 #[test_case(ThreadHistoryMode::Paginated, true; "cold paginated parent")]
 #[test_case(ThreadHistoryMode::Paginated, false; "loaded paginated parent")]
 #[tokio::test]

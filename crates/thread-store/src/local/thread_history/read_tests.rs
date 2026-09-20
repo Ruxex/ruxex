@@ -813,7 +813,7 @@ async fn list_items_update_ordinals_use_selected_rollout_id() {
 
 #[tokio::test]
 async fn list_history_keeps_legacy_threads_unsupported() {
-    let (_home, store, thread_id) = store_with_mode(ThreadHistoryMode::Legacy).await;
+    let (_home, store, thread_id) = store_with_mode(ThreadHistoryMode::Paginated).await;
 
     let error = store
         .list_turns(turn_params(

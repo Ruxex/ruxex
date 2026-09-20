@@ -4,7 +4,6 @@ use std::path::PathBuf;
 
 use codex_protocol::ThreadId;
 use codex_protocol::protocol::HistoryPosition;
-use codex_protocol::protocol::ThreadHistoryMode;
 
 use super::LocalThreadStore;
 use super::thread_rollout_resolver;
@@ -133,12 +132,6 @@ impl LocalThreadStore {
                 return Err(malformed_lineage(
                     requested_thread_id,
                     "source rollout belongs to another thread",
-                ));
-            }
-            if meta.meta.history_mode != ThreadHistoryMode::Paginated {
-                return Err(malformed_lineage(
-                    requested_thread_id,
-                    "source rollout is not paginated",
                 ));
             }
             let rollout_path = match representation {

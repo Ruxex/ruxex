@@ -483,7 +483,7 @@ async fn thread_start_creates_thread_and_emits_started() -> Result<()> {
 }
 
 #[tokio::test]
-async fn thread_start_history_mode_accepts_legacy_and_paginated() -> Result<()> {
+async fn thread_start_history_mode_is_paginated() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
     let codex_home = TempDir::new()?;
     create_config_toml_without_approval_policy(codex_home.path(), &server.uri())?;
@@ -492,15 +492,6 @@ async fn thread_start_history_mode_accepts_legacy_and_paginated() -> Result<()> 
         .with_codex_home(codex_home.path())
         .build_initialized()
         .await?;
-
-    let ThreadStartResponse { thread, .. } = mcp
-        .start_thread(ThreadStartParams {
-            history_mode: Some(ThreadHistoryMode::Legacy),
-            ..Default::default()
-        })
-        .await?;
-
-    assert_eq!(thread.history_mode, ThreadHistoryMode::Legacy);
 
     let ThreadStartResponse { thread, .. } = mcp
         .start_thread(ThreadStartParams {
@@ -1108,7 +1099,7 @@ async fn thread_start_ephemeral_remains_pathless() -> Result<()> {
         thread.ephemeral,
         "ephemeral threads should be marked explicitly"
     );
-    assert_eq!(thread.history_mode, ThreadHistoryMode::Legacy);
+    assert_eq!(thread.history_mode, ThreadHistoryMode::Paginated);
     assert_eq!(
         thread.path, None,
         "ephemeral threads should not expose a path"
