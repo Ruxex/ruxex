@@ -38,7 +38,7 @@ pub enum ModelContextScanProgress {
 /// the scan continues to older turns. A raw `role=user` response item is not sufficient because
 /// contextual user fragments use that role but do not count as turn boundaries during reconstruction.
 /// The compaction restores model-visible items; the turn context restores previous settings
-/// (`model`, `comp_hash`, and `realtime_active`) and the reference baseline.
+/// (`model` and `comp_hash`) and the reference baseline.
 ///
 /// These paginated shapes disable the bounded cutoff:
 ///
@@ -159,7 +159,6 @@ impl ModelContextScan {
             RolloutItem::EventMsg(_)
             | RolloutItem::SessionMeta(_)
             | RolloutItem::InterAgentCommunicationMetadata { .. }
-            | RolloutItem::RealtimeItem(_)
             | RolloutItem::RetainedContext(_)
             | RolloutItem::SecurityRiskScore(_)
             | RolloutItem::TokenUsageRecord(_) => {}

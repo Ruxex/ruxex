@@ -6,7 +6,6 @@ use super::SandboxPolicy;
 use super::Thread;
 use super::ThreadHistoryMode;
 use super::ThreadItem;
-use super::ThreadRealtimeItem;
 use super::ThreadSection;
 use super::ThreadSectionAppearance;
 use super::ThreadSource;
@@ -1774,7 +1773,7 @@ pub struct ThreadItemsListResponse {
     pub backwards_cursor: Option<String>,
 }
 
-/// EXPERIMENTAL - list ordinary and realtime thread history in rollout order.
+/// EXPERIMENTAL - list thread history in rollout order.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
@@ -1804,11 +1803,6 @@ pub enum ThreadTimelineEntry {
         turn_id: String,
         item: Box<ThreadItem>,
     },
-    Realtime {
-        #[ts(type = "number")]
-        position: u64,
-        item: ThreadRealtimeItem,
-    },
     TurnStarted {
         #[ts(type = "number")]
         position: u64,
@@ -1833,14 +1827,13 @@ pub enum ThreadTimelineEntry {
     },
 }
 
-/// EXPERIMENTAL - a bounded timeline page with its resolved opening voice state.
+/// EXPERIMENTAL - a bounded timeline page.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
 pub struct ThreadTimelineListResponse {
     pub data: Vec<ThreadTimelineEntry>,
     pub next_cursor: Option<String>,
-    pub active_realtime_session_at_page_start: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]

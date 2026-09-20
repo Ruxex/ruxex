@@ -39,8 +39,6 @@ use codex_core_api::OtelConfig;
 use codex_core_api::PermissionProfile;
 use codex_core_api::Permissions;
 use codex_core_api::ProjectConfig;
-use codex_core_api::RealtimeAudioConfig;
-use codex_core_api::RealtimeConfig;
 use codex_core_api::SessionPickerViewMode;
 use codex_core_api::SessionSource;
 use codex_core_api::SqliteConfig;
@@ -283,14 +281,6 @@ fn new_config(model: Option<String>, arg0_paths: Arg0DispatchPaths) -> anyhow::R
         respect_system_proxy: false,
         apps_mcp_product_sku: None,
         responses_api_metadata: BTreeMap::new(),
-        realtime_audio: RealtimeAudioConfig::default(),
-        experimental_realtime_ws_base_url: None,
-        experimental_realtime_webrtc_call_base_url: None,
-        experimental_realtime_ws_model: None,
-        realtime: RealtimeConfig::default(),
-        experimental_realtime_ws_backend_prompt: None,
-        experimental_realtime_ws_startup_context: None,
-        experimental_realtime_start_instructions: None,
         experimental_thread_store: ThreadStoreConfig::Local,
         forced_chatgpt_workspace_id: None,
         forced_login_method: None,

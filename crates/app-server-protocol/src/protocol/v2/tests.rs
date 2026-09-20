@@ -40,7 +40,6 @@ use codex_protocol::permissions::FileSystemSpecialPath as CoreFileSystemSpecialP
 use codex_protocol::protocol::AgentStatus as CoreAgentStatus;
 use codex_protocol::protocol::AskForApproval as CoreAskForApproval;
 use codex_protocol::protocol::CodexErrorInfo as CoreCodexErrorInfo;
-use codex_protocol::protocol::ConversationTextRole;
 use codex_protocol::protocol::ExecCommandSource as CoreExecCommandSource;
 use codex_protocol::protocol::GranularApprovalConfig as CoreGranularApprovalConfig;
 use codex_protocol::protocol::NetworkAccess as CoreNetworkAccess;
@@ -5169,59 +5168,6 @@ fn turn_start_params_treat_null_or_omitted_environments_as_default() {
     );
 }
 
-#[test]
-fn realtime_append_text_defaults_role_to_user() {
-    let params = serde_json::from_value::<ThreadRealtimeAppendTextParams>(json!({
-        "threadId": "thread_123",
-        "text": "hello",
-    }))
-    .expect("params should deserialize");
-
-    assert_eq!(
-        params,
-        ThreadRealtimeAppendTextParams {
-            thread_id: "thread_123".to_string(),
-            text: "hello".to_string(),
-            role: ConversationTextRole::User,
-        }
-    );
-}
-
-#[test]
-fn realtime_start_omitted_initial_items_remain_none() {
-    let params = serde_json::from_value::<ThreadRealtimeStartParams>(json!({
-        "threadId": "thread_123",
-        "outputModality": "audio",
-    }))
-    .expect("params should deserialize");
-
-    assert_eq!(params.initial_items, None);
-}
-#[test]
-fn realtime_start_deserializes_client_handoff_channel_prefixes() {
-    let params = serde_json::from_value::<ThreadRealtimeStartParams>(json!({
-        "threadId": "thread_123",
-        "outputModality": "audio",
-        "codexResponseHandoffChannelPrefixes": {
-            "analysis": ["[THINKING]"],
-            "commentary": ["[PROGRESS]", "[UPDATE]"],
-            "final": ["[DONE]"]
-        }
-    }))
-    .expect("params should deserialize");
-
-    assert_eq!(
-        params.codex_response_handoff_channel_prefixes,
-        Some(BTreeMap::from([
-            ("analysis".to_string(), vec!["[THINKING]".to_string()]),
-            (
-                "commentary".to_string(),
-                vec!["[PROGRESS]".to_string(), "[UPDATE]".to_string()],
-            ),
-            ("final".to_string(), vec!["[DONE]".to_string()]),
-        ]))
-    );
-}
 
 #[test]
 fn tool_request_user_input_params_default_legacy_missing_is_blocking_to_true() {

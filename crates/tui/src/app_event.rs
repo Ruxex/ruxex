@@ -10,7 +10,6 @@
 
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
 use tokio_util::sync::CancellationToken;
 
 use crate::inline_visualization::InlineVisualizationContext;
@@ -58,7 +57,6 @@ use codex_features::Feature;
 use codex_plugin::PluginCapabilitySummary;
 use codex_protocol::config_types::CollaborationModeMask;
 use codex_protocol::models::ActivePermissionProfile;
-use codex_realtime_webrtc::StartedRealtimeWebrtcSession;
 
 use crate::history_cell::HistoryCell;
 
@@ -944,9 +942,6 @@ pub(crate) enum AppEvent {
 
     InsertHistoryCell(Box<dyn HistoryCell>),
 
-    /// Move visible completed voice captions into history in one app event.
-    CommitRealtimeTranscriptHistory,
-
     /// Finish buffering initial resume replay after all replay events have been queued.
     EndInitialHistoryReplayBuffer,
 
@@ -1000,25 +995,6 @@ pub(crate) enum AppEvent {
         action: AstraModelPickerAction,
     },
 
-    /// Result of creating a TUI-owned WebRTC offer for an active thread.
-    RealtimeWebrtcOfferCreated {
-        thread_id: ThreadId,
-        attempt_id: u64,
-        result: Result<StartedRealtimeWebrtcSession, String>,
-    },
-
-    /// Result of establishing the WebRTC connection for an active voice attempt.
-    RealtimeWebrtcConnected {
-        thread_id: ThreadId,
-        attempt_id: u64,
-        result: Result<(), codex_realtime_webrtc::ConnectionError>,
-    },
-
-    /// Stop voice on its original thread after its chat widget is replaced.
-    StopRealtimeConversation {
-        thread_id: ThreadId,
-    },
-
     /// Finish a settings selection after its preceding update events have been applied.
     SettingsSelectionClosed,
     /// Run after any nested settings events emitted while handling the close event.
@@ -1038,14 +1014,6 @@ pub(crate) enum AppEvent {
 
     /// Show the cyber auto-review notice after the model selection confirmation.
     CyberModelAutoReviewNotice,
-
-    /// Read the owning server preference before showing the voice picker.
-    OpenRealtimeSettings,
-
-    /// Save the voice for subsequent conversations through the app server.
-    PersistRealtimeVoiceSelection {
-        voice: codex_protocol::protocol::RealtimeVoice,
-    },
 
     /// Persist the selected service tier to the appropriate config.
     PersistServiceTierSelection {

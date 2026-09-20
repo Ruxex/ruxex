@@ -26,7 +26,6 @@ impl MisalignmentReview {
 pub(super) struct MisalignmentViolation {
     turn_id: Option<String>,
     review: Option<Arc<MisalignmentReview>>,
-    retired_voice: bool,
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -48,7 +47,6 @@ impl ChatWidget {
             && !matches!(
                 op,
                 AppCommand::Interrupt
-                    | AppCommand::RealtimeConversationStop { .. }
                     | AppCommand::CleanBackgroundTerminals
                     | AppCommand::OverrideTurnContext { .. }
                     | AppCommand::ReloadUserConfig
@@ -88,10 +86,6 @@ impl ChatWidget {
         {
             return;
         }
-        let retired_voice = self.realtime_conversation_is_running();
-        if retired_voice {
-            self.stop_realtime_conversation();
-        }
         let review = self.thread_id.zip(turn_id.clone()).zip(details).map(
             |((thread_id, turn_id), details)| {
                 Arc::new(MisalignmentReview {
@@ -104,7 +98,6 @@ impl ChatWidget {
         self.misalignment_policy_violation = Some(MisalignmentViolation {
             turn_id,
             review,
-            retired_voice,
         });
         self.input_queue.clear();
         self.finalize_turn();
@@ -237,8 +230,8 @@ impl ChatWidget {
             .as_ref()
             .is_some_and(|violation| {
                 violation.turn_id.as_ref().is_some_and(|id| id != turn_id)
-                    && (!violation.retired_voice
-                        || source == MisalignmentTurnSource::AcknowledgedContinuation)
+                    && (source == MisalignmentTurnSource::AcknowledgedContinuation
+                        || source == MisalignmentTurnSource::ServerNotification)
             })
         {
             self.misalignment_policy_violation = None;

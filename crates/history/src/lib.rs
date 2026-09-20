@@ -27,7 +27,6 @@ use codex_protocol::protocol::ThreadSource;
 use codex_protocol::protocol::TokenUsageRecord;
 use codex_protocol::protocol::TurnContextItem;
 use codex_protocol::protocol::WorldStateItem;
-use codex_protocol::realtime::RealtimeItem;
 use codex_protocol::security_risk::SecurityRiskScore;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -140,8 +139,6 @@ pub enum RolloutItem {
     SecurityRiskScore(SecurityRiskScore),
     RetainedContext(RetainedContextEvent),
     EventMsg(EventMsg),
-    /// Sparse, model-invisible facts used to reconstruct realtime presentation.
-    RealtimeItem(RealtimeItem),
 }
 
 impl Serialize for RolloutItem {
@@ -516,7 +513,6 @@ fn multi_agent_version_from_items(
             | RolloutItem::WorldState(_)
             | RolloutItem::RetainedContext(_)
             | RolloutItem::SecurityRiskScore(_)
-            | RolloutItem::RealtimeItem(_)
             | RolloutItem::EventMsg(_) => None,
         })
     })

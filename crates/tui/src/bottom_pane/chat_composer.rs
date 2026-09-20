@@ -4,7 +4,6 @@
 //! completed slash commands to atomic elements, and handles Enter submission/newlines.
 //! It also shows Luna Reserve's yellow prompt arrow and detects unbracketed paste bursts
 //! from raw key streams, particularly on Windows.
-//! The live voice strip renders after effort ignition, followed by the Astra sparkle when eligible.
 //!
 //! The plain-text preset keeps command prefixes literal, including `!`, so Enter and Tab
 //! submit ordinary text without enabling shell mode.
@@ -161,7 +160,7 @@
 //! erases a held slash also clears the tracked command. An empty main-composer `Esc`
 //! can stop the active flourish. Once shown, it fades out by 15 seconds; command entry, popups, and
 //! focus loss hide the field without restarting that deadline. Rendering runs after the textarea,
-//! placeholder, effort ignition, and voice strip, and draws only in eligible blank cells without
+//! placeholder and effort ignition, and draws only in eligible blank cells without
 //! overwriting the placeholder or normal cursor. Hidden frames do not schedule animation redraws;
 //! motion settings, whimsy settings, and true-color support also gate the effect.
 //!
@@ -318,7 +317,6 @@ use super::skill_popup::MentionItem;
 use super::skill_popup::SkillPopup;
 use super::slash_commands::ServiceTierCommand;
 use super::slash_commands::SlashCommandItem;
-use super::voice_strip::VoiceStrip;
 use crate::history_cell::sanitize_user_text;
 use crate::key_hint::KeyBindingListExt;
 use crate::keymap::EditorKeymap;
@@ -341,7 +339,6 @@ use codex_protocol::user_input::TextElement;
 mod agents_navigation;
 mod attachment_state;
 mod completion_target;
-mod composer_layout;
 mod draft_state;
 mod footer_state;
 mod history_search;
@@ -567,7 +564,6 @@ pub(crate) struct ChatComposer {
     effort_tier: Option<EffortTier>,
     effort_animation_style: Option<IgnitionStyle>,
     effort_ignition: Option<EffortIgnition>,
-    voice_strip: Option<VoiceStrip>,
     effort_status_line_transition: Option<EffortStatusLineTransition>,
     effort_observed: bool,
     luna_reserve_active: bool,
@@ -594,7 +590,6 @@ pub(crate) struct ChatComposer {
     service_tier_commands: Vec<ServiceTierCommand>,
     mentions_v2_enabled: bool,
     goal_command_enabled: bool,
-    voice_command_enabled: bool,
     worktrees_enabled: bool,
     windows_degraded_sandbox_active: bool,
     side_conversation_active: bool,
@@ -737,7 +732,6 @@ impl ChatComposer {
             effort_tier: None,
             effort_animation_style: None,
             effort_ignition: None,
-            voice_strip: None,
             effort_status_line_transition: None,
             effort_observed: false,
             luna_reserve_active: false,
@@ -760,7 +754,6 @@ impl ChatComposer {
             service_tier_commands: Vec::new(),
             mentions_v2_enabled: false,
             goal_command_enabled: false,
-            voice_command_enabled: false,
             worktrees_enabled: false,
             windows_degraded_sandbox_active: false,
             side_conversation_active: false,
@@ -967,9 +960,6 @@ impl ChatComposer {
         self.goal_command_enabled = enabled;
     }
 
-    pub fn set_voice_command_enabled(&mut self, enabled: bool) {
-        self.voice_command_enabled = enabled;
-    }
 
     /// Replace composer, editor, and footer-hint key bindings from one runtime snapshot.
     ///
@@ -1082,13 +1072,11 @@ impl ChatComposer {
             .active
             .required_height(area.width, footer_total_height);
         let popup_constraint = Constraint::Max(popup_height);
-        let voice_rows = if self.voice_strip.is_some() { 3 } else { 0 };
         let [composer_rect, popup_rect] =
-            Layout::vertical([Constraint::Min(3 + voice_rows), popup_constraint]).areas(area);
+            Layout::vertical([Constraint::Min(3), popup_constraint]).areas(area);
         // Keep the draft visible when clipped.
-        let voice_rows = voice_rows * u16::from(composer_rect.height >= 6);
         let mut textarea_rect = composer_rect.inset(Insets::tlbr(
-            /*top*/ 1 + voice_rows,
+            /*top*/ 1,
             LIVE_PREFIX_COLS,
             /*bottom*/ 1,
             /*right*/ 1u16.saturating_add(textarea_right_reserve),
@@ -4636,7 +4624,6 @@ impl ChatComposer {
             + remote_images_height
             + remote_images_separator
             + 2
-            + if self.voice_strip.is_some() { 3 } else { 0 }
             + self
                 .popups
                 .active
@@ -5030,7 +5017,6 @@ impl ChatComposer {
             }
         }
         drop(state);
-        self.render_voice_strip(composer_rect, buf);
         self.render_sparkle(
             composer_rect,
             textarea_rect,

@@ -81,8 +81,6 @@ members = [
     "crates/network-proxy",
     "crates/ollama",
     "crates/process-hardening",
-    "crates/realtime-webrtc",
-    "crates/voice-host",
     "crates/protocol",
     "crates/prompts",
     "crates/rollout",
@@ -154,7 +152,6 @@ license = "Apache-2.0"
 
 [workspace.dependencies]
 # Internal
-codex-realtime-webrtc = { path = "crates/realtime-webrtc" }
 app_test_support = { path = "crates/app-server/tests/common" }
 codex-analytics = { path = "crates/analytics" }
 codex-agent-graph-store = { path = "crates/agent-graph-store" }

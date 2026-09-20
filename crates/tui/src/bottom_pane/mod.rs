@@ -78,7 +78,6 @@ mod status_line_style;
 mod status_surface_preview;
 mod title_setup;
 pub(crate) mod user_verification;
-mod voice_strip;
 pub(crate) use action_required_title::ACTION_REQUIRED_PREVIEW_PREFIX;
 pub(crate) use action_required_title::build_action_required_title_text;
 pub(crate) use actionable_banner::ActionableBanner;
@@ -101,8 +100,6 @@ pub(crate) use mcp_server_elicitation::McpServerElicitationFormRequest;
 pub(crate) use mcp_server_elicitation::McpServerElicitationOverlay;
 pub(crate) use request_user_input::RequestUserInputOverlay;
 pub(crate) use status_line_style::status_line_from_segments;
-pub(crate) use voice_strip::VoiceStripPhase;
-pub(crate) use voice_strip::VoiceStripState;
 mod bottom_pane_view;
 mod effort_ignition;
 
@@ -547,10 +544,6 @@ impl BottomPane {
         self.request_redraw();
     }
 
-    pub fn set_voice_command_enabled(&mut self, enabled: bool) {
-        self.composer.set_voice_command_enabled(enabled);
-        self.request_redraw();
-    }
 
     pub(crate) fn set_side_conversation_active(&mut self, active: bool) {
         self.composer.set_side_conversation_active(active);
@@ -1087,11 +1080,6 @@ impl BottomPane {
         self.request_redraw();
     }
 
-    pub(crate) fn set_voice_strip(&mut self, state: Option<VoiceStripState>) {
-        self.composer
-            .set_voice_strip(state, self.frame_requester.clone());
-        self.request_redraw();
-    }
 
     pub(crate) fn set_remote_image_urls(&mut self, urls: Vec<String>) {
         self.composer.set_remote_image_urls(urls);

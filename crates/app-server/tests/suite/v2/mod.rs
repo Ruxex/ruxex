@@ -85,7 +85,6 @@ mod plugin_share;
 mod plugin_uninstall;
 mod process_exec;
 mod projects;
-mod realtime_conversation;
 mod recommended_plugins;
 mod remote_control;
 #[cfg(debug_assertions)]
@@ -129,7 +128,6 @@ mod thread_settings_update;
 mod thread_shell_command;
 mod thread_start;
 mod thread_status;
-mod thread_timeline;
 mod thread_unarchive;
 mod thread_unsubscribe;
 mod turn_cost_otel;

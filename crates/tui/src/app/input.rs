@@ -139,17 +139,11 @@ impl App {
         if self.overlay.is_some() {
             return KeymapContextSet::new(KeymapContext::Pager);
         }
-        let voice_available = self.chat_widget.realtime_microphone_shortcut_available();
         let contexts = self.chat_widget.keymap_contexts();
         if self.chat_widget.no_modal_or_popup_active() {
-            let contexts = contexts
+            contexts
                 .with(KeymapContext::Global)
-                .with(KeymapContext::Chat);
-            if voice_available {
-                contexts.with(KeymapContext::Voice)
-            } else {
-                contexts
-            }
+                .with(KeymapContext::Chat)
         } else {
             contexts
         }

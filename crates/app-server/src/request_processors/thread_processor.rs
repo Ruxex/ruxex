@@ -919,7 +919,6 @@ impl ThreadRequestProcessor {
             ThreadTimelineListResponse {
                 data: page.items,
                 next_cursor: page.next_cursor,
-                active_realtime_session_at_page_start: page.active_realtime_session_at_page_start,
             }
             .into(),
         ))
