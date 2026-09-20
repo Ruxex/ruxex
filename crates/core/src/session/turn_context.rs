@@ -282,7 +282,6 @@ pub(crate) struct NewTurnContextOptions {
 pub struct TurnContext {
     pub(crate) sub_id: String,
     pub(crate) trace_id: Option<String>,
-    pub(crate) realtime_active: bool,
     pub(crate) code_mode_available: bool,
     /// Turn-scoped configuration. Read step-specific settings such as service tier and
     /// approvals reviewer from the corresponding `StepContext` instead.
@@ -589,7 +588,6 @@ impl TurnContext {
         Self {
             sub_id: self.sub_id.clone(),
             trace_id: self.trace_id.clone(),
-            realtime_active: self.realtime_active,
             code_mode_available: self.code_mode_available,
             config: Arc::new(config),
             configured_token_budget: self.configured_token_budget.clone(),
@@ -703,7 +701,6 @@ impl TurnContext {
             collaboration_mode: Some(self.collaboration_mode()),
             multi_agent_version: Some(self.multi_agent_version),
             multi_agent_mode: None,
-            realtime_active: Some(self.realtime_active),
             cyber_access_program: self.cyber_access_program,
             effort: self.reasoning_effort().cloned(),
             summary: self.reasoning_summary(),
@@ -887,7 +884,6 @@ impl Session {
         TurnContext {
             sub_id,
             trace_id: current_span_trace_id(),
-            realtime_active: false,
             code_mode_available: true,
             config: per_turn_config,
             configured_token_budget,
@@ -1127,8 +1123,6 @@ impl Session {
         );
         turn_context.code_mode_available = self.services.code_mode_service.is_available();
         turn_context.extension_data.insert(trusted_plugin_roots);
-        turn_context.realtime_active = self.conversation.running_state().await.is_some();
-
         turn_context.final_output_json_schema = options.final_output_json_schema;
         if turn_context.config.model_provider_id == codex_model_provider_info::OPENAI_PROVIDER_ID {
             turn_context.cyber_access_program = options.cyber_access_program;

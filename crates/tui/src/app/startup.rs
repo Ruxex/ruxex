@@ -773,9 +773,6 @@ See the Codex keymap documentation for supported actions and examples."
                 ..Default::default()
             },
             thread_event_channels: HashMap::new(),
-            pending_realtime_speech_replay: HashMap::new(),
-            pending_realtime_transcript_replay: HashMap::new(),
-            realtime_replay_order: VecDeque::new(),
             temporary_structured_requests: HashMap::new(),
             pending_thread_titles: HashMap::new(),
             thread_event_listener_tasks: HashMap::new(),

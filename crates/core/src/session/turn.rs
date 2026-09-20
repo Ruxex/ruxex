@@ -12,7 +12,6 @@ use crate::compact::run_inline_auto_compact_task;
 use crate::compact_remote_v2::run_inline_remote_auto_compact_task as run_inline_remote_auto_compact_task_v2;
 use crate::connectors;
 use crate::context::ContextualUserFragment;
-use crate::context::UserVerificationNotice;
 use crate::environment_selection::TurnEnvironmentSnapshot;
 use crate::feedback_tags;
 use crate::hook_runtime::drain_async_hook_results;
@@ -389,7 +388,6 @@ pub(crate) async fn run_turn(
     sess.set_previous_turn_settings(Some(PreviousTurnSettings {
         model: turn_context.model_info().slug.clone(),
         comp_hash: turn_context.model_info().comp_hash.clone(),
-        realtime_active: Some(turn_context.realtime_active),
     }))
     .await;
     for response_item in injection_items {
@@ -767,7 +765,6 @@ pub(crate) async fn run_turn(
                     e.details(),
                     CodexErrorDetails::MisalignmentPolicyViolation { .. }
                 ) {
-                    sess.conversation.retire_handoffs_for_misalignment().await;
                 }
                 let error = e.to_codex_protocol_error();
                 sess.emit_turn_error_lifecycle(turn_context.as_ref(), error.clone())
@@ -1971,117 +1968,6 @@ pub(super) fn agent_message_text(item: &codex_protocol::items::AgentMessageItem)
             codex_protocol::items::AgentMessageContent::Text { text } => text.as_str(),
         })
         .collect()
-}
-
-pub(super) fn realtime_text_for_event(msg: &EventMsg) -> Option<(String, Option<MessagePhase>)> {
-    match msg {
-        EventMsg::ElicitationRequest(request)
-            if matches!(
-                &request.request,
-                codex_protocol::approvals::ElicitationRequest::UserVerification { .. }
-            ) =>
-        {
-            Some((UserVerificationNotice.render(), None))
-        }
-        EventMsg::AgentMessage(event) => Some((event.message.clone(), event.phase.clone())),
-        EventMsg::ItemCompleted(event) => match &event.item {
-            TurnItem::AgentMessage(item) => Some((agent_message_text(item), item.phase.clone())),
-            _ => None,
-        },
-        EventMsg::ExecApprovalRequest(_)
-        | EventMsg::RequestPermissions(_)
-        | EventMsg::ApplyPatchApprovalRequest(_)
-        | EventMsg::RequestUserInput(_)
-        | EventMsg::ElicitationRequest(_) => {
-            let message = if matches!(
-                msg,
-                EventMsg::RequestUserInput(_) | EventMsg::ElicitationRequest(_)
-            ) {
-                "I need your input. Please respond in the app."
-            } else {
-                "I need your approval to continue. Please review the request in the app."
-            };
-            serde_json::to_string(msg)
-                .ok()
-                .map(|request| (format!("{message}\n\n{request}"), None))
-        }
-        EventMsg::Error(_)
-        | EventMsg::Warning(_)
-        | EventMsg::AuthRecoveryStarted(_)
-        | EventMsg::AuthRecoveryCompleted(_)
-        | EventMsg::GuardianWarning(_)
-        | EventMsg::RealtimeConversationStarted(_)
-        | EventMsg::RealtimeConversationSdp(_)
-        | EventMsg::RealtimeConversationRealtime(_)
-        | EventMsg::RealtimeConversationClosed(_)
-        | EventMsg::ModelReroute(_)
-        | EventMsg::ModelVerification(_)
-        | EventMsg::TurnModerationMetadata(_)
-        | EventMsg::SafetyBuffering(_)
-        | EventMsg::ContextCompacted(_)
-        | EventMsg::ThreadRolledBack(_)
-        | EventMsg::TurnStarted(_)
-        | EventMsg::ThreadSettingsApplied(_)
-        | EventMsg::TurnComplete(_)
-        | EventMsg::TokenCount(_)
-        | EventMsg::UserMessage(_)
-        | EventMsg::AgentReasoning(_)
-        | EventMsg::AgentReasoningRawContent(_)
-        | EventMsg::AgentReasoningSectionBreak(_)
-        | EventMsg::SessionConfigured(_)
-        | EventMsg::EnvironmentConnected(_)
-        | EventMsg::EnvironmentDisconnected(_)
-        | EventMsg::ThreadGoalUpdated(_)
-        | EventMsg::ThreadQueueChanged(_)
-        | EventMsg::McpStartupUpdate(_)
-        | EventMsg::McpStartupComplete(_)
-        | EventMsg::McpToolCallBegin(_)
-        | EventMsg::McpToolCallEnd(_)
-        | EventMsg::WebSearchBegin(_)
-        | EventMsg::WebSearchEnd(_)
-        | EventMsg::ExecCommandBegin(_)
-        | EventMsg::ExecCommandOutputDelta(_)
-        | EventMsg::TerminalInteraction(_)
-        | EventMsg::ExecCommandEnd(_)
-        | EventMsg::PatchApplyBegin(_)
-        | EventMsg::PatchApplyUpdated(_)
-        | EventMsg::PatchApplyEnd(_)
-        | EventMsg::ImageGenerationBegin(_)
-        | EventMsg::ImageGenerationEnd(_)
-        | EventMsg::ViewImageToolCall(_)
-        | EventMsg::DynamicToolCallRequest(_)
-        | EventMsg::DynamicToolCallResponse(_)
-        | EventMsg::GuardianAssessment(_)
-        | EventMsg::DeprecationNotice(_)
-        | EventMsg::StreamError(_)
-        | EventMsg::TurnDiff(_)
-        | EventMsg::RealtimeConversationListVoicesResponse(_)
-        | EventMsg::PlanUpdate(_)
-        | EventMsg::TurnAborted(_)
-        | EventMsg::ShutdownComplete
-        | EventMsg::EnteredReviewMode(_)
-        | EventMsg::ExitedReviewMode(_)
-        | EventMsg::RawResponseItem(_)
-        | EventMsg::RawResponseCompleted(_)
-        | EventMsg::ItemStarted(_)
-        | EventMsg::HookStarted(_)
-        | EventMsg::HookCompleted(_)
-        | EventMsg::AgentMessageContentDelta(_)
-        | EventMsg::PlanDelta(_)
-        | EventMsg::ReasoningContentDelta(_)
-        | EventMsg::ReasoningRawContentDelta(_)
-        | EventMsg::CollabAgentSpawnBegin(_)
-        | EventMsg::CollabAgentSpawnEnd(_)
-        | EventMsg::CollabAgentInteractionBegin(_)
-        | EventMsg::CollabAgentInteractionEnd(_)
-        | EventMsg::CollabWaitingBegin(_)
-        | EventMsg::CollabWaitingEnd(_)
-        | EventMsg::CollabCloseBegin(_)
-        | EventMsg::CollabCloseEnd(_)
-        | EventMsg::CollabResumeBegin(_)
-        | EventMsg::CollabResumeEnd(_)
-        | EventMsg::SubAgentActivity(_) => None,
-    }
 }
 
 /// Split the stream into normal assistant text vs. proposed plan content.

@@ -448,7 +448,7 @@ pub trait ThreadStore: Any + Send + Sync {
         })
     }
 
-    /// Lists bounded ordinary and realtime thread history in rollout order.
+    /// Lists bounded thread history in rollout order.
     fn list_timeline(
         &self,
         _params: crate::ListTimelineParams,

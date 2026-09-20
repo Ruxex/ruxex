@@ -225,8 +225,6 @@ mod permission_shortcuts;
 mod pets;
 mod platform_actions;
 mod plugin_mentions;
-mod realtime_delivery;
-mod realtime_settings;
 mod reasoning_replay;
 mod recap;
 mod reconnect;
@@ -611,10 +609,6 @@ pub(crate) struct App {
     windows_sandbox: WindowsSandboxState,
 
     thread_event_channels: HashMap<ThreadId, ThreadEventChannel>,
-    pending_realtime_speech_replay: HashMap<ThreadId, Vec<(String, ThreadItem)>>,
-    pending_realtime_transcript_replay:
-        HashMap<ThreadId, VecDeque<crate::chatwidget::RealtimeTranscriptRecord>>,
-    realtime_replay_order: VecDeque<ThreadId>,
     temporary_structured_requests: HashMap<ThreadId, mpsc::UnboundedSender<ServerNotification>>,
     /// Track title generation across thread switches and deduplicate automatic requests.
     pending_thread_titles: HashMap<(ThreadId, ThreadTitleDestination), CancellationToken>,

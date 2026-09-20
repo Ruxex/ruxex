@@ -93,8 +93,7 @@ fn keep_forked_rollout_item(item: &RolloutItem, preserve_reference_context_item:
             | ResponseItem::ContextCompaction { .. }
             | ResponseItem::Other => false,
         },
-        RolloutItem::RealtimeItem(_)
-        | RolloutItem::InterAgentCommunication(_)
+        RolloutItem::InterAgentCommunication(_)
         | RolloutItem::InterAgentCommunicationMetadata { .. }
         | RolloutItem::RetainedContext(_)
         | RolloutItem::SecurityRiskScore(_) => false,
@@ -1062,7 +1061,6 @@ impl AgentControl {
                     }
                     true
                 }
-                RolloutItem::RealtimeItem(_) => false,
                 RolloutItem::EventMsg(_)
                 | RolloutItem::SessionMeta(_)
                 | RolloutItem::TurnContext(_)

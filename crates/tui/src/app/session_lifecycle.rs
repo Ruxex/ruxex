@@ -485,7 +485,6 @@ impl App {
     /// This helper copies every known nickname/role from `AgentNavigationState` into the
     /// replacement widget so that replayed collab items render agent names immediately.
     pub(super) fn replace_chat_widget(&mut self, mut chat_widget: ChatWidget) {
-        self.retain_realtime_replay_state_before_replace();
         chat_widget.cyber_policy_notice = self.chat_widget.cyber_policy_notice.clone();
         self.commit_animation = None;
         // Transfer the last-written terminal title to the replacement widget
@@ -689,10 +688,6 @@ impl App {
         self.recap.seed_from_progress(recap_progress, now);
         self.schedule_recap_check(thread_id, now);
 
-        // The old widget owns the local helper and its undelivered answers.
-        // Transfer replay state before stopping its backend voice session.
-        self.retain_realtime_replay_state_before_replace();
-        self.stop_realtime_conversation(app_server).await;
         self.render_thread_snapshot(tui, app_server, thread_id, snapshot, !is_replay_only)?;
         if is_replay_only
             && self
@@ -792,9 +787,6 @@ impl App {
     pub(super) fn reset_thread_event_state(&mut self) {
         self.abort_all_thread_event_listeners();
         self.thread_event_channels.clear();
-        self.pending_realtime_speech_replay.clear();
-        self.pending_realtime_transcript_replay.clear();
-        self.realtime_replay_order.clear();
         self.pending_server_profiles.clear();
         self.agents_overview.activity.clear();
         self.agent_navigation.clear();

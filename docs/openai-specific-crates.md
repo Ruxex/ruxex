@@ -52,8 +52,8 @@
 | 15 | `codex-login` | 26 / 56 | ChatGPT OAuth と汎用 credential 管理が混在 | 汎用化 | 非常に高 | ほぼ全エントリーポイントの認証に波及 |
 | 16 | `codex-agent-identity` | 3 / 57 | ChatGPT issuer/JWKS と agent identity が一体 | 汎用化 | 高 | login、model provider、cloud config の認証境界 |
 | 17 | `codex-model-provider-info` | 16 / 60 | 汎用 provider 設定に OpenAI 既定値が混在 | 汎用化 | 非常に高 | 非 OpenAI provider も同じ型を利用 |
-| 18 | `codex-api` | 16 / 71 | OpenAI/Codex wire API と汎用 transport 境界 | 汎用化 | 非常に高 | core を含む最大の推移影響範囲 |
-| 19 | Realtime voice capability（`codex-realtime-webrtc`、`codex-voice-host` を含む） | TUI 経由 | OpenAI Realtime API のみが現行の起動経路 | 削除 | 高 | core、app-server、TUI の会話・音声・履歴を同時に外す必要がある |
+| 18 | `codex-api` | 16 / 71 | Responses/WebSocket wire API と汎用 transport 境界 | 汎用化 | 非常に高 | core を含む最大の推移影響範囲 |
+| 19 | Realtime voice capability（`codex-realtime-webrtc`、`codex-voice-host` を含む） | なし（削除済み） | OpenAI Realtime API のみが現行の起動経路 | 削除済み | 高 | API、protocol、履歴、core、app-server、TUI、専用補助クレートを一単位で削除した |
 
 ### 新基準による再評価
 
@@ -64,7 +64,7 @@
 | `codex-backend-client`、`codex-backend-openapi-models` | なし | workspace message、`/accounts/check`、account usage/rate-limit 読み取り、リセット credit、workspace owner nudge、hosted analytics dashboard、backend turn-cost collection を capability 単位で削除し、両クレートも削除済み。 |
 | ImageGen | image artifact、tool invocation、履歴表現 | OpenAI Images API、固定モデル、OpenAI auth の adapter を削除し、共通表現だけを残す。 |
 | Web Search | standalone search を実行できる互換 provider の経路 | OpenAI hosted search を削除する。共通 tool と standalone executor は残す。 |
-| Realtime voice | なし | Realtime API adapter に限らず、`codex-realtime-webrtc`、`codex-voice-host`、voice UI を含む capability 全体を削除する。 |
+| Realtime voice | なし（削除済み） | Realtime API adapter に限らず、`codex-realtime-webrtc`、`codex-voice-host`、voice UI、Realtime 履歴を含む capability 全体を削除した。通常のテキスト会話、汎用 audio utility、provider-neutral な media 処理は保持する。 |
 | `codex-core-plugins` | local / third-party plugin の load と管理 | OpenAI curated marketplace と ChatGPT remote service だけを削除する。 |
 | `codex-analytics`、`codex-feedback` | local event/reducer、diagnostic bundle | OpenAI/ChatGPT backend sink とそれに専用の metadata を削除する。 |
 | `codex-response-debug-context` | 標準 HTTP/API の診断情報 | OpenAI 固有 header・URL の extractor を削除する。 |
@@ -260,7 +260,7 @@ protocol slice として扱う。generic image input、local media、`view_image
 - **内部依存先:** `codex-client`、`codex-http-client`、`codex-protocol`、rustls-provider utility、`codex-websocket-client`。
 - **依存元:** 直接 16、推移 71 で候補中最大。core、model provider、backend client、MCP、各 extension が利用する。
 - **到達経路:** core の model call を介して CLI/TUI/app-server/exec の主要実行経路すべてに到達する。
-- **影響:** Responses API wire type、stream event、Realtime URL、memory API、model/provider tests、crate README。専用 Cargo feature flag はない。
+- **影響:** Responses API wire type、stream event、memory API、model/provider tests、crate README。専用 Cargo feature flag はない。Realtime URL/call adapter は削除済みである。
 - **推奨:** **汎用化**。汎用 transport/client は `codex-client` / `codex-http-client` に維持し、OpenAI wire protocol を provider adapter として隔離する。互換 provider が使う protocol を「OpenAI 固有」という理由だけで削除しない。
 - **難易度・リスク:** 非常に高。core protocol と多数の extension が wire type を直接共有している。
 
@@ -269,8 +269,8 @@ protocol slice として扱う。generic image input、local media、`view_image
 - **根拠:** 現行の realtime conversation は OpenAI/ChatGPT の Realtime WebSocket と `realtime/calls` の WebRTC 契約、`gpt-realtime-*` モデル、専用 session event を前提とする。`codex-realtime-webrtc` と `codex-voice-host` の実装は WebRTC や音声 device を扱うが、実行時の利用元はこの TUI voice capability だけである。
 - **対象:** `codex-api` の Realtime call / WebSocket adapter、core の realtime conversation・context・prompt・history、app-server protocol と request processor、TUI の voice UI・音声 session・設定、`codex-realtime-webrtc`、`codex-voice-host`、専用設定・prompt・テスト・snapshot。
 - **非対象:** 通常のテキスト会話、thread history、一般の audio utility は、Realtime voice 専用の到達経路でない限り残す。
-- **推奨:** **削除**。将来の provider が使う可能性だけでは WebRTC / audio helper を維持しない。将来 provider-neutral な voice capability を導入する場合は、その provider の契約と共に新設する。
-- **難易度・リスク:** 高。複数 entrypoint にまたがるため、Realtime voice の public protocol、設定、UI、worker、保存済み履歴を一単位として除去し、通常の TUI・app-server・テキスト会話が維持されることを確認する。
+- **推奨:** **削除済み**。将来の provider のためだけに WebRTC / audio helper は維持しない。将来 provider-neutral な voice capability を導入する場合は、その provider の契約と共に新設する。
+- **実績:** Realtime voice の public protocol、設定、UI、worker、保存済み履歴の reader/writer/projection を除去した。既存の Realtime rollout ファイル自体は削除せず、旧形式は現行 reader ではサポートしない。
 
 ## 実施単位の履歴と Phase 3 の後続候補
 
@@ -284,8 +284,8 @@ Phase 2 で完了した削除と、Phase 3 で扱う後続候補を次の順序�
    - `codex apply` と ChatGPT backend connector 経路を分けて処理し、共有の plugin/MCP connector 表現を残してクレート本体を削除した。
 4. **backend integration の隔離**
    - backend models/client、cloud config の利用機能を列挙して個別に外す。Level 1 Phase 3 で一括削除せずに進める。
-5. **Realtime voice capability の削除（Phase 3 の新しい実施単位）**
-   - OpenAI Realtime API に依存する会話・WebRTC・音声 host・UI を一つの実施単位で削除する。`codex-realtime-webrtc` と `codex-voice-host` は現行で非 OpenAI の利用経路がないため、補助クレートも含める。
+5. **Realtime voice capability の削除（完了）**
+   - OpenAI Realtime API に依存する会話・WebRTC・音声 host・UI、protocol、履歴、専用設定を一つの実施単位で削除した。`codex-realtime-webrtc` と `codex-voice-host` も削除済みである。
 6. **共有クレートの provider 境界設計**
    - image generation、web search、plugins、analytics、feedback、response debug、login、agent identity、model-provider-info、codex-api は後続の汎用化作業として扱う。
 

@@ -1,7 +1,6 @@
 use codex_app_server_protocol::ThreadItem;
 use codex_app_server_protocol::ThreadTimelineEntry;
 use codex_protocol::ThreadId;
-use codex_protocol::realtime::RealtimeItem;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -32,10 +31,9 @@ pub(super) fn entry_key(entry: &ThreadTimelineEntry) -> (u64, u8, &str) {
             position, turn_id, ..
         } => (*position, 0, turn_id),
         ThreadTimelineEntry::Item { position, item, .. } => (*position, 1, item.id()),
-        ThreadTimelineEntry::Realtime { position, item } => (*position, 2, &item.id),
         ThreadTimelineEntry::TurnCompleted {
             position, turn_id, ..
-        } => (*position, 3, turn_id),
+        } => (*position, 2, turn_id),
     }
 }
 
@@ -113,15 +111,8 @@ WHERE thread_id = ?1 AND rollout_ordinal >= ?2
   AND rollout_ordinal < ?3 AND rollout_ordinal <= ?4
   AND (rollout_ordinal, 1, item_id) < (?4, ?5, ?6)
 ORDER BY rollout_ordinal DESC, item_id DESC LIMIT ?7
-), realtime AS (
-SELECT rollout_ordinal, 2 AS kind, item_id AS id, NULL AS turn_id, item_json
-FROM thread_realtime_items
-WHERE thread_id = ?1 AND rollout_ordinal >= ?2
-  AND rollout_ordinal < ?3 AND rollout_ordinal <= ?4
-  AND (rollout_ordinal, 2, item_id) < (?4, ?5, ?6)
-ORDER BY rollout_ordinal DESC, item_id DESC LIMIT ?7
 ), ends AS (
-SELECT rollout_end_ordinal AS rollout_ordinal, 3 AS kind, turn_id AS id, turn_id,
+SELECT rollout_end_ordinal AS rollout_ordinal, 2 AS kind, turn_id AS id, turn_id,
        json_object('type', 'turnCompleted', 'position', rollout_end_ordinal,
                    'turnId', turn_id, 'status', status, 'error', json(error_json),
                    'startedAt', started_at, 'completedAt', completed_at,
@@ -129,12 +120,11 @@ SELECT rollout_end_ordinal AS rollout_ordinal, 3 AS kind, turn_id AS id, turn_id
 FROM thread_turns
 WHERE thread_id = ?1 AND rollout_end_ordinal >= ?2
   AND rollout_end_ordinal < ?3 AND rollout_end_ordinal <= ?4
-  AND (rollout_end_ordinal, 3, turn_id) < (?4, ?5, ?6)
+  AND (rollout_end_ordinal, 2, turn_id) < (?4, ?5, ?6)
 ORDER BY rollout_end_ordinal DESC, turn_id DESC LIMIT ?7
 )
 SELECT * FROM starts
 UNION ALL SELECT * FROM items
-UNION ALL SELECT * FROM realtime
 UNION ALL SELECT * FROM ends
 ORDER BY rollout_ordinal DESC, kind DESC, id DESC
 LIMIT ?7
@@ -154,7 +144,7 @@ LIMIT ?7
         for (position, kind, _id, turn_id, item_json) in segment_rows {
             let position = u64::try_from(position).map_err(thread_history_error)?;
             rows.push(match kind {
-                0 | 3 => serde_json::from_str::<ThreadTimelineEntry>(&item_json)
+                0 | 2 => serde_json::from_str::<ThreadTimelineEntry>(&item_json)
                     .map_err(thread_history_error)?,
                 1 => ThreadTimelineEntry::Item {
                     position,
@@ -163,12 +153,6 @@ LIMIT ?7
                         serde_json::from_str::<ThreadItem>(&item_json)
                             .map_err(thread_history_error)?,
                     ),
-                },
-                2 => ThreadTimelineEntry::Realtime {
-                    position,
-                    item: serde_json::from_str::<RealtimeItem>(&item_json)
-                        .map_err(thread_history_error)?
-                        .into(),
                 },
                 _ => return Err(thread_history_error("invalid timeline entry kind")),
             });
@@ -194,53 +178,9 @@ LIMIT ?7
         None
     };
 
-    let (page_start, page_start_kind, page_start_id) =
-        rows.last().map(entry_key).unwrap_or_default();
-    let mut active_realtime_session_at_page_start = None;
-    for segment in lineage.segments().iter().rev() {
-        let upper = page_start.min(
-            segment
-                .end_ordinal()
-                .map(|ordinal| ordinal.saturating_sub(1))
-                .unwrap_or(u64::MAX),
-        );
-        if upper < segment.start_ordinal() {
-            continue;
-        }
-        let boundary = sqlx::query_as::<_, (String, String)>(
-            r#"
-SELECT item_type, json_extract(item_json, '$.realtime_session_id')
-FROM thread_realtime_items
-WHERE thread_id = ?
-  AND rollout_ordinal >= ?
-  AND rollout_ordinal <= ?
-  AND (rollout_ordinal, 2, item_id) < (?, ?, ?)
-  AND item_type IN ('realtime_session_started', 'realtime_session_closed')
-ORDER BY rollout_ordinal DESC
-LIMIT 1
-            "#,
-        )
-        .bind(segment.rollout_id().to_string())
-        .bind(sqlite_integer(segment.start_ordinal(), "rollout ordinal")?)
-        .bind(sqlite_integer(upper, "rollout ordinal")?)
-        .bind(sqlite_integer(page_start, "rollout ordinal")?)
-        .bind(i64::from(page_start_kind))
-        .bind(page_start_id)
-        .fetch_optional(pool)
-        .await
-        .map_err(thread_history_error)?;
-        if let Some((item_type, session_id)) = boundary {
-            if item_type == "realtime_session_started" {
-                active_realtime_session_at_page_start = Some(session_id);
-            }
-            break;
-        }
-    }
-
     rows.reverse();
     Ok(TimelinePage {
         items: rows,
         next_cursor,
-        active_realtime_session_at_page_start,
     })
 }
