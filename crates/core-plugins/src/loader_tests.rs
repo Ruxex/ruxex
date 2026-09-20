@@ -637,23 +637,6 @@ enabled = true
     assert!(hooks_only_valid.apps.is_empty());
 }
 
-#[test]
-fn curated_plugin_cache_version_shortens_full_git_sha() {
-    assert_eq!(
-        curated_plugin_cache_version("0123456789abcdef0123456789abcdef01234567"),
-        "01234567"
-    );
-}
-
-#[test]
-fn curated_plugin_cache_version_preserves_non_git_sha_versions() {
-    assert_eq!(
-        curated_plugin_cache_version("export-backup"),
-        "export-backup"
-    );
-    assert_eq!(curated_plugin_cache_version("0123456"), "0123456");
-}
-
 fn plugin_id() -> PluginId {
     PluginId::parse("demo-plugin@test-marketplace").expect("plugin id")
 }

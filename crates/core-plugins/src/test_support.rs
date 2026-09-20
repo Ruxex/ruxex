@@ -51,6 +51,10 @@ use toml::Value;
 pub(crate) const TEST_CURATED_PLUGIN_SHA: &str = "0123456789abcdef0123456789abcdef01234567";
 pub(crate) const TEST_CURATED_PLUGIN_CACHE_VERSION: &str = "01234567";
 
+pub(crate) fn curated_plugins_repo_path(codex_home: &Path) -> PathBuf {
+    codex_home.join(".tmp/plugins")
+}
+
 pub(crate) fn test_plugins_manager(codex_home: PathBuf) -> PluginsManager {
     PluginsManager::new(
         codex_home,

@@ -1,7 +1,6 @@
 mod app_mcp_routing;
 mod artifact_operation;
 mod command_migration;
-pub mod curated_marketplace;
 mod discoverable;
 mod error_subtype;
 mod executor_hooks;

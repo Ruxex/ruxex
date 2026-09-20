@@ -1,8 +1,5 @@
-use crate::OPENAI_API_CURATED_MARKETPLACE_NAME;
-use crate::OPENAI_CURATED_MARKETPLACE_NAME;
 use crate::OPENAI_PRIMARY_RUNTIME_MARKETPLACE_NAME;
 use crate::PluginLoadOutcome;
-use crate::loader::curated_plugin_cache_version;
 use crate::marketplace::MarketplacePluginSource;
 use crate::marketplace::find_marketplace_plugin;
 use crate::marketplace_policy::primary_runtime_marketplace_root;
@@ -10,9 +7,6 @@ use crate::plugin_metrics::PluginMetricsOperation;
 use crate::plugin_metrics::ResolvedPluginMetricsOperation;
 use crate::plugin_metrics::load_plugin_metrics_operations;
 use crate::remote::REMOTE_GLOBAL_MARKETPLACE_NAME;
-use crate::curated_marketplace::curated_plugins_api_marketplace_path;
-use crate::curated_marketplace::curated_plugins_repo_path;
-use crate::curated_marketplace::read_curated_plugins_sha;
 use crate::store::DEFAULT_PLUGIN_VERSION;
 use crate::store::PluginStore;
 use crate::store::plugin_version_for_source;
@@ -56,8 +50,8 @@ impl PluginCommandAttribution {
 }
 
 /// Active first-party roots eligible for command attribution.
-/// Trusted means OpenAI-shipped synced or bundled runtime code, or a
-/// server-installed global remote plugin cache entry, not a local override.
+/// Trusted means bundled runtime code or a server-installed global remote
+/// plugin cache entry, not a local override.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct TrustedPluginRoots {
     roots: Vec<TrustedPluginRoot>,
@@ -100,7 +94,7 @@ impl TrustedPluginRoots {
 
     fn expected_plugin_root(
         store: &PluginStore,
-        codex_home: &Path,
+        _codex_home: &Path,
         plugin_id: &PluginId,
         primary_runtime_marketplace_root: Option<&Path>,
     ) -> Option<AbsolutePathBuf> {
@@ -113,21 +107,6 @@ impl TrustedPluginRoots {
                     return None;
                 }
                 Some(store.plugin_root(plugin_id, &active_version))
-            }
-            OPENAI_CURATED_MARKETPLACE_NAME | OPENAI_API_CURATED_MARKETPLACE_NAME => {
-                let curated_sha = read_curated_plugins_sha(codex_home)?;
-                let expected_root =
-                    store.plugin_root(plugin_id, &curated_plugin_cache_version(&curated_sha));
-                let marketplace_path = match plugin_id.marketplace_name.as_str() {
-                    OPENAI_CURATED_MARKETPLACE_NAME => curated_plugins_repo_path(codex_home)
-                        .join(".agents/plugins/marketplace.json"),
-                    OPENAI_API_CURATED_MARKETPLACE_NAME => {
-                        curated_plugins_api_marketplace_path(codex_home)
-                    }
-                    _ => return None,
-                };
-                Self::marketplace_plugin(marketplace_path, plugin_id)?;
-                Some(expected_root)
             }
             OPENAI_PRIMARY_RUNTIME_MARKETPLACE_NAME => {
                 let marketplace_root = primary_runtime_marketplace_root?;

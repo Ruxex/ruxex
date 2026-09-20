@@ -5,8 +5,6 @@ use std::path::Path;
 
 use codex_core_plugins::OPENAI_API_CURATED_MARKETPLACE_NAME;
 
-pub(crate) const TEST_CURATED_PLUGIN_SHA: &str = "0123456789abcdef0123456789abcdef01234567";
-
 pub(crate) fn write_file(path: &Path, contents: &str) {
     fs::create_dir_all(path.parent().expect("file should have a parent")).unwrap();
     fs::write(path, contents).unwrap();
@@ -80,14 +78,6 @@ pub(crate) fn write_openai_api_curated_marketplace(root: &Path, plugin_names: &[
     for plugin_name in plugin_names {
         write_curated_plugin(root, plugin_name);
     }
-}
-
-pub(crate) fn write_curated_plugin_sha(codex_home: &Path) {
-    write_curated_plugin_sha_with(codex_home, TEST_CURATED_PLUGIN_SHA);
-}
-
-pub(crate) fn write_curated_plugin_sha_with(codex_home: &Path, sha: &str) {
-    write_file(&codex_home.join(".tmp/plugins.sha"), &format!("{sha}\n"));
 }
 
 pub(crate) fn write_plugins_feature_config(codex_home: &Path) {

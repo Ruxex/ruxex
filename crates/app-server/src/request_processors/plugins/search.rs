@@ -53,8 +53,6 @@ impl PluginRequestProcessor {
         let auth = self.auth_manager.auth().await;
         let auth_mode = auth.as_ref().map(CodexAuth::api_auth_mode);
         let remote_plugin_enabled = config.features.enabled(Feature::RemotePlugin);
-        let use_remote_global_catalog =
-            remote_plugin_enabled && auth_mode.is_some_and(DomainAuthMode::uses_codex_backend);
         let remote_scope = if remote_plugin_enabled {
             Some(scope.map(|scope| match scope {
                 PluginSearchScope::Global => RemotePluginScope::Global,
@@ -145,11 +143,7 @@ impl PluginRequestProcessor {
                     Default::default()
                 });
             let outcome = tokio::task::spawn_blocking(move || {
-                plugins_manager.list_marketplaces_for_config(
-                    &plugins_input,
-                    &roots,
-                    /*include_openai_curated*/ !use_remote_global_catalog,
-                )
+                plugins_manager.list_marketplaces_for_config(&plugins_input, &roots)
             })
             .await
             .map_err(|err| internal_error(format!("failed to list marketplace plugins: {err}")))?

@@ -79,11 +79,7 @@ impl PluginsManager {
         let use_remote_global_catalog =
             input.plugins.remote_plugin_enabled && auth.is_some_and(CodexAuth::uses_codex_backend);
         let marketplaces = self
-            .list_marketplaces_for_config(
-                &input.plugins,
-                &[],
-                /*include_openai_curated*/ !use_remote_global_catalog,
-            )
+            .list_marketplaces_for_config(&input.plugins, &[])
             .context("failed to list plugin marketplaces for tool suggestions")?
             .marketplaces;
         let remote_installed_marketplaces = if use_remote_global_catalog {
@@ -223,7 +219,3 @@ fn is_tool_suggest_fallback_plugin(plugin_id: &str) -> bool {
     );
     TOOL_SUGGEST_DISCOVERABLE_PLUGIN_ALLOWLIST.contains(&default_curated_plugin_id.as_str())
 }
-
-#[cfg(test)]
-#[path = "discoverable_tests.rs"]
-mod tests;

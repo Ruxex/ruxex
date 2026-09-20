@@ -16,9 +16,9 @@ use crate::remote::REMOTE_WORKSPACE_MARKETPLACE_NAME;
 use crate::remote::REMOTE_WORKSPACE_SHARED_WITH_ME_MARKETPLACE_NAME;
 use crate::remote::RecommendedPlugin;
 use crate::remote::RemoteInstalledPlugin;
-use crate::curated_marketplace::curated_plugins_repo_path;
 use crate::test_support::TEST_CURATED_PLUGIN_CACHE_VERSION;
 use crate::test_support::TEST_CURATED_PLUGIN_SHA;
+use crate::test_support::curated_plugins_repo_path;
 use crate::test_support::load_plugins_config as load_plugins_config_input;
 use crate::test_support::set_test_auth;
 use crate::test_support::set_test_auth_mode;
@@ -74,9 +74,6 @@ use wiremock::matchers::path;
 use wiremock::matchers::query_param;
 
 const MAX_CAPABILITY_SUMMARY_DESCRIPTION_LEN: usize = 1024;
-
-#[path = "marketplace_policy/curated_loading_tests.rs"]
-mod curated_marketplace_policy;
 
 fn unrestricted_config_layer_stack() -> ConfigLayerStack {
     ConfigLayerStack::default()
@@ -150,26 +147,6 @@ async fn plugins_manager_reads_auth_mode_from_auth_manager() {
         Some(AuthMode::Chatgpt),
     );
     assert_eq!(manager_with_auth.auth_mode(), Some(AuthMode::Chatgpt));
-}
-
-#[test]
-fn curated_repo_sync_stays_deferred_for_remote_chatgpt_catalog() {
-    CURATED_REPO_SYNC_STARTED.store(false, std::sync::atomic::Ordering::SeqCst);
-    let tmp = TempDir::new().unwrap();
-    let config = PluginsConfigInput::new(
-        unrestricted_config_layer_stack(),
-        "openai".to_string(),
-        /*plugins_enabled*/ true,
-        /*remote_plugin_enabled*/ true,
-        "https://chatgpt.com".to_string(),
-        test_http_client_factory(),
-    );
-    let manager = Arc::new(test_plugins_manager_with_options(
-        tmp.path().to_path_buf(),
-        Some(Product::Codex),
-        Some(AuthMode::Chatgpt),
-    ));
-
 }
 
 #[test]
@@ -354,21 +331,13 @@ path = {:?}
     );
 
     let allowed_outcome = manager
-        .list_marketplaces_for_config(
-            &allowed,
-            std::slice::from_ref(&subdirectory),
-            /*include_openai_curated*/ false,
-        )
+        .list_marketplaces_for_config(&allowed, std::slice::from_ref(&subdirectory))
         .expect("list allowed marketplace");
     assert_eq!(allowed_outcome.marketplaces.len(), 1);
     assert_eq!(allowed_outcome.marketplaces[0].name, "company");
 
     let blocked_outcome = manager
-        .list_marketplaces_for_config(
-            &blocked,
-            std::slice::from_ref(&subdirectory),
-            /*include_openai_curated*/ false,
-        )
+        .list_marketplaces_for_config(&blocked, std::slice::from_ref(&subdirectory))
         .expect("list blocked marketplace");
     assert_eq!(blocked_outcome.marketplaces, Vec::new());
 }
@@ -3848,11 +3817,7 @@ enabled = false
 
     let config = load_config(tmp.path(), &repo_root).await;
     let marketplaces = test_plugins_manager(tmp.path().to_path_buf())
-        .list_marketplaces_for_config(
-            &config,
-            &[AbsolutePathBuf::try_from(repo_root).unwrap()],
-            /*include_openai_curated*/ true,
-        )
+        .list_marketplaces_for_config(&config, &[AbsolutePathBuf::try_from(repo_root).unwrap()])
         .unwrap()
         .marketplaces;
 
@@ -3956,11 +3921,7 @@ enabled = true
 
     let config = load_config(tmp.path(), &repo_root).await;
     let marketplaces = test_plugins_manager(tmp.path().to_path_buf())
-        .list_marketplaces_for_config(
-            &config,
-            &[AbsolutePathBuf::try_from(repo_root).unwrap()],
-            /*include_openai_curated*/ true,
-        )
+        .list_marketplaces_for_config(&config, &[AbsolutePathBuf::try_from(repo_root).unwrap()])
         .unwrap()
         .marketplaces;
 
@@ -4008,11 +3969,7 @@ plugins = true
 
     let config = load_config(tmp.path(), &repo_root).await;
     let marketplaces = test_plugins_manager(tmp.path().to_path_buf())
-        .list_marketplaces_for_config(
-            &config,
-            &[AbsolutePathBuf::try_from(repo_root).unwrap()],
-            /*include_openai_curated*/ true,
-        )
+        .list_marketplaces_for_config(&config, &[AbsolutePathBuf::try_from(repo_root).unwrap()])
         .unwrap()
         .marketplaces;
 
@@ -4263,7 +4220,6 @@ plugins = true
         .list_marketplaces_for_config(
             &config,
             &[AbsolutePathBuf::try_from(repo_root.clone()).unwrap()],
-            /*include_openai_curated*/ false,
         )
         .unwrap()
         .marketplaces
@@ -4339,11 +4295,7 @@ async fn agent_plugin_read_and_tool_suggestions_use_portable_capabilities_only()
     let config = load_config(tmp.path(), &repo_root).await;
     let manager = test_plugins_manager(tmp.path().to_path_buf());
     let plugin = manager
-        .list_marketplaces_for_config(
-            &config,
-            &[AbsolutePathBuf::try_from(repo_root).unwrap()],
-            /*include_openai_curated*/ false,
-        )
+        .list_marketplaces_for_config(&config, &[AbsolutePathBuf::try_from(repo_root).unwrap()])
         .unwrap()
         .marketplaces
         .into_iter()
@@ -4804,7 +4756,6 @@ enabled = true
         .list_marketplaces_for_config(
             &config,
             &[AbsolutePathBuf::try_from(repo_root.clone()).unwrap()],
-            /*include_openai_curated*/ true,
         )
         .unwrap()
         .marketplaces;
@@ -4911,7 +4862,7 @@ plugins = true
         Some(Product::Codex),
         Some(AuthMode::Chatgpt),
     )
-    .list_marketplaces_for_config(&config, &[], /*include_openai_curated*/ true)
+    .list_marketplaces_for_config(&config, &[])
     .unwrap()
     .marketplaces;
 
@@ -4968,7 +4919,7 @@ plugins = true
 
     let config = load_config(tmp.path(), tmp.path()).await;
     let outcome = test_plugins_manager(tmp.path().to_path_buf())
-        .list_marketplaces_for_config(&config, &[], /*include_openai_curated*/ false)
+        .list_marketplaces_for_config(&config, &[])
         .unwrap();
 
     assert_eq!(outcome.errors, Vec::new());
@@ -5033,7 +4984,7 @@ plugins = true
         Some(AuthMode::ApiKey),
     );
     let marketplaces = manager
-        .list_marketplaces_for_config(&config, &[], /*include_openai_curated*/ true)
+        .list_marketplaces_for_config(&config, &[])
         .unwrap()
         .marketplaces;
     let curated_marketplace = marketplaces
@@ -5133,7 +5084,7 @@ plugins = true
             Some(Product::Codex),
             auth_mode,
         )
-        .list_marketplaces_for_config(&config, &[], /*include_openai_curated*/ true)
+        .list_marketplaces_for_config(&config, &[])
         .unwrap()
         .marketplaces;
 
@@ -5178,7 +5129,7 @@ plugins = true
         Some(AuthMode::Chatgpt),
     );
     let marketplaces = manager
-        .list_marketplaces_for_config(&config, &[], /*include_openai_curated*/ true)
+        .list_marketplaces_for_config(&config, &[])
         .unwrap()
         .marketplaces;
 
@@ -5216,9 +5167,7 @@ plugins = true
         Some(Product::Codex),
         Some(AuthMode::BedrockApiKey),
     );
-    let outcome = manager
-        .list_marketplaces_for_config(&config, &[], /*include_openai_curated*/ true)
-        .unwrap();
+    let outcome = manager.list_marketplaces_for_config(&config, &[]).unwrap();
 
     assert_eq!(outcome.errors, Vec::new());
     assert_eq!(
@@ -5272,7 +5221,7 @@ source = "/tmp/debug"
     .unwrap();
     let config = load_config(tmp.path(), tmp.path()).await;
     let marketplaces = test_plugins_manager(tmp.path().to_path_buf())
-        .list_marketplaces_for_config(&config, &[], /*include_openai_curated*/ true)
+        .list_marketplaces_for_config(&config, &[])
         .unwrap()
         .marketplaces;
 
@@ -5451,7 +5400,7 @@ source = "/tmp/debug"
 
     let config = load_config(tmp.path(), tmp.path()).await;
     let marketplaces = test_plugins_manager(tmp.path().to_path_buf())
-        .list_marketplaces_for_config(&config, &[], /*include_openai_curated*/ true)
+        .list_marketplaces_for_config(&config, &[])
         .unwrap()
         .marketplaces;
 
@@ -5506,7 +5455,7 @@ plugins = true
     .unwrap();
     let config = load_config(tmp.path(), tmp.path()).await;
     let marketplaces = test_plugins_manager(tmp.path().to_path_buf())
-        .list_marketplaces_for_config(&config, &[], /*include_openai_curated*/ true)
+        .list_marketplaces_for_config(&config, &[])
         .unwrap()
         .marketplaces;
 
@@ -5591,7 +5540,6 @@ enabled = false
                 AbsolutePathBuf::try_from(repo_a_root).unwrap(),
                 AbsolutePathBuf::try_from(repo_b_root).unwrap(),
             ],
-            /*include_openai_curated*/ true,
         )
         .unwrap()
         .marketplaces;
@@ -5704,11 +5652,7 @@ enabled = true
 
     let config = load_config(tmp.path(), &repo_root).await;
     let marketplaces = test_plugins_manager(tmp.path().to_path_buf())
-        .list_marketplaces_for_config(
-            &config,
-            &[AbsolutePathBuf::try_from(repo_root).unwrap()],
-            /*include_openai_curated*/ true,
-        )
+        .list_marketplaces_for_config(&config, &[AbsolutePathBuf::try_from(repo_root).unwrap()])
         .unwrap()
         .marketplaces;
 
@@ -6210,246 +6154,6 @@ plugins = true
 }
 
 #[test]
-fn refresh_curated_plugin_cache_replaces_existing_local_version_with_short_sha_version() {
-    let tmp = tempfile::tempdir().unwrap();
-    let curated_root = curated_plugins_repo_path(tmp.path());
-    write_openai_curated_marketplace(&curated_root, &["slack"]);
-    write_curated_plugin_sha(tmp.path(), TEST_CURATED_PLUGIN_SHA);
-    let plugin_id = PluginId::new(
-        "slack".to_string(),
-        OPENAI_CURATED_MARKETPLACE_NAME.to_string(),
-    )
-    .unwrap();
-    write_plugin(
-        &tmp.path().join("plugins/cache/openai-curated"),
-        "slack/local",
-        "slack",
-    );
-
-    assert!(
-        refresh_curated_plugin_cache(tmp.path(), TEST_CURATED_PLUGIN_SHA, &[plugin_id])
-            .expect("cache refresh should succeed")
-    );
-
-    assert!(
-        !tmp.path()
-            .join("plugins/cache/openai-curated/slack/local")
-            .exists()
-    );
-    assert!(
-        tmp.path()
-            .join(format!(
-                "plugins/cache/openai-curated/slack/{TEST_CURATED_PLUGIN_CACHE_VERSION}"
-            ))
-            .is_dir()
-    );
-}
-
-#[test]
-fn refresh_curated_plugin_cache_reinstalls_missing_configured_plugin_with_current_short_version() {
-    let tmp = tempfile::tempdir().unwrap();
-    let curated_root = curated_plugins_repo_path(tmp.path());
-    write_openai_curated_marketplace(&curated_root, &["slack"]);
-    write_curated_plugin_sha(tmp.path(), TEST_CURATED_PLUGIN_SHA);
-    let plugin_id = PluginId::new(
-        "slack".to_string(),
-        OPENAI_CURATED_MARKETPLACE_NAME.to_string(),
-    )
-    .unwrap();
-
-    assert!(
-        refresh_curated_plugin_cache(tmp.path(), TEST_CURATED_PLUGIN_SHA, &[plugin_id])
-            .expect("cache refresh should recreate missing configured plugin")
-    );
-
-    assert!(
-        tmp.path()
-            .join(format!(
-                "plugins/cache/openai-curated/slack/{TEST_CURATED_PLUGIN_CACHE_VERSION}"
-            ))
-            .is_dir()
-    );
-}
-
-#[test]
-fn refresh_curated_plugin_cache_reinstalls_missing_api_curated_plugin() {
-    let tmp = tempfile::tempdir().unwrap();
-    let curated_root = curated_plugins_repo_path(tmp.path());
-    write_openai_curated_marketplace(&curated_root, &[]);
-    write_openai_api_curated_marketplace(&curated_root, &["api-only"]);
-    write_curated_plugin_sha(tmp.path(), TEST_CURATED_PLUGIN_SHA);
-    let plugin_id = PluginId::new(
-        "api-only".to_string(),
-        OPENAI_API_CURATED_MARKETPLACE_NAME.to_string(),
-    )
-    .unwrap();
-
-    assert!(
-        refresh_curated_plugin_cache(tmp.path(), TEST_CURATED_PLUGIN_SHA, &[plugin_id])
-            .expect("cache refresh should recreate missing configured API curated plugin")
-    );
-
-    assert!(
-        tmp.path()
-            .join(format!(
-                "plugins/cache/openai-api-curated/api-only/{TEST_CURATED_PLUGIN_CACHE_VERSION}"
-            ))
-            .is_dir()
-    );
-}
-
-#[test]
-fn refresh_curated_plugin_cache_leaves_api_curated_plugin_when_api_manifest_missing() {
-    let tmp = tempfile::tempdir().unwrap();
-    let curated_root = curated_plugins_repo_path(tmp.path());
-    write_openai_curated_marketplace(&curated_root, &[]);
-    write_cached_plugin(tmp.path(), OPENAI_API_CURATED_MARKETPLACE_NAME, "api-only");
-    let plugin_id = PluginId::new(
-        "api-only".to_string(),
-        OPENAI_API_CURATED_MARKETPLACE_NAME.to_string(),
-    )
-    .unwrap();
-
-    assert!(
-        !refresh_curated_plugin_cache(tmp.path(), TEST_CURATED_PLUGIN_SHA, &[plugin_id])
-            .expect("cache refresh should skip missing API curated manifest")
-    );
-    assert!(
-        tmp.path()
-            .join("plugins/cache/openai-api-curated/api-only/local")
-            .is_dir()
-    );
-}
-
-#[test]
-fn refresh_curated_plugin_cache_removes_cache_for_plugin_removed_from_marketplace() {
-    let tmp = tempfile::tempdir().unwrap();
-    let curated_root = curated_plugins_repo_path(tmp.path());
-    write_openai_curated_marketplace(&curated_root, &[]);
-    let plugin_id = PluginId::new(
-        "google-sheets".to_string(),
-        OPENAI_CURATED_MARKETPLACE_NAME.to_string(),
-    )
-    .unwrap();
-    let plugin_cache_root = tmp
-        .path()
-        .join("plugins/cache/openai-curated/google-sheets");
-    write_plugin(
-        &tmp.path().join("plugins/cache/openai-curated"),
-        &format!("google-sheets/{TEST_CURATED_PLUGIN_CACHE_VERSION}"),
-        "google-sheets",
-    );
-
-    assert!(
-        refresh_curated_plugin_cache(tmp.path(), TEST_CURATED_PLUGIN_SHA, &[plugin_id])
-            .expect("cache refresh should remove stale configured plugin")
-    );
-
-    assert!(!plugin_cache_root.exists());
-}
-
-#[test]
-fn curated_plugin_ids_from_config_keys_reads_latest_codex_home_user_config() {
-    let tmp = tempfile::tempdir().unwrap();
-    write_file(
-        &tmp.path().join(CONFIG_TOML_FILE),
-        r#"[features]
-plugins = true
-
-[plugins."slack@openai-curated"]
-enabled = true
-
-[plugins."api-only@openai-api-curated"]
-enabled = true
-
-[plugins."sample@debug"]
-enabled = true
-"#,
-    );
-
-    assert_eq!(
-        configured_curated_plugin_ids_from_codex_home(tmp.path())
-            .into_iter()
-            .map(|plugin_id| plugin_id.as_key())
-            .collect::<Vec<_>>(),
-        vec![
-            "api-only@openai-api-curated".to_string(),
-            "slack@openai-curated".to_string(),
-        ]
-    );
-
-    write_file(
-        &tmp.path().join(CONFIG_TOML_FILE),
-        r#"[features]
-plugins = true
-"#,
-    );
-
-    assert_eq!(
-        configured_curated_plugin_ids_from_codex_home(tmp.path()),
-        Vec::<PluginId>::new()
-    );
-}
-
-#[test]
-fn refresh_curated_plugin_cache_returns_false_when_configured_plugins_are_current() {
-    let tmp = tempfile::tempdir().unwrap();
-    let curated_root = curated_plugins_repo_path(tmp.path());
-    write_openai_curated_marketplace(&curated_root, &["slack"]);
-    let plugin_id = PluginId::new(
-        "slack".to_string(),
-        OPENAI_CURATED_MARKETPLACE_NAME.to_string(),
-    )
-    .unwrap();
-    write_plugin(
-        &tmp.path().join("plugins/cache/openai-curated"),
-        &format!("slack/{TEST_CURATED_PLUGIN_CACHE_VERSION}"),
-        "slack",
-    );
-
-    assert!(
-        !refresh_curated_plugin_cache(tmp.path(), TEST_CURATED_PLUGIN_SHA, &[plugin_id])
-            .expect("cache refresh should be a no-op when configured plugins are current")
-    );
-}
-
-#[test]
-fn refresh_curated_plugin_cache_migrates_full_sha_cache_version_to_short_version() {
-    let tmp = tempfile::tempdir().unwrap();
-    let curated_root = curated_plugins_repo_path(tmp.path());
-    write_openai_curated_marketplace(&curated_root, &["slack"]);
-    let plugin_id = PluginId::new(
-        "slack".to_string(),
-        OPENAI_CURATED_MARKETPLACE_NAME.to_string(),
-    )
-    .unwrap();
-    write_plugin(
-        &tmp.path().join("plugins/cache/openai-curated"),
-        &format!("slack/{TEST_CURATED_PLUGIN_SHA}"),
-        "slack",
-    );
-
-    assert!(
-        refresh_curated_plugin_cache(tmp.path(), TEST_CURATED_PLUGIN_SHA, &[plugin_id])
-            .expect("cache refresh should migrate the full sha cache version")
-    );
-    assert!(
-        !tmp.path()
-            .join(format!(
-                "plugins/cache/openai-curated/slack/{TEST_CURATED_PLUGIN_SHA}"
-            ))
-            .exists()
-    );
-    assert!(
-        tmp.path()
-            .join(format!(
-                "plugins/cache/openai-curated/slack/{TEST_CURATED_PLUGIN_CACHE_VERSION}"
-            ))
-            .is_dir()
-    );
-}
-
-#[test]
 fn refresh_non_curated_plugin_cache_replaces_existing_local_version_with_manifest_version() {
     let tmp = tempfile::tempdir().unwrap();
     let repo_root = tmp.path().join("repo");
@@ -6553,7 +6257,7 @@ enabled = true
         .expect("refresh state lock")
         .in_flight = true;
     let marketplaces = manager
-        .list_marketplaces_for_context(&context, /*include_openai_curated*/ false)
+        .list_marketplaces_for_context(&context)
         .unwrap()
         .marketplaces;
 
@@ -6606,7 +6310,7 @@ enabled = true
         Some("2.0.0"),
     );
     let marketplaces = manager
-        .list_marketplaces_for_context(&context, /*include_openai_curated*/ false)
+        .list_marketplaces_for_context(&context)
         .unwrap()
         .marketplaces;
     manager.maybe_start_non_curated_plugin_cache_refresh(&context, &marketplaces);

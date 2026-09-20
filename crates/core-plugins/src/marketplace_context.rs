@@ -33,7 +33,6 @@ impl PluginMarketplaceContext {
     pub(super) fn list_marketplaces(
         &self,
         manager: &PluginsManager,
-        include_openai_curated: bool,
     ) -> Result<ConfiguredMarketplaceListOutcome, MarketplaceError> {
         let mut plugin_states = ConfiguredPluginStates::default();
         for scope in self
@@ -66,7 +65,6 @@ impl PluginMarketplaceContext {
             let outcome = manager.list_marketplaces_for_config_with_states(
                 &scope.config,
                 scope.cwd.as_slice(),
-                include_openai_curated,
                 &plugin_states,
             )?;
             for mut marketplace in outcome.marketplaces {

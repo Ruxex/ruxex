@@ -5,14 +5,10 @@ use crate::OPENAI_CURATED_MARKETPLACE_NAME;
 use crate::OPENAI_PRIMARY_RUNTIME_MARKETPLACE_NAME;
 use crate::installed_marketplaces::marketplace_install_root;
 use crate::installed_marketplaces::resolve_configured_marketplace_root;
-use crate::is_openai_curated_marketplace_name;
 use crate::marketplace::marketplace_root_dir;
 use crate::marketplace_add::MarketplaceSource;
 use crate::marketplace_add::parse_marketplace_source;
 use crate::remote::RemotePluginScope;
-use crate::curated_marketplace::OPENAI_PLUGINS_GIT_URL;
-use crate::curated_marketplace::curated_plugins_api_marketplace_path;
-use crate::curated_marketplace::curated_plugins_repo_path;
 use codex_config::ConfigLayerStack;
 use codex_config::ConfigRequirements;
 use codex_config::MarketplaceAllowedSourceKind;
@@ -110,10 +106,7 @@ impl MarketplacePolicy {
         marketplace_name: &str,
     ) -> Result<(), String> {
         let root = marketplace_root_dir(marketplace_path).map_err(|err| err.to_string())?;
-        if let Some(expected_name) = managed_marketplace_name(codex_home, marketplace_path, &root) {
-            if is_openai_curated_marketplace_name(expected_name) {
-                self.validate_git_source(OPENAI_PLUGINS_GIT_URL, /*ref_name*/ None)?;
-            }
+        if let Some(expected_name) = managed_marketplace_name(codex_home, &root) {
             return validate_expected_marketplace_name(expected_name, marketplace_name);
         }
         if is_reserved_marketplace_name(marketplace_name) {
@@ -242,11 +235,6 @@ pub(crate) fn policy_filtered_plugin_config(
             let marketplace_name = &plugin_id.marketplace_name;
             if configured_marketplace_names.contains(marketplace_name) {
                 return allowed_marketplace_names.contains(marketplace_name);
-            }
-            if is_openai_curated_marketplace_name(marketplace_name) {
-                return policy
-                    .validate_git_source(OPENAI_PLUGINS_GIT_URL, /*ref_name*/ None)
-                    .is_ok();
             }
             !policy.is_restricted()
         });
@@ -464,21 +452,7 @@ fn is_reserved_marketplace_name(marketplace_name: &str) -> bool {
     ) || RemotePluginScope::from_marketplace_name(marketplace_name).is_some()
 }
 
-fn managed_marketplace_name(
-    codex_home: &Path,
-    marketplace_path: &AbsolutePathBuf,
-    root: &AbsolutePathBuf,
-) -> Option<&'static str> {
-    if is_expected_managed_path(
-        marketplace_path.as_path(),
-        &curated_plugins_api_marketplace_path(codex_home),
-    ) && is_expected_managed_path(root.as_path(), &curated_plugins_repo_path(codex_home))
-    {
-        return Some(OPENAI_API_CURATED_MARKETPLACE_NAME);
-    }
-    if is_expected_managed_path(root.as_path(), &curated_plugins_repo_path(codex_home)) {
-        return Some(OPENAI_CURATED_MARKETPLACE_NAME);
-    }
+fn managed_marketplace_name(codex_home: &Path, root: &AbsolutePathBuf) -> Option<&'static str> {
     managed_local_marketplace_name(codex_home, root.as_path())
 }
 

@@ -112,11 +112,7 @@ impl ExternalAgentConfigService {
             plugins_manager.set_analytics_events_client(analytics_events_client);
         }
         let configured_marketplace_paths = plugins_manager
-            .list_marketplaces_for_config(
-                &config.plugins_config_input(),
-                &[],
-                /*include_openai_curated*/ true,
-            )
+            .list_marketplaces_for_config(&config.plugins_config_input(), &[])
             .map_err(|err| {
                 invalid_data_error(format!("failed to list configured marketplaces: {err}"))
             })?

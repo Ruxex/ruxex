@@ -25,11 +25,6 @@ async fn authenticated_plugin_migration_uses_chatgpt_curated_marketplace() {
     )
     .expect("write Codex config");
     fs::write(
-        codex_home.join(".tmp/plugins.sha"),
-        "0123456789abcdef0123456789abcdef01234567\n",
-    )
-    .expect("write curated plugin version");
-    fs::write(
         curated_root.join(".agents/plugins/marketplace.json"),
         r#"{
   "name": "openai-curated",

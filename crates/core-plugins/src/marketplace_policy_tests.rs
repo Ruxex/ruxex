@@ -1,5 +1,6 @@
 use super::*;
 use crate::marketplace_upgrade::upgrade_configured_git_marketplaces;
+use crate::test_support::curated_plugins_repo_path;
 use codex_config::ConfigLayerEntry;
 use codex_config::ConfigLayerSource;
 use codex_config::RequirementSource;
@@ -10,9 +11,6 @@ use std::fs;
 #[cfg(target_os = "windows")]
 use std::path::PathBuf;
 use tempfile::TempDir;
-
-#[path = "marketplace_policy/curated_tests.rs"]
-mod curated;
 
 fn config_layer_stack(requirements_toml: &str) -> ConfigLayerStack {
     config_layer_stack_with_user_config(requirements_toml, /*user_config*/ None)

@@ -20,7 +20,6 @@ use crate::loaded_cache_metrics;
 use crate::loaded_cache_metrics::RequestOutcome;
 use crate::loader::PluginHookLoadOutcome;
 use crate::loader::TargetCuratedMarketplace;
-use crate::loader::curated_plugin_cache_version;
 use crate::loader::load_plugin_apps_from_manifest;
 use crate::loader::load_plugin_hooks;
 use crate::loader::load_plugin_hooks_from_layer_stack;
@@ -75,9 +74,6 @@ use crate::remote_plugin_id_resolver::RemoteInstalledPluginsSnapshot;
 use crate::remote_plugin_id_resolver::RemotePluginIdResolver;
 use crate::remote_plugin_id_resolver::persisted_remote_plugin_id_for_installation;
 use crate::skill_snapshots::new_plugin_skill_snapshots;
-use crate::curated_marketplace::curated_plugins_api_marketplace_path;
-use crate::curated_marketplace::curated_plugins_repo_path;
-use crate::curated_marketplace::read_curated_plugins_sha;
 use crate::store::PluginInstallResult as StorePluginInstallResult;
 use crate::store::PluginStore;
 use crate::store::PluginStoreError;
@@ -2174,18 +2170,6 @@ impl PluginsManager {
         resolved: ResolvedMarketplacePlugin,
     ) -> Result<PluginInstallOutcome, PluginInstallError> {
         let auth_policy = resolved.policy.authentication;
-        let plugin_version =
-            if is_openai_curated_marketplace_name(&resolved.plugin_id.marketplace_name) {
-                let curated_plugin_version = read_curated_plugins_sha(self.codex_home.as_path())
-                    .ok_or_else(|| {
-                        PluginStoreError::Invalid(
-                            "local curated marketplace sha is not available".to_string(),
-                        )
-                    })?;
-                Some(curated_plugin_cache_version(&curated_plugin_version))
-            } else {
-                None
-            };
         let store = self.store.clone();
         let codex_home = self.codex_home.clone();
         let manifest_fallback_contents = resolved
@@ -2197,23 +2181,13 @@ impl PluginsManager {
                 materialize_marketplace_plugin_source(codex_home.as_path(), &resolved.source)
                     .map_err(PluginStoreError::Invalid)?;
             let source_path = materialized.path;
-            match (plugin_version, manifest_fallback_contents.as_deref()) {
-                (Some(plugin_version), Some(manifest_contents)) => store
-                    .install_with_version_and_fallback_manifest(
-                        source_path,
-                        resolved.plugin_id,
-                        plugin_version,
-                        manifest_contents,
-                    ),
-                (Some(plugin_version), None) => {
-                    store.install_with_version(source_path, resolved.plugin_id, plugin_version)
-                }
-                (None, Some(manifest_contents)) => store.install_with_fallback_manifest(
+            match manifest_fallback_contents.as_deref() {
+                Some(manifest_contents) => store.install_with_fallback_manifest(
                     source_path,
                     resolved.plugin_id,
                     manifest_contents,
                 ),
-                (None, None) => store.install(source_path, resolved.plugin_id),
+                None => store.install(source_path, resolved.plugin_id),
             }
         })
         .await
@@ -2307,39 +2281,30 @@ impl PluginsManager {
     pub fn list_marketplaces_for_context(
         &self,
         context: &PluginMarketplaceContext,
-        include_openai_curated: bool,
     ) -> Result<ConfiguredMarketplaceListOutcome, MarketplaceError> {
-        context.list_marketplaces(self, include_openai_curated)
+        context.list_marketplaces(self)
     }
 
     pub fn list_marketplaces_for_config(
         &self,
         config: &PluginsConfigInput,
         additional_roots: &[AbsolutePathBuf],
-        include_openai_curated: bool,
     ) -> Result<ConfiguredMarketplaceListOutcome, MarketplaceError> {
         if !config.plugins_enabled {
             return Ok(ConfiguredMarketplaceListOutcome::default());
         }
 
         let plugin_states = self.configured_plugin_states(config);
-        self.list_marketplaces_for_config_with_states(
-            config,
-            additional_roots,
-            include_openai_curated,
-            &plugin_states,
-        )
+        self.list_marketplaces_for_config_with_states(config, additional_roots, &plugin_states)
     }
 
     fn list_marketplaces_for_config_with_states(
         &self,
         config: &PluginsConfigInput,
         additional_roots: &[AbsolutePathBuf],
-        include_openai_curated: bool,
         plugin_states: &ConfiguredPluginStates,
     ) -> Result<ConfiguredMarketplaceListOutcome, MarketplaceError> {
-        let marketplace_roots =
-            self.marketplace_roots(config, additional_roots, include_openai_curated);
+        let marketplace_roots = self.marketplace_roots(config, additional_roots);
         let marketplace_outcome = self.list_marketplaces_with_policy(config, &marketplace_roots)?;
         let mut seen_plugin_keys = HashSet::new();
         let marketplaces = marketplace_outcome
@@ -2429,11 +2394,7 @@ impl PluginsManager {
             return Ok(MarketplaceListOutcome::default());
         }
 
-        let marketplace_roots = self.marketplace_roots(
-            config,
-            additional_roots,
-            /*include_openai_curated*/ true,
-        );
+        let marketplace_roots = self.marketplace_roots(config, additional_roots);
         self.list_marketplaces_with_policy(config, &marketplace_roots)
     }
 
@@ -2946,14 +2907,13 @@ impl PluginsManager {
         };
         let mut completion = self.non_curated_cache_refresh_completion.subscribe();
         let changed_sequence = completion.borrow_and_update().changed_sequence;
-        let marketplaces =
-            match self.list_marketplaces_for_context(context, /*include_openai_curated*/ false) {
-                Ok(outcome) => outcome.marketplaces,
-                Err(err) => {
-                    warn!("failed to prepare non-curated plugin cache refresh: {err}");
-                    Vec::new()
-                }
-            };
+        let marketplaces = match self.list_marketplaces_for_context(context) {
+            Ok(outcome) => outcome.marketplaces,
+            Err(err) => {
+                warn!("failed to prepare non-curated plugin cache refresh: {err}");
+                Vec::new()
+            }
+        };
         if let Some(request) = context.non_curated_cache_refresh_request(
             self,
             &marketplaces,
@@ -3429,38 +3389,12 @@ impl PluginsManager {
         &self,
         config: &PluginsConfigInput,
         additional_roots: &[AbsolutePathBuf],
-        include_openai_curated: bool,
     ) -> Vec<AbsolutePathBuf> {
-        // Treat the curated catalog as an extra marketplace root so plugin listing can surface it
-        // without requiring every caller to know where it is stored.
         let mut roots = additional_roots.to_vec();
         roots.extend(installed_marketplace_roots_from_layer_stack(
             &config.config_layer_stack,
             self.codex_home.as_path(),
         ));
-        let curated_marketplace_path = if include_openai_curated {
-            match target_curated_marketplace(self.auth_mode()) {
-                TargetCuratedMarketplace::OpenAi | TargetCuratedMarketplace::OpenAiWithRemote => {
-                    let curated_repo_root = curated_plugins_repo_path(self.codex_home.as_path());
-                    curated_repo_root.is_dir().then_some(curated_repo_root)
-                }
-                TargetCuratedMarketplace::OpenAiApi => {
-                    let api_marketplace_path =
-                        curated_plugins_api_marketplace_path(self.codex_home.as_path());
-                    api_marketplace_path
-                        .is_file()
-                        .then_some(api_marketplace_path)
-                }
-            }
-        } else {
-            None
-        };
-        if let Some(curated_marketplace_path) = curated_marketplace_path
-            && let Ok(curated_marketplace_path) =
-                AbsolutePathBuf::try_from(curated_marketplace_path)
-        {
-            roots.push(curated_marketplace_path);
-        }
         roots.sort_unstable();
         roots.dedup();
         roots

@@ -259,11 +259,7 @@ pub async fn run_plugin_list(
         ..
     } = context;
     let outcome = manager
-        .list_marketplaces_for_config(
-            &plugins_input,
-            &[],
-            /*include_openai_curated*/ !remote_listing.uses_global_catalog,
-        )
+        .list_marketplaces_for_config(&plugins_input, &[])
         .context("failed to list marketplace plugins")?;
     ensure_configured_marketplace_snapshots_loaded(
         codex_home.as_path(),
@@ -800,8 +796,6 @@ fn parse_plugin_selection(
 #[derive(Default)]
 struct RemoteMarketplaceListing {
     marketplaces: Vec<RemoteMarketplace>,
-    // A successful global catalog replaces the local curated catalog even when it is empty.
-    uses_global_catalog: bool,
     catalog_cache_used: bool,
 }
 
@@ -837,7 +831,6 @@ async fn fetch_remote_marketplaces(
         .await
         .map(|outcome| RemoteMarketplaceListing {
             marketplaces: outcome.marketplaces,
-            uses_global_catalog: true,
             catalog_cache_used: outcome.catalog_cache_used,
         })
     } else {
@@ -850,7 +843,6 @@ async fn fetch_remote_marketplaces(
         .await
         .map(|outcome| RemoteMarketplaceListing {
             marketplaces: outcome.marketplace.into_iter().collect(),
-            uses_global_catalog: false,
             catalog_cache_used: outcome.catalog_cache_used,
         })
     };
@@ -895,7 +887,7 @@ fn find_marketplace_for_plugin(
     plugin_name: &str,
 ) -> Result<ConfiguredMarketplace> {
     let outcome = manager
-        .list_marketplaces_for_config(plugins_input, &[], /*include_openai_curated*/ true)
+        .list_marketplaces_for_config(plugins_input, &[])
         .context("failed to list marketplace plugins")?;
     ensure_configured_marketplace_snapshots_loaded(
         codex_home,

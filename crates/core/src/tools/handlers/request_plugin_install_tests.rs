@@ -1,8 +1,6 @@
 use super::*;
 use crate::plugins::plugins_manager_for_config;
 use crate::plugins::test_support::load_plugins_config;
-use crate::plugins::test_support::write_curated_plugin_sha;
-use crate::plugins::test_support::write_openai_api_curated_marketplace;
 use crate::plugins::test_support::write_plugins_feature_config;
 use crate::session::step_context::StepContext;
 use crate::session::tests::make_session_and_context;
@@ -14,7 +12,6 @@ use codex_config::types::ToolSuggestDisabledTool;
 use codex_config::types::ToolSuggestDiscoverable;
 use codex_config::types::ToolSuggestDiscoverableType;
 use codex_core_plugins::PluginInstallRequest;
-use codex_core_plugins::curated_marketplace::curated_plugins_repo_path;
 use codex_login::test_support::auth_manager_from_optional_auth;
 use codex_protocol::ThreadId;
 use codex_protocol::protocol::SessionSource;
@@ -91,46 +88,6 @@ fn request_plugin_install_does_not_support_parallel_tool_calls() {
     );
 
     assert!(!handler.supports_parallel_tool_calls());
-}
-
-#[tokio::test]
-async fn verified_plugin_install_completed_requires_installed_plugin() {
-    let codex_home = tempdir().expect("tempdir should succeed");
-    let curated_root = curated_plugins_repo_path(codex_home.path());
-    write_openai_api_curated_marketplace(&curated_root, &["sample"]);
-    write_curated_plugin_sha(codex_home.path());
-    write_plugins_feature_config(codex_home.path());
-
-    let config = load_plugins_config(codex_home.path()).await;
-    let plugins_manager =
-        plugins_manager_for_config(&config, auth_manager_from_optional_auth(/*auth*/ None));
-
-    assert!(!verified_plugin_install_completed(
-        "sample@openai-api-curated",
-        &config,
-        &plugins_manager,
-    ));
-
-    plugins_manager
-        .install_plugin(
-            &config.config_layer_stack,
-            PluginInstallRequest {
-                plugin_name: "sample".to_string(),
-                marketplace_path: AbsolutePathBuf::try_from(
-                    curated_root.join(".agents/plugins/api_marketplace.json"),
-                )
-                .expect("marketplace path"),
-            },
-        )
-        .await
-        .expect("plugin should install");
-
-    let refreshed_config = load_plugins_config(codex_home.path()).await;
-    assert!(verified_plugin_install_completed(
-        "sample@openai-api-curated",
-        &refreshed_config,
-        &plugins_manager,
-    ));
 }
 
 #[test]

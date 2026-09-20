@@ -611,10 +611,7 @@ impl PluginRequestProcessor {
             let shared_plugin_ids_by_local_path = load_shared_plugin_ids_by_local_path(&config)?;
             match tokio::task::spawn_blocking(move || {
                 let outcome = plugins_manager_for_marketplace_listing
-                    .list_marketplaces_for_context(
-                        &context_for_marketplace_listing,
-                        /*include_openai_curated*/ !use_remote_global_catalog,
-                    )?;
+                    .list_marketplaces_for_context(&context_for_marketplace_listing)?;
                 let local_marketplaces = outcome.marketplaces.clone();
                 Ok::<
                     (
@@ -895,8 +892,7 @@ impl PluginRequestProcessor {
         let shared_plugin_ids_by_local_path = load_shared_plugin_ids_by_local_path(config)?;
         let context = context.clone();
         match tokio::task::spawn_blocking(move || {
-            let outcome = plugins_manager
-                .list_marketplaces_for_context(&context, /*include_openai_curated*/ true)?;
+            let outcome = plugins_manager.list_marketplaces_for_context(&context)?;
             Ok::<
                 (
                     Vec<PluginMarketplaceEntry>,

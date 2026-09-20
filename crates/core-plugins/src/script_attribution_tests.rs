@@ -1,12 +1,14 @@
 use super::*;
 use crate::LoadedPlugin;
+use crate::OPENAI_API_CURATED_MARKETPLACE_NAME;
+use crate::OPENAI_CURATED_MARKETPLACE_NAME;
 use crate::PluginMeasurementDefinition;
-use crate::loader::curated_plugin_cache_version;
 use crate::remote::REMOTE_GLOBAL_MARKETPLACE_NAME;
-use crate::curated_marketplace::curated_plugins_repo_path;
 use crate::store::DEFAULT_PLUGIN_VERSION;
 use crate::store::PluginStore;
+use crate::test_support::TEST_CURATED_PLUGIN_CACHE_VERSION;
 use crate::test_support::TEST_CURATED_PLUGIN_SHA;
+use crate::test_support::curated_plugins_repo_path;
 use crate::test_support::write_curated_plugin_sha_with;
 use crate::test_support::write_openai_api_curated_marketplace;
 use crate::test_support::write_openai_curated_marketplace;
@@ -58,10 +60,8 @@ fn synced_plugin_root(codex_home: &Path, marketplace: &str, plugin_name: &str) -
     }
     let plugin_id =
         PluginId::new(plugin_name.to_string(), marketplace.to_string()).expect("plugin id");
-    let root = PluginStore::new(codex_home.to_path_buf()).plugin_root(
-        &plugin_id,
-        &curated_plugin_cache_version(TEST_CURATED_PLUGIN_SHA),
-    );
+    let root = PluginStore::new(codex_home.to_path_buf())
+        .plugin_root(&plugin_id, TEST_CURATED_PLUGIN_CACHE_VERSION);
     fs::create_dir_all(root.as_path()).expect("create cached plugin root");
     root
 }
@@ -361,7 +361,7 @@ fn trusted_roots_require_verified_curated_or_remote_cache() {
     let _ = synced_plugin_root(temp.path(), OPENAI_CURATED_MARKETPLACE_NAME, "listed");
     let unlisted_root = PluginStore::new(temp.path().to_path_buf()).plugin_root(
         &PluginId::parse("missing@openai-curated").expect("plugin id"),
-        &curated_plugin_cache_version(TEST_CURATED_PLUGIN_SHA),
+        TEST_CURATED_PLUGIN_CACHE_VERSION,
     );
     fs::create_dir_all(unlisted_root.as_path()).expect("create unlisted root");
     assert_untrusted(
