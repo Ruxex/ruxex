@@ -164,11 +164,7 @@ async fn thread_analytics_opt_out_overrides_shared_client() {
     config.chatgpt_base_url = server.uri();
     config.model_provider.base_url = Some(server.uri());
     let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
-    let shared_client = AnalyticsEventsClient::new(
-        AuthManager::from_auth_for_testing(auth.clone()),
-        server.uri(),
-        /*analytics_enabled*/ Some(true),
-    );
+    let shared_client = AnalyticsEventsClient::new(/*analytics_enabled*/ Some(true));
     let mut expected_thread_ids = Vec::new();
     let mut opted_out_thread_ids = Vec::new();
 

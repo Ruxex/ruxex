@@ -198,13 +198,7 @@ async fn actual_turn_elicitation_analytics(scenario: Scenario) -> Result<()> {
     )
     .await;
 
-    let client = AnalyticsEventsClient::new(
-        codex_core::test_support::auth_manager_from_auth(
-            CodexAuth::create_dummy_chatgpt_auth_for_testing(),
-        ),
-        server.uri(),
-        /*analytics_enabled*/ Some(true),
-    );
+    let client = AnalyticsEventsClient::new(/*analytics_enabled*/ Some(true));
     let mut builder = search_capable_apps_builder(server.uri())
         .with_analytics_events_client(client.clone())
         .with_config(move |config| {

@@ -231,11 +231,7 @@ async fn delegate_start_analytics_honors_child_opt_out_with_enabled_parent() {
         .respond_with(ResponseTemplate::new(200))
         .mount(&server)
         .await;
-    let client = AnalyticsEventsClient::new(
-        AuthManager::from_auth_for_testing(CodexAuth::create_dummy_chatgpt_auth_for_testing()),
-        server.uri(),
-        /*analytics_enabled*/ Some(true),
-    );
+    let client = AnalyticsEventsClient::new(/*analytics_enabled*/ Some(true));
     let (mut parent_session, parent_ctx, _rx_events) =
         crate::session::tests::make_session_and_context_with_rx().await;
     Arc::get_mut(&mut parent_session)

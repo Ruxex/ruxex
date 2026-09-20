@@ -59,9 +59,6 @@ use codex_app_server_protocol::TurnItemsView;
 use codex_app_server_protocol::TurnStartedNotification;
 use codex_app_server_protocol::TurnStatus;
 use codex_app_server_protocol::item_event_to_server_notification;
-use codex_login::AuthManager;
-use codex_login::CodexAuth;
-use codex_login::default_client::create_client;
 use codex_plugin::PluginId;
 use codex_plugin::PluginTelemetryMetadata;
 use codex_protocol::ThreadId;
@@ -80,8 +77,7 @@ use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 
 const ANALYTICS_EVENTS_QUEUE_SIZE: usize = 256;
-const ANALYTICS_EVENTS_TIMEOUT: Duration = Duration::from_secs(10);
-// Covers two sequential POSTs plus queue/barrier scheduling; additional queued sends remain best-effort.
+// Covers queue/barrier scheduling while reducer output is captured locally.
 const ANALYTICS_EVENTS_FLUSH_TIMEOUT: Duration = Duration::from_secs(25);
 const ANALYTICS_EVENT_DEDUPE_MAX_KEYS: usize = 4096;
 
@@ -104,9 +100,7 @@ pub struct AnalyticsEventsClient {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum AnalyticsEventsDestination {
-    Http {
-        url: String,
-    },
+    Discard,
     #[cfg(debug_assertions)]
     CaptureFile {
         path: PathBuf,
@@ -114,14 +108,9 @@ enum AnalyticsEventsDestination {
 }
 
 impl AnalyticsEventsDestination {
-    fn from_base_url(base_url: String) -> Self {
-        let capture_file = analytics_capture_file_from_env();
-        Self::from_base_url_and_capture_file(base_url, capture_file)
-    }
-
-    fn from_base_url_and_capture_file(base_url: String, capture_file: Option<PathBuf>) -> Self {
+    fn from_environment() -> Self {
         #[cfg(debug_assertions)]
-        if let Some(path) = capture_file {
+        if let Some(path) = analytics_capture_file_from_env() {
             if let Err(err) = crate::analytics_capture::initialize(&path) {
                 tracing::error!(
                     path = %path.display(),
@@ -135,13 +124,7 @@ impl AnalyticsEventsDestination {
             return Self::CaptureFile { path };
         }
 
-        #[cfg(not(debug_assertions))]
-        let _ = capture_file;
-
-        let base_url = base_url.trim_end_matches('/');
-        Self::Http {
-            url: format!("{base_url}/codex/analytics-events/events"),
-        }
+        Self::Discard
     }
 }
 
@@ -158,7 +141,7 @@ fn analytics_capture_file_from_env() -> Option<PathBuf> {
 }
 
 impl AnalyticsEventsQueue {
-    fn new(auth_manager: Arc<AuthManager>, destination: AnalyticsEventsDestination) -> Self {
+    fn new(destination: AnalyticsEventsDestination) -> Self {
         let (sender, mut receiver) = mpsc::channel(ANALYTICS_EVENTS_QUEUE_SIZE);
         tokio::spawn(async move {
             let mut reducer = AnalyticsReducer::default();
@@ -168,14 +151,14 @@ impl AnalyticsEventsQueue {
                     AnalyticsEventsQueueMessage::Flush(done_tx) => {
                         let mut events = Vec::new();
                         reducer.flush(&mut events);
-                        send_track_events(&auth_manager, &destination, events).await;
+                        process_track_events(&destination, events);
                         let _ = done_tx.send(());
                         continue;
                     }
                 };
                 let mut events = Vec::new();
                 reducer.ingest(input, &mut events).await;
-                send_track_events(&auth_manager, &destination, events).await;
+                process_track_events(&destination, events);
             }
         });
         Self {
@@ -239,15 +222,11 @@ impl AnalyticsEventsQueue {
 }
 
 impl AnalyticsEventsClient {
-    pub fn new(
-        auth_manager: Arc<AuthManager>,
-        base_url: String,
-        analytics_enabled: Option<bool>,
-    ) -> Self {
-        let destination = AnalyticsEventsDestination::from_base_url(base_url);
+    pub fn new(analytics_enabled: Option<bool>) -> Self {
         Self {
             queue: (analytics_enabled != Some(false))
-                .then(|| AnalyticsEventsQueue::new(Arc::clone(&auth_manager), destination)),
+                .then(AnalyticsEventsDestination::from_environment)
+                .map(AnalyticsEventsQueue::new),
         }
     }
 
@@ -846,29 +825,13 @@ fn analytics_turn(turn_id: &str, status: TurnStatus) -> Turn {
     }
 }
 
-async fn send_track_events(
-    auth_manager: &AuthManager,
-    destination: &AnalyticsEventsDestination,
-    mut events: Vec<TrackEventRequest>,
-) {
-    if events.is_empty() {
-        return;
-    }
-
-    let Some(auth) = auth_manager.auth().await else {
-        return;
-    };
-    if auth.is_api_key_auth() {
-        events.retain(TrackEventRequest::can_send_with_api_key_auth);
-    } else if !auth.uses_codex_backend() {
-        return;
-    }
+fn process_track_events(destination: &AnalyticsEventsDestination, events: Vec<TrackEventRequest>) {
     if events.is_empty() {
         return;
     }
 
     for events in track_event_request_batches(events) {
-        send_track_events_request(&auth, destination, events).await;
+        capture_track_events_batch(destination, events);
     }
 }
 
@@ -895,8 +858,7 @@ fn track_event_request_batches(events: Vec<TrackEventRequest>) -> Vec<Vec<TrackE
     batches
 }
 
-async fn send_track_events_request(
-    auth: &CodexAuth,
+fn capture_track_events_batch(
     destination: &AnalyticsEventsDestination,
     events: Vec<TrackEventRequest>,
 ) {
@@ -907,44 +869,19 @@ async fn send_track_events_request(
     let payload = TrackEventsRequest { events };
 
     #[cfg(debug_assertions)]
-    if capture_track_events_request(destination, &payload) {
-        return;
-    }
+    capture_track_events_request(destination, &payload);
 
-    let url = match destination {
-        AnalyticsEventsDestination::Http { url } => url,
-        #[cfg(debug_assertions)]
-        AnalyticsEventsDestination::CaptureFile { .. } => return,
-    };
-    let response = create_client()
-        .post(url)
-        .timeout(ANALYTICS_EVENTS_TIMEOUT)
-        .headers(codex_model_provider::auth_provider_from_auth(auth).to_auth_headers())
-        .header("Content-Type", "application/json")
-        .json(&payload)
-        .send()
-        .await;
-
-    match response {
-        Ok(response) if response.status().is_success() => {}
-        Ok(response) => {
-            let status = response.status();
-            let body = response.text().await.unwrap_or_default();
-            tracing::warn!("events failed with status {status}: {body}");
-        }
-        Err(err) => {
-            tracing::warn!("failed to send events request: {err}");
-        }
-    }
+    #[cfg(not(debug_assertions))]
+    let _ = (destination, payload);
 }
 
 #[cfg(debug_assertions)]
 fn capture_track_events_request(
     destination: &AnalyticsEventsDestination,
     payload: &TrackEventsRequest,
-) -> bool {
+) {
     let AnalyticsEventsDestination::CaptureFile { path } = destination else {
-        return false;
+        return;
     };
 
     if let Err(err) = crate::analytics_capture::append_payload(path, payload) {
@@ -953,7 +890,6 @@ fn capture_track_events_request(
             "failed to capture analytics events; network delivery remains disabled: {err}"
         );
     }
-    true
 }
 
 #[cfg(test)]

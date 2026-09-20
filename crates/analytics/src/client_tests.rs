@@ -3,11 +3,9 @@ use super::AnalyticsEventsDestination;
 use super::AnalyticsEventsQueue;
 use super::AnalyticsEventsQueueMessage;
 #[cfg(debug_assertions)]
+use super::capture_track_events_batch;
+#[cfg(debug_assertions)]
 use super::capture_track_events_request;
-#[cfg(debug_assertions)]
-use super::send_track_events;
-#[cfg(debug_assertions)]
-use super::send_track_events_request;
 use super::track_event_request_batches;
 #[cfg(debug_assertions)]
 use crate::events::AppServerRpcTransport;
@@ -19,10 +17,6 @@ use crate::events::CodexAppServerClientMetadata;
 use crate::events::CodexMcpToolCallEventParams;
 #[cfg(debug_assertions)]
 use crate::events::CodexMcpToolCallEventRequest;
-#[cfg(debug_assertions)]
-use crate::events::CodexPluginMeasurementEventParams;
-#[cfg(debug_assertions)]
-use crate::events::CodexPluginMeasurementEventRequest;
 #[cfg(debug_assertions)]
 use crate::events::CodexPluginMetadata;
 #[cfg(debug_assertions)]
@@ -37,12 +31,6 @@ use crate::events::CodexToolItemEventBase;
 use crate::events::FinalApprovalOutcome;
 use crate::events::SkillInvocationEventParams;
 use crate::events::SkillInvocationEventRequest;
-#[cfg(debug_assertions)]
-use crate::events::ThreadArchiveAction;
-#[cfg(debug_assertions)]
-use crate::events::ThreadArchiveEvent;
-#[cfg(debug_assertions)]
-use crate::events::ThreadArchiveEventParams;
 #[cfg(debug_assertions)]
 use crate::events::ToolItemTerminalStatus;
 use crate::events::TrackEventRequest;
@@ -88,8 +76,6 @@ use codex_app_server_protocol::TurnStartResponse;
 use codex_app_server_protocol::TurnStatus as AppServerTurnStatus;
 use codex_app_server_protocol::TurnSteerParams;
 use codex_app_server_protocol::TurnSteerResponse;
-#[cfg(debug_assertions)]
-use codex_login::AuthManager;
 use codex_utils_absolute_path::test_support::PathBufExt;
 use codex_utils_absolute_path::test_support::test_path_buf;
 use pretty_assertions::assert_eq;
@@ -108,10 +94,9 @@ use tokio::sync::mpsc::error::TryRecvError;
 
 #[cfg(debug_assertions)]
 impl AnalyticsEventsClient {
-    pub(crate) fn new_for_capture_file(auth_manager: Arc<AuthManager>, path: PathBuf) -> Self {
+    pub(crate) fn new_for_capture_file(path: PathBuf) -> Self {
         Self {
             queue: Some(AnalyticsEventsQueue::new(
-                auth_manager,
                 AnalyticsEventsDestination::CaptureFile { path },
             )),
         }
@@ -292,69 +277,6 @@ fn client_with_receiver() -> (
     (AnalyticsEventsClient { queue: Some(queue) }, receiver)
 }
 
-#[test]
-#[cfg(debug_assertions)]
-fn analytics_destination_uses_explicit_capture_file() {
-    let capture_path = unique_capture_path("destination");
-    let destination = AnalyticsEventsDestination::from_base_url_and_capture_file(
-        "https://chatgpt.com/backend-api/".to_string(),
-        Some(capture_path.clone()),
-    );
-
-    assert_eq!(
-        destination,
-        AnalyticsEventsDestination::CaptureFile {
-            path: capture_path.clone()
-        }
-    );
-    assert_eq!(
-        fs::read_to_string(&capture_path).expect("read capture file"),
-        ""
-    );
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-
-        let mode = fs::metadata(&capture_path)
-            .expect("read capture file metadata")
-            .permissions()
-            .mode();
-        assert_eq!(mode & 0o777, 0o600);
-    }
-    fs::remove_file(capture_path).expect("remove capture file");
-}
-
-#[test]
-fn analytics_destination_uses_http_without_capture_file() {
-    let destination = AnalyticsEventsDestination::from_base_url_and_capture_file(
-        "https://chatgpt.com/backend-api/".to_string(),
-        /*capture_file*/ None,
-    );
-
-    assert_eq!(
-        destination,
-        AnalyticsEventsDestination::Http {
-            url: "https://chatgpt.com/backend-api/codex/analytics-events/events".to_string()
-        }
-    );
-}
-
-#[test]
-#[cfg(not(debug_assertions))]
-fn analytics_destination_ignores_capture_file_in_release() {
-    let destination = AnalyticsEventsDestination::from_base_url_and_capture_file(
-        "https://chatgpt.com/backend-api/".to_string(),
-        Some(std::path::PathBuf::from("ignored.jsonl")),
-    );
-
-    assert_eq!(
-        destination,
-        AnalyticsEventsDestination::Http {
-            url: "https://chatgpt.com/backend-api/codex/analytics-events/events".to_string()
-        }
-    );
-}
-
 #[tokio::test]
 #[cfg(debug_assertions)]
 async fn capture_file_writes_exact_serialized_request() {
@@ -364,9 +286,7 @@ async fn capture_file_writes_exact_serialized_request() {
     };
     let event = sample_regular_track_event("thread-1");
     let expected_event = serde_json::to_value(&event).expect("serialize expected event");
-    let auth = codex_login::CodexAuth::create_dummy_chatgpt_auth_for_testing();
-
-    send_track_events_request(&auth, &destination, vec![event]).await;
+    capture_track_events_batch(&destination, vec![event]);
 
     let contents = fs::read_to_string(&capture_path).expect("read capture file");
     let lines = contents.lines().collect::<Vec<_>>();
@@ -385,7 +305,6 @@ async fn capture_file_writes_final_batches_as_separate_lines() {
     let destination = AnalyticsEventsDestination::CaptureFile {
         path: capture_path.clone(),
     };
-    let auth = codex_login::CodexAuth::create_dummy_chatgpt_auth_for_testing();
     let events = vec![
         sample_regular_track_event("thread-1"),
         sample_accepted_line_fingerprint_event("thread-2"),
@@ -393,7 +312,7 @@ async fn capture_file_writes_final_batches_as_separate_lines() {
     ];
 
     for batch in track_event_request_batches(events) {
-        send_track_events_request(&auth, &destination, batch).await;
+        capture_track_events_batch(&destination, batch);
     }
 
     let contents = fs::read_to_string(&capture_path).expect("read capture file");
@@ -412,127 +331,6 @@ async fn capture_file_writes_final_batches_as_separate_lines() {
     fs::remove_file(capture_path).expect("remove capture file");
 }
 
-#[tokio::test]
-#[cfg(debug_assertions)]
-async fn api_key_auth_sends_only_plugin_events_to_codex_backend() {
-    let capture_path = unique_capture_path("api-key-plugin-events");
-    let destination = AnalyticsEventsDestination::CaptureFile {
-        path: capture_path.clone(),
-    };
-    let auth_manager = codex_login::AuthManager::from_auth_for_testing(
-        codex_login::CodexAuth::from_api_key("sk-test"),
-    );
-    let plugin_measurement = |thread_id: &str, plugin_id: &str| {
-        TrackEventRequest::PluginMeasurement(CodexPluginMeasurementEventRequest {
-            event_type: "codex_plugin_measurement_event",
-            event_params: CodexPluginMeasurementEventParams {
-                model_slug: None,
-                reasoning_effort: None,
-                thread_id: thread_id.to_string(),
-                turn_id: "turn-1".to_string(),
-                item_id: "item-1".to_string(),
-                originator: "codex_cli_rs".to_string(),
-                plugin_id: plugin_id.to_string(),
-                execution_id: "execution-1".to_string(),
-                operation: "security_scan".to_string(),
-                measurement_name: "findings".to_string(),
-                number_value: 1.0,
-                dimensions: None,
-            },
-        })
-    };
-
-    send_track_events(
-        &auth_manager,
-        &destination,
-        vec![
-            sample_regular_track_event("non-plugin-skill"),
-            sample_mcp_tool_call_event("non-plugin-mcp", /*plugin_id*/ None),
-            sample_plugin_used_track_event("non-plugin-used", /*plugin_id*/ None),
-            plugin_measurement("non-plugin-measurement", /*plugin_id*/ ""),
-            sample_accepted_line_fingerprint_event("other-event"),
-            TrackEventRequest::ThreadArchive(ThreadArchiveEvent {
-                event_type: "codex_thread_archive_event",
-                event_params: ThreadArchiveEventParams {
-                    thread_id: "non-plugin-thread-archive".to_string(),
-                    action: ThreadArchiveAction::Archived,
-                    occurred_at_ms: 1,
-                    app_server_client: None,
-                    runtime: None,
-                    thread_source: None,
-                    parent_thread_id: None,
-                },
-            }),
-            sample_plugin_used_track_event("plugin-used", Some("sample@test")),
-            sample_skill_track_event("plugin-skill", Some("sample@test")),
-            sample_mcp_tool_call_event("plugin-mcp", Some("sample@test")),
-            sample_artifact_operation_event("plugin-artifact"),
-            plugin_measurement("plugin-measurement", "sample@test"),
-        ],
-    )
-    .await;
-
-    let contents = fs::read_to_string(&capture_path).expect("read capture file");
-    let lines = contents.lines().collect::<Vec<_>>();
-    assert_eq!(lines.len(), 1);
-    let payload: serde_json::Value =
-        serde_json::from_str(lines[0]).expect("parse captured payload");
-    let events = payload["events"].as_array().expect("events array");
-    for event in events {
-        let event_params = event["event_params"].as_object().expect("event params");
-        for server_owned_field in [
-            "auth_mode",
-            "api_organization_id",
-            "api_project_id",
-            "api_key_tracking_id",
-        ] {
-            assert!(!event_params.contains_key(server_owned_field));
-        }
-    }
-    let delivered_events = events
-        .iter()
-        .map(|event| {
-            serde_json::json!({
-                "event_type": event["event_type"],
-                "plugin_id": event["event_params"]["plugin_id"],
-                "thread_id": event["event_params"]["thread_id"],
-            })
-        })
-        .collect::<Vec<_>>();
-    assert_eq!(
-        delivered_events,
-        vec![
-            serde_json::json!({
-                "event_type": "codex_plugin_used",
-                "plugin_id": "sample@test",
-                "thread_id": "plugin-used",
-            }),
-            serde_json::json!({
-                "event_type": "skill_invocation",
-                "plugin_id": "sample@test",
-                "thread_id": "plugin-skill",
-            }),
-            serde_json::json!({
-                "event_type": "codex_mcp_tool_call_event",
-                "plugin_id": "sample@test",
-                "thread_id": "plugin-mcp",
-            }),
-            serde_json::json!({
-                "event_type": "codex_artifact_operation",
-                "plugin_id": "presentations@openai-primary-runtime",
-                "thread_id": "plugin-artifact",
-            }),
-            serde_json::json!({
-                "event_type": "codex_plugin_measurement_event",
-                "plugin_id": "sample@test",
-                "thread_id": "plugin-measurement",
-            }),
-        ]
-    );
-
-    fs::remove_file(capture_path).expect("remove capture file");
-}
-
 #[test]
 #[cfg(debug_assertions)]
 fn capture_write_failure_still_consumes_delivery() {
@@ -542,7 +340,7 @@ fn capture_write_failure_still_consumes_delivery() {
         events: vec![sample_regular_track_event("thread-1")],
     };
 
-    assert!(capture_track_events_request(&destination, &payload));
+    capture_track_events_request(&destination, &payload);
 }
 
 fn sample_turn_start_request() -> ClientRequest {
@@ -902,13 +700,7 @@ async fn flush_waits_for_preceding_fact_delivery() {
 
 #[tokio::test]
 async fn flush_is_noop_when_analytics_is_disabled() {
-    let client = AnalyticsEventsClient::new(
-        codex_login::AuthManager::from_auth_for_testing(
-            codex_login::CodexAuth::create_dummy_chatgpt_auth_for_testing(),
-        ),
-        "https://chatgpt.com/backend-api".to_string(),
-        /*analytics_enabled*/ Some(false),
-    );
+    let client = AnalyticsEventsClient::new(/*analytics_enabled*/ Some(false));
     client.track_notification(&ServerNotification::ThreadArchived(
         ThreadArchivedNotification {
             thread_id: "thread-1".to_string(),

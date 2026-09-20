@@ -4805,11 +4805,7 @@ async fn emit_subagent_session_started_includes_fork_lineage_and_originator() {
 
     let auth_manager =
         AuthManager::from_auth_for_testing(CodexAuth::create_dummy_chatgpt_auth_for_testing());
-    let analytics_events_client = AnalyticsEventsClient::new(
-        auth_manager,
-        server.uri(),
-        /*analytics_enabled*/ Some(true),
-    );
+    let analytics_events_client = AnalyticsEventsClient::new(/*analytics_enabled*/ Some(true));
 
     let parent_thread_id = ThreadId::new();
     let forked_from_thread_id = ThreadId::new();
@@ -5963,11 +5959,7 @@ pub(crate) async fn build_world_state_from_turn_context(
 async fn responses_metadata_uses_selected_harness_analytics_client() {
     for enabled in [true, false] {
         let (mut session, mut turn_context) = make_session_and_context().await;
-        session.services.analytics_events_client = AnalyticsEventsClient::new(
-            Arc::clone(&session.services.auth_manager),
-            turn_context.config.chatgpt_base_url.clone(),
-            Some(enabled),
-        );
+        session.services.analytics_events_client = AnalyticsEventsClient::new(Some(enabled));
         Arc::make_mut(&mut turn_context.config).analytics_enabled = Some(!enabled);
         let step_context = StepContext::for_test(Arc::new(turn_context));
         let metadata = session
@@ -6111,11 +6103,7 @@ pub(crate) async fn make_session_and_context() -> (Session, TurnContext) {
         elicitations: crate::elicitation::ElicitationService::new(),
         shell_zsh_path: None,
         main_execve_wrapper_exe: config.main_execve_wrapper_exe.clone(),
-        analytics_events_client: AnalyticsEventsClient::new(
-            Arc::clone(&auth_manager),
-            config.chatgpt_base_url.trim_end_matches('/').to_string(),
-            config.analytics_enabled,
-        ),
+        analytics_events_client: AnalyticsEventsClient::new(config.analytics_enabled),
         hooks: arc_swap::ArcSwap::from_pointee(hooks),
         rollout_thread_trace: codex_rollout_trace::ThreadTraceContext::disabled(),
         user_shell: Arc::new(default_user_shell()),
@@ -8296,11 +8284,7 @@ where
         elicitations: crate::elicitation::ElicitationService::new(),
         shell_zsh_path: None,
         main_execve_wrapper_exe: config.main_execve_wrapper_exe.clone(),
-        analytics_events_client: AnalyticsEventsClient::new(
-            Arc::clone(&auth_manager),
-            config.chatgpt_base_url.trim_end_matches('/').to_string(),
-            config.analytics_enabled,
-        ),
+        analytics_events_client: AnalyticsEventsClient::new(config.analytics_enabled),
         hooks: arc_swap::ArcSwap::from_pointee(hooks),
         rollout_thread_trace: codex_rollout_trace::ThreadTraceContext::disabled(),
         user_shell: Arc::new(default_user_shell()),

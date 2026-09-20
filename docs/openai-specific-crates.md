@@ -194,13 +194,15 @@ protocol slice として扱う。generic image input、local media、`view_image
 
 ### 12. `codex-analytics`
 
+**進捗:** OpenAI hosted analytics sink は削除済み。`chatgpt.com/backend-api/codex/analytics-events/events` への HTTP 送信、Codex auth/provider header 判定、`codex-model-provider` 依存、送信専用テストを削除した。event/fact/reducer、既存の analytics client 呼び出し、debug 用ローカル capture は provider-neutral な処理として残している。
+
 - **根拠:** event/reducer 自体は汎用だが、ChatGPT backend の analytics endpoint、ChatGPT account、Codex product metadata を扱う。
-- **機能:** thread/turn/tool event の集約、永続化、backend 送信。
-- **内部依存先:** `codex-app-server-protocol`、`codex-git-utils`、`codex-login`、`codex-model-provider`、`codex-plugin`、`codex-protocol`、`codex-state`、absolute-path utility。
+- **機能:** thread/turn/tool event の集約、provider-neutral な fact/reducer 処理、debug capture。
+- **内部依存先:** `codex-app-server-protocol`、`codex-git-utils`、`codex-login`、`codex-plugin`、`codex-protocol`、`codex-state`、absolute-path utility。
 - **依存元:** 直接 10、推移 49。core、app-server、複数 extension が利用する。
 - **到達経路:** core と app-server から全 UI へ間接到達する。独立した CLI command はない。
 - **影響:** analytics 設定、login/model provider、state、plugin、protocol event、広範な reducer/client テスト。専用 README はない。
-- **推奨:** **汎用化**。event model/reducer と OpenAI backend sink を分割し、sink だけを削除可能にする。
+- **推奨:** **汎用化（OpenAI hosted sink は削除済み）**。event model/reducer と hosted sink の境界を明示し、将来の provider adapter は別の明示的な integration として追加する。
 - **難易度・リスク:** 高。収集停止とローカル event 処理削除を混同すると、汎用 observability まで失う。
 
 ### 13. `codex-feedback`
@@ -294,7 +296,9 @@ Phase 2 で完了した削除と、Phase 3 で扱う後続候補を次の順序�
 6. **Web Search hosted adapter の削除（完了）**
    - OpenAI provider と actor-authorized hosted request の自動 `web.run` 経路を削除し、明示的に opt-in した custom provider の standalone search と共通の hosted tool 定義を残した。
 7. **共有クレートの provider 境界設計**
-   - image generation、web search、plugins、analytics、feedback、response debug、login、agent identity、model-provider-info、codex-api は後続の汎用化作業として扱う。
+   - image generation、web search、plugins、feedback、response debug、login、agent identity、model-provider-info、codex-api は後続の汎用化作業として扱う。analytics hosted sink は削除済みである。
+8. **`codex-analytics` hosted sink の削除（完了）**
+   - OpenAI/ChatGPT endpoint への analytics 送信と auth/provider adapter を削除し、event/fact/reducer と debug capture を残した。
 
 Phase 2 の削除対象 1〜3 は完了した。4 以降は影響範囲または汎用責務が大きいため、Level 1 Phase 3 で capability ごとに到達経路を縮小してから扱う。
 

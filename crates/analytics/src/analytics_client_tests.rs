@@ -1420,10 +1420,7 @@ async fn analytics_flush_delivers_completed_turn_with_file_diff() {
         "codex-analytics-turn-flush-{}-{nonce}.jsonl",
         std::process::id()
     ));
-    let auth_manager = codex_login::AuthManager::from_auth_for_testing(
-        codex_login::CodexAuth::create_dummy_chatgpt_auth_for_testing(),
-    );
-    let client = AnalyticsEventsClient::new_for_capture_file(auth_manager, capture_path.clone());
+    let client = AnalyticsEventsClient::new_for_capture_file(capture_path.clone());
 
     for fact in [
         sample_initialize_fact(/*connection_id*/ 7),
@@ -4531,7 +4528,6 @@ async fn reducer_ingests_artifact_operation_fact() {
         )
         .await;
 
-    assert!(events[0].can_send_with_api_key_auth());
     assert_eq!(
         serde_json::to_value(events).expect("serialize events"),
         json!([{

@@ -249,8 +249,7 @@ async fn build_test_processor(
         Arg0DispatchPaths::default(),
         Arc::new(codex_config::NoopThreadConfigLoader),
     );
-    let analytics_events_client =
-        analytics_events_client_from_config(Arc::clone(&auth_manager), config.as_ref());
+    let analytics_events_client = analytics_events_client_from_config(config.as_ref());
     let outgoing = Arc::new(OutgoingMessageSender::new(
         outgoing_tx,
         analytics_events_client.clone(),
