@@ -222,7 +222,6 @@ fn populate_merged_regular_fields_with_sources(
         model_providers,
         check_for_update_on_startup,
         allow_login_shell,
-        feedback,
         allowed_approval_policies,
         allowed_approvals_reviewers,
         allowed_sandbox_modes,
@@ -269,7 +268,6 @@ fn populate_merged_regular_fields_with_sources(
         &["check_for_update_on_startup"]
     );
     set_sourced!(allow_login_shell, &["allow_login_shell"]);
-    set_sourced!(feedback, &["feedback"]);
     set_sourced!(allowed_approval_policies, &["allowed_approval_policies"]);
     set_sourced!(
         allowed_approvals_reviewers,

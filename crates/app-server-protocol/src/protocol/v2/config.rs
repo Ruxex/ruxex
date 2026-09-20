@@ -455,7 +455,6 @@ pub struct ConfigRequirements {
     pub model_catalog_json: Option<PathUri>,
     pub check_for_update_on_startup: Option<bool>,
     pub allow_login_shell: Option<bool>,
-    pub feedback: Option<FeedbackRequirements>,
     pub windows_sandbox_private_desktop: Option<bool>,
 }
 
@@ -491,13 +490,6 @@ pub struct NewThreadModelDefaults {
     pub model: Option<String>,
     pub model_reasoning_effort: Option<ReasoningEffort>,
     pub service_tier: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "v2/")]
-pub struct FeedbackRequirements {
-    pub enabled: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]

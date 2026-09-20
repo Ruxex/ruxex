@@ -537,16 +537,6 @@
             "null"
           ]
         },
-        "feedback": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FeedbackRequirements"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
         "inAppBrowser": {
           "anyOf": [
             {
@@ -759,17 +749,6 @@
       "required": [
         "hooks"
       ],
-      "type": "object"
-    },
-    "FeedbackRequirements": {
-      "properties": {
-        "enabled": {
-          "type": [
-            "boolean",
-            "null"
-          ]
-        }
-      },
       "type": "object"
     },
     "ForcedLoginMethod": {

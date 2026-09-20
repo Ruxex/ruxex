@@ -43,7 +43,6 @@ use codex_config::permissions_toml::WorkspaceRootsToml;
 use codex_config::types::AppToolApproval;
 use codex_config::types::ApprovalsReviewer;
 use codex_config::types::BundledSkillsConfig;
-use codex_config::types::FeedbackConfigToml;
 use codex_config::types::HistoryPersistence;
 use codex_config::types::McpServerEnvVar;
 use codex_config::types::McpServerOAuthConfig;
@@ -6274,26 +6273,6 @@ fn local_dev_builds_force_file_mcp_oauth_store_modes() {
     );
 }
 
-#[tokio::test]
-async fn feedback_enabled_defaults_to_true() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
-    let cfg = ConfigToml {
-        feedback: Some(FeedbackConfigToml::default()),
-        ..Default::default()
-    };
-
-    let config = Config::load_from_base_config_with_overrides(
-        cfg,
-        ConfigOverrides::default(),
-        codex_home.abs(),
-    )
-    .await?;
-
-    assert_eq!(config.feedback_enabled, true);
-
-    Ok(())
-}
-
 #[test]
 fn web_search_mode_defaults_to_none_if_unset() {
     let cfg = ConfigToml::default();
@@ -10040,7 +10019,6 @@ async fn test_requirements_web_search_mode_allowlist_does_not_warn_when_unset() 
         model_catalog_json: None,
         check_for_update_on_startup: None,
         allow_login_shell: None,
-        feedback: None,
         allowed_approval_policies: None,
         allowed_approvals_reviewers: None,
         allowed_sandbox_modes: None,
@@ -12987,9 +12965,6 @@ async fn exact_requirements_apply_to_runtime_config() -> std::io::Result<()> {
 check_for_update_on_startup = true
 allow_login_shell = true
 
-[feedback]
-enabled = true
-
 [windows]
 sandbox_private_desktop = true
 "#,
@@ -13005,9 +12980,6 @@ model_catalog_json = {:?}
 check_for_update_on_startup = false
 allow_login_shell = false
 
-[feedback]
-enabled = false
-
 [windows]
 sandbox_private_desktop = false
 "#,
@@ -13022,7 +12994,6 @@ sandbox_private_desktop = false
     assert_eq!(config.model_catalog, Some(catalog));
     assert!(!config.check_for_update_on_startup);
     assert!(!config.permissions.allow_login_shell);
-    assert!(!config.feedback_enabled);
     assert!(!config.permissions.windows_sandbox_private_desktop);
     assert!(config.startup_warnings.iter().any(|warning| {
         warning.contains("Configured value for `check_for_update_on_startup` is overridden")

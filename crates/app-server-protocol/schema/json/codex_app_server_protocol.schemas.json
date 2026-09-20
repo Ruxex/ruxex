@@ -2147,30 +2147,6 @@
           "type": "object"
         },
         {
-          "properties": {
-            "id": {
-              "$ref": "#/definitions/v2/RequestId"
-            },
-            "method": {
-              "enum": [
-                "feedback/upload"
-              ],
-              "title": "Feedback/uploadRequestMethod",
-              "type": "string"
-            },
-            "params": {
-              "$ref": "#/definitions/v2/FeedbackUploadParams"
-            }
-          },
-          "required": [
-            "id",
-            "method",
-            "params"
-          ],
-          "title": "Feedback/uploadRequest",
-          "type": "object"
-        },
-        {
           "description": "Execute a standalone command (argv vector) under the server's sandbox.",
           "properties": {
             "id": {
@@ -9532,16 +9508,6 @@
               "null"
             ]
           },
-          "feedback": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/v2/FeedbackRequirements"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "inAppBrowser": {
             "anyOf": [
               {
@@ -11063,84 +11029,6 @@
           "remoteMcpServersConfig"
         ],
         "type": "string"
-      },
-      "FeedbackRequirements": {
-        "properties": {
-          "enabled": {
-            "type": [
-              "boolean",
-              "null"
-            ]
-          }
-        },
-        "type": "object"
-      },
-      "FeedbackUploadParams": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "properties": {
-          "classification": {
-            "type": "string"
-          },
-          "extraLogFiles": {
-            "items": {
-              "type": "string"
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          },
-          "includeLogs": {
-            "type": "boolean"
-          },
-          "reason": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "tags": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "threadId": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "classification"
-        ],
-        "title": "FeedbackUploadParams",
-        "type": "object"
-      },
-      "FeedbackUploadResponse": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "properties": {
-          "promptHash": {
-            "default": null,
-            "description": "Whitespace-normalized SHA-256 of the session base instructions, matching the uploaded `prompt_hash` tag. Does not include later developer messages. Null when the reported rollout has no prompt metadata.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "threadId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "threadId"
-        ],
-        "title": "FeedbackUploadResponse",
-        "type": "object"
       },
       "FileChangeOutputDeltaNotification": {
         "$schema": "http://json-schema.org/draft-07/schema#",
