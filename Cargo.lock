@@ -2452,6 +2452,7 @@ dependencies = [
  "multimap",
  "pretty_assertions",
  "prost",
+ "protoc-bin-vendored",
  "regex-lite",
  "schemars 0.8.22",
  "serde",

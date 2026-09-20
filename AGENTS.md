@@ -10,6 +10,6 @@ Current work is Level 1 Phase 3 of `docs/openai-decoupling-plan.md`. The hosted 
 
 Update `docs/pre-release-compatibility-inventory.md` in this order: persisted rollout/thread-history readers and migrations, protocol/app-server aliases and schemas, CLI/config/import compatibility, then UI/observability/runtime shims. Each production match must have a producer/consumer audit and an explicit `remove`, `retain`, or `migrate-in-place` decision before code is changed.
 
-For crate-removal work in this phase, test-first development is not required. Treat `cargo check` (and the repository-wide `just check` when applicable) as the primary verification instead of adding deletion-specific tests first.
+For crate-removal work in this phase, test-first development is not required. Treat `cargo check`, the repository-wide `just check`, and generated-artifact verification with `just generate` when applicable as the primary verification instead of adding deletion-specific tests first.
 
-Do not run tests for this cleanup; use `just check` instead.
+Do not run tests for this cleanup; use `just check` and, when generated artifacts are affected, `just generate` instead.

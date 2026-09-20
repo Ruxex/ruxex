@@ -9,11 +9,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let proto_dir = PathBuf::from(proto_dir_arg);
     let proto_file = proto_dir.join("codex.thread_config.v1.proto");
 
+    let mut config = tonic_prost_build::Config::new();
+    config.protoc_executable(protoc_bin_vendored::protoc_bin_path()?);
+
     tonic_prost_build::configure()
         .build_client(true)
         .build_server(true)
         .out_dir(&proto_dir)
-        .compile_protos(&[proto_file], &[proto_dir])?;
+        .compile_with_config(config, &[proto_file], &[proto_dir])?;
 
     Ok(())
 }

@@ -3,7 +3,7 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/../../.." && pwd)"
-proto_dir="$repo_root/codex-rs/config/src/thread_config/proto"
+proto_dir="$repo_root/crates/config/src/thread_config/proto"
 generated="$proto_dir/codex.thread_config.v1.rs"
 tmpdir="$(mktemp -d)"
 
@@ -13,7 +13,7 @@ cleanup() {
 trap cleanup EXIT
 
 (
-    cd "$repo_root/codex-rs"
+    cd "$repo_root"
     CARGO_TARGET_DIR="$tmpdir/target" cargo run \
         -p codex-config \
         --example generate-proto \
