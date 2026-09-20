@@ -9,15 +9,15 @@ use crate::ThreadStoreError;
 use crate::ThreadStoreResult;
 
 mod read;
-mod timeline;
 mod search;
 mod segment_paging;
+mod timeline;
 mod turn_lookup;
 
 pub(super) use read::list_items;
 pub(super) use read::list_turns;
-pub(super) use timeline::list_timeline;
 pub(super) use search::search_thread_occurrences;
+pub(super) use timeline::list_timeline;
 pub(super) use turn_lookup::find_source_turn;
 pub(super) use turn_lookup::find_visible_turn;
 

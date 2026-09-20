@@ -5053,7 +5053,6 @@ fn turn_start_params_treat_null_or_omitted_environments_as_default() {
     );
 }
 
-
 #[test]
 fn tool_request_user_input_params_default_legacy_missing_is_blocking_to_true() {
     let params = serde_json::from_value::<ToolRequestUserInputParams>(json!({

@@ -64,8 +64,7 @@ fn plugin_capability_summary_from_loaded<M>(
         mcp_server_names,
     };
 
-    (summary.has_skills || !summary.mcp_server_names.is_empty())
-    .then_some(summary)
+    (summary.has_skills || !summary.mcp_server_names.is_empty()).then_some(summary)
 }
 
 /// Normalizes plugin descriptions for inclusion in model-facing capability summaries.

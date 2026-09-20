@@ -27,7 +27,6 @@ pub(crate) fn effective_plugins_changed_callback(
             refresh_thread_manager.invalidate_mcp_runtimes().await;
             refresh_thread_manager.refresh_hook_runtimes().await;
         });
-
     })
 }
 

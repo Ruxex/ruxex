@@ -114,11 +114,7 @@ where
     let mut seen_raw_names = HashSet::new();
     let mut candidates = Vec::new();
     for tool in tools {
-        let raw_namespace_identity = format!(
-            "{}\0{}",
-            tool.server_name,
-            tool.callable_namespace,
-        );
+        let raw_namespace_identity = format!("{}\0{}", tool.server_name, tool.callable_namespace,);
         let raw_tool_identity = format!(
             "{}\0{}\0{}",
             raw_namespace_identity, tool.callable_name, tool.tool.name

@@ -169,9 +169,7 @@ impl Harness {
             code_mode_session_provider: None,
             rpc_transport: match origin {
                 ConnectionOrigin::InProcess => AppServerRpcTransport::InProcess,
-                ConnectionOrigin::Stdio => {
-                    AppServerRpcTransport::Stdio
-                }
+                ConnectionOrigin::Stdio => AppServerRpcTransport::Stdio,
                 ConnectionOrigin::WebSocket => AppServerRpcTransport::Websocket,
             },
             plugin_startup_tasks: None,

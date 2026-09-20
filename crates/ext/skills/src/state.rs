@@ -255,8 +255,7 @@ impl SkillsThreadState {
             .orchestrator_cache
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        if let Some(cache) = cache.as_ref()
-        {
+        if let Some(cache) = cache.as_ref() {
             return Arc::clone(cache);
         }
 

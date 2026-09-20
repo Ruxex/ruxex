@@ -282,11 +282,7 @@ pub(super) fn tool_suggest_disabled_tools_value(
     let mut array = TomlArray::new();
     for disabled_tool in disabled_tools {
         let mut table = InlineTable::new();
-        table.insert(
-            "type",
-            "plugin"
-            .into(),
-        );
+        table.insert("type", "plugin".into());
         table.insert("id", disabled_tool.id.clone().into());
         array.push(table);
     }

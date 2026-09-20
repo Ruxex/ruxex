@@ -53,9 +53,7 @@ impl PluginRequestProcessor {
         let mut data = outcome
             .marketplaces
             .into_iter()
-            .filter(|marketplace| {
-                marketplace_matches_search_scope(&marketplace.name, params.scope)
-            })
+            .filter(|marketplace| marketplace_matches_search_scope(&marketplace.name, params.scope))
             .flat_map(|marketplace| {
                 let marketplace_name = marketplace.name.clone();
                 let marketplace_path = marketplace.path.clone();

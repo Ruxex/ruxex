@@ -30,6 +30,7 @@ use codex_mcp::SandboxState;
 use codex_mcp::ToolInfo;
 use codex_mcp::mcp_permission_prompt_is_auto_approved;
 use codex_prompts::ResolvedModelMessages;
+use codex_protocol::approvals::ElicitationRequest;
 use codex_protocol::items::McpAppDisplayMode;
 use codex_protocol::items::McpAppUi;
 use codex_protocol::items::McpToolCallError;
@@ -49,7 +50,6 @@ use codex_protocol::mcp_approval_meta::TOOL_PARAMS_DISPLAY_KEY as MCP_TOOL_APPRO
 use codex_protocol::mcp_approval_meta::TOOL_PARAMS_KEY as MCP_TOOL_APPROVAL_TOOL_PARAMS_KEY;
 use codex_protocol::mcp_approval_meta::TOOL_TITLE_KEY as MCP_TOOL_APPROVAL_TOOL_TITLE_KEY;
 use codex_protocol::models::PermissionProfile;
-use codex_protocol::approvals::ElicitationRequest;
 use codex_protocol::openai_models::InputModality;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::McpInvocation;
@@ -80,7 +80,6 @@ use tracing::Span;
 use tracing::error;
 use tracing::field::Empty;
 use url::Url;
-
 
 mod telemetry;
 
@@ -159,10 +158,7 @@ pub(crate) async fn handle_mcp_tool_call(
                 .unwrap_or_else(|| JsonValue::Object(serde_json::Map::new())),
         };
     };
-    let metadata = mcp_tool_metadata(
-        prepared_call.tool_info(),
-        prepared_call.plugin_id(),
-    );
+    let metadata = mcp_tool_metadata(prepared_call.tool_info(), prepared_call.plugin_id());
     let item_metadata = McpToolCallItemMetadata::from_tool_metadata(&server, Some(&metadata));
     let approval_mode = prepared_call.tool_approval_mode();
 
@@ -904,8 +900,7 @@ impl Session {
     ) -> Arc<(Option<McpInvocation>, McpToolApprovalMetadata)> {
         let key = (invocation.server.clone(), call_id.to_string());
         let metadata = Arc::new((
-            is_node_repl_backed_server(&invocation.server)
-            .then(|| invocation.clone()),
+            is_node_repl_backed_server(&invocation.server).then(|| invocation.clone()),
             metadata,
         ));
         let mut registry = self
@@ -1408,10 +1403,7 @@ pub(crate) fn build_guardian_mcp_tool_review_request(
     }
 }
 
-fn mcp_tool_metadata(
-    tool_info: &ToolInfo,
-    plugin_id: Option<&str>,
-) -> McpToolApprovalMetadata {
+fn mcp_tool_metadata(tool_info: &ToolInfo, plugin_id: Option<&str>) -> McpToolApprovalMetadata {
     let tool_info = tool_info.clone();
 
     let mcp_app_ui = get_mcp_app_resource_uri(tool_info.tool.meta.as_deref()).map(|resource_uri| {
@@ -1470,9 +1462,7 @@ fn build_mcp_tool_approval_question(
 ) -> RequestUserInputQuestion {
     let question = question_override
         .map(ToString::to_string)
-        .unwrap_or_else(|| {
-            build_mcp_tool_approval_fallback_message(server, tool_name)
-        });
+        .unwrap_or_else(|| build_mcp_tool_approval_fallback_message(server, tool_name));
     let question = format!("{}?", question.trim_end_matches('?'));
 
     let mut options = vec![RequestUserInputQuestionOption {
@@ -1506,10 +1496,7 @@ fn build_mcp_tool_approval_question(
     }
 }
 
-fn build_mcp_tool_approval_fallback_message(
-    server: &str,
-    tool_name: &str,
-) -> String {
+fn build_mcp_tool_approval_fallback_message(server: &str, tool_name: &str) -> String {
     format!("Allow the {server} MCP server to run tool \"{tool_name}\"?")
 }
 
@@ -1613,13 +1600,11 @@ fn build_mcp_tool_approval_display_params(
     let tool_params = tool_params?.as_object()?;
     let mut display_params = tool_params
         .iter()
-        .map(
-            |(name, value)| McpToolApprovalDisplayParam {
-                name: name.clone(),
-                value: value.clone(),
-                display_name: name.clone(),
-            },
-        )
+        .map(|(name, value)| McpToolApprovalDisplayParam {
+            name: name.clone(),
+            value: value.clone(),
+            display_name: name.clone(),
+        })
         .collect::<Vec<_>>();
     display_params.sort_by(|left, right| left.name.cmp(&right.name));
     Some(display_params)

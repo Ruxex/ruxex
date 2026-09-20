@@ -25,7 +25,6 @@ pub use tool_catalog_cache::McpToolCatalogCache;
 pub use tools::ToolInfo;
 pub use trusted_access::TrustedAccessContext;
 
-
 pub use catalog::McpCatalogBuilder;
 pub use catalog::McpEnvironmentAuthority;
 pub use catalog::McpPluginAttribution;

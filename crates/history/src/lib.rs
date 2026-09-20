@@ -128,9 +128,7 @@ pub enum RolloutItem {
     SessionMeta(SessionMetaLine),
     ResponseItem(ResponseItemEnvelope),
     InterAgentCommunication(InterAgentCommunication),
-    InterAgentCommunicationMetadata {
-        trigger_turn: bool,
-    },
+    InterAgentCommunicationMetadata { trigger_turn: bool },
     Compacted(CompactedItem),
     TurnContext(TurnContextItem),
     TokenUsageRecord(TokenUsageRecord),

@@ -10,22 +10,22 @@ pub(crate) fn server_mcp_extensions(
     _server_name: &str,
     _server: Option<&crate::catalog::ResolvedMcpServer>,
 ) -> ClientMcpExtensions {
-    ClientMcpExtensions::new(extensions.iter().map(|(id, settings)| (id.to_string(), settings.clone())))
+    ClientMcpExtensions::new(
+        extensions
+            .iter()
+            .map(|(id, settings)| (id.to_string(), settings.clone())),
+    )
 }
 
 /// Selects the MCP extensions Codex supports from those declared by the app-server host.
 ///
 /// App-server clients may declare unrelated extensions. Codex retains only the
 /// provider-neutral extension namespaces it knows how to project downstream.
-pub fn client_mcp_extensions(
-    extensions: Option<&HashMap<String, Value>>,
-) -> ClientMcpExtensions {
+pub fn client_mcp_extensions(extensions: Option<&HashMap<String, Value>>) -> ClientMcpExtensions {
     let mut selected = extensions
         .into_iter()
         .flat_map(HashMap::iter)
-        .filter(|(id, _)| {
-            id.as_str() == MCP_APP_UI_EXTENSION_ID
-        })
+        .filter(|(id, _)| id.as_str() == MCP_APP_UI_EXTENSION_ID)
         .map(|(id, value)| (id.clone(), value.clone()))
         .collect::<HashMap<_, _>>();
     ClientMcpExtensions::new(selected)

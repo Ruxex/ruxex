@@ -11,7 +11,7 @@ use codex_protocol::auth::AuthMode;
 use codex_protocol::openai_models::ModelInfo;
 
 fn experimental_context_is_eligible(auth_mode: AuthMode, plan_type: Option<PlanType>) -> bool {
-    auth_mode == AuthMode::Chatgpt
+    auth_mode == AuthMode::WorkloadIdentity
         && matches!(
             plan_type,
             Some(PlanType::Plus | PlanType::Pro | PlanType::ProLite)
@@ -232,11 +232,11 @@ mod tests {
     #[test]
     fn experimental_context_requires_eligible_chatgpt_subscription() {
         for (auth_mode, plan_type, expected) in [
-            (AuthMode::Chatgpt, PlanType::Plus, true),
-            (AuthMode::Chatgpt, PlanType::Pro, true),
-            (AuthMode::Chatgpt, PlanType::ProLite, true),
-            (AuthMode::Chatgpt, PlanType::Free, false),
-            (AuthMode::Chatgpt, PlanType::Enterprise, false),
+            (AuthMode::WorkloadIdentity, PlanType::Plus, true),
+            (AuthMode::WorkloadIdentity, PlanType::Pro, true),
+            (AuthMode::WorkloadIdentity, PlanType::ProLite, true),
+            (AuthMode::WorkloadIdentity, PlanType::Free, false),
+            (AuthMode::WorkloadIdentity, PlanType::Enterprise, false),
             (AuthMode::ApiKey, PlanType::Pro, false),
         ] {
             assert_eq!(

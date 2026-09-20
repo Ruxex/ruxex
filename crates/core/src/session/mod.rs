@@ -1481,7 +1481,6 @@ impl Session {
         }
     }
 
-
     async fn record_initial_history(&self, conversation_history: InitialHistory) {
         let (is_subagent, is_paginated_subagent) = {
             let state = self.state.lock().await;

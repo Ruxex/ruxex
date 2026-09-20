@@ -262,7 +262,6 @@ impl PluginStore {
     pub fn uninstall(&self, plugin_id: &PluginId) -> Result<(), PluginStoreError> {
         remove_existing_target(self.plugin_base_root(plugin_id).as_path())
     }
-
 }
 
 #[derive(Debug, thiserror::Error)]

@@ -1206,5 +1206,4 @@ mod tests {
 
         let _ = tokio::fs::remove_dir_all(codex_home).await;
     }
-
 }

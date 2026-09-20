@@ -944,9 +944,7 @@ impl MessageProcessor {
             | ClientRequest::ReviewStart { .. }
             | ClientRequest::ThreadCompactStart { .. }
             | ClientRequest::ThreadShellCommand { .. }
-            | ClientRequest::ThreadQueueStart { .. } => {
-                (Some(self.turn_admission.admit()?), true)
-            }
+            | ClientRequest::ThreadQueueStart { .. } => (Some(self.turn_admission.admit()?), true),
             _ => (None, false),
         };
 
@@ -1184,8 +1182,7 @@ impl MessageProcessor {
                     .thread_processor
                     .thread_unsubscribe(&request_id, params)
                     .await?;
-                if let Ok(thread_id) = ThreadId::from_string(&thread_id) {
-                }
+                if let Ok(thread_id) = ThreadId::from_string(&thread_id) {}
                 Ok(response)
             }
             ClientRequest::ThreadResume { params, .. } => {

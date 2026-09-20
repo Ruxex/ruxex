@@ -121,8 +121,7 @@ impl PluginsConfigInput {
 
 /// Effective-plugin changes that downstream composition layers may act on.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct EffectivePluginsChange {
-}
+pub struct EffectivePluginsChange {}
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct PluginListBackgroundTaskOptions {
@@ -339,10 +338,7 @@ struct PluginLoadCacheKey {
 }
 
 impl PluginLoadCacheKey {
-    fn from_config(
-        config: &PluginsConfigInput,
-        codex_home: &Path,
-    ) -> Self {
+    fn from_config(config: &PluginsConfigInput, codex_home: &Path) -> Self {
         Self {
             configured_plugins: configured_plugins_from_stack(
                 &config.config_layer_stack,

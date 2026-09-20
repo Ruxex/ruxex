@@ -863,9 +863,6 @@
             "unified_image_budget": {
               "type": "boolean"
             },
-            "use_agent_identity": {
-              "type": "boolean"
-            },
             "use_legacy_landlock": {
               "type": "boolean"
             },
@@ -6276,9 +6273,6 @@
           "type": "boolean"
         },
         "unified_image_budget": {
-          "type": "boolean"
-        },
-        "use_agent_identity": {
           "type": "boolean"
         },
         "use_legacy_landlock": {

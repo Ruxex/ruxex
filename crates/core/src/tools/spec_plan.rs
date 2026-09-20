@@ -613,8 +613,7 @@ pub(crate) fn search_tool_enabled(turn_context: &TurnContext, model_info: &Model
 
 pub(crate) fn tool_suggest_enabled(turn_context: &TurnContext) -> bool {
     let features = turn_context.config.features.get();
-    features.enabled(Feature::ToolSuggest)
-        && features.enabled(Feature::Plugins)
+    features.enabled(Feature::ToolSuggest) && features.enabled(Feature::Plugins)
 }
 
 fn namespace_tools_enabled(turn_context: &TurnContext) -> bool {

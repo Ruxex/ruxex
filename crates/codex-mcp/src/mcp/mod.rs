@@ -460,7 +460,6 @@ pub(crate) fn sanitize_responses_api_tool_name(name: &str) -> String {
     }
 }
 
-
 fn protocol_tool_from_rmcp_tool(name: &str, tool: &rmcp::model::Tool) -> Option<Tool> {
     match serde_json::to_value(tool) {
         Ok(value) => match Tool::from_mcp_value(value) {

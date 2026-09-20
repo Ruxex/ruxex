@@ -24,10 +24,9 @@ pub(crate) fn build_plugin_injections(
             let available_mcp_servers = mcp_tools
                 .iter()
                 .filter(|tool| {
-                    tool
-                            .plugin_display_names
-                            .iter()
-                            .any(|plugin_name| plugin_name == &plugin.display_name)
+                    tool.plugin_display_names
+                        .iter()
+                        .any(|plugin_name| plugin_name == &plugin.display_name)
                 })
                 .map(|tool| tool.server_name.clone())
                 .collect::<BTreeSet<String>>()

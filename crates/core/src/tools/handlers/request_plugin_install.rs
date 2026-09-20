@@ -346,7 +346,6 @@ async fn verify_request_plugin_install_completed(
 ) -> bool {
     match tool {
         DiscoverableTool::Plugin(plugin) => {
-
             session.reload_user_config_layer().await;
             let config = session.get_config().await;
             let completed = verified_plugin_install_completed(

@@ -227,13 +227,10 @@ enum CliCommand {
         #[arg(long)]
         abort_on: Option<usize>,
     },
-    /// Trigger a ChatGPT or Amazon Bedrock login flow.
+    /// Trigger an Amazon Bedrock login flow.
     TestLogin {
-        /// Use the device-code login flow instead of the browser callback flow.
-        #[arg(long, default_value_t = false, conflicts_with = "amazon_bedrock")]
-        device_code: bool,
         /// Use a Codex-managed Amazon Bedrock API key.
-        #[arg(long, default_value_t = false, conflicts_with = "device_code")]
+        #[arg(long, default_value_t = true)]
         amazon_bedrock: bool,
         /// Amazon Bedrock API key.
         #[arg(long, value_name = "API_KEY")]
@@ -287,8 +284,6 @@ enum CliCommand {
 }
 
 enum TestLoginMode {
-    ChatgptBrowser,
-    ChatgptDeviceCode,
     AmazonBedrock { api_key: String, region: String },
 }
 
@@ -395,7 +390,6 @@ pub async fn run() -> Result<()> {
             .await
         }
         CliCommand::TestLogin {
-            device_code,
             amazon_bedrock,
             api_key,
             region,
@@ -406,10 +400,8 @@ pub async fn run() -> Result<()> {
                 let api_key = api_key.context("--api-key is required with --amazon-bedrock")?;
                 let region = region.context("--region is required with --amazon-bedrock")?;
                 TestLoginMode::AmazonBedrock { api_key, region }
-            } else if device_code {
-                TestLoginMode::ChatgptDeviceCode
             } else {
-                TestLoginMode::ChatgptBrowser
+                bail!("Amazon Bedrock login is required")
             };
             test_login(&endpoint, &config_overrides, mode).await
         }
@@ -1076,8 +1068,6 @@ async fn test_login(
         println!("< initialize response: {initialize:?}");
 
         let login_response = match mode {
-            TestLoginMode::ChatgptBrowser => client.login_account_chatgpt()?,
-            TestLoginMode::ChatgptDeviceCode => client.login_account_chatgpt_device_code()?,
             TestLoginMode::AmazonBedrock { api_key, region } => {
                 let request_id = client.request_id();
                 let login_response: LoginAccountResponse = client.send_request(
@@ -1110,39 +1100,7 @@ async fn test_login(
             }
         };
         println!("< account/login/start response: {login_response:?}");
-        let login_id = match login_response {
-            LoginAccountResponse::Chatgpt { login_id, auth_url } => {
-                println!("Open the following URL in your browser to continue:\n{auth_url}");
-                login_id
-            }
-            LoginAccountResponse::ChatgptDeviceCode {
-                login_id,
-                verification_url,
-                user_code,
-            } => {
-                println!(
-                    "Open the following URL and enter the code to continue:\n{verification_url}\n\nCode: {user_code}"
-                );
-                login_id
-            }
-            _ => bail!("expected chatgpt login response"),
-        };
-
-        let completion = client.wait_for_account_login_completion(Some(&login_id))?;
-        println!("< account/login/completed notification: {completion:?}");
-
-        if completion.success {
-            println!("Login succeeded.");
-            Ok(())
-        } else {
-            bail!(
-                "login failed: {}",
-                completion
-                    .error
-                    .as_deref()
-                    .unwrap_or("unknown error from account/login/completed")
-            );
-        }
+        Ok(())
     })
     .await
 }
@@ -1691,30 +1649,6 @@ impl CodexClient {
         };
 
         self.send_request(request, request_id, "turn/start")
-    }
-
-    fn login_account_chatgpt(&mut self) -> Result<LoginAccountResponse> {
-        let request_id = self.request_id();
-        let request = ClientRequest::LoginAccount {
-            request_id: request_id.clone(),
-            params: codex_app_server_protocol::LoginAccountParams::Chatgpt {
-                app_brand: None,
-                codex_streamlined_login: false,
-                use_hosted_login_success_page: false,
-            },
-        };
-
-        self.send_request(request, request_id, "account/login/start")
-    }
-
-    fn login_account_chatgpt_device_code(&mut self) -> Result<LoginAccountResponse> {
-        let request_id = self.request_id();
-        let request = ClientRequest::LoginAccount {
-            request_id: request_id.clone(),
-            params: codex_app_server_protocol::LoginAccountParams::ChatgptDeviceCode,
-        };
-
-        self.send_request(request, request_id, "account/login/start")
     }
 
     fn logout_account(&mut self) -> Result<LogoutAccountResponse> {

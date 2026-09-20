@@ -10,7 +10,9 @@ use codex_extension_api::McpToolSource;
 use codex_guardian_context::TrustedTool;
 
 #[derive(Clone, Copy)]
-enum PluginCapability { Mcp }
+enum PluginCapability {
+    Mcp,
+}
 
 pub(crate) async fn trusted_tool_context(
     tool: &McpToolInfo,

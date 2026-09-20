@@ -34,7 +34,6 @@ use std::sync::atomic::Ordering;
 
 use crate::CodexResponsesHeaders;
 use async_channel::Sender;
-use codex_api::AgentIdentityTelemetry;
 use codex_api::ApiError;
 use codex_api::AuthProvider;
 use codex_api::Compression;
@@ -124,8 +123,6 @@ use crate::context::ContextualUserFragment;
 use crate::cyber_access_program;
 use crate::responses_metadata::CodexResponsesMetadata;
 use crate::responses_metadata::subagent_header_value;
-use codex_login::auth::AgentIdentityAuthPolicy;
-use codex_model_provider::AgentIdentitySessionFallback;
 use codex_model_provider::ProviderAuthScope;
 use codex_model_provider::ProviderUnauthorizedRecovery;
 use codex_model_provider::ResponsesConnectionKey;
@@ -197,7 +194,6 @@ struct ModelClientState {
     include_attestation: bool,
     attestation_provider: Option<Arc<dyn AttestationProvider>>,
     disable_websockets: AtomicBool,
-    agent_identity_session_fallback: AgentIdentitySessionFallback,
     cached_websocket_session: StdMutex<WebsocketSession>,
 }
 
@@ -212,7 +208,6 @@ struct CurrentClientSetup {
     api_provider: ApiProvider,
     redirect_policy: ClientRedirectPolicy,
     api_auth: SharedAuthProvider,
-    agent_identity_telemetry: Option<AgentIdentityTelemetry>,
 }
 
 #[derive(Clone, Copy)]
@@ -240,7 +235,6 @@ impl RequestRouteTelemetry {
 #[derive(Debug, Clone)]
 pub struct ModelClient {
     state: Arc<ModelClientState>,
-    agent_identity_policy: AgentIdentityAuthPolicy,
     prompt_cache_key_override: Option<String>,
     codex_responses_headers: Option<Arc<CodexResponsesHeaders>>,
     event_sender: Option<Sender<ProtocolEvent>>,
@@ -429,7 +423,6 @@ impl ModelClient {
     /// observes the resolved outbound proxy policy.
     pub fn new(
         auth_manager: Option<Arc<AuthManager>>,
-        agent_identity_policy: AgentIdentityAuthPolicy,
         thread_id: ThreadId,
         provider_info: ModelProviderInfo,
         session_source: SessionSource,
@@ -460,10 +453,8 @@ impl ModelClient {
                 include_attestation,
                 attestation_provider,
                 disable_websockets: AtomicBool::new(false),
-                agent_identity_session_fallback: AgentIdentitySessionFallback::default(),
                 cached_websocket_session: StdMutex::new(WebsocketSession::default()),
             }),
-            agent_identity_policy,
             prompt_cache_key_override: None,
             codex_responses_headers: None,
             event_sender: None,
@@ -610,7 +601,6 @@ impl ModelClient {
             session_telemetry,
             AuthRequestTelemetryContext::new(
                 client_setup.api_auth.as_ref(),
-                client_setup.agent_identity_telemetry.clone(),
                 PendingUnauthorizedRetry::default(),
             ),
             RequestRouteTelemetry::for_endpoint(MEMORIES_SUMMARIZE_ENDPOINT),
@@ -912,14 +902,7 @@ impl ModelClient {
             let resolved_auth = self
                 .state
                 .provider
-                .api_auth_for_scope(ProviderAuthScope {
-                    agent_identity_policy: self.agent_identity_policy,
-                    session_source: self.state.session_source.clone(),
-                    agent_identity_session_fallback: self
-                        .state
-                        .agent_identity_session_fallback
-                        .clone(),
-                })
+                .api_auth_for_scope(ProviderAuthScope)
                 .await?;
             // Command-backed bearer refreshes cannot change workspace routing. Keep the captured
             // revisions so a refresh during setup still invalidates cached WebSocket state.
@@ -942,7 +925,6 @@ impl ModelClient {
                 api_provider,
                 redirect_policy,
                 api_auth: resolved_auth.auth,
-                agent_identity_telemetry: resolved_auth.agent_identity_telemetry,
             });
         }
     }
@@ -992,10 +974,7 @@ impl ModelClient {
         }
         if !guardian_reviewer
             && !crate::guardian::is_basic_session_source(&self.state.session_source)
-            && matches!(
-                auth,
-                Some(CodexAuth::Chatgpt(_) | CodexAuth::ChatgptAuthTokens(_))
-            )
+            && matches!(auth, Some(CodexAuth::WorkloadIdentity(_)))
             && self.uses_codex_backend(auth)
             && self.state.provider.info().supports_codex_backend_routes()
         {
@@ -1103,7 +1082,6 @@ impl ModelClient {
             response_debug.cf_ray.as_deref(),
             response_debug.auth_error.as_deref(),
             response_debug.auth_error_code.as_deref(),
-            auth_context.agent_identity_telemetry(),
         );
         result
     }
@@ -1286,7 +1264,6 @@ impl ModelClientSession {
         self.websocket_session.reset(Some("other"));
         let auth_context = AuthRequestTelemetryContext::new(
             client_setup.api_auth.as_ref(),
-            client_setup.agent_identity_telemetry.clone(),
             PendingUnauthorizedRetry::default(),
         );
         let responses_headers = self
@@ -1446,11 +1423,8 @@ impl ModelClientSession {
                 "/responses",
                 client_setup.redirect_policy,
             )?;
-            let request_auth_context = AuthRequestTelemetryContext::new(
-                client_setup.api_auth.as_ref(),
-                client_setup.agent_identity_telemetry.clone(),
-                pending_retry,
-            );
+            let request_auth_context =
+                AuthRequestTelemetryContext::new(client_setup.api_auth.as_ref(), pending_retry);
             let (request_telemetry, sse_telemetry) = Self::build_streaming_telemetry(
                 session_telemetry,
                 request_auth_context,
@@ -1618,11 +1592,8 @@ impl ModelClientSession {
                 .client
                 .responses_headers(client_setup.auth.as_ref(), &model_info.slug);
             tracing::Span::current().record("api.path", "/responses");
-            let request_auth_context = AuthRequestTelemetryContext::new(
-                client_setup.api_auth.as_ref(),
-                client_setup.agent_identity_telemetry.clone(),
-                pending_retry,
-            );
+            let request_auth_context =
+                AuthRequestTelemetryContext::new(client_setup.api_auth.as_ref(), pending_retry);
             let mut request = self.client.build_responses_request(
                 prompt,
                 model_info,
@@ -2252,31 +2223,21 @@ impl PendingUnauthorizedRetry {
 struct AuthRequestTelemetryContext {
     auth_header_attached: bool,
     auth_header_name: Option<&'static str>,
-    agent_identity_telemetry: Option<AgentIdentityTelemetry>,
     retry_after_unauthorized: bool,
     recovery_mode: Option<&'static str>,
     recovery_phase: Option<&'static str>,
 }
 
 impl AuthRequestTelemetryContext {
-    fn new(
-        api_auth: &dyn AuthProvider,
-        agent_identity_telemetry: Option<AgentIdentityTelemetry>,
-        retry: PendingUnauthorizedRetry,
-    ) -> Self {
+    fn new(api_auth: &dyn AuthProvider, retry: PendingUnauthorizedRetry) -> Self {
         let auth_telemetry = auth_header_telemetry(api_auth);
         Self {
             auth_header_attached: auth_telemetry.attached,
             auth_header_name: auth_telemetry.name,
-            agent_identity_telemetry,
             retry_after_unauthorized: retry.retry_after_unauthorized,
             recovery_mode: retry.recovery_mode,
             recovery_phase: retry.recovery_phase,
         }
-    }
-
-    fn agent_identity_telemetry(&self) -> Option<&AgentIdentityTelemetry> {
-        self.agent_identity_telemetry.as_ref()
     }
 }
 
@@ -2494,7 +2455,6 @@ impl RequestTelemetry for ApiTelemetry {
             debug.cf_ray.as_deref(),
             debug.auth_error.as_deref(),
             debug.auth_error_code.as_deref(),
-            self.auth_context.agent_identity_telemetry(),
         );
     }
 }
@@ -2519,7 +2479,6 @@ impl WebsocketTelemetry for ApiTelemetry {
             duration,
             error_message.as_deref(),
             connection_reused,
-            self.auth_context.agent_identity_telemetry(),
         );
     }
 

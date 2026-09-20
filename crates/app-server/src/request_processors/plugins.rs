@@ -15,8 +15,8 @@ use codex_app_server_protocol::PluginSource;
 use codex_app_server_protocol::PluginSummary;
 use codex_app_server_protocol::PluginUninstallParams;
 use codex_app_server_protocol::PluginUninstallResponse;
-use codex_core::config::Config;
 use codex_core::ThreadManager;
+use codex_core::config::Config;
 use codex_core_plugins::ConfiguredMarketplace;
 use codex_core_plugins::ConfiguredMarketplacePlugin;
 use codex_core_plugins::PluginInstallRequest;
@@ -121,7 +121,9 @@ impl PluginRequestProcessor {
         params: PluginReadParams,
     ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
         let marketplace_path = params.marketplace_path.ok_or_else(|| {
-            invalid_request("plugin/read requires marketplacePath; remote marketplaces are not supported")
+            invalid_request(
+                "plugin/read requires marketplacePath; remote marketplaces are not supported",
+            )
         })?;
         let config = self
             .load_latest_config(marketplace_path.as_path().parent().map(Path::to_path_buf))
@@ -151,7 +153,9 @@ impl PluginRequestProcessor {
         params: PluginInstallParams,
     ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
         let marketplace_path = params.marketplace_path.ok_or_else(|| {
-            invalid_request("plugin/install requires marketplacePath; remote marketplaces are not supported")
+            invalid_request(
+                "plugin/install requires marketplacePath; remote marketplaces are not supported",
+            )
         })?;
         let config = self.load_latest_config(None).await?;
         let outcome = self
@@ -212,10 +216,12 @@ impl PluginRequestProcessor {
             outcome
                 .errors
                 .into_iter()
-                .map(|error| codex_app_server_protocol::MarketplaceLoadErrorInfo {
-                    marketplace_path: error.path,
-                    message: error.message,
-                })
+                .map(
+                    |error| codex_app_server_protocol::MarketplaceLoadErrorInfo {
+                        marketplace_path: error.path,
+                        message: error.message,
+                    },
+                )
                 .collect(),
         ))
     }
@@ -225,11 +231,11 @@ fn marketplace_to_api(marketplace: ConfiguredMarketplace) -> PluginMarketplaceEn
     PluginMarketplaceEntry {
         name: marketplace.name,
         path: Some(marketplace.path),
-        interface: marketplace
-            .interface
-            .map(|interface| codex_app_server_protocol::MarketplaceInterface {
+        interface: marketplace.interface.map(|interface| {
+            codex_app_server_protocol::MarketplaceInterface {
                 display_name: interface.display_name,
-            }),
+            }
+        }),
         plugins: marketplace
             .plugins
             .into_iter()

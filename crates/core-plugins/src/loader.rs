@@ -137,7 +137,8 @@ async fn load_plugins_from_layer_stack_with_scope(
     store: &PluginStore,
     scope: PluginLoadScope<'_>,
 ) -> Vec<LoadedPlugin<McpServerConfig>> {
-    let configured_plugins = configured_plugins_from_stack(config_layer_stack, store.codex_home().as_path());
+    let configured_plugins =
+        configured_plugins_from_stack(config_layer_stack, store.codex_home().as_path());
     let mut configured_plugins: Vec<_> = configured_plugins.into_iter().collect();
     configured_plugins.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
 

@@ -463,7 +463,7 @@ impl App {
             bootstrap.status_account_display,
             bootstrap.plan_type,
             bootstrap.has_chatgpt_account,
-            matches!(bootstrap.auth_mode, Some(TelemetryAuthMode::Chatgpt)),
+            false,
         );
         if self.chat_widget.has_chatgpt_account() {
             crate::daybreak::prefetch_notice(

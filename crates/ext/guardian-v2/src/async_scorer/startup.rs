@@ -7,8 +7,6 @@ use codex_core::ThreadManager;
 use codex_core::config::Config;
 use codex_extension_api::ThreadOriginator;
 use codex_extension_api::ThreadStartInput;
-use codex_features::Feature;
-use codex_login::AgentIdentityAuthPolicy;
 use codex_login::AuthManager;
 use codex_model_provider::create_model_provider;
 
@@ -44,12 +42,6 @@ pub(super) async fn sampler_config(
     LunaSamplerConfig {
         provider: create_model_provider(input.config.model_provider.clone(), Some(auth_manager)),
         http_client_factory: input.config.http_client_factory(),
-        agent_identity_policy: if input.config.features.enabled(Feature::UseAgentIdentity) {
-            AgentIdentityAuthPolicy::ChatGptAuth
-        } else {
-            AgentIdentityAuthPolicy::JwtOnly
-        },
-        session_source: input.session_source.clone(),
         session_id: input.session_store.level_id().to_string(),
         thread_id: input.thread_store.level_id().to_string(),
         originator: input

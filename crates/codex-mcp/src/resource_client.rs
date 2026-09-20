@@ -137,7 +137,6 @@ impl McpResourceClient {
             .collect::<Result<Vec<_>>>()?;
         Ok(McpResourceReadResult { contents })
     }
-
 }
 
 fn resource_from_rmcp(resource: rmcp::model::Resource) -> Result<Resource> {

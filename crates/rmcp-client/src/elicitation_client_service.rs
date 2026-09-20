@@ -4,7 +4,6 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::PoisonError;
 
-
 use rmcp::RoleClient;
 use rmcp::model::ClientInfo;
 use rmcp::model::ClientResult;

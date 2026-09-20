@@ -120,7 +120,7 @@ Phase 1 で整理した候補から、依存元が少なく、代替や責務移
 5. ChatGPT Remote Control capability を削除する。transport、app-server protocol、daemon、CLI、state persistence、設定、ドキュメントを一単位として扱う。**完了**
 6. Hosted Plugin Marketplace / Sharing / Runtime を削除する。`codex-core-plugins` の remote service、hosted search/share/install RPC、CLI/TUI hosted paths、remote analytics smoke client、protocol/schema surface を削除し、local/bundled/Git/npm plugin foundation は保持する。**完了（working tree）**
 7. ChatGPT Apps / Connectors / host-owned Apps MCP を削除する。`codex-connectors` と専用 extension の依存元・汎用 MCP 利用を監査し、不要になったクレートは同じ単位で削除する。**完了（working tree）**
-8. ChatGPT 認証と Agent Identity を削除する。`codex-agent-identity` は全体削除を先に検証し、`codex-login` は ChatGPT 専用 branch と protocol/UI だけを外して汎用 credential 経路を残す。
+8. ChatGPT 認証と Agent Identity を削除する。`codex-agent-identity`、`AuthMode::Chatgpt`/`ChatgptAuthTokens`/`PersonalAccessToken`、`AuthManager` の OAuth refresh/revoke/PAT 経路、ChatGPT 専用 protocol/UI を削除し、`AuthMode::WorkloadIdentity`、Bedrock、汎用 credential storage/keyring を保持した。**完了（working tree）**
 9. 上記を反映した依存グラフを再生成し、`codex-model-provider-info`、`codex-api`、`codex-http-client`、`codex-mcp` の OpenAI adapter と provider-neutral な共有部分を再評価する。
 
 ### Phase 3 の完了ゲート

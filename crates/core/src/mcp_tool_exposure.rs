@@ -78,7 +78,10 @@ fn append_mcp_tools(
     };
     let mut registered_tools = HashSet::new();
     let mut agent_plugin_bytes = 0usize;
-    for tool in all_mcp_tools.iter().filter(|tool| tool_is_model_visible(tool)) {
+    for tool in all_mcp_tools
+        .iter()
+        .filter(|tool| tool_is_model_visible(tool))
+    {
         let tool_name = tool.canonical_tool_name();
         let agent_plugin = mcp_server_catalog
             .server(&tool.server_name)

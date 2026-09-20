@@ -83,8 +83,7 @@ pub struct LifecycleOutput {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct BootstrapOptions {
-}
+pub struct BootstrapOptions {}
 
 /// Passively probes an existing app-server socket and returns its reported
 /// app-server version.
@@ -819,7 +818,6 @@ impl Daemon {
             app_server_version,
         }
     }
-
 }
 
 #[cfg(any(unix, windows))]
@@ -914,7 +912,6 @@ mod tests {
             ]
         );
     }
-
 
     #[tokio::test]
     async fn waiting_lifecycle_command_uses_migrated_installation() {

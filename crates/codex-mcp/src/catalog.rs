@@ -188,9 +188,7 @@ impl McpServerRegistration {
     ) -> Self {
         Self::new(
             name,
-            McpServerSource::Extension {
-                id: id.into(),
-            },
+            McpServerSource::Extension { id: id.into() },
             config,
             RegistrationPrecedence::Extension(contribution_order),
         )
@@ -323,9 +321,7 @@ impl McpCatalogBuilder {
     ) {
         self.actions.push(CatalogAction::Remove {
             name,
-            source: McpServerSource::Extension {
-                id: id.into(),
-            },
+            source: McpServerSource::Extension { id: id.into() },
             precedence: RegistrationPrecedence::Extension(contribution_order),
         });
     }

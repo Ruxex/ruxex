@@ -3,7 +3,6 @@ members = [
     "crates/aws-auth",
     "crates/analytics",
     "crates/agent-graph-store",
-    "crates/agent-identity",
     "crates/agent-roles",
     "crates/bwrap",
     "crates/build-info",
@@ -152,7 +151,6 @@ license = "Apache-2.0"
 app_test_support = { path = "crates/app-server/tests/common" }
 codex-analytics = { path = "crates/analytics" }
 codex-agent-graph-store = { path = "crates/agent-graph-store" }
-codex-agent-identity = { path = "crates/agent-identity" }
 codex-agent-roles = { path = "crates/agent-roles" }
 codex-ansi-escape = { path = "crates/ansi-escape" }
 codex-api = { path = "crates/codex-api" }

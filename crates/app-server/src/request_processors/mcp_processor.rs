@@ -431,7 +431,11 @@ impl McpRequestProcessor {
         params: McpResourceReadParams,
     ) -> Result<(), JSONRPCErrorError> {
         let outgoing = Arc::clone(&self.outgoing);
-        let McpResourceReadParams { thread_id, server, uri } = params;
+        let McpResourceReadParams {
+            thread_id,
+            server,
+            uri,
+        } = params;
         let resource_params = ReadResourceRequestParams::new(uri);
 
         if let Some(thread_id) = thread_id {
@@ -440,8 +444,7 @@ impl McpRequestProcessor {
 
             tokio::spawn(async move {
                 let result = thread.read_mcp_resource(&server, resource_params).await;
-                Self::send_mcp_resource_read_response(outgoing, request_id, result)
-                    .await;
+                Self::send_mcp_resource_read_response(outgoing, request_id, result).await;
             });
             return Ok(());
         }
@@ -470,10 +473,7 @@ impl McpRequestProcessor {
             )
             .await
             .and_then(|result| serde_json::to_value(result).map_err(anyhow::Error::from));
-            Self::send_mcp_resource_read_response(
-                outgoing, request_id, result,
-            )
-            .await;
+            Self::send_mcp_resource_read_response(outgoing, request_id, result).await;
         });
         Ok(())
     }
@@ -492,9 +492,7 @@ impl McpRequestProcessor {
                     ))
                 })
             })
-            .map(|mut response| {
-                response
-            });
+            .map(|mut response| response);
         outgoing.send_result(request_id, result).await;
     }
 

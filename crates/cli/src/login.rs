@@ -5,7 +5,7 @@ use codex_core::config::edit::ConfigEdit;
 use codex_core::config::edit::ConfigEditsBuilder;
 use codex_login::AuthManager;
 use codex_login::is_workload_identity_selected;
-use codex_login::logout_with_revoke;
+use codex_login::logout;
 use codex_protocol::auth::AuthMode;
 use codex_utils_cli::CliConfigOverrides;
 
@@ -41,20 +41,12 @@ pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
                     std::process::exit(1);
                 }
             },
-            AuthMode::Chatgpt | AuthMode::ChatgptAuthTokens => {
-                eprintln!("Logged in using ChatGPT");
+            AuthMode::WorkloadIdentity => {
+                eprintln!("Logged in using workload identity");
                 std::process::exit(0);
             }
             AuthMode::Headers => {
                 unreachable!("header auth cannot be loaded from auth storage")
-            }
-            AuthMode::AgentIdentity => {
-                eprintln!("Logged in using access token");
-                std::process::exit(0);
-            }
-            AuthMode::PersonalAccessToken => {
-                eprintln!("Logged in using personal access token");
-                std::process::exit(0);
             }
             AuthMode::BedrockApiKey => {
                 eprintln!("Logged in using Amazon Bedrock API key");
@@ -78,16 +70,11 @@ pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
 
 pub async fn run_logout(cli_config_overrides: CliConfigOverrides) -> ! {
     let config = load_config_or_exit(cli_config_overrides).await;
-    let auth_route_config = config.auth_route_config();
-
-    let logged_out = match logout_with_revoke(
+    let logged_out = match logout(
         &config.codex_home,
         config.cli_auth_credentials_store_mode,
         config.auth_keyring_backend_kind(),
-        &auth_route_config,
-    )
-    .await
-    {
+    ) {
         Ok(logged_out) => logged_out,
         Err(err) => {
             eprintln!("Error logging out: {err}");

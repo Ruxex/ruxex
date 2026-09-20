@@ -121,10 +121,7 @@ pub struct TrustedAccessContext {
 impl TrustedAccessContext {
     pub(crate) fn from_runtime(input: &McpRuntimeInput) -> Option<Self> {
         let auth = input.auth.as_ref()?;
-        if !matches!(
-            auth.api_auth_mode(),
-            AuthMode::Chatgpt | AuthMode::ChatgptAuthTokens
-        ) {
+        if !matches!(auth.api_auth_mode(), AuthMode::WorkloadIdentity) {
             return None;
         }
         Some(Self::new(
@@ -189,13 +186,9 @@ impl TrustedAccessContext {
         let account_id = auth
             .get_account_id()
             .filter(|account_id| !account_id.trim().is_empty())?;
-        if !matches!(
-            self.auth.api_auth_mode(),
-            AuthMode::Chatgpt | AuthMode::ChatgptAuthTokens
-        ) || !matches!(
-            auth.api_auth_mode(),
-            AuthMode::Chatgpt | AuthMode::ChatgptAuthTokens
-        ) || account_id != expected_account_id
+        if !matches!(self.auth.api_auth_mode(), AuthMode::WorkloadIdentity)
+            || !matches!(auth.api_auth_mode(), AuthMode::WorkloadIdentity)
+            || account_id != expected_account_id
             || auth.get_chatgpt_user_id() != self.auth.get_chatgpt_user_id()
             || auth.is_workspace_account() != self.auth.is_workspace_account()
             || auth.is_fedramp_account() != self.auth.is_fedramp_account()
@@ -253,10 +246,8 @@ impl TrustedAccessContext {
         let program: VerifiedAccessProgram = serde_json::from_value(program).ok()?;
 
         if self.auth_manager.auth_cached().is_none_or(|current| {
-            !matches!(
-                current.api_auth_mode(),
-                AuthMode::Chatgpt | AuthMode::ChatgptAuthTokens
-            ) || current.get_account_id().as_deref() != Some(account_id.as_str())
+            !matches!(current.api_auth_mode(), AuthMode::WorkloadIdentity)
+                || current.get_account_id().as_deref() != Some(account_id.as_str())
                 || current.get_chatgpt_user_id() != auth.get_chatgpt_user_id()
                 || current.is_workspace_account() != auth.is_workspace_account()
                 || current.is_fedramp_account() != auth.is_fedramp_account()

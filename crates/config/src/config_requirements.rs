@@ -1175,7 +1175,6 @@ impl ConfigRequirementsWithSources {
                 self.auto_review = Some(Sourced::new(incoming_auto_review, source.clone()));
             }
         }
-
     }
 
     pub fn into_toml(self) -> ConfigRequirementsToml {
@@ -2293,7 +2292,6 @@ mod tests {
         assert!(!requirements.is_empty());
         Ok(())
     }
-
 
     #[test]
     fn deserialize_browser_and_computer_use_requirements() -> Result<()> {

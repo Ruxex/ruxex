@@ -156,7 +156,6 @@ mod line_truncation;
 pub(crate) mod live_wrap;
 mod local_settings;
 pub use live_wrap::RowBuilder;
-mod local_chatgpt_auth;
 mod managed_new_thread_defaults;
 mod markdown;
 mod markdown_render;
@@ -1127,7 +1126,7 @@ async fn run_ratatui_app(
     let mut trust_decision_was_made = false;
     let startup_model_provider = initial_config.model_provider_id.clone();
     let (login_status, mut startup_account) = if workload_identity_selected {
-        (LoginStatus::AuthMode(AuthMode::Chatgpt), None)
+        (LoginStatus::AuthMode(AuthMode::WorkloadIdentity), None)
     } else {
         let Some(active_app_server) = app_server.as_mut() else {
             unreachable!("app server should exist when auth is required");
@@ -1932,7 +1931,6 @@ async fn get_login_status(
     let account = app_server.read_account().await?;
     let login_status = match &account.account {
         Some(AppServerAccount::ApiKey {}) => LoginStatus::AuthMode(AuthMode::ApiKey),
-        Some(AppServerAccount::Chatgpt { .. }) => LoginStatus::AuthMode(AuthMode::Chatgpt),
         Some(AppServerAccount::AmazonBedrock { .. }) | None => LoginStatus::NotAuthenticated,
     };
     Ok((login_status, account))

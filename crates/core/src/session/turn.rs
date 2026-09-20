@@ -752,8 +752,7 @@ pub(crate) async fn run_turn(
                 if matches!(
                     e.details(),
                     CodexErrorDetails::MisalignmentPolicyViolation { .. }
-                ) {
-                }
+                ) {}
                 let error = e.to_codex_protocol_error();
                 sess.emit_turn_error_lifecycle(turn_context.as_ref(), error.clone())
                     .await;
@@ -905,8 +904,7 @@ async fn required_mcp_servers_for_input(
 
     let skills_snapshot = turn_context.skills_snapshot();
     let skills_outcome = skills_snapshot.outcome();
-    let mentioned_skills =
-        collect_explicit_skill_mentions(user_input, skills_outcome);
+    let mentioned_skills = collect_explicit_skill_mentions(user_input, skills_outcome);
     for skill in mentioned_skills {
         if let Some(dependencies) = skill.dependencies {
             required_servers.extend(
@@ -957,8 +955,7 @@ async fn build_skills_and_plugins(
     let extension_injection_items =
         build_extension_turn_input_items(sess, step_context, user_input, cancellation_token)
             .await?;
-    let mentioned_skills =
-        collect_explicit_skill_mentions(user_input, skills_outcome);
+    let mentioned_skills = collect_explicit_skill_mentions(user_input, skills_outcome);
     maybe_prompt_and_install_mcp_dependencies(
         sess,
         turn_context,
@@ -1555,9 +1552,7 @@ pub(crate) async fn built_tools(
     prepared_recommendations: PreparedToolRecommendations,
 ) -> CodexResult<Arc<ToolRouter>> {
     let tool_suggest_is_enabled = tool_suggest_enabled(turn_context);
-    let PreparedToolRecommendations {
-        auth,
-    } = prepared_recommendations;
+    let PreparedToolRecommendations { auth } = prepared_recommendations;
     let tool_suggest_candidates = if tool_suggest_is_enabled {
         match crate::plugins::list_tool_suggest_discoverable_plugins(
             &turn_context.config,

@@ -47,10 +47,6 @@ pub enum PlanType {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ProviderAccount {
     ApiKey,
-    Chatgpt {
-        email: Option<String>,
-        plan_type: PlanType,
-    },
     AmazonBedrock {
         uses_codex_managed_credentials: bool,
     },

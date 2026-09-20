@@ -115,9 +115,7 @@ pub(crate) struct ManagedClient {
 impl ManagedClient {
     pub(crate) async fn listed_tools(&self) -> Vec<ToolInfo> {
         self.tool_catalog
-            .read(|catalog| {
-                catalog.tools.to_vec()
-            })
+            .read(|catalog| catalog.tools.to_vec())
             .await
     }
 }
@@ -434,9 +432,7 @@ pub(crate) async fn list_tools_for_client_uncached(
     let tools = collect_paginated_with_limit("tools/list", timeout, catalog_item_limit, |params| {
         let client = Arc::clone(client);
         async move {
-            let response = client
-                .list_tools(params, timeout)
-                .await?;
+            let response = client.list_tools(params, timeout).await?;
             let tools = response.tools;
             let next_cursor = match protocol_mode {
                 McpProtocolMode::Legacy => None,
@@ -447,9 +443,7 @@ pub(crate) async fn list_tools_for_client_uncached(
     })
     .await?
     .into_iter()
-    .map(|tool| {
-        regular_mcp_tool_info_from_listed_tool(server_name, server_instructions, tool)
-    })
+    .map(|tool| regular_mcp_tool_info_from_listed_tool(server_name, server_instructions, tool))
     .collect();
     emit_duration(
         MCP_TOOLS_FETCH_UNCACHED_DURATION_METRIC,
@@ -465,8 +459,8 @@ pub(crate) fn prepare_mcp_tools_for_model(
     tool_plugin_context: &ToolPluginContext,
 ) -> Vec<ToolInfo> {
     for tool in &mut tools {
-        let plugin_names = tool_plugin_context
-            .plugin_display_names_for_mcp_server_name(tool.server_name.as_str());
+        let plugin_names =
+            tool_plugin_context.plugin_display_names_for_mcp_server_name(tool.server_name.as_str());
         add_plugin_provenance_to_tool(tool, plugin_names);
     }
     tools
@@ -625,11 +619,7 @@ async fn start_server_task(
     let initialize_result = client
         .initialize(params, startup_timeout, send_elicitation)
         .await;
-    record_protocol_discovery_metrics(
-        client.protocol_mode(),
-        started_at,
-        &initialize_result,
-    );
+    record_protocol_discovery_metrics(client.protocol_mode(), started_at, &initialize_result);
     let initialize_result = initialize_result.map_err(StartupOutcomeError::from)?;
     *server_capabilities
         .lock()

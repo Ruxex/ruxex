@@ -84,7 +84,6 @@ use codex_home::CodexHomeUserInstructionsProvider;
 use codex_login::AuthManager;
 use codex_login::CodexAuth;
 use codex_login::is_workload_identity_selected;
-use codex_login::read_codex_access_token_from_env;
 use codex_memories_write::clear_memory_roots_contents;
 use codex_models_manager::bundled_models_response;
 use codex_models_manager::manager::RefreshStrategy;
@@ -586,15 +585,6 @@ struct ExecServerCommand {
     #[arg(long = "name", value_name = "NAME", global = true)]
     name: Option<String>,
 
-    /// Use Agent Identity auth from CODEX_ACCESS_TOKEN for remote registration.
-    #[arg(
-        long = "use-agent-identity-auth",
-        requires = "exec_server_remote",
-        conflicts_with = "aws_sigv4",
-        global = true
-    )]
-    use_agent_identity_auth: bool,
-
     /// Sign Direct registration and WebSocket handshake requests with AWS SigV4.
     #[arg(long = "aws-sigv4", requires = "exec_server_remote", global = true)]
     aws_sigv4: bool,
@@ -1059,9 +1049,7 @@ fn main() -> anyhow::Result<()> {
     })
 }
 
-async fn cli_main(
-    arg0_paths: Arg0DispatchPaths,
-) -> anyhow::Result<()> {
+async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
     let MultitoolCli {
         config_overrides: mut root_config_overrides,
         feature_toggles,
@@ -1303,8 +1291,9 @@ async fn cli_main(
                         print_app_server_daemon_output(AppServerLifecycleCommand::Start).await?;
                     }
                     AppServerDaemonSubcommand::Bootstrap => {
-                        let output = codex_app_server_daemon::bootstrap(AppServerBootstrapOptions {})
-                            .await?;
+                        let output =
+                            codex_app_server_daemon::bootstrap(AppServerBootstrapOptions {})
+                                .await?;
                         println!("{}", serde_json::to_string(&output)?);
                     }
                     AppServerDaemonSubcommand::Restart => {
@@ -1829,8 +1818,7 @@ async fn run_exec_server_command(
             })
             .await?
         } else {
-            load_exec_server_remote_auth_provider(&config, &base_url, cmd.use_agent_identity_auth)
-                .await?
+            load_exec_server_remote_auth_provider(&config, &base_url).await?
         };
         let mut remote_config = codex_exec_server::RemoteEnvironmentConfig::new_with_transport(
             base_url,
@@ -1936,25 +1924,7 @@ async fn run_exec_server_command(
 async fn load_exec_server_remote_auth_provider(
     config: &codex_core::config::Config,
     base_url: &str,
-    use_agent_identity_auth: bool,
 ) -> anyhow::Result<codex_api::SharedAuthProvider> {
-    if use_agent_identity_auth {
-        read_codex_access_token_from_env().ok_or_else(|| {
-            anyhow::anyhow!("CODEX_ACCESS_TOKEN is required when --use-agent-identity-auth is set")
-        })?;
-        let auth = AuthManager::shared_from_config(config, /*enable_codex_api_key_env*/ false)
-            .await?
-            .auth()
-            .await
-            .ok_or_else(|| anyhow::anyhow!("Agent Identity authentication is unavailable"))?;
-        if !matches!(auth, CodexAuth::AgentIdentity(_)) {
-            anyhow::bail!(
-                "CODEX_ACCESS_TOKEN did not provide permitted Agent Identity authentication"
-            );
-        }
-        return Ok(codex_model_provider::auth_provider_from_auth(&auth));
-    }
-
     let (auth_manager, auth) = load_exec_server_remote_auth(
         config,
         "remote exec-server registration requires preconfigured ChatGPT credentials or API key authentication; set CODEX_API_KEY when using an API key",
@@ -1963,7 +1933,7 @@ async fn load_exec_server_remote_auth_provider(
 
     if !is_supported_exec_server_remote_auth(&auth) {
         anyhow::bail!(
-            "remote exec-server registration requires ChatGPT authentication or API key authentication; Agent Identity auth requires --use-agent-identity-auth"
+            "remote exec-server registration requires configured account or API key authentication"
         );
     }
 
@@ -4396,7 +4366,6 @@ mod tests {
             err.to_string(),
             "`--strict-config` is not supported for `codex mcp`"
         );
-
     }
 
     #[test]
@@ -4698,11 +4667,8 @@ mod tests {
     #[test]
     fn app_server_daemon_subcommands_parse() {
         assert!(matches!(
-            app_server_from_args(
-                ["codex", "app-server", "daemon", "bootstrap"]
-                .as_ref()
-            )
-            .subcommand,
+            app_server_from_args(["codex", "app-server", "daemon", "bootstrap"].as_ref())
+                .subcommand,
             Some(AppServerSubcommand::Daemon(AppServerDaemonCommand {
                 subcommand: AppServerDaemonSubcommand::Bootstrap
             }))

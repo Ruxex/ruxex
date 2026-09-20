@@ -323,9 +323,7 @@ fn executor_hook_sources_for_step(step_context: &StepContext) -> Vec<ExecutorPlu
         .as_deref()
         .map(|snapshot| {
             executor_plugin_hook_sources(snapshot, |server, tool| {
-                step_context
-                    .mcp
-                    .tool_info(server, tool)
+                step_context.mcp.tool_info(server, tool)
             })
             .into_iter()
             .filter(|source| {

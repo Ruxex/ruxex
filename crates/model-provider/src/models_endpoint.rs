@@ -4,7 +4,6 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
 
-use codex_api::AgentIdentityTelemetry;
 use codex_api::ModelsClient;
 use codex_api::RequestTelemetry;
 use codex_api::ReqwestTransport;
@@ -31,7 +30,6 @@ use codex_response_debug_context::telemetry_transport_error_message;
 use http::HeaderMap;
 use tokio::time::timeout;
 
-use crate::auth::agent_identity_telemetry;
 use crate::auth::resolve_provider_auth;
 
 const MODELS_REFRESH_TIMEOUT: Duration = Duration::from_secs(5);
@@ -93,16 +91,10 @@ impl OpenAiModelsEndpoint {
         let request_url =
             ModelsClient::<ReqwestTransport>::request_url(&api_provider, client_version);
         let auth_telemetry = auth_header_telemetry(api_auth.as_ref());
-        let agent_identity_telemetry = if let Some(CodexAuth::AgentIdentity(auth)) = auth.as_ref() {
-            Some(agent_identity_telemetry(auth))
-        } else {
-            None
-        };
         let request_telemetry: Arc<dyn RequestTelemetry> = Arc::new(ModelsRequestTelemetry {
             auth_mode: auth_mode.map(|mode| TelemetryAuthMode::from(mode).to_string()),
             auth_header_attached: auth_telemetry.attached,
             auth_header_name: auth_telemetry.name,
-            agent_identity_telemetry,
             auth_env: self.auth_env(),
         });
         let (models, etag) = timeout(MODELS_REFRESH_TIMEOUT, async {
@@ -205,7 +197,6 @@ struct ModelsRequestTelemetry {
     auth_mode: Option<String>,
     auth_header_attached: bool,
     auth_header_name: Option<&'static str>,
-    agent_identity_telemetry: Option<AgentIdentityTelemetry>,
     auth_env: AuthEnvTelemetry,
 }
 
@@ -240,14 +231,11 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             auth.env_codex_api_key_enabled = self.auth_env.codex_api_key_env_enabled,
             auth.env_provider_key_name = self.auth_env.provider_env_key_name.as_deref(),
             auth.env_provider_key_present = self.auth_env.provider_env_key_present,
-            auth.env_refresh_token_url_override_present = self.auth_env.refresh_token_url_override_present,
             auth.request_id = response_debug.request_id.as_deref(),
             auth.cf_ray = response_debug.cf_ray.as_deref(),
             auth.error = response_debug.auth_error.as_deref(),
             auth.error_code = response_debug.auth_error_code.as_deref(),
             auth.mode = self.auth_mode.as_deref(),
-            auth.agent_id = self.agent_identity_telemetry.as_ref().map(|metadata| metadata.agent_id.as_str()),
-            auth.task_id = self.agent_identity_telemetry.as_ref().map(|metadata| metadata.task_id.as_str()),
         );
         tracing::event!(
             target: "codex_otel.trace_safe",
@@ -266,14 +254,11 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             auth.env_codex_api_key_enabled = self.auth_env.codex_api_key_env_enabled,
             auth.env_provider_key_name = self.auth_env.provider_env_key_name.as_deref(),
             auth.env_provider_key_present = self.auth_env.provider_env_key_present,
-            auth.env_refresh_token_url_override_present = self.auth_env.refresh_token_url_override_present,
             auth.request_id = response_debug.request_id.as_deref(),
             auth.cf_ray = response_debug.cf_ray.as_deref(),
             auth.error = response_debug.auth_error.as_deref(),
             auth.error_code = response_debug.auth_error_code.as_deref(),
             auth.mode = self.auth_mode.as_deref(),
-            auth.agent_id = self.agent_identity_telemetry.as_ref().map(|metadata| metadata.agent_id.as_str()),
-            auth.task_id = self.agent_identity_telemetry.as_ref().map(|metadata| metadata.task_id.as_str()),
         );
     }
 }

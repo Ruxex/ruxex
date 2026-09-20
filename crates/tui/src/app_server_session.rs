@@ -651,18 +651,6 @@ impl AppServerSession {
                 None,
                 false,
             ),
-            Some(Account::Chatgpt { email, plan_type }) => {
-                (
-                    email.clone(),
-                    Some(TelemetryAuthMode::Chatgpt),
-                    Some(StatusAccountDisplay::ChatGpt {
-                        email,
-                        plan: Some(plan_type_display_name(plan_type)),
-                    }),
-                    Some(plan_type),
-                    true,
-                )
-            }
             Some(Account::AmazonBedrock { .. }) => {
                 (None, None, None, None, false)
             }
@@ -1724,13 +1712,6 @@ pub(crate) fn status_account_display_from_auth_mode(
 ) -> Option<StatusAccountDisplay> {
     match auth_mode {
         Some(AuthMode::ApiKey) => Some(StatusAccountDisplay::ApiKey),
-        Some(AuthMode::Chatgpt)
-        | Some(AuthMode::ChatgptAuthTokens)
-        | Some(AuthMode::AgentIdentity)
-        | Some(AuthMode::PersonalAccessToken) => Some(StatusAccountDisplay::ChatGpt {
-            email: None,
-            plan: plan_type.map(plan_type_display_name),
-        }),
         Some(AuthMode::Headers)
         | Some(AuthMode::BedrockApiKey)
         | Some(AuthMode::BedrockAccessKeys) => None,

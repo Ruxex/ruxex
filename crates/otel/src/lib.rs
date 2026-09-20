@@ -51,21 +51,12 @@ pub enum ToolDecisionSource {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Display)]
 pub enum TelemetryAuthMode {
     ApiKey,
-    Chatgpt,
 }
 
 impl From<AuthMode> for TelemetryAuthMode {
     fn from(mode: AuthMode) -> Self {
-        match mode {
-            AuthMode::ApiKey | AuthMode::BedrockApiKey | AuthMode::BedrockAccessKeys => {
-                Self::ApiKey
-            }
-            AuthMode::Chatgpt
-            | AuthMode::ChatgptAuthTokens
-            | AuthMode::Headers
-            | AuthMode::AgentIdentity
-            | AuthMode::PersonalAccessToken => Self::Chatgpt,
-        }
+        let _ = mode;
+        Self::ApiKey
     }
 }
 

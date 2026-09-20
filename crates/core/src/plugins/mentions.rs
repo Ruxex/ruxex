@@ -1,9 +1,9 @@
 use std::collections::HashSet;
 
 use codex_protocol::user_input::UserInput;
+use codex_skills::ToolMentionKind;
 use codex_skills::extract_tool_mentions_with_sigil;
 use codex_skills::plugin_config_name_from_path;
-use codex_skills::ToolMentionKind;
 use codex_skills::tool_kind_for_path;
 
 use crate::mention_syntax::PLUGIN_TEXT_MENTION_SIGIL;

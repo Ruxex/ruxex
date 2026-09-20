@@ -419,7 +419,7 @@ impl WorkloadIdentityExternalAuth {
         token: &WorkloadIdentityToken,
         previous_account_id: Option<&str>,
     ) -> std::io::Result<CodexAuth> {
-        let auth = CodexAuth::from_external_chatgpt_tokens(
+        let auth = CodexAuth::from_external_workload_identity(
             &token.access_token,
             &token.chatgpt_account_id,
             token.chatgpt_plan_type.as_deref(),

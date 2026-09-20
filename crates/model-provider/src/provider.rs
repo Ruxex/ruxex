@@ -87,16 +87,12 @@ pub struct ProviderAuthRecoveryMessages {
 /// Error returned when a provider cannot construct its app-visible account state.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ProviderAccountError {
-    MissingChatgptAccountDetails,
     UnsupportedBedrockApiKeyAuth,
 }
 
 impl fmt::Display for ProviderAccountError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::MissingChatgptAccountDetails => {
-                write!(f, "plan type is required for chatgpt authentication")
-            }
             Self::UnsupportedBedrockApiKeyAuth => {
                 write!(
                     f,
@@ -399,17 +395,8 @@ impl ModelProvider for ConfiguredModelProvider {
                     CodexAuth::BedrockApiKey(_) | CodexAuth::BedrockAccessKeys(_) => {
                         Err(ProviderAccountError::UnsupportedBedrockApiKeyAuth)
                     }
-                    CodexAuth::Chatgpt(_)
-                    | CodexAuth::ChatgptAuthTokens(_)
-                    | CodexAuth::Headers(_)
-                    | CodexAuth::AgentIdentity(_)
-                    | CodexAuth::PersonalAccessToken(_) => {
-                        let email = auth.get_account_email();
-                        let plan_type = auth.account_plan_type();
-
-                        plan_type
-                            .map(|plan_type| ProviderAccount::Chatgpt { email, plan_type })
-                            .ok_or(ProviderAccountError::MissingChatgptAccountDetails)
+                    CodexAuth::WorkloadIdentity(_) | CodexAuth::Headers(_) => {
+                        Ok(ProviderAccount::ApiKey)
                     }
                 })
                 .transpose()?

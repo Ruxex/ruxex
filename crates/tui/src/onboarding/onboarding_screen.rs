@@ -15,7 +15,6 @@ use codex_app_server_client::AppServerRequestHandle;
 use codex_app_server_protocol::ClientRequest;
 use codex_app_server_protocol::ConfigBatchWriteParams;
 use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ServerNotification;
 use codex_exec_server::LOCAL_FS;
 use codex_git_utils::resolve_root_git_project_for_trust;
 #[cfg(target_os = "windows")]
@@ -30,8 +29,6 @@ use ratatui::prelude::Widget;
 use ratatui::style::Color;
 use ratatui::widgets::Clear;
 use ratatui::widgets::WidgetRef;
-
-use codex_protocol::config_types::ForcedLoginMethod;
 
 use crate::LoginStatus;
 use crate::app_server_session::AppServerSession;
@@ -156,24 +153,16 @@ impl OnboardingScreen {
         #[cfg(not(target_os = "windows"))]
         let show_windows_create_sandbox_hint = false;
         if show_login_screen {
-            let highlighted_mode =
-                if auth_config.is_login_method_allowed(ForcedLoginMethod::Chatgpt) {
-                    SignInOption::ChatGpt
-                } else {
-                    SignInOption::ApiKey
-                };
+            let highlighted_mode = SignInOption::ApiKey;
             if let Some(app_server_request_handle) = app_server_request_handle {
                 steps.push(Step::Auth(AuthModeWidget {
                     request_frame: tui.frame_requester(),
                     highlighted_mode,
                     error: Arc::new(RwLock::new(None)),
                     sign_in_state: Arc::new(RwLock::new(SignInState::PickMode)),
-                    login_status,
                     app_server_request_handle,
                     auth_config,
                     bedrock_setup_enabled,
-                    animations_enabled: local_settings.tui.animations,
-                    animations_suppressed: std::cell::Cell::new(false),
                 }));
             } else {
                 tracing::warn!("skipping onboarding login step without app-server request handle");
@@ -246,15 +235,6 @@ impl OnboardingScreen {
         out
     }
 
-    fn should_suppress_animations(&self) -> bool {
-        // Freeze the whole onboarding screen when auth is showing copyable login
-        // material so terminal selection is not interrupted by redraws.
-        self.current_steps().into_iter().any(|step| match step {
-            Step::Auth(widget) => widget.should_suppress_animations(),
-            Step::Welcome(_) | Step::TrustDirectory(_) => false,
-        })
-    }
-
     fn is_auth_in_progress(&self) -> bool {
         self.steps.iter().any(|step| {
             matches!(step, Step::Auth(_)) && matches!(step.get_step_state(), StepState::InProgress)
@@ -286,29 +266,6 @@ impl OnboardingScreen {
             if let Step::Auth(widget) = step {
                 widget.cancel_active_attempt();
             }
-        }
-    }
-
-    fn auth_widget_mut(&mut self) -> Option<&mut AuthModeWidget> {
-        self.steps.iter_mut().find_map(|step| match step {
-            Step::Auth(widget) => Some(widget),
-            Step::Welcome(_) | Step::TrustDirectory(_) => None,
-        })
-    }
-
-    fn handle_app_server_notification(&mut self, notification: ServerNotification) {
-        match notification {
-            ServerNotification::AccountLoginCompleted(notification) => {
-                if let Some(widget) = self.auth_widget_mut() {
-                    widget.on_account_login_completed(notification);
-                }
-            }
-            ServerNotification::AccountUpdated(notification) => {
-                if let Some(widget) = self.auth_widget_mut() {
-                    widget.on_account_updated(notification);
-                }
-            }
-            _ => {}
         }
     }
 
@@ -405,15 +362,6 @@ fn suppress_quit_while_typing(key_event: KeyEvent, text_entry_context: TextEntry
 
 impl WidgetRef for &OnboardingScreen {
     fn render_ref(&self, area: Rect, buf: &mut Buffer) {
-        let suppress_animations = self.should_suppress_animations();
-        for step in self.current_steps() {
-            match step {
-                Step::Welcome(widget) => widget.set_animations_suppressed(suppress_animations),
-                Step::Auth(widget) => widget.set_animations_suppressed(suppress_animations),
-                Step::TrustDirectory(_) => {}
-            }
-        }
-
         Clear.render(area, buf);
         // Render steps top-to-bottom, measuring each step's height dynamically.
         let mut y = area.y;
@@ -540,8 +488,6 @@ async fn run_onboarding_screen(
 ) -> Result<OnboardingResult> {
     use tokio_stream::StreamExt;
     let mut directory_trust_persisted = false;
-    // One-time guard to fully clear the screen after ChatGPT login success message is shown
-    let mut did_full_clear_after_success = false;
 
     tui.draw(u16::MAX, |frame| {
         frame.render_widget_ref(&onboarding_screen, frame.area());
@@ -575,36 +521,6 @@ async fn run_onboarding_screen(
                         | TuiEvent::Resume
                         | TuiEvent::Resize(_)
                         | TuiEvent::FocusGained => {
-                            if !did_full_clear_after_success
-                                && onboarding_screen.steps.iter().any(|step| {
-                                    if let Step::Auth(w) = step {
-                                        w.sign_in_state.read().is_ok_and(|g| {
-                                            matches!(&*g, super::auth::SignInState::ChatGptSuccessMessage)
-                                        })
-                                    } else {
-                                        false
-                                    }
-                                })
-                            {
-                                // Reset any lingering SGR (underline/color) before clearing
-                                let _ = ratatui::crossterm::execute!(
-                                    std::io::stdout(),
-                                    ratatui::crossterm::style::SetAttribute(
-                                        ratatui::crossterm::style::Attribute::Reset
-                                    ),
-                                    ratatui::crossterm::style::SetAttribute(
-                                        ratatui::crossterm::style::Attribute::NoUnderline
-                                    ),
-                                    ratatui::crossterm::style::SetForegroundColor(
-                                        ratatui::crossterm::style::Color::Reset
-                                    ),
-                                    ratatui::crossterm::style::SetBackgroundColor(
-                                        ratatui::crossterm::style::Color::Reset
-                                    )
-                                );
-                                let _ = tui.terminal.clear();
-                                did_full_clear_after_success = true;
-                            }
                             let _ = tui.draw(u16::MAX, |frame| {
                                 frame.render_widget_ref(&onboarding_screen, frame.area());
                             });
@@ -621,9 +537,7 @@ async fn run_onboarding_screen(
             }, if app_server.is_some() => {
                 if let Some(event) = event {
                     match event {
-                        AppServerEvent::ServerNotification(notification) => {
-                            onboarding_screen.handle_app_server_notification(*notification);
-                        }
+                        AppServerEvent::ServerNotification(_) => {}
                         AppServerEvent::Disconnected { message } => {
                             return Err(color_eyre::eyre::eyre!(message));
                         }

@@ -398,16 +398,7 @@ other non-default provider fields are not supported"
 
     /// Builds an API provider with managed residency taking precedence over configured headers.
     pub fn to_api_provider(&self, auth_mode: Option<AuthMode>) -> CodexResult<ApiProvider> {
-        let default_base_url = if matches!(
-            auth_mode,
-            Some(
-                AuthMode::Chatgpt
-                    | AuthMode::ChatgptAuthTokens
-                    | AuthMode::Headers
-                    | AuthMode::AgentIdentity
-                    | AuthMode::PersonalAccessToken
-            )
-        ) {
+        let default_base_url = if matches!(auth_mode, Some(AuthMode::Headers)) {
             CHATGPT_CODEX_BASE_URL
         } else {
             "https://api.openai.com/v1"

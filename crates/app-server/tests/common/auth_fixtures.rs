@@ -164,12 +164,10 @@ pub fn write_chatgpt_auth(
     let last_refresh = fixture.last_refresh.unwrap_or_else(|| Some(Utc::now()));
 
     let auth = AuthDotJson {
-        auth_mode: Some(AuthMode::Chatgpt),
+        auth_mode: Some(AuthMode::WorkloadIdentity),
         openai_api_key: None,
         tokens: Some(tokens),
         last_refresh,
-        agent_identity: None,
-        personal_access_token: None,
         bedrock_api_key: None,
         bedrock_access_keys: None,
     };

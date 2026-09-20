@@ -18,37 +18,17 @@ use serde::Deserialize;
 use serde::Serialize;
 use strum_macros::Display;
 
-/// Authentication mode for OpenAI-backed providers.
+/// Authentication mode for configured model providers.
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Display, JsonSchema, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum AuthMode {
-    /// OpenAI API key provided by the caller and stored by Codex.
+    /// API key provided by the caller and stored by Codex.
     ApiKey,
-    /// ChatGPT OAuth managed by Codex (tokens persisted and refreshed by Codex).
-    Chatgpt,
-    /// [UNSTABLE] FOR OPENAI INTERNAL USE ONLY - DO NOT USE.
-    ///
-    /// ChatGPT auth tokens are supplied by an external host app and are only
-    /// stored in memory. Token refresh must be handled by the external host app.
-    #[serde(rename = "chatgptAuthTokens")]
-    #[ts(rename = "chatgptAuthTokens")]
-    #[strum(serialize = "chatgptAuthTokens")]
-    ChatgptAuthTokens,
     /// Backend auth supplied as request headers.
     #[serde(rename = "headers")]
     #[ts(rename = "headers")]
     #[strum(serialize = "headers")]
     Headers,
-    /// Programmatic Codex auth backed by a registered Agent Identity.
-    #[serde(rename = "agentIdentity")]
-    #[ts(rename = "agentIdentity")]
-    #[strum(serialize = "agentIdentity")]
-    AgentIdentity,
-    /// Programmatic Codex auth backed by a personal access token.
-    #[serde(rename = "personalAccessToken")]
-    #[ts(rename = "personalAccessToken")]
-    #[strum(serialize = "personalAccessToken")]
-    PersonalAccessToken,
     /// Amazon Bedrock bearer token managed by Codex.
     #[serde(rename = "bedrockApiKey")]
     #[ts(rename = "bedrockApiKey")]
@@ -62,28 +42,14 @@ pub enum AuthMode {
 }
 
 impl AuthMode {
-    /// Returns whether this mode represents an authenticated human ChatGPT account.
+    /// Returns whether this mode represents an authenticated account.
     pub fn has_chatgpt_account(self) -> bool {
-        match self {
-            Self::Chatgpt | Self::ChatgptAuthTokens | Self::PersonalAccessToken => true,
-            Self::ApiKey
-            | Self::Headers
-            | Self::AgentIdentity
-            | Self::BedrockApiKey
-            | Self::BedrockAccessKeys => false,
-        }
+        false
     }
 
     /// Returns whether this mode is backed by Codex services rather than a direct model API.
     pub fn uses_codex_backend(self) -> bool {
-        match self {
-            Self::Chatgpt
-            | Self::ChatgptAuthTokens
-            | Self::Headers
-            | Self::AgentIdentity
-            | Self::PersonalAccessToken => true,
-            Self::ApiKey | Self::BedrockApiKey | Self::BedrockAccessKeys => false,
-        }
+        matches!(self, Self::Headers)
     }
 }
 
@@ -1595,11 +1561,6 @@ server_request_definitions! {
         response: v2::DynamicToolCallResponse,
     },
 
-    ChatgptAuthTokensRefresh => "account/chatgptAuthTokens/refresh" {
-        params: v2::ChatgptAuthTokensRefreshParams,
-        response: v2::ChatgptAuthTokensRefreshResponse,
-    },
-
     /// Generate a fresh upstream attestation result on demand.
     AttestationGenerate => "attestation/generate" {
         params: v2::AttestationGenerateParams,
@@ -2411,7 +2372,6 @@ mod tests {
             },
         };
         assert_eq!(mcp_resource_read.serialization_scope(), None);
-
     }
 
     #[test]
@@ -2628,29 +2588,6 @@ mod tests {
         let payload = ServerRequestPayload::ExecCommandApproval(params);
         assert_eq!(request.id(), &RequestId::Integer(7));
         assert_eq!(payload.request_with_id(RequestId::Integer(7)), request);
-        Ok(())
-    }
-
-    #[test]
-    fn serialize_chatgpt_auth_tokens_refresh_request() -> Result<()> {
-        let request = ServerRequest::ChatgptAuthTokensRefresh {
-            request_id: RequestId::Integer(8),
-            params: v2::ChatgptAuthTokensRefreshParams {
-                reason: v2::ChatgptAuthTokensRefreshReason::Unauthorized,
-                previous_account_id: Some("org-123".to_string()),
-            },
-        };
-        assert_eq!(
-            json!({
-                "method": "account/chatgptAuthTokens/refresh",
-                "id": 8,
-                "params": {
-                    "reason": "unauthorized",
-                    "previousAccountId": "org-123"
-                }
-            }),
-            serde_json::to_value(&request)?,
-        );
         Ok(())
     }
 
@@ -3001,100 +2938,6 @@ mod tests {
     }
 
     #[test]
-    fn serialize_account_login_chatgpt() -> Result<()> {
-        let request = ClientRequest::LoginAccount {
-            request_id: RequestId::Integer(3),
-            params: v2::LoginAccountParams::Chatgpt {
-                app_brand: None,
-                codex_streamlined_login: false,
-                use_hosted_login_success_page: false,
-            },
-        };
-        assert_eq!(
-            json!({
-                "method": "account/login/start",
-                "id": 3,
-                "params": {
-                    "type": "chatgpt",
-                    "appBrand": null
-                }
-            }),
-            serde_json::to_value(&request)?,
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn serialize_account_login_chatgpt_streamlined() -> Result<()> {
-        let request = ClientRequest::LoginAccount {
-            request_id: RequestId::Integer(3),
-            params: v2::LoginAccountParams::Chatgpt {
-                app_brand: None,
-                codex_streamlined_login: true,
-                use_hosted_login_success_page: false,
-            },
-        };
-        assert_eq!(
-            json!({
-                "method": "account/login/start",
-                "id": 3,
-                "params": {
-                    "type": "chatgpt",
-                    "appBrand": null,
-                    "codexStreamlinedLogin": true
-                }
-            }),
-            serde_json::to_value(&request)?,
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn serialize_account_login_chatgpt_with_hosted_success_page() -> Result<()> {
-        let request = ClientRequest::LoginAccount {
-            request_id: RequestId::Integer(3),
-            params: v2::LoginAccountParams::Chatgpt {
-                app_brand: Some(v2::LoginAppBrand::Chatgpt),
-                codex_streamlined_login: true,
-                use_hosted_login_success_page: true,
-            },
-        };
-        assert_eq!(
-            json!({
-                "method": "account/login/start",
-                "id": 3,
-                "params": {
-                    "type": "chatgpt",
-                    "appBrand": "chatgpt",
-                    "codexStreamlinedLogin": true,
-                    "useHostedLoginSuccessPage": true
-                }
-            }),
-            serde_json::to_value(&request)?,
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn serialize_account_login_chatgpt_device_code() -> Result<()> {
-        let request = ClientRequest::LoginAccount {
-            request_id: RequestId::Integer(4),
-            params: v2::LoginAccountParams::ChatgptDeviceCode,
-        };
-        assert_eq!(
-            json!({
-                "method": "account/login/start",
-                "id": 4,
-                "params": {
-                    "type": "chatgptDeviceCode"
-                }
-            }),
-            serde_json::to_value(&request)?,
-        );
-        Ok(())
-    }
-
-    #[test]
     fn serialize_account_logout() -> Result<()> {
         let request = ClientRequest::LogoutAccount {
             request_id: RequestId::Integer(5),
@@ -3104,32 +2947,6 @@ mod tests {
             json!({
                 "method": "account/logout",
                 "id": 5,
-            }),
-            serde_json::to_value(&request)?,
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn serialize_account_login_chatgpt_auth_tokens() -> Result<()> {
-        let request = ClientRequest::LoginAccount {
-            request_id: RequestId::Integer(6),
-            params: v2::LoginAccountParams::ChatgptAuthTokens {
-                access_token: "access-token".to_string(),
-                chatgpt_account_id: "org-123".to_string(),
-                chatgpt_plan_type: Some("business".to_string()),
-            },
-        };
-        assert_eq!(
-            json!({
-                "method": "account/login/start",
-                "id": 6,
-                "params": {
-                    "type": "chatgptAuthTokens",
-                    "accessToken": "access-token",
-                    "chatgptAccountId": "org-123",
-                    "chatgptPlanType": "business"
-                }
             }),
             serde_json::to_value(&request)?,
         );
@@ -3179,32 +2996,6 @@ mod tests {
                 "type": "apiKey",
             }),
             serde_json::to_value(&api_key)?,
-        );
-
-        let chatgpt = v2::Account::Chatgpt {
-            email: Some("user@example.com".to_string()),
-            plan_type: PlanType::Plus,
-        };
-        assert_eq!(
-            json!({
-                "type": "chatgpt",
-                "email": "user@example.com",
-                "planType": "plus",
-            }),
-            serde_json::to_value(&chatgpt)?,
-        );
-
-        let chatgpt_without_email = v2::Account::Chatgpt {
-            email: None,
-            plan_type: PlanType::Pro,
-        };
-        assert_eq!(
-            json!({
-                "type": "chatgpt",
-                "email": null,
-                "planType": "pro",
-            }),
-            serde_json::to_value(&chatgpt_without_email)?,
         );
 
         let codex_managed_bedrock = v2::Account::AmazonBedrock {

@@ -46,10 +46,7 @@ async fn locked_empty_pid_file_is_treated_as_active_reservation() {
     tokio::fs::write(&pid_file, "")
         .await
         .expect("write pid file");
-    let backend = PidBackend::new(
-        temp_dir.path().join("codex"),
-        pid_file.clone(),
-    );
+    let backend = PidBackend::new(temp_dir.path().join("codex"), pid_file.clone());
     let reservation = tokio::fs::OpenOptions::new()
         .create(true)
         .truncate(false)
@@ -73,10 +70,7 @@ async fn unlocked_empty_pid_file_is_treated_as_stale_reservation() {
     tokio::fs::write(&pid_file, "")
         .await
         .expect("write pid file");
-    let backend = PidBackend::new(
-        temp_dir.path().join("codex"),
-        pid_file.clone(),
-    );
+    let backend = PidBackend::new(temp_dir.path().join("codex"), pid_file.clone());
 
     assert_eq!(
         backend.read_pid_file_state().await.expect("read pid"),
@@ -92,10 +86,7 @@ async fn stop_waits_for_live_reservation_to_resolve() {
     tokio::fs::write(&pid_file, "")
         .await
         .expect("write pid file");
-    let backend = PidBackend::new(
-        temp_dir.path().join("codex"),
-        pid_file.clone(),
-    );
+    let backend = PidBackend::new(temp_dir.path().join("codex"), pid_file.clone());
     let reservation = tokio::fs::OpenOptions::new()
         .create(true)
         .truncate(false)
@@ -127,10 +118,7 @@ async fn start_retries_stale_empty_pid_file_under_its_own_lock() {
     tokio::fs::write(&pid_file, "")
         .await
         .expect("write pid file");
-    let backend = PidBackend::new(
-        temp_dir.path().join("missing-codex"),
-        pid_file,
-    );
+    let backend = PidBackend::new(temp_dir.path().join("missing-codex"), pid_file);
 
     let err = backend.start().await.expect_err("start");
     #[cfg(windows)]
@@ -182,10 +170,7 @@ async fn legacy_launch_clears_recovery_best_effort() {
 async fn stale_record_cleanup_preserves_replacement_record() {
     let temp_dir = TempDir::new().expect("temp dir");
     let pid_file = temp_dir.path().join("app-server.pid");
-    let backend = PidBackend::new(
-        temp_dir.path().join("codex"),
-        pid_file.clone(),
-    );
+    let backend = PidBackend::new(temp_dir.path().join("codex"), pid_file.clone());
     let stale = PidRecord {
         pid: 1,
         process_start_time: "old".to_string(),
@@ -234,10 +219,7 @@ async fn pid_record_captures_the_resolved_launch_binary() {
     }
     let selected = temp.path().join("current-codex");
     std::os::unix::fs::symlink(&original, &selected).expect("selected binary");
-    let backend = PidBackend::new(
-        selected.clone(),
-        temp.path().join("app-server.pid"),
-    );
+    let backend = PidBackend::new(selected.clone(), temp.path().join("app-server.pid"));
     backend.start().await.expect("start daemon");
     let record: PidRecord =
         serde_json::from_slice(&std::fs::read(&backend.pid_file).expect("PID record"))
@@ -325,10 +307,7 @@ async fn stop_reaps_untracked_app_server_child() {
     )
     .await
     .expect("write pid file");
-    let backend = PidBackend::new(
-        temp_dir.path().join("codex"),
-        pid_file.clone(),
-    );
+    let backend = PidBackend::new(temp_dir.path().join("codex"), pid_file.clone());
 
     let result = tokio::time::timeout(Duration::from_secs(2), backend.stop()).await;
     if matches!(child.try_wait(), Ok(None)) {
@@ -417,10 +396,7 @@ async fn shutdown_grace_handles_process_exit() {
         .await
         .expect("write pid file");
         #[cfg(unix)]
-        let backend = PidBackend::new(
-            temp.path().join("codex"),
-            pid_file,
-        );
+        let backend = PidBackend::new(temp.path().join("codex"), pid_file);
         #[cfg(windows)]
         let backend = PidBackend::new_update_loop(
             temp.path().join("codex"),

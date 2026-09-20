@@ -3,14 +3,11 @@ use super::bedrock_auth::clear_user_model_provider_if_bedrock;
 use super::bedrock_auth::configure_bedrock_provider;
 use super::bedrock_auth::ensure_user_model_provider_can_be_bedrock;
 use super::*;
-use codex_app_server_protocol::LoginAppBrand;
 use crate::auth_mode::auth_mode_to_api;
-use crate::external_auth::ExternalAuthBridge;
 use crate::outgoing_message::AccountNotification;
 use codex_app_server_protocol::Account;
 use codex_app_server_protocol::DesktopOnboardingEntrypoint;
 use codex_app_server_protocol::GetAccountResponse;
-use codex_login::LoginOnboardingEntrypoint;
 use codex_login::login_with_bedrock_access_keys;
 use codex_model_provider::create_model_provider;
 use codex_model_provider::is_supported_amazon_bedrock_region;
@@ -24,41 +21,6 @@ const LOGIN_ISSUER_OVERRIDE_ENV_VAR: &str = "CODEX_APP_SERVER_LOGIN_ISSUER";
 // The development success-page redirect remains debug-only.
 #[cfg(debug_assertions)]
 const LOGIN_OPEN_APP_URL_OVERRIDE_ENV_VAR: &str = "CODEX_APP_SERVER_DEV_OPEN_APP_URL";
-
-enum ActiveLogin {
-    Browser {
-        shutdown_handle: ShutdownHandle,
-        login_id: Uuid,
-    },
-    DeviceCode {
-        cancel: CancellationToken,
-        login_id: Uuid,
-    },
-}
-
-impl ActiveLogin {
-    fn login_id(&self) -> Uuid {
-        match self {
-            ActiveLogin::Browser { login_id, .. } | ActiveLogin::DeviceCode { login_id, .. } => {
-                *login_id
-            }
-        }
-    }
-
-    fn cancel(&self) {
-        match self {
-            ActiveLogin::Browser {
-                shutdown_handle, ..
-            } => shutdown_handle.shutdown(),
-            ActiveLogin::DeviceCode { cancel, .. } => cancel.cancel(),
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-enum CancelLoginError {
-    NotFound,
-}
 
 enum RefreshTokenRequestOutcome {
     NotAttemptedOrSucceeded,
@@ -75,12 +37,6 @@ enum BedrockLoginCredentials {
     },
 }
 
-impl Drop for ActiveLogin {
-    fn drop(&mut self) {
-        self.cancel();
-    }
-}
-
 #[derive(Clone)]
 pub(crate) struct AccountRequestProcessor {
     auth_manager: Arc<AuthManager>,
@@ -88,7 +44,6 @@ pub(crate) struct AccountRequestProcessor {
     outgoing: Arc<OutgoingMessageSender>,
     config: Arc<Config>,
     config_manager: ConfigManager,
-    active_login: Arc<Mutex<Option<ActiveLogin>>>,
 }
 
 impl AccountRequestProcessor {
@@ -105,7 +60,6 @@ impl AccountRequestProcessor {
             outgoing,
             config,
             config_manager,
-            active_login: Arc::new(Mutex::new(None)),
         };
         let startup = processor.clone();
         tokio::spawn(async move {
@@ -183,12 +137,7 @@ impl AccountRequestProcessor {
             .map(|response| Some(response.into()))
     }
 
-    pub(crate) async fn cancel_active_login(&self) {
-        let mut guard = self.active_login.lock().await;
-        if let Some(active_login) = guard.take() {
-            drop(active_login);
-        }
-    }
+    pub(crate) async fn cancel_active_login(&self) {}
 
     pub(crate) fn clear_external_auth(&self) {
         self.auth_manager.clear_external_auth();
@@ -224,9 +173,7 @@ impl AccountRequestProcessor {
         thread_manager: &Arc<ThreadManager>,
         _auth: Option<CodexAuth>,
     ) {
-        thread_manager
-            .plugins_manager()
-            .clear_cache();
+        thread_manager.plugins_manager().clear_cache();
 
         match config_manager
             .load_latest_config(/*fallback_cwd*/ None)
@@ -250,9 +197,7 @@ impl AccountRequestProcessor {
                 let _ = (config, on_effective_plugins_changed);
             }
             Err(err) => {
-                warn!(
-                    "failed to reload config after account changed: {err}"
-                );
+                warn!("failed to reload config after account changed: {err}");
             }
         }
     }
@@ -282,44 +227,6 @@ impl AccountRequestProcessor {
             LoginAccountParams::ApiKey { api_key } => {
                 self.login_api_key_v2(request_id, LoginApiKeyParams { api_key })
                     .await;
-            }
-            LoginAccountParams::Chatgpt {
-                app_brand,
-                codex_streamlined_login,
-                use_hosted_login_success_page,
-            } => {
-                let login_success_page = if use_hosted_login_success_page {
-                    let app_brand = match app_brand.unwrap_or_default() {
-                        LoginAppBrand::Codex => LoginSuccessPageBrand::Codex,
-                        LoginAppBrand::Chatgpt => LoginSuccessPageBrand::Chatgpt,
-                    };
-                    LoginSuccessPage::Hosted {
-                        url: CODEX_OPEN_APP_URL.parse().map_err(|err| {
-                            internal_error(format!("invalid Codex open app URL: {err}"))
-                        })?,
-                        app_brand,
-                    }
-                } else {
-                    LoginSuccessPage::default()
-                };
-                self.login_chatgpt_v2(request_id, codex_streamlined_login, login_success_page)
-                    .await;
-            }
-            LoginAccountParams::ChatgptDeviceCode => {
-                self.login_chatgpt_device_code_v2(request_id).await;
-            }
-            LoginAccountParams::ChatgptAuthTokens {
-                access_token,
-                chatgpt_account_id,
-                chatgpt_plan_type,
-            } => {
-                self.login_chatgpt_auth_tokens(
-                    request_id,
-                    access_token,
-                    chatgpt_account_id,
-                    chatgpt_plan_type,
-                )
-                .await;
             }
             LoginAccountParams::AmazonBedrock { api_key, region } => {
                 self.login_amazon_bedrock_v2(
@@ -395,14 +302,6 @@ impl AccountRequestProcessor {
             return Err(invalid_request(
                 "API key login is disabled. Use ChatGPT login instead.",
             ));
-        }
-
-        // Cancel any active login attempt.
-        {
-            let mut guard = self.active_login.lock().await;
-            if let Some(active) = guard.take() {
-                drop(active);
-            }
         }
 
         match login_with_api_key(
@@ -520,320 +419,13 @@ impl AccountRequestProcessor {
         }
     }
 
-    // Build options for a ChatGPT login attempt; performs validation.
-    async fn login_chatgpt_common(
-        &self,
-        codex_streamlined_login: bool,
-        login_success_page: LoginSuccessPage,
-    ) -> std::result::Result<LoginServerOptions, JSONRPCErrorError> {
-        let config = self.config.as_ref();
-
-        if self.auth_manager.is_external_chatgpt_auth_active() {
-            return Err(self.external_auth_active_error());
-        }
-
-        if !self
-            .auth_manager
-            .is_login_method_allowed(ForcedLoginMethod::Chatgpt)
-        {
-            return Err(invalid_request(
-                "ChatGPT login is disabled. Use API key login instead.",
-            ));
-        }
-
-        let mut opts = LoginServerOptions {
-            open_browser: false,
-            codex_streamlined_login,
-            login_success_page,
-            ..LoginServerOptions::new(
-                config.codex_home.to_path_buf(),
-                oauth_client_id(),
-                self.auth_manager.effective_chatgpt_workspaces(),
-                config.cli_auth_credentials_store_mode,
-                config.auth_keyring_backend_kind(),
-                config.auth_route_config(),
-            )
-        };
-        if let Ok(issuer) = std::env::var(LOGIN_ISSUER_OVERRIDE_ENV_VAR)
-            && !issuer.trim().is_empty()
-        {
-            opts.issuer = issuer;
-        }
-        #[cfg(debug_assertions)]
-        if let LoginSuccessPage::Hosted { url, .. } = &mut opts.login_success_page
-            && let Ok(open_app_url) = std::env::var(LOGIN_OPEN_APP_URL_OVERRIDE_ENV_VAR)
-            && !open_app_url.trim().is_empty()
-        {
-            *url = open_app_url
-                .parse()
-                .map_err(|err| internal_error(format!("invalid Codex open app URL: {err}")))?;
-        }
-
-        Ok(opts)
-    }
-
-    fn login_chatgpt_device_code_start_error(err: IoError) -> JSONRPCErrorError {
-        let is_not_found = err.kind() == std::io::ErrorKind::NotFound;
-        if is_not_found {
-            invalid_request(err.to_string())
-        } else {
-            internal_error(format!("failed to request device code: {err}"))
-        }
-    }
-
-    async fn login_chatgpt_v2(
-        &self,
-        request_id: ConnectionRequestId,
-        codex_streamlined_login: bool,
-        login_success_page: LoginSuccessPage,
-    ) {
-        let result = self
-            .login_chatgpt_response(codex_streamlined_login, login_success_page)
-            .await;
-        self.outgoing.send_result(request_id, result).await;
-    }
-
-    async fn login_chatgpt_response(
-        &self,
-        codex_streamlined_login: bool,
-        login_success_page: LoginSuccessPage,
-    ) -> Result<LoginAccountResponse, JSONRPCErrorError> {
-        let opts = self
-            .login_chatgpt_common(codex_streamlined_login, login_success_page)
-            .await?;
-        let server = run_login_server(opts)
-            .map_err(|err| internal_error(format!("failed to start login server: {err}")))?;
-        let login_id = Uuid::new_v4();
-        let shutdown_handle = server.cancel_handle();
-
-        // Replace active login if present.
-        {
-            let mut guard = self.active_login.lock().await;
-            if let Some(existing) = guard.take() {
-                drop(existing);
-            }
-            *guard = Some(ActiveLogin::Browser {
-                shutdown_handle: shutdown_handle.clone(),
-                login_id,
-            });
-        }
-
-        let processor = self.clone();
-        let active_login = self.active_login.clone();
-        let auth_url = server.auth_url.clone();
-        tokio::spawn(async move {
-            let (success, error_msg, onboarding_entrypoint) = match tokio::time::timeout(
-                LOGIN_CHATGPT_TIMEOUT,
-                server.block_until_done_with_callback_result(),
-            )
-            .await
-            {
-                Ok(Ok(result)) => (
-                    true,
-                    None,
-                    result
-                        .onboarding_entrypoint
-                        .map(|LoginOnboardingEntrypoint::LifeSciences| {
-                            DesktopOnboardingEntrypoint::LifeSciences
-                        }),
-                ),
-                Ok(Err(err)) => (false, Some(format!("Login server error: {err}")), None),
-                Err(_elapsed) => {
-                    shutdown_handle.shutdown();
-                    (false, Some("Login timed out".to_string()), None)
-                }
-            };
-
-            processor
-                .send_chatgpt_login_completion_notifications(AccountLoginCompletedNotification {
-                    login_id: Some(login_id.to_string()),
-                    success,
-                    error: error_msg,
-                    onboarding_entrypoint,
-                })
-                .await;
-
-            // Clear the active login if it matches this attempt. It may have been replaced or cancelled.
-            let mut guard = active_login.lock().await;
-            if guard.as_ref().map(ActiveLogin::login_id) == Some(login_id) {
-                *guard = None;
-            }
-        });
-
-        Ok(LoginAccountResponse::Chatgpt {
-            login_id: login_id.to_string(),
-            auth_url,
-        })
-    }
-
-    async fn login_chatgpt_device_code_v2(&self, request_id: ConnectionRequestId) {
-        let result = self.login_chatgpt_device_code_response().await;
-        self.outgoing.send_result(request_id, result).await;
-    }
-
-    async fn login_chatgpt_device_code_response(
-        &self,
-    ) -> Result<LoginAccountResponse, JSONRPCErrorError> {
-        let opts = self
-            .login_chatgpt_common(
-                /*codex_streamlined_login*/ false,
-                LoginSuccessPage::default(),
-            )
-            .await?;
-        let device_code = request_device_code(&opts)
-            .await
-            .map_err(Self::login_chatgpt_device_code_start_error)?;
-        let login_id = Uuid::new_v4();
-        let cancel = CancellationToken::new();
-
-        {
-            let mut guard = self.active_login.lock().await;
-            if let Some(existing) = guard.take() {
-                drop(existing);
-            }
-            *guard = Some(ActiveLogin::DeviceCode {
-                cancel: cancel.clone(),
-                login_id,
-            });
-        }
-
-        let verification_url = device_code.verification_url.clone();
-        let user_code = device_code.user_code.clone();
-
-        let processor = self.clone();
-        let active_login = self.active_login.clone();
-        tokio::spawn(async move {
-            let (success, error_msg) = tokio::select! {
-                _ = cancel.cancelled() => {
-                    (false, Some("Login was not completed".to_string()))
-                }
-                r = complete_device_code_login(opts, device_code) => {
-                    match r {
-                        Ok(()) => (true, None),
-                        Err(err) => (false, Some(err.to_string())),
-                    }
-                }
-            };
-
-            processor
-                .send_chatgpt_login_completion_notifications(AccountLoginCompletedNotification {
-                    login_id: Some(login_id.to_string()),
-                    success,
-                    error: error_msg,
-                    onboarding_entrypoint: None,
-                })
-                .await;
-
-            let mut guard = active_login.lock().await;
-            if guard.as_ref().map(ActiveLogin::login_id) == Some(login_id) {
-                *guard = None;
-            }
-        });
-
-        Ok(LoginAccountResponse::ChatgptDeviceCode {
-            login_id: login_id.to_string(),
-            verification_url,
-            user_code,
-        })
-    }
-
-    async fn cancel_login_chatgpt_common(
-        &self,
-        login_id: Uuid,
-    ) -> std::result::Result<(), CancelLoginError> {
-        let mut guard = self.active_login.lock().await;
-        if guard.as_ref().map(ActiveLogin::login_id) == Some(login_id) {
-            if let Some(active) = guard.take() {
-                drop(active);
-            }
-            Ok(())
-        } else {
-            Err(CancelLoginError::NotFound)
-        }
-    }
-
     async fn cancel_login_response(
         &self,
-        params: CancelLoginAccountParams,
+        _params: CancelLoginAccountParams,
     ) -> Result<CancelLoginAccountResponse, JSONRPCErrorError> {
-        let login_id = params.login_id;
-        let uuid = Uuid::parse_str(&login_id)
-            .map_err(|_| invalid_request(format!("invalid login id: {login_id}")))?;
-        let status = match self.cancel_login_chatgpt_common(uuid).await {
-            Ok(()) => CancelLoginAccountStatus::Canceled,
-            Err(CancelLoginError::NotFound) => CancelLoginAccountStatus::NotFound,
-        };
-        Ok(CancelLoginAccountResponse { status })
-    }
-
-    async fn login_chatgpt_auth_tokens(
-        &self,
-        request_id: ConnectionRequestId,
-        access_token: String,
-        chatgpt_account_id: String,
-        chatgpt_plan_type: Option<String>,
-    ) {
-        let result = self
-            .login_chatgpt_auth_tokens_response(access_token, chatgpt_account_id, chatgpt_plan_type)
-            .await;
-        let logged_in = result.is_ok();
-        self.outgoing.send_result(request_id, result).await;
-
-        if logged_in {
-            self.send_login_success_notifications(/*login_id*/ None)
-                .await;
-        }
-    }
-
-    async fn login_chatgpt_auth_tokens_response(
-        &self,
-        access_token: String,
-        chatgpt_account_id: String,
-        chatgpt_plan_type: Option<String>,
-    ) -> Result<LoginAccountResponse, JSONRPCErrorError> {
-        if !self
-            .auth_manager
-            .is_login_method_allowed(ForcedLoginMethod::Chatgpt)
-        {
-            return Err(invalid_request(
-                "External ChatGPT auth is disabled. Use API key login instead.",
-            ));
-        }
-
-        // Cancel any active login attempt to avoid persisting managed auth state.
-        {
-            let mut guard = self.active_login.lock().await;
-            if let Some(active) = guard.take() {
-                drop(active);
-            }
-        }
-
-        if let Some(expected_workspaces) = self.auth_manager.effective_chatgpt_workspaces()
-            && !expected_workspaces.contains(&chatgpt_account_id)
-        {
-            return Err(invalid_request(format!(
-                "External auth must use one of workspace(s) {expected_workspaces:?}, but received {chatgpt_account_id:?}.",
-            )));
-        }
-
-        let auth = CodexAuth::from_external_chatgpt_tokens(
-            &access_token,
-            &chatgpt_account_id,
-            chatgpt_plan_type.as_deref(),
-        )
-        .map_err(|err| internal_error(format!("failed to set external auth: {err}")))?;
-        self.auth_manager
-            .set_external_auth(Arc::new(ExternalAuthBridge::new(
-                Arc::clone(&self.outgoing),
-                auth,
-            )))
-            .await
-            .map_err(|err| internal_error(format!("failed to set external auth: {err}")))?;
-        self.config_manager
-            .sync_default_client_residency_requirement()
-            .await;
-
-        Ok(LoginAccountResponse::ChatgptAuthTokens {})
+        Ok(CancelLoginAccountResponse {
+            status: CancelLoginAccountStatus::NotFound,
+        })
     }
 
     async fn send_login_success_notifications(&self, login_id: Option<Uuid>) {
@@ -894,6 +486,7 @@ impl AccountRequestProcessor {
         }
     }
 
+    #[cfg(any())]
     async fn send_chatgpt_login_completion_notifications(
         &self,
         mut payload_v2: AccountLoginCompletedNotification,
@@ -919,15 +512,7 @@ impl AccountRequestProcessor {
         }
         let config = self.load_latest_config().await;
 
-        // Cancel any active login attempt.
-        {
-            let mut guard = self.active_login.lock().await;
-            if let Some(active) = guard.take() {
-                drop(active);
-            }
-        }
-
-        match self.auth_manager.logout_with_revoke().await {
+        match self.auth_manager.logout().await {
             Ok(_) => {}
             Err(err) => {
                 return Err(internal_error(format!("logout failed: {err}")));
@@ -1026,12 +611,7 @@ impl AccountRequestProcessor {
                     let auth_mode = auth_mode_to_api(auth.api_auth_mode());
                     let (reported_auth_method, token_opt) =
                         if self.auth_manager.is_workload_identity_selected()
-                            || matches!(
-                                auth,
-                                CodexAuth::Headers(_)
-                                    | CodexAuth::AgentIdentity(_)
-                                    | CodexAuth::PersonalAccessToken(_)
-                            )
+                            || matches!(auth, CodexAuth::Headers(_))
                             || include_token && permanent_refresh_failure
                         {
                             // Host-owned and metadata-bearing credentials are never exported.
@@ -1065,5 +645,4 @@ impl AccountRequestProcessor {
 
         Ok(response)
     }
-
 }

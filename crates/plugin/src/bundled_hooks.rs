@@ -100,12 +100,7 @@ pub fn is_allowlisted_bundled_cleanup_hook(
     matcher: Option<&str>,
     handler: &HookHandlerConfig,
 ) -> bool {
-    let HookHandlerConfig::McpTool {
-        server,
-        tool,
-        ..
-    } = handler
-    else {
+    let HookHandlerConfig::McpTool { server, tool, .. } = handler else {
         return false;
     };
 
