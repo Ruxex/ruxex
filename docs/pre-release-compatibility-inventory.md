@@ -56,6 +56,16 @@ earlier one being free of obsolete persisted data:
 This is one image-generation compatibility slice, not a decision to remove
 generic image input, resizing/preparation, local media, or `view_image`.
 
+### Web-search provider boundary
+
+| Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |
+|---|---|---|---|---|
+| `WebSearchExtensionConfig::from` in `crates/ext/web-search/src/extension.rs`, `ModelProviderInfo::create_openai_provider`, and `uses_openai_actor_authorization` | The extension's `web.run` executor was enabled automatically for the built-in OpenAI provider and actor-authorized hosted requests; core then preferred that executor over the hosted `web_search` tool. Custom providers use the explicit `supports_standalone_web_search` opt-in and remain active | OpenAI uses the provider-capability-backed hosted `web_search` specification; custom providers opt into the standalone executor explicitly | `remove` for the OpenAI/actor-authorized branch; `retain` for custom standalone providers | `rg -n 'uses_openai_actor_authorization|OPENAI_ACTOR_AUTHORIZATION_HEADER' crates` returns no production matches; `just check` |
+
+This slice removes the OpenAI hosted adapter path only. The shared search request
+types, generic `SearchClient`, hosted tool specification, and custom-provider
+standalone executor remain available.
+
 ### Persisted rollout and thread-history compatibility
 
 | Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |

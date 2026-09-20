@@ -42,14 +42,18 @@ impl From<&Config> for WebSearchExtensionConfig {
         let web_search_mode = config.web_search_mode.value();
         Self {
             // Core selects this executor per turn using the feature flag or model metadata.
-            available: (config.model_provider.is_openai()
-                || config.model_provider.uses_openai_actor_authorization()
-                || config.model_provider.supports_standalone_web_search)
-                && web_search_mode != WebSearchMode::Disabled,
+            available: standalone_web_search_available(&config.model_provider, web_search_mode),
             provider: config.model_provider.clone(),
             settings: search_settings(config, web_search_mode),
         }
     }
+}
+
+fn standalone_web_search_available(
+    provider: &ModelProviderInfo,
+    web_search_mode: WebSearchMode,
+) -> bool {
+    provider.supports_standalone_web_search && web_search_mode != WebSearchMode::Disabled
 }
 
 fn search_settings(config: &Config, web_search_mode: WebSearchMode) -> SearchSettings {
@@ -166,6 +170,7 @@ mod tests {
     use super::WebSearchExtensionConfig;
     use super::external_web_access_for_mode;
     use super::install;
+    use super::standalone_web_search_available;
     use crate::tool::RUN_TOOL_NAME;
     use crate::tool::WEB_NAMESPACE;
     use codex_api::ExternalWebAccess;
@@ -203,7 +208,10 @@ mod tests {
         let thread_store = ExtensionData::new("11111111-1111-4111-8111-111111111111");
         thread_store.insert(WebSearchExtensionConfig {
             available: true,
-            provider: ModelProviderInfo::create_openai_provider(/*base_url*/ None),
+            provider: ModelProviderInfo {
+                supports_standalone_web_search: true,
+                ..ModelProviderInfo::default()
+            },
             settings: Default::default(),
         });
 
@@ -218,5 +226,27 @@ mod tests {
             tool_names,
             vec![(ToolName::namespaced(WEB_NAMESPACE, RUN_TOOL_NAME), true)]
         );
+    }
+
+    #[test]
+    fn standalone_web_search_requires_provider_opt_in() {
+        assert!(!standalone_web_search_available(
+            &ModelProviderInfo::create_openai_provider(/*base_url*/ None),
+            WebSearchMode::Live,
+        ));
+        assert!(standalone_web_search_available(
+            &ModelProviderInfo {
+                supports_standalone_web_search: true,
+                ..ModelProviderInfo::default()
+            },
+            WebSearchMode::Live,
+        ));
+        assert!(!standalone_web_search_available(
+            &ModelProviderInfo {
+                supports_standalone_web_search: true,
+                ..ModelProviderInfo::default()
+            },
+            WebSearchMode::Disabled,
+        ));
     }
 }

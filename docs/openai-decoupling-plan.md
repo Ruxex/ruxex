@@ -98,7 +98,7 @@ Phase 1 で整理した候補から、依存元が少なく、代替や責務移
 
 ### Phase 3: 残存 integration の段階的な隔離・削除
 
-**進捗:** 進行中。`codex-cloud-config`、backend の user-settings による commit/PR attribution を担う `codex-git-attribution`、および remote-memory の backend rate-limit guard は削除済みである。workspace message、`/accounts/check` による workspace account routing、account usage/rate-limit 読み取り、リセット credit、workspace owner nudge、hosted analytics dashboard、backend turn-cost collection の API・UI・テスト到達経路を削除した。依存元がなくなったため、`codex-backend-client` と `codex-backend-openapi-models` も削除済みである。OpenAI Images adapter と専用 Images API endpoint、および Realtime voice capability の API・transport・protocol・履歴・core・app-server・TUI 到達経路も削除済みである。外部ユーザー0のpre-release forkであるため、引き続き `docs/pre-release-compatibility-inventory.md` の順序に従って保存データ、protocol、CLI/config、import、UI の旧互換層を棚卸しする。各候補は producer/consumer を確認して `remove`、`retain`、`migrate-in-place` を記録する。現行 runtime に必要な platform fallback、active client、security behavior、provider-neutral capability は個別根拠を記録して残す。web search、plugins、analytics/feedback adapter などの残存 capability は、互換性クリーンアップ後に小さな機能単位で隔離・削除する。
+**進捗:** 進行中。`codex-cloud-config`、backend の user-settings による commit/PR attribution を担う `codex-git-attribution`、および remote-memory の backend rate-limit guard は削除済みである。workspace message、`/accounts/check` による workspace account routing、account usage/rate-limit 読み取り、リセット credit、workspace owner nudge、hosted analytics dashboard、backend turn-cost collection の API・UI・テスト到達経路を削除した。依存元がなくなったため、`codex-backend-client` と `codex-backend-openapi-models` も削除済みである。OpenAI Images adapter、専用 Images API endpoint、Realtime voice capability の API・transport・protocol・履歴・core・app-server・TUI 到達経路、および OpenAI hosted web-search adapter の自動 `web.run` 到達経路も削除済みである。外部ユーザー0のpre-release forkであるため、`docs/pre-release-compatibility-inventory.md` の互換性棚卸しと producer/consumer 根拠の記録を継続する。現行 runtime に必要な platform fallback、active client、security behavior、provider-neutral capability は個別根拠を記録して残す。plugins、analytics/feedback adapter などの残存 capability は、小さな機能単位で隔離・削除する。
 
 **方針:** 全バイナリを起点にした Hawk の全面解析は、現時点では実行時間に対して得られる判断材料が少ないため後続へ延期する。まず依存グラフと参照検索を用いて、直接依存元が少ない hosted integration から削除可能な境界を作る。各変更では、対象クレートの公開 API と利用箇所を列挙し、OpenAI 固有の利用機能を一つだけ外す。依存元がなくなったクレートだけを削除し、汎用責務を含むクレートは先に provider-neutral な境界へ分離する。
 
@@ -106,7 +106,7 @@ Phase 1 で整理した候補から、依存元が少なく、代替や責務移
 
 1. `codex-cloud-config` の hosted policy source をローカル設定読み込みから切り離す。**完了**
 2. `codex-backend-client` の account/usage/workspace、remote memory、git attribution などを機能単位で外し、依存元がなくなった後に `codex-backend-openapi-models` とともに削除する。
-3. image generation の OpenAI adapter を削除済み。pre-release で外部互換性が不要なため、image-generation に限定せず、旧 rollout/protocol/config/CLI/import/UI 互換層を先に棚卸しして削除する。その後、web search、plugin marketplace、analytics、feedback を、共通の tool/event/diagnostic 処理を残して provider adapter 単位へ分離する。
+3. image generation の OpenAI adapter と、旧 rollout/protocol/config/CLI/import/UI 互換層を削除済み。その後、web search の OpenAI hosted adapter を削除し、plugin marketplace、analytics、feedback を、共通の tool/event/diagnostic 処理を残して provider adapter 単位へ分離する。
 4. Realtime voice capability を削除する。OpenAI Realtime の WebSocket / WebRTC call 契約、core の会話管理、app-server / TUI の voice UI・protocol・設定・履歴、および専用の `codex-realtime-webrtc` と `codex-voice-host` を削除した。通常のテキスト会話、汎用 audio utility、provider-neutral な media 処理は保持する。**完了**
 5. `codex-login`、`codex-agent-identity`、`codex-model-provider-info`、`codex-api` は、認証・provider registry・transport の汎用境界を設計できる段階まで保留する。
 

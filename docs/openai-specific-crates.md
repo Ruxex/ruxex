@@ -167,13 +167,18 @@ protocol slice として扱う。generic image input、local media、`view_image
 
 ### 10. `codex-web-search-extension`
 
+**進捗:** OpenAI provider と actor-authorized hosted request を自動的に
+`web.run` standalone executor へ流す経路を削除済み。`supports_standalone_web_search`
+を明示的に設定した custom provider の executor、共通の Search API 型、hosted
+`web_search` tool 定義は保持する。
+
 - **根拠:** OpenAI auth/actor authorization の hosted search を実装する一方、`supports_standalone_web_search` を持つ互換 provider も利用できる。
 - **機能:** search/open/find の tool、検索 event の history/output 変換、provider API 呼び出し。
 - **内部依存先:** `codex-api`、`codex-core`、`codex-extension-api`、`codex-extension-items`、`codex-login`、`codex-model-provider`、`codex-model-provider-info`、`codex-otel`、`codex-protocol`、`codex-tools`。
 - **依存元:** 直接は app-server と core、推移は 49 クレート。
 - **到達経路:** core/app-server の extension install、web search feature/model metadata、通常の model tool call。
 - **影響:** hosted/standalone web search の選択、OpenAI provider 判定、search event/tool schema、extension tests。専用 README はない。
-- **推奨:** **汎用化**。クレート自体は削除せず、OpenAI hosted search adapter と provider capability に基づく standalone executor を分離する。
+- **推奨:** **汎用化（OpenAI hosted 経路は削除済み）**。クレート自体は削除せず、OpenAI hosted search adapter と provider capability に基づく standalone executor を分離する。
 - **難易度・リスク:** 高。OpenAI 経路だけを除き、互換 provider の standalone search を維持する必要がある。
 
 ### 11. `codex-core-plugins`
@@ -286,7 +291,9 @@ Phase 2 で完了した削除と、Phase 3 で扱う後続候補を次の順序�
    - backend models/client、cloud config の利用機能を列挙して個別に外す。Level 1 Phase 3 で一括削除せずに進める。
 5. **Realtime voice capability の削除（完了）**
    - OpenAI Realtime API に依存する会話・WebRTC・音声 host・UI、protocol、履歴、専用設定を一つの実施単位で削除した。`codex-realtime-webrtc` と `codex-voice-host` も削除済みである。
-6. **共有クレートの provider 境界設計**
+6. **Web Search hosted adapter の削除（完了）**
+   - OpenAI provider と actor-authorized hosted request の自動 `web.run` 経路を削除し、明示的に opt-in した custom provider の standalone search と共通の hosted tool 定義を残した。
+7. **共有クレートの provider 境界設計**
    - image generation、web search、plugins、analytics、feedback、response debug、login、agent identity、model-provider-info、codex-api は後続の汎用化作業として扱う。
 
 Phase 2 の削除対象 1〜3 は完了した。4 以降は影響範囲または汎用責務が大きいため、Level 1 Phase 3 で capability ごとに到達経路を縮小してから扱う。
