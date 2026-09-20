@@ -360,7 +360,6 @@ pub(super) async fn start_app_server_for_session_command(
         cli_kv_overrides,
         loader_overrides,
         strict_config,
-        codex_feedback::CodexFeedback::new(),
         /*log_db*/ None,
         &mut state_db,
         environment_manager,

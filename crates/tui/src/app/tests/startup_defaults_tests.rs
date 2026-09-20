@@ -24,7 +24,6 @@ async fn run_startup_for_test(
         /*initial_prompt*/ None,
         Vec::new(),
         selection,
-        codex_feedback::CodexFeedback::new(),
         /*is_first_run*/ false,
         /*should_prompt_windows_sandbox_nux_at_startup*/ false,
         AppServerTarget::Embedded,

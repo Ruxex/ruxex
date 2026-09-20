@@ -1135,7 +1135,6 @@ mod tests {
             cli_overrides: Vec::new(),
             loader_overrides: Default::default(),
             strict_config: false,
-            feedback: codex_feedback::CodexFeedback::new(),
             log_db: None,
             state_db: None,
             environment_manager: Arc::new(

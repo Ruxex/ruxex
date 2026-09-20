@@ -472,7 +472,6 @@ impl App {
                 self.chat_widget.cyber_policy_notice.clone(),
             );
         }
-        self.feedback_audience = bootstrap.feedback_audience;
         self.chat_widget.add_info_message(
             "Reconnected. No input was resent. Review uncertain submissions before retrying; recovered queues remain paused.".into(), /*hint*/ None,
         );

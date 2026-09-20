@@ -196,16 +196,6 @@ fn render_debug_config_lines(
         ));
     }
 
-    if let Some(feedback) = requirements.feedback.as_ref()
-        && let Some(enabled) = feedback.value.enabled
-    {
-        requirement_lines.push(requirement_line(
-            "feedback.enabled",
-            enabled.to_string(),
-            Some(&feedback.source),
-        ));
-    }
-
     if let Some(sandbox_private_desktop) = requirements.windows_sandbox_private_desktop.as_ref() {
         requirement_lines.push(requirement_line(
             "windows.sandbox_private_desktop",
@@ -699,7 +689,6 @@ mod tests {
     use codex_config::WebSearchModeRequirement;
     use codex_config::WindowsRequirementsToml;
     use codex_config::sandbox_mode_requirement_for_permission_profile;
-    use codex_config::types::FeedbackConfigToml;
     use codex_protocol::config_types::ApprovalsReviewer;
     use codex_protocol::config_types::WebSearchMode;
     use codex_protocol::models::PermissionProfile;
@@ -859,12 +848,6 @@ interrupt_message = false
                 /*value*/ false,
                 RequirementSource::LegacyManagedConfigTomlFromMdm,
             )),
-            feedback: Some(Sourced::new(
-                FeedbackConfigToml {
-                    enabled: Some(false),
-                },
-                RequirementSource::LegacyManagedConfigTomlFromMdm,
-            )),
             windows_sandbox_private_desktop: Some(Sourced::new(
                 /*value*/ false,
                 RequirementSource::LegacyManagedConfigTomlFromMdm,
@@ -967,9 +950,6 @@ interrupt_message = false
             model_providers: None,
             check_for_update_on_startup: Some(false),
             allow_login_shell: Some(false),
-            feedback: Some(FeedbackConfigToml {
-                enabled: Some(false),
-            }),
             allowed_approval_policies: Some(vec![AskForApproval::OnRequest.to_core()]),
             allowed_approvals_reviewers: Some(vec![ApprovalsReviewer::AutoReview]),
             allowed_sandbox_modes: Some(vec![SandboxModeRequirement::ReadOnly]),

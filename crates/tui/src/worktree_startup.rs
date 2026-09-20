@@ -151,7 +151,6 @@ pub(super) async fn prepare(
             cli_overrides.clone(),
             loader_overrides.clone(),
             strict_config,
-            codex_feedback::CodexFeedback::new(),
             /*log_db*/ None,
             state,
             Arc::new(environment),

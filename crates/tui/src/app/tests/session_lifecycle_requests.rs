@@ -272,7 +272,6 @@ pub(super) async fn start_recording_app_server_with_realtime_speech(
         loader_overrides,
         /*strict_config*/ false,
         codex_config::CloudConfigBundleLoader::default(),
-        codex_feedback::CodexFeedback::new(),
         /*log_db*/ None,
         state_db,
         Arc::new(codex_exec_server::EnvironmentManager::default_for_tests()),

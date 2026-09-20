@@ -22,15 +22,6 @@ pub(super) enum ThreadBufferedEvent {
     Notification(Box<ServerNotification>),
     Request(Box<ServerRequest>),
     HistoryEntryResponse(HistoryLookupResponse),
-    FeedbackSubmission(FeedbackThreadEvent),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(super) struct FeedbackThreadEvent {
-    pub(super) category: FeedbackCategory,
-    pub(super) include_logs: bool,
-    pub(super) feedback_audience: FeedbackAudience,
-    pub(super) result: Result<String, String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -74,7 +65,7 @@ impl ThreadEventStore {
             return true;
         }
         match event {
-            ThreadBufferedEvent::Request(_) | ThreadBufferedEvent::FeedbackSubmission(_) => true,
+            ThreadBufferedEvent::Request(_) => true,
             ThreadBufferedEvent::Notification(notification) => matches!(
                 notification.as_ref(),
                 ServerNotification::HookStarted(_)
@@ -282,8 +273,7 @@ impl ThreadEventStore {
                 }
                 ThreadBufferedEvent::Request(_)
                 | ThreadBufferedEvent::Notification(_)
-                | ThreadBufferedEvent::HistoryEntryResponse(_)
-                | ThreadBufferedEvent::FeedbackSubmission(_) => None,
+                | ThreadBufferedEvent::HistoryEntryResponse(_) => None,
             })
             .collect()
     }
@@ -310,8 +300,7 @@ impl ThreadEventStore {
                         .pending_interactive_replay
                         .should_replay_snapshot_request(request.as_ref()),
                     ThreadBufferedEvent::Notification(_)
-                    | ThreadBufferedEvent::HistoryEntryResponse(_)
-                    | ThreadBufferedEvent::FeedbackSubmission(_) => true,
+                    | ThreadBufferedEvent::HistoryEntryResponse(_) => true,
                 })
                 .cloned()
                 .collect(),
