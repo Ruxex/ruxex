@@ -189,7 +189,6 @@ impl ReviewerRequest for PreparedReview {
             self.params.deadline,
         ))
         .await;
-        record_failed_review(&session.session, &self.params, &result.outcome).await;
         result
     }
 }

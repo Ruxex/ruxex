@@ -19,7 +19,6 @@ members = [
     "crates/app-server-test-client",
     "crates/apply-patch",
     "crates/arg0",
-    "crates/feedback",
     "crates/features",
     "crates/install-context",
     "crates/code-mode",
@@ -204,7 +203,6 @@ codex-history-notes-extension = { path = "crates/ext/history-notes" }
 codex-external-agent-migration = { path = "crates/external-agent-migration" }
 codex-experimental-api-macros = { path = "crates/codex-experimental-api-macros" }
 codex-features = { path = "crates/features" }
-codex-feedback = { path = "crates/feedback" }
 codex-install-context = { path = "crates/install-context" }
 codex-file-search = { path = "crates/file-search" }
 codex-file-watcher = { path = "crates/file-watcher" }
@@ -423,7 +421,6 @@ rustls-pki-types = "1.14.0"
 schemars = "0.8.22"
 seccompiler = "0.5.0"
 semver = "1.0"
-sentry = "0.46.0"
 serde = { version = "1", features = ["rc"] }
 serde_ignored = "0.1.14"
 serde_json = "1"

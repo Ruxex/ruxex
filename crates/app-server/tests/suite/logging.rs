@@ -21,7 +21,6 @@ use codex_app_server_protocol::TurnStartParams;
 use codex_app_server_protocol::TurnStartResponse;
 use codex_app_server_protocol::UserInput;
 use codex_features::Feature;
-use codex_state::LogQuery;
 use codex_state::SqliteConfig;
 use codex_state::StateRuntime;
 use codex_utils_absolute_path::test_support::PathExt;
@@ -49,7 +48,7 @@ use wiremock::matchers::path;
 const READ_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[tokio::test]
-async fn credentials_stay_out_of_persisted_and_feedback_logs() -> Result<()> {
+async fn credentials_stay_out_of_persisted_logs() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let bearer = "synthetic-provider-bearer";
@@ -214,11 +213,9 @@ supports_websockets = false
         "mock_provider".into(),
     )
     .await?;
-    let thread_ids = thread_ids.iter().map(String::as_str).collect::<Vec<_>>();
-    let feedback = timeout(Duration::from_secs(/*secs*/ 60), async {
+    let persisted = timeout(Duration::from_secs(/*secs*/ 60), async {
         loop {
-            let logs =
-                String::from_utf8(state.query_feedback_logs_for_threads(&thread_ids).await?)?;
+            let logs = format!("{:?}", state.query_logs(&codex_state::LogQuery::default()).await?);
             if logs.contains(barrier) {
                 break Ok::<_, anyhow::Error>(logs);
             }
@@ -226,24 +223,15 @@ supports_websockets = false
         }
     })
     .await??;
-    let persisted = format!("{:?}", state.query_logs(&LogQuery::default()).await?);
     state.close().await;
     // The HTTP assertions above prove the credentials were used. The barrier
     // confirms earlier queued logs were persisted before we check for leaks.
-    for (sink, logs) in [("SQLite", persisted), ("feedback", feedback)] {
-        anyhow::ensure!(logs.contains(barrier), "missing log barrier in {sink} logs");
-        for secret in [
-            bearer,
-            header,
-            &initial_token,
-            &refreshed_token,
-            attestation,
-        ] {
-            anyhow::ensure!(
-                !logs.contains(secret),
-                "credential leaked into {sink} logs: {secret}"
-            );
-        }
+    anyhow::ensure!(persisted.contains(barrier), "missing log barrier in SQLite logs");
+    for secret in [bearer, header, &initial_token, &refreshed_token, attestation] {
+        anyhow::ensure!(
+            !persisted.contains(secret),
+            "credential leaked into SQLite logs: {secret}"
+        );
     }
     Ok(())
 }

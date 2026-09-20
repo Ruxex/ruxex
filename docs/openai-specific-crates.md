@@ -47,7 +47,7 @@
 | 10 | `codex-web-search-extension` | 2 / 49 | OpenAI web search と互換 provider が混在 | 汎用化 | 高 | hosted/standalone の二経路を分ける必要がある |
 | 11 | `codex-core-plugins` | 7 / 49 | 汎用 plugin 管理と OpenAI marketplace が混在 | 汎用化 | 高 | local plugin と third-party marketplace を維持する必要がある |
 | 12 | `codex-analytics` | 10 / 49 | 汎用収集と OpenAI backend 送信が混在 | 汎用化 | 高 | 多数の拡張機能と core に波及 |
-| 13 | `codex-feedback` | 7 / 54 | 汎用診断収集と OpenAI/Sentry 送信が混在 | 汎用化 | 高 | ログ layer、app-server API、TUI に波及 |
+| 13 | `codex-feedback` | 7 / 54 | OpenAI/Sentry 向けフィードバック送信 | 削除済み | 高 | ログ layer、app-server API、TUI に波及した |
 | 14 | `codex-response-debug-context` | 2 / 54 | 汎用デバッグ情報と OpenAI header が混在 | 汎用化 | 中 | model error の診断情報欠落 |
 | 15 | `codex-login` | 26 / 56 | ChatGPT OAuth と汎用 credential 管理が混在 | 汎用化 | 非常に高 | ほぼ全エントリーポイントの認証に波及 |
 | 16 | `codex-agent-identity` | 3 / 57 | ChatGPT issuer/JWKS と agent identity が一体 | 汎用化 | 高 | login、model provider、cloud config の認証境界 |
@@ -66,7 +66,7 @@
 | Web Search | standalone search を実行できる互換 provider の経路 | OpenAI hosted search を削除する。共通 tool と standalone executor は残す。 |
 | Realtime voice | なし（削除済み） | Realtime API adapter に限らず、`codex-realtime-webrtc`、`codex-voice-host`、voice UI、Realtime 履歴を含む capability 全体を削除した。通常のテキスト会話、汎用 audio utility、provider-neutral な media 処理は保持する。 |
 | `codex-core-plugins` | local / third-party plugin の load と管理 | OpenAI curated marketplace と ChatGPT remote service だけを削除する。 |
-| `codex-analytics`、`codex-feedback` | local event/reducer、diagnostic bundle | OpenAI/ChatGPT backend sink とそれに専用の metadata を削除する。 |
+| `codex-analytics` | local event/reducer、diagnostic bundle | OpenAI/ChatGPT backend sink とそれに専用の metadata を削除する。 |
 | `codex-response-debug-context` | 標準 HTTP/API の診断情報 | OpenAI 固有 header・URL の extractor を削除する。 |
 | `codex-login`、`codex-agent-identity` | credential storage、鍵・署名 primitive、他 provider の auth | ChatGPT/OpenAI login、issuer/JWKS policy、専用 token flow を隔離後に削除する。 |
 | `codex-model-provider-info`、`codex-api` | provider registry、互換 provider transport、共通 HTTP client | OpenAI built-in 定義と OpenAI wire adapter を隔離後に削除する。 |
@@ -207,14 +207,9 @@ protocol slice として扱う。generic image input、local media、`view_image
 
 ### 13. `codex-feedback`
 
-- **根拠:** ログ・rollout・診断情報の収集は汎用だが、OpenAI の auth metadata と Sentry/backend upload が一体化している。
-- **機能:** tracing layer、snapshot、attachment 圧縮、feedback upload、retry。
-- **内部依存先:** `codex-http-client`、`codex-login`、`codex-protocol`、`codex-rollout`。
-- **依存元:** 直接 7、推移 54。app-server、client、core、exec、guardian、model provider、TUI が利用する。
-- **到達経路:** app-server の `feedback/upload`、TUI/exec の feedback UI・logging 初期化。
-- **影響:** `feedback.enabled`、Sentry、ChatGPT account metadata、doctor report、attachment、関連 API/テスト。専用 README はない。
-- **推奨:** **汎用化**。診断 bundle 作成と upload transport を分割し、OpenAI sink を optional integration として隔離する。
-- **難易度・リスク:** 高。tracing subscriber の組み立てに関与するため、単純な dependency 削除では起動経路が壊れる。
+- **進捗:** 削除済み。フィードバック設定、app-server の upload API、TUI/exec の UI・起動経路、Guardian の失敗レビュー保持、専用 telemetry、Sentry/backend upload、専用クレートと依存宣言を削除した。
+- **保持:** provider-neutral な SQLite ログ保存、通常の tracing/analytics、Guardian のレビュー判定、hook の `Feedback` 出力など、別の現行 capability は保持している。
+- **検証:** `cargo check -p codex-core -p codex-state -p codex-guardian-reviewer -p codex-model-provider -p codex-exec -p codex-app-server -p codex-tui`。
 
 ### 14. `codex-response-debug-context`
 
@@ -296,7 +291,7 @@ Phase 2 で完了した削除と、Phase 3 で扱う後続候補を次の順序�
 6. **Web Search hosted adapter の削除（完了）**
    - OpenAI provider と actor-authorized hosted request の自動 `web.run` 経路を削除し、明示的に opt-in した custom provider の standalone search と共通の hosted tool 定義を残した。
 7. **共有クレートの provider 境界設計**
-   - image generation、web search、plugins、feedback、response debug、login、agent identity、model-provider-info、codex-api は後続の汎用化作業として扱う。analytics hosted sink は削除済みである。
+   - image generation、web search、plugins、response debug、login、agent identity、model-provider-info、codex-api は後続の汎用化作業として扱う。analytics hosted sink と feedback capability は削除済みである。
 8. **`codex-analytics` hosted sink の削除（完了）**
    - OpenAI/ChatGPT endpoint への analytics 送信と auth/provider adapter を削除し、event/fact/reducer と debug capture を残した。
 
