@@ -1164,17 +1164,6 @@ impl App {
             AppEvent::OpenPluginsList { cwd, response } => {
                 self.chat_widget.open_plugins_list(cwd, response);
             }
-            AppEvent::PluginRemoteSectionsLoaded {
-                cwd,
-                marketplaces,
-                section_errors,
-            } => {
-                self.chat_widget.on_plugin_remote_sections_loaded(
-                    cwd,
-                    marketplaces,
-                    section_errors,
-                );
-            }
             AppEvent::HooksLoaded { cwd, result } => {
                 self.chat_widget.on_hooks_loaded(cwd, result);
             }
@@ -1298,14 +1287,12 @@ impl App {
                 {
                     self.fetch_plugins_list(app_server, cwd.clone());
                     if should_refresh_plugin_detail {
-                        let (marketplace_path, remote_marketplace_name) =
-                            location.into_request_params();
+                        let marketplace_path = location.into_request_params();
                         self.fetch_plugin_detail(
                             app_server,
                             cwd,
                             PluginReadParams {
                                 marketplace_path,
-                                remote_marketplace_name,
                                 plugin_name,
                             },
                         );

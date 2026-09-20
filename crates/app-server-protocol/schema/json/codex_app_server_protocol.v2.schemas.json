@@ -2666,150 +2666,6 @@
             },
             "method": {
               "enum": [
-                "plugin/skill/read"
-              ],
-              "title": "Plugin/skill/readRequestMethod",
-              "type": "string"
-            },
-            "params": {
-              "$ref": "#/definitions/PluginSkillReadParams"
-            }
-          },
-          "required": [
-            "id",
-            "method",
-            "params"
-          ],
-          "title": "Plugin/skill/readRequest",
-          "type": "object"
-        },
-        {
-          "properties": {
-            "id": {
-              "$ref": "#/definitions/RequestId"
-            },
-            "method": {
-              "enum": [
-                "plugin/share/save"
-              ],
-              "title": "Plugin/share/saveRequestMethod",
-              "type": "string"
-            },
-            "params": {
-              "$ref": "#/definitions/PluginShareSaveParams"
-            }
-          },
-          "required": [
-            "id",
-            "method",
-            "params"
-          ],
-          "title": "Plugin/share/saveRequest",
-          "type": "object"
-        },
-        {
-          "properties": {
-            "id": {
-              "$ref": "#/definitions/RequestId"
-            },
-            "method": {
-              "enum": [
-                "plugin/share/updateTargets"
-              ],
-              "title": "Plugin/share/updateTargetsRequestMethod",
-              "type": "string"
-            },
-            "params": {
-              "$ref": "#/definitions/PluginShareUpdateTargetsParams"
-            }
-          },
-          "required": [
-            "id",
-            "method",
-            "params"
-          ],
-          "title": "Plugin/share/updateTargetsRequest",
-          "type": "object"
-        },
-        {
-          "properties": {
-            "id": {
-              "$ref": "#/definitions/RequestId"
-            },
-            "method": {
-              "enum": [
-                "plugin/share/list"
-              ],
-              "title": "Plugin/share/listRequestMethod",
-              "type": "string"
-            },
-            "params": {
-              "$ref": "#/definitions/PluginShareListParams"
-            }
-          },
-          "required": [
-            "id",
-            "method",
-            "params"
-          ],
-          "title": "Plugin/share/listRequest",
-          "type": "object"
-        },
-        {
-          "properties": {
-            "id": {
-              "$ref": "#/definitions/RequestId"
-            },
-            "method": {
-              "enum": [
-                "plugin/share/checkout"
-              ],
-              "title": "Plugin/share/checkoutRequestMethod",
-              "type": "string"
-            },
-            "params": {
-              "$ref": "#/definitions/PluginShareCheckoutParams"
-            }
-          },
-          "required": [
-            "id",
-            "method",
-            "params"
-          ],
-          "title": "Plugin/share/checkoutRequest",
-          "type": "object"
-        },
-        {
-          "properties": {
-            "id": {
-              "$ref": "#/definitions/RequestId"
-            },
-            "method": {
-              "enum": [
-                "plugin/share/delete"
-              ],
-              "title": "Plugin/share/deleteRequestMethod",
-              "type": "string"
-            },
-            "params": {
-              "$ref": "#/definitions/PluginShareDeleteParams"
-            }
-          },
-          "required": [
-            "id",
-            "method",
-            "params"
-          ],
-          "title": "Plugin/share/deleteRequest",
-          "type": "object"
-        },
-        {
-          "properties": {
-            "id": {
-              "$ref": "#/definitions/RequestId"
-            },
-            "method": {
-              "enum": [
                 "app/read"
               ],
               "title": "App/readRequestMethod",
@@ -11591,12 +11447,6 @@
             "null"
           ]
         },
-        "shareUrl": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "skills": {
           "items": {
             "$ref": "#/definitions/SkillSummary"
@@ -11618,15 +11468,6 @@
       ],
       "type": "object"
     },
-    "PluginDisabledReason": {
-      "enum": [
-        "disabled_by_admin",
-        "plan_not_eligible",
-        "required_app_unavailable",
-        "unknown"
-      ],
-      "type": "string"
-    },
     "PluginHookSummary": {
       "properties": {
         "eventName": {
@@ -11645,13 +11486,6 @@
     "PluginInstallParams": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
-        "installAttemptId": {
-          "description": "Client-generated identifier used to correlate one installation attempt.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "marketplacePath": {
           "anyOf": [
             {
@@ -11664,12 +11498,6 @@
         },
         "pluginName": {
           "type": "string"
-        },
-        "remoteMarketplaceName": {
-          "type": [
-            "string",
-            "null"
-          ]
         }
       },
       "required": [
@@ -11914,10 +11742,7 @@
     "PluginListMarketplaceKind": {
       "enum": [
         "local",
-        "vertical",
-        "workspace-directory",
-        "shared-with-me",
-        "created-by-me-remote"
+        "vertical"
       ],
       "type": "string"
     },
@@ -11934,12 +11759,8 @@
             "null"
           ]
         },
-        "forceRefetch": {
-          "description": "Whether the client requests a fresh remote plugin catalog fetch.",
-          "type": "boolean"
-        },
         "marketplaceKinds": {
-          "description": "Optional marketplace kind filter. When omitted, only local marketplaces are queried, plus the default remote catalog when enabled by feature flag.",
+          "description": "Optional marketplace kind filter.",
           "items": {
             "$ref": "#/definitions/PluginListMarketplaceKind"
           },
@@ -11955,13 +11776,6 @@
     "PluginListResponse": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
-        "featuredPluginIds": {
-          "default": [],
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
         "marketplaceLoadErrors": {
           "default": [],
           "items": {
@@ -12036,12 +11850,6 @@
         },
         "pluginName": {
           "type": "string"
-        },
-        "remoteMarketplaceName": {
-          "type": [
-            "string",
-            "null"
-          ]
         }
       },
       "required": [
@@ -12117,26 +11925,10 @@
             "$ref": "#/definitions/PluginReconcileChangedPlugin"
           },
           "type": "array"
-        },
-        "failedMaterializationRemotePluginIds": {
-          "description": "Subset of failures for which the requested bundle could not be materialized. A previously cached version may still be available.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "failedRemotePluginIds": {
-          "description": "Backend remote plugin IDs whose bundle or identity update failed.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
         }
       },
       "required": [
-        "changedPlugins",
-        "failedMaterializationRemotePluginIds",
-        "failedRemotePluginIds"
+        "changedPlugins"
       ],
       "title": "PluginReconcileResponse",
       "type": "object"
@@ -12173,402 +11965,6 @@
         "personal"
       ],
       "type": "string"
-    },
-    "PluginShareCheckoutParams": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "remotePluginId": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "remotePluginId"
-      ],
-      "title": "PluginShareCheckoutParams",
-      "type": "object"
-    },
-    "PluginShareCheckoutResponse": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "marketplaceName": {
-          "type": "string"
-        },
-        "marketplacePath": {
-          "$ref": "#/definitions/AbsolutePathBuf"
-        },
-        "pluginId": {
-          "type": "string"
-        },
-        "pluginName": {
-          "type": "string"
-        },
-        "pluginPath": {
-          "$ref": "#/definitions/AbsolutePathBuf"
-        },
-        "remotePluginId": {
-          "type": "string"
-        },
-        "remoteVersion": {
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "marketplaceName",
-        "marketplacePath",
-        "pluginId",
-        "pluginName",
-        "pluginPath",
-        "remotePluginId"
-      ],
-      "title": "PluginShareCheckoutResponse",
-      "type": "object"
-    },
-    "PluginShareContext": {
-      "properties": {
-        "canPublishToWorkspace": {
-          "default": null,
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "creatorAccountUserId": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "creatorName": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "discoverability": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/PluginShareDiscoverability"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "remotePluginId": {
-          "type": "string"
-        },
-        "remoteVersion": {
-          "default": null,
-          "description": "Version of the remote shared plugin release when available.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "sharePrincipals": {
-          "items": {
-            "$ref": "#/definitions/PluginSharePrincipal"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "shareUrl": {
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "remotePluginId"
-      ],
-      "type": "object"
-    },
-    "PluginShareDeleteParams": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "remotePluginId": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "remotePluginId"
-      ],
-      "title": "PluginShareDeleteParams",
-      "type": "object"
-    },
-    "PluginShareDeleteResponse": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "PluginShareDeleteResponse",
-      "type": "object"
-    },
-    "PluginShareDiscoverability": {
-      "enum": [
-        "LISTED",
-        "UNLISTED",
-        "PRIVATE"
-      ],
-      "type": "string"
-    },
-    "PluginShareListItem": {
-      "properties": {
-        "localPluginPath": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/AbsolutePathBuf"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "plugin": {
-          "$ref": "#/definitions/PluginSummary"
-        }
-      },
-      "required": [
-        "plugin"
-      ],
-      "type": "object"
-    },
-    "PluginShareListParams": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "PluginShareListParams",
-      "type": "object"
-    },
-    "PluginShareListResponse": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "data": {
-          "items": {
-            "$ref": "#/definitions/PluginShareListItem"
-          },
-          "type": "array"
-        }
-      },
-      "required": [
-        "data"
-      ],
-      "title": "PluginShareListResponse",
-      "type": "object"
-    },
-    "PluginSharePrincipal": {
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "principalId": {
-          "type": "string"
-        },
-        "principalType": {
-          "$ref": "#/definitions/PluginSharePrincipalType"
-        },
-        "role": {
-          "$ref": "#/definitions/PluginSharePrincipalRole"
-        }
-      },
-      "required": [
-        "name",
-        "principalId",
-        "principalType",
-        "role"
-      ],
-      "type": "object"
-    },
-    "PluginSharePrincipalRole": {
-      "enum": [
-        "reader",
-        "editor",
-        "owner"
-      ],
-      "type": "string"
-    },
-    "PluginSharePrincipalType": {
-      "enum": [
-        "user",
-        "group",
-        "workspace"
-      ],
-      "type": "string"
-    },
-    "PluginShareSaveParams": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "discoverability": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/PluginShareDiscoverability"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "pluginPath": {
-          "$ref": "#/definitions/AbsolutePathBuf"
-        },
-        "remotePluginId": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "shareTargets": {
-          "items": {
-            "$ref": "#/definitions/PluginShareTarget"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "pluginPath"
-      ],
-      "title": "PluginShareSaveParams",
-      "type": "object"
-    },
-    "PluginShareSaveResponse": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "canPublishToWorkspace": {
-          "default": null,
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "remotePluginId": {
-          "type": "string"
-        },
-        "shareUrl": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "remotePluginId",
-        "shareUrl"
-      ],
-      "title": "PluginShareSaveResponse",
-      "type": "object"
-    },
-    "PluginShareTarget": {
-      "properties": {
-        "principalId": {
-          "type": "string"
-        },
-        "principalType": {
-          "$ref": "#/definitions/PluginSharePrincipalType"
-        },
-        "role": {
-          "$ref": "#/definitions/PluginShareTargetRole"
-        }
-      },
-      "required": [
-        "principalId",
-        "principalType",
-        "role"
-      ],
-      "type": "object"
-    },
-    "PluginShareTargetRole": {
-      "enum": [
-        "reader",
-        "editor"
-      ],
-      "type": "string"
-    },
-    "PluginShareUpdateDiscoverability": {
-      "enum": [
-        "UNLISTED",
-        "PRIVATE",
-        "LISTED"
-      ],
-      "type": "string"
-    },
-    "PluginShareUpdateTargetsParams": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "discoverability": {
-          "$ref": "#/definitions/PluginShareUpdateDiscoverability"
-        },
-        "remotePluginId": {
-          "type": "string"
-        },
-        "shareTargets": {
-          "items": {
-            "$ref": "#/definitions/PluginShareTarget"
-          },
-          "type": "array"
-        }
-      },
-      "required": [
-        "discoverability",
-        "remotePluginId",
-        "shareTargets"
-      ],
-      "title": "PluginShareUpdateTargetsParams",
-      "type": "object"
-    },
-    "PluginShareUpdateTargetsResponse": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "discoverability": {
-          "$ref": "#/definitions/PluginShareDiscoverability"
-        },
-        "principals": {
-          "items": {
-            "$ref": "#/definitions/PluginSharePrincipal"
-          },
-          "type": "array"
-        }
-      },
-      "required": [
-        "discoverability",
-        "principals"
-      ],
-      "title": "PluginShareUpdateTargetsResponse",
-      "type": "object"
-    },
-    "PluginSkillReadParams": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "remoteMarketplaceName": {
-          "type": "string"
-        },
-        "remotePluginId": {
-          "type": "string"
-        },
-        "skillName": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "remoteMarketplaceName",
-        "remotePluginId",
-        "skillName"
-      ],
-      "title": "PluginSkillReadParams",
-      "type": "object"
-    },
-    "PluginSkillReadResponse": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "contents": {
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "title": "PluginSkillReadResponse",
-      "type": "object"
     },
     "PluginSource": {
       "oneOf": [
@@ -12663,23 +12059,6 @@
           ],
           "title": "NpmPluginSource",
           "type": "object"
-        },
-        {
-          "description": "The plugin is available in the remote catalog. Download metadata is kept server-side and is not exposed through the app-server API.",
-          "properties": {
-            "type": {
-              "enum": [
-                "remote"
-              ],
-              "title": "RemotePluginSourceType",
-              "type": "string"
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "title": "RemotePluginSource",
-          "type": "object"
         }
       ]
     },
@@ -12696,29 +12075,6 @@
           ],
           "default": "AVAILABLE",
           "description": "Availability state for installing and using the plugin."
-        },
-        "disabledReason": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/PluginDisabledReason"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Why the remote plugin is unavailable, when provided by plugin-service."
-        },
-        "eligiblePlanTypes": {
-          "default": null,
-          "description": "Raw plugin-service plan identifiers eligible to install the plugin.",
-          "items": {
-            "type": "string"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
         },
         "enabled": {
           "type": "boolean"
@@ -12741,15 +12097,6 @@
         },
         "installed": {
           "type": "boolean"
-        },
-        "installedAt": {
-          "default": null,
-          "description": "Unix timestamp in seconds when the remote plugin was installed, when available.",
-          "format": "int64",
-          "type": [
-            "integer",
-            "null"
-          ]
         },
         "interface": {
           "anyOf": [
@@ -12786,34 +12133,8 @@
         "name": {
           "type": "string"
         },
-        "remotePluginId": {
-          "description": "Backend remote plugin identifier when available.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "shareContext": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/PluginShareContext"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Remote sharing context associated with this plugin when available."
-        },
         "source": {
           "$ref": "#/definitions/PluginSource"
-        },
-        "version": {
-          "default": null,
-          "description": "Version advertised by the remote marketplace backend when available.",
-          "type": [
-            "string",
-            "null"
-          ]
         }
       },
       "required": [

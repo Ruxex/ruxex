@@ -6,8 +6,6 @@ use crate::marketplace_policy::primary_runtime_marketplace_root;
 use crate::plugin_metrics::PluginMetricsOperation;
 use crate::plugin_metrics::ResolvedPluginMetricsOperation;
 use crate::plugin_metrics::load_plugin_metrics_operations;
-use crate::remote::REMOTE_GLOBAL_MARKETPLACE_NAME;
-use crate::store::DEFAULT_PLUGIN_VERSION;
 use crate::store::PluginStore;
 use crate::store::plugin_version_for_source;
 use codex_exec_server::ExecutorFileSystem;
@@ -50,8 +48,7 @@ impl PluginCommandAttribution {
 }
 
 /// Active first-party roots eligible for command attribution.
-/// Trusted means bundled runtime code or a server-installed global remote
-/// plugin cache entry, not a local override.
+/// Trusted means bundled runtime code, not a local override.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct TrustedPluginRoots {
     roots: Vec<TrustedPluginRoot>,
@@ -99,15 +96,6 @@ impl TrustedPluginRoots {
         primary_runtime_marketplace_root: Option<&Path>,
     ) -> Option<AbsolutePathBuf> {
         match plugin_id.marketplace_name.as_str() {
-            REMOTE_GLOBAL_MARKETPLACE_NAME => {
-                let active_version = store.active_plugin_version(plugin_id)?;
-                if active_version == DEFAULT_PLUGIN_VERSION
-                    || store.remote_plugin_id(plugin_id).ok().flatten().is_none()
-                {
-                    return None;
-                }
-                Some(store.plugin_root(plugin_id, &active_version))
-            }
             OPENAI_PRIMARY_RUNTIME_MARKETPLACE_NAME => {
                 let marketplace_root = primary_runtime_marketplace_root?;
                 let expected_source_root = AbsolutePathBuf::from_absolute_path_checked(

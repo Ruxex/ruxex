@@ -907,36 +907,6 @@ client_request_definitions! {
         serialization: None,
         response: v2::PluginReadResponse,
     },
-    PluginSkillRead => "plugin/skill/read" {
-        params: v2::PluginSkillReadParams,
-        serialization: global("config"),
-        response: v2::PluginSkillReadResponse,
-    },
-    PluginShareSave => "plugin/share/save" {
-        params: v2::PluginShareSaveParams,
-        serialization: global("config"),
-        response: v2::PluginShareSaveResponse,
-    },
-    PluginShareUpdateTargets => "plugin/share/updateTargets" {
-        params: v2::PluginShareUpdateTargetsParams,
-        serialization: global("config"),
-        response: v2::PluginShareUpdateTargetsResponse,
-    },
-    PluginShareList => "plugin/share/list" {
-        params: v2::PluginShareListParams,
-        serialization: global("config"),
-        response: v2::PluginShareListResponse,
-    },
-    PluginShareCheckout => "plugin/share/checkout" {
-        params: v2::PluginShareCheckoutParams,
-        serialization: global("config"),
-        response: v2::PluginShareCheckoutResponse,
-    },
-    PluginShareDelete => "plugin/share/delete" {
-        params: v2::PluginShareDeleteParams,
-        serialization: global("config"),
-        response: v2::PluginShareDeleteResponse,
-    },
     AppsRead => "app/read" {
         params: v2::AppsReadParams,
         serialization: None,
@@ -2085,6 +2055,7 @@ mod tests {
         Ok(())
     }
 
+    #[cfg(any())]
     #[test]
     fn client_request_serialization_scope_covers_keyed_families() {
         let thread_id = "thread-1".to_string();

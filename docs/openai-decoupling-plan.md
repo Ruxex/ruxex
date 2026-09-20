@@ -118,7 +118,7 @@ Phase 1 で整理した候補から、依存元が少なく、代替や責務移
 3. image generation、web search、analytics hosted sink、OpenAI curated plugin startup sync/cache、feedback の各 capability を整理する。OpenAI 固有部分を削除し、provider-neutral なログ、tool、plugin、media 表現を保持する。**完了**
 4. Realtime voice capability を削除する。OpenAI Realtime の WebSocket / WebRTC call 契約、core の会話管理、app-server / TUI の voice UI・protocol・設定・履歴、および専用の `codex-realtime-webrtc` と `codex-voice-host` を削除した。通常のテキスト会話、汎用 audio utility、provider-neutral な media 処理は保持する。**完了**
 5. ChatGPT Remote Control capability を削除する。transport、app-server protocol、daemon、CLI、state persistence、設定、ドキュメントを一単位として扱う。**完了**
-6. Hosted Plugin Marketplace / Sharing / Runtime を削除する。`codex-core-plugins` は remote service 部分だけを外し、local/bundled/Git/npm plugin foundation は保持する。
+6. Hosted Plugin Marketplace / Sharing / Runtime を削除する。`codex-core-plugins` の remote service、hosted search/share/install RPC、CLI/TUI hosted paths、remote analytics smoke client、protocol/schema surface を削除し、local/bundled/Git/npm plugin foundation は保持する。**完了（working tree）**
 7. ChatGPT Apps / Connectors / host-owned Apps MCP を削除する。`codex-connectors` と専用 extension の依存元・汎用 MCP 利用を監査し、不要になったクレートは同じ単位で削除する。
 8. ChatGPT 認証と Agent Identity を削除する。`codex-agent-identity` は全体削除を先に検証し、`codex-login` は ChatGPT 専用 branch と protocol/UI だけを外して汎用 credential 経路を残す。
 9. 上記を反映した依存グラフを再生成し、`codex-model-provider-info`、`codex-api`、`codex-http-client`、`codex-mcp` の OpenAI adapter と provider-neutral な共有部分を再評価する。

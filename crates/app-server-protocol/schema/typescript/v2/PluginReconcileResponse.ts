@@ -14,13 +14,4 @@ export type PluginReconcileResponse = {
  * Installed-state changes compare against the previous cached snapshot, including
  * cached reinstalls. Removal hints survive cache cleanup failures; unchanged plugins are omitted.
  */
-changedPlugins: Array<PluginReconcileChangedPlugin>,
-/**
- * Backend remote plugin IDs whose bundle or identity update failed.
- */
-failedRemotePluginIds: Array<string>,
-/**
- * Subset of failures for which the requested bundle could not be materialized.
- * A previously cached version may still be available.
- */
-failedMaterializationRemotePluginIds: Array<string>, };
+changedPlugins: Array<PluginReconcileChangedPlugin>, };

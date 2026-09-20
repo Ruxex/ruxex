@@ -203,12 +203,6 @@
             "null"
           ]
         },
-        "shareUrl": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "skills": {
           "items": {
             "$ref": "#/definitions/SkillSummary"
@@ -229,15 +223,6 @@
         "summary"
       ],
       "type": "object"
-    },
-    "PluginDisabledReason": {
-      "enum": [
-        "disabled_by_admin",
-        "plan_not_eligible",
-        "required_app_unavailable",
-        "unknown"
-      ],
-      "type": "string"
     },
     "PluginHookSummary": {
       "properties": {
@@ -417,116 +402,6 @@
       ],
       "type": "object"
     },
-    "PluginShareContext": {
-      "properties": {
-        "canPublishToWorkspace": {
-          "default": null,
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "creatorAccountUserId": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "creatorName": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "discoverability": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/PluginShareDiscoverability"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "remotePluginId": {
-          "type": "string"
-        },
-        "remoteVersion": {
-          "default": null,
-          "description": "Version of the remote shared plugin release when available.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "sharePrincipals": {
-          "items": {
-            "$ref": "#/definitions/PluginSharePrincipal"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "shareUrl": {
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "remotePluginId"
-      ],
-      "type": "object"
-    },
-    "PluginShareDiscoverability": {
-      "enum": [
-        "LISTED",
-        "UNLISTED",
-        "PRIVATE"
-      ],
-      "type": "string"
-    },
-    "PluginSharePrincipal": {
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "principalId": {
-          "type": "string"
-        },
-        "principalType": {
-          "$ref": "#/definitions/PluginSharePrincipalType"
-        },
-        "role": {
-          "$ref": "#/definitions/PluginSharePrincipalRole"
-        }
-      },
-      "required": [
-        "name",
-        "principalId",
-        "principalType",
-        "role"
-      ],
-      "type": "object"
-    },
-    "PluginSharePrincipalRole": {
-      "enum": [
-        "reader",
-        "editor",
-        "owner"
-      ],
-      "type": "string"
-    },
-    "PluginSharePrincipalType": {
-      "enum": [
-        "user",
-        "group",
-        "workspace"
-      ],
-      "type": "string"
-    },
     "PluginSource": {
       "oneOf": [
         {
@@ -620,23 +495,6 @@
           ],
           "title": "NpmPluginSource",
           "type": "object"
-        },
-        {
-          "description": "The plugin is available in the remote catalog. Download metadata is kept server-side and is not exposed through the app-server API.",
-          "properties": {
-            "type": {
-              "enum": [
-                "remote"
-              ],
-              "title": "RemotePluginSourceType",
-              "type": "string"
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "title": "RemotePluginSource",
-          "type": "object"
         }
       ]
     },
@@ -653,29 +511,6 @@
           ],
           "default": "AVAILABLE",
           "description": "Availability state for installing and using the plugin."
-        },
-        "disabledReason": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/PluginDisabledReason"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Why the remote plugin is unavailable, when provided by plugin-service."
-        },
-        "eligiblePlanTypes": {
-          "default": null,
-          "description": "Raw plugin-service plan identifiers eligible to install the plugin.",
-          "items": {
-            "type": "string"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
         },
         "enabled": {
           "type": "boolean"
@@ -698,15 +533,6 @@
         },
         "installed": {
           "type": "boolean"
-        },
-        "installedAt": {
-          "default": null,
-          "description": "Unix timestamp in seconds when the remote plugin was installed, when available.",
-          "format": "int64",
-          "type": [
-            "integer",
-            "null"
-          ]
         },
         "interface": {
           "anyOf": [
@@ -743,34 +569,8 @@
         "name": {
           "type": "string"
         },
-        "remotePluginId": {
-          "description": "Backend remote plugin identifier when available.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "shareContext": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/PluginShareContext"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Remote sharing context associated with this plugin when available."
-        },
         "source": {
           "$ref": "#/definitions/PluginSource"
-        },
-        "version": {
-          "default": null,
-          "description": "Version advertised by the remote marketplace backend when available.",
-          "type": [
-            "string",
-            "null"
-          ]
         }
       },
       "required": [

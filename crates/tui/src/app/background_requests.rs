@@ -108,31 +108,14 @@ impl App {
         self.chat_widget.on_plugins_list_fetch_started(cwd.clone());
         let request_handle = app_server.request_handle();
         let app_event_tx = self.app_event_tx.clone();
-        let plugin_sharing_enabled = self.config.features.enabled(Feature::PluginSharing);
-        let remote_plugin_enabled = self.config.features.enabled(Feature::RemotePlugin);
         tokio::spawn(async move {
             let result = fetch_plugins_list(request_handle.clone(), cwd.clone())
                 .await
                 .map_err(|err| err.to_string());
-            let should_fetch_additional_remote_sections = result.is_ok();
             app_event_tx.send(AppEvent::PluginsLoaded {
                 cwd: cwd.clone(),
                 result,
             });
-            if should_fetch_additional_remote_sections {
-                let (marketplaces, section_errors) = fetch_additional_plugin_remote_sections(
-                    request_handle,
-                    cwd.clone(),
-                    plugin_sharing_enabled,
-                    remote_plugin_enabled,
-                )
-                .await;
-                app_event_tx.send(AppEvent::PluginRemoteSectionsLoaded {
-                    cwd,
-                    marketplaces,
-                    section_errors,
-                });
-            }
         });
     }
 
@@ -563,113 +546,6 @@ pub(super) async fn fetch_plugins_list(
     Ok(response)
 }
 
-pub(super) async fn fetch_additional_plugin_remote_sections(
-    request_handle: AppServerRequestHandle,
-    cwd: PathBuf,
-    plugin_sharing_enabled: bool,
-    remote_plugin_enabled: bool,
-) -> (Vec<PluginMarketplaceEntry>, Vec<PluginRemoteSectionError>) {
-    let mut marketplaces = Vec::new();
-    let mut section_errors = Vec::new();
-    let mut sections = Vec::new();
-    if !remote_plugin_enabled {
-        sections.push((
-            "vertical",
-            "OpenAI Curated",
-            vec![PluginListMarketplaceKind::Vertical],
-        ));
-    }
-    sections.push((
-        "workspace",
-        "Workspace",
-        vec![PluginListMarketplaceKind::WorkspaceDirectory],
-    ));
-    if plugin_sharing_enabled {
-        sections.push((
-            "shared-with-me",
-            "Shared with me",
-            vec![PluginListMarketplaceKind::SharedWithMe],
-        ));
-    } else {
-        section_errors.push(plugin_sharing_disabled_remote_section_error());
-    }
-
-    for (section_id, label, marketplace_kinds) in sections {
-        match request_plugin_list_for_kinds(request_handle.clone(), cwd.clone(), marketplace_kinds)
-            .await
-        {
-            Ok(mut response) => {
-                hide_cli_only_plugin_marketplaces(&mut response);
-                marketplaces.extend(response.marketplaces);
-            }
-            Err(err) => {
-                let message = format!("{err:#}");
-                section_errors.push(PluginRemoteSectionError {
-                    section_id: section_id.to_string(),
-                    label: label.to_string(),
-                    message: plugin_remote_section_error_message(label, &message),
-                });
-            }
-        }
-    }
-
-    (marketplaces, section_errors)
-}
-
-fn plugin_remote_section_error_message(label: &str, err: &str) -> String {
-    let next_step = plugin_remote_section_error_next_step(label, err);
-    if next_step.is_empty() {
-        err.to_string()
-    } else {
-        format!("{err} {next_step}")
-    }
-}
-
-fn plugin_remote_section_error_next_step(label: &str, err: &str) -> &'static str {
-    let err = err.to_ascii_lowercase();
-    if err.contains("api key auth is not supported") {
-        "Sign in with ChatGPT auth; API key auth cannot load remote plugin catalogs."
-    } else if err.contains("authentication required")
-        || err.contains("not signed in")
-        || err.contains("not logged in")
-    {
-        "Sign in to ChatGPT, then try loading this section again."
-    } else if err.contains("codex plugins are disabled")
-        || err.contains("plugin sharing is disabled")
-        || err.contains("plugin sharing is not enabled")
-        || err.contains("feature disabled")
-    {
-        "Ask a workspace admin to enable Codex plugins or plugin sharing."
-    } else if err.contains("workspace") && (err.contains("access") || err.contains("mismatch")) {
-        "Switch to the matching workspace or ask the sharer for access."
-    } else if err.contains("not found") || err.contains("status 404") {
-        "Check that you are signed in to the correct workspace and still have access."
-    } else if err.contains("old build") || err.contains("update codex") || err.contains("stale") {
-        "Update Codex, then try opening the shared plugin again."
-    } else if err.contains("service unavailable")
-        || err.contains("temporarily unavailable")
-        || err.contains("status 503")
-        || err.contains("failed to send")
-        || err.contains("request")
-        || err.contains("status")
-    {
-        "Try again later; local plugin functionality is still available."
-    } else if err.contains("disabled by admin") || err.contains("admin disabled") {
-        "Ask a workspace admin to confirm plugin access."
-    } else if label == "Shared with me" && err.contains("plugin") && err.contains("disabled") {
-        "Ask the sharer or a workspace admin to confirm plugin access."
-    } else {
-        ""
-    }
-}
-
-fn plugin_sharing_disabled_remote_section_error() -> PluginRemoteSectionError {
-    PluginRemoteSectionError {
-        section_id: "shared-with-me".to_string(),
-        label: "Shared with me".to_string(),
-        message: "Plugin sharing is disabled for this Codex session. Enable plugin sharing to load shared plugins.".to_string(),
-    }
-}
 
 const CLI_HIDDEN_PLUGIN_MARKETPLACES: &[&str] = &["openai-bundled"];
 
@@ -708,7 +584,6 @@ async fn request_plugin_list_with_marketplace_kinds(
             params: PluginListParams {
                 cwds: Some(vec![cwd]),
                 marketplace_kinds,
-                force_refetch: false,
             },
         })
         .await
@@ -807,14 +682,12 @@ pub(super) async fn fetch_plugin_install(
     plugin_name: String,
 ) -> Result<PluginInstallResponse> {
     let request_id = RequestId::String(format!("plugin-install-{}", Uuid::new_v4()));
-    let (marketplace_path, remote_marketplace_name) = location.into_request_params();
+    let marketplace_path = location.into_request_params();
     request_handle
         .request_typed(ClientRequest::PluginInstall {
             request_id,
             params: PluginInstallParams {
                 marketplace_path,
-                remote_marketplace_name,
-                install_attempt_id: None,
                 plugin_name,
             },
         })

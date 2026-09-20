@@ -277,10 +277,6 @@ pub enum Feature {
     ///
     /// Requirements-only gate: this should be set from requirements, not user config.
     ComputerUse,
-    /// Enable the PS-backed remote plugin catalog.
-    RemotePlugin,
-    /// Enable remote plugin sharing flows.
-    PluginSharing,
     /// Removed compatibility flag retained as a no-op.
     ExternalMigration,
     /// Omit inline image and audio content from app-server item notifications.
@@ -1462,18 +1458,6 @@ pub const FEATURES: &[FeatureSpec] = &[
     FeatureSpec {
         id: Feature::ComputerUse,
         key: "computer_use",
-        stage: Stage::Stable,
-        default_enabled: true,
-    },
-    FeatureSpec {
-        id: Feature::RemotePlugin,
-        key: "remote_plugin",
-        stage: Stage::Stable,
-        default_enabled: true,
-    },
-    FeatureSpec {
-        id: Feature::PluginSharing,
-        key: "plugin_sharing",
         stage: Stage::Stable,
         default_enabled: true,
     },

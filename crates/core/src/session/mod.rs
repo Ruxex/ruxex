@@ -29,7 +29,6 @@ use crate::context::ManagedDeveloperInstructions;
 use crate::context::ModelSwitchInstructions;
 use crate::context::MultiAgentRoleInstructions;
 use crate::context::NetworkRuleSaved;
-use crate::context::RecommendedPluginsInstructions;
 use crate::context::world_state::WorldState;
 use crate::current_time::TimeProvider;
 use crate::environment_selection::TurnEnvironmentSnapshot;
@@ -328,7 +327,6 @@ use crate::windows_sandbox::WindowsSandboxLevelExt;
 use crate::windows_sandbox::managed_proxy_routing_for_windows_sandbox;
 use codex_core_plugins::PluginCommandAttribution;
 use codex_core_plugins::PluginsManager;
-use codex_core_plugins::RecommendedPluginCandidatesInput;
 use codex_git_utils::get_git_repo_root;
 use codex_history::CodexHarnessMetadata;
 use codex_history::CompactedItem;
@@ -4105,32 +4103,6 @@ impl Session {
             .plugins_for_config(&turn_context.config.plugins_config_input())
             .await
             .without_plugins(&turn_context.disabled_plugin_ids);
-        let recommended_plugin_candidates = if turn_context
-            .config
-            .features
-            .plugin_recommendations_enabled()
-        {
-            let auth = self.services.auth_manager.auth().await;
-            let plugins_config = turn_context.config.plugins_config_input();
-            self.services
-                .plugins_manager
-                .recommended_plugin_candidates_for_config(RecommendedPluginCandidatesInput {
-                    plugins_config: &plugins_config,
-                    loaded_plugins: &loaded_plugins,
-                    auth: auth.as_ref(),
-                    disabled_tools: &turn_context.config.tool_suggest.disabled_tools,
-                    app_server_client_name: turn_context.app_server_client_name.as_deref(),
-                })
-                .await
-        } else {
-            None
-        };
-        if let Some(recommended_plugins) = recommended_plugin_candidates
-            .as_deref()
-            .and_then(RecommendedPluginsInstructions::from_plugins)
-        {
-            contextual_user_sections.push(recommended_plugins.render_fragment());
-        }
         let context_contributors = self.services.extensions.context_contributors().to_vec();
         for contributor in &context_contributors {
             for fragment in contributor

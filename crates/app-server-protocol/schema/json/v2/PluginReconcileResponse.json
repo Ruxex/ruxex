@@ -40,26 +40,10 @@
         "$ref": "#/definitions/PluginReconcileChangedPlugin"
       },
       "type": "array"
-    },
-    "failedMaterializationRemotePluginIds": {
-      "description": "Subset of failures for which the requested bundle could not be materialized. A previously cached version may still be available.",
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
-    },
-    "failedRemotePluginIds": {
-      "description": "Backend remote plugin IDs whose bundle or identity update failed.",
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
     }
   },
   "required": [
-    "changedPlugins",
-    "failedMaterializationRemotePluginIds",
-    "failedRemotePluginIds"
+    "changedPlugins"
   ],
   "title": "PluginReconcileResponse",
   "type": "object"

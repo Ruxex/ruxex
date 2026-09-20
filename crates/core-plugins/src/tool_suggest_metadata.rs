@@ -22,7 +22,6 @@ use crate::loader::load_plugin_apps;
 use crate::loader::load_plugin_mcp_servers;
 use crate::loader::load_plugin_skill_inventory;
 use crate::manager::ConfiguredMarketplacePlugin;
-use crate::manager::remote_plugin_install_required_description;
 use crate::manifest::PluginManifestFormat;
 use crate::manifest::load_plugin_manifest_with_format;
 use crate::marketplace::MarketplaceError;
@@ -212,9 +211,7 @@ async fn load_plugin_metadata(
             config_name: plugin.id.clone(),
             display_name: plugin.name.clone(),
             plugin_namespace: Some(plugin.name.clone()),
-            description: prompt_safe_plugin_description(Some(
-                &remote_plugin_install_required_description(&plugin.source),
-            )),
+            description: None,
             mcp_server_names: Vec::new(),
             app_declarations: Vec::new(),
             skill_inventory: None,

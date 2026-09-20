@@ -68,7 +68,6 @@ use codex_analytics::TurnResolvedConfigFact;
 use codex_analytics::build_track_events_context;
 use codex_async_utils::OrCancelExt;
 use codex_connectors::AppToolPolicyEvaluator;
-use codex_core_plugins::RecommendedPluginCandidatesInput;
 use codex_extension_api::ExtensionData;
 use codex_extension_api::TurnInputContext;
 use codex_extension_api::TurnInputEnvironment;
@@ -1659,7 +1658,6 @@ async fn run_sampling_request(
 
 pub(crate) struct PreparedToolRecommendations {
     auth: Option<CodexAuth>,
-    endpoint_candidates: Option<Vec<DiscoverableTool>>,
 }
 
 #[instrument(level = "trace", skip_all)]
@@ -1667,39 +1665,13 @@ pub(crate) async fn prepare_tool_recommendations(
     sess: &Session,
     turn_context: &TurnContext,
 ) -> PreparedToolRecommendations {
-    let loaded_plugins = sess
-        .services
-        .plugins_manager
-        .plugins_for_config(&turn_context.config.plugins_config_input())
-        .instrument(trace_span!("built_tools.load_plugins"))
-        .await
-        .without_plugins(&turn_context.disabled_plugin_ids);
     let tool_suggest_is_enabled = tool_suggest_enabled(turn_context);
     let auth = if tool_suggest_is_enabled {
         sess.services.auth_manager.auth().await
     } else {
         None
     };
-    let endpoint_candidates = if tool_suggest_is_enabled {
-        let plugins_config = turn_context.config.plugins_config_input();
-        sess.services
-            .plugins_manager
-            .recommended_plugin_candidates_for_config(RecommendedPluginCandidatesInput {
-                plugins_config: &plugins_config,
-                loaded_plugins: &loaded_plugins,
-                auth: auth.as_ref(),
-                disabled_tools: &turn_context.config.tool_suggest.disabled_tools,
-                app_server_client_name: turn_context.app_server_client_name.as_deref(),
-            })
-            .await
-    } else {
-        None
-    };
-
-    PreparedToolRecommendations {
-        auth,
-        endpoint_candidates,
-    }
+    PreparedToolRecommendations { auth }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1729,16 +1701,9 @@ pub(crate) async fn built_tools(
     let tool_suggest_is_enabled = tool_suggest_enabled(turn_context);
     let PreparedToolRecommendations {
         auth,
-        endpoint_candidates: endpoint_recommended_plugin_candidates,
     } = prepared_recommendations;
-    let tool_suggest_candidates =
-        if let Some(recommended_plugin_candidates) = endpoint_recommended_plugin_candidates {
-            Some(ToolSuggestCandidates {
-                tools: recommended_plugin_candidates,
-                presentation: ToolSuggestPresentation::RecommendationContext,
-            })
-        } else {
-            let loaded_plugin_app_connector_ids = connector_snapshot
+    let tool_suggest_candidates = {
+        let loaded_plugin_app_connector_ids = connector_snapshot
                 .connector_ids()
                 .iter()
                 .map(|connector_id| connector_id.0.clone())

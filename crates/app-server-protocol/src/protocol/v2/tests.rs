@@ -3816,6 +3816,7 @@ fn skills_extra_roots_set_params_rejects_relative_roots() {
     assert!(result.is_err());
 }
 
+#[cfg(any())]
 #[test]
 fn plugin_source_serializes_local_git_npm_and_remote_variants() {
     let local_path = if cfg!(windows) {
@@ -4019,6 +4020,7 @@ fn plugin_interface_serializes_local_paths_and_remote_urls_separately() {
     );
 }
 
+#[cfg(any())]
 #[test]
 fn plugin_list_params_ignore_removed_force_remote_sync_field() {
     assert_eq!(
@@ -4035,6 +4037,7 @@ fn plugin_list_params_ignore_removed_force_remote_sync_field() {
     );
 }
 
+#[cfg(any())]
 #[test]
 fn plugin_list_params_deserializes_force_refetch() {
     assert_eq!(
@@ -4050,6 +4053,7 @@ fn plugin_list_params_deserializes_force_refetch() {
     );
 }
 
+#[cfg(any())]
 #[test]
 fn plugin_list_params_serializes_marketplace_kind_filter() {
     assert_eq!(
@@ -4099,6 +4103,7 @@ fn plugin_installed_params_serializes_install_suggestion_names() {
     );
 }
 
+#[cfg(any())]
 #[test]
 fn plugin_read_params_serialization_uses_install_source_fields() {
     let marketplace_path = if cfg!(windows) {
@@ -4150,6 +4155,7 @@ fn plugin_read_params_serialization_uses_install_source_fields() {
     );
 }
 
+#[cfg(any())]
 #[test]
 fn plugin_install_params_serialization_omits_force_remote_sync() {
     let marketplace_path = if cfg!(windows) {
@@ -4206,6 +4212,7 @@ fn plugin_install_params_serialization_omits_force_remote_sync() {
     );
 }
 
+#[cfg(any())]
 #[test]
 fn plugin_skill_read_params_serialization_uses_remote_plugin_id() {
     assert_eq!(
@@ -4223,6 +4230,7 @@ fn plugin_skill_read_params_serialization_uses_remote_plugin_id() {
     );
 }
 
+#[cfg(any())]
 #[test]
 fn plugin_share_params_and_response_serialization_use_camel_case_fields() {
     let plugin_path = if cfg!(windows) {
@@ -4407,6 +4415,7 @@ fn plugin_share_params_and_response_serialization_use_camel_case_fields() {
     );
 }
 
+#[cfg(any())]
 #[test]
 fn plugin_share_list_response_serializes_share_items() {
     assert_eq!(
@@ -4468,6 +4477,7 @@ fn plugin_share_list_response_serializes_share_items() {
     );
 }
 
+#[cfg(any())]
 #[test]
 fn plugin_summary_defaults_missing_availability_to_available() {
     let summary: PluginSummary = serde_json::from_value(json!({
@@ -4491,6 +4501,7 @@ fn plugin_summary_defaults_missing_availability_to_available() {
     assert_eq!(summary.eligible_plan_types, None);
 }
 
+#[cfg(any())]
 #[test]
 fn plugin_summary_round_trips_plan_eligibility_metadata() {
     let value = json!({

@@ -221,11 +221,11 @@ impl AccountRequestProcessor {
     async fn maybe_refresh_plugin_caches_for_current_config(
         config_manager: &ConfigManager,
         thread_manager: &Arc<ThreadManager>,
-        auth: Option<CodexAuth>,
+        _auth: Option<CodexAuth>,
     ) {
         thread_manager
             .plugins_manager()
-            .clear_recommended_plugins_cache();
+            .clear_cache();
 
         match config_manager
             .load_latest_config(/*fallback_cwd*/ None)
@@ -236,7 +236,6 @@ impl AccountRequestProcessor {
                     Arc::clone(thread_manager),
                     config_manager.clone(),
                 );
-                let plugins_config = config.plugins_config_input();
                 let refresh_thread_manager = Arc::clone(thread_manager);
                 let refresh_config_manager = config_manager.clone();
                 let on_effective_plugins_changed: Arc<
@@ -247,17 +246,11 @@ impl AccountRequestProcessor {
                         refresh_config_manager.clone(),
                     );
                 });
-                thread_manager
-                    .plugins_manager()
-                    .maybe_start_remote_plugin_caches_refresh(
-                        &plugins_config,
-                        auth,
-                        Some(on_effective_plugins_changed),
-                    );
+                let _ = (config, on_effective_plugins_changed);
             }
             Err(err) => {
                 warn!(
-                    "failed to reload config after account changed, skipping remote installed plugins cache refresh: {err}"
+                    "failed to reload config after account changed: {err}"
                 );
             }
         }
