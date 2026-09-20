@@ -23,7 +23,6 @@ use codex_extension_api::ToolName;
 use codex_extension_api::ToolOutput;
 use codex_extension_api::ToolSpec;
 use codex_extension_api::parse_tool_input_schema;
-use codex_mcp::CODEX_APPS_MCP_SERVER_NAME;
 use codex_mcp::McpResourceClient;
 use codex_otel::sanitize_metric_tag_value;
 use codex_tools::ResponsesApiNamespace;
@@ -279,9 +278,6 @@ impl SkillToolAuthority {
 
     pub(crate) fn from_authority(authority: &SkillAuthority) -> Option<Self> {
         match &authority.kind {
-            SkillSourceKind::Orchestrator if authority.id == CODEX_APPS_MCP_SERVER_NAME => {
-                Some(Self::Orchestrator)
-            }
             SkillSourceKind::Executor => Some(Self::Executor {
                 id: authority.id.clone(),
             }),

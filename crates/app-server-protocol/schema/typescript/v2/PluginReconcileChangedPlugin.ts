@@ -12,7 +12,7 @@ export type PluginReconcileChangedPlugin = {
 /**
  * Local plugin ID (`name@marketplace`), matching `PluginSummary.id`.
  */
-id: string, hasMcps: boolean, hasApps: boolean, hasHooks: boolean,
+id: string, hasMcps: boolean, hasHooks: boolean,
 /**
  * Whether either bundle declares skill roots; not a validated inventory of enabled skills.
  */

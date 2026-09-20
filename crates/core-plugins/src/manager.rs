@@ -6,14 +6,12 @@ pub use marketplace_context::PluginMarketplaceScope;
 use super::LoadedPlugin;
 use super::PluginLoadOutcome;
 use crate::PluginGitMode;
-use crate::app_mcp_routing::apply_app_mcp_routing_policy;
 use crate::installed_marketplaces::installed_marketplace_roots_from_layer_stack;
 use crate::is_openai_curated_marketplace_name;
 use crate::loaded_cache_metrics;
 use crate::loaded_cache_metrics::RequestOutcome;
 use crate::loader::PluginHookLoadOutcome;
 use crate::loader::TargetCuratedMarketplace;
-use crate::loader::load_plugin_apps_from_manifest;
 use crate::loader::load_plugin_hooks;
 use crate::loader::load_plugin_hooks_from_layer_stack;
 use crate::loader::load_plugin_mcp_servers_from_manifest_with_format;
@@ -63,18 +61,14 @@ use codex_config::clear_user_plugin;
 use codex_config::set_user_plugin_enabled;
 use codex_config::skill_config_rules_from_stack;
 use codex_config::types::PluginConfig;
-use codex_connectors::ConnectorSnapshot;
-use codex_connectors::PluginConnectorSource;
 use codex_hooks::plugin_hook_declarations;
 use codex_http_client::HttpClientFactory;
 use codex_login::AuthManager;
 use codex_login::CodexAuth;
-use codex_plugin::AppConnectorId;
 use codex_plugin::PluginCapabilitySummary;
 use codex_plugin::PluginId;
 use codex_plugin::PluginIdError;
 use codex_plugin::PluginTelemetryMetadata;
-use codex_plugin::app_connector_ids_from_declarations;
 use codex_plugin::prompt_safe_plugin_description;
 use codex_protocol::auth::AuthMode;
 use codex_protocol::protocol::HookEventName;
@@ -218,8 +212,6 @@ pub struct PluginDetail {
     pub skills: Vec<SkillMetadata>,
     pub disabled_skill_paths: HashSet<AbsolutePathBuf>,
     pub hooks: Vec<PluginHookSummary>,
-    pub apps: Vec<AppConnectorId>,
-    pub app_category_by_id: HashMap<String, String>,
     pub mcp_server_names: Vec<String>,
 }
 
@@ -278,7 +270,6 @@ impl From<PluginDetail> for PluginCapabilitySummary {
             description: prompt_safe_plugin_description(value.description.as_deref()),
             has_skills,
             mcp_server_names: value.mcp_server_names,
-            app_connector_ids: value.apps,
         }
     }
 }
@@ -542,15 +533,6 @@ impl PluginsManager {
                 target_curated_marketplace,
             )
         });
-        for plugin in &mut plugins {
-            let plugin_active = plugin.is_active();
-            apply_app_mcp_routing_policy(
-                &mut plugin.apps,
-                &mut plugin.mcp_servers,
-                auth_mode,
-                plugin_active,
-            );
-        }
         PluginLoadOutcome::from_plugins(plugins)
     }
 
@@ -644,16 +626,6 @@ impl PluginsManager {
         if evicted {
             loaded_cache_metrics::record_event("capacity_eviction");
         }
-    }
-
-    /// Applies plugin exclusions and canonical ownership from the current account's installed cache.
-    /// A canonical owner's bundle need not be installed on this host.
-    pub fn connector_snapshot(
-        &self,
-        sources: impl IntoIterator<Item = PluginConnectorSource>,
-        disabled_plugin_ids: &[String],
-    ) -> ConnectorSnapshot {
-        ConnectorSnapshot::from_plugin_sources(sources, disabled_plugin_ids, HashSet::new())
     }
 
     pub async fn telemetry_metadata_for_installed_plugin(
@@ -1257,12 +1229,6 @@ impl PluginsManager {
                 event_name: hook.event_name,
             })
             .collect();
-        let auth_mode = self.auth_mode();
-        let mut app_declarations = if manifest_format == PluginManifestFormat::Legacy {
-            load_plugin_apps_from_manifest(source_path.as_path(), &manifest.paths).await
-        } else {
-            Vec::new()
-        };
         let mcp_data_root = (manifest_format == PluginManifestFormat::AgentPlugin)
             .then(|| self.store.mcp_data_root(&plugin_id, manifest_format));
         let mut mcp_servers = load_plugin_mcp_servers_from_manifest_with_format(
@@ -1273,24 +1239,6 @@ impl PluginsManager {
             manifest_format,
         )
         .await;
-        if manifest_format == PluginManifestFormat::Legacy {
-            apply_app_mcp_routing_policy(
-                &mut app_declarations,
-                &mut mcp_servers,
-                auth_mode,
-                /*plugin_active*/ true,
-            );
-        }
-        let apps = app_connector_ids_from_declarations(&app_declarations);
-        let mut seen_app_connector_ids = HashSet::new();
-        let mut app_category_by_id = HashMap::new();
-        for app in &app_declarations {
-            if seen_app_connector_ids.insert(app.connector_id.0.as_str())
-                && let Some(category) = &app.category
-            {
-                app_category_by_id.insert(app.connector_id.0.clone(), category.clone());
-            }
-        }
         let mut mcp_server_names = mcp_servers.into_keys().collect::<Vec<_>>();
         mcp_server_names.sort_unstable();
         mcp_server_names.dedup();
@@ -1309,8 +1257,6 @@ impl PluginsManager {
             skills: resolved_skills.skills,
             disabled_skill_paths: resolved_skills.disabled_skill_paths,
             hooks,
-            apps,
-            app_category_by_id,
             mcp_server_names,
         })
     }

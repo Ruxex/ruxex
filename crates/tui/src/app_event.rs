@@ -29,7 +29,6 @@ use codex_app_server_protocol::SkillsListResponse;
 use codex_app_server_protocol::Thread;
 use codex_app_server_protocol::ThreadGoalStatus;
 use codex_app_server_protocol::ThreadItemsListResponse;
-use codex_connectors::AppInfo;
 use codex_file_search::FileMatch;
 use codex_message_history::HistoryBatchCursor;
 use codex_protocol::ThreadId;
@@ -46,7 +45,6 @@ use crate::bottom_pane::ApprovalRequest;
 use crate::bottom_pane::StatusLineItem;
 use crate::bottom_pane::TerminalTitleItem;
 use crate::chatwidget::AstraModelPickerAction;
-use crate::chatwidget::ConnectorScopeGeneration;
 use crate::chatwidget::UserMessage;
 use crate::experimental_features::FeatureWriteResult;
 use crate::goal_files::GoalDraft;
@@ -155,12 +153,6 @@ pub(crate) enum ConsolidationScrollbackReflow {
 pub(crate) enum WindowsSandboxEnableMode {
     Elevated,
     Legacy,
-}
-
-#[derive(Debug, Clone)]
-#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
-pub(crate) struct ConnectorsSnapshot {
-    pub(crate) connectors: Vec<AppInfo>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -620,36 +612,8 @@ pub(crate) enum AppEvent {
         thread_id: ThreadId,
     },
 
-    /// Result of prefetching connectors.
-    ConnectorsLoaded {
-        thread_id: Option<ThreadId>,
-        cwd: PathBuf,
-        generation: ConnectorScopeGeneration,
-        result: Result<ConnectorsSnapshot, String>,
-        is_final: bool,
-    },
-
-    /// Thread-scoped installed applications that may actually be mentioned.
-    InstalledConnectorMentionsLoaded {
-        thread_id: Option<ThreadId>,
-        cwd: PathBuf,
-        generation: ConnectorScopeGeneration,
-        result: Result<ConnectorsSnapshot, String>,
-    },
-
     /// Result of computing a `/diff` command.
     DiffResult(PathBuf, String),
-
-    /// Open the app link view in the bottom pane.
-    OpenAppLink {
-        app_id: String,
-        title: String,
-        description: Option<String>,
-        instructions: String,
-        url: String,
-        is_installed: bool,
-        is_enabled: bool,
-    },
 
     /// Open the provided URL in the user's browser.
     OpenUrlInBrowser {
@@ -691,23 +655,6 @@ pub(crate) enum AppEvent {
     ConfiguredPetLoaded {
         pet_id: String,
         result: Result<Option<crate::pets::AmbientPet>, String>,
-    },
-
-    /// Refresh app connector state and mention bindings.
-    RefreshConnectors {
-        force_refetch: bool,
-    },
-
-    /// Fetch apps only while the originating account, workspace, and thread remain current.
-    FetchConnectorsList {
-        force_refetch: bool,
-        generation: ConnectorScopeGeneration,
-    },
-
-    /// Refresh callable installed applications without loading the app directory.
-    FetchInstalledConnectorMentions {
-        force_refresh: bool,
-        generation: ConnectorScopeGeneration,
     },
 
     /// Fetch plugin marketplace state for the provided working directory.
@@ -884,14 +831,6 @@ pub(crate) enum AppEvent {
         cwd: PathBuf,
         plugins: Option<Vec<PluginCapabilitySummary>>,
     },
-
-    /// Advance the post-install plugin app-auth flow.
-    PluginInstallAuthAdvance {
-        refresh_connectors: bool,
-    },
-
-    /// Abandon the post-install plugin app-auth flow.
-    PluginInstallAuthAbandon,
 
     /// Fetch MCP inventory via app-server RPCs and render it into history.
     FetchMcpInventory {
@@ -1178,12 +1117,6 @@ pub(crate) enum AppEvent {
     /// Enable or disable a skill by path.
     SetSkillEnabled {
         path: AbsolutePathBuf,
-        enabled: bool,
-    },
-
-    /// Enable or disable an app by connector ID.
-    SetAppEnabled {
-        id: String,
         enabled: bool,
     },
 

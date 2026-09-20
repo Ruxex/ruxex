@@ -16,10 +16,8 @@ use serde::de::Error as _;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::collections::HashMap;
-use std::convert::Infallible;
 use std::fmt;
 use std::path::PathBuf;
-use std::str::FromStr;
 use wildmatch::WildMatchPattern;
 
 use super::requirements_exec_policy::RequirementsExecPolicyToml;
@@ -35,7 +33,6 @@ use crate::browser_computer_use_requirements::BrowserUseRequirementsToml;
 use crate::browser_computer_use_requirements::ComputerUseRequirementsToml;
 use crate::config_toml::ConfigToml;
 use crate::mcp_requirements::validate_mcp_server_requirement;
-use crate::mcp_types::AppToolApproval;
 use crate::permissions_toml::PermissionProfileToml;
 use crate::types::AuthCredentialsStoreMode;
 use crate::types::WindowsSandboxModeToml;
@@ -884,133 +881,6 @@ impl FeatureRequirementsToml {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, Default, PartialEq, Eq)]
-pub struct AppToolRequirementToml {
-    pub approval_mode: Option<AppToolApproval>,
-    /// Opt-in analytics extraction for this exact tool, not a tool argument.
-    /// The highest-priority rule wins as a whole, including unsupported formats.
-    pub analytics_result_source: Option<AppToolResultSourceRequirementToml>,
-}
-
-#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
-#[serde(deny_unknown_fields)]
-pub struct AppToolResultSourceRequirementToml {
-    /// Result format to parse; currently only `detailed_message_search_v1` is supported.
-    pub format: AppToolResultSourceFormat,
-    /// Source kind emitted alongside each extracted ID.
-    #[serde(rename = "type")]
-    pub source_type: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum AppToolResultSourceFormat {
-    DetailedMessageSearchV1,
-    /// Keep unknown formats so higher-priority rules still override lower ones.
-    Unknown(String),
-}
-
-impl FromStr for AppToolResultSourceFormat {
-    type Err = Infallible;
-
-    fn from_str(value: &str) -> Result<Self, Self::Err> {
-        Ok(match value {
-            "detailed_message_search_v1" => Self::DetailedMessageSearchV1,
-            _ => Self::Unknown(value.to_string()),
-        })
-    }
-}
-
-impl<'de> Deserialize<'de> for AppToolResultSourceFormat {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        String::deserialize(deserializer)?
-            .parse()
-            .map_err(D::Error::custom)
-    }
-}
-
-impl AppToolRequirementToml {
-    pub fn is_empty(&self) -> bool {
-        self.approval_mode.is_none() && self.analytics_result_source.is_none()
-    }
-}
-
-#[derive(Deserialize, Debug, Clone, Default, PartialEq, Eq)]
-pub struct AppToolsRequirementsToml {
-    #[serde(default, flatten)]
-    pub tools: BTreeMap<String, AppToolRequirementToml>,
-}
-
-impl AppToolsRequirementsToml {
-    pub fn is_empty(&self) -> bool {
-        self.tools.values().all(AppToolRequirementToml::is_empty)
-    }
-}
-
-#[derive(Deserialize, Debug, Clone, Default, PartialEq, Eq)]
-pub struct AppRequirementToml {
-    pub enabled: Option<bool>,
-    pub tools: Option<AppToolsRequirementsToml>,
-}
-
-impl AppRequirementToml {
-    pub fn is_empty(&self) -> bool {
-        self.enabled.is_none()
-            && self
-                .tools
-                .as_ref()
-                .is_none_or(AppToolsRequirementsToml::is_empty)
-    }
-}
-
-#[derive(Deserialize, Debug, Clone, Default, PartialEq, Eq)]
-pub struct AppsRequirementsToml {
-    #[serde(default, flatten)]
-    pub apps: BTreeMap<String, AppRequirementToml>,
-}
-
-impl AppsRequirementsToml {
-    pub fn is_empty(&self) -> bool {
-        self.apps.values().all(AppRequirementToml::is_empty)
-    }
-}
-
-/// Merge app requirements from a lower-precedence source into an existing higher-precedence set.
-/// This lets managed sources (for example Cloud/MDM) enforce setting disablement across layers,
-/// while exact tool approval settings keep the higher-precedence value when present.
-pub(crate) fn merge_app_requirements_descending(
-    base: &mut AppsRequirementsToml,
-    incoming: AppsRequirementsToml,
-) {
-    for (app_id, incoming_requirement) in incoming.apps {
-        let base_requirement = base.apps.entry(app_id).or_default();
-        let higher_precedence = base_requirement.enabled;
-        let lower_precedence = incoming_requirement.enabled;
-        base_requirement.enabled =
-            if higher_precedence == Some(false) || lower_precedence == Some(false) {
-                Some(false)
-            } else {
-                higher_precedence.or(lower_precedence)
-            };
-
-        let Some(incoming_tools) = incoming_requirement.tools else {
-            continue;
-        };
-        let base_tools = base_requirement.tools.get_or_insert_with(Default::default);
-        for (tool_name, incoming_tool) in incoming_tools.tools {
-            let base_tool = base_tools.tools.entry(tool_name).or_default();
-            if base_tool.approval_mode.is_none() {
-                base_tool.approval_mode = incoming_tool.approval_mode;
-            }
-            if base_tool.analytics_result_source.is_none() {
-                base_tool.analytics_result_source = incoming_tool.analytics_result_source;
-            }
-        }
-    }
-}
-
 /// Base config deserialized from system `requirements.toml` or MDM.
 #[derive(Deserialize, Debug, Clone, Default, PartialEq)]
 pub struct ConfigRequirementsToml {
@@ -1047,7 +917,6 @@ pub struct ConfigRequirementsToml {
     pub mcp_servers: Option<BTreeMap<String, McpServerRequirement>>,
     pub plugins: Option<BTreeMap<String, PluginRequirementsToml>>,
     pub marketplaces: Option<MarketplaceRequirementsToml>,
-    pub apps: Option<AppsRequirementsToml>,
     pub rules: Option<RequirementsExecPolicyToml>,
     pub enforce_residency: Option<ResidencyRequirement>,
     #[serde(rename = "experimental_network")]
@@ -1151,7 +1020,6 @@ pub struct ConfigRequirementsWithSources {
     pub mcp_servers: Option<Sourced<BTreeMap<String, McpServerRequirement>>>,
     pub plugins: Option<Sourced<BTreeMap<String, PluginRequirementsToml>>>,
     pub marketplaces: Option<Sourced<MarketplaceRequirementsToml>>,
-    pub apps: Option<Sourced<AppsRequirementsToml>>,
     pub rules: Option<Sourced<RequirementsExecPolicyToml>>,
     pub enforce_residency: Option<Sourced<ResidencyRequirement>>,
     pub network: Option<Sourced<NetworkRequirementsToml>>,
@@ -1212,7 +1080,6 @@ impl ConfigRequirementsWithSources {
             mcp_servers: _,
             plugins: _,
             marketplaces: _,
-            apps: _,
             rules: _,
             enforce_residency: _,
             network: _,
@@ -1309,13 +1176,6 @@ impl ConfigRequirementsWithSources {
             }
         }
 
-        if let Some(incoming_apps) = other.apps.take() {
-            if let Some(existing_apps) = self.apps.as_mut() {
-                merge_app_requirements_descending(&mut existing_apps.value, incoming_apps);
-            } else {
-                self.apps = Some(Sourced::new(incoming_apps, source));
-            }
-        }
     }
 
     pub fn into_toml(self) -> ConfigRequirementsToml {
@@ -1349,7 +1209,6 @@ impl ConfigRequirementsWithSources {
             mcp_servers,
             plugins,
             marketplaces,
-            apps,
             rules,
             enforce_residency,
             network,
@@ -1392,7 +1251,6 @@ impl ConfigRequirementsWithSources {
             mcp_servers: mcp_servers.map(|sourced| sourced.value),
             plugins: plugins.map(|sourced| sourced.value),
             marketplaces: marketplaces.map(|sourced| sourced.value),
-            apps: apps.map(|sourced| sourced.value),
             rules: rules.map(|sourced| sourced.value),
             enforce_residency: enforce_residency.map(|sourced| sourced.value),
             network: network.map(|sourced| sourced.value),
@@ -1519,10 +1377,6 @@ impl ConfigRequirementsToml {
                 .marketplaces
                 .as_ref()
                 .is_none_or(MarketplaceRequirementsToml::is_empty)
-            && self
-                .apps
-                .as_ref()
-                .is_none_or(AppsRequirementsToml::is_empty)
             && self.rules.is_none()
             && self.enforce_residency.is_none()
             && self.network.is_none()
@@ -1717,7 +1571,6 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
             mcp_servers,
             plugins,
             marketplaces,
-            apps: _apps,
             rules,
             enforce_residency,
             network,
@@ -2311,7 +2164,6 @@ mod tests {
             mcp_servers: mcp_servers.map(|value| Sourced::new(value, RequirementSource::Unknown)),
             plugins: plugins.map(|value| Sourced::new(value, RequirementSource::Unknown)),
             marketplaces: marketplaces.map(|value| Sourced::new(value, RequirementSource::Unknown)),
-            apps: apps.map(|value| Sourced::new(value, RequirementSource::Unknown)),
             rules: rules.map(|value| Sourced::new(value, RequirementSource::Unknown)),
             enforce_residency: enforce_residency
                 .map(|value| Sourced::new(value, RequirementSource::Unknown)),

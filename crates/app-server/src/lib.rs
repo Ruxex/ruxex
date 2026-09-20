@@ -86,7 +86,6 @@ fn is_unsupported_untrusted_approval_policy_error(err: &std::io::Error) -> bool 
 }
 
 mod analytics_utils;
-mod app_info;
 mod app_server_tracing;
 mod attestation;
 mod auth_mode;

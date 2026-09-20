@@ -24,7 +24,6 @@ use crate::outgoing_message::RequestContext;
 use crate::plugin_config_reload;
 use crate::plugin_config_reload::PluginStartupConfig;
 use crate::request_processors::AccountRequestProcessor;
-use crate::request_processors::AppsRequestProcessor;
 use crate::request_processors::CatalogRequestProcessor;
 use crate::request_processors::CommandExecRequestProcessor;
 use crate::request_processors::ConfigRequestProcessor;
@@ -33,8 +32,6 @@ use crate::request_processors::FsRequestProcessor;
 use crate::request_processors::GitRequestProcessor;
 use crate::request_processors::InitializeRequestProcessor;
 use crate::request_processors::MarketplaceRequestProcessor;
-use crate::request_processors::McpEventStreamReady;
-use crate::request_processors::McpEventStreams;
 use crate::request_processors::McpRequestProcessor;
 use crate::request_processors::PluginRequestProcessor;
 use crate::request_processors::ProcessExecRequestProcessor;
@@ -141,7 +138,6 @@ pub(crate) struct MessageProcessor {
     turn_cost_worker: Option<TurnCostWorker>,
     skills_watcher: Arc<SkillsWatcher>,
     account_processor: AccountRequestProcessor,
-    apps_processor: AppsRequestProcessor,
     catalog_processor: CatalogRequestProcessor,
     command_exec_processor: CommandExecRequestProcessor,
     process_exec_processor: ProcessExecRequestProcessor,
@@ -168,7 +164,6 @@ pub(crate) struct MessageProcessor {
 pub(crate) struct ConnectionSessionState {
     pub(crate) rpc_gate: Arc<ConnectionRpcGate>,
     pub(crate) origin: crate::transport::ConnectionOrigin,
-    pub(crate) mcp_event_streams: McpEventStreams,
     initialized: OnceLock<InitializedConnectionSessionState>,
 }
 
@@ -187,7 +182,6 @@ impl ConnectionSessionState {
         Self {
             origin,
             rpc_gate: Arc::new(ConnectionRpcGate::new()),
-            mcp_event_streams: McpEventStreams::default(),
             initialized: OnceLock::new(),
         }
     }
@@ -321,7 +315,6 @@ impl MessageProcessor {
                 config.as_ref(),
                 auth_manager.clone(),
                 codex_core::build_models_manager(config.as_ref(), auth_manager.clone()),
-                codex_core::CodexAppsToolsCache::default(),
                 session_source,
                 environment_manager,
                 thread_extensions(ThreadExtensionDependencies {
@@ -376,7 +369,6 @@ impl MessageProcessor {
         let thread_watch_manager =
             crate::thread_status::ThreadWatchManager::new_with_outgoing(outgoing.clone());
         let thread_list_state_permit = Arc::new(Semaphore::new(/*permits*/ 1));
-        let app_list_shutdown_token = CancellationToken::new();
         let request_serialization_queues = RequestSerializationQueues::default();
         let config_processor = ConfigRequestProcessor::new(
             outgoing.clone(),
@@ -398,13 +390,6 @@ impl MessageProcessor {
             outgoing.clone(),
             Arc::clone(&config),
             config_manager.clone(),
-        );
-        let apps_processor = AppsRequestProcessor::new(
-            auth_manager.clone(),
-            Arc::clone(&thread_manager),
-            outgoing.clone(),
-            config_manager.clone(),
-            app_list_shutdown_token,
         );
         let catalog_processor = CatalogRequestProcessor::new(
             outgoing.clone(),
@@ -559,7 +544,6 @@ impl MessageProcessor {
             turn_cost_worker,
             skills_watcher,
             account_processor,
-            apps_processor,
             catalog_processor,
             command_exec_processor,
             process_exec_processor,
@@ -585,7 +569,6 @@ impl MessageProcessor {
 
     pub(crate) fn clear_runtime_references(&self) {
         self.account_processor.clear_external_auth();
-        self.apps_processor.shutdown();
         self.models_refresh_worker.shutdown();
         self.skills_watcher.shutdown();
     }
@@ -837,7 +820,6 @@ impl MessageProcessor {
         self.outgoing
             .disconnect_user_verification_connection(connection_id)
             .await;
-        session_state.mcp_event_streams.clear().await;
         if timeout(
             CONNECTION_RPC_DRAIN_TIMEOUT,
             session_state.rpc_gate.shutdown(),
@@ -968,15 +950,6 @@ impl MessageProcessor {
             _ => (None, false),
         };
 
-        let event_stream_ready = match &codex_request {
-            ClientRequest::McpServerEventStreamStart { params, .. } => Some(
-                session
-                    .mcp_event_streams
-                    .start(connection_id, params.clone(), self.mcp_processor.clone())
-                    .await?,
-            ),
-            _ => None,
-        };
         let serialization_scope = codex_request.serialization_scope();
         let error_request_id = connection_request_id.clone();
         let rpc_gate = Arc::clone(&session.rpc_gate);
@@ -999,7 +972,6 @@ impl MessageProcessor {
                     codex_request,
                     request_context,
                     session,
-                    event_stream_ready,
                 ))
                 .await;
                 if let Err(error) = result {
@@ -1028,7 +1000,6 @@ impl MessageProcessor {
         codex_request: ClientRequest,
         request_context: RequestContext,
         session: Arc<ConnectionSessionState>,
-        event_stream_ready: Option<McpEventStreamReady>,
     ) -> Result<(), JSONRPCErrorError> {
         let connection_id = connection_request_id.connection_id;
         let app_server_client_name = session.app_server_client_name().map(str::to_string);
@@ -1214,7 +1185,6 @@ impl MessageProcessor {
                     .thread_unsubscribe(&request_id, params)
                     .await?;
                 if let Ok(thread_id) = ThreadId::from_string(&thread_id) {
-                    session.mcp_event_streams.stop_thread(thread_id).await;
                 }
                 Ok(response)
             }
@@ -1483,15 +1453,6 @@ impl MessageProcessor {
             ClientRequest::PluginRead { params, .. } => {
                 self.plugin_processor.plugin_read(params).await
             }
-            ClientRequest::AppsRead { params, .. } => self.apps_processor.apps_read(params).await,
-            ClientRequest::AppsList { params, .. } => {
-                self.apps_processor.apps_list(&request_id, params).await
-            }
-            ClientRequest::AppsInstalled { params, .. } => self
-                .apps_processor
-                .apps_installed(params)
-                .await
-                .map(|response| Some(response.into())),
             ClientRequest::SkillsConfigWrite { params, .. } => {
                 self.catalog_processor.skills_config_write(params).await
             }
@@ -1569,27 +1530,6 @@ impl MessageProcessor {
                 self.mcp_processor
                     .mcp_resource_read(&request_id, params)
                     .await
-            }
-            ClientRequest::McpServerEventStreamStart { params, .. } => {
-                let ready = event_stream_ready.ok_or_else(|| {
-                    internal_error("MCP event subscription was not reserved before startup")
-                })?;
-                session
-                    .mcp_event_streams
-                    .wait_for_activation(&params.subscription_id, ready)
-                    .await?;
-                Ok(Some(
-                    codex_app_server_protocol::McpServerEventStreamStartResponse {}.into(),
-                ))
-            }
-            ClientRequest::McpServerEventStreamStop { params, .. } => {
-                session
-                    .mcp_event_streams
-                    .stop(&params.subscription_id)
-                    .await;
-                Ok(Some(
-                    codex_app_server_protocol::McpServerEventStreamStopResponse {}.into(),
-                ))
             }
             ClientRequest::McpServerToolCall { params, .. } => {
                 self.mcp_processor

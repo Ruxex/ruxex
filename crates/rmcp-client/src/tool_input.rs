@@ -95,7 +95,7 @@ pub(crate) async fn call_tool(
             return Err(ServiceError::UnexpectedResponse);
         }
         // Parse the whole round before presenting any prompts. Only standard MCP
-        // inputs and supported OpenAI elicitation modes are accepted.
+        // Standard MCP inputs and the native verification extension are accepted.
         let requests = requests
             .into_iter()
             .map(|(key, value)| parse_input(value).map(|request| (key, request)))
@@ -186,10 +186,6 @@ fn parse_input(value: Value) -> Result<ServerRequest, ServiceError> {
             .and_then(|params| params.get("mode"))
             .and_then(Value::as_str)
         {
-            Some("form") => {
-                crate::elicitation_client_service::openai_elicitation_form(request.clone())
-                    .map_err(ServiceError::McpError)?;
-            }
             Some(crate::user_verification::MODE) => {
                 crate::user_verification::parse_request(request.clone())
                     .map_err(ServiceError::McpError)?;

@@ -71,7 +71,6 @@ const APPROVAL_DECLINE_VALUE: &str = "decline";
 const APPROVAL_CANCEL_VALUE: &str = "cancel";
 const APPROVAL_TOOL_PARAM_DISPLAY_LIMIT: usize = 3;
 const APPROVAL_TOOL_PARAM_VALUE_TRUNCATE_GRAPHEMES: usize = 60;
-const TOOL_TYPE_KEY: &str = "tool_type";
 const TOOL_ID_KEY: &str = "tool_id";
 const TOOL_SUGGEST_SUGGEST_TYPE_KEY: &str = "suggest_type";
 const TOOL_SUGGEST_REASON_KEY: &str = "suggest_reason";
@@ -137,12 +136,6 @@ enum McpServerElicitationResponseMode {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum ToolSuggestionToolType {
-    Connector,
-    Plugin,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum ToolSuggestionType {
     Install,
     Enable,
@@ -150,7 +143,6 @@ pub(crate) enum ToolSuggestionType {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct ToolSuggestionRequest {
-    pub(crate) tool_type: ToolSuggestionToolType,
     pub(crate) suggest_type: ToolSuggestionType,
     pub(crate) suggest_reason: String,
     pub(crate) tool_id: String,
@@ -380,11 +372,9 @@ fn parse_tool_suggestion_request(meta: Option<&Value>) -> Option<ToolSuggestionR
         return None;
     }
 
-    let tool_type = match meta.get(TOOL_TYPE_KEY).and_then(Value::as_str) {
-        Some("connector") => ToolSuggestionToolType::Connector,
-        Some("plugin") => ToolSuggestionToolType::Plugin,
-        _ => return None,
-    };
+    if meta.get("tool_type").and_then(Value::as_str) != Some("plugin") {
+        return None;
+    }
     let suggest_type = match meta
         .get(TOOL_SUGGEST_SUGGEST_TYPE_KEY)
         .and_then(Value::as_str)
@@ -395,7 +385,6 @@ fn parse_tool_suggestion_request(meta: Option<&Value>) -> Option<ToolSuggestionR
     };
 
     Some(ToolSuggestionRequest {
-        tool_type,
         suggest_type,
         suggest_reason: meta
             .get(TOOL_SUGGEST_REASON_KEY)

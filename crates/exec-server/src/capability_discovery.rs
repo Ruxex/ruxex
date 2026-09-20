@@ -234,23 +234,9 @@ async fn discover_root(
             }
             None => None,
         };
-        let apps_config = match declarations.apps_config {
-            Some(path) => {
-                read_optional_text_file(
-                    file_system,
-                    path,
-                    sandbox,
-                    &mut budget,
-                    &mut discovery.warnings,
-                )
-                .await
-            }
-            None => None,
-        };
         discovery.plugin = Some(DiscoveredPluginFiles {
             manifest,
             mcp_config,
-            apps_config,
         });
     }
 
@@ -443,7 +429,6 @@ impl BundleBudget {
 struct PluginDeclarationPaths {
     mcp_config: Option<PathUri>,
     mcp_inline: bool,
-    apps_config: Option<PathUri>,
 }
 
 #[derive(Deserialize)]
@@ -451,8 +436,6 @@ struct PluginDeclarationPaths {
 struct RawPluginDeclarations {
     #[serde(default)]
     mcp_servers: Option<Value>,
-    #[serde(default)]
-    apps: Option<Value>,
 }
 
 fn plugin_declaration_paths(
@@ -472,10 +455,6 @@ fn plugin_declaration_paths(
             .mcp_servers
             .as_ref()
             .is_some_and(Value::is_object),
-        apps_config: declarations
-            .apps
-            .as_ref()
-            .and_then(|value| declared_file_path(root, "apps", value, &manifest.path, warnings)),
     }
 }
 

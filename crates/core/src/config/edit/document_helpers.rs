@@ -103,7 +103,6 @@ fn serialize_mcp_server_table(config: &McpServerConfig) -> anyhow::Result<TomlTa
 
     match config.auth {
         McpServerAuth::OAuth => {}
-        McpServerAuth::ChatGpt => entry["auth"] = value("chatgpt"),
         McpServerAuth::EmaAuth => entry["auth"] = value("ema_auth"),
     }
     if !config.enabled {
@@ -253,7 +252,6 @@ pub(super) fn parse_tool_suggest_disabled_tool(
 ) -> Option<ToolSuggestDisabledTool> {
     let table = value.as_inline_table()?;
     let kind = match table.get("type").and_then(TomlValue::as_str) {
-        Some("connector") => ToolSuggestDiscoverableType::Connector,
         Some("plugin") => ToolSuggestDiscoverableType::Plugin,
         _ => return None,
     };
@@ -268,7 +266,6 @@ pub(super) fn parse_tool_suggest_disabled_tool_table(
     table: &TomlTable,
 ) -> Option<ToolSuggestDisabledTool> {
     let kind = match table.get("type").and_then(TomlItem::as_str) {
-        Some("connector") => ToolSuggestDiscoverableType::Connector,
         Some("plugin") => ToolSuggestDiscoverableType::Plugin,
         _ => return None,
     };
@@ -287,10 +284,7 @@ pub(super) fn tool_suggest_disabled_tools_value(
         let mut table = InlineTable::new();
         table.insert(
             "type",
-            match disabled_tool.kind {
-                ToolSuggestDiscoverableType::Connector => "connector",
-                ToolSuggestDiscoverableType::Plugin => "plugin",
-            }
+            "plugin"
             .into(),
         );
         table.insert("id", disabled_tool.id.clone().into());

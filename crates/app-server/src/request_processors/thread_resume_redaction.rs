@@ -53,7 +53,6 @@ fn redacted_mcp_tool_call_result() -> McpToolCallResult {
 mod tests {
     use super::*;
     use codex_app_server_protocol::ImageGenerationItem;
-    use codex_app_server_protocol::McpToolCallAppContext;
     use codex_app_server_protocol::McpToolCallError;
     use codex_app_server_protocol::McpToolCallStatus;
     use codex_app_server_protocol::SessionSource;
@@ -82,13 +81,6 @@ mod tests {
                 tool: "lookup".to_string(),
                 status: McpToolCallStatus::Completed,
                 arguments: serde_json::json!({"secret":"argument"}),
-                app_context: Some(McpToolCallAppContext {
-                    connector_id: "calendar".to_string(),
-                    link_id: Some("link_calendar".to_string()),
-                    resource_uri: Some("ui://widget/lookup.html".to_string()),
-                    app_name: Some("Calendar".to_string()),
-                    action_name: Some("lookup".to_string()),
-                }),
                 mcp_app_resource_uri: Some("ui://widget/lookup.html".to_string()),
                 mcp_app_ui: None,
                 plugin_id: Some("sample@test".to_string()),
@@ -139,13 +131,6 @@ mod tests {
                 tool: "lookup".to_string(),
                 status: McpToolCallStatus::Completed,
                 arguments: JsonValue::String(REDACTED_PAYLOAD.to_string()),
-                app_context: Some(McpToolCallAppContext {
-                    connector_id: "calendar".to_string(),
-                    link_id: Some("link_calendar".to_string()),
-                    resource_uri: Some("ui://widget/lookup.html".to_string()),
-                    app_name: Some("Calendar".to_string()),
-                    action_name: Some("lookup".to_string()),
-                }),
                 mcp_app_resource_uri: Some("ui://widget/lookup.html".to_string()),
                 mcp_app_ui: None,
                 plugin_id: Some("sample@test".to_string()),

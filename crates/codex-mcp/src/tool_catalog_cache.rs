@@ -311,8 +311,6 @@ impl ToolCatalogTransportIdentity {
             if config.oauth.is_some()
                 || config.scopes.is_some()
                 || config.oauth_resource.is_some()
-                || (matches!(config.auth, McpServerAuth::ChatGpt)
-                    && !has_explicit_http_authorization(config))
                 || (!has_explicit_http_authorization(config)
                     && connection_identity.oauth_credentials().ok()?.is_some())
             {

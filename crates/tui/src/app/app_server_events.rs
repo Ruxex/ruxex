@@ -9,7 +9,6 @@ use crate::app_command::AppCommand;
 use crate::app_event::AppEvent;
 #[cfg(any(target_os = "windows", test))]
 use crate::app_event::WindowsSandboxEnableMode;
-use crate::app_info::app_info_from_api;
 use crate::app_server_session::AppServerSession;
 use crate::app_server_session::status_account_display_from_auth_mode;
 use codex_app_server_client::AppServerEvent;
@@ -259,20 +258,6 @@ impl App {
                     self.chat_widget.add_plain_history_lines(
                         crate::external_agent_config_migration::flow::external_agent_config_migration_finished_lines(notification),
                     );
-                }
-                return;
-            }
-            ServerNotification::AppListUpdated(notification) => {
-                if self.current_displayed_thread_id().is_some() {
-                    self.chat_widget
-                        .refresh_connector_directory_after_notification(
-                            notification
-                                .data
-                                .iter()
-                                .cloned()
-                                .map(app_info_from_api)
-                                .collect(),
-                        );
                 }
                 return;
             }

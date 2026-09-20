@@ -16,12 +16,6 @@ experimentalApi: boolean,
  */
 requestAttestation: boolean,
 /**
- * Legacy opt-in for the `openai/form` MCP extension.
- *
- * New clients should declare `openai/form` in [`Self::extensions`].
- */
-mcpServerOpenaiFormElicitation?: boolean,
-/**
  * Exact notification method names that should be suppressed for this
  * connection (for example `thread/started`).
  */

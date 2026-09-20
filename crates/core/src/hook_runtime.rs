@@ -5,8 +5,6 @@ use std::time::Duration;
 use codex_analytics::CompactionTrigger;
 use codex_analytics::HookRunFact;
 use codex_analytics::build_track_events_context;
-use codex_connectors::AppToolPolicyEvaluator;
-use codex_connectors::AppToolPolicyInput;
 use codex_core_plugins::executor_plugin_hook_sources;
 use codex_hooks::InterruptRequest;
 use codex_hooks::PermissionRequestDecision;
@@ -25,7 +23,6 @@ use codex_hooks::UserPromptSubmitOutcome;
 use codex_hooks::UserPromptSubmitRequest;
 use codex_hooks::hook_execution_mode_label;
 use codex_hooks::hook_handler_type_label;
-use codex_mcp::CODEX_APPS_MCP_SERVER_NAME;
 use codex_otel::HOOK_RUN_DURATION_METRIC;
 use codex_otel::HOOK_RUN_METRIC;
 use codex_plugin::ExecutorPluginHookSource;
@@ -325,30 +322,10 @@ fn executor_hook_sources_for_step(step_context: &StepContext) -> Vec<ExecutorPlu
         .executor_capability_discovery
         .as_deref()
         .map(|snapshot| {
-            let app_tool_policy =
-                AppToolPolicyEvaluator::new(&step_context.mcp.config().config_layer_stack);
             executor_plugin_hook_sources(snapshot, |server, tool| {
                 step_context
                     .mcp
                     .tool_info(server, tool)
-                    .filter(|tool_info| {
-                        if server != CODEX_APPS_MCP_SERVER_NAME {
-                            return true;
-                        }
-                        let annotations = tool_info.tool.annotations.as_ref();
-                        app_tool_policy
-                            .policy(AppToolPolicyInput {
-                                connector_id: tool_info.connector_id.as_deref(),
-                                link_id: None,
-                                tool_name: &tool_info.tool.name,
-                                tool_title: tool_info.tool.title.as_deref(),
-                                destructive_hint: annotations
-                                    .and_then(|annotations| annotations.destructive_hint),
-                                open_world_hint: annotations
-                                    .and_then(|annotations| annotations.open_world_hint),
-                            })
-                            .enabled
-                    })
             })
             .into_iter()
             .filter(|source| {

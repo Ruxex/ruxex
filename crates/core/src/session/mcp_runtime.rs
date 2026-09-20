@@ -9,7 +9,6 @@ use super::*;
 use crate::mcp::McpRuntimeProjection;
 use codex_config::McpServerDisabledReason;
 use codex_config::McpServerTransportConfig;
-use codex_mcp::CODEX_APPS_MCP_SERVER_NAME;
 use codex_mcp::ElicitationReviewerHandle;
 use codex_mcp::McpEnvironmentAuthority;
 use codex_mcp::McpServerRegistration;
@@ -204,8 +203,7 @@ impl Session {
                         /*inc*/ 1,
                         &[("server_name", name.as_str()), ("outcome", outcome)],
                     );
-                    if name == CODEX_APPS_MCP_SERVER_NAME
-                        || !server.is_local_environment()
+                    if !server.is_local_environment()
                         || projection
                             .config
                             .mcp_server_catalog
@@ -342,7 +340,6 @@ impl Session {
         } = mcp_projection;
         config.approval_policy = desired.config.permissions.approval_policy.clone();
         config.permission_profile = desired.config.permissions.effective_permission_profile();
-        config.approvals_reviewer = desired.config.approvals_reviewer;
         config.environment_cwds = desired
             .environments
             .turn_environments()
@@ -398,9 +395,7 @@ impl Session {
             tx_event: Some(self.get_tx_event()),
             startup_cancellation_token: CancellationToken::new(),
             runtime_context,
-            codex_apps_tools_cache: self.services.mcp_manager.codex_apps_tools_cache(),
             tool_catalog_cache: self.services.mcp_manager.tool_catalog_cache(),
-            codex_apps_tools_cache_key: connector_runtime_context_key(auth.as_ref()),
             client_mcp_extensions: self.services.client_mcp_extensions.for_mcp_servers(),
             auth,
             auth_manager: Some(Arc::clone(&self.services.auth_manager)),

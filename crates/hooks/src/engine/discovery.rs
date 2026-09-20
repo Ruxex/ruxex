@@ -670,7 +670,6 @@ fn append_matcher_groups(
                     event_name,
                     group.matcher.as_deref(),
                     &config,
-                    /*app_connector_id*/ None,
                 )
             });
             let enabled = hook_enabled(source.is_managed, builtin, state);

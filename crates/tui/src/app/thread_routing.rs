@@ -278,20 +278,11 @@ impl App {
                 )),
             ),
             ServerRequest::McpServerElicitationRequest { request_id, params } => {
-                if let Some(params) = AppLinkViewParams::from_url_app_server_request(
+                if let Some(request) = McpServerElicitationFormRequest::from_app_server_request(
                     thread_id,
-                    &params.server_name,
                     request_id.clone(),
-                    &params.request,
+                    params,
                 ) {
-                    Some(ThreadInteractiveRequest::AppLink(params))
-                } else if let Some(request) =
-                    McpServerElicitationFormRequest::from_app_server_request(
-                        thread_id,
-                        request_id.clone(),
-                        params,
-                    )
-                {
                     Some(ThreadInteractiveRequest::McpServerElicitation(request))
                 } else {
                     match &params.request {
@@ -319,11 +310,7 @@ impl App {
                                 description: description.clone(),
                             },
                         }),
-                        codex_app_server_protocol::McpServerElicitationRequest::OpenAiForm {
-                            ..
-                        }
-                        | codex_app_server_protocol::McpServerElicitationRequest::OpenAiElicitationForm { .. }
-                        | codex_app_server_protocol::McpServerElicitationRequest::Url { .. } => {
+                        codex_app_server_protocol::McpServerElicitationRequest::Url { .. } => {
                             self.app_event_tx.resolve_elicitation(
                                 thread_id,
                                 params.server_name.clone(),
@@ -367,9 +354,6 @@ impl App {
         }
 
         match request {
-            ThreadInteractiveRequest::AppLink(params) => {
-                self.chat_widget.open_app_link_view(params);
-            }
             ThreadInteractiveRequest::Approval(request) => {
                 self.render_inactive_patch_preview(&request);
                 self.chat_widget.push_approval_request(request);
@@ -1838,28 +1822,14 @@ impl App {
     }
 
     fn startup_request_may_open_protected_view(&self, request: &ServerRequest) -> bool {
-        let ServerRequest::McpServerElicitationRequest { request_id, params } = request else {
+        let ServerRequest::McpServerElicitationRequest { params, .. } = request else {
             return true;
         };
 
         match &params.request {
             codex_app_server_protocol::McpServerElicitationRequest::UserVerification { .. } => true,
             codex_app_server_protocol::McpServerElicitationRequest::Form { .. } => true,
-            codex_app_server_protocol::McpServerElicitationRequest::OpenAiForm { .. }
-            | codex_app_server_protocol::McpServerElicitationRequest::OpenAiElicitationForm {
-                ..
-            } => false,
-            request @ codex_app_server_protocol::McpServerElicitationRequest::Url { .. } => {
-                let thread_id = ThreadId::from_string(&params.thread_id)
-                    .unwrap_or_else(|_| self.chat_widget.thread_id().unwrap_or_default());
-                AppLinkViewParams::from_url_app_server_request(
-                    thread_id,
-                    &params.server_name,
-                    request_id.clone(),
-                    request,
-                )
-                .is_some()
-            }
+            codex_app_server_protocol::McpServerElicitationRequest::Url { .. } => false,
         }
     }
 

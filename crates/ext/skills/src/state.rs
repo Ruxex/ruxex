@@ -7,9 +7,7 @@ use std::sync::Weak;
 use codex_exec_server::Environment;
 use codex_exec_server::FileSystemSandboxContext;
 use codex_extension_api::ExtensionMetrics;
-use codex_mcp::CODEX_APPS_MCP_SERVER_NAME;
 use codex_mcp::McpResourceClient;
-use codex_mcp::McpResourceServerCacheKey;
 use codex_protocol::capabilities::SelectedCapabilityRoot;
 use tokio::sync::OnceCell;
 
@@ -204,7 +202,7 @@ impl SkillsThreadState {
             return SkillCatalog::default();
         }
 
-        let cache = self.orchestrator_cache(query.mcp_resources.as_deref());
+        let cache = self.orchestrator_cache();
         cache
             .catalog
             .get_or_init(|| async {
@@ -229,7 +227,7 @@ impl SkillsThreadState {
             return providers.read(request).await;
         }
 
-        let cache = self.orchestrator_cache(request.mcp_resources.as_deref());
+        let cache = self.orchestrator_cache();
         let cache_key = SkillReadCacheKey::from(&request);
         if let Some(result) = cache
             .resources
@@ -252,25 +250,17 @@ impl SkillsThreadState {
             .insert(cache_key, result))
     }
 
-    fn orchestrator_cache(
-        &self,
-        mcp_resources: Option<&McpResourceClient>,
-    ) -> Arc<OrchestratorGenerationCache> {
+    fn orchestrator_cache(&self) -> Arc<OrchestratorGenerationCache> {
         let mut cache = self
             .orchestrator_cache
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let cache_key =
-            mcp_resources.and_then(|client| client.server_cache_key(CODEX_APPS_MCP_SERVER_NAME));
-        if let Some(cache) = cache
-            .as_ref()
-            .filter(|cache| cache.mcp_cache_key == cache_key)
+        if let Some(cache) = cache.as_ref()
         {
             return Arc::clone(cache);
         }
 
         let next_cache = Arc::new(OrchestratorGenerationCache {
-            mcp_cache_key: cache_key,
             catalog: OnceCell::new(),
             resources: Mutex::new(OrchestratorResourceCache::default()),
         });
@@ -339,7 +329,6 @@ struct CachedExecutorDiscoveryCatalog {
 }
 
 struct OrchestratorGenerationCache {
-    mcp_cache_key: Option<McpResourceServerCacheKey>,
     catalog: OnceCell<SkillCatalog>,
     resources: Mutex<OrchestratorResourceCache>,
 }

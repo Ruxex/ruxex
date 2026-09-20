@@ -1,6 +1,5 @@
 mod managed;
 
-use crate::CodexAppsToolsCache;
 use crate::agent::AgentControl;
 use crate::agents_md_manager::SessionInstructions;
 use crate::attestation::AttestationProvider;
@@ -57,7 +56,6 @@ use codex_protocol::config_types::CollaborationModeMask;
 use codex_protocol::error::CodexErr;
 use codex_protocol::error::Result as CodexResult;
 use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::mcp::OPENAI_STANDARD_FORM_INPUT_EXTENSION_ID;
 use codex_protocol::openai_models::ModelPreset;
 use codex_protocol::protocol::Event;
 use codex_protocol::protocol::EventMsg;
@@ -480,7 +478,6 @@ impl ThreadManager {
         config: &Config,
         auth_manager: Arc<AuthManager>,
         models_manager: SharedModelsManager,
-        codex_apps_tools_cache: CodexAppsToolsCache,
         session_source: SessionSource,
         environment_manager: Arc<EnvironmentManager>,
         extensions: Arc<ExtensionRegistry<Config>>,
@@ -510,7 +507,6 @@ impl ThreadManager {
         let mcp_manager = Arc::new(McpManager::new_with_extensions(
             Arc::clone(&plugins_manager),
             Arc::clone(&extensions),
-            codex_apps_tools_cache,
         ));
         let code_mode_session_provider: Arc<dyn CodeModeSessionProvider> =
             if config.features.enabled(Feature::CodeModeHost)
@@ -2190,17 +2186,6 @@ impl ThreadManagerState {
             {
                 warn!(%thread_id, %source_thread_id, %error, "failed to copy fork attachments");
             }
-        }
-        // Enable Full Access form input only after session startup so a required MCP server cannot
-        // block startup while waiting for form input.
-        if session
-            .services
-            .client_mcp_extensions
-            .contains(OPENAI_STANDARD_FORM_INPUT_EXTENSION_ID)
-            && matches!(thread_source.as_ref(), Some(ThreadSource::User))
-            && !tracked_session_source.is_non_root_agent()
-        {
-            session.services.mcp_runtime.enable_full_access_form_input();
         }
         let new_thread = self
             .finalize_thread_spawn(session, io, tracked_session_source)

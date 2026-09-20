@@ -521,17 +521,6 @@ impl TurnContext {
         self.model_info().usable_context_window()
     }
 
-    pub(crate) fn apps_enabled(&self) -> bool {
-        let uses_codex_backend = self
-            .auth_manager
-            .as_deref()
-            .is_some_and(AuthManager::current_auth_uses_codex_backend);
-        self.config
-            .features
-            .apps_enabled_for_auth(uses_codex_backend)
-            && self.config.orchestrator_mcp_enabled
-    }
-
     pub(crate) async fn with_model(
         &self,
         model: String,

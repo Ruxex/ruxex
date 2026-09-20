@@ -6,11 +6,8 @@ use codex_utils_plugins::PluginIdentity;
 use codex_utils_plugins::PluginSkillRoot;
 use codex_utils_plugins::SkillDiscoveryMode;
 
-use crate::AppConnectorId;
-use crate::AppDeclaration;
 use crate::PluginCapabilitySummary;
 use crate::PluginHookSource;
-use crate::app_connector_ids_from_declarations;
 
 const MAX_CAPABILITY_SUMMARY_DESCRIPTION_LEN: usize = 1024;
 
@@ -29,7 +26,6 @@ pub struct LoadedPlugin<M> {
     pub disabled_skill_paths: HashSet<AbsolutePathBuf>,
     pub has_enabled_skills: bool,
     pub mcp_servers: HashMap<String, M>,
-    pub apps: Vec<AppDeclaration>,
     pub hook_sources: Vec<PluginHookSource>,
     pub hook_load_warnings: Vec<String>,
     pub error: Option<String>,
@@ -66,12 +62,9 @@ fn plugin_capability_summary_from_loaded<M>(
         description: prompt_safe_plugin_description(plugin.manifest_description.as_deref()),
         has_skills: plugin.has_enabled_skills,
         mcp_server_names,
-        app_connector_ids: app_connector_ids_from_declarations(&plugin.apps),
     };
 
-    (summary.has_skills
-        || !summary.mcp_server_names.is_empty()
-        || !summary.app_connector_ids.is_empty())
+    (summary.has_skills || !summary.mcp_server_names.is_empty())
     .then_some(summary)
 }
 
@@ -172,15 +165,6 @@ impl<M: Clone> PluginLoadOutcome<M> {
         mcp_servers
     }
 
-    pub fn effective_apps(&self) -> Vec<AppConnectorId> {
-        app_connector_ids_from_declarations(
-            self.plugins
-                .iter()
-                .filter(|plugin| plugin.is_active())
-                .flat_map(|plugin| plugin.apps.iter()),
-        )
-    }
-
     pub fn effective_plugin_hook_sources(&self) -> Vec<PluginHookSource> {
         self.iter_effective_plugin_hook_sources().cloned().collect()
     }
@@ -242,7 +226,6 @@ mod tests {
             disabled_skill_paths: HashSet::new(),
             has_enabled_skills: true,
             mcp_servers: HashMap::new(),
-            apps: Vec::new(),
             hook_sources: Vec::new(),
             hook_load_warnings: Vec::new(),
             error: None,

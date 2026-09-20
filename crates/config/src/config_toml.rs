@@ -12,7 +12,6 @@ use crate::permissions_toml::PermissionsToml;
 use crate::profile_toml::ConfigProfile;
 use crate::types::AnalyticsConfigToml;
 use crate::types::ApprovalsReviewer;
-use crate::types::AppsConfigToml;
 use crate::types::AuthCredentialsStoreMode;
 use crate::types::History;
 use crate::types::MarketplaceConfig;
@@ -238,7 +237,6 @@ pub struct ConfigToml {
     pub include_permissions_instructions: Option<bool>,
 
     /// Whether to inject the `<apps_instructions>` developer block.
-    pub include_apps_instructions: Option<bool>,
 
     /// Whether to inject the `<collaboration_mode>` developer block.
     pub include_collaboration_mode_instructions: Option<bool>,
@@ -384,9 +382,6 @@ pub struct ConfigToml {
     /// Base URL for requests to ChatGPT (as opposed to the OpenAI API).
     pub chatgpt_base_url: Option<String>,
 
-    /// Optional product SKU forwarded on host-owned Codex Apps MCP requests.
-    pub apps_mcp_product_sku: Option<String>,
-
     /// Bounded, product-owned metadata attached to every Responses API request.
     pub responses_api_metadata: Option<BTreeMap<String, String>>,
 
@@ -463,10 +458,6 @@ pub struct ConfigToml {
     /// When `false`, disables analytics across Codex product surfaces in this machine.
     /// Defaults to `true`.
     pub analytics: Option<AnalyticsConfigToml>,
-
-    /// Settings for app-specific controls.
-    #[serde(default)]
-    pub apps: Option<AppsConfigToml>,
 
     /// Opaque desktop settings stored alongside the rest of config.toml.
     #[serde(default)]

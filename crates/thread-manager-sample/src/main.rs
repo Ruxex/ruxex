@@ -16,7 +16,6 @@ use codex_core_api::AskForApproval;
 use codex_core_api::AuthCredentialsStoreMode;
 use codex_core_api::AuthManager;
 use codex_core_api::AutoCompactTokenLimitScope;
-use codex_core_api::CodexAppsToolsCache;
 use codex_core_api::CodexHomeUserInstructionsProvider;
 use codex_core_api::CodexThread;
 use codex_core_api::Config;
@@ -137,7 +136,6 @@ async fn run_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
         &config,
         Arc::clone(&auth_manager),
         build_models_manager(&config, auth_manager),
-        CodexAppsToolsCache::default(),
         SessionSource::Exec,
         environment_manager,
         Arc::new(extensions.build()),
@@ -208,7 +206,6 @@ fn new_config(model: Option<String>, arg0_paths: Arg0DispatchPaths) -> anyhow::R
         guardian_policy_config: None,
         guardian_policy_template: None,
         include_permissions_instructions: false,
-        include_apps_instructions: false,
         include_collaboration_mode_instructions: false,
         include_skill_instructions: false,
         skill_max_context_tokens: None,
@@ -279,7 +276,6 @@ fn new_config(model: Option<String>, arg0_paths: Arg0DispatchPaths) -> anyhow::R
         model_verbosity: None,
         chatgpt_base_url: "https://chatgpt.com/backend-api/".to_string(),
         respect_system_proxy: false,
-        apps_mcp_product_sku: None,
         responses_api_metadata: BTreeMap::new(),
         experimental_thread_store: ThreadStoreConfig::Local,
         forced_chatgpt_workspace_id: None,

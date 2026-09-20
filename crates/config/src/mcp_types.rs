@@ -197,11 +197,6 @@ pub enum McpServerAuth {
     #[default]
     #[serde(rename = "oauth")]
     OAuth,
-    /// Use the current ChatGPT session for servers on the trusted first-party
-    /// ChatGPT origin. If no ChatGPT session provider is available, startup can
-    /// still fall back to stored OAuth credentials.
-    #[serde(rename = "chatgpt")]
-    ChatGpt,
     /// Exchange an enterprise IdP refresh token for resource-specific authorization.
     /// Alternate credentials and ordinary OAuth fallback are not permitted.
     #[serde(rename = "ema_auth")]

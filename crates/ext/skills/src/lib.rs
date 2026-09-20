@@ -40,7 +40,6 @@ pub use host_snapshot::HostSkillsSnapshot;
 pub use invocation::detect_implicit_skill_invocation;
 pub use provider::ExecutorSkillProvider;
 pub use provider::HostSkillProvider;
-pub use provider::OrchestratorSkillProvider;
 pub use provider::SkillProvider;
 pub use sources::SkillProviderSource;
 pub use sources::SkillProviders;

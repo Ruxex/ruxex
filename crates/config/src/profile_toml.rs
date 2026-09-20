@@ -46,7 +46,6 @@ pub struct ConfigProfile {
     pub model_instructions_file: Option<AbsolutePathBuf>,
     pub experimental_compact_prompt_file: Option<AbsolutePathBuf>,
     pub include_permissions_instructions: Option<bool>,
-    pub include_apps_instructions: Option<bool>,
     pub include_collaboration_mode_instructions: Option<bool>,
     pub include_environment_context: Option<bool>,
     pub experimental_use_unified_exec_tool: Option<bool>,

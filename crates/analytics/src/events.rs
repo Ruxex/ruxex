@@ -1,6 +1,5 @@
 use std::time::Instant;
 
-use crate::facts::AppInvocation;
 use crate::facts::ArtifactOperation;
 use crate::facts::ArtifactOperationLifecycle;
 use crate::facts::CodexCompactionEvent;
@@ -72,8 +71,6 @@ pub(crate) enum TrackEventRequest {
     ThreadArchive(ThreadArchiveEvent),
     GuardianReview(Box<GuardianReviewEventRequest>),
     GuardianV2(Box<GuardianV2EventRequest>),
-    AppMentioned(CodexAppMentionedEventRequest),
-    AppUsed(CodexAppUsedEventRequest),
     HookRun(CodexHookRunEventRequest),
     Compaction(Box<CodexCompactionEventRequest>),
     Goal(Box<CodexGoalEventRequest>),
@@ -848,7 +845,6 @@ pub(crate) struct CodexMcpToolCallEventParams {
     pub(crate) mcp_tool_name: String,
     pub(crate) mcp_error_present: bool,
     pub(crate) plugin_id: Option<String>,
-    pub(crate) connector_id: Option<String>,
     pub(crate) elicitation_type: Option<ElicitationType>,
 }
 
@@ -939,36 +935,6 @@ pub(crate) struct CodexImageGenerationEventParams {
 pub(crate) struct CodexImageGenerationEventRequest {
     pub(crate) event_type: &'static str,
     pub(crate) event_params: CodexImageGenerationEventParams,
-}
-
-#[derive(Serialize)]
-pub(crate) struct CodexAppMetadata {
-    pub(crate) connector_id: Option<String>,
-    pub(crate) thread_id: Option<String>,
-    pub(crate) turn_id: Option<String>,
-    pub(crate) app_name: Option<String>,
-    pub(crate) product_client_id: Option<String>,
-    pub(crate) invoke_type: Option<InvocationType>,
-    pub(crate) model_slug: Option<String>,
-}
-
-#[derive(Serialize)]
-pub(crate) struct CodexAppMentionedEventRequest {
-    pub(crate) event_type: &'static str,
-    pub(crate) event_params: CodexAppMetadata,
-}
-
-#[derive(Serialize)]
-pub(crate) struct CodexAppUsedMetadata {
-    #[serde(flatten)]
-    pub(crate) app: CodexAppMetadata,
-    pub(crate) elicitation_type: Option<ElicitationType>,
-}
-
-#[derive(Serialize)]
-pub(crate) struct CodexAppUsedEventRequest {
-    pub(crate) event_type: &'static str,
-    pub(crate) event_params: CodexAppUsedMetadata,
 }
 
 #[derive(Serialize)]
@@ -1155,7 +1121,6 @@ pub(crate) struct CodexPluginMetadata {
     pub(crate) marketplace_name: Option<String>,
     pub(crate) has_skills: Option<bool>,
     pub(crate) mcp_server_count: Option<usize>,
-    pub(crate) connector_ids: Option<Vec<String>>,
     pub(crate) product_client_id: Option<String>,
 }
 
@@ -1174,7 +1139,6 @@ pub(crate) struct CodexPluginInstallRequestedPluginMetadata {
     pub(crate) plugin_id: String,
     pub(crate) remote_plugin_id: Option<String>,
     pub(crate) plugin_name: String,
-    pub(crate) connector_ids: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -1267,21 +1231,6 @@ pub(crate) fn plugin_state_event_type(state: PluginState) -> &'static str {
     }
 }
 
-pub(crate) fn codex_app_metadata(
-    tracking: &TrackEventsContext,
-    app: AppInvocation,
-) -> CodexAppMetadata {
-    CodexAppMetadata {
-        connector_id: app.connector_id,
-        thread_id: Some(tracking.thread_id.clone()),
-        turn_id: Some(tracking.turn_id.clone()),
-        app_name: app.app_name,
-        product_client_id: Some(tracking.product_client_id.clone()),
-        invoke_type: app.invocation_type,
-        model_slug: Some(tracking.model_slug.clone()),
-    }
-}
-
 pub(crate) fn codex_plugin_metadata(plugin: PluginTelemetryMetadata) -> CodexPluginMetadata {
     codex_plugin_metadata_with_product_client_id(plugin, originator().value)
 }
@@ -1308,13 +1257,6 @@ fn codex_plugin_metadata_with_product_client_id(
         mcp_server_count: capability_summary
             .as_ref()
             .map(|summary| summary.mcp_server_names.len()),
-        connector_ids: capability_summary.map(|summary| {
-            summary
-                .app_connector_ids
-                .into_iter()
-                .map(|connector_id| connector_id.0)
-                .collect()
-        }),
         product_client_id: Some(product_client_id),
     }
 }
@@ -1332,7 +1274,6 @@ pub(crate) fn codex_plugin_install_requested_metadata(
                 plugin_id: plugin.plugin_id,
                 remote_plugin_id: plugin.remote_plugin_id,
                 plugin_name: plugin.plugin_name,
-                connector_ids: plugin.connector_ids,
             })
             .collect(),
         source: request.source,

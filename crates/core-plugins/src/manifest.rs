@@ -60,8 +60,6 @@ struct RawPluginManifest {
     #[serde(default)]
     mcp_servers: Option<RawPluginManifestMcpServers>,
     #[serde(default)]
-    apps: Option<String>,
-    #[serde(default)]
     hooks: Option<RawPluginManifestHooks>,
     #[serde(default)]
     interface: Option<RawPluginManifestInterface>,
@@ -299,7 +297,6 @@ fn resolve_raw_plugin_manifest(
         keywords,
         skills,
         mcp_servers,
-        apps,
         hooks,
         interface,
     } = raw;
@@ -395,7 +392,6 @@ fn resolve_raw_plugin_manifest(
         paths: codex_plugin::manifest::PluginManifestPaths {
             skills: resolve_manifest_paths(plugin_root, "skills", skills.as_ref()),
             mcp_servers: resolve_manifest_mcp_servers(plugin_root, mcp_servers),
-            apps: resolve_manifest_path(plugin_root, "apps", apps.as_deref()),
             hooks: resolve_manifest_hooks(plugin_root, hooks),
         },
         interface,
@@ -1000,7 +996,6 @@ mod tests {
                     mcp_servers: Some(PluginManifestMcpServers::Path(
                         plugin_root.join(".mcp.json").expect("MCP URI"),
                     )),
-                    apps: Some(plugin_root.join("apps").expect("apps URI")),
                     hooks: Some(PluginManifestHooks::Paths(vec![
                         plugin_root.join("hooks.json").expect("hooks URI"),
                     ])),

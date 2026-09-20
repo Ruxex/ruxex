@@ -2070,7 +2070,6 @@ fn config_granular_approval_policy_is_marked_experimental() {
         model_verbosity: None,
         service_tier: None,
         analytics: None,
-        apps: None,
         browser_use: None,
         computer_use: None,
         desktop: None,
@@ -2105,7 +2104,6 @@ fn config_approvals_reviewer_is_marked_experimental() {
         model_verbosity: None,
         service_tier: None,
         analytics: None,
-        apps: None,
         browser_use: None,
         computer_use: None,
         desktop: None,
@@ -2355,40 +2353,6 @@ fn mcp_server_elicitation_request_from_core_form_request() {
             meta: None,
             message: "Allow this request?".to_string(),
             requested_schema: expected_schema,
-        }
-    );
-}
-
-#[test]
-fn mcp_server_elicitation_request_from_core_openai_form_request() {
-    let requested_schema = json!({
-        "type": "object",
-        "properties": {
-            "template": {
-                "type": "openai/imagePicker",
-                "title": "Template",
-                "items": [{
-                    "id": "monthly-review",
-                    "title": "Monthly review",
-                    "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4=",
-                }],
-            },
-        },
-        "required": ["template"],
-    });
-    let request = McpServerElicitationRequest::try_from(CoreElicitationRequest::OpenAiForm {
-        meta: None,
-        message: "Choose a report".to_string(),
-        requested_schema: requested_schema.clone(),
-    })
-    .expect("OpenAI form request should convert");
-
-    assert_eq!(
-        request,
-        McpServerElicitationRequest::OpenAiForm {
-            meta: None,
-            message: "Choose a report".to_string(),
-            requested_schema,
         }
     );
 }
@@ -3458,12 +3422,8 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
         server: "server".to_string(),
         tool: "tool".to_string(),
         arguments: json!({"arg": "value"}),
-        connector_id: Some("calendar".to_string()),
         mcp_app_resource_uri: Some("app://connector".to_string()),
         mcp_app_ui: None,
-        link_id: Some("link_calendar".to_string()),
-        app_name: Some("Calendar".to_string()),
-        action_name: Some("create_event".to_string()),
         plugin_id: Some("sample@test".to_string()),
         read_only_hint: Some(true),
         status: CoreMcpToolCallStatus::InProgress,
@@ -3480,13 +3440,6 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
             tool: "tool".to_string(),
             status: McpToolCallStatus::InProgress,
             arguments: json!({"arg": "value"}),
-            app_context: Some(McpToolCallAppContext {
-                connector_id: "calendar".to_string(),
-                link_id: Some("link_calendar".to_string()),
-                resource_uri: Some("app://connector".to_string()),
-                app_name: Some("Calendar".to_string()),
-                action_name: Some("create_event".to_string()),
-            }),
             mcp_app_resource_uri: Some("app://connector".to_string()),
             mcp_app_ui: None,
             plugin_id: Some("sample@test".to_string()),
@@ -3502,12 +3455,8 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
         server: "server".to_string(),
         tool: "tool".to_string(),
         arguments: JsonValue::Null,
-        connector_id: None,
         mcp_app_resource_uri: None,
         mcp_app_ui: None,
-        link_id: None,
-        app_name: None,
-        action_name: None,
         plugin_id: None,
         read_only_hint: Some(false),
         status: CoreMcpToolCallStatus::Completed,
@@ -3529,7 +3478,6 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
             tool: "tool".to_string(),
             status: McpToolCallStatus::Completed,
             arguments: JsonValue::Null,
-            app_context: None,
             mcp_app_resource_uri: None,
             mcp_app_ui: None,
             plugin_id: None,
@@ -3542,78 +3490,6 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
             error: None,
             duration_ms: Some(42),
         }
-    );
-}
-
-#[test]
-fn mcp_tool_call_app_context_serializes_connector_id() {
-    let item = ThreadItem::McpToolCall {
-        id: "mcp-1".to_string(),
-        server: "codex_apps".to_string(),
-        tool: "calendar.create_event".to_string(),
-        status: McpToolCallStatus::InProgress,
-        arguments: json!({}),
-        app_context: Some(McpToolCallAppContext {
-            connector_id: "calendar".to_string(),
-            link_id: Some("link_calendar".to_string()),
-            resource_uri: Some("app://connector".to_string()),
-            app_name: Some("Calendar".to_string()),
-            action_name: Some("create_event".to_string()),
-        }),
-        mcp_app_resource_uri: Some("app://connector".to_string()),
-        mcp_app_ui: None,
-        plugin_id: None,
-        read_only_hint: Some(false),
-        result: None,
-        error: None,
-        duration_ms: None,
-    };
-
-    assert_eq!(
-        serde_json::to_value(item).expect("MCP tool call should serialize"),
-        json!({
-            "type": "mcpToolCall",
-            "id": "mcp-1",
-            "server": "codex_apps",
-            "tool": "calendar.create_event",
-            "status": "inProgress",
-            "arguments": {},
-            "appContext": {
-                "connectorId": "calendar",
-                "linkId": "link_calendar",
-                "resourceUri": "app://connector",
-                "appName": "Calendar",
-                "actionName": "create_event",
-            },
-            "mcpAppResourceUri": "app://connector",
-            "mcpAppUi": null,
-            "pluginId": null,
-            "readOnlyHint": false,
-            "result": null,
-            "error": null,
-            "durationMs": null,
-        })
-    );
-}
-
-#[test]
-fn mcp_tool_call_app_context_serializes_missing_mixed_version_fields_as_null() {
-    assert_eq!(
-        serde_json::to_value(McpToolCallAppContext {
-            connector_id: "calendar".to_string(),
-            link_id: None,
-            resource_uri: None,
-            app_name: None,
-            action_name: None,
-        })
-        .expect("MCP tool call app context should serialize"),
-        json!({
-            "connectorId": "calendar",
-            "linkId": null,
-            "resourceUri": null,
-            "appName": null,
-            "actionName": null,
-        })
     );
 }
 

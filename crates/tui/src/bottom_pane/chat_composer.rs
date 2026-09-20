@@ -364,7 +364,6 @@ use self::slash_input::SlashValidation;
 use self::slash_input::SubmissionValidation;
 use self::vim_history::VimHistory;
 use crate::app_event::AppEvent;
-use crate::app_event::ConnectorsSnapshot;
 use crate::app_event_sender::AppEventSender;
 use crate::bottom_pane::LocalImageAttachment;
 use crate::bottom_pane::MentionBinding;
@@ -379,7 +378,6 @@ use crate::ui_consts::LIVE_PREFIX_COLS;
 #[cfg(test)]
 use codex_app_server_protocol::SkillInterface;
 use codex_app_server_protocol::SkillMetadata;
-use codex_connectors::AppInfo;
 use codex_file_search::FileMatch;
 #[cfg(test)]
 use codex_plugin::AppConnectorId;
@@ -482,7 +480,6 @@ fn parent_owned_command_is_allowed(command: SlashCommand, args: &str) -> bool {
                 | SlashCommand::MemoryDrop
                 | SlashCommand::MemoryUpdate
                 | SlashCommand::Mcp
-                | SlashCommand::Apps
                 | SlashCommand::Plugins
                 | SlashCommand::Rollout
         )
@@ -579,10 +576,8 @@ pub(crate) struct ChatComposer {
     skills: Option<Vec<SkillMetadata>>,
     plugins: Option<Vec<PluginCapabilitySummary>>,
     task_mentions: Option<Vec<crate::task_mentions::TaskMention>>,
-    connectors_snapshot: Option<ConnectorsSnapshot>,
     collaboration_modes_enabled: bool,
     config: ChatComposerConfig,
-    connectors_enabled: bool,
     plugins_command_enabled: bool,
     token_activity_command_enabled: bool,
     service_tier_commands_enabled: bool,
@@ -743,10 +738,8 @@ impl ChatComposer {
             skills: None,
             plugins: None,
             task_mentions: None,
-            connectors_snapshot: None,
             collaboration_modes_enabled: false,
             config,
-            connectors_enabled: false,
             plugins_command_enabled: false,
             token_activity_command_enabled: false,
             service_tier_commands_enabled: false,
@@ -914,11 +907,6 @@ impl ChatComposer {
         self.config.image_paste_enabled = enabled;
     }
 
-    pub fn set_connector_mentions(&mut self, connectors_snapshot: Option<ConnectorsSnapshot>) {
-        self.connectors_snapshot = connectors_snapshot;
-        self.sync_popups();
-    }
-
     pub(crate) fn take_mention_bindings(&mut self) -> Vec<MentionBinding> {
         let elements = self.current_mention_elements();
         let mut ordered = Vec::new();
@@ -940,10 +928,6 @@ impl ChatComposer {
 
     pub fn set_collaboration_modes_enabled(&mut self, enabled: bool) {
         self.collaboration_modes_enabled = enabled;
-    }
-
-    pub fn set_connectors_enabled(&mut self, enabled: bool) {
-        self.connectors_enabled = enabled;
     }
 
     pub fn set_service_tier_commands_enabled(&mut self, enabled: bool) {
@@ -2661,12 +2645,7 @@ impl ChatComposer {
             .plugins
             .as_ref()
             .is_some_and(|plugins| !plugins.is_empty());
-        let connectors_ready = self.connectors_enabled
-            && self
-                .connectors_snapshot
-                .as_ref()
-                .is_some_and(|snapshot| !snapshot.connectors.is_empty());
-        skills_ready || plugins_ready || connectors_ready
+        skills_ready || plugins_ready
     }
 
     fn current_prefixed_token(
@@ -4277,14 +4256,6 @@ impl ChatComposer {
                         format!("{mcp_server_count} MCP servers")
                     });
                 }
-                if !plugin.app_connector_ids.is_empty() {
-                    let app_count = plugin.app_connector_ids.len();
-                    capability_labels.push(if app_count == 1 {
-                        "1 app".to_string()
-                    } else {
-                        format!("{app_count} apps")
-                    });
-                }
                 let description = plugin.description.clone().or_else(|| {
                     Some(if capability_labels.is_empty() {
                         "Plugin".to_string()
@@ -4311,44 +4282,7 @@ impl ChatComposer {
             }
         }
 
-        if self.connectors_enabled
-            && let Some(snapshot) = self.connectors_snapshot.as_ref()
-        {
-            for connector in &snapshot.connectors {
-                if !connector.is_accessible || !connector.is_enabled {
-                    continue;
-                }
-                let display_name = codex_connectors::metadata::connector_display_label(connector);
-                let description = Some(Self::connector_brief_description(connector));
-                let slug = codex_connectors::metadata::connector_mention_slug(connector);
-                let search_terms = vec![display_name.clone(), connector.id.clone(), slug.clone()];
-                let connector_id = connector.id.as_str();
-                mentions.push(MentionItem {
-                    display_name: display_name.clone(),
-                    description,
-                    insert_text: format!("${slug}"),
-                    search_terms,
-                    path: Some(format!("app://{connector_id}")),
-                    category_tag: Some("[App]".to_string()),
-                    sort_rank: 1,
-                });
-            }
-        }
-
         mentions
-    }
-
-    fn connector_brief_description(connector: &AppInfo) -> String {
-        Self::connector_description(connector).unwrap_or_default()
-    }
-
-    fn connector_description(connector: &AppInfo) -> Option<String> {
-        connector
-            .description
-            .as_deref()
-            .map(str::trim)
-            .filter(|description| !description.is_empty())
-            .map(str::to_string)
     }
 
     fn set_has_focus(&mut self, has_focus: bool) {

@@ -37,7 +37,6 @@ pub struct ToolSuggestPluginDiscoveryInput {
     pub plugins: PluginsConfigInput,
     pub configured_plugin_ids: HashSet<String>,
     pub disabled_plugin_ids: HashSet<String>,
-    pub loaded_plugin_app_connector_ids: HashSet<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -48,7 +47,6 @@ pub struct ToolSuggestDiscoverablePlugin {
     pub description: Option<String>,
     pub has_skills: bool,
     pub mcp_server_names: Vec<String>,
-    pub app_connector_ids: Vec<String>,
 }
 
 impl PluginsManager {
@@ -99,11 +97,6 @@ impl PluginsManager {
                             description: plugin.description,
                             has_skills: plugin.has_skills,
                             mcp_server_names: plugin.mcp_server_names,
-                            app_connector_ids: plugin
-                                .app_connector_ids
-                                .into_iter()
-                                .map(|connector_id| connector_id.0)
-                                .collect(),
                         });
                     }
                     Err(err) => {

@@ -170,7 +170,6 @@ impl PluginRequestProcessor {
         Ok(Some(
             PluginInstallResponse {
                 auth_policy: outcome.auth_policy.into(),
-                apps_needing_auth: Vec::new(),
             }
             .into(),
         ))
@@ -320,8 +319,6 @@ fn plugin_detail_to_api(outcome: codex_core_plugins::PluginReadOutcome) -> Plugi
         description: outcome.plugin.description,
         skills: Vec::new(),
         hooks: Vec::new(),
-        apps: Vec::new(),
-        app_templates: Vec::new(),
         mcp_servers: outcome.plugin.mcp_server_names,
         scheduled_tasks: None,
     }

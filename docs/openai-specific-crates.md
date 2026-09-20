@@ -346,12 +346,12 @@ Phase 2 で完了した削除と、Phase 3 で扱う後続候補を次の順序�
    - ChatGPT 専用 host、remote-control endpoint、enrollment/pairing、app-server protocol、daemon、CLI、state persistence を削除した。通常の app-server transport は保持している。
 10. **Hosted Plugin Marketplace / Sharing / Runtime の削除（後続）**
    - startup sync/cache の削除とは別に、remote catalog、search/share/mutation/bundle、Hosted Plugin Runtime を削除する。local/bundled/Git/npm plugin foundation は保持する。
-11. **ChatGPT Apps / Connectors / host-owned Apps MCP の削除（後続）**
+11. **ChatGPT Apps / Connectors / host-owned Apps MCP の削除（完了）**
    - connector directory、Apps protocol/UI/config、ChatGPT auth/account、OpenAI 固有 MCP adapter を一つの capability として削除する。通常の MCP runtime は保持する。
 12. **ChatGPT 認証 / Agent Identity の削除（後続）**
    - `codex-agent-identity` は全体削除を検証し、`codex-login` は ChatGPT login branch と protocol/UI だけを削除する。Bedrock、workload identity、汎用 credential storage は保持する。
 
-Phase 2 の削除対象 1〜3 は完了した。4 以降は影響範囲または汎用責務が大きいため、Level 1 Phase 3 で capability ごとに到達経路を縮小してから扱う。特に 9〜12 は、既存の「共有クレートの汎用化」より先に Hosted capability の本体を削除し、その後に残存 adapter と共有境界を再評価する。
+Phase 2 の削除対象 1〜3 は完了した。4 以降は影響範囲または汎用責務が大きいため、Level 1 Phase 3 で capability ごとに到達経路を縮小してから扱う。特に 9〜12 は、既存の「共有クレートの汎用化」より先に Hosted capability の本体を削除し、その後に残存 adapter と共有境界を再評価する。11 の Apps / Connectors capability は完了し、12 の ChatGPT 認証 / Agent Identity は後続である。
 
 ## 調査したがクレート削除候補から除外したもの
 

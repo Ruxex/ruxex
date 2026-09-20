@@ -16,7 +16,6 @@ use crate::skills_helpers::skill_display_name;
 use codex_app_server_protocol::SkillMetadata;
 use codex_app_server_protocol::SkillsListEntry;
 use codex_app_server_protocol::SkillsListResponse;
-use codex_connectors::AppInfo;
 use codex_protocol::parse_command::ParsedCommand;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use codex_utils_plugins::mention_syntax::TOOL_MENTION_SIGIL;
@@ -238,48 +237,6 @@ pub(crate) fn find_skill_mentions_with_tool_mentions(
     }
 
     matches
-}
-
-pub(crate) fn find_app_mentions(
-    mentions: &ToolMentions,
-    apps: &[AppInfo],
-    skill_names_lower: &HashSet<String>,
-) -> Vec<AppInfo> {
-    let mut explicit_names = HashSet::new();
-    let mut selected_ids = HashSet::new();
-    for (name, path) in &mentions.linked_paths {
-        if let Some(connector_id) = app_id_from_path(path) {
-            explicit_names.insert(name.clone());
-            selected_ids.insert(connector_id.to_string());
-        }
-    }
-
-    let mut slug_counts: HashMap<String, usize> = HashMap::new();
-    for app in apps.iter().filter(|app| is_app_mentionable(app)) {
-        let slug = codex_connectors::metadata::connector_mention_slug(app);
-        *slug_counts.entry(slug).or_insert(0) += 1;
-    }
-
-    for app in apps.iter().filter(|app| is_app_mentionable(app)) {
-        let slug = codex_connectors::metadata::connector_mention_slug(app);
-        let slug_count = slug_counts.get(&slug).copied().unwrap_or(0);
-        if mentions.names.contains(&slug)
-            && !explicit_names.contains(&slug)
-            && slug_count == 1
-            && !skill_names_lower.contains(&slug)
-        {
-            selected_ids.insert(app.id.clone());
-        }
-    }
-
-    apps.iter()
-        .filter(|app| is_app_mentionable(app) && selected_ids.contains(&app.id))
-        .cloned()
-        .collect()
-}
-
-pub(crate) fn is_app_mentionable(app: &AppInfo) -> bool {
-    app.is_accessible && app.is_enabled
 }
 
 pub(crate) struct ToolMentions {

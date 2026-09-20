@@ -139,13 +139,7 @@ impl ToolExecutor<ToolInvocation> for McpHandler {
     }
 
     fn search_info(&self) -> Option<ToolSearchInfo> {
-        let source_name = self
-            .tool_info
-            .connector_name
-            .as_deref()
-            .map(str::trim)
-            .filter(|connector_name| !connector_name.is_empty())
-            .unwrap_or_else(|| self.tool_info.server_name.trim());
+        let source_name = self.tool_info.server_name.trim();
         let source_info = (!source_name.is_empty()).then(|| ToolSearchSourceInfo {
             name: source_name.to_string(),
             description: self
@@ -185,14 +179,7 @@ impl McpHandler {
             )
             .await;
         // Use the executed call's binding; a later catalog refresh must not change eligibility.
-        let result_metadata_capture_allowed = invocation
-            .session
-            .services
-            .analytics_events_client
-            .is_enabled()
-            && prepared_mcp_call
-                .as_ref()
-                .is_some_and(codex_mcp::PreparedMcpCall::is_host_owned_apps);
+        let result_metadata_capture_allowed = false;
         let mcp_tool = prepared_mcp_call.as_ref().map(|call| {
             McpToolContext::from_prepared_call(
                 call,
@@ -491,14 +478,6 @@ fn create_tool_spec(
         .map(str::trim)
         .filter(|description| !description.is_empty())
         .map(str::to_string)
-        .or_else(|| {
-            tool_info
-                .connector_name
-                .as_deref()
-                .map(str::trim)
-                .filter(|connector_name| !connector_name.is_empty())
-                .map(|connector_name| format!("Tools for working with {connector_name}."))
-        })
         .unwrap_or_default();
 
     Ok(ToolSpec::Namespace(ResponsesApiNamespace {
@@ -542,11 +521,6 @@ fn build_mcp_search_text(info: &ToolInfo) -> String {
         && !description.is_empty()
     {
         parts.push(description.to_string());
-    }
-    if let Some(connector_name) = info.connector_name.as_deref().map(str::trim)
-        && !connector_name.is_empty()
-    {
-        parts.push(connector_name.to_string());
     }
     if let Some(namespace_description) = info.namespace_description.as_deref().map(str::trim)
         && !namespace_description.is_empty()

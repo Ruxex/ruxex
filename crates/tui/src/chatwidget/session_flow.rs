@@ -67,8 +67,6 @@ impl ChatWidget {
         self.set_skills(/*skills*/ None);
         self.session_network_proxy = session.network_proxy.clone();
         let previous_thread_id = self.thread_id;
-        let connector_scope_changed = previous_thread_id != Some(session.thread_id)
-            || self.config.cwd.as_path() != session.cwd.as_path();
         self.thread_id = Some(session.thread_id);
         #[cfg(target_os = "windows")]
         if self.windows_sandbox_local_server
@@ -100,9 +98,6 @@ impl ChatWidget {
         self.current_cwd = Some(session.cwd.to_path_buf());
         self.config.cwd = session.cwd.clone();
         self.config.model_provider_id = session.model_provider_id.clone();
-        if connector_scope_changed {
-            self.invalidate_connector_scope();
-        }
         let runtime_workspace_roots = session.runtime_workspace_roots.clone();
         self.config.workspace_roots = runtime_workspace_roots.clone();
         self.config
@@ -206,7 +201,6 @@ impl ChatWidget {
         }
         self.transcript.saw_copy_source_this_turn = false;
         self.refresh_skills_for_current_cwd(/*force_reload*/ true);
-        self.refresh_connector_mentions(/*force_refresh*/ false);
         let initial_user_message_pending = self.initial_user_message.is_some();
         self.submit_initial_user_message_if_pending();
         if self.mcp_startup_status.is_none()

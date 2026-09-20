@@ -907,21 +907,6 @@ client_request_definitions! {
         serialization: None,
         response: v2::PluginReadResponse,
     },
-    AppsRead => "app/read" {
-        params: v2::AppsReadParams,
-        serialization: None,
-        response: v2::AppsReadResponse,
-    },
-    AppsList => "app/list" {
-        params: v2::AppsListParams,
-        serialization: None,
-        response: v2::AppsListResponse,
-    },
-    AppsInstalled => "app/installed" {
-        params: v2::AppsInstalledParams,
-        serialization: None,
-        response: v2::AppsInstalledResponse,
-    },
     // File system requests are intentionally concurrent. Desktop already treats local
     // file system operations as concurrent, and app-server remote fs mirrors that model.
     FsReadFile => "fs/readFile" {
@@ -1102,20 +1087,6 @@ client_request_definitions! {
         params: v2::McpResourceReadParams,
         serialization: optional_thread_id(params.thread_id),
         response: v2::McpResourceReadResponse,
-    },
-
-    #[experimental("mcpServer/event/stream/start")]
-    McpServerEventStreamStart => "mcpServer/event/stream/start" {
-        params: v2::McpServerEventStreamStartParams,
-        serialization: None,
-        response: v2::McpServerEventStreamStartResponse,
-    },
-
-    #[experimental("mcpServer/event/stream/stop")]
-    McpServerEventStreamStop => "mcpServer/event/stream/stop" {
-        params: v2::McpServerEventStreamStopParams,
-        serialization: None,
-        response: v2::McpServerEventStreamStopResponse,
     },
 
     McpServerToolCall => "mcpServer/tool/call" {
@@ -1803,11 +1774,8 @@ server_notification_definitions! {
     McpToolCallProgress => "item/mcpToolCall/progress" (v2::McpToolCallProgressNotification),
     McpServerOauthLoginCompleted => "mcpServer/oauthLogin/completed" (v2::McpServerOauthLoginCompletedNotification),
     McpServerStatusUpdated => "mcpServer/startupStatus/updated" (v2::McpServerStatusUpdatedNotification),
-    #[experimental("mcpServer/event/stream/notification")]
-    McpServerEventStream => "mcpServer/event/stream/notification" (v2::McpServerEventStreamNotification),
     AccountUpdated => "account/updated" (v2::AccountUpdatedNotification),
     AccountRateLimitsUpdated => "account/rateLimits/updated" (v2::AccountRateLimitsUpdatedNotification),
-    AppListUpdated => "app/list/updated" (v2::AppListUpdatedNotification),
     ExternalAgentConfigImportProgress => "externalAgentConfig/import/progress" (v2::ExternalAgentConfigImportProgressNotification),
     ExternalAgentConfigImportCompleted => "externalAgentConfig/import/completed" (v2::ExternalAgentConfigImportCompletedNotification),
     FsChanged => "fs/changed" (v2::FsChangedNotification),
@@ -2262,10 +2230,8 @@ mod tests {
             request_id: request_id(),
             params: v2::McpResourceReadParams {
                 thread_id: Some("thread-1".to_string()),
-                origin_call_id: None,
                 server: "server-a".to_string(),
                 uri: "file:///tmp/resource".to_string(),
-                connector_id: None,
             },
         };
         assert_eq!(
@@ -2440,10 +2406,8 @@ mod tests {
             request_id: request_id(),
             params: v2::McpResourceReadParams {
                 thread_id: None,
-                origin_call_id: None,
                 server: "server-a".to_string(),
                 uri: "file:///tmp/resource".to_string(),
-                connector_id: None,
             },
         };
         assert_eq!(mcp_resource_read.serialization_scope(), None);
@@ -2484,7 +2448,6 @@ mod tests {
                 capabilities: Some(v1::InitializeCapabilities {
                     experimental_api: true,
                     request_attestation: true,
-                    mcp_server_openai_form_elicitation: true,
                     opt_out_notification_methods: Some(vec![
                         "thread/started".to_string(),
                         "item/agentMessage/delta".to_string(),
@@ -2512,7 +2475,6 @@ mod tests {
                     "capabilities": {
                         "experimentalApi": true,
                         "requestAttestation": true,
-                        "mcpServerOpenaiFormElicitation": true,
                         "optOutNotificationMethods": [
                             "thread/started",
                             "item/agentMessage/delta"
@@ -2544,7 +2506,6 @@ mod tests {
                 "capabilities": {
                     "experimentalApi": true,
                     "requestAttestation": true,
-                    "mcpServerOpenaiFormElicitation": true,
                     "optOutNotificationMethods": [
                         "thread/started",
                         "item/agentMessage/delta"
@@ -2571,7 +2532,6 @@ mod tests {
                     capabilities: Some(v1::InitializeCapabilities {
                         experimental_api: true,
                         request_attestation: true,
-                        mcp_server_openai_form_elicitation: true,
                         opt_out_notification_methods: Some(vec![
                             "thread/started".to_string(),
                             "item/agentMessage/delta".to_string(),
@@ -3334,115 +3294,6 @@ mod tests {
                 "method": "collaborationMode/list",
                 "id": 7,
                 "params": {}
-            }),
-            serde_json::to_value(&request)?,
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn serialize_list_apps() -> Result<()> {
-        let request = ClientRequest::AppsList {
-            request_id: RequestId::Integer(8),
-            params: v2::AppsListParams::default(),
-        };
-        assert_eq!(
-            json!({
-                "method": "app/list",
-                "id": 8,
-                "params": {
-                    "cursor": null,
-                    "limit": null,
-                    "threadId": null
-                }
-            }),
-            serde_json::to_value(&request)?,
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn serialize_installed_apps() -> Result<()> {
-        let request = ClientRequest::AppsInstalled {
-            request_id: RequestId::Integer(9),
-            params: v2::AppsInstalledParams::default(),
-        };
-        assert_eq!(
-            json!({
-                "method": "app/installed",
-                "id": 9,
-                "params": {
-                    "threadId": null
-                }
-            }),
-            serde_json::to_value(&request)?,
-        );
-
-        let force_refresh_request = ClientRequest::AppsInstalled {
-            request_id: RequestId::Integer(10),
-            params: v2::AppsInstalledParams {
-                thread_id: Some("thread-1".to_string()),
-                force_refresh: true,
-            },
-        };
-        assert_eq!(
-            json!({
-                "method": "app/installed",
-                "id": 10,
-                "params": {
-                    "threadId": "thread-1",
-                    "forceRefresh": true
-                }
-            }),
-            serde_json::to_value(&force_refresh_request)?,
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn serialize_installed_apps_response() -> Result<()> {
-        let response = v2::AppsInstalledResponse {
-            apps: vec![v2::InstalledApp {
-                id: "demo-app".to_string(),
-                runtime_name: Some("Demo App".to_string()),
-                enabled: false,
-                callable: false,
-            }],
-        };
-
-        assert_eq!(
-            json!({
-                "apps": [{
-                    "id": "demo-app",
-                    "runtimeName": "Demo App",
-                    "enabled": false,
-                    "callable": false
-                }]
-            }),
-            serde_json::to_value(response)?,
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn serialize_read_apps() -> Result<()> {
-        let request = ClientRequest::AppsRead {
-            request_id: RequestId::Integer(9),
-            params: v2::AppsReadParams {
-                app_ids: vec!["app-a".to_string(), "app-b".to_string()],
-                thread_id: None,
-                include_tools: true,
-            },
-        };
-        assert_eq!(
-            json!({
-                "method": "app/read",
-                "id": 9,
-                "params": {
-                    "appIds": ["app-a", "app-b"],
-                    "threadId": null,
-                    "includeTools": true
-                }
             }),
             serde_json::to_value(&request)?,
         );

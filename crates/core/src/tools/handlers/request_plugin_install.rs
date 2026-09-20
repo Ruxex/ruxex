@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::sync::Arc;
 
 use codex_analytics::PluginInstallRequestSource;
@@ -6,7 +5,6 @@ use codex_analytics::PluginInstallRequested;
 use codex_analytics::PluginInstallRequestedPlugin;
 use codex_analytics::build_track_events_context;
 use codex_config::types::ToolSuggestDisabledTool;
-use codex_mcp::CODEX_APPS_MCP_SERVER_NAME;
 use codex_rmcp_client::ElicitationAction;
 use codex_rmcp_client::ElicitationResponse;
 use codex_tools::DiscoverableTool;
@@ -20,10 +18,7 @@ use codex_tools::RequestPluginInstallArgs;
 use codex_tools::RequestPluginInstallResult;
 use codex_tools::ToolName;
 use codex_tools::ToolSpec;
-use codex_tools::all_requested_connectors_picked_up;
 use codex_tools::build_request_plugin_install_elicitation_request;
-use codex_tools::filter_request_plugin_install_discoverable_tools_for_client;
-use codex_tools::verified_connector_install_completed;
 use rmcp::model::RequestId;
 use serde::Deserialize;
 use serde_json::Value;
@@ -31,8 +26,6 @@ use tracing::warn;
 
 use crate::config::edit::ConfigEdit;
 use crate::config::edit::ConfigEditsBuilder;
-use crate::connectors;
-use crate::connectors::AppInfo;
 use crate::function_tool::FunctionCallError;
 use crate::tools::context::FunctionToolOutput;
 use crate::tools::context::ToolInvocation;
@@ -150,10 +143,7 @@ impl RequestPluginInstallHandler {
             ));
         }
 
-        let discoverable_tools = filter_request_plugin_install_discoverable_tools_for_client(
-            self.discoverable_tools.clone(),
-            turn.app_server_client_name.as_deref(),
-        );
+        let discoverable_tools = self.discoverable_tools.clone();
 
         let tool = discoverable_tools
             .into_iter()
@@ -212,7 +202,6 @@ impl RequestPluginInstallHandler {
                             plugin_id: plugin.id.clone(),
                             remote_plugin_id: plugin.remote_plugin_id.clone(),
                             plugin_name: plugin.name.clone(),
-                            connector_ids: plugin.app_connector_ids.clone(),
                         }],
                         source,
                     },
@@ -225,7 +214,7 @@ impl RequestPluginInstallHandler {
         let elicitation = session
             .request_mcp_server_elicitation(
                 turn.as_ref(),
-                CODEX_APPS_MCP_SERVER_NAME.to_string(),
+                "codex_plugins".to_string(),
                 request_id,
                 request,
             )
@@ -247,17 +236,8 @@ impl RequestPluginInstallHandler {
             false
         };
 
-        if completed && let DiscoverableTool::Connector(connector) = &tool {
-            session
-                .merge_connector_selection(HashSet::from([connector.id.clone()]))
-                .await;
-        }
-
         if elicitation.sent {
-            let tool_type = match tool_type {
-                DiscoverableToolType::Connector => "connector",
-                DiscoverableToolType::Plugin => "plugin",
-            };
+            let tool_type = "plugin";
             let response_action = match response.as_ref().map(|response| &response.action) {
                 Some(ElicitationAction::Accept) => "accept",
                 Some(ElicitationAction::Decline) => "decline",
@@ -353,33 +333,18 @@ async fn persist_disabled_install_request(
 
 fn disabled_install_request(tool: &DiscoverableTool) -> ToolSuggestDisabledTool {
     match tool {
-        DiscoverableTool::Connector(connector) => {
-            ToolSuggestDisabledTool::connector(connector.id.as_str())
-        }
         DiscoverableTool::Plugin(plugin) => ToolSuggestDisabledTool::plugin(plugin.id.as_str()),
     }
 }
 
 async fn verify_request_plugin_install_completed(
     session: &Arc<crate::session::session::Session>,
-    turn: &crate::session::turn_context::TurnContext,
-    mcp: &codex_mcp::McpBinding,
+    _turn: &crate::session::turn_context::TurnContext,
+    _mcp: &codex_mcp::McpBinding,
     tool: &DiscoverableTool,
-    auth: Option<&codex_login::CodexAuth>,
+    _auth: Option<&codex_login::CodexAuth>,
 ) -> bool {
     match tool {
-        DiscoverableTool::Connector(connector) => refresh_missing_requested_connectors(
-            session,
-            turn,
-            mcp,
-            auth,
-            std::slice::from_ref(&connector.id),
-            connector.id.as_str(),
-        )
-        .await
-        .is_some_and(|accessible_connectors| {
-            verified_connector_install_completed(connector.id.as_str(), &accessible_connectors)
-        }),
         DiscoverableTool::Plugin(plugin) => {
 
             session.reload_user_config_layer().await;
@@ -389,54 +354,7 @@ async fn verify_request_plugin_install_completed(
                 config.as_ref(),
                 session.services.plugins_manager.as_ref(),
             );
-            let _ = refresh_missing_requested_connectors(
-                session,
-                turn,
-                mcp,
-                auth,
-                &plugin.app_connector_ids,
-                plugin.id.as_str(),
-            )
-            .await;
             completed
-        }
-    }
-}
-
-async fn refresh_missing_requested_connectors(
-    session: &Arc<crate::session::session::Session>,
-    turn: &crate::session::turn_context::TurnContext,
-    mcp: &codex_mcp::McpBinding,
-    auth: Option<&codex_login::CodexAuth>,
-    expected_connector_ids: &[String],
-    tool_id: &str,
-) -> Option<Vec<AppInfo>> {
-    if expected_connector_ids.is_empty() {
-        return Some(Vec::new());
-    }
-
-    let mcp_tools = mcp.tools();
-    let accessible_connectors = connectors::accessible_connectors_from_mcp_tools(mcp_tools);
-    if all_requested_connectors_picked_up(expected_connector_ids, &accessible_connectors) {
-        return Some(accessible_connectors);
-    }
-
-    match session.hard_refresh_latest_codex_apps_tools().await {
-        Ok(mcp_tools) => {
-            let accessible_connectors =
-                connectors::accessible_connectors_from_mcp_tools(&mcp_tools);
-            connectors::refresh_accessible_connectors_cache_from_mcp_tools(
-                &turn.config,
-                auth,
-                &mcp_tools,
-            );
-            Some(accessible_connectors)
-        }
-        Err(err) => {
-            warn!(
-                "failed to refresh codex apps tools cache after plugin install request for {tool_id}: {err:#}"
-            );
-            None
         }
     }
 }

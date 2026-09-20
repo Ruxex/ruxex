@@ -28,7 +28,6 @@ members = [
     "crates/codex-home",
     "crates/cli",
     "crates/collaboration-mode-templates",
-    "crates/connectors",
     "crates/config",
     "crates/config-schema",
     "crates/context-fragments",
@@ -51,7 +50,6 @@ members = [
     "crates/exec-server/tests/support",
     "crates/execpolicy",
     "crates/ext/agent",
-    "crates/ext/connectors",
     "crates/ext/extension-api",
     "crates/ext/goal",
     "crates/ext/guardian-reviewer",
@@ -180,9 +178,7 @@ codex-home = { path = "crates/codex-home" }
 codex-http-client = { path = "crates/http-client" }
 codex-websocket-client = { path = "crates/websocket-client" }
 codex-config = { path = "crates/config" }
-codex-connectors = { path = "crates/connectors" }
 codex-agent-extension = { path = "crates/ext/agent" }
-codex-connectors-extension = { path = "crates/ext/connectors" }
 codex-context-fragments = { path = "crates/context-fragments" }
 codex-core = { path = "crates/core" }
 codex-core-api = { path = "crates/core-api" }

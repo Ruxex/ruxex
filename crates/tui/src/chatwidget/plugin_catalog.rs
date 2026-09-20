@@ -949,12 +949,6 @@ impl ChatWidget {
             ..Default::default()
         });
         items.push(SelectionItem {
-            name: "Apps".to_string(),
-            description: Some(plugin_app_summary(plugin)),
-            is_disabled: true,
-            ..Default::default()
-        });
-        items.push(SelectionItem {
             name: "MCP Servers".to_string(),
             description: Some(plugin_mcp_summary(plugin)),
             is_disabled: true,
@@ -1503,19 +1497,6 @@ fn plugin_skill_summary(plugin: &PluginDetail) -> String {
             .skills
             .iter()
             .map(|skill| skill.name.as_str())
-            .collect::<Vec<_>>()
-            .join(", ")
-    }
-}
-
-fn plugin_app_summary(plugin: &PluginDetail) -> String {
-    if plugin.apps.is_empty() {
-        "No plugin apps.".to_string()
-    } else {
-        plugin
-            .apps
-            .iter()
-            .map(|app| app.name.as_str())
             .collect::<Vec<_>>()
             .join(", ")
     }

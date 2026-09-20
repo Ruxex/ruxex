@@ -918,9 +918,6 @@ pub struct DiscoveredPluginFiles {
     /// File-backed MCP declarations, including the conventional `.mcp.json` fallback.
     #[serde(default)]
     pub mcp_config: Option<CapabilityTextFile>,
-    /// File-backed connector declarations.
-    #[serde(default)]
-    pub apps_config: Option<CapabilityTextFile>,
 }
 
 /// A skill instructions file and its optional sibling metadata.

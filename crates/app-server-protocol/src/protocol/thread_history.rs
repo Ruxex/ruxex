@@ -12,7 +12,6 @@ use crate::protocol::v2::CommandExecutionStatus;
 use crate::protocol::v2::DynamicToolCallOutputContentItem;
 use crate::protocol::v2::DynamicToolCallStatus;
 use crate::protocol::v2::ImageReference;
-use crate::protocol::v2::McpToolCallAppContext;
 use crate::protocol::v2::McpToolCallError;
 use crate::protocol::v2::McpToolCallResult;
 use crate::protocol::v2::McpToolCallStatus;
@@ -772,16 +771,6 @@ impl ThreadHistoryBuilder {
                 .arguments
                 .clone()
                 .unwrap_or(serde_json::Value::Null),
-            app_context: payload
-                .connector_id
-                .clone()
-                .map(|connector_id| McpToolCallAppContext {
-                    connector_id,
-                    link_id: payload.link_id.clone(),
-                    resource_uri: payload.mcp_app_resource_uri.clone(),
-                    app_name: payload.app_name.clone(),
-                    action_name: payload.action_name.clone(),
-                }),
             mcp_app_resource_uri: payload.mcp_app_resource_uri.clone(),
             mcp_app_ui: payload.mcp_app_ui.clone(),
             plugin_id: payload.plugin_id.clone(),
@@ -830,16 +819,6 @@ impl ThreadHistoryBuilder {
                 .arguments
                 .clone()
                 .unwrap_or(serde_json::Value::Null),
-            app_context: payload
-                .connector_id
-                .clone()
-                .map(|connector_id| McpToolCallAppContext {
-                    connector_id,
-                    link_id: payload.link_id.clone(),
-                    resource_uri: payload.mcp_app_resource_uri.clone(),
-                    app_name: payload.app_name.clone(),
-                    action_name: payload.action_name.clone(),
-                }),
             mcp_app_resource_uri: payload.mcp_app_resource_uri.clone(),
             mcp_app_ui: payload.mcp_app_ui.clone(),
             plugin_id: payload.plugin_id.clone(),
@@ -3117,12 +3096,8 @@ mod tests {
                     tool: "lookup".into(),
                     arguments: Some(serde_json::json!({"id":"123"})),
                 },
-                connector_id: None,
                 mcp_app_resource_uri: None,
                 mcp_app_ui: None,
-                link_id: None,
-                app_name: None,
-                action_name: None,
                 plugin_id: None,
                 read_only_hint: None,
                 duration: Duration::from_millis(8),
@@ -3181,7 +3156,6 @@ mod tests {
                 tool: "lookup".into(),
                 status: McpToolCallStatus::Failed,
                 arguments: serde_json::json!({"id":"123"}),
-                app_context: None,
                 mcp_app_resource_uri: None,
                 mcp_app_ui: None,
                 plugin_id: None,
@@ -3214,12 +3188,8 @@ mod tests {
                     tool: "lookup".into(),
                     arguments: Some(serde_json::json!({"id":"123"})),
                 },
-                connector_id: Some("calendar".into()),
                 mcp_app_resource_uri: Some("ui://widget/lookup.html".into()),
                 mcp_app_ui: None,
-                link_id: Some("link_calendar".into()),
-                app_name: Some("Calendar".into()),
-                action_name: Some("lookup".into()),
                 plugin_id: Some("sample@test".into()),
                 read_only_hint: Some(false),
                 duration: Duration::from_millis(8),
@@ -3251,13 +3221,6 @@ mod tests {
                 tool: "lookup".into(),
                 status: McpToolCallStatus::Completed,
                 arguments: serde_json::json!({"id":"123"}),
-                app_context: Some(McpToolCallAppContext {
-                    connector_id: "calendar".into(),
-                    link_id: Some("link_calendar".into()),
-                    resource_uri: Some("ui://widget/lookup.html".into()),
-                    app_name: Some("Calendar".into()),
-                    action_name: Some("lookup".into()),
-                }),
                 mcp_app_resource_uri: Some("ui://widget/lookup.html".into()),
                 mcp_app_ui: None,
                 plugin_id: Some("sample@test".into()),
@@ -3649,12 +3612,8 @@ mod tests {
                 server: "slack".into(),
                 tool: "search".into(),
                 arguments: serde_json::json!({"query": "incident"}),
-                connector_id: None,
                 mcp_app_resource_uri: None,
                 mcp_app_ui: None,
-                link_id: None,
-                app_name: None,
-                action_name: None,
                 plugin_id: None,
                 read_only_hint: Some(true),
                 status: CoreMcpToolCallStatus::Completed,
@@ -4350,7 +4309,6 @@ mod tests {
                 replacement_history: None,
                 retained_context: None,
                 guardian_history: None,
-                mcp_resource_origins: None,
                 window_number: None,
                 first_window_id: None,
                 previous_window_id: None,

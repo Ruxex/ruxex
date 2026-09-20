@@ -1893,7 +1893,6 @@ dependencies = [
  "codex-aws-auth",
  "codex-code-mode",
  "codex-config",
- "codex-connectors",
  "codex-core",
  "codex-core-plugins",
  "codex-diagnostics",
@@ -2485,42 +2484,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "codex-connectors"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "arc-swap",
- "codex-config",
- "codex-login",
- "codex-otel",
- "codex-plugin",
- "codex-protocol",
- "indexmap 2.14.0",
- "pretty_assertions",
- "serde",
- "serde_json",
- "sha1 0.10.6",
- "tempfile",
- "tokio",
- "tracing",
- "urlencoding",
-]
-
-[[package]]
-name = "codex-connectors-extension"
-version = "0.0.0"
-dependencies = [
- "codex-connectors",
- "codex-core-plugins",
- "codex-file-system",
- "codex-plugin",
- "codex-utils-path-uri",
- "serde_json",
- "thiserror 2.0.18",
- "tracing",
-]
-
-[[package]]
 name = "codex-context-fragments"
 version = "0.0.0"
 dependencies = [
@@ -2552,7 +2515,6 @@ dependencies = [
  "codex-client",
  "codex-code-mode",
  "codex-config",
- "codex-connectors",
  "codex-context-fragments",
  "codex-core-plugins",
  "codex-diagnostics",
@@ -2694,7 +2656,6 @@ dependencies = [
  "codex-analytics",
  "codex-app-server-protocol",
  "codex-config",
- "codex-connectors",
  "codex-exec-server",
  "codex-exec-server-test-support",
  "codex-git-utils",
@@ -3374,7 +3335,6 @@ dependencies = [
  "codex-api",
  "codex-async-utils",
  "codex-config",
- "codex-connectors",
  "codex-diagnostics",
  "codex-exec-server",
  "codex-exec-server-test-support",
@@ -3410,8 +3370,6 @@ dependencies = [
  "anyhow",
  "axum",
  "codex-config",
- "codex-connectors",
- "codex-connectors-extension",
  "codex-core",
  "codex-core-plugins",
  "codex-exec-server",
@@ -4192,7 +4150,6 @@ version = "0.0.0"
 dependencies = [
  "bitflags 2.13.1",
  "codex-code-mode",
- "codex-connectors",
  "codex-extension-items",
  "codex-features",
  "codex-file-system",
@@ -4230,7 +4187,6 @@ dependencies = [
  "codex-arg0",
  "codex-build-info",
  "codex-config",
- "codex-connectors",
  "codex-context-fragments",
  "codex-core-plugins",
  "codex-exec-server",

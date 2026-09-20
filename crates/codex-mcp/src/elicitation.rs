@@ -24,7 +24,6 @@ use async_channel::Sender;
 use codex_protocol::approvals::ElicitationRequest;
 use codex_protocol::approvals::ElicitationRequestEvent;
 use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::mcp::OPENAI_ELICITATION_EXTENSION_ID;
 use codex_protocol::mcp::RequestId as ProtocolRequestId;
 use codex_protocol::mcp_approval_meta::APPROVAL_KIND_BROWSER_AUTH;
 use codex_protocol::mcp_approval_meta::APPROVAL_KIND_KEY;
@@ -54,9 +53,6 @@ pub const MCP_ELICITATION_HANDOFF_MESSAGE: &str = concat!(
     "Ask the parent agent to handle this request. ",
     "Do not retry the blocked action until the parent confirms the blocker is resolved."
 );
-
-#[path = "user_verification_elicitation.rs"]
-mod user_verification_elicitation;
 
 #[derive(Debug, Clone)]
 pub struct ElicitationReviewRequest {
@@ -110,7 +106,6 @@ struct ActiveElicitation {
 pub(crate) struct ElicitationRequestRouter {
     requests: Arc<StdMutex<ResponderMap>>,
     auto_deny: Arc<AtomicBool>,
-    full_access_form_input_enabled: Arc<AtomicBool>,
 }
 
 struct PendingElicitationRequest {
@@ -137,15 +132,6 @@ impl ElicitationRequestRouter {
 
     pub(crate) fn set_auto_deny(&self, auto_deny: bool) {
         self.auto_deny.store(auto_deny, Ordering::Relaxed);
-    }
-
-    pub(crate) fn full_access_form_input_enabled(&self) -> bool {
-        self.full_access_form_input_enabled.load(Ordering::Acquire)
-    }
-
-    pub(crate) fn enable_full_access_form_input(&self) {
-        self.full_access_form_input_enabled
-            .store(true, Ordering::Release);
     }
 
     pub(crate) async fn resolve(
@@ -183,18 +169,10 @@ impl ElicitationRequestRouter {
                 meta: None,
             });
         };
-        let (delivery_context, response_context) =
-            if matches!(&request, ElicitationRequest::UserVerification { .. }) {
-                (
-                    "failed to deliver user-verification request",
-                    "user-verification response channel closed",
-                )
-            } else {
-                (
-                    "failed to deliver MCP elicitation request",
-                    "elicitation request channel closed unexpectedly",
-                )
-            };
+        let (delivery_context, response_context) = (
+            "failed to deliver MCP elicitation request",
+            "elicitation request channel closed unexpectedly",
+        );
         let public_request_id = format!(
             "codex-mcp-elicitation-{}",
             NEXT_ELICITATION_REQUEST_ID.fetch_add(1, Ordering::Relaxed)
@@ -292,10 +270,6 @@ impl ElicitationRequestManager {
     ) -> SendElicitation {
         // Event receivers such as codex mcp-server do not necessarily handle verification.
         // Only wait for a response when trusted host activation enabled this exact route.
-        let user_verification_enabled = client_mcp_extensions
-            .get(OPENAI_ELICITATION_EXTENSION_ID)
-            .and_then(|settings| settings.get("userVerification"))
-            .is_some_and(Value::is_object);
         let router = self.router.clone();
         let authority = self.authority.clone();
         Box::new(move |id, elicitation| {
@@ -325,44 +299,9 @@ impl ElicitationRequestManager {
                                 ..
                             },
                         ) => !requested_schema.properties.is_empty(),
-                        Elicitation::OpenAiForm {
-                            requested_schema, ..
-                        }
-                        | Elicitation::OpenAiElicitationForm {
-                            requested_schema, ..
-                        } => requested_schema
-                            .get("properties")
-                            .and_then(Value::as_object)
-                            .is_some_and(|properties| !properties.is_empty()),
                         Elicitation::Mcp(_) | Elicitation::UserVerification { .. } => true,
                     };
                     anyhow::ensure!(!requires_user_input, MCP_ELICITATION_HANDOFF_MESSAGE);
-                }
-                if let Elicitation::UserVerification {
-                    title,
-                    description,
-                    challenge,
-                } = elicitation
-                {
-                    if !user_verification_enabled {
-                        return Ok(ElicitationResponse {
-                            action: ElicitationAction::Cancel,
-                            content: None,
-                            meta: None,
-                        });
-                    }
-                    return user_verification_elicitation::route(
-                        router,
-                        tx_event,
-                        authority,
-                        server_name,
-                        ElicitationRequest::UserVerification {
-                            title,
-                            description,
-                            challenge,
-                        },
-                    )
-                    .await;
                 }
                 if router.auto_deny() {
                     return Ok(ElicitationResponse {
@@ -471,47 +410,22 @@ impl ElicitationRequestManager {
                     });
                 }
 
-                let should_surface_form_in_full_access = router.full_access_form_input_enabled()
-                    && permission_prompt_is_auto_approved
-                    && !elicitation
-                        .meta()
-                        .is_some_and(|meta| meta.contains_key(APPROVAL_KIND_KEY))
-                    && match &elicitation {
-                        Elicitation::Mcp(
-                            rmcp::model::ElicitRequestParams::FormElicitationParams {
-                                requested_schema,
-                                ..
-                            },
-                        ) => !requested_schema.properties.is_empty(),
-                        Elicitation::OpenAiElicitationForm {
-                            requested_schema, ..
-                        } => requested_schema
-                            .get("properties")
-                            .and_then(Value::as_object)
-                            .is_some_and(|properties| !properties.is_empty()),
-                        Elicitation::Mcp(_)
-                        | Elicitation::OpenAiForm { .. }
-                        | Elicitation::UserVerification { .. } => false,
+                if elicitation_is_rejected_by_policy(approval_policy) {
+                    return Ok(ElicitationResponse {
+                        action: ElicitationAction::Decline,
+                        content: None,
+                        meta: None,
+                    });
+                }
+
+                if let Some(reviewer) = reviewer {
+                    let request = ElicitationReviewRequest {
+                        server_name: server_name.clone(),
+                        request_id: id.clone(),
+                        elicitation: elicitation.clone(),
                     };
-
-                if !should_surface_form_in_full_access {
-                    if elicitation_is_rejected_by_policy(approval_policy) {
-                        return Ok(ElicitationResponse {
-                            action: ElicitationAction::Decline,
-                            content: None,
-                            meta: None,
-                        });
-                    }
-
-                    if let Some(reviewer) = reviewer {
-                        let request = ElicitationReviewRequest {
-                            server_name: server_name.clone(),
-                            request_id: id.clone(),
-                            elicitation: elicitation.clone(),
-                        };
-                        if let Some(response) = reviewer.review(request).await? {
-                            return Ok(response);
-                        }
+                    if let Some(response) = reviewer.review(request).await? {
+                        return Ok(response);
                     }
                 }
 
@@ -557,24 +471,6 @@ impl ElicitationRequestManager {
                             meta: None,
                         });
                     }
-                    Elicitation::OpenAiForm {
-                        meta,
-                        message,
-                        requested_schema,
-                    } => ElicitationRequest::OpenAiForm {
-                        meta,
-                        message,
-                        requested_schema,
-                    },
-                    Elicitation::OpenAiElicitationForm {
-                        meta,
-                        message,
-                        requested_schema,
-                    } => ElicitationRequest::OpenAiElicitationForm {
-                        meta,
-                        message,
-                        requested_schema,
-                    },
                 };
                 router
                     .request_user_interaction(tx_event, &authority, server_name, request)
@@ -615,10 +511,7 @@ fn can_auto_accept_elicitation(elicitation: &Elicitation) -> bool {
             // Auto-accept confirm/approval elicitations without schema requirements.
             requested_schema.properties.is_empty()
         }
-        Elicitation::Mcp(_)
-        | Elicitation::OpenAiForm { .. }
-        | Elicitation::OpenAiElicitationForm { .. }
-        | Elicitation::UserVerification { .. } => false,
+        Elicitation::Mcp(_) | Elicitation::UserVerification { .. } => false,
     }
 }
 

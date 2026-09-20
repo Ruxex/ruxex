@@ -10,49 +10,16 @@ use codex_extension_api::McpToolSource;
 use codex_guardian_context::TrustedTool;
 
 #[derive(Clone, Copy)]
-enum PluginCapability {
-    Connector,
-    Mcp,
-}
+enum PluginCapability { Mcp }
 
 pub(crate) async fn trusted_tool_context(
     tool: &McpToolInfo,
     source: &McpToolSource,
-    manager: &ThreadManager,
+    _manager: &ThreadManager,
     config: &Config,
 ) -> Option<TrustedTool> {
     let codex_home = config.codex_home.as_path().canonicalize().ok()?;
-    let plugins = match source {
-        McpToolSource::Connector => Some(
-            manager
-                .plugins_manager()
-                .plugins_for_config(&config.plugins_config_input())
-                .await,
-        ),
-        McpToolSource::Config | McpToolSource::Plugin { .. } => None,
-        McpToolSource::SelectedPlugin | McpToolSource::Other => return None,
-    };
-
     let source = match source {
-        McpToolSource::Connector => {
-            let connector_id = tool.connector_id.as_deref()?;
-            if let Some(plugin) = plugins.as_ref()?.plugins().iter().find(|plugin| {
-                plugin.is_active()
-                    && plugin
-                        .apps
-                        .iter()
-                        .any(|app| app.connector_id.0 == connector_id)
-                    && is_home_owned_plugin_capability(
-                        plugin.root.as_path(),
-                        &codex_home,
-                        PluginCapability::Connector,
-                    )
-            }) {
-                plugin.root.as_path().display().to_string()
-            } else {
-                trusted_user_config_source(config, "apps", connector_id, &codex_home)?
-            }
-        }
         McpToolSource::Plugin { root, .. } => {
             let plugin_root = root.to_abs_path().ok()?;
             if !is_home_owned_plugin_capability(
@@ -72,7 +39,7 @@ pub(crate) async fn trusted_tool_context(
 
     Some(TrustedTool {
         server: tool.server_name.clone(),
-        connector_id: tool.connector_id.clone(),
+        connector_id: None,
         source,
     })
 }
@@ -109,13 +76,6 @@ fn is_home_owned_plugin_capability(
         return false;
     };
     let declaration_path = match capability {
-        PluginCapability::Connector => manifest
-            .get("apps")
-            .and_then(serde_json::Value::as_str)
-            .map_or_else(
-                || plugin_root.join(".app.json"),
-                |path| plugin_root.join(path),
-            ),
         PluginCapability::Mcp => match manifest.get("mcpServers") {
             Some(serde_json::Value::Object(_)) => manifest_path,
             Some(serde_json::Value::String(path)) => plugin_root.join(path),

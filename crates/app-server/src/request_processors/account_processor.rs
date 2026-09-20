@@ -3,6 +3,7 @@ use super::bedrock_auth::clear_user_model_provider_if_bedrock;
 use super::bedrock_auth::configure_bedrock_provider;
 use super::bedrock_auth::ensure_user_model_provider_can_be_bedrock;
 use super::*;
+use codex_app_server_protocol::LoginAppBrand;
 use crate::auth_mode::auth_mode_to_api;
 use crate::external_auth::ExternalAuthBridge;
 use crate::outgoing_message::AccountNotification;

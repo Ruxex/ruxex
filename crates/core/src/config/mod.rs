@@ -670,9 +670,6 @@ pub struct Config {
     /// Whether to inject the `<permissions instructions>` developer block.
     pub include_permissions_instructions: bool,
 
-    /// Whether to inject the `<apps_instructions>` developer block.
-    pub include_apps_instructions: bool,
-
     /// Whether to inject the `<collaboration_mode>` developer block.
     pub include_collaboration_mode_instructions: bool,
 
@@ -963,9 +960,6 @@ pub struct Config {
 
     /// Whether Codex-owned clients should respect host system proxy settings.
     pub respect_system_proxy: bool,
-
-    /// Optional product SKU forwarded to the host-owned apps MCP server.
-    pub apps_mcp_product_sku: Option<String>,
 
     /// Bounded, product-owned metadata attached to every Responses API request.
     pub responses_api_metadata: BTreeMap<String, String>,
@@ -1684,7 +1678,6 @@ impl Config {
 
         McpConfig {
             chatgpt_base_url: self.chatgpt_base_url.clone(),
-            apps_mcp_product_sku: self.apps_mcp_product_sku.clone(),
             requires_read_only_mcp_tools: false,
             codex_home: self.codex_home.to_path_buf(),
             mcp_enterprise_managed_auth: self.mcp_enterprise_managed_auth.clone(),
@@ -1705,13 +1698,10 @@ impl Config {
                 .enabled(Feature::SkillMcpDependencyInstall),
             approval_policy: self.permissions.approval_policy.clone(),
             permission_profile: self.permissions.permission_profile().clone(),
-            config_layer_stack: self.config_layer_stack.clone(),
-            approvals_reviewer: self.approvals_reviewer,
             environment_cwds: HashMap::new(),
             server_permission_profiles: HashMap::new(),
             codex_linux_sandbox_exe: self.codex_linux_sandbox_exe.clone(),
             use_legacy_landlock: self.features.use_legacy_landlock(),
-            apps_enabled: self.features.enabled(Feature::Apps),
             prefix_mcp_tool_names: self.prefix_mcp_tool_names(),
             non_prefixed_mcp_tool_servers: if self
                 .features
@@ -1724,25 +1714,10 @@ impl Config {
                 Vec::new()
             },
             protocol_mode: self.mcp_protocol_mode(),
-            host_owned_apps_protocol_mode: if self.features.enabled(Feature::CodexAppsMcp20260728) {
-                McpProtocolMode::V20260728
-            } else {
-                McpProtocolMode::Legacy
-            },
-            client_elicitation_capability: if self.features.enabled(Feature::AuthElicitation) {
-                ElicitationCapability::new()
-                    .with_form(FormElicitationCapability::new())
-                    .with_url(UrlElicitationCapability::new())
-            } else {
-                // https://modelcontextprotocol.io/specification/2025-06-18/client/elicitation#capabilities
-                // indicates this should be an empty object.
-                ElicitationCapability::default()
-            },
+            client_elicitation_capability: ElicitationCapability::new()
+                .with_form(FormElicitationCapability::new())
+                .with_url(UrlElicitationCapability::new()),
             mcp_server_catalog: catalog.build(),
-            connector_snapshot:
-                codex_connectors::ConnectorSnapshot::from_plugin_capability_summaries(
-                    loaded_plugins.capability_summaries(),
-                ),
         }
     }
 
@@ -3796,7 +3771,6 @@ impl Config {
             .map(|_| BaseInstructionsProvenance::Custom);
         let developer_instructions = developer_instructions.or(cfg.developer_instructions);
         let include_permissions_instructions = cfg.include_permissions_instructions.unwrap_or(true);
-        let include_apps_instructions = cfg.include_apps_instructions.unwrap_or(true);
         let include_collaboration_mode_instructions =
             cfg.include_collaboration_mode_instructions.unwrap_or(true);
         let include_skill_instructions = cfg
@@ -4082,7 +4056,6 @@ impl Config {
             developer_instructions,
             compact_prompt,
             include_permissions_instructions,
-            include_apps_instructions,
             include_collaboration_mode_instructions,
             include_skill_instructions,
             skill_max_context_tokens,
@@ -4180,7 +4153,6 @@ impl Config {
                 .chatgpt_base_url
                 .unwrap_or("https://chatgpt.com/backend-api/".to_string()),
             respect_system_proxy,
-            apps_mcp_product_sku: cfg.apps_mcp_product_sku.clone(),
             responses_api_metadata: cfg.responses_api_metadata.unwrap_or_default(),
             experimental_thread_store: thread_store_config(cfg.experimental_thread_store),
             forced_chatgpt_workspace_id,

@@ -23,8 +23,6 @@ use crate::state::ActiveTurn;
 use crate::turn_metadata::ExecutionMetadata;
 use codex_attachment_store::AttachmentStore;
 use codex_extension_api::ExtensionDataInit;
-use codex_http_client::ClientRouteClass;
-use codex_http_client::RouteAwareClientPool;
 use codex_login::auth::AgentIdentityAuthPolicy;
 use codex_model_provider::SharedModelProvider;
 use codex_prompts::render_model_instructions;
@@ -1552,12 +1550,7 @@ impl Session {
             };
             for item in initial_history.get_rollout_items() {
                 match item {
-                    RolloutItem::Compacted(compacted) => {
-                        if let Some(checkpoint) = &compacted.mcp_resource_origins {
-                            mcp_runtime.restore_resource_origin_checkpoint(checkpoint);
-                        }
-                    }
-                    RolloutItem::EventMsg(event) => mcp_runtime.observe_event(event),
+                    RolloutItem::Compacted(_) | RolloutItem::EventMsg(_) => {}
                     RolloutItem::SessionMeta(_)
                     | RolloutItem::ResponseItem(_)
                     | RolloutItem::InterAgentCommunication(_)
@@ -1611,11 +1604,6 @@ impl Session {
                 show_raw_agent_reasoning: config.show_raw_agent_reasoning,
                 exec_policy,
                 auth_manager: Arc::clone(&auth_manager),
-                openai_file_upload_client_pool: RouteAwareClientPool::new_without_request_logging(
-                    config.http_client_factory(),
-                    ClientRouteClass::Api,
-                )
-                .with_legacy_custom_ca_fallback(),
                 session_telemetry,
                 models_manager: Arc::clone(&models_manager),
                 git_root_discovery,

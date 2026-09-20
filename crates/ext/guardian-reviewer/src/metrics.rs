@@ -9,7 +9,6 @@ use codex_analytics::GuardianReviewFailureReason;
 use codex_analytics::GuardianReviewSessionKind;
 use codex_analytics::GuardianReviewTerminalStatus;
 use codex_analytics::GuardianReviewedAction;
-use codex_mcp::CODEX_APPS_MCP_SERVER_NAME;
 use codex_otel::GUARDIAN_REVIEW_COUNT_METRIC;
 use codex_otel::GUARDIAN_REVIEW_DURATION_METRIC;
 use codex_otel::GUARDIAN_REVIEW_TOKEN_USAGE_METRIC;
@@ -34,16 +33,7 @@ pub(crate) fn emit_guardian_review_metrics(
         .map(|(key, value)| (*key, value.as_str()))
         .collect();
 
-    // Custom MCP tool names may contain user data; only attribute tools from the OpenAI Apps server.
-    let mcp_tags = if let GuardianReviewedAction::McpToolCall {
-        server, tool_name, ..
-    } = reviewed_action
-        && server == CODEX_APPS_MCP_SERVER_NAME
-    {
-        vec![("tool", sanitize_metric_tag_value(tool_name))]
-    } else {
-        Vec::new()
-    };
+    let mcp_tags: Vec<(&str, String)> = Vec::new();
     let mut counter_tag_refs = tag_refs.clone();
     counter_tag_refs.extend(mcp_tags.iter().map(|(key, value)| (*key, value.as_str())));
     session_telemetry.counter(

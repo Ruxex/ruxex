@@ -20,7 +20,6 @@ pub use codex_protocol::config_types::ApprovalsReviewer;
 pub use codex_protocol::config_types::ModeKind;
 pub use codex_protocol::config_types::Personality;
 pub use codex_protocol::config_types::ServiceTier;
-use codex_protocol::config_types::ToolExposureSurface;
 pub use codex_protocol::config_types::WebSearchMode;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::BTreeMap;
@@ -228,7 +227,6 @@ pub struct AnalyticsConfigToml {
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ToolSuggestDiscoverableType {
-    Connector,
     Plugin,
 }
 
@@ -252,13 +250,6 @@ impl ToolSuggestDisabledTool {
     pub fn plugin(id: impl Into<String>) -> Self {
         Self {
             kind: ToolSuggestDiscoverableType::Plugin,
-            id: id.into(),
-        }
-    }
-
-    pub fn connector(id: impl Into<String>) -> Self {
-        Self {
-            kind: ToolSuggestDiscoverableType::Connector,
             id: id.into(),
         }
     }
@@ -397,137 +388,6 @@ impl From<MemoriesToml> for MemoriesConfig {
             consolidation_model: toml.consolidation_model,
         }
     }
-}
-
-/// Default settings that apply to all apps.
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default, JsonSchema)]
-#[schemars(deny_unknown_fields)]
-pub struct AppsDefaultConfig {
-    /// When `false`, apps are disabled unless overridden by per-app settings.
-    #[serde(default = "default_enabled")]
-    pub enabled: bool,
-
-    /// Reviewer for approval prompts unless overridden by per-app settings.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub approvals_reviewer: Option<ApprovalsReviewer>,
-
-    /// Whether tools with `destructive_hint = true` are allowed by default.
-    #[serde(
-        default = "default_enabled",
-        skip_serializing_if = "std::clone::Clone::clone"
-    )]
-    pub destructive_enabled: bool,
-
-    /// Whether tools with `open_world_hint = true` are allowed by default.
-    #[serde(
-        default = "default_enabled",
-        skip_serializing_if = "std::clone::Clone::clone"
-    )]
-    pub open_world_enabled: bool,
-
-    /// Approval mode for tools unless overridden by per-app or per-tool settings.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub default_tools_approval_mode: Option<AppToolApproval>,
-}
-
-/// Per-tool settings for a single app tool.
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default, JsonSchema)]
-#[schemars(deny_unknown_fields)]
-pub struct AppToolConfig {
-    /// Whether this tool is enabled. `Some(true)` explicitly allows this tool.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub enabled: Option<bool>,
-
-    /// Approval mode for this tool.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub approval_mode: Option<AppToolApproval>,
-}
-
-/// Tool settings for a single app.
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default, JsonSchema)]
-#[schemars(deny_unknown_fields)]
-pub struct AppToolsConfig {
-    /// Per-tool overrides keyed by tool name (for example `repos/list`).
-    #[serde(default, flatten)]
-    pub tools: HashMap<String, AppToolConfig>,
-}
-
-/// Approval settings for a connected account within an app.
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema)]
-#[schemars(deny_unknown_fields)]
-pub struct AppLinkConfig {
-    /// Reviewer for approval prompts from this account, overriding the app default.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub approvals_reviewer: Option<ApprovalsReviewer>,
-
-    /// Approval mode for this account unless a tool override exists.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub default_tools_approval_mode: Option<AppToolApproval>,
-}
-
-/// Account settings for a single app.
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema)]
-#[schemars(deny_unknown_fields)]
-pub struct AppLinksConfig {
-    /// Per-account approval settings keyed by link ID.
-    #[serde(default, flatten)]
-    pub links: HashMap<String, AppLinkConfig>,
-}
-
-/// Config values for a single app/connector.
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema)]
-#[schemars(deny_unknown_fields)]
-pub struct AppConfig {
-    /// When `false`, Codex does not surface this app.
-    #[serde(default = "default_enabled")]
-    pub enabled: bool,
-
-    /// Model-facing surfaces from which this connector's tools must be omitted,
-    /// in addition to any server-level omissions. `None` leaves lower-priority
-    /// configuration unchanged; an empty list clears connector-level omissions.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub omit_tools_from: Option<Vec<ToolExposureSurface>>,
-
-    /// Reviewer for approval prompts from this app, overriding the thread default.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub approvals_reviewer: Option<ApprovalsReviewer>,
-
-    /// Whether tools with `destructive_hint = true` are allowed for this app.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub destructive_enabled: Option<bool>,
-
-    /// Whether tools with `open_world_hint = true` are allowed for this app.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub open_world_enabled: Option<bool>,
-
-    /// Approval mode for tools in this app unless a tool override exists.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub default_tools_approval_mode: Option<AppToolApproval>,
-
-    /// Whether tools are enabled by default for this app.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub default_tools_enabled: Option<bool>,
-
-    /// Per-tool settings for this app.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub tools: Option<AppToolsConfig>,
-
-    /// Per-account approval settings keyed by link ID.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub links: Option<AppLinksConfig>,
-}
-
-/// App/connector settings loaded from `config.toml`.
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema)]
-#[schemars(deny_unknown_fields)]
-pub struct AppsConfigToml {
-    /// Default settings for all apps.
-    #[serde(default, rename = "_default", skip_serializing_if = "Option::is_none")]
-    pub default: Option<AppsDefaultConfig>,
-
-    /// Per-app settings keyed by app ID (for example `[apps.google_drive]`).
-    #[serde(default, flatten)]
-    pub apps: HashMap<String, AppConfig>,
 }
 
 // ===== OTEL configuration =====

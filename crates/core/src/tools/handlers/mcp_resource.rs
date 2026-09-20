@@ -4,7 +4,6 @@ use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
 
-use codex_mcp::CODEX_APPS_MCP_SERVER_NAME;
 use codex_protocol::items::McpToolCallError;
 use codex_protocol::items::McpToolCallItem;
 use codex_protocol::items::McpToolCallStatus;
@@ -43,7 +42,9 @@ pub use list_mcp_resources::ListMcpResourcesHandler;
 pub use read_mcp_resource::ReadMcpResourceHandler;
 
 fn model_can_access_mcp_server(turn: &TurnContext, server: &str) -> bool {
-    turn.config.orchestrator_mcp_enabled || server != CODEX_APPS_MCP_SERVER_NAME
+    let _ = turn;
+    let _ = server;
+    true
 }
 
 fn ensure_model_can_access_mcp_server(
@@ -220,12 +221,8 @@ async fn emit_tool_call_begin(
         server,
         tool,
         arguments: arguments.unwrap_or(Value::Null),
-        connector_id: None,
         mcp_app_resource_uri: None,
         mcp_app_ui: None,
-        link_id: None,
-        app_name: None,
-        action_name: None,
         plugin_id: None,
         read_only_hint: None,
         status: McpToolCallStatus::InProgress,
@@ -265,12 +262,8 @@ async fn emit_tool_call_end(
         server,
         tool,
         arguments: arguments.unwrap_or(Value::Null),
-        connector_id: None,
         mcp_app_resource_uri: None,
         mcp_app_ui: None,
-        link_id: None,
-        app_name: None,
-        action_name: None,
         plugin_id: None,
         read_only_hint: None,
         status,

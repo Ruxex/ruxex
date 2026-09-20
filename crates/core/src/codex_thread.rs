@@ -900,13 +900,6 @@ impl CodexThread {
         self.session.refresh_mcp_config(next_config).await;
     }
 
-    /// Refreshes this thread's Apps tools before returning their runtime state.
-    pub async fn refresh_codex_apps_tools(
-        &self,
-    ) -> anyhow::Result<codex_mcp::CodexAppsToolSnapshot> {
-        self.session.refresh_codex_apps_tools().await
-    }
-
     pub async fn environment_selections(&self) -> Vec<TurnEnvironmentSelection> {
         self.session.services.turn_environments.selections()
     }
@@ -948,43 +941,6 @@ impl CodexThread {
             .await?;
 
         Ok(serde_json::to_value(result)?)
-    }
-
-    /// Reads an app resource using the current authority of its originating tool call.
-    pub async fn read_mcp_resource_for_call(
-        &self,
-        call_id: &str,
-        uri: &str,
-    ) -> anyhow::Result<serde_json::Value> {
-        self.session.refresh_mcp_if_dirty().await;
-        let result = self
-            .session
-            .services
-            .mcp_runtime
-            .read_resource_for_call(self.session.thread_id, call_id, uri)
-            .await?;
-
-        Ok(serde_json::to_value(result)?)
-    }
-
-    pub async fn start_mcp_event_stream(
-        &self,
-        name: &str,
-        arguments: serde_json::Value,
-        meta: Option<serde_json::Value>,
-    ) -> anyhow::Result<codex_mcp::McpEventStream> {
-        let meta = match meta.as_ref() {
-            Some(serde_json::Value::Object(meta)) => Some(meta),
-            Some(other) => {
-                anyhow::bail!("MCP event request _meta must be a JSON object, got {other}")
-            }
-            None => None,
-        };
-        let _ = self.session.services.auth_manager.auth().await;
-        self.session.refresh_mcp_if_dirty().await;
-        codex_mcp::McpResourceClient::new(Arc::clone(&self.session.services.mcp_runtime))
-            .open_event_stream(name, &arguments, meta)
-            .await
     }
 
     pub async fn call_mcp_tool(

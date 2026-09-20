@@ -186,7 +186,6 @@ impl ChatWidget {
         // be identical across two accounts, so always invalidate account-scoped requests and data.
         self.model_popup_request_id = None;
         self.invalidate_permission_discovery();
-        self.invalidate_connector_scope();
         self.clear_backend_banner();
         self.luna_reserve_notice_account_id = None;
         self.automatic_model_switch_state = backend_banners::AutomaticModelSwitchState::default();
@@ -210,9 +209,6 @@ impl ChatWidget {
         self.plan_type = plan_type;
         self.has_chatgpt_account = has_chatgpt_account;
         self.has_codex_backend_auth = has_codex_backend_auth;
-        self.bottom_pane
-            .set_connectors_enabled(self.connectors_enabled());
-        self.refresh_connector_mentions(/*force_refresh*/ false);
         self.bottom_pane
             .set_token_activity_command_enabled(has_codex_backend_auth);
         self.refresh_status_surfaces();
@@ -473,9 +469,7 @@ impl ChatWidget {
                 self.app_event_tx
                     .send(AppEvent::RefreshWindowsSandbox { thread_id });
             }
-            self.invalidate_connector_scope();
             self.refresh_skills_for_current_cwd(/*force_reload*/ true);
-            self.refresh_connector_mentions(/*force_refresh*/ false);
         }
         self.refresh_plugin_mentions();
         self.request_redraw();

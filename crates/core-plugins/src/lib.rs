@@ -1,4 +1,3 @@
-mod app_mcp_routing;
 mod artifact_operation;
 mod command_migration;
 mod discoverable;
@@ -46,7 +45,6 @@ pub fn is_openai_curated_marketplace_name(marketplace_name: &str) -> bool {
 pub type LoadedPlugin = codex_plugin::LoadedPlugin<codex_config::McpServerConfig>;
 pub type PluginLoadOutcome = codex_plugin::PluginLoadOutcome<codex_config::McpServerConfig>;
 
-pub use app_mcp_routing::apps_route_available;
 pub use artifact_operation::ArtifactOperation;
 pub use artifact_operation::recognize_artifact_operation;
 pub use command_migration::CommandDescriptionMode;

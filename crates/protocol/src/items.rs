@@ -452,9 +452,6 @@ pub struct McpToolCallItem {
     pub server: String,
     pub tool: String,
     pub arguments: serde_json::Value,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub connector_id: Option<String>,
     /// Legacy compatibility field; prefer `mcp_app_ui.resource_uri` when available.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
@@ -462,15 +459,6 @@ pub struct McpToolCallItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub mcp_app_ui: Option<McpAppUi>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub link_id: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub app_name: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub action_name: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub plugin_id: Option<String>,

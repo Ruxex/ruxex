@@ -143,12 +143,6 @@ pub enum McpServerContribution {
         config: Box<McpServerConfig>,
         protocol_mode: crate::McpProtocolMode,
     },
-    /// Registers the controller-owned Apps server under its reserved name.
-    HostedApps {
-        config: Box<McpServerConfig>,
-        /// Overrides the HTTP protocol mode, or uses the hosted Apps default when absent.
-        protocol_mode: Option<crate::McpProtocolMode>,
-    },
     /// Registers a server declared by a plugin selected for this thread.
     SelectedPlugin {
         name: String,
@@ -157,12 +151,11 @@ pub enum McpServerContribution {
         selection_order: usize,
         config: Box<McpServerConfig>,
     },
-    /// Records a plugin selected for this thread and any connector IDs it declares.
+    /// Records a plugin selected for this thread.
     SelectedPluginPackage {
         selected_root_id: String,
         plugin_id: String,
         plugin_display_name: String,
-        connector_ids: Vec<String>,
     },
     /// Removes a named MCP server.
     Remove { name: String },

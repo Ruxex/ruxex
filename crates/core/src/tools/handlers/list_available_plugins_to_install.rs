@@ -47,7 +47,6 @@ impl ListAvailablePluginsToInstallHandler {
                     tool_type: tool.tool_type,
                     has_skills: tool.has_skills,
                     mcp_server_names: tool.mcp_server_names.clone(),
-                    app_connector_ids: tool.app_connector_ids.clone(),
                 })
                 .collect(),
         }

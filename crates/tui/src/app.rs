@@ -21,7 +21,6 @@ use crate::app_server_session::AppServerBootstrap;
 use crate::app_server_session::AppServerSession;
 use crate::app_server_session::AppServerStartedThread;
 use crate::app_server_session::TurnPermissionsOverride;
-use crate::bottom_pane::AppLinkViewParams;
 use crate::bottom_pane::ApplyPatchApprovalRequest;
 use crate::bottom_pane::ApprovalRequest;
 use crate::bottom_pane::ExecApprovalRequest;
@@ -199,7 +198,6 @@ mod app_server_events;
 pub(crate) mod app_server_requests;
 mod background_requests;
 mod config_persistence;
-mod connector_mentions;
 mod daemon_menu;
 mod event_dispatch;
 mod exit_summary;
@@ -263,7 +261,6 @@ const EXTERNAL_EDITOR_HINT: &str = "Save and close external editor to continue."
 const THREAD_EVENT_CHANNEL_CAPACITY: usize = 32768;
 
 enum ThreadInteractiveRequest {
-    AppLink(AppLinkViewParams),
     Approval(ApprovalRequest),
     McpServerElicitation(McpServerElicitationFormRequest),
     UserVerification {

@@ -3,10 +3,7 @@ use crate::accepted_lines::accepted_line_counts_from_unified_diff;
 use crate::accepted_lines::accepted_line_fingerprint_event_requests;
 use crate::accepted_lines::accepted_line_repo_hash_for_cwd;
 use crate::events::AppServerRpcTransport;
-use crate::events::CodexAppMentionedEventRequest;
 use crate::events::CodexAppServerClientMetadata;
-use crate::events::CodexAppUsedEventRequest;
-use crate::events::CodexAppUsedMetadata;
 use crate::events::CodexCollabAgentToolCallEventParams;
 use crate::events::CodexCollabAgentToolCallEventRequest;
 use crate::events::CodexCommandExecutionEventParams;
@@ -66,7 +63,6 @@ use crate::events::ToolItemFailureKind;
 use crate::events::ToolItemTerminalStatus;
 use crate::events::TrackEventRequest;
 use crate::events::WebSearchActionKind;
-use crate::events::codex_app_metadata;
 use crate::events::codex_artifact_operation_event_request;
 use crate::events::codex_compaction_event_params;
 use crate::events::codex_goal_event_params;
@@ -79,8 +75,6 @@ use crate::events::subagent_source_name;
 use crate::events::subagent_thread_started_event_request;
 use crate::facts::AnalyticsFact;
 use crate::facts::AnalyticsJsonRpcError;
-use crate::facts::AppMentionedInput;
-use crate::facts::AppUsedInput;
 use crate::facts::ArtifactOperationInput;
 use crate::facts::CodeModeToolCallFact;
 use crate::facts::CodeModeToolCallStatus;
@@ -94,8 +88,8 @@ use crate::facts::ExternalAgentConfigImportCompletedInput;
 use crate::facts::ExternalAgentConfigImportFailureInput;
 use crate::facts::HookRunInput;
 use crate::facts::ImagePreparationFact;
-use crate::facts::ImagePreparationMetadata;
 use crate::facts::InvocationType;
+use crate::facts::ImagePreparationMetadata;
 use crate::facts::McpToolCallElicitation;
 use crate::facts::PluginInstallFailedInput;
 use crate::facts::PluginInstallRequestedInput;
@@ -711,12 +705,6 @@ impl AnalyticsReducer {
                 }
                 CustomAnalyticsFact::SkillInvoked(input) => {
                     self.ingest_skill_invoked(input, out).await;
-                }
-                CustomAnalyticsFact::AppMentioned(input) => {
-                    self.ingest_app_mentioned(input, out);
-                }
-                CustomAnalyticsFact::AppUsed(input) => {
-                    self.ingest_app_used(input, out);
                 }
                 CustomAnalyticsFact::McpToolCallElicitation(input) => {
                     let McpToolCallElicitation {
@@ -1387,33 +1375,6 @@ impl AnalyticsReducer {
         }
     }
 
-    fn ingest_app_mentioned(&mut self, input: AppMentionedInput, out: &mut Vec<TrackEventRequest>) {
-        let AppMentionedInput { tracking, mentions } = input;
-        out.extend(mentions.into_iter().map(|mention| {
-            let event_params = codex_app_metadata(&tracking, mention);
-            TrackEventRequest::AppMentioned(CodexAppMentionedEventRequest {
-                event_type: "codex_app_mentioned",
-                event_params,
-            })
-        }));
-    }
-
-    fn ingest_app_used(&mut self, input: AppUsedInput, out: &mut Vec<TrackEventRequest>) {
-        let AppUsedInput {
-            tracking,
-            app,
-            elicitation_type,
-        } = input;
-        let event_params = CodexAppUsedMetadata {
-            app: codex_app_metadata(&tracking, app),
-            elicitation_type,
-        };
-        out.push(TrackEventRequest::AppUsed(CodexAppUsedEventRequest {
-            event_type: "codex_app_used",
-            event_params,
-        }));
-    }
-
     fn ingest_hook_run(&mut self, input: HookRunInput, out: &mut Vec<TrackEventRequest>) {
         let HookRunInput { tracking, hook } = input;
         out.push(TrackEventRequest::HookRun(CodexHookRunEventRequest {
@@ -2023,8 +1984,6 @@ impl AnalyticsReducer {
                     review_summary: self.item_review_summaries.get(&key),
                     elicitation_type,
                 }) {
-                    if let TrackEventRequest::McpToolCall(mcp) = &mut event {
-                    }
                     let root_turn_id = self
                         .turns
                         .get(&notification.turn_id)
@@ -2816,7 +2775,6 @@ fn tool_item_event(input: ToolItemEventInput<'_>) -> Option<TrackEventRequest> {
             error,
             duration_ms,
             plugin_id,
-            app_context,
             ..
         } => {
             let (terminal_status, failure_kind) = mcp_tool_call_outcome(status)?;
@@ -2848,9 +2806,6 @@ fn tool_item_event(input: ToolItemEventInput<'_>) -> Option<TrackEventRequest> {
                         mcp_tool_name: tool.clone(),
                         mcp_error_present: error.is_some(),
                         plugin_id: plugin_id.clone(),
-                        connector_id: app_context
-                            .as_ref()
-                            .map(|app_context| app_context.connector_id.clone()),
                         elicitation_type,
                     },
                 },
@@ -3880,7 +3835,6 @@ mod tests {
                             tool: "tool".to_string(),
                             status: McpToolCallStatus::Failed,
                             arguments: serde_json::json!({}),
-                            app_context: None,
                             mcp_app_resource_uri: None,
                             mcp_app_ui: None,
                             plugin_id: None,

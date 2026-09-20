@@ -208,7 +208,6 @@ fn apply_codex_agent_plugin_extension(
     contents: &str,
 ) -> Result<(), serde_json::Error> {
     let extension = parse_legacy_plugin_manifest_uri(plugin_root, source_path, contents)?;
-    resolved.paths.apps = extension.paths.apps;
     resolved.paths.hooks = extension.paths.hooks;
     if extension.interface.is_some() {
         resolved.interface = extension.interface;

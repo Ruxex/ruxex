@@ -44,7 +44,6 @@ use codex_protocol::config_types::ModeKind;
 use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::config_types::Settings;
 use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::mcp::OPENAI_FORM_EXTENSION_ID;
 use codex_protocol::models::PermissionProfile;
 use codex_protocol::openai_models::ModelInfo;
 use codex_protocol::openai_models::ModelsResponse;
@@ -335,7 +334,6 @@ pub struct TestCodexBuilder {
     exec_server_url: Option<String>,
     extensions: Arc<ExtensionRegistry<Config>>,
     user_instructions_provider: Option<Arc<dyn UserInstructionsProvider>>,
-    supports_openai_form_elicitation: bool,
     external_time_provider: Option<Arc<dyn TimeProvider>>,
     code_mode_host_program: Option<PathBuf>,
     history_mode: Option<ThreadHistoryMode>,
@@ -470,11 +468,6 @@ impl TestCodexBuilder {
         provider: Arc<dyn UserInstructionsProvider>,
     ) -> Self {
         self.user_instructions_provider = Some(provider);
-        self
-    }
-
-    pub fn with_openai_form_elicitation(mut self) -> Self {
-        self.supports_openai_form_elicitation = true;
         self
     }
 
@@ -733,7 +726,6 @@ impl TestCodexBuilder {
                 &config,
                 auth_manager.clone(),
                 models_manager,
-                codex_core::CodexAppsToolsCache::default(),
                 SessionSource::Exec,
                 Arc::clone(&environment_manager),
                 Arc::new(extensions.build()),
@@ -759,12 +751,7 @@ impl TestCodexBuilder {
             }
         });
         let user_shell_override = self.user_shell_override.clone();
-        let client_mcp_extensions = || {
-            ClientMcpExtensions::new(
-                self.supports_openai_form_elicitation
-                    .then(|| (OPENAI_FORM_EXTENSION_ID.to_string(), serde_json::json!({}))),
-            )
-        };
+        let client_mcp_extensions = || ClientMcpExtensions::new(None);
 
         let new_conversation = match (resume_from, user_shell_override) {
             (Some(path), Some(user_shell_override)) => {
@@ -779,7 +766,7 @@ impl TestCodexBuilder {
                         path,
                         auth_manager,
                         user_shell_override,
-                        self.supports_openai_form_elicitation,
+                        false,
                     ),
                 )
                 .await?
@@ -804,7 +791,7 @@ impl TestCodexBuilder {
                         thread_manager.as_ref(),
                         config.clone(),
                         user_shell_override,
-                        self.supports_openai_form_elicitation,
+                        false,
                     ),
                 )
                 .await?
@@ -1374,10 +1361,6 @@ fn function_call_output<'a>(bodies: &'a [Value], call_id: &str) -> &'a Value {
 pub fn test_codex() -> TestCodexBuilder {
     TestCodexBuilder {
         config_mutators: vec![Box::new(|config| {
-            config
-                .features
-                .disable(Feature::Apps)
-                .expect("test config should allow Apps override");
             // Snapshot tests opt in explicitly; avoid spawning login shells for every test.
             config
                 .features
@@ -1393,7 +1376,6 @@ pub fn test_codex() -> TestCodexBuilder {
         exec_server_url: None,
         extensions: empty_extension_registry(),
         user_instructions_provider: None,
-        supports_openai_form_elicitation: false,
         external_time_provider: None,
         code_mode_host_program: None,
         history_mode: None,

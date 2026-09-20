@@ -257,8 +257,6 @@ fn request_preview(request: &ServerRequest) -> Option<String> {
         ServerRequest::PermissionsRequestApproval { params, .. } => params.reason.as_deref(),
         ServerRequest::McpServerElicitationRequest { params, .. } => match &params.request {
             McpServerElicitationRequest::Form { message, .. }
-            | McpServerElicitationRequest::OpenAiForm { message, .. }
-            | McpServerElicitationRequest::OpenAiElicitationForm { message, .. }
             | McpServerElicitationRequest::Url { message, .. } => Some(message.as_str()),
             McpServerElicitationRequest::UserVerification { .. } => None,
         },

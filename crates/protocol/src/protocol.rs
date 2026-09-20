@@ -2258,22 +2258,10 @@ pub struct McpToolCallBeginEvent {
     pub invocation: McpInvocation,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
-    pub connector_id: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
     pub mcp_app_resource_uri: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub mcp_app_ui: Option<crate::items::McpAppUi>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub link_id: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub app_name: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub action_name: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub plugin_id: Option<String>,
@@ -2293,22 +2281,10 @@ pub struct McpToolCallEndEvent {
     pub invocation: McpInvocation,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
-    pub connector_id: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
     pub mcp_app_resource_uri: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub mcp_app_ui: Option<crate::items::McpAppUi>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub link_id: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub app_name: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub action_name: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub plugin_id: Option<String>,

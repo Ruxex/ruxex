@@ -19,7 +19,6 @@ pub struct PluginManifest<Resource> {
 pub struct PluginManifestPaths<Resource> {
     pub skills: Vec<Resource>,
     pub mcp_servers: Option<PluginManifestMcpServers<Resource>>,
-    pub apps: Option<Resource>,
     pub hooks: Option<PluginManifestHooks<Resource>>,
 }
 
@@ -106,7 +105,6 @@ impl<Resource> PluginManifest<Resource> {
         let PluginManifestPaths {
             skills,
             mcp_servers,
-            apps,
             hooks,
         } = paths;
         let hooks = match hooks {
@@ -182,7 +180,6 @@ impl<Resource> PluginManifest<Resource> {
                     .map(&mut map)
                     .collect::<Result<Vec<_>, _>>()?,
                 mcp_servers,
-                apps: apps.map(&mut map).transpose()?,
                 hooks,
             },
             interface,

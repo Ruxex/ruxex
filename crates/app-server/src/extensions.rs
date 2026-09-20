@@ -88,9 +88,6 @@ pub(crate) fn thread_extensions(
     codex_web_search_extension::install(&mut builder, auth_manager.clone());
     let skill_providers = codex_skills_extension::SkillProviders::new()
         .with_executor_provider(executor_skill_provider)
-        .with_orchestrator_provider(Arc::new(
-            codex_skills_extension::OrchestratorSkillProvider::new(),
-        ))
         .with_host_provider(Arc::new(codex_skills_extension::HostSkillProvider::new()));
     codex_skills_extension::install_with_providers_and_metrics(
         &mut builder,

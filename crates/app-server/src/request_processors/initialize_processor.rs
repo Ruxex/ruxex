@@ -9,7 +9,6 @@ use codex_login::default_client::get_codex_user_agent;
 use codex_login::default_client::set_default_client_residency_requirement;
 use codex_login::default_client::set_default_originator;
 use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::mcp::OPENAI_ELICITATION_EXTENSION_ID;
 
 use super::*;
 use crate::message_processor::ConnectionSessionState;
@@ -77,10 +76,7 @@ impl InitializeRequestProcessor {
         let experimental_api_enabled = capabilities.experimental_api;
         let request_attestation = capabilities.request_attestation;
         let extensions = capabilities.extensions.as_ref();
-        let mut client_mcp_extensions = codex_mcp::client_mcp_extensions(
-            extensions,
-            capabilities.mcp_server_openai_form_elicitation,
-        );
+        let mut client_mcp_extensions = codex_mcp::client_mcp_extensions(extensions);
         let opt_out_notification_methods = capabilities
             .opt_out_notification_methods
             .unwrap_or_default();
@@ -113,7 +109,7 @@ impl InitializeRequestProcessor {
                 .map(|(id, value)| (id.to_string(), value.clone()))
                 .collect::<std::collections::HashMap<_, _>>();
             let settings = extensions
-                .entry(OPENAI_ELICITATION_EXTENSION_ID.to_string())
+                .entry("openai/elicitation".to_string())
                 .or_insert_with(|| serde_json::json!({}));
             if !settings.is_object() {
                 *settings = serde_json::json!({});

@@ -15,11 +15,6 @@ enum BundledHookTarget {
         server: &'static str,
         tool: &'static str,
     },
-    App {
-        server: &'static str,
-        connector_id: &'static str,
-        tool: &'static str,
-    },
 }
 
 // Keep unsigned plugin exceptions together so they can be removed as signing lands.
@@ -96,35 +91,18 @@ const ALLOWLISTED_BUNDLED_HOOKS: &[BundledHook] = &[
             tool: "turn_ended",
         },
     },
-    BundledHook {
-        plugin_id: "browser@openai-curated-remote",
-        events: &[
-            HookEventName::Stop,
-            HookEventName::Interrupt,
-            HookEventName::SubagentStop,
-        ],
-        target: BundledHookTarget::App {
-            server: "codex_apps",
-            connector_id: "connector_openai_browser",
-            tool: "browser.turn_ended",
-        },
-    },
 ];
 
-/// Matches a temporary unsigned cleanup exception. App targets additionally require the
-/// connector identity for this handler's server and tool from the caller's enabled tool
-/// catalog; callers without that catalog must pass `None`.
+/// Matches a temporary unsigned cleanup exception.
 pub fn is_allowlisted_bundled_cleanup_hook(
     plugin_id: &str,
     event: HookEventName,
     matcher: Option<&str>,
     handler: &HookHandlerConfig,
-    app_connector_id: Option<&str>,
 ) -> bool {
     let HookHandlerConfig::McpTool {
         server,
         tool,
-        input,
         ..
     } = handler
     else {
@@ -140,17 +118,6 @@ pub fn is_allowlisted_bundled_cleanup_hook(
                         server: expected_server,
                         tool: expected_tool,
                     } => server == expected_server && tool == expected_tool,
-                    BundledHookTarget::App {
-                        server: expected_server,
-                        connector_id,
-                        tool: expected_tool,
-                    } => {
-                        // Raw Apps tool names can collide; require the registered connector.
-                        server == expected_server
-                            && tool == expected_tool
-                            && input.is_empty()
-                            && app_connector_id == Some(connector_id)
-                    }
                 }
         })
 }

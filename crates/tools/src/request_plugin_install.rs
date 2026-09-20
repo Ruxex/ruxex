@@ -1,4 +1,3 @@
-use codex_connectors::AppInfo;
 use codex_protocol::approvals::ElicitationRequest;
 use serde::Deserialize;
 use serde::Serialize;
@@ -46,8 +45,6 @@ pub struct RequestPluginInstallMeta<'a> {
     pub install_url: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub remote_plugin_id: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub app_connector_ids: Option<&'a [String]>,
 }
 
 pub fn build_request_plugin_install_elicitation_request(
@@ -71,37 +68,16 @@ pub fn build_request_plugin_install_elicitation_request(
     }
 }
 
-pub fn all_requested_connectors_picked_up(
-    expected_connector_ids: &[String],
-    accessible_connectors: &[AppInfo],
-) -> bool {
-    expected_connector_ids.iter().all(|connector_id| {
-        verified_connector_install_completed(connector_id, accessible_connectors)
-    })
-}
-
-pub fn verified_connector_install_completed(
-    tool_id: &str,
-    accessible_connectors: &[AppInfo],
-) -> bool {
-    accessible_connectors
-        .iter()
-        .find(|connector| connector.id == tool_id)
-        .is_some_and(|connector| connector.is_accessible)
-}
-
 fn build_request_plugin_install_meta<'a>(
     suggest_reason: &'a str,
     tool: &'a DiscoverableTool,
     suggestion_id: &'a str,
 ) -> RequestPluginInstallMeta<'a> {
-    let (tool_type, suggestion_id, remote_plugin_id, app_connector_ids) = match tool {
-        DiscoverableTool::Connector(_) => (DiscoverableToolType::Connector, None, None, None),
+    let (tool_type, suggestion_id, remote_plugin_id) = match tool {
         DiscoverableTool::Plugin(plugin) => (
             DiscoverableToolType::Plugin,
             Some(suggestion_id),
             plugin.remote_plugin_id.as_deref(),
-            Some(plugin.app_connector_ids.as_slice()),
         ),
     };
     RequestPluginInstallMeta {
@@ -115,7 +91,6 @@ fn build_request_plugin_install_meta<'a>(
         suggestion_id,
         install_url: tool.install_url(),
         remote_plugin_id,
-        app_connector_ids,
     }
 }
 

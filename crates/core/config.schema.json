@@ -114,99 +114,6 @@
       },
       "type": "object"
     },
-    "AppConfig": {
-      "additionalProperties": false,
-      "description": "Config values for a single app/connector.",
-      "properties": {
-        "approvals_reviewer": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/ApprovalsReviewer"
-            }
-          ],
-          "description": "Reviewer for approval prompts from this app, overriding the thread default."
-        },
-        "default_tools_approval_mode": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/AppToolApproval"
-            }
-          ],
-          "description": "Approval mode for tools in this app unless a tool override exists."
-        },
-        "default_tools_enabled": {
-          "description": "Whether tools are enabled by default for this app.",
-          "type": "boolean"
-        },
-        "destructive_enabled": {
-          "description": "Whether tools with `destructive_hint = true` are allowed for this app.",
-          "type": "boolean"
-        },
-        "enabled": {
-          "default": true,
-          "description": "When `false`, Codex does not surface this app.",
-          "type": "boolean"
-        },
-        "links": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/AppLinksConfig"
-            }
-          ],
-          "description": "Per-account approval settings keyed by link ID."
-        },
-        "omit_tools_from": {
-          "description": "Model-facing surfaces from which this connector's tools must be omitted, in addition to any server-level omissions. `None` leaves lower-priority configuration unchanged; an empty list clears connector-level omissions.",
-          "items": {
-            "$ref": "#/definitions/ToolExposureSurface"
-          },
-          "type": "array"
-        },
-        "open_world_enabled": {
-          "description": "Whether tools with `open_world_hint = true` are allowed for this app.",
-          "type": "boolean"
-        },
-        "tools": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/AppToolsConfig"
-            }
-          ],
-          "description": "Per-tool settings for this app."
-        }
-      },
-      "type": "object"
-    },
-    "AppLinkConfig": {
-      "additionalProperties": false,
-      "description": "Approval settings for a connected account within an app.",
-      "properties": {
-        "approvals_reviewer": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/ApprovalsReviewer"
-            }
-          ],
-          "description": "Reviewer for approval prompts from this account, overriding the app default."
-        },
-        "default_tools_approval_mode": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/AppToolApproval"
-            }
-          ],
-          "description": "Approval mode for this account unless a tool override exists."
-        }
-      },
-      "type": "object"
-    },
-    "AppLinksConfig": {
-      "additionalProperties": {
-        "$ref": "#/definitions/AppLinkConfig"
-      },
-      "description": "Account settings for a single app.",
-      "type": "object"
-    },
     "AppToolApproval": {
       "enum": [
         "auto",
@@ -216,32 +123,6 @@
       ],
       "type": "string"
     },
-    "AppToolConfig": {
-      "additionalProperties": false,
-      "description": "Per-tool settings for a single app tool.",
-      "properties": {
-        "approval_mode": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/AppToolApproval"
-            }
-          ],
-          "description": "Approval mode for this tool."
-        },
-        "enabled": {
-          "description": "Whether this tool is enabled. `Some(true)` explicitly allows this tool.",
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
-    "AppToolsConfig": {
-      "additionalProperties": {
-        "$ref": "#/definitions/AppToolConfig"
-      },
-      "description": "Tool settings for a single app.",
-      "type": "object"
-    },
     "ApprovalsReviewer": {
       "description": "Configures who approval requests are routed to for review. Examples include sandbox escapes, blocked network access, MCP approval prompts, and ARC escalations. Defaults to `user`. `auto_review` uses a carefully prompted subagent to gather relevant context and apply a risk-based decision framework before approving or denying the request. The legacy value `guardian_subagent` is accepted for compatibility.",
       "enum": [
@@ -250,59 +131,6 @@
         "guardian_subagent"
       ],
       "type": "string"
-    },
-    "AppsConfigToml": {
-      "additionalProperties": {
-        "$ref": "#/definitions/AppConfig"
-      },
-      "description": "App/connector settings loaded from `config.toml`.",
-      "properties": {
-        "_default": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/AppsDefaultConfig"
-            }
-          ],
-          "description": "Default settings for all apps."
-        }
-      },
-      "type": "object"
-    },
-    "AppsDefaultConfig": {
-      "additionalProperties": false,
-      "description": "Default settings that apply to all apps.",
-      "properties": {
-        "approvals_reviewer": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/ApprovalsReviewer"
-            }
-          ],
-          "description": "Reviewer for approval prompts unless overridden by per-app settings."
-        },
-        "default_tools_approval_mode": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/AppToolApproval"
-            }
-          ],
-          "description": "Approval mode for tools unless overridden by per-app or per-tool settings."
-        },
-        "destructive_enabled": {
-          "description": "Whether tools with `destructive_hint = true` are allowed by default.",
-          "type": "boolean"
-        },
-        "enabled": {
-          "default": true,
-          "description": "When `false`, apps are disabled unless overridden by per-app settings.",
-          "type": "boolean"
-        },
-        "open_world_enabled": {
-          "description": "Whether tools with `open_world_hint = true` are allowed by default.",
-          "type": "boolean"
-        }
-      },
-      "type": "object"
     },
     "AskForApproval": {
       "description": "Determines the conditions under which the user is consulted to approve running the command proposed by Codex.",
@@ -657,31 +485,6 @@
             "apply_patch_streaming_events": {
               "type": "boolean"
             },
-            "apps": {
-              "type": "boolean"
-            },
-            "apps_mcp_path_override": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "additionalProperties": false,
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean"
-                    },
-                    "path": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              ]
-            },
-            "auth_elicitation": {
-              "type": "boolean"
-            },
             "bedrock_setup_wizard": {
               "type": "boolean"
             },
@@ -715,9 +518,6 @@
             "code_mode_prewarm": {
               "type": "boolean"
             },
-            "codex_apps_mcp_2026_07_28": {
-              "type": "boolean"
-            },
             "codex_git_commit": {
               "type": "boolean"
             },
@@ -737,9 +537,6 @@
               "type": "boolean"
             },
             "concurrent_reasoning_summaries": {
-              "type": "boolean"
-            },
-            "connectors": {
               "type": "boolean"
             },
             "content_item_kinds": {
@@ -1107,9 +904,6 @@
             }
           },
           "type": "object"
-        },
-        "include_apps_instructions": {
-          "type": "boolean"
         },
         "include_collaboration_mode_instructions": {
           "type": "boolean"
@@ -2077,13 +1871,6 @@
           "description": "Use stored MCP OAuth credentials when available. Starting an OAuth login is a separate operation.",
           "enum": [
             "oauth"
-          ],
-          "type": "string"
-        },
-        {
-          "description": "Use the current ChatGPT session for servers on the trusted first-party ChatGPT origin. If no ChatGPT session provider is available, startup can still fall back to stored OAuth credentials.",
-          "enum": [
-            "chatgpt"
           ],
           "type": "string"
         },
@@ -3910,7 +3697,6 @@
     },
     "ToolSuggestDiscoverableType": {
       "enum": [
-        "connector",
         "plugin"
       ],
       "type": "string"
@@ -6019,19 +5805,6 @@
       ],
       "description": "Configures who approval requests are routed to for review once they have been escalated. This does not disable separate safety checks such as ARC."
     },
-    "apps": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/AppsConfigToml"
-        }
-      ],
-      "default": null,
-      "description": "Settings for app-specific controls."
-    },
-    "apps_mcp_product_sku": {
-      "description": "Optional product SKU forwarded on host-owned Codex Apps MCP requests.",
-      "type": "string"
-    },
     "auto_review": {
       "allOf": [
         {
@@ -6127,31 +5900,6 @@
         "apply_patch_streaming_events": {
           "type": "boolean"
         },
-        "apps": {
-          "type": "boolean"
-        },
-        "apps_mcp_path_override": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "additionalProperties": false,
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                },
-                "path": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            }
-          ]
-        },
-        "auth_elicitation": {
-          "type": "boolean"
-        },
         "bedrock_setup_wizard": {
           "type": "boolean"
         },
@@ -6185,9 +5933,6 @@
         "code_mode_prewarm": {
           "type": "boolean"
         },
-        "codex_apps_mcp_2026_07_28": {
-          "type": "boolean"
-        },
         "codex_git_commit": {
           "type": "boolean"
         },
@@ -6207,9 +5952,6 @@
           "type": "boolean"
         },
         "concurrent_reasoning_summaries": {
-          "type": "boolean"
-        },
-        "connectors": {
           "type": "boolean"
         },
         "content_item_kinds": {
@@ -6637,12 +6379,8 @@
       ],
       "description": "Lifecycle hooks configured inline in TOML plus user-level overrides."
     },
-    "include_apps_instructions": {
-      "description": "Whether to inject the `<apps_instructions>` developer block.",
-      "type": "boolean"
-    },
     "include_collaboration_mode_instructions": {
-      "description": "Whether to inject the `<collaboration_mode>` developer block.",
+      "description": "Whether to inject the `<apps_instructions>` developer block. Whether to inject the `<collaboration_mode>` developer block.",
       "type": "boolean"
     },
     "include_environment_context": {

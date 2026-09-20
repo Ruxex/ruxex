@@ -4,9 +4,6 @@
     "PluginReconcileChangedPlugin": {
       "description": "Runtime categories affected by this change, not just capabilities currently present. Flags describe declarations before runtime policy filtering. Updates OR the old and new bundle flags; enablement changes and cached reinstalls use the cached bundle; removals retain the old bundle's flags.",
       "properties": {
-        "hasApps": {
-          "type": "boolean"
-        },
         "hasHooks": {
           "type": "boolean"
         },
@@ -23,7 +20,6 @@
         }
       },
       "required": [
-        "hasApps",
         "hasHooks",
         "hasMcps",
         "hasSkills",

@@ -62,7 +62,6 @@ use codex_analytics::TurnCodexErrorFact;
 use codex_async_utils::OrCancelExt;
 use codex_attachment_store::AttachmentStore;
 use codex_attachment_store::InlineAttachmentStore;
-use codex_connectors::connector_runtime_context_key;
 use codex_context_fragments::RenderedFragment;
 use codex_exec_server::Environment;
 use codex_exec_server::EnvironmentManager;
@@ -273,8 +272,6 @@ use self::session::SessionSettingsCommit;
 pub(crate) use self::session::SessionSettingsUpdate;
 #[cfg(test)]
 use self::turn::AssistantMessageStreamParsers;
-#[cfg(test)]
-use self::turn::collect_explicit_app_ids_from_skill_items;
 use self::turn_context::TurnContext;
 #[cfg(test)]
 mod rollout_reconstruction_tests;
@@ -1484,31 +1481,6 @@ impl Session {
         }
     }
 
-    // Merges connector IDs into the session-level explicit connector selection.
-    #[tracing::instrument(
-        level = "trace",
-        skip_all,
-        fields(connector_count = connector_ids.len())
-    )]
-    pub(crate) async fn merge_connector_selection(
-        &self,
-        connector_ids: HashSet<String>,
-    ) -> HashSet<String> {
-        let mut state = self.state.lock().await;
-        state.merge_connector_selection(connector_ids)
-    }
-
-    // Returns the connector IDs currently selected for this session.
-    pub(crate) async fn get_connector_selection(&self) -> HashSet<String> {
-        let state = self.state.lock().await;
-        state.get_connector_selection()
-    }
-
-    // Clears connector IDs that were accumulated for explicit selection.
-    pub(crate) async fn clear_connector_selection(&self) {
-        let mut state = self.state.lock().await;
-        state.clear_connector_selection();
-    }
 
     async fn record_initial_history(&self, conversation_history: InitialHistory) {
         let (is_subagent, is_paginated_subagent) = {
@@ -2066,12 +2038,6 @@ impl Session {
                 warn!("failed to refresh MCP protocol config: {err}");
             }
             if let Err(err) = config.features.set_enabled(
-                Feature::CodexAppsMcp20260728,
-                next_config.features.enabled(Feature::CodexAppsMcp20260728),
-            ) {
-                warn!("failed to refresh Codex Apps MCP protocol config: {err}");
-            }
-            if let Err(err) = config.features.set_enabled(
                 Feature::SecretAuthStorage,
                 next_config.features.enabled(Feature::SecretAuthStorage),
             ) {
@@ -2135,12 +2101,6 @@ impl Session {
             next_config.features.enabled(Feature::Mcp20260728),
         ) {
             warn!("failed to refresh MCP protocol config: {err}");
-        }
-        if let Err(err) = config.features.set_enabled(
-            Feature::CodexAppsMcp20260728,
-            next_config.features.enabled(Feature::CodexAppsMcp20260728),
-        ) {
-            warn!("failed to refresh Codex Apps MCP protocol config: {err}");
         }
         if let Err(err) = config.features.set_enabled(
             Feature::SecretAuthStorage,
@@ -2540,7 +2500,6 @@ impl Session {
     }
 
     async fn send_event_raw_with_persistence(&self, event: Event, persist: bool) {
-        self.services.mcp_runtime.observe_event(&event.msg);
         // Persist the event into rollout storage; the store applies its persistence policy.
         if persist {
             let rollout_items = vec![RolloutItem::EventMsg(event.msg.clone())];
@@ -3930,7 +3889,6 @@ impl Session {
             replacement_history: Some(items.clone()),
             retained_context: None,
             guardian_history: None,
-            mcp_resource_origins: self.services.mcp_runtime.resource_origin_checkpoint(),
             window_number: Some(metadata.window_number),
             first_window_id: Some(metadata.window_ids.first_window_id.to_string()),
             previous_window_id: metadata

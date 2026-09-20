@@ -32,7 +32,6 @@ pub use feature_configs::NetworkProxyDomainPermissionToml;
 pub use feature_configs::NetworkProxyModeToml;
 pub use feature_configs::NetworkProxyUnixSocketPermissionToml;
 pub use feature_configs::NonPrefixedMcpToolNamesConfigToml;
-use feature_configs::RemovedAppsMcpPathOverrideConfigToml;
 pub use feature_configs::RolloutBudgetConfigToml;
 pub use feature_configs::SleepToolConfigToml;
 pub use feature_configs::SleepToolMode;
@@ -205,22 +204,16 @@ pub enum Feature {
     MultiAgentMode,
     /// Removed compatibility flag for the deleted agent-job tools.
     SpawnCsv,
-    /// Enable apps.
-    Apps,
     /// Route first-party ChatGPT requests through PSP.
     Psp,
     /// Enable MCP apps.
     EnableMcpApps,
     /// Enable MCP protocol version 2026-07-28 support.
     Mcp20260728,
-    /// Enable MCP protocol version 2026-07-28 for the host-owned Codex Apps server.
-    CodexAppsMcp20260728,
     /// Let RMCP coordinate OAuth refresh through the configured credential store.
     McpOAuthRefreshCoordination,
     /// Enable enterprise refresh-token authorization for configured MCP resources.
     UseXaa,
-    /// Removed compatibility flag for the legacy Apps MCP path override.
-    AppsMcpPathOverride,
     /// Removed compatibility flag retained as a no-op now that tool_search is always enabled.
     ToolSearch,
     /// Removed compatibility flag. MCP tools are always deferred when tool_search is available.
@@ -336,8 +329,6 @@ pub enum Feature {
     NonfatalClockReadErrors,
     /// Route MCP tool approval prompts through the MCP elicitation request path.
     ToolCallMcpElicitation,
-    /// Prompt Codex Apps connector auth failures through MCP URL elicitations.
-    AuthElicitation,
     /// Offer Amazon Bedrock setup during TUI sign-in onboarding.
     BedrockSetupWizard,
     /// Removed compatibility flag retained as a no-op.
@@ -491,13 +482,8 @@ impl Features {
         self.enabled.contains(&f)
     }
 
-    pub fn apps_enabled_for_auth(&self, has_chatgpt_auth: bool) -> bool {
-        self.enabled(Feature::Apps) && has_chatgpt_auth
-    }
-
     pub fn plugin_recommendations_enabled(&self) -> bool {
-        self.enabled(Feature::Apps)
-            && self.enabled(Feature::Plugins)
+        self.enabled(Feature::Plugins)
             && (self.enabled(Feature::ToolSuggest) || self.enabled(Feature::RecommendedPlugins))
     }
 
@@ -596,7 +582,7 @@ impl Features {
                 "apply_patch_freeform" => {
                     continue;
                 }
-                "tool_search" | "tool_search_always_defer_mcp_tools" | "apps_mcp_path_override" => {
+                "tool_search" | "tool_search_always_defer_mcp_tools" => {
                     continue;
                 }
                 "image_detail_original" | "resize_all_images" | "item_ids" => {
@@ -780,9 +766,6 @@ pub struct FeaturesToml {
     pub current_time_reminder: Option<FeatureToml<CurrentTimeReminderConfigToml>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sleep_tool: Option<FeatureToml<SleepToolConfigToml>>,
-    #[serde(default, rename = "apps_mcp_path_override", skip_serializing)]
-    #[schemars(skip)]
-    removed_apps_mcp_path_override: Option<FeatureToml<RemovedAppsMcpPathOverrideConfigToml>>,
     pub network_proxy: Option<FeatureToml<NetworkProxyConfigToml>>,
     /// Boolean feature toggles keyed by canonical or legacy feature name.
     #[serde(flatten)]
@@ -1294,12 +1277,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         default_enabled: false,
     },
     FeatureSpec {
-        id: Feature::Apps,
-        key: "apps",
-        stage: Stage::Stable,
-        default_enabled: true,
-    },
-    FeatureSpec {
         id: Feature::Psp,
         key: "psp",
         stage: Stage::UnderDevelopment,
@@ -1318,12 +1295,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         default_enabled: false,
     },
     FeatureSpec {
-        id: Feature::CodexAppsMcp20260728,
-        key: "codex_apps_mcp_2026_07_28",
-        stage: Stage::UnderDevelopment,
-        default_enabled: false,
-    },
-    FeatureSpec {
         id: Feature::McpOAuthRefreshCoordination,
         key: "mcp_oauth_refresh_coordination",
         stage: Stage::UnderDevelopment,
@@ -1333,12 +1304,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         id: Feature::UseXaa,
         key: "use_xaa",
         stage: Stage::UnderDevelopment,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::AppsMcpPathOverride,
-        key: "apps_mcp_path_override",
-        stage: Stage::Removed,
         default_enabled: false,
     },
     FeatureSpec {
@@ -1650,12 +1615,6 @@ pub const FEATURES: &[FeatureSpec] = &[
     FeatureSpec {
         id: Feature::ToolCallMcpElicitation,
         key: "tool_call_mcp_elicitation",
-        stage: Stage::Stable,
-        default_enabled: true,
-    },
-    FeatureSpec {
-        id: Feature::AuthElicitation,
-        key: "auth_elicitation",
         stage: Stage::Stable,
         default_enabled: true,
     },
