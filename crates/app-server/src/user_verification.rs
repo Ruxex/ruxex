@@ -64,7 +64,7 @@ impl Service {
         // parent process; in-process calls belong to the embedded application.
         if matches!(
             origin,
-            ConnectionOrigin::WebSocket | ConnectionOrigin::RemoteControl
+            ConnectionOrigin::WebSocket
         ) && !matches!(operation, Operation::Status)
         {
             return Err(unavailable());

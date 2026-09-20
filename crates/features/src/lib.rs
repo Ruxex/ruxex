@@ -402,8 +402,6 @@ pub enum Feature {
     /// Enable collaboration modes (Plan, Default).
     /// Kept for config backward compatibility; behavior is always collaboration-modes-enabled.
     CollaborationModes,
-    /// Removed compatibility flag for the deleted remote control feature.
-    RemoteControl,
     /// Removed compatibility flag retained as a no-op so old wrappers can
     /// still pass `--enable image_detail_original`.
     ImageDetailOriginal,
@@ -596,7 +594,7 @@ impl Features {
                 "js_repl_tools_only" => {
                     continue;
                 }
-                "remote_control" | "remote_compaction_v2" => {
+                "remote_compaction_v2" => {
                     continue;
                 }
                 "apply_patch_freeform" => {
@@ -1705,12 +1703,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         id: Feature::StepModelSwitching,
         key: "step_model_switching",
         stage: Stage::UnderDevelopment,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::RemoteControl,
-        key: "remote_control",
-        stage: Stage::Removed,
         default_enabled: false,
     },
     FeatureSpec {

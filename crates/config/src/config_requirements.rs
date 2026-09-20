@@ -180,7 +180,6 @@ pub struct ConfigRequirements {
     pub web_search_mode: ConstrainedWithSource<WebSearchMode>,
     pub allow_managed_hooks_only: Option<Sourced<bool>>,
     pub allow_appshots: Option<Sourced<bool>>,
-    pub allow_remote_control: Option<Sourced<bool>>,
     pub computer_use: Option<Sourced<ComputerUseRequirementsToml>>,
     pub feature_requirements: Option<Sourced<FeatureRequirementsToml>>,
     pub managed_hooks: Option<ConstrainedWithSource<ManagedHooksRequirementsToml>>,
@@ -238,7 +237,6 @@ impl Default for ConfigRequirements {
             ),
             allow_managed_hooks_only: None,
             allow_appshots: None,
-            allow_remote_control: None,
             computer_use: None,
             feature_requirements: None,
             managed_hooks: None,
@@ -1039,7 +1037,6 @@ pub struct ConfigRequirementsToml {
     pub allow_managed_hooks_only: Option<bool>,
     pub allow_browser_and_computer_use: Option<bool>,
     pub allow_appshots: Option<bool>,
-    pub allow_remote_control: Option<bool>,
     pub computer_use: Option<ComputerUseRequirementsToml>,
     pub browser_use: Option<BrowserUseRequirementsToml>,
     pub in_app_browser: Option<InAppBrowserRequirementsToml>,
@@ -1145,7 +1142,6 @@ pub struct ConfigRequirementsWithSources {
     pub allow_managed_hooks_only: Option<Sourced<bool>>,
     pub allow_browser_and_computer_use: Option<Sourced<bool>>,
     pub allow_appshots: Option<Sourced<bool>>,
-    pub allow_remote_control: Option<Sourced<bool>>,
     pub computer_use: Option<Sourced<ComputerUseRequirementsToml>>,
     pub browser_use: Option<Sourced<BrowserUseRequirementsToml>>,
     pub in_app_browser: Option<Sourced<InAppBrowserRequirementsToml>>,
@@ -1207,7 +1203,6 @@ impl ConfigRequirementsWithSources {
             allow_managed_hooks_only: _,
             allow_browser_and_computer_use: _,
             allow_appshots: _,
-            allow_remote_control: _,
             computer_use: _,
             browser_use: _,
             in_app_browser: _,
@@ -1262,7 +1257,6 @@ impl ConfigRequirementsWithSources {
                 allow_managed_hooks_only,
                 allow_browser_and_computer_use,
                 allow_appshots,
-                allow_remote_control,
                 computer_use,
                 browser_use,
                 in_app_browser,
@@ -1346,7 +1340,6 @@ impl ConfigRequirementsWithSources {
             allow_managed_hooks_only,
             allow_browser_and_computer_use,
             allow_appshots,
-            allow_remote_control,
             computer_use,
             browser_use,
             in_app_browser,
@@ -1390,7 +1383,6 @@ impl ConfigRequirementsWithSources {
             allow_browser_and_computer_use: allow_browser_and_computer_use
                 .map(|sourced| sourced.value),
             allow_appshots: allow_appshots.map(|sourced| sourced.value),
-            allow_remote_control: allow_remote_control.map(|sourced| sourced.value),
             computer_use: computer_use.map(|sourced| sourced.value),
             browser_use: browser_use.map(|sourced| sourced.value),
             in_app_browser: in_app_browser.map(|sourced| sourced.value),
@@ -1494,7 +1486,6 @@ impl ConfigRequirementsToml {
             && self.allow_managed_hooks_only.is_none()
             && self.allow_browser_and_computer_use.is_none()
             && self.allow_appshots.is_none()
-            && self.allow_remote_control.is_none()
             && self
                 .computer_use
                 .as_ref()
@@ -1717,7 +1708,6 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
             allow_managed_hooks_only,
             allow_browser_and_computer_use: _,
             allow_appshots,
-            allow_remote_control,
             computer_use,
             browser_use: _,
             in_app_browser: _,
@@ -2082,7 +2072,6 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
             web_search_mode,
             allow_managed_hooks_only,
             allow_appshots,
-            allow_remote_control,
             computer_use,
             feature_requirements,
             managed_hooks,
@@ -2252,7 +2241,6 @@ mod tests {
             allow_managed_hooks_only,
             allow_browser_and_computer_use,
             allow_appshots,
-            allow_remote_control,
             computer_use,
             browser_use,
             in_app_browser,
@@ -2311,8 +2299,6 @@ mod tests {
             allow_browser_and_computer_use: allow_browser_and_computer_use
                 .map(|value| Sourced::new(value, RequirementSource::Unknown)),
             allow_appshots: allow_appshots
-                .map(|value| Sourced::new(value, RequirementSource::Unknown)),
-            allow_remote_control: allow_remote_control
                 .map(|value| Sourced::new(value, RequirementSource::Unknown)),
             computer_use: computer_use.map(|value| Sourced::new(value, RequirementSource::Unknown)),
             browser_use: browser_use.map(|value| Sourced::new(value, RequirementSource::Unknown)),
@@ -2456,18 +2442,6 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn allow_remote_control_false_is_still_configured() -> Result<()> {
-        let requirements: ConfigRequirementsToml = from_str(
-            r#"
-                allow_remote_control = false
-            "#,
-        )?;
-
-        assert_eq!(requirements.allow_remote_control, Some(false));
-        assert!(!requirements.is_empty());
-        Ok(())
-    }
 
     #[test]
     fn deserialize_browser_and_computer_use_requirements() -> Result<()> {
@@ -2819,7 +2793,6 @@ mod tests {
             allow_managed_hooks_only: Some(true),
             allow_browser_and_computer_use: Some(false),
             allow_appshots: Some(false),
-            allow_remote_control: Some(false),
             computer_use: Some(computer_use.clone()),
             browser_use: Some(browser_use.clone()),
             in_app_browser: None,
@@ -2899,10 +2872,6 @@ mod tests {
                     enforce_source.clone(),
                 )),
                 allow_appshots: Some(Sourced::new(/*value*/ false, enforce_source.clone(),)),
-                allow_remote_control: Some(Sourced::new(
-                    /*value*/ false,
-                    enforce_source.clone(),
-                )),
                 computer_use: Some(Sourced::new(computer_use, enforce_source.clone())),
                 browser_use: Some(Sourced::new(browser_use, enforce_source.clone())),
                 in_app_browser: None,
@@ -2961,7 +2930,6 @@ mod tests {
                 allowed_web_search_modes: None,
                 allow_managed_hooks_only: None,
                 allow_appshots: None,
-                allow_remote_control: None,
                 computer_use: None,
                 browser_use: None,
                 in_app_browser: None,
@@ -3021,7 +2989,6 @@ mod tests {
                 allowed_web_search_modes: None,
                 allow_managed_hooks_only: None,
                 allow_appshots: None,
-                allow_remote_control: None,
                 computer_use: None,
                 browser_use: None,
                 in_app_browser: None,

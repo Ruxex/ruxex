@@ -27,7 +27,7 @@ Feedback の削除で確認したように、OpenAI 固有性はクレート単�
 
 | capability | OpenAI 固有と判断する根拠 | 削除対象 | 残すもの | 判断 |
 |---|---|---|---|---|
-| ChatGPT Remote Control | ChatGPT 専用 host allowlist、`/wham/remote/control` endpoint、ChatGPT account header、enrollment/pairing persistence | `app-server-transport` の remote-control transport、app-server protocol、daemon client、CLI、state runtime、設定、関連 UI/文書 | 現行の通常 app-server transport と localhost/platform transport | **capability 全体を削除** |
+| ChatGPT Remote Control | ChatGPT 専用 host allowlist、`/wham/remote/control` endpoint、ChatGPT account header、enrollment/pairing persistence | `app-server-transport` の remote-control transport、app-server protocol、daemon client、CLI、state runtime、設定、関連 UI/文書 | 現行の通常 app-server transport と localhost/platform transport | **capability 全体を削除済み** |
 | ChatGPT Apps / Connectors / host-owned Apps MCP | connector directory が ChatGPT backend を producer とし、Apps が ChatGPT auth/account と Apps protocolを要求する | `codex-connectors` と専用 extension の到達経路、Apps feature/config/protocol/UI、`codex_apps`、OpenAI 固有 MCP adapter | 通常の MCP server、標準 OAuth/elicitation、provider-neutral な tool/plugin metadata | **capability 全体を削除** |
 | Hosted Plugin Marketplace / Sharing / Runtime | `openai-curated-remote`、ChatGPT base URL、remote catalog/mutation/bundle、Hosted Plugin Runtime に固定 | `core-plugins` の remote service、remote legacy/mutation/bundle/search/share、RemotePlugin feature と専用 CLI/app-server surface | local/bundled/Git/npm plugin loader、hook、tool、marketplace root | **Hosted 部分を削除、基盤は保持** |
 | ChatGPT 認証 / Agent Identity | issuer/JWKS、environment、JWT claims、OAuth/device/access-token が `chatgpt.com` と `auth.openai.com` に固定 | `codex-agent-identity` 全体候補、`codex-login` の ChatGPT branch、login protocol/UI、ChatGPT token consumer | Bedrock、workload identity、汎用 credential storage/keyring、他 provider auth | **Identity は全体削除候補、login は分割** |
@@ -128,10 +128,10 @@ Feedback の削除で確認したように、OpenAI 固有性はクレート単�
 
 ### ChatGPT Remote Control
 
-- **根拠:** `crates/app-server-transport/src/transport/remote_control/protocol.rs` は `chatgpt.com` / `chatgpt-staging.com` の host allowlist と `/wham/remote/control` endpoint を持ち、auth は ChatGPT account header と OpenAI 固有の backend 条件を要求する。feature は `Removed` だが、実装・protocol・CLI・daemon・state persistence は現行ソースに残っている。
+- **根拠:** `crates/app-server-transport` の削除対象は `chatgpt.com` / `chatgpt-staging.com` の host allowlist、`/wham/remote/control` endpoint、ChatGPT account header、enrollment/pairing persistence を持っていた。非 OpenAI consumer は確認されず、実装・protocol・CLI・daemon・state persistence を削除した。
 - **対象:** `app-server-transport` の remote-control transport/auth/client/enroll/websocket、`app-server-protocol` の v2 remote-control types、`app-server-daemon` client、`codex-cli` の `remote-control` command、`codex-state` runtime、`chatgpt_base_url` と remote-control 設定、関連 schema/UI/documentation。
 - **非対象:** 通常の app-server transport、localhost/platform transport、provider-neutral な WebSocket/HTTP utility。現行の非 OpenAI Remote Control consumer は確認できていない。
-- **推奨:** **capability 全体を削除**。将来 generic remote control が必要になった場合は、OpenAI endpoint と persistence contract を持ち込まず新しい provider-neutral capability として設計する。
+- **判断:** **capability 全体を削除済み**。将来 generic remote control が必要になった場合は、OpenAI endpoint と persistence contract を持ち込まず新しい provider-neutral capability として設計する。
 - **難易度・リスク:** 高。protocol、daemon、保存済み enrollment、設定を一つの単位で外し、通常の app-server 起動を維持する必要がある。
 
 ### ChatGPT Apps / Connectors / host-owned Apps MCP
@@ -342,8 +342,8 @@ Phase 2 で完了した削除と、Phase 3 で扱う後続候補を次の順序�
    - image generation、web search、plugins、response debug、login、agent identity、model-provider-info、codex-api は後続の汎用化作業として扱う。analytics hosted sink と feedback capability は削除済みである。
 8. **`codex-analytics` hosted sink の削除（完了）**
    - OpenAI/ChatGPT endpoint への analytics 送信と auth/provider adapter を削除し、event/fact/reducer と debug capture を残した。
-9. **ChatGPT Remote Control capability の削除（後続）**
-   - ChatGPT 専用 host、remote-control endpoint、enrollment/pairing、app-server protocol、daemon、CLI、state persistence を一つの単位で削除する。通常の app-server transport は保持する。
+9. **ChatGPT Remote Control capability の削除（完了）**
+   - ChatGPT 専用 host、remote-control endpoint、enrollment/pairing、app-server protocol、daemon、CLI、state persistence を削除した。通常の app-server transport は保持している。
 10. **Hosted Plugin Marketplace / Sharing / Runtime の削除（後続）**
    - startup sync/cache の削除とは別に、remote catalog、search/share/mutation/bundle、Hosted Plugin Runtime を削除する。local/bundled/Git/npm plugin foundation は保持する。
 11. **ChatGPT Apps / Connectors / host-owned Apps MCP の削除（後続）**

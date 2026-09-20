@@ -97,7 +97,7 @@ impl PidBackend {
             .stderr(Stdio::from(stderr_log.into_std().await));
         // Older or pinned managed binaries may predate this optional startup flag.
         let managed_app_server =
-            matches!(self.command_kind, super::PidCommandKind::AppServer { .. });
+            matches!(self.command_kind, super::PidCommandKind::AppServer);
         if managed_app_server
             && matches!(
                 tokio::time::timeout(
@@ -129,10 +129,6 @@ impl PidBackend {
                 }
             }
         }
-        if let Some((key, value)) = self.command_env() {
-            command.env(key, value);
-        }
-
         #[cfg(unix)]
         {
             unsafe {

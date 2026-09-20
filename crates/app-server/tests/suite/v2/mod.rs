@@ -85,7 +85,6 @@ mod plugin_uninstall;
 mod process_exec;
 mod projects;
 mod recommended_plugins;
-mod remote_control;
 #[cfg(debug_assertions)]
 mod remote_thread_store;
 mod request_permissions;

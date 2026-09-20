@@ -232,7 +232,6 @@ fn populate_merged_regular_fields_with_sources(
         allow_managed_hooks_only,
         allow_browser_and_computer_use,
         allow_appshots,
-        allow_remote_control,
         computer_use,
         browser_use,
         in_app_browser,
@@ -286,7 +285,6 @@ fn populate_merged_regular_fields_with_sources(
         &["allow_browser_and_computer_use"]
     );
     set_sourced!(allow_appshots, &["allow_appshots"]);
-    set_sourced!(allow_remote_control, &["allow_remote_control"]);
     set_sourced!(auto_review, &["auto_review"]);
     set_sourced!(computer_use, &["computer_use"]);
     set_sourced!(browser_use, &["browser_use"]);

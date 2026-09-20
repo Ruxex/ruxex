@@ -169,12 +169,11 @@ impl Harness {
             code_mode_session_provider: None,
             rpc_transport: match origin {
                 ConnectionOrigin::InProcess => AppServerRpcTransport::InProcess,
-                ConnectionOrigin::Stdio | ConnectionOrigin::RemoteControl => {
+                ConnectionOrigin::Stdio => {
                     AppServerRpcTransport::Stdio
                 }
                 ConnectionOrigin::WebSocket => AppServerRpcTransport::Websocket,
             },
-            remote_control_handle: None,
             plugin_startup_tasks: None,
         }));
         Ok(Self {
@@ -190,11 +189,8 @@ impl Harness {
                 ConnectionOrigin::WebSocket => AppServerTransport::WebSocket {
                     bind_address: "127.0.0.1:0".parse()?,
                 },
-                // Remote control can share a process whose primary listener is stdio.
                 // Keeping that case tests that authorization uses the connection's origin.
-                ConnectionOrigin::Stdio
-                | ConnectionOrigin::InProcess
-                | ConnectionOrigin::RemoteControl => AppServerTransport::Stdio,
+                ConnectionOrigin::Stdio | ConnectionOrigin::InProcess => AppServerTransport::Stdio,
             },
         })
     }

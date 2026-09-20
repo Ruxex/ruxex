@@ -16,7 +16,6 @@ pub(crate) const MAX_SHUTDOWN_GRACE_SECONDS: u32 = 5 * 60;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct DaemonSettings {
-    pub(crate) remote_control_enabled: bool,
     pub(crate) auto_update_enabled: bool,
     pub(crate) update_interval_minutes: u32,
     pub(crate) shutdown_grace_seconds: u32,
@@ -25,7 +24,6 @@ pub(crate) struct DaemonSettings {
 impl Default for DaemonSettings {
     fn default() -> Self {
         Self {
-            remote_control_enabled: false,
             auto_update_enabled: true,
             update_interval_minutes: DEFAULT_UPDATE_INTERVAL_MINUTES,
             shutdown_grace_seconds: DEFAULT_SHUTDOWN_GRACE_SECONDS,
@@ -42,8 +40,6 @@ struct StopSettings {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct StoredSettings {
-    #[serde(default)]
-    remote_control_enabled: bool,
     #[serde(default = "default_shutdown_grace_seconds")]
     shutdown_grace_seconds: u32,
     #[serde(default)]
@@ -53,7 +49,6 @@ struct StoredSettings {
 impl Default for StoredSettings {
     fn default() -> Self {
         Self {
-            remote_control_enabled: false,
             shutdown_grace_seconds: DEFAULT_SHUTDOWN_GRACE_SECONDS,
             updater: UpdaterSettings::default(),
         }
@@ -126,7 +121,6 @@ impl DaemonSettings {
         settings.updater.validate()?;
         validate_shutdown_grace(settings.shutdown_grace_seconds)?;
         Ok(Self {
-            remote_control_enabled: settings.remote_control_enabled,
             auto_update_enabled: settings.updater.auto_update_enabled,
             update_interval_minutes: settings.updater.update_interval_minutes,
             shutdown_grace_seconds: settings.shutdown_grace_seconds,
@@ -156,11 +150,7 @@ impl DaemonSettings {
                 )
             })?;
         }
-        let mut settings: Map<String, Value> = read_settings(path).await?;
-        settings.insert(
-            "remoteControlEnabled".to_string(),
-            Value::Bool(self.remote_control_enabled),
-        );
+        let settings: Map<String, Value> = read_settings(path).await?;
         let contents =
             serde_json::to_vec_pretty(&settings).context("failed to serialize settings")?;
         let temporary_path = path.with_extension("tmp");

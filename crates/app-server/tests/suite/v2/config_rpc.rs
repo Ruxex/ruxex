@@ -165,13 +165,11 @@ chatgpt_base_url = "https://managed.example/backend-api/"
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn config_requirements_read_includes_remote_control_and_managed_hooks() -> Result<()> {
+async fn config_requirements_read_includes_managed_hooks() -> Result<()> {
     let codex_home = TempDir::new()?;
     std::fs::write(
         codex_home.path().join("requirements.toml"),
-        r#"allow_remote_control = false
-
-[hooks]
+        r#"[hooks]
 
 [[hooks.SessionStart]]
 
@@ -201,7 +199,6 @@ statusMessage = "Scanning file"
     let requirements = response
         .requirements
         .expect("managed requirements should be returned");
-    assert_eq!(requirements.allow_remote_control, Some(false));
     assert_eq!(
         requirements
             .hooks

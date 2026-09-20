@@ -117,7 +117,7 @@ Phase 1 で整理した候補から、依存元が少なく、代替や責務移
 2. `codex-backend-client` の account/usage/workspace、remote memory、git attribution などを機能単位で外し、依存元がなくなった後に `codex-backend-openapi-models` とともに削除する。**完了**
 3. image generation、web search、analytics hosted sink、OpenAI curated plugin startup sync/cache、feedback の各 capability を整理する。OpenAI 固有部分を削除し、provider-neutral なログ、tool、plugin、media 表現を保持する。**完了**
 4. Realtime voice capability を削除する。OpenAI Realtime の WebSocket / WebRTC call 契約、core の会話管理、app-server / TUI の voice UI・protocol・設定・履歴、および専用の `codex-realtime-webrtc` と `codex-voice-host` を削除した。通常のテキスト会話、汎用 audio utility、provider-neutral な media 処理は保持する。**完了**
-5. ChatGPT Remote Control capability を削除する。transport、app-server protocol、daemon、CLI、state persistence、設定、ドキュメントを一単位として扱う。
+5. ChatGPT Remote Control capability を削除する。transport、app-server protocol、daemon、CLI、state persistence、設定、ドキュメントを一単位として扱う。**完了**
 6. Hosted Plugin Marketplace / Sharing / Runtime を削除する。`codex-core-plugins` は remote service 部分だけを外し、local/bundled/Git/npm plugin foundation は保持する。
 7. ChatGPT Apps / Connectors / host-owned Apps MCP を削除する。`codex-connectors` と専用 extension の依存元・汎用 MCP 利用を監査し、不要になったクレートは同じ単位で削除する。
 8. ChatGPT 認証と Agent Identity を削除する。`codex-agent-identity` は全体削除を先に検証し、`codex-login` は ChatGPT 専用 branch と protocol/UI だけを外して汎用 credential 経路を残す。
@@ -125,7 +125,7 @@ Phase 1 で整理した候補から、依存元が少なく、代替や責務移
 
 ### Phase 3 の完了ゲート
 
-- `Feature::RemoteControl`、`Feature::RemotePlugin`、`Feature::Apps` などの stable/default feature と、それらを有効にする設定・protocol・UI・CLI の producer/consumer 監査が完了している。
+- `Feature::RemotePlugin`、`Feature::Apps` などの stable/default feature と、それらを有効にする設定・protocol・UI・CLI の producer/consumer 監査が完了している。
 - ChatGPT/OpenAI が所有する hosted service へ到達する本番経路が、明示的に保持した provider-compatible transport と区別されている。
 - `codex-agent-identity`、`codex-login`、`codex-connectors`、`codex-core-plugins`、`codex-mcp` の削除/分割判断が、クレート名ではなく capability ごとに記録されている。
 - `docs/pre-release-compatibility-inventory.md` の各行に producer、consumer、`remove`/`retain`/`migrate-in-place`、検証コマンドがある。

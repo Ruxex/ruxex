@@ -433,7 +433,6 @@ pub struct ConfigRequirements {
     pub allow_managed_hooks_only: Option<bool>,
     pub allow_browser_and_computer_use: Option<bool>,
     pub allow_appshots: Option<bool>,
-    pub allow_remote_control: Option<bool>,
     pub computer_use: Option<ComputerUseRequirements>,
     pub browser_use: Option<BrowserUseRequirements>,
     pub in_app_browser: Option<InAppBrowserRequirements>,

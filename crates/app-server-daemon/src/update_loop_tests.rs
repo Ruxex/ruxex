@@ -97,7 +97,7 @@ async fn explicit_update_migrates_running_and_stopped_installations() {
             home.path().join("packages/standalone")
         );
         let settings = format!(
-            r#"{{"updater":{{"autoUpdateEnabled":{running}}},"remoteControlEnabled":true}}"#
+            r#"{{"updater":{{"autoUpdateEnabled":{running}}}}}"#
         );
         std::fs::write(&legacy.settings_file, &settings).unwrap();
         let daemon_settings = legacy.load_settings().await.unwrap();

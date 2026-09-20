@@ -25,7 +25,7 @@ impl ConnectionAuth {
         } else {
             Err(io::Error::new(
                 io::ErrorKind::Interrupted,
-                "remote control authentication changed",
+                "connection authentication changed",
             ))
         }
     }
