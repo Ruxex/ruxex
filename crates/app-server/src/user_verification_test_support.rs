@@ -24,7 +24,6 @@ use codex_config::LoaderOverrides;
 use codex_config::types::AuthCredentialsStoreMode;
 use codex_core::config::ConfigBuilder;
 use codex_exec_server::EnvironmentManager;
-use codex_feedback::CodexFeedback;
 use codex_protocol::protocol::SessionSource;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -160,7 +159,6 @@ impl Harness {
             config,
             config_manager,
             environment_manager: Arc::new(EnvironmentManager::default_for_tests()),
-            feedback: CodexFeedback::new(),
             log_db: None,
             state_db: None,
             config_warnings: Vec::new(),

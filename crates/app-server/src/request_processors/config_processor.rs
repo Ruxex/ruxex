@@ -30,7 +30,6 @@ use codex_app_server_protocol::ConfiguredHookHandler;
 use codex_app_server_protocol::ConfiguredHookMatcherGroup;
 use codex_app_server_protocol::ExperimentalFeatureEnablementSetParams;
 use codex_app_server_protocol::ExperimentalFeatureEnablementSetResponse;
-use codex_app_server_protocol::FeedbackRequirements;
 use codex_app_server_protocol::InAppBrowserRequirements;
 use codex_app_server_protocol::JSONRPCErrorError;
 use codex_app_server_protocol::ManagedHooksRequirements;
@@ -515,9 +514,6 @@ fn map_requirements_to_api(
         model_catalog_json: requirements.model_catalog_json.map(Into::into),
         check_for_update_on_startup: requirements.check_for_update_on_startup,
         allow_login_shell: requirements.allow_login_shell,
-        feedback: requirements.feedback.map(|feedback| FeedbackRequirements {
-            enabled: feedback.enabled,
-        }),
         windows_sandbox_private_desktop,
     })
 }
@@ -835,7 +831,6 @@ mod tests {
     use codex_app_server_protocol::ComputerUseRequirements;
     use codex_app_server_protocol::ComputerUseWindowsExeRequirement;
     use codex_app_server_protocol::ComputerUseWindowsRequirements;
-    use codex_app_server_protocol::FeedbackRequirements;
     use codex_app_server_protocol::WindowsSandboxImplementation;
     use codex_config::AllowDenyRequirementToml;
     use codex_config::AutoReviewRequirementsToml;
@@ -850,7 +845,6 @@ mod tests {
     use codex_config::ModelsRequirementsToml;
     use codex_config::NewThreadModelDefaultsToml;
     use codex_config::WindowsRequirementsToml;
-    use codex_config::types::FeedbackConfigToml;
     use codex_protocol::config_types::ForcedLoginMethod;
     use codex_protocol::openai_models::ReasoningEffort;
     use codex_utils_absolute_path::AbsolutePathBuf;
@@ -1114,9 +1108,6 @@ mod tests {
             model_catalog_json: Some(model_catalog_json.clone()),
             check_for_update_on_startup: Some(false),
             allow_login_shell: Some(false),
-            feedback: Some(FeedbackConfigToml {
-                enabled: Some(false),
-            }),
             ..ConfigRequirementsToml::default()
         });
 
@@ -1128,11 +1119,5 @@ mod tests {
         );
         assert_eq!(mapped.check_for_update_on_startup, Some(false));
         assert_eq!(mapped.allow_login_shell, Some(false));
-        assert_eq!(
-            mapped.feedback,
-            Some(FeedbackRequirements {
-                enabled: Some(false),
-            })
-        );
     }
 }

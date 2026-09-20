@@ -159,10 +159,6 @@ pub struct DoctorCommand {
     #[arg(long, default_value_t = false)]
     json: bool,
 
-    /// Limit database integrity scans when collecting a feedback attachment.
-    #[arg(long, hide = true, default_value_t = false)]
-    feedback: bool,
-
     /// Only show grouped check rows and the final count summary.
     #[arg(long, default_value_t = false)]
     summary: bool,
@@ -456,7 +452,7 @@ async fn build_report(
                         terminal_title_check(config)
                     })
                 },
-                run_async_check("state", progress.clone(), state_check(config, command)),
+                run_async_check("state", progress.clone(), state_check(config)),
                 run_async_check(
                     "thread inventory",
                     progress.clone(),
@@ -2054,7 +2050,7 @@ fn terminal_size_issues(inputs: &TerminalCheckInputs) -> Vec<DoctorIssue> {
     issues
 }
 
-async fn state_check(config: &Config, command: &DoctorCommand) -> DoctorCheck {
+async fn state_check(config: &Config) -> DoctorCheck {
     let mut details = Vec::new();
     path_readiness(&mut details, "CODEX_HOME", &config.codex_home);
     path_readiness(&mut details, "log dir", &config.log_dir);
@@ -2062,17 +2058,13 @@ async fn state_check(config: &Config, command: &DoctorCommand) -> DoctorCheck {
     let mut status = CheckStatus::Ok;
     for db in config.sqlite_config().runtime_db_paths() {
         path_readiness(&mut details, db.label, &db.path);
-        // Feedback collection gives each database its own budget; direct runs scan fully.
-        let deadline = command
-            .feedback
-            .then(|| Instant::now() + Duration::from_secs(1));
         status = status.max(
             sqlite_integrity_detail(
                 config.sqlite_config(),
                 &mut details,
                 db.label,
                 &db.path,
-                deadline,
+                None,
             )
             .await,
         );

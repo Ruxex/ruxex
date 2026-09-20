@@ -8,15 +8,9 @@ use std::time::Duration;
 use anyhow::Context;
 use anyhow::Result;
 use app_test_support::TestAppServer;
-use codex_app_server_protocol::RequestId;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
-use serde_json::json;
 use tempfile::TempDir;
-use tokio::io::AsyncBufReadExt;
-use tokio::io::AsyncWriteExt;
-use tokio::io::BufReader;
-use tokio::net::TcpListener;
 use tokio::time::timeout;
 
 struct Fixture {
@@ -144,10 +138,7 @@ fn startup_and_doctor_do_not_execute_path_helpers() -> Result<()> {
     fixture.command()?.assert().failure();
     assert!(!fixture.marker.exists(), "startup executed a PATH helper");
 
-    for args in [
-        vec!["doctor", "--json"],
-        vec!["doctor", "--json", "--feedback"],
-    ] {
+    for args in [vec!["doctor", "--json"]] {
         let mut command = fixture.command()?;
         command
             .args(args)
@@ -299,77 +290,5 @@ async fn interactive_tmux_startup_does_not_execute_workspace_helpers() -> Result
         !fixture.marker.exists(),
         "interactive startup executed a workspace helper"
     );
-    Ok(())
-}
-
-#[tokio::test]
-async fn feedback_with_logs_does_not_execute_path_helpers() -> Result<()> {
-    let fixture = Fixture::new()?;
-    let proxy = TcpListener::bind("127.0.0.1:0").await?;
-    let proxy_uri = format!("http://{}", proxy.local_addr()?);
-    // Reject all outbound traffic locally, including the final feedback upload.
-    let proxy_task = tokio::spawn(async move {
-        while let Ok((stream, _)) = proxy.accept().await {
-            let mut stream = BufReader::new(stream);
-            let mut request = String::new();
-            if stream.read_line(&mut request).await.is_ok() {
-                let _ = stream.get_mut().write_all(b"HTTP/1.1 503 Service Unavailable\r\nContent-Length: 0\r\nConnection: close\r\n\r\n").await;
-            }
-        }
-    });
-    let path = fixture.path.to_string_lossy();
-    let marker = fixture.marker.to_string_lossy();
-    let home = fixture.root.path().to_string_lossy();
-    let package_root = fixture.workspace.join("node_modules/@openai/codex");
-    let package_root = package_root.to_string_lossy();
-    let mut app_server = TestAppServer::builder()
-        .with_program(&fixture.program)
-        .with_codex_home(&fixture.home)
-        // The CLI does not accept the standalone app-server's test-only flag.
-        // Disable plugins through real config; their safety test joins a full sync.
-        .with_plugin_startup_tasks()
-        .with_args(&["-c", "features.plugins=false", "app-server"])
-        .with_env_overrides(&[
-            ("PATH", Some(path.as_ref())),
-            ("HOME", Some(home.as_ref())),
-            ("CODEX_TEST_HELPER_MARKER", Some(marker.as_ref())),
-            ("CODEX_MANAGED_BY_NPM", Some("1")),
-            ("CODEX_MANAGED_PACKAGE_ROOT", Some(package_root.as_ref())),
-            ("ZELLIJ", Some("0")),
-            ("ZELLIJ_VERSION", None),
-            ("TMUX", None),
-            ("TMUX_PANE", None),
-            ("HTTP_PROXY", Some(&proxy_uri)),
-            ("HTTPS_PROXY", Some(&proxy_uri)),
-            ("ALL_PROXY", Some(&proxy_uri)),
-            ("http_proxy", Some(&proxy_uri)),
-            ("https_proxy", Some(&proxy_uri)),
-            ("all_proxy", Some(&proxy_uri)),
-            ("NO_PROXY", Some("127.0.0.1,localhost")),
-            ("no_proxy", Some("127.0.0.1,localhost")),
-        ])
-        .build_initialized_with_timeout(Duration::from_secs(/*secs*/ 30))
-        .await?;
-    let request_id = app_server
-        .send_raw_request(
-            "feedback/upload",
-            Some(json!({
-                "classification": "bug", "includeLogs": true
-            })),
-        )
-        .await?;
-    let error = timeout(
-        Duration::from_secs(/*secs*/ 45),
-        app_server.read_stream_until_error_message(RequestId::Integer(request_id)),
-    )
-    .await??;
-    assert!(error.error.message.contains("failed to upload feedback"));
-    assert!(!fixture.marker.exists(), "feedback executed a PATH helper");
-    timeout(
-        Duration::from_secs(/*secs*/ 10),
-        app_server.shutdown_gracefully(),
-    )
-    .await??;
-    proxy_task.abort();
     Ok(())
 }
