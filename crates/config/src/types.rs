@@ -216,11 +216,11 @@ pub enum HistoryPersistence {
 
 // ===== Analytics configuration =====
 
-/// Analytics settings loaded from config.toml. Fields are optional so we can apply defaults.
+/// Metrics settings loaded from config.toml. Fields are optional so we can apply defaults.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema)]
 #[schemars(deny_unknown_fields)]
-pub struct AnalyticsConfigToml {
-    /// When `false`, disables analytics across Codex product surfaces in this profile.
+pub struct MetricsConfigToml {
+    /// When `false`, disables metrics across Codex product surfaces in this profile.
     pub enabled: Option<bool>,
 }
 

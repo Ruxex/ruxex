@@ -93,7 +93,7 @@ approval_policy = "never"
 responses_websockets = false
 responses_websockets_v2 = false
 runtime_metrics = true
-[analytics]
+[metrics]
 enabled = true
 [otel]
 exporter = "none"
@@ -125,7 +125,7 @@ metrics_exporter = {{ otlp-http = {{ endpoint = "{}/metrics", protocol = "json" 
         &config,
         "test",
         Some("codex-app-server"),
-        /*default_analytics_enabled*/ false,
+        /*default_metrics_enabled*/ false,
     )
     .map_err(|error| anyhow::anyhow!(error.to_string()))?
     .expect("OTLP enabled");

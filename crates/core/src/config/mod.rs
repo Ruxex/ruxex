@@ -1034,9 +1034,9 @@ pub struct Config {
     /// or placeholder replacement will occur for fast keypress bursts.
     pub disable_paste_burst: bool,
 
-    /// When `false`, disables analytics across Codex product surfaces in this machine.
+    /// When `false`, disables metrics across Codex product surfaces in this machine.
     /// Voluntarily left as Optional because the default value might depend on the client.
-    pub analytics_enabled: Option<bool>,
+    pub metrics_enabled: Option<bool>,
 
     /// Configured discoverable tools for tool suggestions.
     pub tool_suggest: ToolSuggestConfig,
@@ -4184,7 +4184,7 @@ impl Config {
                 .and_then(|tui| tui.disable_paste_burst)
                 .or(cfg.disable_paste_burst)
                 .unwrap_or(false),
-            analytics_enabled: cfg.analytics.as_ref().and_then(|a| a.enabled),
+            metrics_enabled: cfg.metrics.as_ref().and_then(|a| a.enabled),
             tool_suggest,
             tui_notifications: cfg
                 .tui

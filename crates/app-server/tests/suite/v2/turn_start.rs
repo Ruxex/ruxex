@@ -359,11 +359,11 @@ async fn turn_start_omits_notification_media_without_changing_model_input() -> R
 }
 
 #[test_case(None; "analytics_unset")]
-#[test_case(Some(true); "analytics_enabled")]
+#[test_case(Some(true); "metrics_enabled")]
 #[test_case(Some(false); "analytics_disabled")]
 #[tokio::test]
 async fn tool_call_metadata_stays_out_of_raw_response_item_notifications(
-    analytics_enabled: Option<bool>,
+    metrics_enabled: Option<bool>,
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
 
@@ -419,8 +419,8 @@ async fn tool_call_metadata_stays_out_of_raw_response_item_notifications(
         ))
         .enable_feature(Feature::Apps)
         .enable_feature(Feature::ExecutedToolCallMetadata);
-    if let Some(enabled) = analytics_enabled {
-        config = config.with_extra_config(&format!("[analytics]\nenabled = {enabled}"));
+    if let Some(enabled) = metrics_enabled {
+        config = config.with_extra_config(&format!("[metrics]\nenabled = {enabled}"));
     }
     config.write(codex_home.path())?;
     write_chatgpt_auth(
@@ -542,7 +542,7 @@ async fn tool_call_metadata_stays_out_of_raw_response_item_notifications(
     assert_eq!(
         captured["internal_chat_message_metadata_passthrough"]["executed_tool_calls"][0]
             .get("tool_result_metadata"),
-        (analytics_enabled != Some(false)).then_some(&result_metadata),
+        (metrics_enabled != Some(false)).then_some(&result_metadata),
     );
     Ok(())
 }

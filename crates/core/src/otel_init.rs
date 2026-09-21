@@ -17,7 +17,7 @@ pub fn build_provider(
     config: &Config,
     service_version: &str,
     service_name_override: Option<&str>,
-    default_analytics_enabled: bool,
+    default_metrics_enabled: bool,
 ) -> Result<Option<OtelProvider>, Box<dyn Error>> {
     let to_otel_exporter = |kind: &Kind| match kind {
         Kind::None => OtelExporter::None,
@@ -68,8 +68,8 @@ pub fn build_provider(
     let exporter = to_otel_exporter(&config.otel.exporter);
     let trace_exporter = to_otel_exporter(&config.otel.trace_exporter);
     let metrics_exporter = if config
-        .analytics_enabled
-        .unwrap_or(default_analytics_enabled)
+        .metrics_enabled
+        .unwrap_or(default_metrics_enabled)
     {
         to_otel_exporter(&config.otel.metrics_exporter)
     } else {

@@ -13,7 +13,6 @@ export type { AdditionalPermissionProfile } from "./AdditionalPermissionProfile"
 export type { AgentMessageDelivery } from "./AgentMessageDelivery";
 export type { AgentMessageDeltaNotification } from "./AgentMessageDeltaNotification";
 export type { AllowDenyRequirement } from "./AllowDenyRequirement";
-export type { AnalyticsConfig } from "./AnalyticsConfig";
 export type { ApplicationNetworkRequirements } from "./ApplicationNetworkRequirements";
 export type { ApplicationRequirements } from "./ApplicationRequirements";
 export type { ApprovalsReviewer } from "./ApprovalsReviewer";
@@ -259,6 +258,7 @@ export type { McpToolCallStatus } from "./McpToolCallStatus";
 export type { MemoryCitation } from "./MemoryCitation";
 export type { MemoryCitationEntry } from "./MemoryCitationEntry";
 export type { MergeStrategy } from "./MergeStrategy";
+export type { MetricsConfig } from "./MetricsConfig";
 export type { MigrationDetails } from "./MigrationDetails";
 export type { MisalignmentErrorDetails } from "./MisalignmentErrorDetails";
 export type { MisalignmentSteer } from "./MisalignmentSteer";

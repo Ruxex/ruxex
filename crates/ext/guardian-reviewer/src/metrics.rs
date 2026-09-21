@@ -2,13 +2,13 @@
 
 use std::time::Duration;
 
-use codex_analytics::GuardianApprovalRequestSource;
-use codex_analytics::GuardianReviewAnalyticsResult;
-use codex_analytics::GuardianReviewDecision;
-use codex_analytics::GuardianReviewFailureReason;
-use codex_analytics::GuardianReviewSessionKind;
-use codex_analytics::GuardianReviewTerminalStatus;
-use codex_analytics::GuardianReviewedAction;
+use crate::GuardianApprovalRequestSource;
+use crate::GuardianReviewAnalyticsResult;
+use crate::GuardianReviewDecision;
+use crate::GuardianReviewFailureReason;
+use crate::GuardianReviewSessionKind;
+use crate::GuardianReviewTerminalStatus;
+use crate::GuardianReviewedAction;
 use codex_otel::GUARDIAN_REVIEW_COUNT_METRIC;
 use codex_otel::GUARDIAN_REVIEW_DURATION_METRIC;
 use codex_otel::GUARDIAN_REVIEW_TOKEN_USAGE_METRIC;

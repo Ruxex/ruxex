@@ -113,10 +113,8 @@ pub(crate) async fn decide_approval(
         escalated_exec: matches!(&request.request, Ok(GuardianApprovalRequest::ExecCommand { sandbox_permissions, .. }) if sandbox_permissions.requires_escalated_permissions()),
         full_access,
         cancellation: cancellation.clone(),
-        // Keep the existing turn-level reporting policy during this ownership move.
         model: turn.model_info(),
         telemetry: &session.services.session_telemetry,
-        analytics: &session.services.analytics_events_client,
         metrics: Some(crate::session::extension_metrics::from_session_telemetry(
             turn.session_telemetry.clone(),
         )),

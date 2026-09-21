@@ -4,8 +4,6 @@ use crate::context::ImageResizeNotice;
 use crate::context::ImageResizeNoticeSource;
 use crate::context::ResizedImage;
 use crate::original_image_detail::can_request_original_image_detail;
-use codex_analytics::ImageDetailSetting;
-use codex_analytics::ImagePreparationMetadata;
 use codex_attachment_store::AttachmentStore;
 use codex_attachment_store::UploadRequest;
 use codex_attachment_store::UploadResult;
@@ -40,6 +38,25 @@ const REMOTE_IMAGE_URL_PLACEHOLDER: &str =
 pub(crate) enum ImagePreparationMode {
     DetailBased,
     UnifiedBudget,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ImageDetailSetting {
+    Auto,
+    Low,
+    High,
+    Original,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct ImagePreparationMetadata {
+    pub(crate) message_role: Option<String>,
+    pub(crate) item_id: Option<String>,
+    pub(crate) effective_detail: ImageDetailSetting,
+    pub(crate) source_width: u32,
+    pub(crate) source_height: u32,
+    pub(crate) prepared_width: u32,
+    pub(crate) prepared_height: u32,
 }
 
 pub(crate) fn unified_image_budget_enabled(

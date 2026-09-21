@@ -163,7 +163,7 @@ pub struct ToolsV2 {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
 #[serde(rename_all = "snake_case")]
 #[ts(export_to = "v2/")]
-pub struct AnalyticsConfig {
+pub struct MetricsConfig {
     pub enabled: Option<bool>,
     #[serde(default, flatten)]
     pub additional: HashMap<String, JsonValue>,
@@ -216,7 +216,7 @@ pub struct Config {
     pub model_reasoning_summary: Option<ReasoningSummary>,
     pub model_verbosity: Option<Verbosity>,
     pub service_tier: Option<String>,
-    pub analytics: Option<AnalyticsConfig>,
+    pub metrics: Option<MetricsConfig>,
     pub browser_use: Option<BrowserUseConfig>,
     pub computer_use: Option<ComputerUseConfig>,
     pub desktop: Option<HashMap<String, JsonValue>>,

@@ -152,7 +152,7 @@ async fn model_guardian_policy_scores_code_mode_cells(
             analytics_server.uri(),
         ))
         .with_extra_config(&format!(
-            "[mcp_servers.node_repl]\nurl = \"{mcp_url}/mcp\"\ndefault_tools_approval_mode = \"auto\"\n\n[analytics]\nenabled = true{legacy_config}"
+            "[mcp_servers.node_repl]\nurl = \"{mcp_url}/mcp\"\ndefault_tools_approval_mode = \"auto\"\n\n[metrics]\nenabled = true{legacy_config}"
         ))
         .enable_feature(Feature::GuardianApproval)
         .enable_feature(Feature::CodeModeOnly)

@@ -29,8 +29,6 @@ use crate::shell_snapshot::ShellSnapshot;
 use crate::test_support::models_manager_with_provider;
 use crate::tools::format_exec_output_str;
 use crate::tools::registry::ToolRegistry;
-use codex_analytics::CompactionPhase;
-use codex_analytics::CompactionReason;
 use codex_config::ConfigLayerStack;
 use codex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID;
 use codex_config::LoaderOverrides;
@@ -4786,136 +4784,6 @@ pub(crate) async fn make_session_configuration_for_tests() -> SessionConfigurati
     }
 }
 
-#[tokio::test]
-async fn emit_subagent_session_started_includes_fork_lineage_and_originator() {
-    use codex_app_server_protocol::ServerNotification;
-    use codex_app_server_protocol::ThreadArchivedNotification;
-    use wiremock::Mock;
-    use wiremock::MockServer;
-    use wiremock::ResponseTemplate;
-    use wiremock::matchers::method;
-    use wiremock::matchers::path;
-
-    let server = MockServer::start().await;
-    Mock::given(method("POST"))
-        .and(path("/codex/analytics-events/events"))
-        .respond_with(ResponseTemplate::new(200))
-        .mount(&server)
-        .await;
-
-    let auth_manager =
-        AuthManager::from_auth_for_testing(CodexAuth::create_dummy_chatgpt_auth_for_testing());
-    let analytics_events_client = AnalyticsEventsClient::new(/*analytics_enabled*/ Some(true));
-
-    let parent_thread_id = ThreadId::new();
-    let forked_from_thread_id = ThreadId::new();
-    let child_thread_id = ThreadId::new();
-    let mut session_configuration = make_session_configuration_for_tests().await;
-    session_configuration.forked_from_thread_id = Some(forked_from_thread_id);
-    session_configuration.thread_source = Some(ThreadSource::GuardianReview);
-
-    emit_subagent_session_started(
-        &analytics_events_client,
-        AppServerClientMetadata {
-            client_name: Some("codex-tui".to_string()),
-            client_version: Some("1.0.0".to_string()),
-        },
-        SessionId::from(child_thread_id),
-        child_thread_id,
-        Some(parent_thread_id),
-        session_configuration.thread_config_snapshot(Vec::new()),
-        SubAgentSource::Other(crate::guardian::GUARDIAN_REVIEWER_NAME.to_string()),
-    );
-
-    let event = timeout(Duration::from_secs(1), async {
-        'wait_for_event: loop {
-            if let Some(requests) = server.received_requests().await {
-                for request in requests {
-                    let payload: serde_json::Value =
-                        serde_json::from_slice(&request.body).expect("valid analytics payload");
-                    if let Some(event) = payload["events"].as_array().and_then(|events| {
-                        events
-                            .iter()
-                            .find(|event| event["event_type"] == "codex_thread_initialized")
-                    }) {
-                        break 'wait_for_event event.clone();
-                    }
-                }
-            }
-            tokio::time::sleep(Duration::from_millis(10)).await;
-        }
-    })
-    .await
-    .expect("subagent initialization analytics should be emitted");
-
-    assert_eq!(event["event_params"]["thread_source"], "guardian_review");
-    assert_eq!(
-        event["event_params"]["parent_thread_id"],
-        parent_thread_id.to_string()
-    );
-    assert_eq!(
-        event["event_params"]["forked_from_thread_id"],
-        forked_from_thread_id.to_string()
-    );
-    assert_eq!(
-        event["event_params"]["app_server_client"]["product_client_id"],
-        "test_originator"
-    );
-
-    let prewarmed_thread_id = ThreadId::new();
-    emit_subagent_session_started(
-        &analytics_events_client,
-        AppServerClientMetadata {
-            client_name: None,
-            client_version: None,
-        },
-        SessionId::from(parent_thread_id),
-        prewarmed_thread_id,
-        Some(parent_thread_id),
-        session_configuration.thread_config_snapshot(Vec::new()),
-        SubAgentSource::Other(crate::guardian::GUARDIAN_REVIEWER_NAME.to_string()),
-    );
-    // Archive analytics exposes retained lineage even before a parent connection exists.
-    analytics_events_client.track_notification(&ServerNotification::ThreadArchived(
-        ThreadArchivedNotification {
-            thread_id: prewarmed_thread_id.to_string(),
-        },
-    ));
-    analytics_events_client.flush().await;
-    let events = server
-        .received_requests()
-        .await
-        .expect("analytics requests")
-        .into_iter()
-        .flat_map(|request| {
-            let payload: serde_json::Value =
-                serde_json::from_slice(&request.body).expect("valid analytics payload");
-            payload["events"]
-                .as_array()
-                .expect("analytics events")
-                .clone()
-        })
-        .collect::<Vec<_>>();
-    let [initialization, archive] = events.as_slice() else {
-        panic!("expected one complete initialization and one archive: {events:?}");
-    };
-    assert_eq!(initialization, &event);
-    assert_eq!(
-        json!([
-            archive["event_type"],
-            archive["event_params"]["thread_id"],
-            archive["event_params"]["thread_source"],
-            archive["event_params"]["parent_thread_id"],
-        ]),
-        json!([
-            "codex_thread_archive_event",
-            prewarmed_thread_id.to_string(),
-            "guardian_review",
-            parent_thread_id.to_string(),
-        ])
-    );
-}
-
 async fn resolved_environments_for_configuration(
     session_configuration: &SessionConfiguration,
     environment_selections: &[TurnEnvironmentSelection],
@@ -5907,7 +5775,6 @@ async fn session_new_fails_when_zsh_fork_enabled_without_packaged_zsh() {
         /*reserved_thread_id*/ None,
         environment_manager,
         /*inherited_environments*/ None,
-        /*analytics_events_client*/ None,
         crate::passthrough_image_store(),
         Arc::new(codex_thread_store::LocalThreadStore::new(
             codex_thread_store::LocalThreadStoreConfig::from_config(config.as_ref()),
@@ -5956,16 +5823,15 @@ pub(crate) async fn build_world_state_from_turn_context(
 }
 
 #[tokio::test]
-async fn responses_metadata_uses_selected_harness_analytics_client() {
+async fn responses_metadata_uses_metrics_config() {
     for enabled in [true, false] {
-        let (mut session, mut turn_context) = make_session_and_context().await;
-        session.services.analytics_events_client = AnalyticsEventsClient::new(Some(enabled));
-        Arc::make_mut(&mut turn_context.config).analytics_enabled = Some(!enabled);
+        let (session, mut turn_context) = make_session_and_context().await;
+        Arc::make_mut(&mut turn_context.config).metrics_enabled = Some(enabled);
         let step_context = StepContext::for_test(Arc::new(turn_context));
         let metadata = session
             .responses_metadata(&step_context, CodexResponsesRequestKind::Turn)
             .await;
-        assert_eq!(metadata.analytics_enabled, Some(enabled));
+        assert_eq!(metadata.metrics_enabled, Some(enabled));
     }
 }
 
@@ -6103,7 +5969,6 @@ pub(crate) async fn make_session_and_context() -> (Session, TurnContext) {
         elicitations: crate::elicitation::ElicitationService::new(),
         shell_zsh_path: None,
         main_execve_wrapper_exe: config.main_execve_wrapper_exe.clone(),
-        analytics_events_client: AnalyticsEventsClient::new(config.analytics_enabled),
         hooks: arc_swap::ArcSwap::from_pointee(hooks),
         rollout_thread_trace: codex_rollout_trace::ThreadTraceContext::disabled(),
         user_shell: Arc::new(default_user_shell()),
@@ -6389,7 +6254,6 @@ async fn make_session_with_config_and_rx(
         /*reserved_thread_id*/ None,
         environment_manager,
         /*inherited_environments*/ None,
-        /*analytics_events_client*/ None,
         crate::passthrough_image_store(),
         Arc::new(codex_thread_store::LocalThreadStore::new(
             codex_thread_store::LocalThreadStoreConfig::from_config(config.as_ref()),
@@ -6521,7 +6385,6 @@ async fn make_session_with_history_source_and_agent_control_and_rx(
         /*reserved_thread_id*/ None,
         environment_manager,
         /*inherited_environments*/ None,
-        /*analytics_events_client*/ None,
         crate::passthrough_image_store(),
         Arc::new(codex_thread_store::LocalThreadStore::new(
             codex_thread_store::LocalThreadStoreConfig::from_config(config.as_ref()),
@@ -8284,7 +8147,6 @@ where
         elicitations: crate::elicitation::ElicitationService::new(),
         shell_zsh_path: None,
         main_execve_wrapper_exe: config.main_execve_wrapper_exe.clone(),
-        analytics_events_client: AnalyticsEventsClient::new(config.analytics_enabled),
         hooks: arc_swap::ArcSwap::from_pointee(hooks),
         rollout_thread_trace: codex_rollout_trace::ThreadTraceContext::disabled(),
         user_shell: Arc::new(default_user_shell()),

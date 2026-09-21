@@ -2246,7 +2246,7 @@ mod tests {
         let (tx, mut rx) = mpsc::channel(CHANNEL_CAPACITY);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             tx,
-            codex_analytics::AnalyticsEventsClient::disabled(),
+            (),
         ));
         let outgoing = ThreadScopedOutgoingMessageSender::new(
             outgoing,
@@ -2327,7 +2327,7 @@ mod tests {
         let (tx, mut rx) = mpsc::channel(CHANNEL_CAPACITY);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             tx,
-            codex_analytics::AnalyticsEventsClient::disabled(),
+            (),
         ));
         let outgoing = ThreadScopedOutgoingMessageSender::new(
             outgoing,
@@ -2430,7 +2430,7 @@ mod tests {
         let (tx, mut rx) = mpsc::channel(CHANNEL_CAPACITY);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             tx,
-            codex_analytics::AnalyticsEventsClient::disabled(),
+            (),
         ));
         let outgoing = ThreadScopedOutgoingMessageSender::new(
             outgoing,
@@ -2901,7 +2901,7 @@ mod tests {
         let (tx, mut rx) = mpsc::channel(CHANNEL_CAPACITY);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             tx,
-            codex_analytics::AnalyticsEventsClient::disabled(),
+            (),
         ));
         let outgoing = ThreadScopedOutgoingMessageSender::new(
             outgoing,
@@ -3016,7 +3016,7 @@ mod tests {
         let (tx, mut rx) = mpsc::channel(CHANNEL_CAPACITY);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             tx,
-            codex_analytics::AnalyticsEventsClient::disabled(),
+            (),
         ));
         let outgoing = ThreadScopedOutgoingMessageSender::new(
             outgoing,
@@ -3100,7 +3100,7 @@ mod tests {
         let (tx, mut rx) = mpsc::channel(CHANNEL_CAPACITY);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             tx,
-            codex_analytics::AnalyticsEventsClient::disabled(),
+            (),
         ));
         let outgoing = ThreadScopedOutgoingMessageSender::new(
             outgoing,
@@ -3169,7 +3169,7 @@ mod tests {
         let (tx, mut rx) = mpsc::channel(CHANNEL_CAPACITY);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             tx,
-            codex_analytics::AnalyticsEventsClient::disabled(),
+            (),
         ));
         let outgoing = ThreadScopedOutgoingMessageSender::new(
             outgoing,
@@ -3287,7 +3287,7 @@ mod tests {
         let (tx, mut rx) = mpsc::channel(CHANNEL_CAPACITY);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             tx,
-            codex_analytics::AnalyticsEventsClient::disabled(),
+            (),
         ));
         let outgoing = ThreadScopedOutgoingMessageSender::new(
             outgoing,
@@ -3338,7 +3338,7 @@ mod tests {
         let (tx, mut rx) = mpsc::channel(CHANNEL_CAPACITY);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             tx,
-            codex_analytics::AnalyticsEventsClient::disabled(),
+            (),
         ));
         let outgoing = ThreadScopedOutgoingMessageSender::new(
             outgoing,
@@ -3383,7 +3383,7 @@ mod tests {
         let (tx, mut rx) = mpsc::channel(CHANNEL_CAPACITY);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             tx,
-            codex_analytics::AnalyticsEventsClient::disabled(),
+            (),
         ));
         let outgoing = ThreadScopedOutgoingMessageSender::new(
             outgoing,
@@ -3433,7 +3433,7 @@ mod tests {
         let (tx, mut rx) = mpsc::channel(CHANNEL_CAPACITY);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             tx,
-            codex_analytics::AnalyticsEventsClient::disabled(),
+            (),
         ));
         let outgoing = ThreadScopedOutgoingMessageSender::new(
             outgoing,
@@ -3528,7 +3528,7 @@ mod tests {
         let (tx, mut rx) = mpsc::channel(CHANNEL_CAPACITY);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             tx,
-            codex_analytics::AnalyticsEventsClient::disabled(),
+            (),
         ));
         let outgoing = ThreadScopedOutgoingMessageSender::new(
             outgoing,
@@ -3564,7 +3564,7 @@ mod tests {
         let (tx, mut rx) = mpsc::channel(CHANNEL_CAPACITY);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             tx,
-            codex_analytics::AnalyticsEventsClient::disabled(),
+            (),
         ));
         let outgoing = ThreadScopedOutgoingMessageSender::new(
             outgoing,
@@ -3685,7 +3685,7 @@ mod tests {
         let (tx, mut rx) = mpsc::channel(CHANNEL_CAPACITY);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             tx,
-            codex_analytics::AnalyticsEventsClient::disabled(),
+            (),
         ));
         let outgoing = ThreadScopedOutgoingMessageSender::new(
             outgoing,

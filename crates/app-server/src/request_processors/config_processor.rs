@@ -6,7 +6,6 @@ use crate::error_code::internal_error;
 use crate::error_code::invalid_request;
 use crate::outgoing_message::ConnectionRequestId;
 use crate::outgoing_message::OutgoingMessageSender;
-use codex_analytics::AnalyticsEventsClient;
 use codex_app_server_protocol::AllowDenyRequirement;
 use codex_app_server_protocol::AutoReviewRequirements;
 use codex_app_server_protocol::BrowserUseAccessApprovalLifetime;
@@ -53,7 +52,6 @@ use codex_features::Feature;
 use codex_features::canonical_feature_for_key;
 use codex_features::feature_for_key;
 use codex_model_provider::create_model_provider;
-use codex_plugin::PluginId;
 use codex_protocol::config_types::ForcedLoginMethod;
 use codex_protocol::config_types::WebSearchMode;
 use serde_json::json;
@@ -75,7 +73,6 @@ pub(crate) struct ConfigRequestProcessor {
     outgoing: Arc<OutgoingMessageSender>,
     config_manager: ConfigManager,
     thread_manager: Arc<ThreadManager>,
-    analytics_events_client: AnalyticsEventsClient,
 }
 
 impl ConfigRequestProcessor {
@@ -83,13 +80,11 @@ impl ConfigRequestProcessor {
         outgoing: Arc<OutgoingMessageSender>,
         config_manager: ConfigManager,
         thread_manager: Arc<ThreadManager>,
-        analytics_events_client: AnalyticsEventsClient,
     ) -> Self {
         Self {
             outgoing,
             config_manager,
             thread_manager,
-            analytics_events_client,
         }
     }
 
@@ -245,7 +240,6 @@ impl ConfigRequestProcessor {
             .write_value(params)
             .await
             .map_err(map_error)?;
-        self.emit_plugin_toggle_events(pending_changes).await;
         Ok(response)
     }
 
@@ -264,7 +258,6 @@ impl ConfigRequestProcessor {
             .batch_write(params)
             .await
             .map_err(map_error)?;
-        self.emit_plugin_toggle_events(pending_changes).await;
         Ok(response)
     }
 
@@ -308,25 +301,6 @@ impl ConfigRequestProcessor {
         Ok(ExperimentalFeatureEnablementSetResponse { enablement })
     }
 
-    async fn emit_plugin_toggle_events(
-        &self,
-        pending_changes: std::collections::BTreeMap<String, bool>,
-    ) {
-        let plugins_manager = self.thread_manager.plugins_manager();
-        for (plugin_id, enabled) in pending_changes {
-            let Ok(plugin_id) = PluginId::parse(&plugin_id) else {
-                continue;
-            };
-            let metadata = plugins_manager
-                .telemetry_metadata_for_installed_plugin(&plugin_id)
-                .await;
-            if enabled {
-                self.analytics_events_client.track_plugin_enabled(metadata);
-            } else {
-                self.analytics_events_client.track_plugin_disabled(metadata);
-            }
-        }
-    }
 }
 
 pub(super) async fn reload_user_config(

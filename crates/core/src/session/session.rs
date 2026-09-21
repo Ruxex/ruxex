@@ -709,7 +709,6 @@ impl Session {
         CodexResponsesMetadata {
             window_number: Some(window_number),
             context_window_id: Some(context_window_id),
-            analytics_enabled: Some(self.services.analytics_events_client.is_enabled()),
             history_ingest_requested: turn_context
                 .config
                 .token_budget
@@ -753,7 +752,6 @@ impl Session {
         reserved_thread_id: Option<ThreadId>,
         environment_manager: Arc<EnvironmentManager>,
         inherited_environments: Option<TurnEnvironmentSnapshot>,
-        analytics_events_client: Option<AnalyticsEventsClient>,
         image_store: Arc<dyn AttachmentStore>,
         thread_store: Arc<dyn ThreadStore>,
         parent_rollout_thread_trace: ThreadTraceContext,
@@ -1538,15 +1536,6 @@ impl Session {
                 });
             }
 
-            let analytics_events_client = if config.analytics_enabled == Some(false) {
-                AnalyticsEventsClient::disabled()
-            } else {
-                analytics_events_client.unwrap_or_else(|| {
-                    AnalyticsEventsClient::new(
-                        config.analytics_enabled,
-                    )
-                })
-            };
             for item in initial_history.get_rollout_items() {
                 match item {
                     RolloutItem::Compacted(_) | RolloutItem::EventMsg(_) => {}
@@ -1563,7 +1552,6 @@ impl Session {
             }
             let session_extension_data =
                 codex_extension_api::ExtensionData::new(session_id.to_string());
-            session_extension_data.insert(analytics_events_client.clone());
             let mcp_resource_client = Arc::new(McpResourceClient::new(Arc::clone(&mcp_runtime)));
             let extension_metrics =
                 extension_metrics::from_session_telemetry(session_telemetry.clone());
@@ -1596,7 +1584,6 @@ impl Session {
                 elicitations: crate::elicitation::ElicitationService::new(),
                 shell_zsh_path: config.zsh_path.clone(),
                 main_execve_wrapper_exe: config.main_execve_wrapper_exe.clone(),
-                analytics_events_client,
                 hooks: arc_swap::ArcSwap::from_pointee(hooks),
                 rollout_thread_trace,
                 user_shell: Arc::new(default_shell),

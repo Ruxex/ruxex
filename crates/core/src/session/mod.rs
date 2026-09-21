@@ -36,6 +36,7 @@ use crate::exec_policy::BANNED_PREFIX_SUGGESTIONS;
 use crate::exec_policy::ExecPolicyManager;
 use crate::exec_policy::default_policy_path;
 use crate::image_preparation::ImagePreparationMode;
+use crate::image_preparation::ImagePreparationMetadata;
 use crate::image_preparation::ImageResizeNoticeMode;
 use crate::image_preparation::prepare_response_items as prepare_image_response_items;
 use crate::image_preparation::unified_image_budget_enabled;
@@ -54,11 +55,6 @@ use async_channel::Receiver;
 use async_channel::Sender;
 use chrono::Local;
 use chrono::Utc;
-use codex_analytics::AnalyticsEventsClient;
-use codex_analytics::ImagePreparationFact;
-use codex_analytics::ImagePreparationMetadata;
-use codex_analytics::SubAgentThreadStartedInput;
-use codex_analytics::TurnCodexErrorFact;
 use codex_async_utils::OrCancelExt;
 use codex_attachment_store::AttachmentStore;
 use codex_attachment_store::InlineAttachmentStore;
@@ -461,7 +457,6 @@ pub(crate) struct SessionSpawnArgs {
     pub(crate) thread_extension_init: ExtensionDataInit,
     pub(crate) client_mcp_extensions: ClientMcpExtensions,
     pub(crate) reserved_thread_id: Option<ThreadId>,
-    pub(crate) analytics_events_client: Option<AnalyticsEventsClient>,
     pub(crate) image_store: Arc<dyn AttachmentStore>,
     pub(crate) thread_store: Arc<dyn ThreadStore>,
     pub(crate) attestation_provider: Option<Arc<dyn AttestationProvider>>,
@@ -564,7 +559,6 @@ impl Session {
             thread_extension_init,
             client_mcp_extensions,
             reserved_thread_id,
-            analytics_events_client,
             image_store,
             thread_store,
             attestation_provider,
@@ -886,7 +880,6 @@ impl Session {
             reserved_thread_id,
             environment_manager,
             inherited_environments,
-            analytics_events_client,
             image_store,
             thread_store,
             parent_rollout_thread_trace,
@@ -2222,17 +2215,6 @@ impl Session {
             .await;
     }
 
-    /// Record a terminal CodexErr before the app-server completion notification is reduced.
-    pub(crate) fn track_turn_codex_error(&self, turn_context: &TurnContext, error: &CodexErr) {
-        self.services
-            .analytics_events_client
-            .track_turn_codex_error(TurnCodexErrorFact::from_codex_err(
-                self.thread_id.to_string(),
-                turn_context.sub_id.clone(),
-                error,
-            ));
-    }
-
     /// Returns the reviewer pool installed by the Guardian extension.
     pub(crate) fn guardian_review_session(&self) -> Option<Arc<GuardianReviewSessionManager>> {
         self.services
@@ -2283,24 +2265,6 @@ impl Session {
             id: turn_context.sub_id.clone(),
             msg,
         };
-        // Private reviewers have no app-server listener; publicly resumed Guardian threads do.
-        if matches!(
-            &turn_context.session_source,
-            SessionSource::SubAgent(SubAgentSource::Other(name))
-                if name == crate::guardian::GUARDIAN_REVIEWER_NAME
-        ) && self.services.analytics_events_client.is_enabled()
-            && turn_context.parent_thread_id.is_some()
-            && self
-                .state
-                .lock()
-                .await
-                .session_configuration
-                .trusted_guardian_reviewer
-        {
-            self.services
-                .analytics_events_client
-                .track_guardian_session_event(self.thread_id, &event);
-        }
         self.send_event_raw(event).await;
         self.maybe_notify_parent_of_terminal_turn(turn_context, &legacy_source)
             .await;
@@ -3498,14 +3462,6 @@ impl Session {
             state
                 .history
                 .record_annotated_items(&items, model_info.truncation_policy.into());
-        }
-        for image in image_preparations {
-            self.services
-                .analytics_events_client
-                .track_image_preparation(ImagePreparationFact {
-                    turn_id: turn_context.sub_id.clone(),
-                    metadata: image,
-                });
         }
         let rollout_items: Vec<RolloutItem> =
             items.into_iter().map(RolloutItem::ResponseItem).collect();
@@ -4769,47 +4725,6 @@ impl Session {
     fn show_raw_agent_reasoning(&self) -> bool {
         self.services.show_raw_agent_reasoning
     }
-}
-
-pub(crate) fn emit_subagent_session_started(
-    analytics_events_client: &AnalyticsEventsClient,
-    client_metadata: AppServerClientMetadata,
-    session_id: SessionId,
-    thread_id: ThreadId,
-    parent_thread_id: Option<ThreadId>,
-    thread_config: ThreadConfigSnapshot,
-    subagent_source: SubAgentSource,
-) {
-    let AppServerClientMetadata {
-        client_name,
-        client_version,
-    } = client_metadata;
-    if (client_name.is_none() || client_version.is_none())
-        && subagent_source.kind() != crate::guardian::GUARDIAN_REVIEWER_NAME
-    {
-        tracing::warn!("skipping subagent thread analytics: missing inherited client metadata");
-        return;
-    }
-    let created_at = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs();
-    analytics_events_client.track_subagent_thread_started(SubAgentThreadStartedInput {
-        session_id: session_id.to_string(),
-        thread_id: thread_id.to_string(),
-        parent_thread_id: parent_thread_id.map(|thread_id| thread_id.to_string()),
-        forked_from_thread_id: thread_config
-            .forked_from_thread_id
-            .map(|thread_id| thread_id.to_string()),
-        product_client_id: thread_config.originator.clone(),
-        client_name,
-        client_version,
-        model: thread_config.model,
-        ephemeral: thread_config.ephemeral,
-        thread_source: thread_config.thread_source,
-        subagent_source,
-        created_at,
-    });
 }
 
 /// Builds hook configuration for one config snapshot, including any enabled plugin hooks.

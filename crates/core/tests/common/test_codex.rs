@@ -13,7 +13,6 @@ use std::time::Duration;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
-use codex_analytics::AnalyticsEventsClient;
 use codex_attachment_store::AttachmentStore;
 use codex_core::CodexThread;
 pub use codex_core::StartThreadOptions;
@@ -326,7 +325,6 @@ pub fn turn_permission_fields(
 pub struct TestCodexBuilder {
     config_mutators: Vec<Box<ConfigMutator>>,
     auth: CodexAuth,
-    analytics_events_client: Option<AnalyticsEventsClient>,
     pre_build_hooks: Vec<Box<PreBuildHook>>,
     workspace_setups: Vec<Box<WorkspaceSetup>>,
     home: Option<Arc<TempDir>>,
@@ -358,14 +356,6 @@ impl TestCodexBuilder {
 
     pub fn with_auth(mut self, auth: CodexAuth) -> Self {
         self.auth = auth;
-        self
-    }
-
-    pub fn with_analytics_events_client(
-        mut self,
-        analytics_events_client: AnalyticsEventsClient,
-    ) -> Self {
-        self.analytics_events_client = Some(analytics_events_client);
         self
     }
 
@@ -730,7 +720,6 @@ impl TestCodexBuilder {
                 Arc::clone(&environment_manager),
                 Arc::new(extensions.build()),
                 user_instructions_provider,
-                self.analytics_events_client.clone(),
                 Arc::clone(&self.image_store),
                 Arc::clone(&thread_store),
                 codex_core::local_agent_graph_store_from_state_db(state_db.as_ref()),
@@ -1368,7 +1357,6 @@ pub fn test_codex() -> TestCodexBuilder {
                 .expect("test config should allow ShellSnapshot override");
         })],
         auth: CodexAuth::from_api_key("dummy"),
-        analytics_events_client: None,
         pre_build_hooks: vec![],
         workspace_setups: vec![],
         home: None,

@@ -1,5 +1,4 @@
 use super::*;
-use codex_analytics::AnalyticsEventsClient;
 use codex_app_server_protocol::PluginAvailability;
 use codex_app_server_protocol::PluginDetail;
 use codex_app_server_protocol::PluginInstallParams;
@@ -35,7 +34,6 @@ pub(crate) struct PluginRequestProcessor {
     auth_manager: Arc<AuthManager>,
     thread_manager: Arc<ThreadManager>,
     outgoing: Arc<OutgoingMessageSender>,
-    analytics_events_client: AnalyticsEventsClient,
     config_manager: ConfigManager,
     on_effective_plugins_changed:
         Arc<dyn Fn(codex_core_plugins::EffectivePluginsChange) + Send + Sync>,
@@ -56,7 +54,6 @@ impl PluginRequestProcessor {
         auth_manager: Arc<AuthManager>,
         thread_manager: Arc<ThreadManager>,
         outgoing: Arc<OutgoingMessageSender>,
-        analytics_events_client: AnalyticsEventsClient,
         config_manager: ConfigManager,
         on_effective_plugins_changed: Arc<
             dyn Fn(codex_core_plugins::EffectivePluginsChange) + Send + Sync,
@@ -66,7 +63,6 @@ impl PluginRequestProcessor {
             auth_manager,
             thread_manager,
             outgoing,
-            analytics_events_client,
             config_manager,
             on_effective_plugins_changed,
         }

@@ -733,7 +733,7 @@ mod tests {
             .start(StartCommandExecParams {
                 outgoing: Arc::new(OutgoingMessageSender::new(
                     tx,
-                    codex_analytics::AnalyticsEventsClient::disabled(),
+                    (),
                 )),
                 request_id: ConnectionRequestId {
                     connection_id: ConnectionId(1),
@@ -772,7 +772,7 @@ mod tests {
             .start(StartCommandExecParams {
                 outgoing: Arc::new(OutgoingMessageSender::new(
                     tx,
-                    codex_analytics::AnalyticsEventsClient::disabled(),
+                    (),
                 )),
                 request_id: request_id.clone(),
                 process_id: Some("proc-99".to_string()),
@@ -822,7 +822,7 @@ mod tests {
             .start(StartCommandExecParams {
                 outgoing: Arc::new(OutgoingMessageSender::new(
                     tx,
-                    codex_analytics::AnalyticsEventsClient::disabled(),
+                    (),
                 )),
                 request_id: request_id.clone(),
                 process_id: Some("proc-100".to_string()),
@@ -913,7 +913,7 @@ mod tests {
             .start(StartCommandExecParams {
                 outgoing: Arc::new(OutgoingMessageSender::new(
                     tx,
-                    codex_analytics::AnalyticsEventsClient::disabled(),
+                    (),
                 )),
                 request_id: request_id.clone(),
                 process_id: Some("proc-101".to_string()),

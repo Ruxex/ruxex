@@ -187,7 +187,7 @@ async fn websocket_first_turn_uses_startup_prewarm_and_create(
         .with_model("gpt-5.2")
         .with_config(move |config| {
             config.update_plan_enabled = update_plan_enabled;
-            config.analytics_enabled = Some(false);
+            config.metrics_enabled = Some(false);
         });
     let test = builder.build_with_websocket_server(&server).await?;
     test.submit_turn_with_policy("hello", test.config.legacy_sandbox_policy())
@@ -217,7 +217,7 @@ async fn websocket_first_turn_uses_startup_prewarm_and_create(
             .expect("warmup turn metadata"),
     )?;
     assert_eq!(warmup_metadata["request_kind"].as_str(), Some("prewarm"));
-    assert_eq!(warmup_metadata["analytics_enabled"].as_bool(), Some(false));
+    assert_eq!(warmup_metadata["metrics_enabled"].as_bool(), Some(false));
     assert_eq!(
         warmup_metadata["window_id"].as_str(),
         warmup["client_metadata"]["x-codex-window-id"].as_str()
@@ -236,7 +236,7 @@ async fn websocket_first_turn_uses_startup_prewarm_and_create(
             .expect("turn metadata"),
     )?;
     assert_eq!(turn_metadata["request_kind"].as_str(), Some("turn"));
-    assert_eq!(turn_metadata["analytics_enabled"].as_bool(), Some(false));
+    assert_eq!(turn_metadata["metrics_enabled"].as_bool(), Some(false));
     assert_eq!(warmup_metadata["window_number"].as_u64(), Some(0));
     assert_eq!(
         warmup_metadata["window_number"],

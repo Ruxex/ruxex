@@ -3,7 +3,7 @@
 
 use crate::GuardianReviewError;
 use crate::GuardianReviewOutcome;
-use codex_analytics::GuardianReviewAnalyticsResult;
+use crate::GuardianReviewAnalyticsResult;
 use codex_protocol::protocol::CodexErrorInfo;
 use rand::Rng;
 use std::future::Future;

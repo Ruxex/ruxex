@@ -1,7 +1,6 @@
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use codex_analytics::InvocationType;
 use codex_extension_api::FunctionCallError;
 use codex_extension_api::ToolCall;
 use codex_extension_api::ToolExecutor;
@@ -274,15 +273,14 @@ impl<'call> ToolExecutor<ToolCall<'call>> for ReadTool {
                     });
             }
 
-            if requested_resource == main_prompt
-                && args.cursor.is_none()
-                && let Some(analytics) = self.context.analytics.as_ref()
+            if requested_resource == main_prompt && args.cursor.is_none()
+                && let Some(metrics) = self.context.metrics.as_ref()
             {
-                analytics.track_skill_invocation(
+                metrics.track_skill_invocation(
                     &skill_entry,
                     call.model.clone(),
                     call.turn_id.clone(),
-                    InvocationType::Implicit,
+                    true,
                 );
             }
 

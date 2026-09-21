@@ -1,5 +1,4 @@
 use crate::ResolvedPluginMetricsOperation;
-use codex_analytics::PluginMeasurementRow;
 use codex_exec_server::CreateDirectoryOptions;
 use codex_exec_server::Environment;
 use codex_exec_server::ExecutorFileSystem;
@@ -33,6 +32,13 @@ pub struct PluginMeasurementBatch {
     pub execution_id: String,
     pub operation: String,
     pub rows: Vec<PluginMeasurementRow>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct PluginMeasurementRow {
+    pub measurement_name: String,
+    pub number_value: f64,
+    pub dimensions: BTreeMap<String, String>,
 }
 
 pub struct PluginMetricsSidecar {

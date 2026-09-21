@@ -47,7 +47,7 @@ impl Fixture {
 cli_auth_credentials_store = "file"
 check_for_update_on_startup = false
 model_provider = "local"
-[analytics]
+[metrics]
 enabled = false
 [model_providers.local]
 name = "local test"

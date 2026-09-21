@@ -1,9 +1,5 @@
 use std::sync::Arc;
 
-use codex_analytics::PluginInstallRequestSource;
-use codex_analytics::PluginInstallRequested;
-use codex_analytics::PluginInstallRequestedPlugin;
-use codex_analytics::build_track_events_context;
 use codex_config::types::ToolSuggestDisabledTool;
 use codex_rmcp_client::ElicitationAction;
 use codex_rmcp_client::ElicitationResponse;
@@ -179,35 +175,6 @@ impl RequestPluginInstallHandler {
         let tool_type = tool.tool_type();
 
         let suggestion_id = format!("request_plugin_install_{call_id}");
-        if let DiscoverableTool::Plugin(plugin) = &tool {
-            let source = match self.presentation {
-                ToolSuggestPresentation::ListTool => PluginInstallRequestSource::LegacyDiscovery,
-                ToolSuggestPresentation::RecommendationContext => {
-                    PluginInstallRequestSource::LegacyDiscovery
-                }
-            };
-            session
-                .services
-                .analytics_events_client
-                .track_plugin_install_requested(
-                    build_track_events_context(
-                        step_context.settings.model_info.slug.clone(),
-                        session.thread_id.to_string(),
-                        turn.sub_id.clone(),
-                        turn.originator.clone(),
-                    ),
-                    PluginInstallRequested {
-                        suggestion_id: suggestion_id.clone(),
-                        plugins: vec![PluginInstallRequestedPlugin {
-                            plugin_id: plugin.id.clone(),
-                            remote_plugin_id: plugin.remote_plugin_id.clone(),
-                            plugin_name: plugin.name.clone(),
-                        }],
-                        source,
-                    },
-                );
-        }
-
         let request =
             build_request_plugin_install_elicitation_request(suggest_reason, &tool, &suggestion_id);
         let request_id = RequestId::String(suggestion_id.into());

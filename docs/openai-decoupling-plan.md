@@ -121,7 +121,8 @@ Phase 1 で整理した候補から、依存元が少なく、代替や責務移
 6. Hosted Plugin Marketplace / Sharing / Runtime を削除する。`codex-core-plugins` の remote service、hosted search/share/install RPC、CLI/TUI hosted paths、remote analytics smoke client、protocol/schema surface を削除し、local/bundled/Git/npm plugin foundation は保持する。**完了（working tree）**
 7. ChatGPT Apps / Connectors / host-owned Apps MCP を削除する。`codex-connectors` と専用 extension の依存元・汎用 MCP 利用を監査し、不要になったクレートは同じ単位で削除する。**完了（working tree）**
 8. ChatGPT 認証と Agent Identity を削除する。`codex-agent-identity`、`AuthMode::Chatgpt`/`ChatgptAuthTokens`/`PersonalAccessToken`、`AuthManager` の OAuth refresh/revoke/PAT 経路、ChatGPT 専用 protocol/UI を削除し、`AuthMode::WorkloadIdentity`、Bedrock、汎用 credential storage/keyring を保持した。**完了（working tree）**
-9. 上記を反映した依存グラフを再生成し、`codex-model-provider-info`、`codex-api`、`codex-http-client`、`codex-mcp` の OpenAI adapter と provider-neutral な共有部分を再評価する。
+9. 上記を反映した依存グラフを再生成し、`codex-model-provider-info`、`codex-api`、`codex-http-client`、`codex-mcp` の OpenAI adapter と provider-neutral な共有部分を再評価する。**監査完了**。133 クレート / 763 内部依存辺を確認し、共有クレート全体は削除せず、`codex-mcp` の Apps/OpenAI adapter は削除済み、`codex-api`/`codex-http-client`/`codex-model-provider-info` の現行 consumer を保持し、残存 hosted adapter は caller 移行後の分割対象として記録した。孤立していた `turn_cost_worker_chatgpt.rs` は削除した。
+10. `codex-analytics` を削除する。hosted sink 削除後に discard される client/queue/reducer/event serializer を削除し、`TurnProfile`、`TurnAnalyticsMetadata`、`ArtifactOperation` などの core/plugin 所有型を producer 側へ移植した。`analytics.enabled` と app-server の analytics default flag は OTEL metrics 用の `metrics_enabled` に移行し、全 consumer がなくなった段階でクレートと workspace edge を削除した。詳細は [`2026-09-21-remove-analytics-crate.md`](superpowers/plans/2026-09-21-remove-analytics-crate.md) に記録する。**完了**
 
 ### Phase 3 の完了ゲート
 

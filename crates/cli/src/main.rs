@@ -514,13 +514,13 @@ struct AppServerCommand {
     /// in their config.toml:
     ///
     /// ```toml
-    /// [analytics]
+    /// [metrics]
     /// enabled = false
     /// ```
     ///
     /// See https://developers.openai.com/codex/config-advanced/#metrics for more details.
-    #[arg(long = "analytics-default-enabled")]
-    analytics_default_enabled: bool,
+    #[arg(long = "metrics-default-enabled")]
+    metrics_default_enabled: bool,
 
     #[command(flatten)]
     auth: codex_app_server::AppServerWebsocketAuthArgs,
@@ -1251,7 +1251,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 listen,
                 stdio,
                 managed_daemon,
-                analytics_default_enabled,
+                metrics_default_enabled,
                 auth,
             } = app_server_cli;
             let strict_config = app_server_strict_config || root_strict_config;
@@ -1274,7 +1274,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                         root_config_overrides,
                         LoaderOverrides::default(),
                         strict_config,
-                        analytics_default_enabled,
+                        metrics_default_enabled,
                         transport,
                         codex_protocol::protocol::SessionSource::VSCode,
                         auth,
@@ -1309,7 +1309,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                         .await;
                         daemon_telemetry::record_command(
                             &root_config_overrides,
-                            analytics_default_enabled,
+                            metrics_default_enabled,
                             "this_cli",
                             &result,
                         )
@@ -1353,7 +1353,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                                 .map(Some);
                             daemon_telemetry::record_command(
                                 &root_config_overrides,
-                                analytics_default_enabled,
+                                metrics_default_enabled,
                                 "public_stable",
                                 &result,
                             )
@@ -4245,7 +4245,7 @@ mod tests {
     #[test]
     fn app_server_analytics_default_disabled_without_flag() {
         let app_server = app_server_from_args(["codex", "app-server"].as_ref());
-        assert!(!app_server.analytics_default_enabled);
+        assert!(!app_server.metrics_default_enabled);
         assert_eq!(
             app_server.listen,
             codex_app_server::AppServerTransport::Stdio
@@ -4253,10 +4253,10 @@ mod tests {
     }
 
     #[test]
-    fn app_server_analytics_default_enabled_with_flag() {
+    fn app_server_metrics_default_enabled_with_flag() {
         let app_server =
-            app_server_from_args(["codex", "app-server", "--analytics-default-enabled"].as_ref());
-        assert!(app_server.analytics_default_enabled);
+            app_server_from_args(["codex", "app-server", "--metrics-default-enabled"].as_ref());
+        assert!(app_server.metrics_default_enabled);
     }
 
     #[test]

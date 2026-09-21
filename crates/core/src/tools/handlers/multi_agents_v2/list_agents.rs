@@ -1,4 +1,3 @@
-use super::analytics::ToolCallAnalytics;
 use super::*;
 use crate::agent::control::ListedAgent;
 use crate::tools::handlers::multi_agents_spec::create_list_agents_tool;
@@ -20,10 +19,7 @@ impl ToolExecutor<ToolInvocation> for Handler {
         ToolInvocation: 'a,
     {
         Box::pin(async move {
-            let analytics = ToolCallAnalytics::new(&invocation, CollabAgentTool::ListAgents);
-            let result = self.handle_call(invocation).await;
-            analytics.finish(&result);
-            result
+            self.handle_call(invocation).await
         })
     }
 }

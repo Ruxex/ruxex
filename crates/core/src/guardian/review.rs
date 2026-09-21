@@ -5,8 +5,8 @@
 mod request;
 
 use crate::context::GuardianContextMode;
-use codex_analytics::GuardianApprovalRequestSource;
-use codex_analytics::GuardianReviewAnalyticsResult;
+use codex_guardian_reviewer::GuardianApprovalRequestSource;
+use codex_guardian_reviewer::GuardianReviewAnalyticsResult;
 use codex_core_plugins::PluginCommandAttribution;
 use codex_features::Feature;
 use codex_guardian_reviewer::GuardianReviewError;

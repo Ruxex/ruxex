@@ -1,6 +1,3 @@
-use codex_analytics::InvocationType;
-use codex_analytics::SkillInvocation;
-use codex_analytics::SkillInvocationLocation;
 use codex_exec_server::LOCAL_ENVIRONMENT_ID;
 use codex_extension_api::ExtensionData;
 use codex_skills::ImplicitSkillAccess;
@@ -12,6 +9,24 @@ use codex_utils_path_uri::PathUri;
 use crate::HostSkillsSnapshot;
 use crate::catalog::SkillSourceKind;
 use crate::state::ExecutorSkillsStepState;
+
+#[derive(Clone, Debug)]
+pub struct SkillInvocation {
+    pub skill_name: String,
+    pub location: SkillInvocationLocation,
+    pub plugin_id: Option<String>,
+}
+
+#[derive(Clone, Debug)]
+pub enum SkillInvocationLocation {
+    Host {
+        path: AbsolutePathBuf,
+        scope: codex_protocol::protocol::SkillScope,
+    },
+    Resource {
+        id: String,
+    },
+}
 
 /// Identifies the executor-owned or host-owned skill referenced by a command.
 pub fn detect_implicit_skill_invocation(
@@ -33,12 +48,10 @@ pub fn detect_implicit_skill_invocation(
         return Some(SkillInvocation {
             skill_name: skill.name,
             location: SkillInvocationLocation::Host {
-                path: skill.path_to_skills_md.to_path_buf(),
+                path: skill.path_to_skills_md,
                 scope: skill.scope,
             },
             plugin_id: skill.plugin_id,
-            remote_plugin_id: skill.remote_plugin_id,
-            invocation_type: InvocationType::Implicit,
         });
     }
 
@@ -68,12 +81,8 @@ pub fn detect_implicit_skill_invocation(
                     skill_name: entry.name.clone(),
                     location: SkillInvocationLocation::Resource {
                         id: entry.main_prompt.as_str().to_owned(),
-                        skill_id: entry.canonical_skill_id.clone(),
-                        scope: entry.analytics_scope,
                     },
                     plugin_id: entry.plugin_id.clone(),
-                    remote_plugin_id: None,
-                    invocation_type: InvocationType::Implicit,
                 });
             }
         }

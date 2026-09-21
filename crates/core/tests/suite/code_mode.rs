@@ -3,7 +3,6 @@
 use anyhow::Result;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use codex_analytics::AnalyticsEventsClient;
 use codex_config::types::McpServerConfig;
 use codex_config::types::McpServerTransportConfig;
 use codex_core::StartThreadOptions;
@@ -1942,31 +1941,27 @@ fn assert_result_metadata_call(
     assert!(metadata.get("tool_result_metadata").is_none());
 }
 
-enum ResultMetadataAnalytics {
+enum ResultMetadataMetrics {
     Config(Option<bool>),
     HostDisabled(Option<bool>),
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[test_case(true, true, true, false, "user@example.com", ToolMode::CodeModeOnly, ResultMetadataAnalytics::Config(None); "copies_full_metadata_without_rules")]
-#[test_case(true, true, true, true, "user@example.com", ToolMode::CodeModeOnly, ResultMetadataAnalytics::Config(None); "accepted_error_keeps_metadata")]
-#[test_case(true, true, false, false, "user@example.com", ToolMode::CodeModeOnly, ResultMetadataAnalytics::Config(None); "missing_metadata_stays_absent")]
-#[test_case(false, true, true, false, "user@example.com", ToolMode::CodeModeOnly, ResultMetadataAnalytics::Config(None); "feature_off_does_not_record")]
-#[test_case(true, false, true, false, "user@example.com", ToolMode::CodeModeOnly, ResultMetadataAnalytics::Config(None); "extension_owned_apps_do_not_record")]
-#[test_case(true, true, true, false, "employee@openai.com", ToolMode::CodeModeOnly, ResultMetadataAnalytics::Config(None); "employee_keeps_metadata")]
-#[test_case(true, true, true, false, "user@example.com", ToolMode::Direct, ResultMetadataAnalytics::Config(None); "direct_keeps_metadata")]
-#[test_case(true, true, true, true, "user@example.com", ToolMode::Direct, ResultMetadataAnalytics::Config(None); "direct_accepted_error_keeps_metadata")]
-#[test_case(true, true, false, false, "user@example.com", ToolMode::Direct, ResultMetadataAnalytics::Config(None); "direct_missing_metadata_stays_absent")]
-#[test_case(false, true, true, false, "user@example.com", ToolMode::Direct, ResultMetadataAnalytics::Config(None); "direct_feature_off_does_not_record")]
-#[test_case(true, false, true, false, "user@example.com", ToolMode::Direct, ResultMetadataAnalytics::Config(None); "direct_extension_owned_apps_do_not_record")]
-#[test_case(true, true, true, false, "user@example.com", ToolMode::CodeModeOnly, ResultMetadataAnalytics::Config(Some(true)); "analytics_enabled_keeps_metadata")]
-#[test_case(true, true, true, false, "user@example.com", ToolMode::CodeModeOnly, ResultMetadataAnalytics::Config(Some(false)); "analytics_disabled_omits_metadata")]
-#[test_case(true, true, true, false, "user@example.com", ToolMode::Direct, ResultMetadataAnalytics::Config(Some(true)); "direct_analytics_enabled_keeps_metadata")]
-#[test_case(true, true, true, false, "user@example.com", ToolMode::Direct, ResultMetadataAnalytics::Config(Some(false)); "direct_analytics_disabled_omits_metadata")]
-#[test_case(true, true, true, false, "user@example.com", ToolMode::CodeModeOnly, ResultMetadataAnalytics::HostDisabled(None); "host_analytics_disabled_with_config_unset_omits_metadata")]
-#[test_case(true, true, true, false, "user@example.com", ToolMode::CodeModeOnly, ResultMetadataAnalytics::HostDisabled(Some(true)); "host_analytics_disabled_with_config_enabled_omits_metadata")]
-#[test_case(true, true, true, false, "user@example.com", ToolMode::Direct, ResultMetadataAnalytics::HostDisabled(None); "direct_host_analytics_disabled_with_config_unset_omits_metadata")]
-#[test_case(true, true, true, false, "user@example.com", ToolMode::Direct, ResultMetadataAnalytics::HostDisabled(Some(true)); "direct_host_analytics_disabled_with_config_enabled_omits_metadata")]
+#[test_case(true, true, true, false, "user@example.com", ToolMode::CodeModeOnly, ResultMetadataMetrics::Config(None); "copies_full_metadata_without_rules")]
+#[test_case(true, true, true, true, "user@example.com", ToolMode::CodeModeOnly, ResultMetadataMetrics::Config(None); "accepted_error_keeps_metadata")]
+#[test_case(true, true, false, false, "user@example.com", ToolMode::CodeModeOnly, ResultMetadataMetrics::Config(None); "missing_metadata_stays_absent")]
+#[test_case(false, true, true, false, "user@example.com", ToolMode::CodeModeOnly, ResultMetadataMetrics::Config(None); "feature_off_does_not_record")]
+#[test_case(true, false, true, false, "user@example.com", ToolMode::CodeModeOnly, ResultMetadataMetrics::Config(None); "extension_owned_apps_do_not_record")]
+#[test_case(true, true, true, false, "employee@openai.com", ToolMode::CodeModeOnly, ResultMetadataMetrics::Config(None); "employee_keeps_metadata")]
+#[test_case(true, true, true, false, "user@example.com", ToolMode::Direct, ResultMetadataMetrics::Config(None); "direct_keeps_metadata")]
+#[test_case(true, true, true, true, "user@example.com", ToolMode::Direct, ResultMetadataMetrics::Config(None); "direct_accepted_error_keeps_metadata")]
+#[test_case(true, true, false, false, "user@example.com", ToolMode::Direct, ResultMetadataMetrics::Config(None); "direct_missing_metadata_stays_absent")]
+#[test_case(false, true, true, false, "user@example.com", ToolMode::Direct, ResultMetadataMetrics::Config(None); "direct_feature_off_does_not_record")]
+#[test_case(true, false, true, false, "user@example.com", ToolMode::Direct, ResultMetadataMetrics::Config(None); "direct_extension_owned_apps_do_not_record")]
+#[test_case(true, true, true, false, "user@example.com", ToolMode::CodeModeOnly, ResultMetadataMetrics::Config(Some(true)); "metrics_enabled_keeps_metadata")]
+#[test_case(true, true, true, false, "user@example.com", ToolMode::CodeModeOnly, ResultMetadataMetrics::Config(Some(false)); "metrics_disabled_omits_metadata")]
+#[test_case(true, true, true, false, "user@example.com", ToolMode::Direct, ResultMetadataMetrics::Config(Some(true)); "direct_metrics_enabled_keeps_metadata")]
+#[test_case(true, true, true, false, "user@example.com", ToolMode::Direct, ResultMetadataMetrics::Config(Some(false)); "direct_metrics_disabled_omits_metadata")]
 async fn result_metadata_follows_call_binding(
     metadata_enabled: bool,
     host_owned: bool,
@@ -1974,14 +1969,13 @@ async fn result_metadata_follows_call_binding(
     is_error: bool,
     account_email: &str,
     tool_mode: ToolMode,
-    analytics: ResultMetadataAnalytics,
+    metrics: ResultMetadataMetrics,
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
-    let (analytics_enabled, host_disables_analytics) = match analytics {
-        ResultMetadataAnalytics::Config(enabled) => (enabled, false),
-        ResultMetadataAnalytics::HostDisabled(enabled) => (enabled, true),
+    let metrics_enabled = match metrics {
+        ResultMetadataMetrics::Config(enabled) => enabled,
     };
-    let effective_analytics_enabled = analytics_enabled != Some(false) && !host_disables_analytics;
+    let effective_metrics_enabled = metrics_enabled != Some(false);
     let direct = matches!(tool_mode, ToolMode::Direct);
     let server = responses::start_mock_server().await;
     let result_metadata = has_metadata.then(|| {
@@ -2002,7 +1996,7 @@ async fn result_metadata_follows_call_binding(
     let mut builder =
         result_metadata_apps_builder(apps_server.chatgpt_base_url.clone(), account_email)
             .with_config(move |config| {
-                config.analytics_enabled = analytics_enabled;
+                config.metrics_enabled = metrics_enabled;
                 if direct {
                     config.features.disable(Feature::CodeMode).unwrap();
                     config.features.disable(Feature::CodeModeOnly).unwrap();
@@ -2014,9 +2008,6 @@ async fn result_metadata_follows_call_binding(
                         .unwrap();
                 }
             });
-    if host_disables_analytics {
-        builder = builder.with_analytics_events_client(AnalyticsEventsClient::disabled());
-    }
     if !host_owned {
         let mut extensions = ExtensionRegistryBuilder::<Config>::new();
         extensions.mcp_server_contributor(Arc::new(ResultMetadataTestControl {
@@ -2059,7 +2050,7 @@ async fn result_metadata_follows_call_binding(
         );
         run_code_mode_turn_with_builder(&server, "Search a connected app", &code, builder).await?
     };
-    assert_eq!(test.codex.analytics_enabled(), effective_analytics_enabled);
+    assert_eq!(test.codex.metrics_enabled(), effective_metrics_enabled);
     let request = follow_up.single_request();
     assert_eq!(recorded_apps_tool_calls(&server).await.len(), 1);
     let output = if direct {
@@ -2115,7 +2106,7 @@ async fn result_metadata_follows_call_binding(
             .iter()
             .find(|item| item["type"] == output["type"] && item["call_id"] == "call-1")
             .expect("captured tool output");
-        let expected_metadata = (host_owned && effective_analytics_enabled)
+        let expected_metadata = (host_owned && effective_metrics_enabled)
             .then_some(result_metadata)
             .flatten();
         assert_result_metadata_call(captured_output, &arguments, expected_metadata);

@@ -50,7 +50,6 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use crate::analytics_utils::analytics_events_client_from_config;
 use crate::config_manager::ConfigManager;
 use crate::error_code::OVERLOADED_ERROR_CODE;
 use crate::error_code::internal_error;
@@ -67,7 +66,6 @@ use crate::plugin_config_reload::PluginStartupConfig;
 use crate::transport::CHANNEL_CAPACITY;
 use crate::transport::OutboundConnectionState;
 use crate::transport::route_outgoing_envelope;
-use codex_analytics::AppServerRpcTransport;
 use codex_app_server_protocol::AgentMessageDelivery;
 use codex_app_server_protocol::ClientNotification;
 use codex_app_server_protocol::ClientRequest;
@@ -426,11 +424,9 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
 
     let runtime_handle = tokio::spawn(async move {
         let (outgoing_tx, outgoing_rx) = mpsc::channel::<OutgoingEnvelope>(channel_capacity);
-        let analytics_events_client = analytics_events_client_from_config(args.config.as_ref());
-        let analytics_events_flush_client = analytics_events_client.clone();
         let outgoing_message_sender = Arc::new(OutgoingMessageSender::new(
             outgoing_tx,
-            analytics_events_client.clone(),
+            (),
         ));
 
         let (writer_tx, mut writer_rx) = mpsc::channel::<QueuedOutgoingMessage>(channel_capacity);
@@ -469,7 +465,6 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
         let mut processor_handle = tokio::spawn(async move {
             let processor = Arc::new(MessageProcessor::new(MessageProcessorArgs {
                 outgoing: Arc::clone(&processor_outgoing),
-                analytics_events_client,
                 arg0_paths: args.arg0_paths,
                 config: args.config,
                 config_manager,
@@ -484,7 +479,6 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
                 auth_manager,
                 installation_id,
                 code_mode_session_provider: None,
-                rpc_transport: AppServerRpcTransport::InProcess,
                 plugin_startup_tasks: Some(PluginStartupConfig::Current),
             }));
             let mut thread_created_rx = processor.thread_created_receiver();
@@ -771,7 +765,6 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
             let _ = outbound_handle.await;
         }
 
-        analytics_events_flush_client.flush().await;
 
         if let Some(done_tx) = shutdown_ack {
             let _ = done_tx.send(());

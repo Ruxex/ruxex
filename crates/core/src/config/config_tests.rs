@@ -9588,7 +9588,7 @@ fn create_test_fixture() -> std::io::Result<PrecedenceTestFixture> {
 model = "o3"
 approval_policy = "on-request"
 
-[analytics]
+[metrics]
 enabled = true
 
 [model_providers.openai-custom]
@@ -9617,7 +9617,7 @@ model = "o3"
 model_provider = "openai"
 approval_policy = "on-request"
 
-[profiles.zdr.analytics]
+[profiles.zdr.metrics]
 enabled = false
 
 [profiles.gpt5]

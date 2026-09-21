@@ -7,7 +7,6 @@ use std::sync::atomic::Ordering;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
-use codex_analytics::AnalyticsEventsClient;
 use codex_app_server_protocol::ClientResponsePayload;
 use codex_app_server_protocol::JSONRPCErrorError;
 use codex_app_server_protocol::RequestId;
@@ -136,7 +135,6 @@ pub(crate) struct OutgoingMessageSender {
     /// We keep them here because this is where responses, errors, and
     /// disconnect cleanup all get handled.
     request_contexts: Mutex<HashMap<ConnectionRequestId, RequestContext>>,
-    analytics_events_client: AnalyticsEventsClient,
 }
 
 #[derive(Clone)]
@@ -187,19 +185,10 @@ impl ThreadScopedOutgoingMessageSender {
         request_id: RequestId,
         response: RequestPermissionsResponse,
     ) {
-        self.outgoing
-            .analytics_events_client
-            .track_effective_permissions_approval_response(
-                now_unix_timestamp_ms(),
-                request_id,
-                response,
-            );
+        let _ = (request_id, response);
     }
 
     pub(crate) async fn send_server_notification(&self, notification: ServerNotification) {
-        self.outgoing
-            .analytics_events_client
-            .track_notification(&notification);
         if self.connection_ids.is_empty() {
             return;
         }
@@ -240,7 +229,7 @@ impl ThreadScopedOutgoingMessageSender {
 impl OutgoingMessageSender {
     pub(crate) fn new(
         sender: mpsc::Sender<OutgoingEnvelope>,
-        analytics_events_client: AnalyticsEventsClient,
+        _metrics_sink: (),
     ) -> Self {
         Self {
             verification_auth: OnceLock::new(),
@@ -249,7 +238,6 @@ impl OutgoingMessageSender {
             sender,
             request_id_to_callback: Mutex::new(HashMap::new()),
             request_contexts: Mutex::new(HashMap::new()),
-            analytics_events_client,
         }
     }
 
@@ -424,8 +412,6 @@ impl OutgoingMessageSender {
                         send_error = Some(err);
                         break;
                     } else {
-                        self.analytics_events_client
-                            .track_server_request(connection_id.0, request.clone());
                     }
                 }
                 match send_error {
@@ -474,15 +460,10 @@ impl OutgoingMessageSender {
 
         match entry {
             Some((id, entry)) => {
-                let completed_at_ms = now_unix_timestamp_ms();
                 if entry.verification_owner.is_none()
                     && let Ok(response) = entry.request.response_from_result(result.clone())
                 {
                     tracing::info!("<- response: {response:?}");
-                    if !matches!(response, ServerResponse::PermissionsRequestApproval { .. }) {
-                        self.analytics_events_client
-                            .track_server_response(completed_at_ms, response);
-                    }
                 }
                 if entry.callback.send(Ok(result)).is_err() {
                     warn!("could not notify callback for {id:?}: receiver dropped");
@@ -506,8 +487,6 @@ impl OutgoingMessageSender {
             Some((id, entry)) => {
                 // Don't log error messages or data because they may contain credentials.
                 warn!(code = error.code, "client responded with error for {id:?}");
-                self.analytics_events_client
-                    .track_server_request_aborted(now_unix_timestamp_ms(), id.clone());
                 if entry.callback.send(Err(error)).is_err() {
                     warn!("could not notify callback for {id:?}: receiver dropped");
                 }
@@ -521,8 +500,6 @@ impl OutgoingMessageSender {
     pub(crate) async fn cancel_request(&self, id: &RequestId) -> bool {
         let entry = self.take_request_callback(id).await;
         if let Some((request_id, _entry)) = entry {
-            self.analytics_events_client
-                .track_server_request_aborted(now_unix_timestamp_ms(), request_id);
             true
         } else {
             false
@@ -539,8 +516,6 @@ impl OutgoingMessageSender {
         };
 
         for entry in entries {
-            self.analytics_events_client
-                .track_server_request_aborted(now_unix_timestamp_ms(), entry.request.id().clone());
             if let Some(error) = error.as_ref()
                 && entry.callback.send(Err(error.clone())).is_err()
             {
@@ -619,8 +594,6 @@ impl OutgoingMessageSender {
         };
 
         for entry in entries {
-            self.analytics_events_client
-                .track_server_request_aborted(now_unix_timestamp_ms(), entry.request.id().clone());
             if let Some(error) = error.as_ref()
                 && entry.callback.send(Err(error.clone())).is_err()
             {
@@ -675,11 +648,6 @@ impl OutgoingMessageSender {
         };
         let message = match check() {
             Ok(()) => {
-                self.analytics_events_client.track_response(
-                    request_id.connection_id.0,
-                    request_id.request_id.clone(),
-                    &response,
-                );
                 OutgoingMessage::Response(OutgoingResponse {
                     id: request_id.request_id,
                     result: Box::new(response),
@@ -704,25 +672,7 @@ impl OutgoingMessageSender {
         thread_originator: Option<String>,
     ) {
         let connection_id = request_id.connection_id;
-        let request_id_for_analytics = request_id.request_id.clone();
-        match thread_originator {
-            Some(thread_originator) => {
-                self.analytics_events_client
-                    .track_response_with_thread_originator(
-                        connection_id.0,
-                        request_id_for_analytics,
-                        &response,
-                        thread_originator,
-                    );
-            }
-            None => {
-                self.analytics_events_client.track_response(
-                    connection_id.0,
-                    request_id_for_analytics,
-                    &response,
-                );
-            }
-        }
+        let _ = thread_originator;
         let response = Box::new(response);
         let request_context = self.take_request_context(&request_id).await;
         let outgoing_message = OutgoingMessage::Response(OutgoingResponse {
@@ -743,8 +693,6 @@ impl OutgoingMessageSender {
             notification,
             ServerNotification::ThreadArchived(_) | ServerNotification::ThreadUnarchived(_)
         ) {
-            self.analytics_events_client
-                .track_notification(&notification);
         }
         self.send_server_notification_to_connections(&[], notification)
             .await;
@@ -1229,7 +1177,7 @@ mod tests {
     async fn send_response_routes_to_target_connection() {
         let (tx, mut rx) = mpsc::channel::<OutgoingEnvelope>(4);
         let outgoing =
-            OutgoingMessageSender::new(tx, codex_analytics::AnalyticsEventsClient::disabled());
+            OutgoingMessageSender::new(tx, ());
         let request_id = ConnectionRequestId {
             connection_id: ConnectionId(42),
             request_id: RequestId::Integer(7),
@@ -1273,7 +1221,7 @@ mod tests {
     async fn send_response_clears_registered_request_context() {
         let (tx, _rx) = mpsc::channel::<OutgoingEnvelope>(4);
         let outgoing =
-            OutgoingMessageSender::new(tx, codex_analytics::AnalyticsEventsClient::disabled());
+            OutgoingMessageSender::new(tx, ());
         let request_id = ConnectionRequestId {
             connection_id: ConnectionId(42),
             request_id: RequestId::Integer(7),
@@ -1305,7 +1253,7 @@ mod tests {
     async fn send_error_routes_to_target_connection() {
         let (tx, mut rx) = mpsc::channel::<OutgoingEnvelope>(4);
         let outgoing =
-            OutgoingMessageSender::new(tx, codex_analytics::AnalyticsEventsClient::disabled());
+            OutgoingMessageSender::new(tx, ());
         let request_id = ConnectionRequestId {
             connection_id: ConnectionId(9),
             request_id: RequestId::Integer(3),
@@ -1340,7 +1288,7 @@ mod tests {
     async fn send_server_notification_to_connections_reuses_timestamp() {
         let (tx, mut rx) = mpsc::channel::<OutgoingEnvelope>(2);
         let outgoing =
-            OutgoingMessageSender::new(tx, codex_analytics::AnalyticsEventsClient::disabled());
+            OutgoingMessageSender::new(tx, ());
 
         outgoing
             .send_server_notification_to_connections(
@@ -1377,7 +1325,7 @@ mod tests {
     async fn send_server_notification_to_connection_and_wait_tracks_write_completion() {
         let (tx, mut rx) = mpsc::channel::<OutgoingEnvelope>(4);
         let outgoing =
-            OutgoingMessageSender::new(tx, codex_analytics::AnalyticsEventsClient::disabled());
+            OutgoingMessageSender::new(tx, ());
         let send_task = tokio::spawn(async move {
             outgoing
                 .send_server_notification_to_connection_and_wait(
@@ -1429,7 +1377,7 @@ mod tests {
     async fn connection_closed_clears_registered_request_contexts() {
         let (tx, _rx) = mpsc::channel::<OutgoingEnvelope>(4);
         let outgoing =
-            OutgoingMessageSender::new(tx, codex_analytics::AnalyticsEventsClient::disabled());
+            OutgoingMessageSender::new(tx, ());
         let closed_connection_request = ConnectionRequestId {
             connection_id: ConnectionId(9),
             request_id: RequestId::Integer(3),
@@ -1466,7 +1414,7 @@ mod tests {
     async fn notify_client_error_forwards_error_to_waiter() {
         let (tx, _rx) = mpsc::channel::<OutgoingEnvelope>(4);
         let outgoing =
-            OutgoingMessageSender::new(tx, codex_analytics::AnalyticsEventsClient::disabled());
+            OutgoingMessageSender::new(tx, ());
 
         let (request_id, wait_for_result) = outgoing
             .send_request(ServerRequestPayload::ApplyPatchApproval(
@@ -1498,7 +1446,7 @@ mod tests {
         let (tx, _rx) = mpsc::channel::<OutgoingEnvelope>(8);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             tx,
-            codex_analytics::AnalyticsEventsClient::disabled(),
+            (),
         ));
         let thread_id = ThreadId::new();
         let thread_outgoing = ThreadScopedOutgoingMessageSender::new(
@@ -1562,7 +1510,7 @@ mod tests {
         let (tx, _rx) = mpsc::channel::<OutgoingEnvelope>(8);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             tx,
-            codex_analytics::AnalyticsEventsClient::disabled(),
+            (),
         ));
         let thread_id = ThreadId::new();
         let thread_outgoing = ThreadScopedOutgoingMessageSender::new(

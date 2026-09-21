@@ -4,11 +4,6 @@ use std::hash::Hash;
 use std::hash::Hasher;
 use std::sync::Arc;
 
-use codex_analytics::AnalyticsEventsClient;
-use codex_analytics::InvocationType;
-use codex_analytics::SkillInvocation;
-use codex_analytics::SkillInvocationLocation;
-use codex_analytics::build_track_events_context;
 use codex_exec_server::FileSystemSandboxContext;
 use codex_extension_api::ExtensionData;
 use codex_extension_api::ExtensionMetrics;
@@ -16,7 +11,6 @@ use codex_extension_api::FunctionCallError;
 use codex_extension_api::JsonToolOutput;
 use codex_extension_api::ResponsesApiTool;
 use codex_extension_api::SelectedPluginSnapshot;
-use codex_extension_api::ThreadOriginator;
 use codex_extension_api::ToolCall;
 use codex_extension_api::ToolExecutor;
 use codex_extension_api::ToolName;
@@ -74,12 +68,12 @@ pub(crate) fn skill_tools(
     let mcp_resources = session_store
         .get::<SkillsSessionState>()
         .and_then(|state| state.mcp_resources.clone());
-    let analytics = SkillAnalytics::from_stores(session_store, thread_store);
+    let metrics = SkillMetrics::from_stores(session_store, thread_store);
     let context = SkillToolContext {
         providers,
         mcp_resources,
         thread_state,
-        analytics,
+        metrics,
         orchestrator_available,
         executor_query,
         selected_plugins,
@@ -96,30 +90,21 @@ pub(crate) fn skill_tools(
 }
 
 #[derive(Clone)]
-pub(crate) struct SkillAnalytics {
-    client: AnalyticsEventsClient,
+pub(crate) struct SkillMetrics {
     metrics: Option<Arc<dyn ExtensionMetrics>>,
     active_turn: Arc<ActiveSkillTurnMetrics>,
-    thread_id: String,
-    product_client_id: String,
 }
 
-impl SkillAnalytics {
+impl SkillMetrics {
     pub(crate) fn from_stores(
         session_store: &ExtensionData,
         thread_store: &ExtensionData,
     ) -> Option<Self> {
-        let client = session_store.get::<AnalyticsEventsClient>()?;
-        let originator = thread_store.get::<ThreadOriginator>()?;
-
         Some(Self {
-            client: client.as_ref().clone(),
             metrics: session_store
                 .get::<SkillsSessionState>()
                 .and_then(|state| state.extension_metrics.clone()),
             active_turn: thread_store.get_or_init(ActiveSkillTurnMetrics::default),
-            thread_id: thread_store.level_id().to_string(),
-            product_client_id: originator.0.clone(),
         })
     }
 
@@ -128,7 +113,7 @@ impl SkillAnalytics {
         skill: &SkillCatalogEntry,
         model: String,
         turn_id: String,
-        invocation_type: InvocationType,
+        implicit: bool,
     ) {
         let turn_metrics = self
             .active_turn
@@ -149,10 +134,7 @@ impl SkillAnalytics {
                 .as_ref()
                 .map(|turn| turn.reasoning_effort.as_str())
                 .unwrap_or("unknown");
-            let invoke_type = match invocation_type {
-                InvocationType::Explicit => "explicit",
-                InvocationType::Implicit => "implicit",
-            };
+            let invoke_type = if implicit { "implicit" } else { "explicit" };
             metrics.counter(
                 "codex.skill.injected",
                 /*inc*/ 1,
@@ -166,25 +148,6 @@ impl SkillAnalytics {
                 ],
             );
         }
-        self.client.track_skill_invocations(
-            build_track_events_context(
-                model,
-                self.thread_id.clone(),
-                turn_id,
-                self.product_client_id.clone(),
-            ),
-            vec![SkillInvocation {
-                skill_name: skill.name.clone(),
-                location: SkillInvocationLocation::Resource {
-                    id: skill.main_prompt.as_str().to_string(),
-                    skill_id: skill.canonical_skill_id.clone(),
-                    scope: skill.analytics_scope,
-                },
-                plugin_id: skill.plugin_id.clone(),
-                remote_plugin_id: None,
-                invocation_type,
-            }],
-        );
     }
 }
 
@@ -193,7 +156,7 @@ struct SkillToolContext {
     providers: SkillProviders,
     mcp_resources: Option<Arc<McpResourceClient>>,
     thread_state: Arc<SkillsThreadState>,
-    analytics: Option<SkillAnalytics>,
+    metrics: Option<SkillMetrics>,
     orchestrator_available: bool,
     executor_query: Option<SkillListQuery>,
     selected_plugins: Option<Arc<SelectedPluginSnapshot>>,

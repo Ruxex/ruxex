@@ -6,7 +6,6 @@ use std::sync::atomic::Ordering;
 use std::time::Instant;
 use std::time::SystemTime;
 
-use codex_analytics::AnalyticsEventsClient;
 use codex_core::context::GuardianContextMode;
 use codex_core::context::GuardianReviewEvidence;
 use codex_core::context::NodeReplReviewEvidence;
@@ -122,7 +121,6 @@ impl GuardianV2Extension {
                 .fetch_add(/*val*/ 1, Ordering::Relaxed);
         }
         let metrics = score_progress.metrics.clone();
-        let analytics = input.session_store.get::<AnalyticsEventsClient>();
         let sampled_at = SystemTime::now();
         let tool_call_index = score_progress
             .latest_tool_call
@@ -341,7 +339,6 @@ impl GuardianV2Extension {
             score_progress,
             parent_model,
             metrics,
-            analytics,
             sampled_at,
             tool_call_index,
             event_sink,

@@ -5,7 +5,7 @@ use std::future::Future;
 use std::time::Duration;
 
 use anyhow::anyhow;
-use codex_analytics::GuardianReviewAnalyticsResult;
+use crate::GuardianReviewAnalyticsResult;
 use codex_protocol::protocol::ErrorEvent;
 use codex_protocol::protocol::Event;
 use codex_protocol::protocol::EventMsg;

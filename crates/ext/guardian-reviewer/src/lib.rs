@@ -19,6 +19,7 @@ mod retry;
 mod review;
 mod routing;
 mod settings;
+mod telemetry;
 
 pub use assessment::GuardianAssessment;
 pub use assessment::guardian_output_contract_prompt;
@@ -60,6 +61,14 @@ pub use settings::ReviewerConfig;
 pub use settings::ReviewerTurn;
 pub use settings::reviewer_allowed_tools;
 pub use settings::reviewer_permission_profile;
+pub use telemetry::GuardianApprovalRequestSource;
+pub use telemetry::GuardianReviewAnalyticsResult;
+pub use telemetry::GuardianReviewDecision;
+pub use telemetry::GuardianReviewFailureReason;
+pub use telemetry::GuardianReviewSessionAnalyticsParams;
+pub use telemetry::GuardianReviewSessionKind;
+pub use telemetry::GuardianReviewTerminalStatus;
+pub use telemetry::GuardianReviewedAction;
 
 pub use reporting::ReviewDenials;
 pub use reporting::ReviewMetadata;

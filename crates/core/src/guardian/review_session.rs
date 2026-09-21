@@ -20,9 +20,9 @@ use std::sync::Arc;
 #[cfg(test)]
 use std::time::Duration;
 
-use codex_analytics::GuardianReviewAnalyticsResult;
-use codex_analytics::GuardianReviewSessionAnalyticsParams;
-use codex_analytics::GuardianReviewSessionKind;
+use codex_guardian_reviewer::GuardianReviewAnalyticsResult;
+use codex_guardian_reviewer::GuardianReviewSessionAnalyticsParams;
+use codex_guardian_reviewer::GuardianReviewSessionKind;
 use codex_extension_api::Instructions;
 use codex_guardian_reviewer::ConversationCheckpoint;
 use codex_guardian_reviewer::ConversationState;

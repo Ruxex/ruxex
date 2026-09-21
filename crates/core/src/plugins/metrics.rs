@@ -1,7 +1,4 @@
-use crate::session::session::Session;
-use crate::session::turn_context::TurnContext;
 use crate::tools::sandboxing::ToolCtx;
-use codex_analytics::PluginMeasurementsInput;
 use codex_core_plugins::PluginMetricsSidecar;
 use codex_exec_server::Environment;
 use codex_protocol::items::ModelInvocationContext;
@@ -14,9 +11,6 @@ pub(crate) async fn sidecar_for_command(
     cwd: &PathUri,
     environment: &Environment,
 ) -> Option<PluginMetricsSidecar> {
-    if !ctx.session.services.analytics_events_client.is_enabled() {
-        return None;
-    }
     let resolved = ctx
         .step_context
         .turn
@@ -33,30 +27,13 @@ pub(crate) async fn sidecar_for_command(
 pub(crate) async fn finish_and_track_measurements(
     metrics_sidecar: Option<PluginMetricsSidecar>,
     exit_code: i32,
-    session: &Session,
-    turn: &TurnContext,
-    model_context: &ModelInvocationContext,
-    item_id: &str,
+    _session: &crate::session::session::Session,
+    _turn: &crate::session::turn_context::TurnContext,
+    _model_context: &ModelInvocationContext,
+    _item_id: &str,
 ) {
     let Some(metrics_sidecar) = metrics_sidecar else {
         return;
     };
-    let Some(batch) = metrics_sidecar.finish(exit_code).await else {
-        return;
-    };
-    session
-        .services
-        .analytics_events_client
-        .track_plugin_measurements(PluginMeasurementsInput {
-            thread_id: session.thread_id().to_string(),
-            turn_id: turn.sub_id.clone(),
-            item_id: item_id.to_string(),
-            originator: turn.originator.clone(),
-            model_slug: Some(model_context.model_slug.clone()),
-            reasoning_effort: model_context.reasoning_effort.clone(),
-            plugin_id: batch.plugin_id,
-            execution_id: batch.execution_id,
-            operation: batch.operation,
-            rows: batch.rows,
-        });
+    let _ = metrics_sidecar.finish(exit_code).await;
 }

@@ -196,7 +196,7 @@ mod tests {
         FsWatchManager::new_with_file_watcher(
             Arc::new(OutgoingMessageSender::new(
                 tx,
-                codex_analytics::AnalyticsEventsClient::disabled(),
+                (),
             )),
             Arc::new(FileWatcher::noop()),
         )

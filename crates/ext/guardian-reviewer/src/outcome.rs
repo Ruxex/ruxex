@@ -1,7 +1,6 @@
 //! Distinguishes completed assessments from failures without assigning risk to errors.
 
 use crate::GuardianAssessment;
-use codex_analytics::GuardianReviewFailureReason;
 use codex_protocol::protocol::CodexErrorInfo;
 use tokio::time::Instant;
 
@@ -59,17 +58,6 @@ impl GuardianReviewError {
         }
     }
 
-    pub fn failure_reason(&self) -> GuardianReviewFailureReason {
-        match self {
-            Self::PromptBuild { .. } => GuardianReviewFailureReason::PromptBuildError,
-            Self::Session { .. } | Self::InputBudgetExceeded => {
-                GuardianReviewFailureReason::SessionError
-            }
-            Self::Parse { .. } => GuardianReviewFailureReason::ParseError,
-            Self::Timeout => GuardianReviewFailureReason::Timeout,
-            Self::Cancelled => GuardianReviewFailureReason::Cancelled,
-        }
-    }
 }
 
 #[derive(Debug)]

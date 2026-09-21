@@ -1,8 +1,6 @@
-//! Verify MCP prompts, non-root refusal, and elicitation analytics through actual turns.
+//! Verify MCP prompts and non-root refusal through actual turns.
 
 use anyhow::Result;
-use codex_analytics::AnalyticsEventsClient;
-use codex_analytics::AppServerRpcTransport;
 use codex_app_server_protocol as app;
 use codex_core::StartThreadOptions;
 use codex_core::TurnInputRequest;
@@ -156,12 +154,6 @@ async fn actual_turn_elicitation_analytics(scenario: Scenario) -> Result<()> {
     );
     let server = responses::start_mock_server().await;
     AppsTestServer::mount_searchable(&server).await?;
-    Mock::given(method("POST"))
-        .and(path("/codex/analytics-events/events"))
-        .respond_with(ResponseTemplate::new(/*status*/ 200))
-        .mount(&server)
-        .await;
-
     if auth_failure {
         Mock::given(method("POST"))
             .and(path_regex("^/api/codex/ps/mcp/?$"))
@@ -198,10 +190,7 @@ async fn actual_turn_elicitation_analytics(scenario: Scenario) -> Result<()> {
     )
     .await;
 
-    let client = AnalyticsEventsClient::new(/*analytics_enabled*/ Some(true));
-    let mut builder = search_capable_apps_builder(server.uri())
-        .with_analytics_events_client(client.clone())
-        .with_config(move |config| {
+    let mut builder = search_capable_apps_builder(server.uri()).with_config(move |config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
             config.approvals_reviewer = ApprovalsReviewer::User;
             if scenario != Scenario::DefaultAuth {
@@ -236,30 +225,6 @@ approvals_reviewer = "user"
     let test = builder.build_with_auto_env(&server).await?;
     let session = &test.session_configured;
     let thread_id = session.thread_id.to_string();
-    client.track_initialize(
-        /*connection_id*/ 1,
-        app::InitializeParams::default(),
-        "test-client".to_string(),
-        AppServerRpcTransport::Stdio,
-    );
-    let thread_response = serde_json::from_value(json!({
-        "thread": {
-            "id": thread_id, "sessionId": session.session_id.to_string(), "preview": "",
-            "ephemeral": false, "modelProvider": session.model_provider_id,
-            "createdAt": 1, "updatedAt": 1, "status": {"type": "idle"},
-            "cwd": session.cwd, "cliVersion": "0.0.0", "source": "exec", "turns": [],
-        },
-        "model": session.model, "modelProvider": session.model_provider_id, "cwd": session.cwd,
-        "approvalPolicy": app::AskForApproval::from(session.approval_policy),
-        "approvalsReviewer": app::ApprovalsReviewer::from(session.approvals_reviewer),
-        "sandbox": app::SandboxPolicy::from(test.config.legacy_sandbox_policy()),
-    }))?;
-    client.track_response(
-        /*connection_id*/ 1,
-        app::RequestId::Integer(1),
-        &app::ClientResponsePayload::ThreadStart(thread_response),
-    );
-
     let submitted = test
         .codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
@@ -281,13 +246,6 @@ approvals_reviewer = "user"
             match event.msg {
                 EventMsg::TurnStarted(started) => {
                     assert_eq!(started.turn_id, turn_id);
-                    client.track_notification(&app::ServerNotification::TurnStarted(
-                        serde_json::from_value(json!({
-                            "threadId": thread_id,
-                            "turn": {"id": started.turn_id, "items": [],
-                                "status": "inProgress", "startedAt": started.started_at},
-                        }))?,
-                    ));
                 }
                 message @ (EventMsg::ItemStarted(_) | EventMsg::ItemCompleted(_)) => {
                     let (item, item_thread_id, item_turn_id, completed) = match &message {
@@ -309,9 +267,6 @@ approvals_reviewer = "user"
                         assert_eq!(item.connector_id.as_deref(), Some("calendar"));
                         target_lifecycle[usize::from(completed)] += 1;
                     }
-                    let notification =
-                        app::item_event_to_server_notification(message, &thread_id, &event_turn_id);
-                    client.track_notification(&notification);
                 }
                 EventMsg::RequestUserInput(request) => {
                     assert!(!modern, "legacy approval requested for {scenario:?}");
@@ -375,15 +330,6 @@ approvals_reviewer = "user"
                 }
                 EventMsg::TurnComplete(completed) => {
                     assert_eq!(completed.turn_id, turn_id);
-                    client.track_notification(&app::ServerNotification::TurnCompleted(
-                        serde_json::from_value(json!({
-                            "threadId": thread_id,
-                            "turn": {"id": completed.turn_id, "items": [], "status": "completed",
-                                "startedAt": completed.started_at,
-                                "completedAt": completed.completed_at,
-                                "durationMs": completed.duration_ms},
-                        }))?,
-                    ));
                     break;
                 }
                 EventMsg::Error(error) => {
@@ -452,61 +398,6 @@ approvals_reviewer = "user"
         );
         assert!(!output.to_string().contains(PRIVATE_SENTINEL));
     }
-
-    tokio::time::timeout(Duration::from_secs(10), client.flush()).await?;
-    let mut events = Vec::new();
-    for request in server.received_requests().await.unwrap_or_default() {
-        if request.method != "POST" || request.url.path() != "/codex/analytics-events/events" {
-            continue;
-        }
-        let payload: Value = serde_json::from_slice(&request.body)?;
-        let batch = payload["events"].as_array().expect("analytics events");
-        events.extend(batch.iter().cloned());
-    }
-    let mcp_events = events
-        .iter()
-        .filter(|event| {
-            event["event_type"] == "codex_mcp_tool_call_event"
-                && event["event_params"]["item_id"] == CALL_ID
-        })
-        .collect::<Vec<_>>();
-    let app_used_events = events
-        .iter()
-        .filter(|event| {
-            event["event_type"] == "codex_app_used"
-                && event["event_params"]["connector_id"] == "calendar"
-                && event["event_params"]["turn_id"] == turn_id
-        })
-        .collect::<Vec<_>>();
-    assert_eq!(mcp_events.len(), 1);
-    assert_eq!(app_used_events.len(), usize::from(approved));
-    assert_eq!(mcp_events[0]["event_params"]["connector_id"], "calendar");
-    assert_eq!(mcp_events[0]["event_params"]["thread_id"], thread_id);
-    assert_eq!(mcp_events[0]["event_params"]["turn_id"], turn_id);
-    assert_eq!(
-        mcp_events[0]["event_params"]["terminal_status"],
-        if scenario == Scenario::LegacySuccess {
-            "completed"
-        } else {
-            "failed"
-        }
-    );
-    let expected = match scenario {
-        Scenario::DefaultAuth | Scenario::ModernAuth | Scenario::AuthMetadataRemoved => {
-            json!("auth_or_link")
-        }
-        Scenario::LegacySuccess => Value::Null,
-        Scenario::LegacyCancelled | Scenario::ModernDeclined => json!("approval"),
-    };
-    for event in mcp_events.iter().chain(app_used_events.iter()) {
-        assert_eq!(
-            event["event_params"].get("elicitation_type"),
-            Some(&expected)
-        );
-    }
-    let target_payload = serde_json::to_string(&(mcp_events, app_used_events))?;
-    assert!(!target_payload.contains(PRIVATE_SENTINEL));
-    assert!(!target_payload.contains("https://chatgpt.com/apps/"));
 
     Ok(())
 }

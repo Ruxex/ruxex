@@ -103,17 +103,6 @@
         }
       ]
     },
-    "AnalyticsConfigToml": {
-      "additionalProperties": false,
-      "description": "Analytics settings loaded from config.toml. Fields are optional so we can apply defaults.",
-      "properties": {
-        "enabled": {
-          "description": "When `false`, disables analytics across Codex product surfaces in this profile.",
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
     "AppToolApproval": {
       "enum": [
         "auto",
@@ -447,9 +436,6 @@
       "additionalProperties": false,
       "description": "Collection of common configuration options that a user can define as a unit in `config.toml`.",
       "properties": {
-        "analytics": {
-          "$ref": "#/definitions/AnalyticsConfigToml"
-        },
         "approval_policy": {
           "$ref": "#/definitions/AskForApproval"
         },
@@ -910,6 +896,9 @@
         },
         "include_permissions_instructions": {
           "type": "boolean"
+        },
+        "metrics": {
+          "$ref": "#/definitions/MetricsConfigToml"
         },
         "model": {
           "type": "string"
@@ -2044,6 +2033,17 @@
         "v2"
       ],
       "type": "string"
+    },
+    "MetricsConfigToml": {
+      "additionalProperties": false,
+      "description": "Metrics settings loaded from config.toml. Fields are optional so we can apply defaults.",
+      "properties": {
+        "enabled": {
+          "description": "When `false`, disables metrics across Codex product surfaces in this profile.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
     },
     "ModelAvailabilityNuxConfig": {
       "additionalProperties": {
@@ -5778,14 +5778,6 @@
       "description": "Allow macOS sandbox writable roots at or beneath CODEX_HOME to traverse symlinks. Read only from the host's user config at startup; defaults to false. This grants no write access by itself, but trusts symlink targets even if they change between commands or lie outside CODEX_HOME. This setting has no effect on Linux or Windows.",
       "type": "boolean"
     },
-    "analytics": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/AnalyticsConfigToml"
-        }
-      ],
-      "description": "When `false`, disables analytics across Codex product surfaces in this machine. Defaults to `true`."
-    },
     "approval_policy": {
       "allOf": [
         {
@@ -6454,6 +6446,14 @@
         }
       ],
       "description": "Memories subsystem settings."
+    },
+    "metrics": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/MetricsConfigToml"
+        }
+      ],
+      "description": "When `false`, disables metrics across Codex product surfaces in this machine. Defaults to `true`."
     },
     "model": {
       "description": "Optional override of model selection.",

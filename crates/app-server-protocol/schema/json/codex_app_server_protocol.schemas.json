@@ -6110,18 +6110,6 @@
         ],
         "type": "string"
       },
-      "AnalyticsConfig": {
-        "additionalProperties": true,
-        "properties": {
-          "enabled": {
-            "type": [
-              "boolean",
-              "null"
-            ]
-          }
-        },
-        "type": "object"
-      },
       "ApplicationNetworkRequirements": {
         "properties": {
           "domains": {
@@ -7549,16 +7537,6 @@
       "Config": {
         "additionalProperties": true,
         "properties": {
-          "analytics": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/v2/AnalyticsConfig"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "approval_policy": {
             "anyOf": [
               {
@@ -7643,6 +7621,16 @@
             "type": [
               "string",
               "null"
+            ]
+          },
+          "metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/v2/MetricsConfig"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "model": {
@@ -12726,6 +12714,18 @@
             "type": "string"
           }
         ]
+      },
+      "MetricsConfig": {
+        "additionalProperties": true,
+        "properties": {
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
       },
       "MigrationDetails": {
         "properties": {

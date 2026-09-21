@@ -52,8 +52,6 @@ use crate::thread_state::ConnectionCapabilities;
 use crate::thread_state::ThreadStateManager;
 use crate::transport::AppServerTransport;
 use crate::turn_cost_worker::TurnCostWorker;
-use codex_analytics::AnalyticsEventsClient;
-use codex_analytics::AppServerRpcTransport;
 use codex_app_server_protocol::ClientNotification;
 use codex_app_server_protocol::ClientRequest;
 use codex_app_server_protocol::ClientResponsePayload;
@@ -234,7 +232,6 @@ impl ConnectionSessionState {
 
 pub(crate) struct MessageProcessorArgs {
     pub(crate) outgoing: Arc<OutgoingMessageSender>,
-    pub(crate) analytics_events_client: AnalyticsEventsClient,
     pub(crate) arg0_paths: Arg0DispatchPaths,
     pub(crate) config: Arc<Config>,
     pub(crate) config_manager: ConfigManager,
@@ -247,7 +244,6 @@ pub(crate) struct MessageProcessorArgs {
     pub(crate) user_verification: Arc<crate::user_verification::Service>,
     pub(crate) installation_id: String,
     pub(crate) code_mode_session_provider: Option<Arc<dyn CodeModeSessionProvider>>,
-    pub(crate) rpc_transport: AppServerRpcTransport,
     /// `None` skips startup tasks; otherwise preserve the initial config-loading path.
     pub(crate) plugin_startup_tasks: Option<PluginStartupConfig>,
 }
@@ -258,7 +254,6 @@ impl MessageProcessor {
     pub(crate) fn new(args: MessageProcessorArgs) -> Self {
         let MessageProcessorArgs {
             outgoing,
-            analytics_events_client,
             arg0_paths,
             config,
             config_manager,
@@ -271,7 +266,6 @@ impl MessageProcessor {
             user_verification,
             installation_id,
             code_mode_session_provider,
-            rpc_transport,
             plugin_startup_tasks,
         } = args;
         let thread_state_manager = ThreadStateManager::new();
@@ -321,7 +315,6 @@ impl MessageProcessor {
                     event_sink: Arc::clone(&extension_event_sink),
                     auth_manager: auth_manager.clone(),
                     state_db: state_db.clone(),
-                    analytics_events_client: analytics_events_client.clone(),
                     thread_manager: thread_manager.clone(),
                     goal_service: Arc::clone(&goal_service),
                     environment_manager: Arc::clone(&environment_manager_for_extensions),
@@ -332,7 +325,6 @@ impl MessageProcessor {
                 Arc::new(CodexHomeUserInstructionsProvider::new(
                     config.codex_home.clone(),
                 )),
-                Some(analytics_events_client.clone()),
                 codex_core::passthrough_image_store(),
                 Arc::clone(&thread_store),
                 codex_core::local_agent_graph_store_from_state_db(state_db.as_ref()),
@@ -356,9 +348,6 @@ impl MessageProcessor {
             crate::models_refresh_worker::spawn(&models_manager, config.http_client_factory());
         let turn_cost_worker =
             TurnCostWorker::spawn(Arc::clone(&config), Arc::clone(&auth_manager));
-        thread_manager
-            .plugins_manager()
-            .set_analytics_events_client(analytics_events_client.clone());
         let skills_watcher = SkillsWatcher::new(
             thread_manager.skills_service(),
             &config.codex_home,
@@ -374,7 +363,6 @@ impl MessageProcessor {
             outgoing.clone(),
             config_manager.clone(),
             thread_manager.clone(),
-            analytics_events_client.clone(),
         );
         let on_effective_plugins_changed =
             crate::effective_plugin_change::effective_plugins_changed_callback(
@@ -412,10 +400,8 @@ impl MessageProcessor {
         let git_processor = GitRequestProcessor::new();
         let initialize_processor = InitializeRequestProcessor::new(
             outgoing.clone(),
-            analytics_events_client.clone(),
             Arc::clone(&config),
             config_warnings.clone(),
-            rpc_transport,
             Arc::clone(&user_verification),
         );
         let marketplace_processor = MarketplaceRequestProcessor::new(
@@ -434,7 +420,6 @@ impl MessageProcessor {
             auth_manager.clone(),
             Arc::clone(&thread_manager),
             outgoing.clone(),
-            analytics_events_client.clone(),
             config_manager.clone(),
             on_effective_plugins_changed,
         );
@@ -483,7 +468,6 @@ impl MessageProcessor {
             auth_manager,
             Arc::clone(&thread_manager),
             outgoing.clone(),
-            analytics_events_client.clone(),
             Arc::clone(&config),
             config_manager.clone(),
             pending_thread_unloads,
@@ -520,7 +504,6 @@ impl MessageProcessor {
                 config_manager: config_manager.clone(),
                 config_processor: config_processor.clone(),
                 state_db,
-                analytics_events_client,
                 arg0_paths,
                 codex_home: config.codex_home.to_path_buf(),
             });
@@ -924,12 +907,6 @@ impl MessageProcessor {
             return Err(invalid_request(experimental_required_message(reason)));
         }
         let connection_id = connection_request_id.connection_id;
-        self.initialize_processor.track_initialized_request(
-            connection_id,
-            connection_request_id.request_id.clone(),
-            &codex_request,
-        );
-
         let (turn_admission, recheck_turn_admission) = match &codex_request {
             ClientRequest::ThreadStart { .. }
             | ClientRequest::ThreadFork { .. }

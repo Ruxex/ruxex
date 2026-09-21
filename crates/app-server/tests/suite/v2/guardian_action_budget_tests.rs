@@ -125,7 +125,7 @@ with urllib.request.urlopen(request, timeout=30) as response:
         .with_approval_policy("on-request")
         .with_root_config(&format!("approvals_reviewer = \"auto_review\"\nchatgpt_base_url = \"{}\"", analytics_server.uri()))
         .with_extra_config(&format!(
-            "[mcp_servers.{TEST_SERVER_NAME}]\nurl = \"{mcp_url}/mcp\"\ndefault_tools_approval_mode = \"prompt\"\n\n[analytics]\nenabled = true\n\n[features.guardianv2]\nenabled = true\nmax_action_tokens = 128\n\n[features.guardianv2.review_scope]\ncomputer_use_only = false"
+            "[mcp_servers.{TEST_SERVER_NAME}]\nurl = \"{mcp_url}/mcp\"\ndefault_tools_approval_mode = \"prompt\"\n\n[metrics]\nenabled = true\n\n[features.guardianv2]\nenabled = true\nmax_action_tokens = 128\n\n[features.guardianv2.review_scope]\ncomputer_use_only = false"
         ))
         .enable_feature(Feature::GuardianApproval)
         .write(codex_home.path())?;

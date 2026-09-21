@@ -2,9 +2,6 @@ use std::future::Future;
 use std::sync::Arc;
 use std::time::Duration;
 
-use codex_analytics::CompactionTrigger;
-use codex_analytics::HookRunFact;
-use codex_analytics::build_track_events_context;
 use codex_core_plugins::executor_plugin_hook_sources;
 use codex_hooks::InterruptRequest;
 use codex_hooks::PermissionRequestDecision;
@@ -18,6 +15,7 @@ use codex_hooks::SessionStartOutcome;
 use codex_hooks::StartHookTarget;
 use codex_hooks::StopHookTarget;
 use codex_hooks::StopOutcome;
+use crate::responses_metadata::CompactionTrigger;
 use codex_hooks::SubagentHookContext;
 use codex_hooks::UserPromptSubmitOutcome;
 use codex_hooks::UserPromptSubmitRequest;
@@ -887,7 +885,6 @@ pub(crate) async fn emit_hook_completed_events(
 
     for completed in completed_events {
         emit_hook_completed_metrics(turn_context, &completed);
-        track_hook_completed_analytics(sess, turn_context, &completed);
         if should_emit_hook_notification(&completed.run) {
             sess.send_event(turn_context, EventMsg::HookCompleted(completed))
                 .await;
@@ -909,43 +906,6 @@ fn emit_hook_completed_metrics(turn_context: &TurnContext, completed: &HookCompl
             &tags,
         );
     }
-}
-
-fn track_hook_completed_analytics(
-    sess: &Arc<Session>,
-    turn_context: &Arc<TurnContext>,
-    completed: &HookCompletedEvent,
-) {
-    let (tracking, hook) =
-        hook_run_analytics_payload(sess.thread_id.to_string(), turn_context, completed);
-    sess.services
-        .analytics_events_client
-        .track_hook_run(tracking, hook);
-}
-
-fn hook_run_analytics_payload(
-    thread_id: String,
-    turn_context: &TurnContext,
-    completed: &HookCompletedEvent,
-) -> (codex_analytics::TrackEventsContext, HookRunFact) {
-    (
-        build_track_events_context(
-            turn_context.model_info().slug.clone(),
-            thread_id,
-            completed
-                .turn_id
-                .clone()
-                .unwrap_or_else(|| turn_context.sub_id.clone()),
-            turn_context.originator.clone(),
-        ),
-        HookRunFact {
-            event_name: completed.run.event_name,
-            hook_source: completed.run.source,
-            handler_type: completed.run.handler_type,
-            execution_mode: completed.run.execution_mode,
-            status: completed.run.status,
-        },
-    )
 }
 
 fn hook_run_metric_tags(run: &HookRunSummary) -> [(&'static str, &'static str); 5] {

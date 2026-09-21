@@ -144,7 +144,7 @@ pub(super) async fn prepare(
         let state =
             init_state_db_for_app_server_target(&source, &AppServerTarget::Embedded).await?;
         let mut lookup_config = source.clone();
-        lookup_config.analytics_enabled = Some(false);
+        lookup_config.metrics_enabled = Some(false);
         let client = start_embedded_app_server(
             arg0_paths.clone(),
             lookup_config,

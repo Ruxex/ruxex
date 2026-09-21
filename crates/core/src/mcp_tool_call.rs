@@ -18,8 +18,6 @@ use crate::tools::lifecycle::process_mcp_tool_result;
 use crate::tools::sandboxing::ApprovalAction;
 use crate::tools::sandboxing::ToolError;
 use crate::turn_metadata::ExecutionMetadata;
-use codex_analytics::ElicitationType;
-use codex_analytics::McpToolCallElicitation;
 use codex_config::ConfigLayerSource;
 use codex_config::types::AppToolApproval;
 use codex_extension_api::McpToolContext;
@@ -337,7 +335,6 @@ async fn handle_approved_mcp_tool_call(
     let mut tool_input = arguments_value
         .clone()
         .unwrap_or_else(|| JsonValue::Object(serde_json::Map::new()));
-    let mut elicitation_type = None;
     let result = async {
         let result = async {
             let mut result = prepared_call
@@ -444,9 +441,6 @@ async fn handle_approved_mcp_tool_call(
         tracing::warn!("MCP tool call error: {error:?}");
     }
     let duration = start.elapsed();
-    if let Some(elicitation_type) = elicitation_type {
-        track_mcp_tool_call_elicitation(sess, turn_context, call_id, elicitation_type);
-    }
     notify_mcp_tool_call_completed(
         sess,
         turn_context,
@@ -826,30 +820,6 @@ async fn notify_mcp_tool_call_completed(
         duration: Some(duration),
     });
     sess.emit_turn_item_completed(turn_context, item).await;
-}
-
-fn track_mcp_tool_call_elicitation(
-    sess: &Session,
-    turn_context: &TurnContext,
-    call_id: &str,
-    elicitation_type: ElicitationType,
-) {
-    sess.services
-        .analytics_events_client
-        .track_mcp_tool_call_elicitation(McpToolCallElicitation {
-            thread_id: sess.thread_id.to_string(),
-            turn_id: turn_context.sub_id.clone(),
-            item_id: call_id.to_string(),
-            elicitation_type,
-        });
-}
-
-fn mcp_tool_call_auth_elicitation_type(
-    _server: &str,
-    _connector_id: Option<&str>,
-    _result: &CallToolResult,
-) -> Option<ElicitationType> {
-    None
 }
 
 #[derive(Clone, Copy)]
@@ -1348,7 +1318,6 @@ pub(crate) async fn request_mcp_tool_user_approval(
             ReviewDecision::Denied { .. } | ReviewDecision::TimedOut | ReviewDecision::Abort
         )
     {
-        track_mcp_tool_call_elicitation(sess, turn_context, call_id, ElicitationType::Approval);
     }
     decision
 }

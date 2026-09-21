@@ -1780,26 +1780,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "codex-analytics"
-version = "0.0.0"
-dependencies = [
- "codex-app-server-protocol",
- "codex-git-utils",
- "codex-login",
- "codex-plugin",
- "codex-protocol",
- "codex-state",
- "codex-utils-absolute-path",
- "os_info",
- "pretty_assertions",
- "serde",
- "serde_json",
- "sha1 0.10.6",
- "tokio",
- "tracing",
-]
-
-[[package]]
 name = "codex-ansi-escape"
 version = "0.0.0"
 dependencies = [
@@ -1857,7 +1837,6 @@ dependencies = [
  "chrono",
  "clap",
  "codex-agent-extension",
- "codex-analytics",
  "codex-app-server-protocol",
  "codex-app-server-transport",
  "codex-arg0",
@@ -2477,7 +2456,6 @@ dependencies = [
  "chrono",
  "codex-agent-graph-store",
  "codex-agent-roles",
- "codex-analytics",
  "codex-api",
  "codex-app-server-protocol",
  "codex-apply-patch",
@@ -2600,7 +2578,6 @@ dependencies = [
 name = "codex-core-api"
 version = "0.0.0"
 dependencies = [
- "codex-analytics",
  "codex-app-server-protocol",
  "codex-arg0",
  "codex-config",
@@ -2624,7 +2601,6 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "chrono",
- "codex-analytics",
  "codex-app-server-protocol",
  "codex-config",
  "codex-exec-server",
@@ -2884,7 +2860,6 @@ name = "codex-external-agent-migration"
 version = "0.0.0"
 dependencies = [
  "chrono",
- "codex-analytics",
  "codex-app-server-protocol",
  "codex-config",
  "codex-core",
@@ -2994,7 +2969,6 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "chrono",
- "codex-analytics",
  "codex-core",
  "codex-extension-api",
  "codex-otel",
@@ -3029,7 +3003,6 @@ name = "codex-guardian-reviewer"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "codex-analytics",
  "codex-extension-api",
  "codex-guardian-context",
  "codex-mcp",
@@ -3053,7 +3026,6 @@ name = "codex-guardian-v2"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "codex-analytics",
  "codex-api",
  "codex-config",
  "codex-context-fragments",
@@ -3097,7 +3069,6 @@ dependencies = [
 name = "codex-history-notes-extension"
 version = "0.0.0"
 dependencies = [
- "codex-analytics",
  "codex-api",
  "codex-client",
  "codex-config",
@@ -3967,7 +3938,6 @@ name = "codex-skills-extension"
 version = "0.0.0"
 dependencies = [
  "assert_matches",
- "codex-analytics",
  "codex-config",
  "codex-exec-server",
  "codex-extension-api",
@@ -4902,7 +4872,6 @@ dependencies = [
  "anyhow",
  "assert_cmd",
  "base64 0.22.1",
- "codex-analytics",
  "codex-arg0",
  "codex-attachment-store",
  "codex-config",

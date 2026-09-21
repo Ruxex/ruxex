@@ -168,7 +168,7 @@ async fn remote_exec_server_gracefully_stops_when_parent_stdin_closes() -> Resul
         codex_home.path().join("config.toml"),
         format!(
             r#"
-[analytics]
+[metrics]
 enabled = true
 
 [otel]
@@ -404,7 +404,7 @@ async fn local_exec_server_flushes_telemetry_on_stdio_disconnect() -> Result<()>
         codex_home.path().join("config.toml"),
         format!(
             r#"
-[analytics]
+[metrics]
 enabled = true
 
 [otel]

@@ -192,7 +192,7 @@ pub(super) async fn connector_exposure_requests(
             if case.direct_only {
                 config.code_mode.direct_only_tool_namespaces = vec![namespace.to_string()];
             }
-            config.analytics_enabled = Some(false);
+            config.metrics_enabled = Some(false);
             config
                 .features
                 .enable(Feature::CodeModeHost)

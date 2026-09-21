@@ -149,7 +149,7 @@ name = "Mock provider"
 base_url = "http://127.0.0.1:1/v1"
 wire_api = "responses"
 
-[analytics]
+[metrics]
 enabled = true
 
 [otel]

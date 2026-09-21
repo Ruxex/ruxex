@@ -140,7 +140,6 @@ async fn run_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
         environment_manager,
         Arc::new(extensions.build()),
         user_instructions_provider,
-        /*analytics_events_client*/ None,
         passthrough_image_store(),
         Arc::clone(&thread_store),
         local_agent_graph_store_from_state_db(state_db.as_ref()),
@@ -301,7 +300,7 @@ fn new_config(model: Option<String>, arg0_paths: Arg0DispatchPaths) -> anyhow::R
         notices: Notice::default(),
         check_for_update_on_startup: false,
         disable_paste_burst: false,
-        analytics_enabled: Some(false),
+        metrics_enabled: Some(false),
         tool_suggest: ToolSuggestConfig::default(),
         otel: OtelConfig::default(),
     };

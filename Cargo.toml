@@ -1,7 +1,6 @@
 [workspace]
 members = [
     "crates/aws-auth",
-    "crates/analytics",
     "crates/agent-graph-store",
     "crates/agent-roles",
     "crates/bwrap",
@@ -149,7 +148,6 @@ license = "Apache-2.0"
 [workspace.dependencies]
 # Internal
 app_test_support = { path = "crates/app-server/tests/common" }
-codex-analytics = { path = "crates/analytics" }
 codex-agent-graph-store = { path = "crates/agent-graph-store" }
 codex-agent-roles = { path = "crates/agent-roles" }
 codex-ansi-escape = { path = "crates/ansi-escape" }

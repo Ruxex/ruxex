@@ -2,7 +2,6 @@ use std::sync::Arc;
 use std::sync::Weak;
 use std::time::Duration;
 
-use codex_analytics::AnalyticsEventsClient;
 use codex_app_server_protocol::ServerNotification;
 use codex_app_server_protocol::ThreadGoal;
 use codex_app_server_protocol::ThreadGoalUpdatedNotification;
@@ -34,7 +33,6 @@ pub(crate) struct ThreadExtensionDependencies {
     pub(crate) event_sink: Arc<dyn ExtensionEventSink>,
     pub(crate) auth_manager: Arc<AuthManager>,
     pub(crate) state_db: Option<StateDbHandle>,
-    pub(crate) analytics_events_client: AnalyticsEventsClient,
     pub(crate) thread_manager: Weak<ThreadManager>,
     pub(crate) goal_service: Arc<GoalService>,
     pub(crate) environment_manager: Arc<EnvironmentManager>,
@@ -51,7 +49,6 @@ pub(crate) fn thread_extensions(
         event_sink,
         auth_manager,
         state_db,
-        analytics_events_client,
         thread_manager,
         goal_service,
         environment_manager,
@@ -71,7 +68,6 @@ pub(crate) fn thread_extensions(
         codex_goal_extension::install_with_backend(
             &mut builder,
             state_db,
-            analytics_events_client,
             codex_otel::global(),
             thread_manager.clone(),
             goal_service,
@@ -299,7 +295,7 @@ mod tests {
         let (outgoing_tx, _outgoing_rx) = mpsc::channel(4);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             outgoing_tx,
-            AnalyticsEventsClient::disabled(),
+            (),
         ));
         let thread_state_manager = ThreadStateManager::new();
         let thread_id = ThreadId::default();
@@ -352,7 +348,7 @@ mod tests {
         let (outgoing_tx, _outgoing_rx) = mpsc::channel(4);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             outgoing_tx,
-            AnalyticsEventsClient::disabled(),
+            (),
         ));
         let thread_state_manager = ThreadStateManager::new();
         let thread_id = ThreadId::default();
@@ -381,7 +377,7 @@ mod tests {
         let (outgoing_tx, mut outgoing_rx) = mpsc::channel(4);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             outgoing_tx,
-            AnalyticsEventsClient::disabled(),
+            (),
         ));
         let thread_id = ThreadId::new();
         let subscribed_connection = ConnectionId(1);
@@ -442,7 +438,7 @@ mod tests {
         let (outgoing_tx, mut outgoing_rx) = mpsc::channel(4);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             outgoing_tx,
-            AnalyticsEventsClient::disabled(),
+            (),
         ));
         let thread_id = ThreadId::new();
         let subscribed_connection = ConnectionId(1);
@@ -500,7 +496,7 @@ mod tests {
         let (outgoing_tx, mut outgoing_rx) = mpsc::channel(4);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             outgoing_tx,
-            AnalyticsEventsClient::disabled(),
+            (),
         ));
         let thread_id = ThreadId::new();
         let subscribed_connection = ConnectionId(1);
@@ -561,7 +557,7 @@ mod tests {
         let (outgoing_tx, mut outgoing_rx) = mpsc::channel(4);
         let outgoing = Arc::new(OutgoingMessageSender::new(
             outgoing_tx,
-            AnalyticsEventsClient::disabled(),
+            (),
         ));
         let sink = app_server_extension_event_sink(outgoing, ThreadStateManager::new());
 

@@ -277,7 +277,7 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
         std::fs::write(
             codex_home.path().join("config.toml"),
             format!(
-                "[analytics]\nenabled = true\n\n[otel.metrics_exporter.otlp-http]\nendpoint = {endpoint:?}\nprotocol = \"json\"\n"
+                "[metrics]\nenabled = true\n\n[otel.metrics_exporter.otlp-http]\nendpoint = {endpoint:?}\nprotocol = \"json\"\n"
             ),
         )?;
 
@@ -508,7 +508,7 @@ async fn sqlite_log_metrics_grpc_exports_do_not_create_log_cycles(grpc_status: &
     std::fs::write(
         codex_home.path().join("config.toml"),
         format!(
-            "[analytics]\nenabled = true\n\n[otel.metrics_exporter.otlp-grpc]\nendpoint = {endpoint:?}\n"
+            "[metrics]\nenabled = true\n\n[otel.metrics_exporter.otlp-grpc]\nendpoint = {endpoint:?}\n"
         ),
     )?;
     let _app_server = TestAppServer::builder()

@@ -13,7 +13,7 @@ async fn queued_notifications_follow_auth_owner_changes(owner_generation: u64) {
         let (tx, mut rx) = mpsc::channel(/*buffer*/ 1);
         let outgoing = OutgoingMessageSender::new(
             tx.clone(),
-            codex_analytics::AnalyticsEventsClient::disabled(),
+            (),
         );
         let (changes, auth_changes) = watch::channel(AuthChangeState::default());
         let updated = AccountUpdatedNotification {

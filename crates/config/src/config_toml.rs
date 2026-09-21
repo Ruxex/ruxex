@@ -10,7 +10,7 @@ use crate::browser_use::BrowserUseConfigToml;
 use crate::computer_use::ComputerUseConfigToml;
 use crate::permissions_toml::PermissionsToml;
 use crate::profile_toml::ConfigProfile;
-use crate::types::AnalyticsConfigToml;
+use crate::types::MetricsConfigToml;
 use crate::types::ApprovalsReviewer;
 use crate::types::AuthCredentialsStoreMode;
 use crate::types::History;
@@ -454,9 +454,9 @@ pub struct ConfigToml {
     /// Legacy fallback for `tui.disable_paste_burst`. Prefer the setting under `[tui]`.
     pub disable_paste_burst: Option<bool>,
 
-    /// When `false`, disables analytics across Codex product surfaces in this machine.
+    /// When `false`, disables metrics across Codex product surfaces in this machine.
     /// Defaults to `true`.
-    pub analytics: Option<AnalyticsConfigToml>,
+    pub metrics: Option<MetricsConfigToml>,
 
     /// Opaque desktop settings stored alongside the rest of config.toml.
     #[serde(default)]

@@ -82,6 +82,7 @@ pub use plugin_metrics::PluginMetricsOperation;
 pub use plugin_metrics::ResolvedPluginMetricsOperation;
 pub use plugin_metrics_sidecar::PLUGIN_METRICS_OUTPUT_ENV_VAR;
 pub use plugin_metrics_sidecar::PluginMeasurementBatch;
+pub use plugin_metrics_sidecar::PluginMeasurementRow;
 pub use plugin_metrics_sidecar::PluginMetricsSidecar;
 pub use plugin_metrics_sidecar::strip_output_env;
 pub use provider::ExecutorPluginProvider;

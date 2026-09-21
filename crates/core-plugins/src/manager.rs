@@ -53,8 +53,6 @@ use crate::store::PluginStore;
 use crate::store::PluginStoreError;
 use crate::store::error_context_sub_error_type;
 use crate::tool_suggest_metadata::ToolSuggestMetadataCache;
-use codex_analytics::AnalyticsEventsClient;
-use codex_analytics::PluginInstallSource;
 use codex_config::ConfigLayerStack;
 use codex_config::SkillConfigRules;
 use codex_config::clear_user_plugin;
@@ -68,7 +66,6 @@ use codex_login::CodexAuth;
 use codex_plugin::PluginCapabilitySummary;
 use codex_plugin::PluginId;
 use codex_plugin::PluginIdError;
-use codex_plugin::PluginTelemetryMetadata;
 use codex_plugin::prompt_safe_plugin_description;
 use codex_protocol::auth::AuthMode;
 use codex_protocol::protocol::HookEventName;
@@ -287,8 +284,6 @@ pub struct PluginsManager {
     tool_suggest_metadata_cache: ToolSuggestMetadataCache,
     restriction_product: Option<Product>,
     auth_manager: Arc<AuthManager>,
-    analytics_events_client: RwLock<Option<AnalyticsEventsClient>>,
-    plugin_install_source: PluginInstallSource,
 }
 
 #[derive(Clone)]
@@ -402,26 +397,11 @@ impl PluginsManager {
             tool_suggest_metadata_cache: ToolSuggestMetadataCache::new(),
             restriction_product,
             auth_manager,
-            analytics_events_client: RwLock::new(None),
-            plugin_install_source: PluginInstallSource::Manual,
         }
-    }
-
-    pub fn with_plugin_install_source(mut self, source: PluginInstallSource) -> Self {
-        self.plugin_install_source = source;
-        self
     }
 
     pub fn auth_mode(&self) -> Option<AuthMode> {
         self.auth_manager.get_api_auth_mode()
-    }
-
-    pub fn set_analytics_events_client(&self, analytics_events_client: AnalyticsEventsClient) {
-        let mut stored_client = match self.analytics_events_client.write() {
-            Ok(client_guard) => client_guard,
-            Err(err) => err.into_inner(),
-        };
-        *stored_client = Some(analytics_events_client);
     }
 
     fn restriction_product_matches(&self, products: Option<&[Product]>) -> bool {
@@ -624,48 +604,6 @@ impl PluginsManager {
         }
     }
 
-    pub async fn telemetry_metadata_for_installed_plugin(
-        &self,
-        plugin_id: &PluginId,
-    ) -> PluginTelemetryMetadata {
-        let mut metadata = self.telemetry_metadata_for_plugin_id(plugin_id);
-        metadata.capability_summary = match self.store.active_plugin_root(plugin_id) {
-            Some(plugin_root) => {
-                plugin_capability_summary_from_root(
-                    plugin_id,
-                    &plugin_root,
-                    self.skill_root_loader.as_ref(),
-                )
-                .await
-            }
-            None => None,
-        };
-        metadata
-    }
-
-    pub fn telemetry_metadata_for_plugin_id(
-        &self,
-        plugin_id: &PluginId,
-    ) -> PluginTelemetryMetadata {
-        PluginTelemetryMetadata {
-            plugin_id: Some(plugin_id.clone()),
-            remote_plugin_id: None,
-            capability_summary: None,
-        }
-    }
-
-    pub fn telemetry_metadata_for_capability_summary(
-        &self,
-        summary: &PluginCapabilitySummary,
-    ) -> Option<PluginTelemetryMetadata> {
-        let plugin_id = PluginId::parse(&summary.config_name).ok()?;
-        Some(PluginTelemetryMetadata {
-            remote_plugin_id: None,
-            plugin_id: Some(plugin_id),
-            capability_summary: Some(summary.clone()),
-        })
-    }
-
     pub fn maybe_start_plugin_list_background_tasks(
         self: &Arc<Self>,
         context: &PluginMarketplaceContext,
@@ -763,15 +701,6 @@ impl PluginsManager {
                 error = %err,
                 "plugin install failed while resolving marketplace plugin"
             );
-            self.emit_plugin_install_failed(
-                PluginTelemetryMetadata {
-                    plugin_id: None,
-                    remote_plugin_id: None,
-                    capability_summary: None,
-                },
-                marketplace_error_type(err),
-                sub_error_type,
-            );
         }
     }
 
@@ -789,31 +718,6 @@ impl PluginsManager {
             error = %error_message,
             "plugin install failed"
         );
-        self.emit_plugin_install_failed(
-            self.telemetry_metadata_for_plugin_id(plugin_id),
-            error_type,
-            sub_error_type,
-        );
-    }
-
-    fn emit_plugin_install_failed(
-        &self,
-        plugin: PluginTelemetryMetadata,
-        error_type: &'static str,
-        sub_error_type: Option<String>,
-    ) {
-        let analytics_events_client = match self.analytics_events_client.read() {
-            Ok(client) => client.clone(),
-            Err(err) => err.into_inner().clone(),
-        };
-        if let Some(analytics_events_client) = analytics_events_client {
-            analytics_events_client.track_plugin_install_failed(
-                plugin,
-                self.plugin_install_source,
-                error_type.to_string(),
-                sub_error_type,
-            );
-        }
     }
 
     async fn install_resolved_plugin(
@@ -852,17 +756,6 @@ impl PluginsManager {
         .await
         .map_err(anyhow::Error::from)?;
 
-        let analytics_events_client = match self.analytics_events_client.read() {
-            Ok(client) => client.clone(),
-            Err(err) => err.into_inner().clone(),
-        };
-        if let Some(analytics_events_client) = analytics_events_client {
-            analytics_events_client.track_plugin_installed(
-                self.telemetry_metadata_for_installed_plugin(&result.plugin_id)
-                    .await,
-            );
-        }
-
         Ok(PluginInstallOutcome {
             plugin_id: result.plugin_id,
             plugin_version: result.plugin_version,
@@ -877,14 +770,6 @@ impl PluginsManager {
     }
 
     async fn uninstall_plugin_id(&self, plugin_id: PluginId) -> Result<(), PluginUninstallError> {
-        let plugin_telemetry = if self.store.active_plugin_root(&plugin_id).is_some() {
-            Some(
-                self.telemetry_metadata_for_installed_plugin(&plugin_id)
-                    .await,
-            )
-        } else {
-            None
-        };
         let store = self.store.clone();
         let plugin_id_for_store = plugin_id.clone();
         tokio::task::spawn_blocking(move || store.uninstall(&plugin_id_for_store))
@@ -894,16 +779,6 @@ impl PluginsManager {
         clear_user_plugin(&self.codex_home, plugin_id.as_key())
             .await
             .map_err(anyhow::Error::from)?;
-
-        let analytics_events_client = match self.analytics_events_client.read() {
-            Ok(client) => client.clone(),
-            Err(err) => err.into_inner().clone(),
-        };
-        if let Some(plugin_telemetry) = plugin_telemetry
-            && let Some(analytics_events_client) = analytics_events_client
-        {
-            analytics_events_client.track_plugin_uninstalled(plugin_telemetry);
-        }
 
         Ok(())
     }

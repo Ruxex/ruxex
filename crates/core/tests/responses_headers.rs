@@ -461,7 +461,7 @@ async fn responses_stream_includes_turn_metadata_header_for_git_workspace_e2e() 
     ]);
 
     let test = test_codex()
-        .with_config(|config| config.analytics_enabled = Some(true))
+        .with_config(|config| config.metrics_enabled = Some(true))
         .build(&server)
         .await
         .expect("build test codex");
@@ -514,8 +514,8 @@ async fn responses_stream_includes_turn_metadata_header_for_git_workspace_e2e() 
     .expect("body x-codex-turn-metadata should be valid JSON");
     assert_eq!(
         (
-            initial_parsed["analytics_enabled"].as_bool(),
-            body_metadata["analytics_enabled"].as_bool(),
+            initial_parsed["metrics_enabled"].as_bool(),
+            body_metadata["metrics_enabled"].as_bool(),
         ),
         (Some(true), Some(true)),
     );

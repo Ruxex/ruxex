@@ -9,7 +9,7 @@ use wiremock::ResponseTemplate;
 
 #[tokio::test]
 async fn foreground_update_respects_consent_and_reports_unconfirmed() -> anyhow::Result<()> {
-    for (analytics_config, analytics_default_enabled, expected_requests) in [
+    for (analytics_config, metrics_default_enabled, expected_requests) in [
         ("", false, 0),
         ("", true, 1),
         ("analytics.enabled = true\n", false, 1),
@@ -36,8 +36,8 @@ async fn foreground_update_respects_consent_and_reports_unconfirmed() -> anyhow:
             .env("CODEX_HOME", home.path())
             .env_remove(codex_app_server_daemon::telemetry::HANDOFF_ENV)
             .arg("app-server");
-        if analytics_default_enabled {
-            command.arg("--analytics-default-enabled");
+        if metrics_default_enabled {
+            command.arg("--metrics-default-enabled");
         }
         let output = command
             .args(["daemon", "update", "--from-cli", "--yes"])

@@ -466,13 +466,13 @@ async fn app_server_default_analytics_disabled_without_flag() -> Result<()> {
         .build()
         .await?;
     set_metrics_exporter(&mut config);
-    config.analytics_enabled = None;
+    config.metrics_enabled = None;
 
     let provider = codex_core::otel_init::build_provider(
         &config,
         SERVICE_VERSION,
         Some("codex-app-server"),
-        /*default_analytics_enabled*/ false,
+        /*default_metrics_enabled*/ false,
     )
     .map_err(|err| anyhow::anyhow!(err.to_string()))?;
 
@@ -484,20 +484,20 @@ async fn app_server_default_analytics_disabled_without_flag() -> Result<()> {
 }
 
 #[tokio::test]
-async fn app_server_default_analytics_enabled_with_flag() -> Result<()> {
+async fn app_server_default_metrics_enabled_with_flag() -> Result<()> {
     let codex_home = TempDir::new()?;
     let mut config = ConfigBuilder::default()
         .codex_home(codex_home.path().to_path_buf())
         .build()
         .await?;
     set_metrics_exporter(&mut config);
-    config.analytics_enabled = None;
+    config.metrics_enabled = None;
 
     let provider = codex_core::otel_init::build_provider(
         &config,
         SERVICE_VERSION,
         Some("codex-app-server"),
-        /*default_analytics_enabled*/ true,
+        /*default_metrics_enabled*/ true,
     )
     .map_err(|err| anyhow::anyhow!(err.to_string()))?;
 

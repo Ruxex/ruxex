@@ -878,7 +878,7 @@ async fn guardian_v2_routes_scoped_tool_approvals(
             analytics_server.uri(),
         ))
         .with_extra_config(&format!(
-            "[mcp_servers.{server_name}]\nurl = \"{mcp_server_url}/mcp\"\ndefault_tools_approval_mode = \"{tool_approval_mode}\"\n\n[analytics]\nenabled = true\n\n[otel]\nmetrics_exporter = {{ otlp-http = {{ endpoint = \"{responses_url}/metrics\", protocol = \"json\" }} }}\n\n[features.guardianv2]\nenabled = true\nthread_context = {thread_context_enabled}{guardian_scope_config}"
+            "[mcp_servers.{server_name}]\nurl = \"{mcp_server_url}/mcp\"\ndefault_tools_approval_mode = \"{tool_approval_mode}\"\n\n[metrics]\nenabled = true\n\n[otel]\nmetrics_exporter = {{ otlp-http = {{ endpoint = \"{responses_url}/metrics\", protocol = \"json\" }} }}\n\n[features.guardianv2]\nenabled = true\nthread_context = {thread_context_enabled}{guardian_scope_config}"
         ))
         .enable_feature(Feature::GuardianApproval);
     if lifecycle.has_user_input() || lifecycle.has_root_user_input() {
