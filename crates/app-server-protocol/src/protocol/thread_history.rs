@@ -1682,6 +1682,7 @@ mod tests {
     use crate::protocol::v2::AgentMessageDelivery;
     use crate::protocol::v2::AsyncUserInputQuestion;
     use crate::protocol::v2::CommandExecutionSource;
+    use crate::protocol::v2::CommandExecutionStatus;
     use codex_extension_items::ExtensionItem as CoreExtensionItem;
     use codex_extension_items::sleep::SleepItem as CoreSleepItem;
     use codex_protocol::ThreadId;

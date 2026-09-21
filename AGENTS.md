@@ -10,6 +10,10 @@ Current work is Level 1 Phase 3 of `docs/openai-decoupling-plan.md`. The hosted 
 
 Update `docs/pre-release-compatibility-inventory.md` in this order: persisted rollout/thread-history readers and migrations, protocol/app-server aliases and schemas, CLI/config/import compatibility, then UI/observability/runtime shims. Each production match must have a producer/consumer audit and an explicit `remove`, `retain`, or `migrate-in-place` decision before code is changed.
 
-For crate-removal work in this phase, test-first development is not required. Treat `cargo check`, the repository-wide `just check`, and generated-artifact verification with `just generate` when applicable as the primary verification instead of adding deletion-specific tests first.
+Repository-wide verification policy for this `AGENTS.md`: standalone test execution is not the default verification for this cleanup work. Use the following commands as its test substitutes:
 
-Do not run tests for this cleanup; use `just check` and, when generated artifacts are affected, `just generate` instead.
+- Always run `just check` for the production workspace type-check.
+- Run `just check --tests` whenever Rust code is added, removed, moved, or refactored, so test targets are compiled without executing them. This is required when test-only code or `#[cfg(test)]` imports may be affected.
+- Run `just generate` whenever checked-in generated artifacts may be affected, and inspect the resulting diff.
+
+For crate-removal work, test-first development is not required. Do not run standalone test commands for this cleanup unless explicitly requested.
