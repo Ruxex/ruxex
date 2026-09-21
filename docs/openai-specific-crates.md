@@ -65,7 +65,7 @@ Feedback の削除で確認したように、OpenAI 固有性はクレート単�
 | 14 | `codex-response-debug-context` | 2 / 54 | 汎用デバッグ情報と OpenAI header が混在 | 汎用化 | 中 | model error の診断情報欠落 |
 | 15 | `codex-login` | 26 / 56 | ChatGPT OAuth と汎用 credential 管理が混在 | ChatGPT 部分を削除 | 非常に高 | ほぼ全エントリーポイントの認証に波及 |
 | 16 | `codex-agent-identity` | 3 / 57 | ChatGPT issuer/JWKS と agent identity が一体 | クレート削除候補 | 高 | login、model provider、cloud config の認証境界 |
-| 17 | `codex-model-provider-info` | 16 / 60 | 汎用 provider 設定に OpenAI 既定値が混在 | 汎用化 | 非常に高 | 非 OpenAI provider も同じ型を利用 |
+| 17 | `codex-model-provider-info` | 12 / 44 | 汎用 provider 設定に OpenAI 既定値が混在 | 汎用化 | 非常に高 | 非 OpenAI provider も同じ型を利用 |
 | 18 | `codex-api` | 16 / 71 | Responses/WebSocket wire API と汎用 transport 境界 | 汎用化 | 非常に高 | core を含む最大の推移影響範囲 |
 | 19 | Realtime voice capability（`codex-realtime-webrtc`、`codex-voice-host` を含む） | なし（削除済み） | OpenAI Realtime API のみが現行の起動経路 | 削除済み | 高 | API、protocol、履歴、core、app-server、TUI、専用補助クレートを一単位で削除した |
 
@@ -297,7 +297,7 @@ protocol slice として扱う。generic image input、local media、`view_image
 - **根拠:** provider の型と設定解決は汎用だが、OpenAI/ChatGPT の既定 URL、header、環境変数、wire API が組み込まれている。
 - **機能:** provider metadata、base URL、headers、auth env、retry/stream settings、built-in provider。
 - **内部依存先:** `codex-api`、`codex-protocol`、absolute-path/redacted-string utility。
-- **依存元:** 直接 16、推移 60。OpenAI 以外の LM Studio/Ollama も利用する。
+- **依存元:** 直接 16、推移 60。OpenAI 以外の Responses-compatible な custom provider も利用する。
 - **到達経路:** config と model provider を介して全 model request と各 UI に到達する。
 - **影響:** `model_provider`、`model_providers.*`、`OPENAI_API_KEY`、OpenAI organization/project headers、Responses API transport、設定/単体テスト。専用 README はない。
 - **推奨:** **汎用化**。provider registry と OpenAI built-in definition を分離する。クレート自体は削除対象にしない。

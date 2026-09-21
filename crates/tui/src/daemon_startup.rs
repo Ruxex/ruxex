@@ -15,8 +15,6 @@ pub(super) fn exclusion(
         Some("--no-daemon")
     } else if cli.shared.worktree {
         Some("--worktree")
-    } else if cli.oss {
-        Some("--oss")
     } else if workload_identity_selected {
         Some("workload identity")
     } else if cli.agents_overview {

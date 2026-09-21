@@ -34,6 +34,8 @@ use codex_history::RolloutItem;
 use codex_login::AuthManager;
 use codex_login::CodexAuth;
 use codex_model_provider::create_model_provider;
+use codex_model_provider_info::WireApi;
+use codex_model_provider_info::create_responses_provider_with_base_url;
 use codex_model_provider_info::built_in_model_providers;
 use codex_models_manager::manager::StaticModelsManager;
 use codex_protocol::AgentPath;
@@ -299,8 +301,9 @@ async fn spawn_agent_uses_explorer_role_and_preserves_approval_policy() {
     session.services.agent_control = manager.agent_control();
     let mut config = (*turn.config).clone();
     let provider_info =
-        built_in_model_providers(/* openai_base_url */ /*openai_base_url*/ None)["ollama"].clone();
-    config.model_provider_id = "ollama".to_string();
+        create_responses_provider_with_base_url("http://localhost:11434/v1", WireApi::Responses);
+    let provider_id = provider_info.name.clone();
+    config.model_provider_id = provider_id.clone();
     config.model_provider = provider_info.clone();
     config
         .permissions
@@ -340,7 +343,7 @@ async fn spawn_agent_uses_explorer_role_and_preserves_approval_policy() {
         .config_snapshot()
         .await;
     assert_eq!(snapshot.approval_policy, AskForApproval::OnRequest);
-    assert_eq!(snapshot.model_provider_id, "ollama");
+    assert_eq!(snapshot.model_provider_id, provider_id);
 }
 
 #[tokio::test]

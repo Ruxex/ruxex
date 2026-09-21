@@ -122,7 +122,6 @@ fn daemon_eligibility_preserves_launch_options_and_explains_exclusions() {
     for (args, expected) in [
         ("--no-daemon", Some("--no-daemon")),
         ("--worktree", Some("--worktree")),
-        ("--oss", Some("--oss")),
         ("--profile test", Some("--profile")),
         ("--strict-config", Some("--strict-config")),
         (

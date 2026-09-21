@@ -34,11 +34,11 @@
 - Inspect: `crates/exec/src/lib.rs`, `crates/tui/src/oss_selection.rs`, `crates/tui/src/startup_orchestration.rs`
 - Inspect: `crates/config/src/config_toml.rs`, `crates/core/src/config/mod.rs`
 
-- [ ] **Step 1: workspace逆依存を確認する**
+  - [x] **Step 1: workspace逆依存を確認する**
 
   Cargo metadata/treeで`codex-lmstudio`、`codex-ollama`、`codex-utils-oss`のproduction reverse dependencyを記録し、`exec`、`tui`、config、model-provider-infoの削除境界をinventoryに記録する。
 
-- [ ] **Step 2: generic provider helperの扱いを決める**
+  - [x] **Step 2: generic provider helperの扱いを決める**
 
   `create_oss_provider_with_base_url`のproduction consumerを確認する。OSS built-in専用なら削除し、custom provider構成に必要ならprovider-neutralな名前と実装へ移行する。
 
@@ -52,15 +52,15 @@
 - Modify: `crates/exec/Cargo.toml`
 - Modify: `crates/tui/Cargo.toml`
 
-- [ ] **Step 1: workspace membersと依存を削除する**
+  - [x] **Step 1: workspace membersと依存を削除する**
 
   3クレートのworkspace member、workspace dependency、直接依存を削除する。不要になった`which`、`wiremock`などは他のconsumerを確認してから削除する。
 
-- [ ] **Step 2: execのOSS起動処理を削除する**
+  - [x] **Step 2: execのOSS起動処理を削除する**
 
   `resolve_oss_provider`、ready check、default OSS model、`--local-provider`分岐、OSS専用archive処理を削除し、通常のprovider resolutionを残す。
 
-- [ ] **Step 3: TUIのOSS選択処理を削除する**
+  - [x] **Step 3: TUIのOSS選択処理を削除する**
 
   `oss_selection.rs`、起動時のポート検出・provider選択・model download/update処理を削除する。通常のstartup orchestrationとarchiveは維持する。
 
@@ -74,15 +74,15 @@
 - Modify: `crates/cli/src/main.rs`
 - Modify: generated config schema files
 
-- [ ] **Step 1: built-in provider entriesを削除する**
+  - [x] **Step 1: built-in provider entriesを削除する**
 
   `lmstudio`、`ollama`、専用port、OSS-only factoryを組み込みprovider mapから削除する。OpenAI、Bedrock、custom provider登録は残す。
 
-- [ ] **Step 2: config fieldsとlegacy rejectionを削除する**
+  - [x] **Step 2: config fieldsとlegacy rejectionを削除する**
 
   `oss_provider`、`validate_oss_provider`、`ollama-chat`移行エラー、default provider setterを削除する。
 
-- [ ] **Step 3: CLI optionとhelpを削除する**
+  - [x] **Step 3: CLI optionとhelpを削除する**
 
   `--local-provider`および関連するcompletion/help/schema記述を削除する。app-server remoteなど無関係なCLI optionは変更しない。
 
@@ -94,15 +94,14 @@
 - Modify: `docs/pre-release-compatibility-inventory.md`
 - Modify: `docs/openai-decoupling-plan.md`
 
-- [ ] **Step 1: productionとfixtureの残存参照を削除する**
+  - [x] **Step 1: productionとfixtureの残存参照を削除する**
 
   `rg -n -i 'lmstudio|ollama|oss_provider|local-provider|ollama-chat' crates docs`で残存を分類し、custom provider例や一般名詞を誤削除しない。
 
-- [ ] **Step 2: generated artifactsを更新する**
+  - [x] **Step 2: generated artifactsを更新する**
 
   config schemaやCLI snapshotに影響した場合は`just generate`を実行し、生成差分を確認する。
 
 - [ ] **Step 3: repository checkを実行する**
 
   `just check`を実行する。テストコマンドは実行しない。
-

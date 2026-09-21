@@ -932,9 +932,6 @@
         "model_verbosity": {
           "$ref": "#/definitions/Verbosity"
         },
-        "oss_provider": {
-          "type": "string"
-        },
         "personality": {
           "allOf": [
             {
@@ -6546,10 +6543,6 @@
         }
       ],
       "description": "Orchestrator-owned feature settings."
-    },
-    "oss_provider": {
-      "description": "Preferred OSS provider for local models, e.g. \"lmstudio\" or \"ollama\".",
-      "type": "string"
     },
     "otel": {
       "allOf": [
