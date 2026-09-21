@@ -11,8 +11,7 @@ short-lived clients that fragment reqwest's connection pool. In particular, this
 - custom CA handling through `CODEX_CA_CERTIFICATE` and `SSL_CERT_FILE`;
 - explicit outbound proxy policy, including system, PAC/WPAD, environment, and direct routes;
 - route-aware client pooling and redirect handling;
-- tracing-header injection and optional request diagnostics; and
-- the opt-in ChatGPT Cloudflare cookie store.
+- tracing-header injection and optional request diagnostics.
 
 Another important motivation is consistent support for the `respect_system_proxy` feature. That
 feature requires more than enabling reqwest's default proxy behavior: Codex must resolve platform
@@ -103,8 +102,7 @@ Store the client or pool on the component that owns the traffic so its connectio
 Normal clients emit debug diagnostics containing the request URL and response headers. For
 endpoints where those values may contain credentials, use
 `HttpClientFactory::build_client_without_request_logging` or
-`RouteAwareClientPool::new_without_request_logging`. The corresponding ChatGPT cookie-pool
-constructor is `with_chatgpt_cloudflare_cookies_without_request_logging`.
+`RouteAwareClientPool::new_without_request_logging`.
 
 The wrapper's `Debug` implementations redact request URLs and resolved proxy settings, but callers
 should still avoid putting secrets in URLs whenever possible.

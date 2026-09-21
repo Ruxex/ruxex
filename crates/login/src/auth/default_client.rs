@@ -211,15 +211,6 @@ pub fn create_client() -> HttpClient {
     build_default_client(default_http_client_builder())
 }
 
-/// Creates the default client with configured ChatGPT cookies and no sensitive-response logging.
-pub fn create_client_with_chatgpt_cookies(http_client_factory: &HttpClientFactory) -> HttpClient {
-    build_default_client(
-        default_http_client_builder()
-            .with_chatgpt_cookies(http_client_factory)
-            .without_request_logging(),
-    )
-}
-
 /// Create the default HTTP client without request URL or response-header diagnostics.
 ///
 /// This preserves the default client's legacy custom-CA fallback and transport proxy behavior while
@@ -291,9 +282,7 @@ pub async fn create_client_for_route_async(
 }
 
 fn default_http_client_builder() -> HttpClientBuilder {
-    HttpClientBuilder::new()
-        .default_headers(default_headers())
-        .with_chatgpt_cloudflare_cookie_store()
+    HttpClientBuilder::new().default_headers(default_headers())
 }
 
 #[allow(deprecated)]

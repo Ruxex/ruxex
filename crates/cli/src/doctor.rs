@@ -2573,7 +2573,7 @@ async fn provider_reachability_check(plan: ReachabilityPlan) -> DoctorCheck {
         .details(details);
     }
 
-    let client = RouteAwareClientPool::with_chatgpt_cloudflare_cookies_without_request_logging(
+    let client = RouteAwareClientPool::new_without_request_logging(
         plan.http_client_factory,
         ClientRouteClass::Api,
     )

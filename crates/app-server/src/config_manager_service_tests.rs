@@ -1,6 +1,5 @@
 use super::*;
 use anyhow::Result;
-use axum::http::HeaderValue;
 use codex_app_server_protocol::AppConfig;
 use codex_app_server_protocol::AppToolApproval;
 use codex_app_server_protocol::AppsConfig;
@@ -9,8 +8,6 @@ use codex_app_server_protocol::ConfigLayerSource as ApiConfigLayerSource;
 use codex_config::CloudConfigBundleLoader;
 use codex_config::LoaderOverrides;
 use codex_config::test_support::CloudConfigBundleFixture;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyPolicy;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use tempfile::tempdir;
@@ -705,47 +702,6 @@ unified_exec = true
 personality = true
 "#;
     assert_eq!(updated, expected);
-    Ok(())
-}
-
-#[tokio::test]
-async fn psp_feature_configures_first_party_routing() -> Result<()> {
-    let tmp = tempdir()?;
-    let service = ConfigManager::new_for_tests(
-        tmp.path().to_path_buf(),
-        Vec::new(),
-        LoaderOverrides::without_managed_config_for_tests(),
-        CloudConfigBundleLoader::default(),
-    );
-
-    let config = service
-        .load_with_overrides(
-            Some(
-                [(
-                    "features".to_string(),
-                    serde_json::json!({ "apps": true, "psp": true }),
-                )]
-                .into_iter()
-                .collect(),
-            ),
-            Default::default(),
-        )
-        .await?;
-
-    assert!(config.features.enabled(codex_features::Feature::Psp));
-    assert_eq!(
-        config.http_client_factory(),
-        HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault)
-            .with_chatgpt_cookies([HeaderValue::from_static("oai-chat-psp=true")])
-    );
-    assert_eq!(
-        config
-            .config_layer_stack
-            .effective_config()
-            .get("features")
-            .and_then(|features| features.get("psp")),
-        Some(&toml::Value::Boolean(true))
-    );
     Ok(())
 }
 

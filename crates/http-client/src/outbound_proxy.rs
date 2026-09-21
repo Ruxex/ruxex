@@ -8,7 +8,6 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
 use std::io;
-use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::OnceLock;
 use std::time::Duration;
@@ -16,10 +15,7 @@ use std::time::Instant;
 #[cfg(any(target_os = "windows", target_os = "macos"))]
 use tokio::sync::Semaphore;
 
-use http::HeaderValue;
-
 use crate::NetworkPolicy;
-use crate::chatgpt_cloudflare_cookies::ChatGptCookieStore;
 use crate::custom_ca::BuildCustomCaTransportError;
 use crate::custom_ca::build_reqwest_client_with_custom_ca;
 use sha2::Digest;
@@ -166,7 +162,6 @@ impl fmt::Debug for OutboundProxyRoute {
 #[derive(Clone)]
 pub struct HttpClientFactory {
     outbound_proxy_policy: OutboundProxyPolicy,
-    chatgpt_cookie_store: Option<Arc<ChatGptCookieStore>>,
     network_policy: NetworkPolicy,
 }
 
@@ -174,14 +169,6 @@ impl PartialEq for HttpClientFactory {
     fn eq(&self, other: &Self) -> bool {
         self.outbound_proxy_policy == other.outbound_proxy_policy
             && self.network_policy == other.network_policy
-            && self
-                .chatgpt_cookie_store
-                .as_ref()
-                .map(|store| store.configured_cookies())
-                == other
-                    .chatgpt_cookie_store
-                    .as_ref()
-                    .map(|store| store.configured_cookies())
     }
 }
 
@@ -201,7 +188,6 @@ impl HttpClientFactory {
     pub const fn new(outbound_proxy_policy: OutboundProxyPolicy) -> Self {
         Self {
             outbound_proxy_policy,
-            chatgpt_cookie_store: None,
             network_policy: NetworkPolicy::unmanaged(),
         }
     }
@@ -214,23 +200,6 @@ impl HttpClientFactory {
 
     pub fn network_policy(&self) -> &NetworkPolicy {
         &self.network_policy
-    }
-
-    /// Adds process-scoped cookies to requests made by ChatGPT cookie-store clients.
-    pub fn with_chatgpt_cookies(mut self, cookies: impl IntoIterator<Item = HeaderValue>) -> Self {
-        let cookies = cookies.into_iter().collect::<Vec<_>>();
-        self.chatgpt_cookie_store =
-            (!cookies.is_empty()).then(|| Arc::new(ChatGptCookieStore::new(cookies)));
-        self
-    }
-
-    /// Returns whether ChatGPT cookie-store clients have additional configured cookies.
-    pub fn has_chatgpt_cookies(&self) -> bool {
-        self.chatgpt_cookie_store.is_some()
-    }
-
-    pub(crate) fn chatgpt_cookie_store(&self) -> Option<Arc<ChatGptCookieStore>> {
-        self.chatgpt_cookie_store.clone()
     }
 
     /// Returns the outbound proxy policy used for clients built by this factory.

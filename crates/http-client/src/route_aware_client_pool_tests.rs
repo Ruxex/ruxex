@@ -198,7 +198,7 @@ async fn legacy_custom_ca_fallback_is_limited_to_reqwest_default() {
         "respect-system-proxy" => OutboundProxyPolicy::RespectSystemProxy,
         _ => panic!("unexpected test proxy policy: {policy_name}"),
     };
-    let pool = RouteAwareClientPool::with_chatgpt_cloudflare_cookies(
+    let pool = RouteAwareClientPool::new(
         HttpClientFactory::new(outbound_proxy_policy),
         ClientRouteClass::Other,
     )

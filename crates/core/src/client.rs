@@ -847,7 +847,6 @@ impl ModelClient {
                     url.scheme() == "https"
                         && url.host_str().is_some_and(|host| {
                             host == "api.openai.com"
-                                || codex_http_client::is_allowed_chatgpt_host(host)
                         })
                 });
         if !result_metadata_allowed {

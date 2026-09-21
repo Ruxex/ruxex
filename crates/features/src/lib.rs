@@ -200,8 +200,6 @@ pub enum Feature {
     MultiAgentMode,
     /// Removed compatibility flag for the deleted agent-job tools.
     SpawnCsv,
-    /// Route first-party ChatGPT requests through PSP.
-    Psp,
     /// Enable MCP apps.
     EnableMcpApps,
     /// Enable MCP protocol version 2026-07-28 support.
@@ -1239,12 +1237,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         id: Feature::SpawnCsv,
         key: "enable_fanout",
         stage: Stage::Removed,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::Psp,
-        key: "psp",
-        stage: Stage::UnderDevelopment,
         default_enabled: false,
     },
     FeatureSpec {
