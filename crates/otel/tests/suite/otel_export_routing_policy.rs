@@ -491,8 +491,6 @@ fn otel_export_routing_policy_routes_auth_recovery_log_and_trace_events() {
             "recovery_succeeded",
             Some("req-401"),
             Some("ray-401"),
-            Some("missing_authorization_header"),
-            Some("token_expired"),
             /*recovery_reason*/ None,
             Some(true),
         );
@@ -525,16 +523,6 @@ fn otel_export_routing_policy_routes_auth_recovery_log_and_trace_events() {
     assert_eq!(
         recovery_log_attrs.get("auth.cf_ray").map(String::as_str),
         Some("ray-401")
-    );
-    assert_eq!(
-        recovery_log_attrs.get("auth.error").map(String::as_str),
-        Some("missing_authorization_header")
-    );
-    assert_eq!(
-        recovery_log_attrs
-            .get("auth.error_code")
-            .map(String::as_str),
-        Some("token_expired")
     );
     assert_eq!(
         recovery_log_attrs
@@ -571,16 +559,6 @@ fn otel_export_routing_policy_routes_auth_recovery_log_and_trace_events() {
     assert_eq!(
         recovery_trace_attrs.get("auth.cf_ray").map(String::as_str),
         Some("ray-401")
-    );
-    assert_eq!(
-        recovery_trace_attrs.get("auth.error").map(String::as_str),
-        Some("missing_authorization_header")
-    );
-    assert_eq!(
-        recovery_trace_attrs
-            .get("auth.error_code")
-            .map(String::as_str),
-        Some("token_expired")
     );
     assert_eq!(
         recovery_trace_attrs
@@ -659,8 +637,6 @@ fn otel_export_routing_policy_routes_api_request_auth_observability() {
             "/responses",
             Some("req-401"),
             Some("ray-401"),
-            Some("missing_authorization_header"),
-            Some("token_expired"),
             Some(&agent_identity_telemetry),
         );
     });
@@ -718,10 +694,6 @@ fn otel_export_routing_policy_routes_api_request_auth_observability() {
     assert_eq!(
         request_log_attrs.get("endpoint").map(String::as_str),
         Some("/responses")
-    );
-    assert_eq!(
-        request_log_attrs.get("auth.error").map(String::as_str),
-        Some("missing_authorization_header")
     );
     assert_eq!(
         request_log_attrs
@@ -854,8 +826,6 @@ fn otel_export_routing_policy_routes_websocket_connect_auth_observability() {
             /*connection_reused*/ false,
             Some("req-ws-401"),
             Some("ray-ws-401"),
-            Some("missing_authorization_header"),
-            Some("token_expired"),
             Some(&agent_identity_telemetry),
         );
     });
@@ -877,10 +847,6 @@ fn otel_export_routing_policy_routes_websocket_connect_auth_observability() {
             .get("auth.header_name")
             .map(String::as_str),
         Some("authorization")
-    );
-    assert_eq!(
-        connect_log_attrs.get("auth.error").map(String::as_str),
-        Some("missing_authorization_header")
     );
     assert_eq!(
         connect_log_attrs.get("endpoint").map(String::as_str),

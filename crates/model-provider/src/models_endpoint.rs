@@ -233,8 +233,6 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             auth.env_provider_key_present = self.auth_env.provider_env_key_present,
             auth.request_id = response_debug.request_id.as_deref(),
             auth.cf_ray = response_debug.cf_ray.as_deref(),
-            auth.error = response_debug.auth_error.as_deref(),
-            auth.error_code = response_debug.auth_error_code.as_deref(),
             auth.mode = self.auth_mode.as_deref(),
         );
         tracing::event!(
@@ -256,8 +254,6 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             auth.env_provider_key_present = self.auth_env.provider_env_key_present,
             auth.request_id = response_debug.request_id.as_deref(),
             auth.cf_ray = response_debug.cf_ray.as_deref(),
-            auth.error = response_debug.auth_error.as_deref(),
-            auth.error_code = response_debug.auth_error_code.as_deref(),
             auth.mode = self.auth_mode.as_deref(),
         );
     }

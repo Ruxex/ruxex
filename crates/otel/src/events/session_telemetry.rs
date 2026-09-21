@@ -640,8 +640,6 @@ impl SessionTelemetry {
             "unknown",
             /*request_id*/ None,
             /*cf_ray*/ None,
-            /*auth_error*/ None,
-            /*auth_error_code*/ None,
         );
 
         response
@@ -662,8 +660,6 @@ impl SessionTelemetry {
         endpoint: &str,
         request_id: Option<&str>,
         cf_ray: Option<&str>,
-        auth_error: Option<&str>,
-        auth_error_code: Option<&str>,
     ) {
         let success = status.is_some_and(|code| (200..=299).contains(&code)) && error.is_none();
         let success_str = if success { "true" } else { "false" };
@@ -701,8 +697,6 @@ impl SessionTelemetry {
                 auth.env_provider_key_present = self.metadata.auth_env.provider_env_key_present,
                 auth.request_id = request_id,
                 auth.cf_ray = cf_ray,
-                auth.error = auth_error,
-                auth.error_code = auth_error_code,
             },
             log: {},
             trace: {},
@@ -724,8 +718,6 @@ impl SessionTelemetry {
         connection_reused: bool,
         request_id: Option<&str>,
         cf_ray: Option<&str>,
-        auth_error: Option<&str>,
-        auth_error_code: Option<&str>,
     ) {
         let success = error.is_none()
             && status
@@ -754,8 +746,6 @@ impl SessionTelemetry {
                 auth.connection_reused = connection_reused,
                 auth.request_id = request_id,
                 auth.cf_ray = cf_ray,
-                auth.error = auth_error,
-                auth.error_code = auth_error_code,
             },
             log: {},
             trace: {},
@@ -806,8 +796,6 @@ impl SessionTelemetry {
         outcome: &str,
         request_id: Option<&str>,
         cf_ray: Option<&str>,
-        auth_error: Option<&str>,
-        auth_error_code: Option<&str>,
         recovery_reason: Option<&str>,
         auth_state_changed: Option<bool>,
     ) {
@@ -820,8 +808,6 @@ impl SessionTelemetry {
                 auth.outcome = outcome,
                 auth.request_id = request_id,
                 auth.cf_ray = cf_ray,
-                auth.error = auth_error,
-                auth.error_code = auth_error_code,
                 auth.recovery_reason = recovery_reason,
                 auth.state_changed = auth_state_changed,
             },

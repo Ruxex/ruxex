@@ -1,5 +1,4 @@
 use super::*;
-use base64::Engine;
 use codex_protocol::protocol::CodexErrorInfo;
 use codex_protocol::protocol::RateLimitReachedType;
 use pretty_assertions::assert_eq;
@@ -526,20 +525,10 @@ fn map_api_error_ignores_unparseable_rate_limit_reached_type_headers() {
 }
 
 #[test]
-fn map_api_error_extracts_identity_auth_details_from_headers() {
+fn map_api_error_preserves_generic_response_diagnostics() {
     let mut headers = HeaderMap::new();
     headers.insert(REQUEST_ID_HEADER, http::HeaderValue::from_static("req-401"));
     headers.insert(CF_RAY_HEADER, http::HeaderValue::from_static("ray-401"));
-    headers.insert(
-        X_OPENAI_AUTHORIZATION_ERROR_HEADER,
-        http::HeaderValue::from_static("missing_authorization_header"),
-    );
-    let x_error_json =
-        base64::engine::general_purpose::STANDARD.encode(r#"{"error":{"code":"token_expired"}}"#);
-    headers.insert(
-        X_ERROR_JSON_HEADER,
-        http::HeaderValue::from_str(&x_error_json).expect("valid x-error-json header"),
-    );
 
     let err = map_api_error(ApiError::Transport(TransportError::Http {
         status: http::StatusCode::UNAUTHORIZED,
@@ -553,9 +542,4 @@ fn map_api_error_extracts_identity_auth_details_from_headers() {
     };
     assert_eq!(err.request_id.as_deref(), Some("req-401"));
     assert_eq!(err.cf_ray.as_deref(), Some("ray-401"));
-    assert_eq!(
-        err.identity_authorization_error.as_deref(),
-        Some("missing_authorization_header")
-    );
-    assert_eq!(err.identity_error_code.as_deref(), Some("token_expired"));
 }

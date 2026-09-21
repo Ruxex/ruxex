@@ -927,8 +927,6 @@ unset it, then restart Codex"
         url: Some("https://bedrock-mantle.us-east-2.api.aws/openai/v1/responses".to_string()),
         cf_ray: None,
         request_id: None,
-        identity_authorization_error: None,
-        identity_error_code: None,
     };
     let cell = new_error_event(error.to_string());
     let rendered = render_lines(&cell.display_lines(/*width*/ 100)).join("\n");

@@ -124,7 +124,7 @@ external-agent import remain on the paginated contract.
 - Modify: `docs/openai-decoupling-plan.md` and the inventory with final decisions.
 
 - [x] Run workspace `cargo check` through `just check`.
-- [ ] Check repository-local `target/` size before `just check`; if it exceeds the project threshold, remove only that repository-local directory before checking.
+- [x] Check repository-local `target/` size before `just check`; it was 131G, above the 120G cleanup threshold, so only the repository-local `target/` directory was removed before checking.
 - [x] Run `just check`.
 - [x] No manifests or crate dependency edges changed, so dependency-graph regeneration is not required.
 - [x] Confirm the compatibility inventory has no unclassified production entries.

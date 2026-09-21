@@ -1048,8 +1048,6 @@ impl ModelClient {
             /*connection_reused*/ false,
             response_debug.request_id.as_deref(),
             response_debug.cf_ray.as_deref(),
-            response_debug.auth_error.as_deref(),
-            response_debug.auth_error_code.as_deref(),
         );
         result
     }
@@ -2270,8 +2268,6 @@ async fn handle_unauthorized(
                     "recovery_succeeded",
                     debug.request_id.as_deref(),
                     debug.cf_ray.as_deref(),
-                    debug.auth_error.as_deref(),
-                    debug.auth_error_code.as_deref(),
                     /*recovery_reason*/ None,
                     step_result.auth_state_changed(),
                 );
@@ -2284,8 +2280,6 @@ async fn handle_unauthorized(
                     "recovery_failed_permanent",
                     debug.request_id.as_deref(),
                     debug.cf_ray.as_deref(),
-                    debug.auth_error.as_deref(),
-                    debug.auth_error_code.as_deref(),
                     /*recovery_reason*/ None,
                     /*auth_state_changed*/ None,
                 );
@@ -2298,8 +2292,6 @@ async fn handle_unauthorized(
                     "recovery_failed_transient",
                     debug.request_id.as_deref(),
                     debug.cf_ray.as_deref(),
-                    debug.auth_error.as_deref(),
-                    debug.auth_error_code.as_deref(),
                     /*recovery_reason*/ None,
                     /*auth_state_changed*/ None,
                 );
@@ -2322,8 +2314,6 @@ async fn handle_unauthorized(
         "recovery_not_run",
         debug.request_id.as_deref(),
         debug.cf_ray.as_deref(),
-        debug.auth_error.as_deref(),
-        debug.auth_error_code.as_deref(),
         recovery_reason,
         /*auth_state_changed*/ None,
     );
@@ -2384,8 +2374,6 @@ impl RequestTelemetry for ApiTelemetry {
             self.request_route_telemetry.endpoint,
             debug.request_id.as_deref(),
             debug.cf_ray.as_deref(),
-            debug.auth_error.as_deref(),
-            debug.auth_error_code.as_deref(),
         );
     }
 }
