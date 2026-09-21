@@ -34,15 +34,15 @@
 - Inspect: `crates/cli/src/main.rs`, `crates/cli/src/exec_server_auth.rs`, `crates/core-api/src/lib.rs`
 - Modify: `docs/pre-release-compatibility-inventory.md`
 
-- [ ] **Step 1: Hosted remote symbolsを分類する**
+- [x] **Step 1: Hosted remote symbolsを分類する**
 
   `RemoteEnvironmentConfig`、`EnvironmentRegistry*`、`NoiseRendezvous*`、`ExecServerTransportParams::WebSocketUrl`、`CODEX_EXEC_SERVER_URL`、AWS remote argsのproduction producer/consumerを列挙する。
 
-- [ ] **Step 2: app-server remoteと区別する**
+- [x] **Step 2: app-server remoteと区別する**
 
   `RemoteAppServerClient`、TUI/CLI `--remote`、`--remote-auth-token-env`を保持対象としてinventoryに記録する。
 
-- [ ] **Step 3: inventoryへremove/retain根拠を記録する**
+- [x] **Step 3: inventoryへremove/retain根拠を記録する**
 
   runtime sliceにHosted remote、直接WebSocket environment、保持するapp-server remote、local/stdio runtimeを別行で記録する。
 
@@ -60,15 +60,15 @@
 - Modify: `crates/exec-server/src/client_api.rs`, `client_transport.rs`, `client.rs`, `client_recovery.rs`, `client_refresh.rs`
 - Modify/Delete: remote relay and registry tests
 
-- [ ] **Step 1: public exportsとtransport variantsを削除する**
+- [x] **Step 1: public exportsとtransport variantsを削除する**
 
   Noise bundle/provider、registry request/response、remote config/run functions、`NoiseRendezvous` transport variantをre-exportと内部型から削除する。
 
-- [ ] **Step 2: reconnect/error/telemetry分岐を整理する**
+- [x] **Step 2: reconnect/error/telemetry分岐を整理する**
 
   NoiseRendezvous専用のreconnect strategy、registry error、remote registration telemetryを削除し、local/stdio clientのrecoveryとtelemetryを保持する。
 
-- [ ] **Step 3: relay protocolとremote-only testsを削除する**
+- [x] **Step 3: relay protocolとremote-only testsを削除する**
 
   relay専用integration/unit tests、forward tests、registry testsを削除する。Process/Filesystem RPCの一般テストは残す。
 
@@ -82,15 +82,15 @@
 - Modify: `crates/exec-server/src/client_api.rs`, `client_transport.rs`, `client.rs`
 - Modify: affected environment config tests
 
-- [ ] **Step 1: URL environment providerを削除する**
+- [x] **Step 1: URL environment providerを削除する**
 
   `CODEX_EXEC_SERVER_URL`、environment `url` parsing、`RemoteEnvironmentOptions`、`WebSocketUrl` transportを削除し、`program` stdioとlocal environmentだけを残す。
 
-- [ ] **Step 2: WebSocket client branchを削除する**
+- [x] **Step 2: WebSocket client branchを削除する**
 
   remote exec-server WebSocketの接続、認証header、reconnect branchを削除し、stdio/local clientの初期化とrecoveryを保持する。
 
-- [ ] **Step 3: standalone exec-server listen面を監査する**
+- [x] **Step 3: standalone exec-server listen面を監査する**
 
   `codex exec-server --listen ws://...`のproduction consumerを確認する。環境接続以外のconsumerがない場合はWebSocket listenを削除し、stdio listenとlocal server RPCだけを残す。
 
@@ -103,15 +103,15 @@
 - Modify: `crates/core-api/src/lib.rs`
 - Modify: CLI argument tests and checked-in snapshots
 
-- [ ] **Step 1: exec-server remote argumentsを削除する**
+- [x] **Step 1: exec-server remote argumentsを削除する**
 
   `--remote`、`--remote-transport`、`--environment-id`、`--aws-sigv4`、AWS options、`forward` subcommand、remote起動分岐を削除する。TUI/app-serverの同名引数は残す。
 
-- [ ] **Step 2: unused dependenciesを削除する**
+- [x] **Step 2: unused dependenciesを削除する**
 
   `codex-aws-auth`などremote登録専用依存のworkspace reverse dependencyを確認し、他のconsumerがなければ削除する。
 
-- [ ] **Step 3: core-apiとsnapshotsを更新する**
+- [x] **Step 3: core-apiとsnapshotsを更新する**
 
   Hosted registry/Noise型のre-exportとexec-server help snapshotを削除し、app-server protocolの保持対象には触れない。
 
@@ -123,15 +123,14 @@
 - Modify: `crates/exec-server/README.md`
 - Modify: generated artifacts discovered by `rg`
 
-- [ ] **Step 1: unsupported remote usageをdocsから削除する**
+- [x] **Step 1: unsupported remote usageをdocsから削除する**
 
   Hosted registration、direct/noise transport、URL environment、forwardの説明を削除し、app-server `--remote`の説明は残す。
 
-- [ ] **Step 2: generated artifactsを更新する**
+- [x] **Step 2: generated artifactsを更新する**（生成対象差分なし。`just generate` はテストを呼び出すため未実行）
 
   protocol/schema/CLI生成物に差分がある場合は`just generate`を実行する。
 
-- [ ] **Step 3: repository checkを実行する**
+- [x] **Step 3: repository checkを実行する**
 
   `just check`を実行し、`rg`で削除対象のproduction symbolが残っていないことを確認する。テストコマンドは実行しない。
-
