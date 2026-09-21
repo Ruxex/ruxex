@@ -1832,7 +1832,6 @@ dependencies = [
  "codex-file-watcher",
  "codex-git-utils",
  "codex-goal-extension",
- "codex-guardian-v2",
  "codex-history-notes-extension",
  "codex-home",
  "codex-hooks",
@@ -2990,38 +2989,6 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
-]
-
-[[package]]
-name = "codex-guardian-v2"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "codex-api",
- "codex-config",
- "codex-context-fragments",
- "codex-core",
- "codex-extension-api",
- "codex-features",
- "codex-guardian-context",
- "codex-guardian-reviewer",
- "codex-history",
- "codex-http-client",
- "codex-login",
- "codex-model-provider",
- "codex-model-provider-info",
- "codex-prompts",
- "codex-protocol",
- "core_test_support",
- "dirs",
- "http 1.4.0",
- "pretty_assertions",
- "serde_json",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "uuid",
 ]
 
 [[package]]
@@ -4805,7 +4772,6 @@ dependencies = [
  "codex-exec-server",
  "codex-extension-api",
  "codex-features",
- "codex-guardian-v2",
  "codex-home",
  "codex-hooks",
  "codex-http-client",

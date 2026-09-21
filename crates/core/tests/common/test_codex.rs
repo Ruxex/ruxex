@@ -650,9 +650,8 @@ impl TestCodexBuilder {
             .code_mode_host_program
             .take()
             .or_else(|| codex_utils_cargo_bin::cargo_bin("codex-code-mode-host").ok());
-        let thread_manager = Arc::new_cyclic(|manager| {
-            let mut extensions = self.extensions.to_builder();
-            codex_guardian_v2::install_reviewer(&mut extensions, manager.clone());
+        let thread_manager = Arc::new_cyclic(|_| {
+            let extensions = self.extensions.to_builder();
             let thread_manager = ThreadManager::new(
                 &config,
                 auth_manager.clone(),

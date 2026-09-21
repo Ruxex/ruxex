@@ -42,7 +42,6 @@ mod experimental_feature_list;
 mod external_agent_config;
 mod external_agent_import_sync;
 mod fs;
-mod guardian_v2;
 mod history_notes_extension;
 mod hooks_list;
 mod host_skills;
