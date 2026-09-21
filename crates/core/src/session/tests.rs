@@ -10667,7 +10667,7 @@ async fn make_remote_compaction_session(
     Arc<TurnContext>,
     async_channel::Receiver<Event>,
 ) {
-    let mut provider = built_in_model_providers(/*openai_base_url*/ None)["openai"].clone();
+    let mut provider = ModelProviderInfo::create_openai_provider(None);
     provider.base_url = Some(format!("{server_uri}/v1"));
     provider.supports_websockets = false;
     make_session_and_context_with_auth_and_config_and_rx(

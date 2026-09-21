@@ -174,7 +174,7 @@ impl ConfigManager {
             {
                 // Bedrock requirements contain overrides of the built-in provider.
                 merge_configured_model_providers(
-                    built_in_model_providers(/*openai_base_url*/ None),
+                    built_in_model_providers(),
                     HashMap::from([(current.model_provider_id.clone(), provider)]),
                 )
                 .map_err(|message| std::io::Error::new(std::io::ErrorKind::InvalidData, message))?

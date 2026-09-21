@@ -308,7 +308,7 @@ async fn non_openai_responses_requests_include_item_ids_without_passthrough_meta
     )
     .await;
     let mut provider =
-        built_in_model_providers(/* openai_base_url */ /*openai_base_url*/ None)["openai"].clone();
+        ModelProviderInfo::create_openai_provider(None);
     provider.name = "Test Responses".to_string();
     provider.base_url = Some(format!("{}/v1", server.uri()));
     provider.supports_websockets = false;
@@ -1476,7 +1476,7 @@ async fn amazon_bedrock_proxy_uses_command_auth_and_custom_headers() {
     )
     .await;
     let auth_fixture = ProviderAuthCommandFixture::new(&["command-token"]).unwrap();
-    let mut provider = built_in_model_providers(/*openai_base_url*/ None)
+    let mut provider = built_in_model_providers()
         .remove(AMAZON_BEDROCK_PROVIDER_ID)
         .expect("Amazon Bedrock provider should be built in");
     provider.base_url = Some(format!("{}/v1", server.uri()));
@@ -1671,7 +1671,7 @@ async fn chatgpt_auth_sends_correct_request() {
     .await;
 
     let mut model_provider =
-        built_in_model_providers(/* openai_base_url */ /*openai_base_url*/ None)["openai"].clone();
+        ModelProviderInfo::create_openai_provider(None);
     model_provider.base_url = Some(format!("{}/api/codex", server.uri()));
     model_provider.supports_websockets = false;
     let mut builder = test_codex()
@@ -1767,7 +1767,7 @@ async fn prefers_apikey_when_config_prefers_apikey_even_with_chatgpt_tokens() {
     let model_provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
         supports_websockets: false,
-        ..built_in_model_providers(/* openai_base_url */ /*openai_base_url*/ None)["openai"].clone()
+        ..ModelProviderInfo::create_openai_provider(None)
     };
 
     // Init session
@@ -3241,7 +3241,7 @@ async fn token_count_includes_rate_limits_snapshot() {
         .await;
 
     let mut provider =
-        built_in_model_providers(/* openai_base_url */ /*openai_base_url*/ None)["openai"].clone();
+        ModelProviderInfo::create_openai_provider(None);
     provider.base_url = Some(format!("{}/v1", server.uri()));
     provider.supports_websockets = false;
 

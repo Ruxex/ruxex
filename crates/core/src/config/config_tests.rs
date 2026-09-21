@@ -1188,7 +1188,7 @@ command = "print-token"
     .await
     .expect("load config");
 
-    let mut expected_provider = built_in_model_providers(/*openai_base_url*/ None)
+    let mut expected_provider = built_in_model_providers()
         .remove("amazon-bedrock")
         .expect("Amazon Bedrock provider should be built in");
     expected_provider.base_url = Some("https://bedrock.example.com/v1".to_string());

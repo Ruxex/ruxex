@@ -140,7 +140,7 @@ async fn wait_for_recorded_user_input(thread: &crate::CodexThread, expected: &[U
 fn thread_manager() -> ThreadManager {
     ThreadManager::with_models_provider_for_tests(
         CodexAuth::from_api_key("dummy"),
-        built_in_model_providers(/* openai_base_url */ /*openai_base_url*/ None)["openai"].clone(),
+        ModelProviderInfo::create_openai_provider(None),
     )
 }
 
@@ -2171,7 +2171,7 @@ async fn spawn_agent_reapplies_runtime_sandbox_after_role_config() {
     let environment_manager = sandbox_runtime.thread_manager.environment_manager();
     let manager = ThreadManager::with_models_provider_and_home_for_tests(
         CodexAuth::from_api_key("dummy"),
-        built_in_model_providers(/*openai_base_url*/ None)["openai"].clone(),
+        ModelProviderInfo::create_openai_provider(None),
         turn.config.codex_home.to_path_buf(),
         Arc::clone(&environment_manager),
     );

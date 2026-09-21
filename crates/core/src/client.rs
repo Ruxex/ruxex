@@ -934,7 +934,6 @@ impl ModelClient {
             .filter(|config| {
                 config.model == model
                     && self.uses_codex_backend(auth)
-                    && self.state.provider.info().supports_codex_backend_routes()
             })
             .map(|config| config.headers.clone())
             .unwrap_or_default()

@@ -185,37 +185,6 @@ supports_websockets = true
 }
 
 #[test]
-fn test_personal_access_token_uses_chatgpt_codex_base_url() {
-    let api_provider = ModelProviderInfo::create_openai_provider(/*base_url*/ None)
-        .to_api_provider(Some(AuthMode::PersonalAccessToken))
-        .expect("OpenAI provider should build API provider");
-
-    assert_eq!(api_provider.base_url, CHATGPT_CODEX_BASE_URL);
-}
-
-#[test]
-fn test_header_auth_uses_chatgpt_codex_base_url() {
-    let api_provider = ModelProviderInfo::create_openai_provider(/*base_url*/ None)
-        .to_api_provider(Some(AuthMode::Headers))
-        .expect("OpenAI provider should build API provider");
-
-    assert_eq!(api_provider.base_url, CHATGPT_CODEX_BASE_URL);
-}
-
-#[test]
-fn codex_backend_routes_require_codex_base_url() {
-    for (base_url, expected) in [
-        (None, true),
-        (Some(CHATGPT_CODEX_BASE_URL), true),
-        (Some("https://chatgpt-staging.com/backend-api/codex/"), true),
-        (Some("https://proxy.example.com/v1"), false),
-    ] {
-        let provider = ModelProviderInfo::create_openai_provider(base_url.map(str::to_owned));
-        assert_eq!(provider.supports_codex_backend_routes(), expected);
-    }
-}
-
-#[test]
 fn test_deserialize_provider_auth_config_defaults() {
     let base_dir = tempdir().unwrap();
     let provider_toml = r#"
@@ -390,7 +359,7 @@ fn test_amazon_bedrock_provider_adds_mantle_client_agent_header() {
 
 #[test]
 fn test_built_in_model_providers_include_amazon_bedrock_endpoints() {
-    let providers = built_in_model_providers(/*openai_base_url*/ None);
+    let providers = built_in_model_providers();
 
     assert_eq!(
         [
@@ -410,7 +379,7 @@ fn test_built_in_model_providers_include_amazon_bedrock_endpoints() {
 
 #[test]
 fn test_built_in_model_providers_include_amazon_bedrock_runtime() {
-    let providers = built_in_model_providers(/*openai_base_url*/ None);
+    let providers = built_in_model_providers();
     let runtime = providers
         .get(AMAZON_BEDROCK_RUNTIME_PROVIDER_ID)
         .expect("Amazon Bedrock Runtime provider should be built in");
@@ -435,12 +404,12 @@ fn test_merge_configured_model_providers_adds_custom_provider() {
     let configured_model_providers =
         std::collections::HashMap::from([("custom".to_string(), custom_provider.clone())]);
 
-    let mut expected = built_in_model_providers(/*openai_base_url*/ None);
+    let mut expected = built_in_model_providers();
     expected.insert("custom".to_string(), custom_provider);
 
     assert_eq!(
         merge_configured_model_providers(
-            built_in_model_providers(/*openai_base_url*/ None),
+            built_in_model_providers(),
             configured_model_providers,
         ),
         Ok(expected)
@@ -472,7 +441,7 @@ fn test_merge_configured_model_providers_applies_amazon_bedrock_aws_override() {
         },
     )]);
 
-    let mut expected = built_in_model_providers(/*openai_base_url*/ None);
+    let mut expected = built_in_model_providers();
     expected
         .get_mut(AMAZON_BEDROCK_PROVIDER_ID)
         .expect("Amazon Bedrock provider should be built in")
@@ -485,7 +454,7 @@ fn test_merge_configured_model_providers_applies_amazon_bedrock_aws_override() {
 
     assert_eq!(
         merge_configured_model_providers(
-            built_in_model_providers(/*openai_base_url*/ None),
+            built_in_model_providers(),
             configured_model_providers,
         ),
         Ok(expected)
@@ -508,7 +477,7 @@ fn test_merge_configured_model_providers_applies_runtime_overrides_independently
             ..ModelProviderInfo::default()
         },
     )]);
-    let mut expected = built_in_model_providers(/*openai_base_url*/ None);
+    let mut expected = built_in_model_providers();
     let expected_runtime = expected
         .get_mut(AMAZON_BEDROCK_RUNTIME_PROVIDER_ID)
         .expect("Amazon Bedrock Runtime provider should be built in");
@@ -517,7 +486,7 @@ fn test_merge_configured_model_providers_applies_runtime_overrides_independently
 
     assert_eq!(
         merge_configured_model_providers(
-            built_in_model_providers(/*openai_base_url*/ None),
+            built_in_model_providers(),
             configured_model_providers,
         ),
         Ok(expected)
@@ -545,7 +514,7 @@ fn test_merge_configured_model_providers_applies_amazon_bedrock_transport_overri
         },
     )]);
 
-    let mut expected = built_in_model_providers(/*openai_base_url*/ None);
+    let mut expected = built_in_model_providers();
     let expected_provider = expected
         .get_mut(AMAZON_BEDROCK_PROVIDER_ID)
         .expect("Amazon Bedrock provider should be built in");
@@ -564,7 +533,7 @@ fn test_merge_configured_model_providers_applies_amazon_bedrock_transport_overri
 
     assert_eq!(
         merge_configured_model_providers(
-            built_in_model_providers(/*openai_base_url*/ None),
+            built_in_model_providers(),
             configured_model_providers,
         ),
         Ok(expected)
@@ -589,7 +558,7 @@ fn test_merge_configured_model_providers_rejects_amazon_bedrock_non_default_fiel
 
     assert_eq!(
         merge_configured_model_providers(
-            built_in_model_providers(/*openai_base_url*/ None),
+            built_in_model_providers(),
             configured_model_providers,
         ),
         Err(
@@ -617,10 +586,10 @@ fn test_merge_configured_model_providers_allows_amazon_bedrock_default_fields() 
 
     assert_eq!(
         merge_configured_model_providers(
-            built_in_model_providers(/*openai_base_url*/ None),
+            built_in_model_providers(),
             configured_model_providers,
         ),
-        Ok(built_in_model_providers(/*openai_base_url*/ None))
+        Ok(built_in_model_providers())
     );
 }
 

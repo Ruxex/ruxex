@@ -47,7 +47,6 @@ use codex_login::default_client::CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
 use codex_login::default_client::originator;
 use codex_model_provider::create_model_provider;
 use codex_model_provider_info::ModelProviderInfo;
-use codex_model_provider_info::OPENAI_PROVIDER_ID;
 use codex_models_manager::manager::RefreshStrategy;
 use codex_models_manager::manager::SharedModelsManager;
 use codex_protocol::ThreadId;
@@ -655,7 +654,7 @@ impl ThreadManager {
             LocalThreadStoreConfig {
                 codex_home: codex_home.clone(),
                 sqlite: codex_state::SqliteConfig::new_for_testing(absolute_codex_home),
-                default_model_provider_id: OPENAI_PROVIDER_ID.to_string(),
+                default_model_provider_id: "test".to_string(),
             },
             state_db.clone(),
         ));

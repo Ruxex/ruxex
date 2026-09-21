@@ -67,9 +67,6 @@ const MAX_STREAM_MAX_RETRIES: u64 = 100;
 /// Hard cap for user-configured `request_max_retries`.
 const MAX_REQUEST_MAX_RETRIES: u64 = 100;
 
-const OPENAI_PROVIDER_NAME: &str = "OpenAI";
-pub const OPENAI_PROVIDER_ID: &str = "openai";
-pub const CHATGPT_CODEX_BASE_URL: &str = "https://chatgpt.com/backend-api/codex";
 const AMAZON_BEDROCK_PROVIDER_NAME: &str = "Amazon Bedrock";
 pub const AMAZON_BEDROCK_PROVIDER_ID: &str = "amazon-bedrock";
 const AMAZON_BEDROCK_RUNTIME_PROVIDER_NAME: &str = "Amazon Bedrock Runtime";
@@ -395,12 +392,8 @@ other non-default provider fields are not supported"
     }
 
     /// Builds an API provider with managed residency taking precedence over configured headers.
-    pub fn to_api_provider(&self, auth_mode: Option<AuthMode>) -> CodexResult<ApiProvider> {
-        let default_base_url = if matches!(auth_mode, Some(AuthMode::Headers)) {
-            CHATGPT_CODEX_BASE_URL
-        } else {
-            "https://api.openai.com/v1"
-        };
+    pub fn to_api_provider(&self, _auth_mode: Option<AuthMode>) -> CodexResult<ApiProvider> {
+        let default_base_url = "https://api.openai.com/v1";
         let base_url = self
             .base_url
             .clone()
@@ -485,17 +478,16 @@ other non-default provider fields are not supported"
             .unwrap_or(Duration::from_millis(DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS))
     }
 
+    /// Constructs an explicitly configured OpenAI-compatible provider.
+    ///
+    /// This helper does not register the provider in the built-in catalog.
+    /// Applications that need it must opt in through their provider
+    /// configuration instead.
     pub fn create_openai_provider(base_url: Option<String>) -> ModelProviderInfo {
         ModelProviderInfo {
-            name: OPENAI_PROVIDER_NAME.into(),
+            name: "OpenAI".into(),
             base_url,
-            env_key: None,
-            env_key_instructions: None,
-            experimental_bearer_token: None,
-            auth: None,
-            aws: None,
             wire_api: WireApi::Responses,
-            query_params: None,
             http_headers: Some(
                 [("version".to_string(), env!("CARGO_PKG_VERSION").into())]
                     .into_iter()
@@ -512,14 +504,9 @@ other non-default provider fields are not supported"
                 .into_iter()
                 .collect(),
             ),
-            // Use global defaults for retry/timeout unless overridden in config.toml.
-            request_max_retries: None,
-            stream_max_retries: None,
-            stream_idle_timeout_ms: None,
-            websocket_connect_timeout_ms: None,
             requires_openai_auth: true,
             supports_websockets: true,
-            supports_standalone_web_search: false,
+            ..ModelProviderInfo::default()
         }
     }
 
@@ -568,17 +555,14 @@ other non-default provider fields are not supported"
         provider
     }
 
+    /// Returns whether this explicitly configured provider opts into the
+    /// remaining first-party OpenAI behavior.
+    ///
+    /// The provider is no longer bundled by default; this check is retained
+    /// for callers that still need to distinguish an explicitly configured
+    /// first-party-compatible entry until the auth boundary is removed.
     pub fn is_openai(&self) -> bool {
-        self.name == OPENAI_PROVIDER_NAME
-    }
-
-    pub fn supports_codex_backend_routes(&self) -> bool {
-        self.is_openai()
-            && self.base_url.as_deref().is_none_or(|base_url| {
-                base_url
-                    .trim_end_matches('/')
-                    .ends_with("/backend-api/codex")
-            })
+        self.name == "OpenAI"
     }
 
     pub fn is_amazon_bedrock(&self) -> bool {
@@ -596,19 +580,16 @@ other non-default provider fields are not supported"
 }
 
 /// Built-in default provider list.
-pub fn built_in_model_providers(
-    openai_base_url: Option<String>,
-) -> HashMap<String, ModelProviderInfo> {
+pub fn built_in_model_providers() -> HashMap<String, ModelProviderInfo> {
     use ModelProviderInfo as P;
-    let openai_provider = P::create_openai_provider(openai_base_url);
     let amazon_bedrock_provider = P::create_amazon_bedrock_provider(/*aws*/ None);
     let amazon_bedrock_runtime_provider =
         P::create_amazon_bedrock_runtime_provider(/*aws*/ None);
 
-    // We do not bundle third-party providers by default. Users can add their
-    // own providers through `model_providers` in config.toml.
+    // We do not bundle a first-party hosted provider or third-party providers
+    // by default. Users can add compatible providers through `model_providers`
+    // in config.toml.
     [
-        (OPENAI_PROVIDER_ID, openai_provider),
         (AMAZON_BEDROCK_PROVIDER_ID, amazon_bedrock_provider),
         (
             AMAZON_BEDROCK_RUNTIME_PROVIDER_ID,

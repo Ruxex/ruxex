@@ -17,7 +17,6 @@ use codex_features::Feature;
 use codex_login::CodexAuth;
 use codex_mcp::CODEX_APPS_MCP_SERVER_NAME;
 use codex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
-use codex_model_provider_info::OPENAI_PROVIDER_ID;
 use codex_plugin::PluginId;
 use codex_protocol::auth::AuthMode;
 use codex_protocol::config_types::CollaborationMode;
@@ -1128,7 +1127,7 @@ async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
         Fixture {
             name: "ChatGPT",
             target_auth: TargetAuth::Chatgpt,
-            target_model_provider_id: OPENAI_PROVIDER_ID,
+            target_model_provider_id: "openai",
             expected_target_loaded_plugin_skills: &[CHATGPT_CURATED_PLUGIN_SKILL],
             expected_target_skill_description: "chatgpt description",
         },
@@ -1142,7 +1141,7 @@ async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
         Fixture {
             name: "API key",
             target_auth: TargetAuth::ApiKey,
-            target_model_provider_id: OPENAI_PROVIDER_ID,
+            target_model_provider_id: "openai",
             expected_target_loaded_plugin_skills: &[API_CURATED_PLUGIN_SKILL],
             expected_target_skill_description: "api description before",
         },
@@ -1163,7 +1162,7 @@ async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
         Fixture {
             name: "unauthenticated OpenAI",
             target_auth: TargetAuth::NoCodexAuth,
-            target_model_provider_id: OPENAI_PROVIDER_ID,
+            target_model_provider_id: "openai",
             expected_target_loaded_plugin_skills: &[API_CURATED_PLUGIN_SKILL],
             expected_target_skill_description: "api description before",
         },
