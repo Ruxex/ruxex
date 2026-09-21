@@ -28,6 +28,30 @@ Approximate line count by file type:
 The line count includes source, tests, documentation, and generated files, and
 excludes untracked and ignored files. Categories are grouped by file extension.
 
+## Current repository snapshot
+
+- Snapshot commit: `f42f440d72a7471fc36264cc71de168970e13b50` (`Remove Guardian OpenAI integration`)
+- Approximate size at this commit: 1,755,036 lines across 6,651 Git-tracked files
+
+Approximate line count by file type at this commit:
+
+| Category | Lines |
+| --- | ---: |
+| Rust | 1,500,917 |
+| TypeScript | 6,608 |
+| Python | 25,438 |
+| SQL | 794 |
+| Shell/PowerShell | 2,500 |
+| C/C headers | 6,265 |
+| Protocol Buffers | 338 |
+| Markdown | 15,556 |
+| Config/data (JSON, TOML, YAML, XML, lockfiles) | 161,081 |
+| Other tracked files | 35,539 |
+
+This snapshot uses the same scope as the preceding one: source, tests,
+documentation, and generated files are included, while untracked and ignored
+files are excluded.
+
 The Rust implementation remains in a root Cargo workspace. Member crates live
 under `crates/`; shared utility and extension crates retain their existing
 subdirectories. Vendored bubblewrap sources live in `crates/vendor/` to preserve
