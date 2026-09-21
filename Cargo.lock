@@ -2451,8 +2451,6 @@ dependencies = [
  "codex-features",
  "codex-file-system",
  "codex-git-utils",
- "codex-guardian-context",
- "codex-guardian-reviewer",
  "codex-history",
  "codex-home",
  "codex-hooks",
@@ -2954,40 +2952,6 @@ dependencies = [
  "serde_json",
  "tempfile",
  "tokio",
- "tracing",
-]
-
-[[package]]
-name = "codex-guardian-context"
-version = "0.0.0"
-dependencies = [
- "codex-context-fragments",
- "codex-history",
- "codex-protocol",
- "pretty_assertions",
- "serde_json",
-]
-
-[[package]]
-name = "codex-guardian-reviewer"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "codex-extension-api",
- "codex-guardian-context",
- "codex-mcp",
- "codex-otel",
- "codex-prompts",
- "codex-protocol",
- "opentelemetry",
- "opentelemetry_sdk",
- "pretty_assertions",
- "rand 0.9.3",
- "serde",
- "serde_json",
- "test-case",
- "tokio",
- "tokio-util",
  "tracing",
 ]
 
@@ -3554,7 +3518,6 @@ dependencies = [
  "codex-context-fragments",
  "codex-execpolicy",
  "codex-git-utils",
- "codex-guardian-context",
  "codex-protocol",
  "codex-utils-absolute-path",
  "codex-utils-template",

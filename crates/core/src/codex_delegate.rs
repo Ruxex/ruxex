@@ -74,7 +74,6 @@ pub(crate) async fn run_codex_thread_interactive(
     let forked_from_thread_id = conversation_history.forked_from_id();
     let instructions = parent_session.inherited_instructions().await;
     let session_source = SessionSource::SubAgent(subagent_source.clone());
-    let is_guardian_reviewer = crate::guardian::is_basic_session_source(&session_source);
     let extensions = if isolation == codex_extension_api::SessionIsolation::Isolated {
         codex_extension_api::empty_extension_registry()
     } else {
@@ -107,11 +106,7 @@ pub(crate) async fn run_codex_thread_interactive(
         session_source,
         forked_from_thread_id,
         parent_thread_id: Some(parent_session.thread_id),
-        thread_source: Some(if is_guardian_reviewer {
-            ThreadSource::GuardianReview
-        } else {
-            ThreadSource::Subagent
-        }),
+        thread_source: Some(ThreadSource::Subagent),
         originator: parent_ctx.originator.clone(),
         agent_control: parent_session.services.agent_control.clone(),
         dynamic_tools: Vec::new(),

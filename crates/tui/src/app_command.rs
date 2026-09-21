@@ -9,9 +9,7 @@ use codex_app_server_protocol::ReviewTarget;
 use codex_app_server_protocol::ToolRequestUserInputResponse;
 use codex_app_server_protocol::UserInput;
 use codex_app_server_protocol::UserVerificationProof;
-use codex_config::types::ApprovalsReviewer;
 use codex_protocol::ThreadId;
-use codex_protocol::approvals::GuardianAssessmentEvent;
 use codex_protocol::config_types::CollaborationMode;
 use codex_protocol::config_types::Personality;
 use codex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
@@ -35,7 +33,6 @@ pub(crate) enum AppCommand {
         items: Vec<UserInput>,
         cwd: PathBuf,
         approval_policy: AskForApproval,
-        approvals_reviewer: Option<ApprovalsReviewer>,
         active_permission_profile: Option<ActivePermissionProfile>,
         model: String,
         effort: Option<ReasoningEffortConfig>,
@@ -48,7 +45,6 @@ pub(crate) enum AppCommand {
     OverrideTurnContext {
         cwd: Option<PathBuf>,
         approval_policy: Option<AskForApproval>,
-        approvals_reviewer: Option<ApprovalsReviewer>,
         permission_profile: Option<PermissionProfile>,
         active_permission_profile: Option<ActivePermissionProfile>,
         model: Option<String>,
@@ -99,9 +95,6 @@ pub(crate) enum AppCommand {
     Review {
         target: ReviewTarget,
     },
-    ApproveGuardianDeniedAction {
-        event: GuardianAssessmentEvent,
-    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -148,7 +141,6 @@ impl AppCommand {
             items,
             cwd,
             approval_policy,
-            approvals_reviewer: None,
             active_permission_profile,
             model,
             effort,
@@ -164,7 +156,6 @@ impl AppCommand {
     pub(crate) fn override_turn_context(
         cwd: Option<PathBuf>,
         approval_policy: Option<AskForApproval>,
-        approvals_reviewer: Option<ApprovalsReviewer>,
         permission_profile: Option<PermissionProfile>,
         active_permission_profile: Option<ActivePermissionProfile>,
         model: Option<String>,
@@ -177,7 +168,6 @@ impl AppCommand {
         Self::OverrideTurnContext {
             cwd,
             approval_policy,
-            approvals_reviewer,
             permission_profile,
             active_permission_profile,
             model,
@@ -262,10 +252,6 @@ impl AppCommand {
 
     pub(crate) fn review(target: ReviewTarget) -> Self {
         Self::Review { target }
-    }
-
-    pub(crate) fn approve_guardian_denied_action(event: GuardianAssessmentEvent) -> Self {
-        Self::ApproveGuardianDeniedAction { event }
     }
 
     pub(crate) fn is_review(&self) -> bool {

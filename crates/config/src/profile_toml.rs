@@ -5,7 +5,6 @@ use serde::Serialize;
 
 use crate::config_toml::ToolsToml;
 use crate::types::MetricsConfigToml;
-use crate::types::ApprovalsReviewer;
 use crate::types::Personality;
 use crate::types::SessionPickerViewMode;
 use crate::types::WindowsToml;
@@ -31,7 +30,6 @@ pub struct ConfigProfile {
     pub model_provider: Option<String>,
     #[schemars(with = "Option<crate::schema::ConfigAskForApproval>")]
     pub approval_policy: Option<AskForApproval>,
-    pub approvals_reviewer: Option<ApprovalsReviewer>,
     pub sandbox_mode: Option<SandboxMode>,
     pub model_reasoning_effort: Option<ReasoningEffort>,
     pub plan_mode_reasoning_effort: Option<ReasoningEffort>,

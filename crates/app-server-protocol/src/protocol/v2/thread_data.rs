@@ -99,7 +99,6 @@ impl From<ThreadHistoryMode> for CoreThreadHistoryMode {
 pub enum ThreadSource {
     User,
     Subagent,
-    GuardianReview,
     Feature(String),
     MemoryConsolidation,
 }
@@ -134,7 +133,6 @@ impl From<CoreThreadSource> for ThreadSource {
         match value {
             CoreThreadSource::User => ThreadSource::User,
             CoreThreadSource::Subagent => ThreadSource::Subagent,
-            CoreThreadSource::GuardianReview => ThreadSource::GuardianReview,
             CoreThreadSource::Feature(feature) => ThreadSource::Feature(feature),
             CoreThreadSource::MemoryConsolidation => ThreadSource::MemoryConsolidation,
         }
@@ -146,7 +144,6 @@ impl From<ThreadSource> for CoreThreadSource {
         match value {
             ThreadSource::User => CoreThreadSource::User,
             ThreadSource::Subagent => CoreThreadSource::Subagent,
-            ThreadSource::GuardianReview => CoreThreadSource::GuardianReview,
             ThreadSource::Feature(feature) => CoreThreadSource::Feature(feature),
             ThreadSource::MemoryConsolidation => CoreThreadSource::MemoryConsolidation,
         }

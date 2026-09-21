@@ -9,8 +9,6 @@ mod math_interruption_tests;
 mod advanced_reasoning_tests;
 #[path = "tests/agents_navigation_tests.rs"]
 mod agents_navigation_tests;
-#[path = "tests/approvals_reviewer_error_tests.rs"]
-mod approvals_reviewer_error_tests;
 #[path = "tests/background_exit_tests.rs"]
 mod background_exit_tests;
 #[path = "tests/background_task_defaults_tests.rs"]

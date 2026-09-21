@@ -971,9 +971,6 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
         interactive.no_daemon |= options.no_daemon;
     }
     let root_strict_config = interactive.strict_config;
-    interactive
-        .shared
-        .take_auto_review_config_overrides(&mut root_config_overrides);
     reject_root_strict_config_for_subcommand(root_strict_config, &subcommand)?;
     if let Some(subcommand) = subcommand.as_ref() {
         profile_v2_for_subcommand(&interactive, subcommand)?;
@@ -2479,16 +2476,10 @@ fn merge_interactive_cli_flags(interactive: &mut TuiCli, subcommand_cli: TuiCli)
         mut config_overrides,
         ..
     } = subcommand_cli;
-    let subcommand_auto_review = shared.auto_review;
     interactive
         .shared
         .apply_subcommand_overrides(shared.into_inner());
-    interactive
-        .shared
-        .take_auto_review_config_overrides(&mut config_overrides);
-    if subcommand_auto_review {
-        interactive.approval_policy = None;
-    } else if let Some(approval) = approval_policy {
+    if let Some(approval) = approval_policy {
         interactive.approval_policy = Some(approval);
     }
     if web_search {

@@ -52,7 +52,6 @@ mod mcp_server_status;
 mod memory_read;
 mod memory_reset;
 mod misalignment_policy;
-mod model_auto_review;
 mod model_list;
 mod model_provider_capabilities_read;
 #[path = "model_provider_enforcement_tests.rs"]

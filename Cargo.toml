@@ -36,7 +36,6 @@ members = [
     "crates/core-api",
     "crates/core-plugins",
     "crates/diagnostics",
-    "crates/guardian-context",
     "crates/hooks",
     "crates/history",
     "crates/http-client",
@@ -50,7 +49,6 @@ members = [
     "crates/ext/agent",
     "crates/ext/extension-api",
     "crates/ext/goal",
-    "crates/ext/guardian-reviewer",
     "crates/ext/history-notes",
     "crates/ext/items",
     "crates/ext/memories",
@@ -185,7 +183,6 @@ codex-execpolicy = { path = "crates/execpolicy" }
 codex-extension-api = { path = "crates/ext/extension-api" }
 codex-extension-items = { path = "crates/ext/items" }
 codex-goal-extension = { path = "crates/ext/goal" }
-codex-guardian-reviewer = { path = "crates/ext/guardian-reviewer" }
 codex-history-notes-extension = { path = "crates/ext/history-notes" }
 codex-external-agent-migration = { path = "crates/external-agent-migration" }
 codex-experimental-api-macros = { path = "crates/codex-experimental-api-macros" }
@@ -194,7 +191,6 @@ codex-install-context = { path = "crates/install-context" }
 codex-file-search = { path = "crates/file-search" }
 codex-file-watcher = { path = "crates/file-watcher" }
 codex-git-utils = { path = "crates/git-utils" }
-codex-guardian-context = { path = "crates/guardian-context" }
 codex-hooks = { path = "crates/hooks" }
 codex-history = { path = "crates/history" }
 codex-keyring-store = { path = "crates/keyring-store" }

@@ -248,7 +248,6 @@ mod config_errors;
 mod exec_flow;
 mod goal_menu;
 mod goal_validation;
-mod guardian;
 pub(crate) mod helpers;
 mod history_replay;
 mod mcp_startup;

@@ -213,19 +213,6 @@ fn render_debug_config_lines(
         ));
     }
 
-    if let Some(reviewers) = requirements_toml.allowed_approvals_reviewers.as_ref() {
-        let value = join_or_empty(
-            reviewers
-                .iter()
-                .map(ToString::to_string)
-                .collect::<Vec<_>>(),
-        );
-        requirement_lines.push(requirement_line(
-            "allowed_approvals_reviewers",
-            value,
-            requirements.approvals_reviewer.source.as_ref(),
-        ));
-    }
 
     if let Some(modes) = requirements_toml.allowed_sandbox_modes.as_ref() {
         let value = join_or_empty(
@@ -280,14 +267,6 @@ fn render_debug_config_lines(
         ));
     }
 
-
-    if requirements_toml.guardian_policy_config.is_some() {
-        requirement_lines.push(requirement_line(
-            "guardian_policy_config",
-            "configured".to_string(),
-            requirements.guardian_policy_config_source.as_ref(),
-        ));
-    }
 
     if let Some(feature_requirements) = requirements.feature_requirements.as_ref() {
         let value = join_or_empty(

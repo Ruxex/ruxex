@@ -170,7 +170,6 @@ impl JsonSchema for RolloutItem {
     }
 }
 
-mod guardian_history;
 mod reconciled_retained_context;
 mod retained_context;
 mod sender_user_messages;
@@ -188,13 +187,11 @@ pub use retained_context::VerifiedAnswer;
 pub use retained_context::VerifiedQuestionAnswer;
 mod rollout_payload;
 
-pub use guardian_history::GuardianHistoryCheckpoint;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CompactedItem {
     pub message: String,
     pub replacement_history: Option<Vec<ResponseItemEnvelope>>,
-    pub guardian_history: Option<GuardianHistoryCheckpoint>,
     pub retained_context: Option<RetainedContext>,
     pub window_number: Option<u64>,
     pub first_window_id: Option<String>,

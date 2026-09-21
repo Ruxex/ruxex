@@ -44,7 +44,6 @@ mod apply_patch_serialization;
 #[cfg(not(target_os = "windows"))]
 mod approvals;
 mod audio_truncation;
-mod auto_review;
 mod catalog_permission_messages;
 mod cli_stream;
 mod client_websockets;
@@ -64,22 +63,8 @@ mod exec_policy;
 mod external_auth;
 mod fork_thread;
 mod git_enrichment;
-mod guardian_authorization;
-#[path = "guardian_checkpoint_migration_tests.rs"]
-mod guardian_checkpoint_migration;
 // Uses the same command-approval harness as guardian_review below.
 #[cfg(not(target_os = "windows"))]
-mod guardian_context_budget;
-mod guardian_history;
-mod guardian_mcp_elicitation;
-mod guardian_retained_context;
-mod guardian_retry;
-#[cfg(not(target_os = "windows"))]
-mod guardian_review;
-#[cfg(not(target_os = "windows"))]
-mod guardian_review_cancellation;
-#[cfg(not(target_os = "windows"))]
-mod guardian_subagent_authorization;
 #[cfg(not(target_os = "windows"))]
 mod hooks;
 #[cfg(not(target_os = "windows"))]
@@ -189,6 +174,3 @@ mod window_headers;
 mod windows_sandbox;
 mod workspace_roots;
 mod worktree_trust;
-
-#[path = "guardian_sender_messages_tests.rs"]
-mod guardian_sender_messages;

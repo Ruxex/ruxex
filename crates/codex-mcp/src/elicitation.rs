@@ -28,9 +28,7 @@ use codex_protocol::mcp::RequestId as ProtocolRequestId;
 use codex_protocol::mcp_approval_meta::APPROVAL_KIND_BROWSER_AUTH;
 use codex_protocol::mcp_approval_meta::APPROVAL_KIND_KEY;
 use codex_protocol::mcp_approval_meta::APPROVAL_KIND_TOOL_SUGGESTION;
-use codex_protocol::mcp_approval_meta::APPROVALS_REVIEWER_KEY;
 use codex_protocol::mcp_approval_meta::REQUIRES_USER_INPUT_KEY;
-use codex_protocol::mcp_approval_meta::STRICT_AUTO_REVIEW_KEY;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::Event;
 use codex_protocol::protocol::EventMsg;
@@ -46,7 +44,6 @@ use tokio::sync::oneshot;
 
 static NEXT_ELICITATION_REQUEST_ID: AtomicU64 = AtomicU64::new(0);
 
-const STRICT_AUTO_REVIEW_DECLINE_MESSAGE: &str = "Automated review of this operation failed. Do not proceed without asking the user for explicit approval.";
 /// Recovery guidance for a request that a non-root agent cannot present to the user.
 pub const MCP_ELICITATION_HANDOFF_MESSAGE: &str = concat!(
     "MCP server elicitations can only be requested by the root thread. ",
@@ -347,56 +344,6 @@ impl ElicitationRequestManager {
                     });
                 };
 
-                match elicitation
-                    .meta()
-                    .and_then(|meta| meta.get(STRICT_AUTO_REVIEW_KEY))
-                {
-                    Some(Value::Bool(true)) => {
-                        if matches!(
-                            approval_policy,
-                            AskForApproval::Granular(config) if !config.allows_mcp_elicitations()
-                        ) {
-                            return Ok(strict_auto_review_decline());
-                        }
-                        let Some(reviewer) = reviewer.as_ref() else {
-                            return Ok(strict_auto_review_decline());
-                        };
-                        let _active_elicitation =
-                            lifecycle.as_ref().map(ElicitationLifecycle::start);
-                        return Ok(
-                            match reviewer
-                                .review(ElicitationReviewRequest {
-                                    server_name,
-                                    request_id: id,
-                                    elicitation,
-                                })
-                                .await
-                            {
-                                Ok(Some(response))
-                                    if (response.action == ElicitationAction::Accept
-                                        && response.content == Some(serde_json::json!({}))
-                                        || matches!(
-                                            response.action,
-                                            ElicitationAction::Decline | ElicitationAction::Cancel
-                                        ) && response.content.is_none())
-                                        && response
-                                            .meta
-                                            .as_ref()
-                                            .and_then(Value::as_object)
-                                            .and_then(|meta| meta.get(APPROVALS_REVIEWER_KEY))
-                                            .and_then(Value::as_str)
-                                            == Some("auto_review") =>
-                                {
-                                    response
-                                }
-                                Ok(Some(_)) | Ok(None) | Err(_) => strict_auto_review_decline(),
-                            },
-                        );
-                    }
-                    None | Some(Value::Bool(false)) => {}
-                    Some(_) => return Ok(strict_auto_review_decline()),
-                }
-
                 let permission_prompt_is_auto_approved = mcp_permission_prompt_is_auto_approved(
                     approval_policy,
                     permission_profile,
@@ -478,16 +425,6 @@ impl ElicitationRequestManager {
             }
             .boxed()
         })
-    }
-}
-
-fn strict_auto_review_decline() -> ElicitationResponse {
-    ElicitationResponse {
-        action: ElicitationAction::Decline,
-        content: None,
-        meta: Some(serde_json::json!({
-            "message": STRICT_AUTO_REVIEW_DECLINE_MESSAGE,
-        })),
     }
 }
 

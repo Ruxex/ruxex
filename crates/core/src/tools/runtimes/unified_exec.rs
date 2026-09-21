@@ -6,9 +6,7 @@ the process manager to spawn PTYs once an ExecRequest is prepared.
 */
 use crate::exec::ExecCapturePolicy;
 use crate::exec::ExecExpiration;
-use crate::guardian::GUARDIAN_REVIEW_TIMEOUT;
-use crate::guardian::GuardianNetworkAccessTrigger;
-use crate::guardian::routes_approval_policy_to_guardian;
+use crate::tools::network_approval::NetworkApprovalTrigger;
 use crate::plugins::metrics::sidecar_for_command;
 use crate::sandboxing::ExecOptions;
 use crate::sandboxing::ExecServerEnvConfig;
@@ -61,7 +59,7 @@ use std::path::PathBuf;
 use std::time::Duration;
 use tokio_util::sync::CancellationToken;
 
-// Allow 5s for Guardian cleanup and 5s for controller processing after review.
+// Allow 5s for review cleanup and 5s for controller processing after review.
 const REMOTE_NETWORK_POLICY_DECISION_MARGIN: Duration = Duration::from_secs(10);
 
 /// Request payload used by the unified-exec runtime after approvals and
@@ -239,10 +237,10 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
         Some(NetworkApprovalSpec {
             network,
             tool_name: ctx.tool_name.clone(),
-            trigger: GuardianNetworkAccessTrigger {
+            trigger: NetworkApprovalTrigger {
                 call_id: ctx.call_id.clone(),
                 tool_name: flat_tool_name(&ctx.tool_name).into_owned(),
-                command: req.command.clone(),
+                command: req.command.join(" "),
                 cwd: req.cwd.clone(),
                 sandbox_permissions: req.sandbox_permissions,
                 additional_permissions: req.additional_permissions.clone(),
@@ -354,25 +352,6 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
                 let mut launch = network.remote_launch_config().await.map_err(|err| {
                     ToolError::Codex(CodexErr::Io(io::Error::other(err.to_string())))
                 })?;
-                if routes_approval_policy_to_guardian(
-                    ctx.step_context.settings.approval_policy(),
-                    ctx.step_context.settings.approvals_reviewer(),
-                ) && network.remote_policy_decider().is_some()
-                {
-                    let timeout = ctx
-                        .session
-                        .hooks()
-                        .max_permission_request_timeout()
-                        .saturating_add(GUARDIAN_REVIEW_TIMEOUT)
-                        .saturating_add(REMOTE_NETWORK_POLICY_DECISION_MARGIN);
-                    launch.policy_decision_timeout_ms =
-                        Some(u64::try_from(timeout.as_millis()).map_err(|_| {
-                            ToolError::Rejected(
-                                "remote network policy decision timeout exceeds protocol limit"
-                                    .to_string(),
-                            )
-                        })?);
-                }
                 if !launch.proxy.enabled {
                     (env, None, None)
                 } else {

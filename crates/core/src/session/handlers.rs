@@ -10,7 +10,6 @@ use crate::session::turn_input;
 
 use crate::config::Config;
 use crate::context::ContextualUserFragment;
-use crate::context::GuardianApprovedAction;
 use crate::review_prompts::resolve_review_request;
 use crate::session::spawn_review_thread;
 use crate::tasks::CompactTask;
@@ -21,8 +20,6 @@ use codex_protocol::protocol::CodexErrorInfo;
 use codex_protocol::protocol::ErrorEvent;
 use codex_protocol::protocol::Event;
 use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::GuardianAssessmentEvent;
-use codex_protocol::protocol::GuardianAssessmentStatus;
 use codex_protocol::protocol::InterAgentCommunication;
 use codex_protocol::protocol::Op;
 use codex_protocol::protocol::ReviewDecision;
@@ -530,10 +527,6 @@ pub(super) async fn submission_loop(
                     review(&sess, &config, sub.id.clone(), review_request).await;
                     false
                 }
-                Op::ApproveGuardianDeniedAction { event } => {
-                    approve_guardian_denied_action(&sess, event).await;
-                    false
-                }
                 _ => false, // Ignore unknown ops; enum is non_exhaustive to allow extensions.
             }
         }
@@ -555,34 +548,6 @@ pub(super) async fn submission_loop(
         }
     }
     debug!("Agent loop exited");
-}
-
-async fn approve_guardian_denied_action(sess: &Arc<Session>, event: GuardianAssessmentEvent) {
-    if event.status != GuardianAssessmentStatus::Denied {
-        warn!(
-            review_id = event.id.as_str(),
-            "ignoring approval for non-denied Guardian assessment"
-        );
-        return;
-    }
-
-    let approved_action = serde_json::json!({
-        "action": &event.action,
-        "outcome": "allowed",
-    });
-    let approved_action_json = match serde_json::to_string_pretty(&approved_action) {
-        Ok(approved_action_json) => approved_action_json,
-        Err(error) => {
-            warn!(%error, review_id = event.id.as_str(), "failed to serialize approved Guardian action");
-            return;
-        }
-    };
-    let items = vec![ContextualUserFragment::into(GuardianApprovedAction::new(
-        approved_action_json,
-    ))];
-
-    sess.inject_no_new_turn(items, /*current_turn_context*/ None)
-        .await;
 }
 
 pub(super) fn submission_dispatch_span(sub: &Submission) -> tracing::Span {

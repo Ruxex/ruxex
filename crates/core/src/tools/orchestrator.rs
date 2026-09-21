@@ -7,7 +7,7 @@ retry with an escalated sandbox strategy on denial (no re‑approval thanks to
 caching).
 */
 use crate::config::NetworkProxySpec;
-use crate::guardian::GuardianReviewContext;
+use crate::tools::approvals::ApprovalReviewContext;
 use crate::network_policy_decision::network_approval_context_from_payload;
 use crate::tools::approvals::ApprovalContext;
 use crate::tools::flat_tool_name;
@@ -133,11 +133,6 @@ impl ToolOrchestrator {
         let otel = turn_ctx.session_telemetry.clone();
         let otel_tn = flat_tool_name(&tool_ctx.tool_name).into_owned();
         let otel_ci = &tool_ctx.call_id;
-        let strict_auto_review = tool_ctx
-            .session
-            .active_turn_context_and_strict_auto_review()
-            .await
-            .is_some_and(|(_, _, strict_auto_review)| strict_auto_review);
         // 1) Approval
         let mut already_approved = false;
 
@@ -177,35 +172,12 @@ impl ToolOrchestrator {
         });
         match &requirement {
             ExecApprovalRequirement::Skip { .. } => {
-                if strict_auto_review {
-                    let action = tool
-                        .approval_action(req, &tool_ctx.call_id)
-                        .map_err(|err| {
-                            ToolError::Rejected(format!("could not prepare approval action: {err}"))
-                        })?;
-                    let approval_ctx = ApprovalContext {
-                        review_context: GuardianReviewContext::from(&tool_ctx.step_context),
-                        cancellation_token: Some(tool_ctx.cancellation_token.clone()),
-                        call_id: tool_ctx.call_id.clone(),
-                        tool_name: tool_ctx.tool_name.clone(),
-                        strict_auto_review,
-                        approval_reason: None,
-                        retry_reason: None,
-                        network_approval_context: None,
-                    };
-                    tool_ctx
-                        .session
-                        .request_approval(action, approval_ctx)
-                        .await?;
-                    already_approved = true;
-                } else {
-                    otel.tool_decision(
-                        &tool_ctx.tool_name,
-                        otel_ci,
-                        &ReviewDecision::Approved,
-                        Some(ToolDecisionSource::Config),
-                    );
-                }
+                otel.tool_decision(
+                    &tool_ctx.tool_name,
+                    otel_ci,
+                    &ReviewDecision::Approved,
+                    Some(ToolDecisionSource::Config),
+                );
             }
             ExecApprovalRequirement::Forbidden { reason } => {
                 return Err(ToolError::Rejected(reason.clone()));
@@ -217,11 +189,10 @@ impl ToolOrchestrator {
                         ToolError::Rejected(format!("could not prepare approval action: {err}"))
                     })?;
                 let approval_ctx = ApprovalContext {
-                    review_context: GuardianReviewContext::from(&tool_ctx.step_context),
+                    review_context: ApprovalReviewContext::from(&tool_ctx.step_context),
                     cancellation_token: Some(tool_ctx.cancellation_token.clone()),
                     call_id: tool_ctx.call_id.clone(),
                     tool_name: tool_ctx.tool_name.clone(),
-                    strict_auto_review,
                     approval_reason: reason.clone(),
                     retry_reason: None,
                     network_approval_context: None,
@@ -414,10 +385,7 @@ impl ToolOrchestrator {
                         build_denial_reason_from_output(output.as_ref())
                     };
 
-                // Strict auto-review approval covers the sandboxed attempt only;
-                // retrying without the sandbox requires a fresh guardian review.
-                let bypass_retry_approval = !strict_auto_review
-                    && tool.should_bypass_approval(approval_policy, already_approved)
+                let bypass_retry_approval = tool.should_bypass_approval(approval_policy, already_approved)
                     && network_approval_context.is_none();
                 if !bypass_retry_approval {
                     let approval_reason = match &requirement {
@@ -431,11 +399,10 @@ impl ToolOrchestrator {
                             ToolError::Rejected(format!("could not prepare approval action: {err}"))
                         })?;
                     let approval_ctx = ApprovalContext {
-                        review_context: GuardianReviewContext::from(&tool_ctx.step_context),
+                        review_context: ApprovalReviewContext::from(&tool_ctx.step_context),
                         cancellation_token: Some(tool_ctx.cancellation_token.clone()),
                         call_id: tool_ctx.call_id.clone(),
                         tool_name: tool_ctx.tool_name.clone(),
-                        strict_auto_review,
                         approval_reason,
                         retry_reason: Some(retry_reason),
                         network_approval_context: network_approval_context.clone(),

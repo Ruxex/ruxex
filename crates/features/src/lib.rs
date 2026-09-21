@@ -22,10 +22,6 @@ pub use feature_configs::ContextManagementConfigToml;
 pub use feature_configs::CurrentTimeReminderConfigToml;
 pub use feature_configs::CurrentTimeReminderDeliveryMode;
 pub use feature_configs::CurrentTimeSource;
-pub use feature_configs::GuardianV2ConfigToml;
-pub use feature_configs::GuardianV2ReviewScopeConfigToml;
-pub use feature_configs::GuardianV2TranscriptConfigToml;
-pub use feature_configs::GuardianV2TranscriptSource;
 pub use feature_configs::MultiAgentV2ConfigToml;
 pub use feature_configs::NetworkProxyConfigToml;
 pub use feature_configs::NetworkProxyDomainPermissionToml;
@@ -298,21 +294,6 @@ pub enum Feature {
     SendAsyncMessage,
     /// Allow root agents to send async user messages without model catalog support.
     SendMessageToUserAsync,
-    /// Enable automatic review for approval prompts.
-    GuardianApproval,
-    /// Select thread-owned context for both Guardian reviewers.
-    /// Read once from the thread's fixed feature set when Guardian evidence is initialized.
-    GuardianThreadContext,
-    /// Reuse encrypted parent compaction when restarting Guardian review sessions.
-    GuardianReuseParentCompaction,
-    /// Include completed node_repl or cua_repl Code Mode responses in Guardian reviews.
-    GuardianEnhancedNodeReplTranscripts,
-    /// Include completed node_repl or cua_repl Code Mode response images in Guardian reviews.
-    GuardianNodeReplTranscriptImages,
-    /// Enable Guardian V2 automatic approval reviews.
-    GuardianV2,
-    /// Removed compatibility flag for the unused Guardian extension prototype.
-    GuardianExt,
     /// Enable persisted thread goals and automatic goal continuation.
     Goals,
     /// Add current context-window metadata to model-visible context.
@@ -746,12 +727,6 @@ pub struct FeaturesToml {
     pub code_mode_host: Option<FeatureToml<CodeModeHostConfigToml>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub non_prefixed_mcp_tool_names: Option<FeatureToml<NonPrefixedMcpToolNamesConfigToml>>,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        deserialize_with = "feature_configs::deserialize_guardian_v2_feature"
-    )]
-    pub guardianv2: Option<FeatureToml<GuardianV2ConfigToml>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub multi_agent_v2: Option<FeatureToml<MultiAgentV2ConfigToml>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -792,14 +767,6 @@ impl FeaturesToml {
             .and_then(FeatureToml::enabled)
         {
             entries.insert(Feature::NonPrefixedMcpToolNames.key().to_string(), enabled);
-        }
-        if let Some(enabled) = self.guardianv2.as_ref().and_then(FeatureToml::enabled) {
-            entries.insert(Feature::GuardianV2.key().to_string(), enabled);
-        }
-        if let Some(FeatureToml::Config(config)) = &self.guardianv2
-            && let Some(enabled) = config.thread_context
-        {
-            entries.insert(Feature::GuardianThreadContext.key().to_string(), enabled);
         }
         if let Some(enabled) = self.multi_agent_v2.as_ref().and_then(FeatureToml::enabled) {
             entries.insert(Feature::MultiAgentV2.key().to_string(), enabled);
@@ -1518,48 +1485,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         id: Feature::TerminalVisualizationInstructions,
         key: "terminal_visualization_instructions",
         stage: Stage::UnderDevelopment,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::GuardianApproval,
-        key: "guardian_approval",
-        stage: Stage::Stable,
-        default_enabled: true,
-    },
-    FeatureSpec {
-        id: Feature::GuardianThreadContext,
-        key: "guardianv2.thread_context",
-        stage: Stage::UnderDevelopment,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::GuardianReuseParentCompaction,
-        key: "guardian_reuse_parent_compaction",
-        stage: Stage::UnderDevelopment,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::GuardianEnhancedNodeReplTranscripts,
-        key: "guardian_enhanced_node_repl_transcripts",
-        stage: Stage::UnderDevelopment,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::GuardianNodeReplTranscriptImages,
-        key: "guardian_node_repl_transcript_images",
-        stage: Stage::UnderDevelopment,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::GuardianV2,
-        key: "guardianv2",
-        stage: Stage::UnderDevelopment,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::GuardianExt,
-        key: "guardian_ext",
-        stage: Stage::Removed,
         default_enabled: false,
     },
     FeatureSpec {

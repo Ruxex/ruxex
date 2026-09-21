@@ -7,7 +7,6 @@ use crate::error_code::invalid_request;
 use crate::outgoing_message::ConnectionRequestId;
 use crate::outgoing_message::OutgoingMessageSender;
 use codex_app_server_protocol::AllowDenyRequirement;
-use codex_app_server_protocol::AutoReviewRequirements;
 use codex_app_server_protocol::BrowserUseAccessApprovalLifetime;
 use codex_app_server_protocol::BrowserUseOriginPolicy;
 use codex_app_server_protocol::BrowserUseRequirements;
@@ -403,12 +402,6 @@ fn map_requirements_to_api(
                 .map(codex_app_server_protocol::AskForApproval::from)
                 .collect()
         }),
-        allowed_approvals_reviewers: requirements.allowed_approvals_reviewers.map(|reviewers| {
-            reviewers
-                .into_iter()
-                .map(codex_app_server_protocol::ApprovalsReviewer::from)
-                .collect()
-        }),
         allowed_sandbox_modes: requirements.allowed_sandbox_modes.map(|modes| {
             modes
                 .into_iter()
@@ -467,12 +460,6 @@ fn map_requirements_to_api(
             .enforce_residency
             .map(map_residency_requirement_to_api),
         network: requirements.network.map(map_network_requirements_to_api),
-        auto_review: requirements
-            .auto_review
-            .map(|auto_review| AutoReviewRequirements {
-                required_on_models: auto_review.required_on_models,
-                ignore_rules: auto_review.ignore_rules,
-            }),
         models: requirements.models.map(|models| ModelsRequirements {
             new_thread: models.new_thread.map(|new_thread| NewThreadModelDefaults {
                 model: new_thread.model,

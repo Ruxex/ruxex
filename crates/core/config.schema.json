@@ -112,15 +112,6 @@
       ],
       "type": "string"
     },
-    "ApprovalsReviewer": {
-      "description": "Configures who approval requests are routed to for review. Examples include sandbox escapes, blocked network access, MCP approval prompts, and ARC escalations. Defaults to `user`. `auto_review` uses a carefully prompted subagent to gather relevant context and apply a risk-based decision framework before approving or denying the request. The legacy value `guardian_subagent` is accepted for compatibility.",
-      "enum": [
-        "user",
-        "auto_review",
-        "guardian_subagent"
-      ],
-      "type": "string"
-    },
     "AskForApproval": {
       "description": "Determines the conditions under which the user is consulted to approve running the command proposed by Codex.",
       "oneOf": [
@@ -204,19 +195,6 @@
           "type": "string"
         }
       ]
-    },
-    "AutoReviewToml": {
-      "properties": {
-        "experimental_policy_template": {
-          "description": "Experimental full Guardian prompt template containing the tenant policy placeholder.",
-          "type": "string"
-        },
-        "policy": {
-          "description": "Additional policy instructions inserted into the guardian prompt.",
-          "type": "string"
-        }
-      },
-      "type": "object"
     },
     "AwsAuthRefreshConfig": {
       "additionalProperties": false,
@@ -439,9 +417,6 @@
         "approval_policy": {
           "$ref": "#/definitions/AskForApproval"
         },
-        "approvals_reviewer": {
-          "$ref": "#/definitions/ApprovalsReviewer"
-        },
         "chatgpt_base_url": {
           "type": "string"
         },
@@ -590,24 +565,6 @@
             },
             "goals": {
               "type": "boolean"
-            },
-            "guardian_approval": {
-              "type": "boolean"
-            },
-            "guardian_enhanced_node_repl_transcripts": {
-              "type": "boolean"
-            },
-            "guardian_ext": {
-              "type": "boolean"
-            },
-            "guardian_node_repl_transcript_images": {
-              "type": "boolean"
-            },
-            "guardian_reuse_parent_compaction": {
-              "type": "boolean"
-            },
-            "guardianv2": {
-              "$ref": "#/definitions/FeatureToml_for_GuardianV2ConfigToml"
             },
             "hooks": {
               "type": "boolean"
@@ -1175,16 +1132,6 @@
         }
       ]
     },
-    "FeatureToml_for_GuardianV2ConfigToml": {
-      "anyOf": [
-        {
-          "type": "boolean"
-        },
-        {
-          "$ref": "#/definitions/GuardianV2ConfigToml"
-        }
-      ]
-    },
     "FeatureToml_for_MultiAgentV2ConfigToml": {
       "anyOf": [
         {
@@ -1352,142 +1299,6 @@
         "sandbox_approval"
       ],
       "type": "object"
-    },
-    "GuardianV2ConfigToml": {
-      "additionalProperties": false,
-      "description": "User-configurable prompt, approval, and context settings for Guardian v2.",
-      "properties": {
-        "classifier_instructions": {
-          "type": "string"
-        },
-        "enabled": {
-          "type": "boolean"
-        },
-        "free_guardian": {
-          "description": "Legacy setting retained for config compatibility; the backend now controls Guardian billing.",
-          "type": "boolean"
-        },
-        "max_action_tokens": {
-          "format": "uint",
-          "maximum": 100000.0,
-          "minimum": 100.0,
-          "type": "integer"
-        },
-        "max_classifier_instruction_tokens": {
-          "format": "uint",
-          "maximum": 100000.0,
-          "minimum": 100.0,
-          "type": "integer"
-        },
-        "max_parent_compaction_tokens": {
-          "format": "uint",
-          "maximum": 100000.0,
-          "minimum": 100.0,
-          "type": "integer"
-        },
-        "max_tool_call_lag": {
-          "format": "uint",
-          "minimum": 0.0,
-          "type": "integer"
-        },
-        "persist_scores": {
-          "description": "Persist reviewed actions and risk scores to rollout files for debugging.",
-          "type": "boolean"
-        },
-        "reasoning_effort": {
-          "$ref": "#/definitions/ReasoningEffort"
-        },
-        "reuse_parent_compaction": {
-          "type": "boolean"
-        },
-        "review_scope": {
-          "$ref": "#/definitions/GuardianV2ReviewScopeConfigToml"
-        },
-        "review_threshold": {
-          "format": "double",
-          "maximum": 1.0,
-          "minimum": 0.0,
-          "type": "number"
-        },
-        "thread_context": {
-          "description": "Use thread-owned context for sync and async Guardian. Defaults to false. Independent of the Guardian v2 `enabled` toggle.",
-          "type": "boolean"
-        },
-        "transcript": {
-          "$ref": "#/definitions/GuardianV2TranscriptConfigToml"
-        }
-      },
-      "type": "object"
-    },
-    "GuardianV2ReviewScopeConfigToml": {
-      "additionalProperties": false,
-      "description": "Optional tool-call categories available to the Guardian v2 classifier.",
-      "properties": {
-        "computer_use_only": {
-          "description": "Restrict asynchronous classification and fast approvals to browser and computer-use tools.",
-          "type": "boolean"
-        },
-        "sandboxed_exec_commands": {
-          "description": "Include sandboxed shell command calls in Guardian v2 classification.",
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
-    "GuardianV2TranscriptConfigToml": {
-      "additionalProperties": false,
-      "description": "Bounds and optional sources for the Guardian v2 conversation transcript.",
-      "properties": {
-        "include_images": {
-          "description": "Include recent screenshots from messages and configured tool outputs.",
-          "type": "boolean"
-        },
-        "max_message_entry_tokens": {
-          "format": "uint",
-          "maximum": 100000.0,
-          "minimum": 100.0,
-          "type": "integer"
-        },
-        "max_message_transcript_tokens": {
-          "format": "uint",
-          "maximum": 100000.0,
-          "minimum": 100.0,
-          "type": "integer"
-        },
-        "max_recent_non_user_entries": {
-          "format": "uint",
-          "minimum": 1.0,
-          "type": "integer"
-        },
-        "max_tool_entry_tokens": {
-          "format": "uint",
-          "maximum": 100000.0,
-          "minimum": 100.0,
-          "type": "integer"
-        },
-        "max_tool_transcript_tokens": {
-          "format": "uint",
-          "maximum": 100000.0,
-          "minimum": 100.0,
-          "type": "integer"
-        },
-        "sources": {
-          "items": {
-            "$ref": "#/definitions/GuardianV2TranscriptSource"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
-    "GuardianV2TranscriptSource": {
-      "description": "Optional conversation sources available to the Guardian v2 classifier.",
-      "enum": [
-        "tool_calls",
-        "tool_outputs",
-        "reasoning"
-      ],
-      "type": "string"
     },
     "History": {
       "additionalProperties": false,
@@ -5783,23 +5594,6 @@
       ],
       "description": "Default approval policy for executing commands."
     },
-    "approvals_reviewer": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/ApprovalsReviewer"
-        }
-      ],
-      "description": "Configures who approval requests are routed to for review once they have been escalated. This does not disable separate safety checks such as ARC."
-    },
-    "auto_review": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/AutoReviewToml"
-        }
-      ],
-      "default": null,
-      "description": "Optional policy instructions for the guardian auto-reviewer."
-    },
     "background_terminal_max_timeout": {
       "description": "Maximum poll window for background terminal output (`write_stdin`), in milliseconds. Default: `300000` (5 minutes).",
       "format": "uint64",
@@ -6005,24 +5799,6 @@
         },
         "goals": {
           "type": "boolean"
-        },
-        "guardian_approval": {
-          "type": "boolean"
-        },
-        "guardian_enhanced_node_repl_transcripts": {
-          "type": "boolean"
-        },
-        "guardian_ext": {
-          "type": "boolean"
-        },
-        "guardian_node_repl_transcript_images": {
-          "type": "boolean"
-        },
-        "guardian_reuse_parent_compaction": {
-          "type": "boolean"
-        },
-        "guardianv2": {
-          "$ref": "#/definitions/FeatureToml_for_GuardianV2ConfigToml"
         },
         "hooks": {
           "type": "boolean"
@@ -6627,10 +6403,6 @@
       },
       "description": "Bounded, product-owned metadata attached to every Responses API request.",
       "type": "object"
-    },
-    "review_model": {
-      "description": "Review model override used by the `/review` feature.",
-      "type": "string"
     },
     "sandbox_mode": {
       "allOf": [

@@ -1,7 +1,6 @@
 use crate::config::NetworkProxySpec;
 use crate::environment_selection::TurnEnvironmentSnapshot;
-use crate::guardian::GuardianNetworkAccessTrigger;
-use crate::guardian::GuardianReviewContext;
+use crate::tools::approvals::ApprovalReviewContext;
 use crate::network_policy_decision::denied_network_policy_message;
 use crate::session::session::Session;
 use crate::session::turn_context::TurnContext;
@@ -25,6 +24,7 @@ use codex_protocol::approvals::NetworkApprovalContext;
 use codex_protocol::approvals::NetworkApprovalProtocol;
 use codex_protocol::approvals::NetworkPolicyRuleAction;
 use codex_protocol::models::PermissionProfile;
+use codex_protocol::models::AdditionalPermissionProfile;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::Event;
 use codex_protocol::protocol::EventMsg;
@@ -32,6 +32,8 @@ use codex_protocol::protocol::ReviewDecision;
 use codex_protocol::protocol::WarningEvent;
 use codex_sandboxing::record_network_sandbox_violation;
 use codex_tools::ToolName;
+use crate::sandboxing::SandboxPermissions;
+use codex_utils_path_uri::PathUri;
 use indexmap::IndexMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -51,11 +53,23 @@ use uuid::Uuid;
 const ABANDONED_NETWORK_APPROVAL_MESSAGE: &str =
     "network approval was cancelled before a decision was returned";
 
+#[derive(Clone, Debug)]
+pub(crate) struct NetworkApprovalTrigger {
+    pub call_id: String,
+    pub tool_name: String,
+    pub command: String,
+    pub cwd: PathUri,
+    pub sandbox_permissions: SandboxPermissions,
+    pub additional_permissions: Option<AdditionalPermissionProfile>,
+    pub justification: Option<String>,
+    pub tty: Option<bool>,
+}
+
 #[derive(Debug)]
 pub(crate) struct NetworkApprovalSpec {
     pub network: Option<NetworkProxy>,
-    pub trigger: GuardianNetworkAccessTrigger,
-    /// Preserve the typed identity independently of Guardian's display-name payload.
+    pub trigger: NetworkApprovalTrigger,
+    /// Preserve the typed identity independently of the display-name payload.
     pub tool_name: ToolName,
     pub command: String,
     pub environment_id: String,
@@ -237,7 +251,7 @@ impl PendingHostApproval {
 struct ActiveNetworkApprovalCall {
     registration_id: String,
     turn_id: String,
-    trigger: GuardianNetworkAccessTrigger,
+    trigger: NetworkApprovalTrigger,
     tool_name: ToolName,
     command: String,
     environment_id: String,
@@ -647,11 +661,11 @@ impl NetworkApprovalService {
         {
             return NetworkDecision::deny(REASON_NOT_ALLOWED);
         }
-        let active_turn = session.active_turn_context_and_strict_auto_review().await;
+        let active_turn = session.active_turn_context_and_settings().await;
         let Some(environment_id) = active_environment_id.or_else(|| {
             active_turn
                 .as_ref()
-                .and_then(|(turn_context, _, _)| turn_context.environments.primary())
+                .and_then(|(turn_context, _)| turn_context.environments.primary())
                 .map(|environment| environment.selection.environment_id.clone())
         }) else {
             return NetworkDecision::deny(REASON_NOT_ALLOWED);
@@ -678,7 +692,7 @@ impl NetworkApprovalService {
             format!("Network access to \"{target}\" was blocked by policy.");
         let prompt_reason = format!("{} is not in the allowed_domains", request.host);
 
-        let Some((turn_context, step_settings, strict_auto_review)) = active_turn else {
+        let Some((turn_context, step_settings)) = active_turn else {
             if let Some(owner_call) = owner_call.as_ref() {
                 self.record_call_outcome(&owner_call.registration_id, policy_denial_message);
             }
@@ -725,7 +739,7 @@ impl NetworkApprovalService {
             pending_owner.complete(PendingApprovalDecision::Deny);
             return NetworkDecision::deny(REASON_NOT_ALLOWED);
         }
-        let review_context = GuardianReviewContext::from_resolved_settings(
+        let review_context = ApprovalReviewContext::from_resolved_settings(
             Arc::clone(&turn_context),
             &step_settings,
             // Review this new request under current settings, in its originating execution's
@@ -746,10 +760,10 @@ impl NetworkApprovalService {
             host: request.host.clone(),
             protocol,
         };
-        let guardian_approval_id = Self::approval_id_for_key(&key);
+        let approval_id = Self::approval_id_for_key(&key);
         let hook_run_id_suffix = owner_call.as_ref().map_or_else(
-            || guardian_approval_id.clone(),
-            |call| format!("{guardian_approval_id}#{}", call.registration_id),
+            || approval_id.clone(),
+            |call| format!("{approval_id}#{}", call.registration_id),
         );
         let prompt_command = vec!["network-access".to_string(), target.clone()];
         let command = owner_call
@@ -771,7 +785,7 @@ impl NetworkApprovalService {
                     turn_context.cwd.clone()
                 })
         };
-        let approval_call_id = format!("{guardian_approval_id}#{}", Uuid::new_v4());
+        let approval_call_id = format!("{approval_id}#{}", Uuid::new_v4());
         let telemetry_call_id = owner_call.as_ref().map_or_else(
             || Uuid::new_v4().to_string(),
             |call| call.trigger.call_id.clone(),
@@ -781,14 +795,13 @@ impl NetworkApprovalService {
             |call| call.tool_name.clone(),
         );
         let action = ApprovalAction::NetworkAccess {
-            id: guardian_approval_id,
+            id: approval_id,
             turn_id: turn_context.sub_id.clone(),
             environment_id,
             target,
             host: request.host.clone(),
             protocol,
             port: key.port,
-            trigger: owner_call.as_ref().map(|call| call.trigger.clone()),
             hook_command: command,
             hook_run_id: hook_run_id_suffix,
             command: prompt_command,
@@ -799,7 +812,6 @@ impl NetworkApprovalService {
             cancellation_token: None,
             call_id: approval_call_id,
             tool_name: telemetry_tool_name.clone(),
-            strict_auto_review,
             approval_reason: Some(prompt_reason),
             retry_reason: Some(policy_denial_message.clone()),
             network_approval_context: Some(network_approval_context.clone()),

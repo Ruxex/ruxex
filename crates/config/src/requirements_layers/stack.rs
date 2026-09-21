@@ -12,7 +12,6 @@
 //!   active managed-dir conflicts.
 //! - `permissions.filesystem.deny_read` is a high-priority-first union across
 //!   layers.
-//! - `auto_review.required_on_models` is a high-priority-first union across layers.
 
 use crate::ConfigRequirementsToml;
 use crate::ConfigRequirementsWithSources;
@@ -28,7 +27,6 @@ use super::hooks::HookDirectoryField;
 use super::hooks::HookMergeState;
 use super::layer::ComposableRequirementsLayer;
 use super::layer::RequirementsLayerEntry;
-use super::models::AutoReviewModelsMergeState;
 use super::permissions::DenyReadMergeState;
 
 #[derive(Debug, Error, PartialEq, Eq)]
@@ -167,7 +165,6 @@ impl RequirementsLayerStack {
         let mut hooks = HookMergeState::new(hook_directory_field);
         let mut hooks_output = None;
         let mut deny_read = DenyReadMergeState::default();
-        let mut auto_review_models = AutoReviewModelsMergeState::default();
         // Regular TOML fields are folded low-to-high like config. These custom
         // fields append or union values, so process them high-to-low to keep
         // priority order visible in the output.
@@ -180,12 +177,10 @@ impl RequirementsLayerStack {
                 &layer.source,
             )?;
             deny_read.merge(domain_fields.permissions.clone(), &layer.source);
-            auto_review_models.merge(domain_fields.auto_review.clone(), &layer.source);
         }
         output.rules = rules;
         output.hooks = hooks_output;
         deny_read.apply_to(&mut output.permissions);
-        auto_review_models.apply_to(&mut output.auto_review);
 
         let output_is_empty = output.clone().into_toml().is_empty();
         Ok((!output_is_empty).then_some(output))
@@ -223,7 +218,6 @@ fn populate_merged_regular_fields_with_sources(
         check_for_update_on_startup,
         allow_login_shell,
         allowed_approval_policies,
-        allowed_approvals_reviewers,
         allowed_sandbox_modes,
         allowed_permission_profiles,
         default_permissions,
@@ -246,10 +240,8 @@ fn populate_merged_regular_fields_with_sources(
         network,
         application,
         permissions,
-        auto_review,
         models,
         additional_developer_instructions,
-        guardian_policy_config,
     } = requirements;
 
     set_sourced!(allowed_login_methods, &["allowed_login_methods"]);
@@ -267,10 +259,6 @@ fn populate_merged_regular_fields_with_sources(
     );
     set_sourced!(allow_login_shell, &["allow_login_shell"]);
     set_sourced!(allowed_approval_policies, &["allowed_approval_policies"]);
-    set_sourced!(
-        allowed_approvals_reviewers,
-        &["allowed_approvals_reviewers"]
-    );
     set_sourced!(allowed_sandbox_modes, &["allowed_sandbox_modes"]);
     set_sourced!(
         allowed_permission_profiles,
@@ -284,7 +272,6 @@ fn populate_merged_regular_fields_with_sources(
         &["allow_browser_and_computer_use"]
     );
     set_sourced!(allow_appshots, &["allow_appshots"]);
-    set_sourced!(auto_review, &["auto_review"]);
     set_sourced!(computer_use, &["computer_use"]);
     set_sourced!(browser_use, &["browser_use"]);
     set_sourced!(in_app_browser, &["in_app_browser"]);
@@ -303,14 +290,6 @@ fn populate_merged_regular_fields_with_sources(
         &["additional_developer_instructions"]
     );
 
-    if let Some(guardian_policy_config) =
-        guardian_policy_config.filter(|value| !value.trim().is_empty())
-    {
-        output.guardian_policy_config = Some(Sourced::new(
-            guardian_policy_config,
-            source_for_top_level_keys(layers, &["guardian_policy_config"]),
-        ));
-    }
 }
 
 fn source_for_top_level_keys(

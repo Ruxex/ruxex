@@ -40,7 +40,6 @@ impl Session {
         current.cwd() != next.cwd()
             || current.step_settings.approval_policy.value()
                 != next.step_settings.approval_policy.value()
-            || current.step_settings.approvals_reviewer != next.step_settings.approvals_reviewer
             || current.permission_profile() != next.permission_profile()
             || current.windows_sandbox_level != next.windows_sandbox_level
             || updates.environments.as_ref().is_some_and(|environments| {

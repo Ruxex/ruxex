@@ -7,7 +7,6 @@ use codex_config::ConfigRequirements;
 use codex_models_manager::ModelsManagerConfig;
 use codex_models_manager::manager::ModelsManager;
 use codex_otel::SessionTelemetry;
-use codex_protocol::config_types::ApprovalsReviewer;
 use codex_protocol::config_types::CollaborationMode;
 use codex_protocol::config_types::Personality;
 use codex_protocol::config_types::ReasoningSummary;
@@ -30,7 +29,6 @@ pub(crate) struct StepSettings {
     pub(crate) service_tier: Option<String>,
     pub(crate) personality: Option<Personality>,
     pub(crate) approval_policy: Constrained<AskForApproval>,
-    pub(crate) approvals_reviewer: ApprovalsReviewer,
 }
 
 /// Immutable configured choices, pinned model metadata, and effective request values.
@@ -47,9 +45,6 @@ pub(crate) struct ResolvedStepSettings {
     pub(crate) reasoning_summary: ReasoningSummary,
     /// Tier sent on requests, filtered by feature and model support.
     pub(crate) service_tier: Option<String>,
-    /// MCP historically follows refreshed thread defaults. Preserve that behavior
-    /// for older clients until this turn receives an explicit live reviewer update.
-    pub(crate) mcp_approvals_reviewer_override: Option<ApprovalsReviewer>,
 }
 
 impl ResolvedStepSettings {
@@ -72,7 +67,6 @@ impl ResolvedStepSettings {
             model_info,
             reasoning_summary,
             service_tier,
-            mcp_approvals_reviewer_override: None,
         }
     }
 
@@ -98,10 +92,6 @@ impl ResolvedStepSettings {
 
     pub(crate) fn approval_policy(&self) -> AskForApproval {
         self.selected.approval_policy.value()
-    }
-
-    pub(crate) fn approvals_reviewer(&self) -> ApprovalsReviewer {
-        self.selected.approvals_reviewer
     }
 
     /// Retained inputs for constructing a snapshot against different model metadata.
@@ -141,9 +131,6 @@ impl ResolvedStepSettings {
             Arc::new(selected.resolve_model_info(models_manager, overrides).await)
         };
         let mut next = Self::new(Arc::new(selected), model_info, fast_mode_enabled);
-        next.mcp_approvals_reviewer_override = update
-            .approvals_reviewer
-            .or(self.mcp_approvals_reviewer_override);
         Ok(next)
     }
 
@@ -160,11 +147,7 @@ impl ResolvedStepSettings {
         constraints
             .requirements
             .approval_policy
-            .can_set(&self.approval_policy())?;
-        constraints
-            .requirements
-            .approvals_reviewer
-            .can_set(&self.approvals_reviewer())
+            .can_set(&self.approval_policy())
     }
 
     pub(super) fn telemetry(&self, base: &SessionTelemetry) -> SessionTelemetry {
@@ -228,7 +211,6 @@ pub(crate) struct StepSettingsUpdate {
     pub(crate) service_tier: Option<Option<String>>,
     pub(crate) personality: Option<Personality>,
     pub(crate) approval_policy: Option<AskForApproval>,
-    pub(crate) approvals_reviewer: Option<ApprovalsReviewer>,
 }
 
 /// Constraints used when applying and validating a candidate settings version.
@@ -236,8 +218,6 @@ pub(crate) struct StepSettingsUpdate {
 /// environment already admitted for that execution.
 pub(crate) struct StepSettingsConstraints<'a> {
     pub(crate) requirements: &'a ConfigRequirements,
-    pub(crate) guardian_approval_enabled: bool,
-    pub(crate) trusted_guardian_reviewer: bool,
     pub(crate) has_full_disk_write_access: bool,
 }
 
@@ -289,26 +269,6 @@ impl StepSettings {
         if let Some(approval_policy) = update.approval_policy {
             next.approval_policy.set(approval_policy)?;
         }
-        if let Some(approvals_reviewer) = update.approvals_reviewer {
-            constraints
-                .requirements
-                .approvals_reviewer
-                .can_set(&approvals_reviewer)?;
-            next.approvals_reviewer = approvals_reviewer;
-        }
-        if !constraints.trusted_guardian_reviewer
-            && self.collaboration_mode.model() != next.collaboration_mode.model()
-            && constraints
-                .requirements
-                .auto_review_required_for_model(next.collaboration_mode.model())
-            && update.approvals_reviewer.is_none()
-        {
-            constraints
-                .requirements
-                .approvals_reviewer
-                .can_set(&ApprovalsReviewer::AutoReview)?;
-            next.approvals_reviewer = ApprovalsReviewer::AutoReview;
-        }
         next.validate(constraints)?;
         Ok(next)
     }
@@ -316,30 +276,9 @@ impl StepSettings {
     /// Checks directly constructed settings or rechecks changed constraints.
     pub(super) fn validate(
         &self,
-        constraints: &StepSettingsConstraints<'_>,
+        _constraints: &StepSettingsConstraints<'_>,
     ) -> ConstraintResult<()> {
-        if constraints.trusted_guardian_reviewer {
-            return Ok(());
-        }
-
-        let model = self.collaboration_mode.model();
-        if !constraints
-            .requirements
-            .auto_review_required_for_model(model)
-        {
-            return Ok(());
-        }
-
-        if self.approvals_reviewer == ApprovalsReviewer::AutoReview
-            && !constraints.has_full_disk_write_access
-            && constraints.guardian_approval_enabled
-        {
-            return Ok(());
-        }
-
-        Err(ConstraintError::AutoReviewRequired {
-            model: model.to_string(),
-        })
+        Ok(())
     }
 }
 

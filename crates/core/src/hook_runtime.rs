@@ -56,7 +56,6 @@ use tracing::instrument;
 use crate::context::ContextualUserFragment;
 use crate::context::HookAdditionalContext;
 use crate::event_mapping::parse_turn_item;
-use crate::guardian::GuardianReviewContext;
 use crate::session::TurnInput;
 use crate::session::session::Session;
 use crate::session::step_context::StepContext;
@@ -243,7 +242,7 @@ pub(crate) async fn run_pre_tool_use_hooks(
 // tool input or post-run state.
 pub(crate) async fn run_permission_request_hooks(
     sess: &Arc<Session>,
-    review_context: &GuardianReviewContext,
+    review_context: &crate::tools::approvals::ApprovalReviewContext,
     run_id_suffix: &str,
     payload: PermissionRequestPayload,
 ) -> Option<PermissionRequestDecision> {

@@ -179,7 +179,6 @@ impl ProcessEntry {
         &self,
         context: &UnifiedExecContext,
         input: &str,
-        strict_auto_review: bool,
     ) -> Result<Option<(ApprovalAction, String)>, UnifiedExecError> {
         if input.is_empty()
             || (!self.tty && input == "\u{3}")
@@ -213,7 +212,7 @@ impl ProcessEntry {
         let sandbox_permissions = permissions
             .review_requirement(&current, environment.permission_profile())
             .map_err(approval_error)?;
-        if sandbox_permissions == SandboxPermissions::UseDefault && !strict_auto_review {
+        if sandbox_permissions == SandboxPermissions::UseDefault {
             return Ok(None);
         }
         // Manual approvals shell-quote the input, which cannot preserve NUL bytes.

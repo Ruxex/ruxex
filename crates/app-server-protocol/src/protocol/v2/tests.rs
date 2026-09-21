@@ -1,7 +1,6 @@
 use super::*;
 use crate::ServerNotification;
 use codex_protocol::approvals::ElicitationRequest as CoreElicitationRequest;
-use codex_protocol::approvals::GuardianAssessmentAction as CoreGuardianAssessmentAction;
 use codex_protocol::config_types::MultiAgentMode;
 use codex_protocol::items::AgentMessageContent;
 use codex_protocol::items::AgentMessageItem;
@@ -170,7 +169,6 @@ fn thread_sources_round_trip_as_scalar_labels() {
     for (source, label) in [
         (ThreadSource::User, "user"),
         (ThreadSource::Subagent, "subagent"),
-        (ThreadSource::GuardianReview, "guardian_review"),
         (
             ThreadSource::Feature("automation".to_string()),
             "automation",
@@ -187,30 +185,6 @@ fn thread_sources_round_trip_as_scalar_labels() {
 
         let core_source: codex_protocol::protocol::ThreadSource = source.clone().into();
         assert_eq!(ThreadSource::from(core_source), source);
-    }
-}
-
-#[test]
-fn approvals_reviewer_serializes_auto_review_and_accepts_legacy_guardian_subagent() {
-    assert_eq!(
-        serde_json::to_string(&ApprovalsReviewer::User).expect("serialize reviewer"),
-        "\"user\""
-    );
-    assert_eq!(
-        serde_json::to_string(&ApprovalsReviewer::AutoReview).expect("serialize reviewer"),
-        "\"auto_review\""
-    );
-
-    for value in ["user", "auto_review", "guardian_subagent"] {
-        let json = format!("\"{value}\"");
-        let reviewer: ApprovalsReviewer =
-            serde_json::from_str(&json).expect("deserialize reviewer");
-        let expected = if value == "user" {
-            ApprovalsReviewer::User
-        } else {
-            ApprovalsReviewer::AutoReview
-        };
-        assert_eq!(expected, reviewer);
     }
 }
 
@@ -323,7 +297,6 @@ fn thread_resume_response_round_trips_initial_turns_page() {
         runtime_workspace_roots: Vec::new(),
         instruction_sources: Vec::new(),
         approval_policy: AskForApproval::OnRequest,
-        approvals_reviewer: ApprovalsReviewer::User,
         sandbox: SandboxPolicy::DangerFullAccess,
         active_permission_profile: None,
         reasoning_effort: None,
@@ -1089,18 +1062,6 @@ fn permissions_request_approval_response_defaults_scope_to_turn() {
     .expect("response should deserialize");
 
     assert_eq!(response.scope, PermissionGrantScope::Turn);
-    assert_eq!(response.strict_auto_review, None);
-}
-
-#[test]
-fn permissions_request_approval_response_accepts_strict_auto_review() {
-    let response = serde_json::from_value::<PermissionsRequestApprovalResponse>(json!({
-        "permissions": {},
-        "strictAutoReview": true,
-    }))
-    .expect("response should deserialize");
-
-    assert_eq!(response.strict_auto_review, Some(true));
 }
 
 #[test]
@@ -2043,7 +2004,6 @@ fn ask_for_approval_granular_is_marked_experimental() {
 fn config_granular_approval_policy_is_marked_experimental() {
     let reason = crate::experimental_api::ExperimentalApi::experimental_reason(&Config {
         model: None,
-        review_model: None,
         model_context_window: None,
         model_auto_compact_token_limit: None,
         model_auto_compact_token_limit_scope: None,
@@ -2055,7 +2015,6 @@ fn config_granular_approval_policy_is_marked_experimental() {
             request_permissions: false,
             mcp_elicitations: true,
         }),
-        approvals_reviewer: None,
         sandbox_mode: None,
         sandbox_workspace_write: None,
         forced_chatgpt_workspace_id: None,
@@ -2080,40 +2039,6 @@ fn config_granular_approval_policy_is_marked_experimental() {
 }
 
 #[test]
-fn config_approvals_reviewer_is_marked_experimental() {
-    let reason = crate::experimental_api::ExperimentalApi::experimental_reason(&Config {
-        model: None,
-        review_model: None,
-        model_context_window: None,
-        model_auto_compact_token_limit: None,
-        model_auto_compact_token_limit_scope: None,
-        model_provider: None,
-        approval_policy: None,
-        approvals_reviewer: Some(ApprovalsReviewer::AutoReview),
-        sandbox_mode: None,
-        sandbox_workspace_write: None,
-        forced_chatgpt_workspace_id: None,
-        forced_login_method: None,
-        web_search: None,
-        tools: None,
-        instructions: None,
-        developer_instructions: None,
-        compact_prompt: None,
-        model_reasoning_effort: None,
-        model_reasoning_summary: None,
-        model_verbosity: None,
-        service_tier: None,
-        metrics: None,
-        browser_use: None,
-        computer_use: None,
-        desktop: None,
-        additional: HashMap::new(),
-    });
-
-    assert_eq!(reason, Some("config/read.approvalsReviewer"));
-}
-
-#[test]
 fn config_requirements_granular_allowed_approval_policy_is_marked_experimental() {
     let reason =
         crate::experimental_api::ExperimentalApi::experimental_reason(&ConfigRequirements {
@@ -2131,7 +2056,6 @@ fn config_requirements_granular_allowed_approval_policy_is_marked_experimental()
                 request_permissions: false,
                 mcp_elicitations: false,
             }]),
-            allowed_approvals_reviewers: None,
             allowed_sandbox_modes: None,
             allowed_windows_sandbox_implementations: None,
             allowed_permission_profiles: None,
@@ -2147,7 +2071,6 @@ fn config_requirements_granular_allowed_approval_policy_is_marked_experimental()
             hooks: None,
             enforce_residency: None,
             network: None,
-            auto_review: None,
             models: None,
             sqlite_home: None,
             log_dir: None,
@@ -2813,91 +2736,6 @@ fn sandbox_policy_rejects_legacy_workspace_write_restricted_read_access_field() 
     }))
     .expect_err("workspace-write policy should reject removed restricted readOnlyAccess field");
     assert!(err.to_string().contains("workspaceWrite.readOnlyAccess"));
-}
-
-#[test]
-fn automatic_approval_review_deserializes_aborted_status() {
-    let review: GuardianApprovalReview = serde_json::from_value(json!({
-        "status": "aborted",
-        "riskLevel": null,
-        "userAuthorization": null,
-        "rationale": null
-    }))
-    .expect("aborted automatic review should deserialize");
-    assert_eq!(
-        review,
-        GuardianApprovalReview {
-            status: GuardianApprovalReviewStatus::Aborted,
-            risk_level: None,
-            user_authorization: None,
-            rationale: None,
-        }
-    );
-}
-
-#[test]
-fn guardian_approval_review_action_round_trips_foreign_command_path() {
-    let value = json!({
-        "type": "command",
-        "source": "shell",
-        "command": r"Remove-Item C:\workspace\example.sqlite",
-        "cwd": r"C:\workspace",
-    });
-    let action: GuardianApprovalReviewAction =
-        serde_json::from_value(value.clone()).expect("guardian review action");
-
-    assert_eq!(
-        action,
-        GuardianApprovalReviewAction::Command {
-            source: GuardianCommandSource::Shell,
-            command: r"Remove-Item C:\workspace\example.sqlite".to_string(),
-            cwd: LegacyAppPathString::from_string(r"C:\workspace"),
-        }
-    );
-    assert_eq!(
-        serde_json::to_value(&action).expect("serialize guardian review action"),
-        value
-    );
-}
-
-#[test]
-fn guardian_stdin_review_action_round_trips_native_and_foreign_paths() {
-    for (cwd_uri, cwd_native) in [
-        ("file:///home/alice/repo", "/home/alice/repo"),
-        (
-            "file:///C:/Users/Alice%20Smith/repo",
-            r"C:\Users\Alice Smith\repo",
-        ),
-        ("file://server/share/repo", r"\\server\share\repo"),
-    ] {
-        let core_action = CoreGuardianAssessmentAction::WriteStdin {
-            approval_id: "stdin-approval".into(),
-            process_id: "42".into(),
-            stdin: "yes\n".into(),
-            cwd: PathUri::parse(cwd_uri).expect("valid cwd URI"),
-        };
-        let action = GuardianApprovalReviewAction::from(core_action.clone());
-        let value = json!({
-            "type": "writeStdin",
-            "approvalId": "stdin-approval",
-            "processId": "42",
-            "stdin": "yes\n",
-            "cwd": cwd_native,
-        });
-
-        assert_eq!(
-            serde_json::to_value(&action).expect("serialize stdin review action"),
-            value,
-        );
-        let deserialized: GuardianApprovalReviewAction =
-            serde_json::from_value(value).expect("deserialize stdin review action");
-        assert_eq!(deserialized, action);
-        assert_eq!(
-            CoreGuardianAssessmentAction::try_from(deserialized)
-                .expect("convert stdin review action"),
-            core_action,
-        );
-    }
 }
 
 #[test]
@@ -4795,7 +4633,6 @@ fn turn_start_params_preserve_explicit_null_service_tier() {
         cwd: None,
         runtime_workspace_roots: None,
         approval_policy: None,
-        approvals_reviewer: None,
         sandbox_policy: None,
         permissions: None,
         model: None,

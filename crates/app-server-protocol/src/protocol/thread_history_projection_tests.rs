@@ -209,7 +209,6 @@ fn ignores_legacy_abort_without_turn_id_and_context_only_records() {
         message: String::new(),
         replacement_history: None,
         retained_context: None,
-        guardian_history: None,
         window_number: None,
         first_window_id: None,
         previous_window_id: None,

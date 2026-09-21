@@ -444,7 +444,6 @@ impl App {
                     session.approval_policy = cached.approval_policy;
                     session.permission_profile = cached.permission_profile.clone();
                     session.active_permission_profile = cached.active_permission_profile.clone();
-                    session.approvals_reviewer = cached.approvals_reviewer;
                 }
                 // `thread/read` can seed replay state, but it does not attach the app-server
                 // listener that `thread/resume` establishes, so treat this path as replay-only.

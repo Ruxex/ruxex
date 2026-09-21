@@ -11,10 +11,7 @@ pub(super) async fn spawn_review_thread(
     sub_id: String,
     resolved: crate::review_prompts::ResolvedReviewRequest,
 ) {
-    let model = config
-        .review_model
-        .clone()
-        .unwrap_or_else(|| parent_turn_context.model_info().slug.clone());
+    let model = parent_turn_context.model_info().slug.clone();
     let available_models = sess
         .services
         .models_manager
@@ -22,11 +19,6 @@ pub(super) async fn spawn_review_thread(
             RefreshStrategy::OnlineIfUncached,
             config.http_client_factory(),
         )
-        .await;
-    let review_model_info = sess
-        .services
-        .models_manager
-        .get_model_info(&model, &config.to_models_manager_config())
         .await;
     // For reviews, disable web_search and view_image regardless of global settings.
     let mut review_features = sess.features.clone();
@@ -44,7 +36,7 @@ pub(super) async fn spawn_review_thread(
     let review_prompt = resolved.prompt.clone();
     let provider = parent_turn_context.provider.clone();
     let auth_manager = parent_turn_context.auth_manager.clone();
-    let model_info = review_model_info.clone();
+    let model_info = (**parent_turn_context.model_info()).clone();
     let mut selected = parent_turn_context.initial_settings.selected().clone();
     let mut reasoning_effort = selected.collaboration_mode.reasoning_effort();
 
@@ -53,20 +45,6 @@ pub(super) async fn spawn_review_thread(
     // Preserve configured overrides without carrying over the parent model's defaults.
     per_turn_config.token_budget = config.token_budget.clone();
     per_turn_config.features = review_features.clone();
-    if let Some(current_effort) = reasoning_effort.as_ref()
-        && review_model_info.slug != parent_turn_context.model_info().slug
-        && !review_model_info.used_fallback_model_metadata
-        && !review_model_info
-            .supported_reasoning_levels
-            .iter()
-            .any(|preset| &preset.effort == current_effort)
-    {
-        let supported_reasoning_levels = &review_model_info.supported_reasoning_levels;
-        reasoning_effort = supported_reasoning_levels
-            .get(supported_reasoning_levels.len().saturating_sub(1) / 2)
-            .map(|preset| preset.effort.clone())
-            .or_else(|| review_model_info.default_reasoning_level.clone());
-    }
     if let Err(err) = per_turn_config.web_search_mode.set(review_web_search_mode) {
         let fallback_value = per_turn_config.web_search_mode.value();
         tracing::warn!(
@@ -93,10 +71,6 @@ pub(super) async fn spawn_review_thread(
                 .or_else(|| config.service_tier.clone()),
         )
     };
-    let auto_review_enabled = crate::guardian::routes_approval_policy_to_guardian(
-        per_turn_config.permissions.approval_policy.value(),
-        per_turn_config.approvals_reviewer,
-    );
     // The original config may retain a requested tier unsupported by the parent
     // model. Resolve it against the review model and the shared feature gate.
     selected.collaboration_mode.settings.model = model.clone();
@@ -127,7 +101,6 @@ pub(super) async fn spawn_review_thread(
         &parent_turn_context.permission_profile(),
         parent_turn_context.windows_sandbox_level,
         parent_turn_context.network.is_some(),
-        auto_review_enabled,
         &model_info,
     ));
 

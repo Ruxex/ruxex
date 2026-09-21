@@ -127,7 +127,6 @@ impl App {
             .then(|| PermissionProfileSelection {
                 profile_id: active.id.clone(),
                 approval_policy: Some(source.permissions.approval_policy.value().into()),
-                approvals_reviewer: Some(source.approvals_reviewer),
                 display_label: active.id,
             })
         });

@@ -873,14 +873,12 @@ impl App {
                 if let AppCommand::OverrideTurnContext {
                     cwd,
                     approval_policy,
-                    approvals_reviewer,
                     permission_profile,
                     active_permission_profile,
                     ..
                 } = &op
                     && (cwd.is_some()
                         || approval_policy.is_some()
-                        || approvals_reviewer.is_some()
                         || permission_profile.is_some()
                         || active_permission_profile.is_some())
                     && self.reject_pending_permission_change()
@@ -996,10 +994,6 @@ impl App {
             } => {
                 self.lookup_message_history_batch(thread_id, cursor, log_id)
                     .await?;
-            }
-            AppEvent::ApproveRecentAutoReviewDenial { thread_id, id } => {
-                self.chat_widget
-                    .approve_recent_auto_review_denial(thread_id, id);
             }
             AppEvent::SubmitThreadOp { thread_id, op } => {
                 self.submit_thread_op(app_server, thread_id, op).await?;
@@ -1633,7 +1627,6 @@ impl App {
                                     AppCommand::override_turn_context(
                                         /*cwd*/ None,
                                         Some(AskForApproval::from(preset.approval)),
-                                        Some(self.config.approvals_reviewer),
                                         Some(preset.permission_profile.clone()),
                                         Some(preset.active_permission_profile.clone()),
                                         /*model*/ None,
@@ -1706,11 +1699,6 @@ impl App {
             }
             AppEvent::SelectSessionModel { model, effort } => {
                 self.select_session_model(app_server, model, effort).await;
-            }
-            AppEvent::CyberModelAutoReviewNotice => {
-                self.chat_widget.add_warning_message(
-                    "Cyber models default to \"Approve for me\" for safety reasons.".to_string(),
-                );
             }
             AppEvent::PluginUninstallLoaded {
                 cwd,
@@ -1831,36 +1819,6 @@ impl App {
             }
             AppEvent::SelectPermissionProfile(selection) => {
                 self.select_permission_profile(app_server, selection).await;
-            }
-            AppEvent::UpdateApprovalsReviewer(policy) => {
-                if self.reject_pending_permission_change() {
-                    return Ok(AppRunControl::Continue);
-                }
-                self.config.approvals_reviewer = policy;
-                self.chat_widget.set_approvals_reviewer(policy);
-                if let Some(profile) = self.runtime_permission_profile_override.as_mut() {
-                    profile.approvals_reviewer = policy;
-                }
-                self.sync_active_thread_permission_settings_to_cached_session()
-                    .await;
-                if let Err(err) = crate::config_update::write_config_batch(
-                    app_server.request_handle(),
-                    vec![crate::config_update::replace_config_value(
-                        "approvals_reviewer",
-                        serde_json::json!(policy.to_string()),
-                    )],
-                )
-                .await
-                {
-                    tracing::error!(
-                        error = %err,
-                        "failed to persist approvals reviewer update"
-                    );
-                    self.chat_widget.add_error_message(format!(
-                        "Failed to save approvals reviewer: {}",
-                        format_config_error(&err)
-                    ));
-                }
             }
             AppEvent::FetchExperimentalFeatures { thread_id, response_tx } => {
                 self.fetch_experimental_features(app_server, thread_id, response_tx);

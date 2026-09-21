@@ -45,15 +45,12 @@ pub(crate) const THREAD_SOURCE_KEY: &str = "thread_source";
 pub(crate) const TURN_TRIGGER_KEY: &str = "turn_trigger";
 pub(crate) const SANDBOX_KEY: &str = "sandbox";
 pub(crate) const SANDBOX_MODE_KEY: &str = "sandbox_mode";
-pub(crate) const AUTO_REVIEW_ENABLED_KEY: &str = "auto_review_enabled";
-pub(crate) const NODE_REPL_AUTO_REVIEW_REQUIRED_KEY: &str = "node_repl_auto_review_required";
 pub(crate) const NODE_REPL_DISABLED_KEY: &str = "node_repl_disabled";
 pub(crate) const WORKSPACES_KEY: &str = "workspaces";
 
 // App-server clients can specify additional metadata in the `responsesapi_client_metadata` param
 // when submitting a turn, but they must not override fields owned by core.
 const RESERVED_METADATA_KEYS: &[&str] = &[
-    "guardian_credits_requested",
     INSTALLATION_ID_KEY,
     X_CODEX_INSTALLATION_ID_HEADER,
     SESSION_ID_KEY,
@@ -83,8 +80,6 @@ const RESERVED_METADATA_KEYS: &[&str] = &[
     TURN_TRIGGER_KEY,
     SANDBOX_KEY,
     SANDBOX_MODE_KEY,
-    AUTO_REVIEW_ENABLED_KEY,
-    NODE_REPL_AUTO_REVIEW_REQUIRED_KEY,
     NODE_REPL_DISABLED_KEY,
     WORKSPACES_KEY,
 ];
@@ -234,8 +229,6 @@ pub(crate) enum TurnToolSource {
 /// truth.
 #[derive(Clone, Debug)]
 pub struct CodexResponsesMetadata {
-    /// Guardian parent reference; projected only onto a Guardian request.
-    pub(crate) parent_response_id: Option<String>,
     pub(crate) installation_id: String,
     pub(crate) session_id: String,
     pub(crate) thread_id: String,
@@ -257,8 +250,6 @@ pub struct CodexResponsesMetadata {
     pub(crate) turn_trigger: Option<String>,
     pub(crate) sandbox: Option<String>,
     pub(crate) sandbox_mode: Option<String>,
-    pub(crate) auto_review_enabled: Option<bool>,
-    pub(crate) node_repl_auto_review_required: Option<bool>,
     pub(crate) node_repl_disabled: Option<bool>,
     pub(crate) workspaces: BTreeMap<String, TurnMetadataWorkspace>,
     pub(crate) tool_namespaces_info: Option<TurnToolNamespacesInfo>,
@@ -275,7 +266,6 @@ impl CodexResponsesMetadata {
         window_id: String,
     ) -> Self {
         Self {
-            parent_response_id: None,
             installation_id,
             session_id,
             thread_id,
@@ -297,8 +287,6 @@ impl CodexResponsesMetadata {
             turn_trigger: None,
             sandbox: None,
             sandbox_mode: None,
-            auto_review_enabled: None,
-            node_repl_auto_review_required: None,
             node_repl_disabled: None,
             workspaces: BTreeMap::new(),
             tool_namespaces_info: None,
@@ -423,8 +411,6 @@ impl CodexResponsesMetadata {
             turn_trigger: self.turn_trigger.as_deref(),
             sandbox: self.sandbox.as_deref(),
             sandbox_mode: self.sandbox_mode.as_deref(),
-            auto_review_enabled: self.auto_review_enabled,
-            node_repl_auto_review_required: self.node_repl_auto_review_required,
             node_repl_disabled: self.node_repl_disabled,
             workspaces: non_empty_workspaces(&self.workspaces),
             tool_namespaces_info: self.tool_namespaces_info.as_ref(),
@@ -562,10 +548,6 @@ struct CodexTurnMetadataPayload<'a> {
     sandbox: Option<&'a str>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     sandbox_mode: Option<&'a str>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    auto_review_enabled: Option<bool>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    node_repl_auto_review_required: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     node_repl_disabled: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

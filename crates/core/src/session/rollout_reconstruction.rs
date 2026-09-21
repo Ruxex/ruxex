@@ -1,5 +1,4 @@
 use super::*;
-use crate::context::GuardianContextMode;
 use crate::context::world_state::WorldStateSnapshot;
 use crate::context_manager::is_user_turn_boundary;
 use codex_history::ResponseItemEnvelope;
@@ -12,7 +11,6 @@ use uuid::Uuid;
 pub(super) struct RolloutReconstruction {
     pub(super) history: Vec<ResponseItemEnvelope>,
     pub(super) retained_context: codex_history::RetainedContext,
-    pub(super) guardian_history: Option<codex_history::GuardianHistoryCheckpoint>,
     pub(super) previous_turn_settings: Option<PreviousTurnSettings>,
     pub(super) reference_context_item: Option<TurnContextItem>,
     pub(super) world_state_baseline: Option<WorldStateSnapshot>,
@@ -337,22 +335,13 @@ impl Session {
         )
         .unwrap_or(u64::MAX);
 
-        let mut history = ContextManager::with_guardian_context_mode(
-            self.guardian_context_mode,
-            &turn_context.session_source,
-        );
+        let mut history = ContextManager::new();
         let mut saw_legacy_compaction_without_replacement_history = false;
         if let Some(checkpoint) = base_compaction
             && let Some(items) = &checkpoint.compacted.replacement_history
         {
             history.replace_annotated(items.clone());
-            history.restore_review_context(
-                checkpoint.compacted.retained_context.as_ref(),
-                checkpoint.compacted.guardian_history.as_ref(),
-                // Keep the backup during replay; the installing session resolves its reviewer.
-                /*reviewer_compaction_hash*/
-                None,
-            );
+            history.restore_retained_context(checkpoint.compacted.retained_context.as_ref());
         }
         // Materialize exact history semantics from the replay-derived suffix. The eventual lazy
         // design should keep this same replay shape, but drive it from a resumable reverse source
@@ -391,12 +380,7 @@ impl Session {
                         // prompt shape.
                         // TODO(ccunningham): if we drop support for None replacement_history compaction items,
                         // we can get rid of this second loop entirely and just build `history` directly in the first loop.
-                        let identity =
-                            if self.guardian_context_mode == GuardianContextMode::ThreadOwned {
-                                compact::CompactedMessageIdentity::Preserve
-                            } else {
-                                compact::CompactedMessageIdentity::Regenerate
-                            };
+                        let identity = compact::CompactedMessageIdentity::Regenerate;
                         let user_messages = compact::collect_annotated_user_messages(
                             history.annotated_items(),
                             identity,
@@ -474,7 +458,6 @@ impl Session {
         });
         RolloutReconstruction {
             retained_context: history.retained_context().clone(),
-            guardian_history: history.guardian_history_checkpoint(),
             history: history.into_annotated_items(),
             previous_turn_settings,
             reference_context_item,

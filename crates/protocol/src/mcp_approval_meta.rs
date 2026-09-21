@@ -9,11 +9,9 @@ pub const APPROVAL_KIND_TOOL_SUGGESTION: &str = "tool_suggestion";
 pub const REQUIRES_USER_INPUT_KEY: &str = "codex_requires_user_input";
 pub const REQUEST_TYPE_KEY: &str = "codex_request_type";
 pub const REQUEST_TYPE_APPROVAL_REQUEST: &str = "approval_request";
-pub const STRICT_AUTO_REVIEW_KEY: &str = "codex_strict_auto_review";
 /// Marks a sensitive action requiring synchronous review when routed to automatic review.
 /// Absent or false preserves the existing approval path; this does not opt into review.
 pub const SENSITIVE_ACTION_KEY: &str = "codex_sensitive_action";
-pub const APPROVALS_REVIEWER_KEY: &str = "approvals_reviewer";
 pub const PERSIST_KEY: &str = "persist";
 pub const PERSIST_SESSION: &str = "session";
 pub const PERSIST_ALWAYS: &str = "always";

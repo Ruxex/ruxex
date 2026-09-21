@@ -17,11 +17,9 @@ use super::session::SessionSettingsUpdate;
 use super::thread_settings;
 use super::turn_context::NewTurnContextOptions;
 use super::turn_context::TurnContext;
-use crate::context::GuardianContextMode;
 use crate::state::ActiveTurn;
 use crate::state::TurnState;
 use crate::tasks::RegularTask;
-use codex_history::CodexHarnessMetadata;
 use codex_history::ResponseItemEnvelope;
 use codex_protocol::config_types::ModeKind;
 use codex_protocol::error::CodexErr;
@@ -684,22 +682,7 @@ async fn pending_turn_input(
             ) =>
         {
             Session::assign_missing_response_item_id(&mut item);
-            let metadata = if session.guardian_context_mode == GuardianContextMode::ThreadOwned
-                && let Some(messages) = session
-                    .services
-                    .agent_control
-                    .capture_sender_user_messages(&item, session.thread_id, turn_id)
-                    .await
-            {
-                Some(CodexHarnessMetadata {
-                    user_input_order: session.reserve_user_input_order().await,
-                    sender_user_messages: Some(Box::new(messages)),
-                    ..Default::default()
-                })
-            } else {
-                None
-            };
-            TurnInput::FunctionCallOutput(ResponseItemEnvelope { item, metadata })
+            TurnInput::FunctionCallOutput(ResponseItemEnvelope::new(item))
         }
         SubmittedTurnInput::ResponseItem(item) => TurnInput::ResponseItem(item.into()),
         SubmittedTurnInput::InterAgentCommunication(communication) => {

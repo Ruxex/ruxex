@@ -4,7 +4,6 @@
 import type { AbsolutePathBuf } from "../AbsolutePathBuf";
 import type { LegacyAppPathString } from "../LegacyAppPathString";
 import type { ReasoningEffort } from "../ReasoningEffort";
-import type { ApprovalsReviewer } from "./ApprovalsReviewer";
 import type { AskForApproval } from "./AskForApproval";
 import type { SandboxPolicy } from "./SandboxPolicy";
 import type { Thread } from "./Thread";
@@ -17,8 +16,6 @@ disabledPluginIds: Array<string>, cwd: AbsolutePathBuf, /**
  */
 instructionSources: Array<LegacyAppPathString>, approvalPolicy: AskForApproval, /**
  * Reviewer currently used for approval requests on this thread.
- */
-approvalsReviewer: ApprovalsReviewer, /**
  * Legacy sandbox policy retained for compatibility. Experimental clients
  * should prefer `activePermissionProfile` for profile provenance.
  */

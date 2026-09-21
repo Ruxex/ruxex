@@ -95,7 +95,6 @@ pub use codex_protocol::ThreadId;
 pub use codex_protocol::capabilities::CapabilityRootLocation;
 pub use codex_protocol::capabilities::SelectedCapabilityRoot;
 pub use codex_protocol::config_types::AltScreenMode;
-pub use codex_protocol::config_types::ApprovalsReviewer;
 pub use codex_protocol::config_types::AutoCompactTokenLimitScope;
 pub use codex_protocol::config_types::CollaborationModeMask;
 pub use codex_protocol::config_types::ShellEnvironmentPolicy;

@@ -43,7 +43,6 @@ impl ChatWidget {
         if self.safety_buffering_is_waiting()
             || self.unified_exec_wait_streak.is_some()
             || self.status_state.compaction.is_some()
-            || !self.status_state.pending_guardian_review_status.is_empty()
         {
             return;
         }
@@ -53,7 +52,6 @@ impl ChatWidget {
             self.status_state.terminal_title_status_kind = TerminalTitleStatusKind::Thinking;
             self.set_status_header(header);
         } else if self.bottom_pane.is_task_running()
-            || self.status_state.current_status.is_guardian_review()
         {
             self.status_state.terminal_title_status_kind = TerminalTitleStatusKind::Working;
             self.set_status_header(String::from("Working"));
@@ -303,9 +301,6 @@ impl ChatWidget {
             return;
         }
 
-        if !self.status_state.pending_guardian_review_status.is_empty() {
-            return;
-        }
 
         self.reasoning_header =
             latest_summary_line(&self.reasoning_buffer).or(self.reasoning_header.take());

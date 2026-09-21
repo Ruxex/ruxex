@@ -1,6 +1,6 @@
 use crate::exec::ExecCapturePolicy;
 use crate::exec::ExecExpiration;
-use crate::guardian::GuardianReviewContext;
+use crate::tools::approvals::ApprovalReviewContext;
 use crate::sandboxing::ExecOptions;
 use crate::sandboxing::ExecRequest;
 use crate::sandboxing::SandboxPermissions;
@@ -22,7 +22,6 @@ use codex_protocol::error::CodexErr;
 use codex_protocol::models::AdditionalPermissionProfile;
 use codex_protocol::models::PermissionProfile;
 use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::GuardianCommandSource;
 use codex_protocol::protocol::NetworkPolicyRuleAction;
 use codex_protocol::protocol::ReviewDecision;
 use codex_sandboxing::SandboxCommand;
@@ -147,10 +146,9 @@ pub(crate) async fn prepare_unified_exec_zsh_fork(
     let escalation_policy = CoreShellActionProvider {
         policy: Arc::clone(&exec_policy),
         session: Arc::clone(&ctx.session),
-        review_context: GuardianReviewContext::from(&ctx.step_context),
+        review_context: ApprovalReviewContext::from(&ctx.step_context),
         call_id: ctx.call_id.clone(),
         environment_id: req.turn_environment.selection.environment_id.clone(),
-        source: GuardianCommandSource::UnifiedExec,
         tool_name: ctx.tool_name.clone(),
         approval_policy: ctx.step_context.settings.approval_policy(),
         permission_profile: exec_request.permission_profile.clone(),
@@ -182,10 +180,9 @@ pub(crate) async fn prepare_unified_exec_zsh_fork(
 struct CoreShellActionProvider {
     policy: Arc<RwLock<Policy>>,
     session: Arc<crate::session::session::Session>,
-    review_context: GuardianReviewContext,
+    review_context: ApprovalReviewContext,
     call_id: String,
     environment_id: String,
-    source: GuardianCommandSource,
     tool_name: ToolName,
     approval_policy: AskForApproval,
     permission_profile: PermissionProfile,
@@ -273,7 +270,6 @@ impl CoreShellActionProvider {
             id: self.call_id.clone(),
             approval_id: Uuid::new_v4().to_string(),
             environment_id: self.environment_id.clone(),
-            source: self.source,
             program: program.clone(),
             argv: argv.to_vec(),
             command,
@@ -282,9 +278,9 @@ impl CoreShellActionProvider {
         };
         match stopwatch
             .pause_for(async {
-                let (turn_context, step_settings, strict_auto_review) = self
+                let (turn_context, step_settings) = self
                     .session
-                    .active_turn_context_and_strict_auto_review()
+                    .active_turn_context_and_settings()
                     .await
                     .ok_or_else(|| {
                         ToolError::Rejected(
@@ -293,7 +289,7 @@ impl CoreShellActionProvider {
                         )
                     })?;
                 let approval_ctx = ApprovalContext {
-                    review_context: GuardianReviewContext::from_resolved_settings(
+                    review_context: ApprovalReviewContext::from_resolved_settings(
                         Arc::clone(&turn_context),
                         &step_settings,
                         &turn_context.environments,
@@ -302,7 +298,6 @@ impl CoreShellActionProvider {
                     cancellation_token: None,
                     call_id: self.call_id.clone(),
                     tool_name: self.tool_name.clone(),
-                    strict_auto_review,
                     approval_reason: None,
                     retry_reason: None,
                     network_approval_context: None,
@@ -369,14 +364,9 @@ impl CoreShellActionProvider {
                         ReviewDecision::Denied { rejection } => {
                             EscalationDecision::deny(Some(rejection))
                         }
-                        ReviewDecision::TimedOut => EscalationDecision::deny(Some(
-                            ResolvedModelMessages::from_model(
-                                self.review_context.turn().model_info(),
-                            )
-                            .auto_review()
-                            .timeout_instructions
-                            .to_string(),
-                        )),
+                        ReviewDecision::TimedOut => {
+                            EscalationDecision::deny(Some("approval request timed out".to_string()))
+                        }
                         ReviewDecision::ApprovedMcpPolicyAmendment => {
                             error!("Shell escalation received ApprovedMcpPolicyAmendment");
 

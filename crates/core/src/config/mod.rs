@@ -32,7 +32,6 @@ use codex_config::loader::project_trust_key;
 use codex_config::permissions_toml::PermissionProfileToml;
 use codex_config::permissions_toml::PermissionsToml;
 use codex_config::sandbox_mode_requirement_for_permission_profile;
-use codex_config::types::ApprovalsReviewer;
 use codex_config::types::AuthCredentialsStoreMode;
 use codex_config::types::AuthKeyringBackendKind;
 use codex_config::types::History;
@@ -592,9 +591,6 @@ pub struct Config {
     /// `default` means the user explicitly selected standard routing.
     pub service_tier: Option<String>,
 
-    /// Model used specifically for review sessions.
-    pub review_model: Option<String>,
-
     /// Size of the context window for the model, in tokens.
     pub model_context_window: Option<i64>,
 
@@ -624,11 +620,6 @@ pub struct Config {
     /// User-defined permission profiles available from effective config.
     pub custom_permission_profiles: Vec<PermissionProfileCatalogEntry>,
 
-    /// Configures who approval requests are routed to for review once they have
-    /// been escalated. This does not disable separate safety checks such as
-    /// ARC.
-    pub approvals_reviewer: ApprovalsReviewer,
-
     /// enforce_residency means web traffic cannot be routed outside of a
     /// particular geography. HTTP clients should direct their requests
     /// using backend-specific headers or URLs to enforce this.
@@ -651,17 +642,6 @@ pub struct Config {
 
     /// Developer instructions override injected as a separate message.
     pub developer_instructions: Option<String>,
-
-    /// Guardian-specific policy config override from requirements.toml or config.toml.
-    /// This is inserted into the fixed guardian prompt template under the
-    /// `# Policy Configuration` section rather than replacing the whole
-    /// guardian developer prompt.
-    pub guardian_policy_config: Option<String>,
-
-    /// Guardian prompt template override from config.toml.
-    /// The resolved policy config replaces its `{{ tenant_policy_config }}`
-    /// placeholder when a review session is built.
-    pub guardian_policy_template: Option<String>,
 
     /// Whether to inject the `<permissions instructions>` developer block.
     pub include_permissions_instructions: bool,
@@ -1442,16 +1422,6 @@ impl ConfigBuilder {
 impl Config {
     pub fn sqlite_config(&self) -> &codex_state::SqliteConfig {
         &self.sqlite
-    }
-
-    /// Resolves the configured, reviewer-catalog, or bundled Guardian policy.
-    pub fn resolve_guardian_policy<'a>(
-        &'a self,
-        model_messages: ResolvedModelMessages<'a>,
-    ) -> &'a str {
-        self.guardian_policy_config
-            .as_deref()
-            .unwrap_or(model_messages.auto_review().policy)
     }
 
     pub(crate) fn multi_agent_version_override(&self) -> Option<MultiAgentVersion> {
@@ -2446,10 +2416,8 @@ fn resolve_permission_config_syntax(
 #[derive(Default, Debug, Clone)]
 pub struct ConfigOverrides {
     pub model: Option<String>,
-    pub review_model: Option<String>,
     pub cwd: Option<PathBuf>,
     pub approval_policy: Option<AskForApproval>,
-    pub approvals_reviewer: Option<ApprovalsReviewer>,
     pub sandbox_mode: Option<SandboxMode>,
     pub permission_profile: Option<PermissionProfile>,
     pub default_permissions: Option<String>,
@@ -3074,8 +3042,6 @@ impl Config {
             check_for_update_on_startup: _,
             allow_login_shell: _,
             approval_policy: mut constrained_approval_policy,
-            approvals_reviewer: mut constrained_approvals_reviewer,
-            auto_review_required_models: _,
             permission_profile: mut constrained_permission_profile,
             windows_sandbox_mode: mut constrained_windows_sandbox_mode,
             windows_sandbox_private_desktop: _,
@@ -3094,16 +3060,13 @@ impl Config {
             application: _,
             filesystem: filesystem_requirements,
             additional_developer_instructions: _,
-            guardian_policy_config_source: _,
         } = config_layer_stack.requirements().clone();
 
         // Destructure ConfigOverrides fully to ensure all overrides are applied.
         let ConfigOverrides {
             model,
-            review_model: override_review_model,
             cwd,
             approval_policy: approval_policy_override,
-            approvals_reviewer: approvals_reviewer_override,
             sandbox_mode,
             permission_profile,
             default_permissions: default_permissions_override,
@@ -3509,20 +3472,6 @@ impl Config {
             );
             approval_policy = constrained_approval_policy.value();
         }
-        let approvals_reviewer_was_explicit =
-            approvals_reviewer_override.is_some() || cfg.approvals_reviewer.is_some();
-        let mut approvals_reviewer = approvals_reviewer_override
-            .or(cfg.approvals_reviewer)
-            .unwrap_or(ApprovalsReviewer::User);
-        if !approvals_reviewer_was_explicit
-            && let Err(err) = constrained_approvals_reviewer.can_set(&approvals_reviewer)
-        {
-            tracing::warn!(
-                error = %err,
-                "default approvals reviewer is disallowed by requirements; falling back to required default"
-            );
-            approvals_reviewer = constrained_approvals_reviewer.value();
-        }
         let web_search_mode =
             resolve_web_search_mode(&cfg, &features).unwrap_or(WebSearchMode::Cached);
         let web_search_config = resolve_web_search_config(&cfg);
@@ -3745,23 +3694,6 @@ impl Config {
             .as_ref()
             .and_then(|skills| skills.max_context_tokens);
         let include_environment_context = cfg.include_environment_context.unwrap_or(true);
-        let guardian_policy_config =
-            guardian_policy_config_from_requirements(config_layer_stack.requirements_toml())
-                .or_else(|| {
-                    cfg.auto_review
-                        .as_ref()
-                        .and_then(|auto_review| normalize_guardian_policy_config(
-                            auto_review.policy.as_deref(),
-                        ))
-                });
-        let guardian_policy_template = cfg
-            .auto_review
-            .as_ref()
-            .and_then(|auto_review| {
-                normalize_guardian_policy_config(
-                    auto_review.experimental_policy_template.as_deref(),
-                )
-            });
         let personality = personality.or(cfg.personality);
 
         let experimental_compact_prompt_path = cfg.experimental_compact_prompt_file.as_ref();
@@ -3775,8 +3707,6 @@ impl Config {
         let zsh_path = default_zsh_path
             .or_else(|| InstallContext::current().bundled_zsh_path())
             .map(AbsolutePathBuf::into_path_buf);
-
-        let review_model = override_review_model.or(cfg.review_model);
 
         let check_for_update_on_startup = cfg.check_for_update_on_startup.unwrap_or(true);
         let model_catalog = load_model_catalog(cfg.model_catalog_json.clone())?;
@@ -3823,12 +3753,6 @@ impl Config {
                 })
                 .map_err(std::io::Error::from)?;
         }
-        apply_requirement_constrained_value(
-            "approvals_reviewer",
-            approvals_reviewer,
-            &mut constrained_approvals_reviewer,
-            &mut startup_warnings,
-        )?;
         let permission_profile_was_constrained = apply_requirement_constrained_value(
             "permission_profile",
             permission_profile,
@@ -3983,7 +3907,6 @@ impl Config {
         let config = Self {
             model,
             service_tier,
-            review_model,
             model_context_window: cfg.model_context_window,
             model_auto_compact_token_limit: cfg.model_auto_compact_token_limit,
             model_auto_compact_token_limit_scope: cfg
@@ -4009,7 +3932,6 @@ impl Config {
             },
             explicit_permission_profile_mode,
             custom_permission_profiles,
-            approvals_reviewer: constrained_approvals_reviewer.value(),
             enforce_residency: enforce_residency.value,
             notify: cfg.notify,
             base_instructions,
@@ -4104,8 +4026,6 @@ impl Config {
                 .show_raw_agent_reasoning
                 .or(show_raw_agent_reasoning)
                 .unwrap_or(false),
-            guardian_policy_config,
-            guardian_policy_template,
             model_reasoning_effort: cfg.model_reasoning_effort,
             plan_mode_reasoning_effort: cfg.plan_mode_reasoning_effort,
             model_reasoning_summary: cfg.model_reasoning_summary,
@@ -4381,12 +4301,6 @@ impl Config {
     }
 }
 
-fn guardian_policy_config_from_requirements(
-    requirements_toml: &ConfigRequirementsToml,
-) -> Option<String> {
-    normalize_guardian_policy_config(requirements_toml.guardian_policy_config.as_deref())
-}
-
 fn merge_managed_permission_profiles(
     configured_permissions: Option<&PermissionsToml>,
     requirements_toml: &ConfigRequirementsToml,
@@ -4566,13 +4480,6 @@ fn is_permission_allowed(
         .get(profile_id)
         .copied()
         .unwrap_or(false)
-}
-
-fn normalize_guardian_policy_config(value: Option<&str>) -> Option<String> {
-    value.and_then(|value| {
-        let trimmed = value.trim();
-        (!trimmed.is_empty()).then(|| trimmed.to_string())
-    })
 }
 
 /// Returns the path to the Codex configuration directory, which can be

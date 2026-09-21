@@ -248,14 +248,6 @@ impl App {
             return self.working_directory_error("Permission profile cannot be preserved by /cd.");
         }
         self.apply_runtime_policy_overrides(&mut config, RuntimePolicyOverrideScope::All);
-        if self.runtime_permission_profile_override.is_some() {
-            let reviewer = self.config.approvals_reviewer;
-            let reviewers = &config.config_layer_stack.requirements().approvals_reviewer;
-            if let Err(error) = reviewers.can_set(&reviewer) {
-                return self.working_directory_error(format!("Approvals reviewer: {error}"));
-            }
-            config.approvals_reviewer = reviewer;
-        }
         let actual = config.permissions.approval_policy.value();
         let approval = self
             .runtime_approval_policy_override
@@ -365,7 +357,6 @@ impl App {
             || crate::session_resume::cwds_differ(session.cwd.as_path(), cwd.as_path())
             || session.runtime_workspace_roots != config.workspace_roots
             || session.approval_policy.to_core() != config.permissions.approval_policy.value()
-            || session.approvals_reviewer != config.approvals_reviewer
             || session.active_permission_profile != config.permissions.active_permission_profile()
         {
             if session.thread_id != thread_id {

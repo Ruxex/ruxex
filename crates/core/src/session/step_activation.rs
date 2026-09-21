@@ -6,209 +6,11 @@ use super::step_settings::ResolvedStepSettings;
 use super::step_settings::StepSettingsConstraints;
 use super::step_settings::StepSettingsUpdate;
 use super::turn_context::TurnContext;
-use crate::config::Config;
 use crate::config::ConstraintResult;
-use crate::exec_policy::AllowPrefixRules;
 use codex_features::Feature;
-use codex_prompts::ResolvedModelMessages;
-use codex_protocol::openai_models::GuardianV2ModelConfig;
-use codex_protocol::openai_models::GuardianV2TranscriptModelConfig;
-use codex_protocol::openai_models::MODEL_SPECIALTY_CYBER;
-use codex_protocol::openai_models::ModelInfo;
 use codex_protocol::protocol::TurnSettingsUpdate;
 use codex_protocol::protocol::TurnSettingsUpdateOutcome;
 use std::sync::Arc;
-
-/// Temporary restrictions while approvals and Guardian still read the admitted
-/// `TurnContext`. Ordinary live authorization is validated separately. Remove
-/// these restrictions as their consumers migrate to captured step settings.
-fn check_legacy_turn_safety(
-    turn_context: &TurnContext,
-    current: &ResolvedStepSettings,
-    destination: &ResolvedStepSettings,
-    live_config: &Config,
-) -> Result<(), String> {
-    let stack = &live_config.config_layer_stack;
-    let requirements = stack.requirements();
-    let required_review = requirements
-        .auto_review_required_for_model(destination.selected_collaboration_mode().model());
-    let admitted_required_review = turn_context
-        .config
-        .config_layer_stack
-        .requirements()
-        .auto_review_required_for_model(&turn_context.model_info().slug);
-    let ignored_models = stack
-        .requirements_toml()
-        .auto_review
-        .as_ref()
-        .and_then(|review| review.ignore_rules.as_ref());
-    let ignores_prefix_rules = |model: &ModelInfo| {
-        model.model_specialty.as_deref() == Some(MODEL_SPECIALTY_CYBER)
-            || ignored_models.is_some_and(|models| models.contains(&model.slug))
-    };
-
-    // Approval policy and required-model classification still have consumers
-    // using the originating turn. The reviewer is captured separately.
-    if destination.constrained_approval_policy() != current.constrained_approval_policy()
-        || destination.approval_policy() != turn_context.approval_policy()
-    {
-        return Err("the destination changes the admitted approval policy".to_string());
-    }
-    if required_review
-        != requirements
-            .auto_review_required_for_model(current.selected_collaboration_mode().model())
-        || required_review != admitted_required_review
-    {
-        return Err("the destination changes model-required approval authority".to_string());
-    }
-    // Command approval continues to use TurnContext::allow_prefix_rules.
-    if ignores_prefix_rules(&destination.model_info) != ignores_prefix_rules(&current.model_info)
-        || ignores_prefix_rules(&destination.model_info)
-            != (turn_context.allow_prefix_rules() == AllowPrefixRules::IgnoreForCyberModel)
-    {
-        return Err("the destination changes the admitted prefix-rule policy".to_string());
-    }
-
-    check_legacy_model_safety(
-        turn_context.model_info(),
-        &current.model_info,
-        &destination.model_info,
-        &turn_context.config,
-        live_config,
-    )
-}
-
-/// Model-owned portion of the temporary legacy-turn safety check. Ordinary
-/// model metadata may differ so diagnostics can expose unmigrated consumers.
-fn check_legacy_model_safety(
-    admitted: &ModelInfo,
-    current: &ModelInfo,
-    destination: &ModelInfo,
-    admitted_config: &Config,
-    live_config: &Config,
-) -> Result<(), String> {
-    if admitted.used_fallback_model_metadata || current.used_fallback_model_metadata {
-        return Err("the active model has only fallback metadata".to_string());
-    }
-    if destination.used_fallback_model_metadata {
-        return Err("the destination model has only fallback metadata".to_string());
-    }
-    let retained_models = [admitted, current];
-    // The Guardian reviewer extension still selects its circuit-breaker
-    // policy from the admitted model's Cyber classification.
-    let destination_is_cyber =
-        destination.model_specialty.as_deref() == Some(MODEL_SPECIALTY_CYBER);
-    if retained_models.iter().any(|model| {
-        (model.model_specialty.as_deref() == Some(MODEL_SPECIALTY_CYBER)) != destination_is_cyber
-    }) {
-        return Err("the destination changes the admitted Guardian rejection policy".to_string());
-    }
-    // TurnMetadataState pins both node REPL flags. Guardian prompt/evidence
-    // construction also reads node_repl_auto_review_required from the turn.
-    if retained_models.iter().any(|model| {
-        model.computer_use_review_required() != destination.computer_use_review_required()
-    }) {
-        return Err(
-            "the destination changes the admitted node REPL review requirement".to_string(),
-        );
-    }
-    if retained_models
-        .iter()
-        .any(|model| model.guardian != destination.guardian)
-    {
-        return Err("the destination changes the admitted Guardian coverage".to_string());
-    }
-    if retained_models
-        .iter()
-        .any(|model| model.node_repl_disabled != destination.node_repl_disabled)
-    {
-        return Err(
-            "the destination changes the admitted node REPL availability restriction".to_string(),
-        );
-    }
-    // guardian::review::guardian_review_session_config and Guardian V2 still
-    // select the reviewer from the retained parent metadata.
-    if retained_models
-        .iter()
-        .any(|model| model.auto_review_model_override != destination.auto_review_model_override)
-    {
-        return Err("the destination changes the explicit Guardian reviewer model".to_string());
-    }
-
-    if (admitted_config.features.enabled(Feature::GuardianV2) || destination.guardian.is_some())
-        && admitted_config.features.enabled(Feature::GuardianApproval)
-    {
-        // GuardianV2Extension::on_tool_start reads the parent ModelInfo from
-        // thread_store. Its classifier settings are independent of the reviewer
-        // override. Local overrides may mask differences, but resolving those
-        // overrides remains the extension's responsibility.
-        let classification_settings =
-            |model: &ModelInfo| -> GuardianV2ModelConfig {
-                let mut settings = model
-                    .model_messages
-                    .as_ref()
-                    .and_then(|messages| messages.guardian_v2.clone())
-                    .unwrap_or_default();
-                // Missing and empty transcript records supply the same defaults.
-                if settings.transcript.as_ref().is_some_and(|transcript| {
-                    *transcript == GuardianV2TranscriptModelConfig::default()
-                }) {
-                    settings.transcript = None;
-                }
-                settings
-            };
-        let destination_settings = classification_settings(destination);
-        if retained_models
-            .iter()
-            .any(|model| classification_settings(model) != destination_settings)
-        {
-            return Err(
-                "the destination changes the admitted Guardian V2 classification settings"
-                    .to_string(),
-            );
-        }
-    }
-
-    // guardian_review_session_config and Guardian V2 can fall back to parent
-    // metadata if their preferred reviewer is unavailable, including after a
-    // catalog refresh. V1 uses the admitted config; V2 can use the live config.
-    // An unchanged explicit reviewer override prevents both fallback paths.
-    if destination.auto_review_model_override.is_none() {
-        let destination_model_messages = ResolvedModelMessages::from_model(destination);
-        let destination_auto_review = destination_model_messages.auto_review();
-        let retained_model_messages = retained_models.map(ResolvedModelMessages::from_model);
-        let retained_auto_review = retained_model_messages
-            .each_ref()
-            .map(ResolvedModelMessages::auto_review);
-        if retained_auto_review.iter().any(|auto_review| {
-            auto_review.node_repl_policy != destination_auto_review.node_repl_policy
-        }) {
-            return Err(
-                "the destination changes the Guardian parent-fallback node REPL policy".to_string(),
-            );
-        }
-        for config in [admitted_config, live_config] {
-            let destination_policy = config.resolve_guardian_policy(destination_model_messages);
-            if retained_model_messages.iter().any(|model_messages| {
-                config.resolve_guardian_policy(*model_messages) != destination_policy
-            }) {
-                return Err(
-                    "the destination changes the Guardian parent-fallback policy".to_string(),
-                );
-            }
-        }
-        let destination_template = destination_auto_review.policy_template.trim_end();
-        if retained_auto_review
-            .iter()
-            .any(|auto_review| auto_review.policy_template.trim_end() != destination_template)
-        {
-            return Err(
-                "the destination changes the Guardian parent-fallback policy template".to_string(),
-            );
-        }
-    }
-    Ok(())
-}
 
 impl Session {
     /// Publishes settings to the named, originally captured live task, regardless
@@ -226,12 +28,7 @@ impl Session {
         turn_id: &str,
         update: TurnSettingsUpdate,
     ) -> TurnSettingsUpdateOutcome {
-        let reviewer_only = update.approvals_reviewer.is_some()
-            && update.model.is_none()
-            && update.effort.is_none()
-            && update.summary.is_none()
-            && update.service_tier.is_none();
-        if !reviewer_only && !self.features.enabled(Feature::StepModelSwitching) {
+        if !self.features.enabled(codex_features::Feature::StepModelSwitching) {
             return TurnSettingsUpdateOutcome::Rejected {
                 reason: "turn settings updates require the step_model_switching feature"
                     .to_string(),
@@ -259,14 +56,12 @@ impl Session {
             return TurnSettingsUpdateOutcome::TargetUnavailable;
         };
         let TurnSettingsUpdate {
-            approvals_reviewer,
             model,
             effort,
             summary,
             service_tier,
         } = update;
         let update = StepSettingsUpdate {
-            approvals_reviewer,
             model,
             effort,
             reasoning_summary: summary,
@@ -302,25 +97,8 @@ impl Session {
         // and active_turn; no asynchronous preparation runs under these locks.
         let state = self.state.lock().await;
         if let Err(reason) = self
-            .validate_active_step_settings(
-                &turn_context,
-                &destination,
-                &state.session_configuration,
-            )
+            .validate_active_step_settings(&turn_context, &destination, &state.session_configuration)
             .map_err(|error| error.to_string())
-            .and_then(|()| {
-                // A reviewer-only patch cannot change any model-owned authority.
-                // Managed reviewer restrictions were checked above.
-                if reviewer_only {
-                    return Ok(());
-                }
-                check_legacy_turn_safety(
-                    &turn_context,
-                    &current,
-                    &destination,
-                    &state.session_configuration.original_config_do_not_use,
-                )
-            })
         {
             return TurnSettingsUpdateOutcome::Rejected { reason };
         }
@@ -338,20 +116,17 @@ impl Session {
         current: &ResolvedStepSettings,
         update: &StepSettingsUpdate,
     ) -> Result<ResolvedStepSettings, String> {
-        let (requirements, overrides, trusted_guardian_reviewer) = {
+        let (requirements, overrides) = {
             let state = self.state.lock().await;
             let configuration = &state.session_configuration;
             let stack = &configuration.original_config_do_not_use.config_layer_stack;
             (
                 stack.requirements().clone(),
                 configuration.model_info_overrides.clone(),
-                configuration.trusted_guardian_reviewer,
             )
         };
         let constraints = StepSettingsConstraints {
             requirements: &requirements,
-            guardian_approval_enabled: self.features.enabled(Feature::GuardianApproval),
-            trusted_guardian_reviewer,
             has_full_disk_write_access: turn_context
                 .file_system_sandbox_policy()
                 .has_full_disk_write_access(),
@@ -383,8 +158,6 @@ impl Session {
             .requirements();
         settings.revalidate(&StepSettingsConstraints {
             requirements,
-            guardian_approval_enabled: self.features.enabled(Feature::GuardianApproval),
-            trusted_guardian_reviewer: configuration.trusted_guardian_reviewer,
             has_full_disk_write_access: turn_context
                 .file_system_sandbox_policy()
                 .has_full_disk_write_access(),

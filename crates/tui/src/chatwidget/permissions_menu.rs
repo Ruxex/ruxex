@@ -4,37 +4,6 @@ use super::*;
 use crate::permission_discovery::PermissionDiscovery;
 use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
 
-pub(crate) fn auto_review_available(config: &Config) -> bool {
-    cyber_model_approval_reviewer(config) == Some(ApprovalsReviewer::AutoReview)
-}
-
-pub(crate) fn cyber_model_approval_reviewer(config: &Config) -> Option<ApprovalsReviewer> {
-    let requirements = config.config_layer_stack.requirements();
-    if requirements
-        .approval_policy
-        .can_set(&AskForApproval::OnRequest.to_core())
-        .is_err()
-    {
-        return None;
-    }
-
-    let reviewer = if config.features.enabled(Feature::GuardianApproval)
-        && requirements
-            .approvals_reviewer
-            .can_set(&ApprovalsReviewer::AutoReview)
-            .is_ok()
-    {
-        ApprovalsReviewer::AutoReview
-    } else {
-        ApprovalsReviewer::User
-    };
-    requirements
-        .approvals_reviewer
-        .can_set(&reviewer)
-        .is_ok()
-        .then_some(reviewer)
-}
-
 impl ChatWidget {
     pub(super) fn permission_mode_disabled_reason(
         &self,
@@ -95,26 +64,14 @@ impl ChatWidget {
                     .description
                     .replace(" (Identical to Agent mode)", ""),
                 AskForApproval::from(default.approval),
-                ApprovalsReviewer::User,
             ),
         ];
-        if self.config.features.enabled(Feature::GuardianApproval) {
-            items.push(self.builtin_permission_mode_selection_item(
-                &discovery,
-                default,
-                ":workspace",
-                AUTO_REVIEW_DESCRIPTION.to_string(),
-                AskForApproval::OnRequest,
-                ApprovalsReviewer::AutoReview,
-            ));
-        }
         items.push(self.builtin_permission_mode_selection_item(
             &discovery,
             full_access,
             BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS,
             full_access.description.to_string(),
             AskForApproval::from(full_access.approval),
-            ApprovalsReviewer::User,
         ));
         items.push(self.builtin_permission_mode_selection_item(
             &discovery,
@@ -122,7 +79,6 @@ impl ChatWidget {
             ":read-only",
             read_only.description.to_string(),
             AskForApproval::from(read_only.approval),
-            ApprovalsReviewer::User,
         ));
         items.extend(
             discovery
@@ -141,7 +97,6 @@ impl ChatWidget {
                         discovery.disabled_reason(
                             &profile.id,
                             /*approval*/ None,
-                            /*reviewer*/ None,
                         ),
                     )
                 }),
@@ -183,13 +138,8 @@ impl ChatWidget {
         id: &str,
         description: String,
         approval_policy: AskForApproval,
-        approvals_reviewer: ApprovalsReviewer,
     ) -> SelectionItem {
-        let label = match (preset.id, approvals_reviewer) {
-            ("auto", ApprovalsReviewer::AutoReview) => APPROVE_FOR_ME_LABEL,
-            ("auto", ApprovalsReviewer::User) => ASK_FOR_APPROVAL_LABEL,
-            _ => preset.label,
-        };
+        let label = preset.label;
         let active_profile_id = self
             .config
             .permissions
@@ -197,30 +147,26 @@ impl ChatWidget {
             .map(|profile| profile.id);
         let current_approval =
             AskForApproval::from(self.config.permissions.approval_policy.value());
-        let current_reviewer = self.config.approvals_reviewer;
         let profile_id = id.to_string();
         let selection = PermissionProfileSelection {
             profile_id,
             approval_policy: Some(approval_policy),
-            approvals_reviewer: Some(approvals_reviewer),
             display_label: label.to_string(),
         };
         SelectionItem {
             name: label.to_string(),
             description: Some(description),
             is_current: active_profile_id.as_deref() == Some(id)
-                && current_approval == approval_policy
-                && current_reviewer == approvals_reviewer,
+                && current_approval == approval_policy,
             actions: self.permission_mode_actions(
                 preset,
                 label.to_string(),
-                approvals_reviewer,
                 Some(selection),
                 /*return_to_permissions*/ true,
             ),
             dismiss_on_select: true,
             disabled_reason: discovery
-                .disabled_reason(id, Some(approval_policy), Some(approvals_reviewer.into()))
+                .disabled_reason(id, Some(approval_policy))
                 .or_else(|| self.permission_mode_disabled_reason(preset, approval_policy)),
             ..Default::default()
         }
@@ -237,7 +183,6 @@ impl ChatWidget {
         let selection = PermissionProfileSelection {
             profile_id: id_for_action.clone(),
             approval_policy: None,
-            approvals_reviewer: None,
             display_label: id_for_action,
         };
         SelectionItem {

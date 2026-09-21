@@ -202,13 +202,11 @@ impl ExperimentalFeaturesView {
     }
 
     fn save_special_controls(&mut self) {
-        // Keep the two unmigrated controls on their existing writer, including
-        // its runtime and permission side effects. Never retry them generically.
         let mut updates = Vec::new();
         for (item, initial) in self.features.iter().zip(&mut self.initial_enabled) {
             if item.writable
                 && item.enabled != *initial
-                && let Some(feature) = [Feature::PreventIdleSleep, Feature::GuardianApproval]
+                && let Some(feature) = [Feature::PreventIdleSleep]
                     .into_iter()
                     .find(|feature| feature.key() == item.key)
             {
@@ -276,7 +274,7 @@ impl BottomPaneView for ExperimentalFeaturesView {
                     for item in &mut self.features {
                         if matches!(
                             item.key.as_str(),
-                            "prevent_idle_sleep" | "guardian_approval"
+                            "prevent_idle_sleep"
                         ) {
                             continue;
                         }
@@ -317,10 +315,9 @@ impl BottomPaneView for ExperimentalFeaturesView {
                     }
                     self.initial_enabled.push(feature.enabled);
                     self.features.push(ExperimentalFeatureItem {
-                        // Preserve the existing metadata gate for unmigrated controls.
                         writable: !matches!(
                             feature.name.as_str(),
-                            "prevent_idle_sleep" | "guardian_approval"
+                            "prevent_idle_sleep"
                         ) || FEATURES.iter().any(|spec| {
                             spec.key == feature.name
                                 && spec.stage.experimental_menu_name().is_some()

@@ -5,9 +5,7 @@ use std::time::Instant;
 use crate::config::Config;
 use crate::config::edit::ConfigEdit;
 use crate::config::edit::ConfigEditsBuilder;
-use crate::guardian::GuardianApprovalRequest;
-use crate::guardian::GuardianMcpAnnotations;
-use crate::guardian::GuardianReviewContext;
+use crate::tools::approvals::ApprovalReviewContext;
 use crate::session::session::Session;
 use crate::session::step_context::StepContext;
 use crate::session::turn_context::TurnContext;
@@ -232,10 +230,7 @@ pub(crate) async fn handle_mcp_tool_call(
                     &call_id,
                     invocation,
                     item_metadata.clone(),
-                    ResolvedModelMessages::from_model(turn_context.model_info())
-                        .auto_review()
-                        .timeout_instructions
-                        .to_string(),
+                    "approval request timed out".to_string(),
                     /*already_started*/ true,
                 )
                 .await
@@ -998,16 +993,14 @@ fn build_mcp_tool_call_request_meta(
 /// Builds confirmation-policy metadata for eligible actor MCP calls.
 ///
 /// Policies follow the issuing step's model snapshot, including across approval
-/// waits. Only `node_repl`/`cua_repl` receive them; Guardian sessions are excluded.
+/// waits. Only `node_repl`/`cua_repl` receive them; review sessions are excluded.
 /// Eligible calls get an empty object when no policies are configured, clearing
 /// startup defaults. Text stays verbatim so runtimes own blank-value fallback.
 fn build_confirmation_policies_request_meta(
     step_context: &StepContext,
     server: &str,
 ) -> Option<serde_json::Value> {
-    if !is_node_repl_backed_server(server)
-        || crate::guardian::is_basic_session_source(&step_context.turn.session_source)
-    {
+    if !is_node_repl_backed_server(server) {
         return None;
     }
 
@@ -1123,22 +1116,7 @@ async fn maybe_request_mcp_tool_approval(
     policy: McpToolApprovalPolicy,
 ) -> Option<ReviewDecision> {
     let turn_context = &step_context.turn;
-    let turn_state = sess
-        .active_turn
-        .lock()
-        .await
-        .as_ref()
-        .map(|active| Arc::clone(&active.turn_state));
-    let strict_auto_review = match turn_state {
-        Some(turn_state) => turn_state.lock().await.strict_auto_review_enabled(),
-        None => false,
-    };
-    let approvals_reviewer = step_context
-        .settings
-        .mcp_approvals_reviewer_override
-        .unwrap_or(turn_context.config.approvals_reviewer);
-    if !strict_auto_review
-        && mcp_permission_prompt_is_auto_approved(
+    if mcp_permission_prompt_is_auto_approved(
             config.approval_policy.value(),
             permission_profile,
             McpPermissionPromptAutoApproveContext {
@@ -1150,7 +1128,7 @@ async fn maybe_request_mcp_tool_approval(
     }
 
     let annotations = metadata.annotations.as_ref();
-    if !strict_auto_review && !requires_mcp_tool_approval_for_mode(annotations, policy.mode) {
+    if !requires_mcp_tool_approval_for_mode(annotations, policy.mode) {
         return None;
     }
 
@@ -1161,8 +1139,7 @@ async fn maybe_request_mcp_tool_approval(
     } else {
         None
     };
-    if !strict_auto_review
-        && let Some(key) = session_approval_key.as_ref()
+    if let Some(key) = session_approval_key.as_ref()
         && mcp_tool_approval_is_remembered(sess, key).await
     {
         return Some(ReviewDecision::Approved);
@@ -1179,27 +1156,17 @@ async fn maybe_request_mcp_tool_approval(
         connected_account_email: None,
         tool_title: metadata.tool_title.clone(),
         tool_description: metadata.tool_description.clone(),
-        annotations: metadata
-            .annotations
-            .as_ref()
-            .map(|annotations| GuardianMcpAnnotations {
-                destructive_hint: annotations.destructive_hint,
-                open_world_hint: annotations.open_world_hint,
-                read_only_hint: annotations.read_only_hint,
-            }),
         hook_tool_name: hook_tool_name.clone(),
         approval_policy: config.approval_policy.value(),
-        reviewer: approvals_reviewer,
         approval_mode: policy.mode,
         allow_session_remember: session_approval_key.is_some(),
         allow_persistent_approval: persistent_approval_key.is_some(),
     };
     let approval_context = ApprovalContext {
-        review_context: GuardianReviewContext::from(step_context),
+        review_context: ApprovalReviewContext::from(step_context),
         cancellation_token: Some(cancellation_token.clone()),
         call_id: call_id.to_string(),
         tool_name: invocation_tool_name.clone(),
-        strict_auto_review,
         approval_reason: None,
         retry_reason: None,
         network_approval_context: None,
@@ -1344,32 +1311,6 @@ fn persistent_mcp_tool_approval_key(
     approval_mode: AppToolApproval,
 ) -> Option<McpToolApprovalKey> {
     session_mcp_tool_approval_key(invocation, metadata, approval_mode)
-}
-
-pub(crate) fn build_guardian_mcp_tool_review_request(
-    call_id: &str,
-    invocation: &McpInvocation,
-    metadata: Option<&McpToolApprovalMetadata>,
-) -> GuardianApprovalRequest {
-    GuardianApprovalRequest::McpToolCall {
-        id: call_id.to_string(),
-        server: invocation.server.clone(),
-        tool_name: invocation.tool.clone(),
-        arguments: invocation.arguments.clone(),
-        connector_id: None,
-        connector_name: None,
-        connector_description: None,
-        connected_account_email: None,
-        tool_title: metadata.and_then(|metadata| metadata.tool_title.clone()),
-        tool_description: metadata.and_then(|metadata| metadata.tool_description.clone()),
-        annotations: metadata
-            .and_then(|metadata| metadata.annotations.as_ref())
-            .map(|annotations| GuardianMcpAnnotations {
-                destructive_hint: annotations.destructive_hint,
-                open_world_hint: annotations.open_world_hint,
-                read_only_hint: annotations.read_only_hint,
-            }),
-    }
 }
 
 fn mcp_tool_metadata(tool_info: &ToolInfo, plugin_id: Option<&str>) -> McpToolApprovalMetadata {

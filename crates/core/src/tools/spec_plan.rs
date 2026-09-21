@@ -913,21 +913,6 @@ fn code_mode_namespace_descriptions(
 
 #[instrument(level = "trace", skip_all)]
 fn add_core_tool_sources(context: &CoreToolPlanContext<'_>, registry: &mut ToolRegistry) {
-    // Preserve the reviewer's existing sandbox requirements. Tool selection is
-    // supplied separately by the extension through AllowedTools.
-    if crate::guardian::is_basic_session_source(&context.turn_context.session_source)
-        && (!matches!(
-            context.turn_context.permission_profile(),
-            PermissionProfile::Managed { .. }
-        ) || context.environments.turn_environments().any(|environment| {
-            !matches!(
-                environment.permission_profile(),
-                PermissionProfile::Managed { .. }
-            )
-        }))
-    {
-        return;
-    }
 
     add_shell_tools(context, registry);
     add_mcp_resource_tools(context, registry);
@@ -988,12 +973,7 @@ fn add_shell_tools(context: &CoreToolPlanContext<'_>, registry: &mut ToolRegistr
     }
 
     let allow_login_shell = any_environment_allows_login_shell(context.environments);
-    let is_guardian = crate::guardian::is_basic_session_source(&turn_context.session_source);
-    if is_guardian && !features.enabled(Feature::UnifiedExec) {
-        return;
-    }
-    let exec_permission_approvals_enabled =
-        features.enabled(Feature::ExecPermissionApprovals) && !is_guardian;
+    let exec_permission_approvals_enabled = features.enabled(Feature::ExecPermissionApprovals);
     let include_environment_id = matches!(environment_mode, ToolEnvironmentMode::Multiple);
     let options = ExecCommandHandlerOptions {
         allow_login_shell,

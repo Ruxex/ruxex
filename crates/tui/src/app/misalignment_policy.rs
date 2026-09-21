@@ -142,7 +142,6 @@ impl App {
                         config.permissions.user_visible_workspace_roots().to_vec(),
                     ),
                     approval_policy: Some(config.permissions.approval_policy.value().into()),
-                    approvals_reviewer: Some(config.approvals_reviewer.into()),
                     sandbox_policy,
                     permissions,
                     input: vec![UserInput::Text {

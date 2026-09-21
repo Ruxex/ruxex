@@ -37,24 +37,13 @@ impl ChatWidget {
             if !matches!(preset.id, "read-only" | "auto") {
                 continue;
             }
-            for reviewer in [ApprovalsReviewer::User, ApprovalsReviewer::AutoReview] {
-                if reviewer == ApprovalsReviewer::AutoReview
-                    && (preset.id != "auto"
-                        || !self.config.features.enabled(Feature::GuardianApproval))
-                {
-                    continue;
-                }
-                let approval = AskForApproval::from(preset.approval);
-                let requirements = self.config.config_layer_stack.requirements();
-                if self
-                    .permission_mode_disabled_reason(&preset, approval)
-                    .is_some()
-                    || requirements.approvals_reviewer.can_set(&reviewer).is_err()
-                    || (requirements.auto_review_required_for_model(self.current_model())
-                        && reviewer != ApprovalsReviewer::AutoReview)
-                {
-                    continue;
-                }
+            let approval = AskForApproval::from(preset.approval);
+            if self
+                .permission_mode_disabled_reason(&preset, approval)
+                .is_some()
+            {
+                continue;
+            }
                 // These modes still need explicit Windows setup.
                 #[cfg(target_os = "windows")]
                 if preset.id == "auto"
@@ -63,13 +52,11 @@ impl ChatWidget {
                         crate::app::WindowsSandboxHost::Mixed
                             | crate::app::WindowsSandboxHost::Unknown
                     ) || (self.windows_sandbox_host != crate::app::WindowsSandboxHost::Remote
-                        && reviewer == ApprovalsReviewer::User
                         && self.windows_sandbox_config.level() == WindowsSandboxLevel::Disabled))
                 {
                     continue;
                 }
                 let is_current = current_approval == approval
-                    && self.config.approvals_reviewer == reviewer
                     && active_profile.as_ref().map_or_else(
                         || {
                             Self::preset_matches_current(
@@ -81,21 +68,15 @@ impl ChatWidget {
                         },
                         |active| active.id == preset.active_permission_profile.id,
                     );
-                let label = match (preset.id, reviewer) {
-                    ("auto", ApprovalsReviewer::User) => ASK_FOR_APPROVAL_LABEL,
-                    ("auto", ApprovalsReviewer::AutoReview) => APPROVE_FOR_ME_LABEL,
-                    _ => preset.label,
-                };
+                let label = preset.label;
                 choices.push((
                     is_current,
                     PermissionProfileSelection {
                         profile_id: preset.active_permission_profile.id.clone(),
                         approval_policy: Some(approval),
-                        approvals_reviewer: Some(reviewer),
                         display_label: label.to_string(),
                     },
                 ));
-            }
         }
         if !forward {
             choices.reverse();

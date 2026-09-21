@@ -419,16 +419,7 @@ impl TurnContext {
     /// Legacy: returns the frozen initial-turn prefix-rule policy.
     /// Step-scoped consumers should use their captured `StepContext::settings`.
     pub(crate) fn allow_prefix_rules(&self) -> AllowPrefixRules {
-        let ignore_rules = self
-            .config
-            .config_layer_stack
-            .requirements_toml()
-            .auto_review
-            .as_ref()
-            .and_then(|auto_review| auto_review.ignore_rules.as_ref())
-            .is_some_and(|models| models.contains(&self.model_info().slug));
         if self.model_info().model_specialty.as_deref() == Some(MODEL_SPECIALTY_CYBER)
-            || ignore_rules
         {
             AllowPrefixRules::IgnoreForCyberModel
         } else {
@@ -675,7 +666,6 @@ impl TurnContext {
             current_date: self.current_date.clone(),
             timezone: self.timezone.clone(),
             approval_policy: self.approval_policy(),
-            approvals_reviewer: Some(self.config.approvals_reviewer),
             sandbox_policy: self.sandbox_policy(),
             permission_profile: Some(self.permission_profile()),
             active_permission_profile: self.environments.primary().map_or_else(
@@ -754,7 +744,6 @@ impl Session {
             session_configuration.step_settings.reasoning_summary;
         per_turn_config.service_tier = session_configuration.step_settings.service_tier.clone();
         per_turn_config.personality = session_configuration.step_settings.personality;
-        per_turn_config.approvals_reviewer = session_configuration.step_settings.approvals_reviewer;
         session_configuration
             .apply_permission_profile_to_permissions(&mut per_turn_config.permissions);
         let permission_profile = session_configuration.permission_profile();
@@ -845,10 +834,6 @@ impl Session {
         let permission_profile = environments.permission_profile_or_else(|| {
             per_turn_config.permissions.effective_permission_profile()
         });
-        let auto_review_enabled = crate::guardian::routes_approval_policy_to_guardian(
-            per_turn_config.permissions.approval_policy.value(),
-            per_turn_config.approvals_reviewer,
-        );
         let per_turn_config = Arc::new(per_turn_config);
         let turn_metadata_state = Arc::new(TurnMetadataState::new(
             session_id.to_string(),
@@ -862,7 +847,6 @@ impl Session {
             &permission_profile,
             session_configuration.windows_sandbox_level,
             network.is_some(),
-            auto_review_enabled,
             model_info,
         ));
         turn_metadata_state

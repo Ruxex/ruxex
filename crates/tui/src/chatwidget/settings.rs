@@ -106,11 +106,6 @@ impl ChatWidget {
         enabled
     }
 
-    pub(crate) fn set_approvals_reviewer(&mut self, policy: ApprovalsReviewer) {
-        self.config.approvals_reviewer = policy;
-        self.refresh_status_surfaces();
-    }
-
     /// Override the reasoning effort used when Plan mode is active.
     ///
     /// When the active mask is already Plan, the override is applied immediately
@@ -424,7 +419,6 @@ impl ChatWidget {
         self.config.model_provider_id = settings.model_provider.clone();
         self.set_service_tier(settings.service_tier.clone());
         self.set_approval_policy(settings.approval_policy);
-        self.set_approvals_reviewer(settings.approvals_reviewer.to_core());
         self.config.personality = settings.personality;
 
         let permission_profile = PermissionProfile::from_legacy_sandbox_policy_for_cwd(
@@ -669,7 +663,6 @@ impl ChatWidget {
             op: AppCommand::override_turn_context(
                 /*cwd*/ None,
                 /*approval_policy*/ None,
-                /*approvals_reviewer*/ None,
                 /*permission_profile*/ None,
                 /*active_permission_profile*/ None,
                 /*model*/ None,

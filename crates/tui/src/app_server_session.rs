@@ -65,8 +65,6 @@ use codex_app_server_protocol::SessionSource;
 use codex_app_server_protocol::SkillsListParams;
 use codex_app_server_protocol::SkillsListResponse;
 use codex_app_server_protocol::Thread;
-use codex_app_server_protocol::ThreadApproveGuardianDeniedActionParams;
-use codex_app_server_protocol::ThreadApproveGuardianDeniedActionResponse;
 use codex_app_server_protocol::ThreadArchiveParams;
 use codex_app_server_protocol::ThreadArchiveResponse;
 use codex_app_server_protocol::ThreadBackgroundTerminalsCleanParams;
@@ -127,7 +125,6 @@ use codex_app_server_protocol::UserInput;
 use codex_config::ConfigLayerSource;
 use codex_otel::TelemetryAuthMode;
 use codex_protocol::ThreadId;
-use codex_protocol::approvals::GuardianAssessmentEvent;
 use codex_protocol::config_types::Personality;
 use codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
 use codex_protocol::models::ActivePermissionProfile;
@@ -790,7 +787,6 @@ impl AppServerSession {
             params.permissions = Some(selected_profile.profile_id.clone());
             params.sandbox = None;
             params.approval_policy = selected_profile.approval_policy;
-            params.approvals_reviewer = selected_profile.approvals_reviewer.map(Into::into);
             remove_permission_config_overrides(&mut params.config);
         }
         if self.history_support == ThreadHistorySupport::LegacyOnly {
@@ -957,7 +953,6 @@ impl AppServerSession {
             && permission_mode == ForkPermissionMode::InheritSaved
         {
             params.approval_policy = None;
-            params.approvals_reviewer = None;
             params.sandbox = None;
             params.permissions = None;
             remove_permission_config_overrides(&mut params.config);
@@ -966,7 +961,6 @@ impl AppServerSession {
             params.permissions = Some(selected_profile.profile_id.clone());
             params.sandbox = None;
             params.approval_policy = selected_profile.approval_policy;
-            params.approvals_reviewer = selected_profile.approvals_reviewer.map(Into::into);
             remove_permission_config_overrides(&mut params.config);
         }
         self.thread_tool_transport()
@@ -1290,7 +1284,6 @@ impl AppServerSession {
         items: Vec<UserInput>,
         cwd: PathBuf,
         approval_policy: Option<AskForApproval>,
-        approvals_reviewer: Option<codex_app_server_protocol::ApprovalsReviewer>,
         permissions_override: TurnPermissionsOverride,
         workspace_roots: &[AbsolutePathBuf],
         model: String,
@@ -1320,7 +1313,6 @@ impl AppServerSession {
                     cwd: Some(cwd),
                     runtime_workspace_roots: Some(workspace_roots.to_vec()),
                     approval_policy,
-                    approvals_reviewer,
                     sandbox_policy,
                     permissions,
                     model: Some(model),
@@ -1559,27 +1551,6 @@ impl AppServerSession {
         Ok(())
     }
 
-    pub(crate) async fn thread_approve_guardian_denied_action(
-        &mut self,
-        thread_id: ThreadId,
-        event: &GuardianAssessmentEvent,
-    ) -> Result<()> {
-        let request_id = self.next_request_id();
-        let _: ThreadApproveGuardianDeniedActionResponse = self
-            .client
-            .request_typed(ClientRequest::ThreadApproveGuardianDeniedAction {
-                request_id,
-                params: ThreadApproveGuardianDeniedActionParams {
-                    thread_id: thread_id.to_string(),
-                    event: serde_json::to_value(event)
-                        .wrap_err("failed to serialize Auto Review denial event")?,
-                },
-            })
-            .await
-            .wrap_err("thread/approveGuardianDeniedAction failed in TUI")?;
-        Ok(())
-    }
-
     pub(crate) async fn thread_background_terminals_clean(
         &mut self,
         thread_id: ThreadId,
@@ -1781,12 +1752,6 @@ fn model_preset_from_api_model(model: ApiModel) -> ModelPreset {
         supported_in_api: true,
         input_modalities: model.input_modalities,
     }
-}
-
-fn approvals_reviewer_override_from_config(
-    config: &Config,
-) -> Option<codex_app_server_protocol::ApprovalsReviewer> {
-    Some(config.approvals_reviewer.into())
 }
 
 // Keep the explicit Bridge opt-out while retiring Friendly/Pragmatic selection.
@@ -2038,7 +2003,6 @@ pub(crate) fn thread_start_params_from_config(
         cwd: thread_cwd_from_config(config, thread_params_mode, remote_cwd_override),
         runtime_workspace_roots: Some(config.workspace_roots.clone()),
         approval_policy: Some(config.permissions.approval_policy.value().into()),
-        approvals_reviewer: approvals_reviewer_override_from_config(config),
         sandbox,
         permissions,
         config: match thread_params_mode {
@@ -2105,7 +2069,6 @@ fn thread_resume_params_from_config(
         cwd: thread_cwd_from_config(&config, thread_params_mode, remote_cwd_override),
         runtime_workspace_roots: Some(config.workspace_roots.clone()),
         approval_policy: Some(config.permissions.approval_policy.value().into()),
-        approvals_reviewer: approvals_reviewer_override_from_config(&config),
         sandbox,
         permissions,
         config: config_overrides,
@@ -2117,7 +2080,6 @@ fn thread_resume_params_from_config(
     if thread_params_mode == ThreadParamsMode::Remote {
         // Resuming restores the server's saved permission settings, including named profiles.
         params.approval_policy = None;
-        params.approvals_reviewer = None;
         params.sandbox = None;
         params.permissions = None;
         remove_permission_config_overrides(&mut params.config);
@@ -2149,7 +2111,6 @@ fn thread_fork_params_from_config(
         cwd: thread_cwd_from_config(&config, thread_params_mode, remote_cwd_override),
         runtime_workspace_roots: Some(config.workspace_roots.clone()),
         approval_policy: Some(config.permissions.approval_policy.value().into()),
-        approvals_reviewer: approvals_reviewer_override_from_config(&config),
         sandbox,
         permissions,
         config: config_request_overrides_from_config(&config),
@@ -2273,7 +2234,6 @@ async fn thread_session_state_from_thread_start_response(
         response.model_provider.clone(),
         response.service_tier.clone(),
         response.approval_policy,
-        response.approvals_reviewer.to_core(),
         permission_profile,
         response.active_permission_profile.clone().map(Into::into),
         response.cwd.clone(),
@@ -2317,7 +2277,6 @@ async fn thread_session_state_from_thread_resume_response(
         response.model_provider.clone(),
         response.service_tier.clone(),
         response.approval_policy,
-        response.approvals_reviewer.to_core(),
         permission_profile,
         response.active_permission_profile.clone().map(Into::into),
         response.cwd.clone(),
@@ -2354,7 +2313,6 @@ async fn thread_session_state_from_thread_fork_response(
         response.model_provider.clone(),
         response.service_tier.clone(),
         response.approval_policy,
-        response.approvals_reviewer.to_core(),
         permission_profile,
         response.active_permission_profile.clone().map(Into::into),
         response.cwd.clone(),
@@ -2406,7 +2364,6 @@ async fn thread_session_state_from_thread_response(
     model_provider_id: String,
     service_tier: Option<String>,
     approval_policy: AskForApproval,
-    approvals_reviewer: codex_protocol::config_types::ApprovalsReviewer,
     permission_profile: PermissionProfile,
     active_permission_profile: Option<ActivePermissionProfile>,
     cwd: AbsolutePathBuf,
@@ -2438,7 +2395,6 @@ async fn thread_session_state_from_thread_response(
         model_provider_id,
         service_tier,
         approval_policy,
-        approvals_reviewer,
         permission_profile,
         active_permission_profile,
         cwd,

@@ -73,7 +73,7 @@ pub(crate) struct SessionState {
     /// Persisted origin of the session base instructions, when known.
     pub(crate) base_instructions_provenance: Option<BaseInstructionsProvenance>,
     pub(crate) history: ContextManager,
-    /// Cancels work bound to discarded history or a superseded Guardian evidence policy.
+    /// Cancels work bound to discarded history or a superseded evidence policy.
     pub(crate) history_reset: CancellationToken,
     pub(crate) latest_rate_limits: Option<RateLimitSnapshot>,
     pub(crate) latest_token_usage_record: Option<TokenUsageRecord>,
@@ -194,11 +194,7 @@ impl SessionState {
         replacement: HistoryReplacement,
     ) {
         let invalidate_reviews = match replacement {
-            HistoryReplacement::Compaction {
-                reviewer_compaction_hash,
-            } => self
-                .history
-                .replace_compacted(items, reviewer_compaction_hash.as_deref()),
+            HistoryReplacement::Compaction { .. } => self.history.replace_compacted(items, None),
             HistoryReplacement::Reset => {
                 self.history.replace_annotated(items);
                 true

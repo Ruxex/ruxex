@@ -9,7 +9,6 @@ use super::*;
 use crate::agents_md_manager::AgentsMdManager;
 use crate::agents_md_manager::SessionInstructions;
 use crate::config::ConstraintError;
-use crate::context::GuardianContextMode;
 use crate::environment_selection::ThreadEnvironments;
 use crate::environment_selection::TurnEnvironmentSnapshot;
 use crate::hook_mcp_executor::CoreHookMcpExecutor;
@@ -67,7 +66,6 @@ pub(crate) struct Session {
     /// The set of enabled features should be invariant for the lifetime of the
     /// session.
     pub(super) features: ManagedFeatures,
-    pub(crate) guardian_context_mode: GuardianContextMode,
     pub(super) isolation: codex_extension_api::SessionIsolation,
     pub(crate) allowed_tools: Option<Arc<codex_extension_api::AllowedTools>>,
     pub(crate) windows_sandbox_proxy_settings_mode:
@@ -138,8 +136,6 @@ pub(crate) struct SessionConfiguration {
     pub(super) metrics_service_name: Option<String>,
     pub(super) app_server_client_name: Option<String>,
     pub(super) app_server_client_version: Option<String>,
-    /// Guardian reviewer identity is trusted only when established during an in-memory spawn.
-    pub(super) trusted_guardian_reviewer: bool,
     /// Source of the session (cli, vscode, exec, mcp, ...)
     pub(super) session_source: SessionSource,
     /// Persisted thread history contract selected when this thread was created.
@@ -268,7 +264,6 @@ impl SessionConfiguration {
             model_provider_id: self.original_config_do_not_use.model_provider_id.clone(),
             service_tier: self.step_settings.service_tier.clone(),
             approval_policy: self.step_settings.approval_policy.value(),
-            approvals_reviewer: self.step_settings.approvals_reviewer,
             permission_profile: self.effective_permission_profile(&environment_selections),
             full_access: codex_protocol::protocol::has_full_access(
                 self.step_settings.approval_policy.value(),
@@ -309,7 +304,6 @@ impl SessionConfiguration {
             model_provider_id: self.original_config_do_not_use.model_provider_id.clone(),
             service_tier: self.step_settings.service_tier.clone(),
             approval_policy: self.step_settings.approval_policy.value(),
-            approvals_reviewer: self.step_settings.approvals_reviewer,
             permission_profile: self.materialized_permission_profile(environment_selections),
             active_permission_profile: self.active_permission_profile(),
             cwd: self.legacy_fallback_cwd.clone(),
@@ -339,7 +333,6 @@ impl SessionConfiguration {
                     .to_vec(),
             ),
             approval_policy: Some(self.step_settings.approval_policy.value()),
-            approvals_reviewer: Some(self.step_settings.approvals_reviewer),
             permission_profile: Some(self.permission_profile()),
             active_permission_profile: self.active_permission_profile(),
             windows_sandbox_level: Some(self.windows_sandbox_level),
@@ -371,11 +364,6 @@ impl SessionConfiguration {
                 .original_config_do_not_use
                 .config_layer_stack
                 .requirements(),
-            guardian_approval_enabled: self
-                .original_config_do_not_use
-                .features
-                .enabled(Feature::GuardianApproval),
-            trusted_guardian_reviewer: self.trusted_guardian_reviewer,
             has_full_disk_write_access: permission_profile
                 .file_system_sandbox_policy()
                 .has_full_disk_write_access(),
@@ -837,7 +825,7 @@ impl Session {
             ThreadHistoryMode::Paginated
         ) && matches!(
             session_configuration.thread_source.as_ref(),
-            Some(ThreadSource::Subagent | ThreadSource::GuardianReview)
+            Some(ThreadSource::Subagent)
         );
         if let InitialHistory::Forked(items) = &mut initial_history {
             Self::assign_missing_rollout_response_item_ids(items);
@@ -945,20 +933,12 @@ impl Session {
             .map(|policy| *policy)
             .unwrap_or_default();
         let allowed_tools = thread_extension_init
-            .get::<codex_extension_api::AllowedTools>()
-            .or_else(|| {
-                // Older reviewer rollouts predate the explicit startup setting.
-                crate::guardian::is_basic_session_source(&session_configuration.session_source)
-                    .then(|| Arc::new(codex_guardian_reviewer::reviewer_allowed_tools()))
-            });
+            .get::<codex_extension_api::AllowedTools>();
         let mcp_thread_init = thread_extension_init.clone();
         let thread_extension_data = codex_extension_api::ExtensionData::new_with_init(
             thread_id.to_string(),
             thread_extension_init,
         );
-        // Capture follows the flag; replay selects reviewer policy from the saved checkpoint.
-        let guardian_context_mode = GuardianContextMode::from_features(&config.features);
-        thread_extension_data.insert(crate::context::GuardianReviewEvidence::default());
         // Kick off independent async setup tasks in parallel to reduce startup latency.
         //
         // - initialize thread persistence with new or resumed session info
@@ -1423,10 +1403,7 @@ impl Session {
             let mut state = SessionState::new_with_auto_compact_window_ids(
                 session_configuration.clone(),
                 initial_auto_compact_window_ids,
-                ContextManager::with_guardian_context_mode(
-                    guardian_context_mode,
-                    &session_configuration.session_source,
-                ),
+                ContextManager::new(),
             );
             state.last_started_turn_id = initial_history.get_rollout_items().iter().rev().find_map(|item| {
                 match item {
@@ -1639,11 +1616,7 @@ impl Session {
                     InitialHistory::Resumed(_) | InitialHistory::Forked(_)
                 ))
                 .with_session_context(
-                    crate::guardian::prompt_cache_key_override_for_review_session(
-                        &session_configuration.session_source,
-                        session_configuration.parent_thread_id,
-                    )
-                    .or(fork_cache_key),
+                    fork_cache_key,
                     tx_event.clone(),
                     codex_responses_headers,
                 ),
@@ -1667,7 +1640,6 @@ impl Session {
                 thread_settings_persistence: Semaphore::new(/*permits*/ 1),
                 managed_network_proxy_refresh_lock: Semaphore::new(/*permits*/ 1),
                 features: config.features.clone(),
-                guardian_context_mode,
                 isolation,
                 allowed_tools,
                 windows_sandbox_proxy_settings_mode,
@@ -1714,7 +1686,6 @@ impl Session {
                     model_provider_id: thread_config.model_provider_id,
                     service_tier: thread_config.service_tier,
                     approval_policy: thread_config.approval_policy,
-                    approvals_reviewer: thread_config.approvals_reviewer,
                     network_proxy: session_network_proxy.filter(|_| {
                         Self::managed_network_proxy_active_for_permission_profile(
                             &thread_config.permission_profile,

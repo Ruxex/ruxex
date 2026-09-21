@@ -80,10 +80,8 @@ mod execution;
 mod interrupt;
 mod legacy;
 mod residency;
-mod sender_context;
 mod service_tier;
 mod spawn;
-mod user_authorization;
 
 const MAX_ENVIRONMENT_SUBAGENTS: usize = 8;
 const MAX_ENVIRONMENT_SUBAGENT_BYTES: usize = 1_024;

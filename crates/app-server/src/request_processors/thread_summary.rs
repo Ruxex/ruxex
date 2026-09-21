@@ -179,7 +179,6 @@ pub(crate) fn thread_settings_from_config_snapshot(
         disabled_plugin_ids: config_snapshot.disabled_plugin_ids.clone(),
         cwd: config_snapshot.cwd().clone(),
         approval_policy: config_snapshot.approval_policy.into(),
-        approvals_reviewer: config_snapshot.approvals_reviewer.into(),
         sandbox_policy: config_snapshot.sandbox_policy().into(),
         active_permission_profile: thread_response_active_permission_profile(
             config_snapshot.active_permission_profile.clone(),

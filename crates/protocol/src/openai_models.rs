@@ -33,21 +33,10 @@ use crate::config_types::Verbosity;
 use crate::protocol::MultiAgentVersion;
 
 mod access_programs;
-#[path = "openai_models/guardian.rs"]
-mod guardian;
-pub use guardian::GuardianModelPolicy;
-pub use guardian::GuardianReviewMode;
-pub use guardian::GuardianScope;
-pub use guardian::GuardianUnscoredAction;
-
-#[path = "openai_models/guardian_v2.rs"]
-mod guardian_v2;
 #[path = "openai_models/reasoning_effort.rs"]
 mod reasoning_effort;
 
 pub use access_programs::ModelAccessPrograms;
-pub use guardian_v2::GuardianV2ModelConfig;
-pub use guardian_v2::GuardianV2TranscriptModelConfig;
 
 /// Backend model-catalog specialty identifying cybersecurity-focused models.
 pub const MODEL_SPECIALTY_CYBER: &str = "cyber";
@@ -402,11 +391,6 @@ const fn is_true(value: &bool) -> bool {
 /// Model metadata returned by the Codex backend `/models` endpoint.
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, TS, JsonSchema)]
 pub struct ModelInfo {
-    /// Model-owned approval coverage. Absent preserves legacy settings; an empty map disables
-    /// ordinary Guardian review. Keys are computer_use, shell, file_changes, mcp, network,
-    /// and permissions. This does not override mandatory safety or administrator requirements.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub guardian: Option<GuardianModelPolicy>,
     pub slug: String,
     pub display_name: String,
     pub description: Option<String>,
@@ -482,11 +466,7 @@ pub struct ModelInfo {
     #[serde(default)]
     pub use_responses_lite: bool,
     #[serde(default)]
-    pub node_repl_auto_review_required: bool,
-    #[serde(default)]
     pub node_repl_disabled: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub auto_review_model_override: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub model_specialty: Option<String>,
     #[serde(
@@ -548,13 +528,10 @@ pub struct ModelMessages {
     pub instructions_variables: Option<ModelInstructionsVariables>,
     pub approvals: Option<ApprovalMessages>,
     pub collaboration_modes: Option<CollaborationModeMessages>,
-    pub auto_review: Option<AutoReviewMessages>,
     pub permissions: Option<PermissionMessages>,
     pub multi_agent: Option<MultiAgentMessages>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub token_budget: Option<ModelTokenBudgetConfig>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub guardian_v2: Option<GuardianV2ModelConfig>,
     /// Replacement confirmation-policy documents forwarded in actor MCP request metadata.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub confirmation_policies: Option<ConfirmationPolicies>,
@@ -615,7 +592,6 @@ pub struct ModelTokenBudgetConfig {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, TS, JsonSchema)]
 pub struct ApprovalMessages {
     pub on_request: Option<String>,
-    pub on_request_auto_review: Option<String>,
     pub never: Option<String>,
     pub unless_trusted: Option<String>,
 }
@@ -624,17 +600,6 @@ pub struct ApprovalMessages {
 pub struct CollaborationModeMessages {
     pub default: Option<String>,
     pub plan: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, TS, JsonSchema)]
-pub struct AutoReviewMessages {
-    pub policy: Option<String>,
-    pub policy_template: Option<String>,
-    /// Extra developer policy for `node_repl` and `cua_repl` reviews.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub node_repl_policy: Option<String>,
-    pub rejection_instructions: Option<String>,
-    pub timeout_instructions: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, TS, JsonSchema)]
@@ -968,10 +933,7 @@ mod tests {
             supports_search_tool: false,
             supports_experimental_context: false,
             use_responses_lite: false,
-            guardian: None,
-            node_repl_auto_review_required: false,
             node_repl_disabled: false,
-            auto_review_model_override: None,
             model_specialty: None,
             tool_mode: None,
             multi_agent_version: None,
@@ -1099,58 +1061,8 @@ mod tests {
             messages.approvals,
             Some(ApprovalMessages {
                 on_request: Some(String::new()),
-                on_request_auto_review: None,
                 never: Some(String::new()),
                 unless_trusted: None,
-            })
-        );
-    }
-
-    #[test]
-    fn auto_review_messages_preserve_missing_and_empty_values() {
-        let missing_template: ModelMessages = from_str(
-            r#"{
-                "instructions_template": null,
-                "instructions_variables": null,
-                "auto_review": {
-                    "policy": "policy"
-                }
-            }"#,
-        )
-        .expect("auto-review messages should deserialize without a policy template");
-        let empty_template: ModelMessages = from_str(
-            r#"{
-                "instructions_template": null,
-                "instructions_variables": null,
-                "auto_review": {
-                    "policy": "policy",
-                    "policy_template": "",
-                    "node_repl_policy": "",
-                    "rejection_instructions": "",
-                    "timeout_instructions": ""
-                }
-            }"#,
-        )
-        .expect("auto-review messages should deserialize with an empty policy template");
-
-        assert_eq!(
-            missing_template.auto_review,
-            Some(AutoReviewMessages {
-                policy: Some("policy".to_string()),
-                policy_template: None,
-                node_repl_policy: None,
-                rejection_instructions: None,
-                timeout_instructions: None,
-            })
-        );
-        assert_eq!(
-            empty_template.auto_review,
-            Some(AutoReviewMessages {
-                policy: Some("policy".to_string()),
-                policy_template: Some(String::new()),
-                node_repl_policy: Some(String::new()),
-                rejection_instructions: Some(String::new()),
-                timeout_instructions: Some(String::new()),
             })
         );
     }
@@ -1390,20 +1302,12 @@ mod tests {
             instructions_variables: None,
             approvals: Some(ApprovalMessages {
                 on_request: Some("approval".to_string()),
-                on_request_auto_review: None,
                 never: Some("never approval".to_string()),
                 unless_trusted: Some("unless-trusted approval".to_string()),
             }),
             collaboration_modes: Some(CollaborationModeMessages {
                 default: Some("default collaboration".to_string()),
                 plan: Some("plan collaboration".to_string()),
-            }),
-            auto_review: Some(AutoReviewMessages {
-                policy: Some("policy".to_string()),
-                policy_template: None,
-                node_repl_policy: None,
-                rejection_instructions: Some("rejection instructions".to_string()),
-                timeout_instructions: Some("timeout instructions".to_string()),
             }),
             permissions: Some(PermissionMessages {
                 danger_full_access: None,
@@ -1419,17 +1323,6 @@ mod tests {
                 computer_use: Some(
                     "  # Native confirmations\r\n\nKeep ${native_markdown}.\n".to_string(),
                 ),
-            }),
-            guardian_v2: Some(GuardianV2ModelConfig {
-                classifier_instructions: Some("Guardian classification".to_string()),
-                review_threshold_basis_points: Some(7_500),
-                reasoning_effort: Some(ReasoningEffort::Minimal),
-                transcript: Some(GuardianV2TranscriptModelConfig {
-                    sources: Some(vec!["reasoning".to_string()]),
-                    max_tool_entry_tokens: Some(500),
-                    ..Default::default()
-                }),
-                ..Default::default()
             }),
         };
         let mut value = serde_json::to_value(ModelsResponse {

@@ -1,14 +1,8 @@
 use codex_utils_absolute_path::AbsolutePathBuf;
 use codex_utils_redacted_string::RedactedString;
 use schemars::JsonSchema;
-use schemars::r#gen::SchemaGenerator;
-use schemars::schema::InstanceType;
-use schemars::schema::Metadata;
-use schemars::schema::Schema;
-use schemars::schema::SchemaObject;
 use serde::Deserialize;
 use serde::Serialize;
-use serde_json::Value;
 use std::collections::HashMap;
 use std::fmt;
 use std::num::NonZeroU64;
@@ -172,36 +166,6 @@ impl fmt::Display for ProfileV2Name {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Display, TS)]
-#[strum(serialize_all = "snake_case")]
-#[ts(type = r#""user" | "auto_review" | "guardian_subagent""#)]
-/// Configures who approval requests are routed to for review. Examples
-/// include sandbox escapes, blocked network access, MCP approval prompts, and
-/// ARC escalations. Defaults to `user`. `auto_review` uses a carefully
-/// prompted subagent to gather relevant context and apply a risk-based
-/// decision framework before approving or denying the request.
-pub enum ApprovalsReviewer {
-    #[default]
-    #[serde(rename = "user")]
-    User,
-    #[serde(rename = "auto_review", alias = "guardian_subagent")]
-    #[strum(serialize = "auto_review")]
-    AutoReview,
-}
-
-impl JsonSchema for ApprovalsReviewer {
-    fn schema_name() -> String {
-        "ApprovalsReviewer".to_string()
-    }
-
-    fn json_schema(_generator: &mut SchemaGenerator) -> Schema {
-        string_enum_schema_with_description(
-            &["user", "auto_review", "guardian_subagent"],
-            "Configures who approval requests are routed to for review. Examples include sandbox escapes, blocked network access, MCP approval prompts, and ARC escalations. Defaults to `user`. `auto_review` uses a carefully prompted subagent to gather relevant context and apply a risk-based decision framework before approving or denying the request. The legacy value `guardian_subagent` is accepted for compatibility.",
-        )
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum ShellEnvironmentPolicyInherit {
@@ -269,24 +233,6 @@ impl Default for ShellEnvironmentPolicy {
             use_profile: false,
         }
     }
-}
-
-fn string_enum_schema_with_description(values: &[&str], description: &str) -> Schema {
-    let mut schema = SchemaObject {
-        instance_type: Some(InstanceType::String.into()),
-        metadata: Some(Box::new(Metadata {
-            description: Some(description.to_string()),
-            ..Default::default()
-        })),
-        ..Default::default()
-    };
-    schema.enum_values = Some(
-        values
-            .iter()
-            .map(|value| Value::String((*value).to_string()))
-            .collect(),
-    );
-    Schema::Object(schema)
 }
 
 #[derive(

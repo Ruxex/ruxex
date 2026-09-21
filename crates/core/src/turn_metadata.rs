@@ -54,8 +54,6 @@ pub(crate) struct ExecutionMetadata<'a> {
     pub(crate) model: &'a str,
     pub(crate) reasoning_effort: Option<ReasoningEffortConfig>,
     pub(crate) node_repl_disabled: bool,
-    pub(crate) auto_review_enabled: bool,
-    pub(crate) node_repl_auto_review_required: bool,
 }
 
 impl<'a> ExecutionMetadata<'a> {
@@ -64,17 +62,10 @@ impl<'a> ExecutionMetadata<'a> {
             model: settings.model_info.slug.as_str(),
             reasoning_effort: settings.effective_reasoning_effort(),
             node_repl_disabled: settings.model_info.node_repl_disabled,
-            auto_review_enabled: crate::guardian::routes_approval_policy_to_guardian(
-                settings.approval_policy(),
-                settings.approvals_reviewer(),
-            ),
-            node_repl_auto_review_required: settings.model_info.computer_use_review_required(),
         }
     }
 
     pub(crate) fn apply_to(&self, metadata: &mut CodexResponsesMetadata) {
-        metadata.auto_review_enabled = Some(self.auto_review_enabled);
-        metadata.node_repl_auto_review_required = Some(self.node_repl_auto_review_required);
         metadata.node_repl_disabled = Some(self.node_repl_disabled);
         metadata
             .extra
@@ -169,8 +160,6 @@ pub(crate) struct TurnMetadataState {
     // TODO(anp): Derive this cached tag from TurnEnvironment::sandbox_context
     // so metadata reflects the selected environment's backend.
     pub(crate) sandbox_tags: SandboxTags,
-    auto_review_enabled: bool,
-    node_repl_auto_review_required: bool,
     node_repl_disabled: bool,
     enriched_workspaces: RwLock<Option<BTreeMap<String, TurnMetadataWorkspace>>>,
     turn_started_at_unix_ms: RwLock<Option<i64>>,
@@ -195,7 +184,6 @@ impl TurnMetadataState {
         permission_profile: &PermissionProfile,
         windows_sandbox_level: WindowsSandboxLevel,
         enforce_managed_network: bool,
-        auto_review_enabled: bool,
         model_info: &ModelInfo,
     ) -> Self {
         let sandbox_tags = SandboxTags::new(
@@ -224,8 +212,6 @@ impl TurnMetadataState {
             turn_trigger: OnceLock::new(),
             turn_id,
             sandbox_tags,
-            auto_review_enabled,
-            node_repl_auto_review_required: model_info.computer_use_review_required(),
             node_repl_disabled: model_info.node_repl_disabled,
             enriched_workspaces: RwLock::new(None),
             turn_started_at_unix_ms: RwLock::new(None),
@@ -379,14 +365,6 @@ impl TurnMetadataState {
             .read()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .clone();
-        // Extract Guardian's internal parent before filtering configured metadata keys.
-        // Ordinary app-server client metadata stays in `extra`.
-        let parent_response_id =
-            if self.subagent_header.as_deref() == Some(crate::guardian::GUARDIAN_REVIEWER_NAME) {
-                extra.remove("parent_response_id")
-            } else {
-                None
-            };
         for key in self
             .responses_api_metadata
             .read()
@@ -396,7 +374,6 @@ impl TurnMetadataState {
             extra.remove(key);
         }
         let mut metadata = CodexResponsesMetadata {
-            parent_response_id,
             turn_id: Some(self.turn_id.clone()),
             agent_name: Some(self.agent_name.clone()),
             forked_from_thread_id: self.forked_from_thread_id,
@@ -407,8 +384,6 @@ impl TurnMetadataState {
             subagent_kind: self.subagent_kind.clone(),
             thread_source: self.thread_source.clone(),
             turn_trigger: self.turn_trigger.get().cloned(),
-            auto_review_enabled: Some(self.auto_review_enabled),
-            node_repl_auto_review_required: Some(self.node_repl_auto_review_required),
             node_repl_disabled: Some(self.node_repl_disabled),
             workspaces: self.current_workspaces(),
             tool_namespaces_info: None,

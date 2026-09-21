@@ -40,7 +40,7 @@ impl Default for ResponsesStreamRetryState {
 }
 
 /// Server retry advice retained after stream retries are exhausted. The turn ID
-/// prevents a reused Guardian session from applying advice from an earlier review.
+/// prevents a reused session from applying advice from an earlier request.
 pub(crate) struct ExhaustedResponseRetry {
     pub(crate) turn_id: String,
     pub(crate) retry_at: Option<tokio::time::Instant>,

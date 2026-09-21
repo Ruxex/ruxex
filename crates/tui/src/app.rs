@@ -127,7 +127,6 @@ use codex_app_server_protocol::TurnError as AppServerTurnError;
 use codex_app_server_protocol::TurnStatus;
 use codex_app_server_protocol::WriteStatus;
 use codex_config::LoaderOverrides;
-use codex_config::types::ApprovalsReviewer;
 use codex_config::types::MemoriesToml;
 use codex_config::types::ModelAvailabilityNuxConfig;
 use codex_exec_server::EnvironmentManager;
@@ -139,7 +138,6 @@ use codex_otel::SessionTelemetry;
 use codex_otel::TelemetryAuthMode;
 use codex_protocol::ThreadId;
 use codex_protocol::models::ActivePermissionProfile;
-use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
 use codex_protocol::models::PermissionProfile;
 use codex_protocol::openai_models::ModelAvailabilityNux;
 use codex_protocol::openai_models::ModelPreset;
@@ -375,35 +373,6 @@ fn default_exec_approval_decisions(
     }
     decisions.push(CommandExecutionApprovalDecision::Cancel);
     decisions
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-struct AutoReviewMode {
-    approval_policy: AskForApproval,
-    approvals_reviewer: ApprovalsReviewer,
-    active_permission_profile: ActivePermissionProfile,
-}
-
-/// Enabling the Auto-review experiment in the TUI should also switch the
-/// current `/permissions` settings to the matching Auto-review mode. Users
-/// can still change `/permissions` afterward; this just assumes that opting into
-/// the experiment means they want Auto-review enabled immediately.
-fn auto_review_mode() -> AutoReviewMode {
-    AutoReviewMode {
-        approval_policy: AskForApproval::OnRequest,
-        approvals_reviewer: ApprovalsReviewer::AutoReview,
-        active_permission_profile: ActivePermissionProfile::new(
-            BUILT_IN_PERMISSION_PROFILE_WORKSPACE,
-        ),
-    }
-}
-
-#[cfg(test)]
-impl AutoReviewMode {
-    fn permission_profile(&self) -> PermissionProfile {
-        builtin_permission_profile_for_active_permission_profile(&self.active_permission_profile)
-            .expect("auto-review mode should use a built-in permission profile")
-    }
 }
 
 /// Baseline cadence for periodic stream commit animation ticks.
@@ -651,7 +620,6 @@ struct RuntimePermissionProfileOverride {
     permission_profile: PermissionProfile,
     active_permission_profile: Option<ActivePermissionProfile>,
     network: Option<crate::legacy_core::config::NetworkProxySpec>,
-    approvals_reviewer: ApprovalsReviewer,
     turn_override: RuntimePermissionProfileTurnOverride,
 }
 
@@ -688,7 +656,6 @@ impl RuntimePermissionProfileOverride {
             permission_profile: config.permissions.permission_profile().clone(),
             active_permission_profile: config.permissions.active_permission_profile(),
             network: config.permissions.network.clone(),
-            approvals_reviewer: config.approvals_reviewer,
             turn_override: RuntimePermissionProfileTurnOverride::LegacySandbox,
         }
     }
@@ -704,7 +671,6 @@ impl RuntimePermissionProfileOverride {
         self.permission_profile == *config.permissions.permission_profile()
             && self.active_permission_profile == config.permissions.active_permission_profile()
             && self.network == config.permissions.network
-            && self.approvals_reviewer == config.approvals_reviewer
     }
 
     fn turn_permission_profile(&self) -> Option<&PermissionProfile> {

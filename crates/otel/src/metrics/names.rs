@@ -37,10 +37,6 @@ pub const TURN_TOKEN_USAGE_METRIC: &str = "codex.turn.token_usage";
 pub const TURN_COST_MICROUSD_METRIC: &str = "codex.turn.cost_microusd";
 pub const TURN_UNIFIED_EXEC_RUNNING_PROCESSES_METRIC: &str =
     "codex.turn.unified_exec.running_processes";
-pub const GUARDIAN_REVIEW_COUNT_METRIC: &str = "codex.guardian.review";
-pub const GUARDIAN_REVIEW_DURATION_METRIC: &str = "codex.guardian.review.duration_ms";
-pub const GUARDIAN_REVIEW_TTFT_DURATION_METRIC: &str = "codex.guardian.review.ttft.duration_ms";
-pub const GUARDIAN_REVIEW_TOKEN_USAGE_METRIC: &str = "codex.guardian.review.token_usage";
 pub const GOAL_CREATED_METRIC: &str = "codex.goal.created";
 pub const GOAL_RESUMED_METRIC: &str = "codex.goal.resumed";
 pub const GOAL_COMPLETED_METRIC: &str = "codex.goal.completed";

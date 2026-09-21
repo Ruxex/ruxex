@@ -107,12 +107,6 @@ impl std::error::Error for ProviderAccountError {}
 
 pub type ProviderAccountResult = std::result::Result<ProviderAccountState, ProviderAccountError>;
 
-/// Default model used for automatic approval review when a provider does not
-/// require a backend-specific model ID.
-pub const DEFAULT_APPROVAL_REVIEW_PREFERRED_MODEL: &str = "codex-auto-review";
-
-const API_KEY_APPROVAL_REVIEW_PREFERRED_MODEL: &str = "gpt-5.6-luna";
-
 /// Default model used for memory extraction when a provider does not require a
 /// backend-specific model ID.
 pub const DEFAULT_MEMORY_EXTRACTION_PREFERRED_MODEL: &str = "gpt-5.6-luna";
@@ -133,13 +127,6 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
     /// Returns the provider-owned capability upper bounds.
     fn capabilities(&self) -> ProviderCapabilities {
         ProviderCapabilities::default()
-    }
-
-    /// Returns the preferred model used for automatic approval review.
-    ///
-    /// Providers that require backend-specific model IDs should override this.
-    fn approval_review_preferred_model(&self) -> &'static str {
-        DEFAULT_APPROVAL_REVIEW_PREFERRED_MODEL
     }
 
     /// Returns the preferred model used for memory extraction.
@@ -340,19 +327,6 @@ impl ModelProvider for ConfiguredModelProvider {
         ProviderCapabilities {
             remote_compaction,
             ..ProviderCapabilities::default()
-        }
-    }
-
-    fn approval_review_preferred_model(&self) -> &'static str {
-        if self
-            .auth_manager
-            .as_ref()
-            .and_then(|auth_manager| auth_manager.auth_cached())
-            .is_some_and(|auth| auth.is_api_key_auth())
-        {
-            API_KEY_APPROVAL_REVIEW_PREFERRED_MODEL
-        } else {
-            DEFAULT_APPROVAL_REVIEW_PREFERRED_MODEL
         }
     }
 

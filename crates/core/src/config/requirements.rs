@@ -2,8 +2,6 @@ use codex_config::ConfigRequirements;
 use codex_config::RequirementSource;
 use codex_config::Sourced;
 use codex_config::config_toml::ConfigToml;
-use codex_config::types::ApprovalsReviewer;
-use codex_features::FeatureToml;
 use codex_login::default_client::RESIDENCY_HEADER_NAME;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::HashMap;
@@ -40,13 +38,6 @@ pub(super) fn apply_to_config(
     }
     apply_exact!(check_for_update_on_startup);
     apply_exact!(allow_login_shell);
-    if requirements
-        .approvals_reviewer
-        .can_set(&ApprovalsReviewer::User)
-        .is_err()
-    {
-        config.features.get_or_insert_default().guardianv2 = Some(FeatureToml::Enabled(false));
-    }
     if requirements.enforce_residency.value().is_some() {
         for (provider_name, provider) in &config.model_providers {
             let has_residency_header = provider

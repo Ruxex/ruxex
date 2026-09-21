@@ -86,15 +86,6 @@ pub(super) fn server_notification_thread_target(
         ServerNotification::TurnDiffUpdated(notification) => Some(notification.thread_id.as_str()),
         ServerNotification::TurnPlanUpdated(notification) => Some(notification.thread_id.as_str()),
         ServerNotification::ItemStarted(notification) => Some(notification.thread_id.as_str()),
-        ServerNotification::ItemGuardianApprovalReviewStarted(notification) => {
-            Some(notification.thread_id.as_str())
-        }
-        ServerNotification::ItemGuardianApprovalReviewCompleted(notification) => {
-            Some(notification.thread_id.as_str())
-        }
-        ServerNotification::StrictReviewRequired(notification) => {
-            Some(notification.thread_id.as_str())
-        }
         ServerNotification::ItemCompleted(notification) => Some(notification.thread_id.as_str()),
         ServerNotification::RawResponseItemCompleted(notification) => {
             Some(notification.thread_id.as_str())
@@ -149,7 +140,6 @@ pub(super) fn server_notification_thread_target(
             Some(notification.thread_id.as_str())
         }
         ServerNotification::Warning(notification) => notification.thread_id.as_deref(),
-        ServerNotification::GuardianWarning(notification) => Some(notification.thread_id.as_str()),
         ServerNotification::McpServerStatusUpdated(notification) => {
             match notification.thread_id.as_deref() {
                 Some(thread_id) => Some(thread_id),

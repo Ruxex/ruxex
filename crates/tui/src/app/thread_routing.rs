@@ -672,7 +672,6 @@ impl App {
                 items,
                 cwd,
                 approval_policy,
-                approvals_reviewer,
                 active_permission_profile,
                 model,
                 effort,
@@ -761,29 +760,15 @@ impl App {
                         == crate::app_server_session::ThreadParamsMode::Remote)
                         .then(|| config.permissions.active_permission_profile())
                         .flatten();
-                    let (turn_approval_policy, turn_approvals_reviewer) =
-                        if let Some(profile) = selected_profile {
-                            (
-                                profile.approval_policy,
-                                profile.approvals_reviewer.map(Into::into),
-                            )
-                        } else if self.app_server_target.thread_params_mode()
+                    let turn_approval_policy = if let Some(profile) = selected_profile {
+                        profile.approval_policy
+                    } else if self.app_server_target.thread_params_mode()
                             == crate::app_server_session::ThreadParamsMode::Remote
-                        {
-                            (
-                                Some(config.permissions.approval_policy.value().into()),
-                                Some(config.approvals_reviewer.into()),
-                            )
-                        } else {
-                            (
-                                Some(*approval_policy),
-                                Some(
-                                    approvals_reviewer
-                                        .unwrap_or(config.approvals_reviewer)
-                                        .into(),
-                                ),
-                            )
-                        };
+                    {
+                        Some(config.permissions.approval_policy.value().into())
+                    } else {
+                        Some(*approval_policy)
+                    };
                     let permissions_override = Self::turn_permissions_override_from_config(
                         config,
                         selected_active
@@ -801,7 +786,6 @@ impl App {
                             items.to_vec(),
                             cwd.clone(),
                             turn_approval_policy,
-                            turn_approvals_reviewer,
                             permissions_override,
                             config.permissions.user_visible_workspace_roots(),
                             model.to_string(),
@@ -874,12 +858,6 @@ impl App {
             AppCommand::OverrideTurnContext { .. } => {
                 self.sync_override_turn_context_settings(app_server, thread_id, op)
                     .await;
-                Ok(true)
-            }
-            AppCommand::ApproveGuardianDeniedAction { event } => {
-                app_server
-                    .thread_approve_guardian_denied_action(thread_id, event)
-                    .await?;
                 Ok(true)
             }
             _ => Ok(false),
@@ -1070,9 +1048,6 @@ impl App {
                         && selected.approval_policy.is_none_or(|policy| {
                             notification.thread_settings.approval_policy == policy
                         })
-                        && selected.approvals_reviewer.is_none_or(|reviewer| {
-                            notification.thread_settings.approvals_reviewer.to_core() == reviewer
-                        })
                 })
             {
                 self.pending_server_profiles.remove(&thread_id);
@@ -1178,7 +1153,6 @@ impl App {
                     });
                 self.chat_widget.set_permission_network(network);
                 self.config.permissions = self.chat_widget.config_ref().permissions.clone();
-                self.config.approvals_reviewer = self.chat_widget.config_ref().approvals_reviewer;
                 self.runtime_approval_policy_override =
                     Some(RuntimeApprovalPolicyOverride::Explicit(
                         self.config.permissions.approval_policy.value().into(),
@@ -1414,7 +1388,6 @@ impl App {
         {
             tracing::warn!(%err, "failed to sync app permissions from thread session");
         }
-        self.config.approvals_reviewer = session.approvals_reviewer;
 
         let thread_id = session.thread_id;
         self.pending_server_profiles.remove(&thread_id);

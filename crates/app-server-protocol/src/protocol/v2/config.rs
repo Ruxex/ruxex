@@ -1,5 +1,4 @@
 use super::ApplicationRequirements;
-use super::ApprovalsReviewer;
 use super::AskForApproval;
 use super::BrowserUseConfig;
 use super::ComputerUseConfig;
@@ -192,17 +191,12 @@ impl ForcedChatgptWorkspaceIds {
 #[ts(export_to = "v2/")]
 pub struct Config {
     pub model: Option<String>,
-    pub review_model: Option<String>,
     pub model_context_window: Option<i64>,
     pub model_auto_compact_token_limit: Option<i64>,
     pub model_auto_compact_token_limit_scope: Option<AutoCompactTokenLimitScope>,
     pub model_provider: Option<String>,
     #[experimental(nested)]
     pub approval_policy: Option<AskForApproval>,
-    /// [UNSTABLE] Optional default for where approval requests are routed for
-    /// review.
-    #[experimental("config/read.approvalsReviewer")]
-    pub approvals_reviewer: Option<ApprovalsReviewer>,
     pub sandbox_mode: Option<SandboxMode>,
     pub sandbox_workspace_write: Option<SandboxWorkspaceWrite>,
     pub forced_chatgpt_workspace_id: Option<ForcedChatgptWorkspaceIds>,
@@ -332,8 +326,6 @@ pub struct ConfigRequirements {
     pub additional_developer_instructions: Option<String>,
     #[experimental(nested)]
     pub allowed_approval_policies: Option<Vec<AskForApproval>>,
-    #[experimental("configRequirements/read.allowedApprovalsReviewers")]
-    pub allowed_approvals_reviewers: Option<Vec<ApprovalsReviewer>>,
     pub allowed_sandbox_modes: Option<Vec<SandboxMode>>,
     pub allowed_windows_sandbox_implementations: Option<Vec<WindowsSandboxImplementation>>,
     pub allowed_permission_profiles: Option<BTreeMap<String, bool>>,
@@ -353,7 +345,6 @@ pub struct ConfigRequirements {
     pub network: Option<NetworkRequirements>,
     #[experimental("configRequirements/read.application")]
     pub application: Option<ApplicationRequirements>,
-    pub auto_review: Option<AutoReviewRequirements>,
     pub models: Option<ModelsRequirements>,
     #[schemars(with = "Option<String>")]
     pub sqlite_home: Option<PathUri>,
@@ -374,14 +365,6 @@ pub enum CliAuthCredentialsStoreMode {
     Keyring,
     Auto,
     Ephemeral,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "v2/")]
-pub struct AutoReviewRequirements {
-    pub required_on_models: Option<Vec<String>>,
-    pub ignore_rules: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]

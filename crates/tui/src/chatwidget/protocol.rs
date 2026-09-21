@@ -193,23 +193,6 @@ impl ChatWidget {
                 ]);
             }
             ServerNotification::Warning(notification) => self.on_warning(notification.message),
-            ServerNotification::GuardianWarning(notification) => {
-                if !notification
-                    .message
-                    .starts_with("Automatic approval review approved (")
-                {
-                    self.on_warning(notification.message);
-                }
-            }
-            ServerNotification::StrictReviewRequired(_) => {
-                self.app_event_tx.send(AppEvent::InsertHistoryCell(Box::new(
-                    history_cell::new_warning_event(
-                        "This request requires additional safety checks, some tool calls might take extra time"
-                            .to_string(),
-                    ),
-                )));
-                self.request_redraw();
-            }
             ServerNotification::DeprecationNotice(notification) => {
                 self.on_deprecation_notice(notification.summary, notification.details)
             }
@@ -230,26 +213,6 @@ impl ChatWidget {
             }
             ServerNotification::McpServerStatusUpdated(notification) => {
                 self.on_mcp_server_status_updated(notification)
-            }
-            ServerNotification::ItemGuardianApprovalReviewStarted(notification) => {
-                self.on_guardian_review_notification(
-                    notification.review_id,
-                    notification.turn_id,
-                    notification.started_at_ms,
-                    notification.review,
-                    /*completion*/ None,
-                    notification.action,
-                );
-            }
-            ServerNotification::ItemGuardianApprovalReviewCompleted(notification) => {
-                self.on_guardian_review_notification(
-                    notification.review_id,
-                    notification.turn_id,
-                    notification.started_at_ms,
-                    notification.review,
-                    Some((notification.completed_at_ms, notification.decision_source)),
-                    notification.action,
-                );
             }
             ServerNotification::ThreadClosed(_) => {
                 if !from_replay {

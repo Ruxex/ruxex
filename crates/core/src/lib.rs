@@ -40,9 +40,6 @@ pub use codex_protocol::protocol::EnvironmentConfig;
 pub use codex_thread::BackgroundTerminalInfo;
 pub use codex_thread::CodexThread;
 pub use codex_thread::CodexThreadSettingsOverrides;
-pub use codex_thread::GuardianAuthorizationVersion;
-pub use codex_thread::GuardianRootMessage;
-pub use codex_thread::GuardianRootSnapshot;
 pub use codex_thread::ThreadConfigSnapshot;
 pub use session::turn_context::TurnContext;
 mod agent;
@@ -62,8 +59,6 @@ pub mod exec_env;
 mod exec_policy;
 #[cfg(test)]
 mod git_info_tests;
-mod guardian;
-pub mod guardian_review;
 mod hook_mcp_executor;
 mod hook_runtime;
 mod image_preparation;

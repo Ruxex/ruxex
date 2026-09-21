@@ -1,5 +1,3 @@
-use crate::context::GuardianContextMode;
-use crate::context::GuardianReviewEvidence;
 use crate::function_tool::FunctionCallError;
 use crate::tools::context::FunctionToolOutput;
 use crate::tools::context::ToolInvocation;
@@ -14,7 +12,6 @@ use crate::tools::handlers::request_user_input_spec::request_user_input_tool_des
 use crate::tools::handlers::request_user_input_spec::request_user_input_unavailable_message;
 use crate::tools::registry::CoreToolRuntime;
 use crate::tools::registry::ToolExecutor;
-use codex_features::Feature;
 use codex_history::RetainedContextEvent;
 use codex_history::VerifiedAnswer;
 use codex_history::VerifiedQuestionAnswer;
@@ -102,19 +99,7 @@ impl RequestUserInputHandler {
                 "failed to serialize {REQUEST_USER_INPUT_TOOL_NAME} response: {err}"
             ))
         })?;
-        if turn.config.features.enabled(Feature::GuardianApproval) {
-            let history = session.conversation_history_snapshot().await;
-            session
-                .services
-                .thread_extension_data
-                .get_or_init(GuardianReviewEvidence::default)
-                .record_user_input(history.as_ref(), &call_id, &questions, &response);
-        }
-        // Capture follows the session flag even while an older checkpoint uses legacy review.
-        if turn.config.features.enabled(Feature::GuardianApproval)
-            && session.guardian_context_mode == GuardianContextMode::ThreadOwned
-        {
-            let user_input = questions
+        let user_input = questions
                 .iter()
                 .filter_map(|question| {
                     let response = response.answers.get(&question.id)?;
@@ -143,18 +128,17 @@ impl RequestUserInputHandler {
                     })
                 })
                 .collect::<Vec<_>>();
-            if !user_input.is_empty() {
-                session
-                    .record_retained_context(RetainedContextEvent::VerifiedAnswer {
-                        answer: VerifiedAnswer {
-                            turn_id: turn.sub_id.clone(),
-                            call_id,
-                            questions: user_input,
-                        },
-                        acceptance_order: accepted.acceptance_order,
-                    })
-                    .await;
-            }
+        if !user_input.is_empty() {
+            session
+                .record_retained_context(RetainedContextEvent::VerifiedAnswer {
+                    answer: VerifiedAnswer {
+                        turn_id: turn.sub_id.clone(),
+                        call_id,
+                        questions: user_input,
+                    },
+                    acceptance_order: accepted.acceptance_order,
+                })
+                .await;
         }
 
         Ok(boxed_tool_output(FunctionToolOutput::from_text(
@@ -169,7 +153,3 @@ impl CoreToolRuntime for RequestUserInputHandler {
         true
     }
 }
-
-#[cfg(test)]
-#[path = "request_user_input_tests.rs"]
-mod tests;

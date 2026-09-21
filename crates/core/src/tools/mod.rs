@@ -1,4 +1,4 @@
-mod approvals;
+pub(crate) mod approvals;
 pub(crate) mod call_trace;
 pub(crate) mod code_mode;
 pub(crate) mod context;
@@ -23,6 +23,7 @@ use std::borrow::Cow;
 
 use crate::session::turn_context::TurnContext;
 pub(crate) use approvals::ApprovalContext;
+pub(crate) use approvals::ApprovalReviewContext;
 use codex_features::Feature;
 use codex_protocol::exec_output::ExecToolCallOutput;
 use codex_protocol::openai_models::ModelInfo;

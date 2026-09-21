@@ -7,7 +7,6 @@ use crate::app_server_session::AppServerSession;
 use crate::app_server_session::ThreadParamsMode;
 use crate::legacy_core::config::Config;
 use codex_app_server_client::TypedRequestError;
-use codex_app_server_protocol::ApprovalsReviewer;
 use codex_app_server_protocol::AskForApproval;
 use codex_app_server_protocol::ClientRequest;
 use codex_app_server_protocol::ConfigReadParams;
@@ -58,7 +57,6 @@ impl PermissionDiscovery {
         &self,
         id: &str,
         approval: Option<AskForApproval>,
-        reviewer: Option<ApprovalsReviewer>,
     ) -> Option<String> {
         let Some(profile) = self.profiles.iter().find(|profile| profile.id == id) else {
             return Some("Not available on this server.".to_string());
@@ -71,9 +69,6 @@ impl PermissionDiscovery {
             || requirements
                 .and_then(|r| r.allowed_approval_policies.as_ref())
                 .is_some_and(|allowed| approval.is_some_and(|value| !allowed.contains(&value)))
-            || requirements
-                .and_then(|r| r.allowed_approvals_reviewers.as_ref())
-                .is_some_and(|allowed| reviewer.is_some_and(|value| !allowed.contains(&value)))
         {
             return Some("Disabled by requirements.".to_string());
         }

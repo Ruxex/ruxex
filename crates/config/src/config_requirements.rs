@@ -1,8 +1,6 @@
 use crate::ApplicationRequirementsToml;
-use codex_features::FeatureToml;
 use codex_model_provider_info::ModelProviderInfo;
 pub use codex_model_provider_info::ResidencyRequirement;
-use codex_protocol::config_types::ApprovalsReviewer;
 use codex_protocol::config_types::ForcedLoginMethod;
 use codex_protocol::config_types::SandboxMode;
 use codex_protocol::config_types::WebSearchMode;
@@ -14,7 +12,6 @@ use serde::Deserialize;
 use serde::Serialize;
 use serde::de::Error as _;
 use std::collections::BTreeMap;
-use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::fmt;
 use std::path::PathBuf;
@@ -169,8 +166,6 @@ pub struct ConfigRequirements {
     pub check_for_update_on_startup: Option<Sourced<bool>>,
     pub allow_login_shell: Option<Sourced<bool>>,
     pub approval_policy: ConstrainedWithSource<AskForApproval>,
-    pub approvals_reviewer: ConstrainedWithSource<ApprovalsReviewer>,
-    pub auto_review_required_models: Option<Sourced<BTreeSet<String>>>,
     pub permission_profile: ConstrainedWithSource<PermissionProfile>,
     pub windows_sandbox_mode: ConstrainedWithSource<Option<WindowsSandboxModeToml>>,
     pub windows_sandbox_private_desktop: Option<Sourced<bool>>,
@@ -192,8 +187,6 @@ pub struct ConfigRequirements {
     pub filesystem: Option<Sourced<FilesystemConstraints>>,
     /// Managed instructions included independently of ordinary developer instructions.
     pub additional_developer_instructions: Option<Sourced<String>>,
-    /// Source for the managed guardian policy config, when one is configured.
-    pub guardian_policy_config_source: Option<RequirementSource>,
 }
 
 impl Default for ConfigRequirements {
@@ -214,11 +207,6 @@ impl Default for ConfigRequirements {
                 Constrained::allow_any_from_default(),
                 /*source*/ None,
             ),
-            approvals_reviewer: ConstrainedWithSource::new(
-                Constrained::allow_any_from_default(),
-                /*source*/ None,
-            ),
-            auto_review_required_models: None,
             permission_profile: ConstrainedWithSource::new(
                 Constrained::allow_any(PermissionProfile::read_only()),
                 /*source*/ None,
@@ -249,35 +237,11 @@ impl Default for ConfigRequirements {
             application: None,
             filesystem: None,
             additional_developer_instructions: None,
-            guardian_policy_config_source: None,
         }
     }
 }
 
 impl ConfigRequirements {
-    /// Returns whether a model slug or its supported provider alias requires auto-review.
-    pub fn auto_review_required_for_model(&self, model: &str) -> bool {
-        let Some(protected_models) = self.auto_review_required_models.as_ref() else {
-            return false;
-        };
-
-        let model = match model.split_once('/') {
-            Some((namespace, suffix))
-                if !namespace.is_empty()
-                    && !suffix.contains('/')
-                    && namespace.chars().all(|character| {
-                        character.is_ascii_alphanumeric() || character == '_' || character == '-'
-                    }) =>
-            {
-                suffix
-            }
-            Some(_) => return false,
-            None => model,
-        };
-
-        protected_models.value.contains(model)
-    }
-
     pub fn managed_auth_policy(&self) -> ManagedAuthPolicy {
         ManagedAuthPolicy {
             allowed_login_methods: self
@@ -898,7 +862,6 @@ pub struct ConfigRequirementsToml {
     pub check_for_update_on_startup: Option<bool>,
     pub allow_login_shell: Option<bool>,
     pub allowed_approval_policies: Option<Vec<AskForApproval>>,
-    pub allowed_approvals_reviewers: Option<Vec<ApprovalsReviewer>>,
     pub allowed_sandbox_modes: Option<Vec<SandboxModeRequirement>>,
     pub allowed_permission_profiles: Option<BTreeMap<String, bool>>,
     pub default_permissions: Option<String>,
@@ -923,16 +886,8 @@ pub struct ConfigRequirementsToml {
     pub network: Option<NetworkRequirementsToml>,
     pub application: Option<ApplicationRequirementsToml>,
     pub permissions: Option<PermissionsRequirementsToml>,
-    pub auto_review: Option<AutoReviewRequirementsToml>,
     pub models: Option<ModelsRequirementsToml>,
     pub additional_developer_instructions: Option<String>,
-    pub guardian_policy_config: Option<String>,
-}
-
-#[derive(Deserialize, Debug, Clone, Default, PartialEq, Eq)]
-pub struct AutoReviewRequirementsToml {
-    pub required_on_models: Option<Vec<String>>,
-    pub ignore_rules: Option<Vec<String>>,
 }
 
 #[derive(Deserialize, Debug, Clone, Default, PartialEq, Eq)]
@@ -1003,7 +958,6 @@ pub struct ConfigRequirementsWithSources {
     pub check_for_update_on_startup: Option<Sourced<bool>>,
     pub allow_login_shell: Option<Sourced<bool>>,
     pub allowed_approval_policies: Option<Sourced<Vec<AskForApproval>>>,
-    pub allowed_approvals_reviewers: Option<Sourced<Vec<ApprovalsReviewer>>>,
     pub allowed_sandbox_modes: Option<Sourced<Vec<SandboxModeRequirement>>>,
     pub allowed_permission_profiles: Option<Sourced<BTreeMap<String, bool>>>,
     pub default_permissions: Option<Sourced<String>>,
@@ -1025,10 +979,8 @@ pub struct ConfigRequirementsWithSources {
     pub network: Option<Sourced<NetworkRequirementsToml>>,
     pub application: Option<Sourced<ApplicationRequirementsToml>>,
     pub permissions: Option<Sourced<PermissionsRequirementsToml>>,
-    pub auto_review: Option<Sourced<AutoReviewRequirementsToml>>,
     pub models: Option<Sourced<ModelsRequirementsToml>>,
     pub additional_developer_instructions: Option<Sourced<String>>,
-    pub guardian_policy_config: Option<Sourced<String>>,
 }
 
 impl ConfigRequirementsWithSources {
@@ -1062,7 +1014,6 @@ impl ConfigRequirementsWithSources {
             check_for_update_on_startup: _,
             allow_login_shell: _,
             allowed_approval_policies: _,
-            allowed_approvals_reviewers: _,
             allowed_sandbox_modes: _,
             allowed_permission_profiles: _,
             default_permissions: _,
@@ -1085,20 +1036,11 @@ impl ConfigRequirementsWithSources {
             network: _,
             application: _,
             permissions: _,
-            auto_review: _,
             models: _,
             additional_developer_instructions: _,
-            guardian_policy_config: _,
         } = &other;
 
         let mut other = other;
-        if other
-            .guardian_policy_config
-            .as_deref()
-            .is_some_and(|value| value.trim().is_empty())
-        {
-            other.guardian_policy_config = None;
-        }
         fill_missing_take!(
             self,
             other,
@@ -1116,7 +1058,6 @@ impl ConfigRequirementsWithSources {
                 check_for_update_on_startup,
                 allow_login_shell,
                 allowed_approval_policies,
-                allowed_approvals_reviewers,
                 allowed_sandbox_modes,
                 allowed_permission_profiles,
                 default_permissions,
@@ -1140,41 +1081,8 @@ impl ConfigRequirementsWithSources {
                 permissions,
                 models,
                 additional_developer_instructions,
-                guardian_policy_config,
             }
         );
-
-        if let Some(incoming_auto_review) = other.auto_review.take() {
-            if let Some(existing_auto_review) = self.auto_review.as_mut() {
-                let mut source_contributed = false;
-                if let Some(incoming_slugs) = incoming_auto_review.required_on_models {
-                    let protected_slugs = existing_auto_review
-                        .value
-                        .required_on_models
-                        .get_or_insert_default();
-                    for slug in incoming_slugs {
-                        if !protected_slugs.contains(&slug) {
-                            protected_slugs.push(slug);
-                            source_contributed = true;
-                        }
-                    }
-                }
-                if existing_auto_review.value.ignore_rules.is_none()
-                    && let Some(ignore_rules) = incoming_auto_review.ignore_rules
-                {
-                    existing_auto_review.value.ignore_rules = Some(ignore_rules);
-                    source_contributed = true;
-                }
-                if source_contributed && existing_auto_review.source != source {
-                    existing_auto_review.source = RequirementSource::composite([
-                        existing_auto_review.source.clone(),
-                        source.clone(),
-                    ]);
-                }
-            } else {
-                self.auto_review = Some(Sourced::new(incoming_auto_review, source.clone()));
-            }
-        }
     }
 
     pub fn into_toml(self) -> ConfigRequirementsToml {
@@ -1191,7 +1099,6 @@ impl ConfigRequirementsWithSources {
             check_for_update_on_startup,
             allow_login_shell,
             allowed_approval_policies,
-            allowed_approvals_reviewers,
             allowed_sandbox_modes,
             allowed_permission_profiles,
             default_permissions,
@@ -1213,10 +1120,8 @@ impl ConfigRequirementsWithSources {
             network,
             application,
             permissions,
-            auto_review,
             models,
             additional_developer_instructions,
-            guardian_policy_config,
         } = self;
         ConfigRequirementsToml {
             allowed_login_methods: allowed_login_methods.map(|sourced| sourced.value),
@@ -1231,7 +1136,6 @@ impl ConfigRequirementsWithSources {
             check_for_update_on_startup: check_for_update_on_startup.map(|sourced| sourced.value),
             allow_login_shell: allow_login_shell.map(|sourced| sourced.value),
             allowed_approval_policies: allowed_approval_policies.map(|sourced| sourced.value),
-            allowed_approvals_reviewers: allowed_approvals_reviewers.map(|sourced| sourced.value),
             allowed_sandbox_modes: allowed_sandbox_modes.map(|sourced| sourced.value),
             allowed_permission_profiles: allowed_permission_profiles.map(|sourced| sourced.value),
             default_permissions: default_permissions.map(|sourced| sourced.value),
@@ -1255,11 +1159,9 @@ impl ConfigRequirementsWithSources {
             network: network.map(|sourced| sourced.value),
             application: application.map(|sourced| sourced.value),
             permissions: permissions.map(|sourced| sourced.value),
-            auto_review: auto_review.map(|sourced| sourced.value),
             models: models.map(|sourced| sourced.value),
             additional_developer_instructions: additional_developer_instructions
                 .map(|sourced| sourced.value),
-            guardian_policy_config: guardian_policy_config.map(|sourced| sourced.value),
         }
     }
 }
@@ -1334,7 +1236,6 @@ impl ConfigRequirementsToml {
             && self.check_for_update_on_startup.is_none()
             && self.allow_login_shell.is_none()
             && self.allowed_approval_policies.is_none()
-            && self.allowed_approvals_reviewers.is_none()
             && self.allowed_sandbox_modes.is_none()
             && self.allowed_permission_profiles.is_none()
             && self.default_permissions.is_none()
@@ -1384,22 +1285,11 @@ impl ConfigRequirementsToml {
                 .as_ref()
                 .is_none_or(|application| application.network.is_none())
             && self.permissions.is_none()
-            && self.auto_review.as_ref().is_none_or(|auto_review| {
-                auto_review.ignore_rules.as_ref().is_none_or(Vec::is_empty)
-                    && auto_review
-                        .required_on_models
-                        .as_ref()
-                        .is_none_or(Vec::is_empty)
-            })
             && self
                 .models
                 .as_ref()
                 .is_none_or(ModelsRequirementsToml::is_empty)
             && self.additional_developer_instructions.is_none()
-            && self
-                .guardian_policy_config
-                .as_deref()
-                .is_none_or(|value| value.trim().is_empty())
     }
 
     /// Applies the requirements whose values replace config values.
@@ -1425,14 +1315,6 @@ impl ConfigRequirementsToml {
         }
         apply_exact!(check_for_update_on_startup);
         apply_exact!(allow_login_shell);
-
-        if self
-            .allowed_approvals_reviewers
-            .as_ref()
-            .is_some_and(|reviewers| !reviewers.contains(&ApprovalsReviewer::User))
-        {
-            config.features.get_or_insert_default().guardianv2 = Some(FeatureToml::Enabled(false));
-        }
 
         if let Some(sandbox_private_desktop) = self
             .windows
@@ -1553,7 +1435,6 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
             check_for_update_on_startup,
             allow_login_shell,
             allowed_approval_policies,
-            allowed_approvals_reviewers,
             allowed_sandbox_modes,
             allowed_permission_profiles: _,
             default_permissions: _,
@@ -1575,38 +1456,9 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
             network,
             application,
             permissions,
-            auto_review,
             models: _,
             additional_developer_instructions,
-            guardian_policy_config,
         } = toml;
-
-        let auto_review_required_models = auto_review
-            .and_then(|auto_review| {
-                auto_review
-                    .value
-                    .required_on_models
-                    .map(|slugs| Sourced::new(slugs, auto_review.source))
-            })
-            .filter(|models| !models.value.is_empty())
-            .map(|models| {
-                let Sourced { value, source } = models;
-                let mut protected_models = BTreeSet::new();
-                for slug in value {
-                    if slug.trim().is_empty() || slug.trim() != slug || slug.contains('/') {
-                        return Err(ConstraintError::InvalidValue {
-                            field_name: "auto_review.required_on_models",
-                            candidate: format!("{slug:?}"),
-                            allowed: "non-empty model slugs without surrounding whitespace or provider namespaces"
-                                .to_string(),
-                            requirement_source: source,
-                        });
-                    }
-                    protected_models.insert(slug);
-                }
-                Ok(Sourced::new(protected_models, source))
-            })
-            .transpose()?;
 
         if let Some(requirements) = &mcp_servers {
             validate_mcp_server_requirements(
@@ -1645,36 +1497,6 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
                             field_name: "approval_policy",
                             candidate: format!("{candidate:?}"),
                             allowed: format!("{policies:?}"),
-                            requirement_source: requirement_source_for_error.clone(),
-                        })
-                    }
-                })?;
-                ConstrainedWithSource::new(constrained, Some(requirement_source))
-            }
-            None => ConstrainedWithSource::new(
-                Constrained::allow_any_from_default(),
-                /*source*/ None,
-            ),
-        };
-
-        let approvals_reviewer = match allowed_approvals_reviewers {
-            Some(Sourced {
-                value: reviewers,
-                source: requirement_source,
-            }) => {
-                let Some(initial_value) = reviewers.first().copied() else {
-                    return Err(ConstraintError::empty_field("allowed_approvals_reviewers"));
-                };
-
-                let requirement_source_for_error = requirement_source.clone();
-                let constrained = Constrained::new(initial_value, move |candidate| {
-                    if reviewers.contains(candidate) {
-                        Ok(())
-                    } else {
-                        Err(ConstraintError::InvalidValue {
-                            field_name: "approvals_reviewer",
-                            candidate: format!("{candidate:?}"),
-                            allowed: format!("{reviewers:?}"),
                             requirement_source: requirement_source_for_error.clone(),
                         })
                     }
@@ -1902,7 +1724,6 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
             let Sourced { value, source } = sourced_permissions;
             Sourced::new(FilesystemConstraints::from(value), source)
         });
-        let guardian_policy_config_source = guardian_policy_config.map(|sourced| sourced.source);
         Ok(ConfigRequirements {
             allowed_login_methods,
             allowed_chatgpt_workspaces,
@@ -1916,8 +1737,6 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
             check_for_update_on_startup,
             allow_login_shell,
             approval_policy,
-            approvals_reviewer,
-            auto_review_required_models,
             permission_profile,
             windows_sandbox_mode,
             windows_sandbox_private_desktop,
@@ -1936,7 +1755,6 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
             application,
             filesystem,
             additional_developer_instructions,
-            guardian_policy_config_source,
         })
     }
 }
@@ -2534,7 +2352,7 @@ mod tests {
     fn auto_review_required_for_model_matches_exact_provider_aliases() {
         let requirements = ConfigRequirements {
             auto_review_required_models: Some(Sourced::new(
-                BTreeSet::from(["protected-model".to_string()]),
+                std::collections::BTreeSet::from(["protected-model".to_string()]),
                 RequirementSource::Unknown,
             )),
             ..Default::default()

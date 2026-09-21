@@ -1,4 +1,3 @@
-use crate::context::GuardianContextMode;
 use std::sync::Arc;
 
 use crate::Prompt;
@@ -81,7 +80,6 @@ pub(crate) struct CompactedHistoryMetadata {
     pub(crate) window_ids: AutoCompactWindowIds,
     pub(crate) compaction_response_id: Option<String>,
     pub(crate) compaction_model_hash: Option<String>,
-    pub(crate) reviewer_compaction_hash: Option<String>,
 }
 
 pub(crate) async fn build_compaction_initial_context(
@@ -309,11 +307,7 @@ async fn run_compact_task_inner_impl(
     let summary_suffix =
         get_last_assistant_message_from_turn(history_snapshot.raw_items()).unwrap_or_default();
     let summary_text = format!("{SUMMARY_PREFIX}\n{summary_suffix}");
-    let identity = if sess.guardian_context_mode == GuardianContextMode::ThreadOwned {
-        CompactedMessageIdentity::Preserve
-    } else {
-        CompactedMessageIdentity::Regenerate
-    };
+    let identity = CompactedMessageIdentity::Regenerate;
     let user_messages = collect_annotated_user_messages(history_items, identity);
 
     let mut new_history = build_compacted_history(Vec::new(), &user_messages, &summary_text);
@@ -346,7 +340,6 @@ async fn run_compact_task_inner_impl(
             window_ids,
             compaction_response_id: Some(compaction_response_id),
             compaction_model_hash: turn_context.model_info().comp_hash.clone(),
-            reviewer_compaction_hash: None,
         },
     )
     .await;

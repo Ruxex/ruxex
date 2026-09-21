@@ -37,7 +37,6 @@ impl App {
         };
 
         let approval_policy = AskForApproval::from(self.config.permissions.approval_policy.value());
-        let approvals_reviewer = self.config.approvals_reviewer;
         let permission_profile = self
             .chat_widget
             .config_ref()
@@ -51,7 +50,6 @@ impl App {
             .active_permission_profile();
         let update_session = |session: &mut ThreadSessionState| {
             session.approval_policy = approval_policy;
-            session.approvals_reviewer = approvals_reviewer;
             session.permission_profile = permission_profile.clone();
             session.active_permission_profile = active_permission_profile.clone();
         };
@@ -98,7 +96,6 @@ impl App {
                 approval_policy: AskForApproval::from(
                     self.config.permissions.approval_policy.value(),
                 ),
-                approvals_reviewer: self.config.approvals_reviewer,
                 permission_profile: permission_profile.clone(),
                 active_permission_profile: active_permission_profile.clone(),
                 cwd: thread.cwd.clone(),

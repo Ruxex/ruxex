@@ -1971,11 +1971,7 @@ impl ThreadManagerState {
             .get::<codex_extension_api::SessionIsolation>()
             .map(|policy| *policy)
             .unwrap_or_else(|| {
-                if crate::guardian::is_basic_session_source(&session_source) {
-                    codex_extension_api::SessionIsolation::Isolated
-                } else {
-                    codex_extension_api::SessionIsolation::Inherit
-                }
+                codex_extension_api::SessionIsolation::Inherit
             });
         thread_extension_init.insert(isolation);
         let environments = environments.unwrap_or_else(|| {
@@ -1997,14 +1993,6 @@ impl ThreadManagerState {
                 if thread.is_running() {
                     // The parent's pool still owns this runtime and its rollout writer.
                     // Returning it would report success without allowing client access.
-                    if matches!(
-                        thread.session_source,
-                        SessionSource::Internal(InternalSessionSource::Guardian)
-                    ) {
-                        return Err(CodexErr::InvalidRequest(
-                            "cannot resume a live Guardian reviewer; use thread/read to inspect it, or resume after its parent is unloaded".to_owned(),
-                        ));
-                    }
                     if let Some(requested_rollout_path) = resumed.rollout_path.as_deref()
                         && thread.rollout_path().as_deref() != Some(requested_rollout_path)
                     {
@@ -2095,14 +2083,8 @@ impl ThreadManagerState {
             starting.retain(|runtime| runtime.strong_count() != 0);
             starting.push(Arc::downgrade(&source_changed_during_startup));
         }
-        let windows_sandbox_proxy_settings_mode = if matches!(
-            &session_source,
-            SessionSource::Internal(InternalSessionSource::Guardian)
-        ) {
-            codex_sandboxing::WindowsSandboxProxySettingsMode::Preserve
-        } else {
-            codex_sandboxing::WindowsSandboxProxySettingsMode::Reconcile
-        };
+        let windows_sandbox_proxy_settings_mode =
+            codex_sandboxing::WindowsSandboxProxySettingsMode::Reconcile;
         let attachment_source =
             forked_from_thread_id.filter(|_| matches!(&initial_history, InitialHistory::Forked(_)));
         let (session, io) = Session::spawn(SessionSpawnArgs {
@@ -2124,16 +2106,7 @@ impl ThreadManagerState {
             disabled_plugin_ids,
             requested_history_mode: history_mode,
             fork_persistence,
-            // Keep only the manager registration internal. The session and its saved
-            // history retain Guardian's existing identity for metadata, filtering and resume.
-            session_source: match session_source {
-                SessionSource::Internal(InternalSessionSource::Guardian) => {
-                    SessionSource::SubAgent(SubAgentSource::Other(
-                        crate::guardian::GUARDIAN_REVIEWER_NAME.to_owned(),
-                    ))
-                }
-                source => source,
-            },
+            session_source,
             forked_from_thread_id,
             parent_thread_id,
             thread_source: thread_source.clone(),
@@ -2155,14 +2128,7 @@ impl ThreadManagerState {
             attestation_provider: self.attestation_provider.clone(),
             external_time_provider: self.external_time_provider.clone(),
             inherited_multi_agent_version: multi_agent_version,
-            git_enrichment_policy: if matches!(
-                &tracked_session_source,
-                SessionSource::Internal(InternalSessionSource::Guardian)
-            ) {
-                GitEnrichmentPolicy::Skip
-            } else {
-                GitEnrichmentPolicy::Fresh
-            },
+            git_enrichment_policy: GitEnrichmentPolicy::Fresh,
             windows_sandbox_proxy_settings_mode,
         })
         .await?;

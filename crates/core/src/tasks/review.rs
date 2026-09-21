@@ -120,11 +120,7 @@ async fn start_review_conversation(
     sub_agent_config.base_instructions_provenance = Some(BaseInstructionsProvenance::Custom);
     sub_agent_config.permissions.approval_policy = Constrained::allow_only(AskForApproval::Never);
 
-    let model = config
-        .review_model
-        .clone()
-        .unwrap_or_else(|| ctx.model_info().slug.clone());
-    sub_agent_config.model = Some(model);
+    sub_agent_config.model = Some(ctx.model_info().slug.clone());
     (run_codex_thread_one_shot(
         sub_agent_config,
         Arc::clone(&session.services.auth_manager),

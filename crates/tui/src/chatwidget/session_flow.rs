@@ -84,7 +84,6 @@ impl ChatWidget {
             self.backend_banner_notice_model = None;
             self.automatic_model_switch_state =
                 backend_banners::AutomaticModelSwitchState::default();
-            self.review.recent_auto_review_denials = RecentAutoReviewDenials::default();
             self.clear_thread_usage_state();
         }
         self.turn_lifecycle.reset_thread();
@@ -135,7 +134,6 @@ impl ChatWidget {
                 );
             }
         }
-        self.config.approvals_reviewer = session.approvals_reviewer;
         self.config.personality = session.personality;
         self.status_line_project_root_name_cache = None;
         let forked_from_id = session.forked_from_id;

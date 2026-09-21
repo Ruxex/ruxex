@@ -952,38 +952,6 @@ impl ModelClient {
             && provider.aws.is_none()
     }
 
-    fn set_guardian_metadata(
-        &self,
-        metadata: &mut Option<HashMap<String, String>>,
-        parent_response_id: Option<&str>,
-        auth: Option<&CodexAuth>,
-        responses_headers: &ApiHeaderMap,
-    ) {
-        if let Some(metadata) = metadata.as_mut() {
-            metadata.remove("guardian_credits_requested");
-            metadata.remove("parent_response_id");
-        }
-        let guardian_reviewer = responses_headers
-            .get("x-codex-guardian")
-            .is_some_and(|value| value == "reviewer");
-        if guardian_reviewer && let Some(parent_response_id) = parent_response_id {
-            metadata.get_or_insert_with(HashMap::new).insert(
-                "parent_response_id".to_owned(),
-                parent_response_id.to_owned(),
-            );
-        }
-        if !guardian_reviewer
-            && !crate::guardian::is_basic_session_source(&self.state.session_source)
-            && matches!(auth, Some(CodexAuth::WorkloadIdentity(_)))
-            && self.uses_codex_backend(auth)
-            && self.state.provider.info().supports_codex_backend_routes()
-        {
-            metadata
-                .get_or_insert_with(HashMap::new)
-                .insert("guardian_credits_requested".to_owned(), "true".to_owned());
-        }
-    }
-
     fn build_routing_hint_header(
         &self,
         auth: Option<&CodexAuth>,
@@ -1451,20 +1419,7 @@ impl ModelClientSession {
                 &mut request.input,
                 &client_setup.api_provider,
             );
-            self.client.set_guardian_metadata(
-                &mut request.client_metadata,
-                responses_metadata.parent_response_id.as_deref(),
-                client_setup.auth.as_ref(),
-                &responses_headers,
-            );
-            let guardian_reviewer = responses_headers
-                .get("x-codex-guardian")
-                .is_some_and(|value| value == "reviewer");
-            if guardian_reviewer {
-                request.service_tier = None;
-            }
-            if !guardian_reviewer
-                && let Some(header_value) = self.client.build_routing_hint_header(
+            if let Some(header_value) = self.client.build_routing_hint_header(
                     client_setup.auth.as_ref(),
                     &request.model,
                     request.service_tier.as_deref(),
@@ -1480,9 +1435,6 @@ impl ModelClientSession {
             );
             self.client
                 .prepare_response_items_for_request(&mut request.input);
-            if crate::guardian::is_basic_session_source(&self.client.state.session_source) {
-                crate::guardian::observe_guardian_request(session_telemetry, &request);
-            }
             let request_session_telemetry =
                 session_telemetry_for_request(session_telemetry, &request);
             options.extra_headers.extend(responses_headers);
@@ -1606,26 +1558,16 @@ impl ModelClientSession {
                 &mut request.input,
                 &client_setup.api_provider,
             );
-            let guardian_reviewer = responses_headers
-                .get("x-codex-guardian")
-                .is_some_and(|value| value == "reviewer");
-            if guardian_reviewer {
-                request.service_tier = None;
-            }
             request.access_programs = cyber_access_program::for_auth(
                 client_setup.auth.as_ref(),
                 prompt.cyber_access_program,
             );
             let mut websocket_metadata = responses_metadata.clone();
-            websocket_metadata.routing_hint = if !guardian_reviewer {
-                self.client.build_routing_hint_header(
-                    client_setup.auth.as_ref(),
-                    &request.model,
-                    request.service_tier.as_deref(),
-                )
-            } else {
-                None
-            };
+            websocket_metadata.routing_hint = self.client.build_routing_hint_header(
+                client_setup.auth.as_ref(),
+                &request.model,
+                request.service_tier.as_deref(),
+            );
             let request_session_telemetry = if warmup {
                 // `generate=false` prewarm is connection setup, not an inference request.
                 session_telemetry.clone()
@@ -1673,11 +1615,6 @@ impl ModelClientSession {
             }
 
             // Measure the complete logical request, not only the websocket delta.
-            if !warmup
-                && crate::guardian::is_basic_session_source(&self.client.state.session_source)
-            {
-                crate::guardian::observe_guardian_request(session_telemetry, &request);
-            }
             let mut client_metadata = self
                 .client
                 .build_ws_client_metadata(responses_metadata, model_info.use_responses_lite);
@@ -1746,12 +1683,6 @@ impl ModelClientSession {
                 ),
                 ..ResponseCreateWsRequest::from(&request)
             };
-            self.client.set_guardian_metadata(
-                &mut ws_payload.client_metadata,
-                responses_metadata.parent_response_id.as_deref(),
-                client_setup.auth.as_ref(),
-                &responses_headers,
-            );
             let mut ws_request = ResponsesWsRequest::ResponseCreate(ws_payload);
             stamp_ws_stream_request_start_ms(&mut ws_request);
             if !previous_response_id_from_untraced_warmup {

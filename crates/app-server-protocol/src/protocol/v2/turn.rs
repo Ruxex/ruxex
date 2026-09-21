@@ -1,4 +1,3 @@
-use super::ApprovalsReviewer;
 use super::AskForApproval;
 use super::SandboxPolicy;
 use super::Turn;
@@ -51,7 +50,6 @@ pub struct TurnSettingsUpdateParams {
     /// Changes the active turn's reviewer without changing future thread settings.
     /// Already captured steps and pending approvals retain their original reviewer.
     #[ts(optional = nullable)]
-    pub approvals_reviewer: Option<ApprovalsReviewer>,
     /// Omission or `null` leaves the model unchanged.
     #[ts(optional = nullable)]
     pub model: Option<String>,
@@ -216,7 +214,6 @@ pub struct TurnStartParams {
     /// Override where approval requests are routed for review on this turn and
     /// subsequent turns.
     #[ts(optional = nullable)]
-    pub approvals_reviewer: Option<ApprovalsReviewer>,
     /// Override the sandbox policy for this turn and subsequent turns.
     #[ts(optional = nullable)]
     pub sandbox_policy: Option<SandboxPolicy>,

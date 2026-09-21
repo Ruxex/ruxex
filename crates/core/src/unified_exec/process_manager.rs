@@ -23,7 +23,7 @@ use crate::exec_env::inject_apply_patch_env;
 use crate::exec_env::inject_permission_profile_env;
 use crate::exec_env::inject_session_env;
 use crate::exec_policy::ExecApprovalRequest;
-use crate::guardian::GuardianReviewContext;
+use crate::tools::approvals::ApprovalReviewContext;
 use crate::plugins::metrics::finish_and_track_measurements;
 use crate::sandboxing::ExecOptions;
 use crate::sandboxing::ExecRequest;
@@ -895,12 +895,6 @@ impl UnifiedExecProcessManager {
             Arc::clone(&entry.process)
         };
         let _interaction_guard = locked_process.interaction_lock().lock_owned().await;
-        // A queued write must observe strict review enabled while it was waiting.
-        let strict_auto_review = context
-            .session
-            .active_turn_context_and_strict_auto_review()
-            .await
-            .is_some_and(|(_, _, strict)| strict);
         let approval = {
             let store = self.process_store.lock().await;
             let entry = store
@@ -908,7 +902,7 @@ impl UnifiedExecProcessManager {
                 .get(&process_id)
                 .filter(|entry| Arc::ptr_eq(&entry.process, &locked_process))
                 .ok_or(UnifiedExecError::UnknownProcessId { process_id })?;
-            entry.stdin_approval(context, request.input, strict_auto_review)?
+            entry.stdin_approval(context, request.input)?
         };
         if let Some((approval, approval_reason)) = approval {
             let unreviewable_input_error = || {
@@ -916,15 +910,8 @@ impl UnifiedExecProcessManager {
                     "terminal input and permission details are too large to review safely; use a smaller input or start a new terminal with fewer grants".to_string(),
                 ))
             };
-            let reviewed = crate::guardian::format_guardian_action_pretty(
-                &approval
-                    .clone()
-                    .into_guardian_request(/*exec_command_cwd_convention*/ None)
-                    .map_err(|err| {
-                        UnifiedExecError::StdinApproval(ToolError::Rejected(err.to_string()))
-                    })?,
-            )
-            .map_err(|_| unreviewable_input_error())?;
+            let reviewed = serde_json::to_string(&approval)
+                .map_err(|_| unreviewable_input_error())?;
             // Bound the entire serialized action plus its reason, including JSON
             // escaping. Reject, never execute an unreviewed tail.
             let oversized =
@@ -948,11 +935,10 @@ impl UnifiedExecProcessManager {
                 return Err(unreviewable_input_error());
             }
             let approval_context = ApprovalContext {
-                review_context: GuardianReviewContext::from(&context.step_context),
+                review_context: ApprovalReviewContext::from(&context.step_context),
                 cancellation_token: Some(context.cancellation_token.clone()),
                 call_id: context.call_id.clone(),
                 tool_name: ToolName::plain("write_stdin"),
-                strict_auto_review,
                 approval_reason: Some(approval_reason),
                 retry_reason: None,
                 network_approval_context: None,

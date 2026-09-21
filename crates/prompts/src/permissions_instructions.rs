@@ -11,7 +11,6 @@ use crate::model_messages::permissions::ResolvedPermissionMessages;
 use crate::model_messages::permissions::WORKSPACE_WRITE_TEMPLATE;
 use codex_context_fragments::ContextualUserFragment;
 use codex_execpolicy::Policy;
-use codex_protocol::config_types::ApprovalsReviewer;
 use codex_protocol::config_types::SandboxMode;
 use codex_protocol::models::ContentItemKind;
 use codex_protocol::models::PermissionProfile;
@@ -26,7 +25,6 @@ use std::sync::LazyLock;
 const REQUEST_PERMISSION_RULE: &str =
     include_str!("../templates/permissions/approval_policy/on_request_rule_request_permission.md");
 const REQUEST_PERMISSIONS_TOOL: &str = "# request_permissions Tool\n\nThe built-in `request_permissions` tool is available in this session. Invoke it when you need to request additional `network` or `file_system` permissions before later shell-like commands need them. Request only the specific permissions required for the task.";
-const AUTO_REVIEW_SUFFIX: &str = "`approvals_reviewer` is `auto_review`: Sandbox escalations with require_escalated will be reviewed for compliance with the policy. If a rejection happens, you should proceed only with a materially safer alternative, or inform the user of the risk and send a final message to ask for approval.";
 const APPROVED_PREFIXES: &str =
     "## Approved command prefixes\nThe following prefix rules have already been approved: ";
 const GRANULAR_INTRO: &str = "# Approval Requests\n\nApproval policy is `granular`. Categories set to `false` are automatically rejected instead of prompting the user.";
@@ -50,15 +48,13 @@ static READ_ONLY: LazyLock<Template> = LazyLock::new(|| {
 
 #[derive(Debug, Clone, Copy)]
 pub struct ApprovalPromptContext<'a> {
-    reviewer: ApprovalsReviewer,
     messages: ResolvedApprovalMessages<'a>,
     permission_messages: ResolvedPermissionMessages<'a>,
 }
 
 impl<'a> ApprovalPromptContext<'a> {
-    pub fn new(reviewer: ApprovalsReviewer, model_messages: ResolvedModelMessages<'a>) -> Self {
+    pub fn new(model_messages: ResolvedModelMessages<'a>) -> Self {
         Self {
-            reviewer,
             messages: model_messages.approvals(),
             permission_messages: model_messages.permissions(),
         }
@@ -106,7 +102,6 @@ impl PermissionsInstructions {
             &mut text,
             &approval_text(
                 context.approval_policy,
-                approval_context.reviewer,
                 approval_context.messages,
                 context.approved_command_prefixes,
                 context.exec_permission_approvals_enabled,
@@ -213,17 +208,13 @@ fn append_section(text: &mut String, section: &str) {
 
 fn approval_text(
     approval_policy: AskForApproval,
-    approvals_reviewer: ApprovalsReviewer,
     messages: ResolvedApprovalMessages<'_>,
     approved_command_prefixes: &[Vec<String>],
     exec_permission_approvals_enabled: bool,
     request_permissions_tool_enabled: bool,
 ) -> String {
     let selected = match approval_policy {
-        AskForApproval::OnRequest => match approvals_reviewer {
-            ApprovalsReviewer::User => messages.on_request,
-            ApprovalsReviewer::AutoReview => messages.on_request_auto_review,
-        },
+        AskForApproval::OnRequest => messages.on_request,
         AskForApproval::Never => messages.never,
         AskForApproval::UnlessTrusted => messages.unless_trusted,
         AskForApproval::Granular(_) => ResolvedMessage::Bundled(GRANULAR_INTRO),
@@ -264,11 +255,7 @@ fn approval_text(
         ),
     };
 
-    if approvals_reviewer == ApprovalsReviewer::AutoReview {
-        format!("{text}\n\n{AUTO_REVIEW_SUFFIX}")
-    } else {
-        text
-    }
+    text
 }
 
 fn sandbox_text(

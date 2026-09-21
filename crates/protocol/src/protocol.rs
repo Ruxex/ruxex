@@ -20,7 +20,6 @@ use crate::SessionId;
 use crate::ThreadId;
 use crate::approvals::ElicitationRequestEvent;
 use crate::capabilities::SelectedCapabilityRoot;
-use crate::config_types::ApprovalsReviewer;
 use crate::config_types::CollaborationMode;
 use crate::config_types::ModeKind;
 use crate::config_types::MultiAgentMode;
@@ -84,14 +83,6 @@ pub use crate::approvals::ApplyPatchApprovalRequestEvent;
 pub use crate::approvals::ElicitationAction;
 pub use crate::approvals::ExecApprovalRequestEvent;
 pub use crate::approvals::ExecPolicyAmendment;
-pub use crate::approvals::GuardianAssessmentAction;
-pub use crate::approvals::GuardianAssessmentDecisionSource;
-pub use crate::approvals::GuardianAssessmentEvent;
-pub use crate::approvals::GuardianAssessmentOutcome;
-pub use crate::approvals::GuardianAssessmentStatus;
-pub use crate::approvals::GuardianCommandSource;
-pub use crate::approvals::GuardianRiskLevel;
-pub use crate::approvals::GuardianUserAuthorization;
 pub use crate::approvals::NetworkApprovalContext;
 pub use crate::approvals::NetworkApprovalProtocol;
 pub use crate::approvals::NetworkPolicyAmendment;
@@ -216,8 +207,6 @@ pub struct W3cTraceContext {
 /// task kind. Child sessions and consumers of frozen initial settings are unchanged.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct TurnSettingsUpdate {
-    /// Changes the reviewer for subsequent approval requests, not pending reviews.
-    pub approvals_reviewer: Option<ApprovalsReviewer>,
     pub model: Option<String>,
     /// `None` preserves the selection; `Some(None)` clears it.
     pub effort: Option<Option<ReasoningEffortConfig>>,
@@ -242,7 +231,6 @@ pub struct ThreadSettingsOverrides {
     pub runtime_workspace_roots: Option<Vec<AbsolutePathBuf>>,
     pub profile_workspace_roots: Option<Vec<ProfileWorkspaceRoot>>,
     pub approval_policy: Option<AskForApproval>,
-    pub approvals_reviewer: Option<ApprovalsReviewer>,
     pub sandbox_policy: Option<SandboxPolicy>,
     pub permission_profile: Option<PermissionProfile>,
     pub active_permission_profile: Option<ActivePermissionProfile>,
@@ -404,9 +392,6 @@ pub enum Op {
 
     /// Request a code review from the agent.
     Review { review_request: ReviewRequest },
-
-    /// Record that the user approved one retry of a concrete Guardian-denied action.
-    ApproveGuardianDeniedAction { event: GuardianAssessmentEvent },
 
     /// Request to shut down codex instance.
     Shutdown,
@@ -607,7 +592,6 @@ impl Op {
             Self::Compact => "compact",
             Self::SetThreadMemoryMode { .. } => "set_thread_memory_mode",
             Self::Review { .. } => "review",
-            Self::ApproveGuardianDeniedAction { .. } => "approve_guardian_denied_action",
             Self::Shutdown => "shutdown",
             Self::RunUserShellCommand { .. } => "run_user_shell_command",
         }
@@ -1018,8 +1002,6 @@ pub enum EventMsg {
     /// Provider-owned authentication recovery has completed for the current turn.
     AuthRecoveryCompleted(AuthRecoveryEvent),
 
-    /// Warning issued by the guardian automatic approval reviewer.
-    GuardianWarning(WarningEvent),
 
     /// Model routing changed from the requested model to a different model.
     ModelReroute(ModelRerouteEvent),
@@ -1134,8 +1116,6 @@ pub enum EventMsg {
 
     ApplyPatchApprovalRequest(ApplyPatchApprovalRequestEvent),
 
-    /// Structured lifecycle event for a guardian-reviewed approval request.
-    GuardianAssessment(GuardianAssessmentEvent),
 
     /// Notification advising the user that something they are using has been
     /// deprecated and should be phased out.
@@ -1798,7 +1778,6 @@ pub struct ThreadSettingsSnapshot {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub service_tier: Option<String>,
     pub approval_policy: AskForApproval,
-    pub approvals_reviewer: ApprovalsReviewer,
     pub permission_profile: PermissionProfile,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
@@ -2404,7 +2383,6 @@ pub enum SessionSource {
 pub enum ThreadSource {
     User,
     Subagent,
-    GuardianReview,
     Feature(String),
     MemoryConsolidation,
 }
@@ -2414,7 +2392,6 @@ impl ThreadSource {
         match self {
             ThreadSource::User => "user",
             ThreadSource::Subagent => "subagent",
-            ThreadSource::GuardianReview => "guardian_review",
             ThreadSource::Feature(feature) => feature,
             ThreadSource::MemoryConsolidation => "memory_consolidation",
         }
@@ -2448,7 +2425,6 @@ impl FromStr for ThreadSource {
         match value {
             "user" => Ok(ThreadSource::User),
             "subagent" => Ok(ThreadSource::Subagent),
-            "guardian_review" => Ok(ThreadSource::GuardianReview),
             "memory_consolidation" => Ok(ThreadSource::MemoryConsolidation),
             other => Ok(ThreadSource::Feature(other.to_string())),
         }
@@ -2460,7 +2436,6 @@ impl FromStr for ThreadSource {
 #[ts(rename_all = "snake_case")]
 pub enum InternalSessionSource {
     MemoryConsolidation,
-    Guardian,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, TS)]
@@ -2633,7 +2608,6 @@ impl fmt::Display for InternalSessionSource {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             InternalSessionSource::MemoryConsolidation => f.write_str("memory_consolidation"),
-            InternalSessionSource::Guardian => f.write_str("guardian"),
         }
     }
 }
@@ -2872,8 +2846,6 @@ pub struct TurnContextItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub timezone: Option<String>,
     pub approval_policy: AskForApproval,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub approvals_reviewer: Option<ApprovalsReviewer>,
     pub sandbox_policy: SandboxPolicy,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub permission_profile: Option<PermissionProfile>,
@@ -3530,12 +3502,6 @@ pub struct SessionConfiguredEvent {
     /// When to escalate for approval for execution
     pub approval_policy: AskForApproval,
 
-    /// Configures who approval requests are routed to for review once they have
-    /// been escalated. This does not disable separate safety checks such as
-    /// ARC.
-    #[serde(default)]
-    pub approvals_reviewer: ApprovalsReviewer,
-
     /// Canonical effective permissions for commands executed in the session.
     pub permission_profile: PermissionProfile,
 
@@ -3588,8 +3554,6 @@ impl<'de> Deserialize<'de> for SessionConfiguredEvent {
             model_provider_id: String,
             service_tier: Option<String>,
             approval_policy: AskForApproval,
-            #[serde(default)]
-            approvals_reviewer: ApprovalsReviewer,
             // `SessionConfiguredEvent` is persisted into rollout history. Older
             // rollouts only have `sandbox_policy`, so accept it on deserialize
             // and immediately project it into the canonical `permission_profile`.
@@ -3627,7 +3591,6 @@ impl<'de> Deserialize<'de> for SessionConfiguredEvent {
             model_provider_id: wire.model_provider_id,
             service_tier: wire.service_tier,
             approval_policy: wire.approval_policy,
-            approvals_reviewer: wire.approvals_reviewer,
             permission_profile,
             active_permission_profile: wire.active_permission_profile,
             cwd: wire.cwd,

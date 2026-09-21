@@ -160,31 +160,18 @@ pub fn new_approval_decision_cell(
             ApprovalDecisionSubject::Command(command) => {
                 let summary = if let Some(snippet) = non_empty_exec_snippet(&command) {
                     let snippet = Span::from(snippet).dim();
-                    match actor {
-                        ApprovalDecisionActor::User => vec![
-                            actor.subject().into(),
-                            "did not approve".bold(),
-                            " codex to run ".into(),
-                            snippet,
-                        ],
-                        ApprovalDecisionActor::Guardian => vec![
-                            "Request ".into(),
-                            "denied".bold(),
-                            " for codex to run ".into(),
-                            snippet,
-                        ],
-                    }
+                    vec![
+                        actor.subject().into(),
+                        "did not approve".bold(),
+                        " codex to run ".into(),
+                        snippet,
+                    ]
                 } else {
-                    match actor {
-                        ApprovalDecisionActor::User => vec![
-                            actor.subject().into(),
-                            "did not approve".bold(),
-                            " this request".into(),
-                        ],
-                        ApprovalDecisionActor::Guardian => {
-                            vec!["Request ".into(), "denied".bold()]
-                        }
-                    }
+                    vec![
+                        actor.subject().into(),
+                        "did not approve".bold(),
+                        " this request".into(),
+                    ]
                 };
                 ("✗ ".red(), summary)
             }
@@ -266,80 +253,14 @@ pub fn new_approval_decision_cell(
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ApprovalDecisionActor {
     User,
-    Guardian,
 }
 
 impl ApprovalDecisionActor {
     fn subject(self) -> &'static str {
         match self {
             Self::User => "You ",
-            Self::Guardian => "Auto-reviewer ",
         }
     }
-}
-
-pub fn new_guardian_denied_patch_request(files: Vec<String>) -> Box<dyn HistoryCell> {
-    let mut summary = vec![
-        "Request ".into(),
-        "denied".bold(),
-        " for codex to apply ".into(),
-    ];
-    if files.len() == 1 {
-        summary.push("a patch touching ".into());
-        summary.push(Span::from(files[0].clone()).dim());
-    } else {
-        summary.push("a patch touching ".into());
-        summary.push(Span::from(files.len().to_string()).dim());
-        summary.push(" files".into());
-    }
-
-    Box::new(PrefixedWrappedHistoryCell::new(
-        Line::from(summary),
-        "✗ ".red(),
-        "  ",
-    ))
-}
-
-pub fn new_guardian_denied_action_request(summary: String) -> Box<dyn HistoryCell> {
-    let line = Line::from(vec![
-        "Request ".into(),
-        "denied".bold(),
-        " for ".into(),
-        Span::from(summary).dim(),
-    ]);
-    Box::new(PrefixedWrappedHistoryCell::new(line, "✗ ".red(), "  "))
-}
-
-pub fn new_guardian_timed_out_patch_request(files: Vec<String>) -> Box<dyn HistoryCell> {
-    let mut summary = vec![
-        "Review ".into(),
-        "timed out".bold(),
-        " before codex could apply ".into(),
-    ];
-    if files.len() == 1 {
-        summary.push("a patch touching ".into());
-        summary.push(Span::from(files[0].clone()).dim());
-    } else {
-        summary.push("a patch touching ".into());
-        summary.push(Span::from(files.len().to_string()).dim());
-        summary.push(" files".into());
-    }
-
-    Box::new(PrefixedWrappedHistoryCell::new(
-        Line::from(summary),
-        "✗ ".red(),
-        "  ",
-    ))
-}
-
-pub fn new_guardian_timed_out_action_request(summary: String) -> Box<dyn HistoryCell> {
-    let line = Line::from(vec![
-        "Review ".into(),
-        "timed out".bold(),
-        " before ".into(),
-        Span::from(summary).dim(),
-    ]);
-    Box::new(PrefixedWrappedHistoryCell::new(line, "✗ ".red(), "  "))
 }
 
 /// Cyan history cell line showing the current review status.

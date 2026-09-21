@@ -612,7 +612,6 @@ async fn execute_inner(
             thread_start_params.service_tier = Some(source.service_tier);
             thread_start_params.runtime_workspace_roots = Some(source.runtime_workspace_roots);
             thread_start_params.approval_policy = Some(source.approval_policy);
-            thread_start_params.approvals_reviewer = Some(source.approvals_reviewer);
             let sandbox_policy = if let Some(profile) = source.active_permission_profile {
                 thread_start_params.permissions = Some(profile.id);
                 thread_start_params.sandbox = None;

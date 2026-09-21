@@ -177,7 +177,6 @@ fn apply_spawn_agent_runtime_overrides(
         .approval_policy
         .set(turn.approval_policy())
         .map_err(|err| format!("approval_policy is invalid: {err}"))?;
-    config.approvals_reviewer = turn.config.approvals_reviewer;
     #[allow(deprecated)]
     let turn_cwd = turn.cwd.clone();
     config.cwd = turn_cwd;

@@ -1,7 +1,6 @@
 use crate::agent::AgentStatus;
 use crate::config::ConstraintResult;
 use crate::context::ContextualUserFragment;
-use crate::context::GuardianReviewEvidence;
 use crate::elicitation::ElicitationRegistration;
 use crate::session::SessionIo;
 use crate::session::SessionSettingsUpdate;
@@ -18,7 +17,6 @@ use codex_history::RolloutItem;
 use codex_otel::SessionTelemetry;
 use codex_otel::current_span_w3c_trace_context;
 use codex_protocol::ThreadId;
-use codex_protocol::config_types::ApprovalsReviewer;
 use codex_protocol::config_types::CollaborationMode;
 use codex_protocol::config_types::Personality;
 use codex_protocol::config_types::ReasoningSummary;
@@ -85,7 +83,6 @@ pub struct ThreadConfigSnapshot {
     pub model_provider_id: String,
     pub service_tier: Option<String>,
     pub approval_policy: AskForApproval,
-    pub approvals_reviewer: ApprovalsReviewer,
     pub permission_profile: PermissionProfile,
     /// Resolved Full Access across the thread and every selected environment.
     pub full_access: bool,
@@ -143,7 +140,6 @@ pub struct CodexThreadSettingsOverrides {
     pub runtime_workspace_roots: Option<Vec<AbsolutePathBuf>>,
     pub profile_workspace_roots: Option<Vec<ProfileWorkspaceRoot>>,
     pub approval_policy: Option<AskForApproval>,
-    pub approvals_reviewer: Option<ApprovalsReviewer>,
     pub sandbox_policy: Option<SandboxPolicy>,
     pub permission_profile: Option<PermissionProfile>,
     pub active_permission_profile: Option<ActivePermissionProfile>,
@@ -157,32 +153,10 @@ pub struct CodexThreadSettingsOverrides {
     pub disabled_plugin_ids: Option<Vec<String>>,
 }
 
-pub use codex_guardian_context::GuardianRootMessage;
-
-/// Authorization state that changes on genuine user input or history resets.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct GuardianAuthorizationVersion {
-    /// User-message/reset revision, preserved across compaction and internal context.
-    pub user_message_revision: u64,
-    /// Successful host answers captured by the temporary legacy path.
-    pub user_input_response_count: usize,
-    /// False when required retained answers or root instructions are unavailable.
-    pub retained_context_complete: bool,
-}
-
-/// Bounded root conversation and authorization state from one history snapshot.
-#[derive(Debug, Eq, PartialEq)]
-pub struct GuardianRootSnapshot {
-    pub authorization_version: GuardianAuthorizationVersion,
-    pub messages: Vec<GuardianRootMessage>,
-    pub trusted_skill_paths: Vec<String>,
-}
-
 pub struct CodexThread {
     pub(crate) session: Arc<Session>,
     pub(crate) io: SessionIo,
-    // Registration source controls live access and lifecycle hooks. Managed Guardian
-    // reviewers keep their existing subagent identity inside the session.
+    // Registration source controls live access and lifecycle hooks.
     pub(crate) session_source: SessionSource,
     session_configured: SessionConfiguredEvent,
     rollout_path: Option<PathBuf>,
@@ -576,7 +550,6 @@ impl CodexThread {
             runtime_workspace_roots,
             profile_workspace_roots,
             approval_policy,
-            approvals_reviewer,
             sandbox_policy,
             permission_profile,
             active_permission_profile,
@@ -598,7 +571,6 @@ impl CodexThread {
                 service_tier,
                 personality,
                 approval_policy,
-                approvals_reviewer,
             },
             environments,
             runtime_workspace_roots,
@@ -710,15 +682,6 @@ impl CodexThread {
         !self.io.tx_sub.is_closed()
     }
 
-    pub async fn guardian_trunk_rollout_path(&self) -> Option<PathBuf> {
-        self.session
-            .guardian_review_session()?
-            .trunk()
-            .await?
-            .rollout_path()
-            .await
-    }
-
     pub async fn load_history(
         &self,
         include_archived: bool,
@@ -779,20 +742,6 @@ impl CodexThread {
 
     pub async fn config_snapshot(&self) -> ThreadConfigSnapshot {
         self.session.thread_config_snapshot().await
-    }
-
-    /// Returns the active turn's reviewer, including live updates, or the thread default.
-    pub async fn approvals_reviewer_for_turn(&self, turn_id: &str) -> ApprovalsReviewer {
-        if let Some((turn, settings, _)) = self
-            .session
-            .active_turn_context_and_strict_auto_review()
-            .await
-            && turn.sub_id == turn_id
-        {
-            settings.approvals_reviewer()
-        } else {
-            self.config_snapshot().await.approvals_reviewer
-        }
     }
 
     /// Returns thread-owned settings suitable for rollout persistence and resume.
@@ -864,23 +813,6 @@ impl CodexThread {
     /// Shares an immutable view of the live parent model context and retained host facts.
     pub async fn conversation_history_snapshot(&self) -> Arc<dyn ConversationHistorySnapshot> {
         self.session.conversation_history_snapshot().await
-    }
-
-    /// Returns the current user-authorization revision for Guardian.
-    pub async fn guardian_authorization_version(&self) -> GuardianAuthorizationVersion {
-        let history = self.conversation_history_snapshot().await;
-        self.thread_extension_data()
-            .get_or_init(GuardianReviewEvidence::default)
-            .authorization_version(history.as_ref())
-    }
-
-    /// Returns bounded root conversation evidence and its authorization version atomically.
-    pub async fn guardian_root_snapshot(&self) -> Option<GuardianRootSnapshot> {
-        self.session
-            .services
-            .agent_control
-            .root_user_authorization(self.session.thread_id)
-            .await
     }
 
     /// Refresh the thread's layer-backed user config state from a caller-supplied

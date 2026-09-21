@@ -255,9 +255,9 @@ protocol slice として扱う。generic image input、local media、`view_image
 
 ### 13. `codex-feedback`
 
-- **進捗:** 削除済み。フィードバック設定、app-server の upload API、TUI/exec の UI・起動経路、Guardian の失敗レビュー保持、専用 telemetry、Sentry/backend upload、専用クレートと依存宣言を削除した。
-- **保持:** provider-neutral な SQLite ログ保存、通常の tracing/analytics、Guardian のレビュー判定、hook の `Feedback` 出力など、別の現行 capability は保持している。
-- **検証:** `cargo check -p codex-core -p codex-state -p codex-guardian-reviewer -p codex-model-provider -p codex-exec -p codex-app-server -p codex-tui`。
+- **進捗:** 削除済み。フィードバック設定、app-server の upload API、TUI/exec の UI・起動経路、失敗レビュー保持、専用 telemetry、Sentry/backend upload、専用クレートと依存宣言を削除した。
+- **保持:** provider-neutral な SQLite ログ保存、通常の tracing/analytics、hook の `Feedback` 出力など、別の現行 capability は保持している。
+- **検証:** `cargo check -p codex-core -p codex-state -p codex-model-provider -p codex-exec -p codex-app-server -p codex-tui`。
 
 ### 14. `codex-response-debug-context`
 

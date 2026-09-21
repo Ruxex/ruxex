@@ -35,15 +35,15 @@
 - Inspect: `crates/config`, `crates/protocol`, `crates/tui`, `crates/prompts`
 - Modify: `docs/pre-release-compatibility-inventory.md`
 
-- [ ] **Step 1: auto-reviewとmanual approvalの境界を記録する**
+  - [x] **Step 1: auto-reviewとmanual approvalの境界を記録する**
 
   Guardian専用のapproval reviewer、review session、context composer、通知、設定、TUI操作を列挙し、通常approval/sandboxの保持対象と分離する。
 
-- [ ] **Step 2: OpenAI依存の根拠をinventoryに記録する**
+  - [x] **Step 2: OpenAI依存の根拠をinventoryに記録する**
 
   `ResponsesWebsocketClient`、`ResponsesClient`、`CodexAuth`、`x-openai-subagent`、`x-codex-guardian`、`supports_codex_backend_routes`のproducer/consumerを`remove`として記録する。
 
-- [ ] **Step 3: Guardian capability削除の範囲を固定する**
+  - [x] **Step 3: Guardian capability削除の範囲を固定する**
 
   Guardian自動レビューとその設定/UI/protocol surfaceを削除し、手動approvalとsandboxをretainすることをinventoryに明記する。
 
@@ -57,15 +57,15 @@
 - Delete: `crates/guardian-context/`
 - Modify: `crates/core/Cargo.toml`, `crates/prompts/Cargo.toml`, `crates/app-server/Cargo.toml`
 
-- [ ] **Step 1: app-server installationを削除する**
+  - [x] **Step 1: app-server installationを削除する**
 
   `codex_guardian_v2::install`とGuardian extension wiringを削除し、他のapp-server extensionsは保持する。
 
-- [ ] **Step 2: crate reverse dependenciesを除去する**
+  - [x] **Step 2: crate reverse dependenciesを除去する**
 
   core/prompts/app-server/test-supportのGuardian依存を削除し、workspace memberとpackage metadataから3クレートを除去する。
 
-- [ ] **Step 3: backend-specific errors/importsを整理する**
+  - [x] **Step 3: backend-specific errors/importsを整理する**
 
   Guardian crate由来のauth/http/provider imports、OpenAI internal header、Responses route判定、Guardian専用telemetryをproduction codeから除去する。
 
@@ -78,15 +78,15 @@
 - Modify: `crates/protocol/src/`
 - Modify: app-server request/notification processors and generated schema sources
 
-- [ ] **Step 1: Guardian専用core stateとreview sessionを削除する**
+  - [x] **Step 1: Guardian専用core stateとreview sessionを削除する**
 
   `GuardianThreadContext`、Guardian review session、Guardian approval request/notificationのproduction経路を削除する。一般approval requestとpermission evaluationの実装は残す。
 
-- [ ] **Step 2: Guardian専用configを削除する**
+  - [x] **Step 2: Guardian専用configを削除する**
 
   `approvals_reviewer`、`review_model`、`auto_review`、`guardian_policy_config`、managed Guardian requirementsと関連validator/defaultを削除する。
 
-- [ ] **Step 3: protocol/schemaを更新する**
+  - [x] **Step 3: protocol/schemaを更新する**
 
   Guardian専用request、event、status、config schemaを削除し、通常のapproval/permission protocolは保持する。生成物がある場合は`just generate`対象にする。
 
@@ -99,15 +99,15 @@
 - Modify: `docs/openai-decoupling-plan.md`
 - Modify: `docs/pre-release-compatibility-inventory.md`
 
-- [ ] **Step 1: Guardian UIを削除する**
+  - [x] **Step 1: Guardian UIを削除する**
 
   Guardian reviewer選択、auto-review表示、Guardian専用failure/status表示を削除し、通常のpermission promptとapproval UIを残す。
 
-- [ ] **Step 2: Guardian prompt/contextを削除する**
+  - [x] **Step 2: Guardian prompt/contextを削除する**
 
   Guardian専用のcontext/prompt builderとfailure-review保持処理を削除し、一般的なtool/permission promptを変更しない。
 
-- [ ] **Step 3: fixturesとdocsを整理する**
+  - [x] **Step 3: fixturesとdocsを整理する**
 
   Guardian専用fixture、dummy auth、OpenAI-specific review scenario、関連docsを削除する。一般approval/security scenarioは残す。
 
@@ -117,15 +117,14 @@
 - Modify: checked-in schemas, snapshots, generated bindings affected by Task 3 or 4
 - Modify: `docs/pre-release-compatibility-inventory.md`
 
-- [ ] **Step 1: generated artifactsを更新する**
+  - [x] **Step 1: generated artifactsを更新する**
 
   protocol/config/schemaの変更があるため`just generate`を実行し、Guardian専用生成物が消えたことを確認する。
 
-- [ ] **Step 2: production symbol scanを実行する**
+  - [x] **Step 2: production symbol scanを実行する**
 
   `rg -n -i 'guardian|auto_review|review_model|approvals_reviewer|x-openai-subagent|x-codex-guardian|supports_codex_backend_routes' crates --glob '*.{rs,toml,json}'`を実行し、保持対象の一般的なapproval/security参照を除いてGuardian production surfaceが残っていないことを確認する。
 
-- [ ] **Step 3: repository checkを実行する**
+  - [x] **Step 3: repository checkを実行する**
 
   `just check`を実行する。テストコマンドは実行しない。
-

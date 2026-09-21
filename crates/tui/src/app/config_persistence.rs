@@ -51,7 +51,6 @@ pub(super) fn has_explicit_resume_permission_override(
     overrides: &ConfigOverrides,
 ) -> bool {
     overrides.approval_policy.is_some()
-        || overrides.approvals_reviewer.is_some()
         || overrides.sandbox_mode.is_some()
         || overrides.permission_profile.is_some()
         || overrides.default_permissions.is_some()
@@ -67,7 +66,6 @@ pub(super) fn has_explicit_resume_permission_override(
                     }
             ) && [
                 "approval_policy",
-                "approvals_reviewer",
                 "sandbox_mode",
                 "default_permissions",
                 "permissions",
@@ -127,7 +125,6 @@ impl App {
         let PermissionProfileSelection {
             profile_id,
             approval_policy,
-            approvals_reviewer,
             display_label,
         } = selection;
         let selected_config = match self
@@ -181,9 +178,6 @@ impl App {
             ));
             return false;
         }
-        if let Some(reviewer) = approvals_reviewer {
-            config.approvals_reviewer = reviewer;
-        }
         config.permissions.network = network.clone();
         self.config = config;
 
@@ -206,9 +200,6 @@ impl App {
             ));
             return false;
         }
-        if let Some(reviewer) = approvals_reviewer {
-            self.chat_widget.set_approvals_reviewer(reviewer);
-        }
         self.chat_widget.set_permission_network(network);
         if let Some(thread_id) = self.chat_widget.thread_id() {
             self.agents_overview
@@ -223,8 +214,7 @@ impl App {
             .send(AppEvent::CodexOp(AppCommand::override_turn_context(
                 /*cwd*/ None,
                 approval_policy,
-                approvals_reviewer,
-                Some(permission_profile.clone()),
+                    Some(permission_profile.clone()),
                 active_permission_profile,
                 /*model*/ None,
                 /*effort*/ None,
@@ -290,9 +280,6 @@ impl App {
             && selection
                 .approval_policy
                 .is_none_or(|policy| config.permissions.approval_policy.value() == policy.to_core())
-            && selection
-                .approvals_reviewer
-                .is_none_or(|reviewer| config.approvals_reviewer == reviewer)
         {
             self.agents_overview
                 .selected_permission_profiles
@@ -304,7 +291,6 @@ impl App {
             thread_id: thread_id.to_string(),
             permissions: Some(selection.profile_id.clone()),
             approval_policy: selection.approval_policy,
-            approvals_reviewer: selection.approvals_reviewer.map(Into::into),
             ..Default::default()
         };
         match app_server.thread_settings_update(params).await {
@@ -388,7 +374,6 @@ impl App {
         Some(PermissionProfileSelection {
             profile_id: active.id.clone(),
             approval_policy: Some(config.permissions.approval_policy.value().into()),
-            approvals_reviewer: Some(config.approvals_reviewer),
             display_label: active.id,
         })
     }
@@ -493,17 +478,6 @@ impl App {
                     == RuntimePermissionProfileTurnOverride::LegacySandbox)
         {
             match config
-                .config_layer_stack
-                .requirements()
-                .approvals_reviewer
-                .can_set(&profile_override.approvals_reviewer)
-            {
-                Ok(()) => config.approvals_reviewer = profile_override.approvals_reviewer,
-                Err(error) => self.chat_widget.add_error_message(format!(
-                    "Failed to carry forward approvals reviewer: {error}"
-                )),
-            }
-            match config
                 .permissions
                 .set_permission_profile_from_session_snapshot(
                     PermissionProfileSnapshot::from_session_snapshot(
@@ -522,11 +496,6 @@ impl App {
                 }
             }
         }
-    }
-
-    pub(super) fn set_approvals_reviewer_in_app_and_widget(&mut self, reviewer: ApprovalsReviewer) {
-        self.config.approvals_reviewer = reviewer;
-        self.chat_widget.set_approvals_reviewer(reviewer);
     }
 
     pub(super) fn try_set_approval_policy_on_config(
@@ -553,20 +522,9 @@ impl App {
         user_message_prefix: &str,
         log_message: &str,
     ) -> Option<PermissionProfile> {
-        let Some(permission_profile) =
-            builtin_permission_profile_for_active_permission_profile(&active_permission_profile)
-        else {
-            tracing::warn!(
-                id = %active_permission_profile.id,
-                "{log_message}: unsupported active permission profile"
-            );
-            self.chat_widget.add_error_message(format!(
-                "{user_message_prefix}: unsupported active permission profile `{}`",
-                active_permission_profile.id
-            ));
-            return None;
-        };
-
+        let permission_profile = builtin_permission_profile_for_active_permission_profile(
+            &active_permission_profile,
+        )?;
         if let Err(err) = config
             .permissions
             .set_permission_profile_from_session_snapshot(PermissionProfileSnapshot::active(
@@ -579,7 +537,6 @@ impl App {
                 .add_error_message(format!("{user_message_prefix}: {err}"));
             return None;
         }
-
         Some(permission_profile)
     }
 
@@ -591,243 +548,57 @@ impl App {
         if updates.is_empty() {
             return;
         }
-        if updates
-            .iter()
-            .any(|(feature, _)| *feature == Feature::GuardianApproval)
-            && self.reject_pending_permission_change()
-        {
-            return;
-        }
-
-        let auto_review_preset = auto_review_mode();
         let mut next_config = self.config.clone();
-        let mut approval_policy_override = None;
-        let mut approvals_reviewer_override = None;
-        let mut permission_profile_override = None;
-        let mut active_permission_profile_override = None;
         let mut feature_updates_to_apply = Vec::with_capacity(updates.len());
-        let mut permissions_history_label: Option<&'static str> = None;
         let mut config_edits = Vec::new();
-
         for (feature, enabled) in updates {
             let feature_key = feature.key();
-            let mut feature_edits = Vec::new();
             let mut feature_config = next_config.clone();
-            if let Err(err) = feature_config.features.set_enabled(feature, enabled) {
-                tracing::error!(
-                    error = %err,
-                    feature = feature_key,
-                    "failed to update constrained feature flags"
-                );
-                self.chat_widget.add_error_message(format!(
-                    "Failed to update experimental feature `{feature_key}`: {err}"
-                ));
+            let Ok(()) = feature_config.features.set_enabled(feature, enabled) else {
+                self.chat_widget.add_error_message(format!("Failed to update experimental feature {feature_key}"));
                 continue;
-            }
+            };
             let effective_enabled = feature_config.features.enabled(feature);
-            if feature == Feature::GuardianApproval {
-                let previous_approvals_reviewer = feature_config.approvals_reviewer;
-                if effective_enabled {
-                    // Persist the reviewer setting so future sessions keep the
-                    // experiment's matching `/permissions` mode until the user
-                    // changes it explicitly.
-                    feature_config.approvals_reviewer = auto_review_preset.approvals_reviewer;
-                    feature_edits.push(crate::config_update::replace_config_value(
-                        "approvals_reviewer",
-                        serde_json::json!(auto_review_preset.approvals_reviewer.to_string()),
-                    ));
-                    if previous_approvals_reviewer != auto_review_preset.approvals_reviewer {
-                        permissions_history_label = Some("Approve for me");
-                    }
-                } else if !effective_enabled {
-                    feature_edits.push(crate::config_update::clear_config_value(
-                        "approvals_reviewer",
-                    ));
-                    feature_config.approvals_reviewer = ApprovalsReviewer::User;
-                    if previous_approvals_reviewer != ApprovalsReviewer::User {
-                        permissions_history_label = Some("Ask for approval");
-                    }
-                }
-                approvals_reviewer_override = Some(feature_config.approvals_reviewer);
-            }
-            if feature == Feature::GuardianApproval && effective_enabled {
-                // The feature flag alone is not enough for the live session.
-                // We also align approval policy + sandbox to the Auto-review
-                // preset so enabling the experiment immediately
-                // makes guardian review observable in the current thread.
-                if !self.try_set_approval_policy_on_config(
-                    &mut feature_config,
-                    auto_review_preset.approval_policy,
-                    "Failed to enable Approve for me",
-                    "failed to set auto-review approval policy on staged config",
-                ) {
-                    continue;
-                }
-                let Some(permission_profile) = self
-                    .try_set_builtin_active_permission_profile_on_config(
-                        &mut feature_config,
-                        auto_review_preset.active_permission_profile.clone(),
-                        "Failed to enable Approve for me",
-                        "failed to set auto-review permission profile on staged config",
-                    )
-                else {
-                    continue;
-                };
-                feature_edits.extend([
-                    crate::config_update::replace_config_value(
-                        "approval_policy",
-                        serde_json::json!("on-request"),
-                    ),
-                    crate::config_update::replace_config_value(
-                        "sandbox_mode",
-                        serde_json::json!("workspace-write"),
-                    ),
-                ]);
-                approval_policy_override = Some(auto_review_preset.approval_policy);
-                permission_profile_override = Some(permission_profile);
-                active_permission_profile_override =
-                    Some(auto_review_preset.active_permission_profile.clone());
-            }
             next_config = feature_config;
             feature_updates_to_apply.push((feature, effective_enabled));
-            config_edits.extend(feature_edits);
             config_edits.push(crate::config_update::build_feature_enabled_edit(
                 feature_key,
                 effective_enabled,
             ));
         }
-
-        // Persist first so the live session does not diverge from disk if the
-        // config edit fails. Runtime/UI state is patched below only after the
-        // durable config update succeeds.
         let write_response = match crate::config_update::write_config_batch(
             app_server.request_handle(),
             config_edits,
         )
-        .await
-        {
+        .await {
             Ok(response) => response,
             Err(err) => {
-                let error = crate::config_update::format_config_error(&err);
-                tracing::error!(error = %error, "failed to persist feature flags");
-                self.chat_widget
-                    .add_error_message(format!("Failed to update experimental features: {error}"));
+                self.chat_widget.add_error_message(format!("Failed to update experimental features: {err}"));
                 return;
             }
         };
         if write_response.status == WriteStatus::OkOverridden {
-            let message = overridden_write_message(&write_response);
-            tracing::warn!(
-                message,
-                "feature flag config write was overridden by effective config"
-            );
-            self.chat_widget.add_error_message(format!(
-                "Experimental feature changes were saved but not applied: {message}"
-            ));
             if let Some(effective_config) = self
-                .read_effective_config_after_overridden_write(
-                    app_server,
-                    "Experimental feature changes",
-                )
+                .read_effective_config_after_overridden_write(app_server, "Experimental feature changes")
                 .await
             {
                 self.sync_feature_state_from_effective_config(
                     &effective_config,
                     &feature_updates_to_apply,
                 );
-                self.sync_auto_review_runtime_state_from_effective_config(
-                    &effective_config,
-                    &feature_updates_to_apply,
-                )
-                .await;
             }
             return;
         }
-
         let memory_tool_was_enabled = self.config.features.enabled(Feature::MemoryTool);
         self.config = next_config;
-        let show_memory_enable_notice =
-            feature_updates_to_apply.iter().any(|(feature, enabled)| {
-                *feature == Feature::MemoryTool && *enabled && !memory_tool_was_enabled
-            });
-        for (feature, effective_enabled) in feature_updates_to_apply {
-            self.chat_widget
-                .set_feature_enabled(feature, effective_enabled);
+        let show_memory_enable_notice = feature_updates_to_apply.iter().any(|(feature, enabled)| {
+            *feature == Feature::MemoryTool && *enabled && !memory_tool_was_enabled
+        });
+        for (feature, enabled) in feature_updates_to_apply {
+            self.chat_widget.set_feature_enabled(feature, enabled);
         }
         if show_memory_enable_notice {
             self.chat_widget.add_memories_enable_notice();
-        }
-        if approvals_reviewer_override.is_some() {
-            self.set_approvals_reviewer_in_app_and_widget(self.config.approvals_reviewer);
-        }
-        if approval_policy_override.is_some() {
-            self.chat_widget.set_approval_policy(AskForApproval::from(
-                self.config.permissions.approval_policy.value(),
-            ));
-        }
-        let permission_profile_override_value = permission_profile_override
-            .is_some()
-            .then(|| self.config.permissions.permission_profile().clone());
-        if let Some(permission_profile) = permission_profile_override_value.as_ref()
-            && let Err(err) = self
-                .chat_widget
-                .set_permission_profile_from_session_snapshot(
-                    PermissionProfileSnapshot::from_session_snapshot(
-                        permission_profile.clone(),
-                        active_permission_profile_override.clone(),
-                    ),
-                )
-        {
-            tracing::error!(
-                error = %err,
-                "failed to set auto-review permission profile on chat config"
-            );
-            self.chat_widget
-                .add_error_message(format!("Failed to enable Approve for me: {err}"));
-        }
-        if permission_profile_override.is_some() {
-            self.runtime_permission_profile_override =
-                Some(RuntimePermissionProfileOverride::from_config(&self.config));
-        }
-
-        if approval_policy_override.is_some()
-            || approvals_reviewer_override.is_some()
-            || permission_profile_override.is_some()
-        {
-            self.sync_active_thread_permission_settings_to_cached_session()
-                .await;
-            // This uses `OverrideTurnContext` intentionally: toggling the
-            // experiment should update the active thread's effective approval
-            // settings immediately, just like a `/permissions` selection. Without
-            // this runtime patch, the config edit would only affect future
-            // sessions or turns recreated from disk.
-            let op = AppCommand::override_turn_context(
-                /*cwd*/ None,
-                approval_policy_override,
-                approvals_reviewer_override,
-                permission_profile_override,
-                active_permission_profile_override,
-                /*model*/ None,
-                /*effort*/ None,
-                /*summary*/ None,
-                /*service_tier*/ None,
-                /*collaboration_mode*/ None,
-                /*personality*/ None,
-            );
-            let replay_state_op =
-                ThreadEventStore::op_can_change_pending_replay_state(&op).then(|| op.clone());
-            let submitted = self.chat_widget.submit_op(op);
-            if submitted && let Some(op) = replay_state_op.as_ref() {
-                self.note_active_thread_outbound_op(op).await;
-                self.refresh_pending_thread_approvals().await;
-            }
-        }
-
-        if let Some(label) = permissions_history_label {
-            self.chat_widget.add_info_message(
-                format!("Permissions updated to {label}"),
-                /*hint*/ None,
-            );
         }
     }
 
@@ -1107,116 +878,10 @@ impl App {
         for (feature, _) in feature_updates {
             let enabled = feature_enabled_from_effective_config(effective_config, *feature);
             if let Err(err) = self.config.features.set_enabled(*feature, enabled) {
-                tracing::warn!(
-                    error = %err,
-                    feature = feature.key(),
-                    "failed to sync effective feature state after an overridden write"
-                );
+                tracing::warn!(error = %err, feature = feature.key(), "failed to sync effective feature state");
                 continue;
             }
             self.chat_widget.set_feature_enabled(*feature, enabled);
-        }
-
-        if feature_updates
-            .iter()
-            .any(|(feature, _)| *feature == Feature::GuardianApproval)
-            && !self.config.features.enabled(Feature::GuardianApproval)
-        {
-            self.set_approvals_reviewer_in_app_and_widget(ApprovalsReviewer::User);
-            return;
-        }
-
-        if let Some(reviewer) = approvals_reviewer_from_effective_config(effective_config) {
-            self.set_approvals_reviewer_in_app_and_widget(reviewer);
-        }
-        if let Some(policy) = approval_policy_from_effective_config(effective_config) {
-            if let Err(err) = self
-                .config
-                .permissions
-                .approval_policy
-                .set(policy.to_core())
-            {
-                tracing::warn!(
-                    error = %err,
-                    "failed to sync effective approval policy after an overridden write"
-                );
-                self.chat_widget.add_error_message(format!(
-                    "Failed to refresh overridden Approve for me settings: {err}"
-                ));
-            } else {
-                self.chat_widget.set_approval_policy(policy);
-            }
-        }
-    }
-
-    async fn sync_auto_review_runtime_state_from_effective_config(
-        &mut self,
-        effective_config: &ConfigReadResponse,
-        feature_updates: &[(Feature, bool)],
-    ) {
-        if !feature_updates
-            .iter()
-            .any(|(feature, _)| *feature == Feature::GuardianApproval)
-            || !self.config.features.enabled(Feature::GuardianApproval)
-            || sandbox_mode_from_effective_config(effective_config)
-                != Some(AppServerSandboxMode::WorkspaceWrite)
-        {
-            return;
-        }
-
-        let auto_review_preset = auto_review_mode();
-        let mut config = self.config.clone();
-        let Some(permission_profile) = self.try_set_builtin_active_permission_profile_on_config(
-            &mut config,
-            auto_review_preset.active_permission_profile.clone(),
-            "Failed to refresh overridden Approve for me settings",
-            "failed to sync overridden Auto-review permission profile",
-        ) else {
-            return;
-        };
-        self.config = config;
-        if let Err(err) = self
-            .chat_widget
-            .set_permission_profile_from_session_snapshot(PermissionProfileSnapshot::active(
-                permission_profile.clone(),
-                auto_review_preset.active_permission_profile.clone(),
-            ))
-        {
-            tracing::warn!(
-                error = %err,
-                "failed to sync overridden Auto-review permission profile on chat config"
-            );
-            self.chat_widget.add_error_message(format!(
-                "Failed to refresh overridden Approve for me settings: {err}"
-            ));
-            return;
-        }
-
-        self.runtime_permission_profile_override =
-            Some(RuntimePermissionProfileOverride::from_config(&self.config));
-        self.sync_active_thread_permission_settings_to_cached_session()
-            .await;
-
-        let approval_policy = AskForApproval::from(self.config.permissions.approval_policy.value());
-        let op = AppCommand::override_turn_context(
-            /*cwd*/ None,
-            Some(approval_policy),
-            Some(self.config.approvals_reviewer),
-            /*permission_profile*/ None,
-            Some(auto_review_preset.active_permission_profile),
-            /*model*/ None,
-            /*effort*/ None,
-            /*summary*/ None,
-            /*service_tier*/ None,
-            /*collaboration_mode*/ None,
-            /*personality*/ None,
-        );
-        let replay_state_op =
-            ThreadEventStore::op_can_change_pending_replay_state(&op).then(|| op.clone());
-        let submitted = self.chat_widget.submit_op(op);
-        if submitted && let Some(op) = replay_state_op.as_ref() {
-            self.note_active_thread_outbound_op(op).await;
-            self.refresh_pending_thread_approvals().await;
         }
     }
 
@@ -1288,15 +953,6 @@ fn feature_enabled_from_effective_config(
         .unwrap_or_else(|| feature.default_enabled())
 }
 
-fn approvals_reviewer_from_effective_config(
-    effective_config: &ConfigReadResponse,
-) -> Option<ApprovalsReviewer> {
-    effective_config
-        .config
-        .approvals_reviewer
-        .map(codex_app_server_protocol::ApprovalsReviewer::to_core)
-}
-
 fn approval_policy_from_effective_config(
     effective_config: &ConfigReadResponse,
 ) -> Option<AskForApproval> {
@@ -1319,546 +975,4 @@ fn memories_from_effective_config(effective_config: &ConfigReadResponse) -> Opti
 
 fn features_toml_from_json(value: &serde_json::Value) -> Option<FeaturesToml> {
     serde_json::from_value(value.clone()).ok()
-}
-
-#[cfg(test)]
-mod tests {
-    use std::sync::Arc;
-
-    use super::*;
-    use crate::app::test_support::app_enabled_in_effective_config;
-    use crate::app::test_support::make_test_app;
-    use crate::legacy_core::config::edit::ConfigEdit;
-    use crate::test_support::PathBufExt;
-    use codex_config::ConfigLayerEntry;
-    use codex_config::ConfigLayerStack;
-    use codex_protocol::models::PermissionProfile;
-    use codex_protocol::openai_models::ReasoningEffortPreset;
-    use crossterm::event::KeyCode;
-    use crossterm::event::KeyEvent;
-    use pretty_assertions::assert_eq;
-    use tempfile::tempdir;
-
-    #[tokio::test]
-    async fn update_reasoning_effort_updates_collaboration_mode() {
-        let mut app = make_test_app().await;
-        app.chat_widget
-            .set_reasoning_effort(Some(ReasoningEffortConfig::Medium));
-
-        app.on_update_reasoning_effort(Some(ReasoningEffortConfig::High));
-
-        assert_eq!(
-            app.chat_widget.current_reasoning_effort(),
-            Some(ReasoningEffortConfig::High)
-        );
-        assert_eq!(
-            app.config.model_reasoning_effort,
-            Some(ReasoningEffortConfig::High)
-        );
-    }
-
-    #[tokio::test]
-    async fn conversation_reasoning_uses_compatible_default_for_new_threads() {
-        for (configured_effort, expected_default_effort) in [
-            (ReasoningEffortConfig::Low, ReasoningEffortConfig::Low),
-            (
-                ReasoningEffortConfig::Custom("unsupported".to_string()),
-                ReasoningEffortConfig::Medium,
-            ),
-            (ReasoningEffortConfig::Ultra, ReasoningEffortConfig::Medium),
-        ] {
-            let mut app = make_test_app().await;
-            app.config.model = Some("gpt-5.5".to_string());
-            app.config.model_reasoning_effort = Some(configured_effort.clone());
-            app.chat_widget
-                .set_reasoning_effort(Some(configured_effort));
-
-            let default_effort =
-                app.on_apply_advanced_reasoning("gpt-5.5", ReasoningEffortConfig::Ultra);
-            let new_thread_config = &app.config;
-
-            assert_eq!(default_effort, Some(expected_default_effort.clone()));
-            assert_eq!(app.chat_widget.current_model(), "gpt-5.5");
-            assert_eq!(
-                app.chat_widget.current_reasoning_effort(),
-                Some(ReasoningEffortConfig::Ultra)
-            );
-            assert_eq!(
-                (
-                    new_thread_config.model.as_deref(),
-                    new_thread_config.model_reasoning_effort.clone(),
-                ),
-                (Some("gpt-5.5"), Some(expected_default_effort))
-            );
-        }
-    }
-
-    #[tokio::test]
-    async fn conversation_reasoning_keeps_previous_default_for_ultra_only_model() {
-        let mut app = make_test_app().await;
-        app.config.model = Some("gpt-5.5".to_string());
-        app.config.model_reasoning_effort = Some(ReasoningEffortConfig::Low);
-        let mut preset = app
-            .model_catalog
-            .try_list_models()
-            .expect("model catalog is infallible")
-            .into_iter()
-            .find(|preset| preset.model == "gpt-5.5")
-            .expect("gpt-5.5 preset");
-        preset.model = "ultra-only".to_string();
-        preset.default_reasoning_effort = ReasoningEffortConfig::Ultra;
-        preset.supported_reasoning_efforts = vec![ReasoningEffortPreset {
-            effort: ReasoningEffortConfig::Ultra,
-            description: "Ultra reasoning".to_string(),
-        }];
-        app.model_catalog = Arc::new(ModelCatalog::new(vec![preset]));
-
-        let default_effort =
-            app.on_apply_advanced_reasoning("ultra-only", ReasoningEffortConfig::Ultra);
-        let new_thread_config = &app.config;
-
-        assert_eq!(default_effort, None);
-        assert_eq!(app.chat_widget.current_model(), "ultra-only");
-        assert_eq!(
-            app.chat_widget.current_reasoning_effort(),
-            Some(ReasoningEffortConfig::Ultra)
-        );
-        assert_eq!(
-            (
-                new_thread_config.model.as_deref(),
-                new_thread_config.model_reasoning_effort.clone(),
-            ),
-            (Some("gpt-5.5"), Some(ReasoningEffortConfig::Low))
-        );
-    }
-
-    #[tokio::test]
-    async fn conversation_reasoning_updates_active_plan_without_changing_plan_default() {
-        let mut app = make_test_app().await;
-        app.config.model_reasoning_effort = Some(ReasoningEffortConfig::Low);
-        app.config.plan_mode_reasoning_effort = Some(ReasoningEffortConfig::High);
-        app.chat_widget
-            .set_feature_enabled(Feature::CollaborationModes, /*enabled*/ true);
-        app.chat_widget
-            .set_plan_mode_reasoning_effort(Some(ReasoningEffortConfig::High));
-        app.chat_widget
-            .handle_key_event(KeyEvent::from(KeyCode::BackTab));
-
-        let default_effort =
-            app.on_apply_advanced_reasoning("gpt-5.5", ReasoningEffortConfig::Ultra);
-
-        assert_eq!(default_effort, Some(ReasoningEffortConfig::Low));
-        assert_eq!(
-            app.chat_widget.current_reasoning_effort(),
-            Some(ReasoningEffortConfig::Ultra)
-        );
-        app.chat_widget
-            .handle_key_event(KeyEvent::from(KeyCode::BackTab));
-        assert_eq!(
-            app.chat_widget.current_reasoning_effort(),
-            Some(ReasoningEffortConfig::Ultra)
-        );
-        app.chat_widget
-            .handle_key_event(KeyEvent::from(KeyCode::BackTab));
-        assert_eq!(
-            app.chat_widget.current_reasoning_effort(),
-            Some(ReasoningEffortConfig::Ultra)
-        );
-        assert_eq!(
-            (
-                app.config.model_reasoning_effort.clone(),
-                app.config.plan_mode_reasoning_effort.clone(),
-            ),
-            (
-                Some(ReasoningEffortConfig::Low),
-                Some(ReasoningEffortConfig::High),
-            )
-        );
-    }
-
-    #[tokio::test]
-    async fn leaving_conversation_ultra_in_default_clears_the_ephemeral_plan_effort() {
-        let mut app = make_test_app().await;
-        app.config.model_reasoning_effort = Some(ReasoningEffortConfig::Low);
-        app.config.plan_mode_reasoning_effort = Some(ReasoningEffortConfig::High);
-        app.chat_widget
-            .set_feature_enabled(Feature::CollaborationModes, /*enabled*/ true);
-        app.chat_widget
-            .set_plan_mode_reasoning_effort(Some(ReasoningEffortConfig::High));
-
-        app.on_apply_advanced_reasoning("gpt-5.4", ReasoningEffortConfig::Ultra);
-        app.on_update_reasoning_effort(Some(ReasoningEffortConfig::Medium));
-        app.chat_widget
-            .handle_key_event(KeyEvent::from(KeyCode::BackTab));
-
-        assert_eq!(
-            app.chat_widget.current_reasoning_effort(),
-            Some(ReasoningEffortConfig::Medium)
-        );
-        assert_eq!(
-            app.config.plan_mode_reasoning_effort,
-            Some(ReasoningEffortConfig::High)
-        );
-    }
-
-    #[tokio::test]
-    async fn leaving_conversation_ultra_in_plan_clears_the_ephemeral_default_effort() {
-        let mut app = make_test_app().await;
-        app.config.model_reasoning_effort = Some(ReasoningEffortConfig::Low);
-        app.config.plan_mode_reasoning_effort = Some(ReasoningEffortConfig::High);
-        app.chat_widget
-            .set_feature_enabled(Feature::CollaborationModes, /*enabled*/ true);
-        app.chat_widget
-            .set_plan_mode_reasoning_effort(Some(ReasoningEffortConfig::High));
-        app.chat_widget
-            .handle_key_event(KeyEvent::from(KeyCode::BackTab));
-
-        app.on_apply_advanced_reasoning("gpt-5.4", ReasoningEffortConfig::Ultra);
-        app.on_update_plan_mode_reasoning_effort(Some(ReasoningEffortConfig::Medium));
-        app.chat_widget
-            .handle_key_event(KeyEvent::from(KeyCode::BackTab));
-
-        assert_eq!(
-            app.chat_widget.current_reasoning_effort(),
-            Some(ReasoningEffortConfig::Medium)
-        );
-        assert_eq!(
-            app.config.model_reasoning_effort,
-            Some(ReasoningEffortConfig::Low)
-        );
-    }
-
-    #[tokio::test]
-    async fn resume_model_settings_preserves_only_explicit_model_overrides() {
-        let mut app = make_test_app().await;
-
-        assert_eq!(
-            app.resume_model_settings(),
-            crate::app_server_session::ResumeModelSettings::RestoreFromThread
-        );
-        let profile_path = test_path_buf("/tmp/work.config.toml").abs();
-        let profile = "work"
-            .parse::<codex_config::ProfileV2Name>()
-            .expect("valid profile name");
-        for (key, expected) in [
-            (
-                "model",
-                crate::app_server_session::ResumeModelSettings::OverrideFromCurrentConfig,
-            ),
-            (
-                "model_provider",
-                crate::app_server_session::ResumeModelSettings::OverrideFromCurrentConfig,
-            ),
-            (
-                "model_reasoning_effort",
-                crate::app_server_session::ResumeModelSettings::OverrideFromCurrentConfig,
-            ),
-            (
-                "sandbox_mode",
-                crate::app_server_session::ResumeModelSettings::RestoreFromThread,
-            ),
-        ] {
-            let config = TomlValue::Table(toml::map::Map::from_iter([(
-                key.to_string(),
-                TomlValue::String("value".to_string()),
-            )]));
-            app.config.config_layer_stack = ConfigLayerStack::new(
-                vec![ConfigLayerEntry::new(
-                    ConfigLayerSource::SessionFlags,
-                    config.clone(),
-                )],
-                Default::default(),
-                Default::default(),
-            )
-            .expect("session flags layer stack");
-            assert_eq!(app.resume_model_settings(), expected);
-
-            app.config.config_layer_stack = ConfigLayerStack::default()
-                .with_user_config_profile(&profile_path, Some(&profile), config)
-                .expect("user config profile layer stack");
-            assert_eq!(app.resume_model_settings(), expected);
-        }
-
-        app.config.config_layer_stack = ConfigLayerStack::default()
-            .with_user_config(
-                &profile_path,
-                TomlValue::Table(toml::map::Map::from_iter([(
-                    "model_reasoning_effort".to_string(),
-                    TomlValue::String("high".to_string()),
-                )])),
-            )
-            .expect("user config layer stack");
-        assert_eq!(
-            app.resume_model_settings(),
-            crate::app_server_session::ResumeModelSettings::RestoreFromThread
-        );
-
-        app.harness_overrides.model_provider = Some("custom-provider".to_string());
-        assert_eq!(
-            app.resume_model_settings(),
-            crate::app_server_session::ResumeModelSettings::OverrideFromCurrentConfig
-        );
-    }
-
-    #[tokio::test]
-    async fn refresh_in_memory_config_from_disk_loads_latest_apps_state() -> Result<()> {
-        let mut app = make_test_app().await;
-        let codex_home = tempdir()?;
-        app.config.codex_home = codex_home.path().to_path_buf().abs();
-        let app_id = "unit_test_refresh_in_memory_config_connector".to_string();
-
-        assert_eq!(app_enabled_in_effective_config(&app.config, &app_id), None);
-
-        ConfigEditsBuilder::for_config(&app.config)
-            .with_edits([
-                ConfigEdit::SetPath {
-                    segments: vec!["apps".to_string(), app_id.clone(), "enabled".to_string()],
-                    value: false.into(),
-                },
-                ConfigEdit::SetPath {
-                    segments: vec![
-                        "apps".to_string(),
-                        app_id.clone(),
-                        "disabled_reason".to_string(),
-                    ],
-                    value: "user".into(),
-                },
-            ])
-            .apply()
-            .await
-            .expect("persist app toggle");
-
-        assert_eq!(app_enabled_in_effective_config(&app.config, &app_id), None);
-
-        app.refresh_in_memory_config_from_disk().await?;
-
-        assert_eq!(
-            app_enabled_in_effective_config(&app.config, &app_id),
-            Some(false)
-        );
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn refresh_in_memory_config_from_disk_best_effort_keeps_current_config_on_error()
-    -> Result<()> {
-        let mut app = make_test_app().await;
-        let codex_home = tempdir()?;
-        app.config.codex_home = codex_home.path().to_path_buf().abs();
-        std::fs::write(codex_home.path().join("config.toml"), "[broken")?;
-        let original_config = app.config.clone();
-
-        app.refresh_in_memory_config_from_disk_best_effort("starting a new thread")
-            .await;
-
-        assert_eq!(app.config, original_config);
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn refresh_in_memory_config_from_disk_uses_active_chat_widget_cwd() -> Result<()> {
-        let mut app = make_test_app().await;
-        let original_cwd = app.config.cwd.clone();
-        let next_cwd_tmp = tempdir()?;
-        let next_cwd = next_cwd_tmp.path().to_path_buf();
-
-        app.chat_widget
-            .handle_thread_session(crate::session_state::ThreadSessionState {
-                windows_sandbox_host: crate::app::WindowsSandboxHost::Local,
-                thread_id: ThreadId::new(),
-                forked_from_id: None,
-                fork_parent_title: None,
-                thread_name: None,
-                model: "gpt-test".to_string(),
-                model_provider_id: "test-provider".to_string(),
-                service_tier: None,
-                approval_policy: AskForApproval::Never,
-                approvals_reviewer: ApprovalsReviewer::User,
-                permission_profile: PermissionProfile::read_only(),
-                active_permission_profile: None,
-                cwd: next_cwd.clone().abs(),
-                runtime_workspace_roots: Vec::new(),
-                instruction_source_paths: Vec::new(),
-                reasoning_effort: None,
-                collaboration_mode: None,
-                personality: None,
-                message_history: None,
-                network_proxy: None,
-                rollout_path: Some(PathBuf::new()),
-            });
-
-        assert_eq!(app.chat_widget.config_ref().cwd.to_path_buf(), next_cwd);
-        assert_eq!(app.config.cwd, original_cwd);
-
-        app.refresh_in_memory_config_from_disk().await?;
-
-        assert_eq!(app.config.cwd, app.chat_widget.config_ref().cwd);
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn refresh_in_memory_config_from_disk_updates_resize_reflow_config() -> Result<()> {
-        let mut app = make_test_app().await;
-        let mut expected_widget_settings = app.chat_widget.local_settings.clone();
-        expected_widget_settings.tui.terminal_resize_reflow_max_rows = Some(9000);
-        let codex_home = tempdir()?;
-        app.config.codex_home = codex_home.path().to_path_buf().abs();
-        std::fs::write(
-            codex_home.path().join("config.toml"),
-            r#"
-[tui]
-terminal_resize_reflow_max_rows = 9000
-theme = "dracula"
-"#,
-        )?;
-
-        app.refresh_in_memory_config_from_disk().await?;
-
-        assert_eq!(
-            app.local_settings.terminal_resize_reflow().max_rows,
-            crate::legacy_core::config::TerminalResizeReflowMaxRows::Limit(9000)
-        );
-        assert_eq!(app.local_settings.tui.theme.as_deref(), Some("dracula"));
-        assert_eq!(app.chat_widget.local_settings, expected_widget_settings);
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn overridden_disabled_guardian_does_not_apply_auto_review_companions() -> Result<()> {
-        let mut app = make_test_app().await;
-        let original_policy = app.config.permissions.approval_policy.value();
-        let effective_config: ConfigReadResponse = serde_json::from_value(serde_json::json!({
-            "config": {
-                "approval_policy": AskForApproval::OnRequest,
-                "approvals_reviewer": codex_app_server_protocol::ApprovalsReviewer::AutoReview,
-                "sandbox_mode": AppServerSandboxMode::WorkspaceWrite,
-                "features": {
-                    "guardian_approval": false,
-                },
-            },
-            "origins": {},
-        }))?;
-
-        app.sync_feature_state_from_effective_config(
-            &effective_config,
-            &[(Feature::GuardianApproval, /*enabled*/ true)],
-        );
-
-        assert!(!app.config.features.enabled(Feature::GuardianApproval));
-        assert!(
-            !app.chat_widget
-                .config_ref()
-                .features
-                .enabled(Feature::GuardianApproval)
-        );
-        assert_eq!(app.config.approvals_reviewer, ApprovalsReviewer::User);
-        assert_eq!(
-            app.chat_widget.config_ref().approvals_reviewer,
-            ApprovalsReviewer::User
-        );
-        assert_eq!(
-            app.config.permissions.approval_policy.value(),
-            original_policy
-        );
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn rebuild_config_for_resume_or_fallback_uses_current_config_on_same_cwd_error()
-    -> Result<()> {
-        let mut app = make_test_app().await;
-        app.sync_tui_theme_selection("dracula".to_string());
-        let codex_home = tempdir()?;
-        app.config.codex_home = codex_home.path().to_path_buf().abs();
-        std::fs::write(codex_home.path().join("config.toml"), "[broken")?;
-        let current_config = app.config.clone();
-        let current_cwd = current_config.cwd.clone();
-
-        let resume_config = app
-            .rebuild_config_for_resume_or_fallback(&current_cwd, current_cwd.to_path_buf())
-            .await?;
-
-        assert_eq!(resume_config, (current_config, app.local_settings.clone()));
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn rebuild_config_for_resume_or_fallback_errors_when_cwd_changes() -> Result<()> {
-        let mut app = make_test_app().await;
-        let codex_home = tempdir()?;
-        app.config.codex_home = codex_home.path().to_path_buf().abs();
-        std::fs::write(codex_home.path().join("config.toml"), "[broken")?;
-        let current_cwd = app.config.cwd.clone();
-        let next_cwd_tmp = tempdir()?;
-        let next_cwd = next_cwd_tmp.path().to_path_buf();
-
-        let result = app
-            .rebuild_config_for_resume_or_fallback(&current_cwd, next_cwd)
-            .await;
-
-        assert!(result.is_err());
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn sync_tui_theme_selection_updates_chat_widget_config_copy() {
-        let mut app = make_test_app().await;
-
-        app.sync_tui_theme_selection("dracula".to_string());
-
-        assert_eq!(app.local_settings.tui.theme.as_deref(), Some("dracula"));
-        assert_eq!(
-            app.chat_widget.local_settings.tui.theme.as_deref(),
-            Some("dracula")
-        );
-    }
-
-    #[tokio::test]
-    async fn replacement_preserves_live_local_settings_and_server_auth_requirement() -> Result<()> {
-        let mut app = make_test_app().await;
-        let mut tui = crate::tui::test_support::make_test_tui()?;
-        app.sync_tui_theme_selection("dracula".to_string());
-        app.chat_widget.requires_openai_auth = false;
-        let mut legacy_config = app.config.clone();
-        legacy_config.tui_theme = Some("nord".to_string());
-        legacy_config.model_provider.requires_openai_auth = true;
-        let init = app.chatwidget_init_for_forked_or_resumed_thread(
-            &mut tui,
-            legacy_config,
-            /*initial_user_message*/ None,
-        );
-        let replacement = ChatWidget::new_with_app_event(init);
-        assert_eq!(replacement.local_settings, app.local_settings);
-        assert!(!replacement.requires_openai_auth);
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn sync_tui_pet_selection_updates_chat_widget_config_copy() {
-        let mut app = make_test_app().await;
-
-        app.sync_tui_pet_selection("chefito".to_string());
-
-        assert_eq!(app.local_settings.tui.pet.as_deref(), Some("chefito"));
-        assert_eq!(
-            app.chat_widget.local_settings.tui.pet.as_deref(),
-            Some("chefito")
-        );
-    }
-
-    #[tokio::test]
-    async fn sync_tui_pet_disabled_updates_chat_widget_config_copy() {
-        let mut app = make_test_app().await;
-
-        app.sync_tui_pet_disabled();
-
-        assert_eq!(
-            app.local_settings.tui.pet.as_deref(),
-            Some(crate::pets::DISABLED_PET_ID)
-        );
-        assert_eq!(
-            app.chat_widget.local_settings.tui.pet.as_deref(),
-            Some(crate::pets::DISABLED_PET_ID)
-        );
-    }
 }

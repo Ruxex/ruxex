@@ -129,7 +129,7 @@ impl Session {
             world_state.add_section(PermissionsState::new(
                 &permission_profile,
                 settings.approval_policy(),
-                ApprovalPromptContext::new(settings.approvals_reviewer(), model_messages),
+                ApprovalPromptContext::new(model_messages),
                 exec_policy.as_ref(),
                 &cwd,
                 turn_context
@@ -152,21 +152,19 @@ impl Session {
                 turn_context.config.model_catalog.is_some(),
             ));
         }
-        if !crate::guardian::is_basic_session_source(&turn_context.session_source) {
-            let send_user_message_async_available =
-                !turn_context.session_source.is_non_root_agent()
-                    && step_context
-                        .settings
-                        .model_info
-                        .experimental_supported_tools
-                        .iter()
-                        .any(|tool| tool == "send_user_message_async");
-            world_state.add_section(PersistentModeState::new(
-                step_context.settings.effective_reasoning_effort().as_ref(),
-                model_messages.persistent_instructions(),
-                send_user_message_async_available,
-            ));
-        }
+        let send_user_message_async_available =
+            !turn_context.session_source.is_non_root_agent()
+                && step_context
+                    .settings
+                    .model_info
+                    .experimental_supported_tools
+                    .iter()
+                    .any(|tool| tool == "send_user_message_async");
+        world_state.add_section(PersistentModeState::new(
+            step_context.settings.effective_reasoning_effort().as_ref(),
+            model_messages.persistent_instructions(),
+            send_user_message_async_available,
+        ));
         if turn_context.config.include_environment_context {
             let current_date = self
                 .read_clock_for_context(turn_context, "environment_date")
@@ -247,16 +245,14 @@ impl Session {
             world_state.add_section(usage_hint);
         }
         world_state.add_section(multi_agent_mode);
-        if !crate::guardian::is_basic_session_source(&turn_context.session_source) {
-            world_state.add_section(ManagedDeveloperInstructionsState::new(
-                turn_context
-                    .config
-                    .config_layer_stack
-                    .requirements()
-                    .additional_developer_instructions
-                    .as_ref(),
-            ));
-        }
+        world_state.add_section(ManagedDeveloperInstructionsState::new(
+            turn_context
+                .config
+                .config_layer_stack
+                .requirements()
+                .additional_developer_instructions
+                .as_ref(),
+        ));
         Ok(world_state)
     }
 }

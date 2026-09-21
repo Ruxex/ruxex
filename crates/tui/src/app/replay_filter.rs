@@ -33,7 +33,6 @@ pub(super) fn event_is_notice(event: &ThreadBufferedEvent) -> bool {
             if matches!(
                 notification.as_ref(),
                 ServerNotification::Warning(_)
-                    | ServerNotification::GuardianWarning(_)
                     | ServerNotification::ConfigWarning(_)
             )
     )

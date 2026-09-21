@@ -413,9 +413,9 @@ impl ApprovalOverlay {
             return;
         };
         let granted_permissions = match decision {
-            PermissionsDecision::GrantForTurn
-            | PermissionsDecision::GrantForTurnWithStrictAutoReview
-            | PermissionsDecision::GrantForSession => permissions.clone(),
+            PermissionsDecision::GrantForTurn | PermissionsDecision::GrantForSession => {
+                permissions.clone()
+            }
             PermissionsDecision::Deny => Default::default(),
         };
         let scope = if matches!(decision, PermissionsDecision::GrantForSession) {
@@ -423,15 +423,9 @@ impl ApprovalOverlay {
         } else {
             PermissionGrantScope::Turn
         };
-        let strict_auto_review = matches!(
-            decision,
-            PermissionsDecision::GrantForTurnWithStrictAutoReview
-        );
         if request.thread_label().is_none() {
             let message = if granted_permissions.is_empty() {
                 "You did not grant additional permissions"
-            } else if strict_auto_review {
-                "You granted additional permissions with strict auto review"
             } else if matches!(scope, PermissionGrantScope::Session) {
                 "You granted additional permissions for this session"
             } else {
@@ -448,7 +442,6 @@ impl ApprovalOverlay {
             codex_protocol::request_permissions::RequestPermissionsResponse {
                 permissions: granted_permissions,
                 scope,
-                strict_auto_review,
             },
         );
     }
@@ -793,7 +786,6 @@ enum ApprovalDecision {
 #[derive(Clone, Copy)]
 enum PermissionsDecision {
     GrantForTurn,
-    GrantForTurnWithStrictAutoReview,
     GrantForSession,
     Deny,
 }
@@ -1042,13 +1034,6 @@ fn permissions_options(keymap: &ApprovalKeymap) -> Vec<ApprovalOption> {
             label: "Yes, grant these permissions for this turn".to_string(),
             decision: ApprovalDecision::Permissions(PermissionsDecision::GrantForTurn),
             shortcuts: keymap.approve.clone(),
-        },
-        ApprovalOption {
-            label: "Yes, grant for this turn with strict auto review".to_string(),
-            decision: ApprovalDecision::Permissions(
-                PermissionsDecision::GrantForTurnWithStrictAutoReview,
-            ),
-            shortcuts: vec![key_hint::plain(KeyCode::Char('r'))],
         },
         ApprovalOption {
             label: "Yes, grant these permissions for this session".to_string(),

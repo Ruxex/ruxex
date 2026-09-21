@@ -11,7 +11,6 @@ use codex_tools::ToolExecutor;
 use crate::ExtensionData;
 use crate::ExtensionMetrics;
 
-mod approval_review;
 mod context;
 mod mcp;
 mod prompt;
@@ -22,10 +21,6 @@ mod turn_input;
 mod turn_lifecycle;
 mod world_state;
 
-pub use approval_review::ApprovalDecision;
-pub use approval_review::ApprovalDecisionInput;
-pub use approval_review::GuardianV2Enabled;
-pub use approval_review::SynchronousApprovalReviewer;
 pub use context::TurnContextContributionInput;
 pub use mcp::McpServerContribution;
 pub use mcp::McpServerContributionContext;
@@ -353,18 +348,6 @@ pub trait ToolLifecycleContributor: Send + Sync {
     /// hook-provided input cannot be applied, or cancellation wins first.
     fn on_tool_finish<'a>(&'a self, _input: ToolFinishInput<'a>) -> ToolLifecycleFuture<'a> {
         Box::pin(std::future::ready(()))
-    }
-}
-
-/// Owns the complete approval decision, including whether to consult a reviewer.
-/// Returning `None` leaves the request to the next contributor.
-pub trait ApprovalReviewContributor: Send + Sync {
-    /// Claims one request, including a handoff to the user.
-    fn decide<'a>(
-        &'a self,
-        _input: &'a ApprovalDecisionInput<'_>,
-    ) -> ExtensionFuture<'a, Option<ApprovalDecision>> {
-        Box::pin(std::future::ready(None))
     }
 }
 

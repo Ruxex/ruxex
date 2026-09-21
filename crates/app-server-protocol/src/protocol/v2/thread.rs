@@ -1,5 +1,4 @@
 use super::ActivePermissionProfile;
-use super::ApprovalsReviewer;
 use super::AskForApproval;
 use super::SandboxMode;
 use super::SandboxPolicy;
@@ -88,7 +87,6 @@ pub struct ThreadStartParams {
     /// Override where approval requests are routed for review on this thread
     /// and subsequent turns.
     #[ts(optional = nullable)]
-    pub approvals_reviewer: Option<ApprovalsReviewer>,
     #[ts(optional = nullable)]
     pub sandbox: Option<SandboxMode>,
     /// Named profile id for this thread. Cannot be combined with `sandbox`.
@@ -204,7 +202,6 @@ pub struct ThreadStartResponse {
     #[experimental(nested)]
     pub approval_policy: AskForApproval,
     /// Reviewer currently used for approval requests on this thread.
-    pub approvals_reviewer: ApprovalsReviewer,
     /// Legacy sandbox policy retained for compatibility. Experimental clients
     /// should prefer `activePermissionProfile` for profile provenance.
     pub sandbox: SandboxPolicy,
@@ -247,7 +244,6 @@ pub struct ThreadSettingsUpdateParams {
     pub approval_policy: Option<AskForApproval>,
     /// Override where approval requests are routed for subsequent turns.
     #[ts(optional = nullable)]
-    pub approvals_reviewer: Option<ApprovalsReviewer>,
     /// Override the sandbox policy for subsequent turns.
     #[ts(optional = nullable)]
     pub sandbox_policy: Option<SandboxPolicy>,
@@ -306,7 +302,6 @@ pub struct ThreadSettings {
     pub disabled_plugin_ids: Vec<String>,
     pub cwd: AbsolutePathBuf,
     pub approval_policy: AskForApproval,
-    pub approvals_reviewer: ApprovalsReviewer,
     pub sandbox_policy: SandboxPolicy,
     pub active_permission_profile: Option<ActivePermissionProfile>,
     pub model: String,
@@ -397,7 +392,6 @@ pub struct ThreadResumeParams {
     /// Override where approval requests are routed for review on this thread
     /// and subsequent turns.
     #[ts(optional = nullable)]
-    pub approvals_reviewer: Option<ApprovalsReviewer>,
     #[ts(optional = nullable)]
     pub sandbox: Option<SandboxMode>,
     /// Named profile id for the resumed thread. Cannot be combined with
@@ -452,7 +446,6 @@ pub struct ThreadResumeResponse {
     #[experimental(nested)]
     pub approval_policy: AskForApproval,
     /// Reviewer currently used for approval requests on this thread.
-    pub approvals_reviewer: ApprovalsReviewer,
     /// Legacy sandbox policy retained for compatibility. Experimental clients
     /// should prefer `activePermissionProfile` for profile provenance.
     pub sandbox: SandboxPolicy,
@@ -591,7 +584,6 @@ pub struct ThreadForkParams {
     /// Override where approval requests are routed for review on this thread
     /// and subsequent turns.
     #[ts(optional = nullable)]
-    pub approvals_reviewer: Option<ApprovalsReviewer>,
     #[ts(optional = nullable)]
     pub sandbox: Option<SandboxMode>,
     /// Named profile id for the forked thread. Cannot be combined with
@@ -648,7 +640,6 @@ pub struct ThreadForkResponse {
     #[experimental(nested)]
     pub approval_policy: AskForApproval,
     /// Reviewer currently used for approval requests on this thread.
-    pub approvals_reviewer: ApprovalsReviewer,
     /// Legacy sandbox policy retained for compatibility. Experimental clients
     /// should prefer `activePermissionProfile` for profile provenance.
     pub sandbox: SandboxPolicy,
@@ -1175,20 +1166,6 @@ pub struct ThreadShellCommandParams {
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
 pub struct ThreadShellCommandResponse {}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "v2/")]
-pub struct ThreadApproveGuardianDeniedActionParams {
-    pub thread_id: String,
-    /// Serialized `codex_protocol::protocol::GuardianAssessmentEvent`.
-    pub event: JsonValue,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "v2/")]
-pub struct ThreadApproveGuardianDeniedActionResponse {}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
 #[serde(rename_all = "camelCase")]

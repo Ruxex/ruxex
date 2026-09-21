@@ -25,7 +25,6 @@ pub(crate) const READ_ONLY_TEMPLATE: &str =
 pub(crate) struct ResolvedApprovalMessages<'a> {
     pub(crate) never: ResolvedMessage<'a>,
     pub(crate) on_request: ResolvedMessage<'a>,
-    pub(crate) on_request_auto_review: ResolvedMessage<'a>,
     pub(crate) unless_trusted: ResolvedMessage<'a>,
 }
 
@@ -38,10 +37,6 @@ impl<'a> ResolvedApprovalMessages<'a> {
             ),
             on_request: ResolvedMessage::new(
                 messages.and_then(|m| m.on_request.as_deref()),
-                APPROVAL_POLICY_ON_REQUEST,
-            ),
-            on_request_auto_review: ResolvedMessage::new(
-                messages.and_then(|m| m.on_request_auto_review.as_deref()),
                 APPROVAL_POLICY_ON_REQUEST,
             ),
             unless_trusted: ResolvedMessage::new(

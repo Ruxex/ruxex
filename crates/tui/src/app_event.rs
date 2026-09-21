@@ -49,7 +49,6 @@ use crate::chatwidget::UserMessage;
 use crate::experimental_features::FeatureWriteResult;
 use crate::goal_files::GoalDraft;
 use codex_app_server_protocol::AskForApproval;
-use codex_config::types::ApprovalsReviewer;
 use codex_features::Feature;
 use codex_plugin::PluginCapabilitySummary;
 use codex_protocol::config_types::CollaborationModeMask;
@@ -558,11 +557,6 @@ pub(crate) enum AppEvent {
     /// A blocking image-preparation worker has finished; payload stays with its widget.
     ImagesPrepared(Uuid),
 
-    /// Approve one retry of a recent auto-review denial selected in the TUI.
-    ApproveRecentAutoReviewDenial {
-        thread_id: ThreadId,
-        id: String,
-    },
 
     /// Kick off an asynchronous file search for the given query (text after
     /// the `@`). Previous searches may be cancelled by the app layer so there
@@ -934,9 +928,6 @@ pub(crate) enum AppEvent {
         effort: Option<ReasoningEffort>,
     },
 
-    /// Show the cyber auto-review notice after the model selection confirmation.
-    CyberModelAutoReviewNotice,
-
     /// Persist the selected service tier to the appropriate config.
     PersistServiceTierSelection {
         service_tier: Option<String>,
@@ -1051,9 +1042,6 @@ pub(crate) enum AppEvent {
 
     /// Select a named permission profile, optionally applying built-in mode settings too.
     SelectPermissionProfile(PermissionProfileSelection),
-
-    /// Update the current approvals reviewer in the running app and widget.
-    UpdateApprovalsReviewer(ApprovalsReviewer),
 
     /// Discover experimental features for the requesting popup only.
     FetchExperimentalFeatures {
@@ -1293,7 +1281,6 @@ pub(crate) enum AppEvent {
 pub(crate) struct PermissionProfileSelection {
     pub profile_id: String,
     pub approval_policy: Option<AskForApproval>,
-    pub approvals_reviewer: Option<ApprovalsReviewer>,
     pub display_label: String,
 }
 

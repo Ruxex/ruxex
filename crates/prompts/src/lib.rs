@@ -1,5 +1,4 @@
 mod compact;
-mod guardian_instructions;
 mod model_instructions;
 mod model_messages;
 mod multi_agent_instructions;
@@ -10,11 +9,7 @@ mod update_plan_instructions;
 
 pub use compact::SUMMARIZATION_PROMPT;
 pub use compact::SUMMARY_PREFIX;
-pub use guardian_instructions::GuardianClassifierInstructions;
-pub use guardian_instructions::GuardianPolicyInstructions;
-pub use guardian_instructions::render_guardian_rejection;
 pub use model_instructions::render_model_instructions;
-pub use model_messages::ResolvedAutoReviewMessages;
 pub use model_messages::ResolvedCollaborationModeMessages;
 pub use model_messages::ResolvedMessage;
 pub use model_messages::ResolvedModelMessages;

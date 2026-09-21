@@ -146,11 +146,9 @@ impl App {
         if let Some(profile) = &self.runtime_permission_profile_override
             && profile.permission_profile == cached.permission_profile
             && profile.active_permission_profile == cached.active_permission_profile
-            && self.config.approvals_reviewer == cached.approvals_reviewer
         {
             session.permission_profile = profile.permission_profile.clone();
             session.active_permission_profile = profile.active_permission_profile.clone();
-            session.approvals_reviewer = self.config.approvals_reviewer;
         }
     }
 

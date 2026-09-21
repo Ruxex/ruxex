@@ -221,11 +221,6 @@ fn parse_feature_requirements(
         if key == Feature::Personality.key() {
             continue;
         }
-        if key == "auto_review" {
-            pinned_features.insert(Feature::GuardianApproval, enabled);
-            continue;
-        }
-
         if let Some(feature) = canonical_feature_for_key(&key) {
             pinned_features.insert(feature, enabled);
             continue;

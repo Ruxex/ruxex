@@ -127,7 +127,6 @@ struct ThreadSettingsBuildParams {
     disabled_plugin_ids: Option<Vec<String>>,
     environment_override: ThreadEnvironmentOverride,
     approval_policy: Option<codex_app_server_protocol::AskForApproval>,
-    approvals_reviewer: Option<codex_app_server_protocol::ApprovalsReviewer>,
     sandbox_policy: Option<codex_app_server_protocol::SandboxPolicy>,
     permissions: Option<String>,
     model: Option<String>,
@@ -221,9 +220,6 @@ impl TurnRequestProcessor {
             Op::TurnSettings {
                 turn_id: params.turn_id,
                 update: TurnSettingsUpdate {
-                    approvals_reviewer: params
-                        .approvals_reviewer
-                        .map(codex_app_server_protocol::ApprovalsReviewer::to_core),
                     model: params.model,
                     // Match thread/settings/update: public null does not clear effort.
                     effort: params.effort.map(Some),
@@ -537,7 +533,6 @@ impl TurnRequestProcessor {
                     disabled_plugin_ids: params.disabled_plugin_ids,
                     environment_override,
                     approval_policy: params.approval_policy,
-                    approvals_reviewer: params.approvals_reviewer,
                     sandbox_policy: params.sandbox_policy,
                     permissions: params.permissions,
                     model: params.model,
@@ -686,7 +681,6 @@ impl TurnRequestProcessor {
                     runtime_workspace_roots,
                 },
             approval_policy,
-            approvals_reviewer,
             sandbox_policy,
             permissions,
             model,
@@ -718,7 +712,6 @@ impl TurnRequestProcessor {
         let has_any_overrides = has_environment_override
             || disabled_plugin_ids.is_some()
             || approval_policy.is_some()
-            || approvals_reviewer.is_some()
             || sandbox_policy.is_some()
             || permissions.is_some()
             || model.is_some()
@@ -730,8 +723,6 @@ impl TurnRequestProcessor {
 
         let approval_policy =
             approval_policy.map(codex_app_server_protocol::AskForApproval::to_core);
-        let approvals_reviewer =
-            approvals_reviewer.map(codex_app_server_protocol::ApprovalsReviewer::to_core);
         let sandbox_policy = sandbox_policy.map(|policy| policy.to_core());
         let (permission_profile, active_permission_profile, profile_workspace_roots) =
             if let Some(permissions) = permissions {
@@ -777,7 +768,6 @@ impl TurnRequestProcessor {
                     environments: environments.clone(),
                     runtime_workspace_roots: runtime_workspace_roots.clone(),
                     approval_policy,
-                    approvals_reviewer,
                     sandbox_policy: sandbox_policy.clone(),
                     permission_profile: permission_profile.clone(),
                     active_permission_profile: active_permission_profile.clone(),
@@ -802,7 +792,6 @@ impl TurnRequestProcessor {
             runtime_workspace_roots,
             profile_workspace_roots,
             approval_policy,
-            approvals_reviewer,
             sandbox_policy,
             permission_profile,
             active_permission_profile,
@@ -841,7 +830,6 @@ impl TurnRequestProcessor {
                     disabled_plugin_ids: params.disabled_plugin_ids,
                     environment_override,
                     approval_policy: params.approval_policy,
-                    approvals_reviewer: params.approvals_reviewer,
                     sandbox_policy: params.sandbox_policy,
                     permissions: params.permissions,
                     model: params.model,
@@ -1113,10 +1101,6 @@ impl TurnRequestProcessor {
             ));
         }
         let mut config = parent_thread.config().await.as_ref().clone();
-        if let Some(review_model) = &config.review_model {
-            config.model = Some(review_model.clone());
-        }
-
         let AgentRun {
             thread_id,
             thread: review_thread,

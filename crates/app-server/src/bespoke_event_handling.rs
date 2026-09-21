@@ -28,7 +28,6 @@ use codex_app_server_protocol::FileChangeApprovalDecision;
 use codex_app_server_protocol::FileChangeRequestApprovalParams;
 use codex_app_server_protocol::FileChangeRequestApprovalResponse;
 use codex_app_server_protocol::GrantedPermissionProfile as V2GrantedPermissionProfile;
-use codex_app_server_protocol::GuardianWarningNotification;
 use codex_app_server_protocol::HookCompletedNotification;
 use codex_app_server_protocol::HookStartedNotification;
 use codex_app_server_protocol::ItemCompletedNotification;
@@ -51,7 +50,6 @@ use codex_app_server_protocol::RawResponseItemCompletedNotification;
 use codex_app_server_protocol::RequestId;
 use codex_app_server_protocol::ServerNotification;
 use codex_app_server_protocol::ServerRequestPayload;
-use codex_app_server_protocol::StrictReviewRequiredNotification;
 use codex_app_server_protocol::ThreadGoalUpdatedNotification;
 use codex_app_server_protocol::ThreadItem;
 use codex_app_server_protocol::ThreadSettingsUpdatedNotification;
@@ -73,8 +71,6 @@ use codex_app_server_protocol::TurnPlanUpdatedNotification;
 use codex_app_server_protocol::TurnStartedNotification;
 use codex_app_server_protocol::TurnStatus;
 use codex_app_server_protocol::WarningNotification;
-use codex_app_server_protocol::build_item_from_guardian_event;
-use codex_app_server_protocol::guardian_auto_approval_review_notification;
 use codex_app_server_protocol::item_event_to_server_notification;
 use codex_core::CodexThread;
 use codex_core::ThreadManager;
@@ -267,122 +263,6 @@ pub(crate) async fn apply_bespoke_event_handling(
             outgoing
                 .send_server_notification(ServerNotification::Warning(notification))
                 .await;
-        }
-        EventMsg::GuardianWarning(warning_event) => {
-            let notification = GuardianWarningNotification {
-                thread_id: conversation_id.to_string(),
-                message: warning_event.message,
-            };
-            outgoing
-                .send_server_notification(ServerNotification::GuardianWarning(notification))
-                .await;
-        }
-        EventMsg::GuardianAssessment(assessment) => {
-            let pending_command_execution = match build_item_from_guardian_event(
-                &assessment,
-                CommandExecutionStatus::InProgress,
-            ) {
-                Some(ThreadItem::CommandExecution {
-                    id,
-                    model_context,
-                    plugin_id,
-                    script_path,
-                    command,
-                    cwd,
-                    command_actions,
-                    ..
-                }) => Some((
-                    id,
-                    CommandExecutionCompletionItem {
-                        model_context,
-                        plugin_id,
-                        script_path,
-                        command,
-                        cwd,
-                        command_actions,
-                    },
-                )),
-                Some(_) | None => None,
-            };
-            let assessment_turn_id = if assessment.turn_id.is_empty() {
-                event_turn_id.clone()
-            } else {
-                assessment.turn_id.clone()
-            };
-            if assessment.status == codex_protocol::protocol::GuardianAssessmentStatus::InProgress
-                && let Some((target_item_id, completion_item)) = pending_command_execution.as_ref()
-            {
-                start_command_execution_item(
-                    &conversation_id,
-                    assessment_turn_id.clone(),
-                    target_item_id.clone(),
-                    completion_item.model_context.clone(),
-                    completion_item.plugin_id.clone(),
-                    completion_item.script_path.clone(),
-                    completion_item.command.clone(),
-                    completion_item.cwd.clone(),
-                    completion_item.command_actions.clone(),
-                    CommandExecutionSource::Agent,
-                    &outgoing,
-                    &thread_state,
-                )
-                .await;
-            }
-            let notification = guardian_auto_approval_review_notification(
-                &conversation_id,
-                &event_turn_id,
-                &assessment,
-            );
-            outgoing.send_server_notification(notification).await;
-            if assessment.status == codex_protocol::protocol::GuardianAssessmentStatus::InProgress
-                && matches!(
-                    assessment.review_reason,
-                    Some(
-                        codex_protocol::approvals::GuardianReviewReason::ElevatedRisk
-                            | codex_protocol::approvals::GuardianReviewReason::StaleScore
-                            | codex_protocol::approvals::GuardianReviewReason::IncompatibleCompaction
-                            | codex_protocol::approvals::GuardianReviewReason::ScoringFailure
-                            | codex_protocol::approvals::GuardianReviewReason::AuthorizationChanged
-                    )
-                )
-            {
-                outgoing
-                    .send_server_notification(ServerNotification::StrictReviewRequired(
-                        StrictReviewRequiredNotification {
-                            thread_id: conversation_id.to_string(),
-                            turn_id: assessment_turn_id.clone(),
-                            started_at_ms: assessment.started_at_ms,
-                        },
-                    ))
-                    .await;
-            }
-            let completion_status = match assessment.status {
-                codex_protocol::protocol::GuardianAssessmentStatus::Denied
-                | codex_protocol::protocol::GuardianAssessmentStatus::Aborted => {
-                    Some(CommandExecutionStatus::Declined)
-                }
-                codex_protocol::protocol::GuardianAssessmentStatus::TimedOut => {
-                    Some(CommandExecutionStatus::Failed)
-                }
-                codex_protocol::protocol::GuardianAssessmentStatus::InProgress
-                | codex_protocol::protocol::GuardianAssessmentStatus::Approved => None,
-            };
-            if let Some(completion_status) = completion_status
-                && let Some((target_item_id, completion_item)) = pending_command_execution
-            {
-                complete_command_execution_item(
-                    &conversation_id,
-                    assessment_turn_id,
-                    target_item_id,
-                    completion_item,
-                    /*process_id*/ None,
-                    CommandExecutionSource::Agent,
-                    completion_status,
-                    &outgoing,
-                    &thread_state,
-                )
-                .await;
-            }
         }
         EventMsg::ModelReroute(event) => {
             let notification = ModelReroutedNotification {
@@ -869,7 +749,7 @@ pub(crate) async fn apply_bespoke_event_handling(
         EventMsg::ViewImageToolCall(_) => {}
         EventMsg::ItemStarted(event) => {
             let should_emit = match &event.item {
-                // Approval and guardian flows can emit the command start notification before core
+                // Approval flows can emit the command start notification before core
                 // emits the canonical item. Reuse the same set to suppress that duplicate.
                 CoreTurnItem::CommandExecution(item) => thread_state
                     .lock()
@@ -1655,7 +1535,6 @@ fn request_permissions_response_from_client_result(
             return Ok(Some(CoreRequestPermissionsResponse {
                 permissions: Default::default(),
                 scope: CorePermissionGrantScope::Turn,
-                strict_auto_review: false,
             }));
         }
         Err(err) => {
@@ -1663,7 +1542,6 @@ fn request_permissions_response_from_client_result(
             return Ok(Some(CoreRequestPermissionsResponse {
                 permissions: Default::default(),
                 scope: CorePermissionGrantScope::Turn,
-                strict_auto_review: false,
             }));
         }
     };
@@ -1674,29 +1552,13 @@ fn request_permissions_response_from_client_result(
             PermissionsRequestApprovalResponse {
                 permissions: V2GrantedPermissionProfile::default(),
                 scope: codex_app_server_protocol::PermissionGrantScope::Turn,
-                strict_auto_review: None,
             }
         });
-    let strict_auto_review = response.strict_auto_review.unwrap_or(false);
-    if strict_auto_review
-        && matches!(
-            response.scope,
-            codex_app_server_protocol::PermissionGrantScope::Session
-        )
-    {
-        error!("strict auto review is only supported for turn-scoped permission grants");
-        return Ok(Some(CoreRequestPermissionsResponse {
-            permissions: Default::default(),
-            scope: CorePermissionGrantScope::Turn,
-            strict_auto_review: false,
-        }));
-    }
     let granted_permissions: CoreAdditionalPermissionProfile = response.permissions.try_into()?;
     // Core intersects with the request using the originating environment's policy context.
     Ok(Some(CoreRequestPermissionsResponse {
         permissions: CoreRequestPermissionProfile::from(granted_permissions),
         scope: response.scope.to_core(),
-        strict_auto_review,
     }))
 }
 
