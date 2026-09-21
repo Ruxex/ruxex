@@ -266,7 +266,6 @@ pub(super) async fn start_app_server_for_session_command(
         default_daemon,
         reuse_implicit_local_daemon,
         workload_identity_selected,
-        std::env::var_os(codex_exec_server::CODEX_EXEC_SERVER_URL_ENV_VAR).as_deref(),
     )?;
     let remote_cwd_override = cli
         .cwd

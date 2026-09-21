@@ -1,7 +1,7 @@
 //! Minimal exec-server fixture for Bazel-only integration tests.
 //!
 //! Linking only exec-server avoids depending on the full Codex CLI binary
-//! when a test only needs a WebSocket executor endpoint. It handles the arg0
+//! when a test only needs a stdio executor endpoint. It handles the arg0
 //! helper mode because sandboxed process requests re-exec this binary.
 
 use codex_exec_server::ExecServerRuntimePaths;
@@ -31,7 +31,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .enable_all()
         .build()?
         .block_on(codex_exec_server::run_main(
-            "ws://127.0.0.1:0",
+            "stdio",
             runtime_paths,
             HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
         ))

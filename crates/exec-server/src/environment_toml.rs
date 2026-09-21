@@ -4,16 +4,13 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
 
-use http::HeaderMap;
 use serde::Deserialize;
-use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 
 use crate::DefaultEnvironmentProvider;
 use crate::EnvironmentProvider;
 use crate::EnvironmentProviderFuture;
 use crate::ExecServerError;
-use crate::client_api::DEFAULT_REMOTE_EXEC_SERVER_CONNECT_TIMEOUT;
-use crate::client_api::DEFAULT_REMOTE_EXEC_SERVER_INITIALIZE_TIMEOUT;
+use crate::client_api::DEFAULT_EXEC_SERVER_INITIALIZE_TIMEOUT;
 use crate::client_api::ExecServerTransportParams;
 use crate::client_api::StdioExecServerCommand;
 use crate::environment::LOCAL_ENVIRONMENT_ID;
@@ -37,13 +34,10 @@ struct EnvironmentsToml {
 #[serde(deny_unknown_fields)]
 struct EnvironmentToml {
     id: String,
-    url: Option<String>,
     program: Option<String>,
     args: Option<Vec<String>>,
     env: Option<HashMap<String, String>>,
     cwd: Option<PathBuf>,
-    #[serde(default, with = "option_duration_secs")]
-    connect_timeout_sec: Option<Duration>,
     #[serde(default, with = "option_duration_secs")]
     initialize_timeout_sec: Option<Duration>,
 }
@@ -114,12 +108,10 @@ fn parse_environment_toml(
 ) -> Result<(String, ExecServerTransportParams), ExecServerError> {
     let EnvironmentToml {
         id,
-        url,
         program,
         args,
         env,
         cwd,
-        connect_timeout_sec,
         initialize_timeout_sec,
     } = item;
     validate_environment_id(&id)?;
@@ -128,27 +120,11 @@ fn parse_environment_toml(
             "environment `{id}` args, env, and cwd require program"
         )));
     }
-    if url.is_none() && connect_timeout_sec.is_some() {
-        return Err(ExecServerError::Protocol(format!(
-            "environment `{id}` connect_timeout_sec requires url"
-        )));
-    }
-
-    let connect_timeout = connect_timeout_sec.unwrap_or(DEFAULT_REMOTE_EXEC_SERVER_CONNECT_TIMEOUT);
     let initialize_timeout =
-        initialize_timeout_sec.unwrap_or(DEFAULT_REMOTE_EXEC_SERVER_INITIALIZE_TIMEOUT);
+        initialize_timeout_sec.unwrap_or(DEFAULT_EXEC_SERVER_INITIALIZE_TIMEOUT);
 
-    let transport_params = match (url, program) {
-        (Some(url), None) => {
-            let url = validate_websocket_url(url)?;
-            ExecServerTransportParams::WebSocketUrl {
-                websocket_url: url,
-                connect_timeout,
-                initialize_timeout,
-                http_headers: HeaderMap::new(),
-            }
-        }
-        (None, Some(program)) => {
+    let transport_params = match program {
+        Some(program) => {
             let program = program.trim().to_string();
             if program.is_empty() {
                 return Err(ExecServerError::Protocol(format!(
@@ -166,9 +142,9 @@ fn parse_environment_toml(
                 initialize_timeout,
             }
         }
-        (None, None) | (Some(_), Some(_)) => {
+        None => {
             return Err(ExecServerError::Protocol(format!(
-                "environment `{id}` must set exactly one of url or program"
+                "environment `{id}` must set program"
             )));
         }
     };
@@ -271,24 +247,6 @@ fn validate_environment_id(id: &str) -> Result<(), ExecServerError> {
         )));
     }
     Ok(())
-}
-
-fn validate_websocket_url(url: String) -> Result<String, ExecServerError> {
-    let url = url.trim();
-    if url.is_empty() {
-        return Err(ExecServerError::Protocol(
-            "environment url cannot be empty".to_string(),
-        ));
-    }
-    if !url.starts_with("ws://") && !url.starts_with("wss://") {
-        return Err(ExecServerError::Protocol(format!(
-            "environment url `{url}` must use ws:// or wss://"
-        )));
-    }
-    url.into_client_request().map_err(|err| {
-        ExecServerError::Protocol(format!("environment url `{url}` is invalid: {err}"))
-    })?;
-    Ok(url.to_string())
 }
 
 /// Returns `None` when the config is missing; other I/O and parse failures remain errors.

@@ -92,7 +92,6 @@ pub(super) async fn run_main_inner(
             /*default_daemon_socket*/ None,
             /*can_reuse_implicit_local_daemon*/ false,
             workload_identity_selected,
-            std::env::var_os(codex_exec_server::CODEX_EXEC_SERVER_URL_ENV_VAR).as_deref(),
         )?;
         let validation_environment_manager =
             if should_load_configured_environments(&loader_overrides, &validation_target) {
@@ -148,7 +147,6 @@ pub(super) async fn run_main_inner(
         &cli_kv_overrides,
         &launch_loader_overrides,
         workload_identity_selected,
-        std::env::var_os(codex_exec_server::CODEX_EXEC_SERVER_URL_ENV_VAR).as_deref(),
     );
     let reuse_implicit_local_daemon = daemon_exclusion.is_none();
     let search_only_config_override = !workload_identity_selected
@@ -195,7 +193,6 @@ pub(super) async fn run_main_inner(
         default_daemon,
         reuse_implicit_local_daemon,
         workload_identity_selected,
-        std::env::var_os(codex_exec_server::CODEX_EXEC_SERVER_URL_ENV_VAR).as_deref(),
     )?;
     let remote_cwd_override = cli
         .cwd

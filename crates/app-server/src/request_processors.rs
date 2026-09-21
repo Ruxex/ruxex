@@ -41,8 +41,6 @@ use codex_app_server_protocol::DeprecationNoticeNotification;
 use codex_app_server_protocol::DynamicToolFunctionSpec;
 use codex_app_server_protocol::DynamicToolNamespaceTool;
 use codex_app_server_protocol::DynamicToolSpec;
-use codex_app_server_protocol::EnvironmentAddParams;
-use codex_app_server_protocol::EnvironmentAddResponse;
 use codex_app_server_protocol::EnvironmentInfoParams;
 use codex_app_server_protocol::EnvironmentInfoResponse;
 use codex_app_server_protocol::EnvironmentShellInfo;

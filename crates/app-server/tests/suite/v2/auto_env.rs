@@ -20,6 +20,7 @@ use tempfile::TempDir;
 use tokio::time::timeout;
 
 const DEFAULT_READ_TIMEOUT: Duration = Duration::from_secs(10);
+const REMOTE_ENVIRONMENT_ID: &str = "remote";
 
 #[tokio::test]
 async fn builder_interposes_fixed_delay_for_auto_env() -> Result<()> {
@@ -36,7 +37,7 @@ async fn builder_interposes_fixed_delay_for_auto_env() -> Result<()> {
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
     assert_eq!(
         mcp.auto_env_params()?.environment_id,
-        codex_exec_server::REMOTE_ENVIRONMENT_ID
+        REMOTE_ENVIRONMENT_ID
     );
 
     let thread_start = Instant::now();

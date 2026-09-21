@@ -168,4 +168,3 @@ zstd = { workspace = true }
 
 [package.metadata.cargo-shear]
 ignored = ["openssl-sys"]
-ignored-paths = ["tests/remote_env_windows/*.rs"]

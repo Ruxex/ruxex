@@ -24,7 +24,6 @@ use crate::server::request_dispatcher::RequestTaskResult;
 use crate::server::session_registry::SessionRegistry;
 use crate::telemetry::ConnectionTransport;
 use crate::telemetry::ExecServerTelemetry;
-use crate::telemetry::ExecutorRegistration;
 use codex_http_client::HttpClientFactory;
 
 #[derive(Clone)]
@@ -75,21 +74,6 @@ impl ConnectionProcessor {
             connection,
             self.clone(),
             transport,
-            /*executor_registration*/ None,
-        )
-        .await;
-    }
-
-    pub(crate) async fn run_registered_connection(
-        &self,
-        connection: JsonRpcConnection,
-        executor_registration: Option<Arc<ExecutorRegistration>>,
-    ) {
-        run_connection(
-            connection,
-            self.clone(),
-            ConnectionTransport::Relay,
-            executor_registration,
         )
         .await;
     }
@@ -103,7 +87,6 @@ async fn run_connection(
     connection: JsonRpcConnection,
     processor: ConnectionProcessor,
     transport: ConnectionTransport,
-    executor_registration: Option<Arc<ExecutorRegistration>>,
 ) {
     let ConnectionProcessor {
         session_registry,
@@ -124,13 +107,12 @@ async fn run_connection(
         mpsc::channel::<RpcServerOutboundMessage>(CHANNEL_CAPACITY);
     let notifications = RpcNotificationSender::new(outgoing_tx.clone());
     let requests = notifications.request_sender();
-    let mut handler = ExecServerHandler::new(
+    let handler = ExecServerHandler::new(
         session_registry,
         notifications,
         runtime_paths,
         http_client_factory,
     );
-    handler.executor_registration = executor_registration;
     let handler = Arc::new(handler);
 
     let outbound_task = tokio::spawn(async move {
@@ -516,7 +498,6 @@ mod tests {
                 ..super::ConnectionProcessor::new(test_runtime_paths())
             },
             crate::telemetry::ConnectionTransport::Stdio,
-            /*executor_registration*/ None,
         ));
         (client_writer, BufReader::new(client_reader).lines(), task)
     }

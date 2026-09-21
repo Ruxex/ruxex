@@ -37,7 +37,6 @@ use crate::client::http_client::response_body_stream::QueuedHttpBodyDelta;
 use crate::client_api::ExecServerClientConnectOptions;
 use crate::client_api::ExecServerTransportParams;
 use crate::client_api::HttpClient;
-use crate::client_api::RemoteExecServerConnectArgs;
 use crate::client_api::StdioExecServerConnectArgs;
 use crate::client_transport::ExecServerReconnectStrategy;
 use crate::connection::JsonRpcConnection;
@@ -137,25 +136,15 @@ use crate::rpc::RpcClient;
 use crate::rpc_server_requests::MAX_IN_FLIGHT_SERVER_CALLS;
 use codex_http_client::HttpClientFactory;
 
-#[path = "client/accepted.rs"]
-pub(crate) mod accepted;
 pub(crate) mod http_client;
 mod network_policy_audit;
-#[cfg(test)]
-#[path = "../tests/unit/client_provisioning_tests.rs"]
-mod provisioning_tests;
 #[path = "client_recovery.rs"]
 mod recovery;
 #[path = "client_refresh.rs"]
 mod refresh;
-#[cfg(test)]
-pub(crate) use recovery::is_environment_offline_error;
 pub(crate) use recovery::is_retryable_recovery_error;
-pub(crate) use recovery::is_retryable_registry_error;
-pub(crate) use recovery::registry_recovery_retry_delay;
 use refresh::ConnectionAttempt;
 
-const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
 const INITIALIZE_TIMEOUT: Duration = Duration::from_secs(10);
 const ENVIRONMENT_INFO_TIMEOUT: Duration = Duration::from_secs(30);
 const ENVIRONMENT_STATUS_TIMEOUT: Duration = Duration::from_secs(10);
@@ -174,39 +163,12 @@ impl Default for ExecServerClientConnectOptions {
     }
 }
 
-impl From<RemoteExecServerConnectArgs> for ExecServerClientConnectOptions {
-    fn from(value: RemoteExecServerConnectArgs) -> Self {
-        Self {
-            client_name: value.client_name,
-            initialize_timeout: value.initialize_timeout,
-            resume_session_id: value.resume_session_id,
-        }
-    }
-}
-
 impl From<StdioExecServerConnectArgs> for ExecServerClientConnectOptions {
     fn from(value: StdioExecServerConnectArgs) -> Self {
         Self {
             client_name: value.client_name,
             initialize_timeout: value.initialize_timeout,
             resume_session_id: value.resume_session_id,
-        }
-    }
-}
-
-impl RemoteExecServerConnectArgs {
-    pub fn new(
-        websocket_url: String,
-        client_name: String,
-        http_client_factory: HttpClientFactory,
-    ) -> Self {
-        Self {
-            websocket_url,
-            client_name,
-            connect_timeout: CONNECT_TIMEOUT,
-            initialize_timeout: INITIALIZE_TIMEOUT,
-            resume_session_id: None,
-            http_client_factory,
         }
     }
 }
@@ -341,16 +303,6 @@ pub struct ExecServerClient {
     recovery_policy: RecoveryPolicy,
 }
 
-/// State carried from a Noise readiness wait into the initialize RPC.
-///
-/// The span preserves the existing logical initialize operation while
-/// `timeout_for_error` keeps diagnostics tied to the caller's configured
-/// budget after readiness has consumed part of that budget.
-pub(crate) struct NoiseInitializeContext {
-    pub(crate) span: tracing::Span,
-    pub(crate) timeout_for_error: Duration,
-}
-
 struct ActiveProcessStart {
     inner: Arc<Inner>,
 }
@@ -388,7 +340,6 @@ pub(crate) struct LazyRemoteExecServerClient {
     // The latest successful client, replaced whenever reconnecting succeeds.
     current_client: Arc<StdMutex<Option<ExecServerClient>>>,
     reconnect: Arc<StdMutex<Option<Arc<ConnectionAttempt>>>>,
-    refresh_lock: Arc<Mutex<()>>,
     environment_connection_state_tx: watch::Sender<EnvironmentConnectionState>,
 }
 
@@ -404,7 +355,6 @@ impl LazyRemoteExecServerClient {
             startup: Arc::new(ConnectionAttempt::default()),
             current_client: Arc::new(StdMutex::new(None)),
             reconnect: Arc::new(StdMutex::new(None)),
-            refresh_lock: Arc::new(Mutex::new(())),
             environment_connection_state_tx: watch::channel(
                 EnvironmentConnectionState::Disconnected,
             )
@@ -452,13 +402,6 @@ impl LazyRemoteExecServerClient {
     }
 
     pub(crate) async fn status(&self) -> crate::EnvironmentObservedStatus {
-        if let Some(ExecServerTransportParams::Deferred(deferred)) = &self.transport_params
-            && let Some(Err(error)) = deferred.readiness.borrow().as_ref()
-        {
-            return crate::EnvironmentObservedStatus::Disconnected {
-                error: ExecServerError::ProvisioningFailed(error.clone()).to_string(),
-            };
-        }
         // Fail-fast lookup preserves the non-mutating contract: never start or recover a client.
         let client = match self.fail_fast().get().await {
             Ok(client) => client,
@@ -547,17 +490,6 @@ impl LazyRemoteExecServerClient {
                 .clone()
                 .map_err(ExecServerError::ConnectionAttempt)
         };
-        // Ready may arrive before an older attempt publishes its provisioning failure.
-        if let Err(ExecServerError::ConnectionAttempt(error)) = &result
-            && matches!(error.as_ref(), ExecServerError::ProvisioningFailed(_))
-            && matches!(
-                &self.transport_params,
-                Some(ExecServerTransportParams::Deferred(deferred))
-                    if matches!(*deferred.readiness.borrow(), Some(Ok(())))
-            )
-        {
-            return Box::pin(self.reconnect()).await;
-        }
         result
     }
 
@@ -606,14 +538,7 @@ impl LazyRemoteExecServerClient {
     }
 
     fn can_reconnect(&self) -> bool {
-        matches!(
-            self.transport_params,
-            Some(
-                ExecServerTransportParams::Deferred(_)
-                    | ExecServerTransportParams::WebSocketUrl { .. }
-                    | ExecServerTransportParams::NoiseRendezvous { .. }
-            )
-        )
+        false
     }
 }
 
@@ -646,48 +571,20 @@ impl LazyRemoteExecServerClient {
 pub enum ExecServerError {
     #[error("failed to spawn exec-server: {0}")]
     Spawn(#[source] std::io::Error),
-    #[error("timed out connecting to exec-server websocket `{url}` after {timeout:?}")]
-    WebSocketConnectTimeout { url: String, timeout: Duration },
-    #[error("failed to connect to exec-server websocket `{url}`: {source}")]
-    WebSocketConnect {
-        url: String,
-        #[source]
-        source: tokio_tungstenite::tungstenite::Error,
-    },
-    #[error("failed to configure exec-server websocket: {0}")]
-    WebSocketConfiguration(String),
     #[error("timed out waiting for exec-server initialize handshake after {timeout:?}")]
     InitializeTimedOut { timeout: Duration },
     #[error("exec-server transport closed")]
     Closed,
     #[error("{0}")]
     Disconnected(String),
-    #[error("environment unavailable: {0}")]
-    ProvisioningFailed(String),
     #[error("failed to serialize or deserialize exec-server JSON: {0}")]
     Json(#[from] serde_json::Error),
     #[error("HTTP request failed: {0}")]
     HttpRequest(String),
     #[error("exec-server protocol error: {0}")]
     Protocol(String),
-    #[error(
-        "environment `{environment_id}` is already registered with a different provisioning mode"
-    )]
-    ProvisioningModeConflict { environment_id: String },
     #[error("exec-server rejected request ({code}): {message}")]
     Server { code: i64, message: String },
-    #[error("environment registry request failed ({status}{code_suffix}): {message}", code_suffix = .code.as_ref().map(|code| format!(", {code}")).unwrap_or_default())]
-    EnvironmentRegistryHttp {
-        status: http::StatusCode,
-        code: Option<String>,
-        message: String,
-    },
-    #[error("environment registry configuration error: {0}")]
-    EnvironmentRegistryConfig(String),
-    #[error("environment registry authentication error: {0}")]
-    EnvironmentRegistryAuth(String),
-    #[error("environment registry request failed: {0}")]
-    EnvironmentRegistryRequest(#[from] codex_http_client::RouteAwareRequestError),
     #[error("exec-server connection attempt failed: {0}")]
     ConnectionAttempt(#[source] Arc<ExecServerError>),
 }
@@ -744,41 +641,18 @@ impl ExecServerClient {
         &self,
         rpc_client: &RpcClient,
         options: ExecServerClientConnectOptions,
-        noise_context: Option<NoiseInitializeContext>,
     ) -> Result<InitializeResponse, ExecServerError> {
         let ExecServerClientConnectOptions {
             client_name,
             initialize_timeout,
             resume_session_id,
         } = options;
-        let timeout_for_error = noise_context
-            .as_ref()
-            .map_or(initialize_timeout, |context| context.timeout_for_error);
-
         timeout(initialize_timeout, async {
             let params = InitializeParams {
                 client_name,
                 resume_session_id,
             };
-            let response: InitializeResponse = if let Some(noise_context) = noise_context {
-                // This is the one RPC whose wire method and trace operation
-                // intentionally differ: preserve the compatibility initialize
-                // parent while measuring only the actual RPC as initialize_rpc.
-                let initialize_rpc_span = tracing::info_span!(
-                    parent: &noise_context.span,
-                    "codex.exec_server.remote.initialize_rpc",
-                    otel.kind = "client",
-                    otel.name = "codex.exec_server.remote.initialize_rpc",
-                );
-                let response = rpc_client
-                    .call_untraced(INITIALIZE_METHOD, &params)
-                    .instrument(initialize_rpc_span)
-                    .await;
-                drop(noise_context);
-                response?
-            } else {
-                rpc_client.call(INITIALIZE_METHOD, &params).await?
-            };
+            let response: InitializeResponse = rpc_client.call(INITIALIZE_METHOD, &params).await?;
             let session_id = self
                 .inner
                 .session_id
@@ -795,9 +669,7 @@ impl ExecServerClient {
             Ok(response)
         })
         .await
-        .map_err(|_| ExecServerError::InitializeTimedOut {
-            timeout: timeout_for_error,
-        })?
+        .map_err(|_| ExecServerError::InitializeTimedOut { timeout: initialize_timeout })?
     }
 
     pub async fn exec(&self, params: ExecParams) -> Result<ExecResponse, ExecServerError> {
@@ -1183,22 +1055,6 @@ impl ExecServerClient {
             connection,
             options,
             reconnect_strategy,
-            /*noise_context*/ None,
-        )
-        .await
-    }
-
-    pub(crate) async fn connect_with_recovery_and_noise_context(
-        connection: JsonRpcConnection,
-        options: ExecServerClientConnectOptions,
-        reconnect_strategy: Option<ExecServerReconnectStrategy>,
-        noise_context: NoiseInitializeContext,
-    ) -> Result<Self, ExecServerError> {
-        Self::connect_with_recovery_inner(
-            connection,
-            options,
-            reconnect_strategy,
-            Some(noise_context),
         )
         .await
     }
@@ -1207,7 +1063,6 @@ impl ExecServerClient {
         connection: JsonRpcConnection,
         options: ExecServerClientConnectOptions,
         reconnect_strategy: Option<ExecServerReconnectStrategy>,
-        noise_context: Option<NoiseInitializeContext>,
     ) -> Result<Self, ExecServerError> {
         let (rpc_client, events_rx) = RpcClient::new(connection);
         let rpc_client = Arc::new(rpc_client);
@@ -1244,9 +1099,7 @@ impl ExecServerClient {
         // before initialize returns. Drain them immediately so a burst cannot
         // fill the bounded event channel and block the initialize response.
         client.spawn_rpc_reader(&rpc_client, events_rx);
-        let initialize_response = client
-            .initialize_rpc(&rpc_client, options, noise_context)
-            .await?;
+        let initialize_response = client.initialize_rpc(&rpc_client, options).await?;
         if let Some(info) = initialize_response.environment_info {
             assert!(
                 client.inner.environment_info.set(info).is_ok(),

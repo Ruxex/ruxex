@@ -359,13 +359,7 @@ async fn prepare_managed_network(
     state.set_process_log_metadata(codex_network_proxy::NetworkProxyProcessLogMetadata {
         thread_id: telemetry.thread_id.clone(),
         tool_call_id: telemetry.tool_call_id.clone(),
-        executor_identity: telemetry
-            .executor_registration
-            .as_ref()
-            .map(|registration| codex_network_proxy::ExecutorLogIdentity {
-                environment_id: registration.environment_id.clone(),
-                registration_id: registration.executor_registration_id.clone(),
-            }),
+        executor_identity: None,
     });
     let mut builder = NetworkProxy::builder()
         .state(Arc::new(state))

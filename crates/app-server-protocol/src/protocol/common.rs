@@ -1009,13 +1009,6 @@ client_request_definitions! {
         serialization: None,
         response: v2::MockExperimentalMethodResponse,
     },
-    #[experimental("environment/add")]
-    /// Adds or replaces a remote environment by id for later selection.
-    EnvironmentAdd => "environment/add" {
-        params: v2::EnvironmentAddParams,
-        serialization: global("environment"),
-        response: v2::EnvironmentAddResponse,
-    },
     #[experimental("environment/info")]
     /// Reads information from a configured execution environment.
     EnvironmentInfo => "environment/info" {
@@ -2275,18 +2268,6 @@ mod tests {
             Some(ClientRequestSerializationScope::Global("config"))
         );
 
-        let environment_add = ClientRequest::EnvironmentAdd {
-            request_id: request_id(),
-            params: v2::EnvironmentAddParams {
-                environment_id: "remote-a".to_string(),
-                exec_server_url: "ws://127.0.0.1:8765".to_string(),
-                connect_timeout_ms: None,
-            },
-        };
-        assert_eq!(
-            environment_add.serialization_scope(),
-            Some(ClientRequestSerializationScope::Global("environment"))
-        );
     }
 
     #[test]
@@ -3085,31 +3066,6 @@ mod tests {
                 "method": "collaborationMode/list",
                 "id": 7,
                 "params": {}
-            }),
-            serde_json::to_value(&request)?,
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn serialize_environment_add() -> Result<()> {
-        let request = ClientRequest::EnvironmentAdd {
-            request_id: RequestId::Integer(9),
-            params: v2::EnvironmentAddParams {
-                environment_id: "remote-a".to_string(),
-                exec_server_url: "ws://127.0.0.1:8765".to_string(),
-                connect_timeout_ms: Some(300_000),
-            },
-        };
-        assert_eq!(
-            json!({
-                "method": "environment/add",
-                "id": 9,
-                "params": {
-                    "environmentId": "remote-a",
-                    "execServerUrl": "ws://127.0.0.1:8765",
-                    "connectTimeoutMs": 300000
-                }
             }),
             serde_json::to_value(&request)?,
         );

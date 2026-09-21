@@ -71,10 +71,8 @@ use crate::server::build_identity::local_environment_info;
 use crate::server::file_system_handler::FileSystemHandler;
 use crate::server::session_registry::SessionHandle;
 use crate::server::session_registry::SessionRegistry;
-use crate::telemetry::ExecutorRegistration;
 
 pub(crate) struct ExecServerHandler {
-    pub(super) executor_registration: Option<Arc<ExecutorRegistration>>,
     session_registry: Arc<SessionRegistry>,
     notifications: RpcNotificationSender,
     session: StdMutex<Option<SessionHandle>>,
@@ -96,7 +94,6 @@ impl ExecServerHandler {
         http_client_factory: HttpClientFactory,
     ) -> Self {
         Self {
-            executor_registration: None,
             session_registry,
             notifications,
             session: StdMutex::new(None),
@@ -189,7 +186,6 @@ impl ExecServerHandler {
                 params,
                 crate::process_telemetry::ProcessTelemetry {
                     launch_context,
-                    executor_registration: self.executor_registration.clone(),
                     ..Default::default()
                 },
             )

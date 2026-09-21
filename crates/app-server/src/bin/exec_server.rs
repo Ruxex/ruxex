@@ -1,6 +1,6 @@
 //! Cargo entry point for the minimal exec-server integration-test fixture.
 //!
-//! This mirrors `//codex-rs/exec-server/testing:exec-server` so Cargo-backed
+//! This mirrors the minimal exec-server fixture so Cargo-backed
 //! app-server integration tests can receive `CARGO_BIN_EXE_exec-server`. It
 //! also handles the helper argv modes because exec-server re-execs
 //! `codex_self_exe` for sandboxed filesystem and process requests.
@@ -32,7 +32,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .enable_all()
         .build()?
         .block_on(codex_exec_server::run_main(
-            "ws://127.0.0.1:0",
+            "stdio",
             runtime_paths,
             // This test-only fixture has no application configuration to resolve HTTP policy.
             HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),

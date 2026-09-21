@@ -1,7 +1,4 @@
-mod connect_options;
-
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::RwLock;
@@ -9,9 +6,7 @@ use std::sync::RwLock;
 use arc_swap::ArcSwapOption;
 use codex_http_client::HttpClientFactory;
 use codex_http_client::OutboundProxyPolicy;
-use codex_protocol::capabilities::CapabilityRootLocation;
 use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_protocol::shell_environment::CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
 
 use crate::CapabilityRootsDiscoverParams;
 use crate::CapabilityRootsDiscoverResponse;
@@ -21,11 +16,8 @@ use crate::ExecServerError;
 use crate::ExecServerRuntimePaths;
 use crate::ExecutorFileSystem;
 use crate::HttpClient;
-use crate::NoiseChannelIdentity;
-use crate::NoiseRendezvousConnectProvider;
 use crate::client::LazyRemoteExecServerClient;
 use crate::client::http_client::RouteAwareHttpClient;
-use crate::client_api::DEFAULT_REMOTE_EXEC_SERVER_CONNECT_TIMEOUT;
 use crate::client_api::ExecServerTransportParams;
 use crate::environment_bootstrap::PreparedEnvironmentManager;
 use crate::environment_bootstrap::PreparedEnvironmentSource;
@@ -34,13 +26,11 @@ use crate::environment_provider::DefaultEnvironmentProvider;
 use crate::environment_provider::EnvironmentDefault;
 use crate::environment_provider::EnvironmentProvider;
 use crate::environment_provider::EnvironmentProviderSnapshot;
-use crate::environment_provider::normalize_exec_server_url;
 use crate::environment_toml::environment_provider_from_codex_home;
 use crate::local_file_system::LocalFileSystem;
 use crate::local_process::LocalProcess;
 use crate::process::ExecBackend;
 use crate::protocol::EnvironmentInfo;
-use crate::remote::NoiseRendezvousEnvironmentConfig;
 use crate::remote_file_system::RemoteFileSystem;
 use crate::remote_process::RemoteProcess;
 use tokio::sync::watch;
@@ -48,18 +38,6 @@ use tokio_util::task::AbortOnDropHandle;
 use tracing::Instrument;
 use tracing::instrument::WithSubscriber;
 
-#[path = "environment/accepted.rs"]
-mod accepted;
-
-pub use connect_options::RemoteEnvironmentOptions;
-
-pub const CODEX_EXEC_SERVER_URL_ENV_VAR: &str = "CODEX_EXEC_SERVER_URL";
-pub const CODEX_EXEC_SERVER_NOISE_REGISTRY_URL_ENV_VAR: &str =
-    "CODEX_EXEC_SERVER_NOISE_REGISTRY_URL";
-pub const CODEX_EXEC_SERVER_NOISE_ENVIRONMENT_ID_ENV_VAR: &str =
-    "CODEX_EXEC_SERVER_NOISE_ENVIRONMENT_ID";
-pub const CODEX_EXEC_SERVER_NOISE_CHATGPT_ACCOUNT_ID_ENV_VAR: &str =
-    "CODEX_EXEC_SERVER_NOISE_CHATGPT_ACCOUNT_ID";
 
 /// The current connection state for one concrete environment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -72,19 +50,9 @@ pub enum EnvironmentConnectionState {
 
 /// Owns the execution/filesystem environments available to the Codex runtime.
 ///
-/// `EnvironmentManager` is a shared registry for concrete environments. Its
-/// default constructor preserves the legacy `CODEX_EXEC_SERVER_URL` behavior
-/// while configured construction accepts a provider-supplied snapshot.
-///
-/// Setting `CODEX_EXEC_SERVER_URL=none` disables environment access by leaving
-/// the default environment unset and omitting the local environment. Callers
-/// use `default_environment().is_some()` as the signal for model-facing
-/// shell/filesystem tool availability.
-///
-/// Ordinary remote environments begin connecting when added to the manager.
-/// Provisioned remote environments connect only after they are selected for use;
-/// their deferred transport waits for provisioning to complete first. Filesystem
-/// and execution backends share the resulting startup and reconnect as needed.
+/// `EnvironmentManager` is a shared registry for concrete local and stdio
+/// environments. Filesystem and execution backends share the resulting
+/// startup and reconnect as needed.
 #[derive(Debug)]
 pub struct EnvironmentManager {
     default_environment: Option<String>,
@@ -105,8 +73,6 @@ pub struct EnvironmentReadyInfo {
 pub const MAX_SELECTED_CAPABILITY_ROOTS: usize = 256;
 
 pub const LOCAL_ENVIRONMENT_ID: &str = "local";
-pub const REMOTE_ENVIRONMENT_ID: &str = "remote";
-
 /// Non-mutating connection status observed by an environment owner.
 ///
 /// Computing this status never starts, waits for, or reconnects an exec-server
@@ -175,20 +141,12 @@ impl EnvironmentManager {
         }
     }
 
-    /// Discovers configured environments without starting remote connections.
-    ///
-    /// If `CODEX_HOME/environments.toml` is present, it defines the configured
-    /// environments. Otherwise this preserves the legacy
-    /// `CODEX_EXEC_SERVER_URL` behavior.
+    /// Discovers configured environments without starting stdio connections.
     pub async fn prepare_from_codex_home(
         codex_home: impl AsRef<std::path::Path>,
     ) -> Result<PreparedEnvironmentManager, ExecServerError> {
-        let source = if let Some(config) = noise_environment_config_from_env()? {
-            PreparedEnvironmentSource::Noise(config)
-        } else {
-            let provider = environment_provider_from_codex_home(codex_home.as_ref())?;
-            PreparedEnvironmentSource::Snapshot(provider.snapshot().await?)
-        };
+        let provider = environment_provider_from_codex_home(codex_home.as_ref())?;
+        let source = PreparedEnvironmentSource::Snapshot(provider.snapshot().await?);
         Ok(PreparedEnvironmentManager { source })
     }
 
@@ -205,12 +163,8 @@ impl EnvironmentManager {
 
     /// Discovers environment-variable environments without starting connections.
     pub async fn prepare_from_env() -> Result<PreparedEnvironmentManager, ExecServerError> {
-        let source = if let Some(config) = noise_environment_config_from_env()? {
-            PreparedEnvironmentSource::Noise(config)
-        } else {
-            let provider = DefaultEnvironmentProvider::from_env();
-            PreparedEnvironmentSource::Snapshot(provider.snapshot().await?)
-        };
+        let provider = DefaultEnvironmentProvider::from_env();
+        let source = PreparedEnvironmentSource::Snapshot(provider.snapshot().await?);
         Ok(PreparedEnvironmentManager { source })
     }
 
@@ -222,32 +176,6 @@ impl EnvironmentManager {
         Self::prepare_from_env()
             .await?
             .build(local_runtime_paths, http_client_factory)
-    }
-
-    pub(crate) fn from_noise_environment_config(
-        config: NoiseRendezvousEnvironmentConfig,
-        local_runtime_paths: Option<ExecServerRuntimePaths>,
-        http_client_factory: HttpClientFactory,
-    ) -> Result<Self, ExecServerError> {
-        let connect_provider = config.into_connect_provider(http_client_factory.clone())?;
-        let manager = Self {
-            default_environment: Some(REMOTE_ENVIRONMENT_ID.to_string()),
-            environments: RwLock::new(HashMap::new()),
-            local_environment: None,
-            local_runtime_paths,
-            http_client_factory,
-        };
-        let identity = noise_channel_identity()?;
-        let environment = Arc::new(Environment::remote_with_transport(
-            ExecServerTransportParams::NoiseRendezvous {
-                provider: connect_provider,
-                identity,
-            },
-            manager.local_runtime_paths.clone(),
-            manager.http_client_factory.clone(),
-        ));
-        manager.insert_environment(REMOTE_ENVIRONMENT_ID.to_string(), environment)?;
-        Ok(manager)
     }
 
     /// Builds a test-only manager that keeps the provider default while also
@@ -394,59 +322,6 @@ impl EnvironmentManager {
             .cloned()
     }
 
-    /// Records a Ready or Failed provisioning result for an environment.
-    ///
-    /// Ordinary environments are ignored. A provisioned environment keeps the same `Arc` from
-    /// Pending through Ready or Failed, and is created if the report arrives first.
-    ///
-    /// Ready updates capability roots and can recover a failed provisioning attempt. Failed keeps
-    /// the first error until a Ready report arrives; a late failure cannot replace Ready. Invalid
-    /// Ready information fails an existing Pending environment but does not create a missing one.
-    ///
-    /// This only updates provisioning. The connection starts when the environment is selected.
-    pub fn report_environment_provisioning_status(
-        &self,
-        environment_id: String,
-        readiness: Result<EnvironmentReadyInfo, String>,
-        provider_if_missing: Arc<dyn NoiseRendezvousConnectProvider>,
-    ) -> Result<Option<Arc<Environment>>, ExecServerError> {
-        validate_environment_id(&environment_id)?;
-        let mut environments = self
-            .environments
-            .write()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        if let Some(environment) = environments.get(&environment_id).cloned() {
-            if environment.provisioning_status_tx.is_none() {
-                return Ok(None);
-            }
-            match readiness {
-                Ok(ready_info) => {
-                    environment.apply_ready_report(&environment_id, ready_info)?;
-                }
-                Err(error) => {
-                    environment.apply_error_report(&environment_id, error)?;
-                }
-            }
-            return Ok(Some(environment));
-        }
-
-        let environment = match readiness {
-            Ok(ready_info) => {
-                validate_environment_ready_info(&environment_id, &ready_info)?;
-                let environment = Arc::new(
-                    self.provisioning_noise_environment(provider_if_missing, Some(Ok(())))?,
-                );
-                environment.ready_info.store(Some(Arc::new(ready_info)));
-                environment
-            }
-            Err(error) => Arc::new(
-                self.provisioning_noise_environment(provider_if_missing, Some(Err(error)))?,
-            ),
-        };
-        environments.insert(environment_id, Arc::clone(&environment));
-        Ok(Some(environment))
-    }
-
     /// Returns the outbound HTTP policy carried by this manager.
     pub fn http_client_factory(&self) -> &HttpClientFactory {
         &self.http_client_factory
@@ -459,88 +334,6 @@ impl EnvironmentManager {
     ) -> Option<EnvironmentObservedStatus> {
         let environment = self.get_environment(environment_id)?;
         Some(environment.status().await)
-    }
-
-    /// Adds or replaces a named remote environment without changing the
-    /// manager's default environment selection. Uses the default WebSocket
-    /// connection timeout when none is provided.
-    pub fn upsert_environment(
-        &self,
-        environment_id: String,
-        exec_server_url: String,
-        connect_timeout: Option<std::time::Duration>,
-    ) -> Result<(), ExecServerError> {
-        self.upsert_environment_with_options(
-            environment_id,
-            RemoteEnvironmentOptions {
-                exec_server_url,
-                connect_timeout,
-                http_headers: HashMap::new(),
-            },
-        )
-    }
-
-    /// Adds or replaces a direct environment with trusted host-owned connection options.
-    ///
-    /// Invalid headers and WebSocket-controlled handshake headers are rejected
-    /// before the environment is registered. Valid headers are retained for
-    /// automatic reconnects without changing existing URL-only environment APIs.
-    pub fn upsert_environment_with_options(
-        &self,
-        environment_id: String,
-        options: RemoteEnvironmentOptions,
-    ) -> Result<(), ExecServerError> {
-        validate_environment_id(&environment_id)?;
-        let transport = options.into_transport_params()?;
-        let environment = Arc::new(Environment::remote_with_transport(
-            transport,
-            self.local_runtime_paths.clone(),
-            self.http_client_factory.clone(),
-        ));
-        self.insert_environment(environment_id, environment)
-    }
-
-    /// Returns the stable environment for an ID, creating it as pending when absent.
-    pub fn materialize_pending_noise_environment(
-        &self,
-        environment_id: String,
-        provider: Arc<dyn NoiseRendezvousConnectProvider>,
-    ) -> Result<Arc<Environment>, ExecServerError> {
-        validate_environment_id(&environment_id)?;
-        let mut environments = self
-            .environments
-            .write()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        if let Some(environment) = environments.get(&environment_id) {
-            if environment.provisioning_status_tx.is_none() {
-                return Err(ExecServerError::ProvisioningModeConflict { environment_id });
-            }
-            return Ok(Arc::clone(environment));
-        }
-
-        let environment =
-            Arc::new(self.provisioning_noise_environment(provider, /*initial_result*/ None)?);
-        environments.insert(environment_id, Arc::clone(&environment));
-        Ok(environment)
-    }
-
-    fn provisioning_noise_environment(
-        &self,
-        provider: Arc<dyn NoiseRendezvousConnectProvider>,
-        initial_result: Option<Result<(), String>>,
-    ) -> Result<Environment, ExecServerError> {
-        let identity = noise_channel_identity()?;
-        let (provisioning_status_tx, provisioning_status_rx) = watch::channel(initial_result);
-        let mut environment = Environment::remote_with_transport(
-            ExecServerTransportParams::Deferred(Box::new(crate::client_api::Deferred {
-                readiness: provisioning_status_rx,
-                transport: ExecServerTransportParams::NoiseRendezvous { provider, identity },
-            })),
-            self.local_runtime_paths.clone(),
-            self.http_client_factory.clone(),
-        );
-        environment.provisioning_status_tx = Some(provisioning_status_tx);
-        Ok(environment)
     }
 
     fn insert_environment(
@@ -561,43 +354,6 @@ impl EnvironmentManager {
     }
 }
 
-fn validate_environment_ready_info(
-    environment_id: &str,
-    ready_info: &EnvironmentReadyInfo,
-) -> Result<(), ExecServerError> {
-    if ready_info.selected_capability_roots.len() > MAX_SELECTED_CAPABILITY_ROOTS {
-        return Err(ExecServerError::Protocol(format!(
-            "environment ready info contains more than {MAX_SELECTED_CAPABILITY_ROOTS} selected capability roots"
-        )));
-    }
-
-    let mut root_ids = HashSet::with_capacity(ready_info.selected_capability_roots.len());
-    for root in &ready_info.selected_capability_roots {
-        let CapabilityRootLocation::Environment {
-            environment_id: root_environment_id,
-            ..
-        } = &root.location;
-        if root.id.trim().is_empty()
-            || root_environment_id != environment_id
-            || !root_ids.insert(root.id.as_str())
-        {
-            return Err(ExecServerError::Protocol(format!(
-                "selected capability roots must have unique non-empty IDs and belong to environment `{environment_id}`"
-            )));
-        }
-    }
-
-    Ok(())
-}
-
-fn noise_channel_identity() -> Result<NoiseChannelIdentity, ExecServerError> {
-    NoiseChannelIdentity::generate().map_err(|error| {
-        ExecServerError::Protocol(format!(
-            "failed to generate Noise harness identity: {error}"
-        ))
-    })
-}
-
 fn validate_environment_id(environment_id: &str) -> Result<(), ExecServerError> {
     if environment_id.is_empty() {
         return Err(ExecServerError::Protocol(
@@ -610,53 +366,6 @@ fn validate_environment_id(environment_id: &str) -> Result<(), ExecServerError> 
         )));
     }
     Ok(())
-}
-
-fn noise_environment_config_from_env()
--> Result<Option<NoiseRendezvousEnvironmentConfig>, ExecServerError> {
-    noise_environment_config_from_values(
-        optional_environment_value(CODEX_EXEC_SERVER_NOISE_REGISTRY_URL_ENV_VAR),
-        optional_environment_value(CODEX_EXEC_SERVER_NOISE_ENVIRONMENT_ID_ENV_VAR),
-        optional_environment_value(CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR),
-        optional_environment_value(CODEX_EXEC_SERVER_NOISE_CHATGPT_ACCOUNT_ID_ENV_VAR),
-    )
-}
-
-fn noise_environment_config_from_values(
-    registry_url: Option<String>,
-    environment_id: Option<String>,
-    auth_token: Option<String>,
-    chatgpt_account_id: Option<String>,
-) -> Result<Option<NoiseRendezvousEnvironmentConfig>, ExecServerError> {
-    let (registry_url, environment_id, auth_token) =
-        match (registry_url, environment_id, auth_token) {
-            (None, None, None) => return Ok(None),
-            (Some(registry_url), Some(environment_id), Some(auth_token)) => {
-                (registry_url, environment_id, auth_token)
-            }
-            _ => {
-                return Err(ExecServerError::EnvironmentRegistryConfig(format!(
-                    "Noise environment requires {CODEX_EXEC_SERVER_NOISE_REGISTRY_URL_ENV_VAR}, \
-{CODEX_EXEC_SERVER_NOISE_ENVIRONMENT_ID_ENV_VAR}, and \
-{CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR}"
-                )));
-            }
-        };
-
-    NoiseRendezvousEnvironmentConfig::new(
-        registry_url,
-        environment_id,
-        auth_token,
-        chatgpt_account_id,
-    )
-    .map(Some)
-}
-
-fn optional_environment_value(name: &str) -> Option<String> {
-    std::env::var(name)
-        .ok()
-        .map(|value| value.trim().to_string())
-        .filter(|value| !value.is_empty())
 }
 
 /// Concrete execution/filesystem environment selected for a session.
@@ -726,33 +435,16 @@ impl Environment {
         )
     }
 
-    /// Builds an environment from the raw `CODEX_EXEC_SERVER_URL` value and
-    /// local runtime paths used when creating local filesystem helpers.
+    /// Builds a local environment. The legacy URL argument is retained only
+    /// for source compatibility with test-only callers and is ignored.
     fn create_inner(
-        exec_server_url: Option<String>,
+        _exec_server_url: Option<String>,
         local_runtime_paths: Option<ExecServerRuntimePaths>,
         http_client_factory: HttpClientFactory,
     ) -> Result<Self, ExecServerError> {
-        let (exec_server_url, disabled) = normalize_exec_server_url(exec_server_url);
-        if disabled {
-            return Err(ExecServerError::Protocol(
-                "disabled mode does not create an Environment".to_string(),
-            ));
-        }
-
-        Ok(match exec_server_url {
-            Some(exec_server_url) => Self::remote_with_transport(
-                ExecServerTransportParams::websocket_url(
-                    exec_server_url,
-                    DEFAULT_REMOTE_EXEC_SERVER_CONNECT_TIMEOUT,
-                ),
-                local_runtime_paths,
-                http_client_factory,
-            ),
-            None => match local_runtime_paths {
-                Some(local_runtime_paths) => Self::local(local_runtime_paths, http_client_factory),
-                None => Self::default_for_tests(),
-            },
+        Ok(match local_runtime_paths {
+            Some(local_runtime_paths) => Self::local(local_runtime_paths, http_client_factory),
+            None => Self::default_for_tests(),
         })
     }
 
@@ -845,14 +537,6 @@ impl Environment {
         };
         let mut transition_error = None;
         provisioning_status_tx.send_if_modified(|current| {
-            if let Err(error) = validate_environment_ready_info(environment_id, &ready_info) {
-                let pending = current.is_none();
-                if pending {
-                    *current = Some(Err(error.to_string()));
-                }
-                transition_error = Some(error);
-                return pending;
-            }
             self.ready_info.store(Some(Arc::new(ready_info.clone())));
             let was_ready = matches!(current, Some(Ok(())));
             *current = Some(Ok(()));
@@ -906,47 +590,6 @@ impl Environment {
             Some(client) => client.environment_info().await,
             None => Ok(EnvironmentInfo::local()),
         }
-    }
-
-    /// Refresh the connection to the executor currently registered for this environment.
-    ///
-    /// # Caller contract
-    ///
-    /// Call after a planned replacement has registered and become available under the
-    /// same environment ID. This method does not provision or destroy executors, or
-    /// wait for the registry to identify a particular replacement. It requires a remote
-    /// Noise registry-backed environment; other environment types return an error.
-    ///
-    /// # Session behavior
-    ///
-    /// A fresh registry lookup determines whether the current session can be reused.
-    /// A changed executor key, or a failed or missing session, causes a fresh connection
-    /// without resuming the old session. Retirement cancels old recovery, fails its
-    /// outstanding work and process handles, and never replays commands. The environment
-    /// object and filesystem handle remain usable through the new connection.
-    /// A matching executor key preserves a session that has not failed, including one
-    /// that is recovering; the live readiness check rejects a recovering connection.
-    ///
-    /// # Completion and errors
-    ///
-    /// Success means the selected connection answered a live status RPC, not merely that
-    /// metadata was cached. Refresh bypasses the old session's recovery deadline, but
-    /// registry lookup, connection, and status RPC timeouts still apply. If the initial
-    /// registry lookup fails, refresh leaves the old session untouched; errors after
-    /// retirement do not restore it. Ordinary disconnect recovery is unchanged unless
-    /// refresh retires the session.
-    #[tracing::instrument(
-        name = "exec_server.environment.refresh_connection",
-        skip_all,
-        fields(remote = self.is_remote())
-    )]
-    pub async fn refresh_connection(&self) -> Result<(), ExecServerError> {
-        let client = self.remote_client.as_ref().ok_or_else(|| {
-            ExecServerError::Protocol(
-                "connection refresh requires a remote environment".to_string(),
-            )
-        })?;
-        client.refresh_connection().await
     }
 
     /// Fetches uncached metadata, connecting or waiting for recovery as needed.

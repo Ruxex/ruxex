@@ -33,23 +33,6 @@ impl From<&TurnEnvironmentSelection> for ThreadEnvironment {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
 #[serde(rename_all = "camelCase")]
-#[ts(export_to = "v2/")]
-pub struct EnvironmentAddParams {
-    pub environment_id: String,
-    pub exec_server_url: String,
-    /// Optional WebSocket connection timeout. The server default applies when omitted.
-    #[ts(type = "number | null")]
-    #[ts(optional = nullable)]
-    pub connect_timeout_ms: Option<u64>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "v2/")]
-pub struct EnvironmentAddResponse {}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
 #[ts(rename_all = "camelCase", export_to = "v2/")]
 pub struct EnvironmentConnectionNotification {
     pub thread_id: String,

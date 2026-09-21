@@ -915,7 +915,6 @@ fn app_server_target_for_launch(
     default_daemon_socket: Option<AbsolutePathBuf>,
     can_reuse_implicit_local_daemon: bool,
     workload_identity_selected: bool,
-    exec_server_url: Option<&std::ffi::OsStr>,
 ) -> std::io::Result<AppServerTarget> {
     if workload_identity_selected {
         if explicit_remote_endpoint.is_some() {
@@ -928,8 +927,7 @@ fn app_server_target_for_launch(
     }
     Ok(match explicit_remote_endpoint {
         Some(endpoint) => AppServerTarget::Remote { endpoint },
-        // A shared daemon cannot adopt this invocation's executor selection.
-        None if can_reuse_implicit_local_daemon && exec_server_url.is_none() => {
+        None if can_reuse_implicit_local_daemon => {
             default_daemon_socket.map_or(AppServerTarget::Embedded, |socket_path| {
                 AppServerTarget::LocalDaemon {
                     allow_embedded_fallback: true,

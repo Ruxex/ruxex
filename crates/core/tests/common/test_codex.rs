@@ -162,23 +162,14 @@ impl TestEnv {
 
     /// Builds a host-local test environment, optionally using the provided
     /// exec-server URL instead of the normal implicit local executor.
-    pub async fn local_with_exec_server_url(exec_server_url: Option<String>) -> Result<Self> {
+    pub async fn local_with_exec_server_url(_exec_server_url: Option<String>) -> Result<Self> {
         let local_cwd_temp_dir = Arc::new(TempDir::new()?);
         let cwd = local_cwd_temp_dir.abs();
-        let selection = match exec_server_url {
-            Some(_) => TurnEnvironmentSelection {
-                environment_id: codex_exec_server::REMOTE_ENVIRONMENT_ID.to_string(),
-                cwd: PathUri::from_abs_path(&cwd),
-                workspace_roots: vec![PathUri::from_abs_path(&cwd)],
-                config: EnvironmentConfigState::FromThread,
-            },
-            None => local(cwd.clone()),
-        };
-        let environment =
-            codex_exec_server::Environment::create_for_tests(exec_server_url.clone())?;
+        let selection = local(cwd.clone());
+        let environment = codex_exec_server::Environment::create_for_tests(None)?;
         Ok(Self {
             environment,
-            exec_server_url,
+            exec_server_url: None,
             cwd,
             selection,
             local_cwd_temp_dir: Some(local_cwd_temp_dir),
@@ -218,57 +209,7 @@ impl Drop for TestEnv {
 }
 
 pub async fn test_env() -> Result<TestEnv> {
-    match test_environment() {
-        remote_env @ (TestEnvironment::Docker { .. } | TestEnvironment::WineExec) => {
-            let websocket_url = remote_exec_server_url()?;
-            let environment =
-                codex_exec_server::Environment::create_for_tests(Some(websocket_url.clone()))?;
-            let cwd = remote_env
-                .remote_cwd(&remote_test_instance_id())?
-                .context("remote test environment should define a cwd")?;
-            let cwd_uri = cwd.to_path_uri(remote_env.path_convention())?;
-            environment
-                .get_filesystem()
-                .create_directory(
-                    &cwd_uri,
-                    CreateDirectoryOptions {
-                        recursive: true,
-                        follow_symlinks: true,
-                    },
-                    /*sandbox*/ None,
-                )
-                .await?;
-            let selection = TurnEnvironmentSelection {
-                environment_id: codex_exec_server::REMOTE_ENVIRONMENT_ID.to_string(),
-                cwd: cwd_uri.clone(),
-                workspace_roots: vec![cwd_uri.clone()],
-                config: EnvironmentConfigState::FromThread,
-            };
-            let cwd = if remote_env == TestEnvironment::WineExec {
-                // TODO(anp): Convert `Config::cwd` to `LegacyAppPathString` and remove this
-                // compatibility projection.
-                // `Config::cwd` still requires `AbsolutePathBuf`. Preserve the test harness's
-                // Linux-absolute `/C:/...` compatibility spelling so converting it back to a
-                // `PathUri` recovers the remote Windows convention. Production conversions stay
-                // strict: `PathUri::to_abs_path` intentionally rejects foreign paths.
-                let path = cwd_uri.to_url().to_file_path().map_err(|()| {
-                    anyhow!("remote test cwd URI cannot be projected onto the host: {cwd_uri}")
-                })?;
-                AbsolutePathBuf::try_from(path)?
-            } else {
-                cwd_uri.to_abs_path()?
-            };
-            Ok(TestEnv {
-                environment,
-                exec_server_url: Some(websocket_url),
-                cwd,
-                selection,
-                local_cwd_temp_dir: None,
-                remote_container_name: remote_env.docker_container_name().map(str::to_owned),
-            })
-        }
-        TestEnvironment::Local => TestEnv::local().await,
-    }
+    TestEnv::local().await
 }
 
 fn remote_exec_server_url() -> Result<String> {

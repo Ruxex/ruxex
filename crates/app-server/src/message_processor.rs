@@ -1082,9 +1082,6 @@ impl MessageProcessor {
                 .config_requirements_read()
                 .await
                 .map(|response| Some(response.into())),
-            ClientRequest::EnvironmentAdd { params, .. } => {
-                self.environment_processor.environment_add(params).await
-            }
             ClientRequest::EnvironmentInfo { params, .. } => {
                 self.environment_processor.environment_info(params).await
             }

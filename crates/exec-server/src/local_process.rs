@@ -749,7 +749,6 @@ fn child_env(params: &ExecParams) -> HashMap<String, String> {
         }
         None => params.env.clone(),
     };
-    env.remove(crate::CODEX_EXEC_SERVER_EXIT_ON_STDIN_CLOSE_ENV_VAR);
     env.retain(|name, _| !shell_environment::is_non_inheritable_env_var(name));
     env
 }

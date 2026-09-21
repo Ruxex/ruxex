@@ -1,12 +1,8 @@
 //! Emits bounded process lifecycle telemetry using identity captured at launch.
 //! Reconnects and later process operations must not replace that identity.
 
-use std::sync::Arc;
-
 use codex_sandboxing::SandboxType;
 use opentelemetry::trace::SpanContext;
-
-use crate::telemetry::ExecutorRegistration;
 
 /// Log fields captured at launch, never refreshed from a resumed session.
 #[derive(Clone, Default)]
@@ -14,7 +10,6 @@ pub(crate) struct ProcessTelemetry {
     pub(crate) launch_context: Option<SpanContext>,
     pub(crate) thread_id: Option<String>,
     pub(crate) tool_call_id: Option<String>,
-    pub(crate) executor_registration: Option<Arc<ExecutorRegistration>>,
 }
 
 /// Lifecycle events with outcome fields only when a process has exited.
@@ -67,8 +62,6 @@ impl ProcessTelemetry {
             launch.span_id = span_id.as_deref(),
             conversation.id = self.thread_id.as_deref(),
             tool.call_id = self.tool_call_id.as_deref(),
-            executor.environment_id = self.executor_registration.as_ref().map(|registration| registration.environment_id.as_str()),
-            executor.registration_id = self.executor_registration.as_ref().map(|registration| registration.executor_registration_id.as_str()),
             sandbox.type = ?sandbox,
             process.exit_code = exit_code,
             process.termination_requested = termination_requested,

@@ -5,7 +5,6 @@ use codex_core::StartThreadOptions;
 use codex_core::TurnInputRequest;
 use codex_exec_server::CreateDirectoryOptions;
 use codex_exec_server::LOCAL_ENVIRONMENT_ID;
-use codex_exec_server::REMOTE_ENVIRONMENT_ID;
 use codex_extension_api::Instructions;
 use codex_extension_api::LoadInstructionsFuture;
 use codex_extension_api::LoadedUserInstructions;
@@ -39,6 +38,8 @@ use codex_thread_store::LoadThreadHistoryParams;
 use codex_thread_store::PrepareForkParams;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use codex_utils_path_uri::PathUri;
+
+const REMOTE_ENVIRONMENT_ID: &str = "remote";
 use codex_utils_string::approx_bytes_for_tokens;
 use core_test_support::PathBufExt;
 use core_test_support::create_directory_symlink;
