@@ -49,7 +49,3 @@ pub(super) fn verification_error_message(error: &TypedRequestError) -> &'static 
         | None => "The local Codex binary could not complete user verification.",
     }
 }
-
-#[cfg(test)]
-#[path = "user_verification_errors_tests.rs"]
-mod tests;

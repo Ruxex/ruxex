@@ -1243,7 +1243,3 @@ pub(crate) async fn finish_deferred_network_approval(
     };
     deferred.finish(&session.services.network_approval).await
 }
-
-#[cfg(test)]
-#[path = "network_approval_tests.rs"]
-mod tests;

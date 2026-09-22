@@ -75,6 +75,3 @@ mod general;
 
 #[path = "service_tests/memory.rs"]
 mod memory;
-
-#[path = "service_tests/plugins.rs"]
-mod plugins;

@@ -7,19 +7,23 @@ use codex_exec_server_protocol::JSONRPCNotification;
 use codex_exec_server_protocol::JSONRPCRequest;
 use codex_exec_server_protocol::JSONRPCResponse;
 use codex_exec_server_protocol::RequestId;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyPolicy;
 use codex_network_proxy::NetworkDecision;
 use codex_network_proxy::NetworkPolicyDecider;
 use codex_network_proxy::NetworkPolicyRequest;
 use codex_network_proxy::NetworkProxyAuditMetadata;
 use codex_utils_path_uri::PathUri;
-use http::HeaderMap;
 use opentelemetry::trace::TracerProvider as _;
 use opentelemetry_sdk::trace::InMemorySpanExporter;
 use opentelemetry_sdk::trace::SdkTracerProvider;
 use pretty_assertions::assert_eq;
-use tokio::net::TcpListener;
+use tokio::io::AsyncBufReadExt;
+use tokio::io::AsyncWriteExt;
+use tokio::io::BufReader;
+use tokio::io::BufWriter;
+use tokio::io::ReadHalf;
+use tokio::io::WriteHalf;
+use tokio::io::duplex;
+use tokio::io::split;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use tokio::time::timeout;
@@ -27,17 +31,14 @@ use tracing::instrument::WithSubscriber;
 use tracing_subscriber::filter::filter_fn;
 use tracing_subscriber::prelude::*;
 
-use super::super::LazyRemoteExecServerClient;
+use super::super::ExecServerClient;
+use super::super::ExecServerClientConnectOptions;
 use super::super::NetworkPolicyAuditContext;
 use super::super::NetworkPolicyDecisionController;
 use super::super::SessionState;
 use super::super::handle_server_notification;
-use super::accept_websocket;
-use super::complete_websocket_initialize;
-use super::read_jsonrpc_websocket;
-use super::write_jsonrpc_websocket;
+use crate::connection::JsonRpcConnection;
 use crate::ProcessId;
-use crate::client_api::ExecServerTransportParams;
 use crate::protocol::EXEC_METHOD;
 use crate::protocol::EXEC_TERMINATE_METHOD;
 use crate::protocol::ExecParams;
@@ -78,11 +79,30 @@ fn policy_request(request_id: i64, process_id: ProcessId, host: &str) -> JSONRPC
     })
 }
 
-async fn read_decision(
-    websocket: &mut tokio_tungstenite::WebSocketStream<tokio::net::TcpStream>,
-    request_id: i64,
-) -> ExecServerNetworkPolicyDecision {
-    let JSONRPCMessage::Response(response) = read_jsonrpc_websocket(websocket).await else {
+struct StdioPeer {
+    reader: tokio::io::Lines<BufReader<ReadHalf<tokio::io::DuplexStream>>>,
+    writer: BufWriter<WriteHalf<tokio::io::DuplexStream>>,
+}
+
+fn test_transport() -> (JsonRpcConnection, StdioPeer) {
+    let (client, server) = duplex(1 << 20);
+    let (client_reader, client_writer) = split(client);
+    let (server_reader, server_writer) = split(server);
+    (
+        JsonRpcConnection::from_stdio(
+            client_reader,
+            client_writer,
+            "network-policy-test".to_string(),
+        ),
+        StdioPeer {
+            reader: BufReader::new(server_reader).lines(),
+            writer: BufWriter::new(server_writer),
+        },
+    )
+}
+
+async fn read_decision(peer: &mut StdioPeer, request_id: i64) -> ExecServerNetworkPolicyDecision {
+    let JSONRPCMessage::Response(response) = read_jsonrpc_stdio(peer).await else {
         panic!("expected network policy response");
     };
     assert_eq!(response.id, RequestId::Integer(request_id));
@@ -91,25 +111,57 @@ async fn read_decision(
         .decision
 }
 
+async fn complete_stdio_initialize(peer: &mut StdioPeer, client_name: &str) {
+    let JSONRPCMessage::Request(request) = read_jsonrpc_stdio(peer).await else {
+        panic!("expected initialize request");
+    };
+    assert_eq!(request.method, "initialize");
+    let params: crate::protocol::InitializeParams =
+        serde_json::from_value(request.params.expect("initialize params")).expect("params");
+    assert_eq!(params.client_name, client_name);
+    write_jsonrpc_stdio(
+        peer,
+        JSONRPCMessage::Response(JSONRPCResponse {
+            id: request.id,
+            result: serde_json::json!({"sessionId":"network-policy-session"}),
+        }),
+    )
+    .await;
+    let JSONRPCMessage::Notification(notification) = read_jsonrpc_stdio(peer).await else {
+        panic!("expected initialized notification");
+    };
+    assert_eq!(notification.method, "initialized");
+}
+
+async fn read_jsonrpc_stdio(peer: &mut StdioPeer) -> JSONRPCMessage {
+    let line = peer
+        .reader
+        .next_line()
+        .await
+        .expect("stdio read should succeed")
+        .expect("stdio should remain open");
+    serde_json::from_str(&line).expect("JSON-RPC message should decode")
+}
+
+async fn write_jsonrpc_stdio(peer: &mut StdioPeer, message: JSONRPCMessage) {
+    let encoded = serde_json::to_vec(&message).expect("JSON-RPC message should encode");
+    peer.writer
+        .write_all(&encoded)
+        .await
+        .expect("stdio write should succeed");
+    peer.writer
+        .write_all(b"\n")
+        .await
+        .expect("stdio newline should succeed");
+    peer.writer.flush().await.expect("stdio flush should succeed");
+}
+
 #[tokio::test(flavor = "current_thread")]
 async fn policy_decisions_reject_forged_process_and_use_trusted_controller_metadata() {
-    let listener = TcpListener::bind("127.0.0.1:0")
-        .await
-        .expect("listener should bind");
-    let websocket_url = format!("ws://{}", listener.local_addr().expect("listener address"));
+    let (connection, mut peer) = test_transport();
     let (release_tx, release_rx) = oneshot::channel();
-    let (initialized_tx, initialized_rx) = oneshot::channel();
     let server = tokio::spawn(async move {
-        let mut websocket = accept_websocket(&listener).await;
-        complete_websocket_initialize(
-            &mut websocket,
-            "audit-session",
-            /*expected_resume_session_id*/ None,
-        )
-        .await;
-        initialized_tx
-            .send(())
-            .expect("client should await completed WebSocket initialization");
+        complete_stdio_initialize(&mut peer, "audit-orchestrator").await;
         release_rx.await.expect("server should be released");
     });
 
@@ -121,16 +173,15 @@ async fn policy_decisions_reject_forged_process_and_use_trusted_controller_metad
             .with_writer(move || AuditLogWriter(Arc::clone(&writer_logs))),
     );
     async move {
-        let client = LazyRemoteExecServerClient::new(
-            ExecServerTransportParams::websocket_url(websocket_url, Duration::from_secs(1)),
-            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+        let client = ExecServerClient::connect(
+            connection,
+            ExecServerClientConnectOptions {
+                client_name: "audit-orchestrator".to_string(),
+                ..Default::default()
+            },
         )
-        .get()
         .await
         .expect("client should connect");
-        initialized_rx
-            .await
-            .expect("server should complete WebSocket initialization");
         let mut state = SessionState::new(/*recoverable*/ true);
         state.network_policy.audit = Some(NetworkPolicyAuditContext {
             metadata: NetworkProxyAuditMetadata {
@@ -217,36 +268,32 @@ impl std::io::Write for AuditLogWriter {
 
 #[tokio::test]
 async fn abandoned_process_start_unregisters_and_cleans_up() {
-    let listener = TcpListener::bind("127.0.0.1:0")
-        .await
-        .expect("listener should bind");
-    let websocket_url = format!("ws://{}", listener.local_addr().expect("listener address"));
+    let (connection, mut peer) = test_transport();
     let (start_seen_tx, start_seen_rx) = oneshot::channel();
     let (finish_start_tx, finish_start_rx) = oneshot::channel();
     let server = tokio::spawn(async move {
-        let mut websocket = accept_websocket(&listener).await;
-        complete_websocket_initialize(&mut websocket, "p", Default::default()).await;
-        let JSONRPCMessage::Request(start) = read_jsonrpc_websocket(&mut websocket).await else {
+        complete_stdio_initialize(&mut peer, "p").await;
+        let JSONRPCMessage::Request(start) = read_jsonrpc_stdio(&mut peer).await else {
             panic!("expected process start request");
         };
         assert_eq!(start.method, EXEC_METHOD);
         start_seen_tx.send(()).expect("start should be observed");
         finish_start_rx.await.expect("start should be released");
-        write_jsonrpc_websocket(
-            &mut websocket,
+        write_jsonrpc_stdio(
+            &mut peer,
             JSONRPCMessage::Response(JSONRPCResponse {
                 id: start.id,
                 result: serde_json::json!({"processId": "pending-start"}),
             }),
         )
         .await;
-        let JSONRPCMessage::Request(terminate) = read_jsonrpc_websocket(&mut websocket).await
+        let JSONRPCMessage::Request(terminate) = read_jsonrpc_stdio(&mut peer).await
         else {
             panic!("expected process terminate request");
         };
         assert_eq!(terminate.method, EXEC_TERMINATE_METHOD);
-        write_jsonrpc_websocket(
-            &mut websocket,
+        write_jsonrpc_stdio(
+            &mut peer,
             JSONRPCMessage::Response(JSONRPCResponse {
                 id: terminate.id,
                 result: serde_json::json!({"running": true}),
@@ -255,13 +302,9 @@ async fn abandoned_process_start_unregisters_and_cleans_up() {
         .await;
     });
 
-    let client = LazyRemoteExecServerClient::new(
-        ExecServerTransportParams::websocket_url(websocket_url, Duration::from_secs(1)),
-        HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-    )
-    .get()
-    .await
-    .expect("client should connect");
+    let client = ExecServerClient::connect(connection, Default::default())
+        .await
+        .expect("client should connect");
     let process_id = ProcessId::from("pending-start");
     let start_client = client.clone();
     let start_process_id = process_id.clone();
@@ -327,26 +370,14 @@ async fn policy_requests_use_process_decider_and_cancel_on_unregister() {
     let _subscriber = tracing::subscriber::set_default(subscriber);
     tracing::callsite::rebuild_interest_cache();
 
-    let listener = TcpListener::bind("127.0.0.1:0")
-        .await
-        .expect("listener should bind");
-    let websocket_url = format!(
-        "ws://{}",
-        listener.local_addr().expect("listener should have address")
-    );
+    let (connection, mut peer) = test_transport();
     let process_id = ProcessId::from("policy-process");
     let server_process_id = process_id.clone();
     let (ready_tx, ready_rx) = oneshot::channel();
     let (overflow_checked_tx, overflow_checked_rx) = oneshot::channel();
     let (unregistered_tx, unregistered_rx) = oneshot::channel();
     let server = tokio::spawn(async move {
-        let mut websocket = accept_websocket(&listener).await;
-        complete_websocket_initialize(
-            &mut websocket,
-            "policy-session",
-            /*expected_resume_session_id*/ None,
-        )
-        .await;
+        complete_stdio_initialize(&mut peer, "policy-session").await;
         ready_rx.await.expect("process should be registered");
 
         for (request_id, host, expected) in [
@@ -366,18 +397,18 @@ async fn policy_requests_use_process_decider_and_cancel_on_unregister() {
                 },
             ),
         ] {
-            write_jsonrpc_websocket(
-                &mut websocket,
+            write_jsonrpc_stdio(
+                &mut peer,
                 policy_request(request_id, server_process_id.clone(), host),
             )
             .await;
-            assert_eq!(read_decision(&mut websocket, request_id).await, expected);
+            assert_eq!(read_decision(&mut peer, request_id).await, expected);
         }
 
         let first_pending_request_id = 100;
         for offset in 0..MAX_IN_FLIGHT_SERVER_CALLS {
-            write_jsonrpc_websocket(
-                &mut websocket,
+            write_jsonrpc_stdio(
+                &mut peer,
                 policy_request(
                     first_pending_request_id + offset as i64,
                     server_process_id.clone(),
@@ -387,8 +418,8 @@ async fn policy_requests_use_process_decider_and_cancel_on_unregister() {
             .await;
         }
         let overflow_request_id = first_pending_request_id + MAX_IN_FLIGHT_SERVER_CALLS as i64;
-        write_jsonrpc_websocket(
-            &mut websocket,
+        write_jsonrpc_stdio(
+            &mut peer,
             policy_request(
                 overflow_request_id,
                 server_process_id.clone(),
@@ -397,7 +428,7 @@ async fn policy_requests_use_process_decider_and_cancel_on_unregister() {
         )
         .await;
         assert_eq!(
-            read_decision(&mut websocket, overflow_request_id).await,
+            read_decision(&mut peer, overflow_request_id).await,
             ExecServerNetworkPolicyDecision::Deny {
                 reason: "not_allowed".to_string(),
             }
@@ -409,8 +440,8 @@ async fn policy_requests_use_process_decider_and_cancel_on_unregister() {
             .expect("process should be unregistered");
 
         let post_unregister_request_id = 900;
-        write_jsonrpc_websocket(
-            &mut websocket,
+        write_jsonrpc_stdio(
+            &mut peer,
             policy_request(
                 post_unregister_request_id,
                 server_process_id,
@@ -419,25 +450,16 @@ async fn policy_requests_use_process_decider_and_cancel_on_unregister() {
         )
         .await;
         assert_eq!(
-            read_decision(&mut websocket, post_unregister_request_id).await,
+            read_decision(&mut peer, post_unregister_request_id).await,
             ExecServerNetworkPolicyDecision::Deny {
                 reason: "not_allowed".to_string(),
             }
         );
     });
 
-    let client = LazyRemoteExecServerClient::new(
-        ExecServerTransportParams::WebSocketUrl {
-            websocket_url,
-            connect_timeout: Duration::from_secs(1),
-            initialize_timeout: Duration::from_secs(1),
-            http_headers: HeaderMap::new(),
-        },
-        HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-    )
-    .get()
-    .await
-    .expect("client should connect");
+    let client = ExecServerClient::connect(connection, Default::default())
+        .await
+        .expect("client should connect");
     let session = client
         .register_session(&process_id)
         .await

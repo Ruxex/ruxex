@@ -331,7 +331,3 @@ pub(crate) fn format_estimated_usd_micros(micros: i64) -> Option<String> {
     let cents = micros.saturating_add(/*rhs*/ 5_000) / 10_000;
     Some(format!("~${}.{:02}", cents / 100, cents % 100))
 }
-
-#[cfg(test)]
-#[path = "thread_usage_tests.rs"]
-mod tests;

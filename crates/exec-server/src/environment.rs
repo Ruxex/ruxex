@@ -785,11 +785,8 @@ mod tests {
     use super::EnvironmentManager;
     use super::EnvironmentObservedStatus;
     use super::LOCAL_ENVIRONMENT_ID;
-    use super::REMOTE_ENVIRONMENT_ID;
-    use super::noise_environment_config_from_values;
     use crate::ExecServerRuntimePaths;
     use crate::ProcessId;
-    use crate::client_api::DEFAULT_REMOTE_EXEC_SERVER_CONNECT_TIMEOUT;
     use crate::client_api::ExecServerTransportParams;
     use crate::client_api::StdioExecServerCommand;
     use crate::environment_provider::EnvironmentDefault;
@@ -798,19 +795,11 @@ mod tests {
     use codex_http_client::OutboundProxyPolicy;
     use codex_utils_path_uri::PathUri;
     use pretty_assertions::assert_eq;
-    use tokio::net::TcpListener;
-    use tokio::time::timeout;
 
     fn legacy_http_client_factory() -> HttpClientFactory {
         HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault)
     }
 
-    fn prepared_websocket_environment() -> ExecServerTransportParams {
-        ExecServerTransportParams::websocket_url(
-            "ws://127.0.0.1:8765".to_string(),
-            DEFAULT_REMOTE_EXEC_SERVER_CONNECT_TIMEOUT,
-        )
-    }
 
     fn test_runtime_paths() -> ExecServerRuntimePaths {
         ExecServerRuntimePaths::new(
@@ -839,41 +828,6 @@ mod tests {
             info.temp_dir,
             PathUri::from_host_native_path(std::env::temp_dir()).ok()
         );
-    }
-
-    #[tokio::test]
-    async fn noise_environment_config_selects_remote_as_default() {
-        let config = noise_environment_config_from_values(
-            Some("http://registry.example/api".to_string()),
-            Some("environment-requested".to_string()),
-            Some("registry-token".to_string()),
-            Some("workspace-123".to_string()),
-        )
-        .expect("parse noise environment configuration")
-        .expect("noise environment configuration");
-
-        let manager = EnvironmentManager::from_noise_environment_config(
-            config,
-            /*local_runtime_paths*/ None,
-            HttpClientFactory::new(OutboundProxyPolicy::RespectSystemProxy),
-        )
-        .expect("build environment manager");
-
-        assert_eq!(
-            manager.http_client_factory().outbound_proxy_policy(),
-            OutboundProxyPolicy::RespectSystemProxy
-        );
-        assert_eq!(
-            manager.default_environment_id(),
-            Some(REMOTE_ENVIRONMENT_ID)
-        );
-        assert!(
-            manager
-                .default_environment()
-                .expect("remote environment")
-                .is_remote()
-        );
-        assert_local_environment_unavailable(&manager);
     }
 
     #[tokio::test]
@@ -908,7 +862,6 @@ mod tests {
             &manager.try_local_environment().expect("local environment")
         ));
         assert!(manager.try_local_environment().is_some());
-        assert!(manager.get_environment(REMOTE_ENVIRONMENT_ID).is_none());
         assert!(!environment.is_remote());
     }
 
@@ -922,38 +875,12 @@ mod tests {
         assert_eq!(manager.default_environment_id(), None);
         assert_local_environment_unavailable(&manager);
         assert!(manager.get_environment(LOCAL_ENVIRONMENT_ID).is_none());
-        assert!(manager.get_environment(REMOTE_ENVIRONMENT_ID).is_none());
         assert_eq!(
             manager.http_client_factory().outbound_proxy_policy(),
             OutboundProxyPolicy::RespectSystemProxy
         );
     }
 
-    #[tokio::test]
-    async fn environment_manager_creates_remote_environment_for_url() {
-        let manager = EnvironmentManager::create_for_tests(
-            Some("ws://127.0.0.1:8765".to_string()),
-            Some(test_runtime_paths()),
-        )
-        .await;
-
-        let environment = manager.default_environment().expect("default environment");
-        assert_eq!(
-            manager.default_environment_id(),
-            Some(REMOTE_ENVIRONMENT_ID)
-        );
-        assert!(environment.is_remote());
-        assert!(Arc::ptr_eq(
-            &environment,
-            &manager
-                .get_environment(REMOTE_ENVIRONMENT_ID)
-                .expect("remote environment")
-        ));
-        assert!(manager.get_environment(LOCAL_ENVIRONMENT_ID).is_none());
-        assert_local_environment_unavailable(&manager);
-    }
-
-    #[tokio::test]
     async fn environment_manager_default_environment_caches_environment() {
         let manager = EnvironmentManager::default_for_tests();
 
@@ -967,147 +894,6 @@ mod tests {
         ));
     }
 
-    #[tokio::test]
-    async fn environment_manager_builds_from_snapshot() {
-        let snapshot = EnvironmentProviderSnapshot {
-            environments: vec![(
-                REMOTE_ENVIRONMENT_ID.to_string(),
-                prepared_websocket_environment(),
-            )],
-            default: EnvironmentDefault::EnvironmentId(REMOTE_ENVIRONMENT_ID.to_string()),
-            include_local: false,
-        };
-        let manager = EnvironmentManager::from_snapshot(
-            snapshot,
-            Some(test_runtime_paths()),
-            legacy_http_client_factory(),
-        )
-        .expect("environment manager");
-
-        assert_eq!(
-            manager.default_environment_id(),
-            Some(REMOTE_ENVIRONMENT_ID)
-        );
-        assert!(
-            manager
-                .get_environment(REMOTE_ENVIRONMENT_ID)
-                .expect("remote environment")
-                .is_remote()
-        );
-        assert!(manager.get_environment(LOCAL_ENVIRONMENT_ID).is_none());
-        assert_local_environment_unavailable(&manager);
-    }
-
-    #[tokio::test]
-    async fn environment_manager_rejects_empty_environment_id() {
-        let snapshot = EnvironmentProviderSnapshot {
-            environments: vec![("".to_string(), prepared_websocket_environment())],
-            default: EnvironmentDefault::Disabled,
-            include_local: false,
-        };
-        let err = EnvironmentManager::from_snapshot(
-            snapshot,
-            Some(test_runtime_paths()),
-            legacy_http_client_factory(),
-        )
-        .expect_err("empty id should fail");
-
-        assert_eq!(
-            err.to_string(),
-            "exec-server protocol error: environment id cannot be empty"
-        );
-    }
-
-    #[tokio::test]
-    async fn environment_manager_rejects_provider_supplied_local_environment() {
-        let snapshot = EnvironmentProviderSnapshot {
-            environments: vec![(
-                LOCAL_ENVIRONMENT_ID.to_string(),
-                prepared_websocket_environment(),
-            )],
-            default: EnvironmentDefault::Disabled,
-            include_local: false,
-        };
-        let err = EnvironmentManager::from_snapshot(
-            snapshot,
-            Some(test_runtime_paths()),
-            legacy_http_client_factory(),
-        )
-        .expect_err("local id should fail");
-
-        assert_eq!(
-            err.to_string(),
-            "exec-server protocol error: environment id `local` is reserved for EnvironmentManager"
-        );
-    }
-
-    #[tokio::test]
-    async fn environment_manager_uses_explicit_provider_default() {
-        let snapshot = EnvironmentProviderSnapshot {
-            environments: vec![("devbox".to_string(), prepared_websocket_environment())],
-            default: EnvironmentDefault::EnvironmentId("devbox".to_string()),
-            include_local: true,
-        };
-        let manager = EnvironmentManager::from_snapshot(
-            snapshot,
-            Some(test_runtime_paths()),
-            legacy_http_client_factory(),
-        )
-        .expect("manager");
-
-        assert_eq!(manager.default_environment_id(), Some("devbox"));
-        assert_eq!(
-            manager.default_environment_ids(),
-            vec!["devbox".to_string(), LOCAL_ENVIRONMENT_ID.to_string()]
-        );
-        assert!(manager.default_environment().expect("default").is_remote());
-    }
-
-    #[tokio::test]
-    async fn environment_manager_disables_provider_default() {
-        let snapshot = EnvironmentProviderSnapshot {
-            environments: vec![("devbox".to_string(), prepared_websocket_environment())],
-            default: EnvironmentDefault::Disabled,
-            include_local: true,
-        };
-        let manager = EnvironmentManager::from_snapshot(
-            snapshot,
-            Some(test_runtime_paths()),
-            legacy_http_client_factory(),
-        )
-        .expect("manager");
-
-        assert_eq!(manager.default_environment_id(), None);
-        assert!(manager.default_environment().is_none());
-        assert!(Arc::ptr_eq(
-            &manager
-                .get_environment(LOCAL_ENVIRONMENT_ID)
-                .expect("local environment"),
-            &manager.try_local_environment().expect("local environment")
-        ));
-    }
-
-    #[tokio::test]
-    async fn environment_manager_rejects_unknown_provider_default() {
-        let snapshot = EnvironmentProviderSnapshot {
-            environments: vec![("devbox".to_string(), prepared_websocket_environment())],
-            default: EnvironmentDefault::EnvironmentId("missing".to_string()),
-            include_local: true,
-        };
-        let err = EnvironmentManager::from_snapshot(
-            snapshot,
-            Some(test_runtime_paths()),
-            legacy_http_client_factory(),
-        )
-        .expect_err("unknown default should fail");
-
-        assert_eq!(
-            err.to_string(),
-            "exec-server protocol error: default environment `missing` is not configured"
-        );
-    }
-
-    #[tokio::test]
     async fn environment_manager_includes_local_for_default_provider_without_url() {
         let manager = EnvironmentManager::create_for_tests(
             /*exec_server_url*/ None,
@@ -1167,7 +953,6 @@ mod tests {
         assert!(manager.default_environment().is_none());
         assert_eq!(manager.default_environment_id(), None);
         assert!(manager.get_environment(LOCAL_ENVIRONMENT_ID).is_none());
-        assert!(manager.get_environment(REMOTE_ENVIRONMENT_ID).is_none());
         assert_local_environment_unavailable(&manager);
     }
 
@@ -1198,58 +983,6 @@ mod tests {
         let manager = EnvironmentManager::default_for_tests();
 
         assert!(manager.get_environment("does-not-exist").is_none());
-    }
-
-    #[tokio::test]
-    async fn environment_manager_upserts_named_remote_environment() {
-        let manager = EnvironmentManager::without_environments(legacy_http_client_factory());
-
-        manager
-            .upsert_environment(
-                "executor-a".to_string(),
-                "ws://127.0.0.1:8765".to_string(),
-                /*connect_timeout*/ None,
-            )
-            .expect("remote environment");
-        let first = manager
-            .get_environment("executor-a")
-            .expect("first remote environment");
-        assert!(first.is_remote());
-        assert_eq!(manager.default_environment_id(), None);
-
-        manager
-            .upsert_environment(
-                "executor-a".to_string(),
-                "ws://127.0.0.1:9876".to_string(),
-                /*connect_timeout*/ None,
-            )
-            .expect("updated remote environment");
-        let second = manager
-            .get_environment("executor-a")
-            .expect("second remote environment");
-        assert!(second.is_remote());
-        assert!(!Arc::ptr_eq(&first, &second));
-    }
-
-    #[tokio::test]
-    async fn environment_manager_starts_remote_environment_when_upserted() {
-        let listener = TcpListener::bind("127.0.0.1:0")
-            .await
-            .expect("bind websocket listener");
-        let manager = EnvironmentManager::without_environments(legacy_http_client_factory());
-
-        manager
-            .upsert_environment(
-                "executor-a".to_string(),
-                format!("ws://{}", listener.local_addr().expect("listener address")),
-                /*connect_timeout*/ None,
-            )
-            .expect("remote environment");
-
-        timeout(Duration::from_secs(5), listener.accept())
-            .await
-            .expect("environment should start connecting when registered")
-            .expect("accept connection");
     }
 
     #[tokio::test]
@@ -1365,78 +1098,6 @@ mod tests {
         assert!(status.ready_roots.is_empty());
         assert_eq!(status.warnings.len(), 1);
         assert!(status.warnings[0].contains("environment `stdio` is unavailable"));
-    }
-
-    #[tokio::test]
-    async fn replacing_environment_stops_its_startup_task() {
-        let first_listener = TcpListener::bind("127.0.0.1:0")
-            .await
-            .expect("bind first websocket listener");
-        let second_listener = TcpListener::bind("127.0.0.1:0")
-            .await
-            .expect("bind second websocket listener");
-        let manager = EnvironmentManager::without_environments(legacy_http_client_factory());
-        manager
-            .upsert_environment(
-                "executor-a".to_string(),
-                format!(
-                    "ws://{}",
-                    first_listener.local_addr().expect("first listener address")
-                ),
-                /*connect_timeout*/ None,
-            )
-            .expect("first remote environment");
-        let environment = manager
-            .get_environment("executor-a")
-            .expect("first remote environment");
-        let startup_abort = environment
-            .startup_task
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .as_ref()
-            .expect("startup task")
-            .abort_handle();
-        assert!(!startup_abort.is_finished());
-        drop(environment);
-
-        manager
-            .upsert_environment(
-                "executor-a".to_string(),
-                format!(
-                    "ws://{}",
-                    second_listener
-                        .local_addr()
-                        .expect("second listener address")
-                ),
-                /*connect_timeout*/ None,
-            )
-            .expect("replacement remote environment");
-
-        timeout(Duration::from_secs(1), async {
-            while !startup_abort.is_finished() {
-                tokio::task::yield_now().await;
-            }
-        })
-        .await
-        .expect("replacing the environment should cancel its startup task");
-    }
-
-    #[tokio::test]
-    async fn environment_manager_rejects_empty_remote_environment_url() {
-        let manager = EnvironmentManager::without_environments(legacy_http_client_factory());
-
-        let err = manager
-            .upsert_environment(
-                "executor-a".to_string(),
-                String::new(),
-                /*connect_timeout*/ None,
-            )
-            .expect_err("empty URL should fail");
-
-        assert_eq!(
-            err.to_string(),
-            "exec-server protocol error: remote environment requires an exec-server url"
-        );
     }
 
     #[tokio::test]

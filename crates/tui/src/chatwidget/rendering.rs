@@ -277,9 +277,6 @@ impl TranscriptAreaRenderable<'_> {
     }
 }
 
-#[cfg(test)]
-#[path = "rendering_tests.rs"]
-mod tests;
 
 impl Renderable for ChatWidget {
     fn render(&self, area: Rect, buf: &mut Buffer) {

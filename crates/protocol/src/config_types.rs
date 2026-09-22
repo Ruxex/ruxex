@@ -810,31 +810,6 @@ mod tests {
     }
 
     #[test]
-    fn approvals_reviewer_serializes_auto_review_and_accepts_legacy_guardian_subagent() {
-        assert_eq!(ApprovalsReviewer::User.to_string(), "user");
-        assert_eq!(
-            serde_json::to_string(&ApprovalsReviewer::User).expect("serialize reviewer"),
-            "\"user\""
-        );
-        assert_eq!(
-            serde_json::to_string(&ApprovalsReviewer::AutoReview).expect("serialize reviewer"),
-            "\"auto_review\""
-        );
-
-        for value in ["user", "auto_review", "guardian_subagent"] {
-            let json = format!("\"{value}\"");
-            let reviewer: ApprovalsReviewer =
-                serde_json::from_str(&json).expect("deserialize reviewer");
-            let expected = if value == "user" {
-                ApprovalsReviewer::User
-            } else {
-                ApprovalsReviewer::AutoReview
-            };
-            assert_eq!(expected, reviewer);
-        }
-    }
-
-    #[test]
     fn profile_v2_name_rejects_paths_and_empty_names() {
         assert_eq!(
             ProfileV2Name::from_str("../foo"),

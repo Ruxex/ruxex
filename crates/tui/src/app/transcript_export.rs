@@ -304,7 +304,3 @@ fn write_transcript(cwd: &Path, requested_path: &Path, markdown: &str) -> Result
         .map_err(|error| format!("could not create {}: {error}", path.display()))?;
     Ok(path)
 }
-
-#[cfg(test)]
-#[path = "transcript_export_tests.rs"]
-mod tests;

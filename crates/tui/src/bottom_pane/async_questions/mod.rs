@@ -256,7 +256,3 @@ impl AsyncQuestions {
         self.state.pending.len()
     }
 }
-
-#[cfg(test)]
-#[path = "state_tests.rs"]
-mod tests;

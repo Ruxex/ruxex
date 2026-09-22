@@ -122,7 +122,3 @@ fn tool_dispatch_payload(payload: &ToolPayload) -> ToolDispatchPayload {
         },
     }
 }
-
-#[cfg(test)]
-#[path = "tool_dispatch_trace_tests.rs"]
-mod tests;

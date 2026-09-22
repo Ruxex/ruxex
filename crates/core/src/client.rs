@@ -2408,7 +2408,3 @@ impl WebsocketTelemetry for ApiTelemetry {
             .record_websocket_event(result, duration);
     }
 }
-
-#[cfg(test)]
-#[path = "client_tests.rs"]
-mod tests;

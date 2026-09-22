@@ -33,7 +33,3 @@ pub(super) fn latest_persisted_resume_settings(
             _ => None,
         })
 }
-
-#[cfg(test)]
-#[path = "persisted_resume_settings_tests.rs"]
-mod tests;

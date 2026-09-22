@@ -12,7 +12,6 @@ fn thread_settings_snapshot(disabled_plugin_ids: Vec<String>) -> Result<ThreadSe
         "model": "gpt-5",
         "model_provider_id": "openai",
         "approval_policy": "never",
-        "approvals_reviewer": "user",
         "permission_profile": codex_protocol::models::PermissionProfile::read_only(),
         "cwd": std::env::current_dir()?,
         "collaboration_mode": {
@@ -380,8 +379,6 @@ fn compacted_replacement_history_stores_metadata_in_an_aligned_sidecar() -> Resu
             ResponseItemEnvelope::new(compaction_item.clone()),
         ]),
         retained_context: None,
-        guardian_history: None,
-        mcp_resource_origins: None,
         window_number: None,
         first_window_id: None,
         previous_window_id: None,
@@ -486,13 +483,10 @@ fn compacted_metadata_remains_compatible_with_legacy_response_item_readers() -> 
     };
     assert_eq!(*legacy_response, response_item);
 
-    let checkpoint = crate::GuardianHistoryCheckpoint(vec![response_item.clone()]);
     let compacted_line = serde_json::to_value(RolloutItem::Compacted(CompactedItem {
         message: "summary".to_string(),
         replacement_history: Some(vec![envelope]),
         retained_context: None,
-        guardian_history: Some(checkpoint.clone()),
-        mcp_resource_origins: Some(McpResourceOriginCheckpoint::default()),
         window_number: None,
         first_window_id: None,
         previous_window_id: None,
@@ -502,10 +496,9 @@ fn compacted_metadata_remains_compatible_with_legacy_response_item_readers() -> 
     }))?;
 
     let restored: RolloutItem = serde_json::from_value(compacted_line.clone())?;
-    let RolloutItem::Compacted(restored) = restored else {
+    let RolloutItem::Compacted(_restored) = restored else {
         panic!("expected compacted item");
     };
-    assert_eq!(restored.guardian_history, Some(checkpoint));
     let LegacyRolloutItem::Compacted(legacy) =
         serde_json::from_value::<LegacyRolloutItem>(compacted_line)?
     else {
@@ -699,8 +692,6 @@ fn compacted_item_serializes_window_number_and_id() -> Result<()> {
         message: "summary".to_string(),
         replacement_history: None,
         retained_context: None,
-        guardian_history: None,
-        mcp_resource_origins: None,
         window_number: Some(3),
         first_window_id: Some("019b3f6e-0000-7000-8000-000000000001".to_string()),
         previous_window_id: Some("019b3f6e-0000-7000-8000-000000000002".to_string()),
@@ -738,8 +729,6 @@ fn compacted_item_migrates_legacy_numeric_window_id() -> Result<()> {
             message: "summary".to_string(),
             replacement_history: None,
             retained_context: None,
-            guardian_history: None,
-            mcp_resource_origins: None,
             window_number: Some(3),
             first_window_id: None,
             previous_window_id: None,

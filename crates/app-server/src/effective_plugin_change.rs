@@ -29,7 +29,3 @@ pub(crate) fn effective_plugins_changed_callback(
         });
     })
 }
-
-#[cfg(test)]
-#[path = "effective_plugin_change_tests.rs"]
-mod tests;

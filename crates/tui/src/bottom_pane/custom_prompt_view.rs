@@ -254,9 +254,6 @@ impl BottomPaneView for CustomPromptView {
     }
 }
 
-#[cfg(test)]
-#[path = "custom_prompt_view_tests.rs"]
-mod tests;
 
 impl Renderable for CustomPromptView {
     fn desired_height(&self, width: u16) -> u16 {

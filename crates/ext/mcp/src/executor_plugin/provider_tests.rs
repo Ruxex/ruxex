@@ -424,7 +424,6 @@ fn resolved_plugin(
             paths: PluginManifestPaths {
                 skills: Vec::new(),
                 mcp_servers,
-                apps: None,
                 hooks: None,
             },
             interface: None,

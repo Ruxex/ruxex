@@ -16,7 +16,6 @@ use codex_protocol::mcp_policy::PluginMcpRequirements;
 use codex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 
-use crate::CODEX_APPS_MCP_SERVER_NAME;
 use crate::McpProtocolMode;
 
 use super::McpEnvironmentAuthority;
@@ -81,7 +80,6 @@ fn compatibility_source(id: &str) -> McpServerSource {
 fn extension_source(id: &str) -> McpServerSource {
     McpServerSource::Extension {
         id: id.to_string(),
-        host_owned_apps: false,
     }
 }
 
@@ -178,81 +176,6 @@ fn ema_policy_survives_rebuilds_and_rebinds_materialized_servers() {
 }
 
 #[test]
-fn rejected_plugin_ema_registration_does_not_veto_hosted_apps() {
-    let idp = McpServerIdpOAuthConfig {
-        issuer: "https://idp.example".to_string(),
-        client_id: "enterprise-client".to_string(),
-    };
-    for (url, resource) in [
-        ("https://other.example/mcp", "https://resource.example"),
-        ("https://resource.example/mcp", " "),
-    ] {
-        for initially_enabled in [true, false] {
-            let mut rejected = server(url);
-            rejected.enabled = initially_enabled;
-            let policy = PluginMcpServerEmaAuthConfig {
-                url: "https://resource.example/mcp".to_string(),
-                client_id: "resource-client".to_string(),
-                authorization_server_issuer: "https://as.example".to_string(),
-                scopes: Vec::new(),
-                resource: resource.to_string(),
-            };
-            policy.apply(&mut rejected);
-            assert!(rejected.resolve_ema_registration(&idp).is_err());
-            assert_eq!(
-                (
-                    rejected.enabled,
-                    rejected.auth.clone(),
-                    rejected.ema_registration()
-                ),
-                (false, McpServerAuth::EmaAuth, None),
-            );
-            assert_eq!(
-                rejected.disabled_reason,
-                initially_enabled.then_some(McpServerDisabledReason::EmaRegistration),
-            );
-
-            let mut builder = ResolvedMcpCatalog::builder();
-            builder.enable_ema(idp.clone());
-            builder.register(McpServerRegistration::from_plugin(
-                CODEX_APPS_MCP_SERVER_NAME.to_string(),
-                plugin("plugin@test"),
-                /*plugin_order*/ 0,
-                rejected.clone(),
-            ));
-            let catalog = builder.build();
-            assert_eq!(
-                catalog.server(CODEX_APPS_MCP_SERVER_NAME).unwrap().config(),
-                &rejected,
-            );
-
-            let materialized = catalog.with_materialized_servers(catalog.configured_servers());
-            for catalog in [catalog, materialized] {
-                let mut builder = catalog.to_builder();
-                let mut expected = server("https://chatgpt.com/mcp");
-                builder.register(McpServerRegistration::from_hosted_apps(
-                    "apps",
-                    /*contribution_order*/ 0,
-                    expected.clone(),
-                ));
-                expected.enabled = initially_enabled;
-                assert_eq!(
-                    builder.build().server(CODEX_APPS_MCP_SERVER_NAME),
-                    Some(&ResolvedMcpServer {
-                        source: McpServerSource::Extension {
-                            id: "apps".to_string(),
-                            host_owned_apps: true,
-                        },
-                        config: expected,
-                        protocol_mode: None,
-                    }),
-                );
-            }
-        }
-    }
-}
-
-#[test]
 fn source_precedence_preserves_the_winning_registration() {
     let extension = server("https://extension.example/mcp");
     let mut plugin_server = server("https://plugin.example/mcp");
@@ -293,7 +216,6 @@ fn source_precedence_preserves_the_winning_registration() {
         resolved.source(),
         &McpServerSource::Extension {
             id: "hosted".to_string(),
-            host_owned_apps: false,
         }
     );
     assert_eq!(resolved.config(), &extension);
@@ -643,46 +565,6 @@ fn extension_protocol_mode_follows_the_winner_through_materialization() {
             protocol_mode: Some(McpProtocolMode::Legacy),
         })
     );
-}
-
-#[test]
-fn environment_policy_exempts_only_explicitly_host_owned_apps() {
-    let policy = EnvironmentMcpPolicy {
-        servers: Some(BTreeMap::new()),
-        plugins: None,
-    };
-    for (registration, expected) in [
-        (
-            McpServerRegistration::from_extension(
-                CODEX_APPS_MCP_SERVER_NAME.to_string(),
-                "apps",
-                /*contribution_order*/ 0,
-                server("https://apps.example/mcp"),
-            ),
-            false,
-        ),
-        (
-            McpServerRegistration::from_hosted_apps(
-                "apps",
-                /*contribution_order*/ 0,
-                server("https://apps.example/mcp"),
-            ),
-            true,
-        ),
-    ] {
-        let mut builder = ResolvedMcpCatalog::builder();
-        builder.register(registration);
-        let catalog = builder
-            .build_with_environment_authority(|_| McpEnvironmentAuthority::Restricted(&policy));
-        assert_eq!(
-            catalog
-                .server(CODEX_APPS_MCP_SERVER_NAME)
-                .expect("Apps registration")
-                .config()
-                .enabled,
-            expected
-        );
-    }
 }
 
 #[test]

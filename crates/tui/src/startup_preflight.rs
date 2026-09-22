@@ -64,7 +64,3 @@ pub(super) fn should_delay_startup_composer_for_first_login(
 
     matches!(managed_configuration(), Ok(false))
 }
-
-#[cfg(test)]
-#[path = "startup_preflight_tests.rs"]
-mod tests;

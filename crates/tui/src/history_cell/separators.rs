@@ -105,9 +105,6 @@ impl HistoryCell for FinalMessageSeparator {
     }
 }
 
-#[cfg(test)]
-#[path = "separators_tests.rs"]
-mod tests;
 
 pub(crate) fn runtime_metrics_label(summary: RuntimeMetricsSummary) -> Option<String> {
     let mut parts = Vec::new();

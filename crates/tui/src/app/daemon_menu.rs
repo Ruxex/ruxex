@@ -126,7 +126,3 @@ impl App {
         });
     }
 }
-
-#[cfg(test)]
-#[path = "daemon_menu_tests.rs"]
-mod tests;

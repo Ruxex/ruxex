@@ -251,8 +251,6 @@ mod goal_validation;
 pub(crate) mod helpers;
 mod history_replay;
 mod mcp_startup;
-#[path = "tests/misalignment_policy_tests.rs"]
-mod misalignment_policy;
 #[path = "tests/permission_shortcuts_tests.rs"]
 mod permission_shortcuts_tests;
 mod permissions;

@@ -1902,7 +1902,6 @@ mod tests {
             check_for_update_on_startup,
             allow_login_shell,
             allowed_approval_policies,
-            allowed_approvals_reviewers,
             allowed_sandbox_modes,
             allowed_permission_profiles,
             default_permissions,
@@ -1920,16 +1919,13 @@ mod tests {
             mcp_servers,
             plugins,
             marketplaces,
-            apps,
             rules,
             enforce_residency,
             network,
             application,
             permissions,
-            auto_review,
             models,
             additional_developer_instructions,
-            guardian_policy_config,
         } = toml;
         ConfigRequirementsWithSources {
             allowed_login_methods: allowed_login_methods
@@ -1953,8 +1949,6 @@ mod tests {
             allow_login_shell: allow_login_shell
                 .map(|value| Sourced::new(value, RequirementSource::Unknown)),
             allowed_approval_policies: allowed_approval_policies
-                .map(|value| Sourced::new(value, RequirementSource::Unknown)),
-            allowed_approvals_reviewers: allowed_approvals_reviewers
                 .map(|value| Sourced::new(value, RequirementSource::Unknown)),
             allowed_sandbox_modes: allowed_sandbox_modes
                 .map(|value| Sourced::new(value, RequirementSource::Unknown)),
@@ -1987,11 +1981,8 @@ mod tests {
             network: network.map(|value| Sourced::new(value, RequirementSource::Unknown)),
             application: application.map(|value| Sourced::new(value, RequirementSource::Unknown)),
             permissions: permissions.map(|value| Sourced::new(value, RequirementSource::Unknown)),
-            auto_review: auto_review.map(|value| Sourced::new(value, RequirementSource::Unknown)),
             models: models.map(|value| Sourced::new(value, RequirementSource::Unknown)),
             additional_developer_instructions: additional_developer_instructions
-                .map(|value| Sourced::new(value, RequirementSource::Unknown)),
-            guardian_policy_config: guardian_policy_config
                 .map(|value| Sourced::new(value, RequirementSource::Unknown)),
         }
     }
@@ -2349,41 +2340,11 @@ mod tests {
     }
 
     #[test]
-    fn auto_review_required_for_model_matches_exact_provider_aliases() {
-        let requirements = ConfigRequirements {
-            auto_review_required_models: Some(Sourced::new(
-                std::collections::BTreeSet::from(["protected-model".to_string()]),
-                RequirementSource::Unknown,
-            )),
-            ..Default::default()
-        };
-
-        for (model, protected) in [
-            ("protected-model", true),
-            ("protected-model-preview", false),
-            ("openai-codex/protected-model-preview", false),
-            ("provider_1/protected-model", true),
-            ("protected-modelish", false),
-            ("/protected-model", false),
-            ("bad.provider/protected-model", false),
-            ("provider/nested/protected-model", false),
-        ] {
-            assert_eq!(
-                requirements.auto_review_required_for_model(model),
-                protected,
-                "{model}"
-            );
-        }
-    }
-
-    #[test]
     fn merge_unset_fields_copies_every_field_and_sets_sources() {
         let mut target = ConfigRequirementsWithSources::default();
         let source = RequirementSource::LegacyManagedConfigTomlFromMdm;
 
         let allowed_approval_policies = vec![AskForApproval::UnlessTrusted, AskForApproval::Never];
-        let allowed_approvals_reviewers =
-            vec![ApprovalsReviewer::AutoReview, ApprovalsReviewer::User];
         let allowed_sandbox_modes = vec![
             SandboxModeRequirement::WorkspaceWrite,
             SandboxModeRequirement::DangerFullAccess,
@@ -2410,10 +2371,6 @@ mod tests {
             macos: None,
             windows: None,
         };
-        let auto_review = AutoReviewRequirementsToml {
-            required_on_models: Some(vec!["managed-model".to_string()]),
-            ignore_rules: None,
-        };
         let models = ModelsRequirementsToml {
             new_thread: Some(NewThreadModelDefaultsToml {
                 model: Some("managed-model".to_string()),
@@ -2435,7 +2392,6 @@ mod tests {
         let enforce_residency = ResidencyRequirement::Us;
         let enforce_source = source.clone();
         let additional_developer_instructions = "Follow the company policy.".to_string();
-        let guardian_policy_config = "Use the company-managed guardian policy.".to_string();
 
         // Intentionally constructed without `..Default::default()` so adding a new field to
         // `ConfigRequirementsToml` forces this test to be updated.
@@ -2452,7 +2408,6 @@ mod tests {
             check_for_update_on_startup: Some(false),
             allow_login_shell: Some(false),
             allowed_approval_policies: Some(allowed_approval_policies.clone()),
-            allowed_approvals_reviewers: Some(allowed_approvals_reviewers.clone()),
             allowed_sandbox_modes: Some(allowed_sandbox_modes.clone()),
             allowed_permission_profiles: Some(BTreeMap::from([("managed".to_string(), true)])),
             default_permissions: Some("managed".to_string()),
@@ -2470,16 +2425,13 @@ mod tests {
             mcp_servers: None,
             plugins: None,
             marketplaces: None,
-            apps: None,
             rules: None,
             enforce_residency: Some(enforce_residency),
             network: None,
             application: None,
             permissions: None,
-            auto_review: Some(auto_review.clone()),
             models: Some(models.clone()),
             additional_developer_instructions: Some(additional_developer_instructions.clone()),
-            guardian_policy_config: Some(guardian_policy_config.clone()),
         };
 
         target.merge_unset_fields(source.clone(), other);
@@ -2517,10 +2469,6 @@ mod tests {
                     allowed_approval_policies,
                     source.clone()
                 )),
-                allowed_approvals_reviewers: Some(Sourced::new(
-                    allowed_approvals_reviewers,
-                    source.clone(),
-                )),
                 allowed_sandbox_modes: Some(Sourced::new(allowed_sandbox_modes, source.clone(),)),
                 allowed_permission_profiles: Some(Sourced::new(
                     BTreeMap::from([("managed".to_string(), true)]),
@@ -2552,19 +2500,16 @@ mod tests {
                 mcp_servers: None,
                 plugins: None,
                 marketplaces: None,
-                apps: None,
                 rules: None,
                 enforce_residency: Some(Sourced::new(enforce_residency, enforce_source)),
                 network: None,
                 application: None,
                 permissions: None,
-                auto_review: Some(Sourced::new(auto_review, source.clone())),
                 models: Some(Sourced::new(models, source.clone())),
                 additional_developer_instructions: Some(Sourced::new(
                     additional_developer_instructions,
                     source.clone(),
                 )),
-                guardian_policy_config: Some(Sourced::new(guardian_policy_config, source)),
             }
         );
     }
@@ -2591,7 +2536,6 @@ mod tests {
                     vec![AskForApproval::OnRequest],
                     source_location,
                 )),
-                allowed_approvals_reviewers: None,
                 allowed_sandbox_modes: None,
                 allowed_permission_profiles: None,
                 default_permissions: None,
@@ -2607,14 +2551,12 @@ mod tests {
                 mcp_servers: None,
                 plugins: None,
                 marketplaces: None,
-                apps: None,
                 rules: None,
                 enforce_residency: None,
                 network: None,
                 application: None,
                 permissions: None,
                 models: None,
-                guardian_policy_config: None,
                 ..Default::default()
             }
         );
@@ -2650,7 +2592,6 @@ mod tests {
                     vec![AskForApproval::Never],
                     existing_source,
                 )),
-                allowed_approvals_reviewers: None,
                 allowed_sandbox_modes: None,
                 allowed_permission_profiles: None,
                 default_permissions: None,
@@ -2666,93 +2607,15 @@ mod tests {
                 mcp_servers: None,
                 plugins: None,
                 marketplaces: None,
-                apps: None,
                 rules: None,
                 enforce_residency: None,
                 network: None,
                 application: None,
                 permissions: None,
                 models: None,
-                guardian_policy_config: None,
                 ..Default::default()
             }
         );
-        Ok(())
-    }
-
-    #[test]
-    fn merge_unset_fields_ignores_blank_guardian_override() {
-        let mut target = ConfigRequirementsWithSources::default();
-        target.merge_unset_fields(
-            RequirementSource::LegacyManagedConfigTomlFromMdm,
-            ConfigRequirementsToml {
-                guardian_policy_config: Some("   \n\t".to_string()),
-                ..Default::default()
-            },
-        );
-        target.merge_unset_fields(
-            RequirementSource::SystemRequirementsToml {
-                file: system_requirements_toml_file_for_test()
-                    .expect("system requirements.toml path"),
-            },
-            ConfigRequirementsToml {
-                guardian_policy_config: Some("Use the system guardian policy.".to_string()),
-                ..Default::default()
-            },
-        );
-
-        assert_eq!(
-            target.guardian_policy_config,
-            Some(Sourced::new(
-                "Use the system guardian policy.".to_string(),
-                RequirementSource::SystemRequirementsToml {
-                    file: system_requirements_toml_file_for_test()
-                        .expect("system requirements.toml path"),
-                },
-            )),
-        );
-    }
-
-    #[test]
-    fn deserialize_guardian_policy_config() -> Result<()> {
-        let requirements: ConfigRequirementsToml = from_str(
-            r#"
-guardian_policy_config = """
-Use the cloud-managed guardian policy.
-"""
-"#,
-        )?;
-
-        assert_eq!(
-            requirements.guardian_policy_config.as_deref(),
-            Some("Use the cloud-managed guardian policy.\n")
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn blank_guardian_policy_config_is_empty() -> Result<()> {
-        let requirements: ConfigRequirementsToml = from_str(
-            r#"
-guardian_policy_config = """
-
-"""
-"#,
-        )?;
-
-        assert!(requirements.is_empty());
-        Ok(())
-    }
-
-    #[test]
-    fn allowed_approvals_reviewers_is_not_empty() -> Result<()> {
-        let requirements: ConfigRequirementsToml = from_str(
-            r#"
-allowed_approvals_reviewers = ["user"]
-"#,
-        )?;
-
-        assert!(!requirements.is_empty());
         Ok(())
     }
 
@@ -2822,337 +2685,10 @@ allowed_approvals_reviewers = ["user"]
     }
 
     #[test]
-    fn deserialize_apps_requirements() -> Result<()> {
-        let toml_str = r#"
-            [apps.connector_123123]
-            enabled = false
-        "#;
-        let requirements: ConfigRequirementsToml = from_str(toml_str)?;
-
-        assert_eq!(
-            requirements.apps,
-            Some(AppsRequirementsToml {
-                apps: BTreeMap::from([(
-                    "connector_123123".to_string(),
-                    AppRequirementToml {
-                        enabled: Some(false),
-                        tools: None,
-                    },
-                )]),
-            })
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn deserialize_apps_tool_requirements() -> Result<()> {
-        let toml_str = r#"
-            [apps.connector_123123.tools."calendar/list_events"]
-            approval_mode = "approve"
-        "#;
-        let requirements: ConfigRequirementsToml = from_str(toml_str)?;
-
-        assert_eq!(
-            requirements.apps,
-            Some(AppsRequirementsToml {
-                apps: BTreeMap::from([(
-                    "connector_123123".to_string(),
-                    AppRequirementToml {
-                        enabled: None,
-                        tools: Some(AppToolsRequirementsToml {
-                            tools: BTreeMap::from([(
-                                "calendar/list_events".to_string(),
-                                AppToolRequirementToml {
-                                    approval_mode: Some(AppToolApproval::Approve),
-                                    analytics_result_source: None,
-                                },
-                            )]),
-                        }),
-                    },
-                )]),
-            })
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn app_tool_result_source_requirements_parse_and_merge() -> Result<()> {
-        let rule = r#"
-            [apps.connector_123123.tools."messages/search"]
-            analytics_result_source = { format = "detailed_message_search_v1", type = "message_room" }
-            "#;
-        let requirements: ConfigRequirementsToml = from_str(rule)?;
-        assert!(!requirements.is_empty());
-        let source = requirements.apps.expect("apps should be present");
-
-        for higher_rule in [
-            None,
-            Some(("unsupported", "other_resource")),
-            Some(("detailed_message_search_v1", "other_resource")),
-        ] {
-            let mut merged = source.clone();
-            merged
-                .apps
-                .get_mut("connector_123123")
-                .expect("app should be present")
-                .tools
-                .as_mut()
-                .expect("tools should be present")
-                .tools
-                .get_mut("messages/search")
-                .expect("tool should be present")
-                .analytics_result_source = higher_rule.map(|(format, source_type)| {
-                from_str(&format!("format = {format:?}\ntype = {source_type:?}"))
-                    .expect("complete source rule should parse, including unknown formats")
-            });
-            let expected = if higher_rule.is_none() {
-                source.clone()
-            } else {
-                merged.clone()
-            };
-
-            merge_app_requirements_descending(&mut merged, source.clone());
-
-            assert_eq!(merged, expected);
-        }
-
-        for incomplete_rule in [
-            r#"format = "detailed_message_search_v1""#,
-            r#"type = "message_room""#,
-        ] {
-            assert!(from_str::<AppToolResultSourceRequirementToml>(incomplete_rule).is_err());
-        }
-        Ok(())
-    }
-
-    fn apps_requirements(entries: &[(&str, Option<bool>)]) -> AppsRequirementsToml {
-        AppsRequirementsToml {
-            apps: entries
-                .iter()
-                .map(|(app_id, enabled)| {
-                    (
-                        (*app_id).to_string(),
-                        AppRequirementToml {
-                            enabled: *enabled,
-                            tools: None,
-                        },
-                    )
-                })
-                .collect(),
-        }
-    }
-
-    fn app_tool_requirements(
-        app_id: &str,
-        tool_name: &str,
-        approval_mode: AppToolApproval,
-    ) -> AppsRequirementsToml {
-        AppsRequirementsToml {
-            apps: BTreeMap::from([(
-                app_id.to_string(),
-                AppRequirementToml {
-                    enabled: None,
-                    tools: Some(AppToolsRequirementsToml {
-                        tools: BTreeMap::from([(
-                            tool_name.to_string(),
-                            AppToolRequirementToml {
-                                approval_mode: Some(approval_mode),
-                                analytics_result_source: None,
-                            },
-                        )]),
-                    }),
-                },
-            )]),
-        }
-    }
-
-    #[test]
-    fn merge_app_requirements_descending_unions_distinct_apps() {
-        let mut merged = apps_requirements(&[("connector_high", Some(false))]);
-        let lower = apps_requirements(&[("connector_low", Some(true))]);
-
-        merge_app_requirements_descending(&mut merged, lower);
-
-        assert_eq!(
-            merged,
-            apps_requirements(&[
-                ("connector_high", Some(false)),
-                ("connector_low", Some(true))
-            ]),
-        );
-    }
-
-    #[test]
-    fn merge_app_requirements_descending_prefers_false_from_lower_precedence() {
-        let mut merged = apps_requirements(&[("connector_123123", Some(true))]);
-        let lower = apps_requirements(&[("connector_123123", Some(false))]);
-
-        merge_app_requirements_descending(&mut merged, lower);
-
-        assert_eq!(
-            merged,
-            apps_requirements(&[("connector_123123", Some(false))]),
-        );
-    }
-
-    #[test]
-    fn merge_app_requirements_descending_keeps_higher_true_when_lower_is_unset() {
-        let mut merged = apps_requirements(&[("connector_123123", Some(true))]);
-        let lower = apps_requirements(&[("connector_123123", None)]);
-
-        merge_app_requirements_descending(&mut merged, lower);
-
-        assert_eq!(
-            merged,
-            apps_requirements(&[("connector_123123", Some(true))]),
-        );
-    }
-
-    #[test]
-    fn merge_app_requirements_descending_uses_lower_value_when_higher_missing() {
-        let mut merged = apps_requirements(&[]);
-        let lower = apps_requirements(&[("connector_123123", Some(true))]);
-
-        merge_app_requirements_descending(&mut merged, lower);
-
-        assert_eq!(
-            merged,
-            apps_requirements(&[("connector_123123", Some(true))]),
-        );
-    }
-
-    #[test]
-    fn merge_app_requirements_descending_preserves_higher_false_when_lower_missing_app() {
-        let mut merged = apps_requirements(&[("connector_123123", Some(false))]);
-        let lower = apps_requirements(&[]);
-
-        merge_app_requirements_descending(&mut merged, lower);
-
-        assert_eq!(
-            merged,
-            apps_requirements(&[("connector_123123", Some(false))]),
-        );
-    }
-
-    #[test]
-    fn merge_app_requirements_descending_preserves_higher_tool_approval_mode() {
-        let mut merged = app_tool_requirements(
-            "connector_123123",
-            "calendar/list_events",
-            AppToolApproval::Approve,
-        );
-        let lower = app_tool_requirements(
-            "connector_123123",
-            "calendar/list_events",
-            AppToolApproval::Prompt,
-        );
-
-        merge_app_requirements_descending(&mut merged, lower);
-
-        assert_eq!(
-            merged,
-            app_tool_requirements(
-                "connector_123123",
-                "calendar/list_events",
-                AppToolApproval::Approve,
-            )
-        );
-    }
-
-    #[test]
-    fn merge_app_requirements_descending_uses_lower_tool_approval_when_higher_missing() {
-        let mut merged = apps_requirements(&[("connector_123123", None)]);
-        let lower = app_tool_requirements(
-            "connector_123123",
-            "calendar/list_events",
-            AppToolApproval::Approve,
-        );
-
-        merge_app_requirements_descending(&mut merged, lower);
-
-        assert_eq!(
-            merged,
-            app_tool_requirements(
-                "connector_123123",
-                "calendar/list_events",
-                AppToolApproval::Approve,
-            )
-        );
-    }
-
-    #[test]
-    fn merge_unset_fields_merges_apps_across_sources_with_enabled_evaluation() {
-        let higher_source = RequirementSource::LegacyManagedConfigTomlFromMdm;
-        let lower_source = RequirementSource::MdmManagedPreferences {
-            domain: "com.openai.codex".to_string(),
-            key: "requirements_toml_base64".to_string(),
-        };
-        let mut target = ConfigRequirementsWithSources::default();
-
-        target.merge_unset_fields(
-            higher_source.clone(),
-            ConfigRequirementsToml {
-                apps: Some(apps_requirements(&[
-                    ("connector_high", Some(true)),
-                    ("connector_shared", Some(true)),
-                ])),
-                ..Default::default()
-            },
-        );
-        target.merge_unset_fields(
-            lower_source,
-            ConfigRequirementsToml {
-                apps: Some(apps_requirements(&[
-                    ("connector_low", Some(false)),
-                    ("connector_shared", Some(false)),
-                ])),
-                ..Default::default()
-            },
-        );
-
-        let apps = target.apps.expect("apps should be present");
-        assert_eq!(
-            apps.value,
-            apps_requirements(&[
-                ("connector_high", Some(true)),
-                ("connector_low", Some(false)),
-                ("connector_shared", Some(false)),
-            ])
-        );
-        assert_eq!(apps.source, higher_source);
-    }
-
-    #[test]
-    fn merge_unset_fields_apps_empty_higher_source_does_not_block_lower_disables() {
-        let mut target = ConfigRequirementsWithSources::default();
-
-        target.merge_unset_fields(
-            RequirementSource::LegacyManagedConfigTomlFromMdm,
-            ConfigRequirementsToml {
-                apps: Some(apps_requirements(&[])),
-                ..Default::default()
-            },
-        );
-        target.merge_unset_fields(
-            RequirementSource::LegacyManagedConfigTomlFromMdm,
-            ConfigRequirementsToml {
-                apps: Some(apps_requirements(&[("connector_123123", Some(false))])),
-                ..Default::default()
-            },
-        );
-
-        assert_eq!(
-            target.apps.map(|apps| apps.value),
-            Some(apps_requirements(&[("connector_123123", Some(false))])),
-        );
-    }
-
-    #[test]
     fn constraint_error_includes_requirement_source() -> Result<()> {
         let source: ConfigRequirementsToml = from_str(
             r#"
                 allowed_approval_policies = ["on-request"]
-                allowed_approvals_reviewers = ["auto_review"]
                 allowed_sandbox_modes = ["read-only"]
             "#,
         )?;
@@ -3186,18 +2722,6 @@ allowed_approvals_reviewers = ["user"]
                 requirement_source: source_location.clone(),
             })
         );
-        assert_eq!(
-            requirements
-                .approvals_reviewer
-                .can_set(&ApprovalsReviewer::User),
-            Err(ConstraintError::InvalidValue {
-                field_name: "approvals_reviewer",
-                candidate: "User".into(),
-                allowed: "[AutoReview]".into(),
-                requirement_source: source_location,
-            })
-        );
-
         Ok(())
     }
 
@@ -3239,7 +2763,6 @@ allowed_approvals_reviewers = ["user"]
         let source: ConfigRequirementsToml = from_str(
             r#"
                 allowed_approval_policies = ["on-request"]
-                allowed_approvals_reviewers = ["auto_review"]
                 allowed_sandbox_modes = ["read-only"]
                 allowed_web_search_modes = ["cached"]
                 enforce_residency = "us"
@@ -3255,10 +2778,6 @@ allowed_approvals_reviewers = ["user"]
 
         assert_eq!(
             requirements.approval_policy.source,
-            Some(source_location.clone())
-        );
-        assert_eq!(
-            requirements.approvals_reviewer.source,
             Some(source_location.clone())
         );
         assert_eq!(
@@ -3315,35 +2834,6 @@ allowed_approvals_reviewers = ["user"]
             requirements
                 .permission_profile
                 .can_set(&PermissionProfile::read_only())
-                .is_ok()
-        );
-
-        Ok(())
-    }
-
-    #[test]
-    fn deserialize_allowed_approvals_reviewers() -> Result<()> {
-        let toml_str = r#"
-            allowed_approvals_reviewers = ["auto_review", "user"]
-        "#;
-        let config: ConfigRequirementsToml = from_str(toml_str)?;
-        let requirements: ConfigRequirements = with_unknown_source(config).try_into()?;
-
-        assert_eq!(
-            requirements.approvals_reviewer.value(),
-            ApprovalsReviewer::AutoReview,
-            "currently, there is no way to specify the default value for approvals reviewer in the toml, so it picks the first allowed value"
-        );
-        assert!(
-            requirements
-                .approvals_reviewer
-                .can_set(&ApprovalsReviewer::AutoReview)
-                .is_ok()
-        );
-        assert!(
-            requirements
-                .approvals_reviewer
-                .can_set(&ApprovalsReviewer::User)
                 .is_ok()
         );
 
@@ -3414,42 +2904,6 @@ allowed_approvals_reviewers = ["user"]
 
         Ok(())
     }
-
-    #[test]
-    fn deserialize_legacy_allowed_approvals_reviewer() -> Result<()> {
-        let toml_str = r#"
-            allowed_approvals_reviewers = ["guardian_subagent", "user"]
-        "#;
-        let config: ConfigRequirementsToml = from_str(toml_str)?;
-        let requirements: ConfigRequirements = with_unknown_source(config).try_into()?;
-
-        assert_eq!(
-            requirements.approvals_reviewer.value(),
-            ApprovalsReviewer::AutoReview
-        );
-
-        Ok(())
-    }
-
-    #[test]
-    fn empty_allowed_approvals_reviewers_is_rejected() -> Result<()> {
-        let toml_str = r#"
-            allowed_approvals_reviewers = []
-        "#;
-        let config: ConfigRequirementsToml = from_str(toml_str)?;
-        let err = ConfigRequirements::try_from(with_unknown_source(config))
-            .expect_err("empty approvals reviewer allow-list should be rejected");
-
-        assert_eq!(
-            err,
-            ConstraintError::EmptyField {
-                field_name: "allowed_approvals_reviewers".to_string(),
-            }
-        );
-
-        Ok(())
-    }
-
     #[test]
     fn deserialize_allowed_sandbox_modes() -> Result<()> {
         let toml_str = r#"

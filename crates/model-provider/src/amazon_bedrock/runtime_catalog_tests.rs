@@ -48,7 +48,6 @@ fn runtime_catalog_disables_web_search_without_overriding_review_models() {
             .iter()
             .map(|model| (
                 model.slug.as_str(),
-                model.auto_review_model_override.as_deref(),
                 model.supports_search_tool,
                 model.multi_agent_version,
             ))
@@ -56,49 +55,41 @@ fn runtime_catalog_disables_web_search_without_overriding_review_models() {
         vec![
             (
                 "global.openai.gpt-5.6-sol",
-                None,
                 false,
                 Some(MultiAgentVersion::V1),
             ),
             (
                 "global.openai.gpt-6-astra",
-                None,
                 false,
                 Some(MultiAgentVersion::V1),
             ),
             (
                 "global.openai.gpt-5.6-terra",
-                None,
                 false,
                 Some(MultiAgentVersion::V1),
             ),
             (
                 "global.openai.gpt-5.6-luna",
-                None,
                 false,
                 Some(MultiAgentVersion::V1),
             ),
             (
                 "us.openai.gpt-5.6-sol",
-                None,
                 false,
                 Some(MultiAgentVersion::V1),
             ),
             (
                 "us.openai.gpt-6-astra",
-                None,
                 false,
                 Some(MultiAgentVersion::V1),
             ),
             (
                 "us.openai.gpt-5.6-terra",
-                None,
                 false,
                 Some(MultiAgentVersion::V1),
             ),
             (
                 "us.openai.gpt-5.6-luna",
-                None,
                 false,
                 Some(MultiAgentVersion::V1),
             ),

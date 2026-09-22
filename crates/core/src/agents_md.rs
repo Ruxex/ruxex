@@ -556,7 +556,3 @@ impl InstructionProvenance {
         }
     }
 }
-
-#[cfg(test)]
-#[path = "agents_md_tests.rs"]
-mod tests;

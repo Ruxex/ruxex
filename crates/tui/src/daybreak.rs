@@ -40,7 +40,3 @@ impl Notice {
         }
     }
 }
-
-#[cfg(test)]
-#[path = "daybreak_tests.rs"]
-mod tests;

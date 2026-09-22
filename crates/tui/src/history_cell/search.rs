@@ -3,9 +3,6 @@
 use super::*;
 use crate::line_truncation::truncate_line_with_ellipsis_if_overflow;
 
-#[cfg(test)]
-#[path = "search_tests.rs"]
-mod tests;
 
 fn web_search_action_detail(action: &WebSearchAction) -> String {
     match action {

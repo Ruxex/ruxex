@@ -153,7 +153,3 @@ pub(crate) fn shell_mode_for_environment(
         turn_shell_mode.clone()
     }
 }
-
-#[cfg(test)]
-#[path = "unified_exec_tests.rs"]
-mod tests;

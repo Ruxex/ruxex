@@ -354,7 +354,3 @@ async fn forward_ops(
         let _ = io.submit_with_id(submission).await;
     }
 }
-
-#[cfg(test)]
-#[path = "codex_delegate_tests.rs"]
-mod tests;

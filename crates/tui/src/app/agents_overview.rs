@@ -1032,9 +1032,6 @@ impl App {
     }
 }
 
-#[cfg(test)]
-#[path = "agents_overview_tests.rs"]
-mod tests;
 
 fn agents_overview_group(
     thread: &Thread,

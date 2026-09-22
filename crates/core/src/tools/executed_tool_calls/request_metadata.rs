@@ -435,7 +435,3 @@ fn code_mode_input_matches_output(
         _ => false,
     }
 }
-
-#[cfg(test)]
-#[path = "request_metadata_tests.rs"]
-mod tests;

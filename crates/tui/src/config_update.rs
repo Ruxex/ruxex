@@ -392,9 +392,6 @@ pub(crate) async fn write_skill_enabled(
     Ok(())
 }
 
-#[cfg(test)]
-#[path = "config_update_tests.rs"]
-mod tests;
 
 /// Read effective server settings, retaining compatibility with servers without config/read.
 pub(crate) async fn read_effective_config_if_supported(

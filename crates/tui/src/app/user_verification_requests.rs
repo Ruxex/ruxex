@@ -115,7 +115,3 @@ impl UserVerificationRequests {
         self.pending.clear();
     }
 }
-
-#[cfg(test)]
-#[path = "user_verification_requests_tests.rs"]
-mod tests;

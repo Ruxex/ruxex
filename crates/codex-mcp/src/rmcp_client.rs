@@ -920,7 +920,6 @@ pub(crate) async fn make_rmcp_client(
 mod tests {
     use super::*;
     use codex_protocol::mcp::MCP_APP_UI_EXTENSION_ID;
-    use codex_protocol::mcp::OPENAI_FORM_EXTENSION_ID;
     use pretty_assertions::assert_eq;
     use rmcp::model::JsonObject;
     use rmcp::model::MetaObject;
@@ -989,14 +988,12 @@ mod tests {
         let supported = mcp_initialize_request_params(
             ElicitationCapability::default(),
             ClientMcpExtensions::new([
-                (OPENAI_FORM_EXTENSION_ID.to_string(), serde_json::json!({})),
                 (MCP_APP_UI_EXTENSION_ID.to_string(), app_ui.clone()),
             ]),
         );
         assert_eq!(
             supported.capabilities.extensions,
             Some(BTreeMap::from([
-                (OPENAI_FORM_EXTENSION_ID.to_string(), JsonObject::new()),
                 (
                     MCP_APP_UI_EXTENSION_ID.to_string(),
                     app_ui.as_object().cloned().expect("app UI settings"),
@@ -1054,39 +1051,4 @@ mod tests {
         );
     }
 
-    #[test]
-    fn codex_apps_connector_metadata_is_preserved() {
-        let tool = tool_with_connector_meta();
-        let expected_tool = tool.clone();
-
-        let tool_info = tool_info_from_listed_tool(
-            CODEX_APPS_MCP_SERVER_NAME,
-            /*is_codex_apps_mcp_server*/ true,
-            /*server_instructions*/ None,
-            ToolWithConnectorId {
-                tool,
-                connector_id: Some("connector_gmail".to_string()),
-                connector_name: Some("Gmail".to_string()),
-                connector_description: Some("Mail connector".to_string()),
-            },
-        );
-
-        let expected = ToolInfo {
-            server_name: CODEX_APPS_MCP_SERVER_NAME.to_string(),
-            supports_parallel_tool_calls: false,
-            server_origin: None,
-            callable_name: "capture_file_upload".to_string(),
-            callable_namespace: "codex_apps__gmail".to_string(),
-            namespace_description: Some("Mail connector".to_string()),
-            tool: expected_tool,
-            openai_file_input_optional_fields: HashMap::new(),
-            connector_id: Some("connector_gmail".to_string()),
-            connector_name: Some("Gmail".to_string()),
-            plugin_display_names: Vec::new(),
-        };
-        assert_eq!(
-            serde_json::to_value(tool_info).expect("serialize actual tool info"),
-            serde_json::to_value(expected).expect("serialize expected tool info")
-        );
-    }
 }

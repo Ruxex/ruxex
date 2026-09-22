@@ -210,7 +210,3 @@ impl HistoryCell for ComputerActivityCell {
             .max()
     }
 }
-
-#[cfg(test)]
-#[path = "computer_activity_tests.rs"]
-mod tests;

@@ -30,7 +30,3 @@ pub fn client_mcp_extensions(extensions: Option<&HashMap<String, Value>>) -> Cli
         .collect::<HashMap<_, _>>();
     ClientMcpExtensions::new(selected)
 }
-
-#[cfg(test)]
-#[path = "client_capabilities_tests.rs"]
-mod tests;

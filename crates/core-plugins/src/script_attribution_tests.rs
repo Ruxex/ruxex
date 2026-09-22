@@ -3,8 +3,6 @@ use crate::LoadedPlugin;
 use crate::OPENAI_API_CURATED_MARKETPLACE_NAME;
 use crate::OPENAI_CURATED_MARKETPLACE_NAME;
 use crate::PluginMeasurementDefinition;
-use crate::remote::REMOTE_GLOBAL_MARKETPLACE_NAME;
-use crate::store::DEFAULT_PLUGIN_VERSION;
 use crate::store::PluginStore;
 use crate::test_support::TEST_CURATED_PLUGIN_CACHE_VERSION;
 use crate::test_support::TEST_CURATED_PLUGIN_SHA;
@@ -41,7 +39,6 @@ fn loaded_plugin(config_name: &str, root: &Path, enabled: bool) -> LoadedPlugin 
         disabled_skill_paths: HashSet::new(),
         has_enabled_skills: false,
         mcp_servers: HashMap::new(),
-        apps: Vec::new(),
         hook_sources: Vec::new(),
         hook_load_warnings: Vec::new(),
         error: None,
@@ -63,28 +60,6 @@ fn synced_plugin_root(codex_home: &Path, marketplace: &str, plugin_name: &str) -
     let root = PluginStore::new(codex_home.to_path_buf())
         .plugin_root(&plugin_id, TEST_CURATED_PLUGIN_CACHE_VERSION);
     fs::create_dir_all(root.as_path()).expect("create cached plugin root");
-    root
-}
-fn cached_remote_plugin_root(codex_home: &Path, plugin_name: &str) -> AbsolutePathBuf {
-    let plugin_id = PluginId::new(
-        plugin_name.to_string(),
-        REMOTE_GLOBAL_MARKETPLACE_NAME.to_string(),
-    )
-    .expect("plugin id");
-    let root = PluginStore::new(codex_home.to_path_buf()).plugin_root(&plugin_id, "1.2.3");
-    fs::create_dir_all(root.as_path()).expect("create cached remote plugin root");
-    root
-}
-fn installed_remote_plugin_root(codex_home: &Path, plugin_name: &str) -> AbsolutePathBuf {
-    let root = cached_remote_plugin_root(codex_home, plugin_name);
-    let plugin_id = PluginId::new(
-        plugin_name.to_string(),
-        REMOTE_GLOBAL_MARKETPLACE_NAME.to_string(),
-    )
-    .expect("plugin id");
-    PluginStore::new(codex_home.to_path_buf())
-        .write_remote_plugin_id(&plugin_id, "plugins~Plugin_sample")
-        .expect("write remote plugin id");
     root
 }
 fn script_fixture() -> (TempDir, AbsolutePathBuf, AbsolutePathBuf) {
@@ -274,7 +249,7 @@ fn command(parts: &[&str]) -> Vec<String> {
 }
 
 #[test]
-fn trusted_roots_require_verified_curated_or_remote_cache() {
+fn trusted_roots_require_verified_curated_cache() {
     let temp = TempDir::new().expect("temp dir");
     write_curated_plugin_sha_with(temp.path(), TEST_CURATED_PLUGIN_SHA);
     let root = synced_plugin_root(temp.path(), OPENAI_CURATED_MARKETPLACE_NAME, "sample");
@@ -283,34 +258,17 @@ fn trusted_roots_require_verified_curated_or_remote_cache() {
         OPENAI_API_CURATED_MARKETPLACE_NAME,
         "api-sample",
     );
-    let remote_root = installed_remote_plugin_root(temp.path(), "remote-sample");
-    let unverified_remote_root = cached_remote_plugin_root(temp.path(), "unverified-remote");
-    let _ = installed_remote_plugin_root(temp.path(), "overridden-remote");
-    let overridden_remote_plugin_id =
-        PluginId::parse("overridden-remote@openai-curated-remote").expect("plugin id");
-    let remote_local_override = PluginStore::new(temp.path().to_path_buf())
-        .plugin_root(&overridden_remote_plugin_id, DEFAULT_PLUGIN_VERSION);
     let local_root = temp
         .path()
         .join("plugins/cache/openai-curated/sample/local");
     let spoofed_root = temp.path().join("spoofed/openai-curated/sample");
-    let spoofed_remote_root = temp
-        .path()
-        .join("spoofed/openai-curated-remote/remote-sample");
     fs::create_dir_all(&local_root).expect("create local root");
     fs::create_dir_all(&spoofed_root).expect("create spoofed root");
-    fs::create_dir_all(&spoofed_remote_root).expect("create spoofed remote root");
-    fs::create_dir_all(remote_local_override.as_path()).expect("create remote local override");
     let roots = roots_for(
         temp.path(),
         vec![
             loaded_plugin("sample@openai-curated", root.as_path(), ENABLED),
             loaded_plugin("api-sample@openai-api-curated", api_root.as_path(), ENABLED),
-            loaded_plugin(
-                "remote-sample@openai-curated-remote",
-                remote_root.as_path(),
-                ENABLED,
-            ),
             loaded_plugin("sample@openai-curated", &local_root, ENABLED),
             loaded_plugin("sample@openai-curated", &spoofed_root, ENABLED),
             loaded_plugin("disabled@openai-curated", root.as_path(), DISABLED),
@@ -329,28 +287,7 @@ fn trusted_roots_require_verified_curated_or_remote_cache() {
                 metrics_operations_by_path: BTreeMap::new(),
                 root: api_root.canonicalize().expect("canonical root"),
             },
-            TrustedPluginRoot {
-                plugin_id: PluginId::parse("remote-sample@openai-curated-remote")
-                    .expect("plugin id"),
-                metrics_operations_by_path: BTreeMap::new(),
-                root: remote_root.canonicalize().expect("canonical root"),
-            },
         ]
-    );
-    assert_untrusted(
-        temp.path(),
-        "unverified-remote@openai-curated-remote",
-        unverified_remote_root.as_path(),
-    );
-    assert_untrusted(
-        temp.path(),
-        "remote-sample@openai-curated-remote",
-        &spoofed_remote_root,
-    );
-    assert_untrusted(
-        temp.path(),
-        "overridden-remote@openai-curated-remote",
-        remote_local_override.as_path(),
     );
     #[cfg(unix)]
     {

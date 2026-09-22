@@ -2,7 +2,6 @@
 
 mod common;
 
-use codex_exec_server::Environment;
 use codex_exec_server::EnvironmentStatus;
 use codex_exec_server::EnvironmentStatusKind;
 use codex_exec_server::InitializeParams;
@@ -13,42 +12,7 @@ use common::exec_server::exec_server;
 use pretty_assertions::assert_eq;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn exec_server_serves_readyz_alongside_websocket_endpoint() -> anyhow::Result<()> {
-    let mut server = exec_server().await?;
-    let http_base_url = server
-        .websocket_url()
-        .strip_prefix("ws://")
-        .expect("websocket URL should use ws://");
-
-    let client = codex_http_client::HttpClientBuilder::new().build_direct()?;
-    let response = client
-        .get(format!("http://{http_base_url}/readyz"))
-        .send()
-        .await?;
-    assert_eq!(response.status(), http::StatusCode::OK);
-
-    server.shutdown().await?;
-    Ok(())
-}
-
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn remote_environment_fetches_info_from_exec_server() -> anyhow::Result<()> {
-    let mut server = exec_server().await?;
-    let environment = Environment::create_for_tests(Some(server.websocket_url().to_string()))?;
-    assert!(environment.is_remote());
-
-    let remote_info = environment.info().await?;
-    let mut local_info = Environment::default_for_tests().info().await?;
-    // Only the remote executor advertises its optional build identity.
-    local_info.provider_id = remote_info.provider_id.clone();
-    assert_eq!(remote_info, local_info);
-
-    server.shutdown().await?;
-    Ok(())
-}
-
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn exec_server_reports_environment_status_over_websocket() -> anyhow::Result<()> {
+async fn exec_server_reports_environment_status_over_stdio() -> anyhow::Result<()> {
     let mut server = exec_server().await?;
     let initialize_id = server
         .send_request(

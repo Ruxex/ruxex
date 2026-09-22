@@ -755,7 +755,7 @@ async fn assert_reverse_scan_matches_full_history(home: &Path, path: &Path) {
         .await
         .expect("scan model context")
         .items;
-    let full_items = read_thread::load_history_items(path)
+    let (full_items, _, _) = codex_rollout::RolloutRecorder::load_rollout_items(path)
         .await
         .expect("load full history");
 
@@ -870,7 +870,6 @@ fn turn_context(root: &Path, turn_id: &str) -> RolloutItem {
         current_date: None,
         timezone: None,
         approval_policy: AskForApproval::Never,
-        approvals_reviewer: None,
         sandbox_policy: SandboxPolicy::new_read_only_policy(),
         permission_profile: None,
         active_permission_profile: None,
@@ -882,7 +881,6 @@ fn turn_context(root: &Path, turn_id: &str) -> RolloutItem {
         collaboration_mode: None,
         multi_agent_version: None,
         multi_agent_mode: None,
-        realtime_active: None,
         cyber_access_program: None,
         effort: None,
         summary: ReasoningSummary::Auto,
@@ -895,8 +893,6 @@ fn compacted(message: &str, replacement_history: Option<Vec<ResponseItem>>) -> R
         replacement_history: replacement_history
             .map(|items| items.into_iter().map(Into::into).collect()),
         retained_context: None,
-        guardian_history: None,
-        mcp_resource_origins: None,
         window_number: Some(1),
         first_window_id: None,
         previous_window_id: None,

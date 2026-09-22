@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use codex_config::HookEventsToml;
+use codex_config::HookHandlerConfig;
 use codex_config::MatcherGroup;
 use codex_exec_server::CapabilityRootDiscovery;
 use codex_exec_server::CapabilityTextFile;
@@ -40,7 +41,6 @@ fn snapshot_for_manifest(
                 contents: manifest.to_string(),
             },
             mcp_config: None,
-            apps_config: None,
         }),
         skills: Vec::new(),
         namespace_manifests: Vec::new(),
@@ -237,159 +237,6 @@ fn preserves_allowlisted_executor_plugin_hook_options() {
         executor_plugin_hook_sources(&snapshot, |_, _| None),
         vec![expected]
     );
-}
-
-#[test]
-fn resolves_apps_hook_metadata_from_the_registered_connector() {
-    let mut manifest = cleanup_hook_manifest();
-    manifest["name"] = json!("browser");
-    let handler = &mut manifest["hooks"]["hooks"]["Stop"][0]["hooks"][0];
-    handler["server"] = json!("codex_apps");
-    handler["tool"] = json!("browser.turn_ended");
-    handler["input"] = json!({});
-    let mut expected = expected_source(/*index*/ 0);
-    expected.plugin_id = PluginId::parse("browser@openai-curated-remote").expect("plugin id");
-    expected.mcp_environment_id = Some(DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string());
-    let routing = json!({
-        "resource_uri": "/connector_openai_browser/browser-link/turn_ended",
-        "contains_mcp_source": true,
-    });
-    expected.mcp_metadata = Some(Map::from_iter([(
-        MCP_TOOL_CODEX_APPS_META_KEY.to_string(),
-        routing.clone(),
-    )]));
-
-    for (name, event, connector_id, input, routing_metadata, admitted) in [
-        (
-            "registered app",
-            "Stop",
-            Some("connector_openai_browser"),
-            json!({}),
-            routing.clone(),
-            true,
-        ),
-        (
-            "colliding tool name",
-            "Stop",
-            Some("connector_other_browser"),
-            json!({}),
-            routing.clone(),
-            false,
-        ),
-        (
-            "unavailable tool",
-            "Stop",
-            None,
-            json!({}),
-            routing.clone(),
-            false,
-        ),
-        (
-            "registered subagent app",
-            "SubagentStop",
-            Some("connector_openai_browser"),
-            json!({}),
-            routing.clone(),
-            true,
-        ),
-        (
-            "registered interrupted app",
-            "Interrupt",
-            Some("connector_openai_browser"),
-            json!({}),
-            routing.clone(),
-            true,
-        ),
-        (
-            "colliding interrupt tool name",
-            "Interrupt",
-            Some("connector_other_browser"),
-            json!({}),
-            routing.clone(),
-            false,
-        ),
-        (
-            "interrupt manifest arguments",
-            "Interrupt",
-            Some("connector_openai_browser"),
-            json!({ "untrusted": "manifest-provided input" }),
-            routing.clone(),
-            false,
-        ),
-        (
-            "colliding subagent tool name",
-            "SubagentStop",
-            Some("connector_other_browser"),
-            json!({}),
-            routing.clone(),
-            false,
-        ),
-        (
-            "manifest arguments",
-            "Stop",
-            Some("connector_openai_browser"),
-            json!({ "untrusted": "manifest-provided input" }),
-            routing,
-            false,
-        ),
-        (
-            "missing routing metadata",
-            "Stop",
-            Some("connector_openai_browser"),
-            json!({}),
-            json!(null),
-            false,
-        ),
-        (
-            "invalid resource URI",
-            "Stop",
-            Some("connector_openai_browser"),
-            json!({}),
-            json!({ "resource_uri": 42 }),
-            false,
-        ),
-    ] {
-        let mut manifest = manifest.clone();
-        manifest["hooks"]["hooks"]["Stop"][0]["hooks"][0]["input"] = input;
-        let events = manifest["hooks"]["hooks"]
-            .as_object_mut()
-            .expect("hook events");
-        let groups = events.remove("Stop").expect("stop groups");
-        events.insert(event.to_string(), groups);
-        let mut expected = expected.clone();
-        expected.hooks = serde_json::from_value(manifest["hooks"]["hooks"].clone()).expect("hooks");
-        let snapshot = snapshot_for_manifest(
-            "browser@openai-curated-remote",
-            "executor-a",
-            "file:///plugins/computer-use/.codex-plugin/plugin.json",
-            manifest,
-        );
-        let tool_info = connector_id.map(|connector_id| {
-            serde_json::from_value::<ToolInfo>(json!({
-                "server_name": "codex_apps",
-                "tool_name": "turn_ended",
-                "tool_namespace": "browser",
-                "connector_id": connector_id,
-                "tool": {
-                    "name": "browser.turn_ended",
-                    "inputSchema": { "type": "object" },
-                    "_meta": { "_codex_apps": routing_metadata },
-                },
-            }))
-            .expect("listed tool")
-        });
-        let actual = executor_plugin_hook_sources(&snapshot, |server, tool| {
-            tool_info
-                .as_ref()
-                .filter(|info| info.server_name == server && info.tool.name == tool)
-        });
-        let expected = if admitted {
-            vec![expected.clone()]
-        } else {
-            Vec::new()
-        };
-        assert_eq!(actual, expected, "{name}");
-    }
 }
 
 #[test]

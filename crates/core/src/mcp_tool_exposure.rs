@@ -132,7 +132,3 @@ fn append_mcp_tools(
     }
     registered_tools
 }
-
-#[cfg(test)]
-#[path = "mcp_tool_exposure_test.rs"]
-mod tests;

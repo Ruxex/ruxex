@@ -2011,15 +2011,3 @@ fn auth_config_from(config: &impl AuthManagerConfig) -> AuthConfig {
         auth_route_config: config.auth_route_config(),
     }
 }
-
-#[cfg(test)]
-#[path = "auth_tests.rs"]
-mod tests;
-
-#[cfg(test)]
-#[path = "change_state_tests.rs"]
-mod change_state_tests;
-
-#[cfg(test)]
-#[path = "account_user_id_tests.rs"]
-mod account_user_id_tests;

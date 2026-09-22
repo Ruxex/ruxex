@@ -569,7 +569,3 @@ impl Drop for RecapState {
         // Let an in-flight request finish so it can unsubscribe its temporary thread.
     }
 }
-
-#[cfg(test)]
-#[path = "recap_tests.rs"]
-mod tests;

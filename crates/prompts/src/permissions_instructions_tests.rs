@@ -28,7 +28,7 @@ const WORKSPACE_CONTEXT: PermissionsRenderContext<'static> = PermissionsRenderCo
 };
 
 fn user_approval_context() -> ApprovalPromptContext<'static> {
-    ApprovalPromptContext::new(ApprovalsReviewer::User, ResolvedModelMessages::bundled())
+    ApprovalPromptContext::new(ResolvedModelMessages::bundled())
 }
 
 #[test]
@@ -98,10 +98,7 @@ fn builds_permissions_from_profile_with_denied_reads() {
     let instructions = PermissionsInstructions::from_permission_profile(
         &permission_profile,
         AskForApproval::OnRequest,
-        ApprovalPromptContext::new(
-            ApprovalsReviewer::AutoReview,
-            ResolvedModelMessages::bundled(),
-        ),
+        ApprovalPromptContext::new(ResolvedModelMessages::bundled()),
         &Policy::empty(),
         &cwd,
         /*exec_permission_approvals_enabled*/ false,
@@ -271,7 +268,6 @@ fn empty_catalog_permission_message_preserves_non_sandbox_sections() {
             ..WORKSPACE_CONTEXT
         },
         ApprovalPromptContext {
-            reviewer: ApprovalsReviewer::User,
             messages: ResolvedApprovalMessages::new(/*messages*/ None),
             permission_messages: ResolvedPermissionMessages::new(Some(&messages)),
         },
@@ -359,195 +355,6 @@ fn on_request_permission_guidance_matches_enabled_capabilities() {
     }
 }
 
-#[test]
-fn catalog_approval_messages_select_reviewer_variant() {
-    let messages = ApprovalMessages {
-        on_request: Some("user catalog approvals".to_string()),
-        on_request_auto_review: Some("auto-review catalog approvals".to_string()),
-        never: Some("never catalog approvals".to_string()),
-        unless_trusted: Some("unless-trusted catalog approvals".to_string()),
-    };
-
-    for (approval_policy, reviewer, expected) in [
-        (
-            AskForApproval::OnRequest,
-            ApprovalsReviewer::User,
-            "user catalog approvals",
-        ),
-        (
-            AskForApproval::OnRequest,
-            ApprovalsReviewer::AutoReview,
-            "auto-review catalog approvals",
-        ),
-        (
-            AskForApproval::Never,
-            ApprovalsReviewer::AutoReview,
-            "never catalog approvals",
-        ),
-        (
-            AskForApproval::UnlessTrusted,
-            ApprovalsReviewer::AutoReview,
-            "unless-trusted catalog approvals",
-        ),
-    ] {
-        assert_eq!(
-            approval_text(
-                approval_policy,
-                reviewer,
-                ResolvedApprovalMessages::new(Some(&messages)),
-                &[],
-                /*exec_permission_approvals_enabled*/ true,
-                /*request_permissions_tool_enabled*/ true,
-            ),
-            expected
-        );
-    }
-}
-
-#[test]
-fn empty_catalog_approval_message_suppresses_legacy_approval_section() {
-    let messages = ApprovalMessages {
-        on_request: Some(String::new()),
-        on_request_auto_review: None,
-        never: None,
-        unless_trusted: None,
-    };
-    let approved_command_prefixes = vec![vec!["git".to_string(), "pull".to_string()]];
-    let writable_root = "/tmp/repo".to_string();
-
-    let text = PermissionsInstructions::from_resolved(
-        PermissionsRenderContext {
-            network_access: NetworkAccess::Restricted,
-            approved_command_prefixes: &approved_command_prefixes,
-            writable_roots: std::slice::from_ref(&writable_root),
-            exec_permission_approvals_enabled: true,
-            request_permissions_tool_enabled: true,
-            ..WORKSPACE_CONTEXT
-        },
-        ApprovalPromptContext {
-            reviewer: ApprovalsReviewer::User,
-            messages: ResolvedApprovalMessages::new(Some(&messages)),
-            permission_messages: ResolvedPermissionMessages::new(/*messages*/ None),
-        },
-    )
-    .body();
-
-    assert!(text.contains("`sandbox_mode` is `workspace-write`"));
-    assert!(text.contains("Network access is restricted."));
-    assert!(text.contains(&writable_root));
-    assert!(!text.contains("How to request escalation"));
-    assert!(!text.contains("request_permissions Tool"));
-    assert!(!text.contains("Approved command prefixes"));
-}
-
-#[test]
-fn missing_catalog_key_uses_legacy_approval_text() {
-    for (reviewer, messages) in [
-        (
-            ApprovalsReviewer::User,
-            ApprovalMessages {
-                on_request: None,
-                on_request_auto_review: Some("unused catalog approvals".to_string()),
-                never: None,
-                unless_trusted: None,
-            },
-        ),
-        (
-            ApprovalsReviewer::AutoReview,
-            ApprovalMessages {
-                on_request: Some("unused catalog approvals".to_string()),
-                on_request_auto_review: None,
-                never: None,
-                unless_trusted: None,
-            },
-        ),
-    ] {
-        let messages = ResolvedApprovalMessages::new(Some(&messages));
-        let on_request = approval_text(
-            AskForApproval::OnRequest,
-            reviewer,
-            messages,
-            &[],
-            /*exec_permission_approvals_enabled*/ false,
-            /*request_permissions_tool_enabled*/ false,
-        );
-        let never = approval_text(
-            AskForApproval::Never,
-            reviewer,
-            messages,
-            &[],
-            /*exec_permission_approvals_enabled*/ false,
-            /*request_permissions_tool_enabled*/ false,
-        );
-        assert!(on_request.contains("How to request escalation"));
-        assert_eq!(
-            on_request.contains(AUTO_REVIEW_SUFFIX),
-            reviewer == ApprovalsReviewer::AutoReview
-        );
-        assert_eq!(
-            never,
-            ResolvedApprovalMessages::new(/*messages*/ None)
-                .never
-                .text()
-        );
-    }
-}
-
-#[test]
-fn empty_catalog_non_on_request_approval_messages_suppress_legacy_approval_text() {
-    let messages = ApprovalMessages {
-        on_request: None,
-        on_request_auto_review: None,
-        never: Some(String::new()),
-        unless_trusted: Some(String::new()),
-    };
-
-    for approval_policy in [AskForApproval::Never, AskForApproval::UnlessTrusted] {
-        assert_eq!(
-            approval_text(
-                approval_policy,
-                ApprovalsReviewer::AutoReview,
-                ResolvedApprovalMessages::new(Some(&messages)),
-                &[],
-                /*exec_permission_approvals_enabled*/ true,
-                /*request_permissions_tool_enabled*/ true,
-            ),
-            ""
-        );
-    }
-}
-
-#[test]
-fn auto_review_approvals_append_auto_review_specific_guidance() {
-    let text = approval_text(
-        AskForApproval::OnRequest,
-        ApprovalsReviewer::AutoReview,
-        ResolvedApprovalMessages::new(/*messages*/ None),
-        &[],
-        /*exec_permission_approvals_enabled*/ false,
-        /*request_permissions_tool_enabled*/ false,
-    );
-
-    assert!(text.contains("`approvals_reviewer` is `auto_review`"));
-    assert!(!text.contains("`approvals_reviewer` is `guardian_subagent`"));
-    assert!(text.contains("materially safer alternative"));
-}
-
-#[test]
-fn auto_review_approvals_omit_auto_review_specific_guidance_when_approval_is_never() {
-    let text = approval_text(
-        AskForApproval::Never,
-        ApprovalsReviewer::AutoReview,
-        ResolvedApprovalMessages::new(/*messages*/ None),
-        &[],
-        /*exec_permission_approvals_enabled*/ false,
-        /*request_permissions_tool_enabled*/ false,
-    );
-
-    assert!(!text.contains("`approvals_reviewer` is `auto_review`"));
-    assert!(!text.contains("`approvals_reviewer` is `guardian_subagent`"));
-}
-
 const ALL_APPROVALS_ENABLED: GranularApprovalConfig = GranularApprovalConfig {
     sandbox_approval: true,
     rules: true,
@@ -573,7 +380,6 @@ fn granular_policy_lists_prompted_and_rejected_categories_separately() {
             request_permissions: true,
             mcp_elicitations: false,
         }),
-        ApprovalsReviewer::User,
         ResolvedApprovalMessages::new(/*messages*/ None),
         &[],
         /*exec_permission_approvals_enabled*/ true,
@@ -595,7 +401,6 @@ fn granular_policy_lists_prompted_and_rejected_categories_separately() {
 fn granular_policy_includes_command_permission_instructions_when_sandbox_approval_can_prompt() {
     let text = approval_text(
         AskForApproval::Granular(ALL_APPROVALS_ENABLED),
-        ApprovalsReviewer::User,
         ResolvedApprovalMessages::new(/*messages*/ None),
         &[],
         /*exec_permission_approvals_enabled*/ true,
@@ -617,7 +422,6 @@ fn granular_policy_includes_command_permission_instructions_when_sandbox_approva
 fn granular_policy_omits_shell_permission_instructions_when_inline_requests_are_disabled() {
     let text = approval_text(
         AskForApproval::Granular(ALL_APPROVALS_ENABLED),
-        ApprovalsReviewer::User,
         ResolvedApprovalMessages::new(/*messages*/ None),
         &[],
         /*exec_permission_approvals_enabled*/ false,
@@ -634,7 +438,6 @@ fn granular_policy_omits_shell_permission_instructions_when_inline_requests_are_
 fn granular_policy_includes_request_permissions_tool_only_when_that_prompt_can_still_fire() {
     let allowed = approval_text(
         AskForApproval::Granular(ALL_APPROVALS_ENABLED),
-        ApprovalsReviewer::User,
         ResolvedApprovalMessages::new(/*messages*/ None),
         &[],
         /*exec_permission_approvals_enabled*/ true,
@@ -647,7 +450,6 @@ fn granular_policy_includes_request_permissions_tool_only_when_that_prompt_can_s
             request_permissions: false,
             ..ALL_APPROVALS_ENABLED
         }),
-        ApprovalsReviewer::User,
         ResolvedApprovalMessages::new(/*messages*/ None),
         &[],
         /*exec_permission_approvals_enabled*/ true,
@@ -663,7 +465,6 @@ fn preserves_supplied_path_spellings_and_order() {
     let denied_read_globs = vec![r"C:\private\**".to_string(), "/private/**".to_string()];
     let approval_messages = ApprovalMessages {
         on_request: Some(String::new()),
-        on_request_auto_review: None,
         never: None,
         unless_trusted: None,
     };
@@ -681,7 +482,6 @@ fn preserves_supplied_path_spellings_and_order() {
             ..WORKSPACE_CONTEXT
         },
         ApprovalPromptContext {
-            reviewer: ApprovalsReviewer::User,
             messages: ResolvedApprovalMessages::new(Some(&approval_messages)),
             permission_messages: ResolvedPermissionMessages::new(Some(&permission_messages)),
         },

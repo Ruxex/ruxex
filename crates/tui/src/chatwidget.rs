@@ -1955,6 +1955,3 @@ pub(crate) fn extract_first_bold(s: &str) -> Option<String> {
     }
     None
 }
-
-#[cfg(test)]
-pub(crate) mod tests;

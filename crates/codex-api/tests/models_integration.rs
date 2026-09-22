@@ -155,10 +155,7 @@ async fn models_client_hits_models_endpoint() {
             supports_search_tool: false,
             supports_experimental_context: false,
             use_responses_lite: false,
-            guardian: None,
-            node_repl_auto_review_required: true,
             node_repl_disabled: true,
-            auto_review_model_override: None,
             model_specialty: None,
             tool_mode: None,
             multi_agent_version: None,
@@ -192,7 +189,6 @@ async fn models_client_hits_models_endpoint() {
 
     assert_eq!(models.len(), 1);
     assert_eq!(models[0].slug, "gpt-test");
-    assert!(models[0].node_repl_auto_review_required);
     assert!(models[0].node_repl_disabled);
 
     let received = server

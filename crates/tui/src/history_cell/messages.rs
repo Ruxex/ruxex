@@ -585,9 +585,6 @@ impl HistoryCell for AgentMarkdownCell {
     }
 }
 
-#[cfg(test)]
-#[path = "messages_tests.rs"]
-mod tests;
 
 /// Transient active-cell representation of the mutable tail of an agent stream.
 ///

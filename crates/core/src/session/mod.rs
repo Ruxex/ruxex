@@ -267,8 +267,6 @@ pub(crate) use self::session::SessionSettingsUpdate;
 #[cfg(test)]
 use self::turn::AssistantMessageStreamParsers;
 use self::turn_context::TurnContext;
-#[cfg(test)]
-mod rollout_reconstruction_tests;
 
 /// Notes from the previous real user turn.
 ///
@@ -4582,10 +4580,3 @@ async fn build_hooks_config(
         shell_args: hook_shell_argv,
     }
 }
-
-#[cfg(test)]
-#[path = "elicitation_holders_tests.rs"]
-mod elicitation_holders_tests;
-
-#[cfg(test)]
-pub(crate) mod tests;

@@ -1409,10 +1409,8 @@ mod tests {
         assert!(!model.supports_search_tool);
         assert!(!model.supports_experimental_context);
         assert!(!model.use_responses_lite);
-        assert!(!model.node_repl_auto_review_required);
         assert!(!model.node_repl_disabled);
         assert_eq!(model.comp_hash, None);
-        assert_eq!(model.auto_review_model_override, None);
         assert_eq!(model.tool_mode, None);
         assert_eq!(model.multi_agent_reasoning_effort, None);
     }

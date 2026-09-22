@@ -74,7 +74,3 @@ impl ThreadEventStore {
         }
     }
 }
-
-#[cfg(test)]
-#[path = "thread_event_buffer_tests.rs"]
-mod tests;

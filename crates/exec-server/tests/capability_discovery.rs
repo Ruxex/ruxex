@@ -54,8 +54,7 @@ async fn discovers_a_complete_capability_bundle_in_one_request() -> anyhow::Resu
         r#"{
   "name": "demo",
   "interface": {"displayName": "Demo Plugin"},
-  "mcpServers": "./config/mcp.json",
-  "apps": "./config/apps.json"
+  "mcpServers": "./config/mcp.json"
 }"#,
     )?;
     write_file(
@@ -69,10 +68,6 @@ async fn discovers_a_complete_capability_bundle_in_one_request() -> anyhow::Resu
     write_file(
         &root.path().join("config/mcp.json"),
         r#"{"mcpServers":{"demo":{"command":"demo-server"}}}"#,
-    )?;
-    write_file(
-        &root.path().join("config/apps.json"),
-        r#"{"apps":{"demo":{"connector_id":"connector-demo"}}}"#,
     )?;
     write_file(
         &root.path().join("skills/deploy/SKILL.md"),
@@ -117,10 +112,6 @@ async fn discovers_a_complete_capability_bundle_in_one_request() -> anyhow::Resu
     assert_eq!(
         plugin.mcp_config.as_ref().map(|file| &file.path),
         Some(&root_uri.join("config/mcp.json")?)
-    );
-    assert_eq!(
-        plugin.apps_config.as_ref().map(|file| &file.path),
-        Some(&root_uri.join("config/apps.json")?)
     );
     assert_eq!(
         discovery

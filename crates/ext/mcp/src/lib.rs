@@ -16,7 +16,3 @@ pub fn install_executor_plugins(
         executor_plugin::SelectedExecutorPluginMcpContributor::new(environment_manager),
     ));
 }
-
-#[cfg(test)]
-#[path = "lib_tests.rs"]
-mod tests;

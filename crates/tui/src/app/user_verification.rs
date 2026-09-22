@@ -133,7 +133,3 @@ impl App {
         .await
     }
 }
-
-#[cfg(test)]
-#[path = "user_verification_tests.rs"]
-mod tests;

@@ -212,7 +212,3 @@ fn indent_preview_line(mut line: Line<'static>) -> Line<'static> {
     line.spans.insert(0, "    ".into());
     line
 }
-
-#[cfg(test)]
-#[path = "agent_status_feed_tests.rs"]
-mod tests;

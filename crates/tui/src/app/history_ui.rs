@@ -426,7 +426,3 @@ fn powershell_single_quoted_string(value: &str) -> String {
 fn open_desktop_thread_url(_url: &str) -> Result<(), String> {
     Err("The Desktop app is only available on macOS and Windows".to_string())
 }
-
-#[cfg(test)]
-#[path = "history_ui_tests.rs"]
-mod tests;

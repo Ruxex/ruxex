@@ -17,7 +17,6 @@ use app_test_support::write_chatgpt_auth;
 use base64::Engine as _;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use codex_arg0::Arg0DispatchPaths;
-use codex_config::CloudConfigBundleLoader;
 use codex_config::LoaderOverrides;
 use codex_config::types::AuthCredentialsStoreMode;
 use codex_core::config::ConfigBuilder;
@@ -141,7 +140,6 @@ impl Harness {
             Vec::new(),
             LoaderOverrides::default(),
             /*strict_config*/ false,
-            CloudConfigBundleLoader::default(),
             Arg0DispatchPaths::default(),
             Arc::new(codex_config::NoopThreadConfigLoader),
         );

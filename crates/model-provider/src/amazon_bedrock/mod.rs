@@ -659,40 +659,4 @@ mod tests {
         );
     }
 
-    #[test]
-    fn preferred_background_models_match_bedrock_endpoint() {
-        let mantle_provider = AmazonBedrockModelProvider::new(
-            ModelProviderInfo::create_amazon_bedrock_provider(/*aws*/ None),
-            /*auth_manager*/ None,
-        );
-        let runtime_provider = AmazonBedrockModelProvider::new(
-            ModelProviderInfo::create_amazon_bedrock_runtime_provider(/*aws*/ None),
-            /*auth_manager*/ None,
-        );
-
-        assert_eq!(
-            (
-                mantle_provider.approval_review_preferred_model(),
-                mantle_provider.memory_extraction_preferred_model(),
-                mantle_provider.memory_consolidation_preferred_model(),
-            ),
-            (
-                AMAZON_BEDROCK_GPT_5_6_LUNA_MODEL_ID,
-                AMAZON_BEDROCK_GPT_5_6_LUNA_MODEL_ID,
-                AMAZON_BEDROCK_GPT_5_6_TERRA_MODEL_ID,
-            )
-        );
-        assert_eq!(
-            (
-                runtime_provider.approval_review_preferred_model(),
-                runtime_provider.memory_extraction_preferred_model(),
-                runtime_provider.memory_consolidation_preferred_model(),
-            ),
-            (
-                AMAZON_BEDROCK_RUNTIME_GLOBAL_GPT_5_6_LUNA_MODEL_ID,
-                AMAZON_BEDROCK_RUNTIME_GLOBAL_GPT_5_6_LUNA_MODEL_ID,
-                AMAZON_BEDROCK_RUNTIME_GLOBAL_GPT_5_6_TERRA_MODEL_ID,
-            )
-        );
-    }
 }

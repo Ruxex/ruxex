@@ -169,7 +169,3 @@ pub(super) async fn lookup(
     }
     Ok(matched)
 }
-
-#[cfg(test)]
-#[path = "named_session_lookup_tests.rs"]
-mod tests;

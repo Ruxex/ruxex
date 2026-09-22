@@ -617,10 +617,6 @@ fn find_marketplace_plugin_builds_manifest_fallback_from_entry() {
         })
     );
     assert_eq!(
-        manifest.paths.apps.as_ref(),
-        Some(&AbsolutePathBuf::try_from(plugin_root.join("apps/app.json")).unwrap())
-    );
-    assert_eq!(
         manifest.paths.hooks.as_ref(),
         Some(&crate::manifest::PluginManifestHooks::Paths(vec![
             AbsolutePathBuf::try_from(plugin_root.join("hooks/session.json")).unwrap()

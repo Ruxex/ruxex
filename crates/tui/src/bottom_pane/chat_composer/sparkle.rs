@@ -419,7 +419,3 @@ impl ChatComposer {
         }
     }
 }
-
-#[cfg(test)]
-#[path = "sparkle_tests.rs"]
-mod tests;

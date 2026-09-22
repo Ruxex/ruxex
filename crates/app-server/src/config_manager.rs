@@ -387,9 +387,6 @@ impl ConfigManager {
     }
 }
 
-#[cfg(test)]
-#[path = "config_manager_provider_tests.rs"]
-mod provider_tests;
 
 pub(crate) fn protected_feature_keys(config_layer_stack: &ConfigLayerStack) -> BTreeSet<String> {
     let mut protected_features = config_layer_stack

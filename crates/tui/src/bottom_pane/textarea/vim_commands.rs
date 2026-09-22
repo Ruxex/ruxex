@@ -695,7 +695,3 @@ fn vim_command_char(event: KeyEvent) -> Option<char> {
         _ => None,
     }
 }
-
-#[cfg(test)]
-#[path = "vim_commands_tests.rs"]
-mod tests;

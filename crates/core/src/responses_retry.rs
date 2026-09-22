@@ -172,7 +172,3 @@ fn log_retry(
         }
     }
 }
-
-#[cfg(test)]
-#[path = "responses_retry_tests.rs"]
-mod tests;

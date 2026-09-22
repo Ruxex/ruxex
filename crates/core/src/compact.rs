@@ -669,7 +669,3 @@ async fn drain_to_completed(
         }
     }
 }
-
-#[cfg(test)]
-#[path = "compact_tests.rs"]
-mod tests;

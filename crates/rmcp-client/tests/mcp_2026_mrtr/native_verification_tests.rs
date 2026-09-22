@@ -1,7 +1,6 @@
 //! Exercises native verification through the HTTP MRTR tool-input envelope.
 
 use super::*;
-use codex_protocol::mcp::OPENAI_ELICITATION_EXTENSION_ID;
 use codex_rmcp_client::SendElicitation;
 use pretty_assertions::assert_eq;
 use tokio::sync::mpsc;
@@ -18,12 +17,6 @@ fn native_request() -> Value {
     })
 }
 
-fn rich_form_request() -> Value {
-    let mut request = elicitation_request("form");
-    request["method"] = json!("openai/elicitation/create");
-    request
-}
-
 fn input_required(request: Value) -> Value {
     json!({
         "resultType": "input_required", "content": [], "isError": false,
@@ -35,7 +28,7 @@ fn capabilities() -> ClientCapabilities {
     let mut capabilities = ClientCapabilities::default();
     capabilities.extensions = Some(
         [(
-            OPENAI_ELICITATION_EXTENSION_ID.into(),
+            "openai/elicitation".into(),
             serde_json::Map::from_iter([("userVerification".into(), json!({}))]),
         )]
         .into_iter()
@@ -131,7 +124,6 @@ async fn native_mrtr_returns_validated_proof_or_cancellation_in_content() -> any
                     Some("tools/call") if body.pointer("/params/inputResponses").is_none() => {
                         let mut result = input_required(native_request());
                         result["inputRequests"]["confirmation"] = elicitation_request("form");
-                        result["inputRequests"]["richConfirmation"] = rich_form_request();
                         sse_result_response(&body, result)
                     }
                     Some("tools/call") => {
@@ -140,7 +132,6 @@ async fn native_mrtr_returns_validated_proof_or_cancellation_in_content() -> any
                             json!({
                                 "verification": expected,
                                 "confirmation": {"action": "accept", "content": {"confirmed": true}},
-                                "richConfirmation": {"action": "accept", "content": {"confirmed": true}}
                             })
                         );
                         assert_eq!(body["params"]["requestState"], OPAQUE_STATE);
@@ -152,41 +143,16 @@ async fn native_mrtr_returns_validated_proof_or_cancellation_in_content() -> any
                     other => panic!("unexpected request: {other:?}"),
                 }
             })
-            .expect(/*r*/ 3)
+            .expect(/*r*/ 2)
             .mount(&server)
             .await;
         let mut capabilities = capabilities();
-        capabilities
-            .extensions
-            .as_mut()
-            .unwrap()
-            .get_mut(OPENAI_ELICITATION_EXTENSION_ID)
-            .unwrap()
-            .insert("form".into(), json!({}));
         capabilities.elicitation =
             Some(ElicitationCapability::new().with_form(FormElicitationCapability::new()));
         let client = client(
             &server,
             capabilities,
             Box::new(move |_, request| {
-                if let Elicitation::OpenAiElicitationForm { meta, message, requested_schema } = request {
-                    let expected = rich_form_request();
-                    assert_eq!(
-                        json!({"_meta": meta, "message": message, "requestedSchema": requested_schema}),
-                        json!({
-                            "_meta": expected["params"]["_meta"],
-                            "message": expected["params"]["message"],
-                            "requestedSchema": expected["params"]["requestedSchema"]
-                        })
-                    );
-                    return Box::pin(async {
-                        Ok(ElicitationResponse {
-                            action: ElicitationAction::Accept,
-                            content: Some(json!({"confirmed": true})),
-                            meta: None,
-                        })
-                    });
-                }
                 if let Elicitation::Mcp(ElicitRequestParams::FormElicitationParams {
                     meta, ..
                 }) = request
@@ -273,7 +239,6 @@ async fn native_mrtr_rejects_unadvertised_and_malformed_requests_without_prompti
     malformed["params"]["challenge"] = json!("not base64!");
     for (capabilities, request) in [
         (ClientCapabilities::default(), native_request()),
-        (capabilities(), rich_form_request()),
         (capabilities(), malformed),
         (
             capabilities(),
@@ -357,11 +322,6 @@ async fn mrtr_preserves_auth_challenges_after_input_responses() -> anyhow::Resul
             json!({"confirmed": true}),
         ),
         (
-            rich_form_request(),
-            ElicitationAction::Accept,
-            json!({"confirmed": true}),
-        ),
-        (
             native_request(),
             ElicitationAction::Accept,
             json!({"credentialId": "test", "signature": "BAUG"}),
@@ -388,13 +348,6 @@ async fn mrtr_preserves_auth_challenges_after_input_responses() -> anyhow::Resul
             .mount(&server)
             .await;
         let mut capabilities = capabilities();
-        capabilities
-            .extensions
-            .as_mut()
-            .unwrap()
-            .get_mut(OPENAI_ELICITATION_EXTENSION_ID)
-            .unwrap()
-            .insert("form".into(), json!({}));
         capabilities.elicitation =
             Some(ElicitationCapability::new().with_form(FormElicitationCapability::new()));
         let client = client(

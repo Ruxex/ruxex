@@ -433,7 +433,3 @@ pub(super) fn parse_thread_title(response: &str) -> Option<String> {
 
     Some(normalized.chars().take(THREAD_TITLE_MAX_CHARS).collect())
 }
-
-#[cfg(test)]
-#[path = "thread_title_tests.rs"]
-mod tests;

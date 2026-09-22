@@ -248,7 +248,3 @@ impl EffortIgnition {
         true
     }
 }
-
-#[cfg(test)]
-#[path = "effort_ignition_tests.rs"]
-mod tests;

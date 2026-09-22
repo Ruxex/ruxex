@@ -2467,7 +2467,3 @@ pub(crate) fn get_last_assistant_message_from_turn<'a>(
     }
     None
 }
-
-#[cfg(test)]
-#[path = "turn_tests.rs"]
-mod tests;

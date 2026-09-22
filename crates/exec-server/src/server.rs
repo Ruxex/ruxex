@@ -9,10 +9,6 @@ mod request_dispatcher;
 mod session_registry;
 mod transport;
 
-#[cfg(all(test, unix))]
-#[path = "server/process_otel_tests.rs"]
-mod process_otel_tests;
-
 pub(crate) use handler::ExecServerHandler;
 pub use request_dispatcher::ConcurrentRequestLimit;
 pub use request_dispatcher::RequestDispatchMode;

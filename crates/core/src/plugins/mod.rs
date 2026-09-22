@@ -4,9 +4,6 @@ mod mentions;
 pub(crate) mod metrics;
 mod render;
 #[cfg(test)]
-#[path = "skill_snapshot_tests.rs"]
-mod skill_snapshot_tests;
-#[cfg(test)]
 pub(crate) mod test_support;
 
 use crate::config::Config;

@@ -145,9 +145,7 @@ async fn read_only_tool_requests_preserve_host_policy_and_caller_metadata() -> a
             let mut page = rmcp::model::PaginatedRequestParams::default()
                 .with_cursor(Some("next".to_string()));
             page.meta = Some(serde_json::from_value(caller_meta.clone())?);
-            client
-                .list_tools_with_connector_ids(Some(page), /*timeout*/ None)
-                .await?;
+            client.list_tools(Some(page), /*timeout*/ None).await?;
             client
                 .call_tool(
                     "write".to_string(),

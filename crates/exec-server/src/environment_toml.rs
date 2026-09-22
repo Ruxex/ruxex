@@ -300,26 +300,19 @@ mod tests {
         let provider = TomlEnvironmentProvider::new(EnvironmentsToml {
             default: Some("ssh-dev".to_string()),
             include_local: None,
-            environments: vec![
-                EnvironmentToml {
-                    id: "devbox".to_string(),
-                    url: Some(" ws://127.0.0.1:8765 ".to_string()),
-                    ..Default::default()
-                },
-                EnvironmentToml {
-                    id: "ssh-dev".to_string(),
-                    program: Some(" ssh ".to_string()),
-                    args: Some(vec![
-                        "dev".to_string(),
-                        "codex exec-server --listen stdio".to_string(),
-                    ]),
-                    env: Some(HashMap::from([(
-                        "CODEX_LOG".to_string(),
-                        "debug".to_string(),
-                    )])),
-                    ..Default::default()
-                },
-            ],
+            environments: vec![EnvironmentToml {
+                id: "ssh-dev".to_string(),
+                program: Some(" ssh ".to_string()),
+                args: Some(vec![
+                    "dev".to_string(),
+                    "codex exec-server --listen stdio".to_string(),
+                ]),
+                env: Some(HashMap::from([(
+                    "CODEX_LOG".to_string(),
+                    "debug".to_string(),
+                )])),
+                ..Default::default()
+            }],
         })
         .expect("provider");
 
@@ -333,15 +326,11 @@ mod tests {
             .iter()
             .map(|(id, _environment)| id.as_str())
             .collect();
-        assert_eq!(environment_ids, vec!["devbox", "ssh-dev"]);
+        assert_eq!(environment_ids, vec!["ssh-dev"]);
         let environments: HashMap<_, _> = environments.into_iter().collect();
 
         assert!(include_local);
         assert!(!environments.contains_key(LOCAL_ENVIRONMENT_ID));
-        assert!(matches!(
-            &environments["devbox"],
-            ExecServerTransportParams::WebSocketUrl { .. }
-        ));
         assert!(matches!(
             &environments["ssh-dev"],
             ExecServerTransportParams::StdioCommand { .. }
@@ -433,7 +422,7 @@ mod tests {
             (
                 EnvironmentToml {
                     id: "local".to_string(),
-                    url: Some("ws://127.0.0.1:8765".to_string()),
+                    program: Some("codex".to_string()),
                     ..Default::default()
                 },
                 "environment id `local` is reserved",
@@ -441,7 +430,7 @@ mod tests {
             (
                 EnvironmentToml {
                     id: " devbox ".to_string(),
-                    url: Some("ws://127.0.0.1:8765".to_string()),
+                    program: Some("codex".to_string()),
                     ..Default::default()
                 },
                 "environment id ` devbox ` must not contain surrounding whitespace",
@@ -449,27 +438,10 @@ mod tests {
             (
                 EnvironmentToml {
                     id: "dev box".to_string(),
-                    url: Some("ws://127.0.0.1:8765".to_string()),
-                    ..Default::default()
-                },
-                "environment id `dev box` must contain only ASCII letters, numbers, '-' or '_'",
-            ),
-            (
-                EnvironmentToml {
-                    id: "devbox".to_string(),
-                    url: Some("http://127.0.0.1:8765".to_string()),
-                    ..Default::default()
-                },
-                "environment url `http://127.0.0.1:8765` must use ws:// or wss://",
-            ),
-            (
-                EnvironmentToml {
-                    id: "devbox".to_string(),
-                    url: Some("ws://127.0.0.1:8765".to_string()),
                     program: Some("codex".to_string()),
                     ..Default::default()
                 },
-                "environment `devbox` must set exactly one of url or program",
+                "environment id `dev box` must contain only ASCII letters, numbers, '-' or '_'",
             ),
             (
                 EnvironmentToml {
@@ -486,15 +458,6 @@ mod tests {
                     ..Default::default()
                 },
                 "environment `devbox` args, env, and cwd require program",
-            ),
-            (
-                EnvironmentToml {
-                    id: "ssh-dev".to_string(),
-                    program: Some("ssh".to_string()),
-                    connect_timeout_sec: Some(Duration::from_secs(1)),
-                    ..Default::default()
-                },
-                "environment `ssh-dev` connect_timeout_sec requires url",
             ),
         ];
 
@@ -549,63 +512,8 @@ mod tests {
         );
         assert_eq!(
             *initialize_timeout,
-            DEFAULT_REMOTE_EXEC_SERVER_INITIALIZE_TIMEOUT
+            DEFAULT_EXEC_SERVER_INITIALIZE_TIMEOUT
         );
-    }
-
-    #[test]
-    fn toml_provider_parses_configured_transport_timeouts() {
-        let provider = TomlEnvironmentProvider::new(EnvironmentsToml {
-            default: None,
-            include_local: None,
-            environments: vec![
-                EnvironmentToml {
-                    id: "devbox".to_string(),
-                    url: Some("ws://127.0.0.1:8765".to_string()),
-                    connect_timeout_sec: Some(Duration::from_secs(12)),
-                    initialize_timeout_sec: Some(Duration::from_secs(34)),
-                    ..Default::default()
-                },
-                EnvironmentToml {
-                    id: "ssh-dev".to_string(),
-                    program: Some("ssh".to_string()),
-                    initialize_timeout_sec: Some(Duration::from_secs(56)),
-                    ..Default::default()
-                },
-            ],
-        })
-        .expect("provider");
-
-        let ExecServerTransportParams::WebSocketUrl {
-            websocket_url,
-            connect_timeout,
-            initialize_timeout,
-            ..
-        } = &provider.environments[0].1
-        else {
-            panic!("expected websocket transport");
-        };
-        assert_eq!(websocket_url, "ws://127.0.0.1:8765");
-        assert_eq!(*connect_timeout, Duration::from_secs(12));
-        assert_eq!(*initialize_timeout, Duration::from_secs(34));
-
-        let ExecServerTransportParams::StdioCommand {
-            command,
-            initialize_timeout,
-        } = &provider.environments[1].1
-        else {
-            panic!("expected stdio transport");
-        };
-        assert_eq!(
-            command,
-            &StdioExecServerCommand {
-                program: "ssh".to_string(),
-                args: Vec::new(),
-                env: HashMap::new(),
-                cwd: None,
-            }
-        );
-        assert_eq!(*initialize_timeout, Duration::from_secs(56));
     }
 
     #[test]
@@ -636,7 +544,7 @@ mod tests {
             environments: vec![
                 EnvironmentToml {
                     id: "devbox".to_string(),
-                    url: Some("ws://127.0.0.1:8765".to_string()),
+                    program: Some("codex".to_string()),
                     ..Default::default()
                 },
                 EnvironmentToml {
@@ -662,7 +570,7 @@ mod tests {
             include_local: None,
             environments: vec![EnvironmentToml {
                 id: id.clone(),
-                url: Some("ws://127.0.0.1:8765".to_string()),
+                program: Some("codex".to_string()),
                 ..Default::default()
             }],
         })
@@ -703,8 +611,7 @@ include_local = false
 
 [[environments]]
 id = "devbox"
-url = "ws://127.0.0.1:4512"
-connect_timeout_sec = 12.0
+program = "ssh"
 initialize_timeout_sec = 34.0
 
 [[environments]]
@@ -729,8 +636,7 @@ CODEX_LOG = "debug"
             environments.environments[0],
             EnvironmentToml {
                 id: "devbox".to_string(),
-                url: Some("ws://127.0.0.1:4512".to_string()),
-                connect_timeout_sec: Some(Duration::from_secs(12)),
+                program: Some("ssh".to_string()),
                 initialize_timeout_sec: Some(Duration::from_secs(34)),
                 ..Default::default()
             }
@@ -763,7 +669,7 @@ CODEX_LOG = "debug"
                 r#"
 [[environments]]
 id = "devbox"
-url = "ws://127.0.0.1:4512"
+program = "ssh"
 unknown = true
 "#,
                 "unknown field `unknown`",
@@ -781,26 +687,6 @@ unknown = true
                 "expected `{err}` to contain `{expected}`"
             );
         }
-    }
-
-    #[test]
-    fn toml_provider_rejects_malformed_websocket_url() {
-        let err = TomlEnvironmentProvider::new(EnvironmentsToml {
-            default: None,
-            include_local: None,
-            environments: vec![EnvironmentToml {
-                id: "devbox".to_string(),
-                url: Some("ws://".to_string()),
-                ..Default::default()
-            }],
-        })
-        .expect_err("malformed websocket url should fail");
-
-        assert!(
-            err.to_string()
-                .contains("environment url `ws://` is invalid"),
-            "expected malformed URL error, got `{err}`"
-        );
     }
 
     #[tokio::test]

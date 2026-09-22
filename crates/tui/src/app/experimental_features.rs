@@ -107,7 +107,3 @@ impl App {
         });
     }
 }
-
-#[cfg(test)]
-#[path = "experimental_features_tests.rs"]
-mod tests;

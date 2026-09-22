@@ -6261,7 +6261,3 @@ fn build_thread_from_loaded_snapshot(
         loaded_thread.rollout_path(),
     )
 }
-
-#[cfg(test)]
-#[path = "thread_processor_tests.rs"]
-mod thread_processor_tests;

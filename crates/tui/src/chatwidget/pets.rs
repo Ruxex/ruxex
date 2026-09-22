@@ -364,7 +364,3 @@ fn spawn_pet_load<T>(
         });
     }
 }
-
-#[cfg(test)]
-#[path = "pets_tests.rs"]
-mod tests;

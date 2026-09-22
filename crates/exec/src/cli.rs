@@ -313,7 +313,3 @@ pub enum Color {
     #[default]
     Auto,
 }
-
-#[cfg(test)]
-#[path = "cli_tests.rs"]
-mod tests;

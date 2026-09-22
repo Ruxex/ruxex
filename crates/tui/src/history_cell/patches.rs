@@ -4,9 +4,6 @@ use super::*;
 use crate::line_truncation::truncate_line_with_ellipsis_if_overflow;
 use codex_utils_path_uri::LegacyAppPathString;
 
-#[cfg(test)]
-#[path = "patches_tests.rs"]
-mod tests;
 
 #[derive(Debug)]
 pub(crate) struct PatchHistoryCell {

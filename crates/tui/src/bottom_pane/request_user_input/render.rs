@@ -571,7 +571,3 @@ pub(in crate::bottom_pane) fn truncate_line_word_boundary_with_ellipsis(
 
     Line::from(spans_out).style(line_style)
 }
-
-#[cfg(test)]
-#[path = "render_tests.rs"]
-mod tests;

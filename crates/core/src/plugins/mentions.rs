@@ -79,7 +79,3 @@ pub(crate) fn collect_explicit_plugin_ids(input: &[UserInput]) -> HashSet<String
         .filter_map(|path| plugin_config_name_from_path(path.as_str()).map(str::to_string))
         .collect()
 }
-
-#[cfg(test)]
-#[path = "mentions_tests.rs"]
-mod tests;

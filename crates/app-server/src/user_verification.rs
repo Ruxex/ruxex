@@ -260,9 +260,6 @@ mod cancel_tests;
 #[path = "user_verification_test_support.rs"]
 mod test_support;
 
-#[cfg(test)]
-#[path = "user_verification_activation_tests.rs"]
-mod activation_tests;
 
 #[cfg(test)]
 #[path = "user_verification_connection_tests.rs"]

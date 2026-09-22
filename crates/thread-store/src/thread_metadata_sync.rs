@@ -411,7 +411,6 @@ fn git_info_patch_from_observation(git_info: GitInfo) -> GitInfoPatch {
 mod tests {
     use std::sync::Arc;
 
-    use codex_protocol::config_types::ApprovalsReviewer;
     use codex_protocol::config_types::CollaborationMode;
     use codex_protocol::config_types::ModeKind;
     use codex_protocol::config_types::ReasoningSummary;
@@ -594,7 +593,6 @@ mod tests {
             message: "compacted".to_string(),
             replacement_history: None,
             retained_context: None,
-            guardian_history: None,
             window_number: None,
             first_window_id: None,
             previous_window_id: None,
@@ -660,7 +658,6 @@ mod tests {
                     model_provider_id: "updated-provider".to_string(),
                     service_tier: None,
                     approval_policy: AskForApproval::Never,
-                    approvals_reviewer: ApprovalsReviewer::User,
                     permission_profile: permission_profile.clone(),
                     active_permission_profile: None,
                     cwd: cwd.clone().try_into().expect("absolute settings cwd"),

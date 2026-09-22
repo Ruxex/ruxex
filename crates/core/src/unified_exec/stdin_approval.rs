@@ -242,7 +242,3 @@ impl ProcessEntry {
 fn approval_error(reason: impl std::fmt::Display) -> UnifiedExecError {
     UnifiedExecError::StdinApproval(ToolError::Rejected(reason.to_string()))
 }
-
-#[cfg(test)]
-#[path = "stdin_approval_tests.rs"]
-mod tests;

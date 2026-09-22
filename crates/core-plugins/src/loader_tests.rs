@@ -124,26 +124,6 @@ async fn ema_policy_overlays_native_and_agent_plugins_without_changing_endpoints
 }
 
 #[tokio::test]
-async fn agent_plugin_overlay_apps_are_not_runtime_active() {
-    let temp_dir = TempDir::new().expect("tempdir");
-    let plugin_root = temp_dir.path().join("plugin");
-    write_file(
-        &plugin_root.join("plugin.json"),
-        &format!(r#"{{"$schema":"{AGENT_PLUGIN_SCHEMA_URI}","name":"plugin"}}"#),
-    );
-    write_file(
-        &plugin_root.join(".codex-plugin/plugin.json"),
-        r#"{"name":"plugin","apps":"./.app.json"}"#,
-    );
-    write_file(
-        &plugin_root.join(".app.json"),
-        r#"{"apps":{"example":{"id":"connector_example"}}}"#,
-    );
-
-    assert!(load_plugin_apps(&plugin_root).await.is_empty());
-}
-
-#[tokio::test]
 async fn agent_plugin_codex_mcp_overlay_only_forwards_matching_stdio_server_env_vars() {
     let temp_dir = TempDir::new().expect("tempdir");
     let plugin_root = temp_dir.path().join("plugin");
@@ -374,11 +354,9 @@ async fn installed_agent_plugin_uses_isolated_data_root_for_stdio_mcp() {
 
     let plugins = load_plugins_from_layer_stack(
         &stack,
-        RemoteInstalledPluginsSnapshot::default(),
         &store,
         /*plugin_skill_snapshots*/ None,
         Some(Product::Codex),
-        /*remote_global_catalog_active*/ false,
         test_skill_root_loader().as_ref(),
     )
     .await;
@@ -584,19 +562,15 @@ enabled = true
 
     let full = load_plugins_from_layer_stack(
         &stack,
-        RemoteInstalledPluginsSnapshot::default(),
         &store,
         /*plugin_skill_snapshots*/ None,
         Some(Product::Codex),
-        /*remote_global_catalog_active*/ false,
         test_skill_root_loader().as_ref(),
     )
     .await;
     let hooks_only = load_plugins_from_layer_stack_with_scope(
         &stack,
-        HashMap::new(),
         &store,
-        /*remote_global_catalog_active*/ false,
         PluginLoadScope::HooksOnly,
     )
     .await;
@@ -625,7 +599,6 @@ enabled = true
     assert!(full_valid.manifest_name.is_some());
     assert!(!full_valid.skill_roots.is_empty());
     assert!(!full_valid.mcp_servers.is_empty());
-    assert!(!full_valid.apps.is_empty());
 
     let hooks_only_valid = hooks_only
         .iter()
@@ -634,7 +607,6 @@ enabled = true
     assert_eq!(hooks_only_valid.manifest_name, None);
     assert!(hooks_only_valid.skill_roots.is_empty());
     assert!(hooks_only_valid.mcp_servers.is_empty());
-    assert!(hooks_only_valid.apps.is_empty());
 }
 
 fn plugin_id() -> PluginId {

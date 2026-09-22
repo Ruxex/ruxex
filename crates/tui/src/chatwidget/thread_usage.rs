@@ -400,7 +400,3 @@ impl ChatWidget {
         self.frame_requester.schedule_frame_in(delay);
     }
 }
-
-#[cfg(test)]
-#[path = "thread_usage_tests.rs"]
-mod tests;

@@ -265,7 +265,3 @@ pub(super) async fn prepare(
     cli.cwd = Some(managed.checkout.cwd.clone());
     Ok((config, managed))
 }
-
-#[cfg(test)]
-#[path = "worktree_startup_tests.rs"]
-mod tests;

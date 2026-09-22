@@ -5,7 +5,6 @@ use super::ElicitationPauseState;
 use super::ElicitationResponse;
 use super::RmcpClient;
 use crate::InProcessTransportFactory;
-use codex_protocol::mcp::OPENAI_ELICITATION_EXTENSION_ID;
 use futures::future::BoxFuture;
 use pretty_assertions::assert_eq;
 use rmcp::RoleServer;
@@ -247,7 +246,7 @@ async fn user_verification_service_cancellation_drops_pending_response() -> anyh
     let mut client_info = ClientInfo::default();
     client_info.capabilities.extensions = Some(
         [(
-            OPENAI_ELICITATION_EXTENSION_ID.to_string(),
+            "openai/elicitation".to_string(),
             serde_json::Map::from_iter([("userVerification".to_string(), json!({}))]),
         )]
         .into_iter()
@@ -306,7 +305,7 @@ async fn cancelling_one_verification_leaves_the_mcp_connection_and_other_request
     let mut client_info = ClientInfo::default();
     client_info.capabilities.extensions = Some(
         [(
-            OPENAI_ELICITATION_EXTENSION_ID.to_string(),
+            "openai/elicitation".to_string(),
             serde_json::Map::from_iter([("userVerification".to_string(), json!({}))]),
         )]
         .into_iter()

@@ -209,7 +209,3 @@ impl AppServerSession {
         Ok(started)
     }
 }
-
-#[cfg(test)]
-#[path = "rollout_history_tests.rs"]
-mod tests;

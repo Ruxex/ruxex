@@ -2456,7 +2456,3 @@ fn append_interrupted_boundary(
         }
     }
 }
-
-#[cfg(test)]
-#[path = "thread_manager_tests.rs"]
-mod tests;

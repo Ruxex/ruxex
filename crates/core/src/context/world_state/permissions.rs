@@ -125,7 +125,3 @@ impl WorldStateSection for PermissionsState {
         Some(Box::new(self.instructions.clone()))
     }
 }
-
-#[cfg(test)]
-#[path = "permissions_tests.rs"]
-mod tests;

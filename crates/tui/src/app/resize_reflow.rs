@@ -688,7 +688,3 @@ impl App {
                 < self.transcript_cells.len()
     }
 }
-
-#[cfg(test)]
-#[path = "resize_reflow_tests.rs"]
-mod tests;

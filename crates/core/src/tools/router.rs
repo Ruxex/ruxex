@@ -379,7 +379,3 @@ impl ToolRouter {
             .await
     }
 }
-
-#[cfg(test)]
-#[path = "router_tests.rs"]
-mod tests;

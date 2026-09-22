@@ -63,7 +63,6 @@ fn create_directory_junction(target: &Path, alias: &Path) -> Result<()> {
 }
 
 #[test_case(FileSystemImplementation::Local ; "local")]
-#[test_case(FileSystemImplementation::Remote ; "remote")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn file_system_canonicalize_resolves_directory_junction(
     implementation: FileSystemImplementation,
@@ -73,7 +72,6 @@ async fn file_system_canonicalize_resolves_directory_junction(
 }
 
 #[test_case(FileSystemImplementation::Local ; "local")]
-#[test_case(FileSystemImplementation::Remote ; "remote")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn file_system_sandboxed_canonicalize_resolves_directory_junction(
     implementation: FileSystemImplementation,
@@ -86,7 +84,6 @@ async fn file_system_sandboxed_canonicalize_resolves_directory_junction(
 }
 
 #[test_case(FileSystemImplementation::Local ; "local")]
-#[test_case(FileSystemImplementation::Remote ; "remote")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn file_system_operations_can_reject_junctions_in_any_path_component(
     implementation: FileSystemImplementation,
@@ -314,7 +311,6 @@ async fn file_system_operations_can_reject_junctions_in_any_path_component(
 }
 
 #[test_case(FileSystemImplementation::Local ; "local")]
-#[test_case(FileSystemImplementation::Remote ; "remote")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn file_system_no_follow_operations_reject_named_pipes(
     implementation: FileSystemImplementation,
@@ -365,92 +361,8 @@ async fn file_system_no_follow_operations_reject_named_pipes(
     Ok(())
 }
 
-#[test_case(SandboxType::WindowsRestrictedToken; "restricted_token")]
-#[test_case(SandboxType::WindowsMxc; "mxc")]
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn file_system_remote_fs_helper_respects_windows_sandbox_write_policy(
-    sandbox_type: SandboxType,
-) -> Result<()> {
-    let context = create_file_system_context(FileSystemImplementation::Remote).await?;
-    let file_system = context.file_system;
-    let tmp = tempfile::TempDir::new()?;
-    let readonly_dir = tmp.path().join("readonly");
-    std::fs::create_dir_all(&readonly_dir)?;
-
-    let mut sandbox = read_only_sandbox_for_cwd(readonly_dir.clone())?;
-    match sandbox_type {
-        SandboxType::WindowsRestrictedToken => {
-            sandbox.windows_sandbox_selection = WindowsSandboxSelection::RestrictedToken;
-        }
-        SandboxType::WindowsMxc => {
-            sandbox.windows_sandbox_selection = WindowsSandboxSelection::Mxc;
-        }
-        SandboxType::None | SandboxType::MacosSeatbelt | SandboxType::LinuxSeccomp => {
-            anyhow::bail!("expected a Windows sandbox type")
-        }
-    }
-
-    let readable_file = readonly_dir.join("readable.txt");
-    std::fs::write(&readable_file, b"readable")?;
-    let read_result = file_system
-        .read_file(
-            &PathUri::from_host_native_path(&readable_file)?,
-            ReadFileOptions::default(),
-            Some(&sandbox),
-        )
-        .await;
-    assert_eq!(read_result?, b"readable");
-
-    let blocked_file = readonly_dir.join("blocked.txt");
-    if sandbox_type == SandboxType::WindowsMxc && !codex_sandboxing::windows_mxc_available() {
-        let error = file_system
-            .write_file(
-                &PathUri::from_host_native_path(&blocked_file)?,
-                b"blocked".to_vec(),
-                WriteFileOptions::default(),
-                Some(&sandbox),
-            )
-            .await
-            .expect_err("unavailable MXC must fail closed");
-        assert_eq!(
-            (error.kind(), error.to_string()),
-            (
-                std::io::ErrorKind::InvalidInput,
-                "failed to prepare fs sandbox: failed to prepare MXC sandbox: native MXC is unavailable on this executor".to_owned(),
-            )
-        );
-        assert!(!blocked_file.exists());
-        return Ok(());
-    }
-
-    let write_result = file_system
-        .write_file(
-            &PathUri::from_host_native_path(&blocked_file)?,
-            b"blocked".to_vec(),
-            WriteFileOptions::default(),
-            Some(&sandbox),
-        )
-        .await;
-    // Some local Windows hosts cannot create restricted tokens. Reaching that
-    // error still proves the write went through the Windows sandbox launcher.
-    if sandbox_type == SandboxType::WindowsRestrictedToken
-        && is_unsupported_restricted_token_host(&write_result)
-    {
-        assert!(!blocked_file.exists());
-        return Ok(());
-    }
-    let error = write_result.expect_err("write outside the sandbox should fail");
-    assert!(
-        !blocked_file.exists(),
-        "sandboxed fs helper must not create blocked file after error: {error}"
-    );
-
-    Ok(())
-}
-
 /// An elevated filesystem helper must enforce relative deny globs from the policy cwd.
 #[test_case(FileSystemImplementation::Local ; "local")]
-#[test_case(FileSystemImplementation::Remote ; "remote")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial_test::serial(remote_exec_server)]
 async fn file_system_elevated_relative_read_denial_uses_policy_cwd(

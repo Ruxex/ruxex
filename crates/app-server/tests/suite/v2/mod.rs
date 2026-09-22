@@ -1,5 +1,4 @@
 mod account;
-mod analytics;
 mod auto_env;
 mod bedrock_setup;
 mod client_metadata;

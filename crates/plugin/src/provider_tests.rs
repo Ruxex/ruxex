@@ -32,7 +32,6 @@ fn environment_descriptor_binds_every_manifest_resource() {
     let manifest_path = root.join(".codex-plugin/plugin.json");
     let skills = root.join("skills");
     let mcp_servers = root.join(".mcp.json");
-    let apps = root.join(".app.json");
     let hooks = root.join("hooks/hooks.json");
     let composer_icon = root.join("assets/composer.svg");
     let logo = root.join("assets/logo.svg");
@@ -45,7 +44,6 @@ fn environment_descriptor_binds_every_manifest_resource() {
         paths: PluginManifestPaths {
             skills: vec![path_uri(&skills)],
             mcp_servers: Some(PluginManifestMcpServers::Path(path_uri(&mcp_servers))),
-            apps: Some(path_uri(&apps)),
             hooks: Some(PluginManifestHooks::Paths(vec![path_uri(&hooks)])),
         },
         interface: Some(PluginManifestInterface {
@@ -82,7 +80,6 @@ fn environment_descriptor_binds_every_manifest_resource() {
                     "executor-1",
                     &mcp_servers,
                 ))),
-                apps: Some(resource("executor-1", &apps)),
                 hooks: Some(PluginManifestHooks::Paths(vec![resource(
                     "executor-1",
                     &hooks
@@ -111,7 +108,6 @@ fn environment_descriptor_rejects_resources_outside_package_root() {
         paths: PluginManifestPaths {
             skills: Vec::new(),
             mcp_servers: Some(PluginManifestMcpServers::Path(path_uri(&outside))),
-            apps: None,
             hooks: None,
         },
         interface: None,

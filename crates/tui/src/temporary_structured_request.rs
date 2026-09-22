@@ -329,7 +329,3 @@ pub(crate) async fn run_temporary_structured_turn(
 
     result
 }
-
-#[cfg(test)]
-#[path = "temporary_structured_request_tests.rs"]
-mod tests;

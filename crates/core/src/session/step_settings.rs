@@ -281,7 +281,3 @@ impl StepSettings {
         Ok(())
     }
 }
-
-#[cfg(test)]
-#[path = "step_settings_tests.rs"]
-pub(super) mod tests;

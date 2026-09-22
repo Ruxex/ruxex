@@ -154,7 +154,3 @@ pub(crate) async fn write(
         warning: overridden.then(|| "Changes were saved, but the configured values differ from your selections. A higher-priority setting may override them.".to_string()),
     })
 }
-
-#[cfg(test)]
-#[path = "experimental_features_tests.rs"]
-mod tests;

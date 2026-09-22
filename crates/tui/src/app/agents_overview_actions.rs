@@ -319,7 +319,3 @@ impl App {
         Ok(())
     }
 }
-
-#[cfg(test)]
-#[path = "agents_overview_action_progress_tests.rs"]
-mod progress_tests;

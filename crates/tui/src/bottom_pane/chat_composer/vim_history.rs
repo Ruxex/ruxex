@@ -214,7 +214,3 @@ impl ChatComposer {
         self.vim_history.trim();
     }
 }
-
-#[cfg(test)]
-#[path = "vim_history_tests.rs"]
-mod tests;

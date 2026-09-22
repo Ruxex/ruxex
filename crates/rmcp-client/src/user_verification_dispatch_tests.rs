@@ -7,6 +7,7 @@ use rmcp::service::serve_directly;
 use rmcp::transport::IntoTransport;
 use rmcp::transport::Transport;
 use serde_json::json;
+use serde_json::Map;
 use std::time::Duration;
 use tokio::time::timeout;
 
@@ -14,7 +15,7 @@ fn service() -> ElicitationClientService {
     let mut info = ClientInfo::default();
     info.capabilities.extensions = Some(
         [(
-            OPENAI_ELICITATION_EXTENSION_ID.into(),
+            "openai/elicitation".into(),
             Map::from_iter([("userVerification".into(), json!({}))]),
         )]
         .into_iter()
@@ -56,7 +57,7 @@ async fn user_verification_remembers_cancellation_before_request_handler_runs() 
     })
     .await?;
     server.send(serde_json::from_value::<ServerJsonRpcMessage>(json!({
-        "jsonrpc": "2.0", "id": 1, "method": OPENAI_ELICITATION_METHOD,
+        "jsonrpc": "2.0", "id": 1, "method": MCP_ELICITATION_CREATE_METHOD,
         "params": {"mode": crate::user_verification::MODE, "title": "Approve", "description": "", "challenge": "AQID"}
     }))?).await?;
     let response = timeout(Duration::from_secs(/*secs*/ 5), server.receive())
@@ -109,7 +110,7 @@ async fn user_verification_early_cancellation_storage_fails_closed_at_capacity()
             .is_empty()
     );
     let response = service.handle_request(
-        ServerRequest::CustomRequest(CustomRequest::new(OPENAI_ELICITATION_METHOD, Some(json!({
+        ServerRequest::CustomRequest(CustomRequest::new(MCP_ELICITATION_CREATE_METHOD, Some(json!({
             "mode": crate::user_verification::MODE, "title": "Approve", "description": "", "challenge": "AQID"
         })))),
         RequestContext::new(RequestId::Number(5000), client.peer().clone()),
@@ -142,7 +143,7 @@ async fn user_verification_dispatch_rejects_malformed_modes_as_invalid_params() 
         server
             .send(ServerJsonRpcMessage::request(
                 ServerRequest::CustomRequest(CustomRequest::new(
-                    OPENAI_ELICITATION_METHOD,
+                    MCP_ELICITATION_CREATE_METHOD,
                     Some(params),
                 )),
                 RequestId::Number(1),

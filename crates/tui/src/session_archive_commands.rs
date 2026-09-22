@@ -335,7 +335,3 @@ pub(super) async fn start_app_server_for_session_command(
             .with_remote_cwd_override(remote_cwd_override),
     )
 }
-
-#[cfg(test)]
-#[path = "session_archive_commands_tests.rs"]
-mod tests;

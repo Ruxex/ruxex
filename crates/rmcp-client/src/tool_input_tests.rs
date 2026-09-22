@@ -3,7 +3,6 @@
 use super::ElicitationClientService;
 use crate::rmcp_client::ElicitationPauseState;
 use crate::tool_input::call_tool;
-use codex_protocol::mcp::OPENAI_ELICITATION_EXTENSION_ID;
 use rmcp::RoleServer;
 use rmcp::model::CallToolRequestParams;
 use rmcp::model::ClientInfo;
@@ -31,7 +30,7 @@ async fn connection_closure_releases_pending_inputs_and_timeout_pause() -> anyho
             let mut info = ClientInfo::default();
             info.capabilities.extensions = Some(
                 [(
-                    OPENAI_ELICITATION_EXTENSION_ID.into(),
+                    "openai/elicitation".into(),
                     serde_json::Map::from_iter([
                         ("userVerification".into(), json!({})),
                         ("form".into(), json!({})),

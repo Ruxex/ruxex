@@ -4947,12 +4947,8 @@ mod tests {
                 server: "server".into(),
                 tool: "tool".into(),
                 arguments: json!({"arg": "value"}),
-                connector_id: Some("connector".into()),
                 mcp_app_resource_uri: Some("app://connector".into()),
                 mcp_app_ui: None,
-                link_id: Some("link_123".into()),
-                app_name: Some("Calendar".into()),
-                action_name: Some("create_event".into()),
                 plugin_id: Some("sample@test".into()),
                 read_only_hint: Some(false),
                 status: McpToolCallStatus::InProgress,
@@ -4970,14 +4966,10 @@ mod tests {
                 assert_eq!(event.call_id, "mcp-1");
                 assert_eq!(event.invocation.server, "server");
                 assert_eq!(event.invocation.tool, "tool");
-                assert_eq!(event.connector_id.as_deref(), Some("connector"));
                 assert_eq!(
                     event.mcp_app_resource_uri.as_deref(),
                     Some("app://connector")
                 );
-                assert_eq!(event.link_id.as_deref(), Some("link_123"));
-                assert_eq!(event.app_name.as_deref(), Some("Calendar"));
-                assert_eq!(event.action_name.as_deref(), Some("create_event"));
                 assert_eq!(event.plugin_id.as_deref(), Some("sample@test"));
                 assert_eq!(event.read_only_hint, Some(false));
             }
@@ -5069,12 +5061,8 @@ mod tests {
                 server: "server".into(),
                 tool: "tool".into(),
                 arguments: json!({"arg": "value"}),
-                connector_id: Some("connector".into()),
                 mcp_app_resource_uri: Some("app://connector".into()),
                 mcp_app_ui: None,
-                link_id: Some("link_123".into()),
-                app_name: Some("Calendar".into()),
-                action_name: Some("create_event".into()),
                 plugin_id: Some("sample@test".into()),
                 read_only_hint: None,
                 status: McpToolCallStatus::Completed,
@@ -5097,14 +5085,10 @@ mod tests {
                 assert_eq!(event.call_id, "mcp-1");
                 assert_eq!(event.invocation.server, "server");
                 assert_eq!(event.invocation.tool, "tool");
-                assert_eq!(event.connector_id.as_deref(), Some("connector"));
                 assert_eq!(
                     event.mcp_app_resource_uri.as_deref(),
                     Some("app://connector")
                 );
-                assert_eq!(event.link_id.as_deref(), Some("link_123"));
-                assert_eq!(event.app_name.as_deref(), Some("Calendar"));
-                assert_eq!(event.action_name.as_deref(), Some("create_event"));
                 assert_eq!(event.plugin_id.as_deref(), Some("sample@test"));
                 assert_eq!(event.duration, Duration::from_millis(42));
                 assert!(event.is_success());
@@ -5667,7 +5651,6 @@ mod tests {
             current_date: None,
             timezone: None,
             approval_policy: AskForApproval::Never,
-            approvals_reviewer: None,
             sandbox_policy: SandboxPolicy::DangerFullAccess,
             permission_profile: None,
             active_permission_profile: None,
@@ -5743,7 +5726,6 @@ mod tests {
                 model_provider_id: "openai".to_string(),
                 service_tier: None,
                 approval_policy: AskForApproval::Never,
-                approvals_reviewer: ApprovalsReviewer::User,
                 permission_profile: permission_profile.clone(),
                 active_permission_profile: None,
                 cwd: test_path_buf("/home/user/project").abs(),
@@ -5763,7 +5745,6 @@ mod tests {
                 "model": "codex-mini-latest",
                 "model_provider_id": "openai",
                 "approval_policy": "never",
-                "approvals_reviewer": "user",
                 "permission_profile": permission_profile,
                 "cwd": test_path_buf("/home/user/project"),
                 "reasoning_effort": "medium",
@@ -5782,7 +5763,6 @@ mod tests {
             "model": "codex-mini-latest",
             "model_provider_id": "openai",
             "approval_policy": "never",
-            "approvals_reviewer": "user",
             "sandbox_policy": {
                 "type": "read-only"
             },

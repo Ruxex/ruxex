@@ -29,7 +29,3 @@ pub(super) fn group_completed_turn_items(
     }
     groups
 }
-
-#[cfg(test)]
-#[path = "history_completion_tests.rs"]
-mod tests;

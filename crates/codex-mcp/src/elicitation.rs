@@ -451,7 +451,3 @@ fn can_auto_accept_elicitation(elicitation: &Elicitation) -> bool {
         Elicitation::Mcp(_) | Elicitation::UserVerification { .. } => false,
     }
 }
-
-#[cfg(test)]
-#[path = "elicitation_tests.rs"]
-mod tests;

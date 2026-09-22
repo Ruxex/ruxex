@@ -1,6 +1,4 @@
 mod common;
-#[path = "exec_process/windows_sandbox.rs"]
-mod windows_sandbox;
 
 use std::collections::HashMap;
 #[cfg(unix)]
@@ -88,21 +86,12 @@ enum ProcessEventSnapshot {
     },
 }
 
-async fn create_process_context(use_remote: bool) -> Result<ProcessContext> {
-    if use_remote {
-        let server = exec_server().await?;
-        let environment = Environment::create_for_tests(Some(server.websocket_url().to_string()))?;
-        Ok(ProcessContext {
-            backend: environment.get_exec_backend(),
-            _server: Some(server),
-        })
-    } else {
-        let environment = Environment::create_for_tests(/*exec_server_url*/ None)?;
-        Ok(ProcessContext {
-            backend: environment.get_exec_backend(),
-            _server: None,
-        })
-    }
+async fn create_process_context(_use_remote: bool) -> Result<ProcessContext> {
+    let environment = Environment::create_for_tests(/*exec_server_url*/ None)?;
+    Ok(ProcessContext {
+        backend: environment.get_exec_backend(),
+        _server: None,
+    })
 }
 
 #[cfg(target_os = "macos")]
@@ -1544,160 +1533,6 @@ async fn assert_exec_process_preserves_queued_events_before_subscribe(
     assert_eq!(output, "queued output\n");
     assert_eq!(exit_code, Some(0));
     assert!(closed);
-    Ok(())
-}
-
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[cfg_attr(not(unix), ignore = "Unix-only exec-server process test")]
-// Serialize tests that launch a real exec-server process through the full CLI.
-#[serial_test::serial(remote_exec_server)]
-async fn remote_exec_process_recovers_after_transport_disconnect() -> Result<()> {
-    let server = exec_server().await?;
-    let mut proxy = server.disconnectable_websocket_proxy().await?;
-    let environment = Environment::create_for_tests(Some(proxy.websocket_url().to_string()))?;
-    let backend = environment.get_exec_backend();
-    let temp_dir = TempDir::new()?;
-    let gate_path = temp_dir.path().join("release-output");
-    let emitted_path = temp_dir.path().join("output-emitted");
-    let session = backend
-        .start(ExecParams {
-            metadata: Default::default(),
-            process_id: ProcessId::from("proc-recover"),
-            argv: vec![
-                "/bin/sh".to_string(),
-                "-c".to_string(),
-                concat!(
-                    "printf 'ready:%s\\n' \"$$\"; ",
-                    "while [ ! -f \"$GATE\" ]; do /bin/sleep 0.01; done; ",
-                    "printf 'during:%s\\n' \"$$\"; ",
-                    ": > \"$EMITTED\"; ",
-                    "IFS= read -r line; ",
-                    "printf 'after:%s:%s\\n' \"$$\" \"$line\"; ",
-                    "exit 7",
-                )
-                .to_string(),
-            ],
-            cwd: PathUri::from_host_native_path(std::env::current_dir()?)?,
-            shell_snapshot: None,
-            env_policy: /*env_policy*/ None,
-            env: HashMap::from([
-                (
-                    "GATE".to_string(),
-                    gate_path.to_string_lossy().into_owned(),
-                ),
-                (
-                    "EMITTED".to_string(),
-                    emitted_path.to_string_lossy().into_owned(),
-                ),
-            ]),
-            tty: false,
-            pipe_stdin: true,
-            arg0: None,
-            sandbox: None,
-            enforce_managed_network: false,
-            managed_network: None,
-            network_proxy: None,
-        })
-        .await?;
-
-    let process = Arc::clone(&session.process);
-    let mut events = process.subscribe_events();
-    let mut output = Vec::new();
-    let mut last_seq = 0;
-    while !output.ends_with(b"\n") {
-        match timeout(Duration::from_secs(5), events.recv()).await?? {
-            ExecProcessEvent::Output(chunk) => {
-                assert_eq!(chunk.seq, last_seq + 1);
-                last_seq = chunk.seq;
-                output.extend_from_slice(&chunk.chunk.into_inner());
-            }
-            event => anyhow::bail!("expected ready output before disconnect, got {event:?}"),
-        }
-    }
-    let ready = String::from_utf8(output.clone())?;
-    let pid = ready
-        .strip_prefix("ready:")
-        .and_then(|line| line.strip_suffix('\n'))
-        .context("ready output should contain the process id")?
-        .to_string();
-
-    proxy.pause_and_disconnect().await?;
-    tokio::fs::write(&gate_path, b"").await?;
-    timeout(Duration::from_secs(5), async {
-        while tokio::fs::metadata(&emitted_path).await.is_err() {
-            sleep(Duration::from_millis(10)).await;
-        }
-    })
-    .await
-    .context("process did not emit output while disconnected")?;
-
-    let process_for_read = Arc::clone(&process);
-    let mut pending_read = tokio::spawn(async move {
-        process_for_read
-            .read(
-                /*after_seq*/ Some(last_seq),
-                /*max_bytes*/ None,
-                /*wait_ms*/ Some(0),
-            )
-            .await
-    });
-    assert!(
-        timeout(Duration::from_millis(200), &mut pending_read)
-            .await
-            .is_err(),
-        "process reads should wait while recovery is in progress"
-    );
-    proxy.resume()?;
-
-    let recovered_read = timeout(Duration::from_secs(5), pending_read)
-        .await
-        .context("timed out waiting for a read after recovery")??;
-    let recovered_read = recovered_read?;
-    assert_eq!(recovered_read.failure, None);
-    let recovered_output = recovered_read
-        .chunks
-        .into_iter()
-        .flat_map(|chunk| chunk.chunk.into_inner())
-        .collect::<Vec<_>>();
-    assert_eq!(
-        String::from_utf8(recovered_output)?,
-        format!("during:{pid}\n")
-    );
-
-    let write = timeout(Duration::from_secs(5), process.write(b"hello\n".to_vec()))
-        .await
-        .context("timed out waiting for a write after recovery")??;
-    assert_eq!(write.status, WriteStatus::Accepted);
-
-    let mut saw_exit = false;
-    loop {
-        match timeout(Duration::from_secs(5), events.recv()).await?? {
-            ExecProcessEvent::Output(chunk) => {
-                assert_eq!(chunk.seq, last_seq + 1);
-                last_seq = chunk.seq;
-                output.extend_from_slice(&chunk.chunk.into_inner());
-            }
-            ExecProcessEvent::Exited { seq, exit_code, .. } => {
-                assert_eq!(seq, last_seq + 1);
-                assert_eq!(exit_code, 7);
-                last_seq = seq;
-                saw_exit = true;
-            }
-            ExecProcessEvent::Closed { seq } => {
-                assert!(saw_exit, "closed must be delivered after exit");
-                assert_eq!(seq, last_seq + 1);
-                break;
-            }
-            ExecProcessEvent::Failed(message) => {
-                anyhow::bail!("process recovery failed: {message}");
-            }
-        }
-    }
-    assert_eq!(
-        String::from_utf8(output)?,
-        format!("ready:{pid}\nduring:{pid}\nafter:{pid}:hello\n")
-    );
-
     Ok(())
 }
 

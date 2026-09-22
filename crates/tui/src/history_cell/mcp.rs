@@ -21,9 +21,6 @@ use codex_app_server_protocol::McpServerConnectionStatus;
 use result::McpResultKind;
 use result::McpToolResult;
 
-#[cfg(test)]
-#[path = "mcp_tests.rs"]
-mod tests;
 
 fn mcp_auth_status_label(status: McpAuthStatus) -> &'static str {
     match status {

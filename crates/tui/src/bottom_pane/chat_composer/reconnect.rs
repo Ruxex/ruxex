@@ -78,7 +78,3 @@ impl ChatComposer {
         }
     }
 }
-
-#[cfg(test)]
-#[path = "reconnect_tests.rs"]
-mod tests;

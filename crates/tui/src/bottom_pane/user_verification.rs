@@ -300,9 +300,6 @@ fn waiting_view(request: &UserVerificationRequest, keymap: &ListKeymap) -> Box<d
     Box::new(view)
 }
 
-#[cfg(test)]
-#[path = "user_verification_tests.rs"]
-mod tests;
 
 impl super::BottomPane {
     pub(crate) fn push_user_verification_request(

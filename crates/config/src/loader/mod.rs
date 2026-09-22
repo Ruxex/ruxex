@@ -1837,7 +1837,6 @@ foo = "xyzzy"
     fn legacy_managed_config_backfill_includes_read_only_sandbox_mode() -> io::Result<()> {
         let legacy = LegacyManagedConfigToml {
             approval_policy: None,
-            approvals_reviewer: None,
             sandbox_mode: Some(SandboxMode::WorkspaceWrite),
         };
 
@@ -1849,45 +1848,6 @@ foo = "xyzzy"
                     TomlValue::String("read-only".to_string()),
                     TomlValue::String("workspace-write".to_string()),
                 ]),
-            )]))
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn legacy_managed_config_backfill_allows_user_when_guardian_is_required() -> io::Result<()> {
-        let legacy = LegacyManagedConfigToml {
-            approval_policy: None,
-            approvals_reviewer: Some(ApprovalsReviewer::AutoReview),
-            sandbox_mode: None,
-        };
-
-        assert_eq!(
-            legacy_requirements_to_toml_value(legacy)?,
-            TomlValue::Table(toml::map::Map::from_iter([(
-                "allowed_approvals_reviewers".to_string(),
-                TomlValue::Array(vec![
-                    TomlValue::String("auto_review".to_string()),
-                    TomlValue::String("user".to_string()),
-                ]),
-            )]))
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn legacy_managed_config_backfill_preserves_user_only_approvals_reviewer() -> io::Result<()> {
-        let legacy = LegacyManagedConfigToml {
-            approval_policy: None,
-            approvals_reviewer: Some(ApprovalsReviewer::User),
-            sandbox_mode: None,
-        };
-
-        assert_eq!(
-            legacy_requirements_to_toml_value(legacy)?,
-            TomlValue::Table(toml::map::Map::from_iter([(
-                "allowed_approvals_reviewers".to_string(),
-                TomlValue::Array(vec![TomlValue::String("user".to_string())]),
             )]))
         );
         Ok(())

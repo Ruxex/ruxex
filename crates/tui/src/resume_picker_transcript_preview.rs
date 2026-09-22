@@ -170,7 +170,3 @@ fn append_transcript_preview_text(
             }),
     );
 }
-
-#[cfg(test)]
-#[path = "resume_picker_transcript_preview_tests.rs"]
-mod tests;

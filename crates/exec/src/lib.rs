@@ -2141,7 +2141,3 @@ fn build_review_request(args: &ReviewArgs) -> anyhow::Result<ReviewRequest> {
         user_facing_hint: None,
     })
 }
-
-#[cfg(test)]
-#[path = "lib_tests.rs"]
-mod tests;
