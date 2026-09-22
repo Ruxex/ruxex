@@ -119,6 +119,7 @@ mod request_permissions_tool;
 mod request_user_input;
 mod request_user_input_async;
 mod responses_api_proxy_headers;
+mod safety_check_downgrade;
 #[cfg(target_os = "linux")]
 mod responses_system_proxy;
 mod resume;
@@ -129,7 +130,6 @@ mod rollout_budget;
 mod rollout_compression;
 mod rollout_list_find;
 mod safety_buffering;
-mod safety_check_downgrade;
 mod scenarios;
 mod settings_commits;
 mod settings_constraints;

@@ -49,7 +49,7 @@ async fn completed_remote_process_withdraws_pending_network_review() -> Result<(
         &server,
         |request: &wiremock::Request| {
             let body = review_body(request);
-            body.pointer("/client_metadata/x-openai-subagent") != Some(&json!("guardian"))
+            body.pointer("/client_metadata/subagent_kind") != Some(&json!("guardian"))
                 && !body.to_string().contains("pending-network-at-exit")
         },
         sse(vec![
@@ -65,7 +65,7 @@ async fn completed_remote_process_withdraws_pending_network_review() -> Result<(
     let pending_review = mount_response_once_match(
         &server,
         |request: &wiremock::Request| {
-            review_body(request).pointer("/client_metadata/x-openai-subagent")
+            review_body(request).pointer("/client_metadata/subagent_kind")
                 == Some(&json!("guardian"))
         },
         sse_response(sse(vec![ev_completed("review")]))
@@ -76,7 +76,7 @@ async fn completed_remote_process_withdraws_pending_network_review() -> Result<(
         &server,
         |request: &wiremock::Request| {
             let body = review_body(request);
-            body.pointer("/client_metadata/x-openai-subagent") != Some(&json!("guardian"))
+            body.pointer("/client_metadata/subagent_kind") != Some(&json!("guardian"))
                 && body.to_string().contains("pending-network-at-exit")
         },
         sse(vec![
@@ -113,7 +113,7 @@ async fn completed_remote_process_withdraws_pending_network_review() -> Result<(
             while !pending_review.requests().iter().any(|request| {
                 request
                     .body_json()
-                    .pointer("/client_metadata/x-openai-subagent")
+                    .pointer("/client_metadata/subagent_kind")
                     == Some(&json!("guardian"))
             }) {
                 tokio::select! {

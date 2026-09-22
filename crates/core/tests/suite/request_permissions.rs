@@ -562,7 +562,7 @@ async fn request_permissions_auto_review_applies_guardian_decision(outcome: &str
     let guardian_request = requests
         .iter()
         .find(|request| {
-            request.body_json()["client_metadata"]["x-openai-subagent"].as_str() == Some("guardian")
+            request.body_json()["client_metadata"]["subagent_kind"].as_str() == Some("guardian")
         })
         .context("expected Guardian review request")?;
     assert!(guardian_request.body_contains_text(reason));
@@ -634,7 +634,7 @@ async fn interrupted_request_permissions_auto_review_aborts_guardian_review() ->
             serde_json::from_slice::<Value>(&request.body)
                 .ok()
                 .and_then(|body| {
-                    body.pointer("/client_metadata/x-openai-subagent")
+                    body.pointer("/client_metadata/subagent_kind")
                         .and_then(Value::as_str)
                         .map(str::to_owned)
                 })

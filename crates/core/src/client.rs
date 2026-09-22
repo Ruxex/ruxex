@@ -122,7 +122,6 @@ use crate::context::BaseInstructionsFragment;
 use crate::context::ContextualUserFragment;
 use crate::cyber_access_program;
 use crate::responses_metadata::CodexResponsesMetadata;
-use crate::responses_metadata::subagent_header_value;
 use codex_model_provider::ProviderAuthScope;
 use codex_model_provider::ProviderUnauthorizedRecovery;
 use codex_model_provider::ResponsesConnectionKey;
@@ -139,7 +138,6 @@ use codex_response_debug_context::extract_response_debug_context_from_api_error;
 use codex_response_debug_context::telemetry_api_error_message;
 use codex_response_debug_context::telemetry_transport_error_message;
 
-pub const OPENAI_BETA_HEADER: &str = "OpenAI-Beta";
 pub const X_CODEX_INSTALLATION_ID_HEADER: &str = "x-codex-installation-id";
 pub const X_CODEX_ROUTING_HINT_HEADER: &str = "x-codex-routing-hint";
 pub const X_CODEX_TURN_STATE_HEADER: &str = "x-codex-turn-state";
@@ -147,14 +145,12 @@ pub const X_CODEX_TURN_METADATA_HEADER: &str = "x-codex-turn-metadata";
 pub const X_CODEX_PARENT_THREAD_ID_HEADER: &str = "x-codex-parent-thread-id";
 pub const X_CODEX_WINDOW_ID_HEADER: &str = "x-codex-window-id";
 pub const X_OPENAI_MEMGEN_REQUEST_HEADER: &str = "x-openai-memgen-request";
-pub const X_OPENAI_SUBAGENT_HEADER: &str = "x-openai-subagent";
 pub const X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER: &str =
     "x-responsesapi-include-timing-metrics";
 const X_CODEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY: &str =
     "x-codex-ws-stream-request-start-ms";
 const WS_REQUEST_HEADER_RESPONSES_LITE_CLIENT_METADATA_KEY: &str =
     "ws_request_header_x_openai_internal_codex_responses_lite";
-const RESPONSES_WEBSOCKETS_V2_BETA_HEADER_VALUE: &str = "responses_websockets=2026-02-06";
 const X_OPENAI_INTERNAL_CODEX_RESPONSES_LITE_HEADER: &str =
     "x-openai-internal-codex-responses-lite";
 const MEMORIES_SUMMARIZE_ENDPOINT: &str = "/memories/trace_summarize";
@@ -622,19 +618,14 @@ impl ModelClient {
         };
 
         client
-            .summarize_input(&payload, self.build_subagent_headers())
+            .summarize_input(&payload, self.build_memory_headers())
             .await
             .map_err(|error| self.state.provider.map_api_error(error))
     }
 
-    fn build_subagent_headers(&self) -> ApiHeaderMap {
+    fn build_memory_headers(&self) -> ApiHeaderMap {
         let mut extra_headers = ApiHeaderMap::new();
         add_originator_header(&mut extra_headers, self.state.originator.as_str());
-        if let Some(subagent) = subagent_header_value(&self.state.session_source)
-            && let Ok(val) = HeaderValue::from_str(&subagent)
-        {
-            extra_headers.insert(X_OPENAI_SUBAGENT_HEADER, val);
-        }
         if matches!(
             self.state.session_source,
             SessionSource::Internal(InternalSessionSource::MemoryConsolidation)
@@ -1074,10 +1065,6 @@ impl ModelClient {
         if let Some(header_value) = self.generate_attestation_header_for().await {
             headers.insert(X_OAI_ATTESTATION_HEADER, header_value);
         }
-        headers.insert(
-            OPENAI_BETA_HEADER,
-            HeaderValue::from_static(RESPONSES_WEBSOCKETS_V2_BETA_HEADER_VALUE),
-        );
         if self.state.include_timing_metrics {
             headers.insert(
                 X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER,
@@ -1111,7 +1098,6 @@ impl ModelClientSession {
         ApiResponsesOptions {
             session_id: Some(self.client.responses_session_id(responses_metadata)),
             thread_id: Some(responses_metadata.thread_id.to_string()),
-            session_source: Some(self.client.state.session_source.clone()),
             extra_headers: {
                 let mut headers = build_responses_headers(
                     self.client.state.beta_features_header.as_deref(),

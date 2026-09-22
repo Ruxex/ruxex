@@ -22,8 +22,6 @@ use codex_client::TransportError;
 use codex_protocol::ResponseItemId;
 use codex_protocol::models::ContentItem;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
 use http::HeaderMap;
 use http::HeaderValue;
 use http::StatusCode;
@@ -579,7 +577,6 @@ async fn azure_store_sends_ids_and_headers() -> Result<()> {
             ResponsesOptions {
                 session_id: Some("sess_123".into()),
                 thread_id: Some("thread_123".into()),
-                session_source: Some(SessionSource::SubAgent(SubAgentSource::Review)),
                 extra_headers,
                 compression: Compression::None,
                 turn_state: None,
@@ -604,12 +601,6 @@ async fn azure_store_sends_ids_and_headers() -> Result<()> {
             .get("x-client-request-id")
             .and_then(|v| v.to_str().ok()),
         Some("thread_123")
-    );
-    assert_eq!(
-        req.headers
-            .get("x-openai-subagent")
-            .and_then(|v| v.to_str().ok()),
-        Some("review")
     );
     assert_eq!(
         req.headers

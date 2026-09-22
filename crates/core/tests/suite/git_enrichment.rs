@@ -317,7 +317,7 @@ async fn guardian_prewarm_and_review_skip_redundant_git_enrichment() -> Result<(
         expected_workspace(repo.path(), &head, /*has_changes*/ true)
     );
     assert_eq!(
-        guardian_turn["client_metadata"]["x-openai-subagent"].as_str(),
+        guardian_turn["client_metadata"]["subagent_kind"].as_str(),
         Some("guardian")
     );
     assert!(turn_metadata(&guardian_turn)?.get("workspaces").is_none());

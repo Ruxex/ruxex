@@ -7,14 +7,12 @@ use crate::provider::Provider;
 use crate::requests::Compression;
 use crate::requests::headers::build_session_headers;
 use crate::requests::headers::insert_header;
-use crate::requests::headers::subagent_header;
 use crate::sse::spawn_response_stream;
 use crate::telemetry::SseTelemetry;
 use codex_client::EncodedJsonBody;
 use codex_client::HttpTransport;
 use codex_client::RequestCompression;
 use codex_client::RequestTelemetry;
-use codex_protocol::protocol::SessionSource;
 use http::HeaderMap;
 use http::HeaderValue;
 use http::Method;
@@ -32,7 +30,6 @@ pub struct ResponsesClient<T: HttpTransport> {
 pub struct ResponsesOptions {
     pub session_id: Option<String>,
     pub thread_id: Option<String>,
-    pub session_source: Option<SessionSource>,
     pub extra_headers: HeaderMap,
     pub compression: Compression,
     pub turn_state: Option<Arc<OnceLock<String>>>,
@@ -75,7 +72,6 @@ impl<T: HttpTransport> ResponsesClient<T> {
         let ResponsesOptions {
             session_id,
             thread_id,
-            session_source,
             extra_headers,
             compression,
             turn_state,
@@ -88,10 +84,6 @@ impl<T: HttpTransport> ResponsesClient<T> {
             insert_header(&mut headers, "x-client-request-id", thread_id);
         }
         headers.extend(build_session_headers(session_id, thread_id));
-        if let Some(subagent) = subagent_header(&session_source) {
-            insert_header(&mut headers, "x-openai-subagent", &subagent);
-        }
-
         self.stream_encoded(body, headers, compression, turn_state)
             .await
     }

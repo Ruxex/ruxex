@@ -23,6 +23,7 @@ use serde_json::json;
 use tokio::sync::oneshot;
 use wiremock::Mock;
 use wiremock::matchers::header;
+use wiremock::matchers::body_partial_json;
 use wiremock::matchers::method;
 use wiremock::matchers::path;
 
@@ -260,7 +261,9 @@ async fn cyber_access_program_is_inherited_by_child_turns() -> Result<()> {
         // V1 completion notifications can require another parent response.
         Mock::given(method("POST"))
             .and(path("/v1/responses"))
-            .and(|request: &wiremock::Request| !request.headers.contains_key("x-openai-subagent"))
+            .and(|request: &wiremock::Request| {
+                request.body_json()["client_metadata"]["subagent_kind"].is_null()
+            })
             .respond_with(responses::sse_response(final_response("resp-parent-done")))
             .with_priority(/*p*/ 10)
             .mount(&server)
@@ -280,7 +283,9 @@ async fn cyber_access_program_is_inherited_by_child_turns() -> Result<()> {
         .await;
         let initial_child_request = responses::mount_sse_once_match(
             &server,
-            header("x-openai-subagent", "collab_spawn"),
+            body_partial_json(json!({
+                "client_metadata": {"subagent_kind": "collab_spawn"}
+            })),
             final_response("resp-child-initial"),
         )
         .await;
@@ -374,7 +379,9 @@ async fn cyber_access_program_is_inherited_by_child_turns() -> Result<()> {
             responses::mount_sse_sequence(&server, reply_sequence).await;
             let followup_child_request = responses::mount_sse_once_match(
                 &server,
-                header("x-openai-subagent", "collab_spawn"),
+                body_partial_json(json!({
+                    "client_metadata": {"subagent_kind": "collab_spawn"}
+                })),
                 final_response("resp-child-next"),
             )
             .await;

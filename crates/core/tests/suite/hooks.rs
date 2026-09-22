@@ -3499,7 +3499,7 @@ allow_local_binding = true
         requests
             .iter()
             .filter(|request| {
-                request.body_json()["client_metadata"]["x-openai-subagent"].as_str()
+                request.body_json()["client_metadata"]["subagent_kind"].as_str()
                     == Some("guardian")
             })
             .count(),

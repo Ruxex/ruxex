@@ -74,9 +74,7 @@ use tracing::Instrument;
 use tracing_test::traced_test;
 
 const MODEL: &str = "gpt-5.4";
-const OPENAI_BETA_HEADER: &str = "OpenAI-Beta";
 const USER_AGENT_HEADER: &str = "user-agent";
-const WS_V2_BETA_HEADER_VALUE: &str = "responses_websockets=2026-02-06";
 const X_CLIENT_REQUEST_ID_HEADER: &str = "x-client-request-id";
 const WS_REQUEST_HEADER_RESPONSES_LITE_CLIENT_METADATA_KEY: &str =
     "ws_request_header_x_openai_internal_codex_responses_lite";
@@ -284,10 +282,6 @@ async fn responses_websocket_streams_request() {
     assert_eq!(body["stream"], serde_json::Value::Bool(true));
     assert_eq!(body["input"].as_array().map(Vec::len), Some(1));
     let handshake = server.single_handshake();
-    assert_eq!(
-        handshake.header(OPENAI_BETA_HEADER),
-        Some(WS_V2_BETA_HEADER_VALUE.to_string())
-    );
     assert_eq!(
         handshake.header(X_CODEX_ROUTING_HINT_HEADER),
         Some(format!("model={MODEL}"))
@@ -1254,10 +1248,6 @@ async fn responses_websocket_prewarm_includes_model_and_tier_routing_hint() {
         handshake.header(X_CODEX_ROUTING_HINT_HEADER),
         Some(format!("model={MODEL};tier={service_tier}"))
     );
-    assert_eq!(
-        handshake.header(OPENAI_BETA_HEADER),
-        Some(WS_V2_BETA_HEADER_VALUE.to_string())
-    );
     let connection = server.single_connection();
     let prewarm = connection
         .first()
@@ -1300,15 +1290,6 @@ async fn responses_websocket_prewarm_uses_v2_when_provider_supports_websockets()
     assert_eq!(server.single_connection().len(), 1);
 
     let handshake = server.single_handshake();
-    let openai_beta_header = handshake
-        .header(OPENAI_BETA_HEADER)
-        .expect("missing OpenAI-Beta header");
-    assert!(
-        openai_beta_header
-            .split(',')
-            .map(str::trim)
-            .any(|value| value == WS_V2_BETA_HEADER_VALUE)
-    );
     stream_until_complete(&mut client_session, &harness, &prompt).await;
     assert_eq!(server.handshakes().len(), 1);
     let connection = server.single_connection();
@@ -1368,15 +1349,6 @@ async fn responses_websocket_preconnect_runs_when_only_v2_feature_enabled() {
     assert_eq!(server.single_connection().len(), 1);
 
     let handshake = server.single_handshake();
-    let openai_beta_header = handshake
-        .header(OPENAI_BETA_HEADER)
-        .expect("missing OpenAI-Beta header");
-    assert!(
-        openai_beta_header
-            .split(',')
-            .map(str::trim)
-            .any(|value| value == WS_V2_BETA_HEADER_VALUE)
-    );
     server.shutdown().await;
 }
 
@@ -1417,15 +1389,6 @@ async fn responses_websocket_v2_requests_use_v2_when_provider_supports_websocket
     );
 
     let handshake = server.single_handshake();
-    let openai_beta_header = handshake
-        .header(OPENAI_BETA_HEADER)
-        .expect("missing OpenAI-Beta header");
-    assert!(
-        openai_beta_header
-            .split(',')
-            .map(str::trim)
-            .any(|value| value == WS_V2_BETA_HEADER_VALUE)
-    );
     server.shutdown().await;
 }
 
@@ -1566,15 +1529,6 @@ async fn responses_websocket_v2_wins_when_both_features_enabled() {
     );
 
     let handshake = server.single_handshake();
-    let openai_beta_header = handshake
-        .header(OPENAI_BETA_HEADER)
-        .expect("missing OpenAI-Beta header");
-    assert!(
-        openai_beta_header
-            .split(',')
-            .map(str::trim)
-            .any(|value| value == WS_V2_BETA_HEADER_VALUE)
-    );
     server.shutdown().await;
 }
 
@@ -2663,15 +2617,6 @@ async fn responses_websocket_v2_sets_openai_beta_header() {
     stream_until_complete(&mut session, &harness, &prompt).await;
 
     let handshake = server.single_handshake();
-    let openai_beta_header = handshake
-        .header(OPENAI_BETA_HEADER)
-        .expect("missing OpenAI-Beta header");
-    assert!(
-        openai_beta_header
-            .split(',')
-            .map(str::trim)
-            .any(|value| value == WS_V2_BETA_HEADER_VALUE)
-    );
     server.shutdown().await;
 }
 

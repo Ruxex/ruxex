@@ -345,7 +345,6 @@ impl MemoryStartupContext {
             session_id_string,
             self.thread_id.to_string(),
             window_id,
-            &session_source,
             &config.cwd,
             &config_snapshot.permission_profile,
             /*sandbox*/ None,

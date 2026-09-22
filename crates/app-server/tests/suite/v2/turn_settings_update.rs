@@ -531,7 +531,7 @@ async fn live_reviewer_updates_route_approvals_without_changing_future_turns(
     let guardian_requests = requests
         .requests()
         .into_iter()
-        .filter(|request| request.body_json()["client_metadata"]["x-openai-subagent"] == "guardian")
+        .filter(|request| request.body_json()["client_metadata"]["subagent_kind"] == "guardian")
         .count();
     assert_eq!(guardian_requests, 1);
     Ok(())

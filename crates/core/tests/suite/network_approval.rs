@@ -912,7 +912,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
     let requests = responses.requests();
     let reviews = requests
         .iter()
-        .filter(|request| request.body_json()["client_metadata"]["x-openai-subagent"] == "guardian")
+        .filter(|request| request.body_json()["client_metadata"]["subagent_kind"] == "guardian")
         .collect::<Vec<_>>();
     assert_eq!(reviews.len(), 2);
     for review in &reviews {
@@ -921,7 +921,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
     }
     let parent_requests = requests
         .iter()
-        .filter(|request| request.body_json()["client_metadata"]["x-openai-subagent"] != "guardian")
+        .filter(|request| request.body_json()["client_metadata"]["subagent_kind"] != "guardian")
         .collect::<Vec<_>>();
     assert_eq!(parent_requests[0].body_json()["model"], "guardian-parent-a");
     let final_parent = parent_requests
@@ -2867,7 +2867,7 @@ fn is_guardian_request(request: &wiremock::Request) -> bool {
     decoded_request_body(request)
         .and_then(|body| serde_json::from_slice::<Value>(&body).ok())
         .is_some_and(|body| {
-            body.pointer("/client_metadata/x-openai-subagent")
+            body.pointer("/client_metadata/subagent_kind")
                 .and_then(Value::as_str)
                 == Some("guardian")
         })
@@ -2877,7 +2877,7 @@ fn guardian_request_is_for(request: &wiremock::Request, call_id: &str) -> bool {
     decoded_request_body(request)
         .and_then(|body| serde_json::from_slice::<Value>(&body).ok())
         .filter(|body| {
-            body.pointer("/client_metadata/x-openai-subagent")
+            body.pointer("/client_metadata/subagent_kind")
                 .and_then(Value::as_str)
                 == Some("guardian")
         })
@@ -2900,7 +2900,7 @@ fn guardian_network_triggers(responses: &[&ResponseMock]) -> Result<Vec<(String,
         .iter()
         .flat_map(|responses| responses.requests())
         .filter(|request| {
-            request.body_json()["client_metadata"]["x-openai-subagent"].as_str() == Some("guardian")
+            request.body_json()["client_metadata"]["subagent_kind"].as_str() == Some("guardian")
         })
         .map(|request| {
             let user_texts = request.message_input_texts("user");
@@ -2933,7 +2933,7 @@ fn guardian_network_actions(responses: &ResponseMock) -> Result<Vec<Value>> {
         .requests()
         .into_iter()
         .filter(|request| {
-            request.body_json()["client_metadata"]["x-openai-subagent"].as_str() == Some("guardian")
+            request.body_json()["client_metadata"]["subagent_kind"].as_str() == Some("guardian")
                 && request
                     .message_input_texts("user")
                     .iter()
@@ -3038,7 +3038,7 @@ async fn wait_for_guardian_request(responses: &ResponseMock) {
     tokio::time::timeout(Duration::from_secs(10), async {
         loop {
             if responses.requests().iter().any(|request| {
-                request.body_json()["client_metadata"]["x-openai-subagent"] == "guardian"
+                request.body_json()["client_metadata"]["subagent_kind"] == "guardian"
             }) {
                 return;
             }

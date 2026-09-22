@@ -405,7 +405,7 @@ async fn run_mcp_permission_request_hook_test(outcome: PermissionRequestHookOutc
     assert_eq!(requests.len(), 2);
     assert!(
         requests.iter().all(|request| {
-            request.body_json()["client_metadata"]["x-openai-subagent"].as_str() != Some("guardian")
+            request.body_json()["client_metadata"]["subagent_kind"].as_str() != Some("guardian")
         }),
         "a permission request hook should resolve MCP approval before Guardian review",
     );

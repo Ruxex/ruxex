@@ -218,7 +218,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
 
     let request = request_log.single_request();
     assert_eq!(
-        request.header("x-openai-subagent").as_deref(),
+        request.body_json()["client_metadata"]["subagent_kind"].as_str(),
         Some("review")
     );
     let turn_metadata: serde_json::Value = serde_json::from_str(

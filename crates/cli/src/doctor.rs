@@ -64,8 +64,6 @@ use codex_terminal_detection::TerminalName;
 use codex_terminal_detection::terminal_info;
 use codex_tui::Cli as TuiCli;
 use codex_utils_cli::CliConfigOverrides;
-use http::HeaderMap;
-use http::HeaderValue;
 use http::Method;
 use serde::Serialize;
 use supports_color::Stream;
@@ -106,8 +104,6 @@ use thread_inventory::thread_inventory_check;
 use title::terminal_title_check;
 use updates::updates_check;
 
-const OPENAI_BETA_HEADER: &str = "OpenAI-Beta";
-const RESPONSES_WEBSOCKETS_V2_BETA_HEADER_VALUE: &str = "responses_websockets=2026-02-06";
 const WEBSOCKET_IMMEDIATE_CLOSE_GRACE: Duration = Duration::from_millis(250);
 const SLOW_CHECK_PROGRESS_THRESHOLD: Duration = Duration::from_secs(2);
 const SLOW_CHECK_PROGRESS_INTERVAL: Duration = Duration::from_secs(1);
@@ -2225,18 +2221,13 @@ async fn websocket_reachability_check(
         }
     };
 
-    let mut extra_headers = HeaderMap::new();
-    extra_headers.insert(
-        OPENAI_BETA_HEADER,
-        HeaderValue::from_static(RESPONSES_WEBSOCKETS_V2_BETA_HEADER_VALUE),
-    );
     let client = ResponsesWebsocketClient::new(api_provider, api_auth);
     let http_client_factory = config.http_client_factory();
     match tokio::time::timeout(
         provider.websocket_connect_timeout(),
         client.probe_handshake(
             &http_client_factory,
-            extra_headers,
+            Default::default(),
             default_headers(),
             WEBSOCKET_IMMEDIATE_CLOSE_GRACE,
         ),
@@ -2246,10 +2237,6 @@ async fn websocket_reachability_check(
         Ok(Ok(probe)) => {
             details.push(format!("handshake result: HTTP {}", probe.status));
             details.push(format!("reasoning header: {}", probe.reasoning_included));
-            details.push(format!(
-                "server model present: {}",
-                probe.server_model_present
-            ));
             if let Some(close) = probe.immediate_close {
                 details.push(format!("immediate close code: {}", close.code));
                 details.push(format!("immediate close reason: {}", close.reason));

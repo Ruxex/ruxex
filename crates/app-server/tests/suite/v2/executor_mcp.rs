@@ -509,7 +509,7 @@ async fn guardian_review_does_not_discover_executor_mcp() -> Result<()> {
     let requests = response_mock.requests();
     assert_eq!(requests.len(), 3);
     assert_eq!(
-        requests[1].body_json()["client_metadata"]["x-openai-subagent"],
+        requests[1].body_json()["client_metadata"]["subagent_kind"],
         "guardian"
     );
     let output = requests[2].function_call_output("guardian-shell-call");

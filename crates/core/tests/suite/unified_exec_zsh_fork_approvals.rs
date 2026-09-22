@@ -436,7 +436,7 @@ async fn unified_exec_zsh_fork_guardian_reviews_intercepted_execve() -> Result<(
         .requests()
         .into_iter()
         .filter(|request| {
-            request.body_json()["client_metadata"]["x-openai-subagent"].as_str() == Some("guardian")
+            request.body_json()["client_metadata"]["subagent_kind"].as_str() == Some("guardian")
         })
         .collect::<Vec<_>>();
     assert_eq!(guardian_requests.len(), 2);
@@ -620,7 +620,7 @@ async fn unified_exec_zsh_fork_guardian_reviews_persistent_terminal_in_current_t
         .requests()
         .into_iter()
         .filter(|request| {
-            request.body_json()["client_metadata"]["x-openai-subagent"].as_str() == Some("guardian")
+            request.body_json()["client_metadata"]["subagent_kind"].as_str() == Some("guardian")
         })
         .collect::<Vec<_>>();
     assert_eq!(guardian_requests.len(), 2);

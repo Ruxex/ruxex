@@ -20,7 +20,6 @@ use pretty_assertions::assert_eq;
 use serde_json::Value;
 use std::time::Duration;
 
-const WS_V2_BETA_HEADER_VALUE: &str = "responses_websockets=2026-02-06";
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn websocket_model_switch_to_responses_lite_omits_top_level_tools() -> Result<()> {
@@ -376,12 +375,6 @@ async fn websocket_v2_test_codex_shell_chain() -> Result<()> {
     assert_eq!(
         output_item.get("call_id").and_then(Value::as_str),
         Some(call_id)
-    );
-
-    let handshake = server.single_handshake();
-    assert_eq!(
-        handshake.header("openai-beta"),
-        Some(WS_V2_BETA_HEADER_VALUE.to_string())
     );
 
     server.shutdown().await;

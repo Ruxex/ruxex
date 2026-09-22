@@ -163,7 +163,7 @@ async fn saved_prefix_only_bypasses_guardian_for_general_models(
     let guardian_request_count = requests
         .iter()
         .filter(|request| {
-            request.body_json()["client_metadata"]["x-openai-subagent"].as_str() == Some("guardian")
+            request.body_json()["client_metadata"]["subagent_kind"].as_str() == Some("guardian")
         })
         .count();
     assert_eq!(guardian_request_count, expected_guardian_review_count);
@@ -302,7 +302,7 @@ async fn switching_models_suppresses_and_restores_saved_prefix_approvals() -> Re
     let guardian_requests = requests
         .iter()
         .filter(|request| {
-            request.body_json()["client_metadata"]["x-openai-subagent"].as_str() == Some("guardian")
+            request.body_json()["client_metadata"]["subagent_kind"].as_str() == Some("guardian")
         })
         .collect::<Vec<_>>();
     assert_eq!(guardian_requests.len(), 1);

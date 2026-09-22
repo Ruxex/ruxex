@@ -176,7 +176,7 @@ pub(super) async fn mcp_server_elicitation_scenario(
         Some(
             responses::mount_sse_once_match(
                 &server,
-                body_partial_json(json!({"client_metadata": {"x-openai-subagent": "guardian"}})),
+                body_partial_json(json!({"client_metadata": {"subagent_kind": "guardian"}})),
                 responses::sse(vec![
                     responses::ev_assistant_message(
                         "review-result",

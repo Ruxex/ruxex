@@ -4,7 +4,6 @@ use std::collections::HashMap;
 use codex_git_utils::SanitizedGitUrl;
 use codex_protocol::ThreadId;
 use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
 use codex_protocol::protocol::ThreadSource;
 use codex_utils_string::to_ascii_json_string;
 use http::HeaderMap as ApiHeaderMap;
@@ -17,7 +16,6 @@ use crate::client::X_CODEX_INSTALLATION_ID_HEADER;
 use crate::client::X_CODEX_PARENT_THREAD_ID_HEADER;
 use crate::client::X_CODEX_TURN_METADATA_HEADER;
 use crate::client::X_CODEX_WINDOW_ID_HEADER;
-use crate::client::X_OPENAI_SUBAGENT_HEADER;
 
 pub(crate) const INSTALLATION_ID_KEY: &str = "installation_id";
 pub(crate) const SESSION_ID_KEY: &str = "session_id";
@@ -63,7 +61,6 @@ const RESERVED_METADATA_KEYS: &[&str] = &[
     X_CODEX_WINDOW_ID_HEADER,
     X_CODEX_TURN_METADATA_HEADER,
     X_CODEX_PARENT_THREAD_ID_HEADER,
-    X_OPENAI_SUBAGENT_HEADER,
     REQUEST_KIND_KEY,
     COMPACTION_KEY,
     LEGACY_CODE_MODE_TOOL_NAMES_KEY,
@@ -244,7 +241,6 @@ pub struct CodexResponsesMetadata {
     pub(crate) parent_thread_id: Option<ThreadId>,
     pub(crate) parent_turn_id: Option<String>,
     pub(crate) root_turn_id: Option<String>,
-    pub(crate) subagent_header: Option<String>,
     pub(crate) subagent_kind: Option<String>,
     pub(crate) thread_source: Option<ThreadSource>,
     pub(crate) turn_trigger: Option<String>,
@@ -281,7 +277,6 @@ impl CodexResponsesMetadata {
             parent_thread_id: None,
             parent_turn_id: None,
             root_turn_id: None,
-            subagent_header: None,
             subagent_kind: None,
             thread_source: None,
             turn_trigger: None,
@@ -320,12 +315,6 @@ impl CodexResponsesMetadata {
         ]);
         if let Some(turn_id) = &self.turn_id {
             client_metadata.insert(TURN_ID_KEY.to_string(), turn_id.clone());
-        }
-        if let Some(subagent_header) = &self.subagent_header {
-            client_metadata.insert(
-                X_OPENAI_SUBAGENT_HEADER.to_string(),
-                subagent_header.clone(),
-            );
         }
         if let Some(parent_thread_id) = self.parent_thread_id {
             client_metadata.insert(
@@ -370,9 +359,6 @@ impl CodexResponsesMetadata {
                 X_CODEX_PARENT_THREAD_ID_HEADER,
                 &parent_thread_id.to_string(),
             );
-        }
-        if let Some(subagent_header) = &self.subagent_header {
-            insert_header(&mut headers, X_OPENAI_SUBAGENT_HEADER, subagent_header);
         }
         headers
     }
@@ -422,25 +408,6 @@ impl CodexResponsesMetadata {
             // app-server metadata has reserved Codex-owned keys filtered when it enters turn state.
             extra: &self.extra,
         }
-    }
-}
-
-pub(crate) fn subagent_header_value(session_source: &SessionSource) -> Option<String> {
-    match session_source {
-        SessionSource::SubAgent(subagent_source) => match subagent_source {
-            SubAgentSource::Review => Some("review".to_string()),
-            SubAgentSource::Compact => Some("compact".to_string()),
-            SubAgentSource::MemoryConsolidation => Some("memory_consolidation".to_string()),
-            SubAgentSource::ThreadSpawn { .. } => Some("collab_spawn".to_string()),
-            SubAgentSource::Other(label) => Some(label.clone()),
-        },
-        SessionSource::Internal(source) => Some(source.to_string()),
-        SessionSource::Cli
-        | SessionSource::VSCode
-        | SessionSource::Exec
-        | SessionSource::Mcp
-        | SessionSource::Custom(_)
-        | SessionSource::Unknown => None,
     }
 }
 

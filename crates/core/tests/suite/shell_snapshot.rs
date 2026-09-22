@@ -731,7 +731,7 @@ async fn shell_snapshot_v2_guardian_uses_its_resolved_permissions_and_tools(
     let requests = responses.requests();
     let guardian_requests = requests
         .iter()
-        .filter(|request| request.body_json()["client_metadata"]["x-openai-subagent"] == "guardian")
+        .filter(|request| request.body_json()["client_metadata"]["subagent_kind"] == "guardian")
         .collect::<Vec<_>>();
     assert_eq!(guardian_requests.len(), 2);
     let guardian_id = guardian_requests[0].body_json()["client_metadata"]["thread_id"]

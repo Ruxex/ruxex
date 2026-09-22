@@ -5970,7 +5970,7 @@ await tools.exec_command({ cmd: "true", sandbox_permissions: "require_escalated"
     let guardian_request = requests
         .iter()
         .find(|request| {
-            request.body_json()["client_metadata"]["x-openai-subagent"].as_str() == Some("guardian")
+            request.body_json()["client_metadata"]["subagent_kind"].as_str() == Some("guardian")
         })
         .expect("the shell command should trigger Guardian review");
     assert!(guardian_request.message_input_image_urls("user").is_empty());
@@ -6213,7 +6213,7 @@ await tools.exec_command({ cmd: "printf second", sandbox_permissions: "require_e
     let guardian_requests = requests
         .iter()
         .filter(|request| {
-            request.body_json()["client_metadata"]["x-openai-subagent"].as_str() == Some("guardian")
+            request.body_json()["client_metadata"]["subagent_kind"].as_str() == Some("guardian")
                 && request.inputs_of_type("compaction_trigger").is_empty()
         })
         .collect::<Vec<_>>();

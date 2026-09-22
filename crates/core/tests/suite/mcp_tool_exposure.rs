@@ -286,7 +286,7 @@ async fn root_and_spawned_subagent_receive_distinct_mcp_session_sources() -> Res
         &server,
         |request: &Request| {
             std::str::from_utf8(&request.body).is_ok_and(|body| body.contains(PARENT_PROMPT))
-                && !request.headers.contains_key("x-openai-subagent")
+                && request.body_json()["client_metadata"]["subagent_kind"].is_null()
         },
         sse(vec![
             ev_response_created("resp-parent-spawn"),
@@ -304,11 +304,7 @@ async fn root_and_spawned_subagent_receive_distinct_mcp_session_sources() -> Res
         &server,
         |request: &Request| {
             std::str::from_utf8(&request.body).is_ok_and(|body| body.contains(CHILD_PROMPT))
-                && request
-                    .headers
-                    .get("x-openai-subagent")
-                    .and_then(|value| value.to_str().ok())
-                    == Some("collab_spawn")
+                && request.body_json()["client_metadata"]["subagent_kind"] == "collab_spawn"
         },
         sse(vec![
             ev_response_created("resp-child"),
@@ -321,7 +317,7 @@ async fn root_and_spawned_subagent_receive_distinct_mcp_session_sources() -> Res
         &server,
         |request: &Request| {
             std::str::from_utf8(&request.body).is_ok_and(|body| body.contains(SPAWN_CALL_ID))
-                && !request.headers.contains_key("x-openai-subagent")
+                && request.body_json()["client_metadata"]["subagent_kind"].is_null()
         },
         sse(vec![
             ev_response_created("resp-parent-complete"),

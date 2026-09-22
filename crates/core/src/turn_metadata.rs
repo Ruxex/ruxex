@@ -20,7 +20,6 @@ use crate::responses_metadata::PARENT_TURN_ID_KEY;
 use crate::responses_metadata::ROOT_TURN_ID_KEY;
 use crate::responses_metadata::TurnMetadataWorkspace;
 use crate::responses_metadata::filter_extra_metadata;
-use crate::responses_metadata::subagent_header_value;
 use crate::responses_metadata::subagent_metadata_kind;
 use crate::sandbox_tags::SandboxTags;
 use crate::sandbox_tags::record_policy_metadata;
@@ -116,7 +115,6 @@ pub async fn detached_memory_responses_metadata(
     session_id: String,
     thread_id: String,
     window_id: String,
-    session_source: &SessionSource,
     cwd: &AbsolutePathBuf,
     permission_profile: &PermissionProfile,
     sandbox: Option<&str>,
@@ -128,7 +126,6 @@ pub async fn detached_memory_responses_metadata(
         request_kind: Some(CodexResponsesRequestKind::Memory),
         thread_source: Some(ThreadSource::MemoryConsolidation),
         turn_trigger: Some("memory_consolidation".to_owned()),
-        subagent_header: subagent_header_value(session_source),
         sandbox: sandbox.map(ToString::to_string),
         workspaces: memory_workspaces(
             cwd,
@@ -152,7 +149,6 @@ pub(crate) struct TurnMetadataState {
     parent_turn_id: OnceLock<String>,
     initiating_agent_path: OnceLock<AgentPath>,
     root_turn_id: OnceLock<String>,
-    subagent_header: Option<String>,
     subagent_kind: Option<String>,
     thread_source: Option<ThreadSource>,
     turn_trigger: OnceLock<String>,
@@ -206,7 +202,6 @@ impl TurnMetadataState {
             parent_turn_id: OnceLock::new(),
             initiating_agent_path: OnceLock::new(),
             root_turn_id: OnceLock::new(),
-            subagent_header: subagent_header_value(session_source),
             subagent_kind: subagent_metadata_kind(session_source),
             thread_source,
             turn_trigger: OnceLock::new(),
@@ -380,7 +375,6 @@ impl TurnMetadataState {
             parent_thread_id: self.parent_thread_id,
             parent_turn_id: self.parent_turn_id.get().cloned(),
             root_turn_id: self.root_turn_id(),
-            subagent_header: self.subagent_header.clone(),
             subagent_kind: self.subagent_kind.clone(),
             thread_source: self.thread_source.clone(),
             turn_trigger: self.turn_trigger.get().cloned(),

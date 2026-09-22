@@ -48,7 +48,7 @@ async fn responses_api_parent_and_subagent_requests_include_identity_headers_and
         &server,
         |req: &wiremock::Request| {
             request_body_contains(req, PARENT_PROMPT)
-                && request_header(req, "x-openai-subagent").is_none()
+                && req.body_json()["client_metadata"]["subagent_kind"].is_null()
         },
         sse(vec![
             ev_response_created("resp-parent-1"),
@@ -67,7 +67,7 @@ async fn responses_api_parent_and_subagent_requests_include_identity_headers_and
         |req: &wiremock::Request| {
             request_body_contains(req, CHILD_PROMPT)
                 && !request_body_contains(req, SPAWN_CALL_ID)
-                && request_header(req, "x-openai-subagent") == Some("collab_spawn")
+                && req.body_json()["client_metadata"]["subagent_kind"] == "collab_spawn"
         },
         sse(vec![
             ev_response_created("resp-child-1"),
@@ -80,7 +80,7 @@ async fn responses_api_parent_and_subagent_requests_include_identity_headers_and
         &server,
         |req: &wiremock::Request| {
             request_body_contains(req, SPAWN_CALL_ID)
-                && request_header(req, "x-openai-subagent").is_none()
+                && req.body_json()["client_metadata"]["subagent_kind"].is_null()
         },
         sse(vec![
             ev_response_created("resp-parent-2"),
@@ -103,13 +103,14 @@ async fn responses_api_parent_and_subagent_requests_include_identity_headers_and
     submit_turn_with_timeout(&test, PARENT_PROMPT).await?;
 
     let parent = wait_for_matching_request(&parent_mock, "parent request", |request| {
-        request.body_contains_text(PARENT_PROMPT) && request.header("x-openai-subagent").is_none()
+        request.body_contains_text(PARENT_PROMPT)
+            && request.body_json()["client_metadata"]["subagent_kind"].is_null()
     })
     .await?;
     let child = wait_for_matching_request(&child_mock, "child request", |request| {
         request.body_contains_text(CHILD_PROMPT)
             && !request.body_contains_text(SPAWN_CALL_ID)
-            && request.header("x-openai-subagent").as_deref() == Some("collab_spawn")
+            && request.body_json()["client_metadata"]["subagent_kind"] == "collab_spawn"
     })
     .await?;
 
@@ -125,10 +126,10 @@ async fn responses_api_parent_and_subagent_requests_include_identity_headers_and
     assert_eq!(parent_generation, 0);
     assert_eq!(child_generation, 0);
     assert!(child_thread_id != parent_thread_id);
-    assert_eq!(parent.header("x-openai-subagent"), None);
+    assert!(parent.body_json()["client_metadata"]["subagent_kind"].is_null());
     assert_eq!(
-        child.header("x-openai-subagent").as_deref(),
-        Some("collab_spawn")
+        child.body_json()["client_metadata"]["subagent_kind"],
+        "collab_spawn"
     );
     assert_eq!(
         child.header("x-codex-parent-thread-id").as_deref(),
@@ -259,10 +260,6 @@ fn event_summary(event: &EventMsg) -> String {
 
 fn request_body_contains(req: &wiremock::Request, text: &str) -> bool {
     std::str::from_utf8(&req.body).is_ok_and(|body| body.contains(text))
-}
-
-fn request_header<'a>(req: &'a wiremock::Request, name: &str) -> Option<&'a str> {
-    req.headers.get(name).and_then(|value| value.to_str().ok())
 }
 
 fn split_window_id(window_id: &str) -> Result<(&str, u64)> {

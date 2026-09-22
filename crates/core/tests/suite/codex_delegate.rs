@@ -442,7 +442,7 @@ async fn guardian_delegate_rejects_escalation_requests_without_prompting() {
     let guardian_requests = requests
         .iter()
         .filter(|request| {
-            request.body_json()["client_metadata"]["x-openai-subagent"].as_str() == Some("guardian")
+            request.body_json()["client_metadata"]["subagent_kind"].as_str() == Some("guardian")
         })
         .collect::<Vec<_>>();
     assert_eq!(guardian_requests.len(), 2);

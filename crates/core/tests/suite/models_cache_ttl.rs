@@ -132,7 +132,7 @@ async fn guardian_reused_reviewer_avoids_stale_catalog_lookup() -> Result<()> {
     let guardian_requests = requests
         .iter()
         .filter(|request| {
-            request.body_json()["client_metadata"]["x-openai-subagent"].as_str() == Some("guardian")
+            request.body_json()["client_metadata"]["subagent_kind"].as_str() == Some("guardian")
         })
         .collect::<Vec<_>>();
     assert_eq!(guardian_requests.len(), 2);

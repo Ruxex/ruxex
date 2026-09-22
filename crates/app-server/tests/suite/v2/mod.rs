@@ -74,9 +74,9 @@ mod request_user_input;
 mod request_validation;
 mod residency;
 mod review;
+mod safety_check_downgrade;
 #[path = "rollout_compress_tests.rs"]
 mod rollout_compress;
-mod safety_check_downgrade;
 mod selected_environment;
 mod server_diagnostics;
 #[cfg(not(target_os = "windows"))]
