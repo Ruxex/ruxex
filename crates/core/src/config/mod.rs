@@ -1637,7 +1637,6 @@ impl Config {
         }
 
         McpConfig {
-            chatgpt_base_url: self.chatgpt_base_url.clone(),
             requires_read_only_mcp_tools: false,
             codex_home: self.codex_home.to_path_buf(),
             mcp_enterprise_managed_auth: self.mcp_enterprise_managed_auth.clone(),

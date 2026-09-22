@@ -110,8 +110,6 @@ pub struct McpPermissionPromptAutoApproveContext {
 /// runtime entry points such as [`effective_mcp_servers`].
 #[derive(Debug, Clone)]
 pub struct McpConfig {
-    /// Base URL used by the verified-access security boundary for eligible plugins.
-    pub chatgpt_base_url: String,
     /// Requests server-side read-only filtering and invocation checks for MCP tools.
     pub requires_read_only_mcp_tools: bool,
     /// Codex home directory used for MCP OAuth state and app-tool cache files.

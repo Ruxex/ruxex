@@ -385,7 +385,6 @@ impl McpConnectionSet {
         let server_name = &tool_info.server_name;
         let view = self.servers.get(server_name)?;
         PreparedMcpCall::new(
-            Arc::clone(self),
             client,
             config,
             tool_catalog_snapshot,

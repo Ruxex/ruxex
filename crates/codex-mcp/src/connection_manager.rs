@@ -49,8 +49,6 @@ use crate::tool_catalog_cache::McpToolCatalogCacheContext;
 use crate::tools::ToolFilter;
 use crate::tools::ToolInfo;
 use crate::tools::filter_tools;
-use crate::trusted_access::ENTITLEMENT_CONTEXT_KEY;
-use crate::trusted_access::TrustedAccessContext;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
@@ -73,6 +71,7 @@ use tokio::task::JoinSet;
 use tracing::warn;
 
 static LIVE_CONNECTIONS: Gauge = Gauge::new("mcp.connections.live");
+pub(crate) const HOST_OWNED_ENTITLEMENT_CONTEXT_KEY: &str = "openai/entitlementContext";
 
 pub(crate) struct McpServerConnection {
     identity: Option<McpServerConnectionIdentity>,
@@ -182,7 +181,6 @@ pub(crate) struct McpConnectionSet {
     prefix_mcp_tool_names: bool,
     non_prefixed_mcp_tool_servers: Vec<String>,
     elicitation_requests: ElicitationRequestManager,
-    pub(crate) trusted_access: Option<TrustedAccessContext>,
 }
 
 impl McpConnectionSet {
@@ -194,7 +192,6 @@ impl McpConnectionSet {
         input: McpRuntimeInput,
         elicitation_router: ElicitationRequestRouter,
     ) -> Self {
-        let trusted_access = TrustedAccessContext::from_runtime(&input);
         let McpRuntimeInput {
             startup_policy,
             config,
@@ -649,7 +646,6 @@ impl McpConnectionSet {
             prefix_mcp_tool_names,
             non_prefixed_mcp_tool_servers,
             elicitation_requests: elicitation_requests.clone(),
-            trusted_access,
         };
         let summary_publication_gate = publication_gate;
         tokio::spawn(async move {
@@ -706,7 +702,6 @@ impl McpConnectionSet {
             prefix_mcp_tool_names,
             non_prefixed_mcp_tool_servers: Vec::new(),
             elicitation_requests: ElicitationRequestManager::default(),
-            trusted_access: None,
         }
     }
 
@@ -878,7 +873,7 @@ impl McpConnectionSet {
         };
         // Direct callers cannot supply host-owned entitlement metadata, even for unlisted tools.
         if let Some(serde_json::Value::Object(meta)) = meta.as_mut() {
-            meta.remove(ENTITLEMENT_CONTEXT_KEY);
+            meta.remove(HOST_OWNED_ENTITLEMENT_CONTEXT_KEY);
         }
         let result: rmcp::model::CallToolResult = client
             .client
