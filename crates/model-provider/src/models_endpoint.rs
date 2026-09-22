@@ -61,11 +61,11 @@ impl OpenAiModelsEndpoint {
         }
     }
 
-    async fn uses_codex_backend(&self) -> bool {
+    async fn uses_managed_auth(&self) -> bool {
         self.auth()
             .await
             .as_ref()
-            .is_some_and(CodexAuth::uses_codex_backend)
+            .is_some_and(CodexAuth::uses_managed_auth)
     }
 
     async fn list_models(
@@ -136,8 +136,8 @@ impl ModelsEndpointClient for OpenAiModelsEndpoint {
         self.provider_info.has_command_auth()
     }
 
-    fn uses_codex_backend(&self) -> ModelsEndpointFuture<'_, bool> {
-        Box::pin(OpenAiModelsEndpoint::uses_codex_backend(self))
+    fn uses_managed_auth(&self) -> ModelsEndpointFuture<'_, bool> {
+        Box::pin(OpenAiModelsEndpoint::uses_managed_auth(self))
     }
 
     fn list_models<'a>(

@@ -51,7 +51,7 @@ struct AuthManagerAuthProvider {
 
 impl AuthManagerAuthProvider {
     fn is_expected_auth(&self, auth: &CodexAuth) -> bool {
-        auth.uses_codex_backend()
+        auth.uses_managed_auth()
             && auth.get_account_id() == self.expected_auth.get_account_id()
             && auth.get_chatgpt_user_id() == self.expected_auth.get_chatgpt_user_id()
             && auth.is_workspace_account() == self.expected_auth.is_workspace_account()

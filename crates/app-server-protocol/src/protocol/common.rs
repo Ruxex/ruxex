@@ -47,8 +47,8 @@ impl AuthMode {
         false
     }
 
-    /// Returns whether this mode is backed by Codex services rather than a direct model API.
-    pub fn uses_codex_backend(self) -> bool {
+    /// Returns whether this mode uses host-managed authentication rather than a direct model API.
+    pub fn uses_managed_auth(self) -> bool {
         matches!(self, Self::Headers)
     }
 }

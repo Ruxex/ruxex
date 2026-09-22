@@ -88,7 +88,7 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
     bundled.sort_by_key(|model| model.priority);
     let mut bundled = ModelPreset::filter_by_auth(
         bundled.into_iter().map(Into::into).collect(),
-        /*chatgpt_mode*/ false,
+        /*uses_managed_auth*/ false,
     );
     ModelPreset::mark_default_by_picker_visibility(&mut bundled);
     let mut remote = vec![ModelPreset::from(remote_model)];
@@ -194,10 +194,10 @@ fn model_from_preset(preset: &ModelPreset) -> Model {
 }
 
 fn expected_visible_models() -> Vec<Model> {
-    // Filter by supported_in_api to support testing with both ChatGPT and non-ChatGPT auth modes.
+    // Filter by supported_in_api to cover both managed and direct provider auth modes.
     let mut presets = ModelPreset::filter_by_auth(
         codex_core::test_support::all_model_presets().clone(),
-        /*chatgpt_mode*/ false,
+        /*uses_managed_auth*/ false,
     );
 
     // Mirror `ModelsManager::build_available_models()` default selection after auth filtering.

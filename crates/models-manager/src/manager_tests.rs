@@ -88,7 +88,7 @@ fn assert_models_contain(actual: &[ModelInfo], expected: &[ModelInfo]) {
 #[derive(Debug)]
 struct TestModelsEndpoint {
     has_command_auth: bool,
-    uses_codex_backend: bool,
+    uses_managed_auth: bool,
     responses: Mutex<VecDeque<Vec<ModelInfo>>>,
     etag: Option<String>,
     fetch_count: AtomicUsize,
@@ -190,7 +190,7 @@ impl TestModelsEndpoint {
     fn new(responses: Vec<Vec<ModelInfo>>) -> Arc<Self> {
         Arc::new(Self {
             has_command_auth: false,
-            uses_codex_backend: true,
+            uses_managed_auth: true,
             responses: Mutex::new(responses.into()),
             etag: None,
             fetch_count: AtomicUsize::new(0),
@@ -201,7 +201,7 @@ impl TestModelsEndpoint {
     fn without_refresh(responses: Vec<Vec<ModelInfo>>) -> Arc<Self> {
         Arc::new(Self {
             has_command_auth: false,
-            uses_codex_backend: false,
+            uses_managed_auth: false,
             responses: Mutex::new(responses.into()),
             etag: None,
             fetch_count: AtomicUsize::new(0),
@@ -249,8 +249,8 @@ impl ModelsEndpointClient for TestModelsEndpoint {
         self.has_command_auth
     }
 
-    fn uses_codex_backend(&self) -> ModelsEndpointFuture<'_, bool> {
-        Box::pin(async { self.uses_codex_backend })
+    fn uses_managed_auth(&self) -> ModelsEndpointFuture<'_, bool> {
+        Box::pin(async { self.uses_managed_auth })
     }
 
     fn list_models<'a>(
@@ -591,7 +591,7 @@ async fn refresh_available_models_keeps_merging_for_custom_api_auth() {
     let codex_home = tempdir().expect("temp dir");
     let endpoint = Arc::new(TestModelsEndpoint {
         has_command_auth: true,
-        uses_codex_backend: false,
+        uses_managed_auth: false,
         responses: Mutex::new(vec![remote_models.clone()].into()),
         etag: None,
         fetch_count: AtomicUsize::new(0),
@@ -670,7 +670,7 @@ async fn online_refresh_updates_access_programs_with_unchanged_etag() {
     let responses = vec![vec![granted_model.clone()], vec![revoked_model.clone()]];
     let endpoint = Arc::new(TestModelsEndpoint {
         has_command_auth: false,
-        uses_codex_backend: true,
+        uses_managed_auth: true,
         responses: Mutex::new(responses.into()),
         etag: Some("stable-catalog-etag".to_string()),
         fetch_count: AtomicUsize::new(0),
@@ -902,13 +902,13 @@ impl TestAuthAwareModelsEndpoint {
         self.fetch_count.load(Ordering::SeqCst)
     }
 
-    async fn uses_codex_backend(&self) -> bool {
+    async fn uses_managed_auth(&self) -> bool {
         match self.auth_manager.as_ref() {
             Some(auth_manager) => auth_manager
                 .auth()
                 .await
                 .as_ref()
-                .is_some_and(CodexAuth::uses_codex_backend),
+                .is_some_and(CodexAuth::uses_managed_auth),
             None => false,
         }
     }
@@ -945,8 +945,8 @@ impl ModelsEndpointClient for TestAuthAwareModelsEndpoint {
         false
     }
 
-    fn uses_codex_backend(&self) -> ModelsEndpointFuture<'_, bool> {
-        Box::pin(TestAuthAwareModelsEndpoint::uses_codex_backend(self))
+    fn uses_managed_auth(&self) -> ModelsEndpointFuture<'_, bool> {
+        Box::pin(TestAuthAwareModelsEndpoint::uses_managed_auth(self))
     }
 
     fn list_models<'a>(

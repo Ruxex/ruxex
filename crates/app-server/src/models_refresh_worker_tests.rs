@@ -54,7 +54,7 @@ impl ModelsEndpointClient for TestModelsEndpoint {
         true
     }
 
-    fn uses_codex_backend(&self) -> ModelsEndpointFuture<'_, bool> {
+    fn uses_managed_auth(&self) -> ModelsEndpointFuture<'_, bool> {
         Box::pin(async { false })
     }
 

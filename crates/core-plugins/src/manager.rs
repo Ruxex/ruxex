@@ -345,7 +345,7 @@ impl PluginLoadCacheKey {
 }
 
 fn target_curated_marketplace(auth_mode: Option<AuthMode>) -> TargetCuratedMarketplace {
-    if auth_mode.is_some_and(AuthMode::uses_codex_backend) {
+    if auth_mode.is_some_and(AuthMode::uses_managed_auth) {
         TargetCuratedMarketplace::OpenAi
     } else {
         TargetCuratedMarketplace::OpenAiApi

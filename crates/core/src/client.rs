@@ -924,15 +924,15 @@ impl ModelClient {
             .as_ref()
             .filter(|config| {
                 config.model == model
-                    && self.uses_codex_backend(auth)
+                    && self.uses_managed_auth(auth)
             })
             .map(|config| config.headers.clone())
             .unwrap_or_default()
     }
 
-    fn uses_codex_backend(&self, auth: Option<&CodexAuth>) -> bool {
+    fn uses_managed_auth(&self, auth: Option<&CodexAuth>) -> bool {
         let provider = self.state.provider.info();
-        auth.is_some_and(CodexAuth::uses_codex_backend)
+        auth.is_some_and(CodexAuth::uses_managed_auth)
             && provider.is_openai()
             && provider.requires_openai_auth
             && provider.env_key.is_none()
@@ -947,7 +947,7 @@ impl ModelClient {
         model: &str,
         service_tier: Option<&str>,
     ) -> Option<HeaderValue> {
-        if !self.uses_codex_backend(auth) {
+        if !self.uses_managed_auth(auth) {
             return None;
         }
 
@@ -1319,7 +1319,7 @@ impl ModelClientSession {
 
     fn responses_request_compression(&self, auth: Option<&CodexAuth>) -> Compression {
         if self.client.state.enable_request_compression
-            && auth.is_some_and(CodexAuth::uses_codex_backend)
+            && auth.is_some_and(CodexAuth::uses_managed_auth)
             && self.client.state.provider.info().is_openai()
         {
             Compression::Zstd

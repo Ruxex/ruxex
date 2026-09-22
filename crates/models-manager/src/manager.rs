@@ -46,8 +46,8 @@ pub trait ModelsEndpointClient: fmt::Debug + Send + Sync {
     /// Returns whether this provider can authenticate command-scoped requests.
     fn has_command_auth(&self) -> bool;
 
-    /// Returns whether the currently resolved auth can use Codex backend-only models.
-    fn uses_codex_backend(&self) -> ModelsEndpointFuture<'_, bool>;
+    /// Returns whether the currently resolved auth uses host-managed authentication.
+    fn uses_managed_auth(&self) -> ModelsEndpointFuture<'_, bool>;
 
     /// Returns whether this provider supports an authoritative catalog with OpenAI API keys.
     fn supports_api_key_models(&self) -> bool {
@@ -154,10 +154,10 @@ pub trait ModelsManager: fmt::Debug + Send + Sync {
         remote_models.sort_by_key(|model| model.priority);
 
         let mut presets: Vec<ModelPreset> = remote_models.into_iter().map(Into::into).collect();
-        let uses_codex_backend = self
+        let uses_managed_auth = self
             .auth_manager()
-            .is_some_and(AuthManager::current_auth_uses_codex_backend);
-        presets = ModelPreset::filter_by_auth(presets, uses_codex_backend);
+            .is_some_and(AuthManager::current_auth_uses_managed_auth);
+        presets = ModelPreset::filter_by_auth(presets, uses_managed_auth);
 
         ModelPreset::mark_default_by_picker_visibility(&mut presets);
 
@@ -509,7 +509,7 @@ impl OpenAiModelsManager {
     }
 
     async fn should_refresh_models(&self) -> bool {
-        self.endpoint_client.uses_codex_backend().await
+        self.endpoint_client.uses_managed_auth().await
             || self.endpoint_client.has_command_auth()
             || self.supports_api_key_discovery()
     }

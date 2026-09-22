@@ -1001,11 +1001,11 @@ async fn capture_current_model_fallback_step_context(
     previous_model: &str,
     cancellation_token: &CancellationToken,
 ) -> CodexResult<Option<Arc<StepContext>>> {
-    let uses_codex_backend = turn_context
+    let uses_managed_auth = turn_context
         .auth_manager
         .as_deref()
-        .is_some_and(codex_login::AuthManager::current_auth_uses_codex_backend);
-    if !uses_codex_backend
+        .is_some_and(codex_login::AuthManager::current_auth_uses_managed_auth);
+    if !uses_managed_auth
         || !turn_context.provider.info().is_openai()
         || previous_model == turn_context.model_info().slug
     {

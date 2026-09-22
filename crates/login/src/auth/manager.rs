@@ -285,8 +285,8 @@ impl CodexAuth {
         self.api_auth_mode().has_chatgpt_account()
     }
 
-    pub fn uses_codex_backend(&self) -> bool {
-        self.api_auth_mode().uses_codex_backend()
+    pub fn uses_managed_auth(&self) -> bool {
+        self.api_auth_mode().uses_managed_auth()
     }
 
     pub fn is_workload_identity(&self) -> bool {
@@ -661,7 +661,7 @@ fn auth_mode_is_allowed(
     allowed_login_methods: Option<&[ForcedLoginMethod]>,
     mode: AuthMode,
 ) -> bool {
-    let method = if mode.uses_codex_backend() {
+    let method = if mode.uses_managed_auth() {
         ForcedLoginMethod::Chatgpt
     } else {
         ForcedLoginMethod::Api
@@ -1931,9 +1931,9 @@ impl AuthManager {
         self.auth_cached().as_ref().map(CodexAuth::auth_mode)
     }
 
-    pub fn current_auth_uses_codex_backend(&self) -> bool {
+    pub fn current_auth_uses_managed_auth(&self) -> bool {
         self.get_api_auth_mode()
-            .is_some_and(AuthMode::uses_codex_backend)
+            .is_some_and(AuthMode::uses_managed_auth)
     }
 
     async fn refresh_external_auth(
