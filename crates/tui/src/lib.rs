@@ -937,7 +937,6 @@ fn app_server_target_for_launch(
 fn loader_overrides_are_default(loader_overrides: &LoaderOverrides) -> bool {
     let loader_overrides_are_default = loader_overrides.user_config_path.is_none()
         && loader_overrides.user_config_profile.is_none()
-        && loader_overrides.managed_config_path.is_none()
         && loader_overrides.system_config_path.is_none()
         && loader_overrides.system_requirements_path.is_none()
         && !loader_overrides.ignore_managed_requirements

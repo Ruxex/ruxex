@@ -129,3 +129,28 @@ external-agent import remain on the paginated contract.
 - [x] No manifests or crate dependency edges changed, so dependency-graph regeneration is not required.
 - [x] Confirm the compatibility inventory has no unclassified production entries.
 - [x] Leave the next OpenAI-specific integration selection to the subsequent Phase 3 task.
+
+### Task 7: Remove the obsolete `managed_config.toml` compatibility reader
+
+The inventory audit found one remaining pre-release compatibility boundary in
+the configuration loader. This task removes the old file-backed
+`managed_config.toml` reader and its conversion into requirements layers. The
+macOS `config_toml_base64` forced preference is still a current MDM producer,
+so it is migrated to the canonical MDM layer source rather than removed.
+Current `requirements.toml`, managed-preferences requirements,
+enterprise-managed configuration, path resolution, and credential-broker
+security checks remain in place.
+
+**Files:**
+- Modify: `crates/config/src/loader/{layer_io,local,managed_requirements,project_discovery,mod}.rs`.
+- Modify: `crates/config/src/config_layer_source.rs` and affected config-loader tests/docs.
+- Modify: `docs/pre-release-compatibility-inventory.md` with the completed decision.
+
+- [x] Remove the legacy file reader and conversion helper, and migrate the
+  active forced MDM config source to `ConfigLayerSource::Mdm`. The historical
+  app-server metadata variants remain separately inventoried for the next
+  protocol slice.
+- [x] Preserve canonical system requirements, current MDM requirements,
+  enterprise-managed config, and trust/security behavior.
+- [x] Run `just generate`, inspect generated-artifact diff, then run
+  `just check --tests` and `just check`.

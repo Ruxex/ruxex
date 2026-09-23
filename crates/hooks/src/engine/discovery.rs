@@ -312,8 +312,7 @@ fn fallback_managed_hooks_source_path(
     requirement_source: Option<&RequirementSource>,
 ) -> AbsolutePathBuf {
     match requirement_source {
-        Some(RequirementSource::SystemRequirementsToml { file })
-        | Some(RequirementSource::LegacyManagedConfigTomlFromFile { file }) => file.clone(),
+        Some(RequirementSource::SystemRequirementsToml { file }) => file.clone(),
         Some(RequirementSource::MdmManagedPreferences { domain, key }) => {
             synthetic_layer_path(&format!("<mdm:{domain}:{key}>/requirements.toml"))
         }
@@ -327,6 +326,7 @@ fn fallback_managed_hooks_source_path(
                 "<enterprise-managed:{name}:{id}>/requirements.toml"
             ))
         }
+        Some(RequirementSource::LegacyManagedConfigTomlFromFile { file }) => file.clone(),
         Some(RequirementSource::LegacyManagedConfigTomlFromMdm) => {
             synthetic_layer_path("<legacy-managed-config.toml-mdm>/managed_config.toml")
         }
@@ -403,8 +403,7 @@ fn config_toml_source_path(layer: &ConfigLayerEntry) -> AbsolutePathBuf {
     match &layer.name {
         ConfigLayerSource::PackagedDefaults { file }
         | ConfigLayerSource::System { file }
-        | ConfigLayerSource::User { file, .. }
-        | ConfigLayerSource::LegacyManagedConfigTomlFromFile { file } => file.clone(),
+        | ConfigLayerSource::User { file, .. } => file.clone(),
         ConfigLayerSource::Project { dot_codex_folder } => layer
             .hooks_config_folder()
             .unwrap_or_else(|| dot_codex_folder.clone())
@@ -415,10 +414,11 @@ fn config_toml_source_path(layer: &ConfigLayerEntry) -> AbsolutePathBuf {
         ConfigLayerSource::EnterpriseManaged { id, name } => synthetic_layer_path(&format!(
             "<enterprise-managed:{name}:{id}>/{CONFIG_TOML_FILE}"
         )),
+        ConfigLayerSource::SessionFlags => synthetic_layer_path("<session-flags>/config.toml"),
+        ConfigLayerSource::LegacyManagedConfigTomlFromFile { file } => file.clone(),
         ConfigLayerSource::LegacyManagedConfigTomlFromMdm => {
             synthetic_layer_path("<legacy-managed-config.toml-mdm>/managed_config.toml")
         }
-        ConfigLayerSource::SessionFlags => synthetic_layer_path("<session-flags>/config.toml"),
     }
 }
 

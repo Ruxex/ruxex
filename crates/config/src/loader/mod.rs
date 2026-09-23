@@ -15,7 +15,6 @@ use crate::ConfigLayerSource;
 use crate::ProfileV2Name;
 use crate::RequirementsLayerEntry;
 use crate::config_requirements::RequirementSource;
-use crate::config_requirements::SandboxModeRequirement;
 use crate::config_toml::ConfigToml;
 use crate::config_toml::ProjectConfig;
 use crate::diagnostics::ConfigError;
@@ -41,9 +40,7 @@ use crate::thread_config::ThreadConfigLoader;
 use codex_file_system::ExecutorFileSystem;
 use codex_git_utils::resolve_root_git_project_for_trust;
 use codex_network_proxy::is_credential_broker_provider_env_key;
-use codex_protocol::config_types::SandboxMode;
 use codex_protocol::config_types::TrustLevel;
-use codex_protocol::protocol::AskForApproval;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use codex_utils_absolute_path::AbsolutePathBufGuard;
 use codex_utils_path_uri::PathUri;
@@ -98,12 +95,7 @@ async fn first_layer_config_error_from_entries(layers: &[ConfigLayerEntry]) -> O
 ///
 /// - system    `/etc/codex/requirements.toml` (Unix) or
 ///   `%ProgramData%\OpenAI\Codex\requirements.toml` (Windows)
-/// - legacy:   `/etc/codex/managed_config.toml` (Unix) reinterpreted as
-///   requirements.toml
 /// - admin:    managed preferences (*)
-///
-/// For backwards compatibility, Unix continues to load
-/// `/etc/codex/managed_config.toml` and map it to `requirements.toml`.
 ///
 /// Configuration is built up from multiple layers in the following order:
 ///
@@ -382,33 +374,10 @@ pub async fn load_config_layers_state(
         insert_layer_by_precedence(&mut layers, thread_config_layer);
     }
 
-    // Make a best-effort to support the legacy `managed_config.toml` as a
-    // config layer on top of everything else. For fields in
-    // `managed_config.toml` that do not have an equivalent in
-    // `ConfigRequirements`, note users can still override these values on a
-    // per-turn basis in the TUI and VS Code.
     let LoadedConfigLayers {
-        managed_config,
         managed_config_from_mdm,
         ..
     } = loaded_config_layers;
-    if let Some(config) = managed_config {
-        let managed_parent = config.file.as_path().parent().ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!(
-                    "Managed config file {} has no parent directory",
-                    config.file.as_path().display()
-                ),
-            )
-        })?;
-        let managed_config =
-            resolve_relative_paths_in_config_toml(config.managed_config, managed_parent)?;
-        layers.push(ConfigLayerEntry::new(
-            ConfigLayerSource::LegacyManagedConfigTomlFromFile { file: config.file },
-            managed_config,
-        ));
-    }
     if let Some(config) = managed_config_from_mdm {
         // As a general rule, config from MDM should _not_ include relative
         // paths, starting with `./`, but a path starting with `~/` _is_ a
@@ -422,7 +391,10 @@ pub async fn load_config_layers_state(
             raw_toml_base_dir.as_path(),
         )?;
         layers.push(ConfigLayerEntry::new_with_raw_toml(
-            ConfigLayerSource::LegacyManagedConfigTomlFromMdm,
+            ConfigLayerSource::Mdm {
+                domain: "com.openai.codex".to_string(),
+                key: "config_toml_base64".to_string(),
+            },
             managed_config,
             config.raw_toml,
             raw_toml_base_dir,
@@ -709,17 +681,13 @@ pub fn has_local_managed_configuration(codex_home: &Path) -> io::Result<bool> {
 }
 
 fn has_local_managed_configuration_with_system_requirements_path(
-    codex_home: &Path,
+    _codex_home: &Path,
     system_requirements_path: &Path,
 ) -> io::Result<bool> {
     #[cfg(windows)]
     let _ = codex_home;
 
     #[cfg(not(windows))]
-    if layer_io::managed_config_default_path(codex_home).try_exists()? {
-        return Ok(true);
-    }
-
     if system_requirements_path.try_exists()? {
         return Ok(true);
     }
@@ -824,101 +792,6 @@ fn windows_program_data_dir_from_known_folder() -> io::Result<PathBuf> {
     Ok(path)
 }
 
-fn requirements_layers_from_legacy_scheme(
-    loaded_config_layers: LoadedConfigLayers,
-    codex_home: &Path,
-) -> io::Result<Vec<RequirementsLayerEntry>> {
-    // List the file-backed legacy layer first because requirements layers are
-    // composed lowest-precedence to highest-precedence, and MDM has higher
-    // precedence than the legacy managed_config.toml file.
-    let LoadedConfigLayers {
-        managed_config,
-        managed_config_from_mdm,
-        ..
-    } = loaded_config_layers;
-
-    let layer_count =
-        usize::from(managed_config.is_some()) + usize::from(managed_config_from_mdm.is_some());
-    let mut layers = Vec::with_capacity(layer_count);
-    let codex_home = AbsolutePathBuf::from_absolute_path(codex_home)?;
-    for (source, config, base_dir) in managed_config
-        .map(|c| {
-            let base_dir = c.file.parent().ok_or_else(|| {
-                io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    format!(
-                        "Managed config file {} has no parent directory",
-                        c.file.as_path().display()
-                    ),
-                )
-            })?;
-            Ok::<_, io::Error>((
-                RequirementSource::LegacyManagedConfigTomlFromFile { file: c.file },
-                c.managed_config,
-                base_dir,
-            ))
-        })
-        .transpose()?
-        .into_iter()
-        .chain(managed_config_from_mdm.map(|config| {
-            (
-                RequirementSource::LegacyManagedConfigTomlFromMdm,
-                config.managed_config,
-                codex_home.clone(),
-            )
-        }))
-    {
-        let legacy_config: LegacyManagedConfigToml =
-            config.try_into().map_err(|err: toml::de::Error| {
-                io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    format!("Failed to parse config requirements as TOML: {err}"),
-                )
-            })?;
-
-        layers.push(
-            RequirementsLayerEntry::from_toml_value(
-                source,
-                legacy_requirements_to_toml_value(legacy_config)?,
-            )
-            .with_base_dir(base_dir),
-        );
-    }
-
-    Ok(layers)
-}
-
-fn legacy_requirements_to_toml_value(legacy: LegacyManagedConfigToml) -> io::Result<TomlValue> {
-    let LegacyManagedConfigToml {
-        approval_policy,
-        sandbox_mode,
-    } = legacy;
-    let mut table = toml::map::Map::new();
-    if let Some(approval_policy) = approval_policy {
-        table.insert(
-            "allowed_approval_policies".to_string(),
-            toml_value_from_serializable(vec![approval_policy])?,
-        );
-    }
-    if let Some(sandbox_mode) = sandbox_mode {
-        let required_mode: SandboxModeRequirement = sandbox_mode.into();
-        // Allowing read-only is a requirement for Codex to function correctly.
-        // So in this backfill path, we append read-only if it's not already specified.
-        let mut allowed_modes = vec![SandboxModeRequirement::ReadOnly];
-        if required_mode != SandboxModeRequirement::ReadOnly {
-            allowed_modes.push(required_mode);
-        }
-        table.insert(
-            "allowed_sandbox_modes".to_string(),
-            toml_value_from_serializable(allowed_modes)?,
-        );
-    }
-    Ok(TomlValue::Table(table))
-}
-
-fn toml_value_from_serializable<T: serde::Serialize>(value: T) -> io::Result<TomlValue> {
-    TomlValue::try_from(value).map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))
-}
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum CredentialBrokerProjectState {
@@ -1294,9 +1167,6 @@ fn credential_broker_trusted_config(
     let mut trusted_config = merged_config.clone();
     for layer in thread_config_layers {
         merge_toml_values(&mut trusted_config, &layer.config);
-    }
-    if let Some(config) = loaded_config_layers.managed_config.as_ref() {
-        merge_toml_values(&mut trusted_config, &config.managed_config);
     }
     if let Some(config) = loaded_config_layers.managed_config_from_mdm.as_ref() {
         merge_toml_values(&mut trusted_config, &config.managed_config);
@@ -1774,20 +1644,6 @@ async fn load_root_checkout_project_config(
         },
     )
 }
-/// The legacy mechanism for specifying admin-enforced configuration is to read
-/// from a file like `/etc/codex/managed_config.toml` that has the same
-/// structure as `config.toml` where fields like `approval_policy` can specify
-/// exactly one value rather than a list of allowed values.
-///
-/// If present, re-interpret `managed_config.toml` as a `requirements.toml`
-/// where each specified field is treated as a constraint. Most fields allow
-/// only the specified value.
-#[derive(Deserialize, Debug, Clone, Default, PartialEq)]
-struct LegacyManagedConfigToml {
-    approval_policy: Option<AskForApproval>,
-    sandbox_mode: Option<SandboxMode>,
-}
-
 // Cannot name this `mod tests` because of tests.rs in this folder.
 #[cfg(test)]
 mod unit_tests {
@@ -1830,26 +1686,6 @@ foo = "xyzzy"
         );
         expected_toml_value.insert("foo".to_string(), TomlValue::String("xyzzy".to_string()));
         assert_eq!(normalized_toml_value, TomlValue::Table(expected_toml_value));
-        Ok(())
-    }
-
-    #[test]
-    fn legacy_managed_config_backfill_includes_read_only_sandbox_mode() -> io::Result<()> {
-        let legacy = LegacyManagedConfigToml {
-            approval_policy: None,
-            sandbox_mode: Some(SandboxMode::WorkspaceWrite),
-        };
-
-        assert_eq!(
-            legacy_requirements_to_toml_value(legacy)?,
-            TomlValue::Table(toml::map::Map::from_iter([(
-                "allowed_sandbox_modes".to_string(),
-                TomlValue::Array(vec![
-                    TomlValue::String("read-only".to_string()),
-                    TomlValue::String("workspace-write".to_string()),
-                ]),
-            )]))
-        );
         Ok(())
     }
 

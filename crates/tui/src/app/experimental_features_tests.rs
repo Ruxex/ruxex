@@ -8,14 +8,11 @@ async fn experimental_features_use_selected_server_profile_and_preserve_task_set
 {
     let home = tempfile::tempdir()?;
     let selected = AbsolutePathBuf::from_absolute_path(home.path().join("work.config.toml"))?;
-    let managed = home.path().join("managed.toml");
     std::fs::write(home.path().join("config.toml"), "# unselected\n")?;
     std::fs::write(&selected, "[features]\nnetwork_proxy = true\n")?;
-    std::fs::write(&managed, "")?;
     let loader = LoaderOverrides {
         user_config_path: Some(selected.clone()),
         user_config_profile: Some("work".parse()?),
-        managed_config_path: Some(managed.clone()),
         ignore_project_config: true,
         ..LoaderOverrides::without_managed_config_for_tests()
     };

@@ -33,7 +33,7 @@ impl ConfigLayerSource {
     pub fn precedence(&self) -> i16 {
         match self {
             ConfigLayerSource::PackagedDefaults { .. } => -10,
-            ConfigLayerSource::Mdm { .. } => 0,
+            ConfigLayerSource::Mdm { .. } => 50,
             ConfigLayerSource::System { .. } => 10,
             ConfigLayerSource::EnterpriseManaged { .. } => 15,
             ConfigLayerSource::User { profile, .. } => {

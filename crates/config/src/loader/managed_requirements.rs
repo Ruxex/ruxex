@@ -6,7 +6,6 @@ use super::layer_io::LoadedConfigLayers;
 use super::load_requirements_toml;
 #[cfg(target_os = "macos")]
 use super::macos;
-use super::requirements_layers_from_legacy_scheme;
 use super::system_requirements_toml_file_with_overrides;
 use crate::ConfigRequirements;
 use crate::ConfigRequirementsToml;
@@ -20,8 +19,8 @@ use std::io;
 use std::path::Path;
 
 /// Loads current managed requirements without reading system defaults, user or
-/// project settings, or thread-provided configuration. Legacy managed config
-/// remains a requirements source.
+/// project settings, or thread-provided configuration. Current MDM config and
+/// requirements are loaded as separate sources.
 pub async fn load_managed_requirements_state(
     fs: &dyn ExecutorFileSystem,
     codex_home: &Path,
@@ -46,8 +45,8 @@ pub async fn load_managed_requirements_state(
 }
 
 /// Composes the same requirements for full config loads and policy-only checks.
-/// The loaded legacy config and source layers are also returned for the full
-/// config stack and its ignored-field diagnostics.
+/// The loaded MDM config and source layers are also returned for the full config
+/// stack and its ignored-field diagnostics.
 pub(super) async fn load_requirements_from_sources(
     fs: &dyn ExecutorFileSystem,
     codex_home: &Path,
@@ -89,11 +88,6 @@ pub(super) async fn load_requirements_from_sources(
             .await?;
     if !overrides.ignore_managed_requirements {
         requirements_layers.extend(system_requirements_layer);
-        // Legacy managed_config.toml contributes approval and sandbox requirements.
-        requirements_layers.extend(requirements_layers_from_legacy_scheme(
-            loaded_config_layers.clone(),
-            codex_home,
-        )?);
         requirements_layers.extend(managed_preferences_requirements_layer);
     }
 

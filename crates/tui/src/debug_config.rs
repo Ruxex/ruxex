@@ -360,9 +360,10 @@ fn render_debug_config_lines(
 fn render_non_file_layer_details(layer: &ConfigLayerEntry) -> Vec<Line<'static>> {
     match &layer.name {
         ConfigLayerSource::SessionFlags => render_session_flag_details(&layer.config),
-        ConfigLayerSource::Mdm { .. }
-        | ConfigLayerSource::EnterpriseManaged { .. }
-        | ConfigLayerSource::LegacyManagedConfigTomlFromMdm => render_non_file_layer_value(layer),
+        ConfigLayerSource::Mdm { .. } | ConfigLayerSource::EnterpriseManaged { .. } => {
+            render_non_file_layer_value(layer)
+        }
+        ConfigLayerSource::LegacyManagedConfigTomlFromMdm => render_non_file_layer_value(layer),
         ConfigLayerSource::PackagedDefaults { .. }
         | ConfigLayerSource::System { .. }
         | ConfigLayerSource::User { .. }

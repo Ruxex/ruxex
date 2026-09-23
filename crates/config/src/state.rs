@@ -41,7 +41,6 @@ pub struct LoaderOverrides {
     pub packaged_defaults_path: Option<AbsolutePathBuf>,
     pub user_config_path: Option<AbsolutePathBuf>,
     pub user_config_profile: Option<ProfileV2Name>,
-    pub managed_config_path: Option<PathBuf>,
     pub system_config_path: Option<PathBuf>,
     pub system_requirements_path: Option<PathBuf>,
     pub ignore_managed_requirements: bool,
@@ -67,7 +66,6 @@ impl LoaderOverrides {
             packaged_defaults_path: None,
             user_config_path: None,
             user_config_profile: None,
-            managed_config_path: Some(base.join("managed_config.toml")),
             system_config_path: Some(base.join("config.toml")),
             system_requirements_path: Some(base.join("requirements.toml")),
             ignore_managed_requirements: false,
@@ -78,22 +76,6 @@ impl LoaderOverrides {
             #[cfg(target_os = "macos")]
             managed_preferences_base64: Some(String::new()),
             macos_managed_config_requirements_base64: Some(String::new()),
-        }
-    }
-
-    /// Returns overrides with host MDM disabled and managed config loaded from
-    /// `managed_config_path`. System requirements are loaded from a sibling
-    /// `requirements.toml` fixture.
-    ///
-    /// This is intended for tests that supply an explicit managed config fixture.
-    pub fn with_managed_config_path_for_tests(managed_config_path: PathBuf) -> Self {
-        let system_requirements_path = managed_config_path.with_file_name("requirements.toml");
-        Self {
-            user_config_path: None,
-            user_config_profile: None,
-            managed_config_path: Some(managed_config_path),
-            system_requirements_path: Some(system_requirements_path),
-            ..Self::without_managed_config_for_tests()
         }
     }
 

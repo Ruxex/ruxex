@@ -582,7 +582,7 @@ async fn missing_packaged_defaults_file_returns_an_error() {
 
 #[cfg(windows)]
 #[tokio::test]
-async fn default_windows_managed_config_is_ignored_without_compatibility_warning() {
+async fn default_windows_managed_config_is_not_read() {
     let tmp = tempdir().expect("tempdir");
     let codex_home = tmp.path().join("codex-home");
     std::fs::create_dir_all(&codex_home).expect("create codex home");
@@ -599,7 +599,6 @@ sandbox_mode = "danger-full-access"
         .expect("write user config");
 
     let mut overrides = LoaderOverrides::without_managed_config_for_tests();
-    overrides.managed_config_path = None;
     overrides.system_config_path = Some(tmp.path().join("system-config.toml"));
     overrides.system_requirements_path = Some(tmp.path().join("requirements.toml"));
     let stack = load_config_layers_state(
@@ -619,10 +618,12 @@ sandbox_mode = "danger-full-access"
     );
     assert_eq!(stack.requirements_toml().allowed_approval_policies, None);
     assert_eq!(stack.requirements_toml().allowed_sandbox_modes, None);
-    assert!(stack.all_layers_low_to_high().all(|layer| !matches!(
-        &layer.name,
-        ConfigLayerSource::LegacyManagedConfigTomlFromFile { .. }
-    )));
+    assert!(stack.all_layers_low_to_high().all(|layer| {
+        !matches!(
+            &layer.name,
+            ConfigLayerSource::LegacyManagedConfigTomlFromFile { .. }
+        )
+    }));
     assert_eq!(stack.startup_warnings(), None);
 }
 
@@ -862,7 +863,7 @@ fn local_layer_projection_preserves_override_blockers_and_cloud_position() {
 }
 
 #[tokio::test]
-async fn local_layers_keep_raw_paths_order_and_legacy_requirements() {
+async fn local_layers_keep_raw_paths_order_and_requirements() {
     let tmp = tempdir().expect("tempdir");
     let codex_home = tmp.path().join("codex-home");
     let project = tmp.path().join("project");
@@ -898,12 +899,6 @@ async fn local_layers_keep_raw_paths_order_and_legacy_requirements() {
         "model_instructions_file = \"./project.md\"\nopenai_base_url = \"https://ignored\"",
     )
     .expect("write project config");
-    let managed_file = managed_dir.join("managed_config.toml");
-    std::fs::write(
-        &managed_file,
-        "approval_policy = \"never\"\nsandbox_mode = \"workspace-write\"\nmodel_instructions_file = \"./managed.md\"",
-    )
-    .expect("write legacy managed config");
     let requirements_file = managed_dir.join("requirements.toml");
     std::fs::write(
         &requirements_file,
@@ -911,7 +906,7 @@ async fn local_layers_keep_raw_paths_order_and_legacy_requirements() {
     )
     .expect("write system requirements");
 
-    let mut overrides = LoaderOverrides::with_managed_config_path_for_tests(managed_file.clone());
+    let mut overrides = LoaderOverrides::without_managed_config_for_tests();
     overrides.system_config_path = Some(system_file.clone());
     overrides.system_requirements_path = Some(requirements_file.clone());
     let cwd = AbsolutePathBuf::from_absolute_path(&project).expect("absolute cwd");
@@ -935,7 +930,6 @@ async fn local_layers_keep_raw_paths_order_and_legacy_requirements() {
             system_dir.clone(),
             codex_home.clone(),
             dot_codex.clone(),
-            managed_dir.clone(),
         ]
     );
     assert_eq!(layers.config.cloud_insertion_index, 1);
@@ -943,25 +937,13 @@ async fn local_layers_keep_raw_paths_order_and_legacy_requirements() {
     assert_eq!(
         (
             layers.config.layers[2].toml.clone(),
-            layers.config.layers[3]
-                .toml
-                .get("model_instructions_file")
-                .cloned(),
-            layers.requirements.layers[0]
-                .toml
-                .get("log_dir")
-                .cloned(),
-            layers.requirements.layers[1].toml.clone(),
+            layers.requirements.layers[0].toml.clone(),
         ),
         (
             toml::from_str("model_instructions_file = \"./project.md\"")
                 .expect("project TOML"),
-            Some(TomlValue::String("./managed.md".into())),
-            Some(TomlValue::String("./logs".into())),
-            toml::from_str(
-                "allowed_approval_policies=[\"never\"]\nallowed_sandbox_modes=[\"read-only\",\"workspace-write\"]"
-            )
-            .expect("legacy requirements TOML"),
+            toml::from_str("allowed_sandbox_modes=[\"future-mode\"]\nlog_dir=\"./logs\"")
+                .expect("requirements TOML"),
         )
     );
 

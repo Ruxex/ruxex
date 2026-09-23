@@ -9,7 +9,6 @@ use super::load_root_checkout_project_config;
 use super::project_discovery;
 use super::project_root_markers_from_config;
 use super::project_trust_context;
-use super::requirements_layers_from_legacy_scheme;
 use super::system_config_toml_file_with_overrides;
 use super::system_requirements_toml_file_with_overrides;
 use crate::CONFIG_TOML_FILE;
@@ -92,7 +91,7 @@ pub struct LocalTomlLayer<S> {
 ///
 /// Cloud, selected profiles, session flags, and thread-provided layers are not
 /// included. Project discovery uses the executor's system, base-user, and
-/// legacy managed configuration.
+/// current MDM configuration.
 pub async fn load_local_config_layers(
     fs: &dyn ExecutorFileSystem,
     codex_home: &Path,
@@ -137,9 +136,7 @@ pub(super) async fn load_local_config_layers_with_overrides(
     )?;
     let project_root_markers = project_root_markers_from_config(&discovery_config)?
         .unwrap_or_else(default_project_root_markers);
-    let requirements =
-        local_requirements_layers(fs, codex_home.as_path(), overrides, loaded_managed.clone())
-            .await?;
+    let requirements = local_requirements_layers(fs, codex_home.as_path(), overrides).await?;
     let mut trust_context = project_trust_context(
         fs,
         &discovery_config,
@@ -190,7 +187,7 @@ pub(super) async fn load_local_config_layers_with_overrides(
     ];
     append_project_layers(fs, &mut config_layers, project_layers.layers).await?;
 
-    append_legacy_config_layers(&mut config_layers, loaded_managed, &codex_home)?;
+    append_mdm_config_layer(&mut config_layers, loaded_managed, &codex_home)?;
 
     Ok(LocalConfigLayers {
         config: LocalTomlLayerStack {
@@ -248,30 +245,17 @@ async fn append_project_layers(
     Ok(())
 }
 
-fn append_legacy_config_layers(
+fn append_mdm_config_layer(
     output: &mut Vec<LocalTomlLayer<ConfigLayerSource>>,
     loaded: layer_io::LoadedConfigLayers,
     codex_home: &AbsolutePathBuf,
 ) -> io::Result<()> {
-    if let Some(config) = loaded.managed_config {
-        let base_dir = config.file.parent().ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!(
-                    "Managed config file {} has no parent directory",
-                    config.file.as_path().display()
-                ),
-            )
-        })?;
-        output.push(LocalTomlLayer {
-            source: ConfigLayerSource::LegacyManagedConfigTomlFromFile { file: config.file },
-            base_dir,
-            toml: config.managed_config,
-        });
-    }
     if let Some(config) = loaded.managed_config_from_mdm {
         output.push(LocalTomlLayer {
-            source: ConfigLayerSource::LegacyManagedConfigTomlFromMdm,
+            source: ConfigLayerSource::Mdm {
+                domain: "com.openai.codex".to_string(),
+                key: "config_toml_base64".to_string(),
+            },
             base_dir: codex_home.clone(),
             toml: config.managed_config,
         });
@@ -281,19 +265,14 @@ fn append_legacy_config_layers(
 
 async fn local_requirements_layers(
     fs: &dyn ExecutorFileSystem,
-    codex_home: &Path,
+    _codex_home: &Path,
     overrides: &LoaderOverrides,
-    loaded_managed: layer_io::LoadedConfigLayers,
 ) -> io::Result<LocalTomlLayerStack<RequirementSource>> {
     let system_file = system_requirements_toml_file_with_overrides(overrides)?;
     let system = load_requirements_toml(fs, &system_file).await?;
     let cloud_insertion_index = usize::from(system.is_some());
     let mut entries = Vec::new();
     entries.extend(system);
-    entries.extend(requirements_layers_from_legacy_scheme(
-        loaded_managed,
-        codex_home,
-    )?);
 
     #[cfg(target_os = "macos")]
     {

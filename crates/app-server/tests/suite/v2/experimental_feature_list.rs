@@ -35,9 +35,7 @@ async fn experimental_feature_list_returns_feature_metadata_with_stage() -> Resu
     let config = ConfigBuilder::default()
         .codex_home(codex_home.path().to_path_buf())
         .fallback_cwd(Some(codex_home.path().to_path_buf()))
-        .loader_overrides(LoaderOverrides::with_managed_config_path_for_tests(
-            codex_home.path().join("managed_config.toml"),
-        ))
+        .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
         .build()
         .await?;
     let mut mcp = TestAppServer::builder()

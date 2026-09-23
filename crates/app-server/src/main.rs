@@ -12,7 +12,6 @@ use codex_arg0::arg0_dispatch_or_else;
 use codex_config::LoaderOverrides;
 use codex_protocol::protocol::SessionSource;
 use codex_utils_cli::CliConfigOverrides;
-use std::path::PathBuf;
 
 #[cfg(all(
     target_os = "linux",
@@ -24,7 +23,6 @@ static ALLOCATOR: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
 // Debug-only test hook: lets integration tests point the server at a temporary
 // managed config file without writing to /etc.
-const MANAGED_CONFIG_PATH_ENV_VAR: &str = "CODEX_APP_SERVER_MANAGED_CONFIG_PATH";
 const DISABLE_MANAGED_CONFIG_ENV_VAR: &str = "CODEX_APP_SERVER_DISABLE_MANAGED_CONFIG";
 
 #[derive(Debug, Parser)]
@@ -88,9 +86,7 @@ fn main() -> anyhow::Result<()> {
         let loader_overrides = if disable_managed_config_from_debug_env() {
             LoaderOverrides::without_managed_config_for_tests()
         } else {
-            managed_config_path_from_debug_env()
-                .map(LoaderOverrides::with_managed_config_path_for_tests)
-                .unwrap_or_default()
+            LoaderOverrides::default()
         };
         let transport = listen;
         let auth = auth.try_into_settings()?;
@@ -132,21 +128,6 @@ fn disable_managed_config_from_debug_env() -> bool {
     }
 
     false
-}
-
-fn managed_config_path_from_debug_env() -> Option<PathBuf> {
-    #[cfg(debug_assertions)]
-    {
-        if let Ok(value) = std::env::var(MANAGED_CONFIG_PATH_ENV_VAR) {
-            return if value.is_empty() {
-                None
-            } else {
-                Some(PathBuf::from(value))
-            };
-        }
-    }
-
-    None
 }
 
 #[cfg(test)]

@@ -44,7 +44,7 @@ pub enum ConfigLayerSource {
         key: String,
     },
 
-    /// Managed config layer from a file (usually `managed_config.toml`).
+    /// Host-wide configuration loaded from a file.
     #[serde(rename_all = "camelCase")]
     #[ts(rename_all = "camelCase")]
     System {
@@ -93,17 +93,15 @@ pub enum ConfigLayerSource {
     /// Session-layer overrides supplied via `-c`/`--config`.
     SessionFlags,
 
-    /// `managed_config.toml` was designed to be a config that was loaded
-    /// as the last layer on top of everything else. This scheme did not quite
-    /// work out as intended, but we keep this variant as a "best effort" while
-    /// we phase out `managed_config.toml` in favor of `requirements.toml`.
+    /// Historical managed config layer retained for decoding old app-server
+    /// payloads; current loaders no longer produce it.
     #[serde(rename_all = "camelCase")]
     #[ts(rename_all = "camelCase")]
-    LegacyManagedConfigTomlFromFile {
-        file: AbsolutePathBuf,
-    },
+    LegacyManagedConfigTomlFromFile { file: AbsolutePathBuf },
 
+    /// Historical MDM managed config layer retained for old payloads.
     LegacyManagedConfigTomlFromMdm,
+
 }
 
 impl ConfigLayerSource {
@@ -112,7 +110,7 @@ impl ConfigLayerSource {
     pub fn precedence(&self) -> i16 {
         match self {
             ConfigLayerSource::PackagedDefaults { .. } => -10,
-            ConfigLayerSource::Mdm { .. } => 0,
+            ConfigLayerSource::Mdm { .. } => 50,
             ConfigLayerSource::System { .. } => 10,
             ConfigLayerSource::EnterpriseManaged { .. } => 15,
             ConfigLayerSource::User { profile, .. } => {

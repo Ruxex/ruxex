@@ -20,7 +20,6 @@ struct Fixture {
     repo: AbsolutePathBuf,
     project: AbsolutePathBuf,
     cwd: AbsolutePathBuf,
-    managed: PathBuf,
     overrides: LoaderOverrides,
 }
 
@@ -42,8 +41,7 @@ impl Fixture {
             )?;
         }
         std::fs::write(project.join(".company-root"), "")?;
-        let managed = temp.path().join("managed_config.toml");
-        let mut overrides = LoaderOverrides::with_managed_config_path_for_tests(managed.clone());
+        let mut overrides = LoaderOverrides::without_managed_config_for_tests();
         overrides.system_config_path = Some(temp.path().join("system.toml"));
         let fixture = Self {
             _temp: temp,
@@ -51,7 +49,6 @@ impl Fixture {
             repo,
             project,
             cwd,
-            managed,
             overrides,
         };
         std::fs::write(fixture.home.join("config.toml"), fixture.trust("trusted"))?;
@@ -145,48 +142,9 @@ fn assert_discovery(
 }
 
 #[tokio::test]
-async fn managed_project_discovery_uses_file_markers_without_changing_precedence()
--> anyhow::Result<()> {
-    let fixture = Fixture::new()?;
-    for (markers, dirs) in [
-        (
-            vec![".git"],
-            vec![&fixture.repo, &fixture.project, &fixture.cwd],
-        ),
-        (vec![], vec![&fixture.cwd]),
-        (vec![".company-root"], vec![&fixture.project, &fixture.cwd]),
-    ] {
-        let markers_toml = TomlValue::try_from(&markers)?;
-        std::fs::write(
-            &fixture.managed,
-            format!("project_root_markers = {markers_toml}\nmodel = \"managed\"\n"),
-        )?;
-        let (canonical, local) = fixture.load().await?;
-        assert_discovery(&canonical, &local, &dirs, &markers)?;
-        let managed_source = ConfigLayerSource::LegacyManagedConfigTomlFromFile {
-            file: AbsolutePathBuf::from_absolute_path(&fixture.managed)?,
-        };
-        assert_eq!(
-            (
-                canonical.effective_config().get("model").cloned(),
-                &canonical.origins()["model"].name,
-                &local.config.layers.last().expect("managed layer").source,
-            ),
-            (
-                Some(TomlValue::String("managed".into())),
-                &managed_source,
-                &managed_source,
-            )
-        );
-    }
-    Ok(())
-}
-
-#[tokio::test]
 async fn managed_project_discovery_ignores_incomplete_nested_git_directory() -> anyhow::Result<()> {
     let fixture = Fixture::new()?;
     std::fs::create_dir(fixture.cwd.join(".git"))?;
-    std::fs::write(&fixture.managed, "project_root_markers = [\".git\"]\n")?;
 
     let (canonical, local) = fixture.load().await?;
     assert_discovery(
@@ -223,31 +181,24 @@ async fn managed_project_discovery_uses_managed_project_trust() -> anyhow::Resul
         "To load project-local config, hooks, and exec policies, add {trust_key} as a trusted project in {}.",
         user_config.display()
     );
-    for (user, managed, dirs, expected_reason) in [
+    for (user, dirs, expected_reason) in [
         (
             fixture.trust("trusted"),
+            vec![&fixture.repo, &fixture.project, &fixture.cwd],
+            None,
+        ),
+        (
             fixture.trust("untrusted"),
             vec![],
             Some(untrusted_reason.as_str()),
         ),
         (
-            fixture.trust("untrusted"),
-            fixture.trust("trusted"),
-            vec![&fixture.cwd],
-            None,
-        ),
-        (
-            String::new(),
             String::new(),
             vec![],
             Some(unknown_reason.as_str()),
         ),
     ] {
         std::fs::write(&user_config, user)?;
-        std::fs::write(
-            &fixture.managed,
-            format!("project_root_markers = []\n{managed}"),
-        )?;
         let (canonical, local) = fixture.load().await?;
         assert_discovery(&canonical, &local, &dirs, &[])?;
         assert_eq!(
@@ -279,10 +230,6 @@ async fn managed_project_discovery_preserves_remapped_provider_bindings() -> any
              {providers}\n[shell_environment_policy.set]\nB_ENDPOINT = 'https://b.example'\n",
             fixture.trust("trusted")
         ),
-    )?;
-    std::fs::write(
-        &fixture.managed,
-        "[features.network_proxy.credentials.a]\nenv = ['A_AUTH']\n",
     )?;
     fixture.overrides.managed_preferences_base64 = Some(BASE64_STANDARD.encode(
         "[features.network_proxy.credentials]\na = { env = ['B_AUTH'] }\nb = { env = ['A_AUTH'] }\n",
@@ -320,7 +267,6 @@ async fn managed_project_discovery_mdm_overrides_file_markers() -> anyhow::Resul
     use base64::prelude::BASE64_STANDARD;
 
     let mut fixture = Fixture::new()?;
-    std::fs::write(&fixture.managed, "project_root_markers = [\".git\"]\n")?;
     for (markers, dirs) in [
         (vec![], vec![&fixture.cwd]),
         (vec![".company-root"], vec![&fixture.project, &fixture.cwd]),

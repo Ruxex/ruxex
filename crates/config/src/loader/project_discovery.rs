@@ -15,20 +15,6 @@ pub(super) fn merge_managed_config_for_discovery(
     loaded: &LoadedConfigLayers,
     codex_home: &Path,
 ) -> io::Result<()> {
-    if let Some(config) = &loaded.managed_config {
-        let base_dir = config.file.as_path().parent().ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!(
-                    "Managed config file {} has no parent directory",
-                    config.file.as_path().display()
-                ),
-            )
-        })?;
-        let resolved =
-            resolve_relative_paths_in_config_toml(config.managed_config.clone(), base_dir)?;
-        merge_toml_values(discovery_config, &resolved);
-    }
     if let Some(config) = &loaded.managed_config_from_mdm {
         let resolved =
             resolve_relative_paths_in_config_toml(config.managed_config.clone(), codex_home)?;

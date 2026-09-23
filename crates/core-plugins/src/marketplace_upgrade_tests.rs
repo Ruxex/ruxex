@@ -390,7 +390,6 @@ fn config_reloader(codex_home: &Path) -> ConfigLayerReload {
     let codex_home = codex_home.to_path_buf();
     let options = LoaderOverrides {
         system_config_path: Some(codex_home.join("system.toml")),
-        managed_config_path: Some(codex_home.join("managed.toml")),
         system_requirements_path: Some(codex_home.join("requirements.toml")),
         ..LoaderOverrides::without_managed_config_for_tests()
     };

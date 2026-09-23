@@ -74,7 +74,7 @@
           "type": "object"
         },
         {
-          "description": "Managed config layer from a file (usually `managed_config.toml`).",
+          "description": "Host-wide configuration loaded from a file.",
           "properties": {
             "file": {
               "allOf": [
@@ -198,7 +198,7 @@
           "type": "object"
         },
         {
-          "description": "`managed_config.toml` was designed to be a config that was loaded as the last layer on top of everything else. This scheme did not quite work out as intended, but we keep this variant as a \"best effort\" while we phase out `managed_config.toml` in favor of `requirements.toml`.",
+          "description": "Historical managed config layer retained for decoding old app-server payloads; current loaders no longer produce it.",
           "properties": {
             "file": {
               "$ref": "#/definitions/AbsolutePathBuf"
@@ -219,6 +219,7 @@
           "type": "object"
         },
         {
+          "description": "Historical MDM managed config layer retained for old payloads.",
           "properties": {
             "type": {
               "enum": [

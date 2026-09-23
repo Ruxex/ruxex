@@ -13,17 +13,7 @@ use codex_utils_absolute_path::AbsolutePathBufGuard;
 use codex_utils_path_uri::PathUri;
 use std::io;
 use std::path::Path;
-use std::path::PathBuf;
 use toml::Value as TomlValue;
-
-#[cfg(unix)]
-const CODEX_MANAGED_CONFIG_SYSTEM_PATH: &str = "/etc/codex/managed_config.toml";
-
-#[derive(Debug, Clone)]
-pub(super) struct MangedConfigFromFile {
-    pub managed_config: TomlValue,
-    pub file: AbsolutePathBuf,
-}
 
 #[derive(Debug, Clone)]
 pub(super) struct ManagedConfigFromMdm {
@@ -33,9 +23,7 @@ pub(super) struct ManagedConfigFromMdm {
 
 #[derive(Debug, Clone)]
 pub(super) struct LoadedConfigLayers {
-    /// If present, data read from a file such as `/etc/codex/managed_config.toml`.
-    pub managed_config: Option<MangedConfigFromFile>,
-    /// If present, data read from managed preferences (macOS only).
+    /// If present, data read from current forced managed preferences (macOS only).
     pub managed_config_from_mdm: Option<ManagedConfigFromMdm>,
     /// User-facing warnings discovered while loading managed configuration.
     pub startup_warnings: Vec<String>,
@@ -47,44 +35,13 @@ pub(super) async fn load_config_layers_internal(
     overrides: LoaderOverrides,
     strict_config: bool,
 ) -> io::Result<LoadedConfigLayers> {
+    let _ = (&fs, codex_home, &overrides, strict_config);
     #[cfg(target_os = "macos")]
     let LoaderOverrides {
-        managed_config_path,
         managed_preferences_base64,
         ..
     } = overrides;
-
-    #[cfg(not(target_os = "macos"))]
-    let LoaderOverrides {
-        managed_config_path,
-        ..
-    } = overrides;
-
-    #[cfg(windows)]
-    let ignore_default_managed_config = managed_config_path.is_none();
-    #[cfg(not(windows))]
-    let ignore_default_managed_config = false;
-
     let startup_warnings = Vec::new();
-
-    let managed_config_path = match managed_config_path {
-        Some(path) => Some(AbsolutePathBuf::from_absolute_path(path)?),
-        None if ignore_default_managed_config => None,
-        None => Some(AbsolutePathBuf::from_absolute_path(
-            managed_config_default_path(codex_home),
-        )?),
-    };
-    let managed_config = match managed_config_path {
-        Some(path) => {
-            read_config_from_path(fs, &path, /*log_missing_as_info*/ false, strict_config)
-                .await?
-                .map(|loaded| MangedConfigFromFile {
-                    managed_config: loaded,
-                    file: path,
-                })
-        }
-        None => None,
-    };
 
     #[cfg(target_os = "macos")]
     let managed_preferences = load_managed_admin_config_layer(
@@ -99,7 +56,6 @@ pub(super) async fn load_config_layers_internal(
     let managed_preferences = None;
 
     Ok(LoadedConfigLayers {
-        managed_config,
         managed_config_from_mdm: managed_preferences,
         startup_warnings,
     })
@@ -182,19 +138,4 @@ fn validate_config_toml_strictly(
     }
 
     Ok(())
-}
-
-/// Return the default Unix managed config path.
-#[cfg(not(windows))]
-pub(super) fn managed_config_default_path(codex_home: &Path) -> PathBuf {
-    #[cfg(unix)]
-    {
-        let _ = codex_home;
-        PathBuf::from(CODEX_MANAGED_CONFIG_SYSTEM_PATH)
-    }
-
-    #[cfg(not(unix))]
-    {
-        codex_home.join("managed_config.toml")
-    }
 }
