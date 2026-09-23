@@ -56,6 +56,13 @@ fn cwd() -> AbsolutePathBuf {
     AbsolutePathBuf::current_dir().expect("current dir")
 }
 
+fn mdm_requirement_source() -> RequirementSource {
+    RequirementSource::MdmManagedPreferences {
+        domain: "com.openai.codex".to_string(),
+        key: "requirements_toml_base64".to_string(),
+    }
+}
+
 fn command_runtime(shell: CommandShell) -> CommandHookRuntime {
     let (result_sender, _result_receiver) = async_channel::unbounded();
     CommandHookRuntime::new(
@@ -210,12 +217,12 @@ fn requirements_with_managed_hooks_only(
         ConfigRequirements {
             allow_managed_hooks_only: Some(Sourced::new(
                 allow_managed_hooks_only,
-                RequirementSource::LegacyManagedConfigTomlFromMdm,
+                mdm_requirement_source(),
             )),
             managed_hooks: managed_hooks.clone().map(|hooks| {
                 ConstrainedWithSource::new(
                     Constrained::allow_any(hooks),
-                    Some(RequirementSource::LegacyManagedConfigTomlFromMdm),
+                    Some(mdm_requirement_source()),
                 )
             }),
             ..ConfigRequirements::default()
@@ -256,7 +263,7 @@ fn required_managed_hooks_allow_disabled_hooks_feature() {
         managed_hooks_for_current_platform(temp.path(), pre_tool_use_hook_events("  "));
     let config_layer_stack = required_hooks_stack(
         managed_hooks,
-        RequirementSource::LegacyManagedConfigTomlFromMdm,
+                mdm_requirement_source(),
     );
 
     for plugin_hook_sources in [
@@ -290,7 +297,7 @@ fn required_managed_hooks_reject_invalid_matchers() {
     events.pre_tool_use[0].matcher = Some("[".to_string());
     let config_layer_stack = required_hooks_stack(
         managed_hooks_for_current_platform(temp.path(), events),
-        RequirementSource::LegacyManagedConfigTomlFromMdm,
+        mdm_requirement_source(),
     );
 
     let error = crate::Hooks::new(
@@ -318,7 +325,7 @@ fn required_managed_hooks_allow_invalid_matchers_without_handlers() {
     });
     let config_layer_stack = required_hooks_stack(
         managed_hooks_for_current_platform(temp.path(), events),
-        RequirementSource::LegacyManagedConfigTomlFromMdm,
+        mdm_requirement_source(),
     );
 
     let (hooks, _result_receiver) = crate::Hooks::new(
@@ -341,7 +348,7 @@ fn required_managed_hooks_reject_empty_commands() {
     let temp = tempdir().expect("create temp dir");
     let config_layer_stack = required_hooks_stack(
         managed_hooks_for_current_platform(temp.path(), pre_tool_use_hook_events("  ")),
-        RequirementSource::LegacyManagedConfigTomlFromMdm,
+        mdm_requirement_source(),
     );
 
     let error = crate::Hooks::new(
@@ -371,7 +378,7 @@ fn required_managed_hooks_reject_unsupported_handler_types() {
     };
     let config_layer_stack = required_hooks_stack(
         managed_hooks_for_current_platform(temp.path(), events),
-        RequirementSource::LegacyManagedConfigTomlFromMdm,
+        mdm_requirement_source(),
     );
 
     let error = crate::Hooks::new(
@@ -411,7 +418,7 @@ fn required_managed_mcp_hooks_reject_empty_targets() {
     };
     let config_layer_stack = required_hooks_stack(
         managed_hooks_for_current_platform(temp.path(), events),
-        RequirementSource::LegacyManagedConfigTomlFromMdm,
+        mdm_requirement_source(),
     );
 
     let error = crate::Hooks::new(
@@ -451,7 +458,7 @@ fn required_managed_session_end_mcp_hooks_reject_startup() {
     };
     let config_layer_stack = required_hooks_stack(
         managed_hooks_for_current_platform(temp.path(), events),
-        RequirementSource::LegacyManagedConfigTomlFromMdm,
+        mdm_requirement_source(),
     );
 
     let error = crate::Hooks::new(
@@ -501,7 +508,7 @@ fn valid_required_managed_hooks_allow_startup() {
     let temp = tempdir().expect("create temp dir");
     let config_layer_stack = required_hooks_stack(
         managed_hooks_for_current_platform(temp.path(), pre_tool_use_hook_events("echo managed")),
-        RequirementSource::LegacyManagedConfigTomlFromMdm,
+        mdm_requirement_source(),
     );
 
     let (hooks, _result_receiver) = crate::Hooks::new(
@@ -594,7 +601,7 @@ with Path(r"{log_path}").open("a", encoding="utf-8") as handle:
         ConfigRequirements {
             managed_hooks: Some(ConstrainedWithSource::new(
                 Constrained::allow_any(managed_hooks.clone()),
-                Some(RequirementSource::LegacyManagedConfigTomlFromMdm),
+                    Some(mdm_requirement_source()),
             )),
             ..ConfigRequirements::default()
         },
@@ -622,7 +629,7 @@ with Path(r"{log_path}").open("a", encoding="utf-8") as handle:
     assert_eq!(engine.handlers.len(), 1);
     assert_eq!(
         engine.handlers[0].source,
-        HookSource::LegacyManagedConfigMdm
+        HookSource::Mdm
     );
     let listed = crate::list_hooks(crate::HooksConfig {
         legacy_notify_argv: None,
@@ -702,7 +709,7 @@ async fn requirements_managed_hooks_execute_windows_command_override() {
         ConfigRequirements {
             managed_hooks: Some(ConstrainedWithSource::new(
                 Constrained::allow_any(managed_hooks.clone()),
-                Some(RequirementSource::LegacyManagedConfigTomlFromMdm),
+                Some(mdm_requirement_source()),
             )),
             ..ConfigRequirements::default()
         },
@@ -867,7 +874,7 @@ fn user_disablement_filters_non_managed_hooks_but_not_managed_hooks() {
         ConfigRequirements {
             managed_hooks: Some(ConstrainedWithSource::new(
                 Constrained::allow_any(managed_hooks.clone()),
-                Some(RequirementSource::LegacyManagedConfigTomlFromMdm),
+                Some(mdm_requirement_source()),
             )),
             ..ConfigRequirements::default()
         },
@@ -894,7 +901,7 @@ fn user_disablement_filters_non_managed_hooks_but_not_managed_hooks() {
     assert_eq!(engine.handlers.len(), 1);
     assert_eq!(
         engine.handlers[0].source,
-        HookSource::LegacyManagedConfigMdm
+        HookSource::Mdm
     );
     let discovered = super::discovery::discover_handlers(
         Some(&config_layer_stack),
@@ -934,7 +941,7 @@ fn user_disablement_does_not_filter_managed_layer_hooks() {
                 config_with_hook_state(&managed_key, /*enabled*/ false),
             ),
             ConfigLayerEntry::new(
-                ConfigLayerSource::LegacyManagedConfigTomlFromFile {
+                ConfigLayerSource::System {
                     file: managed_config_path,
                 },
                 config_with_pre_tool_use_hook("python3 /tmp/managed-layer.py"),
@@ -961,7 +968,7 @@ fn user_disablement_does_not_filter_managed_layer_hooks() {
     assert_eq!(engine.handlers.len(), 1);
     assert_eq!(
         engine.handlers[0].source,
-        HookSource::LegacyManagedConfigFile
+        HookSource::System
     );
     let discovered = super::discovery::discover_handlers(
         Some(&config_layer_stack),
@@ -1097,7 +1104,7 @@ fn requirements_managed_hooks_load_when_managed_dir_is_missing() {
         ConfigRequirements {
             managed_hooks: Some(ConstrainedWithSource::new(
                 Constrained::allow_any(managed_hooks.clone()),
-                Some(RequirementSource::LegacyManagedConfigTomlFromMdm),
+                Some(mdm_requirement_source()),
             )),
             ..ConfigRequirements::default()
         },
@@ -1404,14 +1411,17 @@ fn allow_managed_hooks_only_keeps_managed_requirement_and_config_layer_hooks() {
                 config_toml_with_pre_tool_use("python3 /tmp/system-hook.py"),
             ),
             ConfigLayerEntry::new(
-                ConfigLayerSource::LegacyManagedConfigTomlFromFile {
+                ConfigLayerSource::System {
                     file: legacy_config_path,
                 },
                 config_toml_with_pre_tool_use("python3 /tmp/legacy-file-hook.py"),
             ),
             ConfigLayerEntry::new(
-                ConfigLayerSource::LegacyManagedConfigTomlFromMdm,
-                config_toml_with_pre_tool_use("python3 /tmp/legacy-mdm-hook.py"),
+                ConfigLayerSource::Mdm {
+                    domain: "com.openai.codex".to_string(),
+                    key: "config".to_string(),
+                },
+                config_toml_with_pre_tool_use("python3 /tmp/mdm-hook.py"),
             ),
         ],
         requirements,
@@ -2601,8 +2611,8 @@ async fn memory_consolidation_stop_preserves_policy_and_executor_cleanup() {
         (HookSource::Mdm, true),
         (HookSource::CloudRequirements, true),
         (HookSource::CloudManagedConfig, true),
-        (HookSource::LegacyManagedConfigFile, true),
-        (HookSource::LegacyManagedConfigMdm, true),
+        (HookSource::System, true),
+        (HookSource::Mdm, true),
         (HookSource::Unknown, true),
     ] {
         let (mut engine, calls, mut request, expected_executor_call, _source) =

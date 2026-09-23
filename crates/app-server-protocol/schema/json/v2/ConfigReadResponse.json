@@ -669,44 +669,6 @@
           ],
           "title": "SessionFlagsConfigLayerSource",
           "type": "object"
-        },
-        {
-          "description": "Historical managed config layer retained for decoding old app-server payloads; current loaders no longer produce it.",
-          "properties": {
-            "file": {
-              "$ref": "#/definitions/AbsolutePathBuf"
-            },
-            "type": {
-              "enum": [
-                "legacyManagedConfigTomlFromFile"
-              ],
-              "title": "LegacyManagedConfigTomlFromFileConfigLayerSourceType",
-              "type": "string"
-            }
-          },
-          "required": [
-            "file",
-            "type"
-          ],
-          "title": "LegacyManagedConfigTomlFromFileConfigLayerSource",
-          "type": "object"
-        },
-        {
-          "description": "Historical MDM managed config layer retained for old payloads.",
-          "properties": {
-            "type": {
-              "enum": [
-                "legacyManagedConfigTomlFromMdm"
-              ],
-              "title": "LegacyManagedConfigTomlFromMdmConfigLayerSourceType",
-              "type": "string"
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "title": "LegacyManagedConfigTomlFromMdmConfigLayerSource",
-          "type": "object"
         }
       ]
     },

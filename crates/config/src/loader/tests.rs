@@ -618,12 +618,6 @@ sandbox_mode = "danger-full-access"
     );
     assert_eq!(stack.requirements_toml().allowed_approval_policies, None);
     assert_eq!(stack.requirements_toml().allowed_sandbox_modes, None);
-    assert!(stack.all_layers_low_to_high().all(|layer| {
-        !matches!(
-            &layer.name,
-            ConfigLayerSource::LegacyManagedConfigTomlFromFile { .. }
-        )
-    }));
     assert_eq!(stack.startup_warnings(), None);
 }
 
@@ -807,7 +801,10 @@ fn local_layer_projection_preserves_override_blockers_and_cloud_position() {
                     "a=2\nignored=false\nonly_user=true",
                 ),
                 layer(
-                    ConfigLayerSource::LegacyManagedConfigTomlFromMdm,
+                    ConfigLayerSource::Mdm {
+                        domain: "com.openai.codex".to_string(),
+                        key: "config".to_string(),
+                    },
                     "[a]\nunrequested=true",
                 ),
             ],
@@ -846,7 +843,13 @@ fn local_layer_projection_preserves_override_blockers_and_cloud_position() {
                     b=1"#,
                 ),
                 layer(ConfigLayerSource::SessionFlags, "a=2"),
-                layer(ConfigLayerSource::LegacyManagedConfigTomlFromMdm, "[a]"),
+                layer(
+                    ConfigLayerSource::Mdm {
+                        domain: "com.openai.codex".to_string(),
+                        key: "config".to_string(),
+                    },
+                    "[a]",
+                ),
             ],
             cloud_insertion_index: 1,
         }

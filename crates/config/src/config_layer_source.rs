@@ -21,10 +21,6 @@ pub enum ConfigLayerSource {
     Project { dot_codex_folder: AbsolutePathBuf },
     /// Overrides supplied for the current session.
     SessionFlags,
-    /// Legacy managed configuration loaded from a file.
-    LegacyManagedConfigTomlFromFile { file: AbsolutePathBuf },
-    /// Legacy managed configuration delivered by MDM.
-    LegacyManagedConfigTomlFromMdm,
 }
 
 impl ConfigLayerSource {
@@ -45,8 +41,6 @@ impl ConfigLayerSource {
             }
             ConfigLayerSource::Project { .. } => 25,
             ConfigLayerSource::SessionFlags => 30,
-            ConfigLayerSource::LegacyManagedConfigTomlFromFile { .. } => 40,
-            ConfigLayerSource::LegacyManagedConfigTomlFromMdm => 50,
         }
     }
 }
@@ -99,11 +93,5 @@ pub fn format_config_layer_source(source: &ConfigLayerSource, config_toml_file: 
             )
         }
         ConfigLayerSource::SessionFlags => "session-flags".to_string(),
-        ConfigLayerSource::LegacyManagedConfigTomlFromFile { file } => {
-            format!("legacy managed_config.toml ({})", file.as_path().display())
-        }
-        ConfigLayerSource::LegacyManagedConfigTomlFromMdm => {
-            "legacy managed_config.toml (MDM)".to_string()
-        }
     }
 }

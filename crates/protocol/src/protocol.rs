@@ -1239,8 +1239,6 @@ pub enum HookSource {
     Plugin,
     CloudRequirements,
     CloudManagedConfig,
-    LegacyManagedConfigFile,
-    LegacyManagedConfigMdm,
     #[default]
     Unknown,
 }

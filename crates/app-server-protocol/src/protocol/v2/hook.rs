@@ -52,8 +52,6 @@ v2_enum_from_core!(
         Plugin,
         CloudRequirements,
         CloudManagedConfig,
-        LegacyManagedConfigFile,
-        LegacyManagedConfigMdm,
         Unknown,
     }
 );

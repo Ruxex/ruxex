@@ -363,12 +363,11 @@ fn render_non_file_layer_details(layer: &ConfigLayerEntry) -> Vec<Line<'static>>
         ConfigLayerSource::Mdm { .. } | ConfigLayerSource::EnterpriseManaged { .. } => {
             render_non_file_layer_value(layer)
         }
-        ConfigLayerSource::LegacyManagedConfigTomlFromMdm => render_non_file_layer_value(layer),
         ConfigLayerSource::PackagedDefaults { .. }
         | ConfigLayerSource::System { .. }
         | ConfigLayerSource::User { .. }
         | ConfigLayerSource::Project { .. }
-        | ConfigLayerSource::LegacyManagedConfigTomlFromFile { .. } => Vec::new(),
+        => Vec::new(),
     }
 }
 
@@ -424,16 +423,13 @@ fn render_non_file_layer_value(layer: &ConfigLayerEntry) -> Vec<Line<'static>> {
 
 fn non_file_layer_value_label(source: &ConfigLayerSource) -> &'static str {
     match source {
-        ConfigLayerSource::Mdm { .. } | ConfigLayerSource::LegacyManagedConfigTomlFromMdm => {
-            "MDM value"
-        }
+        ConfigLayerSource::Mdm { .. } => "MDM value",
         ConfigLayerSource::EnterpriseManaged { .. } => "Enterprise-managed config value",
         ConfigLayerSource::PackagedDefaults { .. }
         | ConfigLayerSource::SessionFlags
         | ConfigLayerSource::System { .. }
         | ConfigLayerSource::User { .. }
-        | ConfigLayerSource::Project { .. }
-        | ConfigLayerSource::LegacyManagedConfigTomlFromFile { .. } => "Layer value",
+        | ConfigLayerSource::Project { .. } => "Layer value",
     }
 }
 

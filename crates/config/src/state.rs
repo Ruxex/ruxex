@@ -203,8 +203,6 @@ impl ConfigLayerEntry {
             ConfigLayerSource::User { file, .. } => file.parent(),
             ConfigLayerSource::Project { dot_codex_folder } => Some(dot_codex_folder.clone()),
             ConfigLayerSource::SessionFlags => None,
-            ConfigLayerSource::LegacyManagedConfigTomlFromFile { .. } => None,
-            ConfigLayerSource::LegacyManagedConfigTomlFromMdm => None,
         }
     }
 

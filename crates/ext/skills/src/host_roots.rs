@@ -121,9 +121,7 @@ fn roots_from_layer_stack(
             ConfigLayerSource::PackagedDefaults { .. }
             | ConfigLayerSource::Mdm { .. }
             | ConfigLayerSource::EnterpriseManaged { .. }
-            | ConfigLayerSource::SessionFlags
-            | ConfigLayerSource::LegacyManagedConfigTomlFromFile { .. }
-            | ConfigLayerSource::LegacyManagedConfigTomlFromMdm => {}
+            | ConfigLayerSource::SessionFlags => {}
         }
     }
 

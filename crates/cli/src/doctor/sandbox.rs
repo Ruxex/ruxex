@@ -87,8 +87,6 @@ pub(super) fn sandbox_check(config: &Config, arg0_paths: &Arg0DispatchPaths) -> 
             Some(RequirementSource::Composite { .. }) => "multiple layers",
             Some(RequirementSource::MdmManagedPreferences { .. }) => "MDM",
             Some(RequirementSource::SystemRequirementsToml { .. }) => "system",
-            Some(RequirementSource::LegacyManagedConfigTomlFromFile { .. }) => "legacy file",
-            Some(RequirementSource::LegacyManagedConfigTomlFromMdm) => "legacy MDM",
         }
     ));
     details.push(format!(

@@ -1439,7 +1439,7 @@ writable_roots = [{}]
     assert_eq!(config.model.as_deref(), Some("gpt-system"));
     assert_eq!(
         origins.get("model").expect("origin").name,
-        ConfigLayerSource::LegacyManagedConfigTomlFromFile {
+        ConfigLayerSource::System {
             file: managed_file.clone(),
         }
     );
@@ -1447,7 +1447,7 @@ writable_roots = [{}]
     assert_eq!(config.approval_policy, Some(AskForApproval::Never));
     assert_eq!(
         origins.get("approval_policy").expect("origin").name,
-        ConfigLayerSource::LegacyManagedConfigTomlFromFile {
+        ConfigLayerSource::System {
             file: managed_file.clone(),
         }
     );
@@ -1471,7 +1471,7 @@ writable_roots = [{}]
             .get("sandbox_workspace_write.writable_roots.0")
             .expect("origin")
             .name,
-        ConfigLayerSource::LegacyManagedConfigTomlFromFile {
+        ConfigLayerSource::System {
             file: managed_file.clone(),
         }
     );
@@ -2517,7 +2517,7 @@ fn assert_layers_user_then_optional_system(
     let mut first_index = 0;
     if matches!(
         layers.first().map(|layer| &layer.name),
-        Some(ConfigLayerSource::LegacyManagedConfigTomlFromMdm)
+        Some(ConfigLayerSource::Mdm { .. })
     ) {
         first_index = 1;
     }
@@ -2544,14 +2544,14 @@ fn assert_layers_managed_user_then_optional_system(
     let mut first_index = 0;
     if matches!(
         layers.first().map(|layer| &layer.name),
-        Some(ConfigLayerSource::LegacyManagedConfigTomlFromMdm)
+        Some(ConfigLayerSource::Mdm { .. })
     ) {
         first_index = 1;
     }
     assert_eq!(layers.len(), first_index + 3);
     assert_eq!(
         layers[first_index].name,
-        ConfigLayerSource::LegacyManagedConfigTomlFromFile { file: managed_file }
+        ConfigLayerSource::System { file: managed_file }
     );
     assert_eq!(
         layers[first_index + 1].name,

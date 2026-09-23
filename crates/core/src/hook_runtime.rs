@@ -931,8 +931,6 @@ fn hook_run_metric_tags(run: &HookRunSummary) -> [(&'static str, &'static str); 
         HookSource::Plugin => "plugin",
         HookSource::CloudRequirements => "cloud_requirements",
         HookSource::CloudManagedConfig => "cloud_managed_config",
-        HookSource::LegacyManagedConfigFile => "legacy_managed_config_file",
-        HookSource::LegacyManagedConfigMdm => "legacy_managed_config_mdm",
         HookSource::Unknown => "unknown",
     };
     let status = match run.status {

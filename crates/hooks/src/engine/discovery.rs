@@ -326,10 +326,6 @@ fn fallback_managed_hooks_source_path(
                 "<enterprise-managed:{name}:{id}>/requirements.toml"
             ))
         }
-        Some(RequirementSource::LegacyManagedConfigTomlFromFile { file }) => file.clone(),
-        Some(RequirementSource::LegacyManagedConfigTomlFromMdm) => {
-            synthetic_layer_path("<legacy-managed-config.toml-mdm>/managed_config.toml")
-        }
         Some(RequirementSource::Unknown) | None => {
             synthetic_layer_path("<managed-requirements>/requirements.toml")
         }
@@ -415,10 +411,6 @@ fn config_toml_source_path(layer: &ConfigLayerEntry) -> AbsolutePathBuf {
             "<enterprise-managed:{name}:{id}>/{CONFIG_TOML_FILE}"
         )),
         ConfigLayerSource::SessionFlags => synthetic_layer_path("<session-flags>/config.toml"),
-        ConfigLayerSource::LegacyManagedConfigTomlFromFile { file } => file.clone(),
-        ConfigLayerSource::LegacyManagedConfigTomlFromMdm => {
-            synthetic_layer_path("<legacy-managed-config.toml-mdm>/managed_config.toml")
-        }
     }
 }
 
@@ -828,12 +820,6 @@ fn hook_metadata_for_config_layer_source(source: &ConfigLayerSource) -> (HookSou
         ConfigLayerSource::Mdm { .. } => (HookSource::Mdm, true),
         ConfigLayerSource::EnterpriseManaged { .. } => (HookSource::CloudManagedConfig, true),
         ConfigLayerSource::SessionFlags => (HookSource::SessionFlags, false),
-        ConfigLayerSource::LegacyManagedConfigTomlFromFile { .. } => {
-            (HookSource::LegacyManagedConfigFile, true)
-        }
-        ConfigLayerSource::LegacyManagedConfigTomlFromMdm => {
-            (HookSource::LegacyManagedConfigMdm, true)
-        }
     }
 }
 
@@ -841,12 +827,6 @@ fn hook_source_for_requirement_source(source: Option<&RequirementSource>) -> Hoo
     match source {
         Some(RequirementSource::MdmManagedPreferences { .. }) => HookSource::Mdm,
         Some(RequirementSource::SystemRequirementsToml { .. }) => HookSource::System,
-        Some(RequirementSource::LegacyManagedConfigTomlFromFile { .. }) => {
-            HookSource::LegacyManagedConfigFile
-        }
-        Some(RequirementSource::LegacyManagedConfigTomlFromMdm) => {
-            HookSource::LegacyManagedConfigMdm
-        }
         Some(RequirementSource::Composite { sources }) => {
             // Requirements hook composition preserves contributing sources in
             // priority order, but discovery only carries one source for the
@@ -1723,18 +1703,6 @@ mod tests {
         assert_eq!(
             super::hook_metadata_for_config_layer_source(&ConfigLayerSource::SessionFlags),
             (HookSource::SessionFlags, false),
-        );
-        assert_eq!(
-            super::hook_metadata_for_config_layer_source(
-                &ConfigLayerSource::LegacyManagedConfigTomlFromFile { file: config_file },
-            ),
-            (HookSource::LegacyManagedConfigFile, true),
-        );
-        assert_eq!(
-            super::hook_metadata_for_config_layer_source(
-                &ConfigLayerSource::LegacyManagedConfigTomlFromMdm,
-            ),
-            (HookSource::LegacyManagedConfigMdm, true),
         );
     }
 }

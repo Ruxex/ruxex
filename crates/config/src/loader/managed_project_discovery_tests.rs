@@ -285,8 +285,14 @@ async fn managed_project_discovery_mdm_overrides_file_markers() -> anyhow::Resul
                 local.config.layers.last().map(|layer| &layer.source),
             ),
             (
-                Some(&ConfigLayerSource::LegacyManagedConfigTomlFromMdm),
-                Some(&ConfigLayerSource::LegacyManagedConfigTomlFromMdm),
+                Some(&ConfigLayerSource::Mdm {
+                    domain: "com.openai.codex".to_string(),
+                    key: "config_toml_base64".to_string(),
+                }),
+                Some(&ConfigLayerSource::Mdm {
+                    domain: "com.openai.codex".to_string(),
+                    key: "config_toml_base64".to_string(),
+                }),
             )
         );
     }

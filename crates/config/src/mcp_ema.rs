@@ -108,8 +108,6 @@ impl McpEnterpriseManagedAuthConfig {
                     ConfigLayerSource::Mdm { .. }
                         | ConfigLayerSource::System { .. }
                         | ConfigLayerSource::EnterpriseManaged { .. }
-                        | ConfigLayerSource::LegacyManagedConfigTomlFromFile { .. }
-                        | ConfigLayerSource::LegacyManagedConfigTomlFromMdm
                 )
             })
             .or_else(|| {

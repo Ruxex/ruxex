@@ -170,8 +170,6 @@
         "plugin",
         "cloudRequirements",
         "cloudManagedConfig",
-        "legacyManagedConfigFile",
-        "legacyManagedConfigMdm",
         "unknown"
       ],
       "type": "string"

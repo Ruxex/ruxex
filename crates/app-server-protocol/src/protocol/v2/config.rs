@@ -93,15 +93,6 @@ pub enum ConfigLayerSource {
     /// Session-layer overrides supplied via `-c`/`--config`.
     SessionFlags,
 
-    /// Historical managed config layer retained for decoding old app-server
-    /// payloads; current loaders no longer produce it.
-    #[serde(rename_all = "camelCase")]
-    #[ts(rename_all = "camelCase")]
-    LegacyManagedConfigTomlFromFile { file: AbsolutePathBuf },
-
-    /// Historical MDM managed config layer retained for old payloads.
-    LegacyManagedConfigTomlFromMdm,
-
 }
 
 impl ConfigLayerSource {
@@ -122,8 +113,6 @@ impl ConfigLayerSource {
             }
             ConfigLayerSource::Project { .. } => 25,
             ConfigLayerSource::SessionFlags => 30,
-            ConfigLayerSource::LegacyManagedConfigTomlFromFile { .. } => 40,
-            ConfigLayerSource::LegacyManagedConfigTomlFromMdm => 50,
         }
     }
 }
