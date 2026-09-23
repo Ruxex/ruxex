@@ -1,9 +1,9 @@
 use std::time::Duration;
 
 use anyhow::Result;
-use app_test_support::ChatGptAuthFixture;
+use app_test_support::WorkloadIdentityAuthFixture;
 use app_test_support::TestAppServer;
-use app_test_support::write_chatgpt_auth;
+use app_test_support::write_workload_identity_auth;
 use codex_app_server_protocol::PluginSearchParams;
 use codex_app_server_protocol::PluginSearchResponse;
 use codex_app_server_protocol::PluginSearchScope;
@@ -42,9 +42,9 @@ plugin_sharing = false
             server.uri()
         ),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -152,9 +152,9 @@ remote_plugin = false
             server.uri()
         ),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -312,7 +312,7 @@ async fn plugin_search_stitches_local_results_into_the_first_remote_page() -> Re
         &local_plugins,
     )?;
     write_remote_plugin_search_config(codex_home.path(), &server, /*remote_plugin*/ true)?;
-    write_chatgpt_search_auth(codex_home.path())?;
+    write_workload_identity_search_auth(codex_home.path())?;
 
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/search"))
@@ -629,7 +629,7 @@ enabled = true
             server.uri()
         ),
     )?;
-    write_chatgpt_search_auth(codex_home.path())?;
+    write_workload_identity_search_auth(codex_home.path())?;
 
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/search"))
@@ -784,10 +784,10 @@ remote_plugin = {remote_plugin}
     Ok(())
 }
 
-fn write_chatgpt_search_auth(codex_home: &std::path::Path) -> Result<()> {
-    write_chatgpt_auth(
+fn write_workload_identity_search_auth(codex_home: &std::path::Path) -> Result<()> {
+    write_workload_identity_auth(
         codex_home,
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),

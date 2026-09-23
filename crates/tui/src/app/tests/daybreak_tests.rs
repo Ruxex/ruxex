@@ -1,7 +1,7 @@
 use super::*;
 use crate::daybreak::Notice;
-use app_test_support::ChatGptAuthFixture;
-use app_test_support::write_chatgpt_auth;
+use app_test_support::WorkloadIdentityAuthFixture;
+use app_test_support::write_workload_identity_auth;
 use codex_app_server_client::AppServerEvent;
 use codex_app_server_protocol::AccountUpdatedNotification;
 use codex_app_server_protocol::AuthMode;
@@ -17,9 +17,9 @@ async fn cyber_refusal_reads_eligibility_without_changing_the_model() -> Result<
     let backend = wiremock::MockServer::start().await;
     app.config.managed_auth_base_url = backend.uri();
     app.config.cli_auth_credentials_store_mode = AuthCredentialsStoreMode::File;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         &app.config.codex_home,
-        ChatGptAuthFixture::new("test-token")
+        WorkloadIdentityAuthFixture::new("test-token")
             .account_id("account")
             .chatgpt_user_id("user"),
         AuthCredentialsStoreMode::File,
@@ -54,9 +54,9 @@ async fn cyber_refusal_reads_eligibility_without_changing_the_model() -> Result<
             ))
             .respond_with(move |_: &wiremock::Request| {
                 if replace_account {
-                    write_chatgpt_auth(
+                    write_workload_identity_auth(
                         &codex_home,
-                        ChatGptAuthFixture::new("test-token").account_id("other-account"),
+                        WorkloadIdentityAuthFixture::new("test-token").account_id("other-account"),
                         AuthCredentialsStoreMode::File,
                     )
                     .unwrap();
@@ -72,7 +72,7 @@ async fn cyber_refusal_reads_eligibility_without_changing_the_model() -> Result<
             &server,
             AppServerEvent::ServerNotification(Box::new(ServerNotification::AccountUpdated(
                 AccountUpdatedNotification {
-                    auth_mode: Some(AuthMode::Chatgpt),
+                    auth_mode: Some(AuthMode::Headers),
                     plan_type: None,
                 },
             ))),

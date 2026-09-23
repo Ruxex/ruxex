@@ -198,9 +198,9 @@ trust_level = "trusted"
         source.join(".codex/config.toml"),
         "model = \"source-model\"\nanalytics.enabled = true\n",
     )?;
-    app_test_support::write_chatgpt_auth(
+    app_test_support::write_workload_identity_auth(
         &home,
-        app_test_support::ChatGptAuthFixture::new("test-token")
+        app_test_support::WorkloadIdentityAuthFixture::new("test-token")
             .account_id("workspace-123")
             .chatgpt_account_id("workspace-123")
             .chatgpt_user_id("user-123")

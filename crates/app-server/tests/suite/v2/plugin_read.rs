@@ -2,10 +2,10 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Result;
-use app_test_support::ChatGptAuthFixture;
+use app_test_support::WorkloadIdentityAuthFixture;
 use app_test_support::TestAppServer;
 use app_test_support::to_response;
-use app_test_support::write_chatgpt_auth;
+use app_test_support::write_workload_identity_auth;
 use axum::Json;
 use axum::Router;
 use axum::extract::State;
@@ -142,9 +142,9 @@ apps = true
             server.uri()
         ),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -364,9 +364,9 @@ async fn plugin_read_returns_share_context_for_shared_remote_plugin() -> Result<
         codex_home.path(),
         &format!("{}/backend-api/", server.uri()),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -516,9 +516,9 @@ async fn plugin_read_includes_share_url_for_admin_disabled_remote_plugin() -> Re
         codex_home.path(),
         &format!("{}/backend-api/", server.uri()),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -758,9 +758,9 @@ async fn plugin_skill_read_reads_remote_skill_contents_when_remote_plugin_enable
         codex_home.path(),
         &format!("{}/backend-api/", server.uri()),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -821,9 +821,9 @@ async fn plugin_read_maps_missing_remote_plugin_to_invalid_request() -> Result<(
         codex_home.path(),
         &format!("{}/backend-api/", server.uri()),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -884,9 +884,9 @@ remote_plugin = true
             server.uri()
         ),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -1020,9 +1020,9 @@ async fn plugin_read_returns_share_context_for_shared_local_plugin() -> Result<(
         codex_home.path(),
         &format!("{}/backend-api/", server.uri()),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -1162,9 +1162,9 @@ async fn plugin_read_keeps_remote_version_when_share_principals_are_missing() ->
         codex_home.path(),
         &format!("{}/backend-api/", server.uri()),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -1425,9 +1425,9 @@ async fn plugin_read_agent_plugin_excludes_nested_skills() -> Result<()> {
 #[tokio::test]
 async fn plugin_read_returns_plugin_details_with_bundle_contents() -> Result<()> {
     let codex_home = TempDir::new()?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -1750,9 +1750,9 @@ async fn plugin_read_batches_large_app_metadata_requests() -> Result<()> {
 
     let codex_home = TempDir::new()?;
     write_connectors_config(codex_home.path(), &server_url)?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -1845,9 +1845,9 @@ async fn plugin_read_stops_batching_after_app_metadata_failure() -> Result<()> {
 
     let codex_home = TempDir::new()?;
     write_connectors_config(codex_home.path(), &server.uri())?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),

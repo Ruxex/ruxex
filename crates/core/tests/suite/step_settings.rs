@@ -2513,7 +2513,7 @@ async fn request_preference_activation_keeps_admitted_model_metadata() -> Result
     )
     .await;
     let test = step_settings_test()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
         .with_config(|config| {
             // Use the real refreshable models manager, and retain an unset
             // preference so the selected model's default is observable.

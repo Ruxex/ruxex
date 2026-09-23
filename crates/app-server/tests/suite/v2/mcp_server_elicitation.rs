@@ -3,10 +3,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use anyhow::Result;
-use app_test_support::ChatGptAuthFixture;
+use app_test_support::WorkloadIdentityAuthFixture;
 use app_test_support::TestAppServer;
 use app_test_support::to_response;
-use app_test_support::write_chatgpt_auth;
+use app_test_support::write_workload_identity_auth;
 use axum::Json;
 use axum::Router;
 use axum::extract::State;
@@ -347,9 +347,9 @@ async fn openai_form_capability_follows_the_turn_starting_connection() -> Result
         start_elicitation_services(ElicitationScenario::OpenAiForm).await?;
     let codex_home = TempDir::new()?;
     write_config_toml(codex_home.path(), &responses_server.uri(), &apps_server_url)?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -689,9 +689,9 @@ impl ElicitationRoundTripFixture {
         if !requirements.is_empty() {
             std::fs::write(codex_home.path().join("requirements.toml"), requirements)?;
         }
-        write_chatgpt_auth(
+        write_workload_identity_auth(
             codex_home.path(),
-            ChatGptAuthFixture::new("chatgpt-token")
+            WorkloadIdentityAuthFixture::new("chatgpt-token")
                 .account_id("account-123")
                 .chatgpt_user_id("user-123")
                 .chatgpt_account_id("account-123"),

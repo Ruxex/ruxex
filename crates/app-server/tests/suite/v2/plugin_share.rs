@@ -3,9 +3,9 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use anyhow::Result;
-use app_test_support::ChatGptAuthFixture;
+use app_test_support::WorkloadIdentityAuthFixture;
 use app_test_support::TestAppServer;
-use app_test_support::write_chatgpt_auth;
+use app_test_support::write_workload_identity_auth;
 use codex_app_server_protocol::JSONRPCError;
 use codex_app_server_protocol::PluginAuthPolicy;
 use codex_app_server_protocol::PluginInstallPolicy;
@@ -54,9 +54,9 @@ async fn plugin_share_save_uploads_local_plugin() -> Result<()> {
     let plugin_path = write_test_plugin(plugin_root.path(), "demo-plugin")?;
     let server = MockServer::start().await;
     write_remote_plugin_config(codex_home.path(), &format!("{}/backend-api", server.uri()))?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -198,9 +198,9 @@ async fn plugin_share_save_forwards_access_policy() -> Result<()> {
     let plugin_path = write_test_plugin(plugin_root.path(), "demo-plugin")?;
     let server = MockServer::start().await;
     write_remote_plugin_config(codex_home.path(), &format!("{}/backend-api", server.uri()))?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -296,9 +296,9 @@ async fn plugin_share_save_rejects_listed_discoverability() -> Result<()> {
     let plugin_path = write_test_plugin(plugin_root.path(), "demo-plugin")?;
     let server = MockServer::start().await;
     write_remote_plugin_config(codex_home.path(), &format!("{}/backend-api", server.uri()))?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -353,9 +353,9 @@ plugin_sharing = false
             server.uri()
         ),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -402,9 +402,9 @@ async fn plugin_share_rejects_workspace_targets_from_client() -> Result<()> {
     let plugin_path = write_test_plugin(plugin_root.path(), "demo-plugin")?;
     let server = MockServer::start().await;
     write_remote_plugin_config(codex_home.path(), &format!("{}/backend-api", server.uri()))?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -483,9 +483,9 @@ async fn plugin_share_save_rejects_access_policy_for_existing_plugin() -> Result
     let plugin_path = write_test_plugin(plugin_root.path(), "demo-plugin")?;
     let server = MockServer::start().await;
     write_remote_plugin_config(codex_home.path(), &format!("{}/backend-api", server.uri()))?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -534,9 +534,9 @@ async fn plugin_share_list_returns_created_workspace_plugins() -> Result<()> {
     let codex_home = TempDir::new()?;
     let server = MockServer::start().await;
     write_remote_plugin_config(codex_home.path(), &format!("{}/backend-api", server.uri()))?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -618,9 +618,9 @@ async fn plugin_share_checkout_adds_personal_marketplace_entry() -> Result<()> {
     let home = TempDir::new()?;
     let server = MockServer::start().await;
     write_remote_plugin_config(codex_home.path(), &format!("{}/backend-api", server.uri()))?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -775,9 +775,9 @@ async fn plugin_share_checkout_rejects_non_share_remote_plugin() -> Result<()> {
     let home = TempDir::new()?;
     let server = MockServer::start().await;
     write_remote_plugin_config(codex_home.path(), &format!("{}/backend-api", server.uri()))?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -839,9 +839,9 @@ async fn plugin_share_checkout_cleans_up_path_when_marketplace_update_fails() ->
     let home = TempDir::new()?;
     let server = MockServer::start().await;
     write_remote_plugin_config(codex_home.path(), &format!("{}/backend-api", server.uri()))?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -935,9 +935,9 @@ async fn plugin_share_update_targets_updates_share_targets() -> Result<()> {
     let codex_home = TempDir::new()?;
     let server = MockServer::start().await;
     write_remote_plugin_config(codex_home.path(), &format!("{}/backend-api", server.uri()))?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -1049,9 +1049,9 @@ async fn plugin_share_update_targets_publishes_workspace_plugin() -> Result<()> 
     let codex_home = TempDir::new()?;
     let server = MockServer::start().await;
     write_remote_plugin_config(codex_home.path(), &format!("{}/backend-api", server.uri()))?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -1132,9 +1132,9 @@ plugin_sharing = false
             server.uri()
         ),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -1173,9 +1173,9 @@ async fn plugin_share_delete_removes_created_workspace_plugin() -> Result<()> {
     let codex_home = TempDir::new()?;
     let server = MockServer::start().await;
     write_remote_plugin_config(codex_home.path(), &format!("{}/backend-api", server.uri()))?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),

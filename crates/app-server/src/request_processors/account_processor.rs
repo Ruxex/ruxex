@@ -14,14 +14,6 @@ use codex_model_provider::is_supported_amazon_bedrock_region;
 
 mod bedrock_setup;
 
-// Duration before a browser ChatGPT login attempt is abandoned.
-const LOGIN_CHATGPT_TIMEOUT: Duration = Duration::from_secs(10 * 60);
-// Packaged clients use this together with the OAuth client ID override for staging login.
-const LOGIN_ISSUER_OVERRIDE_ENV_VAR: &str = "CODEX_APP_SERVER_LOGIN_ISSUER";
-// The development success-page redirect remains debug-only.
-#[cfg(debug_assertions)]
-const LOGIN_OPEN_APP_URL_OVERRIDE_ENV_VAR: &str = "CODEX_APP_SERVER_DEV_OPEN_APP_URL";
-
 enum RefreshTokenRequestOutcome {
     NotAttemptedOrSucceeded,
     FailedTransiently,
@@ -259,7 +251,7 @@ impl AccountRequestProcessor {
 
     fn external_auth_active_error(&self) -> JSONRPCErrorError {
         invalid_request(
-            "External auth is active. Use account/login/start (chatgptAuthTokens) to update it or account/logout to clear it.",
+            "External auth is active. Use host-managed authentication to update it or account/logout to clear it.",
         )
     }
 
@@ -484,26 +476,6 @@ impl AccountRequestProcessor {
                 )
                 .await;
         }
-    }
-
-    #[cfg(any())]
-    async fn send_chatgpt_login_completion_notifications(
-        &self,
-        mut payload_v2: AccountLoginCompletedNotification,
-    ) {
-        if payload_v2.success {
-            self.auth_manager.reload().await;
-            let auth_changes = self.auth_manager.auth_change_state_receiver();
-            let owner_generation = auth_changes.borrow().owner_generation;
-            self.config_manager
-                .sync_default_client_residency_requirement()
-                .await;
-            if auth_changes.borrow().owner_generation != owner_generation {
-                payload_v2.success = false;
-                payload_v2.error = Some("account changed before sign-in completed".into());
-            }
-        }
-        self.send_account_login_notifications(payload_v2).await;
     }
 
     async fn logout_common(&self) -> std::result::Result<Option<AuthMode>, JSONRPCErrorError> {

@@ -2,11 +2,11 @@ use std::time::Duration;
 
 use anyhow::Result;
 use anyhow::bail;
-use app_test_support::ChatGptAuthFixture;
+use app_test_support::WorkloadIdentityAuthFixture;
 use app_test_support::DEFAULT_CLIENT_NAME;
 use app_test_support::TestAppServer;
 use app_test_support::start_analytics_events_server;
-use app_test_support::write_chatgpt_auth;
+use app_test_support::write_workload_identity_auth;
 use codex_app_server_protocol::PluginUninstallParams;
 use codex_app_server_protocol::PluginUninstallResponse;
 use codex_app_server_protocol::RequestId;
@@ -75,9 +75,9 @@ async fn plugin_uninstall_tracks_analytics_event() -> Result<()> {
             analytics_server.uri()
         ),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -172,9 +172,9 @@ async fn plugin_uninstall_writes_remote_plugin_to_cloud_when_remote_plugin_enabl
         codex_home.path(),
         &format!("{}/backend-api/", server.uri()),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -270,9 +270,9 @@ async fn plugin_uninstall_uses_detail_scope_for_cache_namespace() -> Result<()> 
         codex_home.path(),
         &format!("{}/backend-api/", server.uri()),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -334,9 +334,9 @@ async fn plugin_uninstall_accepts_workspace_remote_plugin_id_shape() -> Result<(
         codex_home.path(),
         &format!("{}/backend-api/", server.uri()),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -399,9 +399,9 @@ async fn plugin_uninstall_rejects_before_post_when_remote_detail_fetch_fails() -
         codex_home.path(),
         &format!("{}/backend-api/", server.uri()),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),

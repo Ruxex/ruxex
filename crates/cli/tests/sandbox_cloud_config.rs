@@ -2,8 +2,8 @@ use std::process::Command;
 
 use anyhow::Context;
 use anyhow::Result;
-use app_test_support::ChatGptAuthFixture;
-use app_test_support::write_chatgpt_auth;
+use app_test_support::WorkloadIdentityAuthFixture;
+use app_test_support::write_workload_identity_auth;
 use codex_config::ConfigLoadOptions;
 use codex_config::types::AuthCredentialsStoreMode;
 use codex_core::config::load_config_toml_with_layer_stack;
@@ -76,9 +76,9 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
         return Ok(());
     }
 
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("workspace-123")
             .chatgpt_account_id("workspace-123")
             .chatgpt_user_id("user-123")

@@ -51,7 +51,7 @@ async fn standalone_codex_apps_respects_protocol_setting(
     let server = responses::start_mock_server().await;
     let apps_base_url = AppsTestServer::mount(&server).await?.managed_auth_base_url;
     let fixture = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
         .with_config(move |config| {
             config
                 .features

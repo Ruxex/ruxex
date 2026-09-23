@@ -4,10 +4,10 @@ use std::time::Duration;
 
 use anyhow::Context as _;
 use anyhow::Result;
-use app_test_support::ChatGptAuthFixture;
+use app_test_support::WorkloadIdentityAuthFixture;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
-use app_test_support::write_chatgpt_auth;
+use app_test_support::write_workload_identity_auth;
 use axum::Json;
 use axum::Router;
 use axum::http::StatusCode;
@@ -126,9 +126,9 @@ async fn mcp_event_stream_waits_for_activation_forwards_events_and_cancels() -> 
         .with_root_config(&format!("managed_auth_base_url = \"{apps_url}\""))
         .enable_feature(Feature::Apps)
         .write(codex_home.path())?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),

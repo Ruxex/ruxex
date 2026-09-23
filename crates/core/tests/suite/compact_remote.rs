@@ -295,7 +295,7 @@ async fn remote_compact_v2_retains_metadata_from_resumed_history() -> Result<()>
     )
     .await;
 
-    let builder = || test_codex().with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing());
+    let builder = || test_codex().with_auth(CodexAuth::create_dummy_workload_identity_for_testing());
     let initial = builder()
         .with_pre_build_hook(|home| {
             fs::write(
@@ -351,7 +351,7 @@ async fn remote_compact_v2_retains_only_client_developer_messages_when_enabled(
 
     let harness = TestCodexHarness::with_auto_env_builder(
         test_codex()
-            .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+            .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
             .with_config(move |config| {
                 if enabled {
                     config
@@ -438,7 +438,7 @@ async fn remote_compact_v2_records_usage_before_output_validation() -> Result<()
 
     let harness = TestCodexHarness::with_auto_env_builder(
         test_codex()
-            .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+            .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
             .with_config(|config| {
                 config.model_auto_compact_token_limit = Some(200);
             }),
@@ -618,7 +618,7 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
 
     let harness = TestCodexHarness::with_auto_env_builder(
         test_codex()
-            .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+            .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
             .with_config(move |config| {
                 let _ = config.features.enable(Feature::UnifiedImageBudget);
                 if let Some(enabled) = image_budget_enabled {
@@ -803,7 +803,7 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
     skip_if_no_network!(Ok(()));
 
     let harness = TestCodexHarness::with_builder(
-        test_codex().with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing()),
+        test_codex().with_auth(CodexAuth::create_dummy_workload_identity_for_testing()),
     )
     .await?;
     let image_url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=";
@@ -1155,7 +1155,7 @@ async fn remote_compact_v2_retries_failures_with_stream_retry_budget() -> Result
     let harness = TestCodexHarness::with_builder(
         test_codex()
             .with_history_mode(ThreadHistoryMode::Paginated)
-            .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+            .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
             .with_config(|config| {
                 config.model_provider.request_max_retries = Some(0);
                 config.model_provider.stream_max_retries = Some(2);
@@ -1271,7 +1271,7 @@ async fn remote_compact_v2_rewrites_multiple_trailing_function_call_outputs(
 
     let harness = TestCodexHarness::with_builder(
         test_codex()
-            .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+            .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
             .with_config(|config| {
                 config.model_context_window = Some(2_000);
                 config.model_auto_compact_token_limit = Some(200_000);
@@ -1490,7 +1490,7 @@ async fn remote_mid_turn_compact_v2_sends_turn_state_over_http() -> Result<()> {
 
     let harness = TestCodexHarness::with_builder(
         test_codex()
-            .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+            .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
             .with_config(|config| {
                 config.model_auto_compact_token_limit = Some(200);
             }),
@@ -1618,7 +1618,7 @@ async fn remote_mid_turn_compact_v2_sends_turn_state_over_websocket() -> Result<
     ]])
     .await;
     let mut builder = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
         .with_config(|config| {
             config.model_auto_compact_token_limit = Some(200);
         });

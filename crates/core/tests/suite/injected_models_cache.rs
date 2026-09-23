@@ -185,7 +185,7 @@ fn models_manager(
         cache,
         endpoint,
         Some(AuthManager::from_auth_for_testing(
-            CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+            CodexAuth::create_dummy_workload_identity_for_testing(),
         )),
     ))
 }
@@ -202,7 +202,7 @@ async fn run_agent_with_model(models_manager: SharedModelsManager, model_slug: &
     )
     .await;
     let mut builder = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
         .with_models_manager(models_manager);
     let test = builder.build(&server).await?;
     let available_models = test
@@ -300,7 +300,7 @@ async fn injected_cache_error_falls_back_for_agent_model_selection() -> Result<(
 async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn() -> Result<()> {
     let server = wiremock::MockServer::start().await;
     let home = Arc::new(TempDir::new()?);
-    let initial_auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let initial_auth = CodexAuth::create_dummy_workload_identity_for_testing();
     let auth = AuthManager::from_auth_for_testing_with_home(
         initial_auth.clone(),
         home.path().to_path_buf(),

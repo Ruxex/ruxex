@@ -1,7 +1,7 @@
 use anyhow::Result;
 use anyhow::ensure;
-use app_test_support::ChatGptAuthFixture;
-use app_test_support::write_chatgpt_auth;
+use app_test_support::WorkloadIdentityAuthFixture;
+use app_test_support::write_workload_identity_auth;
 use codex_config::CONFIG_TOML_FILE;
 use codex_config::MarketplaceConfigUpdate;
 use codex_config::record_user_marketplace;
@@ -1168,9 +1168,9 @@ impl RemoteMarketplaceFixture {
                 server.uri()
             ),
         )?;
-        write_chatgpt_auth(
+        write_workload_identity_auth(
             home.path(),
-            ChatGptAuthFixture::new("chatgpt-token")
+            WorkloadIdentityAuthFixture::new("chatgpt-token")
                 .account_id("account-123")
                 .chatgpt_account_id("account-123"),
             AuthCredentialsStoreMode::File,

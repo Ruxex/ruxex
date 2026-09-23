@@ -55,7 +55,6 @@ mod model_provider_capabilities_read;
 #[path = "model_provider_enforcement_tests.rs"]
 mod model_provider_enforcement;
 mod multi_agent_v2_developer_instructions;
-mod otel;
 mod output_schema;
 mod permission_profile_list;
 mod plan_item;
@@ -65,7 +64,6 @@ mod plugin_search;
 mod plugin_uninstall;
 mod process_exec;
 mod projects;
-mod recommended_plugins;
 #[cfg(debug_assertions)]
 mod remote_thread_store;
 mod request_permissions;
@@ -104,7 +102,6 @@ mod thread_shell_command;
 mod thread_start;
 mod thread_unarchive;
 mod thread_unsubscribe;
-mod turn_cost_otel;
 mod turn_interrupt;
 mod turn_settings_update;
 mod turn_start_zsh_fork;

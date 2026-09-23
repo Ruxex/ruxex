@@ -3,10 +3,10 @@
 use std::collections::BTreeMap;
 
 use anyhow::Result;
-use app_test_support::ChatGptAuthFixture;
+use app_test_support::WorkloadIdentityAuthFixture;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
-use app_test_support::write_chatgpt_auth;
+use app_test_support::write_workload_identity_auth;
 use codex_app_server_protocol::ClientRequest;
 use codex_app_server_protocol::ExperimentalFeatureEnablementSetParams;
 use codex_app_server_protocol::ExperimentalFeatureEnablementSetResponse;
@@ -31,9 +31,9 @@ async fn enabling_hosted_apps_protocol_refreshes_an_existing_thread() -> Result<
         .with_root_config(&format!("managed_auth_base_url = \"{}\"", apps.managed_auth_base_url))
         .enable_feature(Feature::Apps)
         .write(codex_home.path())?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),

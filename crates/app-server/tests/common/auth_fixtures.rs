@@ -15,23 +15,23 @@ use codex_login::token_data::parse_chatgpt_jwt_claims;
 use codex_protocol::auth::AuthMode;
 use serde_json::json;
 
-/// Builder for writing a fake ChatGPT auth.json in tests.
+/// Builder for writing fake Workload Identity credentials in tests.
 #[derive(Debug, Clone)]
-pub struct ChatGptAuthFixture {
+pub struct WorkloadIdentityAuthFixture {
     access_token: String,
     refresh_token: String,
     account_id: Option<String>,
-    claims: ChatGptIdTokenClaims,
+    claims: WorkloadIdentityClaims,
     last_refresh: Option<Option<DateTime<Utc>>>,
 }
 
-impl ChatGptAuthFixture {
+impl WorkloadIdentityAuthFixture {
     pub fn new(access_token: impl Into<String>) -> Self {
         Self {
             access_token: access_token.into(),
             refresh_token: "refresh-token".to_string(),
             account_id: None,
-            claims: ChatGptIdTokenClaims::default(),
+            claims: WorkloadIdentityClaims::default(),
             last_refresh: None,
         }
     }
@@ -71,14 +71,14 @@ impl ChatGptAuthFixture {
         self
     }
 
-    pub fn claims(mut self, claims: ChatGptIdTokenClaims) -> Self {
+    pub fn claims(mut self, claims: WorkloadIdentityClaims) -> Self {
         self.claims = claims;
         self
     }
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct ChatGptIdTokenClaims {
+pub struct WorkloadIdentityClaims {
     pub email: Option<String>,
     pub plan_type: Option<String>,
     pub chatgpt_user_id: Option<String>,
@@ -86,7 +86,7 @@ pub struct ChatGptIdTokenClaims {
     pub chatgpt_account_is_fedramp: bool,
 }
 
-impl ChatGptIdTokenClaims {
+impl WorkloadIdentityClaims {
     pub fn new() -> Self {
         Self::default()
     }
@@ -112,7 +112,7 @@ impl ChatGptIdTokenClaims {
     }
 }
 
-pub fn encode_id_token(claims: &ChatGptIdTokenClaims) -> Result<String> {
+pub fn encode_id_token(claims: &WorkloadIdentityClaims) -> Result<String> {
     let header = json!({ "alg": "none", "typ": "JWT" });
     let mut payload = serde_json::Map::new();
     if let Some(email) = &claims.email {
@@ -147,9 +147,9 @@ pub fn encode_id_token(claims: &ChatGptIdTokenClaims) -> Result<String> {
     Ok(format!("{header_b64}.{payload_b64}.{signature_b64}"))
 }
 
-pub fn write_chatgpt_auth(
+pub fn write_workload_identity_auth(
     codex_home: &Path,
-    fixture: ChatGptAuthFixture,
+    fixture: WorkloadIdentityAuthFixture,
     cli_auth_credentials_store_mode: AuthCredentialsStoreMode,
 ) -> Result<()> {
     let id_token_raw = encode_id_token(&fixture.claims)?;

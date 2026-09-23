@@ -6,11 +6,11 @@ use std::sync::Mutex as StdMutex;
 use std::time::Duration;
 
 use anyhow::Result;
-use app_test_support::ChatGptAuthFixture;
-use app_test_support::ChatGptIdTokenClaims;
+use app_test_support::WorkloadIdentityAuthFixture;
+use app_test_support::WorkloadIdentityClaims;
 use app_test_support::TestAppServer;
 use app_test_support::encode_id_token;
-use app_test_support::write_chatgpt_auth;
+use app_test_support::write_workload_identity_auth;
 use axum::Json;
 use axum::Router;
 use axum::extract::State;
@@ -151,83 +151,10 @@ async fn list_apps_returns_empty_with_api_key_auth() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-async fn list_apps_uses_external_chatgpt_auth() -> Result<()> {
-    let access_token = encode_id_token(
-        &ChatGptIdTokenClaims::new()
-            .email("external@example.com")
-            .plan_type("pro")
-            .chatgpt_account_id("account-123"),
-    )?;
-    let connectors = vec![AppInfo {
-        id: "beta".to_string(),
-        name: "Beta".to_string(),
-        description: Some("Beta connector".to_string()),
-        logo_url: None,
-        logo_url_dark: None,
-        icon_assets: None,
-        icon_dark_assets: None,
-        distribution_channel: None,
-        branding: None,
-        app_metadata: None,
-        labels: None,
-        install_url: None,
-        is_accessible: false,
-        is_enabled: true,
-        plugin_display_names: Vec::new(),
-    }];
-    let tools = vec![connector_tool("beta", "Beta App")?];
-    let (server_url, server_handle, _) = start_apps_server_with_delays_and_control_inner(
-        connectors,
-        tools,
-        Duration::ZERO,
-        Duration::ZERO,
-        &access_token,
-    )
-    .await?;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &server_url)?;
-
-    let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
-        .without_auto_env()
-        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
-        .await?;
-    let login_id = mcp
-        .send_chatgpt_auth_tokens_login_request(
-            access_token,
-            "account-123".to_string(),
-            Some("pro".to_string()),
-        )
-        .await?;
-    let login_response: LoginAccountResponse =
-        timeout(DEFAULT_TIMEOUT, mcp.read_response(login_id)).await??;
-    assert_eq!(login_response, LoginAccountResponse::ChatgptAuthTokens {});
-
-    let request_id = mcp
-        .send_apps_list_request(AppsListParams {
-            limit: None,
-            cursor: None,
-            thread_id: None,
-            force_refetch: true,
-        })
-        .await?;
-    let AppsListResponse { data, next_cursor } =
-        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
-
-    assert_eq!(data.len(), 1);
-    assert_eq!(data[0].id, "beta");
-    assert!(data[0].is_accessible);
-    assert!(next_cursor.is_none());
-
-    server_handle.abort();
-    let _ = server_handle.await;
-    Ok(())
-}
 
 #[tokio::test]
-async fn list_apps_includes_plugin_apps_for_chatgpt_auth() -> Result<()> {
+async fn list_apps_includes_plugin_apps_for_workload_identity_auth() -> Result<()> {
     let (server_url, server_handle) =
         start_apps_server_with_delays(Vec::new(), Vec::new(), Duration::ZERO, Duration::ZERO)
             .await?;
@@ -235,9 +162,9 @@ async fn list_apps_includes_plugin_apps_for_chatgpt_auth() -> Result<()> {
     let codex_home = TempDir::new()?;
     write_connectors_and_plugins_config(codex_home.path(), &server_url)?;
     write_plugin_app_fixture(codex_home.path(), "sample", "connector_sample")?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-plugin-apps")
             .chatgpt_account_id("account-123"),
@@ -294,9 +221,9 @@ async fn list_apps_uses_thread_feature_flag_when_thread_id_is_provided() -> Resu
 
     let codex_home = TempDir::new()?;
     write_connectors_config(codex_home.path(), &server_url)?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -395,9 +322,9 @@ async fn list_apps_keeps_apps_with_app_only_tools_accessible() -> Result<()> {
 
     let codex_home = TempDir::new()?;
     write_connectors_config(codex_home.path(), &server_url)?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-app-only")
             .chatgpt_account_id("account-123"),
@@ -469,9 +396,9 @@ enabled = false
 "#
         ),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -589,9 +516,9 @@ async fn list_apps_emits_updates_and_returns_after_both_lists_load() -> Result<(
 
     let codex_home = TempDir::new()?;
     write_connectors_config(codex_home.path(), &server_url)?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -736,9 +663,9 @@ async fn list_apps_waits_for_accessible_data_before_emitting_directory_updates()
 
     let codex_home = TempDir::new()?;
     write_connectors_config(codex_home.path(), &server_url)?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-directory-first")
             .chatgpt_account_id("account-123"),
@@ -847,9 +774,9 @@ async fn list_apps_does_not_emit_empty_interim_updates() -> Result<()> {
 
     let codex_home = TempDir::new()?;
     write_connectors_config(codex_home.path(), &server_url)?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-empty-interim")
             .chatgpt_account_id("account-123"),
@@ -961,9 +888,9 @@ async fn list_apps_paginates_results() -> Result<()> {
 
     let codex_home = TempDir::new()?;
     write_connectors_config(codex_home.path(), &server_url)?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -1091,9 +1018,9 @@ async fn list_apps_force_refetch_preserves_previous_cache_on_failure() -> Result
 
     let codex_home = TempDir::new()?;
     write_connectors_config(codex_home.path(), &server_url)?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -1122,9 +1049,9 @@ async fn list_apps_force_refetch_preserves_previous_cache_on_failure() -> Result
     assert_eq!(initial_data.len(), 1);
     assert!(initial_data.iter().all(|app| app.is_accessible));
 
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token-invalid")
+        WorkloadIdentityAuthFixture::new("chatgpt-token-invalid")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
@@ -1214,9 +1141,9 @@ async fn list_apps_force_refetch_patches_updates_from_cached_snapshots() -> Resu
 
     let codex_home = TempDir::new()?;
     write_connectors_config(codex_home.path(), &server_url)?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),

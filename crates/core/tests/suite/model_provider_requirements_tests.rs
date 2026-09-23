@@ -122,7 +122,7 @@ X-Managed = "required"
         ]),
     )
     .await;
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::create_dummy_workload_identity_for_testing();
     let expected_authorization = format!("Bearer {}", auth.get_token()?);
     let test = test_codex()
         .with_auth(auth)

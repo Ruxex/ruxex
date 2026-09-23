@@ -11,10 +11,10 @@ mod rollout;
 mod test_app_server;
 
 pub use analytics_server::start_analytics_events_server;
-pub use auth_fixtures::ChatGptAuthFixture;
-pub use auth_fixtures::ChatGptIdTokenClaims;
+pub use auth_fixtures::WorkloadIdentityAuthFixture;
+pub use auth_fixtures::WorkloadIdentityClaims;
 pub use auth_fixtures::encode_id_token;
-pub use auth_fixtures::write_chatgpt_auth;
+pub use auth_fixtures::write_workload_identity_auth;
 use codex_app_server_protocol::JSONRPCResponse;
 pub use config::MockResponsesConfig;
 pub use config::write_mock_responses_config_toml;

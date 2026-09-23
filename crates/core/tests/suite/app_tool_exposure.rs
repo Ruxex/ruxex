@@ -171,7 +171,7 @@ pub(super) async fn connector_exposure_requests(
         events.push(responses::sse(vec![responses::ev_completed("second")]));
     }
     let response_mock = responses::mount_sse_sequence(&server, events).await;
-    let auth = codex_login::CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = codex_login::CodexAuth::create_dummy_workload_identity_for_testing();
     let mut extensions = ExtensionRegistryBuilder::new();
     extensions.mcp_server_contributor(Arc::new(AppsServer(serde_json::from_value(json!(
         case.server_omissions

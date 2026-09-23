@@ -2650,7 +2650,7 @@ if (!tool) {
 
     let apps_base_url = apps_server.managed_auth_base_url.clone();
     let mut builder = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
         .with_config(move |config| {
             config
                 .features

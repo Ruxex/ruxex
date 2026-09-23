@@ -1,5 +1,5 @@
 use anyhow::Result;
-use app_test_support::ChatGptAuthFixture;
+use app_test_support::WorkloadIdentityAuthFixture;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_apply_patch_sse_response;
@@ -16,7 +16,7 @@ use app_test_support::create_mock_responses_server_sequence_unchecked;
 use app_test_support::rollout_path;
 use app_test_support::test_absolute_path;
 use app_test_support::to_response;
-use app_test_support::write_chatgpt_auth;
+use app_test_support::write_workload_identity_auth;
 use chrono::Utc;
 use codex_app_server_protocol::ActivePermissionProfile;
 use codex_app_server_protocol::ApprovalsReviewer;
@@ -5851,9 +5851,9 @@ async fn thread_resume_surfaces_cloud_config_bundle_load_errors() -> Result<()> 
     mock_responses_config(&model_server.uri())
         .with_root_config(&format!(r#"managed_auth_base_url = "{managed_auth_base_url}""#))
         .write(codex_home.path())?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home.path(),
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .refresh_token("stale-refresh-token")
             .plan_type("business")
             .chatgpt_user_id("user-123")

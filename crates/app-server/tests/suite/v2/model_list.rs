@@ -2,9 +2,9 @@ use std::time::Duration;
 
 use anyhow::Error;
 use anyhow::Result;
-use app_test_support::ChatGptAuthFixture;
+use app_test_support::WorkloadIdentityAuthFixture;
 use app_test_support::TestAppServer;
-use app_test_support::write_chatgpt_auth;
+use app_test_support::write_workload_identity_auth;
 use app_test_support::write_models_cache;
 use codex_app_server_protocol::ClientRequest;
 use codex_app_server_protocol::ExperimentalFeatureEnablementSetParams;
@@ -358,9 +358,9 @@ api_key_model_discovery = true
             AuthKeyringBackendKind::default(),
         )?;
     } else {
-        write_chatgpt_auth(
+        write_workload_identity_auth(
             codex_home.path(),
-            ChatGptAuthFixture::new(bearer_token).plan_type("pro"),
+            WorkloadIdentityAuthFixture::new(bearer_token).plan_type("pro"),
             AuthCredentialsStoreMode::File,
         )?;
     }

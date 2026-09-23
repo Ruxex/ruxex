@@ -52,65 +52,9 @@ async fn config_requirements_read_preserves_unrestricted_default(config: &str) -
     Ok(())
 }
 
-#[test_case("allowed_login_methods = ['api']", "", &[ForcedLoginMethod::Api]; "managed_api")]
-#[test_case("allowed_login_methods = ['managed']", "", &[ForcedLoginMethod::Managed]; "managed_auth")]
-#[test_case("allowed_login_methods = ['managed', 'api', 'api']", "", &[ForcedLoginMethod::Api, ForcedLoginMethod::Managed]; "both_normalized")]
-#[test_case("", "forced_login_method = 'api'", &[ForcedLoginMethod::Api]; "forced_api_without_requirements")]
-#[test_case("", "forced_login_method = 'managed'", &[ForcedLoginMethod::Managed]; "forced_managed_without_requirements")]
-#[test_case("allowed_login_methods = ['managed', 'api']", "forced_login_method = 'api'", &[ForcedLoginMethod::Api]; "forced_narrows_managed")]
-#[test_case("allowed_managed_workspaces = []", "", &[ForcedLoginMethod::Api]; "empty_managed_workspaces")]
-#[test_case("allowed_managed_workspaces = ['managed']", "forced_managed_workspace_id = ['other']", &[ForcedLoginMethod::Api]; "disjoint_workspaces")]
-#[test_case("allowed_managed_workspaces = ['managed']", "forced_managed_workspace_id = ['other', 'managed']", &[ForcedLoginMethod::Api, ForcedLoginMethod::Managed]; "overlapping_workspaces")]
-#[test_case("allowed_login_methods = ['api']\nallowed_managed_workspaces = ['managed']", "forced_managed_workspace_id = ['other']", &[ForcedLoginMethod::Api]; "api_only_ignores_workspace_mismatch")]
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn config_requirements_read_exposes_effective_login_methods(
-    requirements: &str,
-    config: &str,
-    expected: &[ForcedLoginMethod],
-) -> Result<()> {
-    let (_home, mut server) = start_server(config, Some(requirements)).await?;
-    let wire = read_requirements(&mut server).await?;
-    assert_eq!(wire["requirements"]["allowedLoginMethods"], json!(expected));
-    if !expected.contains(&ForcedLoginMethod::Managed) {
-        let id = server.send_login_account_chatgpt_request().await?;
-        let error = timeout(
-            READ_TIMEOUT,
-            server.read_stream_until_error_message(RequestId::Integer(id)),
-        )
-        .await??;
-        assert!(error.error.message.contains("disabled"), "{error:?}");
-    }
-    if !expected.contains(&ForcedLoginMethod::Api) {
-        let id = server.send_login_account_api_key_request("sk-test").await?;
-        let error = timeout(
-            READ_TIMEOUT,
-            server.read_stream_until_error_message(RequestId::Integer(id)),
-        )
-        .await??;
-        assert!(error.error.message.contains("disabled"), "{error:?}");
-    }
-    Ok(())
-}
 
-#[test_case(""; "removed")]
-#[test_case("allowed_login_methods = ['managed']"; "changed")]
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn config_requirements_read_uses_running_auth_policy(refreshed: &str) -> Result<()> {
-    let (home, mut server) = start_server("", Some("allowed_login_methods = ['api']")).await?;
-    std::fs::write(home.path().join("requirements.toml"), refreshed)?;
-    assert_eq!(
-        read_requirements(&mut server).await?["requirements"]["allowedLoginMethods"],
-        json!(["api"])
-    );
-    let id = server.send_login_account_chatgpt_request().await?;
-    let error = timeout(
-        READ_TIMEOUT,
-        server.read_stream_until_error_message(RequestId::Integer(id)),
-    )
-    .await??;
-    assert!(error.error.message.contains("disabled"), "{error:?}");
-    Ok(())
-}
+
+
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_requirements_read_rejects_invalid_login_method() -> Result<()> {

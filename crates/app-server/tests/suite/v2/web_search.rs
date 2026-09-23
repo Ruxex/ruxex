@@ -3,10 +3,10 @@ use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
-use app_test_support::ChatGptAuthFixture;
+use app_test_support::WorkloadIdentityAuthFixture;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
-use app_test_support::write_chatgpt_auth;
+use app_test_support::write_workload_identity_auth;
 use codex_app_server_protocol::ItemCompletedNotification;
 use codex_app_server_protocol::ItemStartedNotification;
 use codex_app_server_protocol::ThreadItem;
@@ -126,9 +126,9 @@ async fn assert_standalone_web_search_round_trips_output(
     config.write(codex_home.path())?;
 
     if matches!(provider, WebSearchProvider::ChatGpt) {
-        write_chatgpt_auth(
+        write_workload_identity_auth(
             codex_home.path(),
-            ChatGptAuthFixture::new("access-chatgpt"),
+            WorkloadIdentityAuthFixture::new("access-chatgpt"),
             AuthCredentialsStoreMode::File,
         )?;
     }

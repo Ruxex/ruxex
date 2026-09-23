@@ -193,7 +193,7 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
     save_auth(
         test.home_path(),
         &AuthDotJson {
-            auth_mode: Some(AuthMode::Chatgpt),
+            auth_mode: Some(AuthMode::WorkloadIdentity),
             openai_api_key: None,
             tokens: Some(TokenData {
                 id_token: IdTokenInfo {

@@ -682,7 +682,7 @@ async fn reasoning_effort_override_disabled_on_resume_retires_update_at_compacti
     initial.submit_text_turn("before resume").await?;
     let managed_auth_base_url = format!("{}/backend-api", server.uri());
     let resumed = override_builder()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
         .with_config(move |config| {
             config
                 .features
@@ -896,7 +896,7 @@ async fn reasoning_effort_override_compaction_fallback_uses_each_models_effort()
     .await;
     let managed_auth_base_url = format!("{}/backend-api", server.uri());
     let test = override_builder()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
         .with_model_info_override("gpt-5.4", |model| {
             model.comp_hash = Some("original".to_string());
         })

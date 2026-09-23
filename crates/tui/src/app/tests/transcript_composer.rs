@@ -108,9 +108,9 @@ async fn analytics_menu_reopen_preserves_navigation_and_explicit_view_selects_su
         .await;
     app.config.managed_auth_base_url = format!("{}/backend-api", http.uri());
     app.config.cli_auth_credentials_store_mode = codex_login::AuthCredentialsStoreMode::File;
-    app_test_support::write_chatgpt_auth(
+    app_test_support::write_workload_identity_auth(
         &app.config.codex_home,
-        app_test_support::ChatGptAuthFixture::new("test-access-token")
+        app_test_support::WorkloadIdentityAuthFixture::new("test-access-token")
             .account_id("test-account")
             .chatgpt_account_id("test-account")
             .chatgpt_user_id("test-user")

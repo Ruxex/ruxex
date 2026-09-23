@@ -202,7 +202,7 @@ async fn build_test(
     apps_server: &AppsTestServer,
 ) -> Result<TestCodex> {
     let mut builder = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
         .with_config({
             let apps_base_url = apps_server.managed_auth_base_url.clone();
             move |config| {
@@ -224,7 +224,7 @@ async fn build_gated_step_preparation_test(
     let environment_id = remote_aware_environment_id();
     let apps_base_url = apps_server.managed_auth_base_url.clone();
     let mut builder = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
         .with_config(move |config| {
             config
                 .permissions
@@ -502,7 +502,7 @@ async fn startup_recommendations(
     extensions.mcp_server_contributor(barrier.clone());
     let mut builder = test_codex()
         .with_extensions(Arc::new(extensions.build()))
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
         .with_config(move |config| {
             configure_apps_without_search_tool(config, &apps_server.managed_auth_base_url);
             config.model_provider.supports_websockets = false;
@@ -1305,7 +1305,7 @@ async fn endpoint_mode_with_no_eligible_candidates_exposes_no_suggestion_tools()
     )
     .await;
     let mut builder = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
         .with_config({
             let apps_base_url = apps_server.managed_auth_base_url.clone();
             move |config| {

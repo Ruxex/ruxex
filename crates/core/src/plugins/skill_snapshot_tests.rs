@@ -56,7 +56,7 @@ enabled = false
     let plugins_manager = PluginsManager::new_with_options(
         codex_home.path().to_path_buf(),
         Some(Product::Codex),
-        AuthManager::from_auth_for_testing(CodexAuth::create_dummy_chatgpt_auth_for_testing()),
+        AuthManager::from_auth_for_testing(CodexAuth::create_dummy_workload_identity_for_testing()),
         skills_service.clone(),
     );
     let plugin_outcome = plugins_manager.plugins_for_config(&plugins_input).await;

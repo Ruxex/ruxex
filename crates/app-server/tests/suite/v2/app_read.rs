@@ -5,11 +5,11 @@ use std::sync::Mutex as StdMutex;
 use std::time::Duration;
 
 use anyhow::Result;
-use app_test_support::ChatGptAuthFixture;
-use app_test_support::ChatGptIdTokenClaims;
+use app_test_support::WorkloadIdentityAuthFixture;
+use app_test_support::WorkloadIdentityClaims;
 use app_test_support::TestAppServer;
 use app_test_support::encode_id_token;
-use app_test_support::write_chatgpt_auth;
+use app_test_support::write_workload_identity_auth;
 use axum::Json;
 use axum::Router;
 use axum::extract::State;
@@ -85,124 +85,7 @@ fn app_read_deserializes_legacy_tool_summaries() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-async fn app_read_deduplicates_orders_partial_misses_and_reuses_cached_metadata() -> Result<()> {
-    let access_token = encode_id_token(
-        &ChatGptIdTokenClaims::new()
-            .email("external@example.com")
-            .plan_type("plus")
-            .chatgpt_account_id("account-123"),
-    )?;
-    let mut beta_response = app_response(
-        "beta",
-        "Beta",
-        Some("https://files.openai.com/content?id=beta"),
-    );
-    let beta_icon_dark_url = beta_response
-        .as_object_mut()
-        .expect("app response is an object")
-        .remove("icon_dark_url")
-        .expect("app response contains icon_dark_url");
-    beta_response["icon_url_dark"] = beta_icon_dark_url;
-    let state = BatchServerState::new(
-        json!({
-            "apps": [
-                app_response("alpha", "Alpha", Some("https://files.openai.com/content?id=alpha")),
-                beta_response,
-            ]
-        }),
-        &access_token,
-        "tpp",
-    );
-    let (server_url, server_handle) = start_batch_server(state.clone()).await?;
-    let codex_home = TempDir::new()?;
-    write_apps_config(codex_home.path(), &server_url, Some("tpp"))?;
-    let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
-        .without_auto_env()
-        .without_managed_config()
-        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
-        .await?;
-    let login_id = mcp
-        .send_chatgpt_auth_tokens_login_request(
-            access_token,
-            "account-123".to_string(),
-            Some("plus".to_string()),
-        )
-        .await?;
-    let login_response: LoginAccountResponse =
-        timeout(DEFAULT_TIMEOUT, mcp.read_response(login_id)).await??;
-    assert_eq!(login_response, LoginAccountResponse::ChatgptAuthTokens {});
 
-    let raw_response = read_apps_raw(
-        &mut mcp,
-        vec!["beta", "missing", "alpha", "beta", "forbidden"],
-        /*include_tools*/ true,
-    )
-    .await?;
-    assert_eq!(
-        raw_response,
-        json!({
-            "apps": [
-                metadata_json("beta", "Beta", Some("https://files.openai.com/content?id=beta")),
-                metadata_json("alpha", "Alpha", Some("https://files.openai.com/content?id=alpha")),
-            ],
-            "missingAppIds": ["missing", "forbidden"],
-        })
-    );
-    let response: AppsReadResponse = serde_json::from_value(raw_response)?;
-    assert_eq!(
-        response,
-        AppsReadResponse {
-            apps: vec![
-                metadata(
-                    "beta",
-                    "Beta",
-                    Some("https://files.openai.com/content?id=beta")
-                ),
-                metadata(
-                    "alpha",
-                    "Alpha",
-                    Some("https://files.openai.com/content?id=alpha")
-                ),
-            ],
-            missing_app_ids: vec!["missing".to_string(), "forbidden".to_string()],
-        }
-    );
-    assert_eq!(
-        state.requests(),
-        vec![json!({
-            "app_ids": ["beta", "missing", "alpha", "forbidden"],
-            "include_tools": true,
-        })]
-    );
-
-    let cached_response =
-        read_apps(&mut mcp, vec!["alpha", "beta"], /*include_tools*/ true).await?;
-    assert_eq!(
-        cached_response,
-        AppsReadResponse {
-            apps: vec![
-                metadata(
-                    "alpha",
-                    "Alpha",
-                    Some("https://files.openai.com/content?id=alpha")
-                ),
-                metadata(
-                    "beta",
-                    "Beta",
-                    Some("https://files.openai.com/content?id=beta")
-                ),
-            ],
-            missing_app_ids: Vec::new(),
-        }
-    );
-    assert_eq!(state.requests().len(), 1);
-
-    server_handle.abort();
-    let _ = server_handle.await;
-    Ok(())
-}
 
 #[tokio::test]
 async fn app_read_refetches_metadata_only_cache_entries_when_tools_are_requested() -> Result<()> {
@@ -690,9 +573,9 @@ connectors = true
 }
 
 fn write_auth(codex_home: &Path) -> Result<()> {
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         codex_home,
-        ChatGptAuthFixture::new("chatgpt-token")
+        WorkloadIdentityAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123")

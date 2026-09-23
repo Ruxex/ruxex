@@ -1,7 +1,7 @@
 use anyhow::Result;
-use app_test_support::ChatGptAuthFixture;
+use app_test_support::WorkloadIdentityAuthFixture;
 use app_test_support::TestAppServer;
-use app_test_support::write_chatgpt_auth;
+use app_test_support::write_workload_identity_auth;
 use codex_app_server_protocol::ClientRequest;
 use codex_app_server_protocol::CyberAccessProgram;
 use codex_app_server_protocol::JSONRPCErrorError;
@@ -44,7 +44,7 @@ async fn thread_start_stages_daybreak_until_persistence() -> Result<()> {
     )
     .await;
     let home = TempDir::new()?;
-    let mut app = start_chatgpt_app(home.path(), &server).await?;
+    let mut app = start_workload_identity_app(home.path(), &server).await?;
     let mut threads = Vec::new();
     for daybreak_enabled in [Some(true), Some(false), None] {
         let started = app
@@ -82,7 +82,7 @@ async fn thread_start_stages_daybreak_until_persistence() -> Result<()> {
     }
     app.shutdown_gracefully().await?;
 
-    let mut restarted = start_chatgpt_app(home.path(), &server).await?;
+    let mut restarted = start_workload_identity_app(home.path(), &server).await?;
     for (thread_id, daybreak_enabled) in threads {
         let read: ThreadReadResponse = restarted
             .request(|request_id| ClientRequest::ThreadRead {
@@ -106,7 +106,7 @@ async fn thread_start_rejects_daybreak_for_ephemeral_threads() -> Result<()> {
     core_test_support::skip_if_no_network!(Ok(()));
     let server = responses::start_mock_server().await;
     let home = TempDir::new()?;
-    let mut app = start_chatgpt_app(home.path(), &server).await?;
+    let mut app = start_workload_identity_app(home.path(), &server).await?;
     let request_id = app
         .send_thread_start_request_with_auto_env(ThreadStartParams {
             daybreak_enabled: Some(true),
@@ -152,7 +152,7 @@ async fn turn_start_forwards_explicit_cyber_access_program() -> Result<()> {
     )
     .await;
     let home = TempDir::new()?;
-    let mut app = start_chatgpt_app(home.path(), &server).await?;
+    let mut app = start_workload_identity_app(home.path(), &server).await?;
     let thread = app
         .start_thread(ThreadStartParams {
             daybreak_enabled: Some(true),
@@ -204,7 +204,7 @@ async fn daybreak_thread_metadata_persists_independently_across_restart_and_fork
     )
     .await;
     let home = TempDir::new()?;
-    let mut app = start_chatgpt_app(home.path(), &server).await?;
+    let mut app = start_workload_identity_app(home.path(), &server).await?;
     let first = app
         .start_thread(ThreadStartParams {
             daybreak_enabled: Some(false),
@@ -257,7 +257,7 @@ async fn daybreak_thread_metadata_persists_independently_across_restart_and_fork
     assert_eq!(requests.requests().len(), 1);
     app.shutdown_gracefully().await?;
 
-    let mut restarted = start_chatgpt_app(home.path(), &server).await?;
+    let mut restarted = start_workload_identity_app(home.path(), &server).await?;
     for (thread_id, enabled) in [(&first.thread.id, true), (&second.thread.id, false)] {
         let read: ThreadReadResponse = restarted
             .request(|request_id| ClientRequest::ThreadRead {
@@ -311,7 +311,7 @@ async fn daybreak_thread_metadata_persists_independently_across_restart_and_fork
     assert_eq!(requests.requests().len(), 1);
     restarted.shutdown_gracefully().await?;
 
-    let mut restarted = start_chatgpt_app(home.path(), &server).await?;
+    let mut restarted = start_workload_identity_app(home.path(), &server).await?;
     for (thread_id, program, enabled) in [
         (&forked.thread.id, Some(CyberAccessProgram::Standard), true),
         (&forked.thread.id, None, true),
@@ -437,7 +437,7 @@ async fn turn_start_forwards_cyber_access_program_with_personal_access_token() -
     Ok(())
 }
 
-async fn start_chatgpt_app(home: &Path, server: &MockServer) -> Result<TestAppServer> {
+async fn start_workload_identity_app(home: &Path, server: &MockServer) -> Result<TestAppServer> {
     Mock::given(method("GET"))
         .and(path("/v1/responses"))
         .respond_with(ResponseTemplate::new(/*s*/ 426))
@@ -450,9 +450,9 @@ async fn start_chatgpt_app(home: &Path, server: &MockServer) -> Result<TestAppSe
             server.uri()
         ),
     )?;
-    write_chatgpt_auth(
+    write_workload_identity_auth(
         home,
-        ChatGptAuthFixture::new("chatgpt-test-token").plan_type("pro"),
+        WorkloadIdentityAuthFixture::new("chatgpt-test-token").plan_type("pro"),
         AuthCredentialsStoreMode::File,
     )?;
     TestAppServer::builder()
