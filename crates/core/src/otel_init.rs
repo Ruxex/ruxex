@@ -21,7 +21,6 @@ pub fn build_provider(
 ) -> Result<Option<OtelProvider>, Box<dyn Error>> {
     let to_otel_exporter = |kind: &Kind| match kind {
         Kind::None => OtelExporter::None,
-        Kind::Statsig => OtelExporter::Statsig,
         Kind::OtlpHttp {
             endpoint,
             headers,
@@ -67,10 +66,7 @@ pub fn build_provider(
 
     let exporter = to_otel_exporter(&config.otel.exporter);
     let trace_exporter = to_otel_exporter(&config.otel.trace_exporter);
-    let metrics_exporter = if config
-        .metrics_enabled
-        .unwrap_or(default_metrics_enabled)
-    {
+    let metrics_exporter = if config.metrics_enabled.unwrap_or(default_metrics_enabled) {
         to_otel_exporter(&config.otel.metrics_exporter)
     } else {
         OtelExporter::None

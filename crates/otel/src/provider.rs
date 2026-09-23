@@ -1,7 +1,6 @@
 use crate::config::OtelExporter;
 use crate::config::OtelHttpProtocol;
 use crate::config::OtelSettings;
-use crate::config::StatsigMetricsSettings;
 use crate::metrics::MetricsClient;
 use crate::metrics::MetricsConfig;
 use crate::targets::is_log_export_target;
@@ -194,7 +193,7 @@ impl OtelProvider {
     pub fn try_new(settings: &OtelSettings) -> Result<Option<Self>, Box<dyn Error>> {
         let log_enabled = !matches!(settings.exporter, OtelExporter::None);
         let trace_enabled = !matches!(settings.trace_exporter, OtelExporter::None);
-        let metric_exporter = crate::config::resolve_exporter(&settings.metrics_exporter);
+        let metric_exporter = settings.metrics_exporter.clone();
         let metrics_enabled = !matches!(metric_exporter, OtelExporter::None);
 
         if !log_enabled && !trace_enabled && !metrics_enabled {
@@ -266,11 +265,6 @@ impl OtelProvider {
         }
         if let Some(metrics) = provider.metrics.as_mut() {
             *metrics = crate::metrics::install_global(metrics.clone());
-            if matches!(settings.metrics_exporter, OtelExporter::Statsig) {
-                crate::metrics::install_global_statsig_settings(StatsigMetricsSettings {
-                    environment: settings.environment.clone(),
-                });
-            }
         }
         Ok(Some(provider))
     }
@@ -437,9 +431,8 @@ fn build_logger(
 ) -> Result<SdkLoggerProvider, Box<dyn Error>> {
     let mut builder = SdkLoggerProvider::builder().with_resource(resource.clone());
 
-    match crate::config::resolve_exporter(exporter) {
+    match exporter.clone() {
         OtelExporter::None => return Ok(builder.build()),
-        OtelExporter::Statsig => unreachable!("statsig exporter should be resolved"),
         OtelExporter::OtlpGrpc {
             endpoint,
             headers,
@@ -505,9 +498,8 @@ fn build_tracer_provider(
     exporter: &OtelExporter,
     span_attributes: BTreeMap<String, String>,
 ) -> Result<SdkTracerProvider, Box<dyn Error>> {
-    let span_exporter = match crate::config::resolve_exporter(exporter) {
+    let span_exporter = match exporter.clone() {
         OtelExporter::None => return Ok(tracer_provider_builder(resource, span_attributes).build()),
-        OtelExporter::Statsig => unreachable!("statsig exporter should be resolved"),
         OtelExporter::OtlpGrpc {
             endpoint,
             headers,
@@ -603,17 +595,6 @@ mod shutdown_tests;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::metrics::API_CALL_COUNT_METRIC;
-    use crate::metrics::API_CALL_DURATION_METRIC;
-    use crate::metrics::EXEC_SERVER_CLIENT_REQUEST_COUNT_METRIC;
-    use crate::metrics::MetricsExporter;
-    use crate::metrics::RESPONSES_API_ENGINE_IAPI_TTFT_DURATION_METRIC;
-    use crate::metrics::RESPONSES_API_ENGINE_SERVICE_TBT_DURATION_METRIC;
-    use crate::metrics::RESPONSES_API_ENGINE_SERVICE_TTFT_DURATION_METRIC;
-    use crate::metrics::TOOL_CALL_COUNT_METRIC;
-    use crate::metrics::TOOL_CALL_DURATION_METRIC;
-    use crate::metrics::TURN_COST_MICROUSD_METRIC;
-    use crate::metrics::TURN_TOKEN_USAGE_METRIC;
     use opentelemetry_sdk::metrics::InMemoryMetricExporter;
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
@@ -714,63 +695,6 @@ mod tests {
         names.sort_unstable();
         names.dedup();
         assert_eq!(names, vec!["codex.after_transition"]);
-
-        Ok(())
-    }
-
-    #[test]
-    fn statsig_disabled_metrics_are_not_exported() -> Result<(), Box<dyn Error>> {
-        let exporter = InMemoryMetricExporter::default();
-        let mut config = MetricsConfig::otlp(
-            "test",
-            "codex-cli",
-            env!("CARGO_PKG_VERSION"),
-            OtelExporter::Statsig,
-        );
-        config.exporter = MetricsExporter::InMemory(exporter.clone());
-        let metrics = MetricsClient::new(config)?;
-
-        metrics.counter(API_CALL_COUNT_METRIC, /*inc*/ 1, &[])?;
-        metrics.record_duration(API_CALL_DURATION_METRIC, Duration::from_millis(100), &[])?;
-        metrics.counter_with_description(
-            EXEC_SERVER_CLIENT_REQUEST_COUNT_METRIC,
-            "Client-side exec-server RPC attempts.",
-            /*inc*/ 1,
-            &[("method", "fs/readFile")],
-        )?;
-        metrics.counter("codex.conversation.turn.count", /*inc*/ 1, &[])?;
-        metrics.record_duration(
-            RESPONSES_API_ENGINE_IAPI_TTFT_DURATION_METRIC,
-            Duration::from_millis(100),
-            &[],
-        )?;
-        metrics.record_duration(
-            RESPONSES_API_ENGINE_SERVICE_TBT_DURATION_METRIC,
-            Duration::from_millis(100),
-            &[],
-        )?;
-        metrics.record_duration(
-            RESPONSES_API_ENGINE_SERVICE_TTFT_DURATION_METRIC,
-            Duration::from_millis(100),
-            &[],
-        )?;
-        metrics.counter(TOOL_CALL_COUNT_METRIC, /*inc*/ 1, &[])?;
-        metrics.record_duration(TOOL_CALL_DURATION_METRIC, Duration::from_millis(25), &[])?;
-        metrics.counter(TURN_COST_MICROUSD_METRIC, /*inc*/ 1, &[])?;
-        metrics.histogram(TURN_TOKEN_USAGE_METRIC, /*value*/ 100, &[])?;
-        metrics.counter("codex.turns", /*inc*/ 1, &[])?;
-        metrics.shutdown()?;
-
-        let exported_metrics = exporter.get_finished_metrics()?;
-        let mut names: Vec<_> = exported_metrics
-            .iter()
-            .flat_map(opentelemetry_sdk::metrics::data::ResourceMetrics::scope_metrics)
-            .flat_map(opentelemetry_sdk::metrics::data::ScopeMetrics::metrics)
-            .map(opentelemetry_sdk::metrics::data::Metric::name)
-            .collect();
-        names.sort_unstable();
-        names.dedup();
-        assert_eq!(names, vec!["codex.turns"]);
 
         Ok(())
     }

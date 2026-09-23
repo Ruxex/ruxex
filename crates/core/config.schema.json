@@ -2608,8 +2608,7 @@
       "oneOf": [
         {
           "enum": [
-            "none",
-            "statsig"
+            "none"
           ],
           "type": "string"
         },
