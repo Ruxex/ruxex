@@ -4,8 +4,15 @@ Level 3 の公開未使用コード調査では、単一のバイナリだけを
 到達性を判断しない。あるバイナリから到達不能でも、別の実行経路、OS 固有の
 ヘルパー、開発ツール、または統合テストの fixture から利用されることがあるためである。
 
-この一覧は `cargo metadata --no-deps --format-version 1` の `bin` target を基にした。
+この一覧は 2026-09-23 時点の
+`cargo metadata --no-deps --format-version 1` の `bin` target を基にした。
+現在は合計31件で、通常実行16件、開発・補助7件、テスト fixture 8件である。
 更新時は同コマンドの出力と照合する。パッケージの自動検出バイナリも含める。
+
+ここでいう「バイナリ」は、配布用の実行ファイルだけでなく、Cargo が `bin`
+target として認識する開発ツールおよびテスト用サーバーも含む。したがって、
+Level 3 の削除判断では通常実行の16件を主起点としつつ、対象コードが開発ツールや
+テスト fixture からだけ使われる可能性を別集合で確認する。
 
 ## 判定方法
 
@@ -32,7 +39,6 @@ Level 3 の公開未使用コード調査では、単一のバイナリだけを
 | `codex-linux-sandbox` | `codex-linux-sandbox` | Landlock と seccomp を使ってサンドボックス内でコマンドを実行する。 | Linux |
 | `codex-shell-escalation` | `codex-execve-wrapper` | 権限昇格用の execve ラッパーを提供する。 | Unix |
 | `codex-stdio-to-uds` | `codex-stdio-to-uds` | 標準入出力を Unix domain socket に中継する。 | Unix |
-| `codex-voice-host` | `codex-voice-host` | ローカル音声デバイスと realtime transport をつなぐ補助プロセス。 | 対応する音声プラットフォーム |
 | `codex-windows-sandbox` | `codex-windows-sandbox-setup` | Windows sandbox のセットアップを行う。 | Windows |
 | `codex-windows-sandbox` | `codex-command-runner` | Windows sandbox 内のコマンド実行を担う。 | Windows |
 | `codex-windows-sandbox` | `codex-windows-managed-deny-probe` | managed 環境の ACL deny 設定を検査する。 | Windows |

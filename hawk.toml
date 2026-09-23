@@ -1,0 +1,4 @@
+[[production]]
+package = "codex-cli"
+bin = "codex"
+reason = "codex CLI binary"
