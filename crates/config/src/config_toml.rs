@@ -370,11 +370,6 @@ pub struct ConfigToml {
     /// Base URL override for the built-in `openai` model provider.
     pub openai_base_url: Option<String>,
 
-    /// Removed. Former remote thread-store endpoint setting kept only so we can
-    /// fail fast instead of silently falling back to local persistence.
-    #[schemars(skip)]
-    pub experimental_thread_store_endpoint: Option<String>,
-
     /// Experimental / do not use. Selects the thread store implementation.
     pub experimental_thread_store: Option<ThreadStoreToml>,
     pub projects: Option<HashMap<String, ProjectConfig>>,
