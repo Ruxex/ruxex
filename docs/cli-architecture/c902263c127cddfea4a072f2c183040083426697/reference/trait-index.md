@@ -1,144 +1,144 @@
-# Trait index
+# Trait 索引
 
-This index lists Traits that explain a CLI capability boundary or a shared runtime contract. Visibility is recorded from the defining declaration; a public re-export does not change the defining crate.
+この索引には、CLI の機能境界または共有ランタイム契約を説明する Trait を掲載します。可視性は定義宣言に基づいて記録しており、公開 re-export が定義元のクレートを変えることはありません。
 
-## API and provider boundaries
+## API とプロバイダーの境界
 
 ### `AuthProvider`
 
-- Definition: `codex-api`, [`src/auth.rs:30`](../../../../crates/codex-api/src/auth.rs#L30)
-- Visibility: `pub`
-- Role: async request-time auth header provider consumed by API clients.
-- Related users: `codex-login`, `codex-model-provider`, `codex-api` endpoints.
+- 定義: `codex-api`、[`src/auth.rs:30`](../../../../crates/codex-api/src/auth.rs#L30)
+- 可視性: `pub`
+- 役割: API クライアントが利用する、非同期のリクエスト時認証ヘッダープロバイダー。
+- 関連する利用側: `codex-login`、`codex-model-provider`、`codex-api` のエンドポイント。
 
 ### `ModelProvider`
 
-- Definition: `codex-model-provider`, [`src/provider.rs:123`](../../../../crates/model-provider/src/provider.rs#L123)
-- Visibility: `pub`
-- Role: provider capabilities/account state/recovery boundary used by model selection and core.
+- 定義: `codex-model-provider`、[`src/provider.rs:123`](../../../../crates/model-provider/src/provider.rs#L123)
+- 可視性: `pub`
+- 役割: モデル選択と Core が利用する、プロバイダーの機能/アカウント状態/復旧の境界。
 
 ### `RequestTelemetry`
 
-- Definition: `codex-client`, [`src/telemetry.rs:6`](../../../../crates/codex-client/src/telemetry.rs#L6)
-- Visibility: `pub`
-- Role: per-request transport observation hook.
+- 定義: `codex-client`、[`src/telemetry.rs:6`](../../../../crates/codex-client/src/telemetry.rs#L6)
+- 可視性: `pub`
+- 役割: リクエストごとのトランスポート観測フック。
 
 ### `SseTelemetry`
 
-- Definition: `codex-api`, [`src/telemetry.rs:18`](../../../../crates/codex-api/src/telemetry.rs#L18)
-- Visibility: `pub`
-- Role: SSE polling observation hook.
+- 定義: `codex-api`、[`src/telemetry.rs:18`](../../../../crates/codex-api/src/telemetry.rs#L18)
+- 可視性: `pub`
+- 役割: SSE ポーリングの観測フック。
 
 ### `WebsocketTelemetry`
 
-- Definition: `codex-api`, [`src/telemetry.rs:35`](../../../../crates/codex-api/src/telemetry.rs#L35)
-- Visibility: `pub`
-- Role: WebSocket request/event observation hook.
+- 定義: `codex-api`、[`src/telemetry.rs:35`](../../../../crates/codex-api/src/telemetry.rs#L35)
+- 可視性: `pub`
+- 役割: WebSocket のリクエスト/イベント観測フック。
 
-## Configuration and persistence
+## 設定と永続化
 
 ### `ThreadConfigLoader`
 
-- Definition: `codex-config`, [`src/thread_config.rs:86`](../../../../crates/config/src/thread_config.rs#L86)
-- Visibility: `pub`
-- Role: thread-scoped config loading boundary that keeps app-server/core independent from a concrete config source.
+- 定義: `codex-config`、[`src/thread_config.rs:86`](../../../../crates/config/src/thread_config.rs#L86)
+- 可視性: `pub`
+- 役割: app-server/Core を具体的な設定ソースから独立させる、スレッド単位の設定読み込み境界。
 
 ### `ThreadStore`
 
-- Definition: `codex-thread-store`, [`src/store.rs:88`](../../../../crates/thread-store/src/store.rs#L88)
-- Visibility: `pub`
-- Role: persisted thread metadata/history/store boundary used by session lifecycle paths.
+- 定義: `codex-thread-store`、[`src/store.rs:88`](../../../../crates/thread-store/src/store.rs#L88)
+- 可視性: `pub`
+- 役割: セッションのライフサイクル経路が利用する、永続化されたスレッドメタデータ/履歴/ストアの境界。
 
 ### `QueueStore`
 
-- Definition: `codex-thread-store`, [`src/queue_store.rs:14`](../../../../crates/thread-store/src/queue_store.rs#L14)
-- Visibility: `pub`
-- Role: queued messages for existing sessions.
+- 定義: `codex-thread-store`、[`src/queue_store.rs:14`](../../../../crates/thread-store/src/queue_store.rs#L14)
+- 可視性: `pub`
+- 役割: 既存セッション向けにキューへ入れられたメッセージ。
 
 ### `SessionTask`
 
-- Definition: `codex-core`, [`src/tasks/mod.rs:176`](../../../../crates/core/src/tasks/mod.rs#L176)
-- Visibility: `pub(crate)`
-- Role: internal lifecycle contract for session work scheduled on background Tokio tasks.
+- 定義: `codex-core`、[`src/tasks/mod.rs:176`](../../../../crates/core/src/tasks/mod.rs#L176)
+- 可視性: `pub(crate)`
+- 役割: バックグラウンドの Tokio タスクにスケジュールされたセッション作業の内部ライフサイクル契約。
 
-## Tool and policy boundaries
+## ツールとポリシーの境界
 
 ### `ToolExecutor`
 
-- Definition: `codex-tools`, [`src/tool_executor.rs:106`](../../../../crates/tools/src/tool_executor.rs#L106)
-- Visibility: `pub`
-- Role: generic invocation-to-tool-output handler boundary.
+- 定義: `codex-tools`、[`src/tool_executor.rs:106`](../../../../crates/tools/src/tool_executor.rs#L106)
+- 可視性: `pub`
+- 役割: 汎用的な呼び出しからツール出力へのハンドラー境界。
 
 ### `CoreToolRuntime`
 
-- Definition: `codex-core`, [`src/tools/registry.rs:54`](../../../../crates/core/src/tools/registry.rs#L54)
-- Visibility: `pub(crate)`
-- Role: core registry's runtime view over a `ToolExecutor` implementation.
+- 定義: `codex-core`、[`src/tools/registry.rs:54`](../../../../crates/core/src/tools/registry.rs#L54)
+- 可視性: `pub(crate)`
+- 役割: `ToolExecutor` 実装に対する Core レジストリのランタイムビュー。
 
 ### `Approvable`
 
-- Definition: `codex-core`, [`src/tools/sandboxing.rs:309`](../../../../crates/core/src/tools/sandboxing.rs#L309)
-- Visibility: `pub(crate)`
-- Role: tool runtime contract for approval decisions/review keys.
+- 定義: `codex-core`、[`src/tools/sandboxing.rs:309`](../../../../crates/core/src/tools/sandboxing.rs#L309)
+- 可視性: `pub(crate)`
+- 役割: 承認判断/レビューキーに関するツールランタイム契約。
 
 ### `Sandboxable`
 
-- Definition: `codex-core`, [`src/tools/sandboxing.rs:343`](../../../../crates/core/src/tools/sandboxing.rs#L343)
-- Visibility: `pub(crate)`
-- Role: tool runtime contract for sandbox preference/configuration.
+- 定義: `codex-core`、[`src/tools/sandboxing.rs:343`](../../../../crates/core/src/tools/sandboxing.rs#L343)
+- 可視性: `pub(crate)`
+- 役割: サンドボックスの優先設定/構成に関するツールランタイム契約。
 
 ### `ToolRuntime`
 
-- Definition: `codex-core`, [`src/tools/sandboxing.rs:364`](../../../../crates/core/src/tools/sandboxing.rs#L364)
-- Visibility: `pub(crate)`
-- Role: combines approval and sandbox contracts for concrete tool runtimes.
+- 定義: `codex-core`、[`src/tools/sandboxing.rs:364`](../../../../crates/core/src/tools/sandboxing.rs#L364)
+- 可視性: `pub(crate)`
+- 役割: 具体的なツールランタイム向けに承認契約とサンドボックス契約を組み合わせるもの。
 
 ### `Rule`
 
-- Definition: `codex-execpolicy`, [`src/rule.rs:214`](../../../../crates/execpolicy/src/rule.rs#L214)
-- Visibility: `pub`
-- Role: executable rule matching abstraction used by policy evaluation.
+- 定義: `codex-execpolicy`、[`src/rule.rs:214`](../../../../crates/execpolicy/src/rule.rs#L214)
+- 可視性: `pub`
+- 役割: ポリシー評価が利用する実行可能ルールのマッチング抽象化。
 
-## UI and command output boundaries
+## UI とコマンド出力の境界
 
 ### `EventSource`
 
-- Definition: `codex-tui`, [`src/tui/event_stream.rs:45`](../../../../crates/tui/src/tui/event_stream.rs#L45)
-- Visibility: `pub`
-- Role: terminal/event source abstraction consumed by the TUI event broker.
+- 定義: `codex-tui`、[`src/tui/event_stream.rs:45`](../../../../crates/tui/src/tui/event_stream.rs#L45)
+- 可視性: `pub`
+- 役割: TUI イベントブローカーが利用するターミナル/イベントソース抽象化。
 
 ### `EventProcessor`
 
-- Definition: `codex-exec`, [`src/event_processor.rs:13`](../../../../crates/exec/src/event_processor.rs#L13)
-- Visibility: `pub(crate)`
-- Role: internal conversion of response events/status into non-interactive output behavior.
+- 定義: `codex-exec`、[`src/event_processor.rs:13`](../../../../crates/exec/src/event_processor.rs#L13)
+- 可視性: `pub(crate)`
+- 役割: 応答イベント/ステータスを非対話出力の動作へ変換する内部処理。
 
 ### `ToolOutput`
 
-- Definition: `codex-tools`, [`src/tool_output.rs:12`](../../../../crates/tools/src/tool_output.rs#L12)
-- Visibility: `pub`
-- Role: tool result/output boundary.
+- 定義: `codex-tools`、[`src/tool_output.rs:12`](../../../../crates/tools/src/tool_output.rs#L12)
+- 可視性: `pub`
+- 役割: ツールの結果/出力の境界。
 
 ### `TurnItemEmitter`
 
-- Definition: `codex-tools`, [`src/tool_call.rs:56`](../../../../crates/tools/src/tool_call.rs#L56)
-- Visibility: `pub`
-- Role: emits tool/turn items back into conversation/event handling.
+- 定義: `codex-tools`、[`src/tool_call.rs:56`](../../../../crates/tools/src/tool_call.rs#L56)
+- 可視性: `pub`
+- 役割: ツール/ターン項目を会話/イベント処理へ戻すもの。
 
-## Protocol and authentication integration
+## プロトコルと認証の統合
 
 ### `ExperimentalApi`
 
-- Definition: `codex-app-server-protocol`, [`src/experimental_api.rs:5`](../../../../crates/app-server-protocol/src/experimental_api.rs#L5)
-- Visibility: `pub`
-- Role: marker for protocol types/methods that signal experimental usage in schema/API generation.
+- 定義: `codex-app-server-protocol`、[`src/experimental_api.rs:5`](../../../../crates/app-server-protocol/src/experimental_api.rs#L5)
+- 可視性: `pub`
+- 役割: スキーマ/API 生成時に実験的な利用を示すプロトコル型/メソッドのマーカー。
 
 ### `AuthManagerConfig`
 
-- Definition: `codex-login`, [`src/auth/manager.rs:1223`](../../../../crates/login/src/auth/manager.rs#L1223)
-- Visibility: `pub`
-- Role: keeps login manager configuration access independent from `codex-core::Config`.
+- 定義: `codex-login`、[`src/auth/manager.rs:1223`](../../../../crates/login/src/auth/manager.rs#L1223)
+- 可視性: `pub`
+- 役割: login マネージャーの設定アクセスを `codex-core::Config` から独立させるもの。
 
-## Exclusions
+## 除外
 
-Rendering-only Traits such as `Renderable` and unrelated test-only helpers are not listed because they do not explain a CLI capability boundary. They remain valid internal interfaces; exclusion here is a documentation scope decision, not a claim that they do not exist.
+`Renderable` のような描画専用 Trait と、関係のないテスト専用ヘルパーは CLI の機能境界を説明しないため掲載していません。これらは有効な内部インターフェースとして残ります。ここでの除外は文書の範囲を決めるものであり、存在しないという主張ではありません。

@@ -1,26 +1,26 @@
-# Provider and model selection
+# プロバイダーとモデルの選択
 
-## Flow
+## フロー
 
 ```text
 Config + AuthManager
-  -> model provider configuration
+  -> モデルプロバイダー設定
   -> codex-model-provider::create_model_provider
-  -> ModelProvider capability object
-  -> codex-api Provider / client
-  -> Responses or provider-specific stream
+  -> ModelProvider の機能オブジェクト
+  -> codex-api の Provider / クライアント
+  -> Responses またはプロバイダー固有のストリーム
 ```
 
-[`ModelProvider`](../reference/trait-index.md#modelprovider) is defined in `codex-model-provider`, while request/stream types and transport-facing clients are in `codex-api` and `codex-client`. The provider object carries capabilities, account state, recovery behavior, and request construction decisions; core consumes the resulting provider abstraction during turns.
+[`ModelProvider`](../reference/trait-index.md#modelprovider) は `codex-model-provider` で定義され、リクエスト/ストリーム型とトランスポート向けクライアントは `codex-api` と `codex-client` にあります。プロバイダーオブジェクトは機能、アカウント状態、復旧動作、リクエスト構築の判断を保持し、Core はターン中にその結果として得られるプロバイダー抽象化を利用します。
 
-The model catalog/debug path and runtime model selection are related but not identical: `codex debug models` inspects catalog data, while a turn creates the configured provider/model path.
+モデルカタログ/デバッグ経路とランタイムのモデル選択は関連していますが、同一ではありません。`codex debug models` はカタログデータを検査し、ターンは設定されたプロバイダー/モデル経路を作成します。
 
-## Provider-neutral rule
+## プロバイダー非依存のルール
 
-The common agent flow should describe "model provider" and "response stream" at this boundary. Provider-specific authentication, URL/header construction, and retry details belong below it. This keeps `codex-core` reusable when another provider implementation is selected.
+共通のエージェントフローでは、この境界を「モデルプロバイダー」と「応答ストリーム」として説明すべきです。プロバイダー固有の認証、URL/ヘッダー構築、再試行の詳細はこの下位に置きます。これにより、別のプロバイダー実装を選んだ場合も `codex-core` を再利用できます。
 
-## Relevant Traits
+## 関連する Trait
 
-- [`ModelProvider`](../reference/trait-index.md#modelprovider): provider capabilities and lifecycle-facing behavior.
-- [`AuthProvider`](../reference/trait-index.md#authprovider): request-time auth headers.
-- [`SseTelemetry`](../reference/trait-index.md#ssetelemetry) / `WebsocketTelemetry`: transport observations.
+- [`ModelProvider`](../reference/trait-index.md#modelprovider): プロバイダーの機能とライフサイクルに関係する動作。
+- [`AuthProvider`](../reference/trait-index.md#authprovider): リクエスト時の認証ヘッダー。
+- [`SseTelemetry`](../reference/trait-index.md#ssetelemetry) / `WebsocketTelemetry`: トランスポートの観測。

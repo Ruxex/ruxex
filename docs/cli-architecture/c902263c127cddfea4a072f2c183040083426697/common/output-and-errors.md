@@ -1,17 +1,17 @@
-# Output and error propagation
+# 出力とエラーの伝播
 
-## Output families
+## 出力の種類
 
-| Caller | Primary output |
+| 呼び出し元 | 主な出力 |
 | --- | --- |
-| Interactive `codex` | TUI rendering and exit summary |
-| `codex exec` / `review` | text, JSONL events, final message file, optional schema-shaped final result |
-| app-server | protocol responses and notifications |
-| utility commands | human text or command-specific JSON |
-| sandbox wrapper | child process exit status |
+| 対話 `codex` | TUI の描画と終了サマリー |
+| `codex exec` / `review` | テキスト、JSONL イベント、最終メッセージファイル、任意のスキーマ形式の最終結果 |
+| app-server | プロトコルの応答と通知 |
+| ユーティリティコマンド | 人間向けテキストまたはコマンド固有の JSON |
+| サンドボックスラッパー | 子プロセスの終了ステータス |
 
-`codex-exec` has an internal [`EventProcessor`](../reference/trait-index.md#eventprocessor) boundary for converting response events into non-interactive output. API errors, transport errors, core failures, and child exit statuses are kept distinct until the relevant command maps them to its public output/exit contract.
+`codex-exec` には、応答イベントを非対話出力に変換する内部の [`EventProcessor`](../reference/trait-index.md#eventprocessor) 境界があります。API エラー、トランスポートエラー、Core の失敗、子プロセスの終了ステータスは、該当するコマンドが公開出力/終了契約に変換するまで別々に保持されます。
 
-## Error rule
+## エラーのルール
 
-A diagnostic command should explain failure and remediation without silently mutating state. A runtime command should preserve enough error context to identify configuration, authentication, provider, transport, tool, policy, or process failure. See [doctor](../commands/diagnostics.md) and [tool execution](tool-execution.md).
+診断コマンドは状態を黙って変更せず、失敗と対処方法を説明すべきです。ランタイムコマンドは、設定、認証、プロバイダー、トランスポート、ツール、ポリシー、プロセスのどの失敗かを特定できるだけのエラーコンテキストを保持すべきです。[doctor](../commands/diagnostics.md) と [ツール実行](tool-execution.md)も参照してください。

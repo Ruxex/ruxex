@@ -1,38 +1,38 @@
-# `codex` interactive
+# `codex` の対話モード
 
-## Entry
+## エントリ
 
-`codex [OPTIONS] [PROMPT]` enters the interactive path when no subcommand is supplied. The root parser embeds [`codex_tui::Cli`](../../../../crates/tui/src/cli.rs#L11), while the actual dispatch is in [`cli_main`](../../../../crates/cli/src/main.rs#L930) and the TUI startup helper is [`run_interactive_tui`](../../../../crates/cli/src/main.rs#L2195).
+サブコマンドを指定しない場合、`codex [OPTIONS] [PROMPT]` は対話経路に入ります。ルートパーサーは [`codex_tui::Cli`](../../../../crates/tui/src/cli.rs#L11) を組み込み、実際のディスパッチは [`cli_main`](../../../../crates/cli/src/main.rs#L930) が、TUI の起動ヘルパーは [`run_interactive_tui`](../../../../crates/cli/src/main.rs#L2195) が担当します。
 
-The TUI argument object contains user prompt, strict-config, approval mode, web search, alternate-screen, daemon, shared config, and internal resume/fork/agents state. The internal fields are populated by top-level wrapper commands and are not independent user flags.
+TUI の引数オブジェクトには、ユーザープロンプト、strict-config、承認モード、ウェブ検索、代替画面、デーモン、共有設定、内部の resume/fork/agents 状態が含まれます。内部フィールドはトップレベルのラッパーコマンドが設定するもので、独立したユーザーフラグではありません。
 
-## Flow
+## フロー
 
 ```text
 codex [PROMPT]
   -> MultitoolCli + TuiCli
-  -> root config/remote/worktree validation
+  -> ルートの設定/リモート/worktree 検証
   -> run_interactive_tui
-  -> codex_tui startup orchestration
-  -> app-server/direct session startup
-  -> terminal event loop and turns
-  -> AppExitInfo -> exit/update handling
+  -> codex_tui の起動オーケストレーション
+  -> app-server/直接セッション起動
+  -> ターミナルのイベントループとターン
+  -> AppExitInfo -> 終了/更新処理
 ```
 
-The TUI delegates model turns, tools, approvals, and persistence to shared runtime services. See [configuration](../common/configuration.md), [session/thread](../common/session-and-thread.md), [tool execution](../common/tool-execution.md), and [output/errors](../common/output-and-errors.md).
+TUI はモデルのターン、ツール、承認、永続化を共有ランタイムサービスに委譲します。[設定](../common/configuration.md)、[セッション/スレッド](../common/session-and-thread.md)、[ツール実行](../common/tool-execution.md)、[出力/エラー](../common/output-and-errors.md)も参照してください。
 
-## Important constraints
+## 重要な制約
 
-- The TUI checks terminal capability and can reject non-terminal stdin/stdout.
-- `--no-daemon` changes startup routing; it does not remove the core session model.
-- `--ask-for-approval` and the dangerous bypass flag are mutually constrained by `codex-tui::Cli`.
-- Remote mode and additional-directory overrides are validated in the root CLI before startup.
+- TUI はターミナル機能を検査し、ターミナルでない stdin/stdout を拒否できます。
+- `--no-daemon` は起動経路を変えますが、Core のセッションモデルを取り除くものではありません。
+- `--ask-for-approval` と危険なバイパスフラグの併用関係は `codex-tui::Cli` が制約します。
+- リモートモードと追加ディレクトリの上書きは、起動前にルート CLI で検証されます。
 
-## Relevant ownership
+## 関連する担当範囲
 
-| Concern | Definition |
+| 関心事 | 定義 |
 | --- | --- |
-| Root command | `codex-cli::MultitoolCli`, `crates/cli/src/main.rs` |
-| TUI arguments | `codex-tui::Cli`, `crates/tui/src/cli.rs` |
-| Session runtime | `codex-core`, reached through TUI/app-server startup |
-| UI event source | `codex-tui::EventSource`, see [Trait index](../reference/trait-index.md#eventsource) |
+| ルートコマンド | `codex-cli::MultitoolCli`, `crates/cli/src/main.rs` |
+| TUI 引数 | `codex-tui::Cli`, `crates/tui/src/cli.rs` |
+| セッションランタイム | `codex-core`。TUI/app-server の起動経路から到達 |
+| UI イベントソース | `codex-tui::EventSource`。[Trait 索引](../reference/trait-index.md#eventsource)を参照 |

@@ -1,21 +1,21 @@
-# Tool execution
+# ツール実行
 
-## Normalized path
+## 正規化した経路
 
 ```text
-model response tool call
-  -> tool name/argument routing
-  -> ToolExecutor handler or CoreToolRuntime
-  -> approval decision
-  -> sandbox construction
-  -> process/network/filesystem operation
-  -> ToolOutput / protocol event
+モデル応答のツール呼び出し
+  -> ツール名/引数のルーティング
+  -> ToolExecutor ハンドラーまたは CoreToolRuntime
+  -> 承認判断
+  -> サンドボックス構築
+  -> プロセス/ネットワーク/ファイルシステム操作
+  -> ToolOutput / プロトコルイベント
 ```
 
-The generic tool boundary is [`codex_tools::ToolExecutor`](../reference/trait-index.md#toolexecutor). Core's registry adds [`CoreToolRuntime`](../reference/trait-index.md#coretoolruntime), while concrete execution runtimes implement [`ToolRuntime`](../reference/trait-index.md#toolruntime) together with approval and sandbox capabilities.
+汎用ツール境界は [`codex_tools::ToolExecutor`](../reference/trait-index.md#toolexecutor) です。Core のレジストリは [`CoreToolRuntime`](../reference/trait-index.md#coretoolruntime) を追加し、具体的な実行ランタイムは承認とサンドボックスの機能とともに [`ToolRuntime`](../reference/trait-index.md#toolruntime) を実装します。
 
-`TurnItemEmitter` and `ToolOutput` carry tool results/events back toward the turn and output layers. MCP, plugins, code mode, shell, patch, and built-in tools share this routing shape but differ in handler and policy details.
+`TurnItemEmitter` と `ToolOutput` は、ツールの結果/イベントをターンと出力の層へ戻します。MCP、プラグイン、コードモード、シェル、パッチ、組み込みツールはこの経路の形を共有しますが、ハンドラーとポリシーの詳細が異なります。
 
-## Important distinction
+## 重要な違い
 
-The `codex exec` CLI is not the same thing as an agent-issued exec tool. The former is a top-level non-interactive command; the latter is a tool runtime inside a turn. They can share core execution primitives while having different input, approval, and output boundaries.
+`codex exec` CLI は、エージェントが発行する exec ツールと同じものではありません。前者はトップレベルの非対話コマンドで、後者はターン内のツールランタイムです。Core の実行プリミティブを共有することはできますが、入力、承認、出力の境界は異なります。

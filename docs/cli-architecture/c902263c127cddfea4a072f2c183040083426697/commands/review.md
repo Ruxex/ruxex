@@ -1,12 +1,12 @@
 # `codex review`
 
-## Entry
+## エントリ
 
-`codex review` uses [`ReviewCommand`](../../../../crates/cli/src/main.rs#L266), which wraps `codex_exec::ReviewArgs`. The root dispatch enters the same non-interactive execution family as `exec` at [main.rs#L1050](../../../../crates/cli/src/main.rs#L1050).
+`codex review` は `codex_exec::ReviewArgs` をラップする [`ReviewCommand`](../../../../crates/cli/src/main.rs#L266) を使います。ルートのディスパッチは [main.rs#L1050](../../../../crates/cli/src/main.rs#L1050) で `exec` と同じ非対話実行ファミリーに入ります。
 
-## Runtime shape
+## ランタイムの形
 
-The review command supplies review-specific instructions and target selection to the exec runtime. It still shares configuration, provider/model selection, tool execution, approval/policy, and output handling with `codex exec`; the difference is the request construction and review prompt semantics.
+review コマンドはレビュー固有の指示と対象選択を exec ランタイムに渡します。設定、プロバイダー/モデル選択、ツール実行、承認/ポリシー、出力処理は `codex exec` と共有します。違いはリクエストの構築とレビュー用プロンプトの意味論です。
 
 ```text
 codex review [OPTIONS]
@@ -17,8 +17,8 @@ codex review [OPTIONS]
   -> non-interactive result output
 ```
 
-Use the [exec page](exec.md) for the common execution lifecycle, and [provider/model](../common/provider-and-model.md) and [tool execution](../common/tool-execution.md) for shared boundaries.
+共通の実行ライフサイクルについては [exec のページ](exec.md) を、共有される境界については [プロバイダー/モデル](../common/provider-and-model.md) と [ツール実行](../common/tool-execution.md) を参照してください。
 
-## Boundary note
+## 境界に関する注意
 
-The CLI crate owns the top-level spelling and strict-config wrapper. `codex-exec` owns review argument interpretation and execution orchestration; `codex-core` owns the agent/runtime behavior used after the request is admitted.
+CLI クレートはトップレベルの表記と strict-config ラッパーを管理します。`codex-exec` はレビュー引数の解釈と実行オーケストレーションを管理し、`codex-core` はリクエストが受理された後のエージェント/ランタイム動作を管理します。

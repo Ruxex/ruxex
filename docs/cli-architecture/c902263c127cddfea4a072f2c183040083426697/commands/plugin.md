@@ -1,24 +1,24 @@
 # `codex plugin`
 
-## Entry
+## エントリ
 
-Plugins are parsed by [`PluginCli` and `PluginSubcommand`](../../../../crates/cli/src/plugin_cmd.rs#L39). The root dispatch enters the plugin runner at [main.rs#L1083](../../../../crates/cli/src/main.rs#L1083).
+プラグインは [`PluginCli` と `PluginSubcommand`](../../../../crates/cli/src/plugin_cmd.rs#L39) で解析されます。ルートのディスパッチは [main.rs#L1083](../../../../crates/cli/src/main.rs#L1083) でプラグインランナーに入ります。
 
-Subcommands are `add`, `list`, `marketplace`, and `remove`. Marketplace has its own `add`, `list`, `upgrade`, and `remove` commands in [`marketplace_cmd.rs`](../../../../crates/cli/src/marketplace_cmd.rs#L35).
+サブコマンドは `add`、`list`、`marketplace`、`remove` です。Marketplace には [`marketplace_cmd.rs`](../../../../crates/cli/src/marketplace_cmd.rs#L35) に独自の `add`、`list`、`upgrade`、`remove` コマンドがあります。
 
-## Flow
+## フロー
 
 ```text
 codex plugin <operation>
-  -> plugin selector / marketplace arguments
-  -> config and plugin input loading
-  -> marketplace resolution
-  -> install, list, upgrade, or remove
-  -> human or JSON output
+  -> プラグインセレクター / Marketplace 引数
+  -> 設定とプラグイン入力の読み込み
+  -> Marketplace の解決
+  -> インストール、一覧表示、アップグレード、または削除
+  -> 人間向けまたは JSON の出力
 ```
 
-`add` resolves `PLUGIN@MARKETPLACE` or a plugin plus `--marketplace`, then installs into the local plugin/cache state. `list --available --json` can include marketplace plugins that are not installed. These operations mutate local plugin state but do not themselves start a model turn.
+`add` は `PLUGIN@MARKETPLACE`、またはプラグインと `--marketplace` を解決し、ローカルのプラグイン/キャッシュ状態にインストールします。`list --available --json` には未インストールの Marketplace プラグインを含めることができます。これらの操作はローカルのプラグイン状態を変更しますが、それ自体がモデルのターンを開始することはありません。
 
-## Boundary
+## 境界
 
-The command grammar is in `codex-cli`; plugin lifecycle and input/config semantics are in `codex-plugin` and app-server integration. See [configuration](../common/configuration.md), [transport/server](../common/transport-and-server.md), and [output/errors](../common/output-and-errors.md).
+コマンド文法は `codex-cli` にあり、プラグインのライフサイクルと入力/設定の意味論は `codex-plugin` および app-server 統合にあります。[設定](../common/configuration.md)、[トランスポート/サーバー](../common/transport-and-server.md)、[出力/エラー](../common/output-and-errors.md)も参照してください。

@@ -1,21 +1,21 @@
 # `codex doctor`
 
-## Entry
+## エントリ
 
-`DoctorCommand` is dispatched at [`main.rs#L1428`](../../../../crates/cli/src/main.rs#L1428) into [`doctor::run_doctor`](../../../../crates/cli/src/doctor.rs#L308).
+`DoctorCommand` は [`main.rs#L1428`](../../../../crates/cli/src/main.rs#L1428) で [`doctor::run_doctor`](../../../../crates/cli/src/doctor.rs#L308) にディスパッチされます。
 
-## Scope
+## 範囲
 
-Doctor is read-mostly. It inspects installation/package layout, config, auth, terminal/runtime, disk/state paths, Git, network/provider reachability, MCP, sandbox/security, and thread inventory. It produces redacted serializable check rows that can back human and JSON reports.
+Doctor はほぼ読み取り専用です。インストール/パッケージ構成、設定、認証、ターミナル/ランタイム、ディスク/状態パス、Git、ネットワーク/プロバイダー到達性、MCP、サンドボックス/セキュリティ、スレッド一覧を検査します。人間向けレポートと JSON レポートの基礎にできる、秘匿情報を削除したシリアライズ可能な検査行を生成します。
 
 ```text
 codex doctor
-  -> load local config and installation context
-  -> run bounded sync/async checks
-  -> redact and aggregate check rows
-  -> render human report or JSON
+  -> ローカル設定とインストールコンテキストを読み込む
+  -> 時間制限付きの同期/非同期検査を実行する
+  -> 検査行の秘匿情報を削除して集約する
+  -> 人間向けレポートまたは JSON を描画する
 ```
 
-Checks should diagnose and provide remediation without repairing state or starting long-lived services. Network checks are bounded probes; they do not prove that a complete agent turn will succeed.
+検査は状態を修復したり長時間稼働するサービスを起動したりせず、診断と対処方法の提示を行うべきです。ネットワーク検査は時間制限付きのプローブであり、エージェントのターン全体が成功することを証明するものではありません。
 
-See [configuration](../common/configuration.md), [authentication](../common/authentication.md), [transport/server](../common/transport-and-server.md), and [output/errors](../common/output-and-errors.md).
+[設定](../common/configuration.md)、[認証](../common/authentication.md)、[トランスポート/サーバー](../common/transport-and-server.md)、[出力/エラー](../common/output-and-errors.md)も参照してください。

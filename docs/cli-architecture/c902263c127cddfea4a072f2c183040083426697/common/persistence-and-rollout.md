@@ -1,19 +1,19 @@
-# Persistence and rollout
+# 永続化とロールアウト
 
-## State families
+## 状態の種類
 
-- thread/session metadata and collections;
-- queue state for messages sent to existing sessions;
-- rollout/history events used to resume, inspect, or reduce state;
-- local configuration, plugin, MCP, auth, and model caches;
-- optional ephemeral execution state.
+- スレッド/セッションのメタデータとコレクション。
+- 既存セッションに送信するメッセージのキュー状態。
+- 再開、検査、状態縮約に使うロールアウト/履歴イベント。
+- ローカル設定、プラグイン、MCP、認証、モデルのキャッシュ。
+- 任意の一時実行状態。
 
-`ThreadStore` and `QueueStore` define storage boundaries for app-server/core. Rollout and history crates encode event/state persistence; the CLI chooses whether a command such as `--ephemeral`, archive, delete, or debug trace reduction reads or mutates those stores.
+`ThreadStore` と `QueueStore` は app-server/Core のストレージ境界を定義します。ロールアウトと履歴のクレートはイベント/状態の永続化をエンコードし、CLI は `--ephemeral`、archive、delete、デバッグトレース縮約などのコマンドがそれらのストアを読み取るか変更するかを選択します。
 
-## Resume/fork/archive relationship
+## resume/fork/archive の関係
 
-Resume reads an existing thread and reconstructs runtime context. Fork copies completed history into a new thread relationship. Archive/unarchive changes collection state; delete removes saved state subject to confirmation. These operations may be mediated by app-server requests even when invoked from a local CLI.
+Resume は既存のスレッドを読み込み、ランタイムコンテキストを再構築します。Fork は完了済みの履歴を新しいスレッド関係にコピーします。Archive/unarchive はコレクション状態を変更し、delete は確認後に保存済み状態を削除します。これらの操作はローカル CLI から呼び出した場合でも、app-server のリクエストを介することがあります。
 
-## Trace reduction
+## トレースの縮約
 
-`codex debug trace-reduce` consumes a trace bundle and writes reduced state JSON. This is an offline diagnostic transformation, not normal thread persistence. See [debug](../commands/debug.md).
+`codex debug trace-reduce` はトレースバンドルを読み込み、縮約した状態 JSON を書き込みます。これはオフラインの診断変換であり、通常のスレッド永続化ではありません。[デバッグ](../commands/debug.md)も参照してください。

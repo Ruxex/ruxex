@@ -1,41 +1,41 @@
 # `codex exec`
 
-## Entry
+## エントリ
 
-`codex exec [OPTIONS] [PROMPT]` is parsed by [`codex_exec::Cli`](../../../../crates/exec/src/cli.rs#L15) and dispatched by `codex-cli` at [main.rs#L1034](../../../../crates/cli/src/main.rs#L1034). The executable supports a new non-interactive session when no nested command is present and nested `resume`, `fork`, and `review` actions through [`Command`](../../../../crates/exec/src/cli.rs#L149).
+`codex exec [OPTIONS] [PROMPT]` は [`codex_exec::Cli`](../../../../crates/exec/src/cli.rs#L15) で解析され、`codex-cli` により [main.rs#L1034](../../../../crates/cli/src/main.rs#L1034) でディスパッチされます。ネストしたコマンドがない場合は新しい非対話セッションを実行し、[`Command`](../../../../crates/exec/src/cli.rs#L149) を通じてネストした `resume`、`fork`、`review` 操作にも対応します。
 
-## Input and output model
+## 入出力モデル
 
-The exec parser owns flags for:
+exec パーサーは次のフラグを管理します。
 
-- prompt/stdin input;
-- JSONL event output and last-message file output;
-- output schema for the final response;
-- ephemeral execution and config/rules loading controls;
-- global model, approval bypass, hook trust, and worktree options.
+- プロンプト/stdin 入力。
+- JSONL イベント出力と最終メッセージのファイル出力。
+- 最終応答の出力スキーマ。
+- 一時実行と設定/ルール読み込みの制御。
+- グローバルモデル、承認のバイパス、フックの信頼、worktree のオプション。
 
-`codex_exec::run_main` is the runtime entry at [`exec/src/lib.rs#L244`](../../../../crates/exec/src/lib.rs#L244). It loads config, resolves or starts the app-server/session path, sends requests, processes events, and maps completion/error state to process output.
+`codex_exec::run_main` は [`exec/src/lib.rs#L244`](../../../../crates/exec/src/lib.rs#L244) にあるランタイムのエントリです。設定を読み込み、app-server/セッション経路を解決または起動し、リクエストを送信し、イベントを処理して、完了/エラー状態をプロセス出力に変換します。
 
-## Flow
+## フロー
 
 ```text
 codex exec
   -> codex_exec::Cli
   -> codex_exec::run_main
-  -> config/bootstrap
-  -> start/resume/fork thread
-  -> send prompt through app-server/core
-  -> event processing
-  -> text, JSONL, schema-shaped output, or exit code
+  -> 設定/ブートストラップ
+  -> スレッドを開始/再開/フォーク
+  -> app-server/Core 経由でプロンプトを送信
+  -> イベント処理
+  -> テキスト、JSONL、スキーマ形式の出力、または終了コード
 ```
 
-`--ephemeral` is a persistence choice, not a different model protocol. See [configuration](../common/configuration.md), [session/thread](../common/session-and-thread.md), [output/errors](../common/output-and-errors.md), and [persistence](../common/persistence-and-rollout.md).
+`--ephemeral` は永続化方法の選択であり、別のモデルプロトコルではありません。[設定](../common/configuration.md)、[セッション/スレッド](../common/session-and-thread.md)、[出力/エラー](../common/output-and-errors.md)、[永続化](../common/persistence-and-rollout.md)も参照してください。
 
-## Relevant types
+## 関連する型
 
-| Type | Crate | Role |
+| 型 | クレート | 役割 |
 | --- | --- | --- |
-| `Cli`, `Command` | `codex-exec` | command grammar |
-| `EventProcessor` | `codex-exec` | internal event-to-output processing |
-| `ResponseEvent` | `codex-api` | model response stream boundary |
-| `ThreadId`, `ClientRequest` | `codex-protocol` / app-server protocol | request/session identity |
+| `Cli`、`Command` | `codex-exec` | コマンド文法 |
+| `EventProcessor` | `codex-exec` | 内部のイベントから出力への処理 |
+| `ResponseEvent` | `codex-api` | モデル応答ストリームの境界 |
+| `ThreadId`、`ClientRequest` | `codex-protocol` / app-server protocol | リクエスト/セッションの識別情報 |

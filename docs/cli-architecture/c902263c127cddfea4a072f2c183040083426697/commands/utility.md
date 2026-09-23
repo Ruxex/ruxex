@@ -1,24 +1,24 @@
-# Utility and internal commands
+# ユーティリティと内部コマンド
 
 ## `completion`
 
-`codex completion [bash|zsh|fish|...]` generates shell completion scripts using the root clap command. It is local, stateless, and rejects remote mode. The parser is [`CompletionCommand`](../../../../crates/cli/src/main.rs#L197), dispatched at [main.rs#L1420](../../../../crates/cli/src/main.rs#L1420).
+`codex completion [bash|zsh|fish|...]` はルートの clap コマンドを使ってシェル補完スクリプトを生成します。ローカルかつステートレスで、リモートモードを拒否します。パーサーは [`CompletionCommand`](../../../../crates/cli/src/main.rs#L197) で、[main.rs#L1420](../../../../crates/cli/src/main.rs#L1420) でディスパッチされます。
 
 ## `features`
 
-`codex features list|enable|disable` reads or edits feature configuration. `list` resolves the effective config and prints feature key, stage, and enabled state; enable/disable edit the persistent config. The enum is near [`main.rs#L897`](../../../../crates/cli/src/main.rs#L897), and dispatch is at [L1575](../../../../crates/cli/src/main.rs#L1575). See [feature flags](../common/feature-flags.md).
+`codex features list|enable|disable` は機能設定を読み込むか編集します。`list` は有効な設定を解決し、機能キー、段階、有効状態を出力します。enable/disable は永続設定を編集します。enum は [`main.rs#L897`](../../../../crates/cli/src/main.rs#L897) 付近にあり、ディスパッチは [L1575](../../../../crates/cli/src/main.rs#L1575) にあります。[機能フラグ](../common/feature-flags.md)も参照してください。
 
 ## `exec-server`
 
-The experimental `codex exec-server` service exposes execution over stdio, with request concurrency controlled by `RequestDispatchMode`. Its CLI wrapper is [`ExecServerCommand`](../../../../crates/cli/src/main.rs#L525); runtime ownership is in `codex-exec-server` and app-server execution support. See [transport/server](../common/transport-and-server.md) and [telemetry](../common/telemetry.md).
+実験的な `codex exec-server` サービスは stdio 経由で実行機能を公開し、リクエストの並行性は `RequestDispatchMode` が制御します。CLI ラッパーは [`ExecServerCommand`](../../../../crates/cli/src/main.rs#L525) で、ランタイムの担当は `codex-exec-server` と app-server の実行サポートにあります。[トランスポート/サーバー](../common/transport-and-server.md) と [テレメトリ](../common/telemetry.md)も参照してください。
 
-## Internal transport helpers
+## 内部トランスポートヘルパー
 
-- `stdio-to-uds` relays stdio bytes to a Unix domain socket using `codex-stdio-to-uds`.
-- hidden `tcp-tunnel` forwards a local TCP socket through an HTTP/3 CONNECT proxy.
+- `stdio-to-uds` は `codex-stdio-to-uds` を使い、stdio のバイト列を Unix ドメインソケットに中継します。
+- 非表示の `tcp-tunnel` は HTTP/3 CONNECT プロキシ経由でローカル TCP ソケットを転送します。
 
-They are transport plumbing, not general-purpose agent commands. Both are dispatched in `cli_main` and reject remote-mode combinations that would make their local ownership ambiguous.
+これらはトランスポートの配管であり、汎用エージェントコマンドではありません。どちらも `cli_main` でディスパッチされ、ローカルでの担当範囲が曖昧になるリモートモードの組み合わせを拒否します。
 
-## Internal schema/trace utilities
+## 内部スキーマ/トレースユーティリティ
 
-App-server schema generation and debug trace reduction are documented on their command pages because they expose generated protocol/state artifacts without being ordinary end-user runtime modes.
+app-server のスキーマ生成とデバッグトレースの縮約は、通常のエンドユーザー向けランタイムモードではなく、生成されたプロトコル/状態の成果物を公開する機能であるため、それぞれのコマンドページに記載しています。

@@ -1,32 +1,32 @@
-# Session and thread lifecycle
+# セッションとスレッドのライフサイクル
 
-## Terminology
+## 用語
 
-- A thread is the persisted/conversational unit identified by a thread ID.
-- A turn is one user/model interaction within a thread.
-- A session is the CLI-facing workflow around starting, resuming, forking, queueing, or displaying a thread.
+- スレッドは、スレッド ID で識別される永続化/会話の単位です。
+- ターンは、スレッド内の 1 回のユーザー/モデル対話です。
+- セッションは、スレッドの開始、再開、フォーク、キュー投入、表示を取り巻く CLI 向けのワークフローです。
 
-The CLI wrappers in `codex-cli` select a thread/session operation; `codex-tui`, `codex-exec`, and `codex-app-server` coordinate the runtime.
+`codex-cli` の CLI ラッパーがスレッド/セッション操作を選択し、`codex-tui`、`codex-exec`、`codex-app-server` がランタイムを調整します。
 
-## Lifecycle
+## ライフサイクル
 
 ```text
-select/create thread
-  -> load thread config and persisted context
-  -> admit/start turn
-  -> queue, steer, interrupt, complete, or fail
-  -> persist rollout/thread metadata
-  -> resume/fork/archive/delete/unarchive later
+スレッドを選択/作成
+  -> スレッド設定と永続化済みコンテキストを読み込む
+  -> ターンを受理/開始
+  -> キュー投入、誘導、中断、完了、または失敗
+  -> ロールアウト/スレッドメタデータを永続化
+  -> 後で resume/fork/archive/delete/unarchive
 ```
 
-Thread persistence is abstracted by [`ThreadStore`](../reference/trait-index.md#threadstore), and queued messages by [`QueueStore`](../reference/trait-index.md#queuestore). Core task admission uses the internal [`SessionTask`](../reference/trait-index.md#sessiontask) contract.
+スレッドの永続化は [`ThreadStore`](../reference/trait-index.md#threadstore) が、キューに入ったメッセージは [`QueueStore`](../reference/trait-index.md#queuestore) が抽象化します。Core のタスク受理は内部の [`SessionTask`](../reference/trait-index.md#sessiontask) 契約を使います。
 
-## Command distinctions
+## コマンドの違い
 
-- `resume` re-enters an existing thread, optionally starting a new turn.
-- `fork` creates a new thread from completed source history.
-- `queue` sends work to an existing session through a server path.
-- archive/unarchive changes collection/state visibility.
-- delete removes saved state and requires command-specific confirmation rules.
+- `resume` は既存のスレッドに再び入り、任意で新しいターンを開始します。
+- `fork` は完了済みの元履歴から新しいスレッドを作成します。
+- `queue` はサーバー経路を通じて既存セッションに作業を送ります。
+- archive/unarchive はコレクション/状態の可視性を変更します。
+- delete は保存済み状態を削除し、コマンド固有の確認ルールに従います。
 
-See [session commands](../commands/sessions.md) and [persistence](persistence-and-rollout.md).
+[セッションコマンド](../commands/sessions.md) と [永続化](persistence-and-rollout.md)も参照してください。

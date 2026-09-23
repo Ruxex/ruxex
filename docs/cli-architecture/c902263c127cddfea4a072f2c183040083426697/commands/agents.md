@@ -1,25 +1,25 @@
 # `codex agents`
 
-## Entry
+## エントリ
 
-`codex agents` selects the same interactive TUI binary with `agents_overview = true`. The command shape is [`AgentsCommand`](../../../../crates/cli/src/main.rs#L287), and the branch is in the `None | Some(Subcommand::Agents(_))` arm at [main.rs#L981](../../../../crates/cli/src/main.rs#L981).
+`codex agents` は `agents_overview = true` を設定して、通常と同じ対話 TUI バイナリを選択します。コマンドの形は [`AgentsCommand`](../../../../crates/cli/src/main.rs#L287) で、分岐は [main.rs#L981](../../../../crates/cli/src/main.rs#L981) の `None | Some(Subcommand::Agents(_))` アームにあります。
 
-The overview is intended to browse sessions on a shared local app-server daemon. It rejects an initial prompt or images and validates remote endpoint conflicts before entering the TUI.
+この概要画面は、共有ローカル app-server デーモン上のセッションを閲覧するためのものです。初期プロンプトや画像は拒否し、TUI に入る前にリモートエンドポイントの競合を検証します。
 
-## Flow and constraints
+## フローと制約
 
 ```text
 codex agents
-  -> AgentsCommand options
-  -> endpoint and remote-mode validation
+  -> AgentsCommand のオプション
+  -> エンドポイントとリモートモードの検証
   -> TuiCli.agents_overview = true
   -> run_interactive_tui
-  -> daemon-wide thread/session overview
+  -> デーモン全体のスレッド/セッション概要
 ```
 
-- A shared server is required for the overview; `--no-daemon` is rejected.
-- On supported platforms, absence of `--remote` resolves the local daemon endpoint.
-- Workload identity and some additional-directory overrides are incompatible with this path.
-- The overview is a UI mode, not a second thread execution engine.
+- 概要画面には共有サーバーが必要で、`--no-daemon` は拒否されます。
+- 対応プラットフォームでは、`--remote` がない場合にローカルデーモンのエンドポイントを解決します。
+- ワークロード ID と一部の追加ディレクトリ上書きは、この経路と併用できません。
+- 概要画面は UI モードであり、第二のスレッド実行エンジンではありません。
 
-See [transport and server](../common/transport-and-server.md), [session and thread](../common/session-and-thread.md), and [interactive](interactive.md).
+[トランスポートとサーバー](../common/transport-and-server.md)、[セッションとスレッド](../common/session-and-thread.md)、[対話モード](interactive.md)も参照してください。

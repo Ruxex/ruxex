@@ -1,19 +1,19 @@
 # `codex debug`
 
-## Entry points
+## エントリポイント
 
-[`DebugSubcommand`](../../../../crates/cli/src/main.rs#L210) contains:
+[`DebugSubcommand`](../../../../crates/cli/src/main.rs#L210) には次があります。
 
-- `models [--bundled]`: render the model catalog as JSON;
-- `app-server send-message-v2`: send a diagnostic app-server message;
-- `prompt-input [PROMPT] --image FILE`: render model-visible prompt input as JSON;
-- hidden `trace-reduce TRACE_BUNDLE`: replay a rollout trace and write reduced state JSON;
-- hidden `clear-memories`: reset local memory state.
+- `models [--bundled]`: モデルカタログを JSON として出力します。
+- `app-server send-message-v2`: 診断用 app-server メッセージを送信します。
+- `prompt-input [PROMPT] --image FILE`: モデルから見えるプロンプト入力を JSON として出力します。
+- 非表示の `trace-reduce TRACE_BUNDLE`: ロールアウトトレースを再生し、縮約した状態 JSON を書き込みます。
+- 非表示の `clear-memories`: ローカルメモリの状態をリセットします。
 
-The dispatch begins at [main.rs#L1498](../../../../crates/cli/src/main.rs#L1498). These commands reject remote mode and are diagnostic/maintenance entry points rather than ordinary turn execution.
+ディスパッチは [main.rs#L1498](../../../../crates/cli/src/main.rs#L1498) から始まります。これらのコマンドはリモートモードを拒否し、通常のターン実行ではなく診断/保守用のエントリポイントです。
 
-## Ownership and side effects
+## 担当範囲と副作用
 
-`debug models` uses the model manager/catalog path and can either refresh or use the bundled catalog. `prompt-input` exercises input normalization, including image attachments. `trace-reduce` reads a trace bundle and writes reduced state. `clear-memories` mutates local memory state and is intentionally hidden.
+`debug models` はモデルマネージャー/カタログの経路を使い、カタログを更新するか、同梱カタログを利用できます。`prompt-input` は画像添付を含む入力正規化を検証します。`trace-reduce` はトレースバンドルを読み、縮約した状態を書き込みます。`clear-memories` はローカルメモリ状態を変更するため、意図的に非表示です。
 
-See [persistence/rollout](../common/persistence-and-rollout.md), [provider/model](../common/provider-and-model.md), and [output/errors](../common/output-and-errors.md).
+[永続化/ロールアウト](../common/persistence-and-rollout.md)、[プロバイダー/モデル](../common/provider-and-model.md)、[出力/エラー](../common/output-and-errors.md)も参照してください。

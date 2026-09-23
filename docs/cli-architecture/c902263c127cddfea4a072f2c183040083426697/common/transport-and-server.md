@@ -1,23 +1,23 @@
-# Transport and server boundaries
+# トランスポートとサーバーの境界
 
-## Local and remote shapes
+## ローカルとリモートの形
 
-The CLI can reach runtime behavior through:
+CLI は次の経路でランタイム動作に到達できます。
 
-- direct TUI/core startup;
-- a local app-server daemon;
-- explicit remote app-server endpoint;
-- app-server stdio, Unix socket, or WebSocket transport;
-- exec-server or internal stdio-to-UDS plumbing.
+- TUI/Core の直接起動。
+- ローカル app-server デーモン。
+- 明示的なリモート app-server エンドポイント。
+- app-server の stdio、Unix ソケット、または WebSocket トランスポート。
+- exec-server または内部 stdio-to-UDS 配管。
 
-`codex-cli` decides the command and endpoint. `codex-app-server` owns request processing; `codex-app-server-transport` owns connection/transport mechanics; `codex-app-server-protocol` owns serializable protocol types. See [app-server command](../commands/app-server.md).
+`codex-cli` はコマンドとエンドポイントを決めます。`codex-app-server` はリクエスト処理を、`codex-app-server-transport` は接続/トランスポートの仕組みを、`codex-app-server-protocol` はシリアライズ可能なプロトコル型を管理します。[app-server コマンド](../commands/app-server.md)も参照してください。
 
-## Protocol boundary
+## プロトコル境界
 
-Protocol requests/notifications are typed values. Transport moves bytes/messages; server processors turn requests into core/session operations. Do not infer runtime ownership from a protocol type's crate.
+プロトコルのリクエスト/通知は型付きの値です。トランスポートはバイト列/メッセージを移動し、サーバーのプロセッサーはリクエストを Core/セッション操作に変換します。プロトコル型があるクレートからランタイムの担当範囲を推測してはいけません。
 
-## Lifecycle
+## ライフサイクル
 
-Daemon lifecycle commands can install, start, restart, stop, update, or query a managed package. Proxy commands forward bytes to an existing control socket. These are operational paths and can affect running work; they are different from a single foreground request's connection lifetime.
+デーモンのライフサイクルコマンドは、管理対象パッケージのインストール、起動、再起動、停止、更新、照会を行えます。プロキシコマンドは既存の制御ソケットにバイト列を転送します。これらは運用経路であり、実行中の作業に影響する場合があります。単一のフォアグラウンドリクエストの接続ライフタイムとは異なります。
 
-Relevant Traits include [`RequestTelemetry`](../reference/trait-index.md#requesttelemetry) for client observations and [`EventSource`](../reference/trait-index.md#eventsource) for TUI input, while most server boundaries are concrete request/processor types rather than public Traits.
+関連する Trait には、クライアント観測用の [`RequestTelemetry`](../reference/trait-index.md#requesttelemetry) と TUI 入力用の [`EventSource`](../reference/trait-index.md#eventsource) があります。一方、多くのサーバー境界は公開 Trait ではなく、具体的なリクエスト/プロセッサー型です。

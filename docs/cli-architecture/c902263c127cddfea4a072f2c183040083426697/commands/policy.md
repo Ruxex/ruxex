@@ -1,18 +1,18 @@
-# Execution policy
+# 実行ポリシー
 
-## Entry
+## エントリ
 
-The hidden top-level `execpolicy` command currently exposes `execpolicy check`, defined by [`ExecpolicySubcommand`](../../../../crates/cli/src/main.rs#L439) and dispatched at [main.rs#L1546](../../../../crates/cli/src/main.rs#L1546).
+非表示のトップレベル `execpolicy` コマンドは、現在 `execpolicy check` を公開しています。これは [`ExecpolicySubcommand`](../../../../crates/cli/src/main.rs#L439) で定義され、[main.rs#L1546](../../../../crates/cli/src/main.rs#L1546) でディスパッチされます。
 
-## Role
+## 役割
 
-The checker evaluates execpolicy files against a command. It is a policy inspection tool; it does not execute the command. During an agent turn, core/tool runtime uses related policy and approval paths before spawning commands.
+チェッカーはコマンドに対して execpolicy ファイルを評価します。これはポリシー検査ツールであり、コマンドを実行しません。エージェントのターン中は、Core/ツールランタイムがコマンドを起動する前に関連するポリシーと承認の経路を利用します。
 
-The distinction is:
+違いは次のとおりです。
 
-- approval policy decides whether human confirmation is required;
-- execpolicy determines command policy behavior;
-- sandboxing constrains the process after it is admitted;
-- user verification may add an interactive security gate.
+- 承認ポリシーは人間の確認が必要かどうかを決める。
+- execpolicy はコマンドポリシーの動作を決める。
+- サンドボックスはプロセスが許可された後の実行を制限する。
+- ユーザー検証は対話的なセキュリティゲートを追加する場合がある。
 
-See [sandbox and permissions](../common/sandbox-and-permissions.md), [tool execution](../common/tool-execution.md), and [sandbox command](sandbox.md).
+[サンドボックスと権限](../common/sandbox-and-permissions.md)、[ツール実行](../common/tool-execution.md)、[サンドボックスコマンド](sandbox.md)も参照してください。

@@ -1,26 +1,26 @@
 # `codex mcp`
 
-## Entry
+## エントリ
 
-MCP management is parsed by [`McpCli` and `McpSubcommand`](../../../../crates/cli/src/mcp_cmd.rs#L56). The root dispatch calls `McpCli::run` at [main.rs#L1071](../../../../crates/cli/src/main.rs#L1071), which loads configuration and selects the operation.
+MCP の管理操作は [`McpCli` と `McpSubcommand`](../../../../crates/cli/src/mcp_cmd.rs#L56) で解析されます。ルートのディスパッチは [main.rs#L1071](../../../../crates/cli/src/main.rs#L1071) で `McpCli::run` を呼び出し、設定を読み込んで操作を選択します。
 
-Supported subcommands are `list`, `get`, `add`, `remove`, `login`, and `logout`.
+対応するサブコマンドは `list`、`get`、`add`、`remove`、`login`、`logout` です。
 
-## Operation paths
+## 操作経路
 
-| Command | Behavior |
+| コマンド | 動作 |
 | --- | --- |
-| `list` | Read configured server entries; optionally emit JSON. |
-| `get NAME` | Read one configured server; optionally emit JSON. |
-| `add NAME` | Persist a stdio launcher or streamable HTTP server configuration. |
-| `remove NAME` | Remove the configured entry. |
-| `login NAME` | Run MCP OAuth flow, optionally without opening a browser. |
-| `logout NAME` | Delete stored MCP OAuth credentials. |
+| `list` | 設定済みサーバーのエントリを読み込み、任意で JSON を出力します。 |
+| `get NAME` | 指定した設定済みサーバーを読み込み、任意で JSON を出力します。 |
+| `add NAME` | stdio ランチャーまたはストリーム可能な HTTP サーバーの設定を永続化します。 |
+| `remove NAME` | 設定済みエントリを削除します。 |
+| `login NAME` | MCP OAuth フローを実行します。ブラウザーを開かないこともできます。 |
+| `logout NAME` | 保存済み MCP OAuth 資格情報を削除します。 |
 
-`add` requires exactly one transport family. Stdio uses a command plus environment pairs; streamable HTTP uses a URL and may use bearer-token or OAuth registration options. Configuration persistence is distinct from model/tool execution; a configured server becomes relevant to runtime MCP tool discovery later.
+`add` にはトランスポート種別がちょうど 1 つ必要です。Stdio はコマンドと環境変数の組を使い、ストリーム可能な HTTP は URL を使い、ベアラートークンまたは OAuth 登録オプションも利用できます。設定の永続化はモデル/ツール実行とは別であり、設定済みサーバーは後のランタイム MCP ツール検出で利用されます。
 
-See [configuration](../common/configuration.md), [authentication](../common/authentication.md), [tool execution](../common/tool-execution.md), and [output/errors](../common/output-and-errors.md).
+[設定](../common/configuration.md)、[認証](../common/authentication.md)、[ツール実行](../common/tool-execution.md)、[出力/エラー](../common/output-and-errors.md)も参照してください。
 
-## Ownership
+## 担当範囲
 
-The command grammar and config editing are in `codex-cli`; MCP transport/client behavior is in the RMCP client/core MCP crates. The CLI does not define the MCP protocol itself.
+コマンド文法と設定編集は `codex-cli` にあり、MCP のトランスポート/クライアント動作は RMCP クライアント/Core MCP クレートにあります。CLI 自体は MCP プロトコルを定義しません。

@@ -1,11 +1,11 @@
-# Feature flags
+# 機能フラグ
 
-## Resolution
+## 解決
 
-The root parser folds `--enable` and `--disable` into config overrides before dispatch. `codex features list` loads effective configuration and reports each feature's key, stage, and enabled state; `enable` and `disable` edit persistent config. Feature definitions are in `codex-features` and are consumed by core/CLI gates.
+ルートパーサーはディスパッチ前に `--enable` と `--disable` を設定の上書きにまとめます。`codex features list` は有効な設定を読み込み、各機能のキー、段階、有効状態を報告します。`enable` と `disable` は永続設定を編集します。機能定義は `codex-features` にあり、Core/CLI のゲートが利用します。
 
-## Scope
+## 範囲
 
-Feature flags are configuration/runtime gates, not a replacement for clap subcommands. A command can be syntactically available while a feature gate rejects or changes its runtime behavior. Conversely, hidden/internal commands may be available for plumbing without being a feature users can enable.
+機能フラグは設定/ランタイムのゲートであり、clap サブコマンドの代替ではありません。機能ゲートがランタイム動作を拒否または変更していても、コマンド自体は構文上利用可能な場合があります。逆に、非表示/内部コマンドは配管のために利用可能でも、ユーザーが有効化できる機能とは限りません。
 
-See [`FeaturesSubcommand`](../../../../crates/cli/src/main.rs#L897), [CLI entrypoint](../01-cli-entrypoint.md), and [configuration](configuration.md).
+[`FeaturesSubcommand`](../../../../crates/cli/src/main.rs#L897)、[CLI エントリポイント](../01-cli-entrypoint.md)、[設定](configuration.md)も参照してください。

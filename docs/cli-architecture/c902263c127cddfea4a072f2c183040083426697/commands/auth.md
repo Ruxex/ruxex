@@ -1,14 +1,14 @@
-# Authentication commands
+# 認証コマンド
 
-## Entry
+## エントリ
 
-`codex login` and `codex logout` are parsed by [`LoginCommand` and `LogoutCommand`](../../../../crates/cli/src/main.rs#L452). `login status` and logout dispatch to helpers from `codex-login` at [main.rs#L1392](../../../../crates/cli/src/main.rs#L1392).
+`codex login` と `codex logout` は [`LoginCommand` と `LogoutCommand`](../../../../crates/cli/src/main.rs#L452) で解析されます。`login status` と logout は [main.rs#L1392](../../../../crates/cli/src/main.rs#L1392) で `codex-login` のヘルパーにディスパッチされます。
 
-## Behavior
+## 動作
 
-- `codex login status` reports the currently selected local auth state.
-- `codex logout` removes stored authentication credentials.
-- These commands reject remote mode because they mutate or inspect local credential state.
-- The selected auth mode affects later provider/client construction, but the login command does not itself run an agent turn.
+- `codex login status` は現在選択されているローカル認証状態を報告します。
+- `codex logout` は保存済みの認証資格情報を削除します。
+- これらのコマンドはローカルの資格情報状態を変更または参照するため、リモートモードを拒否します。
+- 選択した認証モードは後続のプロバイダー/クライアント構築に影響しますが、login コマンド自体はエージェントのターンを実行しません。
 
-The auth manager, credential formats, keyring, and environment selection are documented in [common authentication](../common/authentication.md). Provider selection is a separate step described in [provider and model](../common/provider-and-model.md).
+認証マネージャー、資格情報の形式、キーチェーン、環境の選択については[共通の認証](../common/authentication.md)に記載しています。プロバイダーの選択は、[プロバイダーとモデル](../common/provider-and-model.md)で説明する別の段階です。

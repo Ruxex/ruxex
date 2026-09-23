@@ -1,10 +1,10 @@
 # `codex sandbox`
 
-## Entry
+## エントリ
 
-`HostSandboxArgs` is selected at compile time for macOS Seatbelt, Linux Landlock, or Windows sandbox implementations in [`cli/src/main.rs`](../../../../crates/cli/src/main.rs#L414). The root dispatch is at [main.rs#L1442](../../../../crates/cli/src/main.rs#L1442), and platform-specific runners live in `crates/cli/src/debug_sandbox.rs`.
+`HostSandboxArgs` は [`cli/src/main.rs`](../../../../crates/cli/src/main.rs#L414) で、macOS Seatbelt、Linux Landlock、Windows のサンドボックス実装のいずれかとしてコンパイル時に選択されます。ルートのディスパッチは [main.rs#L1442](../../../../crates/cli/src/main.rs#L1442) にあり、プラットフォーム固有のランナーは `crates/cli/src/debug_sandbox.rs` にあります。
 
-## Flow
+## フロー
 
 ```text
 codex sandbox [PROFILE OPTIONS] -- COMMAND
@@ -15,6 +15,6 @@ codex sandbox [PROFILE OPTIONS] -- COMMAND
   -> child exit status propagation
 ```
 
-The sandbox command is a local process wrapper, not the same as the approval policy applied to model-issued tools. Both eventually use platform policy primitives, but the caller and lifecycle differ. See [sandbox and permissions](../common/sandbox-and-permissions.md), [policy](policy.md), and [output/errors](../common/output-and-errors.md).
+サンドボックスコマンドはローカルプロセスのラッパーであり、モデルが発行するツールに適用される承認ポリシーと同じものではありません。どちらも最終的にはプラットフォームのポリシー基盤を利用しますが、呼び出し元とライフサイクルが異なります。[サンドボックスと権限](../common/sandbox-and-permissions.md)、[ポリシー](policy.md)、[出力/エラー](../common/output-and-errors.md)も参照してください。
 
-Remote mode is rejected. Unsupported operating systems fail explicitly rather than silently running unsandboxed.
+リモートモードは拒否されます。対応していないオペレーティングシステムでは、サンドボックスなしで黙って実行するのではなく、明示的に失敗します。

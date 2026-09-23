@@ -1,17 +1,17 @@
-# Telemetry and observability
+# テレメトリと可観測性
 
-## Runtime observations
+## ランタイムの観測
 
-Telemetry is initialized at different boundaries:
+テレメトリは異なる境界で初期化されます。
 
-- API/client layers observe request/stream behavior through telemetry Traits;
-- core/app-server initializes tracing/metrics according to loaded configuration and defaults;
-- CLI daemon update paths use consent-aware config and bounded shutdown;
-- exec-server has its own process lifetime and service name handling;
-- doctor reports diagnostics but is not itself a long-lived telemetry service.
+- API/クライアント層はテレメトリ Trait を通じてリクエスト/ストリームの動作を観測します。
+- Core/app-server は読み込んだ設定と既定値に従って tracing/メトリクスを初期化します。
+- CLI のデーモン更新経路は、同意を考慮した設定と時間制限付きシャットダウンを使います。
+- exec-server は独自のプロセスライフタイムとサービス名処理を持ちます。
+- doctor は診断を報告しますが、それ自体は長時間稼働するテレメトリサービスではありません。
 
-[`SseTelemetry`](../reference/trait-index.md#ssetelemetry), `WebsocketTelemetry`, and [`RequestTelemetry`](../reference/trait-index.md#requesttelemetry) are observation hooks, not agent behavior interfaces.
+[`SseTelemetry`](../reference/trait-index.md#ssetelemetry)、`WebsocketTelemetry`、[`RequestTelemetry`](../reference/trait-index.md#requesttelemetry) は観測用フックであり、エージェント動作のインターフェースではありません。
 
-## Consent and defaults
+## 同意と既定値
 
-App-server defaults and foreground CLI defaults can differ. The app-server command exposes a metrics-default option for integration scenarios, while config can still disable metrics. Detached daemon/update paths must not assume the foreground CLI's lifetime or interactive consent flow.
+app-server の既定値とフォアグラウンド CLI の既定値は異なる場合があります。app-server コマンドは統合シナリオ向けにメトリクスの既定値オプションを公開しますが、設定でメトリクスを無効化することもできます。分離されたデーモン/更新経路は、フォアグラウンド CLI のライフタイムや対話的な同意フローを前提にしてはいけません。

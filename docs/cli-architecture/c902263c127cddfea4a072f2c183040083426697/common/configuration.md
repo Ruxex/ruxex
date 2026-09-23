@@ -1,25 +1,25 @@
-# Common configuration flow
+# 共通の設定フロー
 
-## Normalized order
+## 正規化した順序
 
 ```text
-root CLI flags
+ルート CLI フラグ
   -> CliConfigOverrides / SharedCliOptions
-  -> CODEX_HOME and current directory
-  -> profile and config.toml layers
-  -> loader overrides and harness overrides
+  -> CODEX_HOME と現在のディレクトリ
+  -> プロファイルと config.toml の層
+  -> ローダーの上書きとハーネスの上書き
   -> ConfigBuilder
-  -> immutable runtime Config
+  -> 不変のランタイム Config
 ```
 
-The CLI helper [`cloud_config::config_builder`](../../../../crates/cli/src/cloud_config.rs#L20) parses `-c` overrides, resolves `CODEX_HOME`, resolves the effective CWD, and constructs [`codex_core::config::ConfigBuilder`](../../../../crates/core/src/config/mod.rs#L1290). The builder combines persisted/user/project layers with command-specific overrides before runtime consumers receive `Config`.
+CLI ヘルパー [`cloud_config::config_builder`](../../../../crates/cli/src/cloud_config.rs#L20) は `-c` の上書きを解析し、`CODEX_HOME` と有効な CWD を解決して、[`codex_core::config::ConfigBuilder`](../../../../crates/core/src/config/mod.rs#L1290) を構築します。ビルダーはランタイムの利用側に `Config` が渡される前に、永続化済み/ユーザー/プロジェクトの層とコマンド固有の上書きを組み合わせます。
 
-`codex-utils-cli` owns shared argument shapes such as [`SharedCliOptions`](../../../../crates/utils/cli/src/shared_options.rs#L9), while `codex-cli`, `codex-exec`, and `codex-tui` decide which shared flags are exposed/global for their command.
+`codex-utils-cli` は [`SharedCliOptions`](../../../../crates/utils/cli/src/shared_options.rs#L9) のような共有引数の形を管理し、`codex-cli`、`codex-exec`、`codex-tui` は各コマンドでどの共有フラグを公開/グローバル化するかを決めます。
 
-## Precedence
+## 優先順位
 
-Command-specific values and explicit CLI overrides have higher intent than loaded defaults. Profile selection changes the config layer being loaded; it is not the same as arbitrary `-c` key/value override. Strict-config changes unknown-field behavior and is rejected for commands where config loading is not meaningful.
+コマンド固有の値と明示的な CLI 上書きは、読み込まれた既定値より優先されます。プロファイルの選択は読み込む設定層を変えるもので、任意の `-c` キー/値上書きと同じではありません。Strict-config は未知フィールドの動作を変え、設定読み込みに意味がないコマンドでは拒否されます。
 
-## Trait boundary
+## Trait 境界
 
-[`ThreadConfigLoader`](../reference/trait-index.md#threadconfigloader) is the main capability-relevant Trait in the config crate. It lets app-server/core load thread-scoped configuration without making the loader depend on the whole CLI.
+[`ThreadConfigLoader`](../reference/trait-index.md#threadconfigloader) は設定クレートにおける、機能に関係する主要な Trait です。これにより app-server/Core は、ローダーを CLI 全体に依存させずに、スレッド単位の設定を読み込めます。

@@ -1,57 +1,57 @@
-# CLI entrypoint
+# CLI エントリポイント
 
-## Root parser
+## ルートパーサー
 
-The executable is defined in [`crates/cli/src/main.rs`](../../../crates/cli/src/main.rs). `MultitoolCli` at [line 104](../../../crates/cli/src/main.rs#L104) combines:
+実行ファイルは [`crates/cli/src/main.rs`](../../../crates/cli/src/main.rs) で定義されています。[104 行目](../../../crates/cli/src/main.rs#L104) の `MultitoolCli` は、次の要素を組み合わせます。
 
-- `CliConfigOverrides` and feature toggles;
-- shared remote options;
-- [`codex_tui::Cli`](../../../crates/tui/src/cli.rs#L11) for options that apply to the default interactive path;
-- an optional [`Subcommand`](../../../crates/cli/src/main.rs#L122).
+- `CliConfigOverrides` と機能トグル。
+- 共有リモートオプション。
+- 既定の対話経路に適用するオプションを持つ [`codex_tui::Cli`](../../../crates/tui/src/cli.rs#L11)。
+- 任意の [`Subcommand`](../../../crates/cli/src/main.rs#L122)。
 
-With no subcommand, the root parser forwards options to the interactive TUI. Clap is configured to negate default-argument requirements when a subcommand is present, so command-specific parsers can own their required values.
+サブコマンドがない場合、ルートパーサーはオプションを対話 TUI に渡します。Clap はサブコマンドが存在するときに既定引数の必須性を無効化するよう設定されているため、各コマンドのパーサーが必要な値を管理できます。
 
-## Startup and normalization
+## 起動と正規化
 
-`main` at [line 922](../../../crates/cli/src/main.rs#L922) initializes build information and uses `codex_arg0::arg0_dispatch_or_else` to support launcher/alternate-executable dispatch. `cli_main` at [line 930](../../../crates/cli/src/main.rs#L930) then:
+`main`（[922 行目](../../../crates/cli/src/main.rs#L922)）はビルド情報を初期化し、`codex_arg0::arg0_dispatch_or_else` を使ってランチャー/代替実行ファイルのディスパッチをサポートします。続いて `cli_main`（[930 行目](../../../crates/cli/src/main.rs#L930)）は次を行います。
 
-1. parses the root command;
-2. rejects removed or unsupported combinations;
-3. folds `--enable` / `--disable` into config overrides;
-4. resolves remote endpoint and auth-token environment selection;
-5. applies `agents`, profile, strict-config, worktree, and remote-mode validation;
-6. dispatches the selected command.
+1. ルートコマンドを解析する。
+2. 削除済みまたはサポートされない組み合わせを拒否する。
+3. `--enable` / `--disable` を設定の上書きにまとめる。
+4. リモートエンドポイントと認証トークンの環境変数選択を解決する。
+5. `agents`、プロファイル、strict-config、worktree、リモートモードを検証する。
+6. 選択されたコマンドをディスパッチする。
 
-The validation helpers are grouped near [lines 1962–2150](../../../crates/cli/src/main.rs#L1962), rather than being implemented by each command. See [configuration](common/configuration.md), [transport](common/transport-and-server.md), and [feature flags](common/feature-flags.md).
+検証ヘルパーは各コマンドに実装するのではなく、[1962～2150 行付近](../../../crates/cli/src/main.rs#L1962) にまとめられています。[設定](common/configuration.md)、[トランスポート](common/transport-and-server.md)、[機能フラグ](common/feature-flags.md)も参照してください。
 
-## Dispatch map
+## ディスパッチマップ
 
-| Root input | Dispatch target |
+| ルート入力 | ディスパッチ先 |
 | --- | --- |
-| no subcommand / `agents` | `run_interactive_tui` and `codex-tui` |
+| サブコマンドなし / `agents` | `run_interactive_tui` と `codex-tui` |
 | `exec` | `codex_exec::run_main` |
-| `review` | exec review command path |
+| `review` | exec のレビューコマンド経路 |
 | `mcp` | `McpCli::run` in `crates/cli/src/mcp_cmd.rs` |
 | `plugin` | `PluginCli::run` in `crates/cli/src/plugin_cmd.rs` |
-| `app-server` | `codex_app_server::run_main` or daemon/proxy/schema helpers |
+| `app-server` | `codex_app_server::run_main` またはデーモン/プロキシ/スキーマヘルパー |
 | `resume`, `fork` | TUI wrapper state followed by `run_interactive_tui` |
-| `queue`, `archive`, `delete`, `unarchive` | session/daemon helper paths |
-| `login`, `logout` | `codex-login` auth manager helpers |
+| `queue`、`archive`、`delete`、`unarchive` | セッション/デーモンのヘルパー経路 |
+| `login`、`logout` | `codex-login` の認証マネージャーヘルパー |
 | `doctor` | `doctor::run_doctor` |
-| `sandbox` | host-specific `codex-cli` sandbox runner |
-| `debug`, `execpolicy`, `stdio-to-uds`, `exec-server`, `features` | utility-specific dispatch arms |
+| `sandbox` | ホスト固有の `codex-cli` サンドボックスランナー |
+| `debug`、`execpolicy`、`stdio-to-uds`、`exec-server`、`features` | ユーティリティ固有のディスパッチアーム |
 
-The match begins at [line 981](../../../crates/cli/src/main.rs#L981). The command enum and nested command shapes are the authoritative inventory; the [source map](reference/source-map.md) records the snapshot line anchors.
+match は [981 行目](../../../crates/cli/src/main.rs#L981) から始まります。コマンド enum とネストしたコマンドの形が正式な一覧であり、[ソースマップ](reference/source-map.md) にスナップショット時点の行番号アンカーを記録しています。
 
-## Shared state passed through dispatch
+## ディスパッチで渡される共有状態
 
-The root dispatch carries the following values into multiple command paths:
+ルートのディスパッチは、次の値を複数のコマンド経路に渡します。
 
-- parsed config overrides and optional profile;
-- remote endpoint and token-environment name;
-- current working directory and worktree options;
-- strict-config behavior;
-- launcher executable paths;
-- TUI shared options and feature toggle overrides.
+- 解析済みの設定上書きと任意のプロファイル。
+- リモートエンドポイントとトークン環境変数名。
+- 現在の作業ディレクトリと worktree オプション。
+- strict-config の動作。
+- ランチャー実行ファイルのパス。
+- TUI の共有オプションと機能トグルの上書き。
 
-This is why command pages link to common configuration and transport pages instead of treating each command as an isolated binary.
+そのため、各コマンドを独立したバイナリとして扱うのではなく、コマンドのページから共通の設定・トランスポートのページへリンクしています。

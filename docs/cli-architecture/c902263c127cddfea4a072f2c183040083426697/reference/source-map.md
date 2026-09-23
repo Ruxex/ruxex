@@ -1,33 +1,33 @@
-# Source map
+# ソースマップ
 
-All references below describe commit `c902263c127cddfea4a072f2c183040083426697`.
+以下の参照はすべてコミット `c902263c127cddfea4a072f2c183040083426697` を説明するものです。
 
-| Capability | CLI definition / dispatch | Main downstream owner |
+| 機能 | CLI の定義/ディスパッチ | 主な下流の担当 |
 | --- | --- | --- |
-| Root parser | [`MultitoolCli` and `Subcommand`](../../../../crates/cli/src/main.rs#L104), dispatch at [L930](../../../../crates/cli/src/main.rs#L930) | `codex-cli` |
-| Interactive TUI | dispatch at [`None | Agents`](../../../../crates/cli/src/main.rs#L981) | `codex-tui`, `codex-core` |
-| `exec` | [`ExecCli` field and dispatch](../../../../crates/cli/src/main.rs#L1034) | `codex-exec` |
-| `review` | [`ReviewCommand` and dispatch](../../../../crates/cli/src/main.rs#L266) | `codex-exec`, `codex-core` |
-| Session commands | [`ResumeCommand`–`ForkCommand`](../../../../crates/cli/src/main.rs#L304) and dispatch at [L1284](../../../../crates/cli/src/main.rs#L1284) | `codex-tui`, `codex-app-server`, `codex-thread-store` |
-| MCP | [`McpCli`](../../../../crates/cli/src/mcp_cmd.rs#L56), run at [L223](../../../../crates/cli/src/mcp_cmd.rs#L223) | `codex-cli`, MCP/core crates |
-| Plugins | [`PluginCli`](../../../../crates/cli/src/plugin_cmd.rs#L39) | `codex-cli`, `codex-plugin`, app-server |
-| App-server | [`AppServerCommand`](../../../../crates/cli/src/main.rs#L473), dispatch at [L1119](../../../../crates/cli/src/main.rs#L1119) | `codex-app-server`, daemon, protocol |
-| Auth | [`LoginCommand` / `LogoutCommand`](../../../../crates/cli/src/main.rs#L452), dispatch at [L1392](../../../../crates/cli/src/main.rs#L1392) | `codex-login` |
-| Diagnostics | [`DoctorCommand` dispatch](../../../../crates/cli/src/main.rs#L1428) | `codex-cli` doctor modules, `codex-api`, core config |
-| Sandbox | [`HostSandboxArgs` and dispatch](../../../../crates/cli/src/main.rs#L414) | `codex-cli`, `codex-sandboxing`, platform crates |
-| Debug | [`DebugSubcommand`](../../../../crates/cli/src/main.rs#L210), dispatch at [L1498](../../../../crates/cli/src/main.rs#L1498) | `codex-cli`, models/trace/core helpers |
-| Exec policy | [`ExecpolicySubcommand`](../../../../crates/cli/src/main.rs#L439), dispatch at [L1546](../../../../crates/cli/src/main.rs#L1546) | `codex-execpolicy`, core policy |
-| Utilities | completion/features/exec-server/internal transports at [L1420–1617](../../../../crates/cli/src/main.rs#L1420) | command-specific crates |
+| ルートパーサー | [`MultitoolCli` と `Subcommand`](../../../../crates/cli/src/main.rs#L104)、[L930](../../../../crates/cli/src/main.rs#L930) でディスパッチ | `codex-cli` |
+| 対話 TUI | [`None | Agents`](../../../../crates/cli/src/main.rs#L981) でディスパッチ | `codex-tui`、`codex-core` |
+| `exec` | [`ExecCli` のフィールドとディスパッチ](../../../../crates/cli/src/main.rs#L1034) | `codex-exec` |
+| `review` | [`ReviewCommand` とディスパッチ](../../../../crates/cli/src/main.rs#L266) | `codex-exec`、`codex-core` |
+| セッションコマンド | [`ResumeCommand`～`ForkCommand`](../../../../crates/cli/src/main.rs#L304) と [L1284](../../../../crates/cli/src/main.rs#L1284) でのディスパッチ | `codex-tui`、`codex-app-server`、`codex-thread-store` |
+| MCP | [`McpCli`](../../../../crates/cli/src/mcp_cmd.rs#L56)、[L223](../../../../crates/cli/src/mcp_cmd.rs#L223) で実行 | `codex-cli`、MCP/Core クレート |
+| プラグイン | [`PluginCli`](../../../../crates/cli/src/plugin_cmd.rs#L39) | `codex-cli`、`codex-plugin`、app-server |
+| App-server | [`AppServerCommand`](../../../../crates/cli/src/main.rs#L473)、[L1119](../../../../crates/cli/src/main.rs#L1119) でディスパッチ | `codex-app-server`、デーモン、プロトコル |
+| 認証 | [`LoginCommand` / `LogoutCommand`](../../../../crates/cli/src/main.rs#L452)、[L1392](../../../../crates/cli/src/main.rs#L1392) でディスパッチ | `codex-login` |
+| 診断 | [`DoctorCommand` のディスパッチ](../../../../crates/cli/src/main.rs#L1428) | `codex-cli` の doctor モジュール、`codex-api`、Core 設定 |
+| サンドボックス | [`HostSandboxArgs` とディスパッチ](../../../../crates/cli/src/main.rs#L414) | `codex-cli`、`codex-sandboxing`、プラットフォーム用クレート |
+| デバッグ | [`DebugSubcommand`](../../../../crates/cli/src/main.rs#L210)、[L1498](../../../../crates/cli/src/main.rs#L1498) でディスパッチ | `codex-cli`、モデル/トレース/Core ヘルパー |
+| 実行ポリシー | [`ExecpolicySubcommand`](../../../../crates/cli/src/main.rs#L439)、[L1546](../../../../crates/cli/src/main.rs#L1546) でディスパッチ | `codex-execpolicy`、Core ポリシー |
+| ユーティリティ | [L1420～1617](../../../../crates/cli/src/main.rs#L1420) の completion/features/exec-server/内部トランスポート | コマンド固有のクレート |
 
-## Nested command inventory
+## ネストしたコマンド一覧
 
-The root enum at [`main.rs#L122`](../../../../crates/cli/src/main.rs#L122) contains `Agents`, hidden `TcpTunnel`, `Exec`, `Review`, `Login`, `Logout`, `Mcp`, `Plugin`, `AppServer`, `Completion`, `Doctor`, `Sandbox`, `Debug`, hidden `Execpolicy`, `Resume`, `Queue`, `Archive`, `Delete`, `Unarchive`, `Fork`, hidden `StdioToUds`, `ExecServer`, and `Features`.
+[`main.rs#L122`](../../../../crates/cli/src/main.rs#L122) のルート enum には、`Agents`、非表示の `TcpTunnel`、`Exec`、`Review`、`Login`、`Logout`、`Mcp`、`Plugin`、`AppServer`、`Completion`、`Doctor`、`Sandbox`、`Debug`、非表示の `Execpolicy`、`Resume`、`Queue`、`Archive`、`Delete`、`Unarchive`、`Fork`、非表示の `StdioToUds`、`ExecServer`、`Features` が含まれます。
 
-Nested inventories are defined by:
+ネストした一覧は次で定義されています。
 
-- `DebugSubcommand` at [`main.rs#L210`](../../../../crates/cli/src/main.rs#L210);
-- `AppServerSubcommand` and `AppServerDaemonSubcommand` at [`main.rs#L551`](../../../../crates/cli/src/main.rs#L551);
-- `McpSubcommand` at [`mcp_cmd.rs#L65`](../../../../crates/cli/src/mcp_cmd.rs#L65);
-- `PluginSubcommand` at [`plugin_cmd.rs#L48`](../../../../crates/cli/src/plugin_cmd.rs#L48);
-- `MarketplaceSubcommand` at [`marketplace_cmd.rs#L44`](../../../../crates/cli/src/marketplace_cmd.rs#L44);
-- `Command` for `codex exec` at [`exec/cli.rs#L149`](../../../../crates/exec/src/cli.rs#L149).
+- [`main.rs#L210`](../../../../crates/cli/src/main.rs#L210) の `DebugSubcommand`。
+- [`main.rs#L551`](../../../../crates/cli/src/main.rs#L551) の `AppServerSubcommand` と `AppServerDaemonSubcommand`。
+- [`mcp_cmd.rs#L65`](../../../../crates/cli/src/mcp_cmd.rs#L65) の `McpSubcommand`。
+- [`plugin_cmd.rs#L48`](../../../../crates/cli/src/plugin_cmd.rs#L48) の `PluginSubcommand`。
+- [`marketplace_cmd.rs#L44`](../../../../crates/cli/src/marketplace_cmd.rs#L44) の `MarketplaceSubcommand`。
+- [`exec/cli.rs#L149`](../../../../crates/exec/src/cli.rs#L149) の `codex exec` 用 `Command`。

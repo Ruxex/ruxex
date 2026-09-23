@@ -1,16 +1,16 @@
-# Sandbox, approval, and permissions
+# サンドボックス、承認、権限
 
-## Four layers
+## 4 つの層
 
-1. CLI-level sandbox wrappers run an explicitly supplied child command.
-2. Tool approval decides whether a model-issued operation needs human confirmation.
-3. Execpolicy evaluates command rules and can contribute an allow/deny/ask decision.
-4. Platform sandboxing constrains the admitted child process; user verification can add another security gate.
+1. CLI レベルのサンドボックスラッパーは、明示的に指定された子コマンドを実行します。
+2. ツール承認は、モデルが発行した操作に人間の確認が必要かどうかを決めます。
+3. Execpolicy はコマンドルールを評価し、許可/拒否/確認の判断に寄与します。
+4. プラットフォームのサンドボックスは許可された子プロセスを制限し、ユーザー検証は別のセキュリティゲートを追加できます。
 
-Core composes the tool-level layers through [`Approvable`](../reference/trait-index.md#approvable), [`Sandboxable`](../reference/trait-index.md#sandboxable), and [`ToolRuntime`](../reference/trait-index.md#toolruntime) in [`core/src/tools/sandboxing.rs`](../../../../crates/core/src/tools/sandboxing.rs#L309). `codex sandbox` uses platform constructors in `codex-sandboxing` and `codex-cli` debug sandbox helpers.
+Core は [`core/src/tools/sandboxing.rs`](../../../../crates/core/src/tools/sandboxing.rs#L309) にある [`Approvable`](../reference/trait-index.md#approvable)、[`Sandboxable`](../reference/trait-index.md#sandboxable)、[`ToolRuntime`](../reference/trait-index.md#toolruntime) を通じて、ツールレベルの層を組み合わせます。`codex sandbox` は `codex-sandboxing` のプラットフォームコンストラクターと `codex-cli` のデバッグサンドボックスヘルパーを利用します。
 
-## Safety invariant
+## 安全性の不変条件
 
-Approval and sandboxing are not interchangeable. An approval decision may allow an operation to proceed, but the resulting process still runs within the selected sandbox/profile. Conversely, a sandbox restriction does not tell the user why approval was or was not requested.
+承認とサンドボックスは置き換え可能ではありません。承認によって操作の続行が許可されても、結果として起動するプロセスは選択されたサンドボックス/プロファイル内で実行されます。逆に、サンドボックスの制限だけでは、なぜ承認が要求されたか、または要求されなかったかは分かりません。
 
-Platform selection is compile-time/host-specific: macOS Seatbelt, Linux Landlock, and Windows sandbox paths are selected by `HostSandboxArgs`. Unsupported platforms fail explicitly.
+プラットフォームの選択はコンパイル時かつホスト固有です。macOS Seatbelt、Linux Landlock、Windows のサンドボックス経路は `HostSandboxArgs` で選択されます。対応していないプラットフォームでは明示的に失敗します。
