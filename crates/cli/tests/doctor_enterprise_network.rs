@@ -37,7 +37,7 @@ async fn doctor_reports_cloud_filesystem_policy_and_rejects_invalid_requirements
             format!(
                 r#"
 cli_auth_credentials_store = "ephemeral"
-chatgpt_base_url = "{}/backend-api"
+managed_auth_base_url = "{}/backend-api"
 model_provider = "local"
 [model_providers.local]
 name = "local"

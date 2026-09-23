@@ -43,7 +43,7 @@ pub enum AuthMode {
 
 impl AuthMode {
     /// Returns whether this mode represents an authenticated account.
-    pub fn has_chatgpt_account(self) -> bool {
+    pub fn has_managed_account(self) -> bool {
         false
     }
 

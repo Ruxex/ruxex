@@ -1754,7 +1754,7 @@ impl TestAppServerBuilder {
             let config = std::fs::read_to_string(&config_path)?;
             if config
                 .lines()
-                .any(|line| line.trim_start().starts_with("chatgpt_base_url"))
+                .any(|line| line.trim_start().starts_with("managed_auth_base_url"))
             {
                 None
             } else {
@@ -1774,7 +1774,7 @@ impl TestAppServerBuilder {
                 std::fs::write(
                     &config_path,
                     format!(
-                        "chatgpt_base_url = \"{}/backend-api\"\n{config}",
+                        "managed_auth_base_url = \"{}/backend-api\"\n{config}",
                         settings_server.uri()
                     ),
                 )?;

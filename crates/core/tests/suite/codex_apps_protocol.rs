@@ -49,7 +49,7 @@ async fn standalone_codex_apps_respects_protocol_setting(
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
-    let apps_base_url = AppsTestServer::mount(&server).await?.chatgpt_base_url;
+    let apps_base_url = AppsTestServer::mount(&server).await?.managed_auth_base_url;
     let fixture = test_codex()
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_config(move |config| {
@@ -63,7 +63,7 @@ async fn standalone_codex_apps_respects_protocol_setting(
                     .enable(Feature::CodexAppsMcp20260728)
                     .expect("test config should allow Apps protocol override");
             }
-            config.chatgpt_base_url = apps_base_url;
+            config.managed_auth_base_url = apps_base_url;
         })
         .build_with_auto_env(&server)
         .await?;
@@ -93,7 +93,7 @@ async fn apps_call_survives_catalog_restoration_while_awaiting_approval() -> any
     let apps =
         AppsTestServer::mount_with_tools_available_when(&server, Arc::clone(&tools_available))
             .await?;
-    let fixture = apps_enabled_builder(apps.chatgpt_base_url)
+    let fixture = apps_enabled_builder(apps.managed_auth_base_url)
         .with_model_info_override("gpt-5.5", |model| model.supports_search_tool = false)
         .with_config(|config| {
             config.approvals_reviewer = ApprovalsReviewer::User;

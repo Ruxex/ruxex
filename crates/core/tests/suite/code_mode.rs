@@ -1803,7 +1803,7 @@ async fn code_mode_mcp_metadata_keeps_originating_window_after_compaction() -> R
     let control = Arc::new(ResultMetadataTestControl {
         server: Mutex::new(McpServerContribution::HostedApps {
             config: Box::new(codex_apps_mcp_server_config(
-                &apps_server.chatgpt_base_url,
+                &apps_server.managed_auth_base_url,
                 /*apps_mcp_product_sku*/ None,
                 /*originator*/ None,
             )),
@@ -1814,7 +1814,7 @@ async fn code_mode_mcp_metadata_keeps_originating_window_after_compaction() -> R
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     extensions.tool_lifecycle_contributor(control);
     let mut builder =
-        result_metadata_apps_builder(apps_server.chatgpt_base_url, "user@example.com")
+        result_metadata_apps_builder(apps_server.managed_auth_base_url, "user@example.com")
             .with_model("test-gpt-5.1-codex")
             .with_extensions(Arc::new(extensions.build()));
     let test = builder.build_with_auto_env(&server).await?;
@@ -1994,7 +1994,7 @@ async fn result_metadata_follows_call_binding(
     });
     let apps_server = mount_result_metadata_app(&server, result_metadata.clone(), is_error).await?;
     let mut builder =
-        result_metadata_apps_builder(apps_server.chatgpt_base_url.clone(), account_email)
+        result_metadata_apps_builder(apps_server.managed_auth_base_url.clone(), account_email)
             .with_config(move |config| {
                 config.metrics_enabled = metrics_enabled;
                 if direct {
@@ -2014,7 +2014,7 @@ async fn result_metadata_follows_call_binding(
             server: Mutex::new(McpServerContribution::Set {
                 name: CODEX_APPS_MCP_SERVER_NAME.to_string(),
                 config: Box::new(codex_apps_mcp_server_config(
-                    &apps_server.chatgpt_base_url,
+                    &apps_server.managed_auth_base_url,
                     /*apps_mcp_product_sku*/ None,
                     /*originator*/ None,
                 )),
@@ -2136,7 +2136,7 @@ async fn code_mode_result_metadata_follows_runtime_recording_enablement() -> Res
     )
     .await?;
     let mut builder =
-        result_metadata_apps_builder(apps_server.chatgpt_base_url, "user@example.com").with_config(
+        result_metadata_apps_builder(apps_server.managed_auth_base_url, "user@example.com").with_config(
             |config| {
                 config
                     .features
@@ -2247,7 +2247,7 @@ async fn code_mode_result_metadata_keeps_prepared_call_binding_across_runtime_re
     let control = Arc::new(ResultMetadataTestControl {
         server: Mutex::new(McpServerContribution::HostedApps {
             config: Box::new(codex_apps_mcp_server_config(
-                &apps_server.chatgpt_base_url,
+                &apps_server.managed_auth_base_url,
                 /*apps_mcp_product_sku*/ None,
                 /*originator*/ None,
             )),
@@ -2258,7 +2258,7 @@ async fn code_mode_result_metadata_keeps_prepared_call_binding_across_runtime_re
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     extensions.mcp_server_contributor(control.clone());
     extensions.tool_lifecycle_contributor(control.clone());
-    let builder = result_metadata_apps_builder(apps_server.chatgpt_base_url, "user@example.com")
+    let builder = result_metadata_apps_builder(apps_server.managed_auth_base_url, "user@example.com")
         .with_extensions(Arc::new(extensions.build()));
     let arguments = serde_json::json!({
         "query": "launch plan",
@@ -2316,7 +2316,7 @@ async fn code_mode_result_metadata_keeps_prepared_call_binding_across_runtime_re
     *control.server.lock().unwrap() = McpServerContribution::Set {
         name: CODEX_APPS_MCP_SERVER_NAME.to_string(),
         config: Box::new(codex_apps_mcp_server_config(
-            &refreshed_apps.chatgpt_base_url,
+            &refreshed_apps.managed_auth_base_url,
             /*apps_mcp_product_sku*/ None,
             /*originator*/ None,
         )),
@@ -2648,7 +2648,7 @@ if (!tool) {
     )
     .await;
 
-    let apps_base_url = apps_server.chatgpt_base_url.clone();
+    let apps_base_url = apps_server.managed_auth_base_url.clone();
     let mut builder = test_codex()
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_config(move |config| {
@@ -2671,7 +2671,7 @@ if (!tool) {
                 .iter_mut()
                 .find(|model| model.slug == "gpt-5.5")
                 .expect("gpt-5.5 exists in bundled models.json");
-            config.chatgpt_base_url = apps_base_url;
+            config.managed_auth_base_url = apps_base_url;
             config.model = Some("gpt-5.5".to_string());
             model.supports_search_tool = true;
             config.model_catalog = Some(model_catalog);
@@ -2789,7 +2789,7 @@ text(JSON.stringify({{
     )
     .await;
 
-    let mut builder = search_capable_apps_builder(apps_server.chatgpt_base_url.clone())
+    let mut builder = search_capable_apps_builder(apps_server.managed_auth_base_url.clone())
         .with_config(|config| {
             config
                 .features

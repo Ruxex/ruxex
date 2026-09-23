@@ -203,7 +203,7 @@ async fn account_update_rejects_stale_status_rate_limit_snapshots() {
 
     chat.update_account_state(
         /*status_account_display*/ None, /*plan_type*/ None,
-        /*has_chatgpt_account*/ true, /*has_codex_backend_auth*/ true,
+        /*has_managed_account*/ true, /*has_codex_backend_auth*/ true,
     );
     chat.finish_status_rate_limit_refresh(request_id, vec![snapshot(/*percent*/ 92.0)]);
 
@@ -526,7 +526,7 @@ async fn status_command_requests_thread_usage_for_remote_connection_metadata() {
     chat.update_account_state(
         /*status_account_display*/ None,
         Some(PlanType::Business),
-        /*has_chatgpt_account*/ false,
+        /*has_managed_account*/ false,
         /*has_codex_backend_auth*/ true,
     );
     chat.remote_connection = Some(crate::status::remote_connection::RemoteConnectionStatus {
@@ -547,10 +547,10 @@ async fn status_command_requests_thread_usage_with_backend_only_authentication()
     chat.update_account_state(
         /*status_account_display*/ None,
         Some(PlanType::Business),
-        /*has_chatgpt_account*/ false,
+        /*has_managed_account*/ false,
         /*has_codex_backend_auth*/ true,
     );
-    assert!(!chat.has_chatgpt_account());
+    assert!(!chat.has_managed_account());
     assert!(chat.has_codex_backend_auth());
     chat.dispatch_command(SlashCommand::Status);
 
@@ -576,7 +576,7 @@ async fn status_command_remains_visible_when_account_changes_during_usage_refres
 
     chat.update_account_state(
         /*status_account_display*/ None, /*plan_type*/ None,
-        /*has_chatgpt_account*/ false, /*has_codex_backend_auth*/ false,
+        /*has_managed_account*/ false, /*has_codex_backend_auth*/ false,
     );
 
     assert!(!chat.finish_thread_usage_refresh(

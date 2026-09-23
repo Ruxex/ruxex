@@ -1410,7 +1410,7 @@ async fn thread_fork_tracks_thread_initialized_analytics() -> Result<()> {
 
     let codex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
-        .with_root_config(&format!(r#"chatgpt_base_url = "{}""#, server.uri()))
+        .with_root_config(&format!(r#"managed_auth_base_url = "{}""#, server.uri()))
         .write(codex_home.path())?;
     mount_analytics_capture(&server, codex_home.path()).await?;
 
@@ -2254,9 +2254,9 @@ async fn thread_fork_surfaces_cloud_config_bundle_load_errors() -> Result<()> {
 
     let codex_home = TempDir::new()?;
     let model_server = create_mock_responses_server_repeating_assistant("Done").await;
-    let chatgpt_base_url = format!("{}/backend-api", server.uri());
+    let managed_auth_base_url = format!("{}/backend-api", server.uri());
     MockResponsesConfig::new(&model_server.uri())
-        .with_root_config(&format!(r#"chatgpt_base_url = "{chatgpt_base_url}""#))
+        .with_root_config(&format!(r#"managed_auth_base_url = "{managed_auth_base_url}""#))
         .write(codex_home.path())?;
     write_chatgpt_auth(
         codex_home.path(),

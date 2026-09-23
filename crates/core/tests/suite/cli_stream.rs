@@ -76,7 +76,7 @@ fn personal_access_token_exec_command(server: &MockServer, home: &TempDir) -> Co
         .arg("-c")
         .arg(format!("openai_base_url=\"{}/api/codex\"", server.uri()))
         .arg("-c")
-        .arg(format!("chatgpt_base_url=\"{}/backend-api\"", server.uri()))
+        .arg(format!("managed_auth_base_url=\"{}/backend-api\"", server.uri()))
         .arg("-C")
         .arg(repo_root())
         .arg("hello?");

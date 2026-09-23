@@ -129,17 +129,17 @@ pub fn is_workload_identity_selected() -> bool {
 }
 
 fn resolve_config(
-    chatgpt_base_url: &str,
+    managed_auth_base_url: &str,
     environment: ProcessEnvironment,
-    chatgpt_login_allowed: bool,
+    managed_auth_allowed: bool,
     auth_route_config: AuthRouteConfig,
 ) -> Result<Option<WorkloadIdentitySessionConfig>, WorkloadIdentitySessionError> {
     if !environment.has_marker() {
         return Ok(None);
     }
-    if !chatgpt_login_allowed {
+    if !managed_auth_allowed {
         return Err(invalid_config(
-            "workload identity requires a login policy that permits ChatGPT authentication",
+            "workload identity requires a login policy that permits managed authentication",
         ));
     }
 
@@ -155,7 +155,7 @@ fn resolve_config(
         environment.workload_identity_context,
         OPENAI_WORKLOAD_IDENTITY_CONTEXT_ENV_VAR,
     )?;
-    let auth_environment = classify_auth_environment(chatgpt_base_url)?;
+    let auth_environment = classify_managed_auth_environment(managed_auth_base_url)?;
 
     Ok(Some(WorkloadIdentitySessionConfig {
         assertion_file,
@@ -212,7 +212,7 @@ fn optional_unicode(
         .transpose()
 }
 
-fn classify_auth_environment(
+fn classify_managed_auth_environment(
     base_url: &str,
 ) -> Result<WorkloadIdentityEnvironment, WorkloadIdentitySessionError> {
     match base_url.trim().trim_end_matches('/') {
@@ -374,11 +374,11 @@ impl WorkloadIdentityExternalAuth {
         let registry = process_registry();
         resolve_config(
             auth_config
-                .chatgpt_base_url
+                .managed_auth_base_url
                 .as_deref()
                 .unwrap_or("https://chatgpt.com/backend-api"),
             ProcessEnvironment::read(),
-            auth_config.is_login_method_allowed(ForcedLoginMethod::Chatgpt),
+            auth_config.is_login_method_allowed(ForcedLoginMethod::Managed),
             auth_config.auth_route_config.clone(),
         )?
         .map(|config| Self::from_config_with_registry(config, registry))

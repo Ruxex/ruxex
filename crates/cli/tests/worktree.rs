@@ -164,7 +164,7 @@ async fn interactive_worktree_start_and_fork_bind_owner_before_turn() -> anyhow:
         format!(
             r#"
 cli_auth_credentials_store = "file"
-chatgpt_base_url = "{}/source/backend-api"
+managed_auth_base_url = "{}/source/backend-api"
 features.worktrees = true
 check_for_update_on_startup = false
 model_provider = "local"

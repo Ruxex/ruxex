@@ -338,7 +338,7 @@ impl ModelProvider for ConfiguredModelProvider {
         self.auth_manager
             .as_ref()
             .and_then(|auth_manager| auth_manager.auth_cached())
-            .is_some_and(|auth| auth.is_chatgpt_auth())
+            .is_some_and(|auth| auth.is_managed_auth())
     }
 
     fn auth(&self) -> ModelProviderFuture<'_, Option<CodexAuth>> {

@@ -87,7 +87,7 @@ async fn chatgpt_turn_cost_reaches_otlp_on_success() -> Result<()> {
 model = "mock-model"
 model_provider = "openai"
 openai_base_url = "{}/v1"
-chatgpt_base_url = "{}"
+managed_auth_base_url = "{}"
 approval_policy = "never"
 [features]
 responses_websockets = false

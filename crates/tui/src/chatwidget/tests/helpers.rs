@@ -160,7 +160,7 @@ pub(super) async fn make_chatwidget_manual(
 ) {
     make_chatwidget_manual_with_auth(
         model_override,
-        /*has_chatgpt_account*/ false,
+        /*has_managed_account*/ false,
         /*has_codex_backend_auth*/ false,
         FrameRequester::test_dummy(),
     )
@@ -169,7 +169,7 @@ pub(super) async fn make_chatwidget_manual(
 
 pub(super) async fn make_chatwidget_manual_with_auth(
     model_override: Option<&str>,
-    has_chatgpt_account: bool,
+    has_managed_account: bool,
     has_codex_backend_auth: bool,
     frame_requester: FrameRequester,
 ) -> (
@@ -198,7 +198,7 @@ pub(super) async fn make_chatwidget_manual_with_auth(
         workspace_command_runner: None,
         initial_user_message: None,
         enhanced_keys_supported: false,
-        has_chatgpt_account,
+        has_managed_account,
         has_codex_backend_auth,
         model_catalog,
         is_first_run: true,
@@ -257,7 +257,7 @@ pub(super) fn assert_no_submit_op(op_rx: &mut tokio::sync::mpsc::UnboundedReceiv
 }
 
 pub(crate) fn set_chatgpt_auth(chat: &mut ChatWidget) {
-    chat.has_chatgpt_account = true;
+    chat.has_managed_account = true;
     chat.has_codex_backend_auth = true;
     chat.model_catalog = test_model_catalog(&chat.config);
 }

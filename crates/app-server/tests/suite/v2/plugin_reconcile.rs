@@ -240,7 +240,7 @@ async fn start_app_server(server: &MockServer) -> Result<(TestAppServer, TempDir
     let codex_home = TempDir::new()?;
     let base_url = format!("{}/backend-api/", server.uri());
     MockResponsesConfig::new(&server.uri())
-        .with_root_config(&format!("chatgpt_base_url = \"{base_url}\""))
+        .with_root_config(&format!("managed_auth_base_url = \"{base_url}\""))
         .disable_feature(Feature::Apps)
         .enable_feature(Feature::Plugins)
         .enable_feature(Feature::CodexHooks)

@@ -40,7 +40,7 @@ async fn dropping_startup_cleans_up_while_required_mcp_is_stalled() -> anyhow::R
     servers.insert(
         "stalled".to_owned(),
         serde_json::from_value(json!({
-            "url": format!("{}/api/codex/ps/mcp", http_server.chatgpt_base_url),
+            "url": format!("{}/api/codex/ps/mcp", http_server.managed_auth_base_url),
             "http_headers": { "Authorization": "Bearer synthetic-test-token" },
             "required": true,
             "startup_timeout_sec": 120,

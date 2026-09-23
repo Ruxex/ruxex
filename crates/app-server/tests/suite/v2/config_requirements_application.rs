@@ -71,7 +71,7 @@ async fn application_destinations_stay_separate_from_agent_network() -> Result<(
     std::fs::write(
         home.path().join("requirements.toml"),
         r#"
-chatgpt_base_url = "https://managed.example.com/backend-api/"
+managed_auth_base_url = "https://managed.example.com/backend-api/"
 [experimental_network.domains]
 "github.com" = "allow"
 [application.network.domains]

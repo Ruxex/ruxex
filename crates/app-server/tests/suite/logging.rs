@@ -83,7 +83,7 @@ async fn credentials_stay_out_of_persisted_logs() -> Result<()> {
     let codex_home = TempDir::new()?;
     let server_uri = server.uri();
     MockResponsesConfig::new(&server_uri)
-        .with_root_config(&format!("chatgpt_base_url = \"{server_uri}/backend-api\""))
+        .with_root_config(&format!("managed_auth_base_url = \"{server_uri}/backend-api\""))
         .with_provider_config("requires_openai_auth = true\nsupports_websockets = false")
         .with_extra_config(&format!(
             r#"

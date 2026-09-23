@@ -318,7 +318,7 @@ async fn managed_shutdown_preserves_admitted_resume() -> Result<()> {
         format!(
             "{}\n[mcp_servers.stalled]\nurl = {:?}\nrequired = true\nstartup_timeout_sec = 120\nhttp_headers = {{ Authorization = \"Bearer synthetic-test-token\" }}\n",
             std::fs::read_to_string(&config)?,
-            format!("{}/api/codex/ps/mcp", mcp.chatgpt_base_url),
+            format!("{}/api/codex/ps/mcp", mcp.managed_auth_base_url),
         ),
     )?;
     let id = app_test_support::create_fake_rollout(

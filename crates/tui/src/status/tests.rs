@@ -374,7 +374,7 @@ async fn status_snapshot_shows_chatgpt_plan_without_email() {
         ChatGptAuthFixture::new("access-chatgpt").plan_type("enterprise_cbp_automation"),
         AuthCredentialsStoreMode::File,
     )
-    .expect("write email-less ChatGPT auth");
+    .expect("write email-less managed auth");
     write_models_cache(temp_home.path())
         .await
         .expect("write models cache");

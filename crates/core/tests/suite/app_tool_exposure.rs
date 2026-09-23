@@ -33,7 +33,7 @@ impl McpServerContributor<Config> for AppsServer {
     ) -> ExtensionFuture<'a, Vec<McpServerContribution>> {
         Box::pin(async move {
             let mut config = codex_mcp::hosted_plugin_runtime_mcp_server_config(
-                &context.config().chatgpt_base_url,
+                &context.config().managed_auth_base_url,
                 /*apps_mcp_product_sku*/ None,
                 context.originator(),
             );

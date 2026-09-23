@@ -56,7 +56,7 @@ async fn optional_mcp_startup_grace_controls_initial_turn_tool_catalog(
     let (http_server, startup_control) =
         AppsTestServer::mount_with_startup_control(&mcp_server).await?;
     let release_startup = startup_control.hold_next_successful_initialize();
-    let server_url = format!("{}/api/codex/ps/mcp", http_server.chatgpt_base_url);
+    let server_url = format!("{}/api/codex/ps/mcp", http_server.managed_auth_base_url);
     let response = responses::mount_sse_once(
         &responses_server,
         responses::sse(vec![
@@ -184,7 +184,7 @@ async fn running_thread_uses_refreshed_optional_mcp_startup_grace(
     let (http_server, startup_control) =
         AppsTestServer::mount_with_startup_control(&mcp_server).await?;
     let release_startup = startup_control.hold_next_successful_initialize();
-    let server_url = format!("{}/api/codex/ps/mcp", http_server.chatgpt_base_url);
+    let server_url = format!("{}/api/codex/ps/mcp", http_server.managed_auth_base_url);
     let initial_response = responses::mount_sse_once(
         &responses_server,
         responses::sse(vec![

@@ -43,7 +43,7 @@ async fn experimental_mode_plan_is_ignored_on_startup() {
         workspace_command_runner: None,
         initial_user_message: None,
         enhanced_keys_supported: false,
-        has_chatgpt_account: false,
+        has_managed_account: false,
         has_codex_backend_auth: false,
         model_catalog: test_model_catalog(&cfg),
         is_first_run: true,
@@ -2362,7 +2362,7 @@ async fn apps_installed_mentions_revoke_access_and_reject_stale_account_results(
 
     chat.update_account_state(
         /*status_account_display*/ None, /*plan_type*/ None,
-        /*has_chatgpt_account*/ true, /*has_codex_backend_auth*/ true,
+        /*has_managed_account*/ true, /*has_codex_backend_auth*/ true,
     );
 
     assert_ne!(chat.connector_scope_generation(), generation);
@@ -3331,7 +3331,7 @@ async fn model_picker_refresh_rejects_obsolete_and_unusable_replies() {
     chat.update_account_state(
         chat.status_account_display.clone(),
         chat.plan_type,
-        chat.has_chatgpt_account,
+        chat.has_managed_account,
         chat.has_codex_backend_auth,
     );
     assert!(!chat.on_models_loaded(current_request, Ok(refreshed.clone())));
@@ -4223,7 +4223,7 @@ async fn account_change_dismisses_the_previous_app_directory_snapshot() {
 
     chat.update_account_state(
         /*status_account_display*/ None, /*plan_type*/ None,
-        /*has_chatgpt_account*/ true, /*has_codex_backend_auth*/ true,
+        /*has_managed_account*/ true, /*has_codex_backend_auth*/ true,
     );
     let after = normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 80));
     assert_chatwidget_snapshot!(

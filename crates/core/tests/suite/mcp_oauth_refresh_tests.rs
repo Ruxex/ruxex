@@ -78,7 +78,7 @@ async fn http_auth_challenge_reaches_agent_tool_call_events_without_replay() -> 
     )
     .await;
     let server_config: McpServerConfig = serde_json::from_value(json!({
-        "url": format!("{}/api/codex/ps/mcp", http_server.chatgpt_base_url),
+        "url": format!("{}/api/codex/ps/mcp", http_server.managed_auth_base_url),
         "environment_id": DEFAULT_MCP_SERVER_ENVIRONMENT_ID,
     }))?;
     let fixture = test_codex()
@@ -150,7 +150,7 @@ async fn oauth_mode_refresh_replaces_the_live_connection(
     let (http_server, startup_control) =
         AppsTestServer::mount_with_startup_control(&mcp_server).await?;
     let server_name = "oauth_refresh";
-    let server_url = format!("{}/api/codex/ps/mcp", http_server.chatgpt_base_url);
+    let server_url = format!("{}/api/codex/ps/mcp", http_server.managed_auth_base_url);
     Mock::given(method("GET"))
         .and(path(
             "/.well-known/oauth-authorization-server/api/codex/ps/mcp",

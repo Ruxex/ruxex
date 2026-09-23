@@ -181,7 +181,7 @@ async fn codex_delegate_rejects_legacy_mcp_approvals_without_prompting() {
     )
     .await;
 
-    let test = search_capable_apps_builder(apps_server.chatgpt_base_url)
+    let test = search_capable_apps_builder(apps_server.managed_auth_base_url)
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
             config

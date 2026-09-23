@@ -432,12 +432,6 @@
             }
           ]
         },
-        "chatgptBaseUrl": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "checkForUpdateOnStartup": {
           "type": [
             "boolean",
@@ -500,6 +494,12 @@
           ]
         },
         "logDir": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "managedAuthBaseUrl": {
           "type": [
             "string",
             "null"
@@ -705,7 +705,7 @@
     },
     "ForcedLoginMethod": {
       "enum": [
-        "chatgpt",
+        "managed",
         "api"
       ],
       "type": "string"

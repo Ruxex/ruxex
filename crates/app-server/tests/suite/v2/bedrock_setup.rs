@@ -311,7 +311,7 @@ async fn setup_bedrock_rejects_invalid_or_conflicting_credentials() -> Result<()
     let home = TempDir::new()?;
     std::fs::write(
         home.path().join("config.toml"),
-        "forced_login_method = \"chatgpt\"\n",
+        "forced_login_method = \"managed\"\n",
     )?;
     let mut app_server = bedrock_app_server(home.path(), &[]).await?;
     let request_id = app_server
@@ -324,7 +324,7 @@ async fn setup_bedrock_rejects_invalid_or_conflicting_credentials() -> Result<()
     .await??;
     assert_eq!(
         error.error.message,
-        "Amazon Bedrock login is disabled. Use ChatGPT login instead."
+        "Amazon Bedrock login is disabled. Use managed authentication instead."
     );
     assert!(!home.path().join(".env").exists());
 

@@ -509,10 +509,10 @@ async fn ignoring_login_requirements_preserves_local_auth_backend_requirements()
     let requirements_path = tmp.path().join("requirements.toml");
     std::fs::write(
         &requirements_path,
-        r#"allowed_login_methods = ["chatgpt"]
-allowed_chatgpt_workspaces = ["managed-workspace"]
+        r#"allowed_login_methods = ["managed"]
+allowed_managed_workspaces = ["managed-workspace"]
 cli_auth_credentials_store = "keyring"
-chatgpt_base_url = "https://managed.example/backend-api/"
+managed_auth_base_url = "https://managed.example/backend-api/"
 "#,
     )
     .expect("write local authentication requirements");
@@ -534,7 +534,7 @@ chatgpt_base_url = "https://managed.example/backend-api/"
 
     let requirements = stack.requirements();
     assert_eq!(requirements.allowed_login_methods, None);
-    assert_eq!(requirements.allowed_chatgpt_workspaces, None);
+    assert_eq!(requirements.allowed_managed_workspaces, None);
     assert_eq!(
         requirements
             .cli_auth_credentials_store
@@ -544,7 +544,7 @@ chatgpt_base_url = "https://managed.example/backend-api/"
     );
     assert_eq!(
         requirements
-            .chatgpt_base_url
+            .managed_auth_base_url
             .as_ref()
             .map(|required| required.value.as_str()),
         Some("https://managed.example/backend-api/")

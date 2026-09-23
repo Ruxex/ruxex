@@ -12,9 +12,9 @@ use super::stack::RequirementsCompositionError;
 // Authentication requirements that cloud-managed layers cannot set.
 const LOCAL_ONLY_AUTH_REQUIREMENTS: &[&str] = &[
     "allowed_login_methods",
-    "allowed_chatgpt_workspaces",
+    "allowed_managed_workspaces",
     "cli_auth_credentials_store",
-    "chatgpt_base_url",
+    "managed_auth_base_url",
 ];
 
 #[derive(Clone, Debug)]

@@ -327,7 +327,7 @@ impl App {
                 .with_collaboration_modes(bootstrap.collaboration_modes),
         );
         let auth_mode = bootstrap.auth_mode;
-        let has_chatgpt_account = bootstrap.has_chatgpt_account;
+        let has_managed_account = bootstrap.has_managed_account;
         let has_codex_backend_auth = false;
         let requires_openai_auth = bootstrap.requires_openai_auth;
         let status_account_display = bootstrap.status_account_display.clone();
@@ -422,7 +422,7 @@ impl App {
                         Vec::new(),
                     ),
                     enhanced_keys_supported,
-                    has_chatgpt_account,
+                    has_managed_account,
                     requires_openai_auth,
                     has_codex_backend_auth,
                     model_catalog: model_catalog.clone(),
@@ -543,7 +543,7 @@ impl App {
                     )
                     .filter(|_| resumed.is_some()),
                     enhanced_keys_supported,
-                    has_chatgpt_account,
+                    has_managed_account,
                     requires_openai_auth,
                     has_codex_backend_auth,
                     model_catalog: model_catalog.clone(),
@@ -647,7 +647,7 @@ impl App {
                     )
                     .filter(|_| forked.is_some()),
                     enhanced_keys_supported,
-                    has_chatgpt_account,
+                    has_managed_account,
                     requires_openai_auth,
                     has_codex_backend_auth,
                     model_catalog: model_catalog.clone(),
@@ -928,7 +928,7 @@ See the Codex keymap documentation for supported actions and examples."
             "tui startup initial frame scheduled"
         );
         app.refresh_startup_skills(&app_server);
-        if requires_openai_auth && has_chatgpt_account {
+        if requires_openai_auth && has_managed_account {
             crate::daybreak::prefetch_notice(
                 &app.config,
                 &app_server,

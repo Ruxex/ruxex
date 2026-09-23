@@ -201,7 +201,7 @@ async fn responses_lite_includes_tool_namespaces_info_when_enabled() -> Result<(
     )
     .await;
 
-    let mut builder = apps_enabled_builder(apps_server.chatgpt_base_url)
+    let mut builder = apps_enabled_builder(apps_server.managed_auth_base_url)
         .with_model_info_override("gpt-5.4", |model_info| {
             model_info.use_responses_lite = true;
             model_info.tool_mode = Some(ToolMode::CodeMode);

@@ -3754,20 +3754,20 @@
             "null"
           ]
         },
-        "forced_chatgpt_workspace_id": {
+        "forced_login_method": {
           "anyOf": [
             {
-              "$ref": "#/definitions/ForcedChatgptWorkspaceIds"
+              "$ref": "#/definitions/ForcedLoginMethod"
             },
             {
               "type": "null"
             }
           ]
         },
-        "forced_login_method": {
+        "forced_managed_workspace_id": {
           "anyOf": [
             {
-              "$ref": "#/definitions/ForcedLoginMethod"
+              "$ref": "#/definitions/ForcedManagedWorkspaceIds"
             },
             {
               "type": "null"
@@ -4352,12 +4352,6 @@
             }
           ]
         },
-        "chatgptBaseUrl": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "checkForUpdateOnStartup": {
           "type": [
             "boolean",
@@ -4420,6 +4414,12 @@
           ]
         },
         "logDir": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "managedAuthBaseUrl": {
           "type": [
             "string",
             "null"
@@ -5942,7 +5942,14 @@
       ],
       "type": "object"
     },
-    "ForcedChatgptWorkspaceIds": {
+    "ForcedLoginMethod": {
+      "enum": [
+        "managed",
+        "api"
+      ],
+      "type": "string"
+    },
+    "ForcedManagedWorkspaceIds": {
       "anyOf": [
         {
           "type": "string"
@@ -5954,14 +5961,7 @@
           "type": "array"
         }
       ],
-      "description": "Backward-compatible API shape for ChatGPT workspace login restrictions."
-    },
-    "ForcedLoginMethod": {
-      "enum": [
-        "chatgpt",
-        "api"
-      ],
-      "type": "string"
+      "description": "API shape for managed-auth workspace login restrictions."
     },
     "FsChangedNotification": {
       "$schema": "http://json-schema.org/draft-07/schema#",

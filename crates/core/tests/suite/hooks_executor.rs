@@ -501,7 +501,7 @@ async fn executor_browser_and_computer_use_cleanup_hooks_use_separate_mcp_routes
         ("computer-use@openai-bundled", computer_use_hook_manifest()),
     ];
     let mut fixture = executor_plugin_hook_fixture(
-        apps_enabled_builder(apps.chatgpt_base_url)
+        apps_enabled_builder(apps.managed_auth_base_url)
             .with_pre_build_hook(move |home| {
                 std::fs::write(home.join("config.toml"), user_config)
                     .expect("write Browser app configuration");

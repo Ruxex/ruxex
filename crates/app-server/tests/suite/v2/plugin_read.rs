@@ -133,7 +133,7 @@ async fn plugin_read_returns_remote_mcp_servers_when_uninstalled() -> Result<()>
         codex_home.path().join("config.toml"),
         format!(
             r#"
-chatgpt_base_url = "{}/backend-api/"
+managed_auth_base_url = "{}/backend-api/"
 
 [features]
 plugins = true
@@ -875,7 +875,7 @@ async fn plugin_read_rejects_remote_marketplace_when_plugins_are_disabled() -> R
         codex_home.path().join("config.toml"),
         format!(
             r#"
-chatgpt_base_url = "{}/backend-api/"
+managed_auth_base_url = "{}/backend-api/"
 
 [features]
 plugins = false
@@ -2355,7 +2355,7 @@ fn write_connectors_config(codex_home: &std::path::Path, base_url: &str) -> std:
         codex_home.join("config.toml"),
         format!(
             r#"
-chatgpt_base_url = "{base_url}"
+managed_auth_base_url = "{base_url}"
 cli_auth_credentials_store = "file"
 mcp_oauth_credentials_store = "file"
 
@@ -2375,7 +2375,7 @@ fn write_remote_plugin_catalog_config(
         codex_home.join("config.toml"),
         format!(
             r#"
-chatgpt_base_url = "{base_url}"
+managed_auth_base_url = "{base_url}"
 
 [features]
 plugins = true

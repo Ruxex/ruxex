@@ -1497,7 +1497,7 @@ async fn external_agent_config_import_reports_session_config_error_subtype() -> 
         .await?;
     std::fs::write(
         codex_home.path().join("config.toml"),
-        "chatgpt_base_url = [",
+        "managed_auth_base_url = [",
     )?;
 
     let request_id = mcp
@@ -2642,6 +2642,6 @@ async fn external_agent_config_import_compacts_huge_session_before_first_follow_
 fn write_analytics_config(codex_home: &std::path::Path, base_url: &str) -> std::io::Result<()> {
     std::fs::write(
         codex_home.join("config.toml"),
-        format!("chatgpt_base_url = \"{base_url}\"\n"),
+        format!("managed_auth_base_url = \"{base_url}\"\n"),
     )
 }

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use app_test_support::TestAppServer;
-use app_test_support::write_mock_responses_config_toml_with_chatgpt_base_url;
+use app_test_support::write_mock_responses_config_toml_with_managed_auth_base_url;
 use codex_app_server::INVALID_PARAMS_ERROR_CODE;
 use codex_app_server_protocol::ActivePermissionProfile;
 use codex_app_server_protocol::JSONRPCError;
@@ -150,7 +150,7 @@ async fn thread_start_keeps_unknown_field_compatibility_with_named_permissions()
 #[tokio::test]
 async fn request_handlers_reject_remote_image_urls() -> Result<()> {
     let codex_home = TempDir::new()?;
-    write_mock_responses_config_toml_with_chatgpt_base_url(
+    write_mock_responses_config_toml_with_managed_auth_base_url(
         codex_home.path(),
         "http://localhost/unused",
         "http://localhost/unused",

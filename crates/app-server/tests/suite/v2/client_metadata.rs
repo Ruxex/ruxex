@@ -338,7 +338,7 @@ async fn turn_start_sends_nested_subagent_lineage_after_cold_thread_resume_v2() 
 
     let codex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
-        .with_root_config(&format!("chatgpt_base_url = \"{}\"", server.uri()))
+        .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
         .with_provider_config("supports_websockets = false")
         .write(codex_home.path())?;
     mount_analytics_capture(&server, codex_home.path()).await?;
@@ -471,7 +471,7 @@ async fn turn_steer_updates_client_metadata_on_follow_up_responses_request_v2() 
         responses::mount_response_sequence(&server, vec![first_response, second_response]).await;
 
     MockResponsesConfig::new(&server.uri())
-        .with_root_config(&format!("chatgpt_base_url = \"{}\"", server.uri()))
+        .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
         .with_provider_config("supports_websockets = false")
         .write(codex_home.path())?;
     mount_analytics_capture(&server, codex_home.path()).await?;

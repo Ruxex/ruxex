@@ -80,7 +80,7 @@ async fn canonical_plugin_disable_overrides_shared_connector_and_can_be_cleared(
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_config(move |config| {
             config.features.enable(Feature::Apps).unwrap();
-            config.chatgpt_base_url = apps.chatgpt_base_url;
+            config.managed_auth_base_url = apps.managed_auth_base_url;
         });
     let test = builder.build_with_auto_env(&server).await?;
     let manager = test.thread_manager.plugins_manager();

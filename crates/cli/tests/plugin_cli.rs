@@ -1164,7 +1164,7 @@ impl RemoteMarketplaceFixture {
         std::fs::write(
             home.path().join("config.toml"),
             format!(
-                "cli_auth_credentials_store = 'file'\nchatgpt_base_url = '{}/backend-api'\n[features]\nplugins = true\nremote_plugin = true\n",
+                "cli_auth_credentials_store = 'file'\nmanaged_auth_base_url = '{}/backend-api'\n[features]\nplugins = true\nremote_plugin = true\n",
                 server.uri()
             ),
         )?;

@@ -930,8 +930,8 @@ pub struct Config {
     /// Optional verbosity control for GPT-5 models (Responses API `text.verbosity`).
     pub model_verbosity: Option<Verbosity>,
 
-    /// Base URL for requests to ChatGPT (as opposed to the OpenAI API).
-    pub chatgpt_base_url: String,
+    /// Base URL for host-managed authentication requests.
+    pub managed_auth_base_url: String,
 
     /// Whether Codex-owned clients should respect host system proxy settings.
     pub respect_system_proxy: bool,
@@ -941,8 +941,8 @@ pub struct Config {
 
     /// Experimental / do not use. Selects the thread persistence backend.
     pub experimental_thread_store: ThreadStoreConfig,
-    /// When set, restricts ChatGPT login to one or more workspace identifiers.
-    pub forced_chatgpt_workspace_id: Option<Vec<String>>,
+    /// When set, restricts managed authentication to one or more workspace identifiers.
+    pub forced_managed_workspace_id: Option<Vec<String>>,
 
     /// When set, restricts the login mechanism users may use.
     pub forced_login_method: Option<ForcedLoginMethod>,
@@ -1269,16 +1269,16 @@ impl AuthManagerConfig for Config {
         self.forced_login_method
     }
 
-    fn forced_chatgpt_workspace_id(&self) -> Option<Vec<String>> {
-        self.forced_chatgpt_workspace_id.clone()
+    fn forced_managed_workspace_id(&self) -> Option<Vec<String>> {
+        self.forced_managed_workspace_id.clone()
     }
 
     fn managed_auth_policy(&self) -> ManagedAuthPolicy {
         self.config_layer_stack.requirements().managed_auth_policy()
     }
 
-    fn chatgpt_base_url(&self) -> String {
-        self.chatgpt_base_url.clone()
+    fn managed_auth_base_url(&self) -> String {
+        self.managed_auth_base_url.clone()
     }
 
     fn auth_route_config(&self) -> AuthRouteConfig {
@@ -3024,9 +3024,9 @@ impl Config {
         // either applied above or handled while constructing the final Config.
         let ConfigRequirements {
             allowed_login_methods: _,
-            allowed_chatgpt_workspaces: _,
+            allowed_managed_workspaces: _,
             cli_auth_credentials_store,
-            chatgpt_base_url: _,
+            managed_auth_base_url: _,
             sqlite_home: _,
             log_dir: _,
             model_catalog_json: _,
@@ -3616,10 +3616,10 @@ impl Config {
             ));
         }
 
-        let forced_chatgpt_workspace_id = cfg
-            .forced_chatgpt_workspace_id
+        let forced_managed_workspace_id = cfg
+            .forced_managed_workspace_id
             .clone()
-            .map(codex_config::config_toml::ForcedChatgptWorkspaceIds::into_vec)
+            .map(codex_config::config_toml::ForcedManagedWorkspaceIds::into_vec)
             .map(|values| {
                 values
                     .into_iter()
@@ -4024,13 +4024,13 @@ impl Config {
             model_reasoning_summary: cfg.model_reasoning_summary,
             model_catalog,
             model_verbosity: cfg.model_verbosity,
-            chatgpt_base_url: cfg
-                .chatgpt_base_url
+            managed_auth_base_url: cfg
+                .managed_auth_base_url
                 .unwrap_or("https://chatgpt.com/backend-api/".to_string()),
             respect_system_proxy,
             responses_api_metadata: cfg.responses_api_metadata.unwrap_or_default(),
             experimental_thread_store: thread_store_config(cfg.experimental_thread_store),
-            forced_chatgpt_workspace_id,
+            forced_managed_workspace_id,
             forced_login_method,
             web_search_mode: constrained_web_search_mode.value,
             web_search_config,

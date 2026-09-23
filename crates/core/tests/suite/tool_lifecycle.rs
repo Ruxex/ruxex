@@ -262,10 +262,10 @@ async fn tool_start_receives_executed_mcp_call_for_connector(
     extensions.tool_lifecycle_contributor(recorder.clone());
     if matches!(owner, AppsServerOwner::Extension) {
         extensions.mcp_server_contributor(Arc::new(ExtensionOwnedAppsServer {
-            url: format!("{}/api/codex/ps/mcp", apps_server.chatgpt_base_url),
+            url: format!("{}/api/codex/ps/mcp", apps_server.managed_auth_base_url),
         }));
     }
-    let test = apps_enabled_builder(apps_server.chatgpt_base_url)
+    let test = apps_enabled_builder(apps_server.managed_auth_base_url)
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await?;
@@ -397,7 +397,7 @@ async fn mcp_result_processing_precedes_completion(
     });
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     extensions.tool_lifecycle_contributor(contributor.clone());
-    let test = apps_enabled_builder(apps_server.chatgpt_base_url)
+    let test = apps_enabled_builder(apps_server.managed_auth_base_url)
         .with_extensions(Arc::new(extensions.build()))
         .with_config(move |config| {
             if matches!(mode, McpCallMode::CodeMode) {

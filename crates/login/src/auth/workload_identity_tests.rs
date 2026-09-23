@@ -27,13 +27,13 @@ fn complete_environment() -> ProcessEnvironment {
 
 fn resolve_for_test(
     environment: ProcessEnvironment,
-    chatgpt_login_allowed: bool,
-    chatgpt_base_url: &str,
+    managed_auth_allowed: bool,
+    managed_auth_base_url: &str,
 ) -> Result<Option<WorkloadIdentitySessionConfig>, WorkloadIdentitySessionError> {
     resolve_config(
-        chatgpt_base_url,
+        managed_auth_base_url,
         environment,
-        chatgpt_login_allowed,
+        managed_auth_allowed,
         auth_route_config(OutboundProxyPolicy::ReqwestDefault),
     )
 }
@@ -43,7 +43,7 @@ fn markers_select_wif_and_partial_configuration_fails_closed() {
     assert!(
         resolve_for_test(
             ProcessEnvironment::default(),
-            /*chatgpt_login_allowed*/ true,
+            /*managed_auth_allowed*/ true,
             "https://chatgpt.com/backend-api",
         )
         .expect("no markers")
@@ -55,7 +55,7 @@ fn markers_select_wif_and_partial_configuration_fails_closed() {
                 workload_identity_context: Some(r#"{"instance_id":"box-one"}"#.into()),
                 ..ProcessEnvironment::default()
             },
-            /*chatgpt_login_allowed*/ true,
+            /*managed_auth_allowed*/ true,
             "https://chatgpt.com/backend-api",
         )
         .expect("context alone is not a WIF marker")
@@ -79,7 +79,7 @@ fn markers_select_wif_and_partial_configuration_fails_closed() {
     ] {
         let error = resolve_for_test(
             environment,
-            /*chatgpt_login_allowed*/ true,
+            /*managed_auth_allowed*/ true,
             "https://chatgpt.com/backend-api",
         )
         .expect_err("partial WIF must not fall back");
@@ -93,7 +93,7 @@ fn markers_select_wif_and_partial_configuration_fails_closed() {
     assert!(
         resolve_for_test(
             relative,
-            /*chatgpt_login_allowed*/ true,
+            /*managed_auth_allowed*/ true,
             "https://chatgpt.com/backend-api",
         )
         .expect_err("relative assertion path")
@@ -106,13 +106,13 @@ fn markers_select_wif_and_partial_configuration_fails_closed() {
 fn auth_policy_and_app_environment_are_enforced() {
     let policy_error = resolve_for_test(
         complete_environment(),
-        /*chatgpt_login_allowed*/ false,
+        /*managed_auth_allowed*/ false,
         "https://chatgpt.com/backend-api",
     )
     .expect_err("ChatGPT-disallowing policy");
     assert!(policy_error.to_string().contains("login policy"));
 
-    for (chatgpt_base_url, expected_environment, expected_token_url) in [
+    for (managed_auth_base_url, expected_environment, expected_token_url) in [
         (
             "https://chatgpt.com/backend-api/",
             WorkloadIdentityEnvironment::Production,
@@ -126,8 +126,8 @@ fn auth_policy_and_app_environment_are_enforced() {
     ] {
         let config = resolve_for_test(
             complete_environment(),
-            /*chatgpt_login_allowed*/ true,
-            chatgpt_base_url,
+            /*managed_auth_allowed*/ true,
+            managed_auth_base_url,
         )
         .expect("trusted app routing")
         .expect("WIF selected");
@@ -137,7 +137,7 @@ fn auth_policy_and_app_environment_are_enforced() {
 
     let error = resolve_for_test(
         complete_environment(),
-        /*chatgpt_login_allowed*/ true,
+        /*managed_auth_allowed*/ true,
         "https://example.invalid/backend-api",
     )
     .expect_err("untrusted auth environment");
@@ -152,7 +152,7 @@ fn workload_context_is_preserved_without_logging_its_value() {
             workload_identity_context: Some(context.into()),
             ..complete_environment()
         },
-        /*chatgpt_login_allowed*/ true,
+        /*managed_auth_allowed*/ true,
         "https://chatgpt.com/backend-api",
     )
     .expect("valid configuration")

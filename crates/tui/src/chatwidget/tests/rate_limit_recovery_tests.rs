@@ -57,7 +57,7 @@ async fn rate_limit_recovery_preserves_settings_hold_and_clears_on_account_chang
     chat.on_rate_limit_error(RateLimitErrorKind::UsageLimit, "Usage exhausted".into());
     chat.update_account_state(
         /*status_account_display*/ None, /*plan_type*/ None,
-        /*has_chatgpt_account*/ false, /*has_codex_backend_auth*/ false,
+        /*has_managed_account*/ false, /*has_codex_backend_auth*/ false,
     );
     assert!(!chat.input_queue.rate_limit_recovery_pending);
     assert_eq!(chat.queued_user_message_texts(), vec!["queued follow-up"]);

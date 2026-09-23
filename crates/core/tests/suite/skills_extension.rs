@@ -657,7 +657,7 @@ async fn capability_sections_render_in_order_with_host_repo_and_plugin_skills() 
                 .features
                 .enable(Feature::Apps)
                 .expect("test config should allow feature update");
-            config.chatgpt_base_url = apps_server.chatgpt_base_url;
+            config.managed_auth_base_url = apps_server.managed_auth_base_url;
         });
     let test = builder.build_with_auto_env(&server).await?;
     let repo_skill_path = test
@@ -1047,7 +1047,7 @@ text({ names: result.skills.map(skill => skill.name), warnings: result.warnings,
             shadow_selection_enabled: false,
         },
     );
-    let mut builder = apps_enabled_builder(apps_server.chatgpt_base_url)
+    let mut builder = apps_enabled_builder(apps_server.managed_auth_base_url)
         // Local executors disable orchestrator skill discovery.
         .with_exec_server_url("none")
         .with_extensions(Arc::new(extensions.build()))
@@ -1430,7 +1430,7 @@ async fn production_turn_reuses_orchestrator_skills_until_mcp_invalidation() -> 
             shadow_selection_enabled: false,
         },
     );
-    let mut builder = apps_enabled_builder(apps_server.chatgpt_base_url)
+    let mut builder = apps_enabled_builder(apps_server.managed_auth_base_url)
         .with_exec_server_url("none")
         .with_extensions(Arc::new(extensions.build()))
         .with_model_info_override("gpt-5.5", |model_info| {
@@ -2442,14 +2442,14 @@ async fn executor_skill_invocation_is_environment_scoped_and_deduplicated() -> R
     .await;
 
     let (extensions, _) = catalog_extensions(catalog, /*include_host_provider*/ false);
-    let chatgpt_base_url = server.uri();
+    let managed_auth_base_url = server.uri();
     let mut builder = test_codex()
         .with_home(codex_home)
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_extensions(extensions)
         .with_config(move |config| {
             configure_catalog_test(config);
-            config.chatgpt_base_url = chatgpt_base_url;
+            config.managed_auth_base_url = managed_auth_base_url;
         });
     let test = builder.build_with_auto_env(&server).await?;
     test.submit_turn("Read the executor skill twice.").await?;
@@ -3127,7 +3127,7 @@ async fn production_turn_uses_provider_host_catalog_and_core_snapshot_injection(
             shadow_selection_enabled: false,
         },
     );
-    let mut builder = apps_enabled_builder(apps_server.chatgpt_base_url)
+    let mut builder = apps_enabled_builder(apps_server.managed_auth_base_url)
         .with_home(Arc::clone(&codex_home))
         .with_extensions(Arc::new(extensions.build()))
         .with_config(configure_catalog_test);

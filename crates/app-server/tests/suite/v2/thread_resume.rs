@@ -2311,7 +2311,7 @@ async fn thread_resume_tracks_thread_initialized_analytics() -> Result<()> {
 
     let codex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
-        .with_root_config(&format!(r#"chatgpt_base_url = "{}""#, server.uri()))
+        .with_root_config(&format!(r#"managed_auth_base_url = "{}""#, server.uri()))
         .write(codex_home.path())?;
     mount_analytics_capture(&server, codex_home.path()).await?;
 
@@ -2372,7 +2372,7 @@ async fn thread_resume_running_thread_tracks_thread_originator_in_analytics() ->
 
     let codex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
-        .with_root_config(&format!(r#"chatgpt_base_url = "{}""#, server.uri()))
+        .with_root_config(&format!(r#"managed_auth_base_url = "{}""#, server.uri()))
         .write(codex_home.path())?;
     mount_analytics_capture(&server, codex_home.path()).await?;
 
@@ -3656,7 +3656,7 @@ async fn thread_goal_lifecycle_emits_analytics_and_clear_deletes_goal() -> Resul
     let codex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .enable_feature(Feature::Goals)
-        .with_root_config(&format!(r#"chatgpt_base_url = "{}""#, server.uri()))
+        .with_root_config(&format!(r#"managed_auth_base_url = "{}""#, server.uri()))
         .write(codex_home.path())?;
     mount_analytics_capture(&server, codex_home.path()).await?;
 
@@ -5847,9 +5847,9 @@ async fn thread_resume_surfaces_cloud_config_bundle_load_errors() -> Result<()> 
 
     let codex_home = TempDir::new()?;
     let model_server = create_mock_responses_server_repeating_assistant("Done").await;
-    let chatgpt_base_url = format!("{}/backend-api", server.uri());
+    let managed_auth_base_url = format!("{}/backend-api", server.uri());
     mock_responses_config(&model_server.uri())
-        .with_root_config(&format!(r#"chatgpt_base_url = "{chatgpt_base_url}""#))
+        .with_root_config(&format!(r#"managed_auth_base_url = "{managed_auth_base_url}""#))
         .write(codex_home.path())?;
     write_chatgpt_auth(
         codex_home.path(),

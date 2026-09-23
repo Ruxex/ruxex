@@ -100,7 +100,7 @@ pub(super) async fn load_requirements_from_sources(
     let mut requirements = compose_requirements(requirements_layers.clone())?.unwrap_or_default();
     if overrides.ignore_login_requirements {
         requirements.allowed_login_methods = None;
-        requirements.allowed_chatgpt_workspaces = None;
+        requirements.allowed_managed_workspaces = None;
     }
     Ok((requirements, loaded_config_layers, requirements_layers))
 }

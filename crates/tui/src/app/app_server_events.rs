@@ -222,7 +222,7 @@ impl App {
                     false,
                     has_codex_backend_auth,
                 );
-                if self.chat_widget.has_chatgpt_account() {
+                if self.chat_widget.has_managed_account() {
                     crate::daybreak::prefetch_notice(
                         &self.config,
                         app_server_client,

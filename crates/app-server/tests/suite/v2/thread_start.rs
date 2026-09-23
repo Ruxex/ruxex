@@ -927,7 +927,7 @@ async fn thread_start_tracks_thread_initialized_analytics() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
     let codex_home = TempDir::new()?;
-    create_config_toml_with_chatgpt_base_url(codex_home.path(), &server.uri(), &server.uri())?;
+    create_config_toml_with_managed_auth_base_url(codex_home.path(), &server.uri(), &server.uri())?;
     mount_analytics_capture(&server, codex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
@@ -1429,11 +1429,11 @@ async fn thread_start_surfaces_cloud_config_bundle_load_errors() -> Result<()> {
 
     let codex_home = TempDir::new()?;
     let model_server = create_mock_responses_server_repeating_assistant("Done").await;
-    let chatgpt_base_url = format!("{}/backend-api", server.uri());
-    create_config_toml_with_chatgpt_base_url(
+    let managed_auth_base_url = format!("{}/backend-api", server.uri());
+    create_config_toml_with_managed_auth_base_url(
         codex_home.path(),
         &model_server.uri(),
-        &chatgpt_base_url,
+        &managed_auth_base_url,
     )?;
     write_chatgpt_auth(
         codex_home.path(),
@@ -1855,16 +1855,16 @@ fn create_config_toml_with_profile_workspace_root(
     )
 }
 
-fn create_config_toml_with_chatgpt_base_url(
+fn create_config_toml_with_managed_auth_base_url(
     codex_home: &Path,
     server_uri: &str,
-    chatgpt_base_url: &str,
+    managed_auth_base_url: &str,
 ) -> std::io::Result<()> {
     create_config_toml(
         codex_home,
         server_uri,
         &format!(
-            "approval_policy = \"never\"\nsandbox_mode = \"read-only\"\nchatgpt_base_url = \"{chatgpt_base_url}\""
+            "approval_policy = \"never\"\nsandbox_mode = \"read-only\"\nmanaged_auth_base_url = \"{managed_auth_base_url}\""
         ),
         "",
     )

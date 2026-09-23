@@ -129,7 +129,7 @@ Feedback の削除で確認したように、OpenAI 固有性はクレート単�
 ### ChatGPT Remote Control
 
 - **根拠:** `crates/app-server-transport` の削除対象は `chatgpt.com` / `chatgpt-staging.com` の host allowlist、`/wham/remote/control` endpoint、ChatGPT account header、enrollment/pairing persistence を持っていた。非 OpenAI consumer は確認されず、実装・protocol・CLI・daemon・state persistence を削除した。
-- **対象:** `app-server-transport` の remote-control transport/auth/client/enroll/websocket、`app-server-protocol` の v2 remote-control types、`app-server-daemon` client、`codex-cli` の `remote-control` command、`codex-state` runtime、`chatgpt_base_url` と remote-control 設定、関連 schema/UI/documentation。
+- **対象:** `app-server-transport` の remote-control transport/auth/client/enroll/websocket、`app-server-protocol` の v2 remote-control types、`app-server-daemon` client、`codex-cli` の `remote-control` command、`codex-state` runtime、`managed_auth_base_url` と remote-control 設定、関連 schema/UI/documentation。
 - **非対象:** 通常の app-server transport、localhost/platform transport、provider-neutral な WebSocket/HTTP utility。現行の非 OpenAI Remote Control consumer は確認できていない。
 - **判断:** **capability 全体を削除済み**。将来 generic remote control が必要になった場合は、OpenAI endpoint と persistence contract を持ち込まず新しい provider-neutral capability として設計する。
 - **難易度・リスク:** 高。protocol、daemon、保存済み enrollment、設定を一つの単位で外し、通常の app-server 起動を維持する必要がある。
@@ -137,7 +137,7 @@ Feedback の削除で確認したように、OpenAI 固有性はクレート単�
 ### ChatGPT Apps / Connectors / host-owned Apps MCP
 
 - **根拠:** `crates/connectors/src/lib.rs` は ChatGPT backend の connector directory endpoint と account/user cache を実装する。`crates/features` の Apps は ChatGPT auth を要求し、`codex-mcp` の `codex_apps`、host-owned Apps MCP、OpenAI file/elicitation extension と結合している。
-- **対象:** `codex-connectors`、`codex-connectors-extension` とその専用 consumer、`Feature::Apps` / Apps-related feature、`app-server-protocol` の Apps types、core/TUI/app-server の Apps instruction/UI/processor、`codex-mcp` の `codex_apps`・host-owned Apps MCP・OpenAI 固有 adapter、`chatgpt_base_url` / `apps_mcp_product_sku` と専用 schema/config。
+- **対象:** `codex-connectors`、`codex-connectors-extension` とその専用 consumer、`Feature::Apps` / Apps-related feature、`app-server-protocol` の Apps types、core/TUI/app-server の Apps instruction/UI/processor、`codex-mcp` の `codex_apps`・host-owned Apps MCP・OpenAI 固有 adapter、`managed_auth_base_url` / `apps_mcp_product_sku` と専用 schema/config。
 - **非対象:** 通常の設定済み MCP server、標準 MCP OAuth/elicitation、provider-neutral な plugin/tool metadata、通常の MCP runtime。
 - **推奨:** **capability 全体を削除**。まず全 consumer を producer/consumer inventory に記録し、`codex-connectors` が汎用 metadata を実際に供給していないことを確認した後、クレート削除を決める。
 - **難易度・リスク:** 非常に高。Apps protocol と通常の MCP protocol を混同せず、ChatGPT 専用の auth/account/UI だけを一括で除去する必要がある。
@@ -167,7 +167,7 @@ Feedback の削除で確認したように、OpenAI 固有性はクレート単�
 - **内部依存先:** `codex-agent-identity`、`codex-backend-client`、`codex-config`、`codex-core`、`codex-http-client`、`codex-login`、`codex-otel`、`codex-protocol`。
 - **依存元:** 直接は app-server、CLI、exec、TUI、Windows sandbox service。推移は 7 クレート。
 - **到達経路:** 各エントリーポイントの起動時 config load と app-server の config manager。
-- **影響:** `chatgpt_base_url`、managed requirements、remote config storage、再ログイン判定、起動テスト。専用 README と Cargo feature flag はない。
+- **影響:** `managed_auth_base_url`、managed requirements、remote config storage、再ログイン判定、起動テスト。専用 README と Cargo feature flag はない。
 - **推奨:** **隔離**。ローカル設定の読み込みと混ぜず、optional な hosted policy source として切り離した後に削除する。
 - **難易度・リスク:** 高。無効化時にローカル設定や非 OpenAI provider の起動を壊さない検証が必要である。
 
@@ -178,7 +178,7 @@ Feedback の削除で確認したように、OpenAI 固有性はクレート単�
 - **内部依存先:** `codex-api`、`codex-backend-openapi-models`、`codex-http-client`、`codex-login`、`codex-model-provider`、`codex-protocol`。
 - **依存元:** 直接は app-server、cloud config、Cloud Tasks client、git attribution、memories write、TUI。推移は 13 クレート。
 - **到達経路:** app-server の account/usage/workspace 系 request、TUI の backend banner/status、Cloud Tasks、remote memory と git attribution。
-- **影響:** `chatgpt_base_url`、ChatGPT auth、usage/credit UI、workspace message、wiremock テスト。専用 README、Cargo feature flag はない。
+- **影響:** `managed_auth_base_url`、ChatGPT auth、usage/credit UI、workspace message、wiremock テスト。専用 README、Cargo feature flag はない。
 - **推奨:** **隔離**。OpenAI backend integration 層として境界を明示し、利用機能ごとに依存を外してから削除する。
 - **難易度・リスク:** 高。複数の製品機能を一つの client が担い、一括削除すると Phase の変更範囲を超える。
 
@@ -236,7 +236,7 @@ protocol slice として扱う。generic image input、local media、`view_image
 - **内部依存先:** `codex-analytics`、`codex-app-server-protocol`、`codex-config`、`codex-connectors`、`codex-exec-server` と test support、`codex-git-utils`、`codex-hooks`、`codex-http-client`、`codex-login`、`codex-mcp`、`codex-model-provider`、`codex-otel`、`codex-plugin`、`codex-protocol`、`codex-shell-command`、`codex-skills`、`codex-tools`、absolute-path/path/path-uri/plugins utility。
 - **依存元:** 直接 7、推移 49。app-server、CLI、core、TUI と connector/MCP extension が利用する。
 - **到達経路:** 起動時 plugin load、CLI plugin command、app-server plugin API、TUI と extension registration。
-- **影響:** OpenAI marketplace 名、startup sync URL、`chatgpt_base_url`、remote plugin API、marketplace/cache/policy tests。汎用 plugin 文書と設定は残す必要がある。
+- **影響:** OpenAI marketplace 名、startup sync URL、`managed_auth_base_url`、remote plugin API、marketplace/cache/policy tests。汎用 plugin 文書と設定は残す必要がある。
 - **推奨:** **Hosted 部分を削除**。local plugin loader と一般 marketplace interface を残し、OpenAI curated policy と ChatGPT remote service の到達経路を削除する。
 - **難易度・リスク:** 高。クレート全体を削除すると provider-neutral な plugin foundation まで失う。
 

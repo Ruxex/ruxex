@@ -32,7 +32,7 @@ async fn plugin_search_omits_shared_workspace_results_when_plugin_sharing_disabl
     std::fs::write(
         codex_home.path().join("config.toml"),
         format!(
-            r#"chatgpt_base_url = "{}/backend-api/"
+            r#"managed_auth_base_url = "{}/backend-api/"
 
 [features]
 plugins = true
@@ -143,7 +143,7 @@ async fn plugin_search_only_searches_workspace_when_remote_plugin_disabled() -> 
     std::fs::write(
         codex_home.path().join("config.toml"),
         format!(
-            r#"chatgpt_base_url = "{}/backend-api/"
+            r#"managed_auth_base_url = "{}/backend-api/"
 
 [features]
 plugins = true
@@ -611,7 +611,7 @@ async fn plugin_search_deduplicates_shared_remote_identities_while_ignoring_loca
     std::fs::write(
         codex_home.path().join("config.toml"),
         format!(
-            r#"chatgpt_base_url = "{}/backend-api/"
+            r#"managed_auth_base_url = "{}/backend-api/"
 
 [features]
 plugins = true
@@ -772,7 +772,7 @@ fn write_remote_plugin_search_config(
     std::fs::write(
         codex_home.join("config.toml"),
         format!(
-            r#"chatgpt_base_url = "{}/backend-api/"
+            r#"managed_auth_base_url = "{}/backend-api/"
 
 [features]
 plugins = true

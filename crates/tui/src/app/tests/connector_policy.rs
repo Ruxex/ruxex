@@ -16,7 +16,7 @@ async fn installed_connector_mentions_ignore_stale_thread_workspace_and_account(
     let previous_generation = app.chat_widget.connector_scope_generation();
     app.chat_widget.update_account_state(
         /*status_account_display*/ None, /*plan_type*/ None,
-        /*has_chatgpt_account*/ true, /*has_codex_backend_auth*/ true,
+        /*has_managed_account*/ true, /*has_codex_backend_auth*/ true,
     );
     app.chat_widget.insert_str("$");
 
@@ -72,12 +72,12 @@ async fn queued_connector_fetches_are_bound_to_their_original_account() -> Resul
 
     app.chat_widget.update_account_state(
         /*status_account_display*/ None, /*plan_type*/ None,
-        /*has_chatgpt_account*/ true, /*has_codex_backend_auth*/ true,
+        /*has_managed_account*/ true, /*has_codex_backend_auth*/ true,
     );
     let stale_fetch = app_event_rx.try_recv()?;
     app.chat_widget.update_account_state(
         /*status_account_display*/ None, /*plan_type*/ None,
-        /*has_chatgpt_account*/ true, /*has_codex_backend_auth*/ true,
+        /*has_managed_account*/ true, /*has_codex_backend_auth*/ true,
     );
     let current_fetch = app_event_rx.try_recv()?;
 
@@ -108,7 +108,7 @@ async fn app_list_notifications_revalidate_installed_mentions_and_the_current_di
         .handle_thread_session(test_thread_session(thread_id, cwd.clone()));
     app.chat_widget.update_account_state(
         /*status_account_display*/ None, /*plan_type*/ None,
-        /*has_chatgpt_account*/ true, /*has_codex_backend_auth*/ true,
+        /*has_managed_account*/ true, /*has_codex_backend_auth*/ true,
     );
     let scoped_snapshot = ConnectorsSnapshot {
         connectors: vec![serde_json::from_str(

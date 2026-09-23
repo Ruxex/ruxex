@@ -36,7 +36,7 @@ pub struct IdTokenInfo {
     pub chatgpt_user_id: Option<String>,
     /// Organization/workspace identifier associated with the token, if present.
     pub chatgpt_account_id: Option<String>,
-    /// Whether the selected ChatGPT workspace must route through the FedRAMP edge.
+    /// Whether the selected workspace must route through the FedRAMP edge.
     pub chatgpt_account_is_fedramp: bool,
     pub raw_jwt: String,
 }

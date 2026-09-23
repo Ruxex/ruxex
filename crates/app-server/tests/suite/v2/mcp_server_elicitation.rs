@@ -1489,7 +1489,7 @@ approval_policy = "on-request"
 sandbox_mode = "read-only"
 
 model_provider = "mock_provider"
-chatgpt_base_url = "{apps_server_url}"
+managed_auth_base_url = "{apps_server_url}"
 mcp_oauth_credentials_store = "file"
 
 [features]

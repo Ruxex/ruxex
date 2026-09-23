@@ -331,9 +331,9 @@ async fn apps_cache_filled_during_binding_capture_reaches_the_model() -> anyhow:
         let mut extensions = ExtensionRegistryBuilder::new();
         extensions.mcp_server_contributor(Arc::new(ChildAppsEndpoint(format!(
             "{}/api/codex/ps/mcp",
-            pending_apps.chatgpt_base_url
+            pending_apps.managed_auth_base_url
         ))));
-        let test = apps_enabled_builder(apps.chatgpt_base_url)
+        let test = apps_enabled_builder(apps.managed_auth_base_url)
             .with_model_info_override("gpt-5.5", |model| model.supports_search_tool = false)
             .with_extensions(Arc::new(extensions.build()))
             .with_config(move |config| {
@@ -344,7 +344,7 @@ async fn apps_cache_filled_during_binding_capture_reaches_the_model() -> anyhow:
                     .set(std::collections::HashMap::from([(
                         SERVER_NAME.to_string(),
                         serde_json::from_value(json!({
-                            "url": format!("{}/api/codex/ps/mcp", waiting.chatgpt_base_url),
+                            "url": format!("{}/api/codex/ps/mcp", waiting.managed_auth_base_url),
                             "http_headers": { "Authorization": "Bearer cache-test-token" },
                             "enabled_tools": ["calendar_list_events"],
                         }))
@@ -461,7 +461,7 @@ async fn cached_http_mcp_starts_lazily_for_subagents(
     let responses_server = responses::start_mock_server().await;
     let (http_server, startup_control) =
         AppsTestServer::mount_with_startup_control(&responses_server).await?;
-    let server_url = format!("{}/api/codex/ps/mcp", http_server.chatgpt_base_url);
+    let server_url = format!("{}/api/codex/ps/mcp", http_server.managed_auth_base_url);
     let fixture = test_codex()
         .with_model_info_override("gpt-5.4", |model| model.supports_search_tool = false)
         .with_config(move |config| {

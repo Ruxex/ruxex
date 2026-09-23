@@ -121,7 +121,7 @@ async fn app_server_uses_configured_notes_backend_for_context_window_hints(
         serde_json::to_vec(&json!({"models": [model]}))?,
     )?;
     MockResponsesConfig::new(&server.uri())
-        .with_root_config(&format!("chatgpt_base_url = \"{}\"", server.uri()))
+        .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
         .with_root_config(&format!(
             "model_catalog_json = {}",
             serde_json::to_string(&catalog_path)?
@@ -347,7 +347,7 @@ async fn history_notes_and_async_message_emit_control_tool_analytics() -> Result
         .with_provider_name("OpenAI")
         .with_provider_base_url(&format!("{}/backend-api/codex", server.uri()))
         .with_provider_config("supports_websockets = false\nrequires_openai_auth = true")
-        .with_root_config(&format!("chatgpt_base_url = \"{}\"", server.uri()))
+        .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
         .with_root_config(&format!(
             "model_catalog_json = {}",
             serde_json::to_string(&catalog_path)?

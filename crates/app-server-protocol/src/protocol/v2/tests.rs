@@ -2017,7 +2017,7 @@ fn config_granular_approval_policy_is_marked_experimental() {
         }),
         sandbox_mode: None,
         sandbox_workspace_write: None,
-        forced_chatgpt_workspace_id: None,
+        forced_managed_workspace_id: None,
         forced_login_method: None,
         web_search: None,
         tools: None,
@@ -2047,7 +2047,7 @@ fn config_requirements_granular_allowed_approval_policy_is_marked_experimental()
             allowed_login_methods: None,
             application: None,
             cli_auth_credentials_store: None,
-            chatgpt_base_url: None,
+            managed_auth_base_url: None,
             additional_developer_instructions: None,
             allowed_approval_policies: Some(vec![AskForApproval::Granular {
                 sandbox_approval: true,

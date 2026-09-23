@@ -91,7 +91,7 @@ struct CreateConfigTomlParams {
     forced_workspace_ids: Option<Vec<String>>,
     requires_openai_auth: Option<bool>,
     base_url: Option<String>,
-    chatgpt_base_url: Option<String>,
+    managed_auth_base_url: Option<String>,
     model_provider_id: Option<String>,
     extra_provider_config: Option<String>,
 }
@@ -107,14 +107,14 @@ fn create_config_toml(codex_home: &Path, params: CreateConfigTomlParams) -> std:
         String::new()
     };
     let forced_workspace_line = if let Some(ws) = params.forced_workspace_id {
-        format!("forced_chatgpt_workspace_id = \"{ws}\"\n")
+        format!("forced_managed_workspace_id = \"{ws}\"\n")
     } else if let Some(workspaces) = params.forced_workspace_ids {
         let workspaces = workspaces
             .into_iter()
             .map(|workspace_id| format!("\"{workspace_id}\""))
             .collect::<Vec<_>>()
             .join(", ");
-        format!("forced_chatgpt_workspace_id = [{workspaces}]\n")
+        format!("forced_managed_workspace_id = [{workspaces}]\n")
     } else {
         String::new()
     };
@@ -123,9 +123,9 @@ fn create_config_toml(codex_home: &Path, params: CreateConfigTomlParams) -> std:
         Some(false) => String::new(),
         None => String::new(),
     };
-    let chatgpt_base_url_line = params
-        .chatgpt_base_url
-        .map(|url| format!("chatgpt_base_url = \"{url}\"\n"))
+    let managed_auth_base_url_line = params
+        .managed_auth_base_url
+        .map(|url| format!("managed_auth_base_url = \"{url}\"\n"))
         .unwrap_or_default();
     let model_provider_id = params
         .model_provider_id
@@ -149,7 +149,7 @@ stream_max_retries = 0
 model = "mock-model"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
-{chatgpt_base_url_line}
+{managed_auth_base_url_line}
 {forced_line}
 {forced_workspace_line}
 
@@ -369,7 +369,7 @@ async fn startup_enforces_local_auth_requirements_before_cloud_fetch() -> Result
     create_config_toml(
         codex_home.path(),
         CreateConfigTomlParams {
-            chatgpt_base_url: Some(format!("{}/backend-api", mock_server.uri())),
+            managed_auth_base_url: Some(format!("{}/backend-api", mock_server.uri())),
             ..Default::default()
         },
     )?;
@@ -612,7 +612,7 @@ async fn external_auth_refreshes_on_unauthorized() -> Result<()> {
         CreateConfigTomlParams {
             requires_openai_auth: Some(true),
             base_url: Some(format!("{}/v1", mock_server.uri())),
-            chatgpt_base_url: Some(format!("{}/backend-api", mock_server.uri())),
+            managed_auth_base_url: Some(format!("{}/backend-api", mock_server.uri())),
             ..Default::default()
         },
     )?;
@@ -728,7 +728,7 @@ async fn external_auth_refresh_error_fails_turn() -> Result<()> {
         CreateConfigTomlParams {
             requires_openai_auth: Some(true),
             base_url: Some(format!("{}/v1", mock_server.uri())),
-            chatgpt_base_url: Some(format!("{}/backend-api", mock_server.uri())),
+            managed_auth_base_url: Some(format!("{}/backend-api", mock_server.uri())),
             ..Default::default()
         },
     )?;
@@ -840,7 +840,7 @@ async fn external_auth_refresh_mismatched_workspace_fails_turn() -> Result<()> {
             forced_workspace_id: Some(WORKSPACE_ID_ALLOWED.to_string()),
             requires_openai_auth: Some(true),
             base_url: Some(format!("{}/v1", mock_server.uri())),
-            chatgpt_base_url: Some(format!("{}/backend-api", mock_server.uri())),
+            managed_auth_base_url: Some(format!("{}/backend-api", mock_server.uri())),
             ..Default::default()
         },
     )?;
@@ -957,7 +957,7 @@ async fn external_auth_refresh_invalid_access_token_fails_turn() -> Result<()> {
         CreateConfigTomlParams {
             requires_openai_auth: Some(true),
             base_url: Some(format!("{}/v1", mock_server.uri())),
-            chatgpt_base_url: Some(format!("{}/backend-api", mock_server.uri())),
+            managed_auth_base_url: Some(format!("{}/backend-api", mock_server.uri())),
             ..Default::default()
         },
     )?;
@@ -1876,7 +1876,7 @@ async fn login_account_amazon_bedrock_rejected_when_forced_chatgpt() -> Result<(
 
     assert_eq!(
         error.error.message,
-        "Amazon Bedrock login is disabled. Use ChatGPT login instead."
+        "Amazon Bedrock login is disabled. Use managed authentication instead."
     );
     assert_eq!(load_file_auth(codex_home.path())?, None);
     Ok(())
@@ -1966,7 +1966,7 @@ async fn login_account_api_key_rejected_when_forced_chatgpt() -> Result<()> {
 
     assert_eq!(
         err.error.message,
-        "API key login is disabled. Use ChatGPT login instead."
+        "API key login is disabled. Use managed authentication instead."
     );
     Ok(())
 }
@@ -2160,7 +2160,7 @@ async fn login_survives_same_owner_token_refresh(
         codex_home.path(),
         CreateConfigTomlParams {
             requires_openai_auth: Some(true),
-            chatgpt_base_url: Some(format!("{}/backend-api", backend.uri())),
+            managed_auth_base_url: Some(format!("{}/backend-api", backend.uri())),
             ..Default::default()
         },
     )?;

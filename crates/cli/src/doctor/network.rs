@@ -26,7 +26,7 @@ pub(super) fn check(config: Option<&Config>) -> DoctorCheck {
     {
         let request_url = config
             .and_then(|config| config.model_provider.base_url.as_deref())
-            .or_else(|| config.map(|config| config.chatgpt_base_url.as_str()))
+            .or_else(|| config.map(|config| config.managed_auth_base_url.as_str()))
             .unwrap_or("https://chatgpt.com/backend-api/");
         let configuration = match macos_system_proxy_configuration(request_url) {
             MacosSystemProxyConfiguration::Automatic => "automatic (PAC)",

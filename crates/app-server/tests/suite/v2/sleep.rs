@@ -70,7 +70,7 @@ async fn clock_tools_emit_control_tool_analytics() -> Result<()> {
     .await;
     let codex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
-        .with_root_config(&format!("chatgpt_base_url = \"{}\"", server.uri()))
+        .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
         .with_provider_config("supports_websockets = false")
         .with_extra_config("[features.current_time_reminder]\nenabled = true\nsleep_tool = true")
         .write(codex_home.path())?;

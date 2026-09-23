@@ -739,7 +739,7 @@ exec "{real_git}" "$@"
         .enable_feature(Feature::Plugins)
         .enable_feature(Feature::CodexHooks)
         .with_root_config(&format!(
-            "chatgpt_base_url = \"{}/backend-api/\"",
+            "managed_auth_base_url = \"{}/backend-api/\"",
             server.uri()
         ))
         .with_extra_config(&format!(

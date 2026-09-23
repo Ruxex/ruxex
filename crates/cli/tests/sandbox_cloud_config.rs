@@ -35,7 +35,7 @@ enabled = true
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Result<()> {
     let server = MockServer::start().await;
-    let chatgpt_base_url = format!("{}/backend-api", server.uri());
+    let managed_auth_base_url = format!("{}/backend-api", server.uri());
     let expected_requirements = json!([{
         "id": "req-managed-cloud",
         "name": "Managed permissions",
@@ -46,7 +46,7 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
     std::fs::write(
         codex_home.path().join("config.toml"),
         format!(
-            "cli_auth_credentials_store = \"file\"\nchatgpt_base_url = \"{chatgpt_base_url}\"\n",
+            "cli_auth_credentials_store = \"file\"\nmanaged_auth_base_url = \"{managed_auth_base_url}\"\n",
         ),
     )?;
     let bootstrap_config = load_config_toml_with_layer_stack(
@@ -58,8 +58,8 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
                 toml::Value::String("file".to_string()),
             ),
             (
-                "chatgpt_base_url".to_string(),
-                toml::Value::String(chatgpt_base_url.clone()),
+                "managed_auth_base_url".to_string(),
+                toml::Value::String(managed_auth_base_url.clone()),
             ),
         ],
         ConfigLoadOptions::default(),
@@ -67,8 +67,8 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
     .await?;
     if bootstrap_config.config_toml.cli_auth_credentials_store
         != Some(AuthCredentialsStoreMode::File)
-        || bootstrap_config.config_toml.chatgpt_base_url.as_deref()
-            != Some(chatgpt_base_url.as_str())
+        || bootstrap_config.config_toml.managed_auth_base_url.as_deref()
+            != Some(managed_auth_base_url.as_str())
     {
         eprintln!(
             "skipping cloud-managed sandbox subprocess: host-managed authentication or backend routing prevents isolated mock credentials"
@@ -99,7 +99,7 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
         .await;
 
     let codex = codex_utils_cargo_bin::cargo_bin("codex")?;
-    let chatgpt_base_url_override = format!("chatgpt_base_url=\"{chatgpt_base_url}\"");
+    let managed_auth_base_url_override = format!("managed_auth_base_url=\"{managed_auth_base_url}\"");
     let output = Command::new(&codex)
         .current_dir(codex_home.path())
         .env("CODEX_HOME", codex_home.path())
@@ -108,7 +108,7 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
         .env_remove("CODEX_ACCESS_TOKEN")
         .env_remove("OPENAI_API_KEY")
         .args(["-c", "cli_auth_credentials_store=\"file\""])
-        .args(["-c", chatgpt_base_url_override.as_str()])
+        .args(["-c", managed_auth_base_url_override.as_str()])
         .args([
             "sandbox",
             "-P",

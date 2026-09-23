@@ -437,7 +437,7 @@ async fn core_generated_mcp_elicitations_are_root_only(
             .mount(&server)
             .await;
     }
-    let test = search_capable_apps_builder(apps.chatgpt_base_url)
+    let test = search_capable_apps_builder(apps.managed_auth_base_url)
         .with_config(move |config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
             config.approvals_reviewer = ApprovalsReviewer::User;

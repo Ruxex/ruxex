@@ -215,10 +215,10 @@ async fn features_list_is_sorted_alphabetically_by_feature_name() -> Result<()> 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn features_list_honors_cloud_managed_feature_requirements() -> Result<()> {
     let server = MockServer::start().await;
-    let chatgpt_base_url = format!("{}/backend-api", server.uri());
+    let managed_auth_base_url = format!("{}/backend-api", server.uri());
     let codex_home = TempDir::new()?;
     let user_config = format!(
-        "cli_auth_credentials_store = \"file\"\nchatgpt_base_url = \"{chatgpt_base_url}\"\n\n[features]\nfast_mode = true\n"
+        "cli_auth_credentials_store = \"file\"\nmanaged_auth_base_url = \"{managed_auth_base_url}\"\n\n[features]\nfast_mode = true\n"
     );
     std::fs::write(codex_home.path().join("config.toml"), &user_config)?;
 
@@ -231,8 +231,8 @@ async fn features_list_honors_cloud_managed_feature_requirements() -> Result<()>
     .await?;
     if bootstrap_config.config_toml.cli_auth_credentials_store
         != Some(AuthCredentialsStoreMode::File)
-        || bootstrap_config.config_toml.chatgpt_base_url.as_deref()
-            != Some(chatgpt_base_url.as_str())
+        || bootstrap_config.config_toml.managed_auth_base_url.as_deref()
+            != Some(managed_auth_base_url.as_str())
     {
         eprintln!(
             "skipping cloud-managed feature subprocess: host-managed authentication or backend routing prevents isolated mock credentials"

@@ -133,7 +133,7 @@ export type { FileSystemPath } from "./FileSystemPath";
 export type { FileSystemSandboxEntry } from "./FileSystemSandboxEntry";
 export type { FileSystemSpecialPath } from "./FileSystemSpecialPath";
 export type { FileUpdateChange } from "./FileUpdateChange";
-export type { ForcedChatgptWorkspaceIds } from "./ForcedChatgptWorkspaceIds";
+export type { ForcedManagedWorkspaceIds } from "./ForcedManagedWorkspaceIds";
 export type { FsChangedNotification } from "./FsChangedNotification";
 export type { FsCopyParams } from "./FsCopyParams";
 export type { FsCopyResponse } from "./FsCopyResponse";

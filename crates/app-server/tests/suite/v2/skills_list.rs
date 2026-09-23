@@ -80,7 +80,7 @@ fn write_plugins_enabled_config_with_base_url(
     std::fs::write(
         codex_home.join("config.toml"),
         format!(
-            r#"chatgpt_base_url = "{base_url}"
+            r#"managed_auth_base_url = "{base_url}"
 
 [features]
 plugins = true
@@ -373,7 +373,7 @@ async fn runtime_remote_plugin_toggle_updates_local_curated_plugin_skills() -> R
     std::fs::write(
         codex_home.path().join("config.toml"),
         format!(
-            r#"chatgpt_base_url = "{}/backend-api/"
+            r#"managed_auth_base_url = "{}/backend-api/"
 
 [features]
 plugins = true
@@ -1343,7 +1343,7 @@ async fn skills_changed_notification_is_emitted_after_skill_change() -> Result<(
     let server = create_mock_responses_server_repeating_assistant("Done").await;
     let codex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
-        .with_root_config(&format!("chatgpt_base_url = \"{}\"", server.uri()))
+        .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
         .write(codex_home.path())?;
     write_skill(&codex_home, "demo")?;
 

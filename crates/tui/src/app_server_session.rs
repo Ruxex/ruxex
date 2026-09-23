@@ -287,11 +287,11 @@ pub(crate) struct AppServerBootstrap {
     pub(crate) status_account_display: Option<StatusAccountDisplay>,
     pub(crate) plan_type: Option<codex_protocol::account::PlanType>,
     /// Whether the configured model provider needs OpenAI-style auth. Combined
-    /// with `has_chatgpt_account` to decide if a startup rate-limit prefetch
+    /// with `has_managed_account` to decide if a startup rate-limit prefetch
     /// should be fired.
     pub(crate) requires_openai_auth: bool,
     pub(crate) default_model: String,
-    pub(crate) has_chatgpt_account: bool,
+    pub(crate) has_managed_account: bool,
     pub(crate) available_models: Vec<ModelPreset>,
     pub(crate) collaboration_modes: Vec<codex_protocol::config_types::CollaborationModeMask>,
 }
@@ -636,7 +636,7 @@ impl AppServerSession {
             auth_mode,
             status_account_display,
             plan_type,
-            has_chatgpt_account,
+            has_managed_account,
         ) = match account.account {
             Some(Account::ApiKey {}) => (
                 None,
@@ -658,7 +658,7 @@ impl AppServerSession {
             plan_type,
             requires_openai_auth: account.requires_openai_auth,
             default_model,
-            has_chatgpt_account,
+            has_managed_account,
             available_models,
             collaboration_modes,
         })

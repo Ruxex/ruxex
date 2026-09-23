@@ -529,7 +529,7 @@ impl OpenAiModelsManager {
                 || self.auth_manager.as_ref().is_some_and(|auth_manager| {
                     auth_manager
                         .auth_mode()
-                        .is_some_and(AuthMode::has_chatgpt_account)
+                        .is_some_and(AuthMode::has_managed_account)
                 }));
         if !remote_only {
             let mut models = load_remote_models_from_file().unwrap_or_default();

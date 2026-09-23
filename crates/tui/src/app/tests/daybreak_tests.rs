@@ -15,7 +15,7 @@ use serde_json::json;
 async fn cyber_refusal_reads_eligibility_without_changing_the_model() -> Result<()> {
     let (mut app, mut events, _ops) = make_test_app_with_channels().await;
     let backend = wiremock::MockServer::start().await;
-    app.config.chatgpt_base_url = backend.uri();
+    app.config.managed_auth_base_url = backend.uri();
     app.config.cli_auth_credentials_store_mode = AuthCredentialsStoreMode::File;
     write_chatgpt_auth(
         &app.config.codex_home,

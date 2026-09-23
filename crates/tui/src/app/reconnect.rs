@@ -460,10 +460,10 @@ impl App {
         self.chat_widget.update_account_state(
             bootstrap.status_account_display,
             bootstrap.plan_type,
-            bootstrap.has_chatgpt_account,
+            bootstrap.has_managed_account,
             false,
         );
-        if self.chat_widget.has_chatgpt_account() {
+        if self.chat_widget.has_managed_account() {
             crate::daybreak::prefetch_notice(
                 &self.config,
                 app_server,

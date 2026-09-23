@@ -40,8 +40,8 @@ async fn read_requirements(server: &mut TestAppServer) -> Result<Value> {
 }
 
 #[test_case(""; "no_requirements")]
-#[test_case("forced_chatgpt_workspace_id = []"; "empty_forced_workspaces_are_unrestricted")]
-#[test_case("forced_chatgpt_workspace_id = ['managed']"; "forced_workspace_does_not_exclude_api")]
+#[test_case("forced_managed_workspace_id = []"; "empty_forced_workspaces_are_unrestricted")]
+#[test_case("forced_managed_workspace_id = ['managed']"; "forced_workspace_does_not_exclude_api")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_requirements_read_preserves_unrestricted_default(config: &str) -> Result<()> {
     let (_home, mut server) = start_server(config, /*requirements*/ None).await?;
@@ -53,15 +53,15 @@ async fn config_requirements_read_preserves_unrestricted_default(config: &str) -
 }
 
 #[test_case("allowed_login_methods = ['api']", "", &[ForcedLoginMethod::Api]; "managed_api")]
-#[test_case("allowed_login_methods = ['chatgpt']", "", &[ForcedLoginMethod::Chatgpt]; "managed_chatgpt")]
-#[test_case("allowed_login_methods = ['chatgpt', 'api', 'api']", "", &[ForcedLoginMethod::Api, ForcedLoginMethod::Chatgpt]; "both_normalized")]
+#[test_case("allowed_login_methods = ['managed']", "", &[ForcedLoginMethod::Managed]; "managed_auth")]
+#[test_case("allowed_login_methods = ['managed', 'api', 'api']", "", &[ForcedLoginMethod::Api, ForcedLoginMethod::Managed]; "both_normalized")]
 #[test_case("", "forced_login_method = 'api'", &[ForcedLoginMethod::Api]; "forced_api_without_requirements")]
-#[test_case("", "forced_login_method = 'chatgpt'", &[ForcedLoginMethod::Chatgpt]; "forced_chatgpt_without_requirements")]
-#[test_case("allowed_login_methods = ['chatgpt', 'api']", "forced_login_method = 'api'", &[ForcedLoginMethod::Api]; "forced_narrows_managed")]
-#[test_case("allowed_chatgpt_workspaces = []", "", &[ForcedLoginMethod::Api]; "empty_managed_workspaces")]
-#[test_case("allowed_chatgpt_workspaces = ['managed']", "forced_chatgpt_workspace_id = ['other']", &[ForcedLoginMethod::Api]; "disjoint_workspaces")]
-#[test_case("allowed_chatgpt_workspaces = ['managed']", "forced_chatgpt_workspace_id = ['other', 'managed']", &[ForcedLoginMethod::Api, ForcedLoginMethod::Chatgpt]; "overlapping_workspaces")]
-#[test_case("allowed_login_methods = ['api']\nallowed_chatgpt_workspaces = ['managed']", "forced_chatgpt_workspace_id = ['other']", &[ForcedLoginMethod::Api]; "api_only_ignores_workspace_mismatch")]
+#[test_case("", "forced_login_method = 'managed'", &[ForcedLoginMethod::Managed]; "forced_managed_without_requirements")]
+#[test_case("allowed_login_methods = ['managed', 'api']", "forced_login_method = 'api'", &[ForcedLoginMethod::Api]; "forced_narrows_managed")]
+#[test_case("allowed_managed_workspaces = []", "", &[ForcedLoginMethod::Api]; "empty_managed_workspaces")]
+#[test_case("allowed_managed_workspaces = ['managed']", "forced_managed_workspace_id = ['other']", &[ForcedLoginMethod::Api]; "disjoint_workspaces")]
+#[test_case("allowed_managed_workspaces = ['managed']", "forced_managed_workspace_id = ['other', 'managed']", &[ForcedLoginMethod::Api, ForcedLoginMethod::Managed]; "overlapping_workspaces")]
+#[test_case("allowed_login_methods = ['api']\nallowed_managed_workspaces = ['managed']", "forced_managed_workspace_id = ['other']", &[ForcedLoginMethod::Api]; "api_only_ignores_workspace_mismatch")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_requirements_read_exposes_effective_login_methods(
     requirements: &str,
@@ -71,7 +71,7 @@ async fn config_requirements_read_exposes_effective_login_methods(
     let (_home, mut server) = start_server(config, Some(requirements)).await?;
     let wire = read_requirements(&mut server).await?;
     assert_eq!(wire["requirements"]["allowedLoginMethods"], json!(expected));
-    if !expected.contains(&ForcedLoginMethod::Chatgpt) {
+    if !expected.contains(&ForcedLoginMethod::Managed) {
         let id = server.send_login_account_chatgpt_request().await?;
         let error = timeout(
             READ_TIMEOUT,
@@ -93,7 +93,7 @@ async fn config_requirements_read_exposes_effective_login_methods(
 }
 
 #[test_case(""; "removed")]
-#[test_case("allowed_login_methods = ['chatgpt']"; "changed")]
+#[test_case("allowed_login_methods = ['managed']"; "changed")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_requirements_read_uses_running_auth_policy(refreshed: &str) -> Result<()> {
     let (home, mut server) = start_server("", Some("allowed_login_methods = ['api']")).await?;
@@ -140,7 +140,7 @@ async fn config_requirements_read_preserves_api_only_bedrock_without_chatgpt_req
         &format!(
             r#"
 forced_login_method = "api"
-chatgpt_base_url = "{}/backend-api"
+managed_auth_base_url = "{}/backend-api"
 model_provider = "amazon-bedrock"
 [model_providers.amazon-bedrock]
 base_url = "https://bedrock.example.com/v1"

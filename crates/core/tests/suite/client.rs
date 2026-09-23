@@ -1788,7 +1788,7 @@ async fn prefers_apikey_when_config_prefers_apikey_even_with_chatgpt_tokens() {
     let auth = CodexAuth::from_auth_storage(
         codex_home.path(),
         AuthCredentialsStoreMode::File,
-        /*chatgpt_base_url*/ None,
+        /*managed_auth_base_url*/ None,
         AuthKeyringBackendKind::default(),
         &codex_login::test_support::transport_default_auth_route_config(),
     )
@@ -1918,7 +1918,7 @@ async fn includes_apps_guidance_as_developer_message_for_chatgpt_auth() {
     let apps_server = AppsTestServer::mount(&server)
         .await
         .expect("mount apps MCP mock");
-    let apps_base_url = apps_server.chatgpt_base_url.clone();
+    let apps_base_url = apps_server.managed_auth_base_url.clone();
 
     let resp_mock = mount_sse_once(
         &server,
@@ -1933,7 +1933,7 @@ async fn includes_apps_guidance_as_developer_message_for_chatgpt_auth() {
                 .features
                 .enable(Feature::Apps)
                 .expect("test config should allow feature update");
-            config.chatgpt_base_url = apps_base_url;
+            config.managed_auth_base_url = apps_base_url;
         });
     let codex = builder
         .build(&server)
@@ -1975,7 +1975,7 @@ async fn omits_apps_guidance_for_api_key_auth_even_when_feature_enabled() {
     let apps_server = AppsTestServer::mount(&server)
         .await
         .expect("mount apps MCP mock");
-    let apps_base_url = apps_server.chatgpt_base_url.clone();
+    let apps_base_url = apps_server.managed_auth_base_url.clone();
 
     let resp_mock = mount_sse_once(
         &server,
@@ -1990,7 +1990,7 @@ async fn omits_apps_guidance_for_api_key_auth_even_when_feature_enabled() {
                 .features
                 .enable(Feature::Apps)
                 .expect("test config should allow feature update");
-            config.chatgpt_base_url = apps_base_url;
+            config.managed_auth_base_url = apps_base_url;
         });
     let codex = builder
         .build(&server)
@@ -2027,7 +2027,7 @@ async fn omits_apps_guidance_when_configured_off() {
     let apps_server = AppsTestServer::mount(&server)
         .await
         .expect("mount apps MCP mock");
-    let apps_base_url = apps_server.chatgpt_base_url.clone();
+    let apps_base_url = apps_server.managed_auth_base_url.clone();
 
     let resp_mock = mount_sse_once(
         &server,
@@ -2042,7 +2042,7 @@ async fn omits_apps_guidance_when_configured_off() {
                 .features
                 .enable(Feature::Apps)
                 .expect("test config should allow feature update");
-            config.chatgpt_base_url = apps_base_url;
+            config.managed_auth_base_url = apps_base_url;
             config.include_apps_instructions = false;
         });
     let codex = builder
@@ -2076,7 +2076,7 @@ async fn omits_apps_guidance_when_orchestrator_mcp_is_disabled() {
     let apps_server = AppsTestServer::mount(&server)
         .await
         .expect("mount apps MCP mock");
-    let apps_base_url = apps_server.chatgpt_base_url.clone();
+    let apps_base_url = apps_server.managed_auth_base_url.clone();
 
     let list_call_id = "list-resources";
     let read_call_id = "read-resource";
@@ -2113,7 +2113,7 @@ async fn omits_apps_guidance_when_orchestrator_mcp_is_disabled() {
                 .features
                 .enable(Feature::Apps)
                 .expect("test config should allow feature update");
-            config.chatgpt_base_url = apps_base_url;
+            config.managed_auth_base_url = apps_base_url;
             config.orchestrator_mcp_enabled = false;
         });
     let codex = builder

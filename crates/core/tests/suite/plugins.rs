@@ -279,13 +279,13 @@ async fn build_analytics_plugin_test_codex(
     server: &MockServer,
     codex_home: Arc<TempDir>,
 ) -> Result<TestCodex> {
-    let chatgpt_base_url = server.uri();
+    let managed_auth_base_url = server.uri();
     let mut builder = test_codex()
         .with_home(codex_home)
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_model("gpt-5.2")
         .with_config(move |config| {
-            config.chatgpt_base_url = chatgpt_base_url;
+            config.managed_auth_base_url = managed_auth_base_url;
         });
     builder.build_with_auto_env(server).await
 }
@@ -293,7 +293,7 @@ async fn build_analytics_plugin_test_codex(
 async fn build_apps_enabled_plugin_test_codex(
     server: &MockServer,
     codex_home: Arc<TempDir>,
-    chatgpt_base_url: String,
+    managed_auth_base_url: String,
 ) -> Result<TestCodex> {
     let mut builder = test_codex()
         .with_home(codex_home)
@@ -303,7 +303,7 @@ async fn build_apps_enabled_plugin_test_codex(
                 .features
                 .enable(Feature::Apps)
                 .expect("test config should allow feature update");
-            config.chatgpt_base_url = chatgpt_base_url;
+            config.managed_auth_base_url = managed_auth_base_url;
         });
     builder.build_with_remote_and_local_env(server).await
 }
@@ -417,12 +417,12 @@ async fn persisted_remote_plugin_command_attribution_flows_through_turn_context(
     )
     .await;
 
-    let chatgpt_base_url = server.uri();
+    let managed_auth_base_url = server.uri();
     let mut builder = builder
         .with_home(Arc::clone(&codex_home))
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_model("gpt-5.2")
-        .with_config(move |config| config.chatgpt_base_url = chatgpt_base_url);
+        .with_config(move |config| config.managed_auth_base_url = managed_auth_base_url);
     let test_codex = builder.build_with_auto_env(&server).await?;
     let codex = Arc::clone(&test_codex.codex);
     let cwd = test_codex.config.cwd.clone();
@@ -517,7 +517,7 @@ async fn thread_disabled_plugins_filter_skills_and_tools_without_changing_shared
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_config(move |config| {
             config.features.enable(Feature::Apps).unwrap();
-            config.chatgpt_base_url = apps.chatgpt_base_url;
+            config.managed_auth_base_url = apps.managed_auth_base_url;
         });
     let test = builder.build_with_remote_and_local_env(&server).await?;
     let manager = test.thread_manager.plugins_manager();
@@ -910,12 +910,12 @@ enabled = true
         )?;
     }
 
-    let chatgpt_base_url = server.uri();
+    let managed_auth_base_url = server.uri();
     let mut builder = test_codex()
         .with_home(codex_home)
         .with_extensions(skills_extensions())
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
-        .with_config(move |config| config.chatgpt_base_url = chatgpt_base_url);
+        .with_config(move |config| config.managed_auth_base_url = managed_auth_base_url);
     let test = builder.build_with_auto_env(&server).await?;
 
     let auth = test.thread_manager.auth_manager().auth().await;
@@ -1380,7 +1380,7 @@ async fn explicit_plugin_mentions_use_apps_for_chatgpt_dual_surface_plugins(
     )?;
 
     let test_codex =
-        build_apps_enabled_plugin_test_codex(&server, codex_home, apps_server.chatgpt_base_url)
+        build_apps_enabled_plugin_test_codex(&server, codex_home, apps_server.managed_auth_base_url)
             .await?;
     let codex = Arc::clone(&test_codex.codex);
     wait_for_mcp_server(&codex, CODEX_APPS_MCP_SERVER_NAME).await?;
@@ -1467,7 +1467,7 @@ async fn explicit_plugin_mentions_keep_non_conflicting_mcp_for_chatgpt_auth() ->
     write_plugin_app_plugin_with_name(codex_home.as_ref(), "sample_app");
 
     let test_codex =
-        build_apps_enabled_plugin_test_codex(&server, codex_home, apps_server.chatgpt_base_url)
+        build_apps_enabled_plugin_test_codex(&server, codex_home, apps_server.managed_auth_base_url)
             .await?;
     let codex = Arc::clone(&test_codex.codex);
     wait_for_mcp_server(&codex, "sample").await?;

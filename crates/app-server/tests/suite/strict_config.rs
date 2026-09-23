@@ -106,16 +106,16 @@ fn managed_auth_requirements_fail_closed_for_standalone_app_server() -> Result<(
     for (requirements, config) in [
         ("allowed_login_methods = []", ""),
         (
-            "allowed_login_methods = ['chatgpt']\nallowed_chatgpt_workspaces = []",
+            "allowed_login_methods = ['managed']\nallowed_managed_workspaces = []",
             "",
         ),
         (
             "allowed_login_methods = ['api']",
-            "forced_login_method = 'chatgpt'",
+            "forced_login_method = 'managed'",
         ),
         (
-            "allowed_login_methods = ['chatgpt']\nallowed_chatgpt_workspaces = ['managed']",
-            "forced_chatgpt_workspace_id = ['other']",
+            "allowed_login_methods = ['managed']\nallowed_managed_workspaces = ['managed']",
+            "forced_managed_workspace_id = ['other']",
         ),
     ] {
         let codex_home = TempDir::new()?;

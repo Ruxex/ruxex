@@ -114,7 +114,7 @@ async fn exercise_executor_skill(scenario: ExecutorSkillScenario) -> Result<()> 
             ("never", "")
         };
     let analytics_config = if scenario == ExecutorSkillScenario::ExplicitOnly {
-        format!("chatgpt_base_url = \"{}\"", server.uri())
+        format!("managed_auth_base_url = \"{}\"", server.uri())
     } else {
         String::new()
     };

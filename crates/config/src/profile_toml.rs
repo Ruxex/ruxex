@@ -39,7 +39,7 @@ pub struct ConfigProfile {
     pub model_catalog_json: Option<AbsolutePathBuf>,
     /// Deprecated: `friendly` and `pragmatic` no longer select a style.
     pub personality: Option<Personality>,
-    pub chatgpt_base_url: Option<String>,
+    pub managed_auth_base_url: Option<String>,
     /// Optional path to a file containing model instructions.
     pub model_instructions_file: Option<AbsolutePathBuf>,
     pub experimental_compact_prompt_file: Option<AbsolutePathBuf>,

@@ -1183,7 +1183,7 @@ fn auth_check(config: &Config) -> DoctorCheck {
         Ok(Some(auth)) => {
             details.push(format!("stored auth mode: {}", stored_auth_mode(&auth)));
             details.push(format!("stored API key: {}", auth.openai_api_key.is_some()));
-            details.push(format!("stored ChatGPT tokens: {}", auth.tokens.is_some()));
+            details.push(format!("stored managed-auth tokens: {}", auth.tokens.is_some()));
             let auth_issues = stored_auth_issues(&auth, env_var_present);
             details.extend(
                 auth_issues
@@ -2425,7 +2425,7 @@ fn provider_reachability_plan(config: &Config) -> ReachabilityPlan {
         config.model_provider.base_url.as_deref(),
         query_params.as_ref(),
         config.model_provider.is_amazon_bedrock(),
-        &config.chatgpt_base_url,
+        &config.managed_auth_base_url,
     );
     plan.http_client_factory = config.http_client_factory();
     plan
@@ -2477,7 +2477,7 @@ fn provider_reachability_plan_from_parts(
     provider_base_url: Option<&str>,
     provider_query_params: Option<&HashMap<String, String>>,
     is_amazon_bedrock: bool,
-    chatgpt_base_url: &str,
+    managed_auth_base_url: &str,
 ) -> ReachabilityPlan {
     let provider_route_probe_url = provider_base_url
         .or_else(|| {
@@ -2500,7 +2500,11 @@ fn provider_reachability_plan_from_parts(
         }],
         (ProviderAuthReachabilityMode::WorkloadIdentity, None) => vec![ReachabilityEndpoint {
             label: "workload identity backend".to_string(),
-            url: provider_url_for_path(chatgpt_base_url, "codex/responses", provider_query_params),
+            url: provider_url_for_path(
+                managed_auth_base_url,
+                "codex/responses",
+                provider_query_params,
+            ),
             required: true,
             route_probe_url: None,
         }],

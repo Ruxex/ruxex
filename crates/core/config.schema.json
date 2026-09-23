@@ -417,9 +417,6 @@
         "approval_policy": {
           "$ref": "#/definitions/AskForApproval"
         },
-        "chatgpt_base_url": {
-          "type": "string"
-        },
         "experimental_compact_prompt_file": {
           "$ref": "#/definitions/AbsolutePathBuf"
         },
@@ -851,6 +848,9 @@
         "include_permissions_instructions": {
           "type": "boolean"
         },
+        "managed_auth_base_url": {
+          "type": "string"
+        },
         "metrics": {
           "$ref": "#/definitions/MetricsConfigToml"
         },
@@ -1232,7 +1232,14 @@
       },
       "type": "object"
     },
-    "ForcedChatgptWorkspaceIds": {
+    "ForcedLoginMethod": {
+      "enum": [
+        "managed",
+        "api"
+      ],
+      "type": "string"
+    },
+    "ForcedManagedWorkspaceIds": {
       "anyOf": [
         {
           "type": "string"
@@ -1244,14 +1251,7 @@
           "type": "array"
         }
       ],
-      "description": "Backward-compatible shape for ChatGPT workspace login restrictions in config.toml."
-    },
-    "ForcedLoginMethod": {
-      "enum": [
-        "chatgpt",
-        "api"
-      ],
-      "type": "string"
+      "description": "Shape for managed-auth workspace login restrictions in config.toml."
     },
     "GoalsToml": {
       "additionalProperties": false,
@@ -5600,10 +5600,6 @@
     "browser_use": {
       "$ref": "#/definitions/BrowserUseConfigToml"
     },
-    "chatgpt_base_url": {
-      "description": "Base URL for requests to ChatGPT (as opposed to the OpenAI API).",
-      "type": "string"
-    },
     "check_for_update_on_startup": {
       "description": "When `true`, checks for Codex updates on startup and surfaces update prompts. Set to `false` only if your Codex updates are centrally managed. Defaults to `true`.",
       "type": "boolean"
@@ -6081,15 +6077,6 @@
       ],
       "description": "Optional URI-based file opener. If set, citations to files in the model output will be hyperlinked using the specified URI scheme."
     },
-    "forced_chatgpt_workspace_id": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/ForcedChatgptWorkspaceIds"
-        }
-      ],
-      "default": null,
-      "description": "When set, restricts ChatGPT login to one or more workspace identifiers."
-    },
     "forced_login_method": {
       "allOf": [
         {
@@ -6098,6 +6085,15 @@
       ],
       "default": null,
       "description": "When set, restricts the login mechanism users may use."
+    },
+    "forced_managed_workspace_id": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ForcedManagedWorkspaceIds"
+        }
+      ],
+      "default": null,
+      "description": "When set, restricts managed authentication to one or more workspace identifiers."
     },
     "goals": {
       "allOf": [
@@ -6155,6 +6151,10 @@
         }
       ],
       "description": "Directory where Codex writes log files. Setting this value explicitly also enables the TUI text log in this directory. Defaults to `$CODEX_HOME/log`."
+    },
+    "managed_auth_base_url": {
+      "description": "Base URL for host-managed authentication requests.",
+      "type": "string"
     },
     "marketplaces": {
       "additionalProperties": {

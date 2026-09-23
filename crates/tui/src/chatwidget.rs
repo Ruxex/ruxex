@@ -489,7 +489,7 @@ pub(crate) struct ChatWidgetInit {
     pub(crate) workspace_command_runner: Option<WorkspaceCommandRunner>,
     pub(crate) initial_user_message: Option<UserMessage>,
     pub(crate) enhanced_keys_supported: bool,
-    pub(crate) has_chatgpt_account: bool,
+    pub(crate) has_managed_account: bool,
     pub(crate) requires_openai_auth: bool,
     pub(crate) has_codex_backend_auth: bool,
     pub(crate) model_catalog: Arc<ModelCatalog>,
@@ -542,7 +542,7 @@ pub(crate) struct ChatWidget {
     current_collaboration_mode: CollaborationMode,
     /// The currently active collaboration mask, if any.
     active_collaboration_mask: Option<CollaborationModeMask>,
-    has_chatgpt_account: bool,
+    has_managed_account: bool,
     pub(crate) requires_openai_auth: bool,
     has_codex_backend_auth: bool,
     model_catalog: Arc<ModelCatalog>,

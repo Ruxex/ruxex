@@ -293,7 +293,7 @@ async fn thread_archive_requires_materialized_rollout() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
     let codex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
-        .with_root_config(&format!(r#"chatgpt_base_url = "{}""#, server.uri()))
+        .with_root_config(&format!(r#"managed_auth_base_url = "{}""#, server.uri()))
         .write(codex_home.path())?;
     mount_analytics_capture(&server, codex_home.path()).await?;
 
@@ -567,7 +567,7 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
     let codex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
-        .with_root_config(&format!(r#"chatgpt_base_url = "{}""#, server.uri()))
+        .with_root_config(&format!(r#"managed_auth_base_url = "{}""#, server.uri()))
         .write(codex_home.path())?;
     mount_analytics_capture(&server, codex_home.path()).await?;
 

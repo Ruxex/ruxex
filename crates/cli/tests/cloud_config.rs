@@ -48,10 +48,10 @@ struct CloudManagedConfigFixture {
 impl CloudManagedConfigFixture {
     async fn new() -> Result<Option<Self>> {
         let server = MockServer::start().await;
-        let chatgpt_base_url = format!("{}/backend-api", server.uri());
+        let managed_auth_base_url = format!("{}/backend-api", server.uri());
         let codex_home = TempDir::new()?;
         let user_config = format!(
-            "cli_auth_credentials_store = \"file\"\nchatgpt_base_url = \"{chatgpt_base_url}\"\n"
+            "cli_auth_credentials_store = \"file\"\nmanaged_auth_base_url = \"{managed_auth_base_url}\"\n"
         );
         std::fs::write(codex_home.path().join("config.toml"), &user_config)?;
 
@@ -64,8 +64,8 @@ impl CloudManagedConfigFixture {
         .await?;
         if bootstrap_config.config_toml.cli_auth_credentials_store
             != Some(AuthCredentialsStoreMode::File)
-            || bootstrap_config.config_toml.chatgpt_base_url.as_deref()
-                != Some(chatgpt_base_url.as_str())
+            || bootstrap_config.config_toml.managed_auth_base_url.as_deref()
+                != Some(managed_auth_base_url.as_str())
         {
             eprintln!(
                 "skipping cloud-managed subprocess: host-managed authentication or backend routing prevents isolated mock credentials"

@@ -65,7 +65,7 @@ async fn hosted_plugin_runtime_ps_mcp_tool_calls_use_current_auth_manager_token(
     // exercise the connection-manager auth path. Effective server resolution
     // correctly strips ChatGPT auth from untrusted localhost origins.
     let mut hosted_plugin_runtime_config = codex_mcp::hosted_plugin_runtime_mcp_server_config(
-        &apps_server.chatgpt_base_url,
+        &apps_server.managed_auth_base_url,
         /*apps_mcp_product_sku*/ None,
         /*originator*/ None,
     );

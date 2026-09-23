@@ -14,7 +14,7 @@ use app_test_support::create_mock_responses_server_sequence_unchecked;
 use app_test_support::create_request_user_input_sse_response;
 use app_test_support::format_with_current_shell_display;
 use app_test_support::write_chatgpt_auth;
-use app_test_support::write_mock_responses_config_toml_with_chatgpt_base_url;
+use app_test_support::write_mock_responses_config_toml_with_managed_auth_base_url;
 use app_test_support::write_models_cache;
 use app_test_support::write_models_cache_with_models;
 use codex_app_server::INPUT_TOO_LARGE_ERROR_CODE;
@@ -414,8 +414,8 @@ async fn tool_call_metadata_stays_out_of_raw_response_item_notifications(
         .with_provider_name("OpenAI")
         .with_provider_config("supports_websockets = false")
         .with_root_config(&format!(
-            "chatgpt_base_url = \"{}\"\ncli_auth_credentials_store = \"file\"",
-            apps.chatgpt_base_url
+            "managed_auth_base_url = \"{}\"\ncli_auth_credentials_store = \"file\"",
+            apps.managed_auth_base_url
         ))
         .enable_feature(Feature::Apps)
         .enable_feature(Feature::ExecutedToolCallMetadata);
@@ -554,7 +554,7 @@ async fn turn_start_with_empty_input_runs_model_request() -> Result<()> {
 
     let codex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
-        .with_root_config(&format!("chatgpt_base_url = \"{}\"", server.uri()))
+        .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
         .write(codex_home.path())?;
     mount_analytics_capture(&server, codex_home.path()).await?;
 
@@ -1382,7 +1382,7 @@ async fn turn_start_tracks_thread_originator_in_analytics() -> Result<()> {
     .await;
 
     let codex_home = TempDir::new()?;
-    write_mock_responses_config_toml_with_chatgpt_base_url(
+    write_mock_responses_config_toml_with_managed_auth_base_url(
         codex_home.path(),
         &server.uri(),
         &server.uri(),
@@ -1550,7 +1550,7 @@ async fn code_mode_exec_emits_correlated_production_analytics() -> Result<()> {
     let codex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::CodeModeOnly)
-        .with_root_config(&format!("chatgpt_base_url = \"{}\"", server.uri()))
+        .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
         .write(codex_home.path())?;
     mount_analytics_capture(&server, codex_home.path()).await?;
 
@@ -1645,7 +1645,7 @@ async fn turn_profile_tracks_blocking_tool_and_follow_up_sampling() -> Result<()
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::Goals)
         .with_root_config(&format!(
-            "chatgpt_base_url = \"{}\"\ntools.update_plan.enabled = true",
+            "managed_auth_base_url = \"{}\"\ntools.update_plan.enabled = true",
             server.uri()
         ))
         .write(codex_home.path())?;
@@ -4356,7 +4356,7 @@ async fn turn_start_emits_spawn_agent_item_with_model_metadata_v2() -> Result<()
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::Collab)
         .with_root_config(&format!(
-            "chatgpt_base_url = \"{}\"\ntools.update_plan.enabled = true",
+            "managed_auth_base_url = \"{}\"\ntools.update_plan.enabled = true",
             server.uri()
         ))
         .write(codex_home.path())?;
@@ -4598,7 +4598,7 @@ async fn direct_input_to_multi_agent_v2_subagent_is_rejected(
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::MultiAgentV2)
         .enable_feature(Feature::Goals)
-        .with_root_config(&format!("chatgpt_base_url = \"{}\"", server.uri()))
+        .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
         .write(codex_home.path())?;
     write_models_cache(codex_home.path()).await?;
     mount_analytics_capture(&server, codex_home.path()).await?;

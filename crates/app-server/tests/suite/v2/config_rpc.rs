@@ -34,7 +34,7 @@ use codex_app_server_protocol::ConfigRequirementsReadResponse;
 use codex_app_server_protocol::ConfigValueWriteParams;
 use codex_app_server_protocol::ConfigWriteResponse;
 use codex_app_server_protocol::ConfiguredHookHandler;
-use codex_app_server_protocol::ForcedChatgptWorkspaceIds;
+use codex_app_server_protocol::ForcedManagedWorkspaceIds;
 use codex_app_server_protocol::JSONRPCError;
 use codex_app_server_protocol::MergeStrategy;
 use codex_app_server_protocol::RequestId;
@@ -72,13 +72,13 @@ async fn managed_auth_settings_are_exposed_enforced_and_read_only() -> Result<()
     write_config(
         &codex_home,
         r#"cli_auth_credentials_store = "file"
-chatgpt_base_url = "https://user.example/backend-api/"
+managed_auth_base_url = "https://user.example/backend-api/"
 "#,
     )?;
     std::fs::write(
         codex_home.path().join("requirements.toml"),
         r#"cli_auth_credentials_store = "ephemeral"
-chatgpt_base_url = "https://managed.example/backend-api/"
+managed_auth_base_url = "https://managed.example/backend-api/"
 "#,
     )?;
     let mut app_server = TestAppServer::builder()
@@ -97,7 +97,7 @@ chatgpt_base_url = "https://managed.example/backend-api/"
     assert_eq!(
         (
             requirements.cli_auth_credentials_store,
-            requirements.chatgpt_base_url.as_deref(),
+            requirements.managed_auth_base_url.as_deref(),
         ),
         (
             Some(CliAuthCredentialsStoreMode::Ephemeral),
@@ -116,7 +116,7 @@ chatgpt_base_url = "https://managed.example/backend-api/"
     assert_eq!(
         (
             config.config.additional.get("cli_auth_credentials_store"),
-            config.config.additional.get("chatgpt_base_url"),
+            config.config.additional.get("managed_auth_base_url"),
         ),
         (
             Some(&json!("ephemeral")),
@@ -127,7 +127,7 @@ chatgpt_base_url = "https://managed.example/backend-api/"
     for (field, value) in [
         ("cli_auth_credentials_store", json!("file")),
         (
-            "chatgpt_base_url",
+            "managed_auth_base_url",
             json!("https://user.example/backend-api/"),
         ),
     ] {
@@ -158,7 +158,7 @@ chatgpt_base_url = "https://managed.example/backend-api/"
 
     assert_eq!(
         std::fs::read_to_string(codex_home.path().join("config.toml"))?,
-        "cli_auth_credentials_store = \"file\"\nchatgpt_base_url = \"https://user.example/backend-api/\"\n",
+        "cli_auth_credentials_store = \"file\"\nmanaged_auth_base_url = \"https://user.example/backend-api/\"\n",
     );
 
     Ok(())
@@ -852,7 +852,7 @@ access = "deny"
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn config_read_accepts_legacy_forced_chatgpt_workspace_id() -> Result<()> {
+async fn config_read_accepts_legacy_forced_managed_workspace_id() -> Result<()> {
     const WORKSPACE_ID: &str = "123e4567-e89b-42d3-a456-426614174000";
 
     let codex_home = TempDir::new()?;
@@ -860,7 +860,7 @@ async fn config_read_accepts_legacy_forced_chatgpt_workspace_id() -> Result<()> 
         &codex_home,
         &format!(
             r#"
-forced_chatgpt_workspace_id = "{WORKSPACE_ID}"
+forced_managed_workspace_id = "{WORKSPACE_ID}"
 "#
         ),
     )?;
@@ -881,15 +881,15 @@ forced_chatgpt_workspace_id = "{WORKSPACE_ID}"
         timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(request_id)).await??;
 
     assert_eq!(
-        config.forced_chatgpt_workspace_id,
-        Some(ForcedChatgptWorkspaceIds::Single(WORKSPACE_ID.to_string()))
+        config.forced_managed_workspace_id,
+        Some(ForcedManagedWorkspaceIds::Single(WORKSPACE_ID.to_string()))
     );
 
     Ok(())
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn config_read_accepts_forced_chatgpt_workspace_id_list() -> Result<()> {
+async fn config_read_accepts_forced_managed_workspace_id_list() -> Result<()> {
     const WORKSPACE_ID_A: &str = "123e4567-e89b-42d3-a456-426614174000";
     const WORKSPACE_ID_B: &str = "123e4567-e89b-42d3-a456-426614174001";
 
@@ -898,7 +898,7 @@ async fn config_read_accepts_forced_chatgpt_workspace_id_list() -> Result<()> {
         &codex_home,
         &format!(
             r#"
-forced_chatgpt_workspace_id = ["{WORKSPACE_ID_A}", "{WORKSPACE_ID_B}"]
+forced_managed_workspace_id = ["{WORKSPACE_ID_A}", "{WORKSPACE_ID_B}"]
 "#
         ),
     )?;
@@ -919,8 +919,8 @@ forced_chatgpt_workspace_id = ["{WORKSPACE_ID_A}", "{WORKSPACE_ID_B}"]
         timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(request_id)).await??;
 
     assert_eq!(
-        config.forced_chatgpt_workspace_id,
-        Some(ForcedChatgptWorkspaceIds::Multiple(vec![
+        config.forced_managed_workspace_id,
+        Some(ForcedManagedWorkspaceIds::Multiple(vec![
             WORKSPACE_ID_A.to_string(),
             WORKSPACE_ID_B.to_string(),
         ]))

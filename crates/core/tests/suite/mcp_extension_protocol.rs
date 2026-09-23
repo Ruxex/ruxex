@@ -83,14 +83,14 @@ async fn extension_protocol_mode_does_not_change_other_http_servers() -> anyhow:
             "{}/api/codex/ps/mcp",
             AppsTestServer::mount(&extension_server)
                 .await?
-                .chatgpt_base_url
+                .managed_auth_base_url
         );
         let third_party_server = responses::start_mock_server().await;
         let third_party_url = format!(
             "{}/api/codex/ps/mcp",
             AppsTestServer::mount(&third_party_server)
                 .await?
-                .chatgpt_base_url
+                .managed_auth_base_url
         );
         let mut extensions = ExtensionRegistryBuilder::new();
         extensions.mcp_server_contributor(Arc::new(AppsExtensionEndpoint(

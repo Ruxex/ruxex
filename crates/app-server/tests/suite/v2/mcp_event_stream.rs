@@ -123,7 +123,7 @@ async fn mcp_event_stream_waits_for_activation_forwards_events_and_cancels() -> 
 
     let codex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses_server.uri())
-        .with_root_config(&format!("chatgpt_base_url = \"{apps_url}\""))
+        .with_root_config(&format!("managed_auth_base_url = \"{apps_url}\""))
         .enable_feature(Feature::Apps)
         .write(codex_home.path())?;
     write_chatgpt_auth(

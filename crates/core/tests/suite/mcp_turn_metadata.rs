@@ -150,7 +150,7 @@ async fn mcp_app_ui_survives_tool_events_and_resume(
         ],
     )
     .await;
-    let mut builder = search_capable_apps_builder(apps_server.chatgpt_base_url);
+    let mut builder = search_capable_apps_builder(apps_server.managed_auth_base_url);
     let test = builder.build_with_auto_env(&server).await?;
     submit_user_turn(
         &test,
@@ -304,7 +304,7 @@ async fn auto_session_approval_is_scoped_to_tool_link_id() -> Result<()> {
             .collect(),
     )
     .await;
-    let test = search_capable_apps_builder(apps_server.chatgpt_base_url)
+    let test = search_capable_apps_builder(apps_server.managed_auth_base_url)
         .with_config(move |config| {
             set_calendar_approval_mode(config, AppToolApproval::Auto);
             config.approvals_reviewer = ApprovalsReviewer::User;
@@ -621,7 +621,7 @@ async fn approved_mcp_tool_call_metadata_records_prior_user_input_request(
     ]));
     let mock = mount_sse_sequence(&server, response_sequence).await;
 
-    let mut builder = search_capable_apps_builder(apps_server.chatgpt_base_url.clone())
+    let mut builder = search_capable_apps_builder(apps_server.managed_auth_base_url.clone())
         .with_config(move |config| {
             // The permission grant needs user review before strict review applies to the turn.
             config.approvals_reviewer = if strict_auto_review {
@@ -852,7 +852,7 @@ async fn apps_prompt_with_auto_review_routes_actual_mcp_approval_to_guardian(
     )
     .await;
 
-    let mut builder = search_capable_apps_builder(apps_server.chatgpt_base_url.clone())
+    let mut builder = search_capable_apps_builder(apps_server.managed_auth_base_url.clone())
         .with_config(move |config| {
             let (reviewer, app_reviewer) = if protected_model {
                 (ApprovalsReviewer::AutoReview, ApprovalsReviewer::User)
@@ -1092,7 +1092,7 @@ default_tools_approval_mode = "{selected_link_mode}"
     )
     .await;
     let mut builder =
-        search_capable_apps_builder(apps_server.chatgpt_base_url).with_config(move |config| {
+        search_capable_apps_builder(apps_server.managed_auth_base_url).with_config(move |config| {
             config.apps_mcp_product_sku = Some("tpp".to_string());
             config.approvals_reviewer = ApprovalsReviewer::User;
             config
@@ -1270,7 +1270,7 @@ async fn apps_missing_link_respects_advertised_selector(
     )
     .await;
     let mut builder =
-        search_capable_apps_builder(apps_server.chatgpt_base_url).with_config(move |config| {
+        search_capable_apps_builder(apps_server.managed_auth_base_url).with_config(move |config| {
             set_calendar_approval_mode(config, connector_approval);
             config.approvals_reviewer = ApprovalsReviewer::User;
             config
@@ -1401,7 +1401,7 @@ async fn apps_default_writes_prompts_for_writes_but_not_reads() -> Result<()> {
     )
     .await;
 
-    let mut builder = search_capable_apps_builder(apps_server.chatgpt_base_url.clone())
+    let mut builder = search_capable_apps_builder(apps_server.managed_auth_base_url.clone())
         .with_config(|config| {
             config
                 .features
@@ -1583,7 +1583,7 @@ async fn mcp_tool_call_metadata_uses_captured_step_after_request_user_input() ->
     let model_a = "mcp-metadata-a";
     let model_b = "mcp-metadata-b";
     let models = attribution_models([model_a, model_b]);
-    let mut builder = search_capable_apps_builder(apps_server.chatgpt_base_url.clone())
+    let mut builder = search_capable_apps_builder(apps_server.managed_auth_base_url.clone())
         .with_model(model_a)
         .with_config(move |config| {
             set_calendar_approval_mode(config, AppToolApproval::Approve);

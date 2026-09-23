@@ -438,7 +438,7 @@ async fn app_read_adds_plugin_display_names_without_starting_mcp() -> Result<()>
         codex_home.path().join("config.toml"),
         format!(
             r#"
-chatgpt_base_url = "{server_url}"
+managed_auth_base_url = "{server_url}"
 
 [features]
 connectors = true
@@ -679,7 +679,7 @@ fn write_apps_config(
         codex_home.join("config.toml"),
         format!(
             r#"
-chatgpt_base_url = "{base_url}"
+managed_auth_base_url = "{base_url}"
 {apps_mcp_product_sku}
 
 [features]

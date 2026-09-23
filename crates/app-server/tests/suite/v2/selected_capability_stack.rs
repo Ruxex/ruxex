@@ -9,7 +9,7 @@ use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_request_user_input_sse_response;
 use app_test_support::to_response;
 use app_test_support::write_chatgpt_auth;
-use app_test_support::write_mock_responses_config_toml_with_chatgpt_base_url;
+use app_test_support::write_mock_responses_config_toml_with_managed_auth_base_url;
 use codex_app_server_protocol::AppInfo;
 use codex_app_server_protocol::CapabilityRootLocation;
 use codex_app_server_protocol::EnvironmentAddResponse;
@@ -839,7 +839,7 @@ fn selected_capability_fixture(
     apps_url: &str,
 ) -> Result<SelectedCapabilityFixture> {
     let codex_home = TempDir::new()?;
-    write_mock_responses_config_toml_with_chatgpt_base_url(
+    write_mock_responses_config_toml_with_managed_auth_base_url(
         codex_home.path(),
         responses_server_uri,
         apps_url,

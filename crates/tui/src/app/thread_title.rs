@@ -86,7 +86,7 @@ impl App {
         self.sync_thread_title_progress();
         let request_handle = app_server.request_handle();
         let model = if self.chat_widget.config_ref().model_provider_id == "openai"
-            && self.chat_widget.has_chatgpt_account()
+            && self.chat_widget.has_managed_account()
             && self
                 .chat_widget
                 .model_catalog()

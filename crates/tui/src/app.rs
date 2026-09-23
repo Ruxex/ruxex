@@ -753,7 +753,7 @@ impl App {
             workspace_command_runner: self.workspace_command_runner.clone(),
             initial_user_message,
             enhanced_keys_supported: self.enhanced_keys_supported,
-            has_chatgpt_account: self.chat_widget.has_chatgpt_account(),
+            has_managed_account: self.chat_widget.has_managed_account(),
             requires_openai_auth: self.chat_widget.requires_openai_auth,
             has_codex_backend_auth: self.chat_widget.has_codex_backend_auth(),
             model_catalog: self.model_catalog.clone(),

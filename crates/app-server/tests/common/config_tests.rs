@@ -13,7 +13,7 @@ fn mock_responses_config_composes_model_provider_features_and_extra_tables() {
         .with_sandbox_mode("workspace-write")
         .enable_feature(Feature::FastMode)
         .disable_feature(Feature::ShellSnapshot)
-        .with_root_config("chatgpt_base_url = \"http://127.0.0.1:1234\"")
+        .with_root_config("managed_auth_base_url = \"http://127.0.0.1:1234\"")
         .with_provider_config("requires_openai_auth = true")
         .with_extra_config("[extra]\nenabled = true")
         .write(home.path())
@@ -25,7 +25,7 @@ fn mock_responses_config_composes_model_provider_features_and_extra_tables() {
         "model = \"custom-model\"",
         "approval_policy = \"on-request\"",
         "sandbox_mode = \"workspace-write\"",
-        "chatgpt_base_url = \"http://127.0.0.1:1234\"",
+        "managed_auth_base_url = \"http://127.0.0.1:1234\"",
         "model_provider = \"openai-custom\"",
         "shell_snapshot = false",
         "fast_mode = true",

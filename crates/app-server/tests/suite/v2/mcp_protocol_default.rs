@@ -28,7 +28,7 @@ async fn enabling_hosted_apps_protocol_refreshes_an_existing_thread() -> Result<
     let apps = AppsTestServer::mount(&server).await?;
     let codex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
-        .with_root_config(&format!("chatgpt_base_url = \"{}\"", apps.chatgpt_base_url))
+        .with_root_config(&format!("managed_auth_base_url = \"{}\"", apps.managed_auth_base_url))
         .enable_feature(Feature::Apps)
         .write(codex_home.path())?;
     write_chatgpt_auth(

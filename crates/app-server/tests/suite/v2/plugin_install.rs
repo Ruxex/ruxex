@@ -2740,7 +2740,7 @@ fn write_connectors_config(codex_home: &std::path::Path, base_url: &str) -> std:
         codex_home.join("config.toml"),
         format!(
             r#"
-chatgpt_base_url = "{base_url}"
+managed_auth_base_url = "{base_url}"
 mcp_oauth_credentials_store = "file"
 
 [features]
@@ -2753,7 +2753,7 @@ connectors = true
 fn write_analytics_config(codex_home: &std::path::Path, base_url: &str) -> std::io::Result<()> {
     std::fs::write(
         codex_home.join("config.toml"),
-        format!("chatgpt_base_url = \"{base_url}\"\n"),
+        format!("managed_auth_base_url = \"{base_url}\"\n"),
     )
 }
 
@@ -2846,7 +2846,7 @@ fn write_remote_plugin_catalog_config(
         codex_home.join("config.toml"),
         format!(
             r#"
-chatgpt_base_url = "{base_url}"
+managed_auth_base_url = "{base_url}"
 
 [features]
 plugins = true
@@ -2875,7 +2875,7 @@ fn configure_remote_plugin_with_apps_test(
         codex_home.join("config.toml"),
         format!(
             r#"
-chatgpt_base_url = "{}/backend-api/"
+managed_auth_base_url = "{}/backend-api/"
 
 [features]
 plugins = true

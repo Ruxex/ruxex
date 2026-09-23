@@ -453,10 +453,10 @@ async fn root_reconciliation_reuses_pending_apps_startup() -> Result<()> {
     let mut extensions = ExtensionRegistryBuilder::new();
     extensions.mcp_server_contributor(Arc::new(AppsMcpServerContributor {
         id: "pending_apps_root_reconciliation_test",
-        url: format!("{}/api/codex/ps/mcp", gated_apps_server.chatgpt_base_url),
+        url: format!("{}/api/codex/ps/mcp", gated_apps_server.managed_auth_base_url),
         root_resolved: Some(Arc::clone(&root_resolved)),
     }));
-    let mut builder = search_capable_apps_builder(apps_server.chatgpt_base_url)
+    let mut builder = search_capable_apps_builder(apps_server.managed_auth_base_url)
         .with_extensions(Arc::new(extensions.build()))
         .with_config(|config| {
             config
@@ -588,7 +588,7 @@ async fn timeout_refresh_replaces_pending_startup_and_reuses_ready_connection() 
                             (
                                 name.to_string(),
                                 serde_json::from_value(json!({
-                                    "url": format!("{}/api/codex/ps/mcp", server.chatgpt_base_url),
+                                    "url": format!("{}/api/codex/ps/mcp", server.managed_auth_base_url),
                                     "startup_timeout_sec": 60,
                                 }))
                                 .expect("valid MCP config"),
@@ -703,7 +703,7 @@ async fn codex_apps_resource_filter_sends_mime_type_on_each_page() -> Result<()>
     extensions.thread_lifecycle_contributor(Arc::new(McpResourceClientCapture {
         client: Arc::clone(&captured_client),
     }));
-    let test = search_capable_apps_builder(apps_server.chatgpt_base_url)
+    let test = search_capable_apps_builder(apps_server.managed_auth_base_url)
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await?;
@@ -770,13 +770,13 @@ async fn codex_apps_resource_filter_rejects_extension_name_collision() -> Result
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     extensions.mcp_server_contributor(Arc::new(AppsMcpServerContributor {
         id: "test-extension",
-        url: format!("{}/api/codex/ps/mcp", apps_server.chatgpt_base_url),
+        url: format!("{}/api/codex/ps/mcp", apps_server.managed_auth_base_url),
         root_resolved: None,
     }));
     extensions.thread_lifecycle_contributor(Arc::new(McpResourceClientCapture {
         client: Arc::clone(&captured_client),
     }));
-    let test = search_capable_apps_builder(apps_server.chatgpt_base_url)
+    let test = search_capable_apps_builder(apps_server.managed_auth_base_url)
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await?;
@@ -914,13 +914,13 @@ async fn elevated_apps_catalog_limit_requires_host_owned_registration() -> Resul
             .mount(&server)
             .await;
 
-        let mut builder = search_capable_apps_builder(apps_server.chatgpt_base_url.clone())
+        let mut builder = search_capable_apps_builder(apps_server.managed_auth_base_url.clone())
             .with_home(Arc::clone(&codex_home));
         if let Some(id) = extension_id {
             let mut extensions = ExtensionRegistryBuilder::new();
             extensions.mcp_server_contributor(Arc::new(AppsMcpServerContributor {
                 id,
-                url: format!("{}/api/codex/ps/mcp", apps_server.chatgpt_base_url),
+                url: format!("{}/api/codex/ps/mcp", apps_server.managed_auth_base_url),
                 root_resolved: None,
             }));
             builder = builder.with_extensions(Arc::new(extensions.build()));
@@ -986,7 +986,7 @@ async fn code_mode_only_exposes_direct_model_only_mcp_namespaces() -> Result<()>
     )
     .await;
 
-    let mut builder = search_capable_apps_builder(apps_server.chatgpt_base_url.clone())
+    let mut builder = search_capable_apps_builder(apps_server.managed_auth_base_url.clone())
         .with_config(move |config| {
             config
                 .features
@@ -1053,7 +1053,7 @@ async fn deferred_tool_world_state_is_disabled_by_default() -> Result<()> {
     )
     .await;
 
-    let mut builder = search_capable_apps_builder(apps_server.chatgpt_base_url.clone());
+    let mut builder = search_capable_apps_builder(apps_server.managed_auth_base_url.clone());
     let test = builder.build(&server).await?;
     test.submit_turn("inspect deferred MCP tools").await?;
 
@@ -1086,7 +1086,7 @@ async fn deferred_tool_world_state_tracks_initial_unchanged_and_removed_namespac
     let server = responses::start_mock_server().await;
     let apps_server = AppsTestServer::mount_searchable(&server).await?;
     let response = mount_sse_sequence(&server, completed_response_sequence(/*count*/ 3)).await;
-    let mut builder = search_capable_apps_builder(apps_server.chatgpt_base_url.clone())
+    let mut builder = search_capable_apps_builder(apps_server.managed_auth_base_url.clone())
         .with_config(enable_deferred_tool_world_state_without_agents);
     let test = builder.build_with_auto_env(&server).await?;
     wait_for_mcp_server(&test.codex, CODEX_APPS_MCP_SERVER_NAME).await?;
@@ -1179,7 +1179,7 @@ async fn deferred_tool_world_state_survives_resume_without_duplicate_updates() -
     let server = responses::start_mock_server().await;
     let apps_server = AppsTestServer::mount_searchable(&server).await?;
     let response = mount_sse_sequence(&server, completed_response_sequence(/*count*/ 2)).await;
-    let mut builder = search_capable_apps_builder(apps_server.chatgpt_base_url.clone())
+    let mut builder = search_capable_apps_builder(apps_server.managed_auth_base_url.clone())
         .with_config(enable_deferred_tool_world_state_without_agents);
     let initial = builder.build_with_auto_env(&server).await?;
     wait_for_mcp_server(&initial.codex, CODEX_APPS_MCP_SERVER_NAME).await?;
@@ -1212,7 +1212,7 @@ async fn deferred_tool_world_state_survives_resume_without_duplicate_updates() -
             "mcp__codex_apps__calendar": "Plan events and manage your calendar."
         })
     );
-    let mut resume_builder = search_capable_apps_builder(apps_server.chatgpt_base_url)
+    let mut resume_builder = search_capable_apps_builder(apps_server.managed_auth_base_url)
         .with_config(enable_deferred_tool_world_state_without_agents);
     let resumed = resume_builder.restart(&server, &initial).await?;
     drop(initial);
@@ -1260,7 +1260,7 @@ async fn apps_guidance_and_deferred_namespace_appear_after_recovery_within_a_tur
     let mut extensions = ExtensionRegistryBuilder::new();
     extensions.mcp_server_contributor(Arc::new(AppsMcpServerContributor {
         id: "deferred_apps_recovery_test",
-        url: format!("{}/api/codex/ps/mcp", gated_apps_server.chatgpt_base_url),
+        url: format!("{}/api/codex/ps/mcp", gated_apps_server.managed_auth_base_url),
         root_resolved: None,
     }));
     let call_id = "pause-for-apps";
@@ -1298,7 +1298,7 @@ async fn apps_guidance_and_deferred_namespace_appear_after_recovery_within_a_tur
         ],
     )
     .await;
-    let mut builder = search_capable_apps_builder(apps_server.chatgpt_base_url.clone())
+    let mut builder = search_capable_apps_builder(apps_server.managed_auth_base_url.clone())
         .with_extensions(Arc::new(extensions.build()))
         .with_config(|config| {
             config.update_plan_enabled = true;
@@ -1463,7 +1463,7 @@ async fn later_follow_up_uses_background_recovered_apps_after_mid_thread_startup
     )
     .await;
 
-    let mut builder = search_capable_apps_builder(apps_server.chatgpt_base_url.clone())
+    let mut builder = search_capable_apps_builder(apps_server.managed_auth_base_url.clone())
         .with_config(move |config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::Never);
             config

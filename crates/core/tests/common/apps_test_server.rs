@@ -60,7 +60,7 @@ type AppsStartupInitializeGate = Arc<Mutex<Option<mpsc::Receiver<()>>>>;
 
 #[derive(Clone)]
 pub struct AppsTestServer {
-    pub chatgpt_base_url: String,
+    pub managed_auth_base_url: String,
 }
 
 #[derive(Clone)]
@@ -122,7 +122,7 @@ impl AppsTestServer {
         )
         .await;
         Ok(Self {
-            chatgpt_base_url: server.uri(),
+            managed_auth_base_url: server.uri(),
         })
     }
 
@@ -140,7 +140,7 @@ impl AppsTestServer {
         )
         .await;
         Ok(Self {
-            chatgpt_base_url: server.uri(),
+            managed_auth_base_url: server.uri(),
         })
     }
 
@@ -160,7 +160,7 @@ impl AppsTestServer {
         )
         .await;
         Ok(Self {
-            chatgpt_base_url: server.uri(),
+            managed_auth_base_url: server.uri(),
         })
     }
 
@@ -180,7 +180,7 @@ impl AppsTestServer {
         )
         .await;
         Ok(Self {
-            chatgpt_base_url: server.uri(),
+            managed_auth_base_url: server.uri(),
         })
     }
 
@@ -209,7 +209,7 @@ impl AppsTestServer {
         .await;
         Ok((
             Self {
-                chatgpt_base_url: server.uri(),
+                managed_auth_base_url: server.uri(),
             },
             control,
         ))
@@ -247,7 +247,7 @@ impl AppsTestServer {
         )
         .await;
         Ok(Self {
-            chatgpt_base_url: server.uri(),
+            managed_auth_base_url: server.uri(),
         })
     }
 }
@@ -269,7 +269,7 @@ fn configure_apps(config: &mut Config, apps_base_url: &str) {
         .features
         .enable(Feature::Apps)
         .expect("test config should allow feature update");
-    config.chatgpt_base_url = apps_base_url.to_string();
+    config.managed_auth_base_url = apps_base_url.to_string();
 }
 
 pub fn configure_search_capable_apps(config: &mut Config, apps_base_url: &str) {

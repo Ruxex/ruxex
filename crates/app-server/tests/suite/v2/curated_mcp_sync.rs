@@ -153,7 +153,7 @@ exec "$REAL_GIT" "$@"
         MockResponsesConfig::new(&responses_server.uri())
             .enable_feature(Feature::Plugins)
             .with_root_config(&format!(
-                r#"chatgpt_base_url = "{}/backend-api/""#,
+                r#"managed_auth_base_url = "{}/backend-api/""#,
                 responses_server.uri()
             ))
             .with_extra_config(&format!(

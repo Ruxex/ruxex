@@ -694,7 +694,7 @@ async fn mcp_resource_read_returns_contents_and_declines_elicitation_without_thr
         codex_home.path().join("config.toml"),
         format!(
             r#"
-chatgpt_base_url = "{apps_server_url}"
+managed_auth_base_url = "{apps_server_url}"
 mcp_oauth_credentials_store = "file"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
@@ -1496,7 +1496,7 @@ async fn start_resource_test_app_server_with_extra_config(
     MockResponsesConfig::new(responses_server_uri)
         .with_approval_policy("on-request")
         .with_root_config(&format!(
-            "chatgpt_base_url = \"{apps_server_url}\"\nmcp_oauth_credentials_store = \"file\""
+            "managed_auth_base_url = \"{apps_server_url}\"\nmcp_oauth_credentials_store = \"file\""
         ))
         .enable_feature(Feature::Apps)
         .with_extra_config(&format!(

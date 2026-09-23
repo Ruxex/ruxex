@@ -318,7 +318,7 @@ async fn list_apps_uses_thread_feature_flag_when_thread_id_is_provided() -> Resu
         codex_home.path().join("config.toml"),
         format!(
             r#"
-chatgpt_base_url = "{server_url}"
+managed_auth_base_url = "{server_url}"
 mcp_oauth_credentials_store = "file"
 
 [features]
@@ -459,7 +459,7 @@ async fn list_apps_reports_is_enabled_from_config() -> Result<()> {
         codex_home.path().join("config.toml"),
         format!(
             r#"
-chatgpt_base_url = "{server_url}"
+managed_auth_base_url = "{server_url}"
 
 [features]
 connectors = true
@@ -1663,7 +1663,7 @@ fn write_connectors_config(codex_home: &std::path::Path, base_url: &str) -> std:
         config_toml,
         format!(
             r#"
-chatgpt_base_url = "{base_url}"
+managed_auth_base_url = "{base_url}"
 mcp_oauth_credentials_store = "file"
 
 [features]
@@ -1679,7 +1679,7 @@ fn write_connectors_and_plugins_config(codex_home: &Path, base_url: &str) -> std
         config_toml,
         format!(
             r#"
-chatgpt_base_url = "{base_url}"
+managed_auth_base_url = "{base_url}"
 mcp_oauth_credentials_store = "file"
 
 [features]

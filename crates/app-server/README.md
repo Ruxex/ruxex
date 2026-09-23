@@ -280,7 +280,7 @@ support for new `thread/rollback` requests.
 # Selected workspace routing
 
 
-The origin of a required `chatgpt_base_url` must match the discovered origin by scheme, host, and effective port. The base URL's API path is not part of this comparison. Either origin alone is sufficient. If requirements specify no base URL and discovery explicitly returns `NO_CONSTRAINT`, the effective `chatgpt_base_url` supplies the origin, including its existing default. `backendOrigin` is always a resolved origin; `accountRoutingOverride` preserves `NO_CONSTRAINT` when the backend explicitly returns it. Discovering an origin does not change API paths or apply routing headers to requests.
+The origin of a required `managed_auth_base_url` must match the discovered origin by scheme, host, and effective port. The base URL's API path is not part of this comparison. Either origin alone is sufficient. If requirements specify no base URL and discovery explicitly returns `NO_CONSTRAINT`, the effective `managed_auth_base_url` supplies the origin, including its existing default. `backendOrigin` is always a resolved origin; `accountRoutingOverride` preserves `NO_CONSTRAINT` when the backend explicitly returns it. Discovering an origin does not change API paths or apply routing headers to requests.
 
 ## Windows sandbox implementation selection
 

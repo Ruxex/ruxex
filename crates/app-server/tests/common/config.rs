@@ -185,13 +185,13 @@ pub fn write_mock_responses_config_toml(
     config.write(codex_home)
 }
 
-pub fn write_mock_responses_config_toml_with_chatgpt_base_url(
+pub fn write_mock_responses_config_toml_with_managed_auth_base_url(
     codex_home: &Path,
     server_uri: &str,
-    chatgpt_base_url: &str,
+    managed_auth_base_url: &str,
 ) -> std::io::Result<()> {
     MockResponsesConfig::new(server_uri)
-        .with_root_config(&format!("chatgpt_base_url = \"{chatgpt_base_url}\""))
+        .with_root_config(&format!("managed_auth_base_url = \"{managed_auth_base_url}\""))
         .write(codex_home)
 }
 

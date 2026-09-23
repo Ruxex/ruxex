@@ -1286,7 +1286,7 @@ async fn apps_enabled_turn_skips_pending_optional_mcp_without_cached_tools() -> 
 
     let server = responses::start_mock_server().await;
     let apps_server = AppsTestServer::mount(&server).await?;
-    let apps_base_url = apps_server.chatgpt_base_url.clone();
+    let apps_base_url = apps_server.managed_auth_base_url.clone();
     let response_mock = mount_sse_once(
         &server,
         responses::sse(vec![
@@ -1306,7 +1306,7 @@ async fn apps_enabled_turn_skips_pending_optional_mcp_without_cached_tools() -> 
                 .features
                 .enable(Feature::Apps)
                 .expect("test config should allow Apps override");
-            config.chatgpt_base_url = apps_base_url;
+            config.managed_auth_base_url = apps_base_url;
             insert_mcp_server(
                 config,
                 "pending_optional",
@@ -3611,13 +3611,13 @@ async fn streamable_http_chatgpt_auth_is_not_sent_to_configured_origin() -> anyh
     let server = responses::start_mock_server().await;
     let untrusted_server = MockServer::start().await;
     let untrusted_apps = AppsTestServer::mount(&untrusted_server).await?;
-    let untrusted_mcp_url = format!("{}/api/codex/ps/mcp", untrusted_apps.chatgpt_base_url);
-    let untrusted_chatgpt_base_url = untrusted_apps.chatgpt_base_url;
+    let untrusted_mcp_url = format!("{}/api/codex/ps/mcp", untrusted_apps.managed_auth_base_url);
+    let untrusted_managed_auth_base_url = untrusted_apps.managed_auth_base_url;
 
     let fixture = test_codex()
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_config(move |config| {
-            config.chatgpt_base_url = untrusted_chatgpt_base_url;
+            config.managed_auth_base_url = untrusted_managed_auth_base_url;
             insert_mcp_server(
                 config,
                 "untrusted_origin",
@@ -3669,14 +3669,14 @@ async fn streamable_http_chatgpt_auth_is_not_sent_to_configured_origin() -> anyh
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
-async fn configured_chatgpt_base_url_does_not_grant_mcp_chatgpt_auth() -> anyhow::Result<()> {
+async fn configured_managed_auth_base_url_does_not_grant_mcp_chatgpt_auth() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
     let untrusted_server = MockServer::start().await;
     let untrusted_apps = AppsTestServer::mount(&untrusted_server).await?;
-    let untrusted_mcp_url = format!("{}/api/codex/ps/mcp", untrusted_apps.chatgpt_base_url);
-    let untrusted_chatgpt_base_url = untrusted_apps.chatgpt_base_url;
+    let untrusted_mcp_url = format!("{}/api/codex/ps/mcp", untrusted_apps.managed_auth_base_url);
+    let untrusted_managed_auth_base_url = untrusted_apps.managed_auth_base_url;
 
     let fixture = test_codex()
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
@@ -3685,7 +3685,7 @@ async fn configured_chatgpt_base_url_does_not_grant_mcp_chatgpt_auth() -> anyhow
                 codex_home.join("config.toml"),
                 format!(
                     r#"
-chatgpt_base_url = "{untrusted_chatgpt_base_url}"
+managed_auth_base_url = "{untrusted_managed_auth_base_url}"
 
 [mcp_servers.untrusted_origin]
 url = "{untrusted_mcp_url}"

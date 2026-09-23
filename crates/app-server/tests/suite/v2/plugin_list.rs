@@ -79,7 +79,7 @@ fn write_plugins_enabled_config_with_base_url(
     std::fs::write(
         codex_home.join("config.toml"),
         format!(
-            r#"chatgpt_base_url = "{base_url}"
+            r#"managed_auth_base_url = "{base_url}"
 
 [features]
 plugins = true
@@ -95,7 +95,7 @@ fn write_remote_plugins_disabled_config_with_base_url(
     std::fs::write(
         codex_home.join("config.toml"),
         format!(
-            r#"chatgpt_base_url = "{base_url}"
+            r#"managed_auth_base_url = "{base_url}"
 
 [features]
 plugins = true
@@ -3048,7 +3048,7 @@ async fn plugin_installed_includes_remote_shared_with_me_plugins_when_remote_plu
     std::fs::write(
         codex_home.path().join("config.toml"),
         format!(
-            r#"chatgpt_base_url = "{}/backend-api/"
+            r#"managed_auth_base_url = "{}/backend-api/"
 
 [features]
 plugins = true
@@ -3157,7 +3157,7 @@ async fn plugin_installed_includes_workspace_directory_without_plugin_sharing_wh
     std::fs::write(
         codex_home.path().join("config.toml"),
         format!(
-            r#"chatgpt_base_url = "{}/backend-api/"
+            r#"managed_auth_base_url = "{}/backend-api/"
 
 [features]
 plugins = true
@@ -3241,7 +3241,7 @@ async fn plugin_installed_includes_created_by_me_when_remote_plugins_enabled() -
     std::fs::write(
         codex_home.path().join("config.toml"),
         format!(
-            r#"chatgpt_base_url = "{}/backend-api/"
+            r#"managed_auth_base_url = "{}/backend-api/"
 
 [features]
 plugins = true
@@ -3693,7 +3693,7 @@ async fn plugin_list_fetches_user_plugins_in_created_by_me_remote_marketplace() 
     std::fs::write(
         codex_home.path().join("config.toml"),
         format!(
-            r#"chatgpt_base_url = "{}/backend-api/"
+            r#"managed_auth_base_url = "{}/backend-api/"
 
 [features]
 plugins = true
@@ -4040,7 +4040,7 @@ async fn plugin_list_omits_shared_with_me_kind_when_plugin_sharing_disabled() ->
     std::fs::write(
         codex_home.path().join("config.toml"),
         format!(
-            r#"chatgpt_base_url = "{}/backend-api/"
+            r#"managed_auth_base_url = "{}/backend-api/"
 
 [features]
 plugins = true
@@ -4098,7 +4098,7 @@ async fn plugin_list_omits_created_by_me_when_remote_plugins_disabled() -> Resul
     std::fs::write(
         codex_home.path().join("config.toml"),
         format!(
-            r#"chatgpt_base_url = "{}/backend-api/"
+            r#"managed_auth_base_url = "{}/backend-api/"
 
 [features]
 plugins = true
@@ -4307,7 +4307,7 @@ async fn plugin_list_does_not_fetch_remote_marketplaces_when_plugins_disabled(
         codex_home.path().join("config.toml"),
         format!(
             r#"
-chatgpt_base_url = "{}/backend-api/"
+managed_auth_base_url = "{}/backend-api/"
 
 [features]
 plugins = false

@@ -111,7 +111,7 @@ async fn installed_apps_threadless_refresh_updates_existing_thread_tools() -> Re
     let codex_home = configured_codex_home(fixture.base_url())?;
     MockResponsesConfig::new(&responses_server.uri())
         .with_root_config(&format!(
-            "chatgpt_base_url = {:?}\nmcp_oauth_credentials_store = \"file\"",
+            "managed_auth_base_url = {:?}\nmcp_oauth_credentials_store = \"file\"",
             fixture.base_url(),
         ))
         .enable_feature(Feature::Apps)
@@ -250,7 +250,7 @@ async fn installed_apps_thread_refresh_updates_live_tools_and_retains_them_on_fa
     let codex_home = configured_codex_home(fixture.base_url())?;
     MockResponsesConfig::new(&responses_server.uri())
         .with_root_config(&format!(
-            "chatgpt_base_url = {:?}\nmcp_oauth_credentials_store = \"file\"",
+            "managed_auth_base_url = {:?}\nmcp_oauth_credentials_store = \"file\"",
             fixture.base_url()
         ))
         .enable_feature(Feature::Apps)
@@ -429,7 +429,7 @@ fn configured_codex_home(base_url: &str) -> Result<TempDir> {
         codex_home.path().join("config.toml"),
         format!(
             r#"
-chatgpt_base_url = "{base_url}"
+managed_auth_base_url = "{base_url}"
 mcp_oauth_credentials_store = "file"
 
 [features]

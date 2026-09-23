@@ -1427,7 +1427,7 @@ async fn usage_command_runs_with_backend_auth_without_chatgpt_account_flag() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     chat.update_account_state(
         /*status_account_display*/ None, /*plan_type*/ None,
-        /*has_chatgpt_account*/ false, /*has_codex_backend_auth*/ true,
+        /*has_managed_account*/ false, /*has_codex_backend_auth*/ true,
     );
 
     chat.dispatch_command_with_args(SlashCommand::Usage, "daily".to_string(), Vec::new());
@@ -1438,14 +1438,14 @@ async fn usage_command_runs_with_backend_auth_without_chatgpt_account_flag() {
             view: Some(crate::analytics::TokenActivityView::Daily)
         })
     );
-    assert!(!chat.has_chatgpt_account());
+    assert!(!chat.has_managed_account());
 }
 
 #[tokio::test]
 async fn usage_command_runs_with_backend_auth_from_widget_init() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual_with_auth(
         /*model_override*/ None,
-        /*has_chatgpt_account*/ false,
+        /*has_managed_account*/ false,
         /*has_codex_backend_auth*/ true,
         FrameRequester::test_dummy(),
     )
@@ -1459,7 +1459,7 @@ async fn usage_command_runs_with_backend_auth_from_widget_init() {
             view: Some(crate::analytics::TokenActivityView::Daily)
         })
     );
-    assert!(!chat.has_chatgpt_account());
+    assert!(!chat.has_managed_account());
     assert!(chat.has_codex_backend_auth());
 }
 

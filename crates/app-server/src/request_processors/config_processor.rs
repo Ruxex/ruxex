@@ -343,7 +343,7 @@ fn map_requirements_to_api(
 ) -> Option<ConfigRequirements> {
     let requirements = match requirements {
         Some(requirements) => requirements,
-        None if allowed_login_methods == [ForcedLoginMethod::Api, ForcedLoginMethod::Chatgpt] => {
+        None if allowed_login_methods == [ForcedLoginMethod::Api, ForcedLoginMethod::Managed] => {
             return None;
         }
         None => ConfigRequirementsToml::default(),
@@ -394,7 +394,7 @@ fn map_requirements_to_api(
                 }
             },
         ),
-        chatgpt_base_url: requirements.chatgpt_base_url,
+        managed_auth_base_url: requirements.managed_auth_base_url,
         additional_developer_instructions: requirements.additional_developer_instructions,
         allowed_approval_policies: requirements.allowed_approval_policies.map(|policies| {
             policies

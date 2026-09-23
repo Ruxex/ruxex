@@ -10,13 +10,13 @@ use crate::browser_use::BrowserUseConfigToml;
 use crate::computer_use::ComputerUseConfigToml;
 use crate::permissions_toml::PermissionsToml;
 use crate::profile_toml::ConfigProfile;
-use crate::types::MetricsConfigToml;
 use crate::types::AuthCredentialsStoreMode;
 use crate::types::History;
 use crate::types::MarketplaceConfig;
 use crate::types::McpEnterpriseManagedAuthConfig;
 use crate::types::McpServerConfig;
 use crate::types::MemoriesToml;
+use crate::types::MetricsConfigToml;
 use crate::types::Notice;
 use crate::types::OAuthCredentialsStoreMode;
 use crate::types::OtelConfigToml;
@@ -82,15 +82,15 @@ const fn default_true() -> bool {
     true
 }
 
-/// Backward-compatible shape for ChatGPT workspace login restrictions in config.toml.
+/// Shape for managed-auth workspace login restrictions in config.toml.
 #[derive(Serialize, Debug, Clone, PartialEq, JsonSchema)]
 #[serde(untagged)]
-pub enum ForcedChatgptWorkspaceIds {
+pub enum ForcedManagedWorkspaceIds {
     Single(String),
     Multiple(Vec<String>),
 }
 
-impl ForcedChatgptWorkspaceIds {
+impl ForcedManagedWorkspaceIds {
     pub fn into_vec(self) -> Vec<String> {
         match self {
             Self::Single(value) => vec![value],
@@ -99,7 +99,7 @@ impl ForcedChatgptWorkspaceIds {
     }
 }
 
-impl<'de> Deserialize<'de> for ForcedChatgptWorkspaceIds {
+impl<'de> Deserialize<'de> for ForcedManagedWorkspaceIds {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -113,9 +113,9 @@ impl<'de> Deserialize<'de> for ForcedChatgptWorkspaceIds {
 
         match Repr::deserialize(deserializer)? {
             Repr::Single(value) if value.contains(',') => Err(D::Error::custom(
-                "forced_chatgpt_workspace_id must be a single workspace ID string or a TOML list \
+                "forced_managed_workspace_id must be a single workspace ID string or a TOML list \
 of strings; comma-separated strings are not supported. Use \
-`forced_chatgpt_workspace_id = [\"123e4567-e89b-42d3-a456-426614174000\", \
+`forced_managed_workspace_id = [\"123e4567-e89b-42d3-a456-426614174000\", \
 \"123e4567-e89b-42d3-a456-426614174001\"]` instead.",
             )),
             Repr::Single(value) => Ok(Self::Single(value)),
@@ -232,9 +232,9 @@ pub struct ConfigToml {
     /// Compact prompt used for history compaction.
     pub compact_prompt: Option<String>,
 
-    /// When set, restricts ChatGPT login to one or more workspace identifiers.
+    /// When set, restricts managed authentication to one or more workspace identifiers.
     #[serde(default)]
-    pub forced_chatgpt_workspace_id: Option<ForcedChatgptWorkspaceIds>,
+    pub forced_managed_workspace_id: Option<ForcedManagedWorkspaceIds>,
 
     /// When set, restricts the login mechanism users may use.
     #[serde(default)]
@@ -358,8 +358,8 @@ pub struct ConfigToml {
     /// `default`, `priority`, or `flex`; legacy `fast` also works).
     pub service_tier: Option<String>,
 
-    /// Base URL for requests to ChatGPT (as opposed to the OpenAI API).
-    pub chatgpt_base_url: Option<String>,
+    /// Base URL for host-managed authentication requests.
+    pub managed_auth_base_url: Option<String>,
 
     /// Bounded, product-owned metadata attached to every Responses API request.
     pub responses_api_metadata: Option<BTreeMap<String, String>>,
@@ -834,15 +834,15 @@ mod tests {
     }
 
     #[test]
-    fn forced_chatgpt_workspace_id_accepts_single_string() {
+    fn forced_managed_workspace_id_accepts_single_string() {
         let config: ConfigToml = toml::from_str(&format!(
-            r#"forced_chatgpt_workspace_id = "{WORKSPACE_ID_A}""#
+            r#"forced_managed_workspace_id = "{WORKSPACE_ID_A}""#
         ))
         .expect("single workspace id should deserialize");
 
         assert_eq!(
             config
-                .forced_chatgpt_workspace_id
+                .forced_managed_workspace_id
                 .expect("workspace id should be set")
                 .into_vec(),
             vec![WORKSPACE_ID_A.to_string()]
@@ -850,15 +850,15 @@ mod tests {
     }
 
     #[test]
-    fn forced_chatgpt_workspace_id_accepts_string_list() {
+    fn forced_managed_workspace_id_accepts_string_list() {
         let config: ConfigToml = toml::from_str(&format!(
-            r#"forced_chatgpt_workspace_id = ["{WORKSPACE_ID_A}", "{WORKSPACE_ID_B}"]"#
+            r#"forced_managed_workspace_id = ["{WORKSPACE_ID_A}", "{WORKSPACE_ID_B}"]"#
         ))
         .expect("workspace id list should deserialize");
 
         assert_eq!(
             config
-                .forced_chatgpt_workspace_id
+                .forced_managed_workspace_id
                 .expect("workspace ids should be set")
                 .into_vec(),
             vec![WORKSPACE_ID_A.to_string(), WORKSPACE_ID_B.to_string()]
@@ -866,9 +866,9 @@ mod tests {
     }
 
     #[test]
-    fn forced_chatgpt_workspace_id_rejects_comma_separated_string() {
+    fn forced_managed_workspace_id_rejects_comma_separated_string() {
         let err = toml::from_str::<ConfigToml>(&format!(
-            r#"forced_chatgpt_workspace_id = "{WORKSPACE_ID_A},{WORKSPACE_ID_B}""#
+            r#"forced_managed_workspace_id = "{WORKSPACE_ID_A},{WORKSPACE_ID_B}""#
         ))
         .expect_err("comma-separated string should be rejected");
 

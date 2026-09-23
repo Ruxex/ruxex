@@ -230,7 +230,7 @@ async fn codex_apps_file_params_omit_fields_absent_from_tool_schema() -> Result<
     let apps_server = AppsTestServer::mount(&server).await?;
     mount_file_upload_mocks(&server, STREAMED_FILE_SIZE as u64).await;
 
-    let mut builder = apps_enabled_builder(apps_server.chatgpt_base_url.clone())
+    let mut builder = apps_enabled_builder(apps_server.managed_auth_base_url.clone())
         .with_workspace_setup(|cwd, fs| async move {
             let report_path = executor_path_uri(cwd.join("report.txt"))?;
             fs.write_file(
@@ -304,7 +304,7 @@ async fn codex_apps_file_params_pass_uploaded_file_to_post_tool_use_hook() -> Re
     let apps_server = AppsTestServer::mount(&server).await?;
     mount_file_upload_mocks(&server, /*file_size_bytes*/ 11).await;
 
-    let mut builder = apps_enabled_builder(apps_server.chatgpt_base_url.clone())
+    let mut builder = apps_enabled_builder(apps_server.managed_auth_base_url.clone())
         .with_pre_build_hook(move |home| {
             if let Err(error) = write_post_tool_use_hook(home) {
                 panic!("failed to write apps file post tool use hook fixture: {error}");
@@ -340,7 +340,7 @@ async fn codex_apps_file_params_stream_allowed_file_under_restricted_read_policy
     let apps_server = AppsTestServer::mount(&server).await?;
     mount_file_upload_mocks(&server, STREAMED_FILE_SIZE as u64).await;
 
-    let mut builder = apps_enabled_builder(apps_server.chatgpt_base_url)
+    let mut builder = apps_enabled_builder(apps_server.managed_auth_base_url)
         .with_config(|config| restrict_apps_upload_reads(config, "private.txt"))
         .with_workspace_setup(|cwd, fs| async move {
             let report_path = PathUri::from_abs_path(&cwd.join("report.txt"));
@@ -378,7 +378,7 @@ async fn codex_apps_file_params_reject_denied_file_before_upload() -> Result<()>
 
     let server = start_mock_server().await;
     let apps_server = AppsTestServer::mount(&server).await?;
-    let mut builder = apps_enabled_builder(apps_server.chatgpt_base_url)
+    let mut builder = apps_enabled_builder(apps_server.managed_auth_base_url)
         .with_config(|config| restrict_apps_upload_reads(config, "report.txt"))
         .with_workspace_setup(|cwd, fs| async move {
             let report_path = PathUri::from_abs_path(&cwd.join("report.txt"));

@@ -106,7 +106,7 @@ async fn analytics_menu_reopen_preserves_navigation_and_explicit_view_selects_su
         )
         .mount(&http)
         .await;
-    app.config.chatgpt_base_url = format!("{}/backend-api", http.uri());
+    app.config.managed_auth_base_url = format!("{}/backend-api", http.uri());
     app.config.cli_auth_credentials_store_mode = codex_login::AuthCredentialsStoreMode::File;
     app_test_support::write_chatgpt_auth(
         &app.config.codex_home,

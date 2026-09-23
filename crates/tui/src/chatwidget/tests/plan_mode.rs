@@ -1089,7 +1089,7 @@ async fn plan_implementation_popup_shows_after_new_plan_follows_steer() {
 #[tokio::test]
 async fn plan_implementation_popup_skips_when_rate_limit_prompt_pending() {
     let (mut chat, _rx, _op_rx) = make_chatwidget_manual(Some("gpt-5")).await;
-    chat.has_chatgpt_account = true;
+    chat.has_managed_account = true;
     chat.set_feature_enabled(Feature::CollaborationModes, /*enabled*/ true);
     let plan_mask = collaboration_modes::mask_for_kind(chat.model_catalog.as_ref(), ModeKind::Plan)
         .expect("expected plan collaboration mask");
@@ -1637,7 +1637,7 @@ async fn make_startup_chat_with_cli_overrides(
         workspace_command_runner: None,
         initial_user_message: None,
         enhanced_keys_supported: false,
-        has_chatgpt_account: false,
+        has_managed_account: false,
         has_codex_backend_auth: false,
         model_catalog: test_model_catalog(&cfg),
         is_first_run: true,

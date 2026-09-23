@@ -162,8 +162,8 @@ impl ChatWidget {
         self.plan_type
     }
 
-    pub(crate) fn has_chatgpt_account(&self) -> bool {
-        self.has_chatgpt_account
+    pub(crate) fn has_managed_account(&self) -> bool {
+        self.has_managed_account
     }
 
     pub(crate) fn has_codex_backend_auth(&self) -> bool {
@@ -174,7 +174,7 @@ impl ChatWidget {
         &mut self,
         status_account_display: Option<StatusAccountDisplay>,
         plan_type: Option<PlanType>,
-        has_chatgpt_account: bool,
+        has_managed_account: bool,
         has_codex_backend_auth: bool,
     ) {
         // Account-update notifications are the identity boundary. The visible account fields can
@@ -202,7 +202,7 @@ impl ChatWidget {
         self.clear_thread_usage_state();
         self.status_account_display = status_account_display;
         self.plan_type = plan_type;
-        self.has_chatgpt_account = has_chatgpt_account;
+        self.has_managed_account = has_managed_account;
         self.has_codex_backend_auth = has_codex_backend_auth;
         self.bottom_pane
             .set_token_activity_command_enabled(has_codex_backend_auth);

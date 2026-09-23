@@ -259,7 +259,7 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
         .arg("-c")
         .arg("analytics.enabled=true")
         .arg("-c")
-        .arg(format!("chatgpt_base_url={}", server.uri()))
+        .arg(format!("managed_auth_base_url={}", server.uri()))
         .arg("write the file")
         .assert()
         .success();

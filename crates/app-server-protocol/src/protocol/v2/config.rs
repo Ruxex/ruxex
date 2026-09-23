@@ -168,16 +168,16 @@ pub struct MetricsConfig {
     pub additional: HashMap<String, JsonValue>,
 }
 
-/// Backward-compatible API shape for ChatGPT workspace login restrictions.
+/// API shape for managed-auth workspace login restrictions.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
 #[serde(untagged)]
 #[ts(export_to = "v2/")]
-pub enum ForcedChatgptWorkspaceIds {
+pub enum ForcedManagedWorkspaceIds {
     Single(String),
     Multiple(Vec<String>),
 }
 
-impl ForcedChatgptWorkspaceIds {
+impl ForcedManagedWorkspaceIds {
     pub fn into_vec(self) -> Vec<String> {
         match self {
             Self::Single(value) => vec![value],
@@ -199,7 +199,7 @@ pub struct Config {
     pub approval_policy: Option<AskForApproval>,
     pub sandbox_mode: Option<SandboxMode>,
     pub sandbox_workspace_write: Option<SandboxWorkspaceWrite>,
-    pub forced_chatgpt_workspace_id: Option<ForcedChatgptWorkspaceIds>,
+    pub forced_managed_workspace_id: Option<ForcedManagedWorkspaceIds>,
     pub forced_login_method: Option<ForcedLoginMethod>,
     pub web_search: Option<WebSearchMode>,
     pub tools: Option<ToolsV2>,
@@ -322,7 +322,7 @@ pub struct ConfigRequirements {
     /// An empty list permits no login method. Older servers may omit this field.
     pub allowed_login_methods: Option<Vec<ForcedLoginMethod>>,
     pub cli_auth_credentials_store: Option<CliAuthCredentialsStoreMode>,
-    pub chatgpt_base_url: Option<String>,
+    pub managed_auth_base_url: Option<String>,
     pub additional_developer_instructions: Option<String>,
     #[experimental(nested)]
     pub allowed_approval_policies: Option<Vec<AskForApproval>>,

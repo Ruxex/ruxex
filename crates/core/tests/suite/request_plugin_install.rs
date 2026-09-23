@@ -142,7 +142,7 @@ fn configure_apps_without_search_tool(config: &mut Config, apps_base_url: &str) 
         .iter_mut()
         .find(|model| model.slug == "gpt-5.5")
         .expect("gpt-5.5 exists in bundled models.json");
-    config.chatgpt_base_url = apps_base_url.to_string();
+    config.managed_auth_base_url = apps_base_url.to_string();
     config.model = Some("gpt-5.5".to_string());
     config.tool_suggest.discoverables = vec![ToolSuggestDiscoverable {
         kind: ToolSuggestDiscoverableType::Connector,
@@ -204,7 +204,7 @@ async fn build_test(
     let mut builder = test_codex()
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_config({
-            let apps_base_url = apps_server.chatgpt_base_url.clone();
+            let apps_base_url = apps_server.managed_auth_base_url.clone();
             move |config| {
                 config
                     .permissions
@@ -222,7 +222,7 @@ async fn build_gated_step_preparation_test(
 ) -> Result<TestCodex> {
     let command = remote_aware_stdio_server_bin()?;
     let environment_id = remote_aware_environment_id();
-    let apps_base_url = apps_server.chatgpt_base_url.clone();
+    let apps_base_url = apps_server.managed_auth_base_url.clone();
     let mut builder = test_codex()
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_config(move |config| {
@@ -504,7 +504,7 @@ async fn startup_recommendations(
         .with_extensions(Arc::new(extensions.build()))
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_config(move |config| {
-            configure_apps_without_search_tool(config, &apps_server.chatgpt_base_url);
+            configure_apps_without_search_tool(config, &apps_server.managed_auth_base_url);
             config.model_provider.supports_websockets = false;
             for suggestion_feature in [Feature::ToolSuggest, Feature::RecommendedPlugins] {
                 config
@@ -1307,7 +1307,7 @@ async fn endpoint_mode_with_no_eligible_candidates_exposes_no_suggestion_tools()
     let mut builder = test_codex()
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_config({
-            let apps_base_url = apps_server.chatgpt_base_url.clone();
+            let apps_base_url = apps_server.managed_auth_base_url.clone();
             move |config| {
                 configure_apps_without_search_tool(config, apps_base_url.as_str());
                 config.tool_suggest.disabled_tools = vec![ToolSuggestDisabledTool::plugin(

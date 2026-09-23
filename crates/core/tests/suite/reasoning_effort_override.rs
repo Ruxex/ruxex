@@ -680,7 +680,7 @@ async fn reasoning_effort_override_disabled_on_resume_retires_update_at_compacti
     .await;
     let initial = override_builder().build_with_auto_env(&server).await?;
     initial.submit_text_turn("before resume").await?;
-    let chatgpt_base_url = format!("{}/backend-api", server.uri());
+    let managed_auth_base_url = format!("{}/backend-api", server.uri());
     let resumed = override_builder()
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_config(move |config| {
@@ -689,7 +689,7 @@ async fn reasoning_effort_override_disabled_on_resume_retires_update_at_compacti
                 .disable(Feature::ReasoningEffortOverride)
                 .expect("disable overrides");
             config.model_reasoning_effort = Some(ReasoningEffort::High);
-            config.chatgpt_base_url = chatgpt_base_url;
+            config.managed_auth_base_url = managed_auth_base_url;
         })
         .restart(&server, &initial)
         .await?;
@@ -894,7 +894,7 @@ async fn reasoning_effort_override_compaction_fallback_uses_each_models_effort()
         responses::sse(vec![responses::ev_completed("after")]),
     )
     .await;
-    let chatgpt_base_url = format!("{}/backend-api", server.uri());
+    let managed_auth_base_url = format!("{}/backend-api", server.uri());
     let test = override_builder()
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_model_info_override("gpt-5.4", |model| {
@@ -906,7 +906,7 @@ async fn reasoning_effort_override_compaction_fallback_uses_each_models_effort()
         })
         .with_model("gpt-5.4")
         .with_config(move |config| {
-            config.chatgpt_base_url = chatgpt_base_url;
+            config.managed_auth_base_url = managed_auth_base_url;
             config.model_provider.stream_max_retries = Some(0);
         })
         .build_with_auto_env(&server)
