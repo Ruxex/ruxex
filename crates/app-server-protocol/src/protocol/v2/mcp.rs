@@ -234,7 +234,6 @@ pub struct McpServerOauthLoginParams {
 pub enum McpServerOauthClientRegistration {
     #[default]
     Auto,
-    Cimd,
     Dcr,
 }
 

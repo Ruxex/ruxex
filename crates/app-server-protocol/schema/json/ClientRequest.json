@@ -1767,7 +1767,6 @@
     "McpServerOauthClientRegistration": {
       "enum": [
         "auto",
-        "cimd",
         "dcr"
       ],
       "type": "string"

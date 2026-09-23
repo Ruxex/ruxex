@@ -128,36 +128,26 @@ async fn authorization(
 }
 
 #[tokio::test]
-async fn automatic_cimd_uses_stable_or_callback_specific_identity() -> Result<()> {
-    for (host, supports_issuer, expected_client_id, expected_redirect) in [
-        (
-            "127.0.0.1",
-            false,
-            "https://chatgpt.com/oauth/codex/abc123ABC_-x/client.json",
-            "http://127.0.0.1:43123/callback/abc123ABC_-x",
-        ),
-        (
-            "localhost",
-            false,
-            "https://chatgpt.com/oauth/codex/abc123ABC_-x/client.json",
-            "http://localhost:43123/callback/abc123ABC_-x",
-        ),
-        (
-            "127.0.0.1",
-            true,
-            "https://chatgpt.com/oauth/codex/client.json",
-            "http://127.0.0.1:43123/callback",
-        ),
+async fn explicit_cimd_uses_provider_owned_identity() -> Result<()> {
+    for (supports_issuer, redirect) in [
+        (false, "http://127.0.0.1:43123/callback/abc123ABC_-x"),
+        (true, "http://127.0.0.1:43123/callback"),
     ] {
         let server = oauth_server(json!({
             "authorization_response_iss_parameter_supported": supports_issuer,
         }))
         .await;
-        let redirect = format!("http://{host}:43123/callback");
-        let (mut state, query) =
-            authorization(&server, &redirect, McpOAuthClientRegistration::Auto).await?;
-        assert_eq!(query["client_id"], expected_client_id);
-        assert_eq!(query["redirect_uri"], expected_redirect);
+        let provider_client_metadata_url = "https://provider.example/oauth/client.json";
+        let (mut state, query) = authorization(
+            &server,
+            redirect,
+            McpOAuthClientRegistration::Cimd {
+                client_metadata_url: provider_client_metadata_url.to_owned(),
+            },
+        )
+        .await?;
+        assert_eq!(query["client_id"], provider_client_metadata_url);
+        assert_eq!(query["redirect_uri"], redirect);
         assert_eq!(query["code_challenge_method"], "S256");
         assert_eq!(query["scope"], "read offline_access");
 
@@ -176,8 +166,8 @@ async fn automatic_cimd_uses_stable_or_callback_specific_identity() -> Result<()
         let body: HashMap<_, _> = url::form_urlencoded::parse(&request.body)
             .into_owned()
             .collect();
-        assert_eq!(body["client_id"], expected_client_id);
-        assert_eq!(body["redirect_uri"], expected_redirect);
+        assert_eq!(body["client_id"], provider_client_metadata_url);
+        assert_eq!(body["redirect_uri"], redirect);
         assert_eq!(body["grant_type"], "authorization_code");
         assert!(body.contains_key("code_verifier"));
         assert!(!body.contains_key("client_secret"));
@@ -218,6 +208,7 @@ async fn registration_selection_preserves_dcr_capabilities_and_exact_redirects()
             McpOAuthClientRegistration::Auto,
             native,
         ),
+        (json!({}), native, McpOAuthClientRegistration::Auto, native),
         (json!({}), custom, McpOAuthClientRegistration::Auto, custom),
         (
             json!({"authorization_response_iss_parameter_supported": true}),
@@ -553,10 +544,16 @@ async fn invalid_cimd_metadata_and_redirects_fail_without_dynamic_registration()
         ),
     ] {
         let server = oauth_server(metadata).await;
-        let error = authorization(&server, redirect, McpOAuthClientRegistration::Cimd)
-            .await
-            .err()
-            .expect("invalid CIMD metadata or callback should fail");
+        let error = authorization(
+            &server,
+            redirect,
+            McpOAuthClientRegistration::Cimd {
+                client_metadata_url: "https://provider.example/oauth/client.json".to_owned(),
+            },
+        )
+        .await
+        .err()
+        .expect("invalid CIMD metadata or callback should fail");
         assert!(error.to_string().contains(expected_error));
         assert!(requests_to(&server, "/register").await.is_empty());
         assert!(requests_to(&server, "/token").await.is_empty());

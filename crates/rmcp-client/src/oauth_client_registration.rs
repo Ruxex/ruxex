@@ -16,13 +16,13 @@ use crate::oauth_callback::callback_mode;
 use crate::oauth_callback::validate_callback_redirect;
 
 /// OAuth client-registration strategy for one interactive HTTP MCP login.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum McpOAuthClientRegistration {
-    /// Prefer a supported native CIMD and otherwise use advertised DCR.
+    /// Use the authorization server's advertised Dynamic Client Registration endpoint.
     #[default]
     Auto,
-    /// Require a ChatGPT-hosted Codex public native Client ID Metadata Document.
-    Cimd,
+    /// Require a caller-owned public native Client ID Metadata Document.
+    Cimd { client_metadata_url: String },
     /// Require the authorization server's Dynamic Client Registration endpoint.
     Dcr,
 }
@@ -85,14 +85,15 @@ pub(crate) async fn start_authorization(
         && parsed_redirect_uri.username().is_empty()
         && parsed_redirect_uri.password().is_none();
     validate_callback_redirect(&redirect_uri, callback_id, callback_mode)?;
-    // MCP 2026-07-28 priority: pre-registered clients never reach this path; offer
-    // advertised CIMD here and otherwise let rmcp fall back to DCR.
+    // MCP 2026-07-28 priority: pre-registered clients never reach this path. A
+    // caller that owns a public CIMD URL can opt into it explicitly; Auto uses
+    // advertised DCR because this crate does not own a provider-specific URL.
     // https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/client-registration
-    let offer_cimd = match client_registration {
-        McpOAuthClientRegistration::Auto => {
-            cimd_advertised && native_redirect_supported && public_client_auth_supported
-        }
-        McpOAuthClientRegistration::Cimd => {
+    let client_metadata_url = match &client_registration {
+        McpOAuthClientRegistration::Auto => None,
+        McpOAuthClientRegistration::Cimd {
+            client_metadata_url,
+        } => {
             if !cimd_advertised || !public_client_auth_supported {
                 bail!(
                     "MCP authorization server does not advertise CIMD with token endpoint auth method `none`"
@@ -103,24 +104,19 @@ pub(crate) async fn start_authorization(
                     "MCP OAuth CIMD requires an ephemeral loopback callback at `{expected_callback_path}`"
                 );
             }
-            true
+            Some(client_metadata_url.clone())
         }
-        McpOAuthClientRegistration::Dcr => false,
+        McpOAuthClientRegistration::Dcr => None,
     };
 
     auth_manager.set_metadata(metadata);
     let mut request = AuthorizationRequest::new(redirect_uri.clone())
         .with_scopes(scopes.iter().copied())
         .with_client_name("Codex");
-    if offer_cimd {
+    if let Some(client_metadata_url) = client_metadata_url {
         // CIMD is an active IETF Internet-Draft: this HTTPS client identifier resolves
         // to its self-referential JSON metadata document.
         // https://datatracker.ietf.org/doc/draft-ietf-oauth-client-id-metadata-document/
-        let client_metadata_url = if uses_shared_callback {
-            "https://chatgpt.com/oauth/codex/client.json".to_string()
-        } else {
-            format!("https://chatgpt.com/oauth/codex/{callback_id}/client.json")
-        };
         request = request.with_client_metadata_url(client_metadata_url);
     }
     let session = AuthorizationSession::new(auth_manager, request)
