@@ -16,7 +16,7 @@ OpenAI 固有機能の除去後に残ったコードを調査し、汎用プロ�
 | ID | 機能 | 状態 | 優先度 | 判断 |
 |---|---|---|---|---|
 | G-1 | MCP ツールカタログの動的 refresh | 実装済み | 高 | server 単位の汎用 refresh 経路を追加済み |
-| G-2 | 自作マーケットプレイスの publish/upload | 部分実装 | 中 | bundle pack を保持し、公開 API は別途設計する |
+| G-2 | 自作マーケットプレイスの publish/upload | 部分実装 | 中 | 汎用 HTTP registry 向け CLI publish client を追加。registry server と app-server API は別途実装する |
 | G-3 | 拡張機能からの turn 中断 | 未接続 | 中 | 汎用 extension API として接続する |
 | G-4 | リトライ終了後の再開情報 | 未接続 | 中 | producer と consumer を定義する |
 | G-5 | 画像 detail の `low` / `auto` | 部分実装 | 中 | provider capability と変換方針を定義する |
@@ -56,7 +56,7 @@ server 側通知を自動的に refresh へ変換する producer はまだなく
 - marketplace 内 plugin の local/Git/npm source
 - CLI の `codex plugin marketplace add/list/upgrade/remove`
 
-[`plugin_bundle_archive.rs`](../crates/core-plugins/src/plugin_bundle_archive.rs) には、manifest を検証して tar.gz bundle を作る pack 処理もある。ただし、これは現在 private かつ主にテストから利用されており、次の publish 経路はない。
+[`plugin_bundle_archive.rs`](../crates/core-plugins/src/plugin_bundle_archive.rs) には、manifest を検証して tar.gz bundle を作る pack 処理がある。削除前の hosted 実装は、この bundle を署名付き upload URL に PUT してから backend API で finalize していた。
 
 - upload 先となる registry/server API
 - 認証・権限・namespace 管理
@@ -64,7 +64,19 @@ server 側通知を自動的に refresh へ変換する producer はまだなく
 - bundle の署名、検証、size limit の公開契約
 - publish 用 CLI/app-server API
 
-したがって、**自作 marketplace を Git/local で運用することは現在可能**だが、HTTP registry に plugin をアップロードして公開する機能は未実装である。将来の upload 用の土台として bundle pack は保持する。
+したがって、**自作 marketplace を Git/local で運用することは現在可能**であり、HTTP registry への plugin upload は CLI の汎用 client で利用できるようになった。ただし、registry server、署名鍵管理、namespace/version policy、app-server 経由の publish API はこのリポジトリにはまだない。
+
+### 対応済み（client-side publish）
+
+`codex plugin marketplace publish` は、次の provider-neutral な三段階契約を利用する。
+
+1. `POST {registry}/v1/plugins/uploads`
+2. 応答の `upload_url` に `application/gzip` の bundle を `PUT`
+3. `POST {registry}/v1/plugins` に `file_id`、`etag`、任意の `plugin_id` を送信して finalize
+
+control API の bearer token は `--token-env-var` で指定した環境変数から読み取り、署名付き `upload_url` には転送しない。registry は upload reservation に `upload_headers` を返して追加の署名ヘッダーを要求できる。bundle は最大 50 MiB で、symbolic link と path traversal を許可しない既存の archive 検証を利用する。
+
+この実装は tar.gz を HTTP で配布するもので、Docker/OCI コンテナイメージの build・push・pull は提供しない。現在の marketplace source は local/Git/npm であり、npm の `registry` も plugin package の取得先であって marketplace コンテナ registry ではない。
 
 ## G-3: 拡張機能からの turn 中断
 
@@ -144,7 +156,7 @@ compaction の共通型には `Memento` と `PrefixCompaction` があるが、�
 
 ## 推奨する実装順
 
-1. **Marketplace publish contract**: bundle、署名、認証、version、registry API を決めてから pack を production API に昇格する。
+1. **Marketplace publish contract**: server 側の bundle、署名、認証、version、registry API を決め、現在の client-side contract と接続する。
 2. **Provider capability 拡張**: image detail、tool/structured output、streaming、compaction を capability として整理する。
 3. **Extension context**: extension interruption の producer/consumer を接続する。
 4. **Retry / compaction metadata**: Responses 固有の型を provider-neutral な state と adapter に分離する。

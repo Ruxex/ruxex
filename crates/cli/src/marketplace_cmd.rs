@@ -7,6 +7,8 @@ use codex_core::config::ConfigOverrides;
 use codex_core::config::LoaderOverrides;
 use codex_core::plugins_manager_for_config;
 use codex_core_plugins::PluginMarketplaceUpgradeOutcome;
+use codex_core_plugins::PluginPublishOutcome;
+use codex_core_plugins::PluginPublishRequest;
 use codex_core_plugins::PluginsConfigInput;
 use codex_core_plugins::installed_marketplaces::marketplace_install_root;
 use codex_core_plugins::installed_marketplaces::resolve_configured_marketplace_root;
@@ -17,6 +19,9 @@ use codex_core_plugins::marketplace_add::add_marketplace;
 use codex_core_plugins::marketplace_remove::MarketplaceRemoveOutcome;
 use codex_core_plugins::marketplace_remove::MarketplaceRemoveRequest;
 use codex_core_plugins::marketplace_remove::remove_marketplace;
+use codex_core_plugins::publish_plugin_bundle;
+use codex_http_client::ClientRouteClass;
+use codex_http_client::RouteAwareClientPool;
 use codex_utils_cli::CliConfigOverrides;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -52,6 +57,9 @@ enum MarketplaceSubcommand {
     ///
     /// Omit MARKETPLACE_NAME to upgrade all configured Git marketplaces.
     Upgrade(UpgradeMarketplaceArgs),
+
+    /// Publish a plugin bundle to a generic HTTP plugin registry.
+    Publish(PublishMarketplaceArgs),
 
     /// Remove a configured marketplace source by name.
     Remove(RemoveMarketplaceArgs),
@@ -109,6 +117,33 @@ struct UpgradeMarketplaceArgs {
 
 #[derive(Debug, Parser)]
 #[command(
+    bin_name = "codex plugin marketplace publish",
+    after_help = "Example:\n  codex plugin marketplace publish ./plugins/demo --registry https://registry.example --token-env-var PLUGIN_REGISTRY_TOKEN"
+)]
+struct PublishMarketplaceArgs {
+    /// Plugin directory containing .codex-plugin/plugin.json.
+    #[arg(value_name = "PLUGIN_PATH")]
+    plugin_path: PathBuf,
+
+    /// Base URL of the generic HTTP plugin registry.
+    #[arg(long = "registry", value_name = "URL")]
+    registry_url: String,
+
+    /// Optional plugin identifier to send to the registry.
+    #[arg(long, value_name = "PLUGIN_ID")]
+    plugin_id: Option<String>,
+
+    /// Read the registry bearer token from this environment variable.
+    #[arg(long, value_name = "ENV_VAR")]
+    token_env_var: Option<String>,
+
+    /// Output the publish result as JSON.
+    #[arg(long)]
+    json: bool,
+}
+
+#[derive(Debug, Parser)]
+#[command(
     bin_name = "codex plugin marketplace remove",
     after_help = "Example:\n  codex plugin marketplace remove debug"
 )]
@@ -141,10 +176,79 @@ impl MarketplaceCli {
             MarketplaceSubcommand::Add(args) => run_add(config, args).await?,
             MarketplaceSubcommand::List(args) => run_list(config, args).await?,
             MarketplaceSubcommand::Upgrade(args) => run_upgrade(config, args, builder).await?,
+            MarketplaceSubcommand::Publish(args) => run_publish(config, args).await?,
             MarketplaceSubcommand::Remove(args) => run_remove(config, args).await?,
         }
 
         Ok(())
+    }
+}
+
+async fn run_publish(config: Config, args: PublishMarketplaceArgs) -> Result<()> {
+    let PublishMarketplaceArgs {
+        plugin_path,
+        registry_url,
+        plugin_id,
+        token_env_var,
+        json,
+    } = args;
+    let auth_token = token_env_var
+        .as_deref()
+        .map(|name| {
+            std::env::var(name).with_context(|| {
+                format!("failed to read registry token environment variable {name}")
+            })
+        })
+        .transpose()?;
+    let client = RouteAwareClientPool::new(config.http_client_factory(), ClientRouteClass::Other)
+        .with_tls_backend_fallback();
+    let outcome = publish_plugin_bundle(
+        &client,
+        PluginPublishRequest {
+            registry_url,
+            plugin_path,
+            plugin_id,
+            auth_token,
+        },
+    )
+    .await
+    .context("failed to publish plugin bundle")?;
+
+    if json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&JsonMarketplacePublishOutput::from_outcome(outcome))?
+        );
+    } else {
+        println!("Published plugin {}.", outcome.plugin_id);
+        if let Some(version) = outcome.version {
+            println!("Version: {version}");
+        }
+        if let Some(plugin_url) = outcome.plugin_url {
+            println!("Plugin URL: {plugin_url}");
+        }
+    }
+
+    Ok(())
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct JsonMarketplacePublishOutput {
+    plugin_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    plugin_url: Option<String>,
+}
+
+impl JsonMarketplacePublishOutput {
+    fn from_outcome(outcome: PluginPublishOutcome) -> Self {
+        Self {
+            plugin_id: outcome.plugin_id,
+            version: outcome.version,
+            plugin_url: outcome.plugin_url,
+        }
     }
 }
 
@@ -583,5 +687,30 @@ mod tests {
     fn remove_subcommand_parses_marketplace_name() {
         let remove = RemoveMarketplaceArgs::try_parse_from(["remove", "debug"]).unwrap();
         assert_eq!(remove.marketplace_name, "debug");
+    }
+
+    #[test]
+    fn publish_subcommand_parses_registry_and_token_environment() {
+        let publish = PublishMarketplaceArgs::try_parse_from([
+            "publish",
+            "./plugins/demo",
+            "--registry",
+            "https://registry.example",
+            "--token-env-var",
+            "PLUGIN_REGISTRY_TOKEN",
+            "--plugin-id",
+            "demo",
+            "--json",
+        ])
+        .unwrap();
+
+        assert_eq!(publish.plugin_path, PathBuf::from("./plugins/demo"));
+        assert_eq!(publish.registry_url, "https://registry.example");
+        assert_eq!(
+            publish.token_env_var.as_deref(),
+            Some("PLUGIN_REGISTRY_TOKEN")
+        );
+        assert_eq!(publish.plugin_id.as_deref(), Some("demo"));
+        assert!(publish.json);
     }
 }
