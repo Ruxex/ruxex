@@ -128,7 +128,7 @@ Responses API の `input_image.detail` で定義される `auto`、`low`、`high
 - `codex_protocol::openai_models::ModelInfo`
 - Responses 用の compaction、retry、metadata
 
-現在は `wire_api = "chat"` を指定した provider に対して、Chat Completions の `/chat/completions`、function tool payload、SSE 応答を専用 adapter 経由で利用できる。`output_schema` は Chat Completions 経路では未対応であり、独自 streaming protocol や非 OpenAI 形式の tool call は引き続き同じ抽象で扱えない。
+現在は `wire_api = "chat"` を指定した provider に対して、Chat Completions の `/chat/completions`、function tool payload、SSE 応答を専用 adapter 経由で利用できる。対応範囲と request/SSE の変換は [ChatCompletionAPI のアーキテクチャ](cli-architecture/chat-completions.md) に整理している。`output_schema` は Chat Completions 経路では未対応であり、独自 streaming protocol や非 OpenAI 形式の tool call は引き続き同じ抽象で扱えない。
 
 完全な provider-neutral 化には、少なくとも次の境界が必要になる。
 
