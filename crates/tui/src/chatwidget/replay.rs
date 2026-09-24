@@ -14,7 +14,7 @@ impl ChatWidget {
         started: codex_app_server_protocol::ItemStartedNotification,
         parts: Option<(Vec<String>, Vec<String>)>,
     ) {
-        let turn_id = started.turn_id;
+        let _turn_id = started.turn_id;
         let id = started.item.id().to_string();
         self.on_reasoning_item_started(id);
         self.status_state.reasoning_recovered_after_refresh = true;

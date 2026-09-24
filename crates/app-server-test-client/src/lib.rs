@@ -1067,7 +1067,7 @@ async fn test_login(
         let initialize = client.initialize()?;
         println!("< initialize response: {initialize:?}");
 
-        let login_response = match mode {
+        match mode {
             TestLoginMode::AmazonBedrock { api_key, region } => {
                 let request_id = client.request_id();
                 let login_response: LoginAccountResponse = client.send_request(
@@ -1098,9 +1098,7 @@ async fn test_login(
                 }
                 return Ok(());
             }
-        };
-        println!("< account/login/start response: {login_response:?}");
-        Ok(())
+        }
     })
     .await
 }

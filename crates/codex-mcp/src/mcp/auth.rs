@@ -24,7 +24,6 @@ use tracing::warn;
 
 use crate::runtime::McpRuntimeContext;
 use crate::server::EffectiveMcpServer;
-use crate::server::has_explicit_http_authorization;
 
 #[derive(Debug, Clone)]
 pub struct McpOAuthLoginConfig {
@@ -247,7 +246,7 @@ async fn compute_auth_status(
     config: &McpServerConfig,
     store_mode: OAuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
-    auth: Option<&CodexAuth>,
+    _auth: Option<&CodexAuth>,
     runtime_context: &McpRuntimeContext,
     redirect_mode: StreamableHttpRedirectMode,
 ) -> Result<McpAuthState> {

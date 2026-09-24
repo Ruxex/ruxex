@@ -294,7 +294,7 @@ struct McpToolCallItemMetadata {
 }
 
 impl McpToolCallItemMetadata {
-    fn from_tool_metadata(server: &str, metadata: Option<&McpToolApprovalMetadata>) -> Self {
+    fn from_tool_metadata(_server: &str, metadata: Option<&McpToolApprovalMetadata>) -> Self {
         Self {
             mcp_app_ui: metadata.and_then(|metadata| metadata.mcp_app_ui.clone()),
             plugin_id: metadata.and_then(|metadata| metadata.plugin_id.clone()),
@@ -1115,7 +1115,7 @@ async fn maybe_request_mcp_tool_approval(
     permission_profile: &PermissionProfile,
     policy: McpToolApprovalPolicy,
 ) -> Option<ReviewDecision> {
-    let turn_context = &step_context.turn;
+    let _turn_context = &step_context.turn;
     if mcp_permission_prompt_is_auto_approved(
             config.approval_policy.value(),
             permission_profile,
@@ -1435,7 +1435,7 @@ fn build_mcp_tool_approval_elicitation_request(
 }
 
 fn build_mcp_tool_approval_elicitation_meta(
-    server: &str,
+    _server: &str,
     metadata: Option<&McpToolApprovalMetadata>,
     tool_params: Option<&serde_json::Value>,
     tool_params_display: Option<&[McpToolApprovalDisplayParam]>,

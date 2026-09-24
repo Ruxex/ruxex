@@ -1,5 +1,4 @@
 use codex_config::ConfigRequirements;
-use codex_config::RequirementSource;
 use codex_config::Sourced;
 use codex_config::config_toml::ConfigToml;
 use codex_login::default_client::RESIDENCY_HEADER_NAME;
@@ -96,20 +95,6 @@ fn apply_exact_requirement<T>(
     *configured_value = Some(value.clone());
 }
 
-fn replace_required_leaf<T: Clone + PartialEq>(
-    configured: &mut Option<T>,
-    required: &Option<T>,
-) -> bool {
-    let Some(required) = required else {
-        return false;
-    };
-    let conflict = configured
-        .as_ref()
-        .is_some_and(|configured| configured != required);
-    *configured = Some(required.clone());
-    conflict
-}
-
 pub(super) fn push_sqlite_home_env_override_warning(
     configured_sqlite_home: Option<&AbsolutePathBuf>,
     sqlite_home_env: Option<&Path>,
@@ -136,25 +121,5 @@ pub(super) fn push_sqlite_home_env_override_warning(
     );
     startup_warnings.push(format!(
         "Environment value for `$CODEX_SQLITE_HOME` is overridden by the required `sqlite_home` value {value:?} from {source}."
-    ));
-}
-
-/// Emits one source-aware warning when a structured requirement replaces one
-/// or more configured values.
-fn push_structured_requirement_override_warning(
-    field_name: &str,
-    conflict: bool,
-    source: &RequirementSource,
-    startup_warnings: &mut Vec<String>,
-) {
-    if !conflict {
-        return;
-    }
-    tracing::warn!(
-        ?source,
-        "configured values are overridden by requirements for {field_name}"
-    );
-    startup_warnings.push(format!(
-        "Configured values under `{field_name}` are overridden by requirements from {source}."
     ));
 }

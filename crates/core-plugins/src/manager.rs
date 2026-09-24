@@ -19,6 +19,7 @@ use crate::loader::load_plugin_skill_inventory;
 use crate::loader::load_plugins_from_layer_stack;
 use crate::loader::log_plugin_load_errors;
 use crate::loader::materialize_marketplace_plugin_source;
+#[cfg(test)]
 use crate::loader::plugin_capability_summary_from_root;
 use crate::loader::plugin_is_eligible_for_target_marketplace;
 use crate::loader::refresh_non_curated_plugin_cache_detailed;
@@ -60,7 +61,6 @@ use codex_config::set_user_plugin_enabled;
 use codex_config::skill_config_rules_from_stack;
 use codex_config::types::PluginConfig;
 use codex_hooks::plugin_hook_declarations;
-use codex_http_client::HttpClientFactory;
 use codex_login::AuthManager;
 use codex_login::CodexAuth;
 use codex_plugin::PluginCapabilitySummary;
@@ -73,7 +73,6 @@ use codex_protocol::protocol::Product;
 use codex_skills::SkillMetadata;
 use codex_skills::SkillRootLoader;
 use codex_skills::SkillRootSnapshots;
-use codex_tools::DiscoverablePluginInfo;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use codex_utils_plugins::PluginIdentity;
 use codex_utils_plugins::PluginSkillRoot;
@@ -422,7 +421,7 @@ impl PluginsManager {
         if !config.plugins_enabled {
             return None;
         }
-        let auth = self.auth_manager.auth_cached();
+        let _auth = self.auth_manager.auth_cached();
         let key = PluginLoadCacheKey::from_config(config, self.codex_home.as_path());
         self.loaded_plugins_cache
             .lock()
@@ -1102,7 +1101,7 @@ impl PluginsManager {
             .collect();
         let mcp_data_root = (manifest_format == PluginManifestFormat::AgentPlugin)
             .then(|| self.store.mcp_data_root(&plugin_id, manifest_format));
-        let mut mcp_servers = load_plugin_mcp_servers_from_manifest_with_format(
+        let mcp_servers = load_plugin_mcp_servers_from_manifest_with_format(
             source_path.as_path(),
             &manifest.paths,
             /*plugin_policy*/ None,

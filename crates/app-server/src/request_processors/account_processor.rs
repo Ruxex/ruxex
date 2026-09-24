@@ -6,7 +6,6 @@ use super::*;
 use crate::auth_mode::auth_mode_to_api;
 use crate::outgoing_message::AccountNotification;
 use codex_app_server_protocol::Account;
-use codex_app_server_protocol::DesktopOnboardingEntrypoint;
 use codex_app_server_protocol::GetAccountResponse;
 use codex_login::login_with_bedrock_access_keys;
 use codex_model_provider::create_model_provider;

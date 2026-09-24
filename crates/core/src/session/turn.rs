@@ -96,11 +96,7 @@ use codex_protocol::protocol::SessionSource;
 use codex_protocol::protocol::TurnDiffEvent;
 use codex_protocol::protocol::WarningEvent;
 use codex_protocol::user_input::UserInput;
-use codex_skills::ToolMentionKind;
-use codex_skills::app_id_from_path;
-use codex_skills::build_skill_name_counts;
 use codex_skills::collect_explicit_skill_mentions;
-use codex_skills::tool_kind_for_path;
 use codex_skills_extension::HostSkillPrompts;
 use codex_skills_extension::InjectedHostSkillPrompts;
 use codex_thread_store::PersistContext;
@@ -149,7 +145,7 @@ pub(crate) struct McpStartupRequirements {
 pub(crate) async fn run_turn(
     sess: Arc<Session>,
     turn_context: Arc<TurnContext>,
-    mut input: Vec<TurnInput>,
+    input: Vec<TurnInput>,
     mcp_startup_requirements: &mut McpStartupRequirements,
     prewarmed_client_session: Option<ModelClientSession>,
     cancellation_token: CancellationToken,

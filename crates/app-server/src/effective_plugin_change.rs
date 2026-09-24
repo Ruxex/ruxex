@@ -6,19 +6,17 @@ use codex_login::AuthManager;
 
 use crate::config_manager::ConfigManager;
 use crate::request_processors::ConfigRequestProcessor;
-use crate::request_serialization::RequestSerializationAccess;
-use crate::request_serialization::RequestSerializationQueueKey;
 use crate::request_serialization::RequestSerializationQueues;
 
 /// Refresh plugin consumers and trust hooks from newly materialized Workspace + Listed bundles.
 pub(crate) fn effective_plugins_changed_callback(
-    auth_manager: Arc<AuthManager>,
+    _auth_manager: Arc<AuthManager>,
     thread_manager: Arc<ThreadManager>,
-    config_manager: ConfigManager,
-    config_processor: ConfigRequestProcessor,
-    request_serialization_queues: RequestSerializationQueues,
+    _config_manager: ConfigManager,
+    _config_processor: ConfigRequestProcessor,
+    _request_serialization_queues: RequestSerializationQueues,
 ) -> Arc<dyn Fn(EffectivePluginsChange) + Send + Sync> {
-    Arc::new(move |change| {
+    Arc::new(move |_change| {
         thread_manager.plugins_manager().clear_cache();
         thread_manager.skills_service().clear_cache();
 

@@ -138,8 +138,8 @@ async fn run_remote_compact_task_inner(
 ) -> CodexResult<()> {
     let turn_context = &step_context.turn;
     let trigger = compaction_metadata.trigger();
-    let reason = compaction_metadata.reason();
-    let implementation = compaction_metadata.implementation();
+    let _reason = compaction_metadata.reason();
+    let _implementation = compaction_metadata.implementation();
     let phase = compaction_metadata.phase();
     let pre_compact_outcome = run_pre_compact_hooks(sess, turn_context, trigger).await;
     match pre_compact_outcome {

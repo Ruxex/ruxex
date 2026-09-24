@@ -250,7 +250,6 @@ use crate::bottom_pane::BottomPane;
 use crate::bottom_pane::BottomPaneParams;
 use crate::bottom_pane::CancellationEvent;
 use crate::bottom_pane::CollaborationModeIndicator;
-use crate::bottom_pane::ColumnWidthMode;
 use crate::bottom_pane::DOUBLE_PRESS_QUIT_SHORTCUT_ENABLED;
 use crate::bottom_pane::ExecApprovalRequest;
 use crate::bottom_pane::ExperimentalFeaturesView;
@@ -370,7 +369,6 @@ mod backend_banners;
 mod compaction;
 mod luna_reserve_model;
 mod luna_reserve_return;
-pub(crate) use backend_banners::AutomaticModelSwitchReason;
 mod protocol;
 mod protocol_requests;
 mod rate_limits;
@@ -1212,7 +1210,7 @@ impl ChatWidget {
         items: &[UserInput],
         client_id: Option<&str>,
         from_replay: bool,
-        turn_id: &str,
+        _turn_id: &str,
     ) {
         let display = Self::user_message_display_from_inputs(items);
         if from_replay {

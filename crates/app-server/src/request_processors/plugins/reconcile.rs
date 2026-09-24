@@ -1,6 +1,5 @@
 use super::*;
 use crate::request_serialization::RequestSerializationQueues;
-use codex_app_server_protocol::PluginReconcileChangedPlugin;
 use codex_app_server_protocol::PluginReconcileParams;
 use codex_app_server_protocol::PluginReconcileResponse;
 

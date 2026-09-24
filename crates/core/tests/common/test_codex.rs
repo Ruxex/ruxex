@@ -35,7 +35,6 @@ use codex_features::Feature;
 use codex_home::CodexHomeUserInstructionsProvider;
 use codex_login::CodexAuth;
 use codex_model_provider_info::ModelProviderInfo;
-use codex_model_provider_info::built_in_model_providers;
 use codex_models_manager::bundled_models_response;
 use codex_models_manager::manager::SharedModelsManager;
 use codex_protocol::config_types::CollaborationMode;

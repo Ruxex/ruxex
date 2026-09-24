@@ -1,6 +1,4 @@
 use anyhow::Context;
-use codex_app_server_protocol::PluginAvailability;
-use codex_app_server_protocol::PluginInstallPolicy;
 use codex_config::skill_config_rules_from_stack;
 use codex_login::CodexAuth;
 use codex_plugin::PluginId;
@@ -53,7 +51,7 @@ impl PluginsManager {
     pub async fn list_tool_suggest_discoverable_plugins(
         &self,
         input: &ToolSuggestPluginDiscoveryInput,
-        auth: Option<&CodexAuth>,
+        _auth: Option<&CodexAuth>,
     ) -> anyhow::Result<Vec<ToolSuggestDiscoverablePlugin>> {
         if !input.plugins.plugins_enabled {
             return Ok(Vec::new());

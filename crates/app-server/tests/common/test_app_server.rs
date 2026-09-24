@@ -1709,7 +1709,7 @@ impl TestAppServerBuilder {
             codex_home,
             environment,
             program,
-            mut env_overrides,
+            env_overrides,
             args,
             exec_server_delay,
         } = self;

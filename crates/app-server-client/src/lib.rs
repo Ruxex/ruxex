@@ -58,7 +58,6 @@ use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use tokio::time::timeout;
 use toml::Value as TomlValue;
-use tracing::warn;
 
 pub use crate::path::AppServerPath;
 pub use crate::remote::RemoteAppServerClient;

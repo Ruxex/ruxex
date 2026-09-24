@@ -22,7 +22,7 @@ pub(crate) fn server_mcp_extensions(
 /// App-server clients may declare unrelated extensions. Codex retains only the
 /// provider-neutral extension namespaces it knows how to project downstream.
 pub fn client_mcp_extensions(extensions: Option<&HashMap<String, Value>>) -> ClientMcpExtensions {
-    let mut selected = extensions
+    let selected = extensions
         .into_iter()
         .flat_map(HashMap::iter)
         .filter(|(id, _)| id.as_str() == MCP_APP_UI_EXTENSION_ID)

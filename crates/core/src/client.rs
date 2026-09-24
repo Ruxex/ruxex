@@ -1655,7 +1655,7 @@ impl ModelClientSession {
                     .prepare_response_items_for_request(&mut request.input);
                 Some(original_item_ids)
             };
-            let mut ws_payload = ResponseCreateWsRequest {
+            let ws_payload = ResponseCreateWsRequest {
                 previous_response_id,
                 input: incremental_items.as_deref().unwrap_or(&request.input),
                 generate: if warmup { Some(false) } else { None },

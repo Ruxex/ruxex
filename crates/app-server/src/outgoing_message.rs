@@ -15,7 +15,6 @@ use codex_app_server_protocol::ServerNotification;
 use codex_app_server_protocol::ServerNotificationEnvelope;
 use codex_app_server_protocol::ServerRequest;
 use codex_app_server_protocol::ServerRequestPayload;
-use codex_app_server_protocol::ServerResponse;
 use codex_diagnostics::Gauge;
 use codex_diagnostics::GaugeGuard;
 use codex_otel::span_w3c_trace_context;
@@ -499,7 +498,7 @@ impl OutgoingMessageSender {
 
     pub(crate) async fn cancel_request(&self, id: &RequestId) -> bool {
         let entry = self.take_request_callback(id).await;
-        if let Some((request_id, _entry)) = entry {
+        if let Some((_request_id, _entry)) = entry {
             true
         } else {
             false

@@ -8,7 +8,6 @@ use crate::attestation::app_server_attestation_provider;
 use crate::config_manager::ConfigManager;
 use crate::connection_rpc_gate::ConnectionRpcGate;
 use crate::current_time::app_server_time_provider;
-use crate::error_code::internal_error;
 use crate::error_code::invalid_params;
 use crate::error_code::invalid_request;
 use crate::extensions::ThreadExtensionDependencies;
@@ -89,7 +88,6 @@ use tokio::sync::broadcast;
 use tokio::sync::watch;
 use tokio::time::Duration;
 use tokio::time::timeout;
-use tokio_util::sync::CancellationToken;
 use tracing::Instrument;
 
 use crate::models_refresh_worker::ModelsRefreshWorker;
@@ -1156,7 +1154,7 @@ impl MessageProcessor {
                     .thread_processor
                     .thread_unsubscribe(&request_id, params)
                     .await?;
-                if let Ok(thread_id) = ThreadId::from_string(&thread_id) {}
+                if let Ok(_thread_id) = ThreadId::from_string(&thread_id) {}
                 Ok(response)
             }
             ClientRequest::ThreadResume { params, .. } => {

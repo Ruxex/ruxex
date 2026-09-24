@@ -298,13 +298,11 @@ use crate::stream_events_utils::HandleOutputCtx;
 #[cfg(test)]
 use crate::stream_events_utils::handle_output_item_done;
 use crate::tasks::ReviewTask;
-use crate::tools::ApprovalContext;
 use crate::tools::network_approval::NetworkApprovalService;
 use crate::tools::network_approval::build_blocked_request_observer;
 use crate::tools::network_approval::build_network_policy_decider;
 #[cfg(test)]
 use crate::tools::parallel::ToolCallRuntime;
-use crate::tools::sandboxing::ApprovalAction;
 use crate::tools::sandboxing::ApprovalStore;
 use crate::turn_timing::TurnTimingState;
 use crate::turn_timing::record_turn_ttfm_metric;
@@ -371,7 +369,6 @@ use codex_protocol::turn_input::TurnInputSubmission;
 use codex_protocol::turn_input::TurnStartOptions;
 use codex_protocol::user_input::UserInput;
 use codex_skills_extension::HostSkillsService;
-use codex_tools::ToolName;
 use codex_tools::UnifiedExecShellMode;
 use codex_utils_absolute_path::AbsolutePathBuf;
 #[cfg(test)]
@@ -3273,7 +3270,7 @@ impl Session {
         turn_context: &TurnContext,
         model_info: &ModelInfo,
         mut items: Vec<ResponseItemEnvelope>,
-        image_preparations: Vec<ImagePreparationMetadata>,
+        _image_preparations: Vec<ImagePreparationMetadata>,
     ) {
         // Save the originating history budget for replay.
         // Preserve any existing tool-specific override.
@@ -3840,7 +3837,7 @@ impl Session {
             developer_sections
                 .push(DeveloperInstructions::new(developer_instructions).render_fragment());
         }
-        let loaded_plugins = self
+        let _loaded_plugins = self
             .services
             .plugins_manager
             .plugins_for_config(&turn_context.config.plugins_config_input())

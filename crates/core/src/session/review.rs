@@ -38,7 +38,7 @@ pub(super) async fn spawn_review_thread(
     let auth_manager = parent_turn_context.auth_manager.clone();
     let model_info = (**parent_turn_context.model_info()).clone();
     let mut selected = parent_turn_context.initial_settings.selected().clone();
-    let mut reasoning_effort = selected.collaboration_mode.reasoning_effort();
+    let reasoning_effort = selected.collaboration_mode.reasoning_effort();
 
     // Build per‑turn client with the requested model/family.
     let mut per_turn_config = (*parent_turn_context.config).clone();

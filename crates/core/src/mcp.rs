@@ -139,7 +139,7 @@ impl McpManager {
     async fn runtime_config_with_context(
         &self,
         context: McpServerContributionContext<'_, Config>,
-        originator: Option<&str>,
+        _originator: Option<&str>,
         environment_scope: McpEnvironmentScope<'_>,
         disabled_plugin_ids: &[String],
     ) -> McpRuntimeProjection {

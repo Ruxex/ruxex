@@ -491,7 +491,7 @@ impl McpRequestProcessor {
                     ))
                 })
             })
-            .map(|mut response| response);
+            .map(|response| response);
         outgoing.send_result(request_id, result).await;
     }
 

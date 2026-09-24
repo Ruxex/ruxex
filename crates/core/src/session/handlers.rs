@@ -9,7 +9,6 @@ use crate::session::thread_settings;
 use crate::session::turn_input;
 
 use crate::config::Config;
-use crate::context::ContextualUserFragment;
 use crate::review_prompts::resolve_review_request;
 use crate::session::spawn_review_thread;
 use crate::tasks::CompactTask;

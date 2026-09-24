@@ -30,7 +30,6 @@ use crate::pagination::collect_paginated_with_limit;
 use crate::runtime::McpRuntimeContext;
 use crate::runtime::emit_duration;
 use crate::server::EffectiveMcpServer;
-use crate::server::has_explicit_http_authorization;
 use crate::tool_catalog_cache::McpToolCatalogCacheContext;
 use crate::tool_catalog_cache::McpToolCatalogFetchTicket;
 use crate::tools::ToolInfo;
@@ -50,9 +49,6 @@ use codex_login::AuthChangeState;
 use codex_protocol::mcp::ClientMcpExtensions;
 use codex_protocol::mcp::McpServerInfo;
 use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::McpStartupStatus;
-use codex_protocol::protocol::McpStartupUpdateEvent;
 use codex_rmcp_client::ExecutorStdioServerLauncher;
 use codex_rmcp_client::LocalStdioServerLauncher;
 use codex_rmcp_client::McpOAuthRefreshMode;
@@ -73,7 +69,6 @@ use rmcp::model::ProtocolVersion;
 use rmcp::model::ServerPeerInfo;
 use rmcp::model::Tool as RmcpTool;
 use tokio::sync::watch;
-use tokio::time::Instant as TokioInstant;
 use tokio_util::sync::CancellationToken;
 use tokio_util::task::AbortOnDropHandle;
 use tracing::Instrument;
@@ -108,7 +103,6 @@ pub(crate) struct ManagedClient {
     pub(crate) server_info: McpServerInfo,
     pub(crate) tool_catalog: Arc<ClientToolCatalog>,
     pub(crate) tool_timeout: Option<Duration>,
-    pub(crate) server_instructions: Option<String>,
     pub(crate) server_supports_sandbox_state_meta_capability: bool,
 }
 
@@ -501,19 +495,6 @@ fn add_plugin_provenance_to_tool(tool: &mut ToolInfo, plugin_names: &[String]) {
     tool.tool.description = Some(Cow::Owned(annotated_description));
 }
 
-/// Adds server-scoped plugin names to regular MCP tools without changing their input schemas.
-pub(crate) fn prepare_regular_mcp_tools_for_model(
-    mut tools: Vec<ToolInfo>,
-    tool_plugin_context: &ToolPluginContext,
-) -> Vec<ToolInfo> {
-    for tool in &mut tools {
-        let plugin_names =
-            tool_plugin_context.plugin_display_names_for_mcp_server_name(tool.server_name.as_str());
-        add_plugin_provenance_to_tool(tool, plugin_names);
-    }
-    tools
-}
-
 /// Converts a regular MCP tool by removing reserved integration metadata, keeping its raw tool name,
 /// and using the MCP server name and instructions for the model-visible namespace.
 fn regular_mcp_tool_info_from_listed_tool(
@@ -685,7 +666,6 @@ async fn start_server_task(
         server_info,
         tool_catalog: Arc::new(ClientToolCatalog::new(client_tools)),
         tool_timeout: None,
-        server_instructions: initialize_result.instructions,
         server_supports_sandbox_state_meta_capability,
     };
 

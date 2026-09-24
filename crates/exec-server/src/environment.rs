@@ -58,7 +58,6 @@ pub struct EnvironmentManager {
     default_environment: Option<String>,
     pub(super) environments: RwLock<HashMap<String, Arc<Environment>>>,
     local_environment: Option<Arc<Environment>>,
-    local_runtime_paths: Option<ExecServerRuntimePaths>,
     http_client_factory: HttpClientFactory,
 }
 
@@ -107,7 +106,6 @@ impl EnvironmentManager {
                 Arc::new(Environment::default_for_tests()),
             )])),
             local_environment: Some(Arc::new(Environment::default_for_tests())),
-            local_runtime_paths: None,
             // Test-only construction has no application config from which to resolve proxy policy.
             http_client_factory: HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
         }
@@ -119,7 +117,6 @@ impl EnvironmentManager {
             default_environment: None,
             environments: RwLock::new(HashMap::new()),
             local_environment: None,
-            local_runtime_paths: None,
             http_client_factory,
         }
     }
@@ -271,7 +268,6 @@ impl EnvironmentManager {
             default_environment,
             environments: RwLock::new(environment_map),
             local_environment,
-            local_runtime_paths,
             http_client_factory,
         })
     }
@@ -336,36 +332,6 @@ impl EnvironmentManager {
         Some(environment.status().await)
     }
 
-    fn insert_environment(
-        &self,
-        environment_id: String,
-        environment: Arc<Environment>,
-    ) -> Result<(), ExecServerError> {
-        let replaced = {
-            let mut environments = self
-                .environments
-                .write()
-                .unwrap_or_else(std::sync::PoisonError::into_inner);
-            environments.insert(environment_id, Arc::clone(&environment))
-        };
-        drop(replaced);
-        environment.start_connecting();
-        Ok(())
-    }
-}
-
-fn validate_environment_id(environment_id: &str) -> Result<(), ExecServerError> {
-    if environment_id.is_empty() {
-        return Err(ExecServerError::Protocol(
-            "environment id cannot be empty".to_string(),
-        ));
-    }
-    if environment_id == LOCAL_ENVIRONMENT_ID {
-        return Err(ExecServerError::Protocol(format!(
-            "environment id `{LOCAL_ENVIRONMENT_ID}` is reserved for EnvironmentManager"
-        )));
-    }
-    Ok(())
 }
 
 /// Concrete execution/filesystem environment selected for a session.
@@ -376,9 +342,6 @@ fn validate_environment_id(environment_id: &str) -> Result<(), ExecServerError> 
 pub struct Environment {
     remote_client: Option<LazyRemoteExecServerClient>,
     ready_info: Arc<ArcSwapOption<EnvironmentReadyInfo>>,
-    // No sender means an ordinary environment. A provisioned environment retains a sender whose
-    // value is None while Pending, Some(Ok(())) when Ready, or Some(Err(error)) when Failed.
-    provisioning_status_tx: Option<watch::Sender<Option<Result<(), String>>>>,
     // Dropping the environment stops unfinished background startup work.
     startup_task: Arc<Mutex<Option<AbortOnDropHandle<()>>>>,
     exec_backend: Arc<dyn ExecBackend>,
@@ -393,7 +356,6 @@ impl Environment {
         Self {
             remote_client: None,
             ready_info: Arc::new(ArcSwapOption::empty()),
-            provisioning_status_tx: None,
             startup_task: Arc::new(Mutex::new(None)),
             exec_backend: Arc::new(LocalProcess::default()),
             filesystem: Arc::new(LocalFileSystem::unsandboxed()),
@@ -455,7 +417,6 @@ impl Environment {
         Self {
             remote_client: None,
             ready_info: Arc::new(ArcSwapOption::empty()),
-            provisioning_status_tx: None,
             startup_task: Arc::new(Mutex::new(None)),
             exec_backend: Arc::new(LocalProcess::with_local_runtime_paths(
                 local_runtime_paths.clone(),
@@ -488,7 +449,6 @@ impl Environment {
         Self {
             remote_client: Some(client.clone()),
             ready_info: Arc::new(ArcSwapOption::empty()),
-            provisioning_status_tx: None,
             startup_task: Arc::new(Mutex::new(None)),
             exec_backend,
             filesystem,
@@ -499,51 +459,6 @@ impl Environment {
 
     pub fn is_remote(&self) -> bool {
         self.remote_client.is_some()
-    }
-
-    fn apply_error_report(
-        &self,
-        environment_id: &str,
-        error: String,
-    ) -> Result<(), ExecServerError> {
-        let Some(provisioning_status_tx) = &self.provisioning_status_tx else {
-            return Ok(());
-        };
-        let mut transition_error = None;
-        provisioning_status_tx.send_if_modified(|current| match current.as_ref() {
-            None => {
-                *current = Some(Err(error.clone()));
-                true
-            }
-            Some(Ok(())) => {
-                transition_error = Some(ExecServerError::Protocol(format!(
-                    "environment `{environment_id}` is already ready, but a later provisioning report failed: {error}"
-                )));
-                false
-            }
-            Some(Err(_)) => false,
-        });
-
-        transition_error.map_or(Ok(()), Err)
-    }
-
-    fn apply_ready_report(
-        &self,
-        environment_id: &str,
-        ready_info: EnvironmentReadyInfo,
-    ) -> Result<(), ExecServerError> {
-        let Some(provisioning_status_tx) = &self.provisioning_status_tx else {
-            return Ok(());
-        };
-        let mut transition_error = None;
-        provisioning_status_tx.send_if_modified(|current| {
-            self.ready_info.store(Some(Arc::new(ready_info.clone())));
-            let was_ready = matches!(current, Some(Ok(())));
-            *current = Some(Ok(()));
-            !was_ready
-        });
-
-        transition_error.map_or(Ok(()), Err)
     }
 
     /// Returns a snapshot of the last accepted Ready report.

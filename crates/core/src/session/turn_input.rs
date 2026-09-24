@@ -664,7 +664,7 @@ async fn merge_additional_context_input(
 async fn pending_turn_input(
     session: &Session,
     input: SubmittedTurnInput,
-    turn_id: &str,
+    _turn_id: &str,
 ) -> TurnInput {
     match input {
         SubmittedTurnInput::UserInput { content, client_id } => TurnInput::UserInput {

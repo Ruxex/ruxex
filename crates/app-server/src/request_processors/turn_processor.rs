@@ -304,7 +304,7 @@ impl TurnRequestProcessor {
 
     async fn ensure_direct_input_allowed(
         &self,
-        request_id: &ConnectionRequestId,
+        _request_id: &ConnectionRequestId,
         thread: &CodexThread,
     ) -> Result<(), JSONRPCErrorError> {
         ensure_direct_input_allowed(thread)
@@ -966,12 +966,8 @@ impl TurnRequestProcessor {
                     ),
                     NotSubmittedReason::ActiveTurnNotSteerable { turn_kind } => {
                         let message = match turn_kind {
-                            codex_protocol::protocol::NonSteerableTurnKind::Review => (
-                                "cannot steer a review turn".to_string()
-                            ),
-                            codex_protocol::protocol::NonSteerableTurnKind::Compact => (
-                                "cannot steer a compact turn".to_string()
-                            ),
+                            codex_protocol::protocol::NonSteerableTurnKind::Review => "cannot steer a review turn".to_string(),
+                            codex_protocol::protocol::NonSteerableTurnKind::Compact => "cannot steer a compact turn".to_string(),
                         };
                         let error = TurnError {
                             misalignment: None,
@@ -1100,7 +1096,7 @@ impl TurnRequestProcessor {
                 "paginated threads do not support detached review",
             ));
         }
-        let mut config = parent_thread.config().await.as_ref().clone();
+        let config = parent_thread.config().await.as_ref().clone();
         let AgentRun {
             thread_id,
             thread: review_thread,

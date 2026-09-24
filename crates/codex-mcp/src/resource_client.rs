@@ -3,13 +3,10 @@ use std::sync::Weak;
 
 use anyhow::Context;
 use anyhow::Result;
-use anyhow::anyhow;
 use codex_protocol::mcp::Resource;
 use codex_protocol::mcp::ResourceContent;
-use codex_rmcp_client::RmcpClient;
 use rmcp::model::PaginatedRequestParams;
 use rmcp::model::ReadResourceRequestParams;
-use serde::Deserialize;
 
 use crate::McpRuntime;
 use crate::connection_manager::McpConnectionSet;

@@ -17,7 +17,6 @@ use crate::loader::PluginSkillInventory;
 use crate::loader::load_plugin_mcp_servers;
 use crate::loader::load_plugin_skill_inventory;
 use crate::manager::ConfiguredMarketplacePlugin;
-use crate::manifest::PluginManifestFormat;
 use crate::manifest::load_plugin_manifest_with_format;
 use crate::marketplace::MarketplaceError;
 use crate::marketplace::MarketplacePluginSource;
@@ -62,7 +61,7 @@ impl ToolSuggestMetadataFragment {
         skill_config_rules: &SkillConfigRules,
         _auth_mode: Option<codex_protocol::auth::AuthMode>,
     ) -> PluginCapabilitySummary {
-        let mut mcp_servers = self
+        let mcp_servers = self
             .mcp_server_names
             .iter()
             .cloned()

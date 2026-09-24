@@ -260,7 +260,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
         json: json_mode,
         prompt,
         output_schema: output_schema_path,
-        mut config_overrides,
+        config_overrides,
     } = cli;
     let shared = shared.into_inner();
     let SharedCliOptions {

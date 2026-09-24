@@ -17,7 +17,6 @@ use codex_protocol::capabilities::CapabilityRootLocation;
 use codex_protocol::capabilities::SelectedCapabilityRoot;
 use codex_protocol::config_types::ShellEnvironmentPolicy;
 use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::EnvironmentConfig;
 use codex_protocol::protocol::EnvironmentConfigState;
 use codex_protocol::protocol::EnvironmentConnectionEvent;
@@ -921,26 +920,6 @@ pub struct TurnEnvironmentSnapshot {
 }
 
 impl TurnEnvironmentSnapshot {
-    pub(crate) fn has_full_access(
-        &self,
-        approval_policy: AskForApproval,
-        thread_profile: &PermissionProfile,
-    ) -> bool {
-        codex_protocol::protocol::has_full_access(
-            approval_policy,
-            thread_profile,
-            self.refresh_readiness()
-                .environments
-                .iter()
-                .map(|environment| match environment {
-                    TurnEnvironmentState::Ready(environment) => &environment.selection.config,
-                    TurnEnvironmentState::Starting(_) | TurnEnvironmentState::Failed { .. } => {
-                        &EnvironmentConfigState::Pending
-                    }
-                }),
-        )
-    }
-
     /// Promotes completed startup work without adopting newer thread selections.
     pub(crate) fn refresh_readiness(&self) -> Self {
         let environments = self

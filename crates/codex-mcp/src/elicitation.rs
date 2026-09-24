@@ -263,7 +263,7 @@ impl ElicitationRequestManager {
         &self,
         server_name: String,
         tx_event: Option<Sender<Event>>,
-        client_mcp_extensions: &ClientMcpExtensions,
+        _client_mcp_extensions: &ClientMcpExtensions,
     ) -> SendElicitation {
         // Event receivers such as codex mcp-server do not necessarily handle verification.
         // Only wait for a response when trusted host activation enabled this exact route.
@@ -331,7 +331,7 @@ impl ElicitationRequestManager {
                 let ElicitationAuthority {
                     config,
                     reviewer,
-                    lifecycle,
+                    lifecycle: _,
                     ..
                 } = &authority;
                 let approval_policy = config.approval_policy.value();

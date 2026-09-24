@@ -231,7 +231,7 @@ impl ConfigRequestProcessor {
         &self,
         params: ConfigValueWriteParams,
     ) -> Result<ConfigWriteResponse, JSONRPCErrorError> {
-        let pending_changes = codex_core_plugins::toggles::collect_plugin_enabled_candidates(
+        let _pending_changes = codex_core_plugins::toggles::collect_plugin_enabled_candidates(
             [(&params.key_path, &params.value)].into_iter(),
         );
         let response = self
@@ -246,7 +246,7 @@ impl ConfigRequestProcessor {
         &self,
         params: ConfigBatchWriteParams,
     ) -> Result<ConfigWriteResponse, JSONRPCErrorError> {
-        let pending_changes = codex_core_plugins::toggles::collect_plugin_enabled_candidates(
+        let _pending_changes = codex_core_plugins::toggles::collect_plugin_enabled_candidates(
             params
                 .edits
                 .iter()

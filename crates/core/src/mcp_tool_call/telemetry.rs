@@ -72,7 +72,7 @@ fn mcp_call_metric_tags(
     server_name: &str,
     tool_name: &str,
 ) -> Vec<(&'static str, String)> {
-    let mut tags = vec![
+    let tags = vec![
         ("status", sanitize_metric_tag_value(status)),
         ("server", sanitize_metric_tag_value(server_name)),
         ("tool", sanitize_metric_tag_value(tool_name)),

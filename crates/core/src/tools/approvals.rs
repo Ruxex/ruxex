@@ -9,7 +9,6 @@ use crate::session::session::Session;
 use crate::tools::hook_names::HookToolName;
 use crate::tools::runtimes::apply_patch::ApplyPatchApprovalKey;
 use crate::tools::runtimes::unified_exec::UnifiedExecApprovalKey;
-use crate::tools::sandboxing::ApprovalRequestReasons;
 use crate::tools::sandboxing::PermissionRequestPayload;
 use crate::tools::sandboxing::ToolError;
 use crate::tools::sandboxing::with_cached_approval;
@@ -38,7 +37,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tokio_util::sync::CancellationToken;
 use tracing::error;
-use tracing::warn;
 
 #[derive(Clone)]
 pub(crate) struct ApprovalReviewContext {
@@ -339,7 +337,7 @@ struct ApprovalResolution {
 }
 
 impl ApprovalResolution {
-    fn into_tool_result(self, model_info: &ModelInfo) -> Result<ReviewDecision, ToolError> {
+    fn into_tool_result(self, _model_info: &ModelInfo) -> Result<ReviewDecision, ToolError> {
         let source = self.source;
         match self.decision {
             ReviewDecision::ApprovedMcpPolicyAmendment => {

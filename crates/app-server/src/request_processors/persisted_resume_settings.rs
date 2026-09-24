@@ -16,7 +16,7 @@ pub(super) fn latest_persisted_resume_settings(
         .iter()
         .enumerate()
         .rev()
-        .find_map(|(index, item)| match item {
+        .find_map(|(_index, item)| match item {
             RolloutItem::TurnContext(turn_context) => Some(PersistedResumeSettings {
                 approval_policy: turn_context.approval_policy,
                 active_permission_profile: turn_context.active_permission_profile.clone(),

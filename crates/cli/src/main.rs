@@ -2473,7 +2473,7 @@ fn merge_interactive_cli_flags(interactive: &mut TuiCli, subcommand_cli: TuiCli)
         no_alt_screen,
         no_daemon,
         prompt,
-        mut config_overrides,
+        config_overrides,
         ..
     } = subcommand_cli;
     interactive

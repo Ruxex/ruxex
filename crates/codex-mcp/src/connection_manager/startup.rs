@@ -13,7 +13,6 @@ use codex_rmcp_client::McpLoginRequirement;
 
 use crate::rmcp_client::DEFAULT_STARTUP_TIMEOUT;
 use crate::rmcp_client::StartupOutcomeError;
-use crate::server::EffectiveMcpServer;
 
 pub(super) async fn emit_update(
     submit_id: &str,

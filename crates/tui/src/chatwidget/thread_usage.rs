@@ -1,6 +1,5 @@
 //! Demand-driven estimated-cost state for the currently visible enterprise thread.
 
-use super::AppEvent;
 use super::ChatWidget;
 use super::Duration;
 use super::Instant;

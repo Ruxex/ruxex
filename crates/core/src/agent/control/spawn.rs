@@ -708,8 +708,8 @@ impl AgentControl {
         }
 
         if let Some(SessionSource::SubAgent(
-            subagent_source @ SubAgentSource::ThreadSpawn {
-                parent_thread_id, ..
+            _subagent_source @ SubAgentSource::ThreadSpawn {
+                parent_thread_id: _, ..
             },
         )) = notification_source.as_ref()
         {

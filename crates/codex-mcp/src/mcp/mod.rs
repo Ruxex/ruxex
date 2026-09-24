@@ -20,9 +20,7 @@ use std::time::Duration;
 
 use codex_config::Constrained;
 use codex_config::McpEnterpriseManagedAuthConfig;
-use codex_config::McpServerAuth;
 use codex_config::McpServerConfig;
-use codex_config::McpServerTransportConfig;
 use codex_config::types::AppToolApproval;
 use codex_config::types::AuthKeyringBackendKind;
 use codex_config::types::OAuthCredentialsStoreMode;
@@ -289,11 +287,11 @@ pub fn effective_mcp_servers(
 pub fn effective_mcp_servers_from_configured(
     configured_servers: HashMap<String, McpServerConfig>,
     config: &McpConfig,
-    auth: Option<&CodexAuth>,
+    _auth: Option<&CodexAuth>,
 ) -> HashMap<String, EffectiveMcpServer> {
     let servers = configured_servers
         .into_iter()
-        .map(|(name, mut server)| {
+        .map(|(name, server)| {
             let agent_plugin = config
                 .mcp_server_catalog
                 .server(&name)

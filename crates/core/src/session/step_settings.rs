@@ -1,7 +1,6 @@
 //! Configured inputs retained independently of future thread settings.
 
 use crate::config::Constrained;
-use crate::config::ConstraintError;
 use crate::config::ConstraintResult;
 use codex_config::ConfigRequirements;
 use codex_models_manager::ModelsManagerConfig;
@@ -130,7 +129,7 @@ impl ResolvedStepSettings {
         } else {
             Arc::new(selected.resolve_model_info(models_manager, overrides).await)
         };
-        let mut next = Self::new(Arc::new(selected), model_info, fast_mode_enabled);
+        let next = Self::new(Arc::new(selected), model_info, fast_mode_enabled);
         Ok(next)
     }
 
