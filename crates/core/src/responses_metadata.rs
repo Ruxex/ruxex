@@ -124,6 +124,25 @@ pub(crate) struct CompactionTurnMetadata {
     strategy: CompactionStrategy,
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn prefix_compaction_strategy_is_serialized() {
+        let metadata = CompactionTurnMetadata::new(
+            CompactionTrigger::Auto,
+            CompactionReason::ContextLimit,
+            CompactionImplementation::Responses,
+            CompactionPhase::MidTurn,
+        )
+        .with_strategy(CompactionStrategy::PrefixCompaction);
+
+        let metadata = serde_json::to_value(metadata).expect("serialize compaction metadata");
+        assert_eq!(metadata["strategy"], "prefix_compaction");
+    }
+}
+
 impl CompactionTurnMetadata {
     pub(crate) fn new(
         trigger: CompactionTrigger,
@@ -138,6 +157,11 @@ impl CompactionTurnMetadata {
             phase,
             strategy: CompactionStrategy::Memento,
         }
+    }
+
+    pub(crate) fn with_strategy(mut self, strategy: CompactionStrategy) -> Self {
+        self.strategy = strategy;
+        self
     }
 
     pub(crate) fn trigger(self) -> CompactionTrigger {

@@ -22,6 +22,7 @@ use crate::util::backoff;
 use crate::responses_metadata::CompactionImplementation;
 use crate::responses_metadata::CompactionPhase;
 use crate::responses_metadata::CompactionReason;
+use crate::responses_metadata::CompactionStrategy;
 use crate::responses_metadata::CompactionTrigger;
 use codex_context_fragments::AnnotatedContent;
 use codex_context_fragments::set_annotated_content;
@@ -196,7 +197,7 @@ async fn run_compact_task_inner_impl(
     turn_context: Arc<TurnContext>,
     input: Vec<UserInput>,
     initial_context_injection: InitialContextInjection,
-    compaction_metadata: CompactionTurnMetadata,
+    mut compaction_metadata: CompactionTurnMetadata,
 ) -> CodexResult<String> {
     let compaction_item = TurnItem::ContextCompaction(ContextCompactionItem::new());
     sess.emit_turn_item_started(&turn_context, &compaction_item)
@@ -215,10 +216,6 @@ async fn run_compact_task_inner_impl(
     // Reuse one client session so turn-scoped state (sticky routing, websocket incremental
     // request tracking)
     // survives retries within this compact turn.
-    let responses_metadata = sess
-        .compaction_responses_metadata(turn_context.as_ref(), compaction_metadata)
-        .await;
-
     let compaction_response_id = loop {
         // Clone is required because of the loop
         let mut turn_input = history
@@ -233,6 +230,9 @@ async fn run_compact_task_inner_impl(
             base_instructions: sess.get_prompt_base_instructions().await,
             ..Default::default()
         };
+        let responses_metadata = sess
+            .compaction_responses_metadata(turn_context.as_ref(), compaction_metadata)
+            .await;
         let attempt_result = drain_to_completed(
             &sess,
             turn_context.as_ref(),
@@ -268,6 +268,8 @@ async fn run_compact_task_inner_impl(
                     error!(
                         "Context window exceeded while compacting; removing oldest history item. Error: {e}"
                     );
+                    compaction_metadata =
+                        compaction_metadata.with_strategy(CompactionStrategy::PrefixCompaction);
                     history.remove_first_item();
                     retries = 0;
                     continue;

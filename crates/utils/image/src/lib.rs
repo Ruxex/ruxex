@@ -71,6 +71,11 @@ pub struct PromptImageResizeLimits {
 }
 
 impl PromptImageMode {
+    /// Resize policy for low-detail prompt images.
+    pub const LOW_DETAIL: Self = Self::ResizeWithLimits(PromptImageResizeLimits {
+        max_dimension: 512,
+        max_patches: 256,
+    });
     /// Resize policy for high-detail prompt images.
     pub const HIGH_DETAIL: Self = Self::ResizeWithLimits(PromptImageResizeLimits {
         max_dimension: 2048,

@@ -165,6 +165,12 @@ async fn detail_policies_apply_the_expected_budgets() {
             (3200, 3200),
         ),
         (
+            Some(ImageDetail::Low),
+            ImageDetailSetting::Low,
+            (2048, 2048),
+            (512, 512),
+        ),
+        (
             Some(ImageDetail::Auto),
             ImageDetailSetting::High,
             (2048, 2048),
@@ -585,14 +591,11 @@ async fn preparation_replaces_only_failed_tool_images_and_preserves_metadata() {
                     FunctionCallOutputContentItem::InputText {
                         text: IMAGE_PROCESSING_ERROR_PLACEHOLDER.to_string(),
                     },
-                    FunctionCallOutputContentItem::InputText {
-                        text: UNSUPPORTED_LOW_DETAIL_PLACEHOLDER.to_string(),
-                    },
                     FunctionCallOutputContentItem::InputImage {
                         image: ImageReference::Inline {
                             image_url: expected_valid_image_url
                         },
-                        detail: Some(ImageDetail::High),
+                        detail: Some(ImageDetail::Low),
                     },
                 ]),
                 success: Some(true),
@@ -608,10 +611,6 @@ fn preparation_errors_use_bounded_actionable_placeholders() {
         (
             ImagePreparationError::RemoteUrlUnsupported,
             REMOTE_IMAGE_URL_PLACEHOLDER,
-        ),
-        (
-            ImagePreparationError::UnsupportedLowDetail,
-            UNSUPPORTED_LOW_DETAIL_PLACEHOLDER,
         ),
         (
             ImagePreparationError::Processing(ImageProcessingError::ImageTooLarge {

@@ -30,7 +30,6 @@ pub(crate) const IMAGE_PROCESSING_ERROR_PLACEHOLDER: &str =
     "image content omitted because it could not be processed";
 const IMAGE_TOO_LARGE_PLACEHOLDER: &str =
     "image content omitted because it exceeded the supported size limit; use a smaller image";
-const UNSUPPORTED_LOW_DETAIL_PLACEHOLDER: &str = "image content omitted because detail 'low' is not supported; use 'high', 'original', or 'auto'";
 const REMOTE_IMAGE_URL_PLACEHOLDER: &str =
     "image content omitted because remote image URLs are not supported";
 
@@ -115,8 +114,6 @@ impl PreparedInlineImage {
 pub(crate) enum ImagePreparationError {
     #[error("remote image URLs are not supported")]
     RemoteUrlUnsupported,
-    #[error("image detail `low` is not supported")]
-    UnsupportedLowDetail,
     #[error(transparent)]
     Processing(#[from] ImageProcessingError),
 }
@@ -125,7 +122,6 @@ impl ImagePreparationError {
     fn placeholder(&self) -> &'static str {
         match self {
             ImagePreparationError::RemoteUrlUnsupported => REMOTE_IMAGE_URL_PLACEHOLDER,
-            ImagePreparationError::UnsupportedLowDetail => UNSUPPORTED_LOW_DETAIL_PLACEHOLDER,
             ImagePreparationError::Processing(ImageProcessingError::ImageTooLarge { .. }) => {
                 IMAGE_TOO_LARGE_PLACEHOLDER
             }
@@ -409,7 +405,7 @@ pub(crate) fn resize_image(
                 ImageDetailSetting::Original,
                 PromptImageMode::ORIGINAL_DETAIL,
             ),
-            Some(ImageDetail::Low) => return Err(ImagePreparationError::UnsupportedLowDetail),
+            Some(ImageDetail::Low) => (ImageDetailSetting::Low, PromptImageMode::LOW_DETAIL),
         },
     };
     let encoded = load_data_url_for_prompt(image_url, image_mode)?;

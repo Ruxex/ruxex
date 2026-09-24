@@ -280,6 +280,7 @@ fn data_url_processing_rejects_malformed_input() {
 #[tokio::test(flavor = "multi_thread")]
 async fn detail_modes_apply_expected_budgets() {
     for (mode, input_dimensions, expected_dimensions) in [
+        (PromptImageMode::LOW_DETAIL, (1024, 2048), (256, 512)),
         (PromptImageMode::HIGH_DETAIL, (2048, 2048), (1600, 1600)),
         (PromptImageMode::ORIGINAL_DETAIL, (6401, 100), (6000, 94)),
     ] {

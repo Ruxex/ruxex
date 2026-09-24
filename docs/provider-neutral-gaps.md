@@ -18,9 +18,9 @@ OpenAI 固有機能の除去後に残ったコードを調査し、汎用プロ�
 | G-1 | MCP ツールカタログの動的 refresh | 実装済み | 高 | server 単位の汎用 refresh 経路を追加済み |
 | G-2 | 自作マーケットプレイスの publish/upload | 部分実装 | 中 | 汎用 HTTP registry 向け CLI publish client を追加。registry server と app-server API は別途実装する |
 | G-3 | 拡張機能からの turn 中断 | 実装済み | 中 | extension event sink から listener 経由で Core の対象 turn を中断する |
-| G-4 | リトライ終了後の再開情報 | 未接続 | 中 | producer と consumer を定義する |
+| G-4 | リトライ終了後の再開情報 | 対象外 | - | consumer 不在の未使用 producer は削除し、必要になった時点で再設計する |
 | G-5 | 画像 detail の `low` / `auto` | 部分実装 | 中 | provider capability と変換方針を定義する |
-| G-6 | Prefix compaction | 部分実装 | 低 | 現行 Memento との差分を設計してから実装する |
+| G-6 | Prefix compaction | 実装済み | 低 | コンテキスト超過時に自動適用。ユーザー選択設定は追加しない |
 | G-7 | 非 Responses wire API の完全なサポート | 未実装 | 高 | provider transport 境界を再設計する |
 
 ## G-1: MCP ツールカタログの動的 refresh
@@ -91,20 +91,22 @@ host が中断 API を提供しない場合は no-op とし、app-server では 
 
 ## G-4: リトライ終了後の再開情報
 
-Responses stream のリトライ自体は実装されている。最大リトライ回数を超えた時点で [`ExhaustedResponseRetry`](../crates/core/src/responses_retry.rs) を thread extension data に保存するが、現在その値を読む consumer はない。
+Responses stream のリトライ自体は既存のリトライループで完結している。リトライ終了後の
+`retry_at` を後続処理へ渡す consumer はこのフォークに存在せず、自動再試行や UI／extension
+通知を追加しても、ツール実行などの副作用を重複させる安全な再開契約がない。
 
-そのため、次のどちらを提供するかが未決定である。
-
-- 次回 turn で retry-at を考慮して自動再試行する
-- UI/extension に「再試行可能時刻」を通知するだけにする
-
-また、型名と metadata が Responses API 前提なので、汎用 retry state と provider-specific retry advice を分離する必要がある。
+そのため、G-4 は現時点では実装対象外とする。consumer 不在の retry advice producer、thread
+extension data、protocol／UI accessor などの未使用コードが見つかった場合は残さず削除する。
+将来、安全な再開 consumer と重複実行を防ぐ契約が必要になった時点で、provider-neutral な
+retry advice として改めて設計する。
 
 ## G-5: 画像 detail の provider capability
 
-現在の画像処理は `high` と `original` を実際に扱う。`auto` は `high` に正規化され、`low` は unsupported として画像を省略する。
+Responses API の `input_image.detail` で定義される `auto`、`low`、`high`、`original` を受け付ける。
+`auto` は指定値を wire request に保持し、ローカル前処理では安全側の `high` 相当を使う。
+`low` は 512px 四方相当へ縮小してから送信し、未対応値として画像を省略しない。
 
-これは OpenAI 専用機能の残骸というより、provider capability の不足である。provider によって `low`、`auto`、`original` の意味や上限が異なるため、次の capability が必要になる可能性がある。
+これは OpenAI Responses 互換経路の実装であり、provider capability の差異を表現する仕組みは別途必要である。provider によって `low`、`auto`、`original` の意味や上限が異なるため、次の capability が必要になる可能性がある。
 
 - 対応する detail 値
 - provider ごとの最大画像サイズ・変換規則
@@ -113,14 +115,9 @@ Responses stream のリトライ自体は実装されている。最大リトラ
 
 ## G-6: Prefix compaction
 
-compaction の共通型には `Memento` と `PrefixCompaction` があるが、現行の生成経路は `Memento` のみである。ユーザー入力の identity も `Regenerate` が現行経路で、`Preserve` は使われていない。
+通常の compaction は `Memento` として要約を生成して履歴を置換する。要約リクエスト自体がコンテキスト上限を超えた場合は、元の OpenAI 版にあるフォールバックに合わせ、履歴の先頭から項目を削って直近の履歴を残したまま再試行する。この再試行以降の request metadata には `strategy: "prefix_compaction"` を記録する。
 
-ローカル compaction 自体は汎用 agent 機能だが、compaction metadata と request transport は現在 Responses API 形状を強く持つ。Prefix compaction を追加する場合は、先に次を決める必要がある。
-
-- provider が履歴 prefix を保持する場合の契約
-- message identity を保持・再生成する条件
-- thread history / rollback との互換性
-- local compaction と provider-backed compaction の capability 表現
+これは利用者が圧縮方式を選ぶ設定ではなく、コンテキスト超過時だけ自動適用されるリトライ経路である。ローカル compaction と Responses API 形状の metadata は引き続き provider-neutral な共通処理から利用し、provider-specific な履歴保持契約は追加しない。
 
 ## G-7: 非 Responses wire API の完全なサポート
 
