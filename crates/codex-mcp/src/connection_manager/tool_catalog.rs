@@ -3,6 +3,9 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
 
+use anyhow::Context;
+use anyhow::Result;
+use anyhow::anyhow;
 use futures::future::join_all;
 use tracing::Instrument;
 use tracing::instrument;
@@ -17,6 +20,7 @@ use crate::binding_clients::McpBindingClients;
 use crate::client_tool_catalog::ClientToolCatalogRevision;
 use crate::client_tool_catalog::ToolCatalogSnapshot;
 use crate::rmcp_client::ManagedClient;
+use crate::rmcp_client::prepare_mcp_tools_for_model;
 use crate::tools::ToolInfo;
 use crate::tools::filter_tools;
 use crate::tools::normalize_tools_for_model_with_prefix;
@@ -115,6 +119,73 @@ impl McpConnectionSet {
             );
         }
         Some(revisions)
+    }
+
+    /// Re-fetches one live server's tools/list catalog and publishes it to the exact client.
+    /// Existing bindings keep their captured snapshot; subsequent bindings observe the new
+    /// revision and stale prepared calls are rejected before preparation.
+    pub(crate) async fn refresh_server_tool_catalog(
+        &self,
+        server_name: &str,
+    ) -> Result<Vec<ToolInfo>> {
+        let view = self
+            .servers
+            .get(server_name)
+            .ok_or_else(|| anyhow!("unknown MCP server '{server_name}'"))?;
+        let managed_client = view
+            .connection
+            .client()
+            .await
+            .with_context(|| format!("failed to get client for MCP server '{server_name}'"))?;
+        let server_name_for_fetch = server_name.to_string();
+        let client = Arc::clone(&managed_client.client);
+        let timeout = view.tool_timeout;
+        let catalog_item_limit = view.catalog_item_limit;
+        let server_instructions = managed_client.server_instructions.clone();
+        let cache_context = view.connection.client.tool_catalog_cache_context.clone();
+        let fetch_cache_context = cache_context.clone();
+        let fetch_ticket = fetch_cache_context
+            .as_ref()
+            .map(crate::tool_catalog_cache::McpToolCatalogCacheContext::begin_fetch);
+
+        managed_client
+            .tool_catalog
+            .refresh(
+                || async move {
+                    let tools = crate::rmcp_client::list_tools_for_client_uncached(
+                        &server_name_for_fetch,
+                        &client,
+                        timeout,
+                        catalog_item_limit,
+                        server_instructions.as_deref(),
+                    )
+                    .await
+                    .with_context(|| {
+                        format!(
+                            "failed to refresh tools for MCP server '{server_name_for_fetch}'"
+                        )
+                    })?;
+                    Ok((tools, fetch_ticket))
+                },
+                |tools, fetch_ticket| {
+                    if let (Some(cache_context), Some(fetch_ticket)) =
+                        (cache_context.as_ref(), fetch_ticket)
+                    {
+                        cache_context.publish_if_newest(fetch_ticket, tools);
+                    }
+                },
+            )
+            .await?;
+
+        let tools = filter_tools(managed_client.listed_tools().await, &view.tool_filter);
+        let tools = prepare_mcp_tools_for_model(tools, &self.tool_plugin_context)
+            .into_iter()
+            .map(|tool| Self::with_server_metadata(tool, &view.metadata));
+        Ok(normalize_tools_for_model_with_prefix(
+            tools,
+            self.prefix_mcp_tool_names,
+            &self.non_prefixed_mcp_tool_servers,
+        ))
     }
 
     /// Returns all tools with model-visible names normalized.
@@ -397,4 +468,17 @@ impl McpConnectionSet {
             .map(|origin| origin.as_str().to_string());
         tool
     }
+}
+
+#[cfg(test)]
+#[tokio::test]
+async fn refreshing_unknown_server_returns_an_error() {
+    let manager = McpConnectionSet::empty(false);
+
+    let error = manager
+        .refresh_server_tool_catalog("missing")
+        .await
+        .expect_err("unknown MCP servers must not be refreshable");
+
+    assert_eq!(error.to_string(), "unknown MCP server 'missing'");
 }

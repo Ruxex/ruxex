@@ -452,6 +452,16 @@ impl McpRuntime {
         self.latest_connections().list_all_tools().await
     }
 
+    /// Re-fetches and publishes the current catalog for one configured MCP server.
+    pub async fn refresh_server_tool_catalog(
+        &self,
+        server_name: &str,
+    ) -> anyhow::Result<Vec<ToolInfo>> {
+        self.latest_connections()
+            .refresh_server_tool_catalog(server_name)
+            .await
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub async fn latest_call_tool(
         &self,

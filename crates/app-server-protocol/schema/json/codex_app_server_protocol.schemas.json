@@ -1705,7 +1705,14 @@
               "type": "string"
             },
             "params": {
-              "type": "null"
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/McpServerRefreshParams"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -3930,6 +3937,18 @@
       "title": "McpServerElicitationRequestResponse",
       "type": "object"
     },
+    "McpServerRefreshParams": {
+      "properties": {
+        "serverName": {
+          "description": "When set, refresh only this server's live tools/list catalog. Omission retains the existing configuration reload behavior.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
     "NetworkApprovalContext": {
       "properties": {
         "host": {
@@ -3975,6 +3994,18 @@
         "deny"
       ],
       "type": "string"
+    },
+    "Option<McpServerRefreshParams>": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/McpServerRefreshParams"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Nullable_McpServerRefreshParams"
     },
     "ParsedCommand": {
       "oneOf": [

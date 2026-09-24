@@ -203,7 +203,13 @@ impl From<CoreMcpToolCallError> for McpToolCallError {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
-pub struct McpServerRefreshParams {}
+pub struct McpServerRefreshParams {
+    /// When set, refresh only this server's live tools/list catalog. Omission
+    /// retains the existing configuration reload behavior.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional = nullable)]
+    pub server_name: Option<String>,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
 #[serde(rename_all = "camelCase")]

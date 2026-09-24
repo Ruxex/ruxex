@@ -2056,6 +2056,18 @@ impl Session {
         self.schedule_mcp_prewarm();
     }
 
+    pub(crate) async fn refresh_mcp_server_tools(
+        self: &Arc<Self>,
+        server_name: &str,
+    ) -> anyhow::Result<()> {
+        self.refresh_mcp_if_dirty().await;
+        self.services
+            .mcp_runtime
+            .refresh_server_tool_catalog(server_name)
+            .await
+            .map(|_| ())
+    }
+
     fn emit_config_changed_contributors(
         &self,
         previous_config: Option<&Config>,

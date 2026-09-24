@@ -15,7 +15,7 @@ OpenAI 固有機能の除去後に残ったコードを調査し、汎用プロ�
 
 | ID | 機能 | 状態 | 優先度 | 判断 |
 |---|---|---|---|---|
-| G-1 | MCP ツールカタログの動的 refresh | 未接続 | 高 | 汎用 MCP の更新要求経路を追加する |
+| G-1 | MCP ツールカタログの動的 refresh | 実装済み | 高 | server 単位の汎用 refresh 経路を追加済み |
 | G-2 | 自作マーケットプレイスの publish/upload | 部分実装 | 中 | bundle pack を保持し、公開 API は別途設計する |
 | G-3 | 拡張機能からの turn 中断 | 未接続 | 中 | 汎用 extension API として接続する |
 | G-4 | リトライ終了後の再開情報 | 未接続 | 中 | producer と consumer を定義する |
@@ -27,7 +27,7 @@ OpenAI 固有機能の除去後に残ったコードを調査し、汎用プロ�
 
 ### 現状
 
-[`ClientToolCatalog::refresh`](../crates/codex-mcp/src/client_tool_catalog.rs) は、fetch・publication・revision 管理・実行中 call との整合性を実装している。しかし、現在のコードにはこのメソッドを呼び出す汎用 MCP 経路がない。
+[`ClientToolCatalog::refresh`](../crates/codex-mcp/src/client_tool_catalog.rs) は、fetch・publication・revision 管理・実行中 call との整合性を実装している。現在は `McpConnectionSet` の server 単位 API からこの処理を呼び出せる。
 
 以前の呼び出し側は ChatGPT Apps/Connectors の専用カタログ更新処理だった。これは OpenAI のモデルプロバイダ機能ではなく、Apps の削除時に呼び出し側が削除されたものだが、通常の MCP server に対しても次のような更新要求は汎用機能になり得る。
 
@@ -36,9 +36,13 @@ OpenAI 固有機能の除去後に残ったコードを調査し、汎用プロ�
 - server 側の更新通知を受けた場合の refresh
 - refresh 中の既存 call、失敗、stale snapshot の扱い
 
-### 不足しているもの
+### 対応済み
 
-`McpConnectionSet` などから、対象 server を指定して再取得・公開する API と、その呼び出しトリガーがない。単に `refresh` を削除するのではなく、汎用 MCP runtime の更新契約として接続する必要がある。
+`McpConnectionSet`、MCP runtime、core session、app-server の `mcpServer/reload` を接続し、`serverName` を指定した場合に live な `tools/list` を再取得・公開する。initialize 時の server instruction も再利用するため、旧 OpenAI Apps 経路と同じくツール準備・cache ticket・revision 更新を通る。
+
+refresh 前に作られた binding は既存 snapshot を保持し、refresh 後に作られた binding は新しい revision を参照する。refresh 中の call と stale snapshot は既存の `ClientToolCatalog` 契約で処理する。`serverName` を省略した既存の `mcpServer/reload` は従来どおり設定 reload として動作する。
+
+server 側通知を自動的に refresh へ変換する producer はまだなく、必要になった時点で MCP notification の契約を追加する。
 
 ## G-2: 自作マーケットプレイスの publish/upload
 
@@ -131,7 +135,7 @@ compaction の共通型には `Memento` と `PrefixCompaction` があるが、�
 
 | 機能 | 現状 |
 |---|---|
-| MCP server instruction | initialize 時の instruction はツールの namespace description に反映される。重複保存フィールドだけ削除済み |
+| MCP server instruction | initialize 時の instruction はツールの namespace description に反映され、live refresh の再取得にも再利用する |
 | MCP tool provenance | 通常の `prepare_mcp_tools_for_model` が plugin 名を付与する |
 | context window token status | 現行の `context_window_token_status` が model info を取得して計算する。旧 wrapper は削除済み |
 | managed requirements | `apply_exact_requirement` が現行経路。旧 leaf/helper は削除済み |
@@ -140,12 +144,11 @@ compaction の共通型には `Memento` と `PrefixCompaction` があるが、�
 
 ## 推奨する実装順
 
-1. **MCP refresh API**: server 単位の refresh、失敗時の扱い、stale call 防止を先に確定する。
-2. **Marketplace publish contract**: bundle、署名、認証、version、registry API を決めてから pack を production API に昇格する。
-3. **Provider capability 拡張**: image detail、tool/structured output、streaming、compaction を capability として整理する。
-4. **Extension context**: extension interruption の producer/consumer を接続する。
-5. **Retry / compaction metadata**: Responses 固有の型を provider-neutral な state と adapter に分離する。
-6. **非 Responses wire API**: 最後に transport と request/event model を再設計する。
+1. **Marketplace publish contract**: bundle、署名、認証、version、registry API を決めてから pack を production API に昇格する。
+2. **Provider capability 拡張**: image detail、tool/structured output、streaming、compaction を capability として整理する。
+3. **Extension context**: extension interruption の producer/consumer を接続する。
+4. **Retry / compaction metadata**: Responses 固有の型を provider-neutral な state と adapter に分離する。
+5. **非 Responses wire API**: 最後に transport と request/event model を再設計する。
 
 ## 判断保留
 

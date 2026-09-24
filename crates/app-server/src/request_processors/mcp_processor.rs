@@ -46,7 +46,7 @@ impl McpRequestProcessor {
 
     pub(crate) async fn mcp_server_refresh(
         &self,
-        params: Option<()>,
+        params: Option<McpServerRefreshParams>,
     ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
         self.mcp_server_refresh_response(params)
             .await
@@ -85,9 +85,13 @@ impl McpRequestProcessor {
 
     async fn mcp_server_refresh_response(
         &self,
-        _params: Option<()>,
+        params: Option<McpServerRefreshParams>,
     ) -> Result<McpServerRefreshResponse, JSONRPCErrorError> {
-        crate::mcp_refresh::reload_mcp_config(&self.thread_manager, &self.config_manager)
+        crate::mcp_refresh::reload_mcp_config(
+            &self.thread_manager,
+            &self.config_manager,
+            params.as_ref().and_then(|params| params.server_name.as_deref()),
+        )
             .await
             .map_err(|err| internal_error(format!("failed to refresh MCP servers: {err}")))?;
         Ok(McpServerRefreshResponse {})

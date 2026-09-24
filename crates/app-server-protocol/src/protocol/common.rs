@@ -13,6 +13,7 @@ use crate::export::GeneratedSchema;
 use crate::export::write_json_schema;
 use crate::protocol::v1;
 use crate::protocol::v2;
+use crate::protocol::v2::McpServerRefreshParams;
 use codex_experimental_api_macros::ExperimentalApi;
 use serde::Deserialize;
 use serde::Serialize;
@@ -1026,7 +1027,7 @@ client_request_definitions! {
     },
 
     McpServerRefresh => "config/mcpServer/reload" {
-        params: #[ts(type = "undefined")] #[serde(skip_serializing_if = "Option::is_none")] Option<()>,
+        params: #[ts(type = "undefined | v2.McpServerRefreshParams")] #[serde(skip_serializing_if = "Option::is_none")] Option<McpServerRefreshParams>,
         serialization: global("mcp-registry"),
         response: v2::McpServerRefreshResponse,
     },

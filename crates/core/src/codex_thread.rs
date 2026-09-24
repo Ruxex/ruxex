@@ -827,6 +827,11 @@ impl CodexThread {
         self.session.refresh_mcp_config(next_config).await;
     }
 
+    /// Re-fetches and publishes one live MCP server's tools/list catalog.
+    pub async fn refresh_mcp_server_tools(&self, server_name: &str) -> anyhow::Result<()> {
+        self.session.refresh_mcp_server_tools(server_name).await
+    }
+
     pub async fn environment_selections(&self) -> Vec<TurnEnvironmentSelection> {
         self.session.services.turn_environments.selections()
     }

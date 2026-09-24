@@ -101,6 +101,7 @@ pub(crate) struct ManagedClient {
     pub(crate) _auth_change_notifications: Option<Arc<AbortOnDropHandle<()>>>,
     pub(crate) client: Arc<RmcpClient>,
     pub(crate) server_info: McpServerInfo,
+    pub(crate) server_instructions: Option<String>,
     pub(crate) tool_catalog: Arc<ClientToolCatalog>,
     pub(crate) tool_timeout: Option<Duration>,
     pub(crate) server_supports_sandbox_state_meta_capability: bool,
@@ -637,12 +638,13 @@ async fn start_server_task(
     let list_start = Instant::now();
     let server_info =
         mcp_server_info_from_implementation(&server_name, initialize_result.server_info);
+    let server_instructions = initialize_result.instructions;
     let tools = list_tools_for_client_uncached(
         &server_name,
         &client,
         startup_timeout,
         catalog_item_limit,
-        initialize_result.instructions.as_deref(),
+        server_instructions.as_deref(),
     )
     .await
     .map_err(StartupOutcomeError::from)?;
@@ -664,6 +666,7 @@ async fn start_server_task(
         _auth_change_notifications: auth_change_notifications,
         client: Arc::clone(&client),
         server_info,
+        server_instructions,
         tool_catalog: Arc::new(ClientToolCatalog::new(client_tools)),
         tool_timeout: None,
         server_supports_sandbox_state_meta_capability,

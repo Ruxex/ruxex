@@ -84,6 +84,7 @@ use codex_app_server_protocol::McpServerOauthClientRegistration;
 use codex_app_server_protocol::McpServerOauthLoginCompletedNotification;
 use codex_app_server_protocol::McpServerOauthLoginParams;
 use codex_app_server_protocol::McpServerOauthLoginResponse;
+use codex_app_server_protocol::McpServerRefreshParams;
 use codex_app_server_protocol::McpServerRefreshResponse;
 use codex_app_server_protocol::McpServerStatus;
 use codex_app_server_protocol::McpServerStatusDetail;

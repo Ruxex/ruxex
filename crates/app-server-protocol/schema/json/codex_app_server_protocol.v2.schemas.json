@@ -2250,7 +2250,14 @@
               "type": "string"
             },
             "params": {
-              "type": "null"
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/McpServerRefreshParams"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -8040,6 +8047,18 @@
         "authorizationUrl"
       ],
       "title": "McpServerOauthLoginResponse",
+      "type": "object"
+    },
+    "McpServerRefreshParams": {
+      "properties": {
+        "serverName": {
+          "description": "When set, refresh only this server's live tools/list catalog. Omission retains the existing configuration reload behavior.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
       "type": "object"
     },
     "McpServerRefreshResponse": {

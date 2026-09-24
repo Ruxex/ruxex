@@ -9,7 +9,28 @@ use tracing::warn;
 pub(crate) async fn reload_mcp_config(
     thread_manager: &Arc<ThreadManager>,
     config_manager: &ConfigManager,
+    server_name: Option<&str>,
 ) -> io::Result<()> {
+    if let Some(server_name) = server_name {
+        for thread_id in thread_manager.list_thread_ids().await {
+            let thread = thread_manager
+                .get_thread(thread_id)
+                .await
+                .map_err(|err| {
+                    io::Error::other(format!("failed to load thread {thread_id}: {err}"))
+                })?;
+            thread
+                .refresh_mcp_server_tools(server_name)
+                .await
+                .map_err(|err| {
+                    io::Error::other(format!(
+                        "failed to refresh MCP server '{server_name}' on thread {thread_id}: {err}"
+                    ))
+                })?;
+        }
+        return Ok(());
+    }
+
     config_manager
         .load_latest_config(/*fallback_cwd*/ None)
         .await?;
