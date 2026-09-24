@@ -226,10 +226,7 @@ impl ThreadScopedOutgoingMessageSender {
 }
 
 impl OutgoingMessageSender {
-    pub(crate) fn new(
-        sender: mpsc::Sender<OutgoingEnvelope>,
-        _metrics_sink: (),
-    ) -> Self {
+    pub(crate) fn new(sender: mpsc::Sender<OutgoingEnvelope>, _metrics_sink: ()) -> Self {
         Self {
             verification_auth: OnceLock::new(),
             verification_connections: Mutex::new(HashSet::new()),
@@ -646,12 +643,10 @@ impl OutgoingMessageSender {
             return;
         };
         let message = match check() {
-            Ok(()) => {
-                OutgoingMessage::Response(OutgoingResponse {
-                    id: request_id.request_id,
-                    result: Box::new(response),
-                })
-            }
+            Ok(()) => OutgoingMessage::Response(OutgoingResponse {
+                id: request_id.request_id,
+                result: Box::new(response),
+            }),
             Err(error) => OutgoingMessage::Error(OutgoingError {
                 id: request_id.request_id,
                 error,
@@ -691,8 +686,7 @@ impl OutgoingMessageSender {
         if matches!(
             notification,
             ServerNotification::ThreadArchived(_) | ServerNotification::ThreadUnarchived(_)
-        ) {
-        }
+        ) {}
         self.send_server_notification_to_connections(&[], notification)
             .await;
     }
@@ -840,7 +834,6 @@ fn timestamped_server_notification(notification: ServerNotification) -> Outgoing
         emitted_at_ms: Some(now_unix_timestamp_ms().try_into().unwrap_or_default()),
     })
 }
-
 
 #[cfg(test)]
 #[path = "user_verification_cancel_context_tests.rs"]

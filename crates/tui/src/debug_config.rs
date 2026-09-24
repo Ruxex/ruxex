@@ -213,7 +213,6 @@ fn render_debug_config_lines(
         ));
     }
 
-
     if let Some(modes) = requirements_toml.allowed_sandbox_modes.as_ref() {
         let value = join_or_empty(
             modes
@@ -266,7 +265,6 @@ fn render_debug_config_lines(
                 .map(|sourced| &sourced.source),
         ));
     }
-
 
     if let Some(feature_requirements) = requirements.feature_requirements.as_ref() {
         let value = join_or_empty(
@@ -366,8 +364,7 @@ fn render_non_file_layer_details(layer: &ConfigLayerEntry) -> Vec<Line<'static>>
         ConfigLayerSource::PackagedDefaults { .. }
         | ConfigLayerSource::System { .. }
         | ConfigLayerSource::User { .. }
-        | ConfigLayerSource::Project { .. }
-        => Vec::new(),
+        | ConfigLayerSource::Project { .. } => Vec::new(),
     }
 }
 

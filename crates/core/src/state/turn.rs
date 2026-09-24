@@ -242,5 +242,4 @@ impl TurnState {
             .get(environment_id)
             .cloned()
     }
-
 }

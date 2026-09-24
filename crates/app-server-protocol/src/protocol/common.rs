@@ -2258,7 +2258,6 @@ mod tests {
             marketplace_remove.serialization_scope(),
             Some(ClientRequestSerializationScope::Global("config"))
         );
-
     }
 
     #[test]

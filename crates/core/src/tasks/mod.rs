@@ -748,10 +748,8 @@ impl Session {
             &[],
         );
         let started_at = turn_context.turn_timing_state.started_at_unix_secs().await;
-        let (completed_at, duration_ms) = turn_context
-            .turn_timing_state
-            .complete_duration_ms()
-            .await;
+        let (completed_at, duration_ms) =
+            turn_context.turn_timing_state.complete_duration_ms().await;
         let idle_cause = if matches!(
             abort_reason.as_ref(),
             Some(TurnAbortReason::Interrupted | TurnAbortReason::BudgetLimited)

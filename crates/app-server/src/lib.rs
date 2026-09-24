@@ -825,10 +825,7 @@ pub async fn run_main_with_transport_options(
     let recovery_file = daemon_recovery_file_path(&config.codex_home);
     let processor_handle = tokio::spawn({
         let auth_manager = Arc::clone(&auth_manager);
-        let outgoing_message_sender = Arc::new(OutgoingMessageSender::new(
-            outgoing_tx,
-            (),
-        ));
+        let outgoing_message_sender = Arc::new(OutgoingMessageSender::new(outgoing_tx, ()));
         let outbound_control_tx = outbound_control_tx;
         let processor = Arc::new(MessageProcessor::new(MessageProcessorArgs {
             outgoing: outgoing_message_sender,

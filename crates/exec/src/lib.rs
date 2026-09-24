@@ -817,10 +817,7 @@ async fn run_exec_session(args: ExecRunArgs) -> anyhow::Result<()> {
                 &client,
                 ClientRequest::ThreadResume {
                     request_id: request_ids.next(),
-                    params: thread_resume_params_from_config(
-                        &config,
-                        thread_id,
-                    ),
+                    params: thread_resume_params_from_config(&config, thread_id),
                 },
                 "thread/resume",
             )
@@ -1195,10 +1192,7 @@ fn thread_start_params_from_config(
     }
 }
 
-fn thread_resume_params_from_config(
-    config: &Config,
-    thread_id: String,
-) -> ThreadResumeParams {
+fn thread_resume_params_from_config(config: &Config, thread_id: String) -> ThreadResumeParams {
     let permissions = permissions_selection_from_config(config);
     let sandbox = permissions.is_none().then(|| {
         sandbox_mode_from_permission_profile(

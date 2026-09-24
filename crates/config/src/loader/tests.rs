@@ -929,11 +929,7 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
             .iter()
             .map(|layer| layer.base_dir.to_path_buf())
             .collect::<Vec<_>>(),
-        vec![
-            system_dir.clone(),
-            codex_home.clone(),
-            dot_codex.clone(),
-        ]
+        vec![system_dir.clone(), codex_home.clone(), dot_codex.clone(),]
     );
     assert_eq!(layers.config.cloud_insertion_index, 1);
     assert_eq!(layers.requirements.cloud_insertion_index, 1);
@@ -943,8 +939,7 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
             layers.requirements.layers[0].toml.clone(),
         ),
         (
-            toml::from_str("model_instructions_file = \"./project.md\"")
-                .expect("project TOML"),
+            toml::from_str("model_instructions_file = \"./project.md\"").expect("project TOML"),
             toml::from_str("allowed_sandbox_modes=[\"future-mode\"]\nlog_dir=\"./logs\"")
                 .expect("requirements TOML"),
         )

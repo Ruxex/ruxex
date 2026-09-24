@@ -1,7 +1,7 @@
 use super::mcp_refresh::McpRefreshInvalidationGuard;
 use super::*;
-use anyhow::Context;
 use crate::environment_selection::combine_selected_capability_roots;
+use anyhow::Context;
 use codex_exec_server::ExecutorCapabilityDiscoveryCache;
 use codex_exec_server::ExecutorCapabilityDiscoverySnapshot;
 use codex_exec_server::MAX_SELECTED_CAPABILITY_ROOTS;
@@ -677,12 +677,7 @@ async fn review_mcp_elicitation(
     };
 
     Ok(session
-        .request_mcp_server_elicitation(
-            &turn_context,
-            request.server_name,
-            request_id,
-            elicitation,
-        )
+        .request_mcp_server_elicitation(&turn_context, request.server_name, request_id, elicitation)
         .await?
         .response)
 }

@@ -106,10 +106,7 @@ fn keep_forked_rollout_item(item: &RolloutItem, preserve_reference_context_item:
     }
 }
 
-fn retain_forked_developer_message(
-    item: &mut ResponseItem,
-    usage_hint_texts: &[String],
-) -> bool {
+fn retain_forked_developer_message(item: &mut ResponseItem, usage_hint_texts: &[String]) -> bool {
     if !matches!(item, ResponseItem::Message { role, .. } if role == "developer") {
         return true;
     }
@@ -709,11 +706,11 @@ impl AgentControl {
 
         if let Some(SessionSource::SubAgent(
             _subagent_source @ SubAgentSource::ThreadSpawn {
-                parent_thread_id: _, ..
+                parent_thread_id: _,
+                ..
             },
         )) = notification_source.as_ref()
-        {
-        }
+        {}
 
         // Notify a new thread has been created. This notification will be processed by clients
         // to subscribe or drain this newly created thread.

@@ -94,10 +94,7 @@ impl ChatWidget {
                             .as_deref()
                             .unwrap_or("Configured permission profile."),
                         active_profile_id.as_deref(),
-                        discovery.disabled_reason(
-                            &profile.id,
-                            /*approval*/ None,
-                        ),
+                        discovery.disabled_reason(&profile.id, /*approval*/ None),
                     )
                 }),
         );

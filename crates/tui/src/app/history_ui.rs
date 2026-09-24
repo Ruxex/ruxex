@@ -196,8 +196,7 @@ impl App {
                 .is_some_and(|cell| cell.as_any().is::<history_cell::AgentMessageCell>())
     }
 
-    fn insert_pending_usage_output(&mut self, _tui: &mut tui::Tui) {
-    }
+    fn insert_pending_usage_output(&mut self, _tui: &mut tui::Tui) {}
 
     pub(super) fn insert_pending_usage_output_if_ready(&mut self, tui: &mut tui::Tui) {
         if self.pending_usage_output_insertion_blocked() {

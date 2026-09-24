@@ -105,7 +105,6 @@ impl HistoryCell for FinalMessageSeparator {
     }
 }
 
-
 pub(crate) fn runtime_metrics_label(summary: RuntimeMetricsSummary) -> Option<String> {
     let mut parts = Vec::new();
     if summary.tool_calls.count > 0 {

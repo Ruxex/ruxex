@@ -25,6 +25,8 @@ use crate::mentions::collect_tool_mentions_from_messages;
 use crate::plugins::build_plugin_injections;
 use crate::responses_metadata::CodexResponsesMetadata;
 use crate::responses_metadata::CodexResponsesRequestKind;
+use crate::responses_metadata::CompactionPhase;
+use crate::responses_metadata::CompactionReason;
 use crate::responses_retry::ResponsesStreamRequest;
 use crate::responses_retry::ResponsesStreamRetryState;
 use crate::responses_retry::handle_retryable_response_stream_error;
@@ -57,8 +59,6 @@ use crate::tools::spec_plan::tool_suggest_enabled;
 use crate::turn_diff_tracker::TurnDiffTracker;
 use crate::turn_timing::record_turn_ttft_metric;
 use crate::util::error_or_panic;
-use crate::responses_metadata::CompactionPhase;
-use crate::responses_metadata::CompactionReason;
 use codex_async_utils::OrCancelExt;
 use codex_extension_api::ExtensionData;
 use codex_extension_api::TurnInputContext;
@@ -854,13 +854,8 @@ async fn build_skills_and_plugins(
         injected: injected_host_skills,
         warnings: host_skill_warnings,
     } = skills_snapshot.load_skill_prompts(&mentioned_skills).await;
-    emit_explicit_skill_invocations(
-        sess,
-        turn_context,
-        &mentioned_skills,
-        &injected_host_skills,
-    )
-    .await;
+    emit_explicit_skill_invocations(sess, turn_context, &mentioned_skills, &injected_host_skills)
+        .await;
     for message in host_skill_warnings {
         sess.send_event(turn_context, EventMsg::Warning(WarningEvent { message }))
             .await;

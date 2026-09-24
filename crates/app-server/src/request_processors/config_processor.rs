@@ -299,7 +299,6 @@ impl ConfigRequestProcessor {
             );
         Ok(ExperimentalFeatureEnablementSetResponse { enablement })
     }
-
 }
 
 pub(super) async fn reload_user_config(

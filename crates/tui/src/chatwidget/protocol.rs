@@ -295,10 +295,7 @@ impl ChatWidget {
                                 text,
                                 phase: Some(MessagePhase::FinalAnswer) | None,
                                 ..
-                            } =>
-                            {
-                                Some((item.clone(), id.clone(), text.clone()))
-                            }
+                            } => Some((item.clone(), id.clone(), text.clone())),
                             _ => None,
                         });
                 if let Some((item, id, _)) = &last_agent_message

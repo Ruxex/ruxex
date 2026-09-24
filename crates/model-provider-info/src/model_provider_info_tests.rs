@@ -408,10 +408,7 @@ fn test_merge_configured_model_providers_adds_custom_provider() {
     expected.insert("custom".to_string(), custom_provider);
 
     assert_eq!(
-        merge_configured_model_providers(
-            built_in_model_providers(),
-            configured_model_providers,
-        ),
+        merge_configured_model_providers(built_in_model_providers(), configured_model_providers,),
         Ok(expected)
     );
 }
@@ -453,10 +450,7 @@ fn test_merge_configured_model_providers_applies_amazon_bedrock_aws_override() {
     });
 
     assert_eq!(
-        merge_configured_model_providers(
-            built_in_model_providers(),
-            configured_model_providers,
-        ),
+        merge_configured_model_providers(built_in_model_providers(), configured_model_providers,),
         Ok(expected)
     );
 }
@@ -485,10 +479,7 @@ fn test_merge_configured_model_providers_applies_runtime_overrides_independently
     expected_runtime.aws = Some(runtime_aws);
 
     assert_eq!(
-        merge_configured_model_providers(
-            built_in_model_providers(),
-            configured_model_providers,
-        ),
+        merge_configured_model_providers(built_in_model_providers(), configured_model_providers,),
         Ok(expected)
     );
 }
@@ -532,10 +523,7 @@ fn test_merge_configured_model_providers_applies_amazon_bedrock_transport_overri
         .insert("x-example-header".to_string(), "value".into());
 
     assert_eq!(
-        merge_configured_model_providers(
-            built_in_model_providers(),
-            configured_model_providers,
-        ),
+        merge_configured_model_providers(built_in_model_providers(), configured_model_providers,),
         Ok(expected)
     );
 }
@@ -585,10 +573,7 @@ fn test_merge_configured_model_providers_allows_amazon_bedrock_default_fields() 
     )]);
 
     assert_eq!(
-        merge_configured_model_providers(
-            built_in_model_providers(),
-            configured_model_providers,
-        ),
+        merge_configured_model_providers(built_in_model_providers(), configured_model_providers,),
         Ok(built_in_model_providers())
     );
 }

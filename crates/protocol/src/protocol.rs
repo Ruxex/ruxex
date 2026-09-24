@@ -1002,7 +1002,6 @@ pub enum EventMsg {
     /// Provider-owned authentication recovery has completed for the current turn.
     AuthRecoveryCompleted(AuthRecoveryEvent),
 
-
     /// Model routing changed from the requested model to a different model.
     ModelReroute(ModelRerouteEvent),
 
@@ -1115,7 +1114,6 @@ pub enum EventMsg {
     ElicitationRequest(ElicitationRequestEvent),
 
     ApplyPatchApprovalRequest(ApplyPatchApprovalRequestEvent),
-
 
     /// Notification advising the user that something they are using has been
     /// deprecated and should be phased out.

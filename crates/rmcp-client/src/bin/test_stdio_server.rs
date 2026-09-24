@@ -661,9 +661,9 @@ impl ServerHandler for TestToolServer {
                     .supports_openai_form_elicitation
                     .load(Ordering::Relaxed),
             }))),
-            "sandbox_meta" => Ok(
-                Self::structured_result(serde_json::Value::Object(context.meta.0.0)),
-            ),
+            "sandbox_meta" => Ok(Self::structured_result(serde_json::Value::Object(
+                context.meta.0.0,
+            ))),
             "cwd" => {
                 let cwd = std::env::current_dir()
                     .map(|path| path.to_string_lossy().into_owned())

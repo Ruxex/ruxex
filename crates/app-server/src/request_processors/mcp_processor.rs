@@ -90,10 +90,12 @@ impl McpRequestProcessor {
         crate::mcp_refresh::reload_mcp_config(
             &self.thread_manager,
             &self.config_manager,
-            params.as_ref().and_then(|params| params.server_name.as_deref()),
+            params
+                .as_ref()
+                .and_then(|params| params.server_name.as_deref()),
         )
-            .await
-            .map_err(|err| internal_error(format!("failed to refresh MCP servers: {err}")))?;
+        .await
+        .map_err(|err| internal_error(format!("failed to refresh MCP servers: {err}")))?;
         Ok(McpServerRefreshResponse {})
     }
 

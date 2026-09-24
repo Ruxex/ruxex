@@ -300,7 +300,6 @@ fn waiting_view(request: &UserVerificationRequest, keymap: &ListKeymap) -> Box<d
     Box::new(view)
 }
 
-
 impl super::BottomPane {
     pub(crate) fn push_user_verification_request(
         &mut self,

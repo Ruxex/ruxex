@@ -6,7 +6,6 @@ the process manager to spawn PTYs once an ExecRequest is prepared.
 */
 use crate::exec::ExecCapturePolicy;
 use crate::exec::ExecExpiration;
-use crate::tools::network_approval::NetworkApprovalTrigger;
 use crate::plugins::metrics::sidecar_for_command;
 use crate::sandboxing::ExecOptions;
 use crate::sandboxing::ExecServerEnvConfig;
@@ -17,6 +16,7 @@ use crate::shell_snapshot::ShellSnapshotSandbox;
 use crate::shell_snapshot::snapshot_read_permissions;
 use crate::tools::flat_tool_name;
 use crate::tools::network_approval::NetworkApprovalSpec;
+use crate::tools::network_approval::NetworkApprovalTrigger;
 use crate::tools::runtimes::RuntimePathPrepends;
 #[cfg(unix)]
 use crate::tools::runtimes::apply_zsh_fork_path_prepend;

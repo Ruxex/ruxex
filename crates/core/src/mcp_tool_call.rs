@@ -5,11 +5,11 @@ use std::time::Instant;
 use crate::config::Config;
 use crate::config::edit::ConfigEdit;
 use crate::config::edit::ConfigEditsBuilder;
-use crate::tools::approvals::ApprovalReviewContext;
 use crate::session::session::Session;
 use crate::session::step_context::StepContext;
 use crate::session::turn_context::TurnContext;
 use crate::tools::ApprovalContext;
+use crate::tools::approvals::ApprovalReviewContext;
 use crate::tools::context::ToolCallOrigin;
 use crate::tools::hook_names::HookToolName;
 use crate::tools::lifecycle::process_mcp_tool_result;
@@ -1117,13 +1117,12 @@ async fn maybe_request_mcp_tool_approval(
 ) -> Option<ReviewDecision> {
     let _turn_context = &step_context.turn;
     if mcp_permission_prompt_is_auto_approved(
-            config.approval_policy.value(),
-            permission_profile,
-            McpPermissionPromptAutoApproveContext {
-                tool_approval_mode: Some(policy.mode),
-            },
-        )
-    {
+        config.approval_policy.value(),
+        permission_profile,
+        McpPermissionPromptAutoApproveContext {
+            tool_approval_mode: Some(policy.mode),
+        },
+    ) {
         return None;
     }
 
@@ -1284,8 +1283,7 @@ pub(crate) async fn request_mcp_tool_user_approval(
             decision,
             ReviewDecision::Denied { .. } | ReviewDecision::TimedOut | ReviewDecision::Abort
         )
-    {
-    }
+    {}
     decision
 }
 

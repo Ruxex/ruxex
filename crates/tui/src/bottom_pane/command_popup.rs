@@ -75,9 +75,9 @@ impl CommandPopup {
         let commands = commands_for_input(flags.into(), &service_tier_commands)
             .into_iter()
             .filter_map(|command| match command {
-                SlashCommandItem::Builtin(cmd) => (!cmd.command().starts_with("debug")
-                    )
-                    .then_some(CommandItem::Builtin(cmd)),
+                SlashCommandItem::Builtin(cmd) => {
+                    (!cmd.command().starts_with("debug")).then_some(CommandItem::Builtin(cmd))
+                }
                 SlashCommandItem::ServiceTier(command) => Some(CommandItem::ServiceTier(command)),
             })
             .collect();

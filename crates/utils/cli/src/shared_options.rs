@@ -59,8 +59,8 @@ pub struct SharedCliOptions {
 
 impl SharedCliOptions {
     pub fn inherit_exec_root_options(&mut self, root: &Self) {
-        let self_selected_sandbox_mode = self.sandbox_mode.is_some()
-            || self.dangerously_bypass_approvals_and_sandbox;
+        let self_selected_sandbox_mode =
+            self.sandbox_mode.is_some() || self.dangerously_bypass_approvals_and_sandbox;
         let Self {
             images,
             model,

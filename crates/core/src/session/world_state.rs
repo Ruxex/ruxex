@@ -152,14 +152,13 @@ impl Session {
                 turn_context.config.model_catalog.is_some(),
             ));
         }
-        let send_user_message_async_available =
-            !turn_context.session_source.is_non_root_agent()
-                && step_context
-                    .settings
-                    .model_info
-                    .experimental_supported_tools
-                    .iter()
-                    .any(|tool| tool == "send_user_message_async");
+        let send_user_message_async_available = !turn_context.session_source.is_non_root_agent()
+            && step_context
+                .settings
+                .model_info
+                .experimental_supported_tools
+                .iter()
+                .any(|tool| tool == "send_user_message_async");
         world_state.add_section(PersistentModeState::new(
             step_context.settings.effective_reasoning_effort().as_ref(),
             model_messages.persistent_instructions(),

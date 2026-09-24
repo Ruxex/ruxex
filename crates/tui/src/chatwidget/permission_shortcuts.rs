@@ -44,39 +44,38 @@ impl ChatWidget {
             {
                 continue;
             }
-                // These modes still need explicit Windows setup.
-                #[cfg(target_os = "windows")]
-                if preset.id == "auto"
-                    && (matches!(
-                        self.windows_sandbox_host,
-                        crate::app::WindowsSandboxHost::Mixed
-                            | crate::app::WindowsSandboxHost::Unknown
-                    ) || (self.windows_sandbox_host != crate::app::WindowsSandboxHost::Remote
-                        && self.windows_sandbox_config.level() == WindowsSandboxLevel::Disabled))
-                {
-                    continue;
-                }
-                let is_current = current_approval == approval
-                    && active_profile.as_ref().map_or_else(
-                        || {
-                            Self::preset_matches_current(
-                                current_approval,
-                                self.config.permissions.permission_profile(),
-                                self.config.cwd.as_path(),
-                                &preset,
-                            )
-                        },
-                        |active| active.id == preset.active_permission_profile.id,
-                    );
-                let label = preset.label;
-                choices.push((
-                    is_current,
-                    PermissionProfileSelection {
-                        profile_id: preset.active_permission_profile.id.clone(),
-                        approval_policy: Some(approval),
-                        display_label: label.to_string(),
+            // These modes still need explicit Windows setup.
+            #[cfg(target_os = "windows")]
+            if preset.id == "auto"
+                && (matches!(
+                    self.windows_sandbox_host,
+                    crate::app::WindowsSandboxHost::Mixed | crate::app::WindowsSandboxHost::Unknown
+                ) || (self.windows_sandbox_host != crate::app::WindowsSandboxHost::Remote
+                    && self.windows_sandbox_config.level() == WindowsSandboxLevel::Disabled))
+            {
+                continue;
+            }
+            let is_current = current_approval == approval
+                && active_profile.as_ref().map_or_else(
+                    || {
+                        Self::preset_matches_current(
+                            current_approval,
+                            self.config.permissions.permission_profile(),
+                            self.config.cwd.as_path(),
+                            &preset,
+                        )
                     },
-                ));
+                    |active| active.id == preset.active_permission_profile.id,
+                );
+            let label = preset.label;
+            choices.push((
+                is_current,
+                PermissionProfileSelection {
+                    profile_id: preset.active_permission_profile.id.clone(),
+                    approval_policy: Some(approval),
+                    display_label: label.to_string(),
+                },
+            ));
         }
         if !forward {
             choices.reverse();

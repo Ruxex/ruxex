@@ -970,18 +970,14 @@ mod tests {
         });
         let supported = mcp_initialize_request_params(
             ElicitationCapability::default(),
-            ClientMcpExtensions::new([
-                (MCP_APP_UI_EXTENSION_ID.to_string(), app_ui.clone()),
-            ]),
+            ClientMcpExtensions::new([(MCP_APP_UI_EXTENSION_ID.to_string(), app_ui.clone())]),
         );
         assert_eq!(
             supported.capabilities.extensions,
-            Some(BTreeMap::from([
-                (
-                    MCP_APP_UI_EXTENSION_ID.to_string(),
-                    app_ui.as_object().cloned().expect("app UI settings"),
-                ),
-            ]))
+            Some(BTreeMap::from([(
+                MCP_APP_UI_EXTENSION_ID.to_string(),
+                app_ui.as_object().cloned().expect("app UI settings"),
+            ),]))
         );
     }
 
@@ -1033,5 +1029,4 @@ mod tests {
             Some("kept")
         );
     }
-
 }

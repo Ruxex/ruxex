@@ -37,8 +37,8 @@ use super::super::NetworkPolicyAuditContext;
 use super::super::NetworkPolicyDecisionController;
 use super::super::SessionState;
 use super::super::handle_server_notification;
-use crate::connection::JsonRpcConnection;
 use crate::ProcessId;
+use crate::connection::JsonRpcConnection;
 use crate::protocol::EXEC_METHOD;
 use crate::protocol::EXEC_TERMINATE_METHOD;
 use crate::protocol::ExecParams;
@@ -153,7 +153,10 @@ async fn write_jsonrpc_stdio(peer: &mut StdioPeer, message: JSONRPCMessage) {
         .write_all(b"\n")
         .await
         .expect("stdio newline should succeed");
-    peer.writer.flush().await.expect("stdio flush should succeed");
+    peer.writer
+        .flush()
+        .await
+        .expect("stdio flush should succeed");
 }
 
 #[tokio::test(flavor = "current_thread")]
@@ -287,8 +290,7 @@ async fn abandoned_process_start_unregisters_and_cleans_up() {
             }),
         )
         .await;
-        let JSONRPCMessage::Request(terminate) = read_jsonrpc_stdio(&mut peer).await
-        else {
+        let JSONRPCMessage::Request(terminate) = read_jsonrpc_stdio(&mut peer).await else {
             panic!("expected process terminate request");
         };
         assert_eq!(terminate.method, EXEC_TERMINATE_METHOD);

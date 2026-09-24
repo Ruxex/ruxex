@@ -34,8 +34,8 @@ use crate::environment_selection::TurnEnvironmentSnapshot;
 use crate::exec_policy::BANNED_PREFIX_SUGGESTIONS;
 use crate::exec_policy::ExecPolicyManager;
 use crate::exec_policy::default_policy_path;
-use crate::image_preparation::ImagePreparationMode;
 use crate::image_preparation::ImagePreparationMetadata;
+use crate::image_preparation::ImagePreparationMode;
 use crate::image_preparation::ImageResizeNoticeMode;
 use crate::image_preparation::prepare_response_items as prepare_image_response_items;
 use crate::image_preparation::unified_image_budget_enabled;
@@ -1643,7 +1643,9 @@ impl Session {
                 reference_context_item,
                 HistoryReplacement::Reset,
             );
-            state.history.restore_retained_context(Some(&retained_context));
+            state
+                .history
+                .restore_retained_context(Some(&retained_context));
             if let Some(world_state) = world_state_baseline {
                 state.history.set_world_state_baseline(world_state);
             }

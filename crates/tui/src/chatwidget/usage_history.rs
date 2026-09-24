@@ -37,5 +37,4 @@ impl ChatWidget {
     pub(crate) fn request_pending_usage_output_insertion(&self) {}
 
     pub(crate) fn request_pending_usage_output_insertion_after_stream_shutdown(&self) {}
-
 }

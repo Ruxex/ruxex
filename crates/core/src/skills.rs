@@ -8,8 +8,8 @@ use codex_protocol::protocol::SkillScope;
 use codex_skills::SkillMetadata;
 use codex_skills_extension::HostSkillsLoadInput;
 use codex_skills_extension::InjectedHostSkillPrompts;
-use codex_skills_extension::detect_implicit_skill_invocation;
 use codex_skills_extension::SkillInvocationLocation;
+use codex_skills_extension::detect_implicit_skill_invocation;
 use codex_skills_extension::record_plugin_turn_usage;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use codex_utils_path_uri::PathUri;
@@ -94,7 +94,6 @@ pub(crate) async fn emit_explicit_skill_invocations(
                 .await;
         }
     }
-
 }
 
 pub(crate) async fn maybe_emit_implicit_skill_invocation(

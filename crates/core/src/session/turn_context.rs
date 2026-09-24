@@ -419,8 +419,7 @@ impl TurnContext {
     /// Legacy: returns the frozen initial-turn prefix-rule policy.
     /// Step-scoped consumers should use their captured `StepContext::settings`.
     pub(crate) fn allow_prefix_rules(&self) -> AllowPrefixRules {
-        if self.model_info().model_specialty.as_deref() == Some(MODEL_SPECIALTY_CYBER)
-        {
+        if self.model_info().model_specialty.as_deref() == Some(MODEL_SPECIALTY_CYBER) {
             AllowPrefixRules::IgnoreForCyberModel
         } else {
             AllowPrefixRules::Honor

@@ -912,7 +912,6 @@ fn code_mode_namespace_descriptions(
 
 #[instrument(level = "trace", skip_all)]
 fn add_core_tool_sources(context: &CoreToolPlanContext<'_>, registry: &mut ToolRegistry) {
-
     add_shell_tools(context, registry);
     add_mcp_resource_tools(context, registry);
     add_core_utility_tools(context, registry);

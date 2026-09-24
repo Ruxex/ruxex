@@ -21,8 +21,8 @@ use codex_protocol::approvals::ExecPolicyAmendment;
 use codex_protocol::approvals::NetworkApprovalContext;
 use codex_protocol::approvals::NetworkApprovalProtocol;
 use codex_protocol::error::CodexErr;
-use codex_protocol::models::AdditionalPermissionProfile;
 use codex_protocol::items::ModelInvocationContext;
+use codex_protocol::models::AdditionalPermissionProfile;
 use codex_protocol::openai_models::ModelInfo;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::FileChange;
@@ -58,7 +58,11 @@ impl ApprovalReviewContext {
     pub(crate) fn model_context(&self) -> ModelInvocationContext {
         ModelInvocationContext {
             model_slug: self.model_info.slug.clone(),
-            reasoning_effort: self.model_info.default_reasoning_level.as_ref().map(ToString::to_string),
+            reasoning_effort: self
+                .model_info
+                .default_reasoning_level
+                .as_ref()
+                .map(ToString::to_string),
         }
     }
 }
@@ -321,7 +325,6 @@ impl ApprovalAction {
                 .collect(),
         }
     }
-
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -356,7 +359,9 @@ impl ApprovalResolution {
                 Err(ToolError::Rejected(rejection.to_string()))
             }
             ReviewDecision::Denied { rejection } => Err(ToolError::Rejected(rejection)),
-            ReviewDecision::TimedOut => Err(ToolError::Rejected("approval request timed out".to_string())),
+            ReviewDecision::TimedOut => Err(ToolError::Rejected(
+                "approval request timed out".to_string(),
+            )),
             ReviewDecision::Abort => Err(ToolError::Codex(CodexErr::TurnAborted)),
             decision => Ok(decision),
         }

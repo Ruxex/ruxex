@@ -289,7 +289,6 @@ fn populate_merged_regular_fields_with_sources(
         additional_developer_instructions,
         &["additional_developer_instructions"]
     );
-
 }
 
 fn source_for_top_level_keys(

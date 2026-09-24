@@ -816,10 +816,7 @@ pub(crate) fn is_retryable_recovery_error(error: &ExecServerError) -> bool {
         return is_retryable_recovery_error(error.as_ref());
     }
     is_transport_closed_error(error)
-        || matches!(
-            error,
-            ExecServerError::InitializeTimedOut { .. }
-        )
+        || matches!(error, ExecServerError::InitializeTimedOut { .. })
         || matches!(
             error,
             ExecServerError::Server { code, .. }

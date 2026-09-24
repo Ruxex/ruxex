@@ -144,10 +144,7 @@ impl Harness {
             Arc::new(codex_config::NoopThreadConfigLoader),
         );
         let (sender, messages) = mpsc::channel(/*buffer*/ 16);
-        let outgoing = Arc::new(OutgoingMessageSender::new(
-            sender,
-            (),
-        ));
+        let outgoing = Arc::new(OutgoingMessageSender::new(sender, ()));
         let processor = Arc::new(MessageProcessor::new(MessageProcessorArgs {
             outgoing: Arc::clone(&outgoing),
             arg0_paths: Arg0DispatchPaths::default(),

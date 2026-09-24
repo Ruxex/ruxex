@@ -30,7 +30,6 @@ pub use storage::rebuild_raw_memories_file_from_memories;
 pub use storage::rollout_summary_file_stem;
 pub use storage::sync_rollout_summaries_from_memories;
 
-
 mod artifacts {
     pub(super) const EXTENSIONS_SUBDIR: &str = "extensions";
     pub(super) const ROLLOUT_SUMMARIES_SUBDIR: &str = "rollout_summaries";

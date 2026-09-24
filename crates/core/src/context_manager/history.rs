@@ -52,7 +52,6 @@ use std::ops::Deref;
 use std::sync::Arc;
 use std::sync::LazyLock;
 
-
 /// Transcript of thread history
 #[derive(Debug, Clone, Default)]
 pub(crate) struct ContextManager {
@@ -91,8 +90,7 @@ struct SharedConversationHistory {
 }
 
 pub(crate) enum HistoryReplacement {
-    Compaction {
-    },
+    Compaction {},
     Reset,
 }
 
@@ -173,7 +171,6 @@ impl ContextManager {
         self.user_message_revision = self.user_message_revision.saturating_add(1);
         true
     }
-
 
     pub(crate) fn token_info(&self) -> Option<TokenUsageInfo> {
         self.token_info.clone()

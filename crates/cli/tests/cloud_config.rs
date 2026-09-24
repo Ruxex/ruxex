@@ -64,7 +64,10 @@ impl CloudManagedConfigFixture {
         .await?;
         if bootstrap_config.config_toml.cli_auth_credentials_store
             != Some(AuthCredentialsStoreMode::File)
-            || bootstrap_config.config_toml.managed_auth_base_url.as_deref()
+            || bootstrap_config
+                .config_toml
+                .managed_auth_base_url
+                .as_deref()
                 != Some(managed_auth_base_url.as_str())
         {
             eprintln!(

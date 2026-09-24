@@ -100,34 +100,33 @@ impl RequestUserInputHandler {
             ))
         })?;
         let user_input = questions
-                .iter()
-                .filter_map(|question| {
-                    let response = response.answers.get(&question.id)?;
-                    let answers = response
-                        .answers
-                        .iter()
-                        .filter(|answer| !answer.trim().is_empty())
-                        .cloned()
-                        .collect::<Vec<_>>();
-                    if answers.is_empty() {
-                        return None;
-                    }
-                    let mut question_text = question.question.clone();
-                    for option in question
-                        .options
-                        .iter()
-                        .flatten()
-                        .filter(|option| response.answers.contains(&option.label))
-                    {
-                        question_text
-                            .push_str(&format!("\n{}: {}", option.label, option.description));
-                    }
-                    Some(VerifiedQuestionAnswer {
-                        question: question_text,
-                        answer: answers.join("\n"),
-                    })
+            .iter()
+            .filter_map(|question| {
+                let response = response.answers.get(&question.id)?;
+                let answers = response
+                    .answers
+                    .iter()
+                    .filter(|answer| !answer.trim().is_empty())
+                    .cloned()
+                    .collect::<Vec<_>>();
+                if answers.is_empty() {
+                    return None;
+                }
+                let mut question_text = question.question.clone();
+                for option in question
+                    .options
+                    .iter()
+                    .flatten()
+                    .filter(|option| response.answers.contains(&option.label))
+                {
+                    question_text.push_str(&format!("\n{}: {}", option.label, option.description));
+                }
+                Some(VerifiedQuestionAnswer {
+                    question: question_text,
+                    answer: answers.join("\n"),
                 })
-                .collect::<Vec<_>>();
+            })
+            .collect::<Vec<_>>();
         if !user_input.is_empty() {
             session
                 .record_retained_context(RetainedContextEvent::VerifiedAnswer {

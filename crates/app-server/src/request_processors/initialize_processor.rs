@@ -213,5 +213,4 @@ impl InitializeRequestProcessor {
                 .await;
         }
     }
-
 }

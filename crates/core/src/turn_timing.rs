@@ -121,7 +121,6 @@ impl TurnTimingState {
         let mut state = self.state.lock().await;
         state.record_turn_ttfm()
     }
-
 }
 
 fn now_unix_timestamp_secs() -> i64 {

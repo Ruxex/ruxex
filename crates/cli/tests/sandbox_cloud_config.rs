@@ -67,7 +67,10 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
     .await?;
     if bootstrap_config.config_toml.cli_auth_credentials_store
         != Some(AuthCredentialsStoreMode::File)
-        || bootstrap_config.config_toml.managed_auth_base_url.as_deref()
+        || bootstrap_config
+            .config_toml
+            .managed_auth_base_url
+            .as_deref()
             != Some(managed_auth_base_url.as_str())
     {
         eprintln!(
@@ -99,7 +102,8 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
         .await;
 
     let codex = codex_utils_cargo_bin::cargo_bin("codex")?;
-    let managed_auth_base_url_override = format!("managed_auth_base_url=\"{managed_auth_base_url}\"");
+    let managed_auth_base_url_override =
+        format!("managed_auth_base_url=\"{managed_auth_base_url}\"");
     let output = Command::new(&codex)
         .current_dir(codex_home.path())
         .env("CODEX_HOME", codex_home.path())

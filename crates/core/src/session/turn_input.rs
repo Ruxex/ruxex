@@ -41,7 +41,6 @@ use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-
 /// Why input is starting a turn; shared by admission and input delivery.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum TurnStartKind {

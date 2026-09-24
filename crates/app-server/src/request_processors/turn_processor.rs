@@ -307,8 +307,7 @@ impl TurnRequestProcessor {
         _request_id: &ConnectionRequestId,
         thread: &CodexThread,
     ) -> Result<(), JSONRPCErrorError> {
-        ensure_direct_input_allowed(thread)
-            .await
+        ensure_direct_input_allowed(thread).await
     }
 
     fn normalize_collaboration_mode(
@@ -561,9 +560,7 @@ impl TurnRequestProcessor {
                     .with_trace(self.request_trace_context(&request_id).await),
             )
             .await
-            .map_err(|err| {
-                internal_error(format!("failed to submit turn input: {err}"))
-            })?;
+            .map_err(|err| internal_error(format!("failed to submit turn input: {err}")))?;
         let (turn_id, started) = match submission {
             TurnInputSubmission::Started { turn_id } => (turn_id, true),
             TurnInputSubmission::Steered { turn_id } => (turn_id, false),
@@ -946,9 +943,7 @@ impl TurnRequestProcessor {
                 params.expected_turn_id,
             )
             .await
-            .map_err(|err| {
-                internal_error(format!("failed to steer turn: {err}"))
-            })?;
+            .map_err(|err| internal_error(format!("failed to steer turn: {err}")))?;
         let turn_id = match submission {
             SteerSubmission::Steered { turn_id } => turn_id,
             SteerSubmission::NotSubmitted { reason } => {
@@ -956,18 +951,21 @@ impl TurnRequestProcessor {
                     NotSubmittedReason::ServerDraining => {
                         return Err(crate::error_code::server_draining_error());
                     }
-                    NotSubmittedReason::NoActiveTurn | NotSubmittedReason::NotIdle => (
-                        "no active turn to steer".to_string(),
-                        None,
-                    ),
+                    NotSubmittedReason::NoActiveTurn | NotSubmittedReason::NotIdle => {
+                        ("no active turn to steer".to_string(), None)
+                    }
                     NotSubmittedReason::ExpectedTurnMismatch { expected, actual } => (
                         format!("expected active turn id `{expected}` but found `{actual}`"),
                         None,
                     ),
                     NotSubmittedReason::ActiveTurnNotSteerable { turn_kind } => {
                         let message = match turn_kind {
-                            codex_protocol::protocol::NonSteerableTurnKind::Review => "cannot steer a review turn".to_string(),
-                            codex_protocol::protocol::NonSteerableTurnKind::Compact => "cannot steer a compact turn".to_string(),
+                            codex_protocol::protocol::NonSteerableTurnKind::Review => {
+                                "cannot steer a review turn".to_string()
+                            }
+                            codex_protocol::protocol::NonSteerableTurnKind::Compact => {
+                                "cannot steer a compact turn".to_string()
+                            }
                         };
                         let error = TurnError {
                             misalignment: None,
@@ -987,25 +985,18 @@ impl TurnRequestProcessor {
                                 None
                             }
                         };
-                        (
-                            message,
-                            data,
-                        )
+                        (message, data)
                     }
-                    NotSubmittedReason::EmptyInput => (
-                        "input must not be empty".to_string(),
-                        None,
-                    ),
+                    NotSubmittedReason::EmptyInput => ("input must not be empty".to_string(), None),
                     NotSubmittedReason::ActiveTurnOutputSchemaMismatch => (
                         "active turn uses a different output schema".to_string(),
                         None,
                     ),
                     NotSubmittedReason::PendingTriggerTurn
                     | NotSubmittedReason::PlanMode
-                    | NotSubmittedReason::Superseded => (
-                        "no active turn to steer".to_string(),
-                        None,
-                    ),
+                    | NotSubmittedReason::Superseded => {
+                        ("no active turn to steer".to_string(), None)
+                    }
                 };
                 let mut error = invalid_request(message);
                 error.data = data;

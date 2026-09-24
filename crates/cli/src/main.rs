@@ -543,7 +543,6 @@ struct ExecServerCommand {
     /// Transport endpoint URL. Supported values: `stdio` or `stdio://`.
     #[arg(long = "listen", value_name = "URL")]
     listen: Option<String>,
-
 }
 
 #[derive(Debug, clap::Subcommand)]

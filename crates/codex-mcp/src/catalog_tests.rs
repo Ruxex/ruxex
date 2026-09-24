@@ -78,9 +78,7 @@ fn compatibility_source(id: &str) -> McpServerSource {
 }
 
 fn extension_source(id: &str) -> McpServerSource {
-    McpServerSource::Extension {
-        id: id.to_string(),
-    }
+    McpServerSource::Extension { id: id.to_string() }
 }
 
 fn register(source: McpServerSource) -> McpServerConflictAction {

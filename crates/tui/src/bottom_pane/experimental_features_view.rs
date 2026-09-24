@@ -272,10 +272,7 @@ impl BottomPaneView for ExperimentalFeaturesView {
             match result {
                 Ok(result) => {
                     for item in &mut self.features {
-                        if matches!(
-                            item.key.as_str(),
-                            "prevent_idle_sleep"
-                        ) {
+                        if matches!(item.key.as_str(), "prevent_idle_sleep") {
                             continue;
                         }
                         if let Some(feature) = result
@@ -315,14 +312,12 @@ impl BottomPaneView for ExperimentalFeaturesView {
                     }
                     self.initial_enabled.push(feature.enabled);
                     self.features.push(ExperimentalFeatureItem {
-                        writable: !matches!(
-                            feature.name.as_str(),
-                            "prevent_idle_sleep"
-                        ) || FEATURES.iter().any(|spec| {
-                            spec.key == feature.name
-                                && spec.stage.experimental_menu_name().is_some()
-                                && spec.default_enabled == feature.default_enabled
-                        }),
+                        writable: !matches!(feature.name.as_str(), "prevent_idle_sleep")
+                            || FEATURES.iter().any(|spec| {
+                                spec.key == feature.name
+                                    && spec.stage.experimental_menu_name().is_some()
+                                    && spec.default_enabled == feature.default_enabled
+                            }),
                         key: feature.name.clone(),
                         name: feature.display_name.unwrap_or(feature.name),
                         description: feature.description.unwrap_or_default(),

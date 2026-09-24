@@ -669,7 +669,9 @@ impl ExecServerClient {
             Ok(response)
         })
         .await
-        .map_err(|_| ExecServerError::InitializeTimedOut { timeout: initialize_timeout })?
+        .map_err(|_| ExecServerError::InitializeTimedOut {
+            timeout: initialize_timeout,
+        })?
     }
 
     pub async fn exec(&self, params: ExecParams) -> Result<ExecResponse, ExecServerError> {
@@ -1051,12 +1053,7 @@ impl ExecServerClient {
         options: ExecServerClientConnectOptions,
         reconnect_strategy: Option<ExecServerReconnectStrategy>,
     ) -> Result<Self, ExecServerError> {
-        Self::connect_with_recovery_inner(
-            connection,
-            options,
-            reconnect_strategy,
-        )
-        .await
+        Self::connect_with_recovery_inner(connection, options, reconnect_strategy).await
     }
 
     async fn connect_with_recovery_inner(

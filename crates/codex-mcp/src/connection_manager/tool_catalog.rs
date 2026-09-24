@@ -161,9 +161,7 @@ impl McpConnectionSet {
                     )
                     .await
                     .with_context(|| {
-                        format!(
-                            "failed to refresh tools for MCP server '{server_name_for_fetch}'"
-                        )
+                        format!("failed to refresh tools for MCP server '{server_name_for_fetch}'")
                     })?;
                     Ok((tools, fetch_ticket))
                 },

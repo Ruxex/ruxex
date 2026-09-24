@@ -6,8 +6,8 @@ use rmcp::model::ServerJsonRpcMessage;
 use rmcp::service::serve_directly;
 use rmcp::transport::IntoTransport;
 use rmcp::transport::Transport;
-use serde_json::json;
 use serde_json::Map;
+use serde_json::json;
 use std::time::Duration;
 use tokio::time::timeout;
 

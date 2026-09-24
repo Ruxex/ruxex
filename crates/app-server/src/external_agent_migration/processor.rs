@@ -582,7 +582,6 @@ fn import_failure_error_type(failure: &ProtocolImportFailure) -> String {
         .unwrap_or_else(|| failure.failure_stage.clone())
 }
 
-
 async fn record_completed_import_notification(
     state_db: &StateDbHandle,
     provider_id: Option<&str>,

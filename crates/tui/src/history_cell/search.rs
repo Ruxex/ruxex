@@ -3,7 +3,6 @@
 use super::*;
 use crate::line_truncation::truncate_line_with_ellipsis_if_overflow;
 
-
 fn web_search_action_detail(action: &WebSearchAction) -> String {
     match action {
         WebSearchAction::Search { query, queries } => query

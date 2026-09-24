@@ -254,7 +254,6 @@ impl BottomPaneView for CustomPromptView {
     }
 }
 
-
 impl Renderable for CustomPromptView {
     fn desired_height(&self, width: u16) -> u16 {
         let extra_top: u16 = if self.context_label.is_some() { 1 } else { 0 };

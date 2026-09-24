@@ -21,7 +21,6 @@ use codex_app_server_protocol::McpServerConnectionStatus;
 use result::McpResultKind;
 use result::McpToolResult;
 
-
 fn mcp_auth_status_label(status: McpAuthStatus) -> &'static str {
     match status {
         McpAuthStatus::Unknown => "Unknown",

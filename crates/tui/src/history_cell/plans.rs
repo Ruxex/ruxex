@@ -140,7 +140,6 @@ impl HistoryCell for ProposedPlanCell {
     }
 }
 
-
 impl HistoryCell for ProposedPlanStreamCell {
     fn display_lines(&self, _width: u16) -> Vec<Line<'static>> {
         visible_lines(self.lines.clone())

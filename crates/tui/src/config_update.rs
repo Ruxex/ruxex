@@ -392,7 +392,6 @@ pub(crate) async fn write_skill_enabled(
     Ok(())
 }
 
-
 /// Read effective server settings, retaining compatibility with servers without config/read.
 pub(crate) async fn read_effective_config_if_supported(
     request_handle: AppServerRequestHandle,

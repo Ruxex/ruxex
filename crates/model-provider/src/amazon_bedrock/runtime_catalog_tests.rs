@@ -73,26 +73,14 @@ fn runtime_catalog_disables_web_search_without_overriding_review_models() {
                 false,
                 Some(MultiAgentVersion::V1),
             ),
-            (
-                "us.openai.gpt-5.6-sol",
-                false,
-                Some(MultiAgentVersion::V1),
-            ),
-            (
-                "us.openai.gpt-6-astra",
-                false,
-                Some(MultiAgentVersion::V1),
-            ),
+            ("us.openai.gpt-5.6-sol", false, Some(MultiAgentVersion::V1),),
+            ("us.openai.gpt-6-astra", false, Some(MultiAgentVersion::V1),),
             (
                 "us.openai.gpt-5.6-terra",
                 false,
                 Some(MultiAgentVersion::V1),
             ),
-            (
-                "us.openai.gpt-5.6-luna",
-                false,
-                Some(MultiAgentVersion::V1),
-            ),
+            ("us.openai.gpt-5.6-luna", false, Some(MultiAgentVersion::V1),),
         ]
     );
 }

@@ -16,7 +16,6 @@ impl StatusIndicatorState {
             details_max_lines: STATUS_DETAILS_DEFAULT_MAX_LINES,
         }
     }
-
 }
 
 /// Compact runtime states that can be rendered into the terminal title.

@@ -82,33 +82,49 @@ const RESERVED_METADATA_KEYS: &[&str] = &[
 ];
 // These keys were previously valid user configuration. Accept existing configs while filtering
 // their values before constructing Core-owned request metadata.
-const BACKWARD_COMPATIBLE_RESERVED_METADATA_KEYS: &[&str] = &[
-    WINDOW_NUMBER_KEY,
-    FORKED_FROM_ORDINAL_EXCLUSIVE_KEY,
-];
+const BACKWARD_COMPATIBLE_RESERVED_METADATA_KEYS: &[&str] =
+    &[WINDOW_NUMBER_KEY, FORKED_FROM_ORDINAL_EXCLUSIVE_KEY];
 const MAX_EXTRA_METADATA_ENTRIES: usize = 16;
 const MAX_EXTRA_METADATA_KEY_BYTES: usize = 64;
 pub(crate) const MAX_EXTRA_METADATA_VALUE_BYTES: usize = 128;
 
 #[derive(Clone, Copy, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub(crate) enum CompactionTrigger { Manual, Auto }
+pub(crate) enum CompactionTrigger {
+    Manual,
+    Auto,
+}
 
 #[derive(Clone, Copy, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub(crate) enum CompactionReason { UserRequested, ContextLimit, ModelDownshift, CompHashChanged }
+pub(crate) enum CompactionReason {
+    UserRequested,
+    ContextLimit,
+    ModelDownshift,
+    CompHashChanged,
+}
 
 #[derive(Clone, Copy, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub(crate) enum CompactionImplementation { Responses, ResponsesCompactionV2 }
+pub(crate) enum CompactionImplementation {
+    Responses,
+    ResponsesCompactionV2,
+}
 
 #[derive(Clone, Copy, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub(crate) enum CompactionPhase { StandaloneTurn, PreTurn, MidTurn }
+pub(crate) enum CompactionPhase {
+    StandaloneTurn,
+    PreTurn,
+    MidTurn,
+}
 
 #[derive(Clone, Copy, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub(crate) enum CompactionStrategy { Memento, PrefixCompaction }
+pub(crate) enum CompactionStrategy {
+    Memento,
+    PrefixCompaction,
+}
 
 /// Metadata attached to model requests whose purpose is conversation compaction.
 ///

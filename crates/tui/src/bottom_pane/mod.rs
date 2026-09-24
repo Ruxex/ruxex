@@ -517,7 +517,6 @@ impl BottomPane {
         self.request_redraw();
     }
 
-
     pub(crate) fn set_side_conversation_active(&mut self, active: bool) {
         self.composer.set_side_conversation_active(active);
         self.request_redraw();
@@ -1052,7 +1051,6 @@ impl BottomPane {
         self.composer.set_footer_hint_override(items);
         self.request_redraw();
     }
-
 
     pub(crate) fn set_remote_image_urls(&mut self, urls: Vec<String>) {
         self.composer.set_remote_image_urls(urls);

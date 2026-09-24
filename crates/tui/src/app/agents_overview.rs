@@ -1032,7 +1032,6 @@ impl App {
     }
 }
 
-
 fn agents_overview_group(
     thread: &Thread,
     children: &HashMap<String, Vec<&Thread>>,

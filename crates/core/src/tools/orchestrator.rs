@@ -7,9 +7,9 @@ retry with an escalated sandbox strategy on denial (no re‑approval thanks to
 caching).
 */
 use crate::config::NetworkProxySpec;
-use crate::tools::approvals::ApprovalReviewContext;
 use crate::network_policy_decision::network_approval_context_from_payload;
 use crate::tools::approvals::ApprovalContext;
+use crate::tools::approvals::ApprovalReviewContext;
 use crate::tools::flat_tool_name;
 use crate::tools::network_approval::ActiveNetworkApproval;
 use crate::tools::network_approval::DeferredNetworkApproval;
@@ -385,7 +385,8 @@ impl ToolOrchestrator {
                         build_denial_reason_from_output(output.as_ref())
                     };
 
-                let bypass_retry_approval = tool.should_bypass_approval(approval_policy, already_approved)
+                let bypass_retry_approval = tool
+                    .should_bypass_approval(approval_policy, already_approved)
                     && network_approval_context.is_none();
                 if !bypass_retry_approval {
                     let approval_reason = match &requirement {

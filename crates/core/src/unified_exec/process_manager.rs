@@ -23,12 +23,12 @@ use crate::exec_env::inject_apply_patch_env;
 use crate::exec_env::inject_permission_profile_env;
 use crate::exec_env::inject_session_env;
 use crate::exec_policy::ExecApprovalRequest;
-use crate::tools::approvals::ApprovalReviewContext;
 use crate::plugins::metrics::finish_and_track_measurements;
 use crate::sandboxing::ExecOptions;
 use crate::sandboxing::ExecRequest;
 use crate::sandboxing::ExecServerEnvConfig;
 use crate::tools::ApprovalContext;
+use crate::tools::approvals::ApprovalReviewContext;
 use crate::tools::context::ExecCommandToolOutput;
 use crate::tools::events::ToolEmitter;
 use crate::tools::events::ToolEventCtx;
@@ -910,8 +910,8 @@ impl UnifiedExecProcessManager {
                     "terminal input and permission details are too large to review safely; use a smaller input or start a new terminal with fewer grants".to_string(),
                 ))
             };
-            let reviewed = serde_json::to_string(&approval)
-                .map_err(|_| unreviewable_input_error())?;
+            let reviewed =
+                serde_json::to_string(&approval).map_err(|_| unreviewable_input_error())?;
             // Bound the entire serialized action plus its reason, including JSON
             // escaping. Reject, never execute an unreviewed tail.
             let oversized =

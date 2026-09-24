@@ -73,10 +73,7 @@ impl KeymapContext {
     }
 
     const fn is_shared_main(self) -> bool {
-        matches!(
-            self,
-            Self::Global | Self::Chat | Self::Composer
-        )
+        matches!(self, Self::Global | Self::Chat | Self::Composer)
     }
 
     const fn is_main_editor(self) -> bool {

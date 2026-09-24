@@ -714,10 +714,7 @@ fn decorate_workspace_sandbox_label(sandbox: &str, workspace_root_suffix: Option
     }
 }
 
-fn status_approval_label(
-    approval_policy: AskForApproval,
-    approval: &str,
-) -> String {
+fn status_approval_label(approval_policy: AskForApproval, approval: &str) -> String {
     if approval_policy == AskForApproval::OnRequest {
         return "Ask for approval".to_string();
     }

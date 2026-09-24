@@ -101,12 +101,10 @@ impl SideParentStatus {
             | ServerRequest::ExecCommandApproval { .. } => Some(SideParentStatus::NeedsApproval),
             ServerRequest::DynamicToolCall { .. }
             | ServerRequest::AttestationGenerate { .. }
-            | ServerRequest::CurrentTimeRead { .. }
-            => None,
+            | ServerRequest::CurrentTimeRead { .. } => None,
         }
     }
 }
-
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum SideParentStatusChange {

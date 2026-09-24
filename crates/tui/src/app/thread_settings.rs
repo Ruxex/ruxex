@@ -66,7 +66,9 @@ impl App {
         &mut self,
         app_server: &mut AppServerSession,
     ) {
-        let Some(thread_id) = self.active_thread_id else { return };
+        let Some(thread_id) = self.active_thread_id else {
+            return;
+        };
         self.send_thread_settings_update(
             app_server,
             ThreadSettingsUpdateParams {
@@ -95,14 +97,19 @@ impl App {
             service_tier,
             collaboration_mode,
             personality,
-        } = op else { return };
+        } = op
+        else {
+            return;
+        };
         self.send_thread_settings_update(
             app_server,
             ThreadSettingsUpdateParams {
                 thread_id: thread_id.to_string(),
                 cwd: cwd.clone(),
                 approval_policy: *approval_policy,
-                permissions: active_permission_profile.as_ref().map(|profile| profile.id.clone()),
+                permissions: active_permission_profile
+                    .as_ref()
+                    .map(|profile| profile.id.clone()),
                 model: model.clone(),
                 effort: effort.clone().unwrap_or_default(),
                 summary: *summary,
@@ -182,7 +189,10 @@ fn apply_thread_settings_to_session(session: &mut ThreadSessionState, settings: 
     session.set_cwd_retargeting_implicit_runtime_workspace_root(settings.cwd.clone());
     session.personality = settings.personality;
     let mut collaboration_mode = settings.collaboration_mode.clone();
-    collaboration_mode.settings.model.clone_from(&settings.model);
+    collaboration_mode
+        .settings
+        .model
+        .clone_from(&settings.model);
     collaboration_mode.settings.reasoning_effort = settings.effort.clone();
     session.collaboration_mode = Some(Box::new(collaboration_mode));
 }

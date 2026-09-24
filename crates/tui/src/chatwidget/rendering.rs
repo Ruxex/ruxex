@@ -277,7 +277,6 @@ impl TranscriptAreaRenderable<'_> {
     }
 }
 
-
 impl Renderable for ChatWidget {
     fn render(&self, area: Rect, buf: &mut Buffer) {
         self.as_renderable().render(area, buf);

@@ -566,7 +566,10 @@ mod tests {
     #[tokio::test]
     async fn scoped_auth_ignores_scope_for_non_openai_provider() {
         let provider = create_model_provider(
-            create_responses_provider_with_base_url("http://localhost:11434/v1", WireApi::Responses),
+            create_responses_provider_with_base_url(
+                "http://localhost:11434/v1",
+                WireApi::Responses,
+            ),
             /*auth_manager*/ None,
         );
 
@@ -1156,9 +1159,9 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
         provider_info.experimental_bearer_token = Some("provider-token".into());
         let provider = create_model_provider(
             provider_info,
-            Some(AuthManager::from_auth_for_testing(
-                CodexAuth::from_api_key("ambient-api-key"),
-            )),
+            Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
+                "ambient-api-key",
+            ))),
         );
 
         let manager =

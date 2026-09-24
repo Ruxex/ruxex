@@ -763,7 +763,7 @@ impl App {
                     let turn_approval_policy = if let Some(profile) = selected_profile {
                         profile.approval_policy
                     } else if self.app_server_target.thread_params_mode()
-                            == crate::app_server_session::ThreadParamsMode::Remote
+                        == crate::app_server_session::ThreadParamsMode::Remote
                     {
                         Some(config.permissions.approval_policy.value().into())
                     } else {

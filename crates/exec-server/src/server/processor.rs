@@ -70,12 +70,7 @@ impl ConnectionProcessor {
         connection: JsonRpcConnection,
         transport: ConnectionTransport,
     ) {
-        run_connection(
-            connection,
-            self.clone(),
-            transport,
-        )
-        .await;
+        run_connection(connection, self.clone(), transport).await;
     }
 
     pub(crate) async fn shutdown(&self) {

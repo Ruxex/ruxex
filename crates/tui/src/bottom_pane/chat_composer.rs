@@ -941,7 +941,6 @@ impl ChatComposer {
         self.goal_command_enabled = enabled;
     }
 
-
     /// Replace composer, editor, and footer-hint key bindings from one runtime snapshot.
     ///
     /// Submit and queue bindings are cached here because composer dispatch must

@@ -276,9 +276,9 @@ fn openai_manager_for_tests(
     openai_manager_for_tests_with_auth(
         codex_home,
         endpoint_client,
-        Some(AuthManager::from_auth_for_testing(
-            CodexAuth::from_api_key("test-api-key"),
-        )),
+        Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
+            "test-api-key",
+        ))),
     )
 }
 
@@ -308,7 +308,6 @@ where
 fn static_manager_for_tests(model_catalog: ModelsResponse) -> StaticModelsManager {
     StaticModelsManager::new(/*auth_manager*/ None, model_catalog)
 }
-
 
 #[tokio::test]
 async fn static_manager_preserves_supported_requested_model_when_fallback_is_allowed() {
@@ -576,11 +575,6 @@ async fn refresh_available_models_sorts_by_priority() {
     assert_eq!(endpoint.fetch_count(), 1, "expected a single model fetch");
 }
 
-
-
-
-
-
 #[tokio::test]
 async fn refresh_available_models_keeps_merging_for_custom_api_auth() {
     let remote_models = vec![remote_model(
@@ -810,9 +804,9 @@ async fn refresh_available_models_drops_removed_remote_models() {
             Duration::ZERO,
         )),
         endpoint.clone(),
-        Some(AuthManager::from_auth_for_testing(
-                CodexAuth::from_api_key("test-api-key"),
-        )),
+        Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
+            "test-api-key",
+        ))),
     );
 
     manager
@@ -958,9 +952,6 @@ impl ModelsEndpointClient for TestAuthAwareModelsEndpoint {
     }
 }
 
-
-
-
 #[test]
 fn build_available_models_picks_default_after_hiding_hidden_models() {
     let manager = static_manager_for_tests(ModelsResponse { models: Vec::new() });
@@ -978,7 +969,6 @@ fn build_available_models_picks_default_after_hiding_hidden_models() {
 
     assert_eq!(available, vec![expected_hidden, expected_visible]);
 }
-
 
 #[test]
 fn bundled_models_json_roundtrips() {

@@ -273,7 +273,8 @@ impl<'call> ToolExecutor<ToolCall<'call>> for ReadTool {
                     });
             }
 
-            if requested_resource == main_prompt && args.cursor.is_none()
+            if requested_resource == main_prompt
+                && args.cursor.is_none()
                 && let Some(metrics) = self.context.metrics.as_ref()
             {
                 metrics.track_skill_invocation(

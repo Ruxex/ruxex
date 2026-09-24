@@ -9,7 +9,6 @@ mod models;
 mod rollout_history;
 mod thread_list;
 
-
 pub(crate) use history::HISTORY_ITEM_PAGE_LIMIT;
 pub(crate) use history::HISTORY_ITEM_SCAN_LIMIT;
 pub(crate) use history::HistoryHydrationScope;
@@ -630,25 +629,18 @@ impl AppServerSession {
         self.default_model = Some(default_model.clone());
         self.available_models = available_models.clone();
 
-        let (
-            account_email,
-            auth_mode,
-            status_account_display,
-            plan_type,
-            has_managed_account,
-        ) = match account.account {
-            Some(Account::ApiKey {}) => (
-                None,
-                Some(TelemetryAuthMode::ApiKey),
-                Some(StatusAccountDisplay::ApiKey),
-                None,
-                false,
-            ),
-            Some(Account::AmazonBedrock { .. }) => {
-                (None, None, None, None, false)
-            }
-            None => (None, None, None, None, false),
-        };
+        let (account_email, auth_mode, status_account_display, plan_type, has_managed_account) =
+            match account.account {
+                Some(Account::ApiKey {}) => (
+                    None,
+                    Some(TelemetryAuthMode::ApiKey),
+                    Some(StatusAccountDisplay::ApiKey),
+                    None,
+                    false,
+                ),
+                Some(Account::AmazonBedrock { .. }) => (None, None, None, None, false),
+                None => (None, None, None, None, false),
+            };
         Ok(AppServerBootstrap {
             duration: started_at.elapsed(),
             account_email,

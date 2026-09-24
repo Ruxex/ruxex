@@ -214,7 +214,7 @@ impl App {
             .send(AppEvent::CodexOp(AppCommand::override_turn_context(
                 /*cwd*/ None,
                 approval_policy,
-                    Some(permission_profile.clone()),
+                Some(permission_profile.clone()),
                 active_permission_profile,
                 /*model*/ None,
                 /*effort*/ None,
@@ -522,9 +522,8 @@ impl App {
         user_message_prefix: &str,
         log_message: &str,
     ) -> Option<PermissionProfile> {
-        let permission_profile = builtin_permission_profile_for_active_permission_profile(
-            &active_permission_profile,
-        )?;
+        let permission_profile =
+            builtin_permission_profile_for_active_permission_profile(&active_permission_profile)?;
         if let Err(err) = config
             .permissions
             .set_permission_profile_from_session_snapshot(PermissionProfileSnapshot::active(
@@ -555,7 +554,9 @@ impl App {
             let feature_key = feature.key();
             let mut feature_config = next_config.clone();
             let Ok(()) = feature_config.features.set_enabled(feature, enabled) else {
-                self.chat_widget.add_error_message(format!("Failed to update experimental feature {feature_key}"));
+                self.chat_widget.add_error_message(format!(
+                    "Failed to update experimental feature {feature_key}"
+                ));
                 continue;
             };
             let effective_enabled = feature_config.features.enabled(feature);
@@ -570,16 +571,21 @@ impl App {
             app_server.request_handle(),
             config_edits,
         )
-        .await {
+        .await
+        {
             Ok(response) => response,
             Err(err) => {
-                self.chat_widget.add_error_message(format!("Failed to update experimental features: {err}"));
+                self.chat_widget
+                    .add_error_message(format!("Failed to update experimental features: {err}"));
                 return;
             }
         };
         if write_response.status == WriteStatus::OkOverridden {
             if let Some(effective_config) = self
-                .read_effective_config_after_overridden_write(app_server, "Experimental feature changes")
+                .read_effective_config_after_overridden_write(
+                    app_server,
+                    "Experimental feature changes",
+                )
                 .await
             {
                 self.sync_feature_state_from_effective_config(
@@ -591,9 +597,10 @@ impl App {
         }
         let memory_tool_was_enabled = self.config.features.enabled(Feature::MemoryTool);
         self.config = next_config;
-        let show_memory_enable_notice = feature_updates_to_apply.iter().any(|(feature, enabled)| {
-            *feature == Feature::MemoryTool && *enabled && !memory_tool_was_enabled
-        });
+        let show_memory_enable_notice =
+            feature_updates_to_apply.iter().any(|(feature, enabled)| {
+                *feature == Feature::MemoryTool && *enabled && !memory_tool_was_enabled
+            });
         for (feature, enabled) in feature_updates_to_apply {
             self.chat_widget.set_feature_enabled(feature, enabled);
         }

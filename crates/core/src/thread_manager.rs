@@ -1968,9 +1968,7 @@ impl ThreadManagerState {
         let isolation = thread_extension_init
             .get::<codex_extension_api::SessionIsolation>()
             .map(|policy| *policy)
-            .unwrap_or_else(|| {
-                codex_extension_api::SessionIsolation::Inherit
-            });
+            .unwrap_or_else(|| codex_extension_api::SessionIsolation::Inherit);
         thread_extension_init.insert(isolation);
         let environments = environments.unwrap_or_else(|| {
             default_thread_environment_selections(

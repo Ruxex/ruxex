@@ -4910,8 +4910,7 @@ impl ThreadRequestProcessor {
         let restore_approval_policy = typesafe_overrides.approval_policy.is_none();
         let restore_permission_profile =
             !has_permission_override(request_overrides.as_ref(), &typesafe_overrides);
-        let needs_latest_settings =
-            restore_approval_policy || restore_permission_profile;
+        let needs_latest_settings = restore_approval_policy || restore_permission_profile;
         let loaded_parent = self.thread_manager.get_thread(source_thread_id).await.ok();
         let loaded_parent_settings = if paginated_source && needs_latest_settings {
             if let Some(parent) = loaded_parent.as_ref() {

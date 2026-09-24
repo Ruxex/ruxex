@@ -187,7 +187,6 @@ pub use retained_context::VerifiedAnswer;
 pub use retained_context::VerifiedQuestionAnswer;
 mod rollout_payload;
 
-
 #[derive(Clone, Debug, PartialEq)]
 pub struct CompactedItem {
     pub message: String,

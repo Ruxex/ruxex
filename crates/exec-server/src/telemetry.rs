@@ -220,7 +220,6 @@ impl ExecServerTelemetry {
             emit(inner);
         }
     }
-
 }
 
 impl Drop for ConnectionMetricGuard {

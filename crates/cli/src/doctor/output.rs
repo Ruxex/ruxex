@@ -626,8 +626,7 @@ fn auth_reachability_note(report: &DoctorReport) -> Option<DoctorNote> {
     let reachability_mode = detail::detail_value(reachability, "reachability mode")?;
     let auth_mode_lower = auth_mode.to_ascii_lowercase();
     let reachability_mode_lower = reachability_mode.to_ascii_lowercase();
-    if auth_mode_lower.contains("workload_identity")
-        && reachability_mode_lower.contains("api key")
+    if auth_mode_lower.contains("workload_identity") && reachability_mode_lower.contains("api key")
     {
         return Some(DoctorNote {
             status: DisplayStatus::Warning,

@@ -86,17 +86,17 @@ impl ChatWidget {
         }
 
         let should_refresh_plugins_popup = self
+            .bottom_pane
+            .active_tab_id_for_active_view(PLUGINS_SELECTION_VIEW_ID)
+            .is_some()
+            || self
                 .bottom_pane
-                .active_tab_id_for_active_view(PLUGINS_SELECTION_VIEW_ID)
+                .selected_index_for_active_view(PLUGINS_SELECTION_VIEW_ID)
                 .is_some()
-                || self
-                    .bottom_pane
-                    .selected_index_for_active_view(PLUGINS_SELECTION_VIEW_ID)
-                    .is_some()
-                || !matches!(
-                    self.plugins_cache_for_current_cwd(),
-                    PluginsCacheState::Ready(_)
-                );
+            || !matches!(
+                self.plugins_cache_for_current_cwd(),
+                PluginsCacheState::Ready(_)
+            );
 
         match result {
             Ok(response) => {
@@ -700,10 +700,7 @@ impl ChatWidget {
 
         match result {
             Ok(_response) => {
-                self.add_info_message(
-                    format!("Uninstalled {plugin_display_name} plugin."),
-                    None,
-                );
+                self.add_info_message(format!("Uninstalled {plugin_display_name} plugin."), None);
             }
             Err(err) => {
                 let plugins_response = match self.plugins_cache_for_current_cwd() {

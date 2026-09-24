@@ -110,12 +110,9 @@ impl ExecServerClient {
                 }
             });
         }
-        let connection = JsonRpcConnection::from_stdio(
-            stdout,
-            stdin,
-            format!("exec-server stdio `{program}`"),
-        )
-        .with_child_process(child);
+        let connection =
+            JsonRpcConnection::from_stdio(stdout, stdin, format!("exec-server stdio `{program}`"))
+                .with_child_process(child);
         debug!(program = %program, "started exec-server over stdio");
         let result = Self::connect(
             connection,

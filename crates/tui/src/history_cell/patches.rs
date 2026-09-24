@@ -4,7 +4,6 @@ use super::*;
 use crate::line_truncation::truncate_line_with_ellipsis_if_overflow;
 use codex_utils_path_uri::LegacyAppPathString;
 
-
 #[derive(Debug)]
 pub(crate) struct PatchHistoryCell {
     changes: HashMap<PathBuf, FileChange>,

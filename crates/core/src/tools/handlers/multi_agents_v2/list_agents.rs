@@ -18,9 +18,7 @@ impl ToolExecutor<ToolInvocation> for Handler {
     where
         ToolInvocation: 'a,
     {
-        Box::pin(async move {
-            self.handle_call(invocation).await
-        })
+        Box::pin(async move { self.handle_call(invocation).await })
     }
 }
 

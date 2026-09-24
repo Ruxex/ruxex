@@ -510,10 +510,7 @@ mod tests {
                 cwd: Some(config_dir.path().join("workspace")),
             }
         );
-        assert_eq!(
-            *initialize_timeout,
-            DEFAULT_EXEC_SERVER_INITIALIZE_TIMEOUT
-        );
+        assert_eq!(*initialize_timeout, DEFAULT_EXEC_SERVER_INITIALIZE_TIMEOUT);
     }
 
     #[test]

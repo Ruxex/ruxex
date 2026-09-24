@@ -568,12 +568,8 @@ enabled = true
         test_skill_root_loader().as_ref(),
     )
     .await;
-    let hooks_only = load_plugins_from_layer_stack_with_scope(
-        &stack,
-        &store,
-        PluginLoadScope::HooksOnly,
-    )
-    .await;
+    let hooks_only =
+        load_plugins_from_layer_stack_with_scope(&stack, &store, PluginLoadScope::HooksOnly).await;
 
     let validation_state = |plugins: &[LoadedPlugin<McpServerConfig>]| {
         plugins

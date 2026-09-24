@@ -191,13 +191,7 @@ impl CodeModeExecuteHandler {
 
         let result = match payload {
             ToolPayload::Custom { input } if is_exec_tool_name(&tool_name) => self
-                .execute(
-                    session,
-                    step_context,
-                    call_id,
-                    originating_call,
-                    input,
-                )
+                .execute(session, step_context, call_id, originating_call, input)
                 .await
                 .map(boxed_tool_output),
             _ => Err(FunctionCallError::RespondToModel(format!(

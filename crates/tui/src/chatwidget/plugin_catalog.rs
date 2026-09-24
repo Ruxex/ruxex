@@ -988,8 +988,7 @@ impl ChatWidget {
             } else {
                 plugin_brief_description_without_marketplace(plugin, status_label_width)
             };
-            let plugin_detail_request =
-                plugin_detail_request_for_entry(marketplace, plugin);
+            let plugin_detail_request = plugin_detail_request_for_entry(marketplace, plugin);
             let can_view_details = plugin_detail_request.is_some();
             let disabled_by_admin = plugin.availability == PluginAvailability::DisabledByAdmin;
             let can_toggle_plugin = plugin.installed

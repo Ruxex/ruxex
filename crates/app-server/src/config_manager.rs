@@ -387,7 +387,6 @@ impl ConfigManager {
     }
 }
 
-
 pub(crate) fn protected_feature_keys(config_layer_stack: &ConfigLayerStack) -> BTreeSet<String> {
     let mut protected_features = config_layer_stack
         .effective_config()

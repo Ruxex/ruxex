@@ -261,10 +261,7 @@ fn required_managed_hooks_allow_disabled_hooks_feature() {
     let temp = tempdir().expect("create temp dir");
     let managed_hooks =
         managed_hooks_for_current_platform(temp.path(), pre_tool_use_hook_events("  "));
-    let config_layer_stack = required_hooks_stack(
-        managed_hooks,
-                mdm_requirement_source(),
-    );
+    let config_layer_stack = required_hooks_stack(managed_hooks, mdm_requirement_source());
 
     for plugin_hook_sources in [
         Vec::new(),
@@ -601,7 +598,7 @@ with Path(r"{log_path}").open("a", encoding="utf-8") as handle:
         ConfigRequirements {
             managed_hooks: Some(ConstrainedWithSource::new(
                 Constrained::allow_any(managed_hooks.clone()),
-                    Some(mdm_requirement_source()),
+                Some(mdm_requirement_source()),
             )),
             ..ConfigRequirements::default()
         },
@@ -627,10 +624,7 @@ with Path(r"{log_path}").open("a", encoding="utf-8") as handle:
 
     assert!(engine.warnings().is_empty());
     assert_eq!(engine.handlers.len(), 1);
-    assert_eq!(
-        engine.handlers[0].source,
-        HookSource::Mdm
-    );
+    assert_eq!(engine.handlers[0].source, HookSource::Mdm);
     let listed = crate::list_hooks(crate::HooksConfig {
         legacy_notify_argv: None,
         feature_enabled: true,
@@ -899,10 +893,7 @@ fn user_disablement_filters_non_managed_hooks_but_not_managed_hooks() {
     );
 
     assert_eq!(engine.handlers.len(), 1);
-    assert_eq!(
-        engine.handlers[0].source,
-        HookSource::Mdm
-    );
+    assert_eq!(engine.handlers[0].source, HookSource::Mdm);
     let discovered = super::discovery::discover_handlers(
         Some(&config_layer_stack),
         Vec::new(),
@@ -966,10 +957,7 @@ fn user_disablement_does_not_filter_managed_layer_hooks() {
     );
 
     assert_eq!(engine.handlers.len(), 1);
-    assert_eq!(
-        engine.handlers[0].source,
-        HookSource::System
-    );
+    assert_eq!(engine.handlers[0].source, HookSource::System);
     let discovered = super::discovery::discover_handlers(
         Some(&config_layer_stack),
         Vec::new(),

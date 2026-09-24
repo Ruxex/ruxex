@@ -38,7 +38,6 @@ use tokio_util::task::AbortOnDropHandle;
 use tracing::Instrument;
 use tracing::instrument::WithSubscriber;
 
-
 /// The current connection state for one concrete environment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum EnvironmentConnectionState {
@@ -331,7 +330,6 @@ impl EnvironmentManager {
         let environment = self.get_environment(environment_id)?;
         Some(environment.status().await)
     }
-
 }
 
 /// Concrete execution/filesystem environment selected for a session.
@@ -714,7 +712,6 @@ mod tests {
     fn legacy_http_client_factory() -> HttpClientFactory {
         HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault)
     }
-
 
     fn test_runtime_paths() -> ExecServerRuntimePaths {
         ExecServerRuntimePaths::new(

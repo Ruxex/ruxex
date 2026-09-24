@@ -130,8 +130,7 @@ pub(crate) struct ChatKeymap {
     pub(crate) skip_question: Vec<KeyBinding>,
 }
 
-impl ChatKeymap {
-}
+impl ChatKeymap {}
 
 /// Composer-level keybindings validated in the second app-scope conflict pass.
 ///
@@ -1853,9 +1852,7 @@ impl RuntimeKeymap {
             }
         }
         #[cfg(unix)]
-        for (action, bindings) in [
-            ("global.open_agents", &self.app.open_agents),
-        ] {
+        for (action, bindings) in [("global.open_agents", &self.app.open_agents)] {
             if bindings.contains(&key_hint::ctrl(KeyCode::Char('z'))) {
                 return Err(format!(
                     "tui.keymap.{action}: ctrl-z is reserved for suspend"

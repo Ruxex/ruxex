@@ -792,7 +792,6 @@ fn windows_program_data_dir_from_known_folder() -> io::Result<PathBuf> {
     Ok(path)
 }
 
-
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum CredentialBrokerProjectState {
     Unconfigured,

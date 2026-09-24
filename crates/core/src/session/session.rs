@@ -932,8 +932,7 @@ impl Session {
             .get::<codex_extension_api::SessionIsolation>()
             .map(|policy| *policy)
             .unwrap_or_default();
-        let allowed_tools = thread_extension_init
-            .get::<codex_extension_api::AllowedTools>();
+        let allowed_tools = thread_extension_init.get::<codex_extension_api::AllowedTools>();
         let mcp_thread_init = thread_extension_init.clone();
         let thread_extension_data = codex_extension_api::ExtensionData::new_with_init(
             thread_id.to_string(),

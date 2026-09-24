@@ -28,7 +28,10 @@ impl Session {
         turn_id: &str,
         update: TurnSettingsUpdate,
     ) -> TurnSettingsUpdateOutcome {
-        if !self.features.enabled(codex_features::Feature::StepModelSwitching) {
+        if !self
+            .features
+            .enabled(codex_features::Feature::StepModelSwitching)
+        {
             return TurnSettingsUpdateOutcome::Rejected {
                 reason: "turn settings updates require the step_model_switching feature"
                     .to_string(),
@@ -97,7 +100,11 @@ impl Session {
         // and active_turn; no asynchronous preparation runs under these locks.
         let state = self.state.lock().await;
         if let Err(reason) = self
-            .validate_active_step_settings(&turn_context, &destination, &state.session_configuration)
+            .validate_active_step_settings(
+                &turn_context,
+                &destination,
+                &state.session_configuration,
+            )
             .map_err(|error| error.to_string())
         {
             return TurnSettingsUpdateOutcome::Rejected { reason };

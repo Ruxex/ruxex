@@ -16,7 +16,6 @@ fn is_safety_access_block_message(message: &str) -> bool {
 }
 
 impl ChatWidget {
-
     /// Synchronize the bottom-pane "task running" indicator with the current lifecycles.
     ///
     /// The bottom pane only has one running flag, but this module treats it as a derived state of

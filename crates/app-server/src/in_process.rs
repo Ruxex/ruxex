@@ -424,10 +424,7 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
 
     let runtime_handle = tokio::spawn(async move {
         let (outgoing_tx, outgoing_rx) = mpsc::channel::<OutgoingEnvelope>(channel_capacity);
-        let outgoing_message_sender = Arc::new(OutgoingMessageSender::new(
-            outgoing_tx,
-            (),
-        ));
+        let outgoing_message_sender = Arc::new(OutgoingMessageSender::new(outgoing_tx, ()));
 
         let (writer_tx, mut writer_rx) = mpsc::channel::<QueuedOutgoingMessage>(channel_capacity);
         let outbound_initialized = Arc::new(AtomicBool::new(false));
@@ -764,7 +761,6 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
             outbound_handle.abort();
             let _ = outbound_handle.await;
         }
-
 
         if let Some(done_tx) = shutdown_ack {
             let _ = done_tx.send(());

@@ -39,10 +39,7 @@ pub enum ConfigLayerSource {
     /// Managed preferences layer delivered by MDM (macOS only).
     #[serde(rename_all = "camelCase")]
     #[ts(rename_all = "camelCase")]
-    Mdm {
-        domain: String,
-        key: String,
-    },
+    Mdm { domain: String, key: String },
 
     /// Host-wide configuration loaded from a file.
     #[serde(rename_all = "camelCase")]
@@ -86,13 +83,10 @@ pub enum ConfigLayerSource {
     /// these between `cwd` and the project/repo root.
     #[serde(rename_all = "camelCase")]
     #[ts(rename_all = "camelCase")]
-    Project {
-        dot_codex_folder: AbsolutePathBuf,
-    },
+    Project { dot_codex_folder: AbsolutePathBuf },
 
     /// Session-layer overrides supplied via `-c`/`--config`.
     SessionFlags,
-
 }
 
 impl ConfigLayerSource {

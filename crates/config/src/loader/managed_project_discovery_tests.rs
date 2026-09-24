@@ -192,11 +192,7 @@ async fn managed_project_discovery_uses_managed_project_trust() -> anyhow::Resul
             vec![],
             Some(untrusted_reason.as_str()),
         ),
-        (
-            String::new(),
-            vec![],
-            Some(unknown_reason.as_str()),
-        ),
+        (String::new(), vec![], Some(unknown_reason.as_str())),
     ] {
         std::fs::write(&user_config, user)?;
         let (canonical, local) = fixture.load().await?;

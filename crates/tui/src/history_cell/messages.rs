@@ -585,7 +585,6 @@ impl HistoryCell for AgentMarkdownCell {
     }
 }
 
-
 /// Transient active-cell representation of the mutable tail of an agent stream.
 ///
 /// During streaming, lines that have not yet been committed to scrollback because they belong to

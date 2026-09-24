@@ -557,7 +557,6 @@ pub(crate) enum AppEvent {
     /// A blocking image-preparation worker has finished; payload stays with its widget.
     ImagesPrepared(Uuid),
 
-
     /// Kick off an asynchronous file search for the given query (text after
     /// the `@`). Previous searches may be cancelled by the app layer so there
     /// is at most one in-flight search.

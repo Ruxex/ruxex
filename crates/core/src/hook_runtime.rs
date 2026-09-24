@@ -2,6 +2,7 @@ use std::future::Future;
 use std::sync::Arc;
 use std::time::Duration;
 
+use crate::responses_metadata::CompactionTrigger;
 use codex_core_plugins::executor_plugin_hook_sources;
 use codex_hooks::InterruptRequest;
 use codex_hooks::PermissionRequestDecision;
@@ -15,7 +16,6 @@ use codex_hooks::SessionStartOutcome;
 use codex_hooks::StartHookTarget;
 use codex_hooks::StopHookTarget;
 use codex_hooks::StopOutcome;
-use crate::responses_metadata::CompactionTrigger;
 use codex_hooks::SubagentHookContext;
 use codex_hooks::UserPromptSubmitOutcome;
 use codex_hooks::UserPromptSubmitRequest;

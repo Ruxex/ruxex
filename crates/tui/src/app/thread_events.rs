@@ -208,8 +208,7 @@ impl ThreadEventStore {
                     item: ThreadItem::Reasoning { id, .. },
                     ..
                 },
-            ) =>
-            {
+            ) => {
                 self.active_reasoning_item =
                     Some(codex_app_server_protocol::ItemStartedNotification {
                         thread_id: started.thread_id.clone(),

@@ -95,10 +95,7 @@ impl ChatWidget {
                 })
             },
         );
-        self.misalignment_policy_violation = Some(MisalignmentViolation {
-            turn_id,
-            review,
-        });
+        self.misalignment_policy_violation = Some(MisalignmentViolation { turn_id, review });
         self.input_queue.clear();
         self.finalize_turn();
         self.refresh_pending_input_preview();

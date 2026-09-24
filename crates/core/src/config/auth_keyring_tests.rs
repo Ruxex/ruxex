@@ -160,7 +160,10 @@ fn bootstrap_auth_config_applies_managed_store_and_managed_auth_base_url() {
         .expect("managed authentication settings should resolve");
 
     assert_eq!(auth_config.auth_credentials_store_mode, managed_store);
-    assert_eq!(auth_config.managed_auth_base_url.as_deref(), Some(managed_url));
+    assert_eq!(
+        auth_config.managed_auth_base_url.as_deref(),
+        Some(managed_url)
+    );
 }
 
 fn config_toml_load_result(

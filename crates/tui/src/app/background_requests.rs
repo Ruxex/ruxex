@@ -20,7 +20,6 @@ use crate::hooks_rpc::write_hook_trust;
 use crate::hooks_rpc::write_hook_trusts;
 use codex_utils_absolute_path::AbsolutePathBuf;
 
-
 impl App {
     pub(super) fn fetch_mcp_inventory(
         &mut self,
@@ -490,7 +489,6 @@ pub(super) async fn fetch_plugins_list(
     hide_cli_only_plugin_marketplaces(&mut response);
     Ok(response)
 }
-
 
 const CLI_HIDDEN_PLUGIN_MARKETPLACES: &[&str] = &["openai-bundled"];
 

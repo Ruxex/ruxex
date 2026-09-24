@@ -51,8 +51,7 @@ impl ChatWidget {
         if let Some(header) = self.reasoning_header.clone() {
             self.status_state.terminal_title_status_kind = TerminalTitleStatusKind::Thinking;
             self.set_status_header(header);
-        } else if self.bottom_pane.is_task_running()
-        {
+        } else if self.bottom_pane.is_task_running() {
             self.status_state.terminal_title_status_kind = TerminalTitleStatusKind::Working;
             self.set_status_header(String::from("Working"));
         }
@@ -300,7 +299,6 @@ impl ChatWidget {
             // Unified exec waiting should take precedence over reasoning-derived status headers.
             return;
         }
-
 
         self.reasoning_header =
             latest_summary_line(&self.reasoning_buffer).or(self.reasoning_header.take());
