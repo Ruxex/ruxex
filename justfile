@@ -53,7 +53,7 @@ fix *args:
     cargo clippy --fix --tests --allow-dirty {args}
 
 clippy *args:
-    cargo clippy --tests {args}
+    {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- rtk cargo clippy --tests "$@"
 
 [unix]
 install:
