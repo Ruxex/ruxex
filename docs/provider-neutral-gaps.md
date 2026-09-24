@@ -21,7 +21,7 @@ OpenAI 固有機能の除去後に残ったコードを調査し、汎用プロ�
 | G-4 | リトライ終了後の再開情報 | 対象外 | - | consumer 不在の未使用 producer は削除し、必要になった時点で再設計する |
 | G-5 | 画像 detail の `low` / `auto` | 部分実装 | 中 | provider capability と変換方針を定義する |
 | G-6 | Prefix compaction | 実装済み | 低 | コンテキスト超過時に自動適用。ユーザー選択設定は追加しない |
-| G-7 | 非 Responses wire API の完全なサポート | 未実装 | 高 | provider transport 境界を再設計する |
+| G-7 | 非 Responses wire API の完全なサポート | 部分実装 | 高 | Chat Completions の既存経路を復活。独自 streaming protocol は別途設計する |
 
 ## G-1: MCP ツールカタログの動的 refresh
 
@@ -128,7 +128,7 @@ Responses API の `input_image.detail` で定義される `auto`、`low`、`high
 - `codex_protocol::openai_models::ModelInfo`
 - Responses 用の compaction、retry、metadata
 
-したがって、現在の「汎用プロバイダ」は **Responses互換の provider を差し替えられる汎用性** であり、Chat Completions、独自 streaming protocol、非 OpenAI 形式の tool call を同じ抽象で扱える状態ではない。
+現在は `wire_api = "chat"` を指定した provider に対して、Chat Completions の `/chat/completions`、function tool payload、SSE 応答を専用 adapter 経由で利用できる。`output_schema` は Chat Completions 経路では未対応であり、独自 streaming protocol や非 OpenAI 形式の tool call は引き続き同じ抽象で扱えない。
 
 完全な provider-neutral 化には、少なくとも次の境界が必要になる。
 

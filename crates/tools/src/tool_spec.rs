@@ -12,6 +12,7 @@ use codex_protocol::config_types::WebSearchUserLocation as ConfigWebSearchUserLo
 use codex_protocol::config_types::WebSearchUserLocationType;
 use serde::Serialize;
 use serde_json::Value;
+use serde_json::json;
 use serde_json::value::RawValue;
 use std::sync::Arc;
 
@@ -90,6 +91,34 @@ pub fn create_tools_json_for_responses_api(
     }
 
     Ok(tools_json)
+}
+
+/// Returns JSON values compatible with Function Calling in the Chat Completions API.
+pub fn create_tools_json_for_chat_completions_api(
+    tools: &[ToolSpec],
+) -> Result<Vec<Value>, serde_json::Error> {
+    let responses_api_tools_json = create_tools_json_for_responses_api(tools)?;
+    Ok(responses_api_tools_json
+        .into_iter()
+        .filter_map(|mut tool| {
+            if tool.get("type") != Some(&Value::String("function".to_string())) {
+                return None;
+            }
+
+            let map = tool.as_object_mut()?;
+            let name = map
+                .get("name")
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_string();
+            map.remove("type");
+            Some(json!({
+                "type": "function",
+                "name": name,
+                "function": map,
+            }))
+        })
+        .collect())
 }
 
 pub fn create_tools_json_for_responses_lite(

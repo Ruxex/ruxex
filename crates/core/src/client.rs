@@ -34,8 +34,11 @@ use std::sync::atomic::Ordering;
 
 use crate::CodexResponsesHeaders;
 use async_channel::Sender;
+use codex_api::AggregateStreamExt;
 use codex_api::ApiError;
 use codex_api::AuthProvider;
+use codex_api::ChatClient as ApiChatClient;
+use codex_api::ChatRequestBuilder;
 use codex_api::Compression;
 use codex_api::MemoriesClient as ApiMemoriesClient;
 use codex_api::MemorySummarizeInput as ApiMemorySummarizeInput;
@@ -90,6 +93,7 @@ use codex_protocol::protocol::SessionSource;
 use codex_protocol::protocol::W3cTraceContext;
 use codex_rollout_trace::InferenceTraceAttempt;
 use codex_rollout_trace::InferenceTraceContext;
+use codex_tools::create_tools_json_for_chat_completions_api;
 use codex_tools::create_tools_json_for_responses_api;
 use codex_tools::create_tools_json_for_responses_lite;
 use codex_tools::create_tools_raw_json_for_responses_api;
@@ -836,9 +840,7 @@ impl ModelClient {
                 .ok()
                 .is_some_and(|url| {
                     url.scheme() == "https"
-                        && url.host_str().is_some_and(|host| {
-                            host == "api.openai.com"
-                        })
+                        && url.host_str().is_some_and(|host| host == "api.openai.com")
                 });
         if !result_metadata_allowed {
             for item in input {
@@ -922,10 +924,7 @@ impl ModelClient {
     fn responses_headers(&self, auth: Option<&CodexAuth>, model: &str) -> ApiHeaderMap {
         self.codex_responses_headers
             .as_ref()
-            .filter(|config| {
-                config.model == model
-                    && self.uses_managed_auth(auth)
-            })
+            .filter(|config| config.model == model && self.uses_managed_auth(auth))
             .map(|config| config.headers.clone())
             .unwrap_or_default()
     }
@@ -1328,6 +1327,115 @@ impl ModelClientSession {
         }
     }
 
+    /// Streams a turn via the legacy Chat Completions API.
+    ///
+    /// Providers opt into this isolated transport with `wire_api = "chat"`; the default
+    /// Responses transport does not pass through this path.
+    #[allow(clippy::too_many_arguments)]
+    async fn stream_chat_completions(
+        &self,
+        prompt: &Prompt,
+        model_info: &ModelInfo,
+        session_telemetry: &SessionTelemetry,
+        responses_metadata: &CodexResponsesMetadata,
+        inference_trace: &InferenceTraceContext,
+    ) -> Result<ResponseStream> {
+        if prompt.output_schema.is_some() {
+            return Err(codex_protocol::error::CodexErr::UnsupportedOperation(
+                "output_schema is not supported for Chat Completions API".to_string(),
+            ));
+        }
+
+        let tools = create_tools_json_for_chat_completions_api(&prompt.tools)?;
+        let auth_manager = self.client.state.provider.auth_manager();
+        let mut auth_recovery = auth_manager
+            .as_ref()
+            .map(AuthManager::unauthorized_recovery);
+        let mut provider_auth_recovery_attempted = false;
+        let mut pending_retry = PendingUnauthorizedRetry::default();
+
+        loop {
+            let client_setup = self.client.current_client_setup().await?;
+            let transport = self.client.build_api_transport(
+                &client_setup.api_provider,
+                "/chat/completions",
+                client_setup.redirect_policy,
+            )?;
+            let request = ChatRequestBuilder::new(
+                &model_info.slug,
+                &prompt.base_instructions.text,
+                &prompt.input,
+                &tools,
+            )
+            .conversation_id(Some(responses_metadata.session_id.clone()))
+            .session_source(Some(self.client.state.session_source.clone()))
+            .build(&client_setup.api_provider)
+            .map_err(|error| self.client.state.provider.map_api_error(error))?;
+            let request_auth_context =
+                AuthRequestTelemetryContext::new(client_setup.api_auth.as_ref(), pending_retry);
+            let (request_telemetry, sse_telemetry) = Self::build_streaming_telemetry(
+                session_telemetry,
+                request_auth_context,
+                RequestRouteTelemetry::for_endpoint("/chat/completions"),
+            );
+            let inference_trace_attempt = inference_trace.start_attempt();
+            let client =
+                ApiChatClient::new(transport, client_setup.api_provider, client_setup.api_auth)
+                    .with_telemetry(Some(request_telemetry), Some(sse_telemetry));
+
+            match client.stream_request(request).await {
+                Ok(stream) => {
+                    let (stream, _) = map_response_events(
+                        None,
+                        stream.aggregate(),
+                        session_telemetry.clone(),
+                        inference_trace_attempt,
+                        Arc::clone(&self.client.state.provider),
+                    );
+                    return Ok(stream);
+                }
+                Err(ApiError::Transport(unauthorized_transport))
+                    if self
+                        .client
+                        .state
+                        .provider
+                        .is_recoverable_auth_error(&unauthorized_transport) =>
+                {
+                    let response_debug_context =
+                        extract_response_debug_context(&unauthorized_transport);
+                    inference_trace_attempt.record_failed(
+                        &unauthorized_transport,
+                        response_debug_context.request_id.as_deref(),
+                        /*output_items*/ &[],
+                    );
+                    pending_retry = PendingUnauthorizedRetry::from_recovery(
+                        handle_unauthorized(
+                            unauthorized_transport,
+                            &mut auth_recovery,
+                            &mut provider_auth_recovery_attempted,
+                            session_telemetry,
+                            &self.client.state.provider,
+                            self.client.event_sender.as_ref(),
+                            responses_metadata.turn_id.as_deref(),
+                        )
+                        .await?,
+                    );
+                }
+                Err(err) => {
+                    let response_debug_context =
+                        extract_response_debug_context_from_api_error(&err);
+                    let err = self.client.state.provider.map_api_error(err);
+                    inference_trace_attempt.record_failed(
+                        &err,
+                        response_debug_context.request_id.as_deref(),
+                        /*output_items*/ &[],
+                    );
+                    return Err(err);
+                }
+            }
+        }
+    }
+
     /// Streams a turn via the OpenAI Responses API.
     ///
     /// Handles reasoning summaries, verbosity, and the `text` controls used for output schemas.
@@ -1402,11 +1510,10 @@ impl ModelClientSession {
                 &client_setup.api_provider,
             );
             if let Some(header_value) = self.client.build_routing_hint_header(
-                    client_setup.auth.as_ref(),
-                    &request.model,
-                    request.service_tier.as_deref(),
-                )
-            {
+                client_setup.auth.as_ref(),
+                &request.model,
+                request.service_tier.as_deref(),
+            ) {
                 options
                     .extra_headers
                     .insert(X_CODEX_ROUTING_HINT_HEADER, header_value);
@@ -1859,6 +1966,16 @@ impl ModelClientSession {
                     effort,
                     summary,
                     service_tier,
+                    responses_metadata,
+                    inference_trace,
+                )
+                .await
+            }
+            WireApi::Chat => {
+                self.stream_chat_completions(
+                    prompt,
+                    model_info,
+                    session_telemetry,
                     responses_metadata,
                     inference_trace,
                 )
