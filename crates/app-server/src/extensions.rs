@@ -13,6 +13,7 @@ use codex_exec_server::EnvironmentManager;
 use codex_extension_api::ExtensionEventSink;
 use codex_extension_api::ExtensionRegistry;
 use codex_extension_api::ExtensionRegistryBuilder;
+use codex_extension_api::ExtensionTurnInterrupt;
 use codex_extension_api::ExtensionWarning;
 use codex_extension_api::TurnStartAdmission;
 use codex_goal_extension::GoalExtensionConfig;
@@ -229,14 +230,7 @@ impl ExtensionEventSink for AppServerExtensionEventSink {
             );
             return;
         };
-        let mut message = message;
-        if message.len() > MAX_EXTENSION_WARNING_BYTES {
-            let mut truncate_at = MAX_EXTENSION_WARNING_BYTES;
-            while !message.is_char_boundary(truncate_at) {
-                truncate_at -= 1;
-            }
-            message.truncate(truncate_at);
-        }
+        let message = truncate_extension_warning(message);
         if let Some(listener_command_tx) = self
             .thread_state_manager
             .current_listener_command_tx(thread_id)
@@ -271,6 +265,48 @@ impl ExtensionEventSink for AppServerExtensionEventSink {
             send_thread_warning(&outgoing, &thread_state_manager, thread_id, message).await;
         });
     }
+
+    fn request_turn_interrupt(&self, interrupt: ExtensionTurnInterrupt) {
+        let Ok(thread_id) = ThreadId::from_string(&interrupt.thread_id) else {
+            tracing::warn!(
+                thread_id = %interrupt.thread_id,
+                "dropping extension turn interruption with invalid thread id"
+            );
+            return;
+        };
+        if interrupt.turn_id.is_empty() {
+            tracing::warn!(%thread_id, "dropping extension turn interruption without turn id");
+            return;
+        }
+        let warning = truncate_extension_warning(interrupt.message);
+        let Some(listener_command_tx) = self
+            .thread_state_manager
+            .current_listener_command_tx(thread_id)
+        else {
+            tracing::debug!(%thread_id, "dropping extension turn interruption without listener");
+            return;
+        };
+        if listener_command_tx
+            .send(ThreadListenerCommand::InterruptTurn {
+                turn_id: interrupt.turn_id,
+                warning,
+            })
+            .is_err()
+        {
+            tracing::debug!(%thread_id, "dropping extension turn interruption after listener closed");
+        }
+    }
+}
+
+fn truncate_extension_warning(mut message: String) -> String {
+    if message.len() > MAX_EXTENSION_WARNING_BYTES {
+        let mut truncate_at = MAX_EXTENSION_WARNING_BYTES;
+        while !message.is_char_boundary(truncate_at) {
+            truncate_at -= 1;
+        }
+        message.truncate(truncate_at);
+    }
+    message
 }
 
 #[cfg(test)]
@@ -308,13 +344,18 @@ mod tests {
             turn_id: Some("turn-warning".to_string()),
             message: "catalog was shortened".to_string(),
         });
+        sink.request_turn_interrupt(ExtensionTurnInterrupt {
+            thread_id: thread_id.to_string(),
+            turn_id: "turn-interrupt".to_string(),
+            message: "extension requested interruption".to_string(),
+        });
         sink.emit(thread_goal_updated_event(thread_id, "turn-2"));
         listener_command_tx
             .send(ThreadListenerCommand::EmitThreadGoalCleared)
             .expect("listener command channel should be open");
 
         let mut observed = Vec::new();
-        for _ in 0..4 {
+        for _ in 0..5 {
             let command = timeout(Duration::from_secs(1), listener_command_rx.recv())
                 .await
                 .expect("timed out waiting for listener command")
@@ -324,6 +365,9 @@ mod tests {
                     observed.push(turn_id.expect("extension goal updates should include turn ids"));
                 }
                 ThreadListenerCommand::EmitWarning { message } => observed.push(message),
+                ThreadListenerCommand::InterruptTurn { turn_id, warning } => {
+                    observed.push(format!("{turn_id}:{warning}"))
+                }
                 ThreadListenerCommand::EmitThreadGoalCleared => {
                     observed.push("cleared".to_string())
                 }
@@ -335,6 +379,7 @@ mod tests {
             vec![
                 "turn-1".to_string(),
                 "catalog was shortened".to_string(),
+                "turn-interrupt:extension requested interruption".to_string(),
                 "turn-2".to_string(),
                 "cleared".to_string()
             ],

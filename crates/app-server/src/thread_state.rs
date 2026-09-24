@@ -72,6 +72,11 @@ pub(crate) enum ThreadListenerCommand {
     EmitWarning {
         message: String,
     },
+    // InterruptTurn serializes extension-triggered interruption with thread events.
+    InterruptTurn {
+        turn_id: String,
+        warning: String,
+    },
     // EmitThreadGoalCleared is used to order app-server goal clears with running-thread resume responses.
     EmitThreadGoalCleared,
     // EmitThreadGoalSnapshot is used to read and emit the latest goal state in the listener order.

@@ -530,6 +530,11 @@ pub(super) async fn handle_thread_listener_command(
         ThreadListenerCommand::EmitWarning { message } => {
             send_thread_warning(outgoing, thread_state_manager, conversation_id, message).await;
         }
+        ThreadListenerCommand::InterruptTurn { turn_id, warning } => {
+            conversation
+                .interrupt_turn_with_warning(&turn_id, warning)
+                .await;
+        }
         ThreadListenerCommand::EmitThreadGoalCleared => {
             outgoing
                 .send_server_notification(ServerNotification::ThreadGoalCleared(

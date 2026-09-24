@@ -17,7 +17,7 @@ OpenAI 固有機能の除去後に残ったコードを調査し、汎用プロ�
 |---|---|---|---|---|
 | G-1 | MCP ツールカタログの動的 refresh | 実装済み | 高 | server 単位の汎用 refresh 経路を追加済み |
 | G-2 | 自作マーケットプレイスの publish/upload | 部分実装 | 中 | 汎用 HTTP registry 向け CLI publish client を追加。registry server と app-server API は別途実装する |
-| G-3 | 拡張機能からの turn 中断 | 未接続 | 中 | 汎用 extension API として接続する |
+| G-3 | 拡張機能からの turn 中断 | 実装済み | 中 | extension event sink から listener 経由で Core の対象 turn を中断する |
 | G-4 | リトライ終了後の再開情報 | 未接続 | 中 | producer と consumer を定義する |
 | G-5 | 画像 detail の `low` / `auto` | 部分実装 | 中 | provider capability と変換方針を定義する |
 | G-6 | Prefix compaction | 部分実装 | 低 | 現行 Memento との差分を設計してから実装する |
@@ -80,14 +80,14 @@ control API の bearer token は `--token-env-var` で指定した環境変数�
 
 ## G-3: 拡張機能からの turn 中断
 
-[`Session::interrupt_turn_with_warning`](../crates/core/src/session/extension_interruption.rs) は turn を中断し、warning event を送る処理を持つが、現行の extension 呼び出し側がない。
+[`Session::interrupt_turn_with_warning`](../crates/core/src/session/extension_interruption.rs) の既存処理を、`ExtensionEventSink::request_turn_interrupt` から利用できるようにした。app-server は要求を `ThreadListenerCommand` に変換して listener の順序に入れ、対象 `turn_id` がまだ active な場合だけ warning を送って中断する。
 
-拡張機能が外部状態の変化や安全上の判断で turn を停止する必要がある場合、汎用 extension API に次を公開する必要がある。
+拡張機能は次の汎用 API で外部状態の変化や安全上の判断による中断を要求できる。
 
-- 中断対象 turn の識別
-- warning の表示先と永続化方針
-- 中断と通常の user abort / provider error の区別
-- race と cancellation の扱い
+- `ExtensionTurnInterrupt { thread_id, turn_id, message }`
+- `ExtensionEventSink::request_turn_interrupt(...)`
+
+host が中断 API を提供しない場合は no-op とし、app-server では thread listener が順序を保証する。対象 turn が終了済み、別 turn に置き換わった、または listener が存在しない場合は要求を破棄する。中断理由は既存の `TurnAbortReason::Interrupted` を使うため、通常の user interrupt と同じ provider-neutral な lifecycle を通る。
 
 ## G-4: リトライ終了後の再開情報
 

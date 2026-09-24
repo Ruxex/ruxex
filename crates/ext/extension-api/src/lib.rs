@@ -13,6 +13,7 @@ pub use session_isolation::SessionIsolation;
 pub use capabilities::ConversationHistorySnapshot;
 pub use capabilities::ExtensionEventSink;
 pub use capabilities::ExtensionMetrics;
+pub use capabilities::ExtensionTurnInterrupt;
 pub use capabilities::ExtensionWarning;
 pub use capabilities::NoopExtensionEventSink;
 pub use capabilities::NoopResponseItemInjector;

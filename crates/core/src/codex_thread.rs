@@ -266,6 +266,18 @@ impl CodexThread {
         self.session.emit_thread_idle_lifecycle_if_idle(cause).await;
     }
 
+    /// Requests interruption of a specific active turn on behalf of an extension.
+    pub async fn interrupt_turn_with_warning(&self, turn_id: &str, message: String) {
+        self.session
+            .interrupt_turn_with_warning(
+                turn_id,
+                codex_protocol::protocol::EventMsg::Warning(
+                    codex_protocol::protocol::WarningEvent { message },
+                ),
+            )
+            .await;
+    }
+
     #[doc(hidden)]
     pub async fn ensure_rollout_materialized(&self) {
         self.session

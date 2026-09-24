@@ -14,6 +14,7 @@ use codex_extension_api::ExtensionEventSink;
 use codex_extension_api::ExtensionFuture;
 use codex_extension_api::ExtensionMetrics;
 use codex_extension_api::ExtensionRegistryBuilder;
+use codex_extension_api::ExtensionTurnInterrupt;
 use codex_extension_api::ExtensionWarning;
 use codex_extension_api::McpServerContributionContext;
 use codex_extension_api::PromptFragment;
@@ -334,6 +335,7 @@ async fn contributors_preserve_registration_order() {
 #[derive(Default)]
 struct RecordingEventSink {
     events: Mutex<Vec<(String, String)>>,
+    interrupts: Mutex<Vec<ExtensionTurnInterrupt>>,
 }
 
 impl ExtensionEventSink for RecordingEventSink {
@@ -352,6 +354,13 @@ impl ExtensionEventSink for RecordingEventSink {
             .lock()
             .expect("recording event sink lock should not be poisoned")
             .push((warning.thread_id, warning.message));
+    }
+
+    fn request_turn_interrupt(&self, interrupt: ExtensionTurnInterrupt) {
+        self.interrupts
+            .lock()
+            .expect("recording interrupt sink lock should not be poisoned")
+            .push(interrupt);
     }
 }
 
@@ -372,6 +381,13 @@ fn custom_event_sink_survives_registry_build() {
         turn_id: Some("turn".to_string()),
         message: "warning".to_string(),
     });
+    registry
+        .event_sink()
+        .request_turn_interrupt(ExtensionTurnInterrupt {
+            thread_id: "thread".to_string(),
+            turn_id: "turn".to_string(),
+            message: "stop now".to_string(),
+        });
 
     assert_eq!(
         sink.events
@@ -383,6 +399,17 @@ fn custom_event_sink_survives_registry_build() {
             ("registry".to_string(), "after".to_string()),
             ("thread".to_string(), "warning".to_string()),
         ]
+    );
+    assert_eq!(
+        sink.interrupts
+            .lock()
+            .expect("recording interrupt sink lock")
+            .as_slice(),
+        [ExtensionTurnInterrupt {
+            thread_id: "thread".to_string(),
+            turn_id: "turn".to_string(),
+            message: "stop now".to_string(),
+        }]
     );
 }
 

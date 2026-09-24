@@ -11,6 +11,17 @@ pub struct ExtensionWarning {
     pub message: String,
 }
 
+/// Request from an extension to interrupt one active turn.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ExtensionTurnInterrupt {
+    /// Stable host-owned thread identifier used for routing.
+    pub thread_id: String,
+    /// Stable host-owned turn identifier to interrupt.
+    pub turn_id: String,
+    /// Concise warning to deliver before the interruption.
+    pub message: String,
+}
+
 /// Host-provided fire-and-forget sink for extension-generated events.
 ///
 /// Extensions construct protocol events with the correlation id appropriate for
@@ -25,6 +36,11 @@ pub trait ExtensionEventSink: Send + Sync {
     /// Implementations must use [`ExtensionWarning::thread_id`] for routing. The optional
     /// [`ExtensionWarning::turn_id`] is correlation metadata and does not identify a thread.
     fn emit_warning(&self, warning: ExtensionWarning);
+
+    /// Request host-owned interruption of one active turn.
+    ///
+    /// Hosts that do not expose turn interruption may ignore this request.
+    fn request_turn_interrupt(&self, _interrupt: ExtensionTurnInterrupt) {}
 }
 
 /// Event sink used when the host does not expose extension event emission.
