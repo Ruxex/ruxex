@@ -11,7 +11,6 @@ use codex_protocol::items::TurnItem;
 use codex_protocol::protocol::EventMsg;
 use codex_protocol::protocol::GitInfo;
 use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadMemoryMode;
 use codex_protocol::protocol::UserMessageEvent;
 use codex_protocol::protocol::strip_user_message_prefix;
 use codex_protocol::protocol::user_message_preview;
@@ -75,7 +74,6 @@ impl ThreadMetadataSync {
             cwd: Some(cwd.clone()),
             cli_version: Some(env!("CARGO_PKG_VERSION").to_string()),
             git_info: git_info.map(git_info_patch_from_observation),
-            memory_mode: Some(params.metadata.memory_mode),
             ..Default::default()
         };
         Self {
@@ -211,7 +209,6 @@ impl ThreadMetadataSync {
             // Paginated rollouts never append metadata-only SessionMeta updates. Do not reapply
             // initial metadata when resume history is flushed after the first append.
             update.git_info = None;
-            update.memory_mode = None;
         }
         Some(update)
     }
@@ -250,11 +247,6 @@ impl ThreadMetadataSync {
                     }
                     if let Some(git_info) = meta_line.git.clone() {
                         update.git_info = Some(git_info_patch_from_observation(git_info));
-                    }
-                    if let Some(memory_mode) = meta_line.meta.memory_mode.as_deref()
-                        && let Some(memory_mode) = parse_memory_mode(memory_mode)
-                    {
-                        update.memory_mode = Some(memory_mode);
                     }
                 }
                 RolloutItem::TurnContext(turn_ctx) => {
@@ -349,14 +341,6 @@ impl ThreadMetadataSync {
     }
 }
 
-fn parse_memory_mode(value: &str) -> Option<ThreadMemoryMode> {
-    match value {
-        "enabled" => Some(ThreadMemoryMode::Enabled),
-        "disabled" => Some(ThreadMemoryMode::Disabled),
-        _ => None,
-    }
-}
-
 fn parse_session_timestamp(value: &str) -> Option<DateTime<Utc>> {
     DateTime::parse_from_rfc3339(value)
         .map(|timestamp| timestamp.with_timezone(&Utc))
@@ -396,7 +380,6 @@ fn update_has_metadata_facts(update: &ThreadMetadataPatch) -> bool {
         || update.token_usage.is_some()
         || update.first_user_message.is_some()
         || update.git_info.is_some()
-        || update.memory_mode.is_some()
 }
 
 fn git_info_patch_from_observation(git_info: GitInfo) -> GitInfoPatch {
@@ -462,7 +445,6 @@ mod tests {
             metadata: ThreadPersistenceMetadata {
                 cwd: None,
                 model_provider: "test-provider".to_string(),
-                memory_mode: ThreadMemoryMode::Enabled,
             },
         })
         .await;
@@ -739,7 +721,6 @@ mod tests {
         let thread_id = ThreadId::new();
         let mut meta = session_meta(thread_id);
         meta.meta.history_mode = ThreadHistoryMode::Paginated;
-        meta.meta.memory_mode = Some("disabled".to_string());
         meta.git = Some(GitInfo {
             commit_hash: None,
             branch: Some("stale-branch".to_string()),
@@ -755,7 +736,6 @@ mod tests {
 
         let update = sync.take_pending_update().expect("pending metadata update");
         assert_eq!(update.patch.git_info, None);
-        assert_eq!(update.patch.memory_mode, None);
         assert_eq!(update.patch.preview.as_deref(), Some("hello metadata"));
     }
 
@@ -802,7 +782,6 @@ mod tests {
             metadata: ThreadPersistenceMetadata {
                 cwd: None,
                 model_provider: "test-provider".to_string(),
-                memory_mode: ThreadMemoryMode::Enabled,
             },
         }
     }

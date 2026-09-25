@@ -40,7 +40,6 @@ async fn repo_migration_skips_redirected_generated_destinations() -> std::io::Re
     let mut items = service
         .detect(ExternalAgentConfigDetectOptions {
             include_home: false,
-            include_memory: false,
             cwds: Some(vec![repo.clone()]),
         })
         .await?;
@@ -241,7 +240,6 @@ async fn repo_agents_md_migration_skips_symlink_targets() {
         let items = service
             .detect(ExternalAgentConfigDetectOptions {
                 include_home: false,
-                include_memory: false,
                 cwds: Some(vec![repo_root.clone()]),
             })
             .await
@@ -307,7 +305,6 @@ async fn detect_repo_prefers_non_empty_external_agent_agents_source() {
     )
     .detect(ExternalAgentConfigDetectOptions {
         include_home: false,
-        include_memory: false,
         cwds: Some(vec![repo_root.clone()]),
     })
     .await
@@ -433,7 +430,6 @@ async fn repo_hooks_migration_skips_symlink_targets() {
         let items = service
             .detect(ExternalAgentConfigDetectOptions {
                 include_home: false,
-                include_memory: false,
                 cwds: Some(vec![repo_root.clone()]),
             })
             .await

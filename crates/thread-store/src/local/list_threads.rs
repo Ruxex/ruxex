@@ -53,7 +53,6 @@ pub(super) async fn list_threads(
         sqlite: store.config.sqlite.clone(),
         cwd: store.config.codex_home.clone(),
         model_provider_id: store.config.default_model_provider_id.clone(),
-        generate_memories: false,
     };
     let page = list_rollout_threads(
         state_db.clone(),
@@ -697,7 +696,6 @@ mod tests {
                 /*builder*/ None,
                 &[],
                 /*archived_only*/ None,
-                /*new_thread_memory_mode*/ None,
             )
             .await;
             store

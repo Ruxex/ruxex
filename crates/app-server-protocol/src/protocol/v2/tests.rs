@@ -22,8 +22,6 @@ use codex_protocol::items::UserMessageItem;
 use codex_protocol::items::WebSearchItem as CoreWebSearchItem;
 use codex_protocol::mcp::CallToolResult;
 use codex_protocol::mcp::McpServerInfo;
-use codex_protocol::memory_citation::MemoryCitation as CoreMemoryCitation;
-use codex_protocol::memory_citation::MemoryCitationEntry as CoreMemoryCitationEntry;
 use codex_protocol::models::AdditionalPermissionProfile as CoreAdditionalPermissionProfile;
 use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
 use codex_protocol::models::FileSystemPermissions as CoreFileSystemPermissions;
@@ -173,7 +171,6 @@ fn thread_sources_round_trip_as_scalar_labels() {
             ThreadSource::Feature("automation".to_string()),
             "automation",
         ),
-        (ThreadSource::MemoryConsolidation, "memory_consolidation"),
     ] {
         let value = serde_json::to_value(&source).expect("serialize thread source");
 
@@ -2912,7 +2909,6 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
             },
         ],
         phase: None,
-        memory_citation: None,
         delivery: None,
         questions: None,
     });
@@ -2923,7 +2919,6 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
             id: "agent-1".to_string(),
             text: "Hello world".to_string(),
             phase: None,
-            memory_citation: None,
             delivery: None,
             questions: None,
         }
@@ -2935,15 +2930,6 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
             text: "final".to_string(),
         }],
         phase: Some(MessagePhase::FinalAnswer),
-        memory_citation: Some(CoreMemoryCitation {
-            entries: vec![CoreMemoryCitationEntry {
-                path: "MEMORY.md".to_string(),
-                line_start: 1,
-                line_end: 2,
-                note: "summary".to_string(),
-            }],
-            rollout_ids: vec!["rollout-1".to_string()],
-        }),
         delivery: None,
         questions: None,
     });
@@ -2954,15 +2940,6 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
             id: "agent-2".to_string(),
             text: "final".to_string(),
             phase: Some(MessagePhase::FinalAnswer),
-            memory_citation: Some(MemoryCitation {
-                entries: vec![MemoryCitationEntry {
-                    path: "MEMORY.md".to_string(),
-                    line_start: 1,
-                    line_end: 2,
-                    note: "summary".to_string(),
-                }],
-                thread_ids: vec!["rollout-1".to_string()],
-            }),
             delivery: None,
             questions: None,
         }
@@ -2974,7 +2951,6 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
             text: "Which?".to_string(),
         }],
         phase: Some(MessagePhase::FinalAnswer),
-        memory_citation: None,
         delivery: Some(AgentMessageDelivery::Async),
         questions: Some(vec![AsyncUserInputQuestion {
             title: "Which?".to_string(),
@@ -2985,7 +2961,7 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
         serde_json::to_value(&async_item).unwrap(),
         json!({
             "type": "agentMessage", "id": "async-1", "text": "Which?", "phase": "final_answer",
-            "memoryCitation": null, "delivery": "async", "questions": [{"title": "Which?", "options": null}]
+            "delivery": "async", "questions": [{"title": "Which?", "options": null}]
         })
     );
     let old_item: ThreadItem = serde_json::from_value(json!({

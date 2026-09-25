@@ -6,8 +6,6 @@ mod hooks_cla;
 mod hooks_common;
 mod hooks_cur;
 mod mcp;
-mod memory;
-mod memory_import;
 mod migration_source;
 mod model;
 mod plugins;
@@ -53,8 +51,6 @@ pub use mcp::build_mcp_config_from_json_file;
 use mcp::external_agent_project_config_file;
 #[cfg(test)]
 use mcp::parse_env_placeholder;
-pub use memory::ExternalMemoryFile;
-pub use memory::discover_external_memory_files;
 pub use rewrite::RewriteProfile;
 pub use service::DetectedConnectorCandidate;
 pub use service::DetectedConnectorSource;

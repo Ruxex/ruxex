@@ -246,7 +246,6 @@ impl ChatWidget {
                 id,
                 text,
                 phase,
-                memory_citation,
                 delivery,
                 questions,
                 ..
@@ -256,23 +255,6 @@ impl ChatWidget {
                         id,
                         content: vec![AgentMessageContent::Text { text }],
                         phase,
-                        memory_citation: memory_citation.map(|citation| {
-                            codex_protocol::memory_citation::MemoryCitation {
-                                entries: citation
-                                    .entries
-                                    .into_iter()
-                                    .map(|entry| {
-                                        codex_protocol::memory_citation::MemoryCitationEntry {
-                                            path: entry.path,
-                                            line_start: entry.line_start,
-                                            line_end: entry.line_end,
-                                            note: entry.note,
-                                        }
-                                    })
-                                    .collect(),
-                                rollout_ids: citation.thread_ids,
-                            }
-                        }),
                         delivery,
                         questions,
                     },

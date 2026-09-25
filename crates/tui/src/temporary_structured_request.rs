@@ -69,7 +69,6 @@ pub(crate) async fn start_temporary_thread(
         ("features.enable_fanout".to_string(), false.into()),
         ("features.goals".to_string(), false.into()),
         ("features.hooks".to_string(), false.into()),
-        ("features.memories".to_string(), false.into()),
         ("features.multi_agent".to_string(), false.into()),
         ("features.multi_agent_v2".to_string(), false.into()),
         ("features.plugins".to_string(), false.into()),

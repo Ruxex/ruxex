@@ -57,7 +57,6 @@ use codex_protocol::request_user_input::RequestUserInputQuestionOption;
 use codex_protocol::request_user_input::RequestUserInputResponse;
 use codex_rmcp_client::ElicitationAction;
 use codex_rmcp_client::ElicitationResponse;
-use codex_rollout::state_db;
 use codex_tools::ToolName;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use codex_utils_output_truncation::TruncationPolicy;
@@ -360,8 +359,6 @@ async fn handle_approved_mcp_tool_call(
                         )
                         .await;
                     }
-                    maybe_mark_thread_memory_mode_polluted(sess, turn_context, &prepared_call)
-                        .await;
                     let rewritten_arguments = arguments_value.clone();
                     if let Some(rewritten_arguments) = rewritten_arguments.as_ref() {
                         tool_input = rewritten_arguments.clone();
@@ -636,25 +633,6 @@ fn sandbox_cwd_for_mcp_server(step_context: &StepContext, environment_id: &str) 
     }
 
     None
-}
-
-async fn maybe_mark_thread_memory_mode_polluted(
-    sess: &Session,
-    turn_context: &TurnContext,
-    prepared_call: &PreparedMcpCall,
-) {
-    if !turn_context.config.memories.disable_on_external_context {
-        return;
-    }
-    if !prepared_call.server_pollutes_memory() {
-        return;
-    }
-    state_db::mark_thread_memory_mode_polluted(
-        sess.services.state_db.as_deref(),
-        sess.thread_id,
-        "mcp_tool_call",
-    )
-    .await;
 }
 
 fn sanitize_mcp_tool_result_for_model(

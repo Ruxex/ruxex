@@ -26,7 +26,6 @@ impl Default for ExternalAgentSessionImportLimits {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExternalAgentConfigDetectOptions {
     pub include_home: bool,
-    pub include_memory: bool,
     pub cwds: Option<Vec<PathBuf>>,
 }
 
@@ -59,7 +58,6 @@ pub enum ExternalAgentConfigMigrationItemType {
     Subagents,
     Hooks,
     Commands,
-    Memory,
     Sessions,
 }
 
@@ -83,7 +81,6 @@ pub struct MigrationDetails {
     pub hooks: Vec<NamedMigration>,
     pub subagents: Vec<NamedMigration>,
     pub commands: Vec<NamedMigration>,
-    pub memory: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -3,7 +3,6 @@ use std::time::Duration;
 
 use crate::config_manager::ConfigManager;
 use crate::error_code::internal_error;
-use crate::error_code::invalid_request;
 use crate::outgoing_message::ConnectionRequestId;
 use crate::outgoing_message::OutgoingMessageSender;
 use crate::request_processors::ConfigRequestProcessor;
@@ -39,7 +38,6 @@ use codex_external_agent_migration::record_import_error;
 use codex_external_agent_migration::sessions::ExternalAgentSessionMigration as CoreSessionMigration;
 use codex_external_agent_migration::sessions::read_imported_connector_candidates;
 use codex_external_agent_migration::sessions::record_detected_session_connectors;
-use codex_features::Feature;
 use codex_rollout::StateDbHandle;
 use codex_state::ExternalAgentConfigImportFailureRecord;
 use codex_state::ExternalAgentConfigImportSuccessRecord;
@@ -135,7 +133,6 @@ impl ExternalAgentConfigRequestProcessor {
             });
         let options = ExternalAgentConfigDetectOptions {
             include_home: params.include_home,
-            include_memory: self.external_agent_memory_import_enabled().await,
             cwds: params.cwds,
         };
         let items = migration_service
@@ -167,25 +164,6 @@ impl ExternalAgentConfigRequestProcessor {
         request_id: ConnectionRequestId,
         params: ExternalAgentConfigImportParams,
     ) -> Result<(), JSONRPCErrorError> {
-        if params
-            .migration_items
-            .iter()
-            .any(|item| item.item_type == ExternalAgentConfigMigrationItemType::Memory)
-            && !self.external_agent_memory_import_enabled().await
-        {
-            return Err(invalid_request("external agent memory import is disabled"));
-        }
-        if params.migration_items.iter().any(|item| {
-            item.item_type == ExternalAgentConfigMigrationItemType::Memory
-                && item
-                    .details
-                    .as_ref()
-                    .is_none_or(|details| details.memory.is_empty())
-        }) {
-            return Err(invalid_request(
-                "memory import requires at least one selected memory",
-            ));
-        }
         let import_id = Uuid::new_v4().to_string();
         let provider_id = params.provider_id.clone();
         let migration_service = self
@@ -339,24 +317,6 @@ impl ExternalAgentConfigRequestProcessor {
         });
 
         Ok(())
-    }
-
-    async fn external_agent_memory_import_enabled(&self) -> bool {
-        let config = match self
-            .config_manager
-            .load_latest_config(/*fallback_cwd*/ None)
-            .await
-        {
-            Ok(config) => config,
-            Err(err) => {
-                tracing::warn!(
-                    error = %err,
-                    "failed to reload config for external agent memory import detection"
-                );
-                return false;
-            }
-        };
-        config.features.enabled(Feature::ExternalAgentMemoryImport)
     }
 
     pub(crate) async fn read_import_histories(

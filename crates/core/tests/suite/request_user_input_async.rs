@@ -285,7 +285,6 @@ async fn freeform_async_message_emits_an_item_without_ending_the_turn(
             text: MESSAGE.to_string(),
         }],
         phase: Some(MessagePhase::FinalAnswer),
-        memory_citation: None,
         delivery: Some(AgentMessageDelivery::Async),
         questions: None,
     }))?;
@@ -448,7 +447,6 @@ async fn request_user_input_async_emits_item_and_does_not_end_the_turn(
                 text: MESSAGE.to_string(),
             }],
             phase: Some(MessagePhase::FinalAnswer),
-            memory_citation: None,
             delivery: Some(AgentMessageDelivery::Async),
             questions: Some(questions),
         })?

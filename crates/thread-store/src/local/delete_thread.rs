@@ -308,7 +308,6 @@ mod tests {
     use codex_protocol::ThreadId;
     use codex_protocol::protocol::HistoryPosition;
     use codex_protocol::protocol::ThreadHistoryMode;
-    use codex_protocol::protocol::ThreadMemoryMode;
     use codex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
@@ -794,7 +793,6 @@ SELECT
                 metadata: ThreadPersistenceMetadata {
                     cwd: Some(home.path().to_path_buf()),
                     model_provider: "test-provider".to_string(),
-                    memory_mode: ThreadMemoryMode::Enabled,
                 },
             })
             .await

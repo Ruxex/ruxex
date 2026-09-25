@@ -16,7 +16,6 @@ use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::SessionContextWindow;
 use codex_protocol::protocol::SessionMeta;
 use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::ThreadMemoryMode;
 use codex_rollout::RolloutItem;
 use codex_rollout::persisted_rollout_items;
 use codex_utils_absolute_path::AbsolutePathBuf;
@@ -187,7 +186,6 @@ mod tests {
                     metadata: ThreadPersistenceMetadata {
                         cwd: None,
                         model_provider: "test-provider".to_string(),
-                        memory_mode: ThreadMemoryMode::Enabled,
                     },
                 })
                 .await
@@ -487,7 +485,6 @@ mod tests {
         ThreadPersistenceMetadata {
             cwd: None,
             model_provider: "test-provider".to_string(),
-            memory_mode: ThreadMemoryMode::Enabled,
         }
     }
 }
@@ -605,8 +602,6 @@ impl InMemoryThreadStore {
             base_instructions: Some(params.base_instructions.clone()),
             dynamic_tools: (!params.dynamic_tools.is_empty()).then(|| params.dynamic_tools.clone()),
             selected_capability_roots: params.selected_capability_roots.clone(),
-            memory_mode: matches!(params.metadata.memory_mode, ThreadMemoryMode::Disabled)
-                .then_some("disabled".to_string()),
             history_mode: params.history_mode,
             history_base: params.history_base,
             subagent_history_start_ordinal: params.subagent_history_start_ordinal,

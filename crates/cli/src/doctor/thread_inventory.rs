@@ -5,7 +5,6 @@ use super::Config;
 use super::DoctorCheck;
 use super::DoctorIssue;
 use codex_history::RolloutItem;
-use codex_protocol::protocol::InternalSessionSource;
 use codex_protocol::protocol::SessionSource;
 use codex_protocol::protocol::SubAgentSource;
 use codex_state::ThreadStateAuditRow;
@@ -670,15 +669,9 @@ fn source_category(source: &str) -> &'static str {
         SessionSource::Exec => "exec",
         SessionSource::Mcp => "mcp",
         SessionSource::Custom(_) => "custom",
-        SessionSource::Internal(InternalSessionSource::MemoryConsolidation) => {
-            "internal:memory_consolidation"
-        }
         SessionSource::SubAgent(SubAgentSource::Review) => "subagent:review",
         SessionSource::SubAgent(SubAgentSource::Compact) => "subagent:compact",
         SessionSource::SubAgent(SubAgentSource::ThreadSpawn { .. }) => "subagent:thread_spawn",
-        SessionSource::SubAgent(SubAgentSource::MemoryConsolidation) => {
-            "subagent:memory_consolidation"
-        }
         SessionSource::SubAgent(SubAgentSource::Other(_)) => "subagent:other",
         SessionSource::Unknown => "unknown",
     }
@@ -1407,10 +1400,6 @@ INSERT INTO threads (
     #[test]
     fn source_category_coarsens_structured_sources() {
         assert_eq!(source_category("cli"), "cli");
-        assert_eq!(
-            source_category(r#"{"subagent":"memory_consolidation"}"#),
-            "subagent:memory_consolidation"
-        );
         assert_eq!(
             source_category(
                 r#"{"subagent":{"thread_spawn":{"parent_thread_id":"00000000-0000-0000-0000-000000000001","depth":2}}}"#,

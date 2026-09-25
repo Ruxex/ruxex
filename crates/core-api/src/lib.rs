@@ -11,7 +11,6 @@ pub use codex_config::config_toml::ProjectConfig;
 pub use codex_config::types::AuthCredentialsStoreMode;
 pub use codex_config::types::AuthKeyringBackendKind;
 pub use codex_config::types::History;
-pub use codex_config::types::MemoriesConfig;
 pub use codex_config::types::ModelAvailabilityNuxConfig;
 pub use codex_config::types::Notice;
 pub use codex_config::types::OAuthCredentialsStoreMode;

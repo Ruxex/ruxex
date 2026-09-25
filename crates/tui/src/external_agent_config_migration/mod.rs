@@ -817,23 +817,6 @@ mod tests {
         ]
     }
 
-    fn sample_items_with_memory() -> Vec<ExternalAgentConfigMigrationItem> {
-        let mut items = sample_items();
-        items.insert(
-            1,
-            ExternalAgentConfigMigrationItem {
-                item_type: ExternalAgentConfigMigrationItemType::Memory,
-                description: "Migrate memory files from /Users/alex/.claude/projects to /Users/alex/.codex/memories/extensions/external_agent_import/resources".to_string(),
-                cwd: None,
-                details: Some(codex_app_server_protocol::MigrationDetails {
-                    memory: vec!["project".to_string()],
-                    ..Default::default()
-                }),
-            },
-        );
-        items
-    }
-
     fn render_screen(
         screen: &ExternalAgentConfigMigrationScreen,
         width: u16,
@@ -858,7 +841,7 @@ mod tests {
 
     #[test]
     fn prompt_snapshot() {
-        let items = sample_items_with_memory();
+        let items = sample_items();
         let screen = ExternalAgentConfigMigrationScreen::new(
             FrameRequester::test_dummy(),
             &items,
@@ -875,7 +858,7 @@ mod tests {
 
     #[test]
     fn customize_snapshot() {
-        let items = sample_items_with_memory();
+        let items = sample_items();
         let mut screen = ExternalAgentConfigMigrationScreen::new(
             FrameRequester::test_dummy(),
             &items,

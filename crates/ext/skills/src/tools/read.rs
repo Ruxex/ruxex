@@ -252,7 +252,7 @@ impl<'call> ToolExecutor<ToolCall<'call>> for ReadTool {
                 start,
                 response_byte_budget,
             )?;
-            let output = skill_json_output(&response, output_authority)?;
+            let output = skill_json_output(&response)?;
             if output_authority == super::SkillToolAuthoritySelector::Executor
                 && response.next_cursor.is_some()
                 && result.contents.len() <= MAX_SKILL_RESOURCE_CONTENT_BYTES

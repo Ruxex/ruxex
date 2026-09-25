@@ -8,7 +8,7 @@
 
 今回の結果からの優先順位は次のとおりである。
 
-1. `codex-core` の非推奨型エイリアス3件は、リポジトリ内の参照が定義自身しかなく、削除候補として最も明確である。
+1. `codex-core` の非推奨型エイリアス3件は、リポジトリ内の参照が定義自身しかなかったため、削除済みである。
 2. `codex-core::test_support` は実行時コードではないが、統合テストから使われている。削除ではなく、テスト支援クレートへの移動または公開範囲の縮小を検討する。
 3. `dead_public` の残りは、まず全バイナリの結果を合成してから個別に producer/consumer を確認する。特に app-server、TUI、Windows sandbox、protocol は削除しない。
 4. `unnecessary_public` と `unnecessary_restricted_visibility` は「未使用」ではなく、可視性を狭められる可能性を示す。公開 protocol、生成 schema、serde/動的 dispatch、外部 API を含むため、一括置換しない。
@@ -78,7 +78,7 @@ test flag ありの `dead_public` 325件は、`app_test_support` が159件、`co
 
 | 項目 | 観測結果 | 判定 |
 | --- | --- | --- |
-| `codex-core/src/lib.rs` の `ConversationManager`、`NewConversation`、`CodexConversation` | `rg` でリポジトリ内の参照は各型エイリアスの定義自身だけ。いずれも `ThreadManager`、`NewThread`、`CodexThread` への deprecated alias。 | `remove` 候補。コード変更時に `just check` で確認する。外部利用者ゼロというリポジトリ方針とも整合する。 |
+| `codex-core/src/lib.rs` の `ConversationManager`、`NewConversation`、`CodexConversation` | `rg` でリポジトリ内の参照は各型エイリアスの定義自身だけだった。いずれも `ThreadManager`、`NewThread`、`CodexThread` への deprecated alias。`pub type` を削除後、対象名の検索は0件だった。 | `remove`（完了）。外部利用者ゼロというリポジトリ方針とも整合する。 |
 | `codex-app-server-protocol` の `generate_json`、`generate_ts`、`generate_types` の再エクスポート | Hawk の `codex` 起点では未使用。ただし schema generator 群、テスト、CLI の `generate-*` サブコマンドが同クレートの別 API を使用している。 | `migrate-in-place`。wrapper 単位で全 bin・生成手順を確認してから `pub(crate)` 化または削除。 |
 | `codex-core/src/test_support.rs` の Hawk dead 判定項目 | ファイル自身が「Test-only helpers」と明記されているが、`crates/core/tests`、`crates/app-server/tests` 等が `codex_core::test_support::*` を直接使用している。 | `migrate-in-place`。runtime API からテスト支援を分離する候補だが、単純削除は不可。 |
 
@@ -98,7 +98,7 @@ test flag ありの `dead_public` 325件は、`app_test_support` が159件、`co
 
 ### 第一段階: 低リスクの候補
 
-まず deprecated alias 3件の削除可否を別変更として扱う。これらは production consumer が見つからず、provider-neutral capability や platform fallback に触れない。次に、`codex-core::test_support` のうち各 helper を test target ごとに分類し、使用されない helper だけを削除するか、`core_test_support` 側へ移す。
+deprecated alias 3件は、production consumer が見つからず、provider-neutral capability や platform fallback に触れないことを確認したうえで削除済みである。次に進む場合は、`codex-core::test_support` の各 helper を test target ごとに分類し、使用されない helper だけを削除するか、`core_test_support` 側へ移す。
 
 ### 第二段階: 全バイナリ合成後の visibility cleanup
 
@@ -118,13 +118,13 @@ test flag ありの `dead_public` 325件は、`app_test_support` が159件、`co
 | `migrate-in-place` | test support、public wrapper、同一 package の sibling bin など、consumer はあるが責務・公開範囲を整理できるもの。 |
 | `retain` | app-server protocol、OS sandbox/security、現行 MCP、生成 schema、外部向け public wrapper。Hawk の未到達だけでは変更しない。 |
 
-## 5. 未実施の検証
+## 5. 残りの検証
 
-今回は JSON の集計、`cargo metadata` による bin target の棚卸し、対象 symbol の `rg` による producer/consumer 確認までを行った。次の検証はまだ行っていない。
+今回は JSON の集計、`cargo metadata` による bin target の棚卸し、対象 symbol の `rg` による producer/consumer 確認、および `codex-core` の deprecated alias 3件の削除検証までを行った。次の検証はまだ行っていない。
 
-- `pub` / `pub(crate)` を変更しての `just check`
-- Rust の変更を伴う `just check --tests`
+- 残りの候補についての `pub` / `pub(crate)` 変更と `just check`
+- 残りの候補で Rust の変更を伴う `just check --tests`
 - 全31 bin 起点の Hawk 結果合成
 - 生成物に影響する変更後の `just generate`
 
-したがって、この文書の `remove` は実装済みの削除宣言ではなく、次の小さな変更単位へ渡せる分析上の候補である。
+したがって、この文書の `remove` は、明示的に完了と記録した3 aliasを除き、次の小さな変更単位へ渡せる分析上の候補である。

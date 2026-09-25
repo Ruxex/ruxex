@@ -19,7 +19,6 @@ fn agent_message_notification(turn_id: &str, text: &str) -> ServerNotification {
             id: "message-1".to_string(),
             text: text.to_string(),
             phase: None,
-            memory_citation: None,
             delivery: None,
             questions: None,
         },

@@ -1028,7 +1028,6 @@ mod tests {
                     id: "item-1".to_string(),
                     text: "Still working".to_string(),
                     phase: None,
-                    memory_citation: None,
                     delivery: Some(AgentMessageDelivery::Async),
                     questions: None,
                 },

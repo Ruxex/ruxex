@@ -177,7 +177,6 @@ async fn thread_section_move_pins_and_unpins_with_filtered_recency_pagination() 
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
-            /*new_thread_memory_mode*/ None,
         )
         .await;
         thread_ids.push(thread_id);
@@ -420,7 +419,6 @@ async fn thread_sections_preserve_server_owned_manual_order_across_moves_and_res
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
-            /*new_thread_memory_mode*/ None,
         )
         .await;
         thread_ids.push(thread_id);
@@ -957,7 +955,6 @@ async fn thread_metadata_update_repairs_loaded_thread_without_resetting_summary(
         /*builder*/ None,
         &[],
         /*archived_only*/ None,
-        /*new_thread_memory_mode*/ None,
     )
     .await;
 

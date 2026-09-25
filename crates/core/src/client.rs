@@ -40,11 +40,7 @@ use codex_api::AuthProvider;
 use codex_api::ChatClient as ApiChatClient;
 use codex_api::ChatRequestBuilder;
 use codex_api::Compression;
-use codex_api::MemoriesClient as ApiMemoriesClient;
-use codex_api::MemorySummarizeInput as ApiMemorySummarizeInput;
-use codex_api::MemorySummarizeOutput as ApiMemorySummarizeOutput;
 use codex_api::Provider as ApiProvider;
-use codex_api::RawMemory as ApiRawMemory;
 use codex_api::Reasoning;
 use codex_api::ReasoningContext;
 use codex_api::RequestTelemetry;
@@ -88,7 +84,6 @@ use codex_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
 use codex_protocol::protocol::AuthRecoveryEvent;
 use codex_protocol::protocol::Event as ProtocolEvent;
 use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::InternalSessionSource;
 use codex_protocol::protocol::SessionSource;
 use codex_protocol::protocol::W3cTraceContext;
 use codex_rollout_trace::InferenceTraceAttempt;
@@ -148,7 +143,6 @@ pub const X_CODEX_TURN_STATE_HEADER: &str = "x-codex-turn-state";
 pub const X_CODEX_TURN_METADATA_HEADER: &str = "x-codex-turn-metadata";
 pub const X_CODEX_PARENT_THREAD_ID_HEADER: &str = "x-codex-parent-thread-id";
 pub const X_CODEX_WINDOW_ID_HEADER: &str = "x-codex-window-id";
-pub const X_OPENAI_MEMGEN_REQUEST_HEADER: &str = "x-openai-memgen-request";
 pub const X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER: &str =
     "x-responsesapi-include-timing-metrics";
 const X_CODEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY: &str =
@@ -157,7 +151,6 @@ const WS_REQUEST_HEADER_RESPONSES_LITE_CLIENT_METADATA_KEY: &str =
     "ws_request_header_x_openai_internal_codex_responses_lite";
 const X_OPENAI_INTERNAL_CODEX_RESPONSES_LITE_HEADER: &str =
     "x-openai-internal-codex-responses-lite";
-const MEMORIES_SUMMARIZE_ENDPOINT: &str = "/memories/trace_summarize";
 #[cfg(test)]
 pub(crate) const WEBSOCKET_CONNECT_TIMEOUT: Duration =
     Duration::from_millis(DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS);
@@ -574,88 +567,11 @@ impl ModelClient {
         activated
     }
 
-    /// Builds memory summaries for each provided normalized raw memory.
-    ///
-    /// This is a unary call (no streaming) to `/v1/memories/trace_summarize`.
-    ///
-    /// The model selection, reasoning effort, and telemetry context are passed explicitly to keep
-    /// `ModelClient` session-scoped.
-    pub async fn summarize_memories(
-        &self,
-        raw_memories: Vec<ApiRawMemory>,
-        model_info: &ModelInfo,
-        effort: Option<ReasoningEffortConfig>,
-        session_telemetry: &SessionTelemetry,
-    ) -> Result<Vec<ApiMemorySummarizeOutput>> {
-        if raw_memories.is_empty() {
-            return Ok(Vec::new());
-        }
-
-        let client_setup = self.current_client_setup().await?;
-        let transport = self.build_api_transport(
-            &client_setup.api_provider,
-            MEMORIES_SUMMARIZE_ENDPOINT,
-            client_setup.redirect_policy,
-        )?;
-        let request_telemetry = Self::build_request_telemetry(
-            session_telemetry,
-            AuthRequestTelemetryContext::new(
-                client_setup.api_auth.as_ref(),
-                PendingUnauthorizedRetry::default(),
-            ),
-            RequestRouteTelemetry::for_endpoint(MEMORIES_SUMMARIZE_ENDPOINT),
-        );
-        let client =
-            ApiMemoriesClient::new(transport, client_setup.api_provider, client_setup.api_auth)
-                .with_telemetry(Some(request_telemetry));
-
-        let payload = ApiMemorySummarizeInput {
-            model: model_info.slug.clone(),
-            raw_memories,
-            reasoning: effort
-                .map(|effort| model_info.resolve_reasoning_effort(effort))
-                .map(|effort| Reasoning {
-                    effort: Some(effort),
-                    summary: None,
-                    context: None,
-                }),
-        };
-
-        client
-            .summarize_input(&payload, self.build_memory_headers())
-            .await
-            .map_err(|error| self.state.provider.map_api_error(error))
-    }
-
-    fn build_memory_headers(&self) -> ApiHeaderMap {
-        let mut extra_headers = ApiHeaderMap::new();
-        add_originator_header(&mut extra_headers, self.state.originator.as_str());
-        if matches!(
-            self.state.session_source,
-            SessionSource::Internal(InternalSessionSource::MemoryConsolidation)
-        ) {
-            extra_headers.insert(
-                X_OPENAI_MEMGEN_REQUEST_HEADER,
-                HeaderValue::from_static("true"),
-            );
-        }
-        extra_headers
-    }
-
     fn build_responses_compatibility_headers(
         &self,
         responses_metadata: &CodexResponsesMetadata,
     ) -> ApiHeaderMap {
         let mut extra_headers = responses_metadata.compatibility_headers();
-        if matches!(
-            self.state.session_source,
-            SessionSource::Internal(InternalSessionSource::MemoryConsolidation)
-        ) {
-            extra_headers.insert(
-                X_OPENAI_MEMGEN_REQUEST_HEADER,
-                HeaderValue::from_static("true"),
-            );
-        }
         extra_headers
     }
 

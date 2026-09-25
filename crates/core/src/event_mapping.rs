@@ -170,7 +170,6 @@ fn parse_agent_message(
         id,
         content,
         phase,
-        memory_citation: None,
         delivery: None,
         questions: None,
     }

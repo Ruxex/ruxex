@@ -586,7 +586,6 @@ fn open_questions(chat: &mut ChatWidget, options: Option<Vec<String>>) {
             id: "review".into(),
             content: Vec::new(),
             phase: None,
-            memory_citation: None,
             delivery: None,
             questions: Some(vec![
                 AsyncUserInputQuestion {
@@ -715,7 +714,6 @@ async fn question_drafts_survive_navigation_and_snapshot_replay() {
         id: "buffered".into(),
         text: String::new(),
         phase: None,
-        memory_citation: None,
         delivery: None,
         questions: Some(vec![question("Buffered?", /*options*/ None)]),
     };

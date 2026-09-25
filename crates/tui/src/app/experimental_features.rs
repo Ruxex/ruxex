@@ -15,20 +15,12 @@ impl App {
     ) {
         let label = match feature {
             Feature::Collab => "Subagents",
-            Feature::MemoryTool => "Memories",
             _ => return,
         };
         let mut edits = vec![crate::config_update::build_feature_enabled_edit(
             feature.key(),
             /*enabled*/ true,
         )];
-        if feature == Feature::MemoryTool {
-            // Older app servers still use the legacy key for this feature.
-            edits.push(crate::config_update::build_feature_enabled_edit(
-                "memory_tool",
-                /*enabled*/ true,
-            ));
-        }
         let notice: Box<dyn HistoryCell> = match crate::config_update::write_config_batch(
             app_server.request_handle(),
             edits,

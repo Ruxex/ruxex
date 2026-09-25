@@ -6,7 +6,6 @@ use codex_core::ThreadManager;
 use codex_protocol::ThreadId;
 use codex_protocol::models::ResponseItem;
 use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ThreadMemoryMode;
 use codex_rollout::RolloutItem;
 use codex_thread_store::AppendThreadItemsParams;
 use codex_thread_store::ReadThreadParams;
@@ -307,15 +306,9 @@ fn persistence_metadata(
     {
         return None;
     }
-    let memory_mode = match meta.memory_mode.as_deref() {
-        None | Some("enabled") => ThreadMemoryMode::Enabled,
-        Some("disabled") => ThreadMemoryMode::Disabled,
-        Some(_) => return None,
-    };
     Some(ThreadPersistenceMetadata {
         cwd: Some(meta.cwd.clone()),
         model_provider: meta.model_provider.clone()?,
-        memory_mode,
     })
 }
 

@@ -100,7 +100,6 @@ pub enum ThreadSource {
     User,
     Subagent,
     Feature(String),
-    MemoryConsolidation,
 }
 
 #[cfg(test)]
@@ -134,7 +133,6 @@ impl From<CoreThreadSource> for ThreadSource {
             CoreThreadSource::User => ThreadSource::User,
             CoreThreadSource::Subagent => ThreadSource::Subagent,
             CoreThreadSource::Feature(feature) => ThreadSource::Feature(feature),
-            CoreThreadSource::MemoryConsolidation => ThreadSource::MemoryConsolidation,
         }
     }
 }
@@ -145,7 +143,6 @@ impl From<ThreadSource> for CoreThreadSource {
             ThreadSource::User => CoreThreadSource::User,
             ThreadSource::Subagent => CoreThreadSource::Subagent,
             ThreadSource::Feature(feature) => CoreThreadSource::Feature(feature),
-            ThreadSource::MemoryConsolidation => CoreThreadSource::MemoryConsolidation,
         }
     }
 }

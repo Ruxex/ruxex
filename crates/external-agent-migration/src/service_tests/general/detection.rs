@@ -24,7 +24,6 @@ async fn detect_home_lists_config_skills_and_agents_md() {
     let items = service_for_paths(external_agent_home.clone(), codex_home.clone())
         .detect(ExternalAgentConfigDetectOptions {
             include_home: true,
-            include_memory: false,
             cwds: None,
         })
         .await
@@ -99,7 +98,6 @@ async fn detect_and_import_claude_commands_without_frontmatter() {
 
         let options = ExternalAgentConfigDetectOptions {
             include_home: cwd.is_none(),
-            include_memory: false,
             cwds: cwd.clone().map(|cwd| vec![cwd]),
         };
         let items = service.detect(options.clone()).await.expect("detect");
@@ -199,7 +197,6 @@ async fn detect_and_import_claude_commands_preserves_described_commands_on_colli
 
         let options = ExternalAgentConfigDetectOptions {
             include_home: cwd.is_none(),
-            include_memory: false,
             cwds: cwd.clone().map(|cwd| vec![cwd]),
         };
         let items = service.detect(options.clone()).await.expect("detect");
@@ -272,7 +269,6 @@ async fn detect_cursor_home_lists_user_and_managed_skills() {
     let items = service
         .detect(ExternalAgentConfigDetectOptions {
             include_home: true,
-            include_memory: false,
             cwds: None,
         })
         .await
@@ -314,7 +310,6 @@ async fn detect_cursor_repo_lists_skills_from_skills() {
     let items = service
         .detect(ExternalAgentConfigDetectOptions {
             include_home: false,
-            include_memory: false,
             cwds: Some(vec![repo_root.clone()]),
         })
         .await
@@ -364,7 +359,6 @@ async fn detect_home_lists_recent_sessions() {
     let items = service_for_paths(external_agent_home.clone(), codex_home)
         .detect(ExternalAgentConfigDetectOptions {
             include_home: true,
-            include_memory: false,
             cwds: None,
         })
         .await
@@ -411,7 +405,6 @@ async fn detect_repo_lists_agents_md_for_each_cwd() {
     )
     .detect(ExternalAgentConfigDetectOptions {
         include_home: false,
-        include_memory: false,
         cwds: Some(vec![nested, repo_root.clone()]),
     })
     .await
@@ -486,7 +479,6 @@ async fn detect_repo_still_reports_non_plugin_items_when_home_config_is_invalid(
     let items = service_for_paths(root.path().join(EXTERNAL_AGENT_DIR), codex_home)
         .detect(ExternalAgentConfigDetectOptions {
             include_home: false,
-            include_memory: false,
             cwds: Some(vec![repo_root.clone()]),
         })
         .await
@@ -585,7 +577,6 @@ async fn detect_repo_lists_mcp_hooks_commands_and_subagents() {
     )
     .detect(ExternalAgentConfigDetectOptions {
         include_home: false,
-        include_memory: false,
         cwds: Some(vec![repo_root.clone()]),
     })
     .await
@@ -679,7 +670,6 @@ async fn detect_repo_skips_hooks_when_only_unsupported_hooks_exist() {
     )
     .detect(ExternalAgentConfigDetectOptions {
         include_home: false,
-        include_memory: false,
         cwds: Some(vec![repo_root]),
     })
     .await

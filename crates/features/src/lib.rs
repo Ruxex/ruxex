@@ -171,10 +171,6 @@ pub enum Feature {
     CwdRelativeTurnDiffs,
     /// Enable runtime metrics snapshots via a manual reader.
     RuntimeMetrics,
-    /// Enable startup memory extraction and file-backed memory consolidation.
-    MemoryTool,
-    /// Enable importing project-scoped memory from external agents.
-    ExternalAgentMemoryImport,
     /// Compress cold local thread-store rollout files, including shared histories.
     /// Requires every reader of the Codex home to support compressed shared histories.
     LocalThreadStoreCompression,
@@ -1060,18 +1056,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         key: "sqlite",
         stage: Stage::Removed,
         default_enabled: true,
-    },
-    FeatureSpec {
-        id: Feature::MemoryTool,
-        key: "memories",
-        stage: Stage::Stable,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::ExternalAgentMemoryImport,
-        key: "external_agent_memory_import",
-        stage: Stage::UnderDevelopment,
-        default_enabled: false,
     },
     FeatureSpec {
         id: Feature::LocalThreadStoreCompression,

@@ -3205,7 +3205,6 @@ async fn experimental_popup_available_snapshot() {
 #[tokio::test]
 async fn feature_enable_prompts_snapshot() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.set_feature_enabled(Feature::MemoryTool, /*enabled*/ false);
 
     chat.open_feature_enable_prompt(Feature::Collab);
     assert_chatwidget_snapshot!(
@@ -3218,85 +3217,13 @@ async fn feature_enable_prompts_snapshot() {
         Ok(AppEvent::EnableFeatureForNewThreads(Feature::Collab))
     );
 
-    chat.open_memories_popup();
-    assert_chatwidget_snapshot!(
-        "memories_enable_prompt",
-        render_bottom_popup(&chat, /*width*/ 80)
-    );
-    chat.handle_key_event(KeyEvent::from(KeyCode::Enter));
-    assert_matches!(
-        rx.try_recv(),
-        Ok(AppEvent::EnableFeatureForNewThreads(Feature::MemoryTool))
-    );
     assert!(rx.try_recv().is_err());
     assert!(!chat.has_active_view());
 }
 
-#[tokio::test]
-async fn memories_settings_popup_snapshot() {
-    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.set_feature_enabled(Feature::MemoryTool, /*enabled*/ true);
-    chat.config.memories.use_memories = true;
-    chat.config.memories.generate_memories = false;
 
-    chat.open_memories_popup();
 
-    let popup = strip_osc8_for_snapshot(&render_bottom_popup(&chat, /*width*/ 80));
-    assert_chatwidget_snapshot!("memories_settings_popup", popup);
-}
 
-#[tokio::test]
-async fn memories_reset_confirmation_snapshot() {
-    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.set_feature_enabled(Feature::MemoryTool, /*enabled*/ true);
-    chat.config.memories.use_memories = true;
-    chat.config.memories.generate_memories = false;
-
-    chat.open_memories_popup();
-    chat.handle_key_event(KeyEvent::from(KeyCode::Down));
-    chat.handle_key_event(KeyEvent::from(KeyCode::Down));
-    chat.handle_key_event(KeyEvent::from(KeyCode::Enter));
-
-    let popup = render_bottom_popup(&chat, /*width*/ 80);
-    assert_chatwidget_snapshot!("memories_reset_confirmation", popup);
-}
-
-#[tokio::test]
-async fn memories_settings_toggle_saves_on_enter() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.set_feature_enabled(Feature::MemoryTool, /*enabled*/ true);
-    chat.config.memories.use_memories = true;
-    chat.config.memories.generate_memories = false;
-
-    chat.open_memories_popup();
-    chat.handle_key_event(KeyEvent::from(KeyCode::Down));
-    chat.handle_key_event(KeyEvent::from(KeyCode::Char(' ')));
-    chat.handle_key_event(KeyEvent::from(KeyCode::Enter));
-
-    assert_matches!(
-        rx.try_recv(),
-        Ok(AppEvent::UpdateMemorySettings {
-            use_memories: true,
-            generate_memories: true,
-        })
-    );
-}
-
-#[tokio::test]
-async fn memories_reset_confirmation_sends_event_on_confirm() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.set_feature_enabled(Feature::MemoryTool, /*enabled*/ true);
-    chat.config.memories.use_memories = true;
-    chat.config.memories.generate_memories = false;
-
-    chat.open_memories_popup();
-    chat.handle_key_event(KeyEvent::from(KeyCode::Down));
-    chat.handle_key_event(KeyEvent::from(KeyCode::Down));
-    chat.handle_key_event(KeyEvent::from(KeyCode::Enter));
-    chat.handle_key_event(KeyEvent::from(KeyCode::Enter));
-
-    assert_matches!(rx.try_recv(), Ok(AppEvent::ResetMemories));
-}
 
 #[tokio::test]
 async fn model_selection_popup_snapshot() {

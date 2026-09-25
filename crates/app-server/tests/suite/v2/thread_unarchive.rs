@@ -37,7 +37,6 @@ use codex_exec_server::EnvironmentManager;
 use codex_protocol::ThreadId;
 use codex_protocol::models::BaseInstructions;
 use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::ThreadMemoryMode;
 use codex_state::PINNED_THREAD_SECTION_ID;
 use codex_state::PINNED_THREAD_SECTION_NAME;
 use codex_thread_store::CreateThreadParams;
@@ -265,7 +264,6 @@ async fn thread_unarchive_preserves_pathless_store_metadata() -> Result<()> {
             metadata: ThreadPersistenceMetadata {
                 cwd: None,
                 model_provider: "test-provider".to_string(),
-                memory_mode: ThreadMemoryMode::Disabled,
             },
         })
         .await?;

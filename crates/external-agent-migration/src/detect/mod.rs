@@ -1,4 +1,3 @@
-mod memory;
 pub(crate) mod plugins;
 pub(crate) mod sessions;
 
@@ -54,19 +53,6 @@ impl ExternalAgentConfigService {
                 continue;
             }
             self.detect_migrations(&scope, &mut items).await?;
-        }
-
-        if params.include_home
-            && params.include_memory
-            && self.source.supports_memory()
-            && let Some(item) = memory::detect(&self.codex_home, &self.external_agent_home)?
-        {
-            items.push(item);
-            emit_migration_metric(
-                EXTERNAL_AGENT_CONFIG_DETECT_METRIC,
-                ExternalAgentConfigMigrationItemType::Memory,
-                /*skills_count*/ None,
-            );
         }
 
         Ok(items)

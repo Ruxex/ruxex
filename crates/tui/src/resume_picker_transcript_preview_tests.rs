@@ -42,7 +42,6 @@ fn rollout_agent_message(text: &str) -> RolloutItem {
     RolloutItem::EventMsg(EventMsg::AgentMessage(AgentMessageEvent {
         message: text.to_string(),
         phase: None,
-        memory_citation: None,
         delivery: None,
         questions: None,
     }))
@@ -273,7 +272,6 @@ fn transcript_preview_reverse_scan_stops_before_older_items() {
         id: String::from("final"),
         text: String::from("one\ntwo\nthree\nfour\nfive\nsix"),
         phase: None,
-        memory_citation: None,
         delivery: None,
         questions: None,
     };

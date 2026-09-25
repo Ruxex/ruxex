@@ -440,7 +440,7 @@ async fn recap_generation_uses_remote_workspace_cwd() -> Result<()> {
 }
 
 #[tokio::test]
-async fn temporary_recap_threads_disable_memories_and_remote_mcp_servers() -> Result<()> {
+async fn temporary_recap_threads_disable_remote_mcp_servers() -> Result<()> {
     let (mut app, _app_event_rx, _op_rx) = make_test_app_with_channels().await;
     let codex_home = tempdir()?;
     std::fs::write(
@@ -470,9 +470,7 @@ async fn temporary_recap_threads_disable_memories_and_remote_mcp_servers() -> Re
 
     let starts = recorded_params(&requests, "thread/start");
     assert_eq!(starts.len(), 1);
-    assert_eq!(starts[0]["config"]["features.memories"], false);
     assert_eq!(starts[0]["config"]["features.context_management"], false);
-    assert!(starts[0]["config"].get("features.memory_tool").is_none());
     assert_eq!(
         starts[0]["config"]["mcp_servers"]["filesystem"]["enabled"],
         false

@@ -246,7 +246,6 @@ async fn inactive_thread_user_verification_preserves_foreground_stream() -> Resu
                 id: "message-foreground".to_string(),
                 text: "The foreground answer continues.".to_string(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             },

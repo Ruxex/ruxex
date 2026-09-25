@@ -334,14 +334,10 @@ fn serialized_len(value: &impl Serialize) -> Result<usize, FunctionCallError> {
 
 fn skill_json_output<T: Serialize>(
     value: &T,
-    authority: SkillToolAuthoritySelector,
 ) -> Result<Box<dyn ToolOutput>, FunctionCallError> {
     let value = serde_json::to_value(value).map_err(|err| {
         FunctionCallError::Fatal(format!("failed to serialize tool output: {err}"))
     })?;
     let output = JsonToolOutput::new(value);
-    Ok(match authority {
-        SkillToolAuthoritySelector::Orchestrator => Box::new(output.with_external_context()),
-        SkillToolAuthoritySelector::Executor => Box::new(output),
-    })
+    Ok(Box::new(output))
 }

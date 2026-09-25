@@ -202,7 +202,6 @@ pub(crate) enum CodexResponsesRequestKind {
     Turn,
     Prewarm,
     Compaction(CompactionTurnMetadata),
-    Memory,
 }
 
 impl CodexResponsesRequestKind {
@@ -211,12 +210,11 @@ impl CodexResponsesRequestKind {
             CodexResponsesRequestKind::Turn => ("turn", None),
             CodexResponsesRequestKind::Prewarm => ("prewarm", None),
             CodexResponsesRequestKind::Compaction(metadata) => ("compaction", Some(metadata)),
-            CodexResponsesRequestKind::Memory => ("memory", None),
         }
     }
 
     fn has_thread_identity(self) -> bool {
-        !matches!(self, CodexResponsesRequestKind::Memory)
+        true
     }
 }
 

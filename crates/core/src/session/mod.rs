@@ -47,7 +47,6 @@ use crate::session::turn_context::TurnEnvironment;
 use crate::session_prefix::format_inter_agent_completion_message;
 use crate::shell_snapshot::SnapshotCredentialBrokerState;
 use crate::skills_load_input_from_config;
-use crate::stream_events_utils::mark_thread_memory_mode_polluted_if_external_context;
 use crate::turn_metadata::TurnMetadataState;
 use crate::turn_timing::now_unix_timestamp_ms;
 use async_channel::Receiver;
@@ -356,7 +355,6 @@ use codex_protocol::protocol::SessionConfiguredEvent;
 use codex_protocol::protocol::SessionNetworkProxyRuntime;
 use codex_protocol::protocol::StreamErrorEvent;
 use codex_protocol::protocol::Submission;
-use codex_protocol::protocol::ThreadMemoryMode;
 use codex_protocol::protocol::TokenCountEvent;
 use codex_protocol::protocol::TokenUsage;
 use codex_protocol::protocol::TokenUsageInfo;
@@ -1316,13 +1314,6 @@ impl Session {
         self.services.live_thread.as_ref()
     }
 
-    pub(crate) async fn set_thread_memory_mode(
-        self: &Arc<Self>,
-        mode: ThreadMemoryMode,
-    ) -> anyhow::Result<()> {
-        handlers::persist_thread_memory_mode_update(self, mode).await
-    }
-
     /// Flush rollout writes and return the final durability-barrier result.
     #[instrument(name = "session.flush_rollout", level = "trace", skip_all)]
     pub(crate) async fn flush_rollout(&self) -> std::io::Result<()> {
@@ -1566,18 +1557,6 @@ impl Session {
                 Some(turn_context)
             }
         };
-        if let Some(turn_context) = turn_context
-            && turn_context.config.memories.disable_on_external_context
-        {
-            let history = self.clone_history().await;
-            if let Some(item) = history
-                .raw_items()
-                .find(|item| matches!(item, ResponseItem::FunctionCallOutput { call_id: None, .. }))
-            {
-                mark_thread_memory_mode_polluted_if_external_context(self, &turn_context, item)
-                    .await;
-            }
-        }
     }
 
     #[instrument(
@@ -3318,13 +3297,6 @@ impl Session {
         let rollout_items: Vec<RolloutItem> =
             items.into_iter().map(RolloutItem::ResponseItem).collect();
         self.persist_rollout_items(&rollout_items).await;
-        if turn_context.config.memories.disable_on_external_context
-            && let Some(item) = response_items
-                .iter()
-                .find(|item| matches!(item, ResponseItem::FunctionCallOutput { call_id: None, .. }))
-        {
-            mark_thread_memory_mode_polluted_if_external_context(self, turn_context, item).await;
-        }
         self.send_raw_response_items(turn_context, &response_items)
             .await;
     }
@@ -4492,17 +4464,6 @@ impl Session {
             additional_details: Some(additional_details),
         });
         self.send_event(turn_context, event).await;
-    }
-
-    pub(crate) async fn record_memory_citation_for_turn(&self, sub_id: &str) {
-        let turn_state = self
-            .input_queue
-            .turn_state_for_sub_id(&self.active_turn, sub_id)
-            .await;
-        let Some(turn_state) = turn_state else {
-            return;
-        };
-        turn_state.lock().await.has_memory_citation = true;
     }
 
     pub async fn interrupt_task(self: &Arc<Self>) {

@@ -1,9 +1,7 @@
 use std::time::Duration;
 
 use anyhow::Result;
-use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
-use app_test_support::create_mock_responses_server_repeating_assistant;
 use codex_app_server_protocol::ConfigReadParams;
 use codex_app_server_protocol::ConfigReadResponse;
 use codex_app_server_protocol::ExperimentalFeature;
@@ -14,8 +12,6 @@ use codex_app_server_protocol::ExperimentalFeatureListResponse;
 use codex_app_server_protocol::ExperimentalFeatureStage;
 use codex_app_server_protocol::JSONRPCError;
 use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
 use codex_config::LoaderOverrides;
 use codex_core::config::ConfigBuilder;
 use codex_features::FEATURES;
@@ -88,60 +84,6 @@ async fn experimental_feature_list_returns_feature_metadata_with_stage() -> Resu
     };
 
     assert_eq!(actual, expected);
-    Ok(())
-}
-
-#[tokio::test]
-async fn experimental_feature_list_resolves_thread_project_config() -> Result<()> {
-    let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    let workspace = TempDir::new()?;
-    let workspace_key = workspace.path().to_string_lossy().replace('\\', "\\\\");
-    MockResponsesConfig::new(&server.uri())
-        .with_extra_config(&format!(
-            "[projects.\"{workspace_key}\"]\ntrust_level = \"trusted\""
-        ))
-        .write(codex_home.path())?;
-    let project_config_dir = workspace.path().join(".codex");
-    std::fs::create_dir_all(&project_config_dir)?;
-    std::fs::write(
-        project_config_dir.join("config.toml"),
-        r#"[features]
-memories = true
-"#,
-    )?;
-
-    let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
-        .without_managed_config()
-        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
-        .await?;
-
-    let thread_start_id = mcp
-        .send_thread_start_request_with_auto_env(ThreadStartParams {
-            cwd: Some(workspace.path().display().to_string()),
-            ..Default::default()
-        })
-        .await?;
-    let ThreadStartResponse { thread, .. } =
-        read_response::<ThreadStartResponse>(&mut mcp, thread_start_id).await?;
-
-    let request_id = mcp
-        .send_experimental_feature_list_request(ExperimentalFeatureListParams {
-            cursor: None,
-            limit: None,
-            thread_id: Some(thread.id),
-        })
-        .await?;
-
-    let actual = read_response::<ExperimentalFeatureListResponse>(&mut mcp, request_id).await?;
-    let memories = actual
-        .data
-        .iter()
-        .find(|feature| feature.name == "memories")
-        .expect("memories feature should be present");
-    assert!(memories.enabled);
-
     Ok(())
 }
 
@@ -220,44 +162,6 @@ async fn experimental_feature_enablement_set_applies_to_global_and_thread_config
 }
 
 #[tokio::test]
-async fn experimental_feature_enablement_set_does_not_override_user_config() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    std::fs::write(
-        codex_home.path().join("config.toml"),
-        "[features]\nmemories = false\n",
-    )?;
-    let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
-        .without_auto_env()
-        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
-        .await?;
-
-    let actual = set_experimental_feature_enablement(
-        &mut mcp,
-        BTreeMap::from([("memories".to_string(), true)]),
-    )
-    .await?;
-    assert_eq!(
-        actual,
-        ExperimentalFeatureEnablementSetResponse {
-            enablement: BTreeMap::from([("memories".to_string(), true)]),
-        }
-    );
-
-    let ConfigReadResponse { config, .. } = read_config(&mut mcp, /*cwd*/ None).await?;
-
-    assert_eq!(
-        config
-            .additional
-            .get("features")
-            .and_then(|features| features.get("memories")),
-        Some(&json!(false))
-    );
-
-    Ok(())
-}
-
-#[tokio::test]
 async fn experimental_feature_enablement_set_only_updates_named_features() -> Result<()> {
     let codex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
@@ -275,7 +179,6 @@ async fn experimental_feature_enablement_set_only_updates_named_features() -> Re
         &mut mcp,
         BTreeMap::from([
             ("auth_elicitation".to_string(), true),
-            ("memories".to_string(), true),
             ("remote_plugin".to_string(), true),
             ("tool_suggest".to_string(), false),
         ]),
@@ -287,7 +190,6 @@ async fn experimental_feature_enablement_set_only_updates_named_features() -> Re
         ExperimentalFeatureEnablementSetResponse {
             enablement: BTreeMap::from([
                 ("auth_elicitation".to_string(), true),
-                ("memories".to_string(), true),
                 ("remote_plugin".to_string(), true),
                 ("tool_suggest".to_string(), false),
             ]),
@@ -308,13 +210,6 @@ async fn experimental_feature_enablement_set_only_updates_named_features() -> Re
             .additional
             .get("features")
             .and_then(|features| features.get("auth_elicitation")),
-        Some(&json!(true))
-    );
-    assert_eq!(
-        config
-            .additional
-            .get("features")
-            .and_then(|features| features.get("memories")),
         Some(&json!(true))
     );
     assert_eq!(

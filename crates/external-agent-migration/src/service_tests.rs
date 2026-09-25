@@ -72,6 +72,3 @@ fn import_success(
 
 #[path = "service_tests/general.rs"]
 mod general;
-
-#[path = "service_tests/memory.rs"]
-mod memory;

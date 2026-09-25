@@ -38,9 +38,6 @@ impl codex_rollout::RolloutConfigView for Config {
         self.model_provider_id.as_str()
     }
 
-    fn generate_memories(&self) -> bool {
-        self.memories.generate_memories
-    }
 }
 
 pub(crate) mod list {

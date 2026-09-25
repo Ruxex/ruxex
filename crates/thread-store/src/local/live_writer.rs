@@ -2,7 +2,6 @@ use std::path::PathBuf;
 
 use codex_protocol::ThreadId;
 use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadMemoryMode;
 use codex_rollout::RolloutConfig;
 use codex_rollout::RolloutItem;
 use codex_rollout::RolloutRecorder;
@@ -98,7 +97,6 @@ pub(super) async fn resume_thread(
         sqlite: store.config.sqlite.clone(),
         cwd,
         model_provider_id: params.metadata.model_provider.clone(),
-        generate_memories: matches!(params.metadata.memory_mode, ThreadMemoryMode::Enabled),
     };
     let rollout_id =
         codex_rollout::rollout_id_from_path(rollout_path.as_path()).ok_or_else(|| {

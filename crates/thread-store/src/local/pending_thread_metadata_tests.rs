@@ -6,7 +6,6 @@ use codex_protocol::protocol::EventMsg;
 use codex_protocol::protocol::ItemCompletedEvent;
 use codex_protocol::protocol::SessionSource;
 use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadMemoryMode;
 use codex_protocol::user_input::UserInput;
 use codex_rollout::RolloutItem;
 use pretty_assertions::assert_eq;
@@ -190,7 +189,6 @@ fn create_thread_params(thread_id: ThreadId) -> CreateThreadParams {
         metadata: ThreadPersistenceMetadata {
             cwd: Some(std::env::current_dir().expect("cwd")),
             model_provider: "test-provider".to_string(),
-            memory_mode: ThreadMemoryMode::Enabled,
         },
     }
 }

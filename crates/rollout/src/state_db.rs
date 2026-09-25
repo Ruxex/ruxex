@@ -497,23 +497,6 @@ pub async fn find_rollout_path_by_id(
         })
 }
 
-pub async fn mark_thread_memory_mode_polluted(
-    context: Option<&codex_state::StateRuntime>,
-    thread_id: ThreadId,
-    stage: &str,
-) {
-    let Some(ctx) = context else {
-        return;
-    };
-    if let Err(err) = ctx
-        .memories()
-        .mark_thread_memory_mode_polluted(thread_id)
-        .await
-    {
-        warn!("memories db mark_thread_memory_mode_polluted failed during {stage}: {err}");
-    }
-}
-
 /// Reconcile rollout items into SQLite, falling back to scanning the rollout file.
 pub async fn reconcile_rollout(
     context: Option<&codex_state::StateRuntime>,
@@ -522,7 +505,6 @@ pub async fn reconcile_rollout(
     builder: Option<&ThreadMetadataBuilder>,
     items: &[RolloutItem],
     archived_only: Option<bool>,
-    new_thread_memory_mode: Option<&str>,
 ) {
     let Some(ctx) = context else {
         return;
@@ -535,7 +517,6 @@ pub async fn reconcile_rollout(
             builder,
             items,
             "reconcile_rollout",
-            new_thread_memory_mode,
             /*updated_at_override*/ None,
         )
         .await;
@@ -553,7 +534,6 @@ pub async fn reconcile_rollout(
             }
         };
     let mut metadata = outcome.metadata;
-    let memory_mode = outcome.memory_mode.unwrap_or_else(|| "enabled".to_string());
     metadata.cwd = normalize_cwd_for_state_db(&metadata.cwd);
     let existing_metadata = ctx.get_thread(metadata.id).await.ok().flatten();
     // Filesystem repair may seed a missing row, but it must not change an existing row's
@@ -565,9 +545,6 @@ pub async fn reconcile_rollout(
     {
         return;
     }
-    // Paginated metadata updates are SQLite-only. Use the rollout mode to seed a
-    // missing row, then keep the value from SQLite.
-    let restore_memory_mode_from_rollout = existing_metadata.is_none();
     if let Some(existing_metadata) = existing_metadata.as_ref() {
         metadata.prefer_existing_git_info(existing_metadata);
         metadata.prefer_existing_explicit_title(existing_metadata);
@@ -587,16 +564,6 @@ pub async fn reconcile_rollout(
             rollout_path.display()
         );
         return;
-    }
-    if restore_memory_mode_from_rollout
-        && let Err(err) = ctx
-            .set_thread_memory_mode(metadata.id, memory_mode.as_str())
-            .await
-    {
-        warn!(
-            "state db reconcile_rollout memory_mode update failed {}: {err}",
-            rollout_path.display()
-        );
     }
 }
 
@@ -667,7 +634,6 @@ pub async fn read_repair_rollout_path(
         /*builder*/ None,
         &[],
         archived_only,
-        /*new_thread_memory_mode*/ None,
     )
     .await;
 }
@@ -681,7 +647,6 @@ pub async fn apply_rollout_items(
     builder: Option<&ThreadMetadataBuilder>,
     items: &[RolloutItem],
     stage: &str,
-    new_thread_memory_mode: Option<&str>,
     updated_at_override: Option<DateTime<Utc>>,
 ) {
     let Some(ctx) = context else {
@@ -707,7 +672,7 @@ pub async fn apply_rollout_items(
     builder.rollout_path = rollout_path.to_path_buf();
     builder.cwd = normalize_cwd_for_state_db(&builder.cwd);
     if let Err(err) = ctx
-        .apply_rollout_items(&builder, items, new_thread_memory_mode, updated_at_override)
+        .apply_rollout_items(&builder, items, updated_at_override)
         .await
     {
         warn!(

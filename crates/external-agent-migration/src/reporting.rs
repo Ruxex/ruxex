@@ -15,7 +15,6 @@ fn migration_item_type_label(item_type: ExternalAgentConfigMigrationItemType) ->
         ExternalAgentConfigMigrationItemType::Subagents => "subagents",
         ExternalAgentConfigMigrationItemType::Hooks => "hooks",
         ExternalAgentConfigMigrationItemType::Commands => "commands",
-        ExternalAgentConfigMigrationItemType::Memory => "memory",
         ExternalAgentConfigMigrationItemType::Sessions => "sessions",
     }
 }

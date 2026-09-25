@@ -7,21 +7,6 @@ fn parse_toml(value: &str) -> TomlValue {
     toml::from_str(value).expect("TOML should parse")
 }
 
-#[test]
-fn removed_config_aliases_are_not_deserialized() {
-    let config: ConfigToml = parse_toml("[memories]\nno_memories_if_mcp_or_web_search = true\n")
-        .try_into()
-        .expect("unknown compatibility keys should remain harmless");
-
-    assert_eq!(
-        config
-            .memories
-            .and_then(|memories| memories.disable_on_external_context),
-        None
-    );
-    assert!(toml::from_str::<AgentsToml>("max_threads = 4").is_err());
-}
-
 /// Feature tables added above legacy toggles retain the lower layer's enabled state.
 #[test]
 fn merge_multi_agent_v2_table_preserves_legacy_boolean_toggle() {

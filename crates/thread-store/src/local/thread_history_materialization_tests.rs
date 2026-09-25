@@ -21,7 +21,6 @@ use codex_protocol::protocol::RateLimitSnapshot;
 use codex_protocol::protocol::RateLimitWindow;
 use codex_protocol::protocol::SessionSource;
 use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadMemoryMode;
 use codex_protocol::protocol::TokenCountEvent;
 use codex_protocol::protocol::TurnCompleteEvent;
 use codex_protocol::protocol::TurnStartedEvent;
@@ -108,7 +107,6 @@ async fn split_homes_support_backfill_listing_and_paginated_history() {
         sqlite: sqlite.clone(),
         cwd: codex_home.clone(),
         model_provider_id: "test-provider".to_string(),
-        generate_memories: false,
     };
     let recorder = RolloutRecorder::new(
         &rollout_config,
@@ -197,7 +195,6 @@ async fn split_homes_support_backfill_listing_and_paginated_history() {
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(codex_home.clone()),
                 model_provider: "test-provider".to_string(),
-                memory_mode: ThreadMemoryMode::Enabled,
             },
         })
         .await
@@ -225,7 +222,6 @@ async fn split_homes_support_backfill_listing_and_paginated_history() {
                             text: "done".to_string(),
                         }],
                         phase: None,
-                        memory_citation: None,
                         delivery: None,
                         questions: None,
                     }),
@@ -319,7 +315,6 @@ async fn paginated_live_append_materializes_turn_items_and_state() {
                             text: "done".to_string(),
                         }],
                         phase: None,
-                        memory_citation: None,
                         delivery: None,
                         questions: None,
                     }),
@@ -879,7 +874,6 @@ async fn paginated_fork_reads_compressed_shared_lineage_without_materializing() 
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(home.path().to_path_buf()),
                 model_provider: "test-provider".to_string(),
-                memory_mode: ThreadMemoryMode::Enabled,
             },
         })
         .await
@@ -2356,7 +2350,6 @@ async fn create_paginated_subagent_thread(
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(std::env::current_dir().expect("cwd")),
                 model_provider: "test-provider".to_string(),
-                memory_mode: ThreadMemoryMode::Enabled,
             },
         })
         .await
@@ -2432,7 +2425,6 @@ fn agent_message(id: &str, phase: MessagePhase) -> TurnItem {
             text: id.to_string(),
         }],
         phase: Some(phase),
-        memory_citation: None,
         delivery: None,
         questions: None,
     })

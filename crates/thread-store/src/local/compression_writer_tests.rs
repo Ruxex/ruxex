@@ -9,7 +9,6 @@ use std::time::SystemTime;
 
 use codex_protocol::ThreadId;
 use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ThreadMemoryMode;
 use codex_protocol::protocol::UserMessageEvent;
 use codex_rollout::RolloutItem;
 use codex_rollout::RolloutRecorder;
@@ -51,7 +50,6 @@ fn resume(thread_id: ThreadId, path: &Path, home: &Path) -> ResumeThreadParams {
         metadata: ThreadPersistenceMetadata {
             cwd: Some(home.to_path_buf()),
             model_provider: "test-provider".into(),
-            memory_mode: ThreadMemoryMode::Enabled,
         },
     }
 }

@@ -176,7 +176,6 @@ mod tests {
             RolloutItem::EventMsg(EventMsg::AgentMessage(AgentMessageEvent {
                 message: "first answer".to_string(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             })),

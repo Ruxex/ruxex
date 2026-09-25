@@ -60,7 +60,6 @@ const SUPPORTED_EXPERIMENTAL_FEATURE_ENABLEMENT: &[&str] = &[
     "api_key_model_discovery",
     "auth_elicitation",
     "mcp_2026_07_28",
-    "memories",
     "mentions_v2",
     "remote_plugin",
     "tool_suggest",

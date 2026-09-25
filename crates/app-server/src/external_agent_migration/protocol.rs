@@ -110,7 +110,6 @@ fn protocol_migration_details(details: CoreMigrationDetails) -> MigrationDetails
             .into_iter()
             .map(|command| CommandMigration { name: command.name })
             .collect(),
-        memory: details.memory,
     }
 }
 
@@ -174,7 +173,6 @@ fn core_migration_details(details: MigrationDetails) -> CoreMigrationDetails {
             .into_iter()
             .map(|command| NamedMigration { name: command.name })
             .collect(),
-        memory: details.memory,
     }
 }
 
@@ -192,7 +190,6 @@ pub(super) fn protocol_migration_item_type(
         CoreMigrationItemType::Subagents => ExternalAgentConfigMigrationItemType::Subagents,
         CoreMigrationItemType::Hooks => ExternalAgentConfigMigrationItemType::Hooks,
         CoreMigrationItemType::Commands => ExternalAgentConfigMigrationItemType::Commands,
-        CoreMigrationItemType::Memory => ExternalAgentConfigMigrationItemType::Memory,
         CoreMigrationItemType::Sessions => ExternalAgentConfigMigrationItemType::Sessions,
     }
 }
@@ -211,7 +208,6 @@ fn core_migration_item_type(
         ExternalAgentConfigMigrationItemType::Subagents => CoreMigrationItemType::Subagents,
         ExternalAgentConfigMigrationItemType::Hooks => CoreMigrationItemType::Hooks,
         ExternalAgentConfigMigrationItemType::Commands => CoreMigrationItemType::Commands,
-        ExternalAgentConfigMigrationItemType::Memory => CoreMigrationItemType::Memory,
         ExternalAgentConfigMigrationItemType::Sessions => CoreMigrationItemType::Sessions,
     }
 }
@@ -316,7 +312,6 @@ pub(super) fn completed_notification(
         ExternalAgentConfigMigrationItemType::Hooks => 6,
         ExternalAgentConfigMigrationItemType::Commands => 7,
         ExternalAgentConfigMigrationItemType::Sessions => 8,
-        ExternalAgentConfigMigrationItemType::Memory => 9,
     });
 
     ExternalAgentConfigImportCompletedNotification {

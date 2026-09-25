@@ -37,7 +37,6 @@ use codex_config::types::AuthKeyringBackendKind;
 use codex_config::types::History;
 use codex_config::types::McpServerConfig;
 use codex_config::types::McpServerDisabledReason;
-use codex_config::types::MemoriesConfig;
 use codex_config::types::ModelAvailabilityNuxConfig;
 use codex_config::types::Notice;
 use codex_config::types::OAuthCredentialsStoreMode;
@@ -856,9 +855,6 @@ pub struct Config {
 
     /// Maximum token budget allowed for a goal and default budget for new goals.
     pub max_goal_token_budget: Option<i64>,
-
-    /// Memories subsystem settings.
-    pub memories: MemoriesConfig,
 
     /// Directory containing all Codex state (defaults to `~/.codex` but can be
     /// overridden by the `CODEX_HOME` environment variable).
@@ -3231,9 +3227,6 @@ impl Config {
             ));
         }
 
-        let memories_config: MemoriesConfig = cfg.memories.clone().unwrap_or_default().into();
-        let memories_root = codex_home.join(memories_config.version.directory_name());
-
         let profiles_are_active = effective_permission_selection.profiles_are_active(
             default_permissions_override.as_deref(),
             permission_config_syntax,
@@ -3784,9 +3777,6 @@ impl Config {
             zsh_path.as_ref(),
             main_execve_wrapper_exe.as_ref(),
         );
-        if features.enabled(Feature::MemoryTool) && memories_config.use_memories {
-            helper_readable_roots.push(memories_root);
-        }
         let effective_permission_profile = constrained_permission_profile.value.get().clone();
         let (mut effective_file_system_sandbox_policy, effective_network_sandbox_policy) =
             effective_permission_profile.to_runtime_permissions();
@@ -3991,7 +3981,6 @@ impl Config {
                     })
                 })
                 .transpose()?,
-            memories: memories_config,
             agent_interrupt_message_enabled,
             codex_home,
             sqlite: codex_state::SqliteConfig::from_sqlite_home(sqlite_home),

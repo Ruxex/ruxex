@@ -44,7 +44,6 @@ use crate::stream_events_utils::finalize_non_tool_response_item;
 use crate::stream_events_utils::handle_non_tool_response_item;
 use crate::stream_events_utils::handle_output_item_done;
 use crate::stream_events_utils::last_assistant_message_from_item;
-use crate::stream_events_utils::mark_thread_memory_mode_polluted_if_external_context;
 use crate::stream_events_utils::raw_assistant_output_text_from_item;
 use crate::stream_events_utils::record_completed_response_item_with_finalized_facts;
 use crate::tasks::emit_compact_metric;
@@ -87,12 +86,10 @@ use codex_protocol::protocol::AgentReasoningSectionBreakEvent;
 use codex_protocol::protocol::CodexErrorInfo;
 use codex_protocol::protocol::ErrorEvent;
 use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::InternalSessionSource;
 use codex_protocol::protocol::PlanDeltaEvent;
 use codex_protocol::protocol::ReasoningContentDeltaEvent;
 use codex_protocol::protocol::ReasoningRawContentDeltaEvent;
 use codex_protocol::protocol::SafetyBufferingEvent;
-use codex_protocol::protocol::SessionSource;
 use codex_protocol::protocol::TurnDiffEvent;
 use codex_protocol::protocol::WarningEvent;
 use codex_protocol::user_input::UserInput;
@@ -579,16 +576,6 @@ pub(crate) async fn run_turn(
                         last_agent_message.clone(),
                     )
                     .await;
-                    if matches!(
-                        turn_context.session_source,
-                        SessionSource::Internal(InternalSessionSource::MemoryConsolidation)
-                    ) && (stop_outcome.should_block || stop_outcome.should_stop)
-                    {
-                        // Do not feed managed rejections back into an unattended memory loop.
-                        return Err(CodexErr::InvalidRequest(
-                            "Memory consolidation was rejected by a Stop hook.".to_string(),
-                        ));
-                    }
                     if stop_outcome.should_block {
                         if let Some(hook_prompt_message) =
                             build_hook_prompt_message(&stop_outcome.continuation_fragments)
@@ -1731,7 +1718,6 @@ async fn emit_agent_message_in_plan_mode(
                     id: agent_message_id.clone(),
                     content: Vec::new(),
                     phase: None,
-                    memory_citation: None,
                     delivery: None,
                     questions: None,
                 })
@@ -1832,12 +1818,6 @@ async fn drain_in_flight(
     while let Some(res) = in_flight.next().await {
         match res {
             Ok(envelope) => {
-                mark_thread_memory_mode_polluted_if_external_context(
-                    sess.as_ref(),
-                    turn_context.as_ref(),
-                    &envelope.item,
-                )
-                .await;
                 sess.record_annotated_conversation_items(
                     turn_context,
                     &step_context.settings.model_info,

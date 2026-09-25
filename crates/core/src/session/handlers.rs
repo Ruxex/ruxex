@@ -23,12 +23,10 @@ use codex_protocol::protocol::InterAgentCommunication;
 use codex_protocol::protocol::Op;
 use codex_protocol::protocol::ReviewDecision;
 use codex_protocol::protocol::ReviewRequest;
-use codex_protocol::protocol::ThreadMemoryMode;
 use codex_protocol::protocol::TurnAbortReason;
 use codex_protocol::protocol::WarningEvent;
 use codex_protocol::request_permissions::RequestPermissionsResponse;
 use codex_protocol::request_user_input::RequestUserInputResponse;
-use codex_thread_store::PersistContext;
 
 use crate::context_manager::is_user_turn_boundary;
 use codex_protocol::dynamic_tools::DynamicToolResponse;
@@ -222,39 +220,6 @@ pub async fn compact(sess: &Arc<Session>, sub_id: String) {
         .await;
 
     sess.spawn_task(turn_context, Vec::new(), CompactTask).await;
-}
-
-pub(super) async fn persist_thread_memory_mode_update(
-    sess: &Arc<Session>,
-    mode: ThreadMemoryMode,
-) -> anyhow::Result<()> {
-    let live_thread = sess.live_thread_for_persistence("update thread memory mode")?;
-    live_thread.persist(PersistContext::Standard).await?;
-    live_thread.flush().await?;
-    live_thread
-        .update_memory_mode(mode, /*include_archived*/ false)
-        .await?;
-    live_thread.flush().await?;
-    Ok(())
-}
-
-/// Persists thread-level memory mode metadata for the active session.
-///
-/// This does not involve the model and only affects whether the thread is
-/// eligible for future memory generation.
-pub async fn set_thread_memory_mode(sess: &Arc<Session>, sub_id: String, mode: ThreadMemoryMode) {
-    if let Err(err) = persist_thread_memory_mode_update(sess, mode).await {
-        warn!("Failed to persist thread memory mode update to rollout: {err}");
-        let event = Event {
-            id: sub_id,
-            msg: EventMsg::Error(ErrorEvent {
-                misalignment: None,
-                message: err.to_string(),
-                codex_error_info: Some(CodexErrorInfo::Other),
-            }),
-        };
-        sess.send_event_raw(event).await;
-    }
 }
 
 pub(super) async fn shutdown_session_runtime(sess: &Arc<Session>) {
@@ -497,10 +462,6 @@ pub(super) async fn submission_loop(
                 }
                 Op::Compact => {
                     compact(&sess, sub.id.clone()).await;
-                    false
-                }
-                Op::SetThreadMemoryMode { mode } => {
-                    set_thread_memory_mode(&sess, sub.id.clone(), mode).await;
                     false
                 }
                 Op::RunUserShellCommand {

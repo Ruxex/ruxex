@@ -1701,51 +1701,6 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
-    fn writable_roots_under_symlinked_ancestors_bind_real_target() {
-        let temp_dir = TempDir::new().expect("temp dir");
-        let logical_home = temp_dir.path().join("home");
-        let real_codex = temp_dir.path().join("real-codex");
-        let logical_codex = logical_home.join(".codex");
-        let real_memories = real_codex.join("memories");
-        let logical_memories = logical_codex.join("memories");
-        std::fs::create_dir_all(&logical_home).expect("create logical home");
-        std::fs::create_dir_all(&real_memories).expect("create memories dir");
-        std::os::unix::fs::symlink(&real_codex, &logical_codex)
-            .expect("create symlinked codex home");
-
-        let logical_memories_root =
-            AbsolutePathBuf::from_absolute_path(&logical_memories).expect("absolute memories");
-        let real_memories_str = path_to_string(&real_memories);
-        let logical_memories_str = path_to_string(&logical_memories);
-        let policy = FileSystemSandboxPolicy::restricted(vec![FileSystemSandboxEntry {
-            path: logical_memories_root.into(),
-            access: FileSystemAccessMode::Write,
-            missing_path_behavior: None,
-        }]);
-
-        let args = create_filesystem_args(&policy, temp_dir.path(), BwrapOptions::default())
-            .expect("filesystem args");
-
-        assert!(args.args.windows(3).any(|window| {
-            window
-                == [
-                    "--bind",
-                    real_memories_str.as_str(),
-                    real_memories_str.as_str(),
-                ]
-        }));
-        assert!(!args.args.windows(3).any(|window| {
-            window
-                == [
-                    "--bind",
-                    logical_memories_str.as_str(),
-                    logical_memories_str.as_str(),
-                ]
-        }));
-    }
-
-    #[cfg(unix)]
-    #[test]
     fn protected_symlinked_directory_subpaths_fail_closed() {
         let temp_dir = TempDir::new().expect("temp dir");
         let root = temp_dir.path().join("root");

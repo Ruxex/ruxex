@@ -1,7 +1,6 @@
 Everything becomes a good contributor design, which contributors do we need?
 
 git attribution              Context
-memories                     Context + Tool + Output
 guardian                     Context + Request
 goal                         Tool + Runtime
 image generation             Tool + Output

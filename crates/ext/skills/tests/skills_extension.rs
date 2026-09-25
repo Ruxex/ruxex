@@ -1723,7 +1723,6 @@ async fn skills_list_only_returns_model_visible_bounded_metadata() -> TestResult
                 ..call.clone()
             })
             .await?;
-        assert!(output.contains_external_context());
         let response = output
             .post_tool_use_response(&call_id, &payload)
             .ok_or("skills.list should expose structured output")?;

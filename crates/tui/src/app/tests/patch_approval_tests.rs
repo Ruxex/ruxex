@@ -269,7 +269,6 @@ async fn active_patch_approval_preserves_deferred_startup_protection() -> Result
                 id: "agent-1".to_string(),
                 text: "streaming".to_string(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             },

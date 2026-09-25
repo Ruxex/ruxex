@@ -20,9 +20,6 @@ pub(crate) fn subagent_header(source: &Option<SessionSource>) -> Option<String> 
         codex_protocol::protocol::SubAgentSource::ThreadSpawn { .. } => {
             Some("collab_spawn".to_string())
         }
-        codex_protocol::protocol::SubAgentSource::MemoryConsolidation => {
-            Some("memory_consolidation".to_string())
-        }
         codex_protocol::protocol::SubAgentSource::Other(label) => Some(label.clone()),
     }
 }

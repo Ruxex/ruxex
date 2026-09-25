@@ -191,7 +191,6 @@ async fn reconcile_rollout_preserves_existing_explicit_title() -> anyhow::Result
         /*builder*/ None,
         &[],
         /*archived_only*/ Some(false),
-        /*new_thread_memory_mode*/ None,
     )
     .await;
 
@@ -257,60 +256,9 @@ async fn filesystem_repair_preserves_existing_rollout_path() -> anyhow::Result<(
         /*builder*/ None,
         &[],
         /*archived_only*/ None,
-        /*new_thread_memory_mode*/ None,
     )
     .await;
     assert_eq!(runtime.get_thread(thread_id).await?, Some(active_metadata));
-    Ok(())
-}
-
-#[tokio::test]
-async fn reconcile_rollout_preserves_existing_paginated_memory_mode() -> anyhow::Result<()> {
-    let home = TempDir::new().expect("temp dir");
-    let thread_id = ThreadId::new();
-    let rollout_path = write_rollout_with_user_message(
-        home.path(),
-        thread_id,
-        "Hey",
-        ThreadHistoryMode::Paginated,
-    )?;
-    let runtime = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        "test-provider".to_string(),
-    )
-    .await?;
-
-    reconcile_rollout(
-        Some(runtime.as_ref()),
-        rollout_path.as_path(),
-        "test-provider",
-        /*builder*/ None,
-        &[],
-        /*archived_only*/ None,
-        /*new_thread_memory_mode*/ None,
-    )
-    .await;
-    assert!(
-        runtime
-            .set_thread_memory_mode(thread_id, "disabled")
-            .await?
-    );
-
-    reconcile_rollout(
-        Some(runtime.as_ref()),
-        rollout_path.as_path(),
-        "test-provider",
-        /*builder*/ None,
-        &[],
-        /*archived_only*/ None,
-        /*new_thread_memory_mode*/ None,
-    )
-    .await;
-
-    assert_eq!(
-        runtime.get_thread_memory_mode(thread_id).await?.as_deref(),
-        Some("disabled")
-    );
     Ok(())
 }
 
@@ -348,7 +296,6 @@ fn write_rollout_with_user_message(
                     base_instructions: None,
                     dynamic_tools: None,
                     selected_capability_roots: Vec::new(),
-                    memory_mode: None,
                     history_mode,
                     history_base: None,
                     subagent_history_start_ordinal: None,

@@ -19,7 +19,6 @@ codex-core = { workspace = true }
 codex-core-plugins = { workspace = true }
 codex-hooks = { workspace = true }
 codex-login = { workspace = true }
-codex-memories-write = { workspace = true }
 codex-otel = { workspace = true }
 codex-plugin = { workspace = true }
 codex-protocol = { workspace = true }

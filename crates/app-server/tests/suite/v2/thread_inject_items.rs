@@ -61,7 +61,6 @@ async fn thread_inject_items_adds_raw_response_items_to_thread_history(
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::Sqlite)
         .enable_feature(Feature::RetainClientDeveloperMessages)
-        .with_extra_config("[memories]\ndisable_on_external_context = true")
         .write(codex_home.path())?;
     let state_db = StateRuntime::init(
         codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
@@ -128,14 +127,6 @@ async fn thread_inject_items_adds_raw_response_items_to_thread_history(
     let _response: ThreadInjectItemsResponse =
         timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(inject_req)).await??;
     assert!(response_mock.requests().is_empty());
-
-    assert_eq!(
-        state_db
-            .get_thread_memory_mode(ThreadId::from_string(&thread.id)?)
-            .await?
-            .as_deref(),
-        Some("polluted")
-    );
 
     let rollout_path = thread.path.as_ref().context("thread path missing")?;
     let history = RolloutRecorder::get_rollout_history(rollout_path).await?;

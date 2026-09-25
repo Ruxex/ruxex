@@ -160,7 +160,7 @@ impl<'call> ToolExecutor<ToolCall<'call>> for ListTool {
                         .then(|| cursor_at(skills[end.saturating_sub(1)].0.saturating_add(1))),
                 };
                 if serialized_len(&response)? <= response_byte_budget {
-                    return skill_json_output(&response, args.authority);
+                    return skill_json_output(&response);
                 }
                 if end > 1 {
                     end = end.saturating_sub(1);
@@ -172,7 +172,7 @@ impl<'call> ToolExecutor<ToolCall<'call>> for ListTool {
                     // the next call resumes at the same canonical skill offset.
                     response.next_cursor = Some(cursor_at(start));
                     if serialized_len(&response)? <= response_byte_budget {
-                        return skill_json_output(&response, args.authority);
+                        return skill_json_output(&response);
                     }
                     if omission_warning.is_some() && !provider_warnings.is_empty() {
                         response.warnings = provider_warnings;
@@ -180,7 +180,7 @@ impl<'call> ToolExecutor<ToolCall<'call>> for ListTool {
                         // Reusing this offset lets the next call report it before advancing.
                         response.next_cursor = Some(format!("{cursor_fingerprint:016x}:{start}"));
                         if serialized_len(&response)? <= response_byte_budget {
-                            return skill_json_output(&response, args.authority);
+                            return skill_json_output(&response);
                         }
                     }
                     // FunctionCallError cannot carry external-context metadata, so do not

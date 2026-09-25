@@ -35,17 +35,14 @@ use codex_protocol::protocol::EventMsg;
 use codex_protocol::protocol::HookCompletedEvent;
 use codex_protocol::protocol::HookEventName;
 use codex_protocol::protocol::HookExecutionMode;
-use codex_protocol::protocol::HookHandlerType;
 use codex_protocol::protocol::HookOutputEntryKind;
 use codex_protocol::protocol::HookRunStatus;
 use codex_protocol::protocol::HookRunSummary;
 use codex_protocol::protocol::HookSource;
 use codex_protocol::protocol::HookStartedEvent;
-use codex_protocol::protocol::InternalSessionSource;
 use codex_protocol::protocol::SessionSource;
 use codex_protocol::protocol::SubAgentSource;
 use codex_protocol::protocol::WarningEvent;
-use codex_rollout::state_db;
 use codex_thread_store::PersistContext;
 use codex_thread_store::ReadThreadParams;
 use serde_json::Map;
@@ -403,10 +400,6 @@ pub(crate) async fn run_turn_stop_hooks(
         // Internal/synthetic subagents do not expose user-configured lifecycle
         // hooks, so there is no Stop or SubagentStop request to dispatch.
         SessionSource::SubAgent(_) => return StopOutcome::default(),
-        SessionSource::Internal(InternalSessionSource::MemoryConsolidation) => (
-            StopHookTarget::MemoryConsolidation,
-            sess.hook_transcript_path().await,
-        ),
         _ => (StopHookTarget::Stop, sess.hook_transcript_path().await),
     };
     let request_metadata = build_request_metadata(Some(step_context), turn_context);
@@ -865,23 +858,6 @@ pub(crate) async fn emit_hook_completed_events(
     turn_context: &Arc<TurnContext>,
     completed_events: Vec<HookCompletedEvent>,
 ) {
-    if turn_context.config.memories.disable_on_external_context
-        && completed_events.iter().any(|completed| {
-            completed.run.handler_type == HookHandlerType::McpTool
-                && matches!(
-                    completed.run.status,
-                    HookRunStatus::Completed | HookRunStatus::Blocked | HookRunStatus::Stopped
-                )
-        })
-    {
-        state_db::mark_thread_memory_mode_polluted(
-            sess.services.state_db.as_deref(),
-            sess.thread_id,
-            "mcp_tool_hook",
-        )
-        .await;
-    }
-
     for completed in completed_events {
         emit_hook_completed_metrics(turn_context, &completed);
         if should_emit_hook_notification(&completed.run) {

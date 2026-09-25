@@ -65,7 +65,6 @@ fn empty_continuations_require_three_turns_without_activity_or_goal_changes() {
         id: "empty".into(),
         content: vec![AgentMessageContent::Text { text: " \n".into() }],
         phase: Some(MessagePhase::FinalAnswer),
-        memory_citation: None,
         delivery: None,
         questions: None,
     });

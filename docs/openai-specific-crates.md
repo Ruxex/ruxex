@@ -2,7 +2,7 @@
 
 ## 目的と調査方法
 
-この文書は、[OpenAI 固有機能の段階的な分離計画](openai-decoupling-plan.md) の Level 1 Phase 1 の成果物である。OpenAI または ChatGPT の認証、API、ホスト型サービス、クラウド機能を直接実装するクレートと、汎用責務の中にそれらを含むクレートを分け、Phase 2 で安全に削除できる単位を決める。
+この文書は、[OpenAI 固有機能の段階的な分離計画](openai-decoupling-plan.md) の Level 1 Phase 1 の成果物である。OpenAI または ChatGPT の認証、API、ホスト型サービス、クラウド機能を直接実装するクレートと、汎用責務の中にそれらを含むクレートを分け、Phase 2 で安全に削除できる単位を決める。現在の削除状況は [Phase 3 の計画](openai-decoupling-plan.md#phase-3-残存-integration-の段階的な隔離削除) と [pre-release compatibility inventory](pre-release-compatibility-inventory.md) を正とする。
 
 調査は現行 HEAD `72c8f5844` を基準に、次の情報を照合した。過去のクレート一覧だけでは Hosted capability の境界を見落とすため、機能・feature・protocol・設定・UI の到達経路も再監査する。
 
@@ -176,8 +176,8 @@ Feedback の削除で確認したように、OpenAI 固有性はクレート単�
 - **根拠:** ChatGPT/Codex backend の `/wham` API、workspace message、usage、credit、profile などを実装する。
 - **機能:** backend URL/path の構築、認証付き request、rate limit/credit/workspace API。
 - **内部依存先:** `codex-api`、`codex-backend-openapi-models`、`codex-http-client`、`codex-login`、`codex-model-provider`、`codex-protocol`。
-- **依存元:** 直接は app-server、cloud config、Cloud Tasks client、git attribution、memories write、TUI。推移は 13 クレート。
-- **到達経路:** app-server の account/usage/workspace 系 request、TUI の backend banner/status、Cloud Tasks、remote memory と git attribution。
+- **依存元:** 直接は app-server、cloud config、Cloud Tasks client、TUI。推移は 13 クレート。
+- **到達経路:** app-server の account/usage/workspace 系 request、TUI の backend banner/status、Cloud Tasks。
 - **影響:** `managed_auth_base_url`、ChatGPT auth、usage/credit UI、workspace message、wiremock テスト。専用 README、Cargo feature flag はない。
 - **推奨:** **隔離**。OpenAI backend integration 層として境界を明示し、利用機能ごとに依存を外してから削除する。
 - **難易度・リスク:** 高。複数の製品機能を一つの client が担い、一括削除すると Phase の変更範囲を超える。
@@ -188,7 +188,7 @@ Feedback の削除で確認したように、OpenAI 固有性はクレート単�
 - **機能:** rate limit、workspace message、usage、credit など backend response の serde model。
 - **内部依存先:** なし。外部の serde 系だけに依存する。
 - **依存元:** 直接は `codex-backend-client` のみ、推移は 14 クレート。
-- **到達経路:** backend client を介して app-server、TUI、Cloud Tasks、cloud config、memories、git attribution へ到達する。
+- **到達経路:** backend client を介して app-server、TUI、Cloud Tasks、cloud config へ到達する。
 - **影響:** 生成モデルと、それを公開型として再 export する backend client の API。feature flag、独立設定、専用 README、crate 単体 test はない。
 - **推奨:** **隔離**。直接依存数だけを見て先に削除せず、backend client と同じ境界に置く。backend 機能の縮小後に未使用モデルを削る。
 - **難易度・リスク:** 中。生成元との同期と公開型互換性が主なリスクである。
@@ -305,12 +305,12 @@ protocol slice として扱う。generic image input、local media、`view_image
 
 ### 18. `codex-api`
 
-- **根拠:** README が Codex/OpenAI API client と明記し、Responses、Realtime、memory summarize などの wire contract を実装する。一方、任意 base URL の provider や互換 server からも利用される。
+- **根拠:** README が Codex/OpenAI API client と明記し、Responses などの wire contract を実装する。一方、任意 base URL の provider や互換 server からも利用される。
 - **機能:** typed request/response、SSE/WebSocket、retry、API error、provider/auth header injection。
 - **内部依存先:** `codex-client`、`codex-http-client`、`codex-protocol`、rustls-provider utility、`codex-websocket-client`。
 - **依存元:** 直接 16、推移 71 で候補中最大。core、model provider、backend client、MCP、各 extension が利用する。
 - **到達経路:** core の model call を介して CLI/TUI/app-server/exec の主要実行経路すべてに到達する。
-- **影響:** Responses API wire type、stream event、memory API、model/provider tests、crate README。専用 Cargo feature flag はない。Realtime URL/call adapter は削除済みである。
+- **影響:** Responses API wire type、stream event、model/provider tests、crate README。専用 Cargo feature flag はない。Realtime URL/call adapter と memory API は削除済みである。
 - **推奨:** **汎用化**。汎用 transport/client は `codex-client` / `codex-http-client` に維持し、OpenAI wire protocol を provider adapter として隔離する。互換 provider が使う protocol を「OpenAI 固有」という理由だけで削除しない。
 - **難易度・リスク:** 非常に高。core protocol と多数の extension が wire type を直接共有している。
 
@@ -344,14 +344,14 @@ Phase 2 で完了した削除と、Phase 3 で扱う後続候補を次の順序�
    - OpenAI/ChatGPT endpoint への analytics 送信と auth/provider adapter を削除し、event/fact/reducer と debug capture を残した。
 9. **ChatGPT Remote Control capability の削除（完了）**
    - ChatGPT 専用 host、remote-control endpoint、enrollment/pairing、app-server protocol、daemon、CLI、state persistence を削除した。通常の app-server transport は保持している。
-10. **Hosted Plugin Marketplace / Sharing / Runtime の削除（後続）**
+10. **Hosted Plugin Marketplace / Sharing / Runtime の削除（完了、working tree）**
    - startup sync/cache の削除とは別に、remote catalog、search/share/mutation/bundle、Hosted Plugin Runtime を削除する。local/bundled/Git/npm plugin foundation は保持する。
 11. **ChatGPT Apps / Connectors / host-owned Apps MCP の削除（完了）**
    - connector directory、Apps protocol/UI/config、ChatGPT auth/account、OpenAI 固有 MCP adapter を一つの capability として削除する。通常の MCP runtime は保持する。
-12. **ChatGPT 認証 / Agent Identity の削除（後続）**
+12. **ChatGPT 認証 / Agent Identity の削除（完了、working tree）**
    - `codex-agent-identity` は全体削除を検証し、`codex-login` は ChatGPT login branch と protocol/UI だけを削除する。Bedrock、workload identity、汎用 credential storage は保持する。
 
-Phase 2 の削除対象 1〜3 は完了した。4 以降は影響範囲または汎用責務が大きいため、Level 1 Phase 3 で capability ごとに到達経路を縮小してから扱う。特に 9〜12 は、既存の「共有クレートの汎用化」より先に Hosted capability の本体を削除し、その後に残存 adapter と共有境界を再評価する。11 の Apps / Connectors capability は完了し、12 の ChatGPT 認証 / Agent Identity は後続である。
+Phase 2 の削除対象 1〜3 は完了した。4 以降は影響範囲または汎用責務が大きいため、Level 1 Phase 3 で capability ごとに到達経路を縮小してから扱う。特に 9〜12 は、既存の「共有クレートの汎用化」より先に Hosted capability の本体を削除し、その後に残存 adapter と共有境界を再評価する。11 の Apps / Connectors capability と 12 の ChatGPT 認証 / Agent Identity は、現行の Phase 3 working tree では完了扱いである。互換性クリーンアップの build-system slice は [pre-release compatibility inventory](pre-release-compatibility-inventory.md#build-system-and-experimental-scaffolding) を参照する。
 
 ## 調査したがクレート削除候補から除外したもの
 

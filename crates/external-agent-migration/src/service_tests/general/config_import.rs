@@ -41,7 +41,6 @@ url = "https://example.com/mixed-transport"
         service
             .detect(ExternalAgentConfigDetectOptions {
                 include_home: false,
-                include_memory: false,
                 cwds: Some(vec![repo_root.clone()]),
             })
             .await
@@ -94,7 +93,6 @@ url = "https://example.com/mixed-transport"
     )
     .detect(ExternalAgentConfigDetectOptions {
         include_home: false,
-        include_memory: false,
         cwds: Some(vec![repo_root.clone()]),
     })
     .await
@@ -490,7 +488,6 @@ async fn detect_home_skips_config_when_target_already_has_supported_fields() {
     let items = service_for_paths(external_agent_home, codex_home)
         .detect(ExternalAgentConfigDetectOptions {
             include_home: true,
-            include_memory: false,
             cwds: None,
         })
         .await
@@ -512,7 +509,6 @@ async fn detect_home_skips_skills_when_all_skill_directories_exist() {
     let items = service_for_paths(external_agent_home, codex_home)
         .detect(ExternalAgentConfigDetectOptions {
             include_home: true,
-            include_memory: false,
             cwds: None,
         })
         .await

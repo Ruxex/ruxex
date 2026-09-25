@@ -436,7 +436,7 @@ impl TurnRequestProcessor {
         app_server_client_name: Option<String>,
         app_server_client_version: Option<String>,
     ) -> Result<TurnStartResponse, JSONRPCErrorError> {
-        let (thread_id, thread) = self.load_thread(&params.thread_id).await?;
+        let (_, thread) = self.load_thread(&params.thread_id).await?;
         self.ensure_direct_input_allowed(&request_id, thread.as_ref())
             .await?;
         self.config_manager
@@ -490,7 +490,6 @@ impl TurnRequestProcessor {
             resolve_turn_environment_selections(self.thread_manager.as_ref(), params.environments)?;
 
         let additional_context = map_additional_context(params.additional_context);
-        let turn_has_input = !params.input.is_empty();
         let input = if let Some(tool_output) = params.tool_output {
             let item = ResponseItem::FunctionCallOutput {
                 id: None,
@@ -561,9 +560,9 @@ impl TurnRequestProcessor {
             )
             .await
             .map_err(|err| internal_error(format!("failed to submit turn input: {err}")))?;
-        let (turn_id, started) = match submission {
-            TurnInputSubmission::Started { turn_id } => (turn_id, true),
-            TurnInputSubmission::Steered { turn_id } => (turn_id, false),
+        let turn_id = match submission {
+            TurnInputSubmission::Started { turn_id } => turn_id,
+            TurnInputSubmission::Steered { turn_id } => turn_id,
             TurnInputSubmission::NotSubmitted { reason } => {
                 let error = if reason == NotSubmittedReason::ServerDraining {
                     crate::error_code::server_draining_error()
@@ -573,21 +572,6 @@ impl TurnRequestProcessor {
                 return Err(error);
             }
         };
-
-        if turn_has_input && started {
-            let config_snapshot = thread.config_snapshot().await;
-            if config_snapshot.is_primary_environment_configured() {
-                codex_memories_write::start_memories_startup_task(
-                    Arc::clone(&self.thread_manager),
-                    Arc::clone(&self.auth_manager),
-                    thread_id,
-                    Arc::clone(&thread),
-                    thread.config().await,
-                    config_snapshot.permission_profile,
-                    &config_snapshot.session_source,
-                );
-            }
-        }
 
         self.outgoing
             .record_request_turn_id(&request_id, &turn_id)

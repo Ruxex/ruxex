@@ -5779,7 +5779,6 @@
         "SUBAGENTS",
         "HOOKS",
         "COMMANDS",
-        "MEMORY",
         "SESSIONS"
       ],
       "type": "string"
@@ -8303,54 +8302,6 @@
       ],
       "type": "string"
     },
-    "MemoryCitation": {
-      "properties": {
-        "entries": {
-          "items": {
-            "$ref": "#/definitions/MemoryCitationEntry"
-          },
-          "type": "array"
-        },
-        "threadIds": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
-      "required": [
-        "entries",
-        "threadIds"
-      ],
-      "type": "object"
-    },
-    "MemoryCitationEntry": {
-      "properties": {
-        "lineEnd": {
-          "format": "uint32",
-          "minimum": 0.0,
-          "type": "integer"
-        },
-        "lineStart": {
-          "format": "uint32",
-          "minimum": 0.0,
-          "type": "integer"
-        },
-        "note": {
-          "type": "string"
-        },
-        "path": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "lineEnd",
-        "lineStart",
-        "note",
-        "path"
-      ],
-      "type": "object"
-    },
     "MergeStrategy": {
       "enum": [
         "replace",
@@ -8409,12 +8360,6 @@
           "default": [],
           "items": {
             "$ref": "#/definitions/McpServerMigration"
-          },
-          "type": "array"
-        },
-        "memory": {
-          "items": {
-            "type": "string"
           },
           "type": "array"
         },
@@ -14075,8 +14020,7 @@
         {
           "enum": [
             "review",
-            "compact",
-            "memory_consolidation"
+            "compact"
           ],
           "type": "string"
         },
@@ -15268,17 +15212,6 @@
             "id": {
               "type": "string"
             },
-            "memoryCitation": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/MemoryCitation"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null
-            },
             "phase": {
               "anyOf": [
                 {
@@ -16330,13 +16263,6 @@
       ],
       "title": "ThreadLoadedListResponse",
       "type": "object"
-    },
-    "ThreadMemoryMode": {
-      "enum": [
-        "enabled",
-        "disabled"
-      ],
-      "type": "string"
     },
     "ThreadMetadataGitInfoUpdateParams": {
       "properties": {

@@ -51,7 +51,6 @@ members = [
     "crates/ext/goal",
     "crates/ext/history-notes",
     "crates/ext/items",
-    "crates/ext/memories",
     "crates/ext/mcp",
     "crates/ext/queue",
     "crates/ext/skills",
@@ -63,8 +62,6 @@ members = [
     "crates/linux-sandbox",
     "crates/login",
     "crates/codex-mcp",
-    "crates/memories/read",
-    "crates/memories/write",
     "crates/mermaid",
     "crates/model-provider-info",
     "crates/mxc-sandbox",
@@ -197,10 +194,7 @@ codex-linux-sandbox = { path = "crates/linux-sandbox" }
 codex-login = { path = "crates/login" }
 codex-mermaid = { path = "crates/mermaid" }
 codex-message-history = { path = "crates/message-history" }
-codex-memories-extension = { path = "crates/ext/memories" }
 codex-web-search-extension = { path = "crates/ext/web-search" }
-codex-memories-read = { path = "crates/memories/read" }
-codex-memories-write = { path = "crates/memories/write" }
 codex-mcp = { path = "crates/codex-mcp" }
 codex-mcp-extension = { path = "crates/ext/mcp" }
 codex-model-provider-info = { path = "crates/model-provider-info" }

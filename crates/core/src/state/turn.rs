@@ -96,7 +96,6 @@ pub(crate) struct TurnState {
     mailbox_delivery_phase: MailboxDeliveryPhase,
     granted_permissions_by_environment_id: HashMap<String, AdditionalPermissionProfile>,
     pub(crate) tool_calls: u64,
-    pub(crate) has_memory_citation: bool,
     pub(crate) token_usage_at_turn_start: TokenUsage,
     pub(crate) token_usage_by_model: TurnTokenUsage,
     /// The last step captured for execution or selected from a speculative fallback.

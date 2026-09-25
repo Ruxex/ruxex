@@ -2,7 +2,6 @@ use super::LocalThreadStore;
 use crate::CreateThreadParams;
 use crate::ThreadStoreError;
 use crate::ThreadStoreResult;
-use codex_protocol::protocol::ThreadMemoryMode;
 use codex_rollout::RolloutConfig;
 use codex_rollout::RolloutRecorder;
 use codex_rollout::RolloutRecorderParams;
@@ -25,7 +24,6 @@ pub(super) async fn create_thread(
         sqlite: store.config.sqlite.clone(),
         cwd,
         model_provider_id: params.metadata.model_provider.clone(),
-        generate_memories: matches!(params.metadata.memory_mode, ThreadMemoryMode::Enabled),
     };
     RolloutRecorder::new_with_writer_lock(
         &config,

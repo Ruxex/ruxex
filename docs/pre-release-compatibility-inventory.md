@@ -74,6 +74,9 @@ standalone executor remain available.
 
 ### Persisted rollout and thread-history compatibility
 
+| Memory-specific rollout extraction, rollout policy/input fields, thread-history projection fields, and memory runtime readers/writers | Producer/consumer audit: only the removed memories writer, memory context injection, and memory state/runtime consumed these fields. Existing rollout JSONL and SQLite rows are left untouched; no current reader or writer uses them | Ordinary paginated rollout/history and normal SQLite state | remove for runtime paths and fields; retain historical persisted data without a new migration | rg audit; just check --tests; just check |
+| crates/state/migrations/* historical memory-table migrations and existing memory DB/files | These SQL files are applied migration history and their checksums/order must remain stable; existing CODEX_HOME/memories files and memory rows have no active producer/consumer after removal | No new memory migration; leave historical records untouched and unused | retain history/data in place | Migration files intentionally unchanged; just check |
+
 | Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |
 |---|---|---|---|---|
 | `RolloutMigrationMode`, `RolloutMigrationOptions`, `LegacyRolloutCanonicalizer`, `rollout_migration.rs` and `rollout_migration/` | No current producer or consumer remains after the Paginated writer boundary; startup migration, manual CLI migration, migration telemetry, and migration-only state APIs were deleted | Current paginated rollout writer and SQLite projection | `remove (completed)` | `just check` |
@@ -92,13 +95,15 @@ implementation.
 
 ### Protocol and app-server compatibility
 
+| Memory protocol/app-server aliases, schemas, endpoints, status/reset requests, and external-agent MEMORY import item | Producer/consumer audit: these surfaces only served the removed long-term memory capability; generated JSON/TypeScript artifacts were regenerated from the reduced protocol | Current thread/turn/history and provider-neutral external-agent import protocol | remove (completed) | just generate; just check --tests; just check |
+
 | Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |
 |---|---|---|---|---|
-| `crates/config/src/key_aliases.rs`, `AgentsToml::max_threads`, and `MemoriesToml::no_memories_if_mcp_or_web_search` | No current producer uses these names; the normalizer, serde aliases, origin projection, and merge tests existed only to accept old user config keys | Canonical `agents.max_concurrent_threads_per_session` and `memories.disable_on_external_context` | `remove (completed)` | `just check --tests`; `just check` |
+| `crates/config/src/key_aliases.rs`, `AgentsToml::max_threads`, and the removed `MemoriesToml`/`Config::memories` reader | Producer/consumer audit: the old agent alias and memories config reader had no current producer/consumer after the compatibility cleanup; current config parsing intentionally treats `[memories]` as unknown | Canonical `agents.max_concurrent_threads_per_session`; no memories compatibility reader | `remove (completed)` | `rg -n 'MemoriesToml|Config::memories|disable_on_external_context' crates --glob '*.{rs,json,toml}'` returns no matches; `just check --tests`; `just check` |
 | `ConfigRequirementsToml`'s `feature_requirements` serde alias and requirements-layer alias merge; credential-broker projection of the old path in `loader/local.rs` | Current managed requirements use `[features]`; the only current consumer of the old path was the credential-broker projection, which now reads the canonical path only | Canonical `[features]` requirements path | `remove (completed)` | `just check --tests`; `just check` |
 | Removed config aliases `ignore_untracked_files_over_bytes` and `large_untracked_dir_warning_threshold` | Repository search found no production producer or consumer for these names; they are retained in this row only as audited historical candidates | Current config fields, if any, with no compatibility reader | `remove` (already absent) | `rg -n 'ignore_untracked_files_over_bytes|large_untracked_dir_warning_threshold' crates` |
 | `EventMsg` aliases `turn_started`/`turn_complete` in `crates/protocol/src/protocol.rs` | Canonical serializers and current clients use `task_started`/`task_complete`; the old `turn_*` tags appeared only in the deserializer compatibility path, documentation, and observability labels | Canonical `task_started`/`task_complete` event tags | `remove` (already absent) | `cargo test -p codex-protocol old_turn_started_records_have_no_root_attribution`; `cargo check -p codex-app-server` |
-| Deprecated public aliases `codex_core::{ConversationManager, NewConversation, CodexConversation}` in `crates/core/src/lib.rs` | Repository search found only the alias definitions; current code uses `ThreadManager`, `NewThread`, and `CodexThread`. The aliases preserve pre-release upstream names and have no current producer/consumer | Canonical `ThreadManager`, `NewThread`, and `CodexThread` | `remove (planned)` | `rg -n 'ConversationManager|NewConversation|CodexConversation' crates --glob '*.rs'; `just check --tests`; `just check` |
+| Deprecated public aliases `codex_core::{ConversationManager, NewConversation, CodexConversation}` in `crates/core/src/lib.rs` | Repository search found only the alias definitions; current code uses `ThreadManager`, `NewThread`, and `CodexThread`. The aliases preserve pre-release upstream names and have no current producer/consumer | Canonical `ThreadManager`, `NewThread`, and `CodexThread` | `remove (completed)` | `rg -n 'ConversationManager|NewConversation|CodexConversation' crates --glob '*.rs'` returns no matches; `just check --tests`; `just check` |
 | Deprecated rollout aliases `codex_rollout::{ConversationItem, ConversationsPage}` in `crates/rollout/src/list.rs` | Repository search found no consumer of these aliases; `rollout-trace`'s `ConversationItem` is a separate provider-neutral trace model and is not this alias | Canonical `ThreadItem` and `ThreadsPage` | `remove (planned)` | `rg -n 'codex_rollout::(ConversationItem|ConversationsPage)|ConversationItem|ConversationsPage' crates --glob '*.rs'; `just check --tests`; `just check` |
 | Deprecated `codex_core::find_thread_meta_by_name_str` re-export in `crates/core/src/lib.rs` | `codex-exec` and rollout-list tests still import/use the core-root re-export; the underlying `codex_rollout::find_thread_meta_by_name_str` function remains current | Canonical `codex_core::rollout`/`codex_rollout` path after callers migrate | `migrate-in-place` | `rg -n 'codex_core::find_thread_meta_by_name_str|find_thread_meta_by_name_str' crates --glob '*.rs'; migrate callers, then `just check --tests`; `just check` |
 | `ResponseItem`/model aliases in `crates/protocol/src/models.rs`, `openai_models.rs`, and `codex-api` | Active Responses-compatible providers and app-server model catalog still consume some wire shapes | Provider-neutral model/response representation after call-site migration | `migrate-in-place` | `cargo check -p codex-protocol -p codex-api -p codex-app-server-protocol` |
@@ -128,6 +133,8 @@ implementation.
 
 ### Runtime, UI, and observability shims
 
+| Memory context injection, usage telemetry, reset/status CLI, TUI memory settings/slash commands, and memory extension tools | Producer/consumer audit: the deleted memories crates and their core/app-server/TUI callers were the only producers/consumers. Chronicle's independent screen-context capability and generic OS/in-memory terminology are unrelated and remain | Ordinary context manager, MCP/plugin tools, and current provider-neutral UI/runtime | remove for memories capability; retain Chronicle and generic memory terms | rg audit; just check |
+
 | Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |
 |---|---|---|---|---|
 | `compatibility_sandbox_policy_for_permission_profile`, `to_legacy_sandbox_policy`, and `compatibility_workspace_write_policy` | Current sandbox permission profiles are projected for existing launcher/platform interfaces | Runtime `PermissionProfile` plus platform sandbox adapters | `retain` | `cargo test -p codex-sandboxing` |
@@ -148,6 +155,8 @@ implementation.
 | Deprecated `HttpClientBuilder::{build_with_transport_default_proxy, build_with_transport_default_proxy_and_custom_ca_fallback, build_direct_with_custom_ca_fallback}` | Active callers remain in `RouteAwareClientPool` and login's default client. They preserve current proxy, custom-CA, localhost, and security behavior; removing them by name would break current consumers | `HttpClientFactory::build_client`, `build_respecting_outbound_proxy_policy`, or explicit direct/custom-CA APIs after caller migration | `migrate-in-place` | `rg -n 'build_with_transport_default_proxy|build_direct_with_custom_ca_fallback' crates --glob '*.rs'; `just check --tests`; `just check` |
 
 ### Build-system and experimental scaffolding
+
+| Workspace members, Cargo dependencies, generated schemas, and snapshots belonging only to codex-memories-read, codex-memories-write, and codex-ext-memories | Producer/consumer audit: no active Cargo target or test consumes these crates after runtime/protocol/UI removal; lockfile and generated artifacts were refreshed | Workspace without dedicated memories crates and their generated outputs | remove (completed) | just generate; just check |
 
 This slice is separate from provider cleanup. It must not remove the active
 V8/code-mode runtime or current platform/security behavior. The implementation
@@ -195,6 +204,13 @@ The following rows are capability-level cleanup units. They are intentionally
 larger than a single compatibility symbol: each row must be audited from its
 hosted producer through protocol, configuration, UI, and runtime consumers
 before code is removed.
+
+### Final dependency and documentation audit
+
+| Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |
+|---|---|---|---|---|
+| codex-api memory summarize documentation, app-server clear-memories documentation, and obsolete memory snapshots | These were documentation or generated-test consumers of deleted APIs; no current producer remains | Responses client documentation, current debug commands, and current snapshots | remove (completed) | Repository-wide rg audit; git diff --check; just generate |
+| Existing migration-history references and the removal design/plan | The design, plan, and inventory intentionally document the completed removal and the retained historical migration/data boundary; they are not runtime compatibility readers | Current implementation plus explicit historical audit record | retain | Manual producer/consumer review; just check |
 
 ### ChatGPT Remote Control capability
 

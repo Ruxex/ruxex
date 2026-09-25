@@ -1065,15 +1065,6 @@ pub(crate) enum AppEvent {
     /// Save an enable prompt on the app server without changing the current thread.
     EnableFeatureForNewThreads(Feature),
 
-    /// Update memory settings and persist them to config.toml.
-    UpdateMemorySettings {
-        use_memories: bool,
-        generate_memories: bool,
-    },
-
-    /// Clear all persisted local memory artifacts via the app-server.
-    ResetMemories,
-
     /// Update whether the rate limit switch prompt has been acknowledged for the session.
     UpdateRateLimitSwitchPromptHidden(bool),
 

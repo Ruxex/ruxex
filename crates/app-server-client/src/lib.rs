@@ -1033,7 +1033,6 @@ mod tests {
                 id: "item".to_string(),
                 text: text.to_string(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             },

@@ -18,12 +18,6 @@ pub trait ToolOutput: Send {
 
     fn success_for_logging(&self) -> bool;
 
-    /// Whether this output contains external context that should disable memory generation when
-    /// `memories.disable_on_external_context` is enabled.
-    fn contains_external_context(&self) -> bool {
-        false
-    }
-
     /// Overrides history's fallback token limit after tool-specific truncation.
     /// Include any serialization allowance; history uses this limit unchanged.
     fn fallback_token_limit_override(&self) -> Option<usize> {
@@ -75,10 +69,6 @@ where
         (**self).success_for_logging()
     }
 
-    fn contains_external_context(&self) -> bool {
-        (**self).contains_external_context()
-    }
-
     fn fallback_token_limit_override(&self) -> Option<usize> {
         (**self).fallback_token_limit_override()
     }
@@ -112,7 +102,6 @@ where
 pub struct JsonToolOutput {
     value: JsonValue,
     success: Option<bool>,
-    contains_external_context: bool,
 }
 
 impl JsonToolOutput {
@@ -120,7 +109,6 @@ impl JsonToolOutput {
         Self {
             value,
             success: Some(true),
-            contains_external_context: false,
         }
     }
 
@@ -128,14 +116,9 @@ impl JsonToolOutput {
         Self {
             value,
             success,
-            contains_external_context: false,
         }
     }
 
-    pub fn with_external_context(mut self) -> Self {
-        self.contains_external_context = true;
-        self
-    }
 }
 
 impl ToolOutput for JsonToolOutput {
@@ -145,10 +128,6 @@ impl ToolOutput for JsonToolOutput {
 
     fn success_for_logging(&self) -> bool {
         self.success.unwrap_or(true)
-    }
-
-    fn contains_external_context(&self) -> bool {
-        self.contains_external_context
     }
 
     fn to_response_item(&self, call_id: &str, payload: &ToolPayload) -> ResponseInputItem {

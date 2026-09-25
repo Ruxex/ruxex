@@ -56,7 +56,6 @@ async fn daybreak_preference_survives_reconciliation_and_cold_reads()
         /*builder*/ None,
         &[],
         /*archived_only*/ None,
-        /*new_thread_memory_mode*/ None,
     )
     .await;
     drop(store);

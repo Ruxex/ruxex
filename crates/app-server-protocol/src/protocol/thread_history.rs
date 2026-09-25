@@ -493,7 +493,6 @@ impl ThreadHistoryBuilder {
             id,
             text: payload.message.clone(),
             phase: payload.phase.clone(),
-            memory_citation: payload.memory_citation.clone().map(Into::into),
             delivery: payload.delivery,
             questions: payload.questions.clone(),
         });
@@ -1782,7 +1781,6 @@ mod tests {
             EventMsg::AgentMessage(AgentMessageEvent {
                 message: "Hi there".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }),
@@ -1803,7 +1801,6 @@ mod tests {
             EventMsg::AgentMessage(AgentMessageEvent {
                 message: "Reply two".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }),
@@ -1845,7 +1842,6 @@ mod tests {
                 id: "item-2".into(),
                 text: "Hi there".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }
@@ -1880,7 +1876,6 @@ mod tests {
                 id: "item-5".into(),
                 text: "Reply two".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }
@@ -2525,7 +2520,6 @@ mod tests {
         let events = vec![EventMsg::AgentMessage(AgentMessageEvent {
             message: "Final reply".into(),
             phase: Some(CoreMessagePhase::FinalAnswer),
-            memory_citation: None,
             delivery: Some(AgentMessageDelivery::Async),
             questions: Some(questions.clone()),
         })];
@@ -2542,7 +2536,6 @@ mod tests {
                 id: "item-1".into(),
                 text: "Final reply".into(),
                 phase: Some(CoreMessagePhase::FinalAnswer),
-                memory_citation: None,
                 delivery: Some(AgentMessageDelivery::Async),
                 questions: Some(questions),
             }
@@ -2655,7 +2648,6 @@ mod tests {
             EventMsg::AgentMessage(AgentMessageEvent {
                 message: "interlude".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }),
@@ -2705,7 +2697,6 @@ mod tests {
             EventMsg::AgentMessage(AgentMessageEvent {
                 message: "Working...".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }),
@@ -2727,7 +2718,6 @@ mod tests {
             EventMsg::AgentMessage(AgentMessageEvent {
                 message: "Second attempt complete.".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }),
@@ -2760,7 +2750,6 @@ mod tests {
                 id: "item-2".into(),
                 text: "Working...".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }
@@ -2786,7 +2775,6 @@ mod tests {
                 id: "item-4".into(),
                 text: "Second attempt complete.".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }
@@ -2807,7 +2795,6 @@ mod tests {
             EventMsg::AgentMessage(AgentMessageEvent {
                 message: "A1".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }),
@@ -2822,7 +2809,6 @@ mod tests {
             EventMsg::AgentMessage(AgentMessageEvent {
                 message: "A2".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }),
@@ -2838,7 +2824,6 @@ mod tests {
             EventMsg::AgentMessage(AgentMessageEvent {
                 message: "A3".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }),
@@ -2870,7 +2855,6 @@ mod tests {
                     id: "item-2".into(),
                     text: "A1".into(),
                     phase: None,
-                    memory_citation: None,
                     delivery: None,
                     questions: None,
                 },
@@ -2891,7 +2875,6 @@ mod tests {
                     id: "item-4".into(),
                     text: "A3".into(),
                     phase: None,
-                    memory_citation: None,
                     delivery: None,
                     questions: None,
                 },
@@ -2913,7 +2896,6 @@ mod tests {
             EventMsg::AgentMessage(AgentMessageEvent {
                 message: "A1".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }),
@@ -2928,7 +2910,6 @@ mod tests {
             EventMsg::AgentMessage(AgentMessageEvent {
                 message: "A2".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }),
@@ -3896,7 +3877,6 @@ mod tests {
             EventMsg::AgentMessage(AgentMessageEvent {
                 message: "still in b".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }),
@@ -4080,7 +4060,6 @@ mod tests {
             EventMsg::AgentMessage(AgentMessageEvent {
                 message: "still in b".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }),
@@ -4348,7 +4327,6 @@ mod tests {
             EventMsg::AgentMessage(AgentMessageEvent {
                 message: "done".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }),

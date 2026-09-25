@@ -7,7 +7,6 @@ use codex_protocol::ThreadId;
 use codex_protocol::protocol::GitInfo;
 use codex_protocol::protocol::SessionSource;
 use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadMemoryMode;
 use codex_rollout::read_session_meta_line;
 use codex_state::ThreadMetadataBuilder;
 use tracing::warn;
@@ -60,8 +59,7 @@ pub(super) async fn update_thread_metadata(
         .await;
     }
 
-    let has_explicit_metadata =
-        patch.name.is_some() || patch.memory_mode.is_some() || patch.git_info.is_some();
+    let has_explicit_metadata = patch.name.is_some() || patch.git_info.is_some();
     let history_mode = if has_explicit_metadata {
         match live_writer::live_writer_parts(store, thread_id).await {
             Ok((_recorder, _rollout_id, history_mode)) => Some(history_mode),
@@ -353,14 +351,6 @@ async fn apply_metadata_update(
                         ),
                     })?;
             }
-            if let Some(memory_mode) = patch.memory_mode {
-                state_db
-                    .set_thread_memory_mode(thread_id, memory_mode_as_str(memory_mode))
-                    .await
-                    .map_err(|err| ThreadStoreError::Internal {
-                        message: format!("failed to update memory mode for {thread_id}: {err}"),
-                    })?;
-            }
             if let Some(daybreak_enabled) = patch.daybreak_enabled
                 && !state_db
                     .set_thread_daybreak_enabled(thread_id, daybreak_enabled)
@@ -576,12 +566,6 @@ fn resolve_git_info_patch(
     (sha, branch, origin_url)
 }
 
-fn memory_mode_as_str(mode: ThreadMemoryMode) -> &'static str {
-    match mode {
-        ThreadMemoryMode::Enabled => "enabled",
-        ThreadMemoryMode::Disabled => "disabled",
-    }
-}
 
 fn rollout_path_is_archived(store: &LocalThreadStore, path: &Path) -> bool {
     super::helpers::rollout_path_is_archived(store.config.codex_home.as_path(), path)
@@ -637,7 +621,6 @@ mod tests {
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
-            /*new_thread_memory_mode*/ None,
         )
         .await;
         store
@@ -839,42 +822,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn update_thread_metadata_sets_memory_mode_on_active_rollout() {
-        let home = TempDir::new().expect("temp dir");
-        let config = test_config(home.path());
-        let uuid = Uuid::from_u128(302);
-        let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
-        write_session_file(home.path(), "2025-01-03T14-30-00", uuid).expect("session file");
-        let runtime = codex_state::StateRuntime::init(
-            codex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            config.default_model_provider_id.clone(),
-        )
-        .await
-        .expect("state db should initialize");
-        let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
-
-        let thread = store
-            .update_thread_metadata(UpdateThreadMetadataParams {
-                thread_id,
-                patch: ThreadMetadataPatch {
-                    memory_mode: Some(ThreadMemoryMode::Disabled),
-                    ..Default::default()
-                },
-                include_archived: false,
-            })
-            .await
-            .expect("set thread memory mode")
-            .expect("local store returns updated thread");
-
-        assert_eq!(thread.thread_id, thread_id);
-        let memory_mode = runtime
-            .get_thread_memory_mode(thread_id)
-            .await
-            .expect("thread memory mode should be readable");
-        assert_eq!(memory_mode.as_deref(), Some("disabled"));
-    }
-
-    #[tokio::test]
     async fn update_thread_metadata_updates_paginated_git_info_in_sqlite_only() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
@@ -901,7 +848,6 @@ mod tests {
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
-            /*new_thread_memory_mode*/ None,
         )
         .await;
         let mut stale_metadata = runtime
@@ -960,7 +906,6 @@ mod tests {
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
-            /*new_thread_memory_mode*/ None,
         )
         .await;
         let thread = store
@@ -976,71 +921,6 @@ mod tests {
             git_info.repository_url.as_deref(),
             Some("https://example.com/repo.git")
         );
-    }
-
-    #[tokio::test]
-    async fn update_thread_metadata_preserves_memory_mode_when_updating_git_info() {
-        let home = TempDir::new().expect("temp dir");
-        let config = test_config(home.path());
-        let uuid = Uuid::from_u128(312);
-        let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
-        let path =
-            write_session_file(home.path(), "2025-01-03T18-30-00", uuid).expect("session file");
-        let runtime = codex_state::StateRuntime::init(
-            config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
-        )
-        .await
-        .expect("state db should initialize");
-        let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
-
-        store
-            .update_thread_metadata(UpdateThreadMetadataParams {
-                thread_id,
-                patch: ThreadMetadataPatch {
-                    memory_mode: Some(ThreadMemoryMode::Disabled),
-                    ..Default::default()
-                },
-                include_archived: false,
-            })
-            .await
-            .expect("set memory mode");
-
-        let thread = store
-            .update_thread_metadata(UpdateThreadMetadataParams {
-                thread_id,
-                patch: ThreadMetadataPatch {
-                    git_info: Some(GitInfoPatch {
-                        branch: Some(Some("feature".to_string())),
-                        ..Default::default()
-                    }),
-                    ..Default::default()
-                },
-                include_archived: false,
-            })
-            .await
-            .expect("set git metadata")
-            .expect("local store returns updated thread");
-
-        assert_eq!(
-            thread.git_info.expect("git info").branch.as_deref(),
-            Some("feature")
-        );
-        codex_rollout::state_db::reconcile_rollout(
-            Some(runtime.as_ref()),
-            path.as_path(),
-            config.default_model_provider_id.as_str(),
-            /*builder*/ None,
-            &[],
-            /*archived_only*/ None,
-            /*new_thread_memory_mode*/ None,
-        )
-        .await;
-        let memory_mode = runtime
-            .get_thread_memory_mode(thread_id)
-            .await
-            .expect("thread memory mode should be readable");
-        assert_eq!(memory_mode.as_deref(), Some("disabled"));
     }
 
     #[tokio::test]
@@ -1270,7 +1150,6 @@ mod tests {
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
-            /*new_thread_memory_mode*/ None,
         )
         .await;
         let thread = store
@@ -1287,7 +1166,6 @@ mod tests {
             .update_thread_metadata(UpdateThreadMetadataParams {
                 thread_id,
                 patch: ThreadMetadataPatch {
-                    memory_mode: Some(ThreadMemoryMode::Disabled),
                     ..Default::default()
                 },
                 include_archived: false,
@@ -1301,7 +1179,6 @@ mod tests {
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
-            /*new_thread_memory_mode*/ None,
         )
         .await;
         let thread = store
@@ -1351,7 +1228,6 @@ mod tests {
             .update_thread_metadata(UpdateThreadMetadataParams {
                 thread_id,
                 patch: ThreadMetadataPatch {
-                    memory_mode: Some(ThreadMemoryMode::Disabled),
                     ..Default::default()
                 },
                 include_archived: false,
@@ -1365,7 +1241,6 @@ mod tests {
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
-            /*new_thread_memory_mode*/ None,
         )
         .await;
         let thread = store
@@ -1408,7 +1283,6 @@ mod tests {
             .update_thread_metadata(UpdateThreadMetadataParams {
                 thread_id,
                 patch: ThreadMetadataPatch {
-                    memory_mode: Some(ThreadMemoryMode::Enabled),
                     ..Default::default()
                 },
                 include_archived: false,
@@ -1439,7 +1313,6 @@ mod tests {
                 thread_id,
                 patch: ThreadMetadataPatch {
                     name: Some(Some("Combined metadata".to_string())),
-                    memory_mode: Some(ThreadMemoryMode::Disabled),
                     git_info: Some(GitInfoPatch {
                         branch: Some(Some("combined".to_string())),
                         ..Default::default()
@@ -1457,11 +1330,6 @@ mod tests {
             thread.git_info.expect("git info").branch.as_deref(),
             Some("combined")
         );
-        let memory_mode = runtime
-            .get_thread_memory_mode(thread_id)
-            .await
-            .expect("thread memory mode should be readable");
-        assert_eq!(memory_mode.as_deref(), Some("disabled"));
     }
 
     #[test]
@@ -1471,7 +1339,6 @@ mod tests {
             ..Default::default()
         }));
         assert!(!sqlite_write_failure_should_block(&ThreadMetadataPatch {
-            memory_mode: Some(ThreadMemoryMode::Disabled),
             ..Default::default()
         }));
     }
@@ -1488,7 +1355,6 @@ mod tests {
                 branch: Some(Some("main".to_string())),
                 ..Default::default()
             }),
-            memory_mode: Some(ThreadMemoryMode::Enabled),
             ..Default::default()
         }));
     }
@@ -1825,7 +1691,6 @@ mod tests {
             /*builder*/ None,
             &[],
             /*archived_only*/ Some(true),
-            /*new_thread_memory_mode*/ None,
         )
         .await;
         assert!(
@@ -1889,7 +1754,6 @@ mod tests {
             /*builder*/ None,
             &[],
             /*archived_only*/ Some(true),
-            /*new_thread_memory_mode*/ None,
         )
         .await;
         store
@@ -1932,7 +1796,6 @@ mod tests {
         ThreadPersistenceMetadata {
             cwd: Some(std::env::current_dir().expect("cwd")),
             model_provider: "test-provider".to_string(),
-            memory_mode: ThreadMemoryMode::Enabled,
         }
     }
 }

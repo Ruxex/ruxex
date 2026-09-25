@@ -94,7 +94,6 @@ async fn apply_role_to_config_inner(
                 && let Some(
                     feature @ (Feature::ShellTool
                     | Feature::Plugins
-                    | Feature::MemoryTool
                     | Feature::RequestPermissionsTool),
                 ) = feature_for_key(&key)
             {

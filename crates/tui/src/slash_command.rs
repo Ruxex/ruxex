@@ -20,7 +20,6 @@ pub enum SlashCommand {
     #[strum(serialize = "setup-default-sandbox")]
     ElevateSandbox,
     Experimental,
-    Memories,
     Skills,
     Import,
     Hooks,
@@ -71,11 +70,6 @@ pub enum SlashCommand {
     TestApproval,
     #[strum(serialize = "subagents")]
     MultiAgents,
-    // Debugging commands.
-    #[strum(serialize = "debug-m-drop")]
-    MemoryDrop,
-    #[strum(serialize = "debug-m-update")]
-    MemoryUpdate,
 }
 
 impl SlashCommand {
@@ -116,8 +110,6 @@ impl SlashCommand {
             SlashCommand::Pets => "choose or hide the terminal pet",
             SlashCommand::Ps => "list background terminals",
             SlashCommand::Stop => "stop all background terminals",
-            SlashCommand::MemoryDrop => "DO NOT USE",
-            SlashCommand::MemoryUpdate => "DO NOT USE",
             SlashCommand::Model => "choose what model and reasoning effort to use",
             SlashCommand::Ide => {
                 "include current selection, open files, and other context from your IDE"
@@ -134,7 +126,6 @@ impl SlashCommand {
             SlashCommand::Vim => "toggle Vim mode for the composer",
             SlashCommand::ElevateSandbox => "set up elevated agent sandbox",
             SlashCommand::Experimental => "toggle experimental features",
-            SlashCommand::Memories => "configure memory use and generation",
             SlashCommand::Mcp => "list configured MCP tools; use /mcp verbose for details",
             SlashCommand::Plugins => "browse plugins",
             SlashCommand::Logout => "log out of Codex",
@@ -209,16 +200,13 @@ impl SlashCommand {
             | SlashCommand::Vim
             | SlashCommand::ElevateSandbox
             | SlashCommand::Experimental
-            | SlashCommand::Memories
             | SlashCommand::Import
             | SlashCommand::Review
             | SlashCommand::Plan
             | SlashCommand::Cd
             | SlashCommand::Clear
             | SlashCommand::Logout
-            | SlashCommand::MemoryDrop
-            | SlashCommand::MemoryUpdate => false,
-            SlashCommand::Diff
+            | SlashCommand::Diff
             | SlashCommand::Resume
             | SlashCommand::Model
             | SlashCommand::Permissions

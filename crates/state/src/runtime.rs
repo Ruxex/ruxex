@@ -9,7 +9,6 @@ use crate::ThreadsPage;
 use crate::apply_rollout_item;
 use crate::migrations::runtime_goals_migrator;
 use crate::migrations::runtime_logs_migrator;
-use crate::migrations::runtime_memories_migrator;
 use crate::migrations::runtime_queue_migrator;
 use crate::migrations::runtime_state_migrator;
 use crate::migrations::runtime_thread_history_migrator;
@@ -43,8 +42,6 @@ mod backfill;
 mod external_agent_config_imports;
 mod goals;
 mod logs;
-mod memories;
-mod memory_versions;
 mod projects;
 mod queued_items;
 mod recovery;
@@ -63,7 +60,6 @@ pub use goals::GoalAccountingMode;
 pub use goals::GoalAccountingOutcome;
 pub use goals::GoalStore;
 pub use goals::GoalUpdate;
-pub use memories::MemoryStore;
 pub use queued_items::SqliteQueueStore;
 pub use recovery::RuntimeDbBackup;
 pub(super) use recovery::RuntimeDbInitError;
@@ -90,8 +86,6 @@ pub struct StateRuntime {
     pool: Arc<sqlx::SqlitePool>,
     logs_pool: Arc<sqlx::SqlitePool>,
     thread_goals: GoalStore,
-    memories: MemoryStore,
-    memories_v2: Arc<tokio::sync::OnceCell<MemoryStore>>,
     thread_queue: SqliteQueueStore,
     thread_updated_at_millis: Arc<AtomicI64>,
     thread_recency_at_millis: Arc<AtomicI64>,
@@ -126,14 +120,11 @@ impl StateRuntime {
         let state_migrator = runtime_state_migrator();
         let logs_migrator = runtime_logs_migrator();
         let goals_migrator = runtime_goals_migrator();
-        let memories_migrator = runtime_memories_migrator();
         let queue_migrator = runtime_queue_migrator();
         let state_path = sqlite.state_db_path();
         let logs_path = sqlite.logs_db_path();
         let goals_path = sqlite.goals_db_path();
-        let memories_path = sqlite.memories_db_path();
         let queue_path = sqlite.queue_db_path();
-        let has_memories_v2 = tokio::fs::try_exists(sqlite.memories_v2_db_path()).await?;
         let pool = match sqlite
             .open_state_db(&state_migrator, telemetry_override)
             .await
@@ -166,20 +157,6 @@ impl StateRuntime {
                 return Err(err);
             }
         };
-        let memories_pool = match sqlite
-            .open_memories_db(&memories_migrator, telemetry_override)
-            .await
-        {
-            Ok(db) => Arc::new(db),
-            Err(err) => {
-                warn!(
-                    "failed to open memories db at {}: {err}",
-                    memories_path.display()
-                );
-                close_sqlite_pools(&[pool.as_ref(), logs_pool.as_ref(), goals_pool.as_ref()]).await;
-                return Err(err);
-            }
-        };
         let queue_pool = match sqlite
             .open_queue_db(&queue_migrator, telemetry_override)
             .await
@@ -191,7 +168,6 @@ impl StateRuntime {
                     pool.as_ref(),
                     logs_pool.as_ref(),
                     goals_pool.as_ref(),
-                    memories_pool.as_ref(),
                 ])
                 .await;
                 return Err(err);
@@ -211,7 +187,6 @@ impl StateRuntime {
                 pool.as_ref(),
                 logs_pool.as_ref(),
                 goals_pool.as_ref(),
-                memories_pool.as_ref(),
                 queue_pool.as_ref(),
             ])
             .await;
@@ -240,7 +215,6 @@ impl StateRuntime {
                         pool.as_ref(),
                         logs_pool.as_ref(),
                         goals_pool.as_ref(),
-                        memories_pool.as_ref(),
                         queue_pool.as_ref(),
                     ])
                     .await;
@@ -251,8 +225,6 @@ impl StateRuntime {
         let thread_recency_at_millis = thread_recency_at_millis.unwrap_or(0);
         let runtime = Arc::new(Self {
             thread_goals: GoalStore::new(Arc::clone(&goals_pool)),
-            memories: MemoryStore::new(Arc::clone(&memories_pool), Arc::clone(&pool)),
-            memories_v2: Arc::new(tokio::sync::OnceCell::new()),
             thread_queue: SqliteQueueStore::new(queue_pool),
             pool,
             logs_pool,
@@ -261,16 +233,6 @@ impl StateRuntime {
             thread_updated_at_millis: Arc::new(AtomicI64::new(thread_updated_at_millis)),
             thread_recency_at_millis: Arc::new(AtomicI64::new(thread_recency_at_millis)),
         });
-        // Existing v2 state must participate in startup corruption recovery.
-        // Keep creation lazy for users who have never used v2.
-        if has_memories_v2
-            && let Err(err) = runtime
-                .memories_for_version(codex_protocol::MemoryVersion::V2)
-                .await
-        {
-            runtime.close().await;
-            return Err(err);
-        }
         if let Err(err) = runtime.run_logs_startup_maintenance().await {
             warn!(
                 "failed to run startup maintenance for logs db at {}: {err}",
@@ -289,10 +251,6 @@ impl StateRuntime {
         &self.thread_goals
     }
 
-    pub fn memories(&self) -> &MemoryStore {
-        &self.memories
-    }
-
     /// Return the durable, SQLite-backed user-message queue.
     pub fn thread_queue(&self) -> &SqliteQueueStore {
         &self.thread_queue
@@ -301,46 +259,11 @@ impl StateRuntime {
     /// Close all SQLite pools and wait for outstanding pool workers to exit.
     pub async fn close(&self) {
         self.thread_queue.close().await;
-        self.memories.close().await;
-        if let Some(memories) = self.memories_v2.get() {
-            memories.close().await;
-        }
         self.thread_goals.close().await;
         self.logs_pool.close().await;
         self.pool.close().await;
     }
 
-    pub async fn clear_memory_data_in_sqlite_home(sqlite: &SqliteConfig) -> anyhow::Result<bool> {
-        let mut cleared = false;
-        for version in [
-            codex_protocol::MemoryVersion::V1,
-            codex_protocol::MemoryVersion::V2,
-        ] {
-            let path = match version {
-                codex_protocol::MemoryVersion::V1 => sqlite.memories_db_path(),
-                codex_protocol::MemoryVersion::V2 => sqlite.memories_v2_db_path(),
-            };
-            if !tokio::fs::try_exists(path).await? {
-                continue;
-            }
-            let pool = match version {
-                codex_protocol::MemoryVersion::V1 => {
-                    sqlite
-                        .open_memories_db(
-                            &runtime_memories_migrator(),
-                            /*telemetry_override*/ None,
-                        )
-                        .await?
-                }
-                codex_protocol::MemoryVersion::V2 => sqlite.open_memories_v2_db().await?,
-            };
-            let result = memories::clear_memory_data_in_pool(&pool).await;
-            pool.close().await;
-            result?;
-            cleared = true;
-        }
-        Ok(cleared)
-    }
 }
 
 async fn close_sqlite_pools(pools: &[&SqlitePool]) {
@@ -695,8 +618,6 @@ mod tests {
             "migrate_logs",
             "open_goals",
             "migrate_goals",
-            "open_memories",
-            "migrate_memories",
             "open_queue",
             "migrate_queue",
             "ensure_backfill_state",

@@ -4,7 +4,6 @@ use codex_protocol::protocol::EventMsg;
 use codex_protocol::protocol::MultiAgentVersion;
 use codex_protocol::protocol::SessionSource;
 use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadMemoryMode;
 use codex_protocol::protocol::TurnCompleteEvent;
 use codex_protocol::protocol::TurnStartedEvent;
 use codex_rollout::RolloutItem;
@@ -65,7 +64,6 @@ async fn revert_keeps_thread_id_and_hides_suffix_across_repeated_reverts() {
         /*builder*/ None,
         &[],
         /*archived_only*/ Some(false),
-        /*new_thread_memory_mode*/ None,
     )
     .await;
     compress_rollout(original_path.as_path());
@@ -94,7 +92,6 @@ async fn revert_keeps_thread_id_and_hides_suffix_across_repeated_reverts() {
         .expect("read replacement metadata")
         .meta;
     assert_eq!(replacement_meta.id, thread_id);
-    assert_eq!(replacement_meta.memory_mode, None);
     assert_eq!(
         replacement_meta.runtime_workspace_roots,
         Some(vec![home.path().join("workspace")])
@@ -188,7 +185,6 @@ async fn revert_preserves_resolved_multi_agent_version_in_session_metadata() {
             /*builder*/ None,
             &[],
             /*archived_only*/ Some(false),
-            /*new_thread_memory_mode*/ None,
         )
         .await;
 
@@ -251,7 +247,6 @@ async fn create_paginated_thread(store: &LocalThreadStore, thread_id: ThreadId) 
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(std::env::current_dir().expect("cwd")),
                 model_provider: "test-provider".to_string(),
-                memory_mode: ThreadMemoryMode::Enabled,
             },
         })
         .await

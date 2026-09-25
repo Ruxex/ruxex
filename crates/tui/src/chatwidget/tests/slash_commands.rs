@@ -1568,7 +1568,6 @@ async fn slash_copy_picker_uses_completed_commentary_during_active_turn() {
                 id: "active-commentary".to_string(),
                 text: commentary.to_string(),
                 phase: Some(MessagePhase::Commentary),
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             },
@@ -2754,37 +2753,7 @@ async fn slash_mcp_invalid_args_show_usage() {
     assert!(op_rx.try_recv().is_err(), "expected no core op to be sent");
 }
 
-#[tokio::test]
-async fn slash_memories_opens_memory_menu() {
-    let (mut chat, mut rx, mut op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.set_feature_enabled(Feature::MemoryTool, /*enabled*/ true);
 
-    chat.dispatch_command(SlashCommand::Memories);
-
-    assert!(render_bottom_popup(&chat, /*width*/ 80).contains("Use memories"));
-    assert_matches!(rx.try_recv(), Err(TryRecvError::Empty));
-    assert!(op_rx.try_recv().is_err(), "expected no core op to be sent");
-}
-
-#[tokio::test]
-async fn slash_memory_update_reports_stubbed_feature() {
-    let (mut chat, mut rx, mut op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-
-    chat.dispatch_command(SlashCommand::MemoryUpdate);
-
-    let event = rx.try_recv().expect("expected unsupported-feature error");
-    match event {
-        AppEvent::InsertHistoryCell(cell) => {
-            let rendered = lines_to_single_string(&cell.display_lines(/*width*/ 80));
-            assert!(rendered.contains("Memory maintenance: Not available in TUI yet."));
-        }
-        other => panic!("expected InsertHistoryCell error, got {other:?}"),
-    }
-    assert!(
-        op_rx.try_recv().is_err(),
-        "expected no memory op to be sent"
-    );
-}
 
 #[tokio::test]
 async fn slash_resume_opens_picker_while_mcp_startup_is_running() {

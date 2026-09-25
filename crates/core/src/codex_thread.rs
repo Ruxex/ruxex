@@ -41,7 +41,6 @@ use codex_protocol::protocol::SessionConfiguredEvent;
 use codex_protocol::protocol::SessionSource;
 use codex_protocol::protocol::Submission;
 use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadMemoryMode;
 use codex_protocol::protocol::ThreadSettingsSnapshot;
 use codex_protocol::protocol::ThreadSource;
 use codex_protocol::protocol::TokenUsageInfo;
@@ -477,11 +476,6 @@ impl CodexThread {
                 .await?;
         }
         self.io.submit_turn_input(request, mode).await
-    }
-
-    /// Persist whether this thread is eligible for future memory generation.
-    pub async fn set_thread_memory_mode(&self, mode: ThreadMemoryMode) -> anyhow::Result<()> {
-        self.session.set_thread_memory_mode(mode).await
     }
 
     /// Injects model-visible items into the currently active turn.

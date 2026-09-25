@@ -121,9 +121,6 @@ fn external_agent_config_migration_started_lines(
                     .iter()
                     .map(|command| command.name.as_str())
                     .collect(),
-                ExternalAgentConfigMigrationItemType::Memory => {
-                    details.memory.iter().map(String::as_str).collect()
-                }
                 ExternalAgentConfigMigrationItemType::Sessions => details
                     .sessions
                     .iter()

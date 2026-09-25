@@ -641,24 +641,6 @@ client_request_definitions! {
         serialization: thread_id(params.thread_id),
         response: v2::ThreadSettingsUpdateResponse,
     },
-    #[experimental("thread/memoryMode/set")]
-    ThreadMemoryModeSet => "thread/memoryMode/set" {
-        params: v2::ThreadMemoryModeSetParams,
-        serialization: thread_id(params.thread_id),
-        response: v2::ThreadMemoryModeSetResponse,
-    },
-    #[experimental("memory/status")]
-    MemoryStatus => "memory/status" {
-        params: v2::MemoryStatusParams,
-        serialization: global("memory"),
-        response: v2::MemoryStatusResponse,
-    },
-    #[experimental("memory/reset")]
-    MemoryReset => "memory/reset" {
-        params: #[ts(type = "undefined")] #[serde(skip_serializing_if = "Option::is_none")] Option<()>,
-        serialization: global("memory"),
-        response: v2::MemoryResetResponse,
-    },
     #[experimental("rollout/compress")]
     /// Start a best-effort background compression pass for cold local rollouts.
     RolloutCompress => "rollout/compress" {
@@ -1840,27 +1822,8 @@ mod tests {
                 params: Some(serde_json::Value::Null),
                 trace: None,
             },
-            // Optional unit params preserve omitted, null, and empty-object behavior.
             JSONRPCRequest {
                 id: RequestId::Integer(4),
-                method: "memory/reset".to_string(),
-                params: None,
-                trace: None,
-            },
-            JSONRPCRequest {
-                id: RequestId::Integer(5),
-                method: "memory/reset".to_string(),
-                params: Some(serde_json::Value::Null),
-                trace: None,
-            },
-            JSONRPCRequest {
-                id: RequestId::Integer(6),
-                method: "memory/reset".to_string(),
-                params: Some(json!({})),
-                trace: None,
-            },
-            JSONRPCRequest {
-                id: RequestId::Integer(7),
                 method: "getConversationSummary".to_string(),
                 params: Some(json!({
                     "conversationId": "67e55044-10b1-426f-9247-bb680e5fe0c8"

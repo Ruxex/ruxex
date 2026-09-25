@@ -65,7 +65,6 @@ use codex_protocol::protocol::AgentMessageEvent;
 use codex_protocol::protocol::EventMsg;
 use codex_protocol::protocol::ItemCompletedEvent;
 use codex_protocol::protocol::SessionSource as ProtocolSessionSource;
-use codex_protocol::protocol::ThreadMemoryMode;
 use codex_protocol::protocol::TurnCompleteEvent;
 use codex_protocol::protocol::TurnStartedEvent;
 use codex_protocol::protocol::UserMessageEvent;
@@ -607,7 +606,6 @@ async fn thread_search_occurrences_reads_paginated_projection() -> Result<()> {
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(codex_home.path().to_path_buf()),
                 model_provider: "mock_provider".to_string(),
-                memory_mode: ThreadMemoryMode::Enabled,
             },
         })
         .await?;
@@ -658,7 +656,6 @@ async fn thread_search_occurrences_reads_paginated_projection() -> Result<()> {
                             text: "commentary needle".to_string(),
                         }],
                         phase: Some(MessagePhase::Commentary),
-                        memory_citation: None,
                         delivery: None,
                         questions: None,
                     }),
@@ -672,7 +669,6 @@ async fn thread_search_occurrences_reads_paginated_projection() -> Result<()> {
                             text: "😀 **Final**  \nneedle".to_string(),
                         }],
                         phase: Some(MessagePhase::FinalAnswer),
-                        memory_citation: None,
                         delivery: None,
                         questions: None,
                     }),
@@ -1664,7 +1660,6 @@ async fn paginated_history_lists_and_legacy_reads_use_projected_turns_and_items(
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(codex_home.path().to_path_buf()),
                 model_provider: "mock_provider".to_string(),
-                memory_mode: ThreadMemoryMode::Enabled,
             },
         })
         .await?;
@@ -1703,7 +1698,6 @@ async fn paginated_history_lists_and_legacy_reads_use_projected_turns_and_items(
                             text: "first".to_string(),
                         }],
                         phase: None,
-                        memory_citation: None,
                         delivery: None,
                         questions: None,
                     }),
@@ -1756,7 +1750,6 @@ async fn paginated_history_lists_and_legacy_reads_use_projected_turns_and_items(
                 id: "agent-1".to_string(),
                 text: "first".to_string(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             },
@@ -1943,7 +1936,6 @@ async fn paginated_history_lists_and_legacy_reads_use_projected_turns_and_items(
                     id: "agent-1".to_string(),
                     text: "first".to_string(),
                     phase: None,
-                    memory_citation: None,
                     delivery: None,
                     questions: None,
                 },
@@ -2190,7 +2182,6 @@ fn append_agent_message(path: &Path, timestamp: &str, text: &str) -> anyhow::Res
             "payload": serde_json::to_value(EventMsg::AgentMessage(AgentMessageEvent {
                 message: text.to_string(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }))?,
@@ -2392,7 +2383,6 @@ async fn seed_pathless_store_thread(
             metadata: ThreadPersistenceMetadata {
                 cwd: None,
                 model_provider: "test-provider".to_string(),
-                memory_mode: ThreadMemoryMode::Disabled,
             },
         })
         .await?;

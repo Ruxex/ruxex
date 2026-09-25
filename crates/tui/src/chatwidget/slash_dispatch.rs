@@ -399,9 +399,6 @@ impl ChatWidget {
             SlashCommand::Experimental => {
                 self.open_experimental_popup();
             }
-            SlashCommand::Memories => {
-                self.open_memories_popup();
-            }
             SlashCommand::Quit | SlashCommand::Exit => {
                 self.request_quit_without_confirmation();
             }
@@ -494,12 +491,6 @@ impl ChatWidget {
             }
             SlashCommand::Stop => {
                 self.clean_background_terminals();
-            }
-            SlashCommand::MemoryDrop => {
-                self.add_app_server_stub_message("Memory maintenance");
-            }
-            SlashCommand::MemoryUpdate => {
-                self.add_app_server_stub_message("Memory maintenance");
             }
             SlashCommand::Mcp => {
                 self.add_mcp_output(McpServerStatusDetail::ToolsAndAuthOnly);
@@ -1123,8 +1114,6 @@ impl ChatWidget {
             | SlashCommand::DebugConfig
             | SlashCommand::Ps
             | SlashCommand::Stop
-            | SlashCommand::MemoryDrop
-            | SlashCommand::MemoryUpdate
             | SlashCommand::Mcp
             | SlashCommand::Plugins
             | SlashCommand::Rollout
@@ -1168,7 +1157,6 @@ impl ChatWidget {
             | SlashCommand::Permissions
             | SlashCommand::ElevateSandbox
             | SlashCommand::Experimental
-            | SlashCommand::Memories
             | SlashCommand::Quit
             | SlashCommand::Exit
             | SlashCommand::Logout

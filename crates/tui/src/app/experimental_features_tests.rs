@@ -43,7 +43,6 @@ async fn experimental_features_use_selected_server_profile_and_preserve_task_set
     let updates = vec![
         ("network_proxy".to_string(), false),
         ("multi_agent".to_string(), false),
-        ("memories".to_string(), true),
     ];
     let (response_tx, response_rx) = oneshot::channel();
     app.save_experimental_features(&server, thread, updates.clone(), response_tx);
@@ -68,7 +67,7 @@ async fn experimental_features_use_selected_server_profile_and_preserve_task_set
     let saved: toml::Value = toml::from_str(&std::fs::read_to_string(&selected)?)?;
     assert_eq!(
         serde_json::to_value(saved)?,
-        serde_json::json!({"features": {"multi_agent": false, "memories": true}})
+        serde_json::json!({"features": {"multi_agent": false}})
     );
     assert_eq!(
         (app.config.clone(), app.chat_widget.config_ref().clone()),
@@ -92,20 +91,8 @@ async fn experimental_features_use_selected_server_profile_and_preserve_task_set
     app.enable_feature_for_new_threads(&mut tui, &server, Feature::Collab)
         .await;
     insta::assert_snapshot!("subagents_enable_notice", notice_text(&app));
-    std::fs::write(
-        &selected,
-        format!(
-            "{}memory_tool = false\n",
-            std::fs::read_to_string(&selected)?
-        ),
-    )?;
-    app.enable_feature_for_new_threads(&mut tui, &server, Feature::MemoryTool)
-        .await;
-    insta::assert_snapshot!("memories_enable_notice", notice_text(&app));
     let saved: toml::Value = toml::from_str(&std::fs::read_to_string(&selected)?)?;
     assert_eq!(saved["features"]["multi_agent"].as_bool(), Some(true));
-    assert_eq!(saved["features"]["memories"].as_bool(), Some(true));
-    assert_eq!(saved["features"]["memory_tool"].as_bool(), Some(true));
     assert_eq!(
         (app.config.clone(), app.chat_widget.config_ref().clone()),
         before

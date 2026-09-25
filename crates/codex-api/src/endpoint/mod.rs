@@ -1,5 +1,4 @@
 pub(crate) mod chat;
-pub(crate) mod memories;
 pub(crate) mod models;
 pub(crate) mod responses;
 pub(crate) mod responses_websocket;
@@ -8,7 +7,6 @@ mod session;
 
 pub use chat::AggregateStreamExt;
 pub use chat::ChatClient;
-pub use memories::MemoriesClient;
 pub use models::ModelsClient;
 pub use responses::ResponsesClient;
 pub use responses::ResponsesOptions;

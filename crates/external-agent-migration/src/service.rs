@@ -3,7 +3,6 @@ use crate::config_values::merge_missing_mcp_servers;
 use crate::config_values::merge_missing_toml_values;
 use crate::config_values::migrated_mcp_server_names;
 use crate::config_values::write_toml_file;
-use crate::memory_import;
 use crate::migration_source::ExternalAgentSource;
 use crate::migration_source::InstructionSourceGroup;
 pub use crate::model::DetectedConnectorCandidate;
@@ -385,49 +384,6 @@ impl ExternalAgentConfigService {
                     }
                     Ok(())
                 })(),
-                ExternalAgentConfigMigrationItemType::Memory if self.source.supports_memory() => {
-                    async {
-                        let selected_memory = migration_item
-                            .details
-                            .as_ref()
-                            .map(|details| details.memory.as_slice())
-                            .unwrap_or_default();
-                        let memory_outcome = memory_import::import(
-                            &self.codex_home,
-                            &self.external_agent_home,
-                            self.state_db.as_ref(),
-                            selected_memory,
-                        )
-                        .await?;
-                        emit_migration_metric(
-                            EXTERNAL_AGENT_CONFIG_IMPORT_METRIC,
-                            ExternalAgentConfigMigrationItemType::Memory,
-                            /*skills_count*/ None,
-                        );
-                        let target_path = memory_import::resources_root(&self.codex_home);
-                        for project_key in memory_outcome.synchronized_projects {
-                            item_result.record_success(
-                                Some(project_key),
-                                Some(target_path.display().to_string()),
-                                /*title*/ None,
-                            );
-                        }
-                        for failure in memory_outcome.failures {
-                            record_import_error(
-                                &mut item_result,
-                                "memory_import",
-                                /*sub_error_type*/ None,
-                                failure.message,
-                                Some(failure.project_key),
-                            );
-                        }
-                        Ok(())
-                    }
-                    .await
-                }
-                ExternalAgentConfigMigrationItemType::Memory => Err(invalid_data_error(
-                    "memory import is not supported for the selected migration source".to_string(),
-                )),
                 ExternalAgentConfigMigrationItemType::Sessions => Ok(()),
             };
             if let Err(err) = import_result

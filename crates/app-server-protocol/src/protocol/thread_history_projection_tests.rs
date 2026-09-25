@@ -130,7 +130,6 @@ fn projects_completed_canonical_turn_items() {
             text: "done".to_string(),
         }],
         phase: None,
-        memory_citation: None,
         delivery: None,
         questions: None,
     });

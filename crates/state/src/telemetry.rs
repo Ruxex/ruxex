@@ -48,7 +48,6 @@ pub(crate) enum DbKind {
     State,
     Logs,
     Goals,
-    Memories,
     Queue,
     ThreadHistory,
 }
@@ -59,7 +58,6 @@ impl DbKind {
             Self::State => "state",
             Self::Logs => "logs",
             Self::Goals => "goals",
-            Self::Memories => "memories",
             Self::Queue => "queue",
             Self::ThreadHistory => "thread_history",
         }

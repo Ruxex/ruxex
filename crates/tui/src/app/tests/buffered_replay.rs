@@ -26,7 +26,6 @@ fn completed(thread: &str) -> ServerNotification {
             id: "answer".into(),
             text: "Final **answer**".into(),
             phase: None,
-            memory_citation: None,
             delivery: None,
             questions: None,
         },
@@ -249,7 +248,6 @@ fn evicted_voice_delegation_marker_still_suppresses_private_replay() {
             id: "reasoning".into(),
             text: "[ANALYSIS] private".into(),
             phase: None,
-            memory_citation: None,
             delivery: None,
             questions: None,
         },
@@ -374,7 +372,6 @@ fn snapshot_keeps_typed_output_before_voice_handoff_in_the_same_turn() {
         text: text.into(),
         phase: Some(codex_protocol::models::MessagePhase::Commentary),
         questions: None,
-        memory_citation: None,
         delivery: None,
     };
     let marker = ThreadItem::UserMessage {
@@ -431,7 +428,6 @@ fn snapshot_keeps_typed_item_completed_after_voice_handoff() {
         text: "Typed commentary completed late".into(),
         phase: Some(codex_protocol::models::MessagePhase::Commentary),
         questions: None,
-        memory_citation: None,
         delivery: None,
     };
     let private = ThreadItem::AgentMessage {
@@ -439,7 +435,6 @@ fn snapshot_keeps_typed_item_completed_after_voice_handoff() {
         text: "Voice-private commentary".into(),
         phase: Some(codex_protocol::models::MessagePhase::Commentary),
         questions: None,
-        memory_citation: None,
         delivery: None,
     };
     let marker = ThreadItem::UserMessage {
@@ -556,7 +551,6 @@ async fn evicted_voice_marker_survives_widget_snapshot_for_late_reasoning() {
                 id: "private-commentary".into(),
                 text: "[COMMENTARY] private after switch".into(),
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             },

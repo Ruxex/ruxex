@@ -74,7 +74,6 @@ async fn older_pagination_completion_footers_follow_answers_without_overlap_dupl
                     text: format!("{name} answer"),
                 }],
                 phase: None,
-                memory_citation: None,
                 delivery: None,
                 questions: None,
             }),

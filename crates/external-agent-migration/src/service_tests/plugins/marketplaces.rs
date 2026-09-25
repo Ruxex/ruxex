@@ -330,7 +330,6 @@ async fn detect_home_supports_relative_external_agent_plugin_marketplace_path() 
     let items = service_for_paths(external_agent_home.clone(), codex_home)
         .detect(ExternalAgentConfigDetectOptions {
             include_home: true,
-            include_memory: false,
             cwds: None,
         })
         .await
@@ -377,7 +376,6 @@ async fn detect_home_infers_external_official_marketplace_when_missing_from_sett
     let items = service_for_paths(external_agent_home.clone(), codex_home)
         .detect(ExternalAgentConfigDetectOptions {
             include_home: true,
-            include_memory: false,
             cwds: None,
         })
         .await
@@ -582,7 +580,6 @@ async fn detect_repo_skips_project_relative_external_agent_plugin_marketplace_pa
     let items = service_for_paths(external_agent_home, codex_home)
         .detect(ExternalAgentConfigDetectOptions {
             include_home: false,
-            include_memory: false,
             cwds: Some(vec![repo_root.clone()]),
         })
         .await

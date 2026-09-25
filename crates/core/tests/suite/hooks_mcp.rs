@@ -572,60 +572,6 @@ async fn mcp_tool_hook_passes_thread_metadata_to_model_hidden_tools() -> Result<
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn mcp_tool_hook_marks_thread_memory_mode_polluted_when_configured() -> Result<()> {
-    skip_if_no_network!(Ok(()));
-
-    let server = start_mock_server().await;
-    mount_sse_once(
-        &server,
-        sse(vec![
-            ev_response_created("resp-1"),
-            ev_assistant_message("msg-1", "hook context received"),
-            ev_completed("resp-1"),
-        ]),
-    )
-    .await;
-    let rmcp_test_server_bin = stdio_server_bin()?;
-    let test = test_codex()
-        .with_pre_build_hook(|home| {
-            write_mcp_tool_hook(
-                home,
-                "UserPromptSubmit",
-                /*matcher*/ None,
-                RMCP_SERVER,
-                r#"{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"external MCP context"}}"#,
-            )
-            .expect("write MCP prompt hook fixture");
-        })
-        .with_config(move |config| {
-            enable_hooks_and_rmcp_server(
-                config,
-                rmcp_test_server_bin,
-                AppToolApproval::Prompt,
-                /*prefix_mcp_tool_names*/ true,
-            );
-            config
-                .features
-                .enable(Feature::Sqlite)
-                .expect("test config should allow feature update");
-            config.memories.disable_on_external_context = true;
-        })
-        .build(&server)
-        .await?;
-    wait_for_mcp_server(&test.codex, RMCP_SERVER).await?;
-
-    let db = test.codex.state_db().expect("state db enabled");
-    let thread_id = test.session_configured.thread_id;
-    test.submit_turn("review checkout.rs").await?;
-
-    assert_eq!(
-        db.get_thread_memory_mode(thread_id).await?,
-        Some("polluted".to_string())
-    );
-
-    Ok(())
-}
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn mcp_tool_hook_blocks_model_tool_without_recursive_hooks_or_approval() -> Result<()> {

@@ -23,7 +23,6 @@ pub use codex_protocol::turn_input::TurnInputRequest;
 pub use codex_protocol::turn_input::TurnInputSubmission;
 pub use codex_protocol::turn_input::TurnStartOptions;
 pub use responses_metadata::CodexResponsesMetadata;
-pub use turn_metadata::detached_memory_responses_metadata;
 mod codex_thread;
 mod compact_model_fallback;
 mod compact_remote_history;
@@ -119,12 +118,6 @@ pub use thread_manager::thread_store_from_config;
 pub use tools::handlers::WaitForEnvironmentToolConfig;
 pub use web_search::web_search_action_detail;
 pub use windows_sandbox_read_grants::grant_read_root_non_elevated;
-#[deprecated(note = "use ThreadManager")]
-pub type ConversationManager = ThreadManager;
-#[deprecated(note = "use NewThread")]
-pub type NewConversation = NewThread;
-#[deprecated(note = "use CodexThread")]
-pub type CodexConversation = CodexThread;
 pub(crate) mod agents_md;
 mod agents_md_manager;
 pub use agents_md::DEFAULT_AGENTS_MD_FILENAME;
@@ -198,7 +191,6 @@ pub use exec_policy::format_exec_policy_error_with_source;
 pub use exec_policy::load_exec_policy;
 pub use installation_id::resolve_installation_id;
 pub mod compact;
-mod memory_usage;
 pub mod otel_init;
 
 // Captured environment bindings can be passed back to ThreadManager by internal reviewers.

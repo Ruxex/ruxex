@@ -15,7 +15,6 @@ use crate::types::History;
 use crate::types::MarketplaceConfig;
 use crate::types::McpEnterpriseManagedAuthConfig;
 use crate::types::McpServerConfig;
-use crate::types::MemoriesToml;
 use crate::types::MetricsConfigToml;
 use crate::types::Notice;
 use crate::types::OAuthCredentialsStoreMode;
@@ -388,9 +387,6 @@ pub struct ConfigToml {
 
     /// Goal-related settings.
     pub goals: Option<GoalsToml>,
-
-    /// Memories subsystem settings.
-    pub memories: Option<MemoriesToml>,
 
     /// User-level skill config entries keyed by SKILL.md path.
     pub skills: Option<SkillsConfig>,
