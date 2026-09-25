@@ -1173,8 +1173,9 @@ fn restricted_reads_cannot_read_preferences_outside_allowed_roots() {
             .to_string_lossy()
     ));
     let marker = "codex-preferences-read-canary";
-    // Bazel gives tests a temporary HOME, but preferences use the account home.
-    // Use caller-owned storage because tests can query the account concurrently.
+    // Some test runners give tests a temporary HOME, but preferences use the
+    // account home. Use caller-owned storage because tests can query the
+    // account concurrently.
     let mut passwd = MaybeUninit::<libc::passwd>::uninit();
     let mut buffer = vec![0_u8; 16 * 1024];
     let mut result = std::ptr::null_mut();

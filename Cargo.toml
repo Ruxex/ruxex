@@ -85,7 +85,6 @@ members = [
     "crates/tui",
     "crates/user-verification",
     "crates/tools",
-    "crates/v8-poc",
     "crates/websocket-client",
     "crates/windows-sandbox-service",
     "crates/worktree",
@@ -261,7 +260,6 @@ codex-utils-stream-parser = { path = "crates/utils/stream-parser" }
 codex-utils-string = { path = "crates/utils/string" }
 codex-utils-template = { path = "crates/utils/template" }
 codex-user-verification = { path = "crates/user-verification" }
-codex-v8-poc = { path = "crates/v8-poc" }
 codex-workload-identity = { path = "crates/workload-identity" }
 codex-windows-sandbox = { path = "crates/windows-sandbox-rs" }
 core_test_support = { path = "crates/core/tests/common" }
@@ -390,7 +388,6 @@ regex-lite = "0.1.8"
 regex-syntax = "0.8.8"
 reqwest = "0.12"
 rmcp = { version = "=3.2.0", default-features = false }
-runfiles = { git = "https://github.com/dzbarsky/rules_rust", rev = "b56cbaa8465e74127f1ea216f813cd377295ad81" }
 rustix = { version = "1.1.4", features = ["net"] }
 rustls = { version = "0.23.45", default-features = false, features = [
     "aws_lc_rs",
@@ -539,7 +536,6 @@ unwrap_used = "deny"
 ignored = [
     "icu_provider",
     "openssl-sys",
-    "codex-v8-poc",
 ]
 
 [profile.dev]

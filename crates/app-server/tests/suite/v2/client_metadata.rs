@@ -34,8 +34,8 @@ use super::analytics::captured_analytics_events;
 use super::analytics::mount_analytics_capture;
 use super::analytics::wait_for_analytics_event;
 
-// Bazel CI can spend tens of seconds starting app-server subprocesses or
-// processing turn RPCs under load.
+// CI can spend tens of seconds starting app-server subprocesses or processing
+// turn RPCs under load.
 const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(60);
 
 #[tokio::test]

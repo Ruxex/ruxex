@@ -8,7 +8,11 @@
 
 **Tech Stack:** Rust workspace, Cargo, app-server protocol schemas, rollout/thread-store persistence, CLI/TUI, generated dependency graph.
 
-**Spec:** `docs/superpowers/specs/2026-09-19-remove-pre-release-compatibility-layers-design.md`
+**Spec:** [`docs/superpowers/specs/2026-09-19-remove-pre-release-compatibility-layers-design.md`](../specs/2026-09-19-remove-pre-release-compatibility-layers-design.md)
+
+**Inventory:** [`docs/pre-release-compatibility-inventory.md`](../../pre-release-compatibility-inventory.md)
+
+**Phase handoff:** [`docs/openai-decoupling-plan.md`](../../openai-decoupling-plan.md)
 
 ## Global Constraints
 
@@ -35,6 +39,8 @@
 - **Protocol/app-server:** `crates/protocol/src/legacy_events.rs`, `crates/protocol/src/models.rs`, `crates/protocol/src/config_types.rs`, `crates/protocol/src/openai_models.rs`, `crates/app-server-protocol/src/protocol/v1.rs`, `crates/app-server-protocol/src/protocol/common.rs`, `crates/app-server-protocol/src/protocol/v2/`, generated app-server schemas, and app-server request processors.
 - **CLI/config/import:** `crates/cli/src/`, `crates/core/src/config/`, `crates/app-server/src/config*`, `crates/app-server/src/external_agent_migration/`, and related tests/docs selected by the inventory.
 - **Runtime/UI/observability:** `crates/core/src/context/legacy_*`, `crates/core/src/context/world_state/`, `crates/sandboxing/src/manager.rs`, `crates/tui/src/`, `crates/analytics/src/`, `crates/otel/src/`, `crates/rollout-trace/src/`, and tests selected by the inventory.
+- **Build-system/experimental scaffolding:** `crates/v8-poc/`, the workspace and lockfile registrations, Hawk output, `crates/utils/cargo-bin/`, `crates/code-mode-protocol/`, `crates/linux-sandbox/`, and Bazel-only exec-server/test branches selected by the inventory.
+- **Hawk follow-up:** [`docs/hawk-codex-cli-result-analysis.md`](../../hawk-codex-cli-result-analysis.md) is an input to the inventory; its deprecated aliases and false-positive/retained public APIs must be classified before any Level 3 removal.
 
 ### Task 1: Establish the repository-wide compatibility inventory
 
@@ -154,3 +160,21 @@ security checks remain in place.
   enterprise-managed config, and trust/security behavior.
 - [x] Run `just generate`, inspect generated-artifact diff, then run
   `just check --tests` and `just check`.
+
+### Task 8: Remove the unintegrated V8 POC and obsolete Bazel compatibility
+
+This task is tracked in the [build-system and experimental scaffolding slice](../../pre-release-compatibility-inventory.md#build-system-and-experimental-scaffolding).
+The boundary is defined in the [compatibility-layer removal design](../specs/2026-09-19-remove-pre-release-compatibility-layers-design.md#build-system-compatibility-and-experimental-v8-scaffolding).
+The checked-in Hawk output is described in the [Hawk result analysis](../../hawk-codex-cli-result-analysis.md).
+
+**Files:**
+- Delete: `crates/v8-poc/`.
+- Modify: `Cargo.toml`, `Cargo.lock`, and the checked-in Hawk output [`codex-cli.json`](../../codex-cli.json).
+- Modify: `crates/utils/cargo-bin/`, `crates/code-mode-protocol/`, `crates/linux-sandbox/`, `crates/exec-server/`, and affected test/resource helpers selected by the inventory.
+- Modify: `docs/pre-release-compatibility-inventory.md` and the Phase 3 handoff in `docs/openai-decoupling-plan.md`.
+
+- [x] Record the producer/consumer audit before changing code: `codex-v8-poc` has no product consumer; active code-mode uses `codex-code-mode-runtime` and `rusty_v8` directly. Record the same distinction for each Bazel/runfiles branch.
+- [x] Remove the POC crate, workspace member/dependency, cargo-shear exception, lockfile package, and generated Hawk references together.
+- [x] Remove only the unmaintained Bazel/runfiles compatibility branches; preserve Cargo binary/resource resolution, active sandbox behavior, and the provider-neutral code-mode runtime.
+- [x] Remove the obsolete `bazel_native` lint feature after confirming the normal Dylint source-build path remains.
+- [x] Run `just generate` when generated artifacts are affected, then `just check --tests` and `just check`; inspect the complete diff.

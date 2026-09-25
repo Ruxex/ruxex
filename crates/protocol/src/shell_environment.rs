@@ -69,17 +69,16 @@ where
     let mut env_map = populate_env(vars, policy, thread_id);
 
     if cfg!(target_os = "windows") {
-        // This is a workaround to address the failures we are seeing in the
-        // following tests when run via Bazel on Windows:
+        // This is a workaround for failures in the following tests under the
+        // restricted Windows CI environment:
         //
         // ```
         // suite::shell_command::unicode_output::with_login
         // suite::shell_command::unicode_output::without_login
         // ```
         //
-        // Currently, we can only reproduce these failures in CI, which makes
-        // iteration times long, so we include this quick fix for now to unblock
-        // getting the Windows Bazel build running.
+        // The failures are only reproducible in CI, so keep this small
+        // fallback for the current Windows test environment.
         if !env_map.keys().any(|k| k.eq_ignore_ascii_case("PATHEXT")) {
             env_map.insert("PATHEXT".to_string(), ".COM;.EXE;.BAT;.CMD".to_string());
         }

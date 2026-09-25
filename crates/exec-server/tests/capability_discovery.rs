@@ -640,23 +640,6 @@ async fn executor_legacy_exec_uses_process_cwd_for_relative_denials() -> anyhow:
     );
     let process_env =
         std::collections::HashMap::from([("PATH".to_string(), std::env::var("PATH")?)]);
-    #[cfg(target_os = "linux")]
-    let process_env = {
-        let mut process_env = process_env;
-        // Bazel-provided bubblewrap lives in runfiles, not necessarily on the process PATH.
-        for name in [
-            "CARGO_BIN_EXE_bwrap",
-            "RUNFILES_DIR",
-            "RUNFILES_MANIFEST_FILE",
-            "TEST_SRCDIR",
-            "TEST_WORKSPACE",
-        ] {
-            if let Ok(value) = std::env::var(name) {
-                process_env.insert(name.to_string(), value);
-            }
-        }
-        process_env
-    };
     let mut server = exec_server().await?;
     initialize(&mut server).await?;
     for (index, legacy_cwd) in [None, Some(serde_json::Value::Null)]

@@ -236,7 +236,7 @@ impl ActionKind {
                 Ok((event, Some(command)))
             }
             ActionKind::RunCommand { command } => {
-                // Bazel Linux runners can be heavily oversubscribed while this
+                // Linux CI runners can be heavily oversubscribed while this
                 // matrix runs, so avoid making scheduling latency look like an
                 // approval behavior failure.
                 let event = shell_event(
@@ -248,7 +248,7 @@ impl ActionKind {
                 Ok((event, Some(command.to_string())))
             }
             ActionKind::RunCommandWithPolicy { command, .. } => {
-                // Bazel Linux runners can be heavily oversubscribed while this
+                // Linux CI runners can be heavily oversubscribed while this
                 // matrix runs, so avoid making scheduling latency look like an
                 // approval behavior failure.
                 let event = shell_event(
@@ -296,9 +296,8 @@ impl ActionKind {
                 let _ = fs::remove_file(&path);
                 let patch = build_add_file_patch(&patch_path, content);
                 let command = shell_apply_patch_command(&patch);
-                // Bazel may need to launch the configured Codex helper binary
-                // to apply the verified patch, which can exceed the normal
-                // short command timeout on slower CI runners.
+                // The configured Codex helper binary can take longer to launch
+                // on slower CI runners, so allow more than the normal timeout.
                 let timeout_ms = 30_000;
                 let event = shell_event(call_id, &command, timeout_ms, sandbox_permissions)?;
                 Ok((event, Some(command)))

@@ -8,6 +8,10 @@ legacy rollout formats, old protocol fields, deprecated configuration and CLI
 surfaces, and older app-server clients. Those paths make the new agent
 foundation larger and preserve contracts that this fork has not released.
 
+Tracking documents: [implementation plan](../plans/2026-09-19-remove-pre-release-compatibility-layers.md),
+[compatibility inventory](../../pre-release-compatibility-inventory.md), and
+[OpenAI decoupling handoff](../../openai-decoupling-plan.md).
+
 ## Decision
 
 Perform a repository-wide compatibility cleanup before removing the next
@@ -37,6 +41,34 @@ code that reads, migrates, or preserves obsolete formats.
 - UI replay, analytics, telemetry, trace, and tests that exist only to preserve
   those obsolete shapes.
 
+### Build-system compatibility and experimental V8 scaffolding
+
+The `codex-v8-poc` crate is an unintegrated proof-of-concept and is not used by
+the product path. The actual code-mode runtime depends on `rusty_v8` directly,
+so the POC crate may be removed independently. Its workspace registration,
+workspace dependency, cargo-shear exclusion, lockfile entry, and generated
+dependency-graph references must be removed together.
+
+Bazel build infrastructure is not maintained in this fork, but Bazel
+compatibility branches still exist in shared test and resource-resolution
+helpers. Remove those branches in stages rather than deleting shared helpers
+or Cargo behavior wholesale:
+
+- Keep Cargo binary and resource resolution in `codex-utils-cargo-bin` while
+  removing its runfiles-only branch and the `runfiles` dependency.
+- Remove the Bazel-only `codex_bazel` protocol path after the canonical Cargo
+  protobuf path is confirmed as the sole supported path.
+- Remove Bazel-specific sandbox binary lookup and test-environment handling
+  after confirming that local Cargo tests retain their current behavior.
+- Remove the `bazel_native` lint feature only after preserving the normal
+  Dylint source-build path used by the repository's lint commands.
+- Remove stale Bazel metadata, comments, fixtures, and generated references
+  after the code paths are gone.
+
+This slice does not remove `rusty_v8`, `codex-code-mode-runtime`, or the
+provider-neutral code-mode capability. It removes only the unintegrated POC
+crate and build-system compatibility that has no maintained Bazel consumer.
+
 ## Compatibility categories to review, not remove automatically
 
 - Platform fallbacks such as Windows sandbox behavior when still required by
@@ -56,4 +88,7 @@ code that reads, migrates, or preserves obsolete formats.
   a nearby symbol contains `legacy`, `deprecated`, or `fallback`.
 - Old local data is not silently deleted, but the unsupported-data policy is
   explicit in project documentation.
+- `codex-v8-poc` is removed without removing the active V8/code-mode runtime.
+- Bazel compatibility is removed without breaking Cargo builds, Cargo tests,
+  sandbox behavior, or current test-resource resolution.
 - The workspace passes the applicable `cargo check` and `just check` gates.

@@ -1,10 +1,15 @@
 # Pre-release Compatibility Inventory
 
-This inventory is maintained by
-`docs/superpowers/plans/2026-09-19-remove-pre-release-compatibility-layers.md`.
+This inventory is maintained by the
+[pre-release compatibility-layer removal plan](superpowers/plans/2026-09-19-remove-pre-release-compatibility-layers.md).
 The repository is a pre-release fork with zero external users, so historical
 upstream contracts may be removed. A match is a candidate only when its
 producer/consumer audit shows that it is not current runtime behavior.
+
+Related references: [design spec](superpowers/specs/2026-09-19-remove-pre-release-compatibility-layers-design.md),
+[OpenAI decoupling plan](openai-decoupling-plan.md),
+[OpenAI-specific crate/capability audit](openai-specific-crates.md), and
+[Hawk result analysis](hawk-codex-cli-result-analysis.md).
 
 ## Decision categories
 
@@ -39,7 +44,8 @@ earlier one being free of obsolete persisted data:
 2. protocol and app-server aliases/schemas;
 3. CLI, config, and import compatibility;
 4. UI, observability, and runtime shims;
-5. final dependency and documentation audit.
+5. build-system and experimental scaffolding;
+6. final dependency and documentation audit.
 
 ## Candidates and decisions
 
@@ -92,6 +98,9 @@ implementation.
 | `ConfigRequirementsToml`'s `feature_requirements` serde alias and requirements-layer alias merge; credential-broker projection of the old path in `loader/local.rs` | Current managed requirements use `[features]`; the only current consumer of the old path was the credential-broker projection, which now reads the canonical path only | Canonical `[features]` requirements path | `remove (completed)` | `just check --tests`; `just check` |
 | Removed config aliases `ignore_untracked_files_over_bytes` and `large_untracked_dir_warning_threshold` | Repository search found no production producer or consumer for these names; they are retained in this row only as audited historical candidates | Current config fields, if any, with no compatibility reader | `remove` (already absent) | `rg -n 'ignore_untracked_files_over_bytes|large_untracked_dir_warning_threshold' crates` |
 | `EventMsg` aliases `turn_started`/`turn_complete` in `crates/protocol/src/protocol.rs` | Canonical serializers and current clients use `task_started`/`task_complete`; the old `turn_*` tags appeared only in the deserializer compatibility path, documentation, and observability labels | Canonical `task_started`/`task_complete` event tags | `remove` (already absent) | `cargo test -p codex-protocol old_turn_started_records_have_no_root_attribution`; `cargo check -p codex-app-server` |
+| Deprecated public aliases `codex_core::{ConversationManager, NewConversation, CodexConversation}` in `crates/core/src/lib.rs` | Repository search found only the alias definitions; current code uses `ThreadManager`, `NewThread`, and `CodexThread`. The aliases preserve pre-release upstream names and have no current producer/consumer | Canonical `ThreadManager`, `NewThread`, and `CodexThread` | `remove (planned)` | `rg -n 'ConversationManager|NewConversation|CodexConversation' crates --glob '*.rs'; `just check --tests`; `just check` |
+| Deprecated rollout aliases `codex_rollout::{ConversationItem, ConversationsPage}` in `crates/rollout/src/list.rs` | Repository search found no consumer of these aliases; `rollout-trace`'s `ConversationItem` is a separate provider-neutral trace model and is not this alias | Canonical `ThreadItem` and `ThreadsPage` | `remove (planned)` | `rg -n 'codex_rollout::(ConversationItem|ConversationsPage)|ConversationItem|ConversationsPage' crates --glob '*.rs'; `just check --tests`; `just check` |
+| Deprecated `codex_core::find_thread_meta_by_name_str` re-export in `crates/core/src/lib.rs` | `codex-exec` and rollout-list tests still import/use the core-root re-export; the underlying `codex_rollout::find_thread_meta_by_name_str` function remains current | Canonical `codex_core::rollout`/`codex_rollout` path after callers migrate | `migrate-in-place` | `rg -n 'codex_core::find_thread_meta_by_name_str|find_thread_meta_by_name_str' crates --glob '*.rs'; migrate callers, then `just check --tests`; `just check` |
 | `ResponseItem`/model aliases in `crates/protocol/src/models.rs`, `openai_models.rs`, and `codex-api` | Active Responses-compatible providers and app-server model catalog still consume some wire shapes | Provider-neutral model/response representation after call-site migration | `migrate-in-place` | `cargo check -p codex-protocol -p codex-api -p codex-app-server-protocol` |
 | `FeedbackConfigToml`, `ConfigToml::feedback`, `Config::feedback_enabled`, managed `feedback.enabled` requirements, `FeedbackUpload` app-server request, `FeedbackUploadParams`, `FeedbackUploadResponse`, and generated feedback schemas | The TUI feedback command produced the request; the app-server processor consumed and uploaded it to the fixed Sentry endpoint. This pre-release fork has no external client that needs the removed contract | No feedback config or feedback/upload protocol surface | `remove` (completed) | `just write-config-schema`; `just write-app-server-schema`; `cargo check -p codex-config -p codex-app-server-protocol` |
 | Deprecated personality, multi-agent, full-history, and `includeTurns` fields in app-server v2 thread/turn protocol | Current app-server tests and in-repository clients still exercise these fields and receive deprecation notices | Paginated thread/item APIs and reasoning configuration | `migrate-in-place` | `cargo check -p codex-app-server-protocol -p codex-app-server` |
@@ -134,6 +143,42 @@ implementation.
 | `CODEX_EXEC_SERVER_URL`, `environments.toml` environment `url`, `RemoteEnvironmentOptions`, `ExecServerTransportParams::WebSocketUrl`, and exec-server WebSocket client/reconnect branches | Direct WebSocket environment connections were produced by the environment provider/config parser and consumed by app-server environment selection. The app-server client `--remote` is a separate transport and remains active. | Local environment and `environments.toml` stdio `program` entries; app-server `--remote` | `remove` (completed) | `rg -n 'CODEX_EXEC_SERVER_URL|RemoteEnvironmentOptions|WebSocketUrl|environment.*url' crates/exec-server crates/app-server crates/cli --glob '*.{rs,toml}'; `just check` (0 errors) |
 | `environment/add` protocol, `EnvironmentAddParams`, `EnvironmentAddResponse`, and `EnvironmentManager::upsert_environment*` | The RPC only registered direct WebSocket exec-server URLs; environment info/status and thread environment selection remain active for local/stdio environments. | Existing environment info/status and local/stdio configuration | `remove` (completed) | `rg -n 'EnvironmentAdd|environment/add|upsert_environment' crates --glob '*.{rs,json,ts}'; `just check` (0 errors) |
 | Exec-server `--remote`, `--remote-transport`, `--environment-id`, `--aws-sigv4`, AWS remote options, `forward`, and `exec_server_auth.rs` | These CLI surfaces only registered/forwarded hosted or direct WebSocket exec-server environments. Bedrock's independent AWS authentication remains an active consumer of `codex-aws-auth`. | Local/stdio `codex exec-server`; app-server/TUI top-level `--remote` | `remove` for exec-server remote surfaces; `retain` for Bedrock AWS auth | `rg -n 'ExecServerRemoteTransport|aws_sigv4|environment_id|forward|exec_server_auth' crates/cli/src crates/exec-server/src --glob '*.rs'; `just check` (0 errors) |
+
+| Deprecated `TurnContext::cwd` field in `crates/core/src/session/turn_context.rs` | Current sandbox policy transforms, tool handlers, child configuration, and hook/runtime paths still consume the field; the selected turn environment's cwd is the canonical source for newer consumers | `TurnEnvironment::cwd()` / selected environment cwd, after all remaining consumers migrate | `migrate-in-place` | `rg -n 'turn_context\\.cwd|context\\.cwd' crates/core crates/sandboxing --glob '*.rs'; `just check --tests`; `just check` |
+| Deprecated `HttpClientBuilder::{build_with_transport_default_proxy, build_with_transport_default_proxy_and_custom_ca_fallback, build_direct_with_custom_ca_fallback}` | Active callers remain in `RouteAwareClientPool` and login's default client. They preserve current proxy, custom-CA, localhost, and security behavior; removing them by name would break current consumers | `HttpClientFactory::build_client`, `build_respecting_outbound_proxy_policy`, or explicit direct/custom-CA APIs after caller migration | `migrate-in-place` | `rg -n 'build_with_transport_default_proxy|build_direct_with_custom_ca_fallback' crates --glob '*.rs'; `just check --tests`; `just check` |
+
+### Build-system and experimental scaffolding
+
+This slice is separate from provider cleanup. It must not remove the active
+V8/code-mode runtime or current platform/security behavior. The implementation
+steps are tracked in [Task 8 of the compatibility removal plan](superpowers/plans/2026-09-19-remove-pre-release-compatibility-layers.md#task-8-remove-the-unintegrated-v8-poc-and-obsolete-bazel-compatibility),
+and the boundary is defined in the [design spec](superpowers/specs/2026-09-19-remove-pre-release-compatibility-layers-design.md#build-system-compatibility-and-experimental-v8-scaffolding).
+
+Pre-change producer/consumer audit (2026-09-25): `codex-v8-poc` has no
+consumer in a product or test entry point; the active code-mode path is
+`codex-code-mode-runtime` and its direct workspace `rusty_v8` dependency.
+The `codex_bazel` protobuf branch is not produced by the Cargo `build.rs` and
+has no maintained consumer. The `runfiles` dependency and the
+`codex-utils-cargo-bin` runfiles branches were consumed only by Bazel-oriented
+test/resource resolution; Cargo consumers use `CARGO_BIN_EXE_*`,
+`CARGO_MANIFEST_DIR`, and `repo_root.marker`. The Linux sandbox bwrap lookup,
+exec-server environment forwarding, app-server executable staging, and
+platform test fixtures are Bazel-only branches; installed-resource lookup,
+sandbox digest/security checks, and the underlying Cargo tests remain active.
+The `bazel_native` match was limited to the standalone lint crate's alternate
+build feature and has no remaining consumer.
+
+| Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |
+|---|---|---|---|---|
+| `crates/v8-poc/`, its `Cargo.toml` registrations, and `codex-v8-poc` in `Cargo.lock` | The crate is an unintegrated Bazel-wired proof of concept. No product path imports it; the active code-mode path uses `codex-code-mode-runtime` and the workspace `rusty_v8` dependency directly | Active `codex-code-mode-runtime` / `rusty_v8` code-mode runtime | `remove (completed)` | `rg -n 'codex-v8-poc|crates/v8-poc|codex_v8_poc' Cargo.toml Cargo.lock crates codex-cli.json` returns no matches; `just check --tests`; `just check` |
+| `codex-cli.json` Hawk findings for `codex_v8_poc` | Checked-in dead/public-code output retained findings only because the POC was a workspace member; it was not a product consumer | Checked-in Hawk output without the deleted crate | `remove (completed)` | Updated output inspected; `rg -n 'codex-v8-poc|codex_v8_poc|crates/v8-poc' codex-cli.json` returns no matches |
+| `codex_bazel` branch in `crates/code-mode-protocol/src/grpc/mod.rs` and its `rustc-check-cfg` declaration | Cargo `build.rs` always generates the canonical tonic protobuf module; the Bazel branch had no maintained in-repository consumer and only preserved an alternate generated-module contract | Cargo-generated `tonic::include_proto!` path | `remove (completed)` | `rg -n 'codex_bazel' crates/code-mode-protocol` returns no matches; `just check --tests`; `just check` |
+| `runfiles` dependency and Bazel branches in `crates/utils/cargo-bin/` | `cargo_bin`, `find_resource!`, and `repo_root` had alternate runfiles resolution for Bazel tests; maintained consumers use Cargo environment and repository-marker resolution | Cargo `CARGO_BIN_EXE_*`, `CARGO_MANIFEST_DIR`, and repository-marker resolution | `remove (completed)` | `rg -n 'runfiles|RUNFILES_|BAZEL_PACKAGE' crates/utils/cargo-bin` returns no matches; `just check --tests`; `just check` |
+| Bazel bwrap/runfiles lookup in `crates/linux-sandbox/{src/bazel_bwrap.rs,src/bundled_bwrap.rs}` and Bazel environment forwarding in `crates/exec-server/src/fs_sandbox.rs` | These branches located test/runtime helpers only through Bazel runfiles; installed Cargo sandbox lookup and current sandbox/security checks are separate active consumers | Current install-context/Cargo bundled-bwrap lookup and ordinary exec-server environment policy | `remove (completed)` for Bazel-only branches; `retain` for sandbox/security behavior | `rg -n 'bazel_bwrap|BAZEL_PACKAGE|RUNFILES_|TEST_SRCDIR|CARGO_BIN_EXE_bwrap' crates/linux-sandbox crates/exec-server` returns no matches; `just check --tests`; `just check` |
+| Bazel-only test setup, timeout, and fixture branches in app-server/core/protocol/exec-server/linux-sandbox tests | These branches changed test environment or timing for Bazel execution; the underlying tests and Cargo behavior remain current | Cargo-native test setup and existing platform-specific test handling | `remove (completed)` for obsolete Bazel-only branches; `retain` current tests and platform behavior | Broad `rg` audit after targeted removals; `just check --tests`; `just check` |
+| `default.nix` `runfiles-0.1.0` Cargo lock hash | The hash existed only for the removed workspace `runfiles` dependency; Nix builds consume the same Cargo lockfile and have no separate runfiles producer | Cargo lockfile without `runfiles` | `remove (completed)` | `rg -n 'runfiles' default.nix Cargo.toml Cargo.lock` returns no matches |
+| `tools/argument-comment-lint` `bazel_native` feature and conditional Dylint registration | The feature only disabled the normal `dylint_library!()` registration for an unmaintained alternate build; repository lint commands use the source/prebuilt Dylint path | Normal Dylint source-build registration | `remove (completed)` | `rg -n 'bazel_native' tools/argument-comment-lint` returns no matches; `just check` |
+| Unreferenced `crates/exec-server/testing/` Bazel-only fixture and `crates/cli/e2e_benches/` Bazel-only benchmark | No Cargo target or repository consumer references either directory; the active Cargo exec-server fixture is `crates/app-server/src/bin/exec_server.rs` | Active Cargo test binaries and helpers | `remove (completed)` | `rg -n 'exec-server/testing|e2e_benches|codex_help' . --glob '!target/**'` returns no matches; `just check --tests`; `just check` |
 
 ## Inventory completion rule
 

@@ -369,7 +369,7 @@ async fn file_system_elevated_relative_read_denial_uses_policy_cwd(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
     // Both implementations re-enter this test binary; the elevated backend finds its helpers
-    // next to that binary, while Cargo and Bazel provide them separately.
+    // next to that binary.
     let test_exe = std::env::current_exe()?;
     let resources = test_exe
         .parent()

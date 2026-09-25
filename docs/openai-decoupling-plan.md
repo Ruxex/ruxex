@@ -102,6 +102,10 @@ OpenAI 固有機能を除去した後に残る、汎用プロバイダ版クラ�
 
 **進捗:** 進行中。`codex-cloud-config`、backend の user-settings による commit/PR attribution を担う `codex-git-attribution`、および remote-memory の backend rate-limit guard は削除済みである。workspace message、`/accounts/check` による workspace account routing、account usage/rate-limit 読み取り、リセット credit、workspace owner nudge、hosted analytics dashboard、backend turn-cost collection の API・UI・テスト到達経路を削除した。依存元がなくなったため、`codex-backend-client` と `codex-backend-openapi-models` も削除済みである。OpenAI Images adapter、専用 Images API endpoint、Realtime voice capability の API・transport・protocol・履歴・core・app-server・TUI 到達経路、OpenAI hosted web-search adapter の自動 `web.run` 到達経路、および analytics の OpenAI hosted sink も削除済みである。`codex-core-plugins` の OpenAI curated plugin startup sync（GitHub Git/HTTP/export archive producer、同期スレッド、専用 telemetry）と、同期結果だけを読むローカル curated marketplace キャッシュ経路も削除済みである。feedback capability についても、設定・protocol・app-server upload・TUI/exec UI・Guardian 失敗レビュー保持・専用クレート・Sentry/backend sink を削除し、provider-neutral なログ保存と hook feedback は保持した。ChatGPT Apps / Connectors / host-owned Apps MCP についても、専用 connector crate、Apps protocol/UI/config、`codex_apps` と OpenAI 固有 MCP adapter を削除し、通常の MCP、汎用 OAuth/elicitation、provider-neutral な metadata と security behavior は保持した。リモート実行環境 transport については、Hosted registry、Noise/Direct rendezvous、forward、exec-server の直接 WebSocket 接続、URL environment、専用 CLI/auth、関連 protocol・依存・ドキュメント・テスト到達経路を削除した。`codex --remote` の app-server 接続、local/stdio exec-server、Process/Filesystem/HTTP capability、sandbox、network policy は保持している。LM Studio/Ollama の組み込み provider も削除済みで、任意の `model_providers` と Responses-compatible な custom provider は保持している。外部ユーザー0のpre-release forkであるため、`docs/pre-release-compatibility-inventory.md` の互換性棚卸しと producer/consumer 根拠の記録を継続する。現行 runtime に必要な platform fallback、active client、security behavior、provider-neutral capability は個別根拠を記録して残す。Guardian の OpenAI 固有 integration と互換性クリーンアップの最終ゲートは完了しており、次は Phase 3 の残存候補を選定する。
 
+**互換性クリーンアップの補足:** 上記の「最終ゲート完了」は、当時完了していた persisted/protocol/CLI/UI slices を指す。追加で判明した [build-system and experimental scaffolding slice](pre-release-compatibility-inventory.md#build-system-and-experimental-scaffolding)（`codex-v8-poc`、Bazel/runfiles、未参照の build/test scaffolding）は完了し、active `rusty_v8`/code-mode runtime、Cargo の resource resolution、sandbox/security behavior は保持している。
+
+互換性クリーンアップは [`実施計画`](superpowers/plans/2026-09-19-remove-pre-release-compatibility-layers.md) と [`インベントリ`](pre-release-compatibility-inventory.md) で追跡する。build-system slice の producer/consumer 監査と削除結果はインベントリに記録済みであり、Phase 3 の残存 integration 選定を継続する。
+
 **機能単位の再監査:** Feedback の削除で確認した基準を、残存する Hosted capability にも適用する。クレート名ではなく、認証、固定 endpoint、hosted protocol、設定、feature、protocol、UI までを一つの到達可能な機能として監査する。現時点では次の機能を、Phase 3 の独立した実施単位として追加する。
 
 - ChatGPT Remote Control は、ChatGPT 専用 URL・認証・enrollment 永続化・WebSocket・CLI・app-server protocol を含むため、機能全体を削除する。汎用 remote transport は現行 capability として存在しないため、この機能のためだけに抽象化を残さない。
@@ -187,7 +191,8 @@ Level 1 Phase 3 と Level 2 の完了後に依存グラフを再生成し、さ�
 Hawk の起点となるバイナリ一覧と、複数起点の結果を合成する判断基準は
 [Hawk 解析のバイナリ起点](hawk-entrypoints.md) に記録する。
 
-調査結果は、少なくとも次の区分で整理する。
+調査結果は、[既存の Hawk 分析](hawk-codex-cli-result-analysis.md) と
+[Hawk 解析のバイナリ起点](hawk-entrypoints.md) を入力に、少なくとも次の区分で整理する。
 
 - 到達不能で、安全に削除できる公開コード
 - feature、別バイナリ、テスト、外部利用からのみ到達するコード

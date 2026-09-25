@@ -31,8 +31,8 @@ use wiremock::matchers::header;
 use wiremock::matchers::method;
 use wiremock::matchers::path;
 
-// Bazel CI can spend tens of seconds starting app-server subprocesses or
-// processing auth RPCs under load.
+// CI can spend tens of seconds starting app-server subprocesses or processing
+// auth RPCs under load.
 const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(60);
 
 fn create_config_toml_custom_provider(
