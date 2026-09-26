@@ -87,7 +87,6 @@ use tungstenite::stream::MaybeTlsStream;
 use url::Url;
 use uuid::Uuid;
 
-mod loopback_responses_server;
 mod request_user_input;
 
 const NOTIFICATIONS_TO_OPT_OUT: &[&str] = &[

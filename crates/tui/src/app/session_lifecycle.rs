@@ -508,7 +508,6 @@ impl App {
             self.app_server_target,
             AppServerTarget::LocalDaemon { .. }
         ));
-        chat_widget.inherit_backend_banner_state(&mut self.chat_widget);
         for (thread_id, entry) in self.agent_navigation.ordered_threads() {
             chat_widget.set_collab_agent_metadata(
                 thread_id,

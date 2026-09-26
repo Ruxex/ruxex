@@ -20,17 +20,18 @@
 |---|---|---|
 | `codex-utils-readiness` | workspace に登録されていたが、他の workspace member からの依存・参照がなく、実装と自身のテストだけが残っていた。producer/consumer 監査後に workspace 登録、本体、lockfile、checked-in Hawk finding を削除済み | 置換なし。未参照クレートを削除 | `remove (completed)` |
 | `codex-thread-manager-sample` | 他の workspace member から利用されず、製品 runtime や必須 test entrypoint からも利用されない standalone binary。README と entrypoint 文書は配布する場合の説明に留まり、現行の必須 consumer ではない | 置換なし。ThreadManager サンプルを削除 | `remove` |
-| `LoopbackResponsesServer` | `app-server-test-client` で module 登録されているが、型・`start`・`base_url` の利用箇所がない | module、関連 generated artifact、古い snapshot の扱いを精査する候補 |
-| `crates/tui/src/app/backend_banner_fallback.rs` | production `app.rs` から module 化されておらず、production caller も見つからない。関連する fallback snapshot は残る | 孤立ソースと Reserve fallback の残存範囲を精査する候補 |
+| `LoopbackResponsesServer` と `plugin_analytics_capture_tests.rs` | いずれも削除済みの plugin analytics smoke test の残骸。前者は module 登録だけが残り、後者は module 登録されず削除済みシンボルを参照していた。`codex-cli.json` には前者の古い Hawk finding が2件残っていた | 置換なし。孤立した test helper、孤立 test source、生成済み finding を削除 | `remove (completed)` |
+| `crates/tui/src/app/backend_banner_fallback.rs`、`BackendBanner`、`ActionableBanner` | production caller がなく、ChatGPT の利用量・課金導線・Reserve 自動復旧に結び付いた TUI 実装と孤立 snapshot だけが残っていた | 汎用 rate-limit/status と通常の model picker は残し、Banner と Reserve 自動復旧を削除 | `remove (completed)` |
 
 確認対象の主なパスは次のとおり。
 
 - `crates/utils/readiness/`
 - `crates/thread-manager-sample/`
 - `crates/app-server-test-client/src/loopback_responses_server.rs`
-- `crates/tui/src/app/backend_banner_fallback.rs`
-- `crates/tui/src/chatwidget/backend_banners.rs`
-- `crates/tui/src/chatwidget/luna_reserve_return.rs`
+- `crates/app-server-test-client/src/plugin_analytics_capture_tests.rs`
+- `crates/tui/src/app/backend_banner_fallback.rs`（削除済み）
+- `crates/tui/src/chatwidget/backend_banners.rs`（削除済み）
+- `crates/tui/src/chatwidget/luna_reserve_return.rs`（削除済み）
 
 ## 2. デフォルトオフまたは削除済み feature の残存候補
 
@@ -74,7 +75,7 @@
 
 ## 3. OpenAI バックエンド依存の capability 候補
 
-### 3.1 ChatGPT の利用量・Reserve 自動切替・復旧 UI
+### 3.1 ChatGPT の利用量・Reserve 自動切替・復旧 UI（Banner 部分は削除済み）
 
 対象候補は TUI の rate limit、thread usage、backend banner、Reserve model return state、status card、ChatGPT usage URL、`requires_openai_auth` 判定である。
 
@@ -82,13 +83,15 @@
 
 - `crates/tui/src/chatwidget/rate_limits.rs`
 - `crates/tui/src/chatwidget/thread_usage.rs`
-- `crates/tui/src/chatwidget/backend_banners.rs`
-- `crates/tui/src/chatwidget/luna_reserve_return.rs`
-- `crates/tui/src/backend_banners/actions.rs`
+- `crates/tui/src/chatwidget/backend_banners.rs`（削除済み）
+- `crates/tui/src/chatwidget/luna_reserve_return.rs`（削除済み）
+- `crates/tui/src/backend_banners/actions.rs`（削除済み）
 - `crates/tui/src/status/card.rs`
 - `crates/tui/src/status/account.rs`
 
 通常の status、model catalog、provider-neutral な usage 表現まで削除するのではなく、ChatGPT account/plan、固定 URL、OpenAI 専用 recovery state の到達経路を分けて監査する。
+
+BackendBanner の parser/CTA/render、bottom pane の専用 inline banner、Reserve 自動切替・復帰状態・関連 snapshot は `remove (completed)` とした。通常の rate-limit 表示、status card、手動の model catalog はこの削除に含めていない。
 
 ### 3.2 OpenAI Curated / Bundled marketplace
 
@@ -131,7 +134,7 @@ OpenAI account/entitlement、host-owned Apps MCP、Apps 固有 UI/protocol と�
 
 各単位で、先に [pre-release compatibility inventory](pre-release-compatibility-inventory.md) の順序に従って producer/consumer を記録する。
 
-1. 参照元のないクレート・ソースと generated artifact を確認する。`codex-utils-readiness` と `codex-thread-manager-sample` は削除済みで、次は `LoopbackResponsesServer` と関連 generated artifact を確認する。
+1. 参照元のないクレート・ソースと generated artifact を確認する。`codex-utils-readiness`、`codex-thread-manager-sample`、`LoopbackResponsesServer`、plugin analytics の孤立 source、BackendBanner と関連 snapshot は削除済み。
 2. persisted/config/schema に残る削除済み feature の互換層を確認する。
 3. protocol/app-server の OpenAI 固有 alias・schema・account surface を確認する。
 4. TUI の usage/recovery UI と OpenAI Curated marketplace を確認する。

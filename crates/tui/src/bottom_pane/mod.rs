@@ -13,8 +13,8 @@
 //!
 //! Some UI is time-based rather than input-based, such as the transient "press again to quit"
 //! hint. The pane schedules redraws so those hints can expire even when the UI is otherwise idle.
-//! Inline banners sit above the composer. Number shortcuts apply only to an empty, idle composer;
-//! drafts, paste bursts, and active dialogs keep their normal input routing.
+//! Number shortcuts apply only to an empty, idle composer; drafts, paste bursts, and active dialogs
+//! keep their normal input routing.
 use std::collections::VecDeque;
 use std::path::PathBuf;
 
@@ -59,7 +59,6 @@ use std::time::Duration;
 use std::time::Instant;
 
 mod action_required_title;
-mod actionable_banner;
 mod apply_patch_header;
 mod approval_overlay;
 mod async_questions;
@@ -75,8 +74,6 @@ mod title_setup;
 pub(crate) mod user_verification;
 pub(crate) use action_required_title::ACTION_REQUIRED_PREVIEW_PREFIX;
 pub(crate) use action_required_title::build_action_required_title_text;
-pub(crate) use actionable_banner::ActionableBanner;
-pub(crate) use actionable_banner::BannerDismissal;
 pub(crate) use approval_overlay::ApplyPatchApprovalRequest;
 pub(crate) use approval_overlay::ApprovalOverlay;
 pub(crate) use approval_overlay::ApprovalRequest;
@@ -248,7 +245,6 @@ pub(crate) struct BottomPane {
     status: Option<StatusIndicatorWidget>,
     /// Running-hook summary supplied by the lifecycle owner after its reveal delay.
     hook_status_message: Option<String>,
-    inline_banner: Option<actionable_banner::InlineBanner>,
     /// Streaming may drop the row without losing its elapsed time or modal pause.
     status_timer: crate::status_indicator_widget::StatusTimer,
     /// Unified exec session summary source.
@@ -323,7 +319,6 @@ impl BottomPane {
             is_task_running: false,
             status: None,
             hook_status_message: None,
-            inline_banner: None,
             status_timer: crate::status_indicator_widget::StatusTimer::default(),
             unified_exec_footer: UnifiedExecFooter::new(),
             pending_input_preview: PendingInputPreview::new(),
@@ -774,9 +769,6 @@ impl BottomPane {
             self.request_redraw();
             InputResult::None
         } else {
-            if self.handle_inline_banner_key(key_event) {
-                return InputResult::None;
-            }
             // Allow the configured interrupt while a task is running, even when its
             // status row is hidden or the composer has focus.
             // When a popup is active, prefer dismissing it over interrupting the task.
@@ -1598,7 +1590,6 @@ impl BottomPane {
             && !self.questions.as_ref().is_some_and(|q| q.expanded)
             && self.view_stack.is_empty()
             && !self.composer.popup_active()
-            && !self.inline_banner_accepts_dismissal()
     }
 
     /// Return true when no popups or modal views are active, regardless of task state.
@@ -1899,22 +1890,10 @@ impl BottomPane {
         &'_ self,
         composer_right_reserve: u16,
     ) -> RenderableItem<'_> {
-        if (self.is_task_running || !self.view_stack.is_empty())
-            && let Some(banner) = &self.inline_banner
-        {
-            banner.visible.set(false);
-        }
         if let Some(view) = self.active_view() {
             RenderableItem::Borrowed(view)
         } else {
             let mut flex = FlexRenderable::new();
-            if let Some(banner) = self
-                .inline_banner
-                .as_ref()
-                .filter(|_| !self.is_task_running)
-            {
-                flex.push(/*flex*/ 0, RenderableItem::Borrowed(banner));
-            }
             if let Some(status) = self.status_widget() {
                 flex.push(
                     /*flex*/ 0,

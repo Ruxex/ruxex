@@ -101,13 +101,6 @@ pub struct ThreadItem {
     pub recency_at: Option<String>,
 }
 
-#[allow(dead_code)]
-#[deprecated(note = "use ThreadItem")]
-pub type ConversationItem = ThreadItem;
-#[allow(dead_code)]
-#[deprecated(note = "use ThreadsPage")]
-pub type ConversationsPage = ThreadsPage;
-
 #[derive(Default)]
 struct HeadTailSummary {
     originator: Option<String>,

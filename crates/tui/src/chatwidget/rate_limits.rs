@@ -212,9 +212,6 @@ impl ChatWidget {
     }
 
     pub(crate) fn finish_rate_limit_recovery(&mut self) {
-        if self.waiting_for_luna_reserve() {
-            return;
-        }
         if std::mem::take(&mut self.input_queue.rate_limit_recovery_pending) {
             self.submit_initial_user_message_if_pending();
             self.maybe_send_next_queued_input();
@@ -226,15 +223,6 @@ impl ChatWidget {
     }
 
     pub(crate) fn on_rolling_rate_limit_snapshot(&mut self, snapshot: RateLimitSnapshot) {
-        if let (Some(previous), Some(current)) = (
-            self.codex_rate_limit_reached_type,
-            snapshot.rate_limit_reached_type,
-        ) && previous != current
-        {
-            // Do not keep a credits CTA when a newer notification requires a different remedy.
-            // An absent aggregate limit type is not a contradiction of model-scoped recovery.
-            self.clear_backend_banner();
-        }
         // Rolling app-server notifications are sparse. Preserve metadata learned from the full read.
         self.on_rate_limit_snapshot_from(Some(snapshot), RateLimitSnapshotSource::RollingUpdate);
     }
@@ -407,9 +395,6 @@ impl ChatWidget {
     }
 
     pub(super) fn maybe_show_pending_rate_limit_prompt(&mut self) {
-        if self.has_applicable_backend_banner() {
-            return;
-        }
         if self.rate_limit_switch_prompt_hidden()
             || matches!(self.current_model(), NUDGE_MODEL_SLUG | LUNA_RESERVE_MODEL)
         {

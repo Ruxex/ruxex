@@ -885,15 +885,6 @@ impl App {
                 {
                     return Ok(AppRunControl::Continue);
                 }
-                if self.active_thread_id == self.chat_widget.thread_id() {
-                    if matches!(&op, AppCommand::UserTurn { .. })
-                        && self.chat_widget.defer_pending_turn_for_luna_reserve()
-                    {
-                        return Ok(AppRunControl::Continue);
-                    }
-                    self.chat_widget
-                        .apply_reserve_fallback_to_pending_turn(&mut op);
-                }
                 let is_user_turn = matches!(&op, AppCommand::UserTurn { .. });
                 if is_user_turn {
                     let screen_size = tui.terminal.last_known_screen_size;
@@ -1358,7 +1349,6 @@ impl App {
                 self.sync_active_thread_reasoning_setting(app_server, effort)
                     .await;
             }
-            AppEvent::UpdateLunaReserveReasoning { .. } => {}
             AppEvent::UpdateModel(model) => {
                 if self
                     .active_thread_model_setting_update_params(model.clone())

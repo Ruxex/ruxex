@@ -436,7 +436,6 @@ impl ChatWidget {
         if source == UserMessageSource::Prompt {
             self.bottom_pane.clear_pending_questions();
         }
-        self.dismiss_backend_banner_for_new_turn();
         if render_in_history {
             self.input_queue.user_turn_pending_start = true;
         }

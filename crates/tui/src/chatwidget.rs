@@ -358,10 +358,7 @@ mod notifications;
 mod session_model_selection;
 use self::notifications::Notification;
 pub(crate) use self::session_model_selection::AstraModelPickerAction;
-mod backend_banners;
 mod compaction;
-mod luna_reserve_model;
-mod luna_reserve_return;
 mod permission_discovery;
 mod permission_popups;
 mod permission_shortcuts;
@@ -578,11 +575,6 @@ pub(crate) struct ChatWidget {
     codex_rate_limit_reached_type: Option<RateLimitReachedType>,
     codex_spend_control_reached: Option<bool>,
     rate_limit_warnings: RateLimitWarningState,
-    backend_banner_state: backend_banners::BackendBannerState,
-    automatic_model_switch_state: backend_banners::AutomaticModelSwitchState,
-    backend_banner_notice_model: Option<String>,
-    // Remember the account's Reserve entry notice across chats and transient banner refreshes.
-    luna_reserve_notice_account_id: Option<String>,
     warning_display_state: WarningDisplayState,
     rate_limit_switch_prompt: RateLimitSwitchPromptState,
     adaptive_chunking: AdaptiveChunkingPolicy,
