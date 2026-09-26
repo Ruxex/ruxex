@@ -111296,34 +111296,6 @@
       "code": "hawk::unnecessary_public",
       "expansion": null,
       "identity": {
-        "compiler_id": "c75b43f72f51b7daa59fcc4dc2170b07",
-        "crate": "codex_utils_readiness",
-        "id": "v1|21:codex-utils-readiness|21:codex_utils_readiness|18:ReadinessFlag::new|15:inherent_method|6:source|33:crates/utils/readiness/src/lib.rs|60|5",
-        "item": "ReadinessFlag::new",
-        "kind": "inherent_method",
-        "module_scope": [],
-        "package": "codex-utils-readiness",
-        "parent": "ReadinessFlag"
-      },
-      "kind": "unnecessary_public",
-      "location": {
-        "byte_end": 2119,
-        "byte_start": 1816,
-        "column": 5,
-        "end_column": 6,
-        "end_line": 68,
-        "file": "crates/utils/readiness/src/lib.rs",
-        "line": 59
-      },
-      "severity": "warning",
-      "test_compiled_only": true,
-      "test_only": true
-    },
-    {
-      "category": "finding",
-      "code": "hawk::unnecessary_public",
-      "expansion": null,
-      "identity": {
         "compiler_id": "67ed72598357bf426073632b645534df",
         "crate": "codex_utils_sandbox_summary",
         "id": "v1|27:codex-utils-sandbox-summary|27:codex_utils_sandbox_summary|24:summarize_sandbox_policy|8:reexport|6:source|39:crates/utils/sandbox-summary/src/lib.rs|4|9",

@@ -52,7 +52,6 @@ Level 3 の削除判断では通常実行の16件を主起点としつつ、対�
 | `codex-config-schema` | `codex-write-config-schema` | `config.toml` の JSON Schema fixture を生成する。 | スキーマ生成コードを評価する場合に含める。 |
 | `codex-hooks` | `write_hooks_schema_fixtures` | hooks の schema fixture を生成する。 | hooks の生成コードを評価する場合に含める。 |
 | `codex-http-client` | `custom_ca_probe` | カスタム CA を利用する HTTP 接続を検査する。 | HTTP クライアントの補助コードを評価する場合に含める。 |
-| `codex-thread-manager-sample` | `codex-thread-manager-sample` | ThreadManager の 1 turn を実行し、通知を JSON Lines で出力するサンプル。 | sample を配布対象として扱う場合に含める。 |
 | `codex-tui` | `md-events` | Markdown 入力を pulldown-cmark のイベント列として表示する診断ツール。 | TUI の Markdown 補助コードを評価する場合に含める。 |
 | `codex-app-server-test-client` | `codex-app-server-test-client` | app-server を起動・操作する手動／統合テスト用クライアント。 | app-server テスト支援コードを評価する場合に含める。 |
 

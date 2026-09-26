@@ -3835,17 +3835,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "codex-thread-manager-sample"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "clap",
- "codex-core-api",
- "serde_json",
- "tracing",
-]
-
-[[package]]
 name = "codex-thread-store"
 version = "0.0.0"
 dependencies = [
@@ -4232,16 +4221,6 @@ dependencies = [
  "shared_library",
  "tokio",
  "winapi",
-]
-
-[[package]]
-name = "codex-utils-readiness"
-version = "0.0.0"
-dependencies = [
- "assert_matches",
- "thiserror 2.0.18",
- "time",
- "tokio",
 ]
 
 [[package]]

@@ -18,8 +18,8 @@
 
 | 対象 | 現時点の観測 | 現時点の扱い |
 |---|---|---|
-| `codex-utils-readiness` | workspace に登録されているが、他の workspace member からの依存・参照がない。実装と自身のテストだけが残る | クレート削除可否を精査する候補 |
-| `codex-thread-manager-sample` | workspace member だが、他の workspace member から利用されない独立サンプル | 製品 workspace に残すサンプルかどうかを確認する候補 |
+| `codex-utils-readiness` | workspace に登録されていたが、他の workspace member からの依存・参照がなく、実装と自身のテストだけが残っていた。producer/consumer 監査後に workspace 登録、本体、lockfile、checked-in Hawk finding を削除済み | 置換なし。未参照クレートを削除 | `remove (completed)` |
+| `codex-thread-manager-sample` | 他の workspace member から利用されず、製品 runtime や必須 test entrypoint からも利用されない standalone binary。README と entrypoint 文書は配布する場合の説明に留まり、現行の必須 consumer ではない | 置換なし。ThreadManager サンプルを削除 | `remove` |
 | `LoopbackResponsesServer` | `app-server-test-client` で module 登録されているが、型・`start`・`base_url` の利用箇所がない | module、関連 generated artifact、古い snapshot の扱いを精査する候補 |
 | `crates/tui/src/app/backend_banner_fallback.rs` | production `app.rs` から module 化されておらず、production caller も見つからない。関連する fallback snapshot は残る | 孤立ソースと Reserve fallback の残存範囲を精査する候補 |
 
@@ -131,7 +131,7 @@ OpenAI account/entitlement、host-owned Apps MCP、Apps 固有 UI/protocol と�
 
 各単位で、先に [pre-release compatibility inventory](pre-release-compatibility-inventory.md) の順序に従って producer/consumer を記録する。
 
-1. 参照元のないクレート・ソースと generated artifact を確認する。
+1. 参照元のないクレート・ソースと generated artifact を確認する。`codex-utils-readiness` と `codex-thread-manager-sample` は削除済みで、次は `LoopbackResponsesServer` と関連 generated artifact を確認する。
 2. persisted/config/schema に残る削除済み feature の互換層を確認する。
 3. protocol/app-server の OpenAI 固有 alias・schema・account surface を確認する。
 4. TUI の usage/recovery UI と OpenAI Curated marketplace を確認する。
