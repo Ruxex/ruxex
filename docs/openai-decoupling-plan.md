@@ -118,6 +118,8 @@ OpenAI 固有機能を除去した後に残る、汎用プロバイダ版クラ�
 
 `codex-model-provider-info`、`codex-api`、`codex-http-client`、`codex-mcp` は、上記 capability を外した後に OpenAI 固有 adapter と現行の互換 transport を再監査する。Responses-compatible な非 OpenAI provider、標準 MCP、汎用 HTTP transport を利用する経路があるため、クレート全体の削除は先行して決めない。
 
+今回の追加調査で見つかった、参照元のないクレート・ソース、削除済み feature の互換残骸、TUI の ChatGPT usage/recovery、OpenAI Curated marketplace、first-party auth、Apps/MCP の候補は [未使用・OpenAI 依存候補の追加調査メモ](openai-decoupling-candidates.md) に記録する。ここでは削除可否を確定せず、producer/consumer 監査後に本計画と [pre-release compatibility inventory](pre-release-compatibility-inventory.md) の判断へ反映する。
+
 **次の選定:** 残存する OpenAI/ChatGPT 固有 adapter を、次の 8 つの独立した実施単位に分ける。実施順は、影響範囲の小さいものから、認証・security boundary の強いものへ進める。
 
 1. `codex-response-debug-context` の response diagnostics。**完了。** `x-openai-authorization-error`、`x-error-json`、`x-oai-request-id` と identity-error fields/telemetry を削除し、`x-request-id`、`cf-ray`、bounded error redaction、provider-owned authorization recovery を保持した。producer/consumer audit は `docs/pre-release-compatibility-inventory.md` に記録し、詳細は [`2026-09-21-remove-response-debug-openai-adapter.md`](superpowers/plans/2026-09-21-remove-response-debug-openai-adapter.md) に記録した。
