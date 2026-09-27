@@ -1,6 +1,6 @@
 # 未使用・OpenAI 依存候補の追加調査メモ
 
-この文書は、[OpenAI 固有機能の段階的な分離計画](openai-decoupling-plan.md) に対する 2026-09-26 時点の追加調査結果を記録する。
+この文書は、[OpenAI 固有機能の段階的な分離計画](openai-decoupling-plan.md) に対する 2026-09-27 時点の追加調査結果を記録する。
 
 ここに記載した項目は **削除・保持・移行の決定ではない**。個別の producer/consumer 監査、別バイナリからの到達性、動的登録、生成物、外部利用の確認を行った後、[pre-release compatibility inventory](pre-release-compatibility-inventory.md) に `remove`、`retain`、または `migrate-in-place` として記録する。
 
@@ -13,6 +13,13 @@
 - `just check --tests`：成功
 
 既存の計画書・インベントリには、現在のソースツリーに残る実装を完了済みと記載している箇所もある。以下の候補は、その差分を解消するための再監査対象として扱う。
+
+互換性クリーンアップ計画の Task 1〜8 は完了している。削除済み feature
+の registry、schema、`apply_map`、CLI/TUI の一時的な consumer とテスト残骸も
+`fb8d960a7` で処理済みであり、詳細な `remove` / `retain` /
+`migrate-in-place` の判断は [pre-release compatibility inventory](pre-release-compatibility-inventory.md)
+に記録した。以下では、未更新だった候補の状態と、まだ残る Phase 3
+候補を区別して記録する。
 
 ## 1. 参照元が見つからないクレート・ソース
 
@@ -33,11 +40,12 @@
 - `crates/tui/src/chatwidget/backend_banners.rs`（削除済み）
 - `crates/tui/src/chatwidget/luna_reserve_return.rs`（削除済み）
 
-## 2. デフォルトオフまたは削除済み feature の残存候補
+## 2. デフォルトオフまたは削除済み feature の残存候補（監査完了）
 
 ### production consumer が見つからない、または互換 no-op に見えるもの
 
-次の feature は、現行 Rust production code から直接利用されていないか、`Features::apply_map` の互換 no-op として残っている。
+次の feature は、現行 Rust production code から直接利用されていないか、`Features::apply_map` の互換 no-op として残っていた。producer/consumer
+監査の結果、旧 feature の registry/spec/schema/no-op は削除済みである。
 
 - `transcript_v2`
 - `code_mode_buffered_exec`
@@ -60,12 +68,19 @@
 - `responses_websockets_v2`
 - `tui_app_server`
 
-これらは、次の互換処理と生成物を producer/consumer 監査する。
+削除したのは旧 feature compatibility layer だけであり、同名に近い現行
+capability は次のように保持している。
 
-- `crates/features/src/lib.rs` の `FeatureSpec` と `apply_map`
-- `crates/core/config.schema.json` の設定 schema
-- feature 設定を読む config layer、CLI、app-server、TUI
-- tests、fixture、説明文、生成済み schema
+- `multi_agent_mode`、`plugin_hooks`、`external_migration` は、現行の
+  multi-agent、plugin hooks、external-agent import の consumer を保持
+- `search_tool`、`image_detail_original`、`responses_websockets*` は、現行の
+  provider/model capability と `supports_websockets` に移行
+- `use_legacy_landlock`、`recommended_plugins`、`workspace_dependencies`、
+  code-mode、MCP、plugin runtime は現行 consumer または security fallback として保持
+
+検証は `crates/features/src/lib.rs`、`crates/core/config.schema.json`、
+CLI/managed-feature consumer の参照監査、`just generate`、
+`just check --tests`、`just check` で完了している。
 
 ### 名前だけでは削除しないもの
 
@@ -135,9 +150,9 @@ OpenAI account/entitlement、host-owned Apps MCP、Apps 固有 UI/protocol と�
 
 各単位で、先に [pre-release compatibility inventory](pre-release-compatibility-inventory.md) の順序に従って producer/consumer を記録する。
 
-1. 参照元のないクレート・ソースと generated artifact を確認する。`codex-utils-readiness`、`codex-thread-manager-sample`、`LoopbackResponsesServer`、plugin analytics の孤立 source、BackendBanner と関連 snapshot は削除済み。
-2. persisted/config/schema に残る削除済み feature の互換層を確認する。
-3. protocol/app-server の OpenAI 固有 alias・schema・account surface を確認する。
-4. TUI の usage/recovery UI と OpenAI Curated marketplace を確認する。
-5. login/model-provider の first-party auth adapter と Apps/MCP の OpenAI 固有部分を確認する。
-6. 各項目について `remove`、`retain`、`migrate-in-place` を決め、変更後に `just check`、必要に応じて `just check --tests`、生成物があれば `just generate` を実行する。
+1. 参照元のないクレート・ソースと generated artifact を確認する。`codex-utils-readiness`、`codex-thread-manager-sample`、`LoopbackResponsesServer`、plugin analytics の孤立 source、BackendBanner と関連 snapshot、Apps専用の孤立テスト群は削除済み。
+2. persisted/config/schema に残る削除済み feature の互換層を確認する。**完了**。
+3. protocol/app-server の互換 alias・schema は**完了**。ただし ChatGPT account/auth の現行 protocol surface は、次の first-party auth 境界で別途判断する。
+4. TUI の BackendBanner/Reserve recovery は**完了**。通常の status/account 表示と OpenAI Curated/Bundled marketplace の残存境界は未完了。
+5. login/model-provider の first-party auth adapter は未完了。Apps/MCP の専用 adapter は削除済みで、通常の MCP/OAuth/elicitation/security は保持済み。
+6. 未完了の各項目について producer/consumer を台帳に記録し、`remove`、`retain`、`migrate-in-place` を決めた後、`just check`、必要に応じて `just check --tests`、生成物があれば `just generate` を実行する。
