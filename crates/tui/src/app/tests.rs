@@ -15,8 +15,6 @@ mod background_exit_tests;
 mod background_task_defaults_tests;
 #[path = "tests/buffered_replay.rs"]
 mod buffered_replay;
-#[path = "tests/connector_policy.rs"]
-mod connector_policy;
 #[path = "tests/disconnect_tests.rs"]
 mod disconnect;
 #[path = "tests/fresh_sparkle_tests.rs"]

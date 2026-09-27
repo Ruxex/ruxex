@@ -234,6 +234,13 @@ before code is removed.
 | `crates/app-server-protocol/src/protocol/v2/apps.rs`, Apps request processors, core Apps instructions, and TUI Apps/app mentions | Producer/consumer audit: app-server, core, and TUI were the only producers/consumers of the ChatGPT Apps product surface. RPCs, processors, instructions, UI, and generated schemas were removed. | Active app-server/core/TUI protocol and UI without Apps product types | `remove` (completed) | `rg -n 'AppsRequestProcessor|AppsList|AppsRequest|AppsInstalled|AppsRead' crates --glob '*.rs' --glob '*.json' --glob '*.ts'; just check` |
 | `crates/codex-mcp/src/codex_apps.rs`, host-owned Apps MCP configuration, OpenAI `fileParams`/elicitation/source-attribution adapters, and ChatGPT MCP auth | Producer/consumer audit: ChatGPT-hosted Apps was the only producer; the dedicated MCP runtime, core, app-server, and TUI adapters were consumers. Those adapters were removed; generic MCP runtime, OAuth, standard elicitation, and security metadata remain. | Standard MCP runtime, generic OAuth/elicitation, and provider-neutral tool metadata | `remove` for Apps/OpenAI adapters; `retain` for generic MCP | `rg -n 'codex_apps|host_owned_codex_apps|CODEX_APPS_MCP|fileParams|openai/elicitation|McpServerAuth::ChatGpt' crates/codex-mcp crates --glob '*.rs'; just check` |
 
+The follow-up audit found only orphaned, unregistered Apps-specific test sources,
+fixtures, and snapshots (including the former `AppsTestServer`, Apps protocol
+fixtures, and OpenAI file-MCP fixtures). Mixed tests that exercise ordinary MCP,
+OAuth, tool caching, hooks, or provider-neutral security are retained even when
+they use an old Apps fixture name. The dedicated orphaned artifacts were removed;
+no production producer or generic MCP consumer remains for them.
+
 ### Hosted Plugin Marketplace / Sharing / Runtime capability
 
 | Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |
