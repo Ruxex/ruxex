@@ -385,7 +385,7 @@ mod tests {
                     .try_into()
                     .expect("current dir should be absolute"),
             }),
-            requires_openai_auth: false,
+            requires_first_party_auth: false,
             ..ModelProviderInfo::create_openai_provider(/*base_url*/ None)
         }
     }

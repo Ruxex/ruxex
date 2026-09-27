@@ -115,7 +115,7 @@ impl AccountRequestProcessor {
             .map_err(|err| invalid_request(err.to_string()))?;
         Ok(GetAccountResponse {
             account: account_state.account.map(Account::from),
-            requires_openai_auth: account_state.requires_openai_auth,
+            requires_first_party_auth: account_state.requires_first_party_auth,
         })
     }
 
@@ -558,16 +558,16 @@ impl AccountRequestProcessor {
         self.refresh_token_if_requested(do_refresh).await;
 
         // Determine whether auth is required based on the active model provider.
-        // If a custom provider is configured with `requires_openai_auth == false`,
+        // If a custom provider is configured with `requires_first_party_auth == false`,
         // then no auth step is required; otherwise, default to requiring auth.
         let config = self.load_latest_config().await;
-        let requires_openai_auth = config.model_provider.requires_openai_auth;
+        let requires_first_party_auth = config.model_provider.requires_first_party_auth;
 
-        let response = if !requires_openai_auth {
+        let response = if !requires_first_party_auth {
             GetAuthStatusResponse {
                 auth_method: None,
                 auth_token: None,
-                requires_openai_auth: Some(false),
+                requires_first_party_auth: Some(false),
             }
         } else {
             let auth = if do_refresh {
@@ -603,13 +603,13 @@ impl AccountRequestProcessor {
                     GetAuthStatusResponse {
                         auth_method: reported_auth_method,
                         auth_token: token_opt,
-                        requires_openai_auth: Some(true),
+                        requires_first_party_auth: Some(true),
                     }
                 }
                 None => GetAuthStatusResponse {
                     auth_method: None,
                     auth_token: None,
-                    requires_openai_auth: Some(true),
+                    requires_first_party_auth: Some(true),
                 },
             }
         };

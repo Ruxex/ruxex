@@ -1,15 +1,15 @@
 use super::*;
 use crate::LoadedPlugin;
-use crate::OPENAI_API_CURATED_MARKETPLACE_NAME;
-use crate::OPENAI_CURATED_MARKETPLACE_NAME;
+use crate::TEST_API_CURATED_MARKETPLACE_NAME;
+use crate::TEST_CURATED_MARKETPLACE_NAME;
 use crate::PluginMeasurementDefinition;
 use crate::store::PluginStore;
 use crate::test_support::TEST_CURATED_PLUGIN_CACHE_VERSION;
 use crate::test_support::TEST_CURATED_PLUGIN_SHA;
 use crate::test_support::curated_plugins_repo_path;
 use crate::test_support::write_curated_plugin_sha_with;
-use crate::test_support::write_openai_api_curated_marketplace;
-use crate::test_support::write_openai_curated_marketplace;
+use crate::test_support::write_test_api_curated_marketplace;
+use crate::test_support::write_test_curated_marketplace;
 use codex_plugin::PluginLoadOutcome;
 use codex_utils_path_uri::PathUri;
 use codex_utils_plugins::SkillDiscoveryMode;
@@ -47,11 +47,11 @@ fn loaded_plugin(config_name: &str, root: &Path, enabled: bool) -> LoadedPlugin 
 fn synced_plugin_root(codex_home: &Path, marketplace: &str, plugin_name: &str) -> AbsolutePathBuf {
     let synced_root = curated_plugins_repo_path(codex_home);
     match marketplace {
-        OPENAI_CURATED_MARKETPLACE_NAME => {
-            write_openai_curated_marketplace(&synced_root, &[plugin_name])
+        TEST_CURATED_MARKETPLACE_NAME => {
+            write_test_curated_marketplace(&synced_root, &[plugin_name])
         }
-        OPENAI_API_CURATED_MARKETPLACE_NAME => {
-            write_openai_api_curated_marketplace(&synced_root, &[plugin_name])
+        TEST_API_CURATED_MARKETPLACE_NAME => {
+            write_test_api_curated_marketplace(&synced_root, &[plugin_name])
         }
         _ => panic!("unsupported test marketplace"),
     }
@@ -65,7 +65,7 @@ fn synced_plugin_root(codex_home: &Path, marketplace: &str, plugin_name: &str) -
 fn script_fixture() -> (TempDir, AbsolutePathBuf, AbsolutePathBuf) {
     let temp = TempDir::new().expect("temp dir");
     write_curated_plugin_sha_with(temp.path(), TEST_CURATED_PLUGIN_SHA);
-    let root = synced_plugin_root(temp.path(), OPENAI_CURATED_MARKETPLACE_NAME, "sample");
+    let root = synced_plugin_root(temp.path(), TEST_CURATED_MARKETPLACE_NAME, "sample");
     let script = root.join("scripts/run.py");
     fs::create_dir_all(script.as_path().parent().expect("script parent")).expect("create scripts");
     fs::write(script.as_path(), "#!/usr/bin/env python3\n").expect("write script");
@@ -160,7 +160,7 @@ async fn resolves_relocated_script_through_executor_filesystem() {
     let roots = roots_for(
         temp.path(),
         vec![loaded_plugin(
-            "sample@openai-curated",
+            "sample@test-curated",
             root.as_path(),
             ENABLED,
         )],
@@ -168,7 +168,7 @@ async fn resolves_relocated_script_through_executor_filesystem() {
     let executor = TempDir::new().expect("executor temp dir");
     let executor_root = executor
         .path()
-        .join("plugins/cache/openai-curated/sample/remote-version");
+        .join("plugins/cache/test-curated/sample/remote-version");
     let executor_script = executor_root.join("scripts/run.py");
     fs::create_dir_all(executor_script.parent().expect("script parent"))
         .expect("create executor scripts");
@@ -187,7 +187,7 @@ async fn resolves_relocated_script_through_executor_filesystem() {
             )
             .await,
         Some(PluginCommandAttribution {
-            plugin_id: PluginId::parse("sample@openai-curated").expect("plugin id"),
+            plugin_id: PluginId::parse("sample@test-curated").expect("plugin id"),
             normalized_relative_path: "scripts/run.py".to_string(),
         })
     );
@@ -224,7 +224,7 @@ fn assert_invalid_metrics_manifest(codex_home: &Path, root: &AbsolutePathBuf, ma
     let roots = roots_for(
         codex_home,
         vec![loaded_plugin(
-            "sample@openai-curated",
+            "sample@test-curated",
             root.as_path(),
             ENABLED,
         )],
@@ -252,38 +252,38 @@ fn command(parts: &[&str]) -> Vec<String> {
 fn trusted_roots_require_verified_curated_cache() {
     let temp = TempDir::new().expect("temp dir");
     write_curated_plugin_sha_with(temp.path(), TEST_CURATED_PLUGIN_SHA);
-    let root = synced_plugin_root(temp.path(), OPENAI_CURATED_MARKETPLACE_NAME, "sample");
+    let root = synced_plugin_root(temp.path(), TEST_CURATED_MARKETPLACE_NAME, "sample");
     let api_root = synced_plugin_root(
         temp.path(),
-        OPENAI_API_CURATED_MARKETPLACE_NAME,
+        TEST_API_CURATED_MARKETPLACE_NAME,
         "api-sample",
     );
     let local_root = temp
         .path()
-        .join("plugins/cache/openai-curated/sample/local");
-    let spoofed_root = temp.path().join("spoofed/openai-curated/sample");
+        .join("plugins/cache/test-curated/sample/local");
+    let spoofed_root = temp.path().join("spoofed/test-curated/sample");
     fs::create_dir_all(&local_root).expect("create local root");
     fs::create_dir_all(&spoofed_root).expect("create spoofed root");
     let roots = roots_for(
         temp.path(),
         vec![
-            loaded_plugin("sample@openai-curated", root.as_path(), ENABLED),
-            loaded_plugin("api-sample@openai-api-curated", api_root.as_path(), ENABLED),
-            loaded_plugin("sample@openai-curated", &local_root, ENABLED),
-            loaded_plugin("sample@openai-curated", &spoofed_root, ENABLED),
-            loaded_plugin("disabled@openai-curated", root.as_path(), DISABLED),
+            loaded_plugin("sample@test-curated", root.as_path(), ENABLED),
+            loaded_plugin("api-sample@test-api-curated", api_root.as_path(), ENABLED),
+            loaded_plugin("sample@test-curated", &local_root, ENABLED),
+            loaded_plugin("sample@test-curated", &spoofed_root, ENABLED),
+            loaded_plugin("disabled@test-curated", root.as_path(), DISABLED),
         ],
     );
     assert_eq!(
         roots.roots,
         vec![
             TrustedPluginRoot {
-                plugin_id: PluginId::parse("sample@openai-curated").expect("plugin id"),
+                plugin_id: PluginId::parse("sample@test-curated").expect("plugin id"),
                 metrics_operations_by_path: BTreeMap::new(),
                 root: root.canonicalize().expect("canonical root"),
             },
             TrustedPluginRoot {
-                plugin_id: PluginId::parse("api-sample@openai-api-curated").expect("plugin id"),
+                plugin_id: PluginId::parse("api-sample@test-api-curated").expect("plugin id"),
                 metrics_operations_by_path: BTreeMap::new(),
                 root: api_root.canonicalize().expect("canonical root"),
             },
@@ -293,24 +293,24 @@ fn trusted_roots_require_verified_curated_cache() {
     {
         let alias = temp.path().join("sample-alias");
         std::os::unix::fs::symlink(root.as_path(), &alias).expect("symlink root");
-        assert_untrusted(temp.path(), "sample@openai-curated", &alias);
+        assert_untrusted(temp.path(), "sample@test-curated", &alias);
     }
-    let _ = synced_plugin_root(temp.path(), OPENAI_CURATED_MARKETPLACE_NAME, "listed");
+    let _ = synced_plugin_root(temp.path(), TEST_CURATED_MARKETPLACE_NAME, "listed");
     let unlisted_root = PluginStore::new(temp.path().to_path_buf()).plugin_root(
-        &PluginId::parse("missing@openai-curated").expect("plugin id"),
+        &PluginId::parse("missing@test-curated").expect("plugin id"),
         TEST_CURATED_PLUGIN_CACHE_VERSION,
     );
     fs::create_dir_all(unlisted_root.as_path()).expect("create unlisted root");
     assert_untrusted(
         temp.path(),
-        "missing@openai-curated",
+        "missing@test-curated",
         unlisted_root.as_path(),
     );
     let no_sha = TempDir::new().expect("temp dir");
-    let no_sha_root = synced_plugin_root(no_sha.path(), OPENAI_CURATED_MARKETPLACE_NAME, "sample");
+    let no_sha_root = synced_plugin_root(no_sha.path(), TEST_CURATED_MARKETPLACE_NAME, "sample");
     assert_untrusted(
         no_sha.path(),
-        "sample@openai-curated",
+        "sample@test-curated",
         no_sha_root.as_path(),
     );
 }
@@ -335,7 +335,7 @@ operations:
     let roots = roots_for(
         temp.path(),
         vec![loaded_plugin(
-            "sample@openai-curated",
+            "sample@test-curated",
             root.as_path(),
             ENABLED,
         )],
@@ -343,7 +343,7 @@ operations:
     assert_eq!(
         roots.resolve_metrics_operation(&command(&["scripts/run.py"]), &root),
         Some(ResolvedPluginMetricsOperation {
-            plugin_id: PluginId::parse("sample@openai-curated").expect("plugin id"),
+            plugin_id: PluginId::parse("sample@test-curated").expect("plugin id"),
             operation: PluginMetricsOperation {
                 operation_name: "security_scan".to_string(),
                 measurements: BTreeMap::from([
@@ -406,7 +406,7 @@ operations:
     let roots = roots_for(
         temp.path(),
         vec![loaded_plugin(
-            "sample@openai-curated",
+            "sample@test-curated",
             root.as_path(),
             ENABLED,
         )],
@@ -499,13 +499,13 @@ fn resolves_local_attribution_for_safe_interpreters_and_wrappers() {
     let roots = roots_for(
         temp.path(),
         vec![loaded_plugin(
-            "sample@openai-curated",
+            "sample@test-curated",
             root.as_path(),
             ENABLED,
         )],
     );
     let expected = Some(PluginCommandAttribution {
-        plugin_id: PluginId::parse("sample@openai-curated").expect("plugin id"),
+        plugin_id: PluginId::parse("sample@test-curated").expect("plugin id"),
         normalized_relative_path: "scripts/run.py".to_string(),
     });
     let script = script.to_string_lossy().to_string();
@@ -551,7 +551,7 @@ fn only_emits_safe_normalized_relative_script_paths() {
     );
     assert_eq!(
         normalized_relative_script_path(Path::new(
-            "/home/user/.codex/plugins/cache/openai-curated/sample/scripts/run.py"
+            "/home/user/.codex/plugins/cache/test-curated/sample/scripts/run.py"
         )),
         None
     );
@@ -563,7 +563,7 @@ fn rejects_ambiguous_commands_overlaps_and_symlink_escapes() {
     let roots = roots_for(
         temp.path(),
         vec![loaded_plugin(
-            "sample@openai-curated",
+            "sample@test-curated",
             root.as_path(),
             ENABLED,
         )],
@@ -587,12 +587,12 @@ fn rejects_ambiguous_commands_overlaps_and_symlink_escapes() {
     let overlapping = TrustedPluginRoots {
         roots: vec![
             TrustedPluginRoot {
-                plugin_id: PluginId::parse("sample@openai-curated").expect("plugin id"),
+                plugin_id: PluginId::parse("sample@test-curated").expect("plugin id"),
                 metrics_operations_by_path: BTreeMap::new(),
                 root: root.canonicalize().expect("canonical root"),
             },
             TrustedPluginRoot {
-                plugin_id: PluginId::parse("nested@openai-curated").expect("plugin id"),
+                plugin_id: PluginId::parse("nested@test-curated").expect("plugin id"),
                 metrics_operations_by_path: BTreeMap::new(),
                 root: root.join("scripts").canonicalize().expect("nested root"),
             },

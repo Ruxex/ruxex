@@ -675,7 +675,7 @@ fn set_test_initial_prompt(app: &mut App, initial_prompt: String) {
     let config = app.config.clone();
     let model = get_model_offline_for_tests(config.model.as_deref());
     app.chat_widget = ChatWidget::new_with_app_event(ChatWidgetInit {
-        requires_openai_auth: true,
+        requires_first_party_auth: true,
         local_settings: crate::local_settings::LocalSettings::from(&config),
         config,
         frame_requester: crate::tui::FrameRequester::test_dummy(),
@@ -8161,7 +8161,7 @@ async fn replace_chat_widget_reseeds_collab_agent_metadata_for_replay() {
     );
 
     let replacement = ChatWidget::new_with_app_event(ChatWidgetInit {
-        requires_openai_auth: true,
+        requires_first_party_auth: true,
         local_settings: crate::local_settings::LocalSettings::from(&app.config),
         config: app.config.clone(),
         frame_requester: crate::tui::FrameRequester::test_dummy(),

@@ -111,12 +111,18 @@ BackendBanner の parser/CTA/render、bottom pane の専用 inline banner、Rese
 
 ### 3.2 OpenAI Curated / Bundled marketplace
 
-次の OpenAI 固有 marketplace surface が残っている。
+監査の結果、OpenAI 固有 marketplace surface は次の active boundary と test-only
+残骸に分かれた。
 
-- `crates/core-plugins/src/lib.rs` の `openai-curated`、`openai-api-curated`、`openai-bundled`、`openai-primary-runtime`
-- `crates/core-plugins/src/marketplace_policy.rs` の予約名・managed path 判定
-- `crates/app-server/src/request_processors/plugins/search.rs` の built-in marketplace scope
-- `crates/tui/src/chatwidget/plugin_catalog.rs` の OpenAI Curated tab と help URL
+- `crates/core-plugins/src/lib.rs` の `openai-bundled`、`openai-primary-runtime` と、対応する
+  `marketplace_policy` の予約名・managed path 判定は、bundled plugin ローダー、trusted
+  script attribution、artifact telemetry が現在も消費しているため保持する。
+- `crates/app-server/src/request_processors/plugins/search.rs` に OpenAI 固有の built-in
+  scope はなく、local/Git/npm marketplace の検索基盤だけが残る。
+- `crates/tui/src/chatwidget/plugin_catalog.rs` の OpenAI Curated tab は既に削除済みで、
+  残っていた Apps help URL と disclosure line も削除した。
+- `core-plugins` と TUI の test-only curated marketplace 名は `test-curated`/
+  `test-api-curated`/`Test Marketplace` へ移行した。
 
 汎用の local/Git/npm plugin loader、hook、tool、trust/security policy は別の保持候補であり、`codex-core-plugins` 全体を削除する根拠にはしない。
 
@@ -125,7 +131,7 @@ BackendBanner の parser/CTA/render、bottom pane の専用 inline banner、Rese
 次のクレートは OpenAI 固有部分と provider-neutral 部分が混在している。
 
 - `codex-login`: ChatGPT JWT、plan/account ID、managed auth、`OPENAI_API_KEY`
-- `codex-model-provider-info`: `create_openai_provider`、`requires_openai_auth`
+- `codex-model-provider-info`: `create_openai_provider`、`requires_first_party_auth`
 - `codex-model-provider`: OpenAI models endpoint、ChatGPT account header、OpenAI auth predicate
 - `codex-app-server-protocol`: ChatGPT auth/account や OpenAI 固有 protocol 型
 
@@ -153,6 +159,10 @@ OpenAI account/entitlement、host-owned Apps MCP、Apps 固有 UI/protocol と�
 1. 参照元のないクレート・ソースと generated artifact を確認する。`codex-utils-readiness`、`codex-thread-manager-sample`、`LoopbackResponsesServer`、plugin analytics の孤立 source、BackendBanner と関連 snapshot、Apps専用の孤立テスト群は削除済み。
 2. persisted/config/schema に残る削除済み feature の互換層を確認する。**完了**。
 3. protocol/app-server の互換 alias・schema は**完了**。ただし ChatGPT account/auth の現行 protocol surface は、次の first-party auth 境界で別途判断する。
-4. TUI の BackendBanner/Reserve recovery は**完了**。通常の status/account 表示と OpenAI Curated/Bundled marketplace の残存境界は未完了。
-5. login/model-provider の first-party auth adapter は未完了。Apps/MCP の専用 adapter は削除済みで、通常の MCP/OAuth/elicitation/security は保持済み。
+4. TUI の BackendBanner/Reserve recovery と hosted/curated marketplace UI は**完了**。
+   通常の status/account 表示と active bundled/runtime marketplace boundary は保持する。
+5. login/model-provider の first-party auth adapter は、共有 auth capability の名称を
+   `requires_first_party_auth` に移行済みだが、明示的な OpenAI-compatible adapter と
+   ChatGPT/workload-identity の active consumer は保持中で、adapter の分割・削除は未完了。
+   Apps/MCP の専用 adapter は削除済みで、通常の MCP/OAuth/elicitation/security は保持済み。
 6. 未完了の各項目について producer/consumer を台帳に記録し、`remove`、`retain`、`migrate-in-place` を決めた後、`just check`、必要に応じて `just check --tests`、生成物があれば `just generate` を実行する。

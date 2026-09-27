@@ -37,9 +37,9 @@ pub(crate) const OPENAI_BUNDLED_ALPHA_MARKETPLACE_NAME: &str = "openai-bundled-a
 pub(crate) const OPENAI_PRIMARY_RUNTIME_MARKETPLACE_NAME: &str = "openai-primary-runtime";
 
 #[cfg(test)]
-pub(crate) const OPENAI_CURATED_MARKETPLACE_NAME: &str = "openai-curated";
+pub(crate) const TEST_CURATED_MARKETPLACE_NAME: &str = "test-curated";
 #[cfg(test)]
-pub(crate) const OPENAI_API_CURATED_MARKETPLACE_NAME: &str = "openai-api-curated";
+pub(crate) const TEST_API_CURATED_MARKETPLACE_NAME: &str = "test-api-curated";
 
 pub type LoadedPlugin = codex_plugin::LoadedPlugin<codex_config::McpServerConfig>;
 pub type PluginLoadOutcome = codex_plugin::PluginLoadOutcome<codex_config::McpServerConfig>;

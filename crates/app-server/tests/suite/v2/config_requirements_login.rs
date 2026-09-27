@@ -112,7 +112,7 @@ command = "print-token"
             account: Some(Account::AmazonBedrock {
                 uses_codex_managed_credentials: false
             }),
-            requires_openai_auth: false,
+            requires_first_party_auth: false,
         }
     );
     assert!(

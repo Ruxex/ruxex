@@ -31,7 +31,7 @@ pub(crate) fn identity(
         field(name.as_bytes());
         field(value.as_bytes());
     }
-    field(&[u8::from(provider_info.requires_openai_auth)]);
+    field(&[u8::from(provider_info.requires_first_party_auth)]);
     field(&[u8::from(provider_info.has_command_auth())]);
     field(format!("{:?}", auth.map(CodexAuth::api_auth_mode)).as_bytes());
     if let Some(auth) = auth {

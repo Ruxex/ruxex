@@ -46,7 +46,7 @@ pub(crate) fn write_curated_plugin(root: &Path, plugin_name: &str) {
     );
 }
 
-pub(crate) fn write_openai_api_curated_marketplace(root: &Path, plugin_names: &[&str]) {
+pub(crate) fn write_test_api_curated_marketplace(root: &Path, plugin_names: &[&str]) {
     let plugins = plugin_names
         .iter()
         .map(|plugin_name| {
@@ -66,7 +66,7 @@ pub(crate) fn write_openai_api_curated_marketplace(root: &Path, plugin_names: &[
         &root.join(".agents/plugins/api_marketplace.json"),
         &format!(
             r#"{{
-  "name": "openai-api-curated",
+  "name": "test-api-curated",
   "plugins": [
 {plugins}
   ]

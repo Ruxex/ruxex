@@ -65,7 +65,7 @@ impl Default for ProviderCapabilities {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProviderAccountState {
     pub account: Option<ProviderAccount>,
-    pub requires_openai_auth: bool,
+    pub requires_first_party_auth: bool,
 }
 
 /// Outcome of a provider-owned attempt to recover from an authentication failure.
@@ -274,7 +274,7 @@ pub type ModelProviderFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a
 pub type SharedModelProvider = Arc<dyn ModelProvider>;
 
 fn provider_uses_first_party_auth_path(provider: &ModelProviderInfo) -> bool {
-    provider.requires_openai_auth
+    provider.requires_first_party_auth
         && provider.env_key.is_none()
         && provider.experimental_bearer_token.is_none()
         && provider.auth.is_none()
@@ -351,7 +351,7 @@ impl ModelProvider for ConfiguredModelProvider {
     }
 
     fn account_state(&self) -> ProviderAccountResult {
-        let account = if self.info.requires_openai_auth {
+        let account = if self.info.requires_first_party_auth {
             self.auth_manager
                 .as_ref()
                 .and_then(|auth_manager| {
@@ -380,7 +380,7 @@ impl ModelProvider for ConfiguredModelProvider {
 
         Ok(ProviderAccountState {
             account,
-            requires_openai_auth: self.info.requires_openai_auth,
+            requires_first_party_auth: self.info.requires_first_party_auth,
         })
     }
 
@@ -500,7 +500,7 @@ mod tests {
                     .try_into()
                     .expect("current dir should be absolute"),
             }),
-            requires_openai_auth: false,
+            requires_first_party_auth: false,
             ..ModelProviderInfo::create_openai_provider(/*base_url*/ None)
         }
     }
@@ -526,7 +526,7 @@ mod tests {
             stream_max_retries: Some(0),
             stream_idle_timeout_ms: Some(5_000),
             websocket_connect_timeout_ms: None,
-            requires_openai_auth: false,
+            requires_first_party_auth: false,
             supports_websockets: false,
             supports_standalone_web_search: false,
         }
@@ -933,7 +933,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
             provider.account_state(),
             Ok(ProviderAccountState {
                 account: None,
-                requires_openai_auth: true,
+                requires_first_party_auth: true,
             })
         );
     }
@@ -951,7 +951,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
             provider.account_state(),
             Ok(ProviderAccountState {
                 account: Some(ProviderAccount::ApiKey),
-                requires_openai_auth: true,
+                requires_first_party_auth: true,
             })
         );
     }
@@ -976,7 +976,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
                 name: "Custom".to_string(),
                 base_url: Some("http://localhost:1234/v1".to_string()),
                 wire_api: WireApi::Responses,
-                requires_openai_auth: false,
+                requires_first_party_auth: false,
                 ..Default::default()
             },
             /*auth_manager*/ None,
@@ -986,7 +986,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
             provider.account_state(),
             Ok(ProviderAccountState {
                 account: None,
-                requires_openai_auth: false,
+                requires_first_party_auth: false,
             })
         );
     }
@@ -1004,7 +1004,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
                 account: Some(ProviderAccount::AmazonBedrock {
                     uses_codex_managed_credentials: false,
                 }),
-                requires_openai_auth: false,
+                requires_first_party_auth: false,
             })
         );
     }

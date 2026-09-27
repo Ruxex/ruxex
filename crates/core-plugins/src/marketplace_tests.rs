@@ -1175,7 +1175,7 @@ fn list_marketplaces_supports_explicit_api_marketplace_manifest_path() {
     fs::write(
         marketplace_path.as_path(),
         r#"{
-  "name": "openai-api-curated",
+  "name": "test-api-curated",
   "plugins": [
     {
       "name": "api-plugin",
@@ -1199,7 +1199,7 @@ fn list_marketplaces_supports_explicit_api_marketplace_manifest_path() {
     assert_eq!(
         marketplaces,
         vec![Marketplace {
-            name: "openai-api-curated".to_string(),
+            name: "test-api-curated".to_string(),
             path: marketplace_path,
             interface: None,
             plugins: vec![MarketplacePlugin {
@@ -1553,7 +1553,7 @@ fn list_marketplaces_reads_marketplace_display_name() {
     fs::write(
         repo_root.join(".agents/plugins/marketplace.json"),
         r#"{
-  "name": "openai-curated",
+  "name": "test-curated",
   "interface": {
     "displayName": "ChatGPT Official"
   },

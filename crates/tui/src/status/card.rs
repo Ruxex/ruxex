@@ -200,7 +200,7 @@ pub(crate) fn new_status_output_with_rate_limits(
 ) -> CompositeHistoryCell {
     new_status_output_with_rate_limits_handle(
         config,
-        config.model_provider.requires_openai_auth,
+        config.model_provider.requires_first_party_auth,
         /*model_provider_id*/ None,
         /*remote_connection*/ None,
         account_display,
@@ -224,7 +224,7 @@ pub(crate) fn new_status_output_with_rate_limits(
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn new_status_output_with_rate_limits_handle(
     config: &Config,
-    requires_openai_auth: bool,
+    requires_first_party_auth: bool,
     model_provider_id: Option<&str>,
     remote_connection: Option<&RemoteConnectionStatus>,
     account_display: Option<&StatusAccountDisplay>,
@@ -245,7 +245,7 @@ pub(crate) fn new_status_output_with_rate_limits_handle(
     let command = PlainHistoryCell::new(vec!["/status".magenta().into()]);
     let card = Arc::new(StatusHistoryCell::new(
         config,
-        requires_openai_auth,
+        requires_first_party_auth,
         model_provider_id,
         remote_connection,
         account_display,
@@ -277,7 +277,7 @@ impl StatusHistoryCell {
     #[allow(clippy::too_many_arguments)]
     fn new(
         config: &Config,
-        requires_openai_auth: bool,
+        requires_first_party_auth: bool,
         model_provider_id: Option<&str>,
         remote_connection: Option<&RemoteConnectionStatus>,
         account_display: Option<&StatusAccountDisplay>,
@@ -349,7 +349,7 @@ impl StatusHistoryCell {
             &approval,
             workspace_root_suffix.as_deref(),
         );
-        let show_chatgpt_usage_link = requires_openai_auth;
+        let show_chatgpt_usage_link = requires_first_party_auth;
         let account = compose_account_display(account_display);
         let session_id = session_id.as_ref().map(std::string::ToString::to_string);
         let forked_from = forked_from.map(|id| id.to_string());
@@ -806,7 +806,7 @@ impl StatusHistoryCell {
             RtOptions::new(available_inner_width),
         );
         lines.push(Line::from(Vec::<Span<'static>>::new()));
-        // The ChatGPT usage page only applies to providers backed by OpenAI auth;
+        // The ChatGPT usage page only applies to providers backed by first-party auth;
         // providers like Bedrock manage limits and billing elsewhere.
         if self.show_chatgpt_usage_link {
             lines.extend(note_lines);

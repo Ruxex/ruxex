@@ -94,7 +94,7 @@ async fn auto_compaction_emits_started_and_completed_items(route: CompactionRout
     if let CompactionRoute::Remote = route {
         config = config
             .with_provider_name("OpenAI")
-            .with_provider_config("requires_openai_auth = true");
+            .with_provider_config("requires_first_party_auth = true");
         write_workload_identity_auth(
             codex_home.path(),
             WorkloadIdentityAuthFixture::new("access-chatgpt").plan_type("pro"),

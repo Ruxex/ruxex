@@ -253,7 +253,7 @@ fn install_with_version_uses_requested_cache_version() {
     let tmp = tempdir().unwrap();
     write_plugin(tmp.path(), "sample-plugin", "sample-plugin");
     let plugin_id =
-        PluginId::new("sample-plugin".to_string(), "openai-curated".to_string()).unwrap();
+        PluginId::new("sample-plugin".to_string(), "test-curated".to_string()).unwrap();
     let plugin_version = "0123456789abcdef".to_string();
 
     let result = PluginStore::new(tmp.path().to_path_buf())
@@ -265,7 +265,7 @@ fn install_with_version_uses_requested_cache_version() {
         .unwrap();
 
     let installed_path = tmp.path().join(format!(
-        "plugins/cache/openai-curated/sample-plugin/{plugin_version}"
+        "plugins/cache/test-curated/sample-plugin/{plugin_version}"
     ));
     assert_eq!(
         result,

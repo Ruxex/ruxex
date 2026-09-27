@@ -72,7 +72,7 @@ pub struct ModelProvider {
     #[prost(uint64, optional, tag = "15")]
     pub websocket_connect_timeout_ms: ::core::option::Option<u64>,
     #[prost(bool, tag = "16")]
-    pub requires_openai_auth: bool,
+    pub requires_first_party_auth: bool,
     #[prost(bool, tag = "17")]
     pub supports_websockets: bool,
     #[prost(bool, tag = "18")]

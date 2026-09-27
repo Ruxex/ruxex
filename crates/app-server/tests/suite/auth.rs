@@ -37,13 +37,13 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 
 fn create_config_toml_custom_provider(
     codex_home: &Path,
-    requires_openai_auth: bool,
+    requires_first_party_auth: bool,
 ) -> std::io::Result<()> {
     let mut config = MockResponsesConfig::new("http://127.0.0.1:0")
         .with_sandbox_mode("danger-full-access")
         .disable_feature(Feature::ShellSnapshot);
-    if requires_openai_auth {
-        config = config.with_provider_config("requires_openai_auth = true");
+    if requires_first_party_auth {
+        config = config.with_provider_config("requires_first_party_auth = true");
     }
     config.write(codex_home)
 }
@@ -132,7 +132,7 @@ async fn get_auth_status_with_api_key() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn get_auth_status_with_api_key_when_auth_not_required() -> Result<()> {
     let codex_home = TempDir::new()?;
-    create_config_toml_custom_provider(codex_home.path(), /*requires_openai_auth*/ false)?;
+    create_config_toml_custom_provider(codex_home.path(), /*requires_first_party_auth*/ false)?;
 
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
@@ -154,9 +154,9 @@ async fn get_auth_status_with_api_key_when_auth_not_required() -> Result<()> {
     assert_eq!(status.auth_method, None, "expected no auth method");
     assert_eq!(status.auth_token, None, "expected no token");
     assert_eq!(
-        status.requires_openai_auth,
+        status.requires_first_party_auth,
         Some(false),
-        "requires_openai_auth should be false",
+        "requires_first_party_auth should be false",
     );
     Ok(())
 }
@@ -215,7 +215,7 @@ async fn get_auth_status_with_api_key_refresh_requested() -> Result<()> {
         GetAuthStatusResponse {
             auth_method: Some(AuthMode::ApiKey),
             auth_token: Some("sk-test-key".to_string()),
-            requires_openai_auth: Some(true),
+            requires_first_party_auth: Some(true),
         }
     );
     Ok(())

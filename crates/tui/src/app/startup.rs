@@ -329,7 +329,7 @@ impl App {
         let auth_mode = bootstrap.auth_mode;
         let has_managed_account = bootstrap.has_managed_account;
         let has_codex_backend_auth = false;
-        let requires_openai_auth = bootstrap.requires_openai_auth;
+        let requires_first_party_auth = bootstrap.requires_first_party_auth;
         let status_account_display = bootstrap.status_account_display.clone();
         let initial_plan_type = bootstrap.plan_type;
         let session_telemetry = SessionTelemetry::new(
@@ -423,7 +423,7 @@ impl App {
                     ),
                     enhanced_keys_supported,
                     has_managed_account,
-                    requires_openai_auth,
+                    requires_first_party_auth,
                     has_codex_backend_auth,
                     model_catalog: model_catalog.clone(),
                     is_first_run,
@@ -544,7 +544,7 @@ impl App {
                     .filter(|_| resumed.is_some()),
                     enhanced_keys_supported,
                     has_managed_account,
-                    requires_openai_auth,
+                    requires_first_party_auth,
                     has_codex_backend_auth,
                     model_catalog: model_catalog.clone(),
                     is_first_run,
@@ -648,7 +648,7 @@ impl App {
                     .filter(|_| forked.is_some()),
                     enhanced_keys_supported,
                     has_managed_account,
-                    requires_openai_auth,
+                    requires_first_party_auth,
                     has_codex_backend_auth,
                     model_catalog: model_catalog.clone(),
                     is_first_run,
@@ -928,7 +928,7 @@ See the Codex keymap documentation for supported actions and examples."
             "tui startup initial frame scheduled"
         );
         app.refresh_startup_skills(&app_server);
-        if requires_openai_auth && has_managed_account {
+        if requires_first_party_auth && has_managed_account {
             crate::daybreak::prefetch_notice(
                 &app.config,
                 &app_server,

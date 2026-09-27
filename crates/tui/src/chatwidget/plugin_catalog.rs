@@ -23,7 +23,6 @@ use crate::key_hint;
 use crate::legacy_core::config::Config;
 use crate::motion::MotionMode;
 use crate::motion::shimmer_text;
-use crate::onboarding::mark_url_hyperlink;
 use crate::render::renderable::ColumnRenderable;
 use crate::render::renderable::Renderable;
 use crate::tui::FrameRequester;
@@ -44,7 +43,6 @@ use ratatui::style::Stylize;
 use ratatui::text::Line;
 use ratatui::text::Span;
 use ratatui::widgets::Paragraph;
-use ratatui::widgets::Wrap;
 use unicode_width::UnicodeWidthStr;
 
 const INSTALLED_PLUGINS_TAB_ID: &str = "installed-plugins";
@@ -52,7 +50,6 @@ const MARKETPLACE_TAB_ID_PREFIX: &str = "marketplace:";
 const PLUGIN_ROW_PREFIX_WIDTH: usize = 6;
 const LOADING_ANIMATION_DELAY: Duration = Duration::from_secs(1);
 const LOADING_ANIMATION_INTERVAL: Duration = Duration::from_millis(100);
-const APPS_HELP_ARTICLE_URL: &str = "https://help.openai.com/en/articles/11487775-apps-in-chatgpt";
 const PERSONAL_MARKETPLACE_RELATIVE_PATH: &str = ".agents/plugins/marketplace.json";
 const LOCAL_MARKETPLACE_TAB_ORDER: u8 = 0;
 const OTHER_MARKETPLACE_TAB_ORDER: u8 = 1;
@@ -159,27 +156,6 @@ impl Renderable for DelayedLoadingHeader {
 
     fn desired_height(&self, _width: u16) -> u16 {
         2 + u16::from(self.note.is_some())
-    }
-}
-
-struct PluginDisclosureLine {
-    line: Line<'static>,
-}
-
-impl Renderable for PluginDisclosureLine {
-    fn render(&self, area: Rect, buf: &mut Buffer) {
-        Paragraph::new(self.line.clone())
-            .wrap(Wrap { trim: false })
-            .render(area, buf);
-        mark_url_hyperlink(buf, area, APPS_HELP_ARTICLE_URL);
-    }
-
-    fn desired_height(&self, width: u16) -> u16 {
-        Paragraph::new(self.line.clone())
-            .wrap(Wrap { trim: false })
-            .line_count(width)
-            .try_into()
-            .unwrap_or(u16::MAX)
     }
 }
 
@@ -779,19 +755,6 @@ impl ChatWidget {
         header.push(Line::from(
             format!("{display_name} · {detail_status_label} · {marketplace_label}").bold(),
         ));
-        if !plugin.summary.installed {
-            header.push(PluginDisclosureLine {
-                line: Line::from(vec![
-                    "Data shared with this app is subject to the app's ".into(),
-                    "terms of service".bold(),
-                    " and ".into(),
-                    "privacy policy".bold(),
-                    ". ".into(),
-                    "Learn more".cyan().underlined(),
-                    ".".into(),
-                ]),
-            });
-        }
         if let Some(description) = plugin_detail_description(plugin) {
             header.push(Line::from(description.dim()));
         }

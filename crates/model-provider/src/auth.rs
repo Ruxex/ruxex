@@ -88,7 +88,7 @@ impl AuthProvider for AuthManagerAuthProvider {
 }
 
 // Some providers are meant to send no auth headers. Examples include local OSS
-// providers and custom test providers with `requires_openai_auth = false`.
+// providers and custom test providers with `requires_first_party_auth = false`.
 #[derive(Clone, Debug)]
 struct UnauthenticatedAuthProvider;
 
@@ -121,7 +121,7 @@ pub(crate) fn resolve_provider_auth(
         return Ok(Arc::new(auth));
     }
 
-    if !provider.requires_openai_auth && provider.auth.is_none() {
+    if !provider.requires_first_party_auth && provider.auth.is_none() {
         return Ok(unauthenticated_auth_provider());
     }
 

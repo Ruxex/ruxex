@@ -5,8 +5,8 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use crate::OPENAI_API_CURATED_MARKETPLACE_NAME;
-use crate::OPENAI_CURATED_MARKETPLACE_NAME;
+use crate::TEST_API_CURATED_MARKETPLACE_NAME;
+use crate::TEST_CURATED_MARKETPLACE_NAME;
 use crate::PluginsConfigInput;
 use crate::PluginsManager;
 use codex_config::LoaderOverrides;
@@ -319,22 +319,22 @@ pub(crate) fn write_curated_plugin(root: &Path, plugin_name: &str) {
     );
 }
 
-pub(crate) fn write_openai_curated_marketplace(root: &Path, plugin_names: &[&str]) {
+pub(crate) fn write_test_curated_marketplace(root: &Path, plugin_names: &[&str]) {
     write_curated_marketplace(
         root,
         "marketplace.json",
-        OPENAI_CURATED_MARKETPLACE_NAME,
+        TEST_CURATED_MARKETPLACE_NAME,
         /*display_name*/ None,
         plugin_names,
     );
 }
 
-pub(crate) fn write_openai_api_curated_marketplace(root: &Path, plugin_names: &[&str]) {
+pub(crate) fn write_test_api_curated_marketplace(root: &Path, plugin_names: &[&str]) {
     write_curated_marketplace(
         root,
         "api_marketplace.json",
-        OPENAI_API_CURATED_MARKETPLACE_NAME,
-        Some("OpenAI Curated"),
+        TEST_API_CURATED_MARKETPLACE_NAME,
+        Some("Test Curated"),
         plugin_names,
     );
 }

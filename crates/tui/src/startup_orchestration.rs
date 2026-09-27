@@ -272,7 +272,7 @@ pub(super) async fn run_main_inner(
         && daemon_exclusion.is_none()
         && should_show_bedrock_setup_wizard(
             LoginStatus::NotAuthenticated,
-            config.model_provider.requires_openai_auth,
+            config.model_provider.requires_first_party_auth,
             &config,
             &AppServerTarget::Embedded,
         )

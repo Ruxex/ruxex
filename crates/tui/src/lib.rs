@@ -1111,12 +1111,12 @@ async fn run_ratatui_app(
         }
     };
     // Workload identity bypasses interactive login; every other provider uses account/read.
-    let requires_openai_auth = startup_account
+    let requires_first_party_auth = startup_account
         .as_ref()
-        .is_some_and(|account| account.requires_openai_auth);
+        .is_some_and(|account| account.requires_first_party_auth);
     let should_show_onboarding = should_show_onboarding(
         login_status,
-        requires_openai_auth,
+        requires_first_party_auth,
         should_show_trust_screen_flag,
     );
 
@@ -1127,10 +1127,10 @@ async fn run_ratatui_app(
         }
         // Authentication can change while any interactive onboarding screen is open.
         startup_account = None;
-        let show_login_screen = should_show_login_screen(login_status, requires_openai_auth);
+        let show_login_screen = should_show_login_screen(login_status, requires_first_party_auth);
         let bedrock_setup_enabled = should_show_bedrock_setup_wizard(
             login_status,
-            requires_openai_auth,
+            requires_first_party_auth,
             &initial_config,
             &app_server_target,
         );
@@ -2026,20 +2026,20 @@ fn should_show_trust_screen(config: &Config) -> bool {
 
 fn should_show_onboarding(
     login_status: LoginStatus,
-    requires_openai_auth: bool,
+    requires_first_party_auth: bool,
     show_trust_screen: bool,
 ) -> bool {
     if show_trust_screen {
         return true;
     }
 
-    should_show_login_screen(login_status, requires_openai_auth)
+    should_show_login_screen(login_status, requires_first_party_auth)
 }
 
-fn should_show_login_screen(login_status: LoginStatus, requires_openai_auth: bool) -> bool {
-    // Only show the login screen for providers that actually require OpenAI auth
+fn should_show_login_screen(login_status: LoginStatus, requires_first_party_auth: bool) -> bool {
+    // Only show the login screen for providers that actually require first-party auth
     // (OpenAI or equivalents). For OSS/other providers, skip login entirely.
-    if !requires_openai_auth {
+    if !requires_first_party_auth {
         return false;
     }
 
@@ -2048,12 +2048,12 @@ fn should_show_login_screen(login_status: LoginStatus, requires_openai_auth: boo
 
 fn should_show_bedrock_setup_wizard(
     login_status: LoginStatus,
-    requires_openai_auth: bool,
+    requires_first_party_auth: bool,
     config: &Config,
     app_server_target: &AppServerTarget,
 ) -> bool {
     matches!(app_server_target, AppServerTarget::Embedded)
-        && should_show_login_screen(login_status, requires_openai_auth)
+        && should_show_login_screen(login_status, requires_first_party_auth)
         && config.features.enabled(Feature::BedrockSetupWizard)
         && config.model_provider_id == "openai"
         && config

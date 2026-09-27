@@ -761,10 +761,10 @@ async fn status_uses_server_provider_id_and_auth_requirement() {
         .expect("timestamp");
     let model_slug = get_model_offline_for_tests(config.model.as_deref());
 
-    config.model_provider.requires_openai_auth = true;
+    config.model_provider.requires_first_party_auth = true;
     let (composite, _handle) = new_status_output_with_rate_limits_handle(
         &config,
-        /*requires_openai_auth*/ false,
+        /*requires_first_party_auth*/ false,
         Some("server-ollama"),
         /*remote_connection*/ None,
         test_status_account_display().as_ref(),
@@ -790,12 +790,12 @@ async fn status_uses_server_provider_id_and_auth_requirement() {
     config.model_provider = ModelProviderInfo {
         name: "OpenAI Proxy".to_string(),
         base_url: Some("https://openai-proxy.example/v1".to_string()),
-        requires_openai_auth: false,
+        requires_first_party_auth: false,
         ..ModelProviderInfo::default()
     };
     let (composite, _handle) = new_status_output_with_rate_limits_handle(
         &config,
-        /*requires_openai_auth*/ true,
+        /*requires_first_party_auth*/ true,
         Some("server-openai"),
         /*remote_connection*/ None,
         test_status_account_display().as_ref(),
@@ -1647,7 +1647,7 @@ async fn status_snapshot_uses_default_reasoning_when_config_empty() {
     let token_info = token_info_for(&model_slug, &config, &usage);
     let (composite, _) = new_status_output_with_rate_limits_handle(
         &config,
-        /*requires_openai_auth*/ true,
+        /*requires_first_party_auth*/ true,
         /*model_provider_id*/ None,
         Some(&remote_connection),
         account_display.as_ref(),
@@ -1758,7 +1758,7 @@ async fn transcript_overlay_remeasures_status_after_rate_limit_refresh() {
 
     let (status, handle) = new_status_output_with_rate_limits_handle(
         &config,
-        /*requires_openai_auth*/ true,
+        /*requires_first_party_auth*/ true,
         /*model_provider_id*/ None,
         /*remote_connection*/ None,
         /*account_display*/ None,

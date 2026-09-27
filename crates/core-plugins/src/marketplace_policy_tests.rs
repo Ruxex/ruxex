@@ -1,6 +1,6 @@
 use super::*;
-use crate::OPENAI_API_CURATED_MARKETPLACE_NAME;
-use crate::OPENAI_CURATED_MARKETPLACE_NAME;
+use crate::TEST_API_CURATED_MARKETPLACE_NAME;
+use crate::TEST_CURATED_MARKETPLACE_NAME;
 use crate::marketplace_upgrade::upgrade_configured_git_marketplaces;
 use crate::test_support::curated_plugins_repo_path;
 use codex_config::ConfigLayerEntry;
@@ -380,7 +380,7 @@ url = "https://github.com/openai/plugins.git"
             &stack,
             codex_home.path(),
             &marketplace_path,
-            crate::OPENAI_CURATED_MARKETPLACE_NAME,
+            crate::TEST_CURATED_MARKETPLACE_NAME,
         ),
         Ok(())
     );
@@ -390,7 +390,7 @@ url = "https://github.com/openai/plugins.git"
                 &stack,
                 codex_home.path(),
                 &marketplace_path,
-                crate::OPENAI_API_CURATED_MARKETPLACE_NAME,
+                crate::TEST_API_CURATED_MARKETPLACE_NAME,
             )
             .is_err()
     );
@@ -404,8 +404,8 @@ url = "https://github.com/openai/plugins.git"
     let unrestricted = ConfigLayerStack::default();
     for config in [&stack, &unrestricted] {
         for marketplace in [
-            OPENAI_CURATED_MARKETPLACE_NAME,
-            OPENAI_API_CURATED_MARKETPLACE_NAME,
+            TEST_CURATED_MARKETPLACE_NAME,
+            TEST_API_CURATED_MARKETPLACE_NAME,
             OPENAI_BUNDLED_MARKETPLACE_NAME,
             OPENAI_BUNDLED_ALPHA_MARKETPLACE_NAME,
             OPENAI_PRIMARY_RUNTIME_MARKETPLACE_NAME,
@@ -448,13 +448,13 @@ fn symlinked_marketplaces_cannot_borrow_managed_provenance() {
     for (path, marketplace) in [
         (
             root_alias.join(".agents/plugins/marketplace.json"),
-            OPENAI_CURATED_MARKETPLACE_NAME,
+            TEST_CURATED_MARKETPLACE_NAME,
         ),
         (
             parent_alias.join("plugins/.agents/plugins/marketplace.json"),
-            OPENAI_CURATED_MARKETPLACE_NAME,
+            TEST_CURATED_MARKETPLACE_NAME,
         ),
-        (manifest_alias, OPENAI_API_CURATED_MARKETPLACE_NAME),
+        (manifest_alias, TEST_API_CURATED_MARKETPLACE_NAME),
     ] {
         let manifest = AbsolutePathBuf::try_from(path).expect("absolute repository manifest");
         assert!(
@@ -645,14 +645,14 @@ path = {source_root:?}
 source_type = "local"
 source = {source_root:?}
 
-[marketplaces.openai-curated]
+[marketplaces.test-curated]
 source_type = "local"
 source = {source_root:?}
 
 [plugins."sample@openai-bundled"]
 enabled = true
 
-[plugins."sample@openai-curated"]
+[plugins."sample@test-curated"]
 enabled = true
 "#
             ),

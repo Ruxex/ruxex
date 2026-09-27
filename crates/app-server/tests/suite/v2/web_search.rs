@@ -114,14 +114,14 @@ async fn assert_standalone_web_search_round_trips_output(
             .with_model_provider("openai-custom")
             .with_provider_name("OpenAI")
             .with_provider_base_url(&format!("{}/api/codex", server.uri()))
-            .with_provider_config("requires_openai_auth = true"),
+            .with_provider_config("requires_first_party_auth = true"),
         WebSearchProvider::CustomResponses => config
             .with_model_provider("custom-responses")
             .with_provider_name("Custom Responses")
             .with_provider_base_url(&format!("{}/v1", server.uri()))
             .with_provider_config("env_key = \"CUSTOM_RESPONSES_API_KEY\"")
             .with_provider_config("supports_standalone_web_search = true")
-            .with_provider_config("requires_openai_auth = false"),
+            .with_provider_config("requires_first_party_auth = false"),
     };
     config.write(codex_home.path())?;
 

@@ -35,7 +35,7 @@ async fn experimental_mode_plan_is_ignored_on_startup() {
     let resolved_model = get_model_offline_for_tests(cfg.model.as_deref());
     let session_telemetry = test_session_telemetry(&cfg, resolved_model.as_str());
     let init = ChatWidgetInit {
-        requires_openai_auth: true,
+        requires_first_party_auth: true,
         local_settings: crate::local_settings::LocalSettings::from(&cfg),
         config: cfg.clone(),
         frame_requester: FrameRequester::test_dummy(),
@@ -276,7 +276,7 @@ async fn plugins_popup_truncates_long_descriptions_in_list_rows() {
         .expect("expected verbose plugin row in popup");
     insta::assert_snapshot!(
         verbose_row,
-        @"  [-] Verbose Plugin  Available · OpenAI Curated · This description…"
+        @"  [-] Verbose Plugin  Available · Test Marketplace · This description…"
     );
     assert!(
         !popup
@@ -777,7 +777,7 @@ async fn plugin_detail_popup_distinguishes_admin_installed_from_enabled() {
             .find(|line| line.contains("Figma ·"))
             .expect("expected plugin detail header")
             .trim(),
-        @"Figma · Enabled by Admin · ChatGPT Marketplace"
+        @"Figma · Enabled by Admin · Test Marketplace"
     );
 }
 
@@ -1111,7 +1111,7 @@ async fn plugin_detail_popup_shows_admin_disabled_status_snapshot() {
         .expect("expected admin-disabled status row");
     insta::assert_snapshot!(
         status_row,
-        @"  Admin Blocked · Disabled by admin · ChatGPT Marketplace"
+        @"  Admin Blocked · Disabled by admin · Test Marketplace"
     );
     assert!(
         popup.contains("This plugin is disabled by your workspace admin.")
@@ -1246,7 +1246,7 @@ async fn plugins_popup_remote_section_fallback_states_when_remote_plugin_disable
         ])),
     );
     let curated_loading_popup =
-        select_tab_containing(&mut chat, "Loading OpenAI Curated plugins...");
+        select_tab_containing(&mut chat, "Loading Test Marketplace plugins...");
     let workspace_loading_popup = select_tab_containing(&mut chat, "Loading Workspace plugins.");
     let shared_loading_popup = select_tab_containing(&mut chat, "Loading Shared with me plugins.");
     let _ = select_tab_containing(&mut chat, "Loading Workspace plugins.");
@@ -1281,7 +1281,7 @@ async fn plugins_popup_remote_section_fallback_states_when_remote_plugin_disable
         ])),
     );
     let remote_curated_empty_popup =
-        select_tab_containing(&mut remote_chat, "No OpenAI Curated plugins available");
+        select_tab_containing(&mut remote_chat, "No Test Marketplace plugins available");
 
     insta::assert_snapshot!(
         [
@@ -1293,8 +1293,8 @@ async fn plugins_popup_remote_section_fallback_states_when_remote_plugin_disable
         ]
         .join("\n\n"),
         @r###"
-        OpenAI Curated marketplace.
-        Loading OpenAI Curated plugins...  This updates when OpenAI Curated plugins finish loading.
+        Test Marketplace marketplace.
+        Loading Test Marketplace plugins...  This updates when Test Marketplace plugins finish loading.
 
         Loading Workspace plugins.
         Loading Workspace plugins...  This updates when workspace plugins finish loading.
@@ -1305,8 +1305,8 @@ async fn plugins_popup_remote_section_fallback_states_when_remote_plugin_disable
         Workspace unavailable.
         Workspace unavailable  Sign in to ChatGPT to load workspace plugins.
 
-        OpenAI Curated marketplace.
-        No OpenAI Curated plugins available  No OpenAI Curated plugins available.
+        Test Marketplace marketplace.
+        No Test Marketplace plugins available  No Test Marketplace plugins available.
         "###
     );
 }
@@ -1912,7 +1912,7 @@ async fn plugins_popup_installed_tab_filters_rows_and_clears_search() {
 }
 
 #[tokio::test]
-async fn plugins_popup_openai_curated_tab_omits_marketplace_in_rows() {
+async fn plugins_popup_test_marketplace_tab_omits_marketplace_in_rows() {
     let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     chat.set_feature_enabled(Feature::Plugins, /*enabled*/ true);
 
@@ -1945,15 +1945,15 @@ async fn plugins_popup_openai_curated_tab_omits_marketplace_in_rows() {
 
     let popup = render_bottom_popup(&chat, /*width*/ 100);
     assert!(
-        popup.contains("OpenAI Curated marketplace."),
-        "expected OpenAI Curated tab header, got:\n{popup}"
+        popup.contains("Test Marketplace marketplace."),
+        "expected Test Marketplace tab header, got:\n{popup}"
     );
     assert!(
         popup.contains("Calendar") && !popup.contains("Repo Plugin"),
-        "expected OpenAI Curated tab to show only official marketplace plugins, got:\n{popup}"
+        "expected Test Marketplace tab to show only official marketplace plugins, got:\n{popup}"
     );
     assert!(
-        !popup.contains("ChatGPT Marketplace ·"),
+        !popup.contains("Test Marketplace ·"),
         "expected marketplace-specific rows to omit marketplace labels, got:\n{popup}"
     );
 }

@@ -465,7 +465,6 @@ use unicode_segmentation::UnicodeSegmentation;
 const USER_SHELL_COMMAND_HELP_TITLE: &str = "Prefix a command with ! to run it locally";
 const USER_SHELL_COMMAND_HELP_HINT: &str = "Example: !ls";
 const ASK_FOR_APPROVAL_LABEL: &str = "Ask for approval";
-const DEFAULT_OPENAI_BASE_URL: &str = "https://api.openai.com/v1";
 const DEFAULT_STATUS_LINE_ITEMS: [&str; 3] = ["model-with-reasoning", "current-dir", "thread-name"];
 
 /// Common initialization parameters shared by all `ChatWidget` constructors.
@@ -482,7 +481,7 @@ pub(crate) struct ChatWidgetInit {
     pub(crate) initial_user_message: Option<UserMessage>,
     pub(crate) enhanced_keys_supported: bool,
     pub(crate) has_managed_account: bool,
-    pub(crate) requires_openai_auth: bool,
+    pub(crate) requires_first_party_auth: bool,
     pub(crate) has_codex_backend_auth: bool,
     pub(crate) model_catalog: Arc<ModelCatalog>,
     pub(crate) is_first_run: bool,
@@ -535,7 +534,7 @@ pub(crate) struct ChatWidget {
     /// The currently active collaboration mask, if any.
     active_collaboration_mask: Option<CollaborationModeMask>,
     has_managed_account: bool,
-    pub(crate) requires_openai_auth: bool,
+    pub(crate) requires_first_party_auth: bool,
     has_codex_backend_auth: bool,
     model_catalog: Arc<ModelCatalog>,
     model_popup_request_id: Option<uuid::Uuid>,

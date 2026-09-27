@@ -283,7 +283,7 @@ pub(crate) struct AppServerBootstrap {
     /// Whether the configured model provider needs OpenAI-style auth. Combined
     /// with `has_managed_account` to decide if a startup rate-limit prefetch
     /// should be fired.
-    pub(crate) requires_openai_auth: bool,
+    pub(crate) requires_first_party_auth: bool,
     pub(crate) default_model: String,
     pub(crate) has_managed_account: bool,
     pub(crate) available_models: Vec<ModelPreset>,
@@ -643,7 +643,7 @@ impl AppServerSession {
             auth_mode,
             status_account_display,
             plan_type,
-            requires_openai_auth: account.requires_openai_auth,
+            requires_first_party_auth: account.requires_first_party_auth,
             default_model,
             has_managed_account,
             available_models,

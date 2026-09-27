@@ -129,7 +129,7 @@ async fn app_server_uses_configured_notes_backend_for_context_window_hints(
         .with_model_provider("openai-custom")
         .with_provider_name("OpenAI")
         .with_provider_base_url(&format!("{}/backend-api/codex", server.uri()))
-        .with_provider_config("supports_websockets = false\nrequires_openai_auth = true")
+        .with_provider_config("supports_websockets = false\nrequires_first_party_auth = true")
         .with_extra_config(&format!(
             "[features.token_budget]\nenabled = true\nuse_history_notes_extension = {use_history_notes_extension}\n\n[mcp_servers.notes]\nurl = \"{}/mcp\"\nstartup_timeout_sec = 10\n",
             server.uri(),
@@ -346,7 +346,7 @@ async fn history_notes_and_async_message_emit_control_tool_analytics() -> Result
         .with_model_provider("openai-custom")
         .with_provider_name("OpenAI")
         .with_provider_base_url(&format!("{}/backend-api/codex", server.uri()))
-        .with_provider_config("supports_websockets = false\nrequires_openai_auth = true")
+        .with_provider_config("supports_websockets = false\nrequires_first_party_auth = true")
         .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
         .with_root_config(&format!(
             "model_catalog_json = {}",

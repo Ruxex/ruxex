@@ -112,7 +112,7 @@ async fn interactive_startup_honors_codex_home_symlink_opt_out() -> Result<()> {
              [sandbox_workspace_write]\nwritable_roots = [{visualizations}]\n\
              [model_providers.test]\nname = \"Mock\"\n\
              base_url = \"{base_url}/v1\"\nwire_api = \"responses\"\n\
-             requires_openai_auth = false\nsupports_websockets = false\n"
+             requires_first_party_auth = false\nsupports_websockets = false\n"
         ),
     )?;
 

@@ -190,7 +190,7 @@ pub(super) async fn make_chatwidget_manual_with_auth(
     let session_telemetry = test_session_telemetry(&cfg, resolved_model.as_str());
     let model_catalog = test_model_catalog(&cfg);
     let common = ChatWidgetInit {
-        requires_openai_auth: cfg.model_provider.requires_openai_auth,
+        requires_first_party_auth: cfg.model_provider.requires_first_party_auth,
         local_settings: crate::local_settings::LocalSettings::from(&cfg),
         config: cfg,
         frame_requester,
@@ -1496,10 +1496,10 @@ pub(super) fn plugins_test_curated_marketplace(
     plugins: Vec<PluginSummary>,
 ) -> PluginMarketplaceEntry {
     PluginMarketplaceEntry {
-        name: "openai-curated".to_string(),
-        path: Some(plugins_test_absolute_path("marketplaces/chatgpt")),
+        name: "test-curated".to_string(),
+        path: Some(plugins_test_absolute_path("marketplaces/test")),
         interface: Some(MarketplaceInterface {
-            display_name: Some("ChatGPT Marketplace".to_string()),
+            display_name: Some("Test Marketplace".to_string()),
         }),
         plugins,
     }
@@ -1557,8 +1557,8 @@ pub(super) fn plugins_test_detail(
     mcp_servers: &[&str],
 ) -> PluginDetail {
     PluginDetail {
-        marketplace_name: "ChatGPT Marketplace".to_string(),
-        marketplace_path: Some(plugins_test_absolute_path("marketplaces/chatgpt")),
+        marketplace_name: "Test Marketplace".to_string(),
+        marketplace_path: Some(plugins_test_absolute_path("marketplaces/test")),
         summary,
         share_url: None,
         description: description.map(str::to_string),

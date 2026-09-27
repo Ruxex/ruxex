@@ -59,7 +59,7 @@ async fn picker_side_worktree_fork_and_cd_run_on_the_production_stack() -> Resul
     fs::write(
         &config_path,
         format!(
-            "{config}\n[model_providers.test]\nname = \"Mock\"\nbase_url = \"{}/v1\"\nwire_api = \"responses\"\nrequires_openai_auth = false\nsupports_websockets = false\n",
+            "{config}\n[model_providers.test]\nname = \"Mock\"\nbase_url = \"{}/v1\"\nwire_api = \"responses\"\nrequires_first_party_auth = false\nsupports_websockets = false\n",
             server.uri()
         ),
     )?;

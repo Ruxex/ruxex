@@ -173,7 +173,7 @@ pub struct ModelProviderInfo {
     /// are stored in auth.json. If false (which is the default), login screen is skipped,
     /// and API key (if needed) comes from the "env_key" environment variable.
     #[serde(default)]
-    pub requires_openai_auth: bool,
+    pub requires_first_party_auth: bool,
     /// Whether this provider supports the Responses API WebSocket transport.
     #[serde(default)]
     pub supports_websockets: bool,
@@ -290,8 +290,8 @@ other non-default provider fields are not supported"
             if self.auth.is_some() {
                 conflicts.push("auth");
             }
-            if self.requires_openai_auth {
-                conflicts.push("requires_openai_auth");
+            if self.requires_first_party_auth {
+                conflicts.push("requires_first_party_auth");
             }
 
             if !conflicts.is_empty() {
@@ -352,8 +352,8 @@ other non-default provider fields are not supported"
         if self.experimental_bearer_token.is_some() {
             conflicts.push("experimental_bearer_token");
         }
-        if self.requires_openai_auth {
-            conflicts.push("requires_openai_auth");
+        if self.requires_first_party_auth {
+            conflicts.push("requires_first_party_auth");
         }
 
         if conflicts.is_empty() {
@@ -508,7 +508,7 @@ other non-default provider fields are not supported"
                 .into_iter()
                 .collect(),
             ),
-            requires_openai_auth: true,
+            requires_first_party_auth: true,
             supports_websockets: true,
             ..ModelProviderInfo::default()
         }
@@ -544,7 +544,7 @@ other non-default provider fields are not supported"
             stream_max_retries: None,
             stream_idle_timeout_ms: None,
             websocket_connect_timeout_ms: None,
-            requires_openai_auth: false,
+            requires_first_party_auth: false,
             supports_websockets: false,
             supports_standalone_web_search: false,
         }
@@ -667,7 +667,7 @@ pub fn create_responses_provider_with_base_url(
         stream_max_retries: None,
         stream_idle_timeout_ms: None,
         websocket_connect_timeout_ms: None,
-        requires_openai_auth: false,
+        requires_first_party_auth: false,
         supports_websockets: false,
         supports_standalone_web_search: false,
     }

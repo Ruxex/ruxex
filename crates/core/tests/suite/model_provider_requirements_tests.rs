@@ -102,7 +102,7 @@ base_url = "{local_url}"
 [model_providers.gateway]
 name = "Managed gateway"
 base_url = "{gateway_url}"
-requires_openai_auth = true
+requires_first_party_auth = true
 [model_providers.gateway.http_headers]
 X-Managed = "required"
 "#

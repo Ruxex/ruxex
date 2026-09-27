@@ -75,7 +75,7 @@ base_url = "http://localhost:11434/v1"
         stream_max_retries: None,
         stream_idle_timeout_ms: None,
         websocket_connect_timeout_ms: None,
-        requires_openai_auth: false,
+        requires_first_party_auth: false,
         supports_websockets: false,
         supports_standalone_web_search: false,
     };
@@ -110,7 +110,7 @@ query_params = { api-version = "2025-04-01-preview" }
         stream_max_retries: None,
         stream_idle_timeout_ms: None,
         websocket_connect_timeout_ms: None,
-        requires_openai_auth: false,
+        requires_first_party_auth: false,
         supports_websockets: false,
         supports_standalone_web_search: false,
     };
@@ -149,7 +149,7 @@ supports_standalone_web_search = true
         stream_max_retries: None,
         stream_idle_timeout_ms: None,
         websocket_connect_timeout_ms: None,
-        requires_openai_auth: false,
+        requires_first_party_auth: false,
         supports_websockets: false,
         supports_standalone_web_search: true,
     };
@@ -279,7 +279,7 @@ fn test_create_amazon_bedrock_provider() {
             stream_max_retries: None,
             stream_idle_timeout_ms: None,
             websocket_connect_timeout_ms: None,
-            requires_openai_auth: false,
+            requires_first_party_auth: false,
             supports_websockets: false,
             supports_standalone_web_search: false,
         }
@@ -594,7 +594,7 @@ fn test_validate_provider_aws_rejects_conflicting_auth() {
 
     assert_eq!(
         provider.validate(),
-        Err("provider aws cannot be combined with env_key, requires_openai_auth".to_string())
+        Err("provider aws cannot be combined with env_key, requires_first_party_auth".to_string())
     );
 }
 
@@ -607,7 +607,7 @@ fn test_validate_provider_aws_rejects_websockets() {
             credential_export: None,
             auth_refresh: None,
         }),
-        requires_openai_auth: false,
+        requires_first_party_auth: false,
         supports_websockets: true,
         ..ModelProviderInfo::create_openai_provider(/*base_url*/ None)
     };

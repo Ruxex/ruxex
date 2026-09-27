@@ -1,7 +1,7 @@
 use super::*;
 use crate::LoadedPlugin;
-use crate::OPENAI_API_CURATED_MARKETPLACE_NAME;
-use crate::OPENAI_CURATED_MARKETPLACE_NAME;
+use crate::TEST_API_CURATED_MARKETPLACE_NAME;
+use crate::TEST_CURATED_MARKETPLACE_NAME;
 use crate::PluginLoadOutcome;
 use crate::ToolSuggestDiscoverablePlugin;
 use crate::ToolSuggestPluginDiscoveryInput;
@@ -26,8 +26,8 @@ use crate::test_support::test_skill_root_loader;
 use crate::test_support::write_curated_plugin;
 use crate::test_support::write_curated_plugin_sha_with as write_curated_plugin_sha;
 use crate::test_support::write_file;
-use crate::test_support::write_openai_api_curated_marketplace;
-use crate::test_support::write_openai_curated_marketplace;
+use crate::test_support::write_test_api_curated_marketplace;
+use crate::test_support::write_test_curated_marketplace;
 use codex_config::AppToolApproval;
 use codex_config::CONFIG_TOML_FILE;
 use codex_config::ConfigLayerEntry;
@@ -1375,10 +1375,10 @@ source = {marketplace_root:?}
 }
 
 #[tokio::test]
-async fn install_openai_curated_plugin_uses_short_sha_cache_version() {
+async fn install_test_curated_plugin_uses_short_sha_cache_version() {
     let tmp = tempfile::tempdir().unwrap();
     let curated_root = curated_plugins_repo_path(tmp.path());
-    write_openai_curated_marketplace(&curated_root, &["slack"]);
+    write_test_curated_marketplace(&curated_root, &["slack"]);
     write_curated_plugin_sha(tmp.path(), TEST_CURATED_PLUGIN_SHA);
 
     let result = test_plugins_manager(tmp.path().to_path_buf())
@@ -1396,14 +1396,14 @@ async fn install_openai_curated_plugin_uses_short_sha_cache_version() {
         .unwrap();
 
     let installed_path = tmp.path().join(format!(
-        "plugins/cache/openai-curated/slack/{TEST_CURATED_PLUGIN_CACHE_VERSION}"
+        "plugins/cache/test-curated/slack/{TEST_CURATED_PLUGIN_CACHE_VERSION}"
     ));
     assert_eq!(
         result,
         PluginInstallOutcome {
             plugin_id: PluginId::new(
                 "slack".to_string(),
-                OPENAI_CURATED_MARKETPLACE_NAME.to_string()
+                TEST_CURATED_MARKETPLACE_NAME.to_string()
             )
             .unwrap(),
             plugin_version: TEST_CURATED_PLUGIN_CACHE_VERSION.to_string(),
@@ -2272,7 +2272,7 @@ plugins = true
     fs::write(
         curated_root.join(".agents/plugins/marketplace.json"),
         r#"{
-  "name": "openai-curated",
+  "name": "test-curated",
   "plugins": [
     {
       "name": "linear",
@@ -2303,18 +2303,18 @@ plugins = true
 
     let curated_marketplace = marketplaces
         .into_iter()
-        .find(|marketplace| marketplace.name == "openai-curated")
+        .find(|marketplace| marketplace.name == "test-curated")
         .expect("curated marketplace should be listed");
 
     assert_eq!(
         curated_marketplace,
         ConfiguredMarketplace {
-            name: "openai-curated".to_string(),
+            name: "test-curated".to_string(),
             path: AbsolutePathBuf::try_from(curated_root.join(".agents/plugins/marketplace.json"))
                 .unwrap(),
             interface: None,
             plugins: vec![ConfiguredMarketplacePlugin {
-                id: "linear@openai-curated".to_string(),
+                id: "linear@test-curated".to_string(),
                 name: "linear".to_string(),
                 local_version: None,
                 installed_version: None,
@@ -2365,7 +2365,7 @@ plugins = true
         outcome
             .marketplaces
             .iter()
-            .any(|marketplace| marketplace.name == OPENAI_API_CURATED_MARKETPLACE_NAME),
+            .any(|marketplace| marketplace.name == TEST_API_CURATED_MARKETPLACE_NAME),
         false
     );
 }

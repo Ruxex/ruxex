@@ -10407,12 +10407,12 @@
               }
             ]
           },
-          "requiresOpenaiAuth": {
+          "requiresFirstPartyAuth": {
             "type": "boolean"
           }
         },
         "required": [
-          "requiresOpenaiAuth"
+          "requiresFirstPartyAuth"
         ],
         "title": "GetAccountResponse",
         "type": "object"

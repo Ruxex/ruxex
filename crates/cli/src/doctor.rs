@@ -1166,7 +1166,7 @@ fn auth_check(config: &Config) -> DoctorCheck {
         ));
     }
     if let Some(check) = provider_specific_auth_check(
-        config.model_provider.requires_openai_auth,
+        config.model_provider.requires_first_party_auth,
         config.model_provider.env_key.as_deref(),
         config.model_provider.env_key_instructions.as_deref(),
         details.clone(),
@@ -1247,16 +1247,16 @@ fn auth_check(config: &Config) -> DoctorCheck {
 }
 
 fn provider_specific_auth_check(
-    requires_openai_auth: bool,
+    requires_first_party_auth: bool,
     provider_env_key: Option<&str>,
     provider_env_key_instructions: Option<&str>,
     mut details: Vec<String>,
     env_var_present: impl Fn(&str) -> bool,
 ) -> Option<DoctorCheck> {
     details.push(format!(
-        "model provider requires OpenAI auth: {requires_openai_auth}"
+        "model provider requires first-party auth: {requires_first_party_auth}"
     ));
-    if requires_openai_auth {
+    if requires_first_party_auth {
         return None;
     }
 
@@ -1294,7 +1294,7 @@ fn provider_specific_auth_check(
                 "auth.credentials",
                 "auth",
                 CheckStatus::Ok,
-                "OpenAI auth is not required for the active model provider",
+                "First-party auth is not required for the active model provider",
             )
             .details(details),
         ),
@@ -2412,7 +2412,7 @@ fn provider_reachability_plan(config: &Config) -> ReachabilityPlan {
     .ok()
     .flatten();
     let mode = provider_auth_reachability_mode_from_auth(
-        config.model_provider.requires_openai_auth,
+        config.model_provider.requires_first_party_auth,
         config.model_provider.env_key.as_deref(),
         config.model_provider.base_url.as_deref(),
         env_var_present,
@@ -2444,13 +2444,13 @@ fn default_reachability_plan() -> ReachabilityPlan {
 }
 
 fn provider_auth_reachability_mode_from_auth(
-    requires_openai_auth: bool,
+    requires_first_party_auth: bool,
     provider_env_key: Option<&str>,
     provider_base_url: Option<&str>,
     env_var_present: impl Fn(&str) -> bool,
     stored_auth: Option<&AuthDotJson>,
 ) -> ProviderAuthReachabilityMode {
-    if !requires_openai_auth {
+    if !requires_first_party_auth {
         return ProviderAuthReachabilityMode::NotRequired;
     }
     if provider_base_url.is_some_and(|url| !url.trim().is_empty())

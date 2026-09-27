@@ -751,7 +751,7 @@ impl App {
             initial_user_message,
             enhanced_keys_supported: self.enhanced_keys_supported,
             has_managed_account: self.chat_widget.has_managed_account(),
-            requires_openai_auth: self.chat_widget.requires_openai_auth,
+            requires_first_party_auth: self.chat_widget.requires_first_party_auth,
             has_codex_backend_auth: self.chat_widget.has_codex_backend_auth(),
             model_catalog: self.model_catalog.clone(),
             is_first_run: false,

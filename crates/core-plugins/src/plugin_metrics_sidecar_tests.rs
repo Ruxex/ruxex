@@ -39,7 +39,7 @@ fn sidecar_is_created_in_system_temp_with_private_permissions() {
 
 fn resolved_operation() -> ResolvedPluginMetricsOperation {
     ResolvedPluginMetricsOperation {
-        plugin_id: PluginId::parse("security@openai-curated").expect("valid plugin id"),
+        plugin_id: PluginId::parse("security@test-curated").expect("valid plugin id"),
         operation: PluginMetricsOperation {
             operation_name: "security_scan".to_string(),
             measurements: BTreeMap::from([
@@ -95,7 +95,7 @@ async fn sidecar_keeps_valid_rows_and_first_duplicate_then_cleans_up() {
     assert_eq!(
         batch,
         PluginMeasurementBatch {
-            plugin_id: "security@openai-curated".to_string(),
+            plugin_id: "security@test-curated".to_string(),
             execution_id: execution_id.clone(),
             operation: "security_scan".to_string(),
             rows: vec![

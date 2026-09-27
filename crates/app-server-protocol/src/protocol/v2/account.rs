@@ -203,7 +203,7 @@ pub struct GetAccountParams {
 #[ts(export_to = "v2/")]
 pub struct GetAccountResponse {
     pub account: Option<Account>,
-    pub requires_openai_auth: bool,
+    pub requires_first_party_auth: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]

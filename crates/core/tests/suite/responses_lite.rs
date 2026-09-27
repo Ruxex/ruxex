@@ -345,7 +345,7 @@ async fn responses_lite_exposes_standalone_tools_for_actor_authorized_provider()
         .with_config(|config| {
             configure_responses_tools(config);
             config.model_provider.name = "local".to_string();
-            config.model_provider.requires_openai_auth = false;
+            config.model_provider.requires_first_party_auth = false;
             config.model_provider.http_headers = Some(HashMap::from([(
                 "x-openai-actor-authorization".to_string(),
                 "test-actor-authorization".into(),
@@ -422,7 +422,7 @@ async fn responses_lite_does_not_expose_standalone_web_search_for_bedrock_provid
         .with_config(|config| {
             configure_responses_tools(config);
             config.model_provider.name = "Amazon Bedrock".to_string();
-            config.model_provider.requires_openai_auth = false;
+            config.model_provider.requires_first_party_auth = false;
             config.model_provider.http_headers = None;
             config.model_provider.supports_standalone_web_search = false;
         });
@@ -474,7 +474,7 @@ async fn assert_responses_lite_custom_provider_web_search(
             configure_responses_tools(config);
             assert!(config.web_search_mode.set(web_search_mode).is_ok());
             config.model_provider.name = "custom-responses".to_string();
-            config.model_provider.requires_openai_auth = false;
+            config.model_provider.requires_first_party_auth = false;
             config.model_provider.http_headers = None;
             config.model_provider.supports_standalone_web_search = supports_standalone_web_search;
         });

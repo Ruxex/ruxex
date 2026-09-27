@@ -65,7 +65,7 @@ async fn retries_on_early_close() {
         stream_max_retries: Some(1),
         stream_idle_timeout_ms: Some(2000),
         websocket_connect_timeout_ms: None,
-        requires_openai_auth: false,
+        requires_first_party_auth: false,
         supports_websockets: false,
         supports_standalone_web_search: false,
     };

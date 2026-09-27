@@ -849,7 +849,7 @@ impl ModelClient {
         let provider = self.state.provider.info();
         auth.is_some_and(CodexAuth::uses_managed_auth)
             && provider.is_openai()
-            && provider.requires_openai_auth
+            && provider.requires_first_party_auth
             && provider.env_key.is_none()
             && provider.experimental_bearer_token.is_none()
             && provider.auth.is_none()

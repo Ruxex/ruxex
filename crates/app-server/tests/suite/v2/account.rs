@@ -87,7 +87,7 @@ struct CreateConfigTomlParams {
     forced_method: Option<String>,
     forced_workspace_id: Option<String>,
     forced_workspace_ids: Option<Vec<String>>,
-    requires_openai_auth: Option<bool>,
+    requires_first_party_auth: Option<bool>,
     base_url: Option<String>,
     managed_auth_base_url: Option<String>,
     model_provider_id: Option<String>,
@@ -116,8 +116,8 @@ fn create_config_toml(codex_home: &Path, params: CreateConfigTomlParams) -> std:
     } else {
         String::new()
     };
-    let requires_line = match params.requires_openai_auth {
-        Some(true) => "requires_openai_auth = true\n".to_string(),
+    let requires_line = match params.requires_first_party_auth {
+        Some(true) => "requires_first_party_auth = true\n".to_string(),
         Some(false) => String::new(),
         None => String::new(),
     };
@@ -609,7 +609,7 @@ async fn login_amazon_bedrock_replaces_primary_auth_and_persists_provider(
             account: Some(Account::AmazonBedrock {
                 uses_codex_managed_credentials: true,
             }),
-            requires_openai_auth: false,
+            requires_first_party_auth: false,
         }
     );
 
@@ -637,7 +637,7 @@ async fn login_amazon_bedrock_replaces_primary_auth_and_persists_provider(
             read_account(&mut mcp).await?,
             GetAccountResponse {
                 account: None,
-                requires_openai_auth: true,
+                requires_first_party_auth: true,
             }
         );
     }
@@ -852,7 +852,7 @@ async fn logout_managed_bedrock_restores_default_account(
             account: Some(Account::AmazonBedrock {
                 uses_codex_managed_credentials: true,
             }),
-            requires_openai_auth: false,
+            requires_first_party_auth: false,
         }
     );
 
@@ -900,7 +900,7 @@ async fn logout_managed_bedrock_restores_default_account(
         read_account(&mut mcp).await?,
         GetAccountResponse {
             account: None,
-            requires_openai_auth: true,
+            requires_first_party_auth: true,
         }
     );
     Ok(())
@@ -966,7 +966,7 @@ async fn logout_aws_managed_bedrock_clears_provider_and_restores_default_account
                 account: Some(Account::AmazonBedrock {
                     uses_codex_managed_credentials: false,
                 }),
-                requires_openai_auth: false,
+                requires_first_party_auth: false,
             }
         );
         let mut expected_config = read_config_toml(codex_home.path())?;
@@ -1002,7 +1002,7 @@ async fn logout_aws_managed_bedrock_clears_provider_and_restores_default_account
             read_account(&mut mcp).await?,
             GetAccountResponse {
                 account: None,
-                requires_openai_auth: true,
+                requires_first_party_auth: true,
             }
         );
     }
@@ -1070,7 +1070,7 @@ async fn logout_managed_bedrock_preserves_changed_provider_without_experimental_
         read_account(&mut mcp).await?,
         GetAccountResponse {
             account: None,
-            requires_openai_auth: false,
+            requires_first_party_auth: false,
         }
     );
     Ok(())
@@ -1151,7 +1151,7 @@ async fn login_managed_bedrock_updates_active_bedrock_account() -> Result<()> {
             account: Some(Account::AmazonBedrock {
                 uses_codex_managed_credentials: true,
             }),
-            requires_openai_auth: false,
+            requires_first_party_auth: false,
         }
     );
 
@@ -1256,7 +1256,7 @@ async fn get_account_no_auth() -> Result<()> {
     create_config_toml(
         codex_home.path(),
         CreateConfigTomlParams {
-            requires_openai_auth: Some(true),
+            requires_first_party_auth: Some(true),
             ..Default::default()
         },
     )?;
@@ -1277,7 +1277,7 @@ async fn get_account_no_auth() -> Result<()> {
         timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(request_id)).await??;
 
     assert_eq!(account.account, None, "expected no account");
-    assert_eq!(account.requires_openai_auth, true);
+    assert_eq!(account.requires_first_party_auth, true);
     Ok(())
 }
 
@@ -1287,7 +1287,7 @@ async fn get_account_with_api_key() -> Result<()> {
     create_config_toml(
         codex_home.path(),
         CreateConfigTomlParams {
-            requires_openai_auth: Some(true),
+            requires_first_party_auth: Some(true),
             ..Default::default()
         },
     )?;
@@ -1314,7 +1314,7 @@ async fn get_account_with_api_key() -> Result<()> {
 
     let expected = GetAccountResponse {
         account: Some(Account::ApiKey {}),
-        requires_openai_auth: true,
+        requires_first_party_auth: true,
     };
     assert_eq!(received, expected);
     Ok(())
@@ -1326,7 +1326,7 @@ async fn get_account_when_auth_not_required() -> Result<()> {
     create_config_toml(
         codex_home.path(),
         CreateConfigTomlParams {
-            requires_openai_auth: Some(false),
+            requires_first_party_auth: Some(false),
             ..Default::default()
         },
     )?;
@@ -1347,7 +1347,7 @@ async fn get_account_when_auth_not_required() -> Result<()> {
 
     let expected = GetAccountResponse {
         account: None,
-        requires_openai_auth: false,
+        requires_first_party_auth: false,
     };
     assert_eq!(received, expected);
     Ok(())
@@ -1389,7 +1389,7 @@ region = "us-west-2"
         account: Some(Account::AmazonBedrock {
             uses_codex_managed_credentials: false,
         }),
-        requires_openai_auth: false,
+        requires_first_party_auth: false,
     };
     assert_eq!(received, expected);
     Ok(())
@@ -1427,7 +1427,7 @@ command = "print-token"
             account: Some(Account::AmazonBedrock {
                 uses_codex_managed_credentials: false,
             }),
-            requires_openai_auth: false,
+            requires_first_party_auth: false,
         }
     );
     Ok(())
@@ -1465,7 +1465,7 @@ region = "us-west-2"
             account: Some(Account::AmazonBedrock {
                 uses_codex_managed_credentials: false,
             }),
-            requires_openai_auth: false,
+            requires_first_party_auth: false,
         }
     );
 
@@ -1485,7 +1485,7 @@ region = "us-west-2"
         GetAuthStatusResponse {
             auth_method: None,
             auth_token: None,
-            requires_openai_auth: Some(false),
+            requires_first_party_auth: Some(false),
         }
     );
 
@@ -1530,7 +1530,7 @@ async fn get_account_with_managed_bedrock_provider() -> Result<()> {
             account: Some(Account::AmazonBedrock {
                 uses_codex_managed_credentials: true,
             }),
-            requires_openai_auth: false,
+            requires_first_party_auth: false,
         }
     );
     Ok(())
