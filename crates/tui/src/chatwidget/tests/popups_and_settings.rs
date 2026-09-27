@@ -3039,13 +3039,6 @@ async fn experimental_features_popup_snapshot() {
 
     let features = vec![
         ExperimentalFeatureItem {
-            key: Feature::JsRepl.key().to_string(),
-            writable: true,
-            name: "JavaScript REPL".to_string(),
-            description: "Enable a persistent Node-backed JavaScript REPL for interactive website debugging and other inline JavaScript execution capabilities.".to_string(),
-            enabled: false,
-        },
-        ExperimentalFeatureItem {
             key: Feature::ShellTool.key().to_string(),
             writable: true,
             name: "Shell tool".to_string(),
@@ -3102,13 +3095,13 @@ async fn experimental_features_toggle_saves_on_exit() {
 
     let mut keymap = crate::keymap::RuntimeKeymap::defaults().list;
     keymap.cancel = vec![crate::key_hint::plain(KeyCode::F(2))];
-    let expected_feature = Feature::JsRepl;
+    let expected_feature = Feature::ShellTool;
     let view = ExperimentalFeaturesView::new(
         vec![ExperimentalFeatureItem {
             key: expected_feature.key().to_string(),
             writable: true,
-            name: "JavaScript REPL".to_string(),
-            description: "Enable a persistent Node-backed JavaScript REPL for interactive website debugging and other inline JavaScript execution capabilities.".to_string(),
+            name: "Shell tool".to_string(),
+            description: "Allow the model to run shell commands.".to_string(),
             enabled: false,
         }],
         ThreadId::new(),

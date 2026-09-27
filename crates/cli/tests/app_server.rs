@@ -37,8 +37,6 @@ fn agents_accept_interactive_configuration_overrides() -> Result<()> {
     let codex_home = TempDir::new()?;
 
     for args in [
-        ["-c", "features.multi_agent_mode=true", "agents"].as_slice(),
-        ["--enable", "multi_agent_mode", "agents"].as_slice(),
         ["--yolo", "agents"].as_slice(),
         ["--search", "agents"].as_slice(),
         ["--model", "gpt-5", "agents"].as_slice(),

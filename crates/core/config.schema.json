@@ -434,9 +434,6 @@
             "api_key_model_discovery": {
               "type": "boolean"
             },
-            "apply_patch_freeform": {
-              "type": "boolean"
-            },
             "apply_patch_preserve_line_endings": {
               "type": "boolean"
             },
@@ -461,9 +458,6 @@
             "code_mode": {
               "$ref": "#/definitions/FeatureToml_for_CodeModeConfigToml"
             },
-            "code_mode_buffered_exec": {
-              "type": "boolean"
-            },
             "code_mode_host": {
               "$ref": "#/definitions/FeatureToml_for_CodeModeHostConfigToml"
             },
@@ -474,9 +468,6 @@
               "type": "boolean"
             },
             "code_mode_prewarm": {
-              "type": "boolean"
-            },
-            "codex_git_commit": {
               "type": "boolean"
             },
             "codex_hooks": {
@@ -527,9 +518,6 @@
             "enable_experimental_windows_sandbox": {
               "type": "boolean"
             },
-            "enable_fanout": {
-              "type": "boolean"
-            },
             "enable_mcp_apps": {
               "type": "boolean"
             },
@@ -551,9 +539,6 @@
             "experimental_windows_sandbox": {
               "type": "boolean"
             },
-            "external_migration": {
-              "type": "boolean"
-            },
             "fast_mode": {
               "type": "boolean"
             },
@@ -561,9 +546,6 @@
               "type": "boolean"
             },
             "hooks": {
-              "type": "boolean"
-            },
-            "image_detail_original": {
               "type": "boolean"
             },
             "image_resize_notice": {
@@ -587,16 +569,7 @@
             "item_ids": {
               "type": "boolean"
             },
-            "js_repl": {
-              "type": "boolean"
-            },
-            "js_repl_tools_only": {
-              "type": "boolean"
-            },
             "local_thread_store_compression": {
-              "type": "boolean"
-            },
-            "local_thread_store_shared_compression": {
               "type": "boolean"
             },
             "mcp_2026_07_28": {
@@ -609,9 +582,6 @@
               "type": "boolean"
             },
             "multi_agent": {
-              "type": "boolean"
-            },
-            "multi_agent_mode": {
               "type": "boolean"
             },
             "multi_agent_v2": {
@@ -630,9 +600,6 @@
               "type": "boolean"
             },
             "personality": {
-              "type": "boolean"
-            },
-            "plugin_hooks": {
               "type": "boolean"
             },
             "plugins": {
@@ -662,19 +629,10 @@
             "request_permissions_tool": {
               "type": "boolean"
             },
-            "request_rule": {
-              "type": "boolean"
-            },
             "resize_all_images": {
               "type": "boolean"
             },
             "respect_system_proxy": {
-              "type": "boolean"
-            },
-            "responses_websockets": {
-              "type": "boolean"
-            },
-            "responses_websockets_v2": {
               "type": "boolean"
             },
             "retain_client_developer_messages": {
@@ -684,9 +642,6 @@
               "$ref": "#/definitions/FeatureToml_for_RolloutBudgetConfigToml"
             },
             "runtime_metrics": {
-              "type": "boolean"
-            },
-            "search_tool": {
               "type": "boolean"
             },
             "secret_auth_storage": {
@@ -708,9 +663,6 @@
               "type": "boolean"
             },
             "shell_zsh_fork": {
-              "type": "boolean"
-            },
-            "skill_env_var_dependency_prompt": {
               "type": "boolean"
             },
             "skill_mcp_dependency_install": {
@@ -764,15 +716,6 @@
             "tool_suggest": {
               "type": "boolean"
             },
-            "transcript_v2": {
-              "type": "boolean"
-            },
-            "tui_app_server": {
-              "type": "boolean"
-            },
-            "unavailable_dummy_tools": {
-              "type": "boolean"
-            },
             "unbounded_connection_retries": {
               "type": "boolean"
             },
@@ -816,9 +759,6 @@
               "type": "boolean"
             },
             "workspace_dependencies": {
-              "type": "boolean"
-            },
-            "workspace_owner_usage_nudge": {
               "type": "boolean"
             },
             "worktrees": {
@@ -5582,9 +5522,6 @@
         "api_key_model_discovery": {
           "type": "boolean"
         },
-        "apply_patch_freeform": {
-          "type": "boolean"
-        },
         "apply_patch_preserve_line_endings": {
           "type": "boolean"
         },
@@ -5609,9 +5546,6 @@
         "code_mode": {
           "$ref": "#/definitions/FeatureToml_for_CodeModeConfigToml"
         },
-        "code_mode_buffered_exec": {
-          "type": "boolean"
-        },
         "code_mode_host": {
           "$ref": "#/definitions/FeatureToml_for_CodeModeHostConfigToml"
         },
@@ -5622,9 +5556,6 @@
           "type": "boolean"
         },
         "code_mode_prewarm": {
-          "type": "boolean"
-        },
-        "codex_git_commit": {
           "type": "boolean"
         },
         "codex_hooks": {
@@ -5675,9 +5606,6 @@
         "enable_experimental_windows_sandbox": {
           "type": "boolean"
         },
-        "enable_fanout": {
-          "type": "boolean"
-        },
         "enable_mcp_apps": {
           "type": "boolean"
         },
@@ -5699,9 +5627,6 @@
         "experimental_windows_sandbox": {
           "type": "boolean"
         },
-        "external_migration": {
-          "type": "boolean"
-        },
         "fast_mode": {
           "type": "boolean"
         },
@@ -5709,9 +5634,6 @@
           "type": "boolean"
         },
         "hooks": {
-          "type": "boolean"
-        },
-        "image_detail_original": {
           "type": "boolean"
         },
         "image_resize_notice": {
@@ -5735,16 +5657,7 @@
         "item_ids": {
           "type": "boolean"
         },
-        "js_repl": {
-          "type": "boolean"
-        },
-        "js_repl_tools_only": {
-          "type": "boolean"
-        },
         "local_thread_store_compression": {
-          "type": "boolean"
-        },
-        "local_thread_store_shared_compression": {
           "type": "boolean"
         },
         "mcp_2026_07_28": {
@@ -5757,9 +5670,6 @@
           "type": "boolean"
         },
         "multi_agent": {
-          "type": "boolean"
-        },
-        "multi_agent_mode": {
           "type": "boolean"
         },
         "multi_agent_v2": {
@@ -5778,9 +5688,6 @@
           "type": "boolean"
         },
         "personality": {
-          "type": "boolean"
-        },
-        "plugin_hooks": {
           "type": "boolean"
         },
         "plugins": {
@@ -5810,19 +5717,10 @@
         "request_permissions_tool": {
           "type": "boolean"
         },
-        "request_rule": {
-          "type": "boolean"
-        },
         "resize_all_images": {
           "type": "boolean"
         },
         "respect_system_proxy": {
-          "type": "boolean"
-        },
-        "responses_websockets": {
-          "type": "boolean"
-        },
-        "responses_websockets_v2": {
           "type": "boolean"
         },
         "retain_client_developer_messages": {
@@ -5832,9 +5730,6 @@
           "$ref": "#/definitions/FeatureToml_for_RolloutBudgetConfigToml"
         },
         "runtime_metrics": {
-          "type": "boolean"
-        },
-        "search_tool": {
           "type": "boolean"
         },
         "secret_auth_storage": {
@@ -5856,9 +5751,6 @@
           "type": "boolean"
         },
         "shell_zsh_fork": {
-          "type": "boolean"
-        },
-        "skill_env_var_dependency_prompt": {
           "type": "boolean"
         },
         "skill_mcp_dependency_install": {
@@ -5912,15 +5804,6 @@
         "tool_suggest": {
           "type": "boolean"
         },
-        "transcript_v2": {
-          "type": "boolean"
-        },
-        "tui_app_server": {
-          "type": "boolean"
-        },
-        "unavailable_dummy_tools": {
-          "type": "boolean"
-        },
         "unbounded_connection_retries": {
           "type": "boolean"
         },
@@ -5964,9 +5847,6 @@
           "type": "boolean"
         },
         "workspace_dependencies": {
-          "type": "boolean"
-        },
-        "workspace_owner_usage_nudge": {
           "type": "boolean"
         },
         "worktrees": {

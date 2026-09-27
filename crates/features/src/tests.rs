@@ -15,15 +15,6 @@ use toml::Table;
 use toml::Value as TomlValue;
 
 #[test]
-fn transcript_v2_resolves_explicit_config_overrides() {
-    let mut features = Features::with_defaults();
-    for enabled in [false, true, false] {
-        features.apply_map(&BTreeMap::from([("transcript_v2".to_string(), enabled)]));
-        assert_eq!(features.enabled(Feature::TranscriptV2), enabled);
-    }
-}
-
-#[test]
 fn sleep_tool_config_rejects_unknown_mode() {
     assert!(toml::from_str::<FeaturesToml>("[sleep_tool]\nmode = 'off'").is_err());
 }
@@ -267,27 +258,7 @@ fn from_sources_applies_base_profile_and_overrides() {
     assert_eq!(features.enabled(Feature::Plugins), true);
     assert_eq!(features.enabled(Feature::CodeModeOnly), true);
     assert_eq!(features.enabled(Feature::CodeMode), true);
-    assert_eq!(features.enabled(Feature::ApplyPatchFreeform), false);
     assert_eq!(features.enabled(Feature::WebSearchRequest), false);
-}
-
-#[test]
-fn from_sources_ignores_removed_image_detail_original_feature_key() {
-    let features_toml = FeaturesToml::from(BTreeMap::from([(
-        "image_detail_original".to_string(),
-        true,
-    )]));
-
-    let features = Features::from_sources(
-        FeatureConfigSource {
-            features: Some(&features_toml),
-            ..Default::default()
-        },
-        FeatureConfigSource::default(),
-        FeatureOverrides::default(),
-    );
-
-    assert_eq!(features, Features::with_defaults());
 }
 
 #[test]
@@ -341,42 +312,6 @@ fn from_sources_ignores_removed_undo_feature_key() {
 }
 
 #[test]
-fn from_sources_ignores_removed_js_repl_feature_keys() {
-    let features_toml = FeaturesToml::from(BTreeMap::from([
-        ("js_repl".to_string(), true),
-        ("js_repl_tools_only".to_string(), true),
-    ]));
-
-    let features = Features::from_sources(
-        FeatureConfigSource {
-            features: Some(&features_toml),
-            ..Default::default()
-        },
-        FeatureConfigSource::default(),
-        FeatureOverrides::default(),
-    );
-
-    assert_eq!(features, Features::with_defaults());
-}
-
-#[test]
-fn from_sources_ignores_removed_apply_patch_freeform_feature_key() {
-    let features_toml =
-        FeaturesToml::from(BTreeMap::from([("apply_patch_freeform".to_string(), true)]));
-
-    let features = Features::from_sources(
-        FeatureConfigSource {
-            features: Some(&features_toml),
-            ..Default::default()
-        },
-        FeatureConfigSource::default(),
-        FeatureOverrides::default(),
-    );
-
-    assert_eq!(features, Features::with_defaults());
-}
-
-#[test]
 fn from_sources_accepts_and_ignores_removed_personality_feature_values() {
     for enabled in [false, true] {
         let features_toml: FeaturesToml = toml::from_str(&format!("personality = {enabled}"))
@@ -403,22 +338,6 @@ fn from_sources_accepts_and_ignores_removed_personality_feature_values() {
             Features::with_defaults()
         );
     }
-}
-
-#[test]
-fn from_sources_ignores_removed_plugin_hooks_feature_key() {
-    let features_toml = FeaturesToml::from(BTreeMap::from([("plugin_hooks".to_string(), true)]));
-
-    let features = Features::from_sources(
-        FeatureConfigSource {
-            features: Some(&features_toml),
-            ..Default::default()
-        },
-        FeatureConfigSource::default(),
-        FeatureOverrides::default(),
-    );
-
-    assert_eq!(features, Features::with_defaults());
 }
 
 #[test]

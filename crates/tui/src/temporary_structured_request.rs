@@ -66,7 +66,6 @@ pub(crate) async fn start_temporary_thread(
         ("features.context_management".to_string(), false.into()),
         ("features.current_time_reminder".to_string(), false.into()),
         ("features.deferred_executor".to_string(), false.into()),
-        ("features.enable_fanout".to_string(), false.into()),
         ("features.goals".to_string(), false.into()),
         ("features.hooks".to_string(), false.into()),
         ("features.multi_agent".to_string(), false.into()),
