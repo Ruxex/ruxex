@@ -110,10 +110,6 @@ impl PluginMarketplaceContext {
         let mut configured_plugin_sources = Vec::new();
 
         for marketplace in marketplaces {
-            if is_openai_curated_marketplace_name(&marketplace.name) {
-                continue;
-            }
-
             for plugin in &marketplace.plugins {
                 if !configured_plugin_key_set.contains(&plugin.id) {
                     continue;

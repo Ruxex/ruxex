@@ -1,7 +1,5 @@
-use crate::OPENAI_API_CURATED_MARKETPLACE_NAME;
 use crate::OPENAI_BUNDLED_ALPHA_MARKETPLACE_NAME;
 use crate::OPENAI_BUNDLED_MARKETPLACE_NAME;
-use crate::OPENAI_CURATED_MARKETPLACE_NAME;
 use crate::OPENAI_PRIMARY_RUNTIME_MARKETPLACE_NAME;
 use crate::installed_marketplaces::marketplace_install_root;
 use crate::installed_marketplaces::resolve_configured_marketplace_root;
@@ -443,9 +441,7 @@ fn validate_expected_marketplace_name(
 fn is_reserved_marketplace_name(marketplace_name: &str) -> bool {
     matches!(
         marketplace_name,
-        OPENAI_CURATED_MARKETPLACE_NAME
-            | OPENAI_API_CURATED_MARKETPLACE_NAME
-            | OPENAI_BUNDLED_MARKETPLACE_NAME
+        OPENAI_BUNDLED_MARKETPLACE_NAME
             | OPENAI_BUNDLED_ALPHA_MARKETPLACE_NAME
             | OPENAI_PRIMARY_RUNTIME_MARKETPLACE_NAME
     )

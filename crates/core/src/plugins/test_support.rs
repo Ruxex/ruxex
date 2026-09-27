@@ -3,8 +3,6 @@ use crate::config::ConfigBuilder;
 use std::fs;
 use std::path::Path;
 
-use codex_core_plugins::OPENAI_API_CURATED_MARKETPLACE_NAME;
-
 pub(crate) fn write_file(path: &Path, contents: &str) {
     fs::create_dir_all(path.parent().expect("file should have a parent")).unwrap();
     fs::write(path, contents).unwrap();
@@ -68,7 +66,7 @@ pub(crate) fn write_openai_api_curated_marketplace(root: &Path, plugin_names: &[
         &root.join(".agents/plugins/api_marketplace.json"),
         &format!(
             r#"{{
-  "name": "{OPENAI_API_CURATED_MARKETPLACE_NAME}",
+  "name": "openai-api-curated",
   "plugins": [
 {plugins}
   ]

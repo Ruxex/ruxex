@@ -1,4 +1,6 @@
 use super::*;
+use crate::OPENAI_API_CURATED_MARKETPLACE_NAME;
+use crate::OPENAI_CURATED_MARKETPLACE_NAME;
 use crate::marketplace_upgrade::upgrade_configured_git_marketplaces;
 use crate::test_support::curated_plugins_repo_path;
 use codex_config::ConfigLayerEntry;

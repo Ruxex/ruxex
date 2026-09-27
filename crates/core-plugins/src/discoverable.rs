@@ -1,34 +1,12 @@
 use anyhow::Context;
 use codex_config::skill_config_rules_from_stack;
 use codex_login::CodexAuth;
-use codex_plugin::PluginId;
 use std::collections::HashSet;
 use tracing::warn;
 
-use crate::OPENAI_API_CURATED_MARKETPLACE_NAME;
-use crate::OPENAI_CURATED_MARKETPLACE_NAME;
 use crate::PluginsConfigInput;
 use crate::PluginsManager;
 use crate::marketplace::MarketplacePluginInstallPolicy;
-
-const TOOL_SUGGEST_DISCOVERABLE_PLUGIN_ALLOWLIST: &[&str] = &[
-    "github@openai-curated",
-    "notion@openai-curated",
-    "slack@openai-curated",
-    "gmail@openai-curated",
-    "google-calendar@openai-curated",
-    "google-drive@openai-curated",
-    "openai-developers@openai-curated",
-    "canva@openai-curated",
-    "teams@openai-curated",
-    "sharepoint@openai-curated",
-    "outlook-email@openai-curated",
-    "outlook-calendar@openai-curated",
-    "linear@openai-curated",
-    "figma@openai-curated",
-    "chrome@openai-bundled",
-    "computer-use@openai-bundled",
-];
 
 #[derive(Debug, Clone)]
 pub struct ToolSuggestPluginDiscoveryInput {
@@ -69,11 +47,10 @@ impl PluginsManager {
 
             for plugin in marketplace.plugins {
                 let is_configured_plugin = input.configured_plugin_ids.contains(plugin.id.as_str());
-                let is_fallback_plugin = is_tool_suggest_fallback_plugin(&plugin.id);
                 if plugin.installed
                     || plugin.policy.installation == MarketplacePluginInstallPolicy::NotAvailable
                     || input.disabled_plugin_ids.contains(plugin.id.as_str())
-                    || (!is_configured_plugin && !is_fallback_plugin)
+                    || !is_configured_plugin
                 {
                     continue;
                 }
@@ -110,23 +87,4 @@ impl PluginsManager {
         });
         Ok(discoverable_plugins)
     }
-}
-
-fn is_tool_suggest_fallback_plugin(plugin_id: &str) -> bool {
-    if TOOL_SUGGEST_DISCOVERABLE_PLUGIN_ALLOWLIST.contains(&plugin_id) {
-        return true;
-    }
-
-    let Ok(plugin_id) = PluginId::parse(plugin_id) else {
-        return false;
-    };
-    if plugin_id.marketplace_name != OPENAI_API_CURATED_MARKETPLACE_NAME {
-        return false;
-    }
-
-    let default_curated_plugin_id = format!(
-        "{}@{}",
-        plugin_id.plugin_name, OPENAI_CURATED_MARKETPLACE_NAME
-    );
-    TOOL_SUGGEST_DISCOVERABLE_PLUGIN_ALLOWLIST.contains(&default_curated_plugin_id.as_str())
 }

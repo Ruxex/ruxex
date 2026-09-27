@@ -3,7 +3,6 @@ use codex_app_server_protocol::PluginSearchParams;
 use codex_app_server_protocol::PluginSearchResponse;
 use codex_app_server_protocol::PluginSearchResult;
 use codex_app_server_protocol::PluginSearchScope;
-use codex_core_plugins::OPENAI_BUNDLED_MARKETPLACE_NAME;
 
 const DEFAULT_PLUGIN_SEARCH_LIMIT: usize = 16;
 const MAX_PLUGIN_SEARCH_LIMIT: usize = 1_000;
@@ -53,7 +52,7 @@ impl PluginRequestProcessor {
         let mut data = outcome
             .marketplaces
             .into_iter()
-            .filter(|marketplace| marketplace_matches_search_scope(&marketplace.name, params.scope))
+            .filter(|_| marketplace_matches_search_scope(params.scope))
             .flat_map(|marketplace| {
                 let marketplace_name = marketplace.name.clone();
                 let marketplace_path = marketplace.path.clone();
@@ -100,22 +99,9 @@ fn plugin_search_result(
     }
 }
 
-fn marketplace_matches_search_scope(
-    marketplace_name: &str,
-    scope: Option<PluginSearchScope>,
-) -> bool {
-    let is_built_in = codex_core_plugins::is_openai_curated_marketplace_name(marketplace_name)
-        || matches!(
-            marketplace_name,
-            OPENAI_BUNDLED_MARKETPLACE_NAME
-                | "openai-bundled-alpha"
-                | "codex-official"
-                | "openai-primary-runtime"
-        );
+fn marketplace_matches_search_scope(scope: Option<PluginSearchScope>) -> bool {
     match scope {
-        None => true,
-        Some(PluginSearchScope::Global) => is_built_in,
-        Some(PluginSearchScope::Workspace) => false,
-        Some(PluginSearchScope::Personal) => !is_built_in,
+        Some(PluginSearchScope::Global | PluginSearchScope::Workspace) => false,
+        None | Some(PluginSearchScope::Personal) => true,
     }
 }

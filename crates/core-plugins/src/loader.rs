@@ -1,5 +1,4 @@
 use crate::PluginGitMode;
-use crate::is_openai_curated_marketplace_name;
 use crate::manifest::PluginManifest;
 use crate::manifest::PluginManifestFormat;
 use crate::manifest::PluginManifestHooks;
@@ -60,13 +59,6 @@ const DEFAULT_MCP_CONFIG_FILE: &str = ".mcp.json";
 pub struct PluginHookLoadOutcome {
     pub hook_sources: Vec<PluginHookSource>,
     pub hook_load_warnings: Vec<String>,
-}
-
-/// The built-in curated marketplace selection for the current runtime.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TargetCuratedMarketplace {
-    OpenAi,
-    OpenAiApi,
 }
 
 enum PluginLoadScope<'a> {
@@ -168,17 +160,13 @@ async fn load_plugins_from_layer_stack_with_scope(
 pub async fn load_plugin_hooks_from_layer_stack(
     config_layer_stack: &ConfigLayerStack,
     store: &PluginStore,
-    target_curated_marketplace: TargetCuratedMarketplace,
 ) -> PluginHookLoadOutcome {
-    let mut plugins = load_plugins_from_layer_stack_with_scope(
+    let plugins = load_plugins_from_layer_stack_with_scope(
         config_layer_stack,
         store,
         PluginLoadScope::HooksOnly,
     )
     .await;
-    plugins.retain(|plugin| {
-        plugin_is_eligible_for_target_marketplace(&plugin.config_name, target_curated_marketplace)
-    });
     PluginHookLoadOutcome {
         hook_sources: plugins
             .iter()
@@ -190,23 +178,6 @@ pub async fn load_plugin_hooks_from_layer_stack(
             .filter(|plugin| plugin.is_active())
             .flat_map(|plugin| plugin.hook_load_warnings.iter().cloned())
             .collect(),
-    }
-}
-
-pub(crate) fn plugin_is_eligible_for_target_marketplace(
-    plugin_key: &str,
-    target_curated_marketplace: TargetCuratedMarketplace,
-) -> bool {
-    let Ok(plugin_id) = PluginId::parse(plugin_key) else {
-        return true;
-    };
-    match target_curated_marketplace {
-        TargetCuratedMarketplace::OpenAi => {
-            plugin_id.marketplace_name != crate::OPENAI_API_CURATED_MARKETPLACE_NAME
-        }
-        TargetCuratedMarketplace::OpenAiApi => {
-            plugin_id.marketplace_name != crate::OPENAI_CURATED_MARKETPLACE_NAME
-        }
     }
 }
 
@@ -278,10 +249,7 @@ fn refresh_non_curated_plugin_cache_with_mode(
     let mut configured_non_curated_plugin_ids = configured_plugin_keys
         .iter()
         .filter_map(|plugin_key| match PluginId::parse(plugin_key) {
-            Ok(plugin_id) if !is_openai_curated_marketplace_name(&plugin_id.marketplace_name) => {
-                Some(plugin_id)
-            }
-            Ok(_) => None,
+            Ok(plugin_id) => Some(plugin_id),
             Err(err) => {
                 warn!(
                     plugin_key,
@@ -310,10 +278,6 @@ fn refresh_non_curated_plugin_cache_with_mode(
     let mut plugin_sources = HashMap::<String, (MarketplacePluginSource, Option<String>)>::new();
 
     for marketplace in marketplace_outcome.marketplaces {
-        if is_openai_curated_marketplace_name(&marketplace.name) {
-            continue;
-        }
-
         for plugin in marketplace.plugins {
             let plugin_id = match PluginId::new(plugin.name.clone(), marketplace.name.clone()) {
                 Ok(plugin_id) => plugin_id,

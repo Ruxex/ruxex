@@ -61,7 +61,6 @@ const SUPPORTED_EXPERIMENTAL_FEATURE_ENABLEMENT: &[&str] = &[
     "auth_elicitation",
     "mcp_2026_07_28",
     "mentions_v2",
-    "remote_plugin",
     "tool_suggest",
     "windows_sandbox_service",
 ];

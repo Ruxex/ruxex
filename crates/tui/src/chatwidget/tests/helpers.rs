@@ -1496,7 +1496,7 @@ pub(super) fn plugins_test_curated_marketplace(
     plugins: Vec<PluginSummary>,
 ) -> PluginMarketplaceEntry {
     PluginMarketplaceEntry {
-        name: OPENAI_CURATED_MARKETPLACE_NAME.to_string(),
+        name: "openai-curated".to_string(),
         path: Some(plugins_test_absolute_path("marketplaces/chatgpt")),
         interface: Some(MarketplaceInterface {
             display_name: Some("ChatGPT Marketplace".to_string()),

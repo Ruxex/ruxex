@@ -221,7 +221,7 @@ async fn plugins_popup_remote_local_dedupe_prefers_installed_remote_after_mapped
             .map(|marketplace| marketplace.name.as_str())
             .collect::<Vec<_>>(),
         vec![
-            OPENAI_CURATED_MARKETPLACE_NAME,
+            "openai-curated",
             "workspace-shared-with-me-private"
         ]
     );

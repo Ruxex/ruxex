@@ -35,7 +35,6 @@ use codex_app_server_protocol::PluginListResponse;
 use codex_app_server_protocol::PluginMarketplaceEntry;
 use codex_app_server_protocol::PluginSource;
 use codex_app_server_protocol::PluginSummary;
-use codex_core_plugins::is_openai_curated_marketplace_name;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use crossterm::event::KeyCode;
 use ratatui::buffer::Buffer;
@@ -50,7 +49,6 @@ use unicode_width::UnicodeWidthStr;
 
 const INSTALLED_PLUGINS_TAB_ID: &str = "installed-plugins";
 const MARKETPLACE_TAB_ID_PREFIX: &str = "marketplace:";
-const OPENAI_CURATED_TAB_ID: &str = "marketplace:openai-curated";
 const PLUGIN_ROW_PREFIX_WIDTH: usize = 6;
 const LOADING_ANIMATION_DELAY: Duration = Duration::from_secs(1);
 const LOADING_ANIMATION_INTERVAL: Duration = Duration::from_millis(100);
@@ -61,7 +59,6 @@ const OTHER_MARKETPLACE_TAB_ORDER: u8 = 1;
 
 #[derive(Debug, Clone, Copy)]
 enum MarketplaceProduct {
-    OpenAiCurated,
     Local,
     Other,
 }
@@ -83,17 +80,12 @@ impl MarketplaceProduct {
     }
 
     fn from_marketplace_name(marketplace_name: &str) -> Self {
-        if is_openai_curated_marketplace_name(marketplace_name) {
-            return Self::OpenAiCurated;
-        }
-
         let _ = marketplace_name;
         Self::Other
     }
 
     fn label(self) -> Option<&'static str> {
         match self {
-            Self::OpenAiCurated => Some("OpenAI Curated"),
             Self::Local => Some("Local"),
             Self::Other => None,
         }
@@ -102,12 +94,8 @@ impl MarketplaceProduct {
     fn tab_order(self) -> u8 {
         match self {
             Self::Local => LOCAL_MARKETPLACE_TAB_ORDER,
-            Self::OpenAiCurated | Self::Other => OTHER_MARKETPLACE_TAB_ORDER,
+            Self::Other => OTHER_MARKETPLACE_TAB_ORDER,
         }
-    }
-
-    fn is_by_openai(self) -> bool {
-        matches!(self, Self::OpenAiCurated)
     }
 }
 
@@ -651,34 +639,8 @@ impl ChatWidget {
             ),
         });
 
-        let curated_entries =
-            plugin_entries_for_marketplaces(marketplaces.iter().filter(|marketplace| {
-                MarketplaceProduct::from_marketplace(marketplace).is_by_openai()
-            }));
-        let curated_total = curated_entries.len();
-        let curated_installed = curated_entries
-            .iter()
-            .filter(|(_, plugin, _)| plugin.installed)
-            .count();
-        let curated_items = self.plugin_selection_items(
-            curated_entries,
-            /*include_marketplace_names*/ false,
-            "No OpenAI Curated plugins available",
-            "No OpenAI Curated plugins available.",
-        );
-        tabs.push(SelectionTab {
-            id: OPENAI_CURATED_TAB_ID.to_string(),
-            label: "OpenAI Curated".to_string(),
-            header: plugins_header(
-                "OpenAI Curated marketplace.".to_string(),
-                format!("Installed {curated_installed} of {curated_total} OpenAI Curated plugins."),
-            ),
-            items: curated_items,
-        });
-
         let mut additional_marketplaces: Vec<&PluginMarketplaceEntry> = marketplaces
             .iter()
-            .filter(|marketplace| !MarketplaceProduct::from_marketplace(marketplace).is_by_openai())
             .collect();
         additional_marketplaces.sort_by_cached_key(|marketplace| {
             let display_name = marketplace_display_name(marketplace);
@@ -882,7 +844,7 @@ impl ChatWidget {
                 items.push(SelectionItem {
                     name: "Uninstall plugin".to_string(),
                     description: Some(
-                        "This remote plugin did not provide an uninstall identity.".to_string(),
+                        "This plugin did not provide an uninstall identity.".to_string(),
                     ),
                     is_disabled: true,
                     ..Default::default()
@@ -1015,7 +977,7 @@ impl ChatWidget {
             } else if can_view_details {
                 format!("{selected_status_label}   Press Enter to install or view plugin details.")
             } else {
-                format!("{selected_status_label}   Remote plugin details are not available yet.")
+                format!("{selected_status_label}   Plugin details are not available yet.")
             };
             let search_value = format!(
                 "{display_name} {} {} {} {} {}",

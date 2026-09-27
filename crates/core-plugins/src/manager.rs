@@ -7,11 +7,9 @@ use super::LoadedPlugin;
 use super::PluginLoadOutcome;
 use crate::PluginGitMode;
 use crate::installed_marketplaces::installed_marketplace_roots_from_layer_stack;
-use crate::is_openai_curated_marketplace_name;
 use crate::loaded_cache_metrics;
 use crate::loaded_cache_metrics::RequestOutcome;
 use crate::loader::PluginHookLoadOutcome;
-use crate::loader::TargetCuratedMarketplace;
 use crate::loader::load_plugin_hooks;
 use crate::loader::load_plugin_hooks_from_layer_stack;
 use crate::loader::load_plugin_mcp_servers_from_manifest_with_format;
@@ -21,7 +19,6 @@ use crate::loader::log_plugin_load_errors;
 use crate::loader::materialize_marketplace_plugin_source;
 #[cfg(test)]
 use crate::loader::plugin_capability_summary_from_root;
-use crate::loader::plugin_is_eligible_for_target_marketplace;
 use crate::loader::refresh_non_curated_plugin_cache_detailed;
 use crate::loader::refresh_non_curated_plugin_cache_force_reinstall_detailed;
 use crate::manifest::PluginManifestFormat;
@@ -343,14 +340,6 @@ impl PluginLoadCacheKey {
     }
 }
 
-fn target_curated_marketplace(auth_mode: Option<AuthMode>) -> TargetCuratedMarketplace {
-    if auth_mode.is_some_and(AuthMode::uses_managed_auth) {
-        TargetCuratedMarketplace::OpenAi
-    } else {
-        TargetCuratedMarketplace::OpenAiApi
-    }
-}
-
 impl PluginsManager {
     pub fn new(
         codex_home: PathBuf,
@@ -444,11 +433,10 @@ impl PluginsManager {
             return PluginLoadOutcome::default();
         }
         let mut cache_outcome = RequestOutcome::Hit;
-        let auth_mode = self.auth_mode();
         let cache_key = PluginLoadCacheKey::from_config(config, self.codex_home.as_path());
         if let Some(plugins) = self.cached_loaded_plugins(&cache_key) {
             cache_outcome.record();
-            return self.resolve_loaded_plugins_for_auth(plugins, auth_mode);
+            return PluginLoadOutcome::from_plugins(plugins);
         }
 
         if matches!(cache_outcome, RequestOutcome::Hit) {
@@ -466,7 +454,7 @@ impl PluginsManager {
         };
         if let Some(plugins) = self.cached_loaded_plugins(&cache_key) {
             cache_outcome.record();
-            return self.resolve_loaded_plugins_for_auth(plugins, auth_mode);
+            return PluginLoadOutcome::from_plugins(plugins);
         }
 
         let cache_generation = self.loaded_plugins_cache_generation();
@@ -493,21 +481,6 @@ impl PluginsManager {
             plugin_skill_snapshots,
         );
         cache_outcome.record();
-        self.resolve_loaded_plugins_for_auth(plugins, auth_mode)
-    }
-
-    fn resolve_loaded_plugins_for_auth(
-        &self,
-        mut plugins: Vec<LoadedPlugin>,
-        auth_mode: Option<AuthMode>,
-    ) -> PluginLoadOutcome {
-        let target_curated_marketplace = target_curated_marketplace(auth_mode);
-        plugins.retain(|plugin| {
-            plugin_is_eligible_for_target_marketplace(
-                &plugin.config_name,
-                target_curated_marketplace,
-            )
-        });
         PluginLoadOutcome::from_plugins(plugins)
     }
 
@@ -551,13 +524,7 @@ impl PluginsManager {
         if !config.plugins_enabled {
             return PluginHookLoadOutcome::default();
         }
-        let target_curated_marketplace = target_curated_marketplace(self.auth_mode());
-        load_plugin_hooks_from_layer_stack(
-            config_layer_stack,
-            &self.store,
-            target_curated_marketplace,
-        )
-        .await
+        load_plugin_hooks_from_layer_stack(config_layer_stack, &self.store).await
     }
 
     fn cached_loaded_plugins(&self, key: &PluginLoadCacheKey) -> Option<Vec<LoadedPlugin>> {
