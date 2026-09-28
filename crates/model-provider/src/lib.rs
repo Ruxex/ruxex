@@ -40,6 +40,7 @@ pub use provider::ModelProviderFuture;
 pub use provider::ProviderAccountError;
 pub use provider::ProviderAccountResult;
 pub use provider::ProviderAccountState;
+pub use provider::ProviderApi;
 pub use provider::ProviderAuthRecoveryMessages;
 pub use provider::ProviderCapabilities;
 pub use provider::ProviderUnauthorizedRecovery;

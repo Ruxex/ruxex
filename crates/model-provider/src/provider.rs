@@ -5,13 +5,16 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use codex_api::ApiError;
+use codex_api::ChatCompletionApi;
 use codex_api::Provider;
 use codex_api::SharedAuthProvider;
+use codex_api::StandardChatCompletionApi;
 use codex_api::TransportError;
 use codex_api::is_azure_responses_provider;
 use codex_login::AuthManager;
 use codex_login::CodexAuth;
 use codex_model_provider_info::ModelProviderInfo;
+use codex_model_provider_info::WireApi;
 use codex_models_manager::cache::ModelsCache;
 use codex_models_manager::manager::OpenAiModelsManager;
 use codex_models_manager::manager::SharedModelsManager;
@@ -108,6 +111,15 @@ impl std::error::Error for ProviderAccountError {}
 
 pub type ProviderAccountResult = std::result::Result<ProviderAccountState, ProviderAccountError>;
 
+/// Runtime API selected for model execution.
+#[derive(Clone)]
+pub enum ProviderApi {
+    /// The existing concrete Responses API implementation.
+    Responses,
+    /// A provider-specific Chat Completions wire adapter.
+    Chat(Arc<dyn ChatCompletionApi>),
+}
+
 /// Default model used for memory extraction when a provider does not require a
 /// backend-specific model ID.
 pub const DEFAULT_MEMORY_EXTRACTION_PREFERRED_MODEL: &str = "gpt-5.6-luna";
@@ -124,6 +136,14 @@ pub const DEFAULT_MEMORY_CONSOLIDATION_PREFERRED_MODEL: &str = "gpt-5.6-terra";
 pub trait ModelProvider: fmt::Debug + Send + Sync {
     /// Returns the configured provider metadata.
     fn info(&self) -> &ModelProviderInfo;
+
+    /// Resolves the runtime API implementation for this provider.
+    fn api(&self) -> ProviderApi {
+        match self.info().wire_api {
+            WireApi::Responses => ProviderApi::Responses,
+            WireApi::Chat => ProviderApi::Chat(Arc::new(StandardChatCompletionApi)),
+        }
+    }
 
     /// Returns the provider-owned capability upper bounds.
     fn capabilities(&self) -> ProviderCapabilities {
@@ -490,6 +510,26 @@ mod tests {
 
     use super::*;
     use crate::shared_state::process_shared_state;
+
+    #[test]
+    fn my_provider_selects_chat_runtime_api() {
+        let provider = create_model_provider(
+            ModelProviderInfo::create_my_provider(),
+            /*auth_manager*/ None,
+        );
+
+        assert!(matches!(provider.api(), ProviderApi::Chat(_)));
+    }
+
+    #[test]
+    fn responses_provider_keeps_concrete_runtime_api() {
+        let provider = create_model_provider(
+            ModelProviderInfo::create_openai_provider(None),
+            /*auth_manager*/ None,
+        );
+
+        assert!(matches!(provider.api(), ProviderApi::Responses));
+    }
 
     fn provider_info_with_command_auth() -> ModelProviderInfo {
         ModelProviderInfo {

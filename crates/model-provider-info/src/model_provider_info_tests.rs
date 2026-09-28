@@ -389,6 +389,7 @@ fn test_built_in_model_providers_include_my_provider() {
         provider.base_url.as_deref(),
         Some(MY_PROVIDER_DEFAULT_BASE_URL)
     );
+    assert_eq!(provider.wire_api, WireApi::Chat);
 }
 
 #[test]

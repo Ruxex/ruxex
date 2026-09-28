@@ -3342,6 +3342,64 @@ async fn token_count_includes_rate_limits_snapshot() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn chat_completion_usage_reaches_token_count_event() {
+    skip_if_no_network!();
+    let server = MockServer::start().await;
+    let sse_body = concat!(
+        "data: {\"choices\":[{\"delta\":{\"content\":\"hello\"}}]}\n\n",
+        "data: {\"choices\":[{\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":123,\"completion_tokens\":7,\"total_tokens\":130}}\n\n",
+        "data: [DONE]\n\n"
+    );
+
+    Mock::given(method("POST"))
+        .and(path("/v1/chat/completions"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("content-type", "text/event-stream")
+                .set_body_raw(sse_body, "text/event-stream"),
+        )
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let mut provider = ModelProviderInfo::create_my_provider();
+    provider.base_url = Some(format!("{}/v1", server.uri()));
+    let codex = test_codex()
+        .with_auth(CodexAuth::from_api_key("test"))
+        .with_config(move |config| {
+            config.model_provider = provider;
+        })
+        .build(&server)
+        .await
+        .expect("create conversation")
+        .codex;
+
+    codex
+        .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
+            text: "hello".into(),
+            text_elements: Vec::new(),
+        }]))
+        .await
+        .unwrap();
+
+    let token_event = wait_for_event(&codex, |msg| {
+        matches!(
+            msg,
+            EventMsg::TokenCount(event)
+                if event.info.as_ref().is_some_and(|info| {
+                    info.last_token_usage.input_tokens == 123
+                        && info.last_token_usage.output_tokens == 7
+                        && info.last_token_usage.total_tokens == 130
+                })
+        )
+    })
+    .await;
+
+    assert!(matches!(token_event, EventMsg::TokenCount(_)));
+    wait_for_event(&codex, |msg| matches!(msg, EventMsg::TurnComplete(_))).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn usage_limit_error_emits_rate_limit_event() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
     let server = MockServer::start().await;

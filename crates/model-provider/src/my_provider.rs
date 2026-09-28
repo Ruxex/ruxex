@@ -1,8 +1,16 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use codex_api::ApiError;
 use codex_api::AuthProvider;
+use codex_api::ChatCompletionApi;
+use codex_api::ChatRequest;
+use codex_api::ChatRequestInput;
+use codex_api::ResponseStream;
 use codex_api::SharedAuthProvider;
+use codex_api::SseTelemetry;
+use codex_api::StandardChatCompletionApi;
+use codex_api::StreamResponse;
 use codex_login::AuthManager;
 use codex_login::CodexAuth;
 use codex_model_provider_info::ModelProviderInfo;
@@ -18,6 +26,7 @@ use super::provider::ModelProvider;
 use super::provider::ModelProviderFuture;
 use super::provider::ProviderAccountResult;
 use super::provider::ProviderAccountState;
+use super::provider::ProviderApi;
 
 #[derive(Clone, Debug)]
 pub(crate) struct MyModelProvider {
@@ -36,6 +45,25 @@ struct MyApiKeyAuthProvider {
     api_key: String,
 }
 
+/// Runtime Chat adapter reserved for the built-in My Provider.
+#[derive(Clone, Copy, Debug, Default)]
+pub(crate) struct MyProviderChatCompletionApi;
+
+impl ChatCompletionApi for MyProviderChatCompletionApi {
+    fn build_request(&self, input: ChatRequestInput<'_>) -> Result<ChatRequest, ApiError> {
+        StandardChatCompletionApi.build_request(input)
+    }
+
+    fn spawn_stream(
+        &self,
+        response: StreamResponse,
+        idle_timeout: std::time::Duration,
+        telemetry: Option<Arc<dyn SseTelemetry>>,
+    ) -> ResponseStream {
+        StandardChatCompletionApi.spawn_stream(response, idle_timeout, telemetry)
+    }
+}
+
 impl AuthProvider for MyApiKeyAuthProvider {
     fn add_auth_headers(&self, headers: &mut HeaderMap) {
         if let Ok(value) = HeaderValue::from_str(&format!("apikey {}", self.api_key)) {
@@ -47,6 +75,10 @@ impl AuthProvider for MyApiKeyAuthProvider {
 impl ModelProvider for MyModelProvider {
     fn info(&self) -> &ModelProviderInfo {
         &self.info
+    }
+
+    fn api(&self) -> ProviderApi {
+        ProviderApi::Chat(Arc::new(MyProviderChatCompletionApi))
     }
 
     fn auth_manager(&self) -> Option<Arc<AuthManager>> {

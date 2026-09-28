@@ -1,3 +1,4 @@
+use crate::chat_completion::ChatUsageDecoder;
 use crate::common::ResponseEvent;
 use crate::common::ResponseStream;
 use crate::error::ApiError;
@@ -6,13 +7,13 @@ use codex_client::StreamResponse;
 use codex_protocol::models::ContentItem;
 use codex_protocol::models::ReasoningItemContent;
 use codex_protocol::models::ResponseItem;
+use codex_protocol::protocol::TokenUsage;
 use eventsource_stream::Eventsource;
 use futures::Stream;
 use futures::StreamExt;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
-use std::sync::OnceLock;
 use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::time::Instant;
@@ -24,11 +25,18 @@ pub(crate) fn spawn_chat_stream(
     stream_response: StreamResponse,
     idle_timeout: Duration,
     telemetry: Option<Arc<dyn SseTelemetry>>,
-    _turn_state: Option<Arc<OnceLock<String>>>,
+    usage_decoder: Arc<dyn ChatUsageDecoder>,
 ) -> ResponseStream {
     let (tx_event, rx_event) = mpsc::channel::<Result<ResponseEvent, ApiError>>(1600);
     tokio::spawn(async move {
-        process_chat_sse(stream_response.bytes, tx_event, idle_timeout, telemetry).await;
+        process_chat_sse(
+            stream_response.bytes,
+            tx_event,
+            idle_timeout,
+            telemetry,
+            usage_decoder,
+        )
+        .await;
     });
     ResponseStream {
         rx_event,
@@ -56,6 +64,7 @@ pub async fn process_chat_sse<S>(
     tx_event: mpsc::Sender<Result<ResponseEvent, ApiError>>,
     idle_timeout: Duration,
     telemetry: Option<std::sync::Arc<dyn SseTelemetry>>,
+    usage_decoder: Arc<dyn ChatUsageDecoder>,
 ) where
     S: Stream<Item = Result<bytes::Bytes, codex_client::TransportError>> + Unpin,
 {
@@ -76,12 +85,14 @@ pub async fn process_chat_sse<S>(
     let mut last_tool_call_index: Option<usize> = None;
     let mut assistant_item: Option<ResponseItem> = None;
     let mut reasoning_item: Option<ResponseItem> = None;
-    let mut completed_sent = false;
+    let mut token_usage: Option<TokenUsage> = None;
+    let mut stop_seen = false;
 
     async fn flush_and_complete(
         tx_event: &mpsc::Sender<Result<ResponseEvent, ApiError>>,
         reasoning_item: &mut Option<ResponseItem>,
         assistant_item: &mut Option<ResponseItem>,
+        token_usage: Option<&TokenUsage>,
     ) {
         if let Some(reasoning) = reasoning_item.take() {
             let _ = tx_event
@@ -98,7 +109,7 @@ pub async fn process_chat_sse<S>(
         let _ = tx_event
             .send(Ok(ResponseEvent::Completed {
                 response_id: String::new(),
-                token_usage: None,
+                token_usage: token_usage.cloned(),
                 usage_metadata: None,
                 end_turn: None,
             }))
@@ -118,9 +129,13 @@ pub async fn process_chat_sse<S>(
                 return;
             }
             Ok(None) => {
-                if !completed_sent {
-                    flush_and_complete(&tx_event, &mut reasoning_item, &mut assistant_item).await;
-                }
+                flush_and_complete(
+                    &tx_event,
+                    &mut reasoning_item,
+                    &mut assistant_item,
+                    token_usage.as_ref(),
+                )
+                .await;
                 return;
             }
             Err(_) => {
@@ -140,9 +155,13 @@ pub async fn process_chat_sse<S>(
         }
 
         if data == "[DONE]" || data == "DONE" {
-            if !completed_sent {
-                flush_and_complete(&tx_event, &mut reasoning_item, &mut assistant_item).await;
-            }
+            flush_and_complete(
+                &tx_event,
+                &mut reasoning_item,
+                &mut assistant_item,
+                token_usage.as_ref(),
+            )
+            .await;
             return;
         }
 
@@ -157,9 +176,26 @@ pub async fn process_chat_sse<S>(
             }
         };
 
+        if let Some(usage) = value.get("usage")
+            && let Some(decoded) = usage_decoder.decode(usage)
+        {
+            token_usage = Some(decoded);
+        }
+
         let Some(choices) = value.get("choices").and_then(|c| c.as_array()) else {
             continue;
         };
+
+        if stop_seen && choices.is_empty() {
+            flush_and_complete(
+                &tx_event,
+                &mut reasoning_item,
+                &mut assistant_item,
+                token_usage.as_ref(),
+            )
+            .await;
+            return;
+        }
 
         for choice in choices {
             if let Some(delta) = choice.get("delta") {
@@ -274,17 +310,7 @@ pub async fn process_chat_sse<S>(
                         .send(Ok(ResponseEvent::OutputItemDone(assistant)))
                         .await;
                 }
-                if !completed_sent {
-                    let _ = tx_event
-                        .send(Ok(ResponseEvent::Completed {
-                            response_id: String::new(),
-                            token_usage: None,
-                            usage_metadata: None,
-                            end_turn: None,
-                        }))
-                        .await;
-                    completed_sent = true;
-                }
+                stop_seen = true;
                 continue;
             }
 
@@ -396,6 +422,7 @@ async fn append_reasoning_text(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::StandardChatUsageDecoder;
     use assert_matches::assert_matches;
     use codex_protocol::models::ResponseItem;
     use futures::TryStreamExt;
@@ -430,6 +457,7 @@ mod tests {
             tx,
             Duration::from_millis(1000),
             None,
+            Arc::new(StandardChatUsageDecoder),
         ));
 
         let mut out = Vec::new();
@@ -437,6 +465,123 @@ mod tests {
             out.push(ev.expect("stream error"));
         }
         out
+    }
+
+    #[tokio::test]
+    async fn carries_usage_from_usage_only_chunk_to_completed_event() {
+        let text = json!({
+            "choices": [{"delta": {"content": "hello"}}]
+        });
+        let usage = json!({
+            "choices": [],
+            "usage": {
+                "prompt_tokens": 10,
+                "prompt_tokens_details": {"cached_tokens": 3},
+                "completion_tokens": 5,
+                "completion_tokens_details": {"reasoning_tokens": 2},
+                "total_tokens": 15
+            }
+        });
+
+        let events = collect_events(&build_body(&[text, usage])).await;
+        let Some(ResponseEvent::Completed { token_usage, .. }) = events.last() else {
+            panic!("expected a completed event, got {events:?}");
+        };
+        let token_usage = token_usage.as_ref().expect("usage should be present");
+        assert_eq!(token_usage.input_tokens, 10);
+        assert_eq!(token_usage.cached_input_tokens, 3);
+        assert_eq!(token_usage.output_tokens, 5);
+        assert_eq!(token_usage.reasoning_output_tokens, 2);
+        assert_eq!(token_usage.total_tokens, 15);
+    }
+
+    #[tokio::test]
+    async fn carries_usage_from_chunk_after_stop_finish_reason() {
+        let finish = json!({
+            "choices": [{"finish_reason": "stop"}]
+        });
+        let usage = json!({
+            "choices": [],
+            "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}
+        });
+
+        let events = collect_events(&build_body(&[finish, usage])).await;
+        let Some(ResponseEvent::Completed { token_usage, .. }) = events.last() else {
+            panic!("expected a completed event, got {events:?}");
+        };
+        assert_eq!(token_usage.as_ref().map(|usage| usage.total_tokens), Some(15));
+    }
+
+    #[tokio::test]
+    async fn uses_last_valid_usage_snapshot_and_ignores_invalid_snapshot() {
+        let first_usage = json!({
+            "choices": [],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 2, "total_tokens": 3}
+        });
+        let invalid_usage = json!({
+            "choices": [],
+            "usage": {"prompt_tokens": "bad", "completion_tokens": 20, "total_tokens": 21}
+        });
+        let last_usage = json!({
+            "choices": [],
+            "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30}
+        });
+
+        let events = collect_events(&build_body(&[
+            first_usage,
+            invalid_usage,
+            last_usage,
+            json!({"choices": [{"finish_reason": "stop"}]}),
+        ]))
+        .await;
+        let Some(ResponseEvent::Completed { token_usage, .. }) = events.last() else {
+            panic!("expected a completed event, got {events:?}");
+        };
+        assert_eq!(
+            token_usage.as_ref().map(|usage| usage.total_tokens),
+            Some(30)
+        );
+    }
+
+    #[tokio::test]
+    async fn carries_usage_through_tool_call_completion() {
+        let tool_call = json!({
+            "choices": [{
+                "delta": {
+                    "tool_calls": [{
+                        "id": "call_a",
+                        "index": 0,
+                        "function": {"name": "do_a", "arguments": "{}"}
+                    }]
+                },
+                "finish_reason": "tool_calls"
+            }],
+            "usage": {"prompt_tokens": 4, "completion_tokens": 6, "total_tokens": 10}
+        });
+
+        let events = collect_events(&build_body(&[tool_call])).await;
+        let Some(ResponseEvent::Completed { token_usage, .. }) = events.last() else {
+            panic!("expected a completed event, got {events:?}");
+        };
+        assert_eq!(
+            token_usage.as_ref().map(|usage| usage.total_tokens),
+            Some(10)
+        );
+    }
+
+    #[tokio::test]
+    async fn completes_without_usage_when_no_usage_is_returned() {
+        let events = collect_events(&build_body(&[
+            json!({"choices": [{"finish_reason": "stop"}]}),
+        ]))
+        .await;
+        assert_matches!(
+            events.last(),
+            Some(ResponseEvent::Completed {
+                token_usage: None,
+                ..
+            })
+        );
     }
 
     #[tokio::test]
