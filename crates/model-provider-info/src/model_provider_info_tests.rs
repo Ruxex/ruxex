@@ -378,6 +378,20 @@ fn test_built_in_model_providers_include_amazon_bedrock_endpoints() {
 }
 
 #[test]
+fn test_built_in_model_providers_include_my_provider() {
+    let providers = built_in_model_providers();
+    let provider = providers
+        .get(MY_PROVIDER_ID)
+        .expect("my provider should be built in");
+
+    assert_eq!(provider.name, MY_PROVIDER_NAME);
+    assert_eq!(
+        provider.base_url.as_deref(),
+        Some(MY_PROVIDER_DEFAULT_BASE_URL)
+    );
+}
+
+#[test]
 fn test_built_in_model_providers_include_amazon_bedrock_runtime() {
     let providers = built_in_model_providers();
     let runtime = providers

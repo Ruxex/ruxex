@@ -80,6 +80,9 @@ pub const AMAZON_BEDROCK_GPT_5_6_LUNA_MODEL_ID: &str = "openai.gpt-5.6-luna";
 pub const AMAZON_BEDROCK_RUNTIME_GLOBAL_GPT_5_6_TERRA_MODEL_ID: &str =
     "global.openai.gpt-5.6-terra";
 pub const AMAZON_BEDROCK_RUNTIME_GLOBAL_GPT_5_6_LUNA_MODEL_ID: &str = "global.openai.gpt-5.6-luna";
+pub const MY_PROVIDER_ID: &str = "my-provider";
+pub const MY_PROVIDER_NAME: &str = "My Provider";
+pub const MY_PROVIDER_DEFAULT_BASE_URL: &str = "https://example.com";
 pub const AMAZON_BEDROCK_DEFAULT_BASE_URL: &str =
     "https://bedrock-mantle.us-east-1.api.aws/openai/v1";
 const AMAZON_BEDROCK_MANTLE_CLIENT_AGENT_HEADER: &str = "x-amzn-mantle-client-agent";
@@ -559,6 +562,14 @@ other non-default provider fields are not supported"
         provider
     }
 
+    pub fn create_my_provider() -> ModelProviderInfo {
+        ModelProviderInfo {
+            name: MY_PROVIDER_NAME.to_string(),
+            base_url: Some(MY_PROVIDER_DEFAULT_BASE_URL.to_string()),
+            ..ModelProviderInfo::default()
+        }
+    }
+
     /// Returns whether this explicitly configured provider opts into the
     /// remaining first-party OpenAI behavior.
     ///
@@ -590,10 +601,8 @@ pub fn built_in_model_providers() -> HashMap<String, ModelProviderInfo> {
     let amazon_bedrock_runtime_provider =
         P::create_amazon_bedrock_runtime_provider(/*aws*/ None);
 
-    // We do not bundle a first-party hosted provider or third-party providers
-    // by default. Users can add compatible providers through `model_providers`
-    // in config.toml.
     [
+        (MY_PROVIDER_ID, P::create_my_provider()),
         (AMAZON_BEDROCK_PROVIDER_ID, amazon_bedrock_provider),
         (
             AMAZON_BEDROCK_RUNTIME_PROVIDER_ID,

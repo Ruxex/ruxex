@@ -3,6 +3,7 @@ mod auth;
 mod bearer_auth_provider;
 mod models_endpoint;
 mod models_identity;
+mod my_provider;
 mod provider;
 mod shared_state;
 pub mod test_support;

@@ -27,6 +27,7 @@ use crate::auth::auth_manager_for_provider;
 use crate::auth::resolve_provider_auth;
 use crate::auth::resolve_provider_auth_for_scope;
 use crate::models_endpoint::OpenAiModelsEndpoint;
+use crate::my_provider::MyModelProvider;
 
 /// Remote context-compaction protocols supported by a model provider.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -288,6 +289,8 @@ pub fn create_model_provider(
 ) -> SharedModelProvider {
     if provider_info.is_amazon_bedrock() {
         Arc::new(AmazonBedrockModelProvider::new(provider_info, auth_manager))
+    } else if provider_info.name == codex_model_provider_info::MY_PROVIDER_NAME {
+        Arc::new(MyModelProvider::new(provider_info, auth_manager))
     } else {
         Arc::new(ConfiguredModelProvider::new(provider_info, auth_manager))
     }
@@ -579,6 +582,29 @@ mod tests {
             .expect("auth should resolve");
 
         assert!(auth.auth.to_auth_headers().is_empty());
+    }
+
+    #[tokio::test]
+    async fn my_provider_uses_api_key_header_auth() {
+        let provider = create_model_provider(
+            ModelProviderInfo {
+                name: "My Provider".to_string(),
+                base_url: Some("https://example.com".to_string()),
+                ..ModelProviderInfo::default()
+            },
+            Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
+                "test-key",
+            ))),
+        );
+
+        let auth = provider.api_auth().await.expect("auth should resolve");
+        assert_eq!(
+            auth.to_auth_headers()
+                .get("APIKEY")
+                .and_then(|value| value.to_str().ok()),
+            Some("apikey test-key")
+        );
+        assert!(!auth.to_auth_headers().contains_key("authorization"));
     }
 
     #[test]
