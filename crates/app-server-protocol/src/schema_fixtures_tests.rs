@@ -73,7 +73,6 @@ fn experimental_precomputed_exports_match_generated() -> Result<()> {
     let json_dir = output_dir.path().join("json");
     generate_ts_with_options(
         &typescript_dir,
-        /*prettier*/ None,
         GenerateTsOptions {
             experimental_api: true,
             ..GenerateTsOptions::default()
@@ -100,7 +99,6 @@ fn write_schema_fixtures_from_env() -> Result<()> {
     let schema_root = std::env::var_os("CODEX_APP_SERVER_SCHEMA_ROOT")
         .map(PathBuf::from)
         .context("CODEX_APP_SERVER_SCHEMA_ROOT must be set")?;
-    let prettier = std::env::var_os("CODEX_APP_SERVER_SCHEMA_PRETTIER").map(PathBuf::from);
     let experimental = std::env::var("CODEX_APP_SERVER_SCHEMA_EXPERIMENTAL")
         .context("CODEX_APP_SERVER_SCHEMA_EXPERIMENTAL must be set")?;
     let experimental_api = match experimental.as_str() {
@@ -113,7 +111,6 @@ fn write_schema_fixtures_from_env() -> Result<()> {
 
     write_schema_fixtures_with_options(
         &schema_root,
-        prettier.as_deref(),
         SchemaFixtureOptions { experimental_api },
     )
 }

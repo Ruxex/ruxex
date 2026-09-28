@@ -16,12 +16,6 @@ def main() -> None:
         help="root directory containing the schema fixtures",
     )
     parser.add_argument(
-        "-p",
-        "--prettier",
-        type=Path,
-        help="optional Prettier executable used to format TypeScript files",
-    )
-    parser.add_argument(
         "--experimental",
         action="store_true",
         help="regenerate the precomputed experimental exports",
@@ -37,9 +31,6 @@ def main() -> None:
     env = os.environ.copy()
     env["CODEX_APP_SERVER_SCHEMA_ROOT"] = str(schema_root)
     env["CODEX_APP_SERVER_SCHEMA_EXPERIMENTAL"] = "1" if args.experimental else "0"
-    if args.prettier:
-        env["CODEX_APP_SERVER_SCHEMA_PRETTIER"] = str(args.prettier)
-
     subprocess.run(
         [
             "cargo",

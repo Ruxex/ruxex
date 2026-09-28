@@ -87,18 +87,17 @@ pub fn generate_typescript_schema_fixture_subtree_for_tests() -> Result<BTreeMap
 ///
 /// This is intended to be used by tooling (e.g., `just write-app-server-schema`).
 /// It deletes any previously generated files so stale artifacts are removed.
-pub fn write_schema_fixtures(schema_root: &Path, prettier: Option<&Path>) -> Result<()> {
-    write_schema_fixtures_with_options(schema_root, prettier, SchemaFixtureOptions::default())
+pub fn write_schema_fixtures(schema_root: &Path) -> Result<()> {
+    write_schema_fixtures_with_options(schema_root, SchemaFixtureOptions::default())
 }
 
 /// Regenerates schema fixtures with configurable options.
 pub fn write_schema_fixtures_with_options(
     schema_root: &Path,
-    prettier: Option<&Path>,
     options: SchemaFixtureOptions,
 ) -> Result<()> {
     if options.experimental_api {
-        return write_experimental_precomputed_exports(schema_root, prettier);
+        return write_experimental_precomputed_exports(schema_root);
     }
 
     let typescript_out_dir = schema_root.join("typescript");
@@ -109,7 +108,6 @@ pub fn write_schema_fixtures_with_options(
 
     crate::export::generate_ts_with_options(
         &typescript_out_dir,
-        prettier,
         crate::export::GenerateTsOptions::default(),
     )?;
     crate::export::generate_json(&json_out_dir)?;
@@ -126,17 +124,13 @@ pub fn write_schema_fixtures_with_options(
     Ok(())
 }
 
-fn write_experimental_precomputed_exports(
-    schema_root: &Path,
-    prettier: Option<&Path>,
-) -> Result<()> {
+fn write_experimental_precomputed_exports(schema_root: &Path) -> Result<()> {
     let temp_dir = tempfile::tempdir().context("create experimental schema temp dir")?;
     let typescript_out_dir = temp_dir.path().join("typescript");
     let json_out_dir = temp_dir.path().join("json");
 
     crate::export::generate_ts_with_options(
         &typescript_out_dir,
-        prettier,
         crate::export::GenerateTsOptions {
             experimental_api: true,
             ..crate::export::GenerateTsOptions::default()

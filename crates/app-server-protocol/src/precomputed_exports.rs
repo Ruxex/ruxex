@@ -9,7 +9,6 @@ use std::io::Cursor;
 use std::path::Component;
 use std::path::Path;
 use std::path::PathBuf;
-use std::process::Command;
 
 pub(crate) const GENERATED_TS_HEADER: &str = "// GENERATED CODE! DO NOT MODIFY BY HAND!\n\n";
 const STABLE_EXPORTS: &[u8] =
@@ -21,7 +20,6 @@ const EXPERIMENTAL_EXPORTS: &[u8] =
 pub struct GenerateTsOptions {
     pub generate_indices: bool,
     pub ensure_headers: bool,
-    pub run_prettier: bool,
     pub experimental_api: bool,
 }
 
@@ -30,7 +28,6 @@ impl Default for GenerateTsOptions {
         Self {
             generate_indices: true,
             ensure_headers: true,
-            run_prettier: true,
             experimental_api: false,
         }
     }
@@ -50,18 +47,17 @@ enum ExportSet {
     Experimental,
 }
 
-pub fn generate_types(out_dir: &Path, prettier: Option<&Path>) -> Result<()> {
-    generate_ts(out_dir, prettier)?;
+pub fn generate_types(out_dir: &Path) -> Result<()> {
+    generate_ts(out_dir)?;
     generate_json(out_dir)
 }
 
-pub fn generate_ts(out_dir: &Path, prettier: Option<&Path>) -> Result<()> {
-    generate_ts_with_options(out_dir, prettier, GenerateTsOptions::default())
+pub fn generate_ts(out_dir: &Path) -> Result<()> {
+    generate_ts_with_options(out_dir, GenerateTsOptions::default())
 }
 
 pub fn generate_ts_with_options(
     out_dir: &Path,
-    prettier: Option<&Path>,
     options: GenerateTsOptions,
 ) -> Result<()> {
     let export_set = if options.experimental_api {
@@ -71,22 +67,6 @@ pub fn generate_ts_with_options(
     };
     let exports = load_exports(export_set)?;
     let ts_files = write_typescript_exports(out_dir, &exports.typescript, options)?;
-
-    if options.run_prettier
-        && let Some(prettier_bin) = prettier
-        && !ts_files.is_empty()
-    {
-        let status = Command::new(prettier_bin)
-            .arg("--write")
-            .arg("--log-level")
-            .arg("warn")
-            .args(ts_files.iter().map(PathBuf::as_path))
-            .status()
-            .with_context(|| format!("Failed to invoke Prettier at {}", prettier_bin.display()))?;
-        if !status.success() {
-            bail!("Prettier failed with status {status}");
-        }
-    }
 
     trim_trailing_whitespace_in_ts_files(&ts_files)
 }

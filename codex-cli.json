@@ -2231,36 +2231,6 @@
       "code": "hawk::unnecessary_public",
       "expansion": null,
       "identity": {
-        "compiler_id": "fdcd44ae41099c164e5c1e599b043f43",
-        "crate": "codex_app_server_protocol",
-        "id": "v1|25:codex-app-server-protocol|25:codex_app_server_protocol|39:export::GenerateTsOptions::run_prettier|5:field|6:source|40:crates/app-server-protocol/src/export.rs|106|5",
-        "item": "export::GenerateTsOptions::run_prettier",
-        "kind": "field",
-        "module_scope": [
-          "export"
-        ],
-        "package": "codex-app-server-protocol",
-        "parent": "export::GenerateTsOptions"
-      },
-      "kind": "unnecessary_public",
-      "location": {
-        "byte_end": 3334,
-        "byte_start": 3311,
-        "column": 5,
-        "end_column": 28,
-        "end_line": 106,
-        "file": "crates/app-server-protocol/src/export.rs",
-        "line": 106
-      },
-      "severity": "warning",
-      "test_compiled_only": true,
-      "test_only": true
-    },
-    {
-      "category": "finding",
-      "code": "hawk::unnecessary_public",
-      "expansion": null,
-      "identity": {
         "compiler_id": "fdcd44ae41099c16ffcd5d3364eb9b7f",
         "crate": "codex_app_server_protocol",
         "id": "v1|25:codex-app-server-protocol|25:codex_app_server_protocol|43:export::GenerateTsOptions::experimental_api|5:field|6:source|40:crates/app-server-protocol/src/export.rs|107|5",

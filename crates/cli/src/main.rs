@@ -618,10 +618,6 @@ struct GenerateTsCommand {
     #[arg(short = 'o', long = "out", value_name = "DIR")]
     out_dir: PathBuf,
 
-    /// Optional path to the Prettier executable to format generated files
-    #[arg(short = 'p', long = "prettier", value_name = "PRETTIER_BIN")]
-    prettier: Option<PathBuf>,
-
     /// Include experimental methods and fields in the generated output
     #[arg(long = "experimental", default_value_t = false)]
     experimental: bool,
@@ -1260,7 +1256,6 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                     };
                     codex_app_server_protocol::generate_ts_with_options(
                         &gen_cli.out_dir,
-                        gen_cli.prettier.as_deref(),
                         options,
                     )?;
                 }

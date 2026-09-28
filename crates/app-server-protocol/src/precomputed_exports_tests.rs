@@ -19,7 +19,6 @@ fn precomputed_exports_are_written_to_disk() -> Result<()> {
 
     generate_ts_with_options(
         &typescript_dir,
-        /*prettier*/ None,
         GenerateTsOptions::default(),
     )?;
     generate_json_with_experimental(&json_dir, /*experimental_api*/ false)?;
@@ -46,7 +45,6 @@ fn typescript_export_options_preserve_generator_behavior() -> Result<()> {
     let output_dir = tempfile::tempdir().context("create TypeScript export temp dir")?;
     generate_ts_with_options(
         output_dir.path(),
-        /*prettier*/ None,
         GenerateTsOptions {
             generate_indices: false,
             ensure_headers: false,

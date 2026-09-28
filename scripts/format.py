@@ -47,19 +47,10 @@ def rust_formatter_group(*, check: bool) -> FormatterGroup:
     return FormatterGroup("Rust", (command,))
 
 
-def python_scripts_formatter_group(*, check: bool) -> FormatterGroup:
-    args = ["uv", "run", "--frozen", "--project", "scripts", "ruff", "format"]
-    if check:
-        args.append("--check")
-    args.append(".")
-    return FormatterGroup("Python scripts", (Command(tuple(args)),))
-
-
 def formatter_groups(*, check: bool) -> tuple[FormatterGroup, ...]:
     return (
         just_formatter_group(check=check),
         rust_formatter_group(check=check),
-        python_scripts_formatter_group(check=check),
     )
 
 

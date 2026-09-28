@@ -36,7 +36,6 @@ use std::io::Read;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
-use std::process::Command;
 use std::thread;
 
 #[path = "export_user_verification.rs"]
@@ -103,7 +102,6 @@ type JsonSchemaEmitter = fn(&Path) -> Result<GeneratedSchema>;
 pub struct GenerateTsOptions {
     pub generate_indices: bool,
     pub ensure_headers: bool,
-    pub run_prettier: bool,
     pub experimental_api: bool,
 }
 
@@ -112,7 +110,6 @@ impl Default for GenerateTsOptions {
         Self {
             generate_indices: true,
             ensure_headers: true,
-            run_prettier: true,
             experimental_api: false,
         }
     }
@@ -120,7 +117,6 @@ impl Default for GenerateTsOptions {
 
 pub fn generate_ts_with_options(
     out_dir: &Path,
-    prettier: Option<&Path>,
     options: GenerateTsOptions,
 ) -> Result<()> {
     let v2_out_dir = out_dir.join("v2");
@@ -173,23 +169,6 @@ pub fn generate_ts_with_options(
 
             Ok(())
         })?;
-    }
-
-    // Optionally run Prettier on all generated TS files.
-    if options.run_prettier
-        && let Some(prettier_bin) = prettier
-        && !ts_files.is_empty()
-    {
-        let status = Command::new(prettier_bin)
-            .arg("--write")
-            .arg("--log-level")
-            .arg("warn")
-            .args(ts_files.iter().map(|p| p.as_os_str()))
-            .status()
-            .with_context(|| format!("Failed to invoke Prettier at {}", prettier_bin.display()))?;
-        if !status.success() {
-            return Err(anyhow!("Prettier failed with status {status}"));
-        }
     }
 
     trim_trailing_whitespace_in_ts_files(&ts_files)?;
