@@ -15,6 +15,8 @@ use crate::config_requirements::ConfigRequirementsWithSources;
 use crate::state::ConfigLoadOptions;
 use crate::state::LoaderOverrides;
 use codex_file_system::ExecutorFileSystem;
+#[cfg(target_os = "macos")]
+use codex_utils_absolute_path::AbsolutePathBuf;
 use std::io;
 use std::path::Path;
 

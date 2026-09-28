@@ -265,9 +265,12 @@ fn append_mdm_config_layer(
 
 async fn local_requirements_layers(
     fs: &dyn ExecutorFileSystem,
-    _codex_home: &Path,
+    codex_home: &Path,
     overrides: &LoaderOverrides,
 ) -> io::Result<LocalTomlLayerStack<RequirementSource>> {
+    #[cfg(not(target_os = "macos"))]
+    let _ = codex_home;
+
     let system_file = system_requirements_toml_file_with_overrides(overrides)?;
     let system = load_requirements_toml(fs, &system_file).await?;
     let cloud_insertion_index = usize::from(system.is_some());
