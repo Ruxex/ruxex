@@ -1,5 +1,6 @@
 pub(crate) mod api_bridge;
 pub(crate) mod auth;
+pub mod chat_completion;
 pub(crate) mod common;
 pub(crate) mod endpoint;
 pub(crate) mod error;
@@ -15,6 +16,7 @@ pub use crate::requests::headers::build_conversation_headers;
 pub use crate::requests::headers::build_session_headers;
 pub use codex_client::RequestTelemetry;
 pub use codex_client::ReqwestTransport;
+pub use codex_client::StreamResponse;
 pub use codex_client::TransportError;
 
 pub use crate::api_bridge::map_api_error;
@@ -25,6 +27,11 @@ pub use crate::auth::AuthProvider;
 pub use crate::auth::AuthProviderFuture;
 pub use crate::auth::SharedAuthProvider;
 pub use crate::auth::auth_header_telemetry;
+pub use crate::chat_completion::ChatCompletionApi;
+pub use crate::chat_completion::ChatRequestInput;
+pub use crate::chat_completion::ChatUsageDecoder;
+pub use crate::chat_completion::StandardChatCompletionApi;
+pub use crate::chat_completion::StandardChatUsageDecoder;
 pub use crate::common::AccessPrograms;
 pub use crate::common::OpenAiVerbosity;
 pub use crate::common::Reasoning;

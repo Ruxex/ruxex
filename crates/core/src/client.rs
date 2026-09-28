@@ -38,7 +38,7 @@ use codex_api::AggregateStreamExt;
 use codex_api::ApiError;
 use codex_api::AuthProvider;
 use codex_api::ChatClient as ApiChatClient;
-use codex_api::ChatRequestBuilder;
+use codex_api::ChatRequestInput;
 use codex_api::Compression;
 use codex_api::Provider as ApiProvider;
 use codex_api::Reasoning;
@@ -121,6 +121,7 @@ use crate::context::BaseInstructionsFragment;
 use crate::context::ContextualUserFragment;
 use crate::cyber_access_program;
 use crate::responses_metadata::CodexResponsesMetadata;
+use codex_model_provider::ProviderApi;
 use codex_model_provider::ProviderAuthScope;
 use codex_model_provider::ProviderUnauthorizedRecovery;
 use codex_model_provider::ResponsesConnectionKey;
@@ -129,7 +130,6 @@ use codex_model_provider::create_model_provider;
 #[cfg(test)]
 use codex_model_provider_info::DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS;
 use codex_model_provider_info::ModelProviderInfo;
-use codex_model_provider_info::WireApi;
 use codex_protocol::error::CodexErr;
 use codex_protocol::error::Result;
 use codex_response_debug_context::extract_response_debug_context;
@@ -1255,6 +1255,7 @@ impl ModelClientSession {
         session_telemetry: &SessionTelemetry,
         responses_metadata: &CodexResponsesMetadata,
         inference_trace: &InferenceTraceContext,
+        chat_api: Arc<dyn codex_api::ChatCompletionApi>,
     ) -> Result<ResponseStream> {
         if prompt.output_schema.is_some() {
             return Err(codex_protocol::error::CodexErr::UnsupportedOperation(
@@ -1277,16 +1278,17 @@ impl ModelClientSession {
                 "/chat/completions",
                 client_setup.redirect_policy,
             )?;
-            let request = ChatRequestBuilder::new(
-                &model_info.slug,
-                &prompt.base_instructions.text,
-                &prompt.input,
-                &tools,
-            )
-            .conversation_id(Some(responses_metadata.session_id.clone()))
-            .session_source(Some(self.client.state.session_source.clone()))
-            .build(&client_setup.api_provider)
-            .map_err(|error| self.client.state.provider.map_api_error(error))?;
+            let request = chat_api
+                .build_request(ChatRequestInput {
+                    provider: &client_setup.api_provider,
+                    model: &model_info.slug,
+                    instructions: &prompt.base_instructions.text,
+                    input: &prompt.input,
+                    tools: &tools,
+                    conversation_id: Some(responses_metadata.session_id.clone()),
+                    session_source: Some(self.client.state.session_source.clone()),
+                })
+                .map_err(|error| self.client.state.provider.map_api_error(error))?;
             let request_auth_context =
                 AuthRequestTelemetryContext::new(client_setup.api_auth.as_ref(), pending_retry);
             let (request_telemetry, sse_telemetry) = Self::build_streaming_telemetry(
@@ -1295,9 +1297,13 @@ impl ModelClientSession {
                 RequestRouteTelemetry::for_endpoint("/chat/completions"),
             );
             let inference_trace_attempt = inference_trace.start_attempt();
-            let client =
-                ApiChatClient::new(transport, client_setup.api_provider, client_setup.api_auth)
-                    .with_telemetry(Some(request_telemetry), Some(sse_telemetry));
+            let client = ApiChatClient::with_api(
+                transport,
+                client_setup.api_provider,
+                client_setup.api_auth,
+                Arc::clone(&chat_api),
+            )
+            .with_telemetry(Some(request_telemetry), Some(sse_telemetry));
 
             match client.stream_request(request).await {
                 Ok(stream) => {
@@ -1848,9 +1854,8 @@ impl ModelClientSession {
         responses_metadata: &CodexResponsesMetadata,
         inference_trace: &InferenceTraceContext,
     ) -> Result<ResponseStream> {
-        let wire_api = self.client.state.provider.info().wire_api;
-        match wire_api {
-            WireApi::Responses => {
+        match self.client.state.provider.api() {
+            ProviderApi::Responses => {
                 if self.client.responses_websocket_enabled() {
                     let request_trace = current_span_w3c_trace_context();
                     match self
@@ -1887,13 +1892,14 @@ impl ModelClientSession {
                 )
                 .await
             }
-            WireApi::Chat => {
+            ProviderApi::Chat(chat_api) => {
                 self.stream_chat_completions(
                     prompt,
                     model_info,
                     session_telemetry,
                     responses_metadata,
                     inference_trace,
+                    chat_api,
                 )
                 .await
             }

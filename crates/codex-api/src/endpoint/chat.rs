@@ -1,11 +1,11 @@
 use crate::ChatRequest;
 use crate::auth::SharedAuthProvider;
+use crate::chat_completion::ChatCompletionApi;
 use crate::common::ResponseEvent;
 use crate::common::ResponseStream;
 use crate::endpoint::session::EndpointSession;
 use crate::error::ApiError;
 use crate::provider::Provider;
-use crate::sse::chat::spawn_chat_stream;
 use crate::telemetry::SseTelemetry;
 use codex_client::EncodedJsonBody;
 use codex_client::HttpTransport;
@@ -27,13 +27,29 @@ use std::task::Poll;
 pub struct ChatClient<T: HttpTransport> {
     session: EndpointSession<T>,
     sse_telemetry: Option<Arc<dyn SseTelemetry>>,
+    chat_api: Arc<dyn ChatCompletionApi>,
 }
 
 impl<T: HttpTransport> ChatClient<T> {
     pub fn new(transport: T, provider: Provider, auth: SharedAuthProvider) -> Self {
+        Self::with_api(
+            transport,
+            provider,
+            auth,
+            Arc::new(crate::StandardChatCompletionApi),
+        )
+    }
+
+    pub fn with_api(
+        transport: T,
+        provider: Provider,
+        auth: SharedAuthProvider,
+        chat_api: Arc<dyn ChatCompletionApi>,
+    ) -> Self {
         Self {
             session: EndpointSession::new(transport, provider, auth),
             sse_telemetry: None,
+            chat_api,
         }
     }
 
@@ -45,6 +61,7 @@ impl<T: HttpTransport> ChatClient<T> {
         Self {
             session: self.session.with_request_telemetry(request),
             sse_telemetry: sse,
+            chat_api: self.chat_api,
         }
     }
 
@@ -74,11 +91,10 @@ impl<T: HttpTransport> ChatClient<T> {
                 },
             )
             .await?;
-        Ok(spawn_chat_stream(
+        Ok(self.chat_api.spawn_stream(
             response,
             self.session.provider().stream_idle_timeout,
             self.sse_telemetry.clone(),
-            None,
         ))
     }
 }
