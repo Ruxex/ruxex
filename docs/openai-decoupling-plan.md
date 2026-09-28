@@ -106,7 +106,7 @@ OpenAI 固有機能を除去した後に残る、汎用プロバイダ版クラ�
 
 互換性クリーンアップは [`実施計画`](superpowers/plans/2026-09-19-remove-pre-release-compatibility-layers.md) と [`インベントリ`](pre-release-compatibility-inventory.md) で追跡する。build-system slice の producer/consumer 監査と削除結果はインベントリに記録済みであり、Phase 3 の残存 integration 選定を継続する。
 
-**状態確認（2026-09-27）:** 互換性クリーンアップ計画の Task 1〜8 は完了している。削除済み feature の registry/schema/no-op と関連テスト残骸も `fb8d960a7` で処理済みであり、Apps専用の孤立テスト・fixture・snapshot は `bc4c8228a` で削除済みである。したがって、次の作業は互換性クリーンアップの再実施ではなく、Phase 3 に残る OpenAI Curated/Bundled marketplace と first-party auth/model-provider adapter の capability 単位監査である。通常のMCP、plugin基盤、Bedrock、custom provider、security fallback は引き続き保持する。
+**状態確認（2026-09-27）:** 互換性クリーンアップ計画の Task 1〜8 は完了している。削除済み feature の registry/schema/no-op と関連テスト残骸も `fb8d960a7` で処理済みであり、Apps専用の孤立テスト・fixture・snapshot は `bc4c8228a` で削除済みである。したがって、次の作業は互換性クリーンアップの再実施ではなく、Phase 3 に残る OpenAI Curated/Bundled marketplace と first-party auth/model-provider adapter の capability 単位監査である。通常のMCP、plugin基盤、Bedrock、custom provider、security fallback は引き続き保持する。監査結果は [pre-release compatibility inventory の first-party auth/model-provider adapter audit](pre-release-compatibility-inventory.md#first-party-auth-and-model-provider-adapter-audit-2026-09-28) に記録した。
 
 **機能単位の再監査:** Feedback の削除で確認した基準を、残存する Hosted capability にも適用する。クレート名ではなく、認証、固定 endpoint、hosted protocol、設定、feature、protocol、UI までを一つの到達可能な機能として監査する。現時点では次の機能を、Phase 3 の独立した実施単位として追加する。
 
