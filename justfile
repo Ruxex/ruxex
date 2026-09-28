@@ -104,7 +104,7 @@ bench-smoke:
     just bench -- --test
 
 # Regenerate all checked-in generated artifacts.
-generate: write-config-schema write-app-server-schema write-hooks-schema generate-thread-config-proto
+generate: write-config-schema write-app-server-schema write-hooks-schema
 
 # Regenerate the json schema for config.toml from the current config types.
 write-config-schema:
@@ -121,11 +121,6 @@ crate-dependency-graph *args:
 [no-cd]
 write-hooks-schema:
     cargo run --manifest-path {{ justfile_directory() }}/Cargo.toml -p codex-hooks --bin write_hooks_schema_fixtures
-
-# Regenerate the checked-in thread config protobuf Rust module.
-[no-cd]
-generate-thread-config-proto:
-    {{ justfile_directory() }}/crates/config/scripts/generate-proto.sh
 
 # Run argument-comment Dylint checks from source.
 [no-cd]

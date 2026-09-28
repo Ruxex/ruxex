@@ -29942,37 +29942,6 @@
       "code": "hawk::unnecessary_public",
       "expansion": null,
       "identity": {
-        "compiler_id": "d125c10f50626c3d336170e8bfc8cac4",
-        "crate": "codex_config",
-        "id": "v1|12:codex-config|12:codex_config|52:thread_config::remote::RemoteThreadConfigLoader::new|15:inherent_method|6:source|41:crates/config/src/thread_config/remote.rs|34|5",
-        "item": "thread_config::remote::RemoteThreadConfigLoader::new",
-        "kind": "inherent_method",
-        "module_scope": [
-          "thread_config",
-          "remote"
-        ],
-        "package": "codex-config",
-        "parent": "thread_config::remote::RemoteThreadConfigLoader"
-      },
-      "kind": "unnecessary_public",
-      "location": {
-        "byte_end": 1121,
-        "byte_start": 1002,
-        "column": 5,
-        "end_column": 6,
-        "end_line": 38,
-        "file": "crates/config/src/thread_config/remote.rs",
-        "line": 34
-      },
-      "severity": "warning",
-      "test_compiled_only": false,
-      "test_only": true
-    },
-    {
-      "category": "finding",
-      "code": "hawk::unnecessary_public",
-      "expansion": null,
-      "identity": {
         "compiler_id": "d125c10f50626c3dfc925483d3c75306",
         "crate": "codex_config",
         "id": "v1|12:codex-config|12:codex_config|48:types::DEFAULT_MEMORIES_MAX_ROLLOUTS_PER_STARTUP|8:constant|6:source|26:crates/config/src/types.rs|49|1",
