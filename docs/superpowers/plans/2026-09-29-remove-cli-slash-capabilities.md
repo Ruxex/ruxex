@@ -48,27 +48,27 @@
 **Interfaces:**
 - Produces: 3子計画が参照する decision、保持境界、検証コマンド。
 
-- [ ] `/app`、`experimentalFeature`、`FastMode`、Fast service tier、関連 generated artifact の production match を `rg` と `cargo metadata --no-deps` で収集する。
-- [ ] 各 match を producer/consumer、削除対象、保持対象に分類し、inventory に exact path と decision を記録する。
-- [ ] `/app` の Desktop 本体/doctor、`/experimental` の通常 feature registry、`/fast` の Flex/一般 service tier を retain として明記する。
-- [ ] 子計画の実施順と、inventory decision がコード変更より先に必要であることを確認する。
+- [x] `/app`、`experimentalFeature`、`FastMode`、Fast service tier、関連 generated artifact の production match を `rg` と `cargo metadata --no-deps` で収集する。
+- [x] 各 match を producer/consumer、削除対象、保持対象に分類し、inventory に exact path と decision を記録する。
+- [x] `/app` の Desktop 本体/doctor、`/experimental` の通常 feature registry、`/fast` の Flex/一般 service tier を retain として明記する。
+- [x] 子計画の実施順と、inventory decision がコード変更より先に必要であることを確認する。
 
 ### Task 2: `/app` 子計画の実行
 
 **Files:**
 - Reference: `docs/superpowers/plans/2026-09-29-remove-app-slash-command.md`
 
-- [ ] `/app` 子計画の Task 1–4 を順に実行する。
-- [ ] 子計画完了時点で `OpenDesktopThread`、`codex://threads` の専用 producer/consumer、`SlashCommand::App` が対象範囲から消えていることを確認する。
+- [x] `/app` 子計画の Task 1–4 を順に実行する。
+- [x] 子計画完了時点で `OpenDesktopThread`、`codex://threads` の専用 producer/consumer、`SlashCommand::App` が対象範囲から消えていることを確認する。
 
 ### Task 3: `/experimental` 子計画の実行
 
 **Files:**
 - Reference: `docs/superpowers/plans/2026-09-29-remove-experimental-features.md`
 
-- [ ] `/experimental` 子計画の Task 1–5 を順に実行する。
-- [ ] app-server protocol の Rust source と generated JSON/TypeScript schema を同じ変更単位として確認する。
-- [ ] 通常の feature registry/config/CLI 経路が残っていることを子計画の保持監査で確認する。
+- [x] `/experimental` 子計画の Task 1–5 を順に実行する。
+- [x] app-server protocol の Rust source と generated JSON/TypeScript schema を同じ変更単位として確認する。
+- [x] 通常の feature registry/config/CLI 経路が残っていることを子計画の保持監査で確認する。
 
 ### Task 4: `/fast` 子計画の実行
 
@@ -87,12 +87,12 @@
 - Modify: `docs/cli-architecture/`（削除した command/capability の記述がある場合のみ）
 - Modify/Delete: 残存 snapshots、fixtures、generated schema、workspace/dependency references
 
-- [ ] `rg -n 'SlashCommand::(App|Experimental)|OpenDesktopThread|codex://threads|experimentalFeature/(list|enablement/set)|ExperimentalFeature|Feature::FastMode|fast_mode|SPEED_TIER_FAST|toggle_fast_mode' crates Cargo.toml Cargo.lock docs --glob '*.{rs,json,ts,toml,md}'` を実行し、残存 match を production/test/history に分類する。
-- [ ] `/app`、`/experimental`、`/fast` の専用 production match がないこと、retain とした Desktop doctor、通常 feature、Flex/一般 service tier のみが残ることを確認する。
-- [ ] `cargo metadata --no-deps` と必要な dependency graph を確認し、削除した機能専用 crate/dependency/module の孤立参照がないことを確認する。
-- [ ] `just generate` を実行し、生成物の差分が計画した protocol/config/model schema の変更だけであることを確認する。
-- [ ] `just check --tests`、`just check`、`git diff --check` を実行する。
-- [ ] 設計書の完了条件、3子計画の完了条件、inventory の全 decision を照合し、Phase 3 の handoff を更新する。
+- [x] `rg -n 'SlashCommand::(App|Experimental)|OpenDesktopThread|codex://threads|experimentalFeature/(list|enablement/set)|ExperimentalFeature|Feature::FastMode|fast_mode|SPEED_TIER_FAST|toggle_fast_mode' crates Cargo.toml Cargo.lock docs --glob '*.{rs,json,ts,toml,md}'` を実行し、残存 match を production/test/history に分類する。
+- [x] `/app`、`/experimental`、`/fast` の専用 production match がないこと、retain とした Desktop doctor、通常 feature、Flex/一般 service tier のみが残ることを確認する。
+- [x] `cargo metadata --no-deps` と必要な dependency graph を確認し、削除した機能専用 crate/dependency/module の孤立参照がないことを確認する。
+- [x] `just generate` を実行し、生成物の差分が計画した protocol/config/model schema の変更だけであることを確認する。
+- [x] `just check --tests`、`just check`、`git diff --check` を実行する。
+- [x] 設計書の完了条件、3子計画の完了条件、inventory の全 decision を照合し、Phase 3 の handoff を更新する。
 
 ## 実行上の注意
 
