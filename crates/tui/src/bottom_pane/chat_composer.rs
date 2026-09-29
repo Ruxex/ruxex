@@ -451,7 +451,6 @@ fn parent_owned_command_is_allowed(command: SlashCommand, args: &str) -> bool {
                 | SlashCommand::Vim
                 | SlashCommand::Keymap
                 | SlashCommand::ElevateSandbox
-                | SlashCommand::Experimental
                 | SlashCommand::Quit
                 | SlashCommand::Exit
                 | SlashCommand::Logout

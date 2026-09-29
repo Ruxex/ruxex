@@ -1070,11 +1070,6 @@ impl MessageProcessor {
             ClientRequest::ConfigBatchWrite { params, .. } => {
                 self.config_processor.batch_write(params).await.map(Some)
             }
-            ClientRequest::ExperimentalFeatureEnablementSet { params, .. } => {
-                self.config_processor
-                    .experimental_feature_enablement_set(request_id.clone(), params)
-                    .await
-            }
             ClientRequest::ConfigRequirementsRead { params: _, .. } => self
                 .config_processor
                 .config_requirements_read()
@@ -1421,11 +1416,6 @@ impl MessageProcessor {
             }
             ClientRequest::ModelList { params, .. } => {
                 self.catalog_processor.model_list(params).await
-            }
-            ClientRequest::ExperimentalFeatureList { params, .. } => {
-                self.catalog_processor
-                    .experimental_feature_list(params)
-                    .await
             }
             ClientRequest::PermissionProfileList { params, .. } => {
                 self.catalog_processor.permission_profile_list(params).await

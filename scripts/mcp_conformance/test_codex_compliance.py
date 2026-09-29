@@ -237,7 +237,6 @@ def test_mode_summaries_separate_official_and_supplemental_percentages() -> None
         success=False,
         checks=[
             CheckResult("mcp_add", True, "ok"),
-            CheckResult("modern_feature_enablement", True, "ok"),
             CheckResult("inventory", False, "failed"),
             CheckResult("http_header_mirroring", False, "failed"),
             CheckResult(
@@ -990,7 +989,7 @@ def test_regression_gate_requires_the_complete_modern_authenticated_catalog() ->
     assert any("complete authenticated" in item for item in gate["configurationErrors"])
 
 
-def test_regression_gate_requires_modern_feature_enablement() -> None:
+def test_regression_gate_requires_modern_feature_configuration() -> None:
     baseline = _regression_report()
     candidate = deepcopy(baseline)
     candidate["modernFeatureEnablement"] = False

@@ -4101,13 +4101,6 @@
         "transport": "stdio"
       },
       {
-        "check_id": "modern_feature_enablement",
-        "mode": "2026-07-28",
-        "scenario": "",
-        "source": "supplemental",
-        "transport": "stdio"
-      },
-      {
         "check_id": "multi_round_trip_request",
         "mode": "2026-07-28",
         "scenario": "",

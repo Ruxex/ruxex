@@ -255,23 +255,7 @@ def _initialize_review_client(
     client.notify("initialized")
     if mode != MODERN_VERSION:
         return True
-
-    feature, feature_detail = _response_result(
-        client.request(
-            "experimentalFeature/enablement/set",
-            {"enablement": {"mcp_2026_07_28": True}},
-        )
-    )
-    enabled = (
-        feature is not None
-        and isinstance(feature.get("enablement"), dict)
-        and feature["enablement"].get("mcp_2026_07_28") is True
-    )
-    return case.check(
-        "review/modern-feature-enablement",
-        enabled,
-        "enabled the production modern MCP feature" if enabled else feature_detail,
-    )
+    return True
 
 
 def _review_thread_id(

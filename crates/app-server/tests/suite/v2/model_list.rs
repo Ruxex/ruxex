@@ -7,8 +7,6 @@ use app_test_support::TestAppServer;
 use app_test_support::write_workload_identity_auth;
 use app_test_support::write_models_cache;
 use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::ExperimentalFeatureEnablementSetParams;
-use codex_app_server_protocol::ExperimentalFeatureEnablementSetResponse;
 use codex_app_server_protocol::JSONRPCError;
 use codex_app_server_protocol::Model;
 use codex_app_server_protocol::ModelListParams;
@@ -66,9 +64,10 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
         .await;
     let codex_home = TempDir::new()?;
     let server_uri = server.uri();
-    let feature_config = user_enablement
-        .map(|enabled| format!("[features]\napi_key_model_discovery = {enabled}\n"))
-        .unwrap_or_default();
+    let feature_config = format!(
+        "[features]\napi_key_model_discovery = {}\n",
+        user_enablement.unwrap_or(app_enablement)
+    );
     std::fs::write(
         codex_home.path().join("config.toml"),
         format!("openai_base_url = \"{server_uri}/v1\"\n{feature_config}"),
@@ -93,16 +92,6 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
     ModelPreset::mark_default_by_picker_visibility(&mut bundled);
     let mut remote = vec![ModelPreset::from(remote_model)];
     ModelPreset::mark_default_by_picker_visibility(&mut remote);
-    let _: ExperimentalFeatureEnablementSetResponse = mcp
-        .request(
-            |request_id| ClientRequest::ExperimentalFeatureEnablementSet {
-                request_id,
-                params: ExperimentalFeatureEnablementSetParams {
-                    enablement: [("api_key_model_discovery".to_string(), app_enablement)].into(),
-                },
-            },
-        )
-        .await?;
     let response: ModelListResponse = mcp
         .request(|request_id| ClientRequest::ModelList {
             request_id,

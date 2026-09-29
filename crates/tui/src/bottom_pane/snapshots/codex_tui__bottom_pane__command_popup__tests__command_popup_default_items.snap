@@ -7,7 +7,6 @@ expression: commands
 /permissions - choose what Codex is allowed to do
 /keymap - remap TUI shortcuts
 /vim - toggle Vim mode for the composer
-/experimental - toggle experimental features
 /approve - approve one retry of a recent auto-review denial
 /skills - use skills to improve how Codex performs specific tasks
 /import - import setup, this project, and recent chats from Claude Code

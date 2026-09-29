@@ -183,15 +183,6 @@ impl CatalogRequestProcessor {
         .map(|response| Some(response.into()))
     }
 
-    pub(crate) async fn experimental_feature_list(
-        &self,
-        params: ExperimentalFeatureListParams,
-    ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
-        self.experimental_feature_list_response(params)
-            .await
-            .map(|response| Some(response.into()))
-    }
-
     pub(crate) async fn permission_profile_list(
         &self,
         params: PermissionProfileListParams,
@@ -309,110 +300,6 @@ impl CatalogRequestProcessor {
             .collect();
         let response = CollaborationModeListResponse { data: items };
         Ok(response)
-    }
-
-    async fn experimental_feature_list_response(
-        &self,
-        params: ExperimentalFeatureListParams,
-    ) -> Result<ExperimentalFeatureListResponse, JSONRPCErrorError> {
-        let ExperimentalFeatureListParams {
-            cursor,
-            limit,
-            thread_id,
-        } = params;
-        let config = match thread_id.as_deref() {
-            Some(thread_id) => {
-                let thread_id = ThreadId::from_string(thread_id)
-                    .map_err(|err| invalid_request(format!("invalid thread id: {err}")))?;
-                let thread = self
-                    .thread_manager
-                    .get_thread(thread_id)
-                    .await
-                    .map_err(|_| invalid_request(format!("thread not found: {thread_id}")))?;
-                let thread_config = thread.config().await;
-                self.config_manager
-                    .load_latest_config_with_session_layers(
-                        &thread_config.config_layer_stack,
-                        &thread_config.cwd,
-                    )
-                    .await
-                    .map_err(|err| internal_error(format!("failed to reload config: {err}")))?
-            }
-            None => self.load_latest_config(/*fallback_cwd*/ None).await?,
-        };
-        let data = FEATURES
-            .iter()
-            .map(|spec| {
-                let (stage, display_name, description, announcement) = match spec.stage {
-                    Stage::Experimental {
-                        name,
-                        menu_description,
-                        announcement,
-                    } => (
-                        ApiExperimentalFeatureStage::Beta,
-                        Some(name.to_string()),
-                        Some(menu_description.to_string()),
-                        Some(announcement.to_string()),
-                    ),
-                    Stage::UnderDevelopment => (
-                        ApiExperimentalFeatureStage::UnderDevelopment,
-                        None,
-                        None,
-                        None,
-                    ),
-                    Stage::Stable => (ApiExperimentalFeatureStage::Stable, None, None, None),
-                    Stage::Deprecated => {
-                        (ApiExperimentalFeatureStage::Deprecated, None, None, None)
-                    }
-                    Stage::Removed => (ApiExperimentalFeatureStage::Removed, None, None, None),
-                };
-
-                ApiExperimentalFeature {
-                    name: spec.key.to_string(),
-                    stage,
-                    display_name,
-                    description,
-                    announcement,
-                    enabled: config.features.enabled(spec.id),
-                    default_enabled: spec.default_enabled,
-                }
-            })
-            .collect::<Vec<_>>();
-
-        let total = data.len();
-        if total == 0 {
-            return Ok(ExperimentalFeatureListResponse {
-                data: Vec::new(),
-                next_cursor: None,
-            });
-        }
-
-        // Clamp to 1 so limit=0 cannot return a non-advancing page.
-        let effective_limit = limit.unwrap_or(total as u32).max(1) as usize;
-        let effective_limit = effective_limit.min(total);
-        let start = match cursor {
-            Some(cursor) => match cursor.parse::<usize>() {
-                Ok(idx) => idx,
-                Err(_) => return Err(invalid_request(format!("invalid cursor: {cursor}"))),
-            },
-            None => 0,
-        };
-
-        if start > total {
-            return Err(invalid_request(format!(
-                "cursor {start} exceeds total feature flags {total}"
-            )));
-        }
-
-        let end = start.saturating_add(effective_limit).min(total);
-        let data = data[start..end].to_vec();
-        let next_cursor = if end < total {
-            Some(end.to_string())
-        } else {
-            None
-        };
-
-        Ok(ExperimentalFeatureListResponse { data, next_cursor })
     }
 
     async fn permission_profile_list_response(

@@ -41,7 +41,7 @@ pub use legacy::legacy_feature_keys;
 pub enum Stage {
     /// Features that are still under development, not ready for external use
     UnderDevelopment,
-    /// Experimental features made available to users through the `/experimental` menu
+    /// Features that are still experimental and can be enabled through feature configuration
     Experimental {
         name: &'static str,
         menu_description: &'static str,
@@ -794,7 +794,7 @@ pub const FEATURES: &[FeatureSpec] = &[
         stage: Stage::Experimental {
             name: "Automatically start the background server",
             menu_description: "Use the shared local server for new, resumed, and forked sessions. Takes effect next launch.",
-            announcement: "Automatic background server startup can now be enabled from /experimental.",
+            announcement: "Automatic background server startup can now be enabled through feature configuration.",
         },
         default_enabled: false,
     },
@@ -1069,7 +1069,7 @@ pub const FEATURES: &[FeatureSpec] = &[
         stage: Stage::Experimental {
             name: "Network proxy",
             menu_description: "Apply network proxy restrictions to sandboxed sessions that already have network access.",
-            announcement: "NEW: Network proxy can now be enabled from /experimental. Restart Codex after enabling it.",
+            announcement: "NEW: Network proxy can now be enabled through feature configuration. Restart Codex after enabling it.",
         },
         default_enabled: false,
     },
@@ -1408,7 +1408,7 @@ pub const FEATURES: &[FeatureSpec] = &[
             Stage::Experimental {
                 name: "Prevent sleep while running",
                 menu_description: "Keep your computer awake while Codex is running a thread.",
-                announcement: "NEW: Prevent sleep while running is now available in /experimental.",
+                announcement: "NEW: Prevent sleep while running is now available through feature configuration.",
             }
         } else {
             Stage::UnderDevelopment

@@ -1,4 +1,3 @@
-use std::collections::BTreeMap;
 use std::time::Duration;
 
 use anyhow::Result;
@@ -13,8 +12,6 @@ use codex_app_server_protocol::ConfigReadParams;
 use codex_app_server_protocol::ConfigReadResponse;
 use codex_app_server_protocol::ConfigRequirementsReadResponse;
 use codex_app_server_protocol::ConfigWriteResponse;
-use codex_app_server_protocol::ExperimentalFeatureEnablementSetParams;
-use codex_app_server_protocol::ExperimentalFeatureEnablementSetResponse;
 use codex_app_server_protocol::MergeStrategy;
 use codex_app_server_protocol::PermissionProfileListParams;
 use codex_app_server_protocol::PermissionProfileListResponse;
@@ -361,123 +358,6 @@ async fn skills_list_runtime_enable_refreshes_shared_system_skill_cache() -> Res
             .all(|skill| skill.name != "stale-system-skill")
     );
     assert!(!stale_skill_path.exists());
-    Ok(())
-}
-
-#[tokio::test]
-async fn runtime_remote_plugin_toggle_updates_local_curated_plugin_skills() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let cwd = TempDir::new()?;
-    let server = MockServer::start().await;
-    write_cached_local_curated_plugin_with_skill(codex_home.path(), "openai-curated")?;
-    std::fs::write(
-        codex_home.path().join("config.toml"),
-        format!(
-            r#"managed_auth_base_url = "{}/backend-api/"
-
-[features]
-plugins = true
-
-[plugins."google-calendar@openai-curated"]
-enabled = true
-"#,
-            server.uri()
-        ),
-    )?;
-    write_workload_identity_auth(
-        codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
-            .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
-        AuthCredentialsStoreMode::File,
-    )?;
-
-    let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
-        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
-        .await?;
-
-    let disablement_request_id = mcp
-        .send_experimental_feature_enablement_set_request(ExperimentalFeatureEnablementSetParams {
-            enablement: BTreeMap::from([("remote_plugin".to_string(), false)]),
-        })
-        .await?;
-    let _: ExperimentalFeatureEnablementSetResponse =
-        timeout(DEFAULT_TIMEOUT, mcp.read_response(disablement_request_id)).await??;
-
-    let initial_skills_list_request_id = mcp
-        .send_skills_list_request(SkillsListParams {
-            cwds: vec![cwd.path().to_path_buf()],
-            force_reload: false,
-        })
-        .await?;
-    let thread_start_request_id = mcp
-        .send_thread_start_request_with_auto_env(ThreadStartParams {
-            cwd: Some(cwd.path().to_string_lossy().into_owned()),
-            ..Default::default()
-        })
-        .await?;
-    let SkillsListResponse { data } = timeout(
-        DEFAULT_TIMEOUT,
-        mcp.read_response(initial_skills_list_request_id),
-    )
-    .await??;
-    assert!(data.iter().any(|entry| {
-        entry
-            .skills
-            .iter()
-            .any(|skill| skill.name == "google-calendar:meeting-prep")
-    }));
-    let _: ThreadStartResponse =
-        timeout(DEFAULT_TIMEOUT, mcp.read_response(thread_start_request_id)).await??;
-
-    std::fs::write(
-        codex_home.path().join(
-            "plugins/cache/openai-curated/google-calendar/local/skills/meeting-prep/SKILL.md",
-        ),
-        "---\nname: meeting-prep\ndescription: Updated meeting preparation\n---\n\n# Body\n",
-    )?;
-    for force_reload in [true, false] {
-        let request_id = mcp
-            .send_skills_list_request(SkillsListParams {
-                cwds: vec![cwd.path().to_path_buf()],
-                force_reload,
-            })
-            .await?;
-        let SkillsListResponse { data } =
-            timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
-        assert!(data.iter().any(|entry| {
-            entry.skills.iter().any(|skill| {
-                skill.name == "google-calendar:meeting-prep"
-                    && skill.description == "Updated meeting preparation"
-            })
-        }));
-    }
-
-    let enablement_request_id = mcp
-        .send_experimental_feature_enablement_set_request(ExperimentalFeatureEnablementSetParams {
-            enablement: BTreeMap::from([("remote_plugin".to_string(), true)]),
-        })
-        .await?;
-    let _: ExperimentalFeatureEnablementSetResponse =
-        timeout(DEFAULT_TIMEOUT, mcp.read_response(enablement_request_id)).await??;
-
-    let skills_list_request_id = mcp
-        .send_skills_list_request(SkillsListParams {
-            cwds: vec![cwd.path().to_path_buf()],
-            force_reload: true,
-        })
-        .await?;
-    let SkillsListResponse { data } =
-        timeout(DEFAULT_TIMEOUT, mcp.read_response(skills_list_request_id)).await??;
-
-    assert!(data.iter().all(|entry| {
-        entry
-            .skills
-            .iter()
-            .all(|skill| skill.name != "google-calendar:meeting-prep")
-    }));
     Ok(())
 }
 

@@ -111,7 +111,6 @@ mod chat_composer_history;
 mod command_popup;
 pub(crate) mod custom_prompt_view;
 mod effort_status_line;
-mod experimental_features_view;
 mod file_search_popup;
 mod footer;
 mod list_selection_view;
@@ -200,9 +199,6 @@ pub(crate) use textarea::KillBufferSnapshot;
 
 use crate::status_indicator_widget::StatusDetailsCapitalization;
 use crate::status_indicator_widget::StatusIndicatorWidget;
-#[cfg(test)]
-pub(crate) use experimental_features_view::ExperimentalFeatureItem;
-pub(crate) use experimental_features_view::ExperimentalFeaturesView;
 pub(crate) use list_selection_view::SELECTION_TOGGLE_BLOCKED_PREFIX;
 pub(crate) use list_selection_view::SELECTION_TOGGLE_UNAVAILABLE_PREFIX;
 pub(crate) use list_selection_view::SelectionAction;

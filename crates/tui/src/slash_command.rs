@@ -19,7 +19,6 @@ pub enum SlashCommand {
     Vim,
     #[strum(serialize = "setup-default-sandbox")]
     ElevateSandbox,
-    Experimental,
     Skills,
     Import,
     Hooks,
@@ -123,7 +122,6 @@ impl SlashCommand {
             SlashCommand::Keymap => "remap TUI shortcuts",
             SlashCommand::Vim => "toggle Vim mode for the composer",
             SlashCommand::ElevateSandbox => "set up elevated agent sandbox",
-            SlashCommand::Experimental => "toggle experimental features",
             SlashCommand::Mcp => "list configured MCP tools; use /mcp verbose for details",
             SlashCommand::Plugins => "browse plugins",
             SlashCommand::Logout => "log out of Codex",
@@ -197,7 +195,6 @@ impl SlashCommand {
             | SlashCommand::Keymap
             | SlashCommand::Vim
             | SlashCommand::ElevateSandbox
-            | SlashCommand::Experimental
             | SlashCommand::Import
             | SlashCommand::Review
             | SlashCommand::Plan

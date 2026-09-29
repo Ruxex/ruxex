@@ -4,7 +4,6 @@ use crate::config_manager::ConfigManager;
 use crate::config_manager_service::ConfigManagerError;
 use crate::error_code::internal_error;
 use crate::error_code::invalid_request;
-use crate::outgoing_message::ConnectionRequestId;
 use crate::outgoing_message::OutgoingMessageSender;
 use codex_app_server_protocol::AllowDenyRequirement;
 use codex_app_server_protocol::BrowserUseAccessApprovalLifetime;
@@ -26,8 +25,6 @@ use codex_app_server_protocol::ConfigWriteErrorCode;
 use codex_app_server_protocol::ConfigWriteResponse;
 use codex_app_server_protocol::ConfiguredHookHandler;
 use codex_app_server_protocol::ConfiguredHookMatcherGroup;
-use codex_app_server_protocol::ExperimentalFeatureEnablementSetParams;
-use codex_app_server_protocol::ExperimentalFeatureEnablementSetResponse;
 use codex_app_server_protocol::InAppBrowserRequirements;
 use codex_app_server_protocol::JSONRPCErrorError;
 use codex_app_server_protocol::ManagedHooksRequirements;
@@ -47,8 +44,6 @@ use codex_config::MatcherGroup as CoreMatcherGroup;
 use codex_config::ResidencyRequirement as CoreResidencyRequirement;
 use codex_config::SandboxModeRequirement as CoreSandboxModeRequirement;
 use codex_core::ThreadManager;
-use codex_features::Feature;
-use codex_features::canonical_feature_for_key;
 use codex_features::feature_for_key;
 use codex_model_provider::create_model_provider;
 use codex_protocol::config_types::ForcedLoginMethod;
@@ -56,7 +51,7 @@ use codex_protocol::config_types::WebSearchMode;
 use serde_json::json;
 use std::path::PathBuf;
 
-const SUPPORTED_EXPERIMENTAL_FEATURE_ENABLEMENT: &[&str] = &[
+const FEATURE_CONFIG_KEYS_EXPOSED_IN_CONFIG_READ: &[&str] = &[
     "api_key_model_discovery",
     "auth_elicitation",
     "mcp_2026_07_28",
@@ -92,7 +87,7 @@ impl ConfigRequestProcessor {
         let fallback_cwd = params.cwd.as_ref().map(PathBuf::from);
         let mut response = self.config_manager.read(params).await.map_err(map_error)?;
         let config = self.load_latest_config(fallback_cwd).await?;
-        for feature_key in SUPPORTED_EXPERIMENTAL_FEATURE_ENABLEMENT {
+        for feature_key in FEATURE_CONFIG_KEYS_EXPOSED_IN_CONFIG_READ {
             let Some(feature) = feature_for_key(feature_key) else {
                 continue;
             };
@@ -163,26 +158,6 @@ impl ConfigRequestProcessor {
             }
         }
         Ok(ClientResponsePayload::ConfigBatchWrite(response))
-    }
-
-    pub(crate) async fn experimental_feature_enablement_set(
-        &self,
-        request_id: ConnectionRequestId,
-        params: ExperimentalFeatureEnablementSetParams,
-    ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
-        let response = self
-            .handle_config_mutation_result(self.set_experimental_feature_enablement(params).await)
-            .await?;
-        if !response.enablement.is_empty() {
-            reload_user_config(&self.config_manager, &self.thread_manager).await;
-        }
-        self.outgoing
-            .send_response_as(
-                request_id,
-                ClientResponsePayload::ExperimentalFeatureEnablementSet(response),
-            )
-            .await;
-        Ok(None)
     }
 
     pub(crate) async fn model_provider_capabilities_read(
@@ -258,45 +233,6 @@ impl ConfigRequestProcessor {
         Ok(response)
     }
 
-    async fn set_experimental_feature_enablement(
-        &self,
-        params: ExperimentalFeatureEnablementSetParams,
-    ) -> Result<ExperimentalFeatureEnablementSetResponse, JSONRPCErrorError> {
-        let ExperimentalFeatureEnablementSetParams { mut enablement } = params;
-        let mut invalid_keys = Vec::new();
-        enablement.retain(|key, _| {
-            let valid = canonical_feature_for_key(key).is_some()
-                && SUPPORTED_EXPERIMENTAL_FEATURE_ENABLEMENT.contains(&key.as_str());
-            if !valid {
-                invalid_keys.push(key.clone());
-            }
-            valid
-        });
-        if !invalid_keys.is_empty() {
-            let invalid_keys = invalid_keys.join(", ");
-            tracing::warn!("ignoring invalid experimental feature enablement keys: {invalid_keys}");
-        }
-
-        if enablement.is_empty() {
-            return Ok(ExperimentalFeatureEnablementSetResponse { enablement });
-        }
-
-        self.config_manager
-            .extend_runtime_feature_enablement(
-                enablement
-                    .iter()
-                    .map(|(name, enabled)| (name.clone(), *enabled)),
-            )
-            .map_err(|_| internal_error("failed to update feature enablement"))?;
-
-        let config = self.load_latest_config(/*fallback_cwd*/ None).await?;
-        self.thread_manager
-            .get_models_manager()
-            .set_api_key_model_discovery_enabled(
-                config.features.enabled(Feature::ApiKeyModelDiscovery),
-            );
-        Ok(ExperimentalFeatureEnablementSetResponse { enablement })
-    }
 }
 
 pub(super) async fn reload_user_config(

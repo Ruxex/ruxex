@@ -540,11 +540,6 @@
         "transport": "review-http:catalog-max"
       },
       {
-        "check_id": "review/modern-feature-enablement",
-        "mode": "2026-07-28",
-        "transport": "review-http:catalog-max"
-      },
-      {
         "check_id": "review/app-server-initialize",
         "mode": "2026-07-28",
         "transport": "review-http:catalog-over-limit"
@@ -575,11 +570,6 @@
         "transport": "review-http:catalog-over-limit"
       },
       {
-        "check_id": "review/modern-feature-enablement",
-        "mode": "2026-07-28",
-        "transport": "review-http:catalog-over-limit"
-      },
-      {
         "check_id": "review/app-server-initialize",
         "mode": "2026-07-28",
         "transport": "review-http:discovery-mismatched-id"
@@ -596,11 +586,6 @@
       },
       {
         "check_id": "review/modern-feature-configuration",
-        "mode": "2026-07-28",
-        "transport": "review-http:discovery-mismatched-id"
-      },
-      {
-        "check_id": "review/modern-feature-enablement",
         "mode": "2026-07-28",
         "transport": "review-http:discovery-mismatched-id"
       },
@@ -630,11 +615,6 @@
         "transport": "review-http:discovery-null-id"
       },
       {
-        "check_id": "review/modern-feature-enablement",
-        "mode": "2026-07-28",
-        "transport": "review-http:discovery-null-id"
-      },
-      {
         "check_id": "review/reject-null-discovery-response-id",
         "mode": "2026-07-28",
         "transport": "review-http:discovery-null-id"
@@ -656,11 +636,6 @@
       },
       {
         "check_id": "review/modern-feature-configuration",
-        "mode": "2026-07-28",
-        "transport": "review-http:repeated-cursor"
-      },
-      {
-        "check_id": "review/modern-feature-enablement",
         "mode": "2026-07-28",
         "transport": "review-http:repeated-cursor"
       },
@@ -705,11 +680,6 @@
         "transport": "review-http:review-regressions"
       },
       {
-        "check_id": "review/modern-feature-enablement",
-        "mode": "2026-07-28",
-        "transport": "review-http:review-regressions"
-      },
-      {
         "check_id": "review/modern-paginated-tools-page-two",
         "mode": "2026-07-28",
         "transport": "review-http:review-regressions"
@@ -745,11 +715,6 @@
         "transport": "review-http:sse-comment-flood"
       },
       {
-        "check_id": "review/modern-feature-enablement",
-        "mode": "2026-07-28",
-        "transport": "review-http:sse-comment-flood"
-      },
-      {
         "check_id": "review/sse-comment-flood-excluded-from-event-size-limit",
         "mode": "2026-07-28",
         "transport": "review-http:sse-comment-flood"
@@ -781,11 +746,6 @@
       },
       {
         "check_id": "review/modern-feature-configuration",
-        "mode": "2026-07-28",
-        "transport": "review-http:sse-cr-comments"
-      },
-      {
-        "check_id": "review/modern-feature-enablement",
         "mode": "2026-07-28",
         "transport": "review-http:sse-cr-comments"
       },
@@ -845,11 +805,6 @@
         "transport": "review-stdio:catalog-max"
       },
       {
-        "check_id": "review/modern-feature-enablement",
-        "mode": "2026-07-28",
-        "transport": "review-stdio:catalog-max"
-      },
-      {
         "check_id": "review/app-server-initialize",
         "mode": "2026-07-28",
         "transport": "review-stdio:catalog-over-limit"
@@ -876,11 +831,6 @@
       },
       {
         "check_id": "review/modern-feature-configuration",
-        "mode": "2026-07-28",
-        "transport": "review-stdio:catalog-over-limit"
-      },
-      {
-        "check_id": "review/modern-feature-enablement",
         "mode": "2026-07-28",
         "transport": "review-stdio:catalog-over-limit"
       },
@@ -916,11 +866,6 @@
       },
       {
         "check_id": "review/modern-feature-configuration",
-        "mode": "2026-07-28",
-        "transport": "review-stdio:review-regressions"
-      },
-      {
-        "check_id": "review/modern-feature-enablement",
         "mode": "2026-07-28",
         "transport": "review-stdio:review-regressions"
       },

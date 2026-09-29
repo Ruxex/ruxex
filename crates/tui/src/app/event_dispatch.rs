@@ -1807,12 +1807,6 @@ impl App {
             AppEvent::SelectPermissionProfile(selection) => {
                 self.select_permission_profile(app_server, selection).await;
             }
-            AppEvent::FetchExperimentalFeatures { thread_id, response_tx } => {
-                self.fetch_experimental_features(app_server, thread_id, response_tx);
-            }
-            AppEvent::SaveExperimentalFeatures { thread_id, updates, response_tx } => {
-                self.save_experimental_features(app_server, thread_id, updates, response_tx);
-            }
             AppEvent::EnableFeatureForNewThreads(feature) => {
                 self.enable_feature_for_new_threads(tui, app_server, feature)
                     .await;

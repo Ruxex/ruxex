@@ -78,6 +78,43 @@ pub(super) fn has_explicit_resume_permission_override(
 }
 
 impl App {
+    pub(super) async fn enable_feature_for_new_threads(
+        &mut self,
+        tui: &mut tui::Tui,
+        app_server: &AppServerSession,
+        feature: Feature,
+    ) {
+        let label = match feature {
+            Feature::Collab => "Subagents",
+            _ => return,
+        };
+        let edits = vec![crate::config_update::build_feature_enabled_edit(
+            feature.key(),
+            /*enabled*/ true,
+        )];
+        let notice: Box<dyn HistoryCell> = match crate::config_update::write_config_batch(
+            app_server.request_handle(),
+            edits,
+        )
+        .await
+        {
+            Ok(response) if response.status == WriteStatus::Ok => {
+                Box::new(history_cell::new_warning_event(format!(
+                    "{label} setting saved on the server for new threads. This thread is unchanged. Project or task settings may override it."
+                )))
+            }
+            Ok(response) => Box::new(history_cell::new_error_event(format!(
+                "{label} setting was saved but is overridden: {}",
+                overridden_write_message(&response)
+            ))),
+            Err(err) => Box::new(history_cell::new_error_event(format!(
+                "Failed to save {label} setting: {}",
+                crate::config_update::format_config_error(&err)
+            ))),
+        };
+        self.insert_history_cell(tui, notice);
+    }
+
     pub(super) async fn rebuild_config_for_cwd(&self, cwd: PathBuf) -> Result<Config> {
         let mut overrides = self.harness_overrides.clone();
         overrides.cwd = Some(cwd.clone());
@@ -555,7 +592,7 @@ impl App {
             let mut feature_config = next_config.clone();
             let Ok(()) = feature_config.features.set_enabled(feature, enabled) else {
                 self.chat_widget.add_error_message(format!(
-                    "Failed to update experimental feature {feature_key}"
+                    "Failed to update feature {feature_key}"
                 ));
                 continue;
             };
@@ -576,7 +613,7 @@ impl App {
             Ok(response) => response,
             Err(err) => {
                 self.chat_widget
-                    .add_error_message(format!("Failed to update experimental features: {err}"));
+                    .add_error_message(format!("Failed to update features: {err}"));
                 return;
             }
         };
@@ -584,7 +621,7 @@ impl App {
             if let Some(effective_config) = self
                 .read_effective_config_after_overridden_write(
                     app_server,
-                    "Experimental feature changes",
+                    "Feature changes",
                 )
                 .await
             {

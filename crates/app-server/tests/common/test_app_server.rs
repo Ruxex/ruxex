@@ -27,7 +27,6 @@ use codex_app_server_protocol::CommandExecWriteParams;
 use codex_app_server_protocol::ConfigBatchWriteParams;
 use codex_app_server_protocol::ConfigReadParams;
 use codex_app_server_protocol::ConfigValueWriteParams;
-use codex_app_server_protocol::ExperimentalFeatureListParams;
 use codex_app_server_protocol::FsCopyParams;
 use codex_app_server_protocol::FsCreateDirectoryParams;
 use codex_app_server_protocol::FsGetMetadataParams;
@@ -669,15 +668,6 @@ impl TestAppServer {
             .await
     }
 
-    /// Send an `experimentalFeature/list` JSON-RPC request.
-    pub async fn send_experimental_feature_list_request(
-        &mut self,
-        params: ExperimentalFeatureListParams,
-    ) -> anyhow::Result<i64> {
-        let params = Some(serde_json::to_value(params)?);
-        self.send_request("experimentalFeature/list", params).await
-    }
-
     /// Send a `permissionProfile/list` JSON-RPC request.
     pub async fn send_permission_profile_list_request(
         &mut self,
@@ -685,16 +675,6 @@ impl TestAppServer {
     ) -> anyhow::Result<i64> {
         let params = Some(serde_json::to_value(params)?);
         self.send_request("permissionProfile/list", params).await
-    }
-
-    /// Send an `experimentalFeature/enablement/set` JSON-RPC request.
-    pub async fn send_experimental_feature_enablement_set_request(
-        &mut self,
-        params: codex_app_server_protocol::ExperimentalFeatureEnablementSetParams,
-    ) -> anyhow::Result<i64> {
-        let params = Some(serde_json::to_value(params)?);
-        self.send_request("experimentalFeature/enablement/set", params)
-            .await
     }
 
     /// Send an `mcpServer/resource/read` JSON-RPC request.

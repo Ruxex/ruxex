@@ -49,8 +49,7 @@ subsequent local operations return `failed/providerError` until that worker exit
 
 The host-owned HTTP `codex_apps` server uses Legacy by default in app-server and
 standalone Codex. To discover the 2026-07-28 protocol, set
-`codex_apps_mcp_2026_07_28 = true` under `[features]`, or send a true runtime
-override via `experimentalFeature/enablement/set`. Discovery falls back to Legacy
+`codex_apps_mcp_2026_07_28 = true` under `[features]`. Discovery falls back to Legacy
 when the server does not support it. Explicit config takes precedence.
 The dedicated setting does not apply to third-party HTTP or local `codex_app`
 stdio servers. The existing `mcp_2026_07_28` flag still governs eligible other

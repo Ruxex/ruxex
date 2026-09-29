@@ -46,7 +46,6 @@ use crate::bottom_pane::StatusLineItem;
 use crate::bottom_pane::TerminalTitleItem;
 use crate::chatwidget::AstraModelPickerAction;
 use crate::chatwidget::UserMessage;
-use crate::experimental_features::FeatureWriteResult;
 use crate::goal_files::GoalDraft;
 use codex_app_server_protocol::AskForApproval;
 use codex_features::Feature;
@@ -1031,24 +1030,9 @@ pub(crate) enum AppEvent {
     /// Select a named permission profile, optionally applying built-in mode settings too.
     SelectPermissionProfile(PermissionProfileSelection),
 
-    /// Discover experimental features for the requesting popup only.
-    FetchExperimentalFeatures {
-        thread_id: ThreadId,
-        response_tx: tokio::sync::oneshot::Sender<
-            Result<Vec<codex_app_server_protocol::ExperimentalFeature>, String>,
-        >,
-    },
-
     /// Update feature flags and persist them to the top-level config.
     UpdateFeatureFlags {
         updates: Vec<(Feature, bool)>,
-    },
-
-    /// Save generic menu controls without changing running-task settings.
-    SaveExperimentalFeatures {
-        thread_id: ThreadId,
-        updates: Vec<(String, bool)>,
-        response_tx: tokio::sync::oneshot::Sender<Result<FeatureWriteResult, String>>,
     },
 
     /// Save an enable prompt on the app server without changing the current thread.

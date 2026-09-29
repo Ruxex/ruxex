@@ -80,11 +80,6 @@ async fn managed_restart_resumes_loaded_threads_and_goal_without_client() -> Res
             "skills/extraRoots/set",
             json!({"extraRoots":[home.path()]}),
         ),
-        (
-            4,
-            "experimentalFeature/enablement/set",
-            json!({"enablement":{"mcp_2026_07_28":true}}),
-        ),
     ] {
         request(&mut client, id, method, params).await?;
     }

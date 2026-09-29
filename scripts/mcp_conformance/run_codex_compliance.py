@@ -76,7 +76,6 @@ CHECK_ORDER = (
     "mcp_add",
     "mcp_get",
     "app_server_initialize",
-    "modern_feature_enablement",
     "inventory",
     "ephemeral_thread",
     "echo_tool",
@@ -772,29 +771,6 @@ def _exercise_app_server(
     ):
         return
     client.notify("initialized")
-
-    if mode == MODERN_VERSION and enable_modern_feature:
-        feature_result, feature_detail = _response_result(
-            client.request(
-                "experimentalFeature/enablement/set",
-                {"enablement": {"mcp_2026_07_28": True}},
-            )
-        )
-        enabled = (
-            feature_result is not None
-            and isinstance(feature_result.get("enablement"), dict)
-            and feature_result["enablement"].get("mcp_2026_07_28") is True
-        )
-        if not case.check(
-            "modern_feature_enablement",
-            enabled,
-            (
-                "runtime feature mcp_2026_07_28 enabled"
-                if enabled
-                else _result_detail(feature_result, feature_detail)
-            ),
-        ):
-            return
 
     inventory, inventory_detail = _response_result(
         client.request("mcpServerStatus/list", {})

@@ -874,30 +874,6 @@ def run_adapter(server_url: str) -> dict[str, object]:
             steps.append(Step("app_server_initialize", bool(initialize), "initialized"))
             client.notify("initialized")
 
-            if protocol_version == MODERN_VERSION and enable_modern_feature:
-                feature = _result_or_raise(
-                    client.request(
-                        "experimentalFeature/enablement/set",
-                        {"enablement": {"mcp_2026_07_28": True}},
-                    ),
-                    "experimentalFeature/enablement/set",
-                )
-                enabled = (
-                    isinstance(feature.get("enablement"), dict)
-                    and feature["enablement"].get("mcp_2026_07_28") is True
-                )
-                steps.append(
-                    Step(
-                        "modern_feature_enablement",
-                        enabled,
-                        "enabled mcp_2026_07_28"
-                        if enabled
-                        else f"unexpected response: {feature!r}",
-                    )
-                )
-                if not enabled:
-                    raise AdapterFailure("could not enable the modern MCP feature")
-
             if scenario.startswith("auth/"):
                 client_registration = _client_registration_override(
                     scenario,

@@ -386,9 +386,6 @@ impl ChatWidget {
                     // Not supported; on non-Windows this command should never be reachable.
                 }
             }
-            SlashCommand::Experimental => {
-                self.open_experimental_popup();
-            }
             SlashCommand::Quit | SlashCommand::Exit => {
                 self.request_quit_without_confirmation();
             }
@@ -1145,7 +1142,6 @@ impl ChatWidget {
             | SlashCommand::MultiAgents
             | SlashCommand::Permissions
             | SlashCommand::ElevateSandbox
-            | SlashCommand::Experimental
             | SlashCommand::Quit
             | SlashCommand::Exit
             | SlashCommand::Logout
