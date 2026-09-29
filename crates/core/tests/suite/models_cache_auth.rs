@@ -7,7 +7,7 @@ use codex_login::AuthCredentialsStoreMode;
 use codex_login::AuthKeyringBackendKind;
 use codex_login::CodexAuth;
 use codex_login::login_with_api_key;
-use codex_models_manager::bundled_models_response;
+use codex_models_manager::test_support::test_models_response;
 use codex_models_manager::manager::RefreshStrategy;
 use codex_protocol::openai_models::ModelVisibility;
 use codex_protocol::openai_models::ModelsResponse;
@@ -23,7 +23,7 @@ use tempfile::TempDir;
 async fn auth_and_provider_switches_do_not_reuse_chatgpt_catalog() -> Result<()> {
     let server = wiremock::MockServer::start().await;
     let home = Arc::new(TempDir::new()?);
-    let mut model = bundled_models_response()?
+    let mut model = test_models_response()?
         .models
         .into_iter()
         .find(|model| model.slug == "gpt-5.5")
@@ -60,7 +60,7 @@ async fn auth_and_provider_switches_do_not_reuse_chatgpt_catalog() -> Result<()>
     )?;
     assert!(chatgpt.thread_manager.auth_manager().reload().await);
     let manager = chatgpt.thread_manager.get_models_manager();
-    let bundled = bundled_models_response()?.models;
+    let bundled = test_models_response()?.models;
     assert_eq!(manager.get_remote_models().await, bundled);
     assert_eq!(
         manager

@@ -34,12 +34,19 @@ use crate::auth::resolve_provider_auth;
 const MODELS_REFRESH_TIMEOUT: Duration = Duration::from_secs(5);
 const MODELS_ENDPOINT: &str = "/models";
 
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum ModelsEndpointAuthMode {
+    ConfiguredProvider,
+    MyProvider,
+}
+
 /// Provider-owned OpenAI-compatible `/models` endpoint.
 #[derive(Debug)]
 pub(crate) struct OpenAiModelsEndpoint {
     provider_info: ModelProviderInfo,
     auth_manager: Option<Arc<AuthManager>>,
     transport_builder: Arc<dyn ModelsTransportBuilder>,
+    auth_mode: ModelsEndpointAuthMode,
 }
 
 impl OpenAiModelsEndpoint {
@@ -47,10 +54,23 @@ impl OpenAiModelsEndpoint {
         provider_info: ModelProviderInfo,
         auth_manager: Option<Arc<AuthManager>>,
     ) -> Self {
+        Self::new_with_auth_mode(
+            provider_info,
+            auth_manager,
+            ModelsEndpointAuthMode::ConfiguredProvider,
+        )
+    }
+
+    pub(crate) fn new_with_auth_mode(
+        provider_info: ModelProviderInfo,
+        auth_manager: Option<Arc<AuthManager>>,
+        auth_mode: ModelsEndpointAuthMode,
+    ) -> Self {
         Self {
             provider_info,
             auth_manager,
             transport_builder: Arc::new(RouteAwareModelsTransportBuilder),
+            auth_mode,
         }
     }
 
@@ -79,7 +99,14 @@ impl OpenAiModelsEndpoint {
         let identity = crate::models_identity::identity(&self.provider_info, auth.as_ref())?;
         let auth_mode = auth.as_ref().map(CodexAuth::auth_mode);
         let api_provider = self.provider_info.to_api_provider(auth_mode)?;
-        let api_auth = resolve_provider_auth(auth.as_ref(), &self.provider_info)?;
+        let api_auth = match self.auth_mode {
+            ModelsEndpointAuthMode::ConfiguredProvider => {
+                resolve_provider_auth(auth.as_ref(), &self.provider_info)?
+            }
+            ModelsEndpointAuthMode::MyProvider => {
+                crate::my_provider::my_provider_auth_provider(auth.as_ref())
+            }
+        };
         let request_url =
             ModelsClient::<ReqwestTransport>::request_url(&api_provider, client_version);
         let auth_telemetry = auth_header_telemetry(api_auth.as_ref());
@@ -122,6 +149,7 @@ impl OpenAiModelsEndpoint {
 impl ModelsEndpointClient for OpenAiModelsEndpoint {
     fn supports_api_key_models(&self) -> bool {
         self.provider_info.env_key.is_some()
+            || matches!(self.auth_mode, ModelsEndpointAuthMode::MyProvider)
     }
 
     fn identity(&self) -> Option<String> {
@@ -349,6 +377,7 @@ mod tests {
                 },
                 auth_manager: Some(auth.clone()),
                 transport_builder: capture.clone(),
+                auth_mode: ModelsEndpointAuthMode::ConfiguredProvider,
             });
             let manager = OpenAiModelsManager::new_without_cache(endpoint.clone(), Some(auth));
             manager.set_api_key_model_discovery_enabled(/*enabled*/ true);
@@ -430,6 +459,7 @@ mod tests {
             transport_builder: Arc::new(RecordingTransportBuilder {
                 observed_request: Arc::clone(&observed_request),
             }),
+            auth_mode: ModelsEndpointAuthMode::ConfiguredProvider,
         };
 
         endpoint
@@ -475,6 +505,7 @@ mod tests {
             transport_builder: Arc::new(RecordingTransportBuilder {
                 observed_request: Arc::new(Mutex::new(None)),
             }),
+            auth_mode: ModelsEndpointAuthMode::ConfiguredProvider,
         };
 
         set_default_client_residency_requirement(Some(ResidencyRequirement::Us));
@@ -566,7 +597,7 @@ mod tests {
             Some(&model)
         );
         auth.auth().await;
-        let bundled = codex_models_manager::bundled_models_response().unwrap();
+        let bundled = codex_models_manager::test_support::test_models_response().unwrap();
         assert_eq!(manager.get_remote_models().await, bundled.models);
         assert_eq!(manager.try_get_remote_models().unwrap(), bundled.models);
         assert_eq!(

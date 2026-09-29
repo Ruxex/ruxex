@@ -4,7 +4,7 @@
 
 [`DebugSubcommand`](../../../../crates/cli/src/main.rs#L210) には次があります。
 
-- `models [--bundled]`: モデルカタログを JSON として出力します。
+- `models`: 動的に取得したモデルカタログを JSON として出力します。
 - `app-server send-message-v2`: 診断用 app-server メッセージを送信します。
 - `prompt-input [PROMPT] --image FILE`: モデルから見えるプロンプト入力を JSON として出力します。
 - 非表示の `trace-reduce TRACE_BUNDLE`: ロールアウトトレースを再生し、縮約した状態 JSON を書き込みます。

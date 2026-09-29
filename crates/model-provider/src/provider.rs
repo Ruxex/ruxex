@@ -267,9 +267,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
         &self,
         config_model_catalog: Option<ModelsResponse>,
     ) -> SharedModelsManager {
-        let model_catalog = config_model_catalog
-            .or_else(|| codex_models_manager::bundled_models_response().ok())
-            .unwrap_or_default();
+        let model_catalog = config_model_catalog.unwrap_or_default();
         Arc::new(StaticModelsManager::new(self.auth_manager(), model_catalog))
     }
 
@@ -1165,7 +1163,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
 
     #[tokio::test]
     async fn configured_bedrock_catalog_only_allows_default_service_tier() {
-        let configured_model = codex_models_manager::bundled_models_response()
+        let configured_model = codex_models_manager::test_support::test_models_response()
             .expect("bundled models should parse")
             .models
             .into_iter()

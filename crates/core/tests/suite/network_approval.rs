@@ -2652,7 +2652,7 @@ async fn approved_network_host_for_one_environment_still_prompts_in_another() ->
 }
 
 pub(super) fn guardian_parent_catalog() -> ModelsResponse {
-    let template = codex_models_manager::bundled_models_response()
+    let template = codex_models_manager::test_support::test_models_response()
         .expect("bundled model catalog")
         .models
         .into_iter()

@@ -520,7 +520,7 @@ async fn run_safety_retry(
     let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
     let codex_home = tempdir()?;
     // Keep text-only retry fixtures independent of the optional Code Mode host.
-    let mut model_catalog = codex_models_manager::bundled_models_response()?;
+    let mut model_catalog = codex_models_manager::test_support::test_models_response()?;
     for model in model_catalog
         .models
         .iter_mut()

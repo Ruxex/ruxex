@@ -27,7 +27,7 @@ use codex_extension_api::SkillInvocationInput;
 use codex_features::Feature;
 use codex_login::CodexAuth;
 use codex_mcp::CODEX_APPS_MCP_SERVER_NAME;
-use codex_models_manager::bundled_models_response;
+use codex_models_manager::test_support::test_models_response;
 use codex_otel::OtelExporter;
 use codex_otel::OtelHttpProtocol;
 use codex_otel::OtelProvider;
@@ -2701,7 +2701,7 @@ async fn assert_catalog_model_switch(max_context_tokens: Option<usize>) -> Resul
                 .expect("model switching");
             config.skill_max_context_tokens =
                 max_context_tokens.and_then(std::num::NonZeroUsize::new);
-            let template = bundled_models_response()
+            let template = test_models_response()
                 .expect("bundled models")
                 .models
                 .into_iter()

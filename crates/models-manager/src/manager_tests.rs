@@ -576,7 +576,7 @@ async fn refresh_available_models_sorts_by_priority() {
 }
 
 #[tokio::test]
-async fn refresh_available_models_keeps_merging_for_custom_api_auth() {
+async fn refresh_available_models_uses_only_dynamic_models_for_custom_api_auth() {
     let remote_models = vec![remote_model(
         "api-auth-visible-remote",
         "API Auth Visible",
@@ -598,9 +598,6 @@ async fn refresh_available_models_keeps_merging_for_custom_api_auth() {
             "test-api-key",
         ))),
     );
-    let mut expected = load_remote_models_from_file().expect("bundled models should parse");
-    expected.extend(remote_models);
-
     manager
         .refresh_available_models(
             RefreshStrategy::OnlineIfUncached,
@@ -609,7 +606,7 @@ async fn refresh_available_models_keeps_merging_for_custom_api_auth() {
         .await
         .expect("refresh succeeds");
 
-    assert_eq!(manager.get_remote_models().await, expected);
+    assert_eq!(manager.get_remote_models().await, remote_models);
     assert_eq!(endpoint.fetch_count(), 1, "expected a single model fetch");
 }
 
@@ -972,20 +969,20 @@ fn build_available_models_picks_default_after_hiding_hidden_models() {
 
 #[test]
 fn bundled_models_json_roundtrips() {
-    let response = crate::bundled_models_response()
-        .unwrap_or_else(|err| panic!("bundled models.json should parse: {err}"));
+    let response = crate::test_support::test_models_response()
+        .unwrap_or_else(|err| panic!("test model catalog should parse: {err}"));
 
     let serialized =
-        serde_json::to_string(&response).expect("bundled models.json should serialize");
+        serde_json::to_string(&response).expect("test model catalog should serialize");
     let roundtripped: ModelsResponse =
-        serde_json::from_str(&serialized).expect("serialized models.json should deserialize");
+        serde_json::from_str(&serialized).expect("serialized test model catalog should deserialize");
 
     assert_eq!(
         response, roundtripped,
-        "bundled models.json should round trip through serde"
+        "test model catalog should round trip through serde"
     );
     assert!(
         !response.models.is_empty(),
-        "bundled models.json should contain at least one model"
+        "test model catalog should contain at least one model"
     );
 }

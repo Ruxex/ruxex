@@ -4,7 +4,7 @@ use super::*;
 use pretty_assertions::assert_eq;
 
 #[tokio::test]
-async fn api_key_discovery_disabled_preserves_command_auth_discovery_and_merging() {
+async fn api_key_discovery_disabled_preserves_command_auth_discovery() {
     let models = vec![remote_model(
         "command-auth",
         "Command Auth",
@@ -24,14 +24,12 @@ async fn api_key_discovery_disabled_preserves_command_auth_discovery_and_merging
             "test-key",
         ))),
     );
-    let mut merged = load_remote_models_from_file().unwrap();
-    merged.extend(models.clone());
     assert_eq!(
         manager
             .raw_model_catalog(RefreshStrategy::Online, DEFAULT_HTTP_CLIENT_FACTORY)
             .await
             .models,
-        merged
+        models
     );
     assert_eq!(endpoint.fetch_count(), 1);
 }
@@ -44,7 +42,6 @@ async fn api_key_discovery_startup_flag_controls_fetches_and_cached_catalogs() {
     let auth = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("test-key"));
     let manager =
         OpenAiModelsManager::new(home.path().into(), endpoint.clone(), Some(auth.clone()));
-    let bundled = load_remote_models_from_file().unwrap();
 
     for strategy in [
         RefreshStrategy::Online,
@@ -56,7 +53,7 @@ async fn api_key_discovery_startup_flag_controls_fetches_and_cached_catalogs() {
                 .raw_model_catalog(strategy, DEFAULT_HTTP_CLIENT_FACTORY)
                 .await
                 .models,
-            bundled
+            Vec::new()
         );
     }
     assert_eq!(endpoint.fetch_count(), 0);
@@ -78,7 +75,7 @@ async fn api_key_discovery_startup_flag_controls_fetches_and_cached_catalogs() {
         let restarted =
             OpenAiModelsManager::new(home.path().into(), endpoint.clone(), Some(auth.clone()));
         restarted.set_api_key_model_discovery_enabled(enabled);
-        let expected = if enabled { &models } else { &bundled };
+        let expected: &[ModelInfo] = if enabled { &models } else { &[] };
         for strategy in [RefreshStrategy::Offline, RefreshStrategy::OnlineIfUncached] {
             assert_eq!(
                 &restarted

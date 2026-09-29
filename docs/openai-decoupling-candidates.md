@@ -137,6 +137,8 @@ BackendBanner の parser/CTA/render、bottom pane の専用 inline banner、Rese
 
 Bedrock、custom `model_providers`、汎用 credential storage、Responses-compatible provider の consumer があるため、クレート全体の削除ではなく first-party adapter の分割・削除を先に検討する。
 
+モデル一覧については、`MyModelProvider` も `ModelProvider::models_manager()` 経由で provider の `/models` を動的取得するよう移行済み。OpenAI の bundled catalog と暗黙 fallback は削除し、明示的な `model_catalog_json` と Bedrock の provider-owned catalog だけを静的経路として保持する。
+
 ### 3.4 Apps / host-owned MCP
 
 Apps、`codex_apps`、Apps entitlement、host-owned Apps MCP の現行経路とApps専用の孤立テストは削除済みである。`codex-mcp` 全体は通常のMCP、OAuth/elicitation、provider-neutral metadata/security behaviorのため保持する。

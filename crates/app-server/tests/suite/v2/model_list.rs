@@ -47,7 +47,7 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
     app_enablement: bool,
 ) -> Result<()> {
     let server = MockServer::start().await;
-    let mut remote_model = codex_models_manager::bundled_models_response()?
+    let mut remote_model = codex_models_manager::test_support::test_models_response()?
         .models
         .remove(0);
     remote_model.slug = "rollout-model".into();
@@ -83,7 +83,7 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
         .with_env_overrides(&[("OPENAI_API_KEY", None), ("CODEX_API_KEY", None)])
         .build_initialized()
         .await?;
-    let mut bundled = codex_models_manager::bundled_models_response()?.models;
+    let mut bundled = codex_models_manager::test_support::test_models_response()?.models;
     bundled.sort_by_key(|model| model.priority);
     let mut bundled = ModelPreset::filter_by_auth(
         bundled.into_iter().map(Into::into).collect(),

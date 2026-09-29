@@ -35,7 +35,7 @@ use codex_features::Feature;
 use codex_home::CodexHomeUserInstructionsProvider;
 use codex_login::CodexAuth;
 use codex_model_provider_info::ModelProviderInfo;
-use codex_models_manager::bundled_models_response;
+use codex_models_manager::test_support::test_models_response;
 use codex_models_manager::manager::SharedModelsManager;
 use codex_protocol::config_types::CollaborationMode;
 use codex_protocol::config_types::ModeKind;
@@ -328,14 +328,14 @@ impl TestCodexBuilder {
         let model = model.to_string();
         self.with_config(move |config| {
             let model_catalog = config.model_catalog.get_or_insert_with(|| {
-                bundled_models_response().expect("test model catalog should parse")
+                test_models_response().expect("test model catalog should parse")
             });
             if !model_catalog
                 .models
                 .iter()
                 .any(|candidate| candidate.slug == model)
             {
-                let mut fixture = bundled_models_response()
+                let mut fixture = test_models_response()
                     .expect("bundled model catalog should parse")
                     .models
                     .into_iter()
@@ -819,7 +819,7 @@ fn ensure_test_model_catalog(config: &mut Config) -> Result<()> {
         return Ok(());
     }
 
-    let bundled_models = bundled_models_response().expect("test model catalog should parse");
+    let bundled_models = test_models_response().expect("test model catalog should parse");
     let mut model = bundled_models
         .models
         .iter()

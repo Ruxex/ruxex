@@ -78,7 +78,6 @@ use codex_features::is_known_feature_key;
 use codex_home::CodexHomeUserInstructionsProvider;
 use codex_login::AuthManager;
 use codex_login::is_workload_identity_selected;
-use codex_models_manager::bundled_models_response;
 use codex_models_manager::manager::RefreshStrategy;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::user_input::UserInput;
@@ -251,11 +250,7 @@ struct DebugPromptInputCommand {
 }
 
 #[derive(Debug, Parser)]
-struct DebugModelsCommand {
-    /// Skip refresh and dump only the bundled catalog shipped with this binary.
-    #[arg(long = "bundled", default_value_t = false)]
-    bundled: bool,
-}
+struct DebugModelsCommand {}
 
 #[derive(Debug, Parser)]
 struct ReviewCommand {
@@ -1870,29 +1865,25 @@ async fn run_debug_prompt_input_command(
 }
 
 async fn run_debug_models_command(
-    cmd: DebugModelsCommand,
+    _cmd: DebugModelsCommand,
     root_config_overrides: CliConfigOverrides,
 ) -> anyhow::Result<()> {
-    let catalog = if cmd.bundled {
-        bundled_models_response()?
-    } else {
-        let cli_overrides = root_config_overrides
-            .parse_overrides()
-            .map_err(anyhow::Error::msg)?;
-        let config = ConfigBuilder::default()
-            .cli_overrides(cli_overrides)
-            .build()
-            .await?;
-        let auth_manager =
-            AuthManager::shared_from_config(&config, /*enable_codex_api_key_env*/ true).await?;
-        let models_manager = build_models_manager(&config, auth_manager);
-        models_manager
-            .raw_model_catalog(
-                RefreshStrategy::OnlineIfUncached,
-                config.http_client_factory(),
-            )
-            .await
-    };
+    let cli_overrides = root_config_overrides
+        .parse_overrides()
+        .map_err(anyhow::Error::msg)?;
+    let config = ConfigBuilder::default()
+        .cli_overrides(cli_overrides)
+        .build()
+        .await?;
+    let auth_manager =
+        AuthManager::shared_from_config(&config, /*enable_codex_api_key_env*/ true).await?;
+    let models_manager = build_models_manager(&config, auth_manager);
+    let catalog = models_manager
+        .raw_model_catalog(
+            RefreshStrategy::OnlineIfUncached,
+            config.http_client_factory(),
+        )
+        .await;
 
     serde_json::to_writer(std::io::stdout(), &catalog)?;
     println!();

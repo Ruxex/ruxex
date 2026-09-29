@@ -19,7 +19,7 @@ use codex_history::InitialHistory;
 use codex_history::RolloutItem;
 use codex_model_provider_info::ModelProviderInfo;
 use codex_model_provider_info::built_in_model_providers;
-use codex_models_manager::bundled_models_response;
+use codex_models_manager::test_support::test_models_response;
 use codex_plugin::PluginHookSource;
 use codex_plugin::PluginId;
 use codex_protocol::items::parse_hook_prompt_fragment;
@@ -3654,7 +3654,7 @@ async fn pre_tool_use_hook_model_tracks_step_after_a_turn_update() -> Result<()>
     )
     .await;
 
-    let base_model = bundled_models_response()
+    let base_model = test_models_response()
         .expect("bundled models should parse")
         .models
         .into_iter()

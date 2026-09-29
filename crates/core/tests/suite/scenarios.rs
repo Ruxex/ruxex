@@ -26,7 +26,7 @@ use codex_extension_api::ExtensionRegistry;
 use codex_extension_api::ExtensionRegistryBuilder;
 use codex_features::Feature;
 use codex_login::CodexAuth;
-use codex_models_manager::bundled_models_response;
+use codex_models_manager::test_support::test_models_response;
 use codex_protocol::capabilities::CapabilityRootLocation;
 use codex_protocol::capabilities::SelectedCapabilityRoot;
 use codex_protocol::items::AgentMessageDelivery;
@@ -179,7 +179,7 @@ fn configure_scenario_catalog(config: &mut Config) {
         stack.requirements_toml().clone(),
     )
     .expect("fixture config layers");
-    config.model_catalog = Some(bundled_models_response().expect("bundled model catalog"));
+    config.model_catalog = Some(test_models_response().expect("bundled model catalog"));
     config.orchestrator_skills_enabled = false;
 }
 

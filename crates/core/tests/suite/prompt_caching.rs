@@ -7,7 +7,7 @@ use std::sync::Arc;
 use codex_core::TurnInputRequest;
 use codex_core::shell::default_user_shell;
 use codex_features::Feature;
-use codex_models_manager::bundled_models_response;
+use codex_models_manager::test_support::test_models_response;
 use codex_models_manager::collaboration_mode_presets::builtin_collaboration_mode_presets;
 use codex_models_manager::manager::StaticModelsManager;
 use codex_prompts::render_model_instructions;
@@ -142,7 +142,7 @@ async fn prompt_tools_are_consistent_across_requests(
         "Custom base.\r\n## Plan tool\r\nPreserve this custom workflow.\r\n";
     const MODEL_BASE_INSTRUCTIONS: &str = "Model base.\n\n## Planning\nYou have access to an `update_plan` tool which tracks steps.\n\n## Work\nKeep working.\n\n## `update_plan`\nUpdate the plan.\n";
 
-    let mut model = bundled_models_response()?
+    let mut model = test_models_response()?
         .models
         .into_iter()
         .find(|model| model.slug == "gpt-5.5")

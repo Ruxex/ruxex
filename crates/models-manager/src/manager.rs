@@ -12,7 +12,6 @@ use codex_protocol::config_types::CollaborationModeMask;
 use codex_protocol::error::Result as CoreResult;
 use codex_protocol::openai_models::ModelInfo;
 use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::ModelVisibility;
 use codex_protocol::openai_models::ModelsResponse;
 use std::fmt;
 use std::future::Future;
@@ -240,7 +239,7 @@ pub type ModelsManagerFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a
 /// Shared model manager handle used across runtime services.
 pub type SharedModelsManager = Arc<dyn ModelsManager>;
 
-/// OpenAI-compatible model manager backed by bundled models, cache, and `/models`.
+/// Provider-compatible model manager backed by the provider `/models` endpoint and cache.
 #[derive(Debug)]
 pub struct OpenAiModelsManager {
     remote_models: RwLock<ModelsCacheEntry>,
@@ -300,14 +299,13 @@ impl OpenAiModelsManager {
         endpoint_client: Arc<dyn ModelsEndpointClient>,
         auth_manager: Option<Arc<AuthManager>>,
     ) -> Self {
-        let remote_models = load_remote_models_from_file().unwrap_or_default();
         Self {
             remote_models: RwLock::new(ModelsCacheEntry {
                 fetched_at: Utc::now(),
                 etag: None,
                 client_version: Some(crate::client_version_to_whole()),
                 identity: endpoint_client.identity(),
-                models: remote_models,
+                models: Vec::new(),
             }),
             cache,
             api_key_model_discovery_enabled: AtomicBool::new(false),
@@ -351,7 +349,7 @@ impl ModelsManager for OpenAiModelsManager {
             if entry.identity.is_some() && entry.identity == self.endpoint_client.identity() {
                 entry.models.clone()
             } else {
-                load_remote_models_from_file().unwrap_or_default()
+                Vec::new()
             }
         })
     }
@@ -362,7 +360,7 @@ impl ModelsManager for OpenAiModelsManager {
             if entry.identity.is_some() && entry.identity == self.endpoint_client.identity() {
                 entry.models.clone()
             } else {
-                load_remote_models_from_file().unwrap_or_default()
+                Vec::new()
             },
         )
     }
@@ -437,7 +435,7 @@ impl OpenAiModelsManager {
         refresh_strategy: RefreshStrategy,
         http_client_factory: &HttpClientFactory,
     ) -> CoreResult<()> {
-        // Gate cache loading as well as requests; disabled sessions use bundled API-key models.
+        // Gate cache loading as well as requests for API-key model discovery.
         if self.supports_api_key_discovery()
             && !self.api_key_model_discovery_enabled.load(Ordering::SeqCst)
         {
@@ -515,35 +513,10 @@ impl OpenAiModelsManager {
     }
 
     /// Publish only while the request identity still matches, including after async storage.
-    async fn apply_remote_models(&self, mut entry: ModelsCacheEntry) -> bool {
+    async fn apply_remote_models(&self, entry: ModelsCacheEntry) -> bool {
         let mut current = self.remote_models.write().await;
         if entry.identity != self.endpoint_client.identity() {
             return false;
-        }
-        // Visible ChatGPT and OpenAI API-key catalogs are authoritative.
-        let remote_only = entry
-            .models
-            .iter()
-            .any(|model| model.visibility == ModelVisibility::List)
-            && (self.supports_api_key_discovery()
-                || self.auth_manager.as_ref().is_some_and(|auth_manager| {
-                    auth_manager
-                        .auth_mode()
-                        .is_some_and(AuthMode::has_managed_account)
-                }));
-        if !remote_only {
-            let mut models = load_remote_models_from_file().unwrap_or_default();
-            for model in entry.models {
-                if let Some(index) = models
-                    .iter()
-                    .position(|existing| existing.slug == model.slug)
-                {
-                    models[index] = model;
-                } else {
-                    models.push(model);
-                }
-            }
-            entry.models = models;
         }
         *current = entry;
         true
@@ -662,10 +635,6 @@ impl ModelsManager for StaticModelsManager {
     ) -> ModelsManagerFuture<'_, ()> {
         Box::pin(async {})
     }
-}
-
-fn load_remote_models_from_file() -> Result<Vec<ModelInfo>, std::io::Error> {
-    Ok(crate::bundled_models_response()?.models)
 }
 
 fn default_model_from_available(available: Vec<ModelPreset>) -> String {
