@@ -280,8 +280,8 @@ async fn remote_project_trust_guards_thread_start_and_preserves_repository_decis
 #[test]
 fn format_config_error_preserves_server_validation_message() {
     let err = Err::<(), _>(color_eyre::eyre::eyre!(
-        "config/batchWrite failed: Invalid configuration: features.fast_mode=true violates \
-         managed requirements; allowed set [fast_mode=false]"
+        "config/batchWrite failed: Invalid configuration: features.network_proxy=true violates \
+         managed requirements; allowed set [network_proxy=false]"
     ))
     .wrap_err("config/batchWrite failed in TUI")
     .unwrap_err();
@@ -289,6 +289,6 @@ fn format_config_error_preserves_server_validation_message() {
     assert_eq!(
         format_config_error(&err),
         "config/batchWrite failed in TUI: config/batchWrite failed: Invalid configuration: \
-         features.fast_mode=true violates managed requirements; allowed set [fast_mode=false]"
+         features.network_proxy=true violates managed requirements; allowed set [network_proxy=false]"
     );
 }

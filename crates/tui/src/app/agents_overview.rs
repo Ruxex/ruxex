@@ -914,12 +914,8 @@ impl App {
             &self.cli_kv_overrides,
             &self.harness_overrides,
         );
-        if server_model_cleared
-            && config.model.is_none()
-            && config.features.enabled(Feature::FastMode)
-        {
-            // Bootstrap's fallback model may be seeded from the client. Resolve tiers
-            // against the server catalog when config/read cleared the model.
+        if server_model_cleared && config.model.is_none() {
+            // Bootstrap's fallback model may be seeded from the client.
             config.model = self
                 .model_catalog
                 .models

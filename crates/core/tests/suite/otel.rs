@@ -124,7 +124,7 @@ async fn responses_api_emits_api_request_event() {
     let TestCodex { codex, .. } = test_codex()
         .with_model("gpt-5.4")
         .with_config(|config| {
-            config.service_tier = Some(ServiceTier::Fast.request_value().to_string());
+            config.service_tier = Some(ServiceTier::Flex.request_value().to_string());
             config.model_reasoning_effort = Some(ReasoningEffort::High);
         })
         .build(&server)
@@ -142,7 +142,7 @@ async fn responses_api_emits_api_request_event() {
     wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request_body = response_mock.single_request().body_json();
-    assert_eq!(request_body["service_tier"].as_str(), Some("priority"));
+    assert_eq!(request_body["service_tier"].as_str(), Some("flex"));
     assert_eq!(request_body["reasoning"]["effort"].as_str(), Some("high"));
 
     logs_assert(|lines: &[&str]| {
@@ -159,7 +159,7 @@ async fn responses_api_emits_api_request_event() {
             .find(|line| {
                 line.contains("codex.sse_event")
                     && line.contains("event.kind=response.completed")
-                    && line.contains("service_tier=\"priority\"")
+                    && line.contains("service_tier=\"flex\"")
                     && line.contains("model_reasoning_effort=\"high\"")
             })
             .map(|_| Ok(()))

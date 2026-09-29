@@ -175,9 +175,9 @@ async fn spawn_agent_description_lists_visible_models_and_reasoning_efforts() ->
                         },
                     ],
                     vec![ModelServiceTier {
-                        id: "priority".to_string(),
-                        name: "Fast".to_string(),
-                        description: "1.5x speed, increased usage".to_string(),
+                        id: "flex".to_string(),
+                        name: "Flex".to_string(),
+                        description: "Flexible processing".to_string(),
                     }],
                 ),
                 test_model_info(
@@ -247,7 +247,7 @@ async fn spawn_agent_description_lists_visible_models_and_reasoning_efforts() ->
         "expected default reasoning effort in spawn_agent description: {description:?}"
     );
     assert!(
-        description.contains("Service tiers: priority."),
+        description.contains("Service tiers: flex."),
         "expected service tier guidance in spawn_agent description: {description:?}"
     );
     assert!(

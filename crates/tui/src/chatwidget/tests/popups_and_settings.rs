@@ -3228,31 +3228,6 @@ async fn model_picker_refresh_preserves_highlight() {
 }
 
 #[tokio::test]
-async fn model_picker_refreshes_service_tier_controls() {
-    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.4")).await;
-    chat.thread_id = Some(ThreadId::new());
-    set_fast_mode_test_catalog(&mut chat);
-    chat.set_feature_enabled(Feature::FastMode, /*enabled*/ true);
-    chat.set_service_tier(Some(ServiceTier::Fast.request_value().to_string()));
-    let mut refreshed = chat.model_catalog.try_list_models().unwrap();
-    refreshed
-        .iter_mut()
-        .for_each(|model| model.service_tiers.clear());
-    chat.open_model_popup();
-    chat.handle_key_event(KeyEvent::from(KeyCode::Esc));
-
-    apply_model_list_response(&mut chat, refreshed);
-
-    assert_eq!(chat.current_service_tier(), None);
-    chat.bottom_pane
-        .set_composer_text("/fast".to_string(), Vec::new(), Vec::new());
-    assert_chatwidget_snapshot!(
-        "model_picker_refreshes_service_tier_controls",
-        normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 80))
-    );
-}
-
-#[tokio::test]
 async fn model_picker_refresh_preserves_dismissal_and_reasoning_submenu() {
     for (dismiss, explicit_all_models, accept_reasoning) in [
         (true, false, false),

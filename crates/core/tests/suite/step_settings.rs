@@ -144,7 +144,6 @@ fn step_settings_test() -> TestCodexBuilder {
         for feature in [
             Feature::StepModelSwitching,
             Feature::DefaultModeRequestUserInput,
-            Feature::FastMode,
         ] {
             config
                 .features
@@ -770,7 +769,7 @@ async fn settings_updates_preserve_turn_identity_and_target(target: SettingsTarg
                         model: Some(MODEL_B.to_string()),
                         effort: Some(Some(ReasoningEffort::High)),
                         summary: Some(ReasoningSummary::Detailed),
-                        service_tier: Some(Some(ServiceTier::Fast.request_value().to_string())),
+                        service_tier: Some(Some(ServiceTier::Flex.request_value().to_string())),
                         ..Default::default()
                     },
                 })
@@ -781,7 +780,7 @@ async fn settings_updates_preserve_turn_identity_and_target(target: SettingsTarg
                 model: Some(MODEL_B.to_string()),
                 effort: Some(Some(ReasoningEffort::High)),
                 summary: Some(ReasoningSummary::Detailed),
-                service_tier: Some(Some(ServiceTier::Fast.request_value().to_string())),
+                service_tier: Some(Some(ServiceTier::Flex.request_value().to_string())),
                 ..Default::default()
             };
             assert_eq!(
@@ -821,7 +820,7 @@ async fn settings_updates_preserve_turn_identity_and_target(target: SettingsTarg
     changed_settings.model = MODEL_B.to_string();
     changed_settings.reasoning_effort = Some(ReasoningEffort::High);
     changed_settings.reasoning_summary = Some(ReasoningSummary::Detailed);
-    changed_settings.service_tier = Some(ServiceTier::Fast.request_value().to_string());
+    changed_settings.service_tier = Some(ServiceTier::Flex.request_value().to_string());
     changed_settings.collaboration_mode = changed_settings.collaboration_mode.with_updates(
         Some(MODEL_B.to_string()),
         Some(Some(ReasoningEffort::High)),
@@ -851,7 +850,7 @@ async fn settings_updates_preserve_turn_identity_and_target(target: SettingsTarg
     let changed_request_settings = json!({
         "model": MODEL_B,
         "reasoning": { "effort": "high", "summary": "detailed" },
-        "service_tier": "priority",
+        "service_tier": "flex",
     });
     let (continued_settings, next_turn_settings) = match target {
         SettingsTarget::Thread => (original_request_settings.clone(), changed_request_settings),
@@ -1968,7 +1967,7 @@ async fn sparse_updates_preserve_divergent_active_and_future_models() -> Result<
     test.codex
         .submit(Op::ThreadSettings {
             thread_settings: ThreadSettingsOverrides {
-                service_tier: Some(Some(ServiceTier::Fast.request_value().to_string())),
+                service_tier: Some(Some(ServiceTier::Flex.request_value().to_string())),
                 ..Default::default()
             },
         })
@@ -1977,7 +1976,7 @@ async fn sparse_updates_preserve_divergent_active_and_future_models() -> Result<
         &test.codex,
         &request.turn_id,
         TurnSettingsUpdate {
-            service_tier: Some(Some(ServiceTier::Fast.request_value().to_string())),
+            service_tier: Some(Some(ServiceTier::Flex.request_value().to_string())),
             ..Default::default()
         },
     )
@@ -1994,7 +1993,7 @@ async fn sparse_updates_preserve_divergent_active_and_future_models() -> Result<
     );
     assert_eq!(
         durable_settings.service_tier,
-        Some(ServiceTier::Fast.request_value().to_string())
+        Some(ServiceTier::Flex.request_value().to_string())
     );
     answer_paused_turn(&test.codex, &second_request.turn_id).await?;
     wait_for_event(&test.codex, |event| {
@@ -2020,12 +2019,12 @@ async fn sparse_updates_preserve_divergent_active_and_future_models() -> Result<
             json!({
                 "model": MODEL_C,
                 "reasoning": { "effort": "high", "summary": "concise" },
-                "service_tier": "priority",
+                "service_tier": "flex",
             }),
             json!({
                 "model": MODEL_B,
                 "reasoning": { "effort": "low", "summary": "concise" },
-                "service_tier": "priority",
+                "service_tier": "flex",
             }),
         ]
     );
@@ -2131,7 +2130,7 @@ async fn model_activation_uses_destination_metadata_defaults(
             config.model_context_window = None;
             config.model_auto_compact_token_limit = None;
             config.model_reasoning_summary = configured_summary;
-            config.service_tier = Some(ServiceTier::Fast.request_value().to_string());
+            config.service_tier = Some(ServiceTier::Flex.request_value().to_string());
             config.base_instructions = None;
             for model in &mut config
                 .model_catalog
@@ -2148,7 +2147,7 @@ async fn model_activation_uses_destination_metadata_defaults(
                     model.default_reasoning_summary = ReasoningSummary::Detailed;
                     model
                         .service_tiers
-                        .retain(|tier| tier.id != ServiceTier::Fast.request_value());
+                        .retain(|tier| tier.id != ServiceTier::Flex.request_value());
                     model
                         .model_messages
                         .as_mut()
@@ -2203,7 +2202,7 @@ async fn model_activation_uses_destination_metadata_defaults(
             json!({
                 "model": MODEL_A,
                 "reasoning": { "effort": "low", "summary": "concise" },
-                "service_tier": "priority",
+                "service_tier": "flex",
             }),
             json!({
                 "model": MODEL_B,
@@ -2213,7 +2212,7 @@ async fn model_activation_uses_destination_metadata_defaults(
             json!({
                 "model": MODEL_A,
                 "reasoning": { "effort": "low", "summary": "concise" },
-                "service_tier": "priority",
+                "service_tier": "flex",
             }),
         ]
     );

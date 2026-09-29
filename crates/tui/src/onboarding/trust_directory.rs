@@ -363,7 +363,7 @@ mod tests {
     #[test]
     fn renders_snapshot_for_trust_error() {
         let widget = widget(Some(
-            "Failed to set trust for /workspace/project: config/batchWrite failed in TUI: Invalid configuration: features.fast_mode=true is not supported; allowed set [fast_mode=false]"
+            "Failed to set trust for /workspace/project: config/batchWrite failed in TUI: Invalid configuration: features.network_proxy=true is not supported; allowed set [network_proxy=false]"
                 .to_string(),
         ));
 
@@ -373,6 +373,14 @@ mod tests {
             .draw(|f| (&widget).render_ref(f.area(), f.buffer_mut()))
             .expect("draw");
 
-        insta::assert_snapshot!(terminal.backend());
+        insta::assert_snapshot!(
+            terminal
+                .backend()
+                .to_string()
+                .lines()
+                .map(str::trim_end)
+                .collect::<Vec<_>>()
+                .join("\n")
+        );
     }
 }

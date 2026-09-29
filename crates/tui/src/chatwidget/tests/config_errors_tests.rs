@@ -4,7 +4,7 @@ use super::*;
 async fn chained_config_error_wraps_in_history_snapshot() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     chat.add_error_message(
-        "Failed to save default model: config/batchWrite failed in TUI: Invalid configuration: features.fast_mode=true is not supported; allowed set [fast_mode=false]"
+        "Failed to save default model: config/batchWrite failed in TUI: Invalid configuration: features.network_proxy=true is not supported; allowed set [network_proxy=false]"
             .to_string(),
     );
 

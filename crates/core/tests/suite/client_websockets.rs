@@ -1220,11 +1220,11 @@ async fn responses_websocket_prewarm_includes_model_and_tier_routing_hint() {
 
     let harness = websocket_harness_for_codex_backend(&server).await;
     let mut model_info = harness.model_info.clone();
-    let service_tier = ServiceTier::Fast.request_value();
+    let service_tier = ServiceTier::Flex.request_value();
     model_info.service_tiers.push(ModelServiceTier {
         id: service_tier.to_string(),
-        name: "Fast".to_string(),
-        description: "Priority processing".to_string(),
+        name: "Flex".to_string(),
+        description: "Flexible processing".to_string(),
     });
     let mut client_session = harness.client.new_session();
     let prompt = prompt_with_input(vec![message_item("hello")]);

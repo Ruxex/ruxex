@@ -475,7 +475,6 @@ fn unstable_warning_event_only_mentions_enabled_under_development_features() {
         "apply_patch_streaming_events".to_string(),
         TomlValue::Boolean(true),
     );
-    configured_features.insert("fast_mode".to_string(), TomlValue::Boolean(true));
     configured_features.insert("unknown".to_string(), TomlValue::Boolean(true));
 
     let mut features = Features::with_defaults();
@@ -493,7 +492,6 @@ fn unstable_warning_event_only_mentions_enabled_under_development_features() {
         panic!("expected warning event");
     };
     assert!(message.contains("apply_patch_streaming_events"));
-    assert!(!message.contains("fast_mode"));
     assert!(message.contains("/tmp/config.toml"));
 }
 

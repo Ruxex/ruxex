@@ -25,7 +25,7 @@ fn thread_settings_for_test(
             ),
             model: model.to_string(),
             model_provider: "openai".to_string(),
-            service_tier: Some(ServiceTier::Fast.request_value().to_string()),
+            service_tier: Some(ServiceTier::Flex.request_value().to_string()),
             effort: Some(ReasoningEffortConfig::High),
             summary: None,
             collaboration_mode: CollaborationMode {
@@ -513,7 +513,7 @@ async fn invalid_url_elicitation_is_declined() {
 async fn thread_settings_updated_updates_visible_state_without_transcript() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.2")).await;
     set_chatgpt_auth(&mut chat);
-    set_fast_mode_test_catalog(&mut chat);
+    set_service_tier_test_catalog(&mut chat);
     chat.set_feature_enabled(Feature::Apps, /*enabled*/ true);
     let thread_id = ThreadId::new();
     let mut session = configured_thread_session(thread_id);
@@ -542,7 +542,7 @@ async fn thread_settings_updated_updates_visible_state_without_transcript() {
     );
     assert_eq!(
         chat.current_service_tier(),
-        Some(ServiceTier::Fast.request_value())
+        Some(ServiceTier::Flex.request_value())
     );
     assert_eq!(
         chat.config_ref().permissions.approval_policy.value(),

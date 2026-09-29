@@ -75,9 +75,9 @@
 **Files:**
 - Reference: `docs/superpowers/plans/2026-09-29-remove-fast-mode.md`
 
-- [ ] `/fast` 子計画の Task 1–6 を順に実行する。
-- [ ] Fast 固有の feature、tier、keymap/status、Core 判定を削除し、Flex/一般 tier と model selection を残す。
-- [ ] Fast 固有の config/schema/test fixture を削除または更新し、既存設定を削除する migration は追加しない。
+- [x] `/fast` 子計画の Task 1–6 を順に実行する。
+- [x] Fast 固有の feature、tier、keymap/status、Core 判定を削除し、Flex/一般 tier と model selection を残す。
+- [x] Fast 固有の config/schema/test fixture を削除または更新し、既存設定を削除する migration は追加しない。
 
 ### Task 5: 最終 dependency・generated artifact・documentation audit
 

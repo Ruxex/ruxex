@@ -28,8 +28,6 @@ pub(super) struct KeymapActionDescriptor {
     pub(super) action: &'static str,
     /// Short user-facing explanation of what the action does.
     pub(super) description: &'static str,
-    /// Feature required before the action appears in `/keymap`.
-    required_feature: Option<KeymapActionFeature>,
 }
 
 const fn action(
@@ -43,42 +41,15 @@ const fn action(
         context_label,
         action,
         description,
-        required_feature: None,
     }
-}
-
-const fn gated_action(
-    context: &'static str,
-    context_label: &'static str,
-    action: &'static str,
-    description: &'static str,
-    required_feature: KeymapActionFeature,
-) -> KeymapActionDescriptor {
-    KeymapActionDescriptor {
-        context,
-        context_label,
-        action,
-        description,
-        required_feature: Some(required_feature),
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-enum KeymapActionFeature {
-    FastMode,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
-pub(crate) struct KeymapActionFilter {
-    pub(crate) fast_mode_enabled: bool,
-}
+pub(crate) struct KeymapActionFilter;
 
 impl KeymapActionDescriptor {
-    pub(super) fn is_visible(self, filter: KeymapActionFilter) -> bool {
-        match self.required_feature {
-            None => true,
-            Some(KeymapActionFeature::FastMode) => filter.fast_mode_enabled,
-        }
+    pub(super) fn is_visible(self, _filter: KeymapActionFilter) -> bool {
+        true
     }
 }
 
@@ -90,7 +61,6 @@ pub(super) const KEYMAP_ACTIONS: &[KeymapActionDescriptor] = &[
     action("global", "Global", "copy", "Copy the last agent response to the clipboard."),
     action("global", "Global", "clear_terminal", "Clear the terminal UI."),
     action("global", "Global", "toggle_vim_mode", "Turn Vim composer mode on or off."),
-    gated_action("global", "Global", "toggle_fast_mode", "Turn Fast mode on or off.", KeymapActionFeature::FastMode),
     action("global", "Global", "toggle_raw_output", "Toggle raw scrollback mode."),
     action("global", "Global", "toggle_side_conversation", "Switch between a side conversation and its parent."),
     action("chat", "Chat", "interrupt_turn", "Interrupt the active turn."),
@@ -270,7 +240,6 @@ pub(super) fn binding_slot<'a>(
         ("global", "copy") => Some(&mut keymap.global.copy),
         ("global", "clear_terminal") => Some(&mut keymap.global.clear_terminal),
         ("global", "toggle_vim_mode") => Some(&mut keymap.global.toggle_vim_mode),
-        ("global", "toggle_fast_mode") => Some(&mut keymap.global.toggle_fast_mode),
         ("global", "toggle_raw_output") => Some(&mut keymap.global.toggle_raw_output),
         ("global", "toggle_side_conversation") => Some(&mut keymap.global.toggle_side_conversation),
         ("chat", "interrupt_turn") => Some(&mut keymap.chat.interrupt_turn),

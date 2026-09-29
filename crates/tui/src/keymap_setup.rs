@@ -761,12 +761,6 @@ mod tests {
         render_buffer(&buf)
     }
 
-    fn fast_mode_action_filter() -> KeymapActionFilter {
-        KeymapActionFilter {
-            fast_mode_enabled: true,
-        }
-    }
-
     fn render_buffer(buf: &Buffer) -> String {
         let area = buf.area();
         (0..area.height)
@@ -840,7 +834,7 @@ mod tests {
         let params = build_keymap_picker_params_with_filter(
             &runtime,
             &TuiKeymap::default(),
-            fast_mode_action_filter(),
+            KeymapActionFilter::default(),
         );
         let all_tab = selection_tab(&params, KEYMAP_ALL_TAB_ID);
 
@@ -861,57 +855,6 @@ mod tests {
         assert!(KEYMAP_ACTIONS.iter().all(|descriptor| {
             bindings_for_action(&runtime, descriptor.context, descriptor.action).is_some()
         }));
-    }
-
-    #[test]
-    fn picker_hides_fast_mode_action_when_feature_is_disabled() {
-        let runtime = RuntimeKeymap::defaults();
-        let params = build_keymap_picker_params(&runtime, &TuiKeymap::default());
-        let all_tab = selection_tab(&params, KEYMAP_ALL_TAB_ID);
-
-        assert!(
-            all_tab
-                .items
-                .iter()
-                .all(|item| item.name != "Toggle Fast Mode")
-        );
-    }
-
-    #[test]
-    fn picker_shows_fast_mode_action_when_feature_is_enabled() {
-        let runtime = RuntimeKeymap::defaults();
-        let params = build_keymap_picker_params_with_filter(
-            &runtime,
-            &TuiKeymap::default(),
-            fast_mode_action_filter(),
-        );
-        let all_tab = selection_tab(&params, KEYMAP_ALL_TAB_ID);
-        let common_tab = selection_tab(&params, KEYMAP_COMMON_TAB_ID);
-        let app_tab = selection_tab(&params, "app-shortcuts");
-        let unbound_tab = selection_tab(&params, KEYMAP_UNBOUND_TAB_ID);
-
-        for tab in [all_tab, common_tab, app_tab, unbound_tab] {
-            assert!(
-                tab.items.iter().any(|item| item.name == "Toggle Fast Mode"),
-                "expected Toggle Fast Mode in {}",
-                tab.label
-            );
-        }
-    }
-
-    #[test]
-    fn keymap_picker_fast_mode_enabled_snapshot() {
-        let runtime = RuntimeKeymap::defaults();
-        let params = build_keymap_picker_params_with_filter(
-            &runtime,
-            &TuiKeymap::default(),
-            fast_mode_action_filter(),
-        );
-
-        assert_snapshot!(
-            "keymap_picker_fast_mode_enabled",
-            render_picker(params, /*width*/ 120)
-        );
     }
 
     #[test]

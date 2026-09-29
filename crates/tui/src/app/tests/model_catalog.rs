@@ -15,7 +15,7 @@ async fn model_picker_refresh_updates_app_catalog_from_app_server() -> Result<()
     let (mut app, mut rx, _op_rx) = make_test_app_with_channels().await;
     let mut app_server = start_config_write_test_app_server(&app).await?;
     let mut tui = crate::tui::test_support::make_test_tui()?;
-    let fast = Some(ServiceTier::Fast.request_value());
+    let service_tier = Some(ServiceTier::Flex.request_value());
     let thread_id = ThreadId::new();
     let mut session = test_thread_session(thread_id, test_path_buf("/tmp/project"));
     session.model = "gpt-5.5".to_string();
@@ -27,8 +27,6 @@ async fn model_picker_refresh_updates_app_catalog_from_app_server() -> Result<()
         ThreadEventChannel::new_with_session(/*capacity*/ 4, session.clone(), Vec::new()),
     );
     app.chat_widget.handle_thread_session(session.clone());
-    app.chat_widget
-        .set_feature_enabled(Feature::FastMode, /*enabled*/ true);
     app.chat_widget.open_model_popup();
     let request_id = std::iter::from_fn(|| rx.try_recv().ok())
         .find_map(|event| match event {
@@ -73,9 +71,14 @@ async fn model_picker_refresh_updates_app_catalog_from_app_server() -> Result<()
     assert!(!models.is_empty());
     for model in models.iter_mut() {
         model.is_default = model.model == "gpt-5.5";
-        model.default_service_tier = model
-            .is_default
-            .then(|| ServiceTier::Fast.request_value().to_string());
+        if model.is_default {
+            model.service_tiers = vec![codex_protocol::openai_models::ModelServiceTier {
+                id: ServiceTier::Flex.request_value().to_string(),
+                name: "Flex".to_string(),
+                description: "Flexible processing".to_string(),
+            }];
+            model.default_service_tier = Some(ServiceTier::Flex.request_value().to_string());
+        }
     }
     let expected = models.clone();
     Box::pin(app.handle_event(&mut tui, &mut app_server, loaded)).await?;
@@ -83,7 +86,7 @@ async fn model_picker_refresh_updates_app_catalog_from_app_server() -> Result<()
     app.chat_widget.open_model_popup();
     assert!(!app.chat_widget.no_modal_or_popup_active());
 
-    session.service_tier = fast.map(str::to_string);
+    session.service_tier = service_tier.map(str::to_string);
     let channel = &app.thread_event_channels[&thread_id];
     let cached = channel.store.lock().await.session.clone();
     assert_eq!(
@@ -95,7 +98,7 @@ async fn model_picker_refresh_updates_app_catalog_from_app_server() -> Result<()
         test_path_buf("/tmp/other"),
     ));
     app.chat_widget.handle_thread_session(cached.unwrap());
-    assert_eq!(app.chat_widget.current_service_tier(), fast);
+    assert_eq!(app.chat_widget.current_service_tier(), service_tier);
     let stale = AppEvent::ModelsLoaded {
         request_id: uuid::Uuid::new_v4(),
         result: Ok(all_model_presets()),
@@ -110,8 +113,7 @@ async fn model_picker_refresh_updates_app_catalog_from_app_server() -> Result<()
     );
     let mut config = app.config.clone();
     config.service_tier = None;
-    config.features.enable(Feature::FastMode)?;
-    for (model, expected_tier) in [(None, fast), (Some("gpt-5.6-terra"), Some("default"))] {
+    for (model, expected_tier) in [(None, service_tier), (Some("gpt-5.6-terra"), Some("default"))] {
         config.model = model.map(str::to_string);
         let started = app_server.start_thread(&config).await?;
         assert_eq!(started.session.service_tier.as_deref(), expected_tier);

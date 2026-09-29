@@ -531,7 +531,7 @@ async fn settings_update_during_active_turn_applies_to_next_turn_only() -> Resul
             model: Some("gpt-5.5".to_string()),
             effort: Some(Some(ReasoningEffort::High)),
             summary: Some(ReasoningSummary::Detailed),
-            service_tier: Some(Some(ServiceTier::Fast.request_value().to_string())),
+            service_tier: Some(Some(ServiceTier::Flex.request_value().to_string())),
             approval_policy: Some(AskForApproval::Never),
             approvals_reviewer: Some(ApprovalsReviewer::AutoReview),
             ..Default::default()
@@ -592,7 +592,7 @@ async fn settings_update_during_active_turn_applies_to_next_turn_only() -> Resul
             json!({
                 "model": "gpt-5.5",
                 "reasoning": { "effort": "high", "summary": "detailed" },
-                "service_tier": "priority",
+                "service_tier": "flex",
                 "approval_policy_never": true,
             }),
         ]
@@ -614,7 +614,7 @@ async fn service_tier_change_is_applied_on_next_http_turn() -> Result<()> {
 
     let test = test_codex().build(&server).await?;
 
-    test.submit_turn_with_service_tier("fast turn", Some(ServiceTier::Fast.request_value()))
+    test.submit_turn_with_service_tier("flex turn", Some(ServiceTier::Flex.request_value()))
         .await?;
     test.submit_turn_with_service_tier("standard turn", /*service_tier*/ None)
         .await?;
@@ -625,7 +625,7 @@ async fn service_tier_change_is_applied_on_next_http_turn() -> Result<()> {
     let first_body = requests[0].body_json();
     let second_body = requests[1].body_json();
 
-    assert_eq!(first_body["service_tier"].as_str(), Some("priority"));
+    assert_eq!(first_body["service_tier"].as_str(), Some("flex"));
     assert_eq!(second_body.get("service_tier"), None);
 
     Ok(())
@@ -692,7 +692,7 @@ async fn unsupported_service_tier_is_omitted_from_http_turn() -> Result<()> {
         });
     let test = builder.build(&server).await?;
 
-    test.submit_turn_with_service_tier("fast turn", Some(ServiceTier::Fast.request_value()))
+    test.submit_turn_with_service_tier("flex turn", Some(ServiceTier::Flex.request_value()))
         .await?;
 
     let request = resp_mock.single_request();
@@ -755,11 +755,11 @@ async fn default_service_tier_override_is_omitted_from_http_turn() -> Result<()>
         default_input_modalities(),
     );
     model.service_tiers = vec![ModelServiceTier {
-        id: ServiceTier::Fast.request_value().to_string(),
-        name: "fast".to_string(),
-        description: "Fast processing.".to_string(),
+        id: ServiceTier::Flex.request_value().to_string(),
+        name: "flex".to_string(),
+        description: "Flexible processing.".to_string(),
     }];
-    model.default_service_tier = Some(ServiceTier::Fast.request_value().to_string());
+    model.default_service_tier = Some(ServiceTier::Flex.request_value().to_string());
     let resp_mock = mount_sse_once(&server, sse_completed("resp-1")).await;
 
     let mut builder = test_codex()
@@ -794,11 +794,11 @@ async fn null_service_tier_override_is_omitted_from_http_turn_with_catalog_defau
         default_input_modalities(),
     );
     model.service_tiers = vec![ModelServiceTier {
-        id: ServiceTier::Fast.request_value().to_string(),
-        name: "fast".to_string(),
-        description: "Fast processing.".to_string(),
+        id: ServiceTier::Flex.request_value().to_string(),
+        name: "flex".to_string(),
+        description: "Flexible processing.".to_string(),
     }];
-    model.default_service_tier = Some(ServiceTier::Fast.request_value().to_string());
+    model.default_service_tier = Some(ServiceTier::Flex.request_value().to_string());
     let resp_mock = mount_sse_once(&server, sse_completed("resp-1")).await;
 
     let mut builder = test_codex()

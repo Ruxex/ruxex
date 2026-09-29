@@ -403,7 +403,7 @@ ignore_rules = ["gpt-protected"]
 [models.new_thread]
 model = "gpt-managed"
 model_reasoning_effort = "medium"
-service_tier = "fast"
+service_tier = "legacy"
 "#,
     )?;
     let mut mcp = TestAppServer::builder()
@@ -442,7 +442,7 @@ service_tier = "fast"
         defaults.model_reasoning_effort,
         Some(ReasoningEffort::Medium)
     );
-    assert_eq!(defaults.service_tier.as_deref(), Some("fast"));
+    assert_eq!(defaults.service_tier.as_deref(), Some("legacy"));
 
     let config_id = mcp
         .send_config_read_request(ConfigReadParams {

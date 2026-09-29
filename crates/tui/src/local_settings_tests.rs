@@ -62,8 +62,6 @@ session_picker_view = "comfortable"
 [history]
 persistence = "none"
 max_bytes = 4096
-[notice]
-fast_default_opt_out = true
 "#,
     ] {
         let home = tempfile::tempdir()?;

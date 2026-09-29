@@ -14,7 +14,7 @@ expression: terminal.backend()
   2. Quit
 
   Failed to set trust for /workspace/project: config/batchWrite failed
-  in TUI: Invalid configuration: features.fast_mode=true is not       
-  supported; allowed set [fast_mode=false]                            
+  in TUI: Invalid configuration: features.network_proxy=true is not
+  supported; allowed set [network_proxy=false]
 
   Press enter to continue; esc to quit

@@ -134,13 +134,11 @@ pub(crate) fn new_session_info(
     is_first_event: bool,
     tooltip_override: Option<String>,
     auth_plan: Option<PlanType>,
-    show_fast_status: bool,
 ) -> SessionInfoCell {
     // Header box rendered as history (so it appears at the very top)
     let header = SessionHeaderHistoryCell::new(
         session.model.clone(),
         session.reasoning_effort.clone(),
-        show_fast_status,
         config.cwd.to_path_buf(),
         CODEX_CLI_VERSION,
     )
@@ -188,7 +186,7 @@ pub(crate) fn new_session_info(
     } else {
         if local_settings.tui.show_tooltips
             && let Some(tooltips) = tooltip_override
-                .or_else(|| tooltips::get_tooltip(auth_plan, show_fast_status))
+                .or_else(|| tooltips::get_tooltip(auth_plan))
                 .map(|tip| TooltipHistoryCell::new(tip, &config.cwd))
         {
             parts.push(Box::new(tooltips));
@@ -233,7 +231,6 @@ pub(crate) struct SessionHeaderHistoryCell {
     model: String,
     model_style: Style,
     reasoning_effort: Option<ReasoningEffortConfig>,
-    show_fast_status: bool,
     directory: PathBuf,
     yolo_mode: bool,
 }
@@ -242,7 +239,6 @@ impl SessionHeaderHistoryCell {
     pub(crate) fn new(
         model: String,
         reasoning_effort: Option<ReasoningEffortConfig>,
-        show_fast_status: bool,
         directory: PathBuf,
         version: &'static str,
     ) -> Self {
@@ -250,7 +246,6 @@ impl SessionHeaderHistoryCell {
             model,
             Style::default(),
             reasoning_effort,
-            show_fast_status,
             directory,
             version,
         )
@@ -260,7 +255,6 @@ impl SessionHeaderHistoryCell {
         model: String,
         model_style: Style,
         reasoning_effort: Option<ReasoningEffortConfig>,
-        show_fast_status: bool,
         directory: PathBuf,
         version: &'static str,
     ) -> Self {
@@ -269,7 +263,6 @@ impl SessionHeaderHistoryCell {
             model: crate::model_catalog::model_display_name(&model).to_string(),
             model_style,
             reasoning_effort,
-            show_fast_status,
             directory,
             yolo_mode: false,
         }
@@ -354,10 +347,6 @@ impl HistoryCell for SessionHeaderHistoryCell {
             if let Some(reasoning) = reasoning_label {
                 spans.push(Span::from(" "));
                 spans.push(Span::from(reasoning.to_owned()));
-            }
-            if self.show_fast_status {
-                spans.push("   ".into());
-                spans.push(Span::styled("fast", self.model_style.magenta()));
             }
             spans.push("   ".dim());
             spans.push(CHANGE_MODEL_HINT_COMMAND.cyan());

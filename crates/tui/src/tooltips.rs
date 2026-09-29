@@ -4,8 +4,6 @@ use codex_protocol::account::PlanType;
 use lazy_static::lazy_static;
 use rand::Rng;
 
-const FAST_TOOLTIP: &str =
-    "*New* Use **/fast** to enable our fastest inference with increased plan usage.";
 const OTHER_TOOLTIP: &str = "*New* Build faster with Codex.";
 const FREE_GO_TOOLTIP: &str =
     "*New* For a limited time, Codex is included in your plan for free – let’s build together.";
@@ -34,7 +32,7 @@ fn experimental_tooltips(features: &[FeatureSpec]) -> Vec<&'static str> {
 }
 
 /// Pick a random tooltip to show to the user when starting Codex.
-pub(crate) fn get_tooltip(plan: Option<PlanType>, fast_mode_enabled: bool) -> Option<String> {
+pub(crate) fn get_tooltip(plan: Option<PlanType>) -> Option<String> {
     let mut rng = rand::rng();
 
     // Leave small chance for a random tooltip to be shown.
@@ -47,9 +45,7 @@ pub(crate) fn get_tooltip(plan: Option<PlanType>, fast_mode_enabled: bool) -> Op
                 ) || plan_type.is_team_like()
                     || plan_type.is_business_like() =>
             {
-                if let Some(tooltip) = pick_paid_tooltip(fast_mode_enabled) {
-                    return Some(tooltip.to_string());
-                }
+                return Some(OTHER_TOOLTIP.to_string());
             }
             Some(PlanType::Go) | Some(PlanType::Free) => {
                 return Some(FREE_GO_TOOLTIP.to_string());
@@ -61,13 +57,6 @@ pub(crate) fn get_tooltip(plan: Option<PlanType>, fast_mode_enabled: bool) -> Op
     }
 
     pick_tooltip(&mut rng).map(str::to_string)
-}
-
-/// Paid users spend most startup sessions in a dedicated promo slot rather than the
-/// generic random tip pool. Suppress the Fast promo once the user already has Fast
-/// mode enabled.
-fn pick_paid_tooltip(fast_mode_enabled: bool) -> Option<&'static str> {
-    (!fast_mode_enabled).then_some(FAST_TOOLTIP)
 }
 
 fn pick_tooltip<R: Rng + ?Sized>(rng: &mut R) -> Option<&'static str> {
@@ -104,13 +93,4 @@ mod tests {
         assert_eq!(expected, pick_tooltip(&mut rng));
     }
 
-    #[test]
-    fn paid_tooltip_promotes_fast_when_fast_mode_is_disabled() {
-        assert_eq!(pick_paid_tooltip(false), Some(FAST_TOOLTIP));
-    }
-
-    #[test]
-    fn paid_tooltip_pool_skips_fast_when_fast_mode_is_enabled() {
-        assert_eq!(pick_paid_tooltip(true), None);
-    }
 }

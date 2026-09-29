@@ -128,7 +128,7 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
         ("remote", true, false, "destination", "destination-model"),
         ("remote", false, true, "launch", "server-model"),
         ("remote", false, false, ".", "server-model"),
-        ("remote-null-fast", false, false, ".", ""),
+        ("remote-null-service-tier", false, false, ".", ""),
     ] {
         let client_home = tempdir()?;
         let server_home = tempdir()?;
@@ -138,7 +138,7 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
             client_home.path().join("config.toml"),
             format!(
                 "model = \"{}\"\nmodel_reasoning_effort = \"low\"\n{}",
-                if mode == "remote-null-fast" {
+                if mode == "remote-null-service-tier" {
                     "gpt-5.2"
                 } else {
                     "client-model"
@@ -154,7 +154,7 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
             server_home.path().join("config.toml"),
             format!(
                 "{}model_reasoning_effort = \"high\"\n{}",
-                if mode == "remote-null-fast" {
+                if mode == "remote-null-service-tier" {
                     ""
                 } else {
                     "model = \"server-model\"\n"
@@ -191,7 +191,7 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
         if mode == "local-cli-model" {
             app.harness_overrides.model = Some("cli-model".into());
         }
-        app.chat_widget.set_service_tier(Some("priority".into()));
+        app.chat_widget.set_service_tier(Some("flex".into()));
         app.harness_overrides.cwd = Some(launch.path().to_path_buf());
         app.config = ConfigBuilder::default()
             .codex_home(client_home.path().to_path_buf())
@@ -200,9 +200,6 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
             .harness_overrides(app.harness_overrides.clone())
             .build()
             .await?;
-        if mode == "remote-null-fast" {
-            app.config.features.enable(Feature::FastMode)?;
-        }
         app.chat_widget
             .handle_thread_session_quiet(test_thread_session(
                 ThreadId::new(),
@@ -251,7 +248,7 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
             ));
         }
         let bootstrap = server.bootstrap(&app.config).await?;
-        let expected_model = if mode == "remote-null-fast" {
+        let expected_model = if mode == "remote-null-service-tier" {
             let default_model = bootstrap
                 .available_models
                 .iter()
@@ -310,7 +307,7 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
                 &serde_json::json!(if mode == "local" && explicit_cwd {
                     "flex"
                 } else {
-                    "priority"
+                    "flex"
                 }),
             ),
             "{mode} {expected_cwd}"

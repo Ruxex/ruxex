@@ -76,10 +76,6 @@ impl ChatWidget {
             );
         }
         let enabled = self.config.features.enabled(feature);
-        if feature == Feature::FastMode {
-            self.refresh_effective_service_tier();
-            self.sync_service_tier_commands();
-        }
         if feature == Feature::Worktrees {
             self.sync_worktrees_enabled();
         }

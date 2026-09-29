@@ -472,7 +472,6 @@ impl From<WebSearchToolConfig> for WebSearchConfig {
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]
 pub enum ServiceTier {
-    Fast,
     Flex,
 }
 
@@ -485,14 +484,12 @@ pub const SERVICE_TIER_DEFAULT_REQUEST_VALUE: &str = "default";
 impl ServiceTier {
     pub const fn request_value(self) -> &'static str {
         match self {
-            Self::Fast => "priority",
             Self::Flex => "flex",
         }
     }
 
     pub fn from_request_value(value: &str) -> Option<Self> {
         match value {
-            "fast" | "priority" => Some(Self::Fast),
             "flex" => Some(Self::Flex),
             _ => None,
         }

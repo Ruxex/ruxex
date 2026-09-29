@@ -309,7 +309,7 @@ mod tests {
             assert_eq!(model.service_tiers, Vec::new());
             assert_eq!(model.default_service_tier, None);
             assert_eq!(
-                model.service_tier_for_request(Some("priority".to_string())),
+                model.service_tier_for_request(Some("flex".to_string())),
                 None
             );
             assert_eq!(

@@ -7,7 +7,6 @@ use super::step_settings::StepSettingsConstraints;
 use super::step_settings::StepSettingsUpdate;
 use super::turn_context::TurnContext;
 use crate::config::ConstraintResult;
-use codex_features::Feature;
 use codex_protocol::protocol::TurnSettingsUpdate;
 use codex_protocol::protocol::TurnSettingsUpdateOutcome;
 use std::sync::Arc;
@@ -144,7 +143,6 @@ impl Session {
                 &constraints,
                 self.services.models_manager.as_ref(),
                 &overrides,
-                self.features.enabled(Feature::FastMode),
             )
             .await
             .map_err(|error| error.to_string())

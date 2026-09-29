@@ -154,9 +154,7 @@ impl ChatWidget {
     }
 
     fn keymap_action_filter(&self) -> keymap_setup::KeymapActionFilter {
-        keymap_setup::KeymapActionFilter {
-            fast_mode_enabled: self.fast_mode_enabled(),
-        }
+        keymap_setup::KeymapActionFilter::default()
     }
 
     /// Applies a committed keymap edit to the live chat widget.

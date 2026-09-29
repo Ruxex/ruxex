@@ -1021,25 +1021,20 @@ impl AppServerSession {
         let Some(model) = config.model.as_deref().or(self.default_model.as_deref()) else {
             return config.clone();
         };
-        let local_settings = LocalSettings::from(config);
         let mut session_config = config.clone();
         match service_tier_resolution::service_tier_update_for_core(
             config,
-            &local_settings.notices,
             model,
             &self.available_models,
         ) {
             Some(Some(service_tier)) => {
                 session_config.service_tier = Some(service_tier);
-                session_config.notices.fast_default_opt_out = None;
             }
             Some(None) => {
                 session_config.service_tier = Some(SERVICE_TIER_DEFAULT_REQUEST_VALUE.to_string());
-                session_config.notices.fast_default_opt_out = None;
             }
             None => {
                 session_config.service_tier = None;
-                session_config.notices.fast_default_opt_out = None;
             }
         }
         session_config
@@ -1826,11 +1821,7 @@ fn new_thread_reasoning_overrides(config: &Config) -> Option<HashMap<String, ser
 }
 
 fn service_tier_override_from_config(config: &Config) -> Option<Option<String>> {
-    let local_settings = LocalSettings::from(config);
-    config.service_tier.clone().map(Some).or_else(|| {
-        (local_settings.notices.fast_default_opt_out == Some(true))
-            .then(|| Some(SERVICE_TIER_DEFAULT_REQUEST_VALUE.to_string()))
-    })
+    config.service_tier.clone().map(Some)
 }
 
 fn sandbox_mode_from_permission_profile(

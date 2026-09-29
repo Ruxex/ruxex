@@ -199,10 +199,6 @@ mod role_overrides {
         }
         if let Some(service_tier) = &overrides.service_tier {
             next_config.service_tier = match ServiceTier::from_request_value(service_tier) {
-                Some(ServiceTier::Fast) => next_config
-                    .features
-                    .enabled(Feature::FastMode)
-                    .then(|| ServiceTier::Fast.request_value().to_string()),
                 Some(ServiceTier::Flex) => Some(ServiceTier::Flex.request_value().to_string()),
                 None => Some(service_tier.clone()),
             };

@@ -539,9 +539,6 @@
             "experimental_windows_sandbox": {
               "type": "boolean"
             },
-            "fast_mode": {
-              "type": "boolean"
-            },
             "goals": {
               "type": "boolean"
             },
@@ -2265,10 +2262,6 @@
           },
           "description": "Tracks scopes where external config migration prompts should be suppressed."
         },
-        "fast_default_opt_out": {
-          "description": "Tracks whether the user opted out of Codex-managed fast defaults.",
-          "type": "boolean"
-        },
         "hide_full_access_warning": {
           "description": "Tracks whether the user has acknowledged the full access warning prompt.",
           "type": "boolean"
@@ -3482,7 +3475,6 @@
               "open_transcript": null,
               "queue": null,
               "submit": null,
-              "toggle_fast_mode": null,
               "toggle_raw_output": null,
               "toggle_shortcuts": null,
               "toggle_side_conversation": null,
@@ -4209,14 +4201,6 @@
           ],
           "description": "Submit the current composer draft."
         },
-        "toggle_fast_mode": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/KeybindingsSpec"
-            }
-          ],
-          "description": "Toggle Fast mode."
-        },
         "toggle_raw_output": {
           "allOf": [
             {
@@ -4363,7 +4347,6 @@
             "open_transcript": null,
             "queue": null,
             "submit": null,
-            "toggle_fast_mode": null,
             "toggle_raw_output": null,
             "toggle_shortcuts": null,
             "toggle_side_conversation": null,
@@ -5625,9 +5608,6 @@
           "type": "boolean"
         },
         "experimental_windows_sandbox": {
-          "type": "boolean"
-        },
-        "fast_mode": {
           "type": "boolean"
         },
         "goals": {

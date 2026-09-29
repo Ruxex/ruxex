@@ -61,7 +61,6 @@ async fn ordinary_settings_updates_keep_the_running_turn_snapshot() -> Result<()
                 .features
                 .enable(Feature::DefaultModeRequestUserInput)
                 .unwrap();
-            config.features.enable(Feature::FastMode).unwrap();
             let template = bundled_models_response()
                 .unwrap()
                 .models
@@ -104,7 +103,7 @@ async fn ordinary_settings_updates_keep_the_running_turn_snapshot() -> Result<()
             model: Some("snapshot-model-b".to_string()),
             effort: Some(Some(ReasoningEffort::High)),
             summary: Some(ReasoningSummary::Detailed),
-            service_tier: Some(Some(ServiceTier::Fast.request_value().to_string())),
+            service_tier: Some(Some(ServiceTier::Flex.request_value().to_string())),
             ..Default::default()
         },
     )
@@ -112,7 +111,7 @@ async fn ordinary_settings_updates_keep_the_running_turn_snapshot() -> Result<()
     expected.model = "snapshot-model-b".to_string();
     expected.reasoning_effort = Some(ReasoningEffort::High);
     expected.reasoning_summary = Some(ReasoningSummary::Detailed);
-    expected.service_tier = Some(ServiceTier::Fast.request_value().to_string());
+    expected.service_tier = Some(ServiceTier::Flex.request_value().to_string());
     expected.collaboration_mode = expected.collaboration_mode.with_updates(
         Some(expected.model.clone()),
         Some(expected.reasoning_effort.clone()),
@@ -163,7 +162,7 @@ async fn ordinary_settings_updates_keep_the_running_turn_snapshot() -> Result<()
             json!({
                 "model": "snapshot-model-b",
                 "reasoning": { "effort": "high", "summary": "detailed" },
-                "service_tier": "priority",
+                "service_tier": "flex",
             })
         ]
     );

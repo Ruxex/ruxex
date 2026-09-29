@@ -23,9 +23,9 @@ fn model_preset(id: &str, show_in_picker: bool) -> ModelPreset {
         supports_personality: false,
         additional_speed_tiers: Vec::new(),
         service_tiers: vec![ModelServiceTier {
-            id: "priority".to_string(),
-            name: "Fast".to_string(),
-            description: "1.5x speed, increased usage".to_string(),
+            id: "flex".to_string(),
+            name: "Flex".to_string(),
+            description: "Flexible processing".to_string(),
         }],
         default_service_tier: None,
         available_access_programs: None,
@@ -89,10 +89,10 @@ fn spawn_agent_tool_v2_requires_task_name_and_lists_visible_models() {
             .contains("Available model overrides (optional; inherited parent model is preferred):")
     );
     assert!(description.contains(
-        "- `visible-model`: visible description Reasoning efforts: medium (default). Service tiers: priority."
+        "- `visible-model`: visible description Reasoning efforts: medium (default). Service tiers: flex."
     ));
     assert!(description.contains(
-        "- `legacy-model`: legacy description Reasoning efforts: medium (default). Service tiers: priority."
+        "- `legacy-model`: legacy description Reasoning efforts: medium (default). Service tiers: flex."
     ));
     assert!(!description.contains("hidden-model"));
     assert!(!description.contains("disabled-model"));
@@ -274,7 +274,7 @@ fn spawn_agent_tool_caps_reasoning_effort_value_length() {
     assert_eq!(
         spawn_agent_models_description(&[model], MultiAgentVersion::V2),
         format!(
-            "Available model overrides (optional; inherited parent model is preferred):\n- `visible-model`: visible description Reasoning efforts: {} (default). Service tiers: priority.",
+            "Available model overrides (optional; inherited parent model is preferred):\n- `visible-model`: visible description Reasoning efforts: {} (default). Service tiers: flex.",
             "é".repeat(MAX_REASONING_EFFORT_CHARS_IN_SPAWN_AGENT_DESCRIPTION)
         )
     );

@@ -7,8 +7,8 @@ expression: "render_lines(&view, 62)"
   2 hooks are new or changed.
   Hooks can run outside the sandbox after you trust them.
   Failed to trust hooks: config/batchWrite failed in TUI:
-  Invalid configuration: features.fast_mode=true is not
-  supported; allowed set [fast_mode=false]
+  Invalid configuration: features.network_proxy=true is not
+  supported; allowed set [network_proxy=false]
 
 › 1. Review hooks
   2. Trust all and continue

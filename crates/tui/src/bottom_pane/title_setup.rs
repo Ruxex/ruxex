@@ -81,8 +81,6 @@ pub(crate) enum TerminalTitleItem {
     /// Full thread UUID.
     #[strum(to_string = "thread-id", serialize = "session-id")]
     SessionId,
-    /// Whether Fast mode is currently active.
-    FastMode,
     /// Current model name.
     #[strum(to_string = "model", serialize = "model-name")]
     Model,
@@ -134,7 +132,6 @@ impl TerminalTitleItem {
             TerminalTitleItem::SessionId => {
                 "Current thread identifier (omitted until thread starts)"
             }
-            TerminalTitleItem::FastMode => "Whether Fast mode is currently active",
             TerminalTitleItem::Model => "Current model name",
             TerminalTitleItem::ModelWithReasoning => "Current model name with reasoning level",
             TerminalTitleItem::Reasoning => "Current reasoning level",
@@ -169,7 +166,6 @@ impl TerminalTitleItem {
                 Some(StatusSurfacePreviewItem::EstimatedThreadCost)
             }
             TerminalTitleItem::SessionId => Some(StatusSurfacePreviewItem::SessionId),
-            TerminalTitleItem::FastMode => Some(StatusSurfacePreviewItem::FastMode),
             TerminalTitleItem::Model => Some(StatusSurfacePreviewItem::Model),
             TerminalTitleItem::ModelWithReasoning => {
                 Some(StatusSurfacePreviewItem::ModelWithReasoning)

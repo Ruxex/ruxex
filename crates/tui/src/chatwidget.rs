@@ -1363,7 +1363,6 @@ impl ChatWidget {
                 DEFAULT_MODEL_DISPLAY_NAME.to_string(),
                 placeholder_style,
                 /*reasoning_effort*/ None,
-                /*show_fast_status*/ false,
                 config.cwd.to_path_buf(),
                 CODEX_CLI_VERSION,
             )

@@ -472,7 +472,7 @@ mod tests {
         let view = selection_view(
             &entry(),
             Some(
-                "Failed to trust hooks: config/batchWrite failed in TUI: Invalid configuration: features.fast_mode=true is not supported; allowed set [fast_mode=false]",
+                "Failed to trust hooks: config/batchWrite failed in TUI: Invalid configuration: features.network_proxy=true is not supported; allowed set [network_proxy=false]",
             ),
             /*trusting_all*/ false,
             AppEventSender::new(tx_raw),

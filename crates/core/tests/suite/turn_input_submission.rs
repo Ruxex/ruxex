@@ -525,12 +525,6 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     let server = responses::start_mock_server().await;
     let test = test_codex()
         .with_model("gpt-5.6-sol")
-        .with_config(|config| {
-            config
-                .features
-                .enable(codex_features::Feature::FastMode)
-                .unwrap();
-        })
         .build_with_auto_env(&server)
         .await
         .unwrap();
@@ -564,7 +558,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
             TurnInputRequest::new(TurnInput::ResponseItem(input.clone())).on_start(
                 TurnStartOptions {
                     final_output_json_schema: Some(schema.clone()),
-                    service_tier: Some("priority".to_string()),
+                    service_tier: Some("flex".to_string()),
                     root_turn_id: Some("originating-turn".to_string()),
                     ..Default::default()
                 },
@@ -594,7 +588,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     assert_eq!(metadata["root_turn_id"], "originating-turn");
     let body = request.body_json();
     assert_eq!(body["text"]["format"]["schema"], schema);
-    assert_eq!(body["service_tier"], "priority");
+    assert_eq!(body["service_tier"], "flex");
     // The continuation has completed, but the saved previous ID is still stale.
     assert_eq!(
         test.codex

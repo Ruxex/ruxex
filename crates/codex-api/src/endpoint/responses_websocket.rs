@@ -952,7 +952,7 @@ mod tests {
             stream: true,
             stream_options: None,
             include: vec!["reasoning.encrypted_content".to_string()],
-            service_tier: Some("priority".to_string()),
+            service_tier: Some("flex".to_string()),
             prompt_cache_key: Some("cache-key".to_string()),
             text: None,
             access_programs: Some(

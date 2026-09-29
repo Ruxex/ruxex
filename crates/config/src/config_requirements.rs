@@ -2318,7 +2318,7 @@ mod tests {
                 [models.new_thread]
                 model = "managed-model"
                 model_reasoning_effort = "medium"
-                service_tier = "fast"
+                service_tier = "legacy"
             "#,
         )?;
 
@@ -2328,7 +2328,7 @@ mod tests {
                 new_thread: Some(NewThreadModelDefaultsToml {
                     model: Some("managed-model".to_string()),
                     model_reasoning_effort: Some(ReasoningEffort::Medium),
-                    service_tier: Some("fast".to_string()),
+                    service_tier: Some("legacy".to_string()),
                 }),
             })
         );
@@ -2372,7 +2372,7 @@ mod tests {
             new_thread: Some(NewThreadModelDefaultsToml {
                 model: Some("managed-model".to_string()),
                 model_reasoning_effort: Some(ReasoningEffort::Medium),
-                service_tier: Some("fast".to_string()),
+                service_tier: Some("legacy".to_string()),
             }),
         };
         let sqlite_home = AbsolutePathBuf::try_from(std::env::temp_dir().join("managed-state"))

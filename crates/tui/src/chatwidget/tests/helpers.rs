@@ -262,13 +262,13 @@ pub(crate) fn set_chatgpt_auth(chat: &mut ChatWidget) {
     chat.model_catalog = test_model_catalog(&chat.config);
 }
 
-fn test_model_info(slug: &str, priority: i32, supports_fast_mode: bool) -> ModelInfo {
+fn test_model_info(slug: &str, priority: i32, supports_service_tier: bool) -> ModelInfo {
     let mut service_tiers = Vec::new();
-    if supports_fast_mode {
+    if supports_service_tier {
         service_tiers.push(json!({
-            "id": ServiceTier::Fast.request_value(),
-            "name": "fast",
-            "description": "Fastest inference with increased plan usage"
+            "id": ServiceTier::Flex.request_value(),
+            "name": "flex",
+            "description": "Flexible processing"
         }));
     }
     serde_json::from_value(json!({
@@ -298,24 +298,24 @@ fn test_model_info(slug: &str, priority: i32, supports_fast_mode: bool) -> Model
     .expect("valid model info")
 }
 
-pub(crate) fn set_fast_mode_test_catalog(chat: &mut ChatWidget) {
-    set_fast_mode_test_catalog_for_models(chat, "gpt-5.4", "gpt-5.2");
+pub(crate) fn set_service_tier_test_catalog(chat: &mut ChatWidget) {
+    set_service_tier_test_catalog_for_models(chat, "gpt-5.4", "gpt-5.2");
 }
 
-pub(crate) fn set_fast_mode_test_catalog_for_models(
+pub(crate) fn set_service_tier_test_catalog_for_models(
     chat: &mut ChatWidget,
-    fast_model: &str,
+    tiered_model: &str,
     standard_model: &str,
 ) {
     let models: Vec<ModelPreset> = ModelsResponse {
         models: vec![
             test_model_info(
-                fast_model, /*priority*/ 0, /*supports_fast_mode*/ true,
+                tiered_model, /*priority*/ 0, /*supports_service_tier*/ true,
             ),
             test_model_info(
                 standard_model,
                 /*priority*/ 1,
-                /*supports_fast_mode*/ false,
+                /*supports_service_tier*/ false,
             ),
         ],
     }

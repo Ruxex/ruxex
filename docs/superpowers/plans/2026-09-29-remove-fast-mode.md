@@ -39,45 +39,45 @@
 
 ### Task 1: FastMode と Fast tier の producer/consumer audit
 
-- [ ] `rg -n 'FastMode|fast_mode|SPEED_TIER_FAST|ServiceTier::Fast|supports_fast_mode|toggle_fast_mode|/fast|service_tier.*fast' crates Cargo.toml Cargo.lock docs --glob '*.{rs,json,ts,toml,md}'` で全 match を収集する。
-- [ ] `cargo metadata --no-deps` と model/config dependency を確認し、Fast 固有の crate/module/generated artifact と一般 service-tier consumer を区別する。
-- [ ] Core の `agent/role`、session/turn/review、config の `service_tier` validation、TUI の service-tier resolution/keymap/status/title を producer/consumer 表にする。
-- [ ] inventory に Fast 固有を `remove`、Flex/一般 service tier/model transport を `retain`、現行 consumer が移行を要する共有 helper を `migrate-in-place` として記録する。
+- [x] `rg -n 'FastMode|fast_mode|SPEED_TIER_FAST|ServiceTier::Fast|supports_fast_mode|toggle_fast_mode|/fast|service_tier.*fast' crates Cargo.toml Cargo.lock docs --glob '*.{rs,json,ts,toml,md}'` で全 match を収集する。
+- [x] `cargo metadata --no-deps` と model/config dependency を確認し、Fast 固有の crate/module/generated artifact と一般 service-tier consumer を区別する。
+- [x] Core の `agent/role`、session/turn/review、config の `service_tier` validation、TUI の service-tier resolution/keymap/status/title を producer/consumer 表にする。
+- [x] inventory に Fast 固有を `remove`、Flex/一般 service tier/model transport を `retain`、現行 consumer が移行を要する共有 helper を `migrate-in-place` として記録する。
 
 ### Task 2: Feature registry/config schema と managed defaults を削除
 
-- [ ] `Feature::FastMode`、feature spec/key/stage/default、feature display/schema/apply mapping の producer/consumer を削除する。
-- [ ] `crates/config/src/` の FastMode-specific validation、managed requirement fixture、Fast 固有 default/compatibility branch を削除し、一般 `service_tier` と Flex/custom value の parsing を残す。
-- [ ] `crates/config/src/tui_keymap.rs` の `toggle_fast_mode` field と config schema entry を削除する。既存 keymap の他 binding は保持する。
-- [ ] generated config schema が管理対象なら `just generate` を実行し、FastMode/keymap の削除 diff を確認する。
+- [x] `Feature::FastMode`、feature spec/key/stage/default、feature display/schema/apply mapping の producer/consumer を削除する。
+- [x] `crates/config/src/` の FastMode-specific validation、managed requirement fixture、Fast 固有 default/compatibility branch を削除し、一般 `service_tier` と Flex/custom value の parsing を残す。
+- [x] `crates/config/src/tui_keymap.rs` の `toggle_fast_mode` field と config schema entry を削除する。既存 keymap の他 binding は保持する。
+- [x] generated config schema が管理対象なら `just generate` を実行し、FastMode/keymap の削除 diff を確認する。
 
 ### Task 3: Protocol/model metadata から Fast 固有の型・判定を削除
 
-- [ ] `ServiceTier::Fast`、`SPEED_TIER_FAST`、Fast 固有の `request_value`/parse branch を、Flex/一般 string transport を壊さない形で削除する。
-- [ ] `ModelPreset::supports_fast_mode`、Fast 固有の `additional_speed_tiers` 判定、Fast 固有 model fixture/test を削除または一般 service-tier capability 判定へ移行する。
-- [ ] `ModelServiceTier`、`service_tier_for_request`、Flex/custom provider の protocol serialization は保持する。
-- [ ] `just generate` を実行し、protocol/model generated artifact に Fast 固有 schema がある場合だけ更新する。
+- [x] `ServiceTier::Fast`、`SPEED_TIER_FAST`、Fast 固有の `request_value`/parse branch を、Flex/一般 string transport を壊さない形で削除する。
+- [x] `ModelPreset::supports_fast_mode`、Fast 固有の `additional_speed_tiers` 判定、Fast 固有 model fixture/test を削除または一般 service-tier capability 判定へ移行する。
+- [x] `ModelServiceTier`、`service_tier_for_request`、Flex/custom provider の protocol serialization は保持する。
+- [x] `just generate` を実行し、protocol/model generated artifact に Fast 固有 schema がある場合だけ更新する。
 
 ### Task 4: TUI の `/fast`、service-tier command、keymap、表示を削除
 
-- [ ] `current_model_service_tier_commands` から Fast 固有の slash command生成・FastMode gate・`toggle_service_tier_from_ui` の不要経路を削除し、他の tier を残す。
-- [ ] `InputResult::ServiceTierCommand`、service-tier command popup、slash input の dynamic command support を、他の tier が残るかを確認したうえで最小化または削除する。
-- [ ] `toggle_fast_mode` keymap action/runtime/input dispatch、FastMode keymap picker/tests/snapshots を削除する。
-- [ ] status line、terminal title、status preview、model header、tooltip、Fast 固有 snapshots/tests を削除し、一般 model/service-tier 表示を保持する。
+- [x] `current_model_service_tier_commands` から Fast 固有の slash command生成・FastMode gate・`toggle_service_tier_from_ui` の不要経路を削除し、他の tier を残す。
+- [x] `InputResult::ServiceTierCommand`、service-tier command popup、slash input の dynamic command support を、他の tier が残るかを確認したうえで最小化または削除する。
+- [x] `toggle_fast_mode` keymap action/runtime/input dispatch、FastMode keymap picker/tests/snapshots を削除する。
+- [x] status line、terminal title、status preview、model header、tooltip、Fast 固有 snapshots/tests を削除し、一般 model/service-tier 表示を保持する。
 
 ### Task 5: Core/app-server runtime の FastMode 判定を削除
 
-- [ ] Core の agent role、session step activation、turn context、review、startup/default、client request で `Feature::FastMode` または Fast 固有 tier を参照する分岐を削除する。
-- [ ] app-server/TUI の config/session initialization で FastMode-specific effective-tier resolution を削除し、一般 service_tier の明示値・Flex/custom value の transport を保持する。
-- [ ] Fast 固有の tests/fixtures を削除または一般 tier の regression coverage に更新する。Fast 以外の service-tier serialization tests は保持する。
-- [ ] `rg` で FastMode gate が残っていないことを確認し、残存する `fast` は unrelated wording/history/test data として分類する。
+- [x] Core の agent role、session step activation、turn context、review、startup/default、client request で `Feature::FastMode` または Fast 固有 tier を参照する分岐を削除する。
+- [x] app-server/TUI の config/session initialization で FastMode-specific effective-tier resolution を削除し、一般 service_tier の明示値・Flex/custom value の transport を保持する。
+- [x] Fast 固有の tests/fixtures を削除または一般 tier の regression coverage に更新する。Fast 以外の service-tier serialization tests は保持する。
+- [x] `rg` で FastMode gate が残っていないことを確認し、残存する `fast` は unrelated wording/history/test data として分類する。
 
 ### Task 6: 最終検証と設定・依存境界の確認
 
-- [ ] `rg -n 'Feature::FastMode|fast_mode|SPEED_TIER_FAST|ServiceTier::Fast|supports_fast_mode|toggle_fast_mode|/fast' crates Cargo.toml Cargo.lock docs --glob '*.{rs,json,ts,toml,md}'` を実行し、専用 production match が残っていないことを確認する。
-- [ ] `rg -n 'ServiceTier::Flex|ModelServiceTier|service_tier' crates/core crates/config crates/protocol crates/tui --glob '*.rs'` を確認し、一般 service-tier/model path が保持されていることを確認する。
-- [ ] `cargo metadata --no-deps` で Fast 専用 crate/dependency/module の孤立参照がないことを確認する。
-- [ ] 必要な `just generate` の diff を確認する。
-- [ ] `just check --tests` を実行する。
-- [ ] `just check` を実行する。
-- [ ] `git diff --check` を実行し、inventory row と本計画の完了条件を照合する。
+- [x] `rg -n 'Feature::FastMode|fast_mode|SPEED_TIER_FAST|ServiceTier::Fast|supports_fast_mode|toggle_fast_mode|/fast' crates Cargo.toml Cargo.lock docs --glob '*.{rs,json,ts,toml,md}'` を実行し、専用 production match が残っていないことを確認する。
+- [x] `rg -n 'ServiceTier::Flex|ModelServiceTier|service_tier' crates/core crates/config crates/protocol crates/tui --glob '*.rs'` を確認し、一般 service-tier/model path が保持されていることを確認する。
+- [x] `cargo metadata --no-deps` で Fast 専用 crate/dependency/module の孤立参照がないことを確認する。
+- [x] 必要な `just generate` の diff を確認する。
+- [x] `just check --tests` を実行する。
+- [x] `just check` を実行する。
+- [x] `git diff --check` を実行し、inventory row と本計画の完了条件を照合する。

@@ -529,13 +529,6 @@ impl App {
             return true;
         }
 
-        if self.keymap.app.toggle_fast_mode.is_pressed(key_event)
-            && self.chat_widget.can_toggle_fast_mode_from_keybinding()
-        {
-            self.chat_widget.toggle_fast_mode_from_ui();
-            return true;
-        }
-
         if self.keymap.app.toggle_raw_output.is_pressed(key_event) {
             let enabled = !self.chat_widget.raw_output_mode();
             self.apply_raw_output_mode(tui, enabled, /*notify*/ false);

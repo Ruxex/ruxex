@@ -294,8 +294,6 @@ pub enum Feature {
     Personality,
     /// Enable native artifact tools.
     Artifact,
-    /// Enable Fast mode selection in the TUI and request layer.
-    FastMode,
     /// Enable explicitly requested model changes for later step captures.
     StepModelSwitching,
     /// Prevent idle system sleep while a turn is actively running.
@@ -1384,12 +1382,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         key: "artifact",
         stage: Stage::UnderDevelopment,
         default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::FastMode,
-        key: "fast_mode",
-        stage: Stage::Stable,
-        default_enabled: true,
     },
     FeatureSpec {
         id: Feature::StepModelSwitching,

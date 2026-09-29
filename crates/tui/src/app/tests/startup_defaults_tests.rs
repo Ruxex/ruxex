@@ -45,7 +45,7 @@ async fn cli_fork_omits_implicit_model_and_effort() -> Result<()> {
     let home = tempdir()?;
     std::fs::write(
         home.path().join("config.toml"),
-        "model = \"gpt-5.5\"\nmodel_reasoning_effort = \"low\"\nfeatures.fast_mode = true\n",
+        "model = \"gpt-5.5\"\nmodel_reasoning_effort = \"low\"\nfeatures.network_proxy = true\n",
     )?;
     let config = ConfigBuilder::default()
         .codex_home(home.path().to_path_buf())

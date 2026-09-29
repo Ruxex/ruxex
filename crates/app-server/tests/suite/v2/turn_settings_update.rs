@@ -134,7 +134,7 @@ async fn settings_updates_report_results_and_preserve_the_target_on_saved_thread
         model: Some(MODEL_B.to_string()),
         effort: Some(ReasoningEffort::High),
         summary: Some(ReasoningSummary::Detailed),
-        service_tier: Some(Some("priority".to_string())),
+        service_tier: Some(Some("flex".to_string())),
         ..Default::default()
     };
     match scenario {
@@ -263,7 +263,7 @@ async fn settings_updates_report_results_and_preserve_the_target_on_saved_thread
     let changed = json!({
         "model": MODEL_B,
         "reasoning": { "effort": "high", "summary": "detailed" },
-        "service_tier": "priority",
+        "service_tier": "flex",
     });
     let expected = match scenario {
         UpdateScenario::Future => vec![initial.clone(), initial, changed],
@@ -579,6 +579,5 @@ fn mock_config(codex_home: &Path, server_uri: &str) -> Result<MockResponsesConfi
             "model_catalog_json = {catalog_path}\nmodel_reasoning_effort = \"low\"\nmodel_reasoning_summary = \"concise\""
         ))
         .with_provider_config("supports_websockets = false")
-        .enable_feature(Feature::DefaultModeRequestUserInput)
-        .enable_feature(Feature::FastMode))
+        .enable_feature(Feature::DefaultModeRequestUserInput))
 }

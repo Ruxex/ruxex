@@ -42,7 +42,7 @@ pub(crate) struct ResolvedStepSettings {
     pub(crate) model_info: Arc<ModelInfo>,
     /// Effective request summary: the configured value or the pinned model's default.
     pub(crate) reasoning_summary: ReasoningSummary,
-    /// Tier sent on requests, filtered by feature and model support.
+    /// Tier sent on requests, filtered by model support.
     pub(crate) service_tier: Option<String>,
 }
 
@@ -51,14 +51,12 @@ impl ResolvedStepSettings {
     pub(super) fn new(
         selected: Arc<StepSettings>,
         model_info: Arc<ModelInfo>,
-        fast_mode_enabled: bool,
     ) -> Self {
         let reasoning_summary = selected
             .reasoning_summary
             .unwrap_or(model_info.default_reasoning_summary);
         let service_tier = super::get_service_tier(
             selected.service_tier.clone(),
-            fast_mode_enabled,
             &model_info,
         );
         Self {
@@ -118,7 +116,6 @@ impl ResolvedStepSettings {
         constraints: &StepSettingsConstraints<'_>,
         models_manager: &dyn ModelsManager,
         overrides: &ModelInfoOverrides,
-        fast_mode_enabled: bool,
     ) -> ConstraintResult<Self> {
         let selected = self.selected.apply(update, constraints)?;
         let model_info = if selected.collaboration_mode.model()
@@ -129,7 +126,7 @@ impl ResolvedStepSettings {
         } else {
             Arc::new(selected.resolve_model_info(models_manager, overrides).await)
         };
-        let next = Self::new(Arc::new(selected), model_info, fast_mode_enabled);
+        let next = Self::new(Arc::new(selected), model_info);
         Ok(next)
     }
 
@@ -253,7 +250,7 @@ impl StepSettings {
         }
         if let Some(service_tier) = update.service_tier.clone() {
             // TODO(aibrahim): Remove once v2 clients no longer send the legacy
-            // "fast" service tier value.
+            // An unknown service tier value.
             next.service_tier = Some(match service_tier {
                 Some(service_tier) => ServiceTier::from_request_value(&service_tier)
                     .map_or(service_tier, |service_tier| {

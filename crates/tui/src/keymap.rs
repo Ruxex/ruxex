@@ -95,8 +95,6 @@ pub(crate) struct AppKeymap {
     pub(crate) clear_terminal: Vec<KeyBinding>,
     /// Toggle Vim mode for the composer input.
     pub(crate) toggle_vim_mode: Vec<KeyBinding>,
-    /// Toggle Fast mode.
-    pub(crate) toggle_fast_mode: Vec<KeyBinding>,
     /// Toggle raw scrollback mode for copy-friendly transcript selection.
     pub(crate) toggle_raw_output: Vec<KeyBinding>,
     /// Switch between a side conversation and its parent without closing either.
@@ -645,11 +643,6 @@ impl RuntimeKeymap {
                 keymap.global.toggle_vim_mode.as_ref(),
                 &defaults.app.toggle_vim_mode,
                 "tui.keymap.global.toggle_vim_mode",
-            )?,
-            toggle_fast_mode: resolve_bindings(
-                keymap.global.toggle_fast_mode.as_ref(),
-                &defaults.app.toggle_fast_mode,
-                "tui.keymap.global.toggle_fast_mode",
             )?,
             toggle_raw_output: resolve_bindings(
                 keymap.global.toggle_raw_output.as_ref(),
@@ -1332,10 +1325,6 @@ impl RuntimeKeymap {
                 app.toggle_vim_mode.as_slice(),
             ),
             (
-                keymap.global.toggle_fast_mode.as_ref(),
-                app.toggle_fast_mode.as_slice(),
-            ),
-            (
                 keymap.global.toggle_raw_output.as_ref(),
                 app.toggle_raw_output.as_slice(),
             ),
@@ -1534,7 +1523,6 @@ impl RuntimeKeymap {
                 copy: default_bindings![ctrl(KeyCode::Char('o'))],
                 clear_terminal: default_bindings![ctrl(KeyCode::Char('l'))],
                 toggle_vim_mode: default_bindings![],
-                toggle_fast_mode: default_bindings![],
                 toggle_raw_output: default_bindings![alt(KeyCode::Char('r'))],
                 toggle_side_conversation: default_bindings![ctrl(KeyCode::Char('/'))],
             },
@@ -1887,7 +1875,6 @@ impl RuntimeKeymap {
             ("copy", self.app.copy.as_slice()),
             ("clear_terminal", self.app.clear_terminal.as_slice()),
             ("toggle_vim_mode", self.app.toggle_vim_mode.as_slice()),
-            ("toggle_fast_mode", self.app.toggle_fast_mode.as_slice()),
             ("toggle_raw_output", self.app.toggle_raw_output.as_slice()),
             ("toggle_side_conversation", side_toggle_bindings.as_slice()),
             ("chat.interrupt_turn", self.chat.interrupt_turn.as_slice()),
@@ -1985,7 +1972,6 @@ impl RuntimeKeymap {
                 ("copy", self.app.copy.as_slice()),
                 ("clear_terminal", self.app.clear_terminal.as_slice()),
                 ("toggle_vim_mode", self.app.toggle_vim_mode.as_slice()),
-                ("toggle_fast_mode", self.app.toggle_fast_mode.as_slice()),
                 ("toggle_raw_output", self.app.toggle_raw_output.as_slice()),
                 ("toggle_side_conversation", side_toggle_bindings.as_slice()),
             ],
@@ -2064,7 +2050,6 @@ impl RuntimeKeymap {
                 ("chat.skip_question", self.chat.skip_question.as_slice()),
                 ("composer.submit", self.composer.submit.as_slice()),
                 ("toggle_vim_mode", self.app.toggle_vim_mode.as_slice()),
-                ("toggle_fast_mode", self.app.toggle_fast_mode.as_slice()),
                 ("toggle_raw_output", self.app.toggle_raw_output.as_slice()),
                 ("toggle_side_conversation", side_toggle_bindings.as_slice()),
                 (
@@ -2769,7 +2754,6 @@ mod tests {
             runtime.app.clear_terminal,
             vec![key_hint::ctrl(KeyCode::Char('l'))]
         );
-        assert_eq!(runtime.app.toggle_fast_mode, Vec::new());
         assert_eq!(
             runtime.chat.interrupt_turn,
             vec![key_hint::plain(KeyCode::Esc)]
@@ -3424,30 +3408,6 @@ mod tests {
             runtime.editor.kill_whole_line,
             vec![key_hint::ctrl(KeyCode::Char('u'))]
         );
-    }
-
-    #[test]
-    fn toggle_fast_mode_can_be_assigned_without_default_binding() {
-        let mut keymap = TuiKeymap::default();
-        keymap.global.toggle_fast_mode = Some(one("ctrl-shift-f"));
-
-        let runtime = RuntimeKeymap::from_config(&keymap).expect("runtime keymap");
-
-        assert_eq!(
-            runtime.app.toggle_fast_mode,
-            vec![KeyBinding::new(
-                KeyCode::Char('f'),
-                KeyModifiers::CONTROL | KeyModifiers::SHIFT,
-            )]
-        );
-    }
-
-    #[test]
-    fn toggle_fast_mode_conflicts_with_existing_main_surface_bindings() {
-        let mut keymap = TuiKeymap::default();
-        keymap.global.toggle_fast_mode = Some(one("ctrl-l"));
-
-        expect_conflict(&keymap, "clear_terminal", "toggle_fast_mode");
     }
 
     #[test]

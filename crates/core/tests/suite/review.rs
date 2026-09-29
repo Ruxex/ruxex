@@ -606,9 +606,9 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
         })
         .with_model_info_override("gpt-5.4", |model_info| {
             model_info.service_tiers = vec![ModelServiceTier {
-                id: ServiceTier::Fast.request_value().to_string(),
-                name: "Fast".to_string(),
-                description: "Priority processing".to_string(),
+                id: ServiceTier::Flex.request_value().to_string(),
+                name: "Flex".to_string(),
+                description: "Flexible processing".to_string(),
             }];
             model_info.supported_reasoning_levels = [
                 ReasoningEffort::Low,
@@ -632,11 +632,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
         .with_config(|config| {
             config.review_model = Some("gpt-5.4".to_string());
             config.model_context_window = Some(128_000);
-            config.service_tier = Some(ServiceTier::Fast.request_value().to_string());
-            config
-                .features
-                .enable(Feature::FastMode)
-                .expect("enable FastMode");
+            config.service_tier = Some(ServiceTier::Flex.request_value().to_string());
             config
                 .features
                 .enable(Feature::TokenBudget)
@@ -715,7 +711,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
     assert_eq!(request.body_json()["reasoning"]["effort"], "medium");
     assert_eq!(
         request.body_json()["service_tier"],
-        ServiceTier::Fast.request_value()
+        ServiceTier::Flex.request_value()
     );
     assert!(
         request
@@ -803,65 +799,6 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
 
     let _codex_home_guard = codex_home;
     server.verify().await;
-}
-
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn review_omits_retained_tier_when_fast_mode_disabled() -> anyhow::Result<()> {
-    skip_if_no_network!(Ok(()));
-    let (server, request_log) =
-        start_responses_server_with_sse(completed_sse(), /*expected_requests*/ 1).await;
-    let test = test_codex()
-        .with_model_info_override("gpt-5.4", |model| {
-            model.service_tiers = vec![ModelServiceTier {
-                id: ServiceTier::Flex.request_value().to_string(),
-                name: "Flex".to_string(),
-                description: "Flexible processing".to_string(),
-            }];
-        })
-        .with_config(|config| {
-            config
-                .features
-                .disable(Feature::FastMode)
-                .expect("disable FastMode");
-        })
-        .build_with_auto_env(&server)
-        .await?;
-    core_test_support::submit_thread_settings(
-        &test.codex,
-        ThreadSettingsOverrides {
-            service_tier: Some(Some(ServiceTier::Flex.request_value().to_string())),
-            ..Default::default()
-        },
-    )
-    .await?;
-    test.codex
-        .submit(Op::Review {
-            review_request: ReviewRequest {
-                target: ReviewTarget::Custom {
-                    instructions: "review the changes".to_string(),
-                },
-                user_facing_hint: None,
-            },
-        })
-        .await?;
-    wait_for_event(&test.codex, |event| {
-        matches!(event, EventMsg::TurnComplete(_))
-    })
-    .await;
-
-    assert_eq!(
-        test.codex
-            .thread_settings_snapshot()
-            .await
-            .service_tier
-            .as_deref(),
-        Some("flex")
-    );
-    assert_eq!(
-        request_log.single_request().body_json().get("service_tier"),
-        None
-    );
-    Ok(())
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

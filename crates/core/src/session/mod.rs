@@ -748,14 +748,11 @@ impl Session {
                 /*developer_instructions*/ None,
             )
         });
-        let fast_mode_enabled = config.features.enabled(Feature::FastMode);
         let initial_service_tier_warning = unsupported_service_tier_warning(
             config.service_tier.as_deref(),
-            fast_mode_enabled,
             &model_info,
         );
-        let service_tier =
-            get_service_tier(config.service_tier.clone(), fast_mode_enabled, &model_info);
+        let service_tier = get_service_tier(config.service_tier.clone(), &model_info);
         let session_configuration = SessionConfiguration {
             provider: create_model_provider(
                 config.model_provider.clone(),
@@ -1006,12 +1003,8 @@ pub(crate) fn new_submission_id() -> String {
 
 fn get_service_tier(
     configured_service_tier: Option<String>,
-    fast_mode_enabled: bool,
     model_info: &ModelInfo,
 ) -> Option<String> {
-    if !fast_mode_enabled {
-        return None;
-    }
     configured_service_tier.filter(|service_tier| {
         service_tier == SERVICE_TIER_DEFAULT_REQUEST_VALUE
             || model_info.supports_service_tier(service_tier)
@@ -1020,12 +1013,10 @@ fn get_service_tier(
 
 fn unsupported_service_tier_warning(
     configured_service_tier: Option<&str>,
-    fast_mode_enabled: bool,
     model_info: &ModelInfo,
 ) -> Option<String> {
     let service_tier = configured_service_tier.filter(|service_tier| {
-        fast_mode_enabled
-            && *service_tier != SERVICE_TIER_DEFAULT_REQUEST_VALUE
+        *service_tier != SERVICE_TIER_DEFAULT_REQUEST_VALUE
             && !model_info.supports_service_tier(service_tier)
     })?;
     Some(format!(
@@ -3430,7 +3421,6 @@ impl Session {
                 let inherited_settings = ResolvedStepSettings::new(
                     Arc::new(selected),
                     Arc::clone(&settings.model_info),
-                    self.features.enabled(Feature::FastMode),
                 );
                 settings = Arc::new(inherited_settings);
             }

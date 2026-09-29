@@ -29,7 +29,7 @@ async fn auth_and_provider_switches_do_not_reuse_chatgpt_catalog() -> Result<()>
         .find(|model| model.slug == "gpt-5.5")
         .unwrap();
     model.visibility = ModelVisibility::List;
-    model.default_service_tier = Some("priority".into());
+    model.default_service_tier = Some("flex".into());
     let models_mock = responses::mount_models_once(
         &server,
         ModelsResponse {
@@ -119,11 +119,11 @@ async fn auth_and_provider_switches_do_not_reuse_chatgpt_catalog() -> Result<()>
         ]),
     )
     .await;
-    api.submit_turn_with_service_tier("hello again", Some("priority"))
+    api.submit_turn_with_service_tier("hello again", Some("flex"))
         .await?;
     assert_eq!(
         explicit.single_request().body_json()["service_tier"],
-        "priority"
+        "flex"
     );
     assert_eq!(api_models_mock.requests().len(), 1);
     drop(api);

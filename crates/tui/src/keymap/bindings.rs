@@ -248,7 +248,6 @@ define_runtime_action_bindings! {
         copy,
         clear_terminal,
         toggle_vim_mode,
-        toggle_fast_mode,
         toggle_raw_output,
         toggle_side_conversation,
     ],

@@ -496,7 +496,6 @@ fn startup_session_header(config: Option<&Config>) -> Box<dyn HistoryCell> {
             "loading".to_string(),
             placeholder_style,
             /*reasoning_effort*/ None,
-            /*show_fast_status*/ false,
             directory,
             CODEX_CLI_VERSION,
         )

@@ -34,7 +34,7 @@ const FRESH_CHILD_PROMPT: &str = "finish the new service-tier worker";
 const SPAWN_CALL_ID: &str = "spawn-service-tier-worker";
 const FRESH_SPAWN_CALL_ID: &str = "spawn-fresh-service-tier-worker";
 const PAUSE_CALL_ID: &str = "pause-service-tier-worker";
-const PRIORITY_ROLE: &str = "priority-worker";
+const FLEX_ROLE: &str = "flex-worker";
 
 fn body_contains(request: &wiremock::Request, text: &str) -> bool {
     let body = match request
@@ -62,7 +62,7 @@ fn assert_request_service_tier(request: &ResponseMock, expected: Option<&str>) {
     );
 }
 
-fn configure_priority_role(config: &mut Config) {
+fn configure_flex_role(config: &mut Config) {
     for feature in [Feature::Collab, Feature::MultiAgentV2] {
         config
             .features
@@ -71,13 +71,13 @@ fn configure_priority_role(config: &mut Config) {
     }
     config.model_provider.request_max_retries = Some(0);
     config.model_provider.stream_max_retries = Some(0);
-    let role_path = config.codex_home.join("priority-worker.toml");
-    std::fs::write(&role_path, "service_tier = \"priority\"\n")
-        .expect("priority role should be written");
+    let role_path = config.codex_home.join("flex-worker.toml");
+    std::fs::write(&role_path, "service_tier = \"flex\"\n")
+        .expect("flex role should be written");
     config.agent_roles.insert(
-        PRIORITY_ROLE.to_string(),
+        FLEX_ROLE.to_string(),
         AgentRoleConfig {
-            description: Some("Role with a configured priority tier".to_string()),
+            description: Some("Role with a configured flex tier".to_string()),
             config_file: Some(role_path.to_path_buf()),
             nickname_candidates: None,
         },
@@ -147,9 +147,9 @@ async fn mount_completed_child(
     .await
 }
 
-#[test_case(Some("priority"), None; "disabling fast mode updates active and idle child work")]
-#[test_case(Some("priority"), Some("default"); "explicit default updates active and idle child work")]
-#[test_case(None, Some("priority"); "enabling fast mode updates active and idle child work")]
+#[test_case(Some("flex"), None; "clearing the service tier updates active and idle child work")]
+#[test_case(Some("flex"), Some("default"); "explicit default updates active and idle child work")]
+#[test_case(None, Some("flex"); "setting the service tier updates active and idle child work")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn root_service_tier_change_updates_existing_subagent(
     initial_service_tier: Option<&str>,
@@ -163,7 +163,7 @@ async fn root_service_tier_change_updates_existing_subagent(
         .with_model("gpt-5.6-sol")
         .with_config(move |config| {
             config.service_tier = initial_service_tier_owned;
-            configure_priority_role(config);
+            configure_flex_role(config);
         });
     let test = builder.build_with_auto_env(&server).await?;
     assert!(!test.config.features.enabled(Feature::StepModelSwitching));
@@ -176,7 +176,7 @@ async fn root_service_tier_change_updates_existing_subagent(
         json!({
             "message": CHILD_PROMPT,
             "task_name": "worker",
-            "agent_type": PRIORITY_ROLE,
+            "agent_type": FLEX_ROLE,
             "fork_turns": "none",
         }),
     )
@@ -289,7 +289,7 @@ async fn root_service_tier_change_updates_existing_subagent(
         json!({
             "message": FRESH_CHILD_PROMPT,
             "task_name": "fresh",
-            "agent_type": PRIORITY_ROLE,
+            "agent_type": FLEX_ROLE,
             "fork_turns": "none",
         }),
     )
@@ -310,9 +310,9 @@ async fn evicted_role_subagent_uses_root_service_tier_after_reload() -> Result<(
     let mut builder = test_codex()
         .with_model("gpt-5.6-sol")
         .with_config(|config| {
-            config.service_tier = Some("priority".to_string());
+            config.service_tier = Some("flex".to_string());
             config.multi_agent_v2.max_concurrent_threads_per_session = 2;
-            configure_priority_role(config);
+            configure_flex_role(config);
         });
     let test = builder.build_with_auto_env(&server).await?;
     let mut created_threads = test.thread_manager.subscribe_thread_created();
@@ -324,7 +324,7 @@ async fn evicted_role_subagent_uses_root_service_tier_after_reload() -> Result<(
         json!({
             "message": CHILD_PROMPT,
             "task_name": "original",
-            "agent_type": PRIORITY_ROLE,
+            "agent_type": FLEX_ROLE,
             "fork_turns": "none",
         }),
     )
@@ -334,7 +334,7 @@ async fn evicted_role_subagent_uses_root_service_tier_after_reload() -> Result<(
     let original_thread_id = created_threads.recv().await?;
     let original_thread = test.thread_manager.get_thread(original_thread_id).await?;
     wait_for_turn_complete(&original_thread).await;
-    assert_request_service_tier(&original_request, Some("priority"));
+    assert_request_service_tier(&original_request, Some("flex"));
     drop(original_thread);
 
     mount_root_collaboration_call(

@@ -20,7 +20,7 @@ fn defaults() -> NewThreadModelDefaults {
     NewThreadModelDefaults {
         model: Some("managed-model".to_string()),
         model_reasoning_effort: Some(ReasoningEffort::High),
-        service_tier: Some("fast".to_string()),
+        service_tier: Some("flex".to_string()),
     }
 }
 
@@ -33,7 +33,7 @@ async fn applies_managed_defaults_to_a_new_thread_config() {
     let mut expected = actual.clone();
     expected.model = Some("managed-model".to_string());
     expected.model_reasoning_effort = Some(ReasoningEffort::High);
-    expected.service_tier = Some(ServiceTier::Fast.request_value().to_string());
+    expected.service_tier = Some("flex".to_string());
 
     apply_managed_new_thread_defaults(
         &mut actual,
@@ -52,7 +52,7 @@ async fn explicit_model_skips_managed_model_and_reasoning_effort() {
     actual.model_reasoning_effort = None;
     actual.service_tier = Some("flex".to_string());
     let mut expected = actual.clone();
-    expected.service_tier = Some(ServiceTier::Fast.request_value().to_string());
+    expected.service_tier = Some("flex".to_string());
     let harness_overrides = ConfigOverrides {
         model: Some("explicit-model".to_string()),
         ..ConfigOverrides::default()
@@ -70,7 +70,7 @@ async fn explicit_reasoning_effort_skips_managed_model_and_reasoning_effort() {
     actual.model_reasoning_effort = Some(ReasoningEffort::Low);
     actual.service_tier = Some("flex".to_string());
     let mut expected = actual.clone();
-    expected.service_tier = Some(ServiceTier::Fast.request_value().to_string());
+    expected.service_tier = Some("flex".to_string());
     let cli_kv_overrides = vec![(
         "model_reasoning_effort".to_string(),
         TomlValue::String("low".to_string()),
@@ -196,7 +196,7 @@ async fn managed_defaults_win_when_a_project_setting_shadows_the_selected_profil
     let mut expected = actual.clone();
     expected.model = Some("managed-model".to_string());
     expected.model_reasoning_effort = Some(ReasoningEffort::High);
-    expected.service_tier = Some(ServiceTier::Fast.request_value().to_string());
+    expected.service_tier = Some("flex".to_string());
 
     apply_managed_new_thread_defaults(
         &mut actual,
