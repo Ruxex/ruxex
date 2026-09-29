@@ -78003,36 +78003,6 @@
     },
     {
       "category": "finding",
-      "code": "hawk::dead_public",
-      "expansion": null,
-      "identity": {
-        "compiler_id": "21db1b4d9b76c95353d3aef9d8363794",
-        "crate": "codex_protocol",
-        "id": "v1|14:codex-protocol|14:codex_protocol|37:protocol::APPS_INSTRUCTIONS_CLOSE_TAG|8:constant|6:source|31:crates/protocol/src/protocol.rs|115|1",
-        "item": "protocol::APPS_INSTRUCTIONS_CLOSE_TAG",
-        "kind": "constant",
-        "module_scope": [
-          "protocol"
-        ],
-        "package": "codex-protocol",
-        "parent": "protocol"
-      },
-      "kind": "dead_public",
-      "location": {
-        "byte_end": 4780,
-        "byte_start": 4711,
-        "column": 1,
-        "end_column": 70,
-        "end_line": 115,
-        "file": "crates/protocol/src/protocol.rs",
-        "line": 115
-      },
-      "severity": "warning",
-      "test_compiled_only": false,
-      "test_only": false
-    },
-    {
-      "category": "finding",
       "code": "hawk::unnecessary_public",
       "expansion": null,
       "identity": {

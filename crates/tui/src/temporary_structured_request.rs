@@ -60,7 +60,6 @@ pub(crate) async fn start_temporary_thread(
     let custom_permission_profile =
         active_permission_profile.filter(|profile| !profile.starts_with(':'));
     let mut config = std::collections::HashMap::from([
-        ("features.apps".to_string(), false.into()),
         ("features.code_mode".to_string(), false.into()),
         ("features.code_mode_only".to_string(), false.into()),
         ("features.context_management".to_string(), false.into()),

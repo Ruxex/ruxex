@@ -325,7 +325,6 @@ fn known_segment_name(text: &str, source: TextSource<'_>) -> Option<String> {
                 | "collaboration_mode"
                 | "multi_agent_role"
                 | "multi_agent_mode"
-                | "apps_instructions"
                 | "skills_instructions"
                 | "plugins_instructions"
                 | "model_switch"

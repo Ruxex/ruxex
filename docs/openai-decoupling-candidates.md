@@ -84,7 +84,7 @@ CLI/managed-feature consumer の参照監査、`just generate`、
 
 ### 名前だけでは削除しないもの
 
-- `enable_mcp_apps` は feature enum の直接参照が少なくても、Apps/MCP/plugin の現行経路があるため、Apps capability と一緒に監査する。
+- `EnableMcpApps` はApps capability削除時に残った未使用のfeature登録であり、今回の残存コード掃除で削除する。
 - `use_legacy_landlock` は Linux の実行時 security fallback と結び付くため、互換 no-op とみなさない。
 - `in_app_*`、`browser_use_*`、`computer_use` は requirements-only gate として config/app-server 側に consumer があるため、registry だけを見て削除しない。
 - `recommended_plugins`、`workspace_dependencies`、code-mode、MCP、plugin runtime など、デフォルトオフでも現行 entrypoint やテストから到達できる機能は別扱いにする。
@@ -139,7 +139,7 @@ Bedrock、custom `model_providers`、汎用 credential storage、Responses-compa
 
 ### 3.4 Apps / host-owned MCP
 
-`codex-mcp`、app-server、core、tests には Apps、`codex_apps`、managed auth、Apps entitlement に関係する現行コードが残る。したがって `codex-mcp` 全体は未使用とは扱わない。
+Apps、`codex_apps`、Apps entitlement、host-owned Apps MCP の現行経路とApps専用の孤立テストは削除済みである。`codex-mcp` 全体は通常のMCP、OAuth/elicitation、provider-neutral metadata/security behaviorのため保持する。
 
 OpenAI account/entitlement、host-owned Apps MCP、Apps 固有 UI/protocol と、通常の MCP、OAuth/elicitation、provider-neutral metadata/security behavior を分けて監査する。
 

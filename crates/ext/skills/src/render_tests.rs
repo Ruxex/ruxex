@@ -660,7 +660,7 @@ fn mixed_catalogs_alias_all_skill_sources_under_budget_pressure() {
     );
     let orchestrator_catalog = catalog(
         SkillSourceKind::Orchestrator,
-        "codex_apps",
+        "orchestrator",
         orchestrator_root,
         "orchestrator",
     );
@@ -754,7 +754,7 @@ fn mixed_catalog_prefers_executor_inclusion_over_total_aliased_inclusion() {
         entries: vec![
             SkillCatalogEntry::new(
                 SkillPackageId("o1".to_string()),
-                SkillAuthority::new(SkillSourceKind::Orchestrator, "codex_apps"),
+                SkillAuthority::new(SkillSourceKind::Orchestrator, "orchestrator"),
                 "o1",
                 "",
                 SkillResourceId::new(orchestrator_resource),

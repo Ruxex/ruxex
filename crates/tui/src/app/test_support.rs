@@ -118,16 +118,3 @@ fn test_session_telemetry(config: &Config, model: &str) -> SessionTelemetry {
             .expect("cli session source should deserialize"),
     )
 }
-
-pub(super) fn app_enabled_in_effective_config(config: &Config, app_id: &str) -> Option<bool> {
-    config
-        .config_layer_stack
-        .effective_config()
-        .as_table()
-        .and_then(|table| table.get("apps"))
-        .and_then(TomlValue::as_table)
-        .and_then(|apps| apps.get(app_id))
-        .and_then(TomlValue::as_table)
-        .and_then(|app| app.get("enabled"))
-        .and_then(TomlValue::as_bool)
-}

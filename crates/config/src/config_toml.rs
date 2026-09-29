@@ -214,8 +214,6 @@ pub struct ConfigToml {
     /// Whether to inject the `<permissions instructions>` developer block.
     pub include_permissions_instructions: Option<bool>,
 
-    /// Whether to inject the `<apps_instructions>` developer block.
-
     /// Whether to inject the `<collaboration_mode>` developer block.
     pub include_collaboration_mode_instructions: Option<bool>,
 

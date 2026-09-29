@@ -629,7 +629,6 @@ fn detailed_skills_use_the_same_truncation_and_dynamic_normalization_as_other_te
 fn rewritten_segments_share_one_tag_format_and_keep_compaction_data() {
     let developer = |tag, body| tagged_message("developer", tag, body);
     let items = [
-        developer("apps_instructions", "Apps guidance"),
         developer("plugins_instructions", "Plugins guidance"),
         message(
             "developer",
@@ -656,7 +655,6 @@ fn rewritten_segments_share_one_tag_format_and_keep_compaction_data() {
     assert_eq!(
         lines,
         [
-            "<APPS_INSTRUCTIONS>",
             "<PLUGINS_INSTRUCTIONS>",
             "<GUARDIAN_INSTRUCTIONS>",
             "<AGENTS_MD>",

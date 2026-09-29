@@ -186,8 +186,6 @@ pub enum Feature {
     Collab,
     /// Enable task-path-based multi-agent routing.
     MultiAgentV2,
-    /// Enable MCP apps.
-    EnableMcpApps,
     /// Enable MCP protocol version 2026-07-28 support.
     Mcp20260728,
     /// Let RMCP coordinate OAuth refresh through the configured credential store.
@@ -1093,12 +1091,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         id: Feature::MultiAgentV2,
         key: "multi_agent_v2",
         stage: Stage::Stable,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::EnableMcpApps,
-        key: "enable_mcp_apps",
-        stage: Stage::UnderDevelopment,
         default_enabled: false,
     },
     FeatureSpec {

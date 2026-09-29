@@ -503,7 +503,7 @@ async fn executor_orchestrator_and_host_share_catalog_world_state_flow() -> Test
         )))
         .with_orchestrator_provider(provider(test_entry(
             SkillSourceKind::Orchestrator,
-            "codex_apps",
+            "orchestrator",
             "orchestrator/orchestrator-skill",
             "skill://orchestrator/orchestrator-skill/SKILL.md",
         )))
@@ -1270,7 +1270,7 @@ async fn default_context_truncates_catalog_descriptions() -> TestResult {
     executor_entry.description = description.clone();
     let mut orchestrator_entry = test_entry(
         SkillSourceKind::Orchestrator,
-        "codex_apps",
+        "orchestrator",
         "orchestrator/orchestrator-long-description",
         "skill://orchestrator/orchestrator-long-description/SKILL.md",
     );
@@ -1352,7 +1352,7 @@ async fn moderate_budget_pressure_keeps_every_catalog_entry() -> TestResult {
             let package_id = format!("orchestrator/orchestrator-skill-{index:02}");
             let mut entry = test_entry(
                 SkillSourceKind::Orchestrator,
-                "codex_apps",
+                "orchestrator",
                 &package_id,
                 &format!("skill://{package_id}/SKILL.md"),
             );
@@ -1466,7 +1466,7 @@ async fn extreme_budget_pressure_removes_descriptions_before_omitting_entries() 
             let package_id = format!("orchestrator/orchestrator-skill-{index:03}");
             let mut entry = test_entry(
                 SkillSourceKind::Orchestrator,
-                "codex_apps",
+                "orchestrator",
                 &package_id,
                 &format!("skill://{package_id}/SKILL.md"),
             );
@@ -1573,7 +1573,7 @@ async fn skills_list_only_returns_model_visible_bounded_metadata() -> TestResult
     let opaque_suffix = "\\".repeat(1_500);
     let mut entry = test_entry(
         SkillSourceKind::Orchestrator,
-        "codex_apps",
+        "orchestrator",
         &format!("orchestrator/{opaque_suffix}"),
         &format!("skill://orchestrator/{opaque_suffix}/SKILL.md"),
     );
@@ -1581,7 +1581,7 @@ async fn skills_list_only_returns_model_visible_bounded_metadata() -> TestResult
     let [first_entry, mut middle_entry, mut final_entry] = ["p0", "p1", "p2"].map(|name| {
         test_entry(
             SkillSourceKind::Orchestrator,
-            "codex_apps",
+            "orchestrator",
             name,
             &format!("skill://{name}/SKILL.md"),
         )
@@ -1598,7 +1598,7 @@ async fn skills_list_only_returns_model_visible_bounded_metadata() -> TestResult
                     final_entry,
                     test_entry(
                         SkillSourceKind::Orchestrator,
-                        "codex_apps",
+                        "orchestrator",
                         "orchestrator/hidden",
                         "skill://orchestrator/hidden/SKILL.md",
                     )
@@ -1838,7 +1838,7 @@ async fn orchestrator_catalog_snapshot_caches_failure() -> TestResult {
             catalog: SkillCatalog {
                 entries: vec![test_entry(
                     SkillSourceKind::Orchestrator,
-                    "codex_apps",
+                    "orchestrator",
                     "orchestrator/first",
                     "skill://orchestrator/first/SKILL.md",
                 )],

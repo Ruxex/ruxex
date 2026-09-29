@@ -518,9 +518,6 @@
             "enable_experimental_windows_sandbox": {
               "type": "boolean"
             },
-            "enable_mcp_apps": {
-              "type": "boolean"
-            },
             "enable_request_compression": {
               "type": "boolean"
             },
@@ -5589,9 +5586,6 @@
         "enable_experimental_windows_sandbox": {
           "type": "boolean"
         },
-        "enable_mcp_apps": {
-          "type": "boolean"
-        },
         "enable_request_compression": {
           "type": "boolean"
         },
@@ -5898,7 +5892,7 @@
       "description": "Lifecycle hooks configured inline in TOML plus user-level overrides."
     },
     "include_collaboration_mode_instructions": {
-      "description": "Whether to inject the `<apps_instructions>` developer block. Whether to inject the `<collaboration_mode>` developer block.",
+      "description": "Whether to inject the `<collaboration_mode>` developer block.",
       "type": "boolean"
     },
     "include_environment_context": {

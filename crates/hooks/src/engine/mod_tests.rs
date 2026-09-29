@@ -1871,10 +1871,10 @@ fn bundled_cleanup_trust_requires_matching_plugin_server_and_event() {
 }
 
 #[test]
-fn local_hosted_app_cleanup_hooks_require_saved_trust() {
-    let mut source = bundled_cleanup_source("browser@openai-curated-remote", "codex_apps", "Stop");
+fn local_mcp_cleanup_hooks_require_saved_trust() {
+    let mut source = bundled_cleanup_source("browser@openai-curated-remote", "calendar_mcp", "Stop");
     source.hooks.stop[0].hooks[0] = HookHandlerConfig::McpTool {
-        server: "codex_apps".to_string(),
+        server: "calendar_mcp".to_string(),
         tool: "browser.turn_ended".to_string(),
         input: Default::default(),
         timeout_sec: None,
