@@ -2556,7 +2556,7 @@ async fn thread_resume_returns_rollout_history() -> Result<()> {
 }
 
 #[tokio::test]
-async fn thread_resume_redacts_payloads_for_chatgpt_remote_clients() -> Result<()> {
+async fn thread_resume_redacts_payloads_for_named_remote_clients() -> Result<()> {
     for client_name in ["codex_chatgpt_android_remote", "codex_chatgpt_ios_remote"] {
         let remote_resume = resume_redaction_fixture(Some(client_name)).await?;
         let remote_turn = remote_resume
