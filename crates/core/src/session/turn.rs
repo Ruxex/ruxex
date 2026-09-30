@@ -2163,10 +2163,6 @@ async fn try_run_sampling_request(
                         .await;
                 }
             }
-            ResponseEvent::TurnModerationMetadata(metadata) => {
-                sess.emit_turn_moderation_metadata(&turn_context, metadata)
-                    .await;
-            }
             ResponseEvent::SafetyBuffering(buffering) => {
                 sess.send_event(
                     &turn_context,

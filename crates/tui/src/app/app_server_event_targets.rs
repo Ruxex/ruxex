@@ -132,9 +132,6 @@ pub(super) fn server_notification_thread_target(
         ServerNotification::ModelSafetyBufferingUpdated(notification) => {
             Some(notification.thread_id.as_str())
         }
-        ServerNotification::TurnModerationMetadata(notification) => {
-            Some(notification.thread_id.as_str())
-        }
         ServerNotification::AuthRecoveryStarted(notification)
         | ServerNotification::AuthRecoveryCompleted(notification) => {
             Some(notification.thread_id.as_str())
