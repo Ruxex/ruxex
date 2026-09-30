@@ -1,6 +1,4 @@
 use crate::ThreadId;
-use crate::auth::KnownPlan;
-use crate::auth::PlanType;
 pub use crate::auth::RefreshTokenFailedError;
 pub use crate::auth::RefreshTokenFailedReason;
 use crate::exec_output::ExecToolCallOutput;
@@ -8,13 +6,7 @@ use crate::network_policy::NetworkPolicyDecisionPayload;
 use crate::protocol::CodexErrorInfo;
 use crate::protocol::ErrorEvent;
 use crate::protocol::MisalignmentErrorDetails;
-use crate::protocol::RateLimitReachedType;
-use crate::protocol::RateLimitSnapshot;
 use crate::protocol::TruncationPolicy;
-use chrono::DateTime;
-use chrono::Datelike;
-use chrono::Local;
-use chrono::Utc;
 use codex_async_utils::CancelErr;
 use codex_http_client::HttpError;
 use codex_utils_string::truncate_middle_chars;
@@ -131,8 +123,6 @@ pub enum CodexErrorDetails {
     /// Invalid image.
     #[error("Image poisoning")]
     InvalidImageRequest(),
-    #[error("{0}")]
-    UsageLimitReached(UsageLimitReachedError),
     #[error("Selected model is at capacity. Please try a different model.")]
     ServerOverloaded,
     #[error("{message}")]
@@ -148,10 +138,6 @@ pub enum CodexErrorDetails {
     ConnectionFailed(ConnectionFailedError),
     #[error("Quota exceeded. Check your plan and billing details.")]
     QuotaExceeded,
-    #[error(
-        "To use Codex with your ChatGPT plan, upgrade to Plus: https://chatgpt.com/explore/plus."
-    )]
-    UsageNotIncluded,
     #[error("We’re currently experiencing high demand, which may cause temporary errors.")]
     InternalServerError,
     /// Retry limit exceeded.
@@ -322,7 +308,6 @@ impl CodexErr {
         Interrupted,
         ServerOverloaded,
         QuotaExceeded,
-        UsageNotIncluded,
         InternalServerError,
         InternalAgentDied,
         LandlockSandboxExecutableNotProvided,
@@ -333,7 +318,6 @@ impl CodexErr {
         ThreadNotFound(thread_id: ThreadId),
         UnexpectedStatus(error: UnexpectedResponseError),
         InvalidRequest(message: String),
-        UsageLimitReached(error: UsageLimitReachedError),
         ResponseStreamFailed(error: ResponseStreamFailed),
         ConnectionFailed(error: ConnectionFailedError),
         RetryLimit(error: RetryLimitReachedError),
@@ -376,7 +360,6 @@ impl CodexErr {
             | CodexErrorDetails::Interrupted
             | CodexErrorDetails::EnvVar(_)
             | CodexErrorDetails::Fatal(_)
-            | CodexErrorDetails::UsageNotIncluded
             | CodexErrorDetails::QuotaExceeded
             | CodexErrorDetails::InvalidImageRequest()
             | CodexErrorDetails::InvalidRequest(_)
@@ -391,7 +374,6 @@ impl CodexErr {
             | CodexErrorDetails::AgentLimitReached { .. }
             | CodexErrorDetails::Spawn
             | CodexErrorDetails::SessionConfiguredNotFirstEvent
-            | CodexErrorDetails::UsageLimitReached(_)
             | CodexErrorDetails::ServerOverloaded
             | CodexErrorDetails::CyberPolicy { .. }
             | CodexErrorDetails::MisalignmentPolicyViolation { .. } => false,
@@ -434,9 +416,7 @@ impl CodexErr {
             CodexErrorDetails::ContextWindowExceeded => CodexErrorInfo::ContextWindowExceeded,
             CodexErrorDetails::SessionBudgetExceeded => CodexErrorInfo::SessionBudgetExceeded,
             CodexErrorDetails::RateLimitExceeded(_) => CodexErrorInfo::RateLimitExceeded,
-            CodexErrorDetails::UsageLimitReached(_)
-            | CodexErrorDetails::QuotaExceeded
-            | CodexErrorDetails::UsageNotIncluded => CodexErrorInfo::UsageLimitExceeded,
+            CodexErrorDetails::QuotaExceeded => CodexErrorInfo::UsageLimitExceeded,
             CodexErrorDetails::ServerOverloaded => CodexErrorInfo::ServerOverloaded,
             CodexErrorDetails::CyberPolicy { .. } => CodexErrorInfo::CyberPolicy,
             CodexErrorDetails::MisalignmentPolicyViolation { .. } => {
@@ -630,179 +610,6 @@ impl std::fmt::Display for RetryLimitReachedError {
                 .unwrap_or_default()
         )
     }
-}
-
-#[derive(Debug)]
-pub struct UsageLimitReachedError {
-    pub plan_type: Option<PlanType>,
-    pub resets_at: Option<DateTime<Utc>>,
-    pub rate_limits: Option<Box<RateLimitSnapshot>>,
-    pub promo_message: Option<String>,
-    pub rate_limit_reached_type: Option<RateLimitReachedType>,
-}
-
-impl std::fmt::Display for UsageLimitReachedError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // Reserve is a fallback for exhausted ordinary usage, so keep the standard
-        // promo/plan recovery copy below instead of suggesting another model.
-        if let Some(limit_name) = self
-            .rate_limits
-            .as_ref()
-            .and_then(|snapshot| snapshot.limit_name.as_deref())
-            .map(str::trim)
-            .filter(|name| !name.is_empty())
-            && !limit_name.eq_ignore_ascii_case("codex")
-            && !limit_name.eq_ignore_ascii_case("gpt-reserve")
-        {
-            return write!(
-                f,
-                "You’ve hit your usage limit for {limit_name}. Switch to another model now,{}",
-                retry_suffix_after_or(self.resets_at.as_ref())
-            );
-        }
-
-        if let Some(rate_limit_reached_type) = self.rate_limit_reached_type {
-            match rate_limit_reached_type {
-                RateLimitReachedType::WorkspaceOwnerCreditsDepleted => {
-                    return write!(
-                        f,
-                        "Your workspace is out of credits. Add credits to continue."
-                    );
-                }
-                RateLimitReachedType::WorkspaceMemberCreditsDepleted => {
-                    return write!(
-                        f,
-                        "Your workspace is out of credits. Ask your workspace owner to refill in order to continue."
-                    );
-                }
-                RateLimitReachedType::WorkspaceOwnerUsageLimitReached => {
-                    return write!(
-                        f,
-                        "You hit your spend cap set in your workspace. Increase your spend cap to continue."
-                    );
-                }
-                RateLimitReachedType::WorkspaceMemberUsageLimitReached => {
-                    return write!(
-                        f,
-                        "You hit your spend cap set by the owner of your workspace. Ask an owner to increase your spend cap to continue."
-                    );
-                }
-                RateLimitReachedType::RateLimitReached => {
-                    // Generic limits intentionally use the existing promo or plan copy below.
-                }
-            }
-        }
-
-        if let Some(promo_message) = &self.promo_message {
-            return write!(
-                f,
-                "You’ve hit your usage limit. {promo_message},{}",
-                retry_suffix_after_or(self.resets_at.as_ref())
-            );
-        }
-
-        let message = match self.plan_type.as_ref() {
-            Some(PlanType::Known(KnownPlan::Plus)) => format!(
-                "You’ve hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits{}",
-                retry_suffix_after_or(self.resets_at.as_ref())
-            ),
-            Some(PlanType::Known(
-                KnownPlan::Team
-                | KnownPlan::SelfServeBusinessProLite
-                | KnownPlan::SelfServeBusinessUsageBased
-                | KnownPlan::Business
-                | KnownPlan::Ent26
-                | KnownPlan::EnterpriseCbpAutomation
-                | KnownPlan::EnterpriseCbpUsageBased,
-            )) => {
-                format!(
-                    "You’ve hit your usage limit. To get more access now, send a request to your admin{}",
-                    retry_suffix_after_or(self.resets_at.as_ref())
-                )
-            }
-            Some(PlanType::Known(KnownPlan::Free)) | Some(PlanType::Known(KnownPlan::Go)) => {
-                format!(
-                    "You’ve hit your usage limit. Upgrade to Plus to continue using Codex (https://chatgpt.com/explore/plus),{}",
-                    retry_suffix_after_or(self.resets_at.as_ref())
-                )
-            }
-            Some(PlanType::Known(KnownPlan::Pro | KnownPlan::ProLite)) => format!(
-                "You’ve hit your usage limit. Visit https://chatgpt.com/codex/settings/usage to purchase more credits{}",
-                retry_suffix_after_or(self.resets_at.as_ref())
-            ),
-            Some(PlanType::Known(
-                KnownPlan::Enterprise | KnownPlan::Edu | KnownPlan::EduPlus | KnownPlan::EduPro,
-            )) => format!(
-                "You’ve hit your usage limit.{}",
-                retry_suffix(self.resets_at.as_ref())
-            ),
-            Some(PlanType::Unknown(_)) | None => format!(
-                "You’ve hit your usage limit.{}",
-                retry_suffix(self.resets_at.as_ref())
-            ),
-        };
-
-        write!(f, "{message}")
-    }
-}
-
-fn retry_suffix(resets_at: Option<&DateTime<Utc>>) -> String {
-    if let Some(resets_at) = resets_at {
-        let formatted = format_retry_timestamp(resets_at);
-        format!(" Try again at {formatted}.")
-    } else {
-        " Try again later.".to_string()
-    }
-}
-
-fn retry_suffix_after_or(resets_at: Option<&DateTime<Utc>>) -> String {
-    if let Some(resets_at) = resets_at {
-        let formatted = format_retry_timestamp(resets_at);
-        format!(" or try again at {formatted}.")
-    } else {
-        " or try again later.".to_string()
-    }
-}
-
-fn format_retry_timestamp(resets_at: &DateTime<Utc>) -> String {
-    let local_reset = resets_at.with_timezone(&Local);
-    let local_now = now_for_retry().with_timezone(&Local);
-    if local_reset.date_naive() == local_now.date_naive() {
-        local_reset.format("%-I:%M %p").to_string()
-    } else {
-        let suffix = day_suffix(local_reset.day());
-        local_reset
-            .format(&format!("%b %-d{suffix}, %Y %-I:%M %p"))
-            .to_string()
-    }
-}
-
-fn day_suffix(day: u32) -> &'static str {
-    match day {
-        11..=13 => "th",
-        _ => match day % 10 {
-            1 => "st",
-            2 => "nd", // codespell:ignore
-            3 => "rd",
-            _ => "th",
-        },
-    }
-}
-
-#[cfg(test)]
-thread_local! {
-    static NOW_OVERRIDE: std::cell::RefCell<Option<DateTime<Utc>>> =
-        const { std::cell::RefCell::new(None) };
-}
-
-fn now_for_retry() -> DateTime<Utc> {
-    #[cfg(test)]
-    {
-        if let Some(now) = NOW_OVERRIDE.with(|cell| *cell.borrow()) {
-            return now;
-        }
-    }
-    Utc::now()
 }
 
 #[derive(Debug)]

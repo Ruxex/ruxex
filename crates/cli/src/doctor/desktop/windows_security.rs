@@ -153,7 +153,6 @@ fn event_target(value: &str) -> Option<&'static str> {
         "codex-command-runner.exe" => Some("command_runner"),
         "codex.exe" => Some("codex"),
         "codex-desktop.exe" => Some("codex_desktop"),
-        "chatgpt.exe" | "electron.exe" if trusted => Some("codex_desktop"),
         "rg.exe" if trusted => Some("ripgrep"),
         _ if package => Some("codex_desktop_package"),
         _ => None,

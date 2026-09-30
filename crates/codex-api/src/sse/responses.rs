@@ -424,8 +424,13 @@ pub fn process_responses_event(
                         response_error = ApiError::ContextWindowExceeded;
                     } else if is_quota_exceeded_error(&error) {
                         response_error = ApiError::QuotaExceeded;
-                    } else if is_usage_not_included(&error) {
-                        response_error = ApiError::UsageNotIncluded;
+                    } else if error.code.as_deref() == Some("usage_not_included") {
+                        response_error = ApiError::RateLimitExceeded {
+                            message: error
+                                .message
+                                .unwrap_or_else(|| "Rate limit exceeded".to_string()),
+                            delay: None,
+                        };
                     } else if is_cyber_policy_error(&error) {
                         let message = cyber_policy_message(error.message);
                         response_error = ApiError::CyberPolicy { message };
@@ -725,10 +730,6 @@ fn is_quota_exceeded_error(error: &Error) -> bool {
                 | "project_spend_limit_exceeded"
         )
     )
-}
-
-fn is_usage_not_included(error: &Error) -> bool {
-    error.code.as_deref() == Some("usage_not_included")
 }
 
 fn is_cyber_policy_error(error: &Error) -> bool {

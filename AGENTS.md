@@ -10,6 +10,8 @@ Current work is Level 1 Phase 3 of [`docs/openai-decoupling-plan.md`](docs/opena
 
 For the current Phase 3 work, treat [`docs/openai-decoupling-candidates.md`](docs/openai-decoupling-candidates.md) as the primary work queue until further notice. Follow its stated inspection order, starting with unreferenced crates, source files, and generated artifacts. The entries are investigation candidates, not deletion decisions: audit producers and consumers first, then record an explicit `remove`, `retain`, or `migrate-in-place` decision in [`docs/pre-release-compatibility-inventory.md`](docs/pre-release-compatibility-inventory.md) before changing code.
 
+The immediate follow-up work is tracked in [`docs/superpowers/plans/2026-09-30-remove-chatgpt-hosted-surfaces.md`](docs/superpowers/plans/2026-09-30-remove-chatgpt-hosted-surfaces.md). It covers the planned removal or provider-neutralization of ChatGPT-specific update/install paths, desktop/security detection, and usage/billing error presentation.
+
 Update [`docs/pre-release-compatibility-inventory.md`](docs/pre-release-compatibility-inventory.md) in this order: persisted rollout/thread-history readers and migrations, protocol/app-server aliases and schemas, CLI/config/import compatibility, UI/observability/runtime shims, build-system/experimental scaffolding, then the final dependency/documentation audit. Each production match must have a producer/consumer audit and an explicit `remove`, `retain`, or `migrate-in-place` decision before code is changed.
 
 Repository-wide verification policy for this `AGENTS.md`: standalone test execution is not the default verification for this cleanup work. Use the following commands as its test substitutes:

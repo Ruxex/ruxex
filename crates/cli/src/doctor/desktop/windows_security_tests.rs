@@ -49,7 +49,7 @@ fn defender_distinguishes_detection_and_remediation() {
 fn only_trusted_codex_executables_are_reported() {
     for (path, expected) in [
         ("codex.exe", true),
-        (r"OpenAI.Codex_2p2nqsd0c76g0\ChatGPT.exe", true),
+        (r"OpenAI.Codex_2p2nqsd0c76g0\ChatGPT.exe", false),
         ("evil-codex.exe", false),
         (r"C:\Other\ChatGPT.exe", false),
         (r"OpenAI.CodexEvil_1\ChatGPT.exe", false),

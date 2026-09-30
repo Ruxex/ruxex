@@ -1,6 +1,5 @@
 use codex_protocol::account::PlanType;
 use codex_protocol::protocol::CreditsSnapshot;
-use codex_protocol::protocol::RateLimitReachedType;
 use codex_protocol::protocol::RateLimitSnapshot;
 use codex_protocol::protocol::RateLimitWindow;
 use http::HeaderMap;
@@ -175,21 +174,6 @@ fn map_event_window(window: Option<&RateLimitEventWindow>) -> Option<RateLimitWi
         window_minutes: window.window_minutes,
         resets_at: window.reset_at,
     })
-}
-
-/// Parses the bespoke Codex rate-limit headers into a `RateLimitSnapshot`.
-pub fn parse_promo_message(headers: &HeaderMap) -> Option<String> {
-    parse_header_str(headers, "x-codex-promo-message")
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-        .map(std::string::ToString::to_string)
-}
-
-pub(crate) fn parse_rate_limit_reached_type(headers: &HeaderMap) -> Option<RateLimitReachedType> {
-    parse_header_str(headers, "x-codex-rate-limit-reached-type")?
-        .trim()
-        .parse()
-        .ok()
 }
 
 fn parse_rate_limit_window(

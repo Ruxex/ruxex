@@ -1,27 +1,18 @@
 use crate::TransportError;
 use crate::error::ApiError;
-use crate::rate_limits::parse_promo_message;
-use crate::rate_limits::parse_rate_limit_for_limit;
-use crate::rate_limits::parse_rate_limit_reached_type;
-use chrono::DateTime;
-use chrono::Utc;
-use codex_protocol::auth::PlanType;
 use codex_protocol::error::CodexErr;
 use codex_protocol::error::CodexErrorDetails;
 use codex_protocol::error::ConnectionFailedError;
 use codex_protocol::error::RetryLimitReachedError;
 use codex_protocol::error::UnexpectedResponseError;
-use codex_protocol::error::UsageLimitReachedError;
 use codex_protocol::protocol::MisalignmentErrorDetails;
 use http::HeaderMap;
-use serde::Deserialize;
 use serde_json::Value;
 
 pub fn map_api_error(err: ApiError) -> CodexErr {
     match err {
         ApiError::ContextWindowExceeded => CodexErr::ContextWindowExceeded,
         ApiError::QuotaExceeded => CodexErr::QuotaExceeded,
-        ApiError::UsageNotIncluded => CodexErr::UsageNotIncluded,
         ApiError::Retryable { message, delay } => {
             let error = CodexErr::Stream(message);
             match delay {
@@ -134,48 +125,31 @@ pub fn map_api_error(err: ApiError) -> CodexErr {
                 } else if status == http::StatusCode::INTERNAL_SERVER_ERROR {
                     CodexErr::InternalServerError
                 } else if status == http::StatusCode::TOO_MANY_REQUESTS {
-                    if let Ok(err) = serde_json::from_str::<UsageErrorResponse>(&body_text) {
-                        if err.error.error_type.as_deref() == Some("usage_limit_reached") {
-                            let limit_id = extract_header(headers.as_ref(), ACTIVE_LIMIT_HEADER);
-                            let promo_message = headers.as_ref().and_then(parse_promo_message);
-                            let rate_limit_reached_type =
-                                headers.as_ref().and_then(parse_rate_limit_reached_type);
-                            let rate_limits = headers
-                                .as_ref()
-                                .and_then(|map| {
-                                    parse_rate_limit_for_limit(map, limit_id.as_deref())
-                                })
-                                .map(|mut snapshot| {
-                                    snapshot.rate_limit_reached_type = rate_limit_reached_type;
-                                    snapshot
-                                });
-                            let resets_at = err
-                                .error
-                                .resets_at
-                                .and_then(|seconds| DateTime::<Utc>::from_timestamp(seconds, 0));
-                            return CodexErr::UsageLimitReached(UsageLimitReachedError {
-                                plan_type: err.error.plan_type,
-                                resets_at,
-                                rate_limits: rate_limits.map(Box::new),
-                                promo_message,
-                                rate_limit_reached_type,
-                            });
-                        } else if err.error.error_type.as_deref() == Some("usage_not_included") {
-                            return CodexErr::UsageNotIncluded;
-                        } else if err.error.error_type.as_deref() == Some("insufficient_quota")
-                            || matches!(
-                                err.error.code.as_deref(),
-                                Some(
-                                    "insufficient_quota"
-                                        | "credit_balance_exhausted"
-                                        | "organization_spend_limit_exceeded"
-                                        | "project_spend_limit_exceeded"
-                                        | "organization_usage_limit_exceeded"
-                                )
+                    if let Ok(parsed) = serde_json::from_str::<Value>(&body_text)
+                        && let Some(error) = parsed.get("error")
+                    {
+                        if matches!(
+                            error.get("type").and_then(Value::as_str),
+                            Some("insufficient_quota")
+                        ) || matches!(
+                            error.get("code").and_then(Value::as_str),
+                            Some(
+                                "insufficient_quota"
+                                    | "credit_balance_exhausted"
+                                    | "organization_spend_limit_exceeded"
+                                    | "project_spend_limit_exceeded"
+                                    | "organization_usage_limit_exceeded"
                             )
-                        {
+                        ) {
                             return CodexErr::QuotaExceeded;
                         }
+                        let message = error
+                            .get("message")
+                            .and_then(Value::as_str)
+                            .filter(|message| !message.trim().is_empty())
+                            .unwrap_or("Rate limit exceeded")
+                            .to_owned();
+                        return CodexErr::new(CodexErrorDetails::RateLimitExceeded(message));
                     }
 
                     CodexErr::RetryLimit(RetryLimitReachedError {
@@ -210,7 +184,6 @@ pub fn map_api_error(err: ApiError) -> CodexErr {
     }
 }
 
-const ACTIVE_LIMIT_HEADER: &str = "x-codex-active-limit";
 const REQUEST_ID_HEADER: &str = "x-request-id";
 const CF_RAY_HEADER: &str = "cf-ray";
 const CYBER_POLICY_ERROR_CODE: &str = "cyber_policy";
@@ -251,18 +224,4 @@ fn extract_header(headers: Option<&HeaderMap>, name: &str) -> Option<String> {
             .and_then(|value| value.to_str().ok())
             .map(str::to_string)
     })
-}
-
-#[derive(Debug, Deserialize)]
-struct UsageErrorResponse {
-    error: UsageErrorBody,
-}
-
-#[derive(Debug, Deserialize)]
-struct UsageErrorBody {
-    code: Option<String>,
-    #[serde(rename = "type")]
-    error_type: Option<String>,
-    plan_type: Option<PlanType>,
-    resets_at: Option<i64>,
 }

@@ -1251,13 +1251,6 @@ async fn run_sampling_request(
                     sess.set_total_tokens_full(&turn_context).await;
                     return Err(err);
                 }
-                CodexErrorDetails::UsageLimitReached(e) => {
-                    let rate_limits = e.rate_limits.clone();
-                    if let Some(rate_limits) = rate_limits {
-                        sess.update_rate_limits(&turn_context, *rate_limits).await;
-                    }
-                    return Err(err);
-                }
                 _ => err,
             },
         };

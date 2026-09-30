@@ -17,8 +17,6 @@ pub enum ApiError {
     ContextWindowExceeded,
     #[error("quota exceeded")]
     QuotaExceeded,
-    #[error("usage not included")]
-    UsageNotIncluded,
     #[error("retryable error: {message}")]
     Retryable {
         message: String,

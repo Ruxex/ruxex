@@ -1,6 +1,5 @@
 use super::*;
 use codex_protocol::protocol::CodexErrorInfo;
-use codex_protocol::protocol::RateLimitReachedType;
 use pretty_assertions::assert_eq;
 
 #[test]
@@ -342,9 +341,7 @@ fn map_api_error_distinguishes_http_quota_errors_from_rate_limits() {
         serde_json::json!({"type": "rate_limit_error", "code": "slow_down"}),
     ] {
         let expected = if error["type"] == "rate_limit_error" {
-            CodexErrorInfo::ResponseTooManyFailedAttempts {
-                http_status_code: Some(429),
-            }
+            CodexErrorInfo::RateLimitExceeded
         } else {
             CodexErrorInfo::UsageLimitExceeded
         };
@@ -356,171 +353,6 @@ fn map_api_error_distinguishes_http_quota_errors_from_rate_limits() {
         }));
 
         assert_eq!(err.to_codex_protocol_error(), expected, "{error}");
-    }
-}
-
-#[test]
-fn map_api_error_maps_usage_limit_limit_name_header() {
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        ACTIVE_LIMIT_HEADER,
-        http::HeaderValue::from_static("codex_other"),
-    );
-    headers.insert(
-        "x-codex-other-limit-name",
-        http::HeaderValue::from_static("codex_other"),
-    );
-    let body = serde_json::json!({
-        "error": {
-            "type": "usage_limit_reached",
-            "plan_type": "pro",
-        }
-    })
-    .to_string();
-    let err = map_api_error(ApiError::Transport(TransportError::Http {
-        status: http::StatusCode::TOO_MANY_REQUESTS,
-        url: Some("http://example.com/v1/responses".to_string()),
-        headers: Some(headers),
-        body: Some(body),
-    }));
-
-    let CodexErrorDetails::UsageLimitReached(usage_limit) = err.details() else {
-        panic!("expected CodexErrorDetails::UsageLimitReached, got {err:?}");
-    };
-    assert_eq!(
-        usage_limit
-            .rate_limits
-            .as_ref()
-            .and_then(|snapshot| snapshot.limit_name.as_deref()),
-        Some("codex_other")
-    );
-}
-
-#[test]
-fn map_api_error_does_not_fallback_limit_name_to_limit_id() {
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        ACTIVE_LIMIT_HEADER,
-        http::HeaderValue::from_static("codex_other"),
-    );
-    let body = serde_json::json!({
-        "error": {
-            "type": "usage_limit_reached",
-            "plan_type": "pro",
-        }
-    })
-    .to_string();
-    let err = map_api_error(ApiError::Transport(TransportError::Http {
-        status: http::StatusCode::TOO_MANY_REQUESTS,
-        url: Some("http://example.com/v1/responses".to_string()),
-        headers: Some(headers),
-        body: Some(body),
-    }));
-
-    let CodexErrorDetails::UsageLimitReached(usage_limit) = err.details() else {
-        panic!("expected CodexErrorDetails::UsageLimitReached, got {err:?}");
-    };
-    assert_eq!(
-        usage_limit
-            .rate_limits
-            .as_ref()
-            .and_then(|snapshot| snapshot.limit_name.as_deref()),
-        None
-    );
-}
-
-#[test]
-fn map_api_error_copies_rate_limit_reached_type_to_usage_limit_snapshot() {
-    for (active_limit, expected_limit_id) in [(None, "codex"), (Some("codex_other"), "codex_other")]
-    {
-        let mut headers = HeaderMap::new();
-        if let Some(active_limit) = active_limit {
-            headers.insert(
-                ACTIVE_LIMIT_HEADER,
-                http::HeaderValue::from_static(active_limit),
-            );
-        }
-        for (name, value) in [
-            ("x-codex-credits-has-credits", "true"),
-            ("x-codex-credits-unlimited", "false"),
-            ("x-codex-credits-balance", ""),
-            (
-                "x-codex-rate-limit-reached-type",
-                "workspace_member_usage_limit_reached",
-            ),
-        ] {
-            headers.insert(name, http::HeaderValue::from_static(value));
-        }
-        let body = serde_json::json!({
-            "error": {
-                "type": "usage_limit_reached",
-                "plan_type": "pro",
-            }
-        })
-        .to_string();
-
-        let err = map_api_error(ApiError::Transport(TransportError::Http {
-            status: http::StatusCode::TOO_MANY_REQUESTS,
-            url: Some("http://example.com/v1/responses".to_string()),
-            headers: Some(headers),
-            body: Some(body),
-        }));
-
-        let CodexErrorDetails::UsageLimitReached(usage_limit) = err.details() else {
-            panic!("expected CodexErrorDetails::UsageLimitReached, got {err:?}");
-        };
-        assert_eq!(
-            usage_limit.rate_limit_reached_type,
-            Some(RateLimitReachedType::WorkspaceMemberUsageLimitReached)
-        );
-        let snapshot = usage_limit
-            .rate_limits
-            .as_ref()
-            .expect("usage limit snapshot");
-        assert_eq!(snapshot.limit_id.as_deref(), Some(expected_limit_id));
-        assert_eq!(
-            snapshot.rate_limit_reached_type,
-            Some(RateLimitReachedType::WorkspaceMemberUsageLimitReached)
-        );
-        assert_eq!(
-            snapshot.credits.as_ref().map(|credits| (
-                credits.has_credits,
-                credits.unlimited,
-                credits.balance.as_deref()
-            )),
-            Some((true, false, None))
-        );
-    }
-}
-
-#[test]
-fn map_api_error_ignores_unparseable_rate_limit_reached_type_headers() {
-    let values = [
-        http::HeaderValue::from_static("future_rate_limit_reached_type"),
-        http::HeaderValue::from_bytes(&[0xff]).expect("valid opaque header value"),
-    ];
-
-    for value in values {
-        let mut headers = HeaderMap::new();
-        headers.insert("x-codex-rate-limit-reached-type", value);
-        let body = serde_json::json!({
-            "error": {
-                "type": "usage_limit_reached",
-                "plan_type": "pro",
-            }
-        })
-        .to_string();
-        let err = map_api_error(ApiError::Transport(TransportError::Http {
-            status: http::StatusCode::TOO_MANY_REQUESTS,
-            url: Some("http://example.com/v1/responses".to_string()),
-            headers: Some(headers),
-            body: Some(body),
-        }));
-
-        let CodexErrorDetails::UsageLimitReached(usage_limit) = err.details() else {
-            panic!("expected CodexErrorDetails::UsageLimitReached, got {err:?}");
-        };
-        assert_eq!(usage_limit.rate_limit_reached_type, None);
     }
 }
 

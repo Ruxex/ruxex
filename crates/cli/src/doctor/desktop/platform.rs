@@ -221,7 +221,7 @@ async fn installed_macos_app() -> Result<Option<InstalledApp>, DiscoveryError> {
     let applications = std::iter::once(PathBuf::from("/Applications"))
         .chain(std::env::var_os("HOME").map(|home| PathBuf::from(home).join("Applications")))
         .flat_map(|directory| {
-            ["ChatGPT.app", "Codex.app"]
+            ["Codex.app"]
                 .into_iter()
                 .map(move |application| directory.join(application))
         });

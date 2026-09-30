@@ -18,7 +18,7 @@ const SECURITY_LOG_PREDICATE: &str = concat!(
     "OR process BEGINSWITH 'XProtect' OR subsystem BEGINSWITH 'com.apple.syspolicy' ",
     "OR subsystem CONTAINS[c] 'XProtect' ",
     "OR subsystem == 'com.apple.security.assessment') AND ",
-    "(eventMessage CONTAINS[c] 'codex' OR eventMessage CONTAINS[c] 'chatgpt' ",
+    "(eventMessage CONTAINS[c] 'codex' ",
     "OR eventMessage CONTAINS[c] '.plugin-appserver' ",
     "OR eventMessage CONTAINS[c] '100024' OR eventMessage CONTAINS[c] 'EMFILE' ",
     "OR eventMessage CONTAINS[c] 'ENFILE' ",
@@ -97,7 +97,6 @@ fn classify_security_events(output: &str) -> Evidence {
         if !contains(&[
             "com.openai.codex",
             "codex.app",
-            "chatgpt.app",
             ".plugin-appserver",
             "codex-command-runner",
         ]) || contains(&["not blocked", "not denied"])
