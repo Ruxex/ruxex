@@ -62,10 +62,11 @@ pub(crate) async fn request_manual_update(
 
 const INITIAL_UPDATE_DELAY: Duration = Duration::from_secs(5 * 60);
 const RESTART_RETRY_INTERVAL: Duration = Duration::from_millis(50);
-#[cfg(unix)]
-const INSTALL_URL: &str = "https://chatgpt.com/codex/install.sh";
-#[cfg(windows)]
-const INSTALL_URL: &str = "https://chatgpt.com/codex/install.ps1";
+#[cfg(not(test))]
+const INSTALLER_URL_ENV: &str = "CODEX_INSTALLER_URL";
+
+#[cfg(test)]
+const INSTALL_URL: &str = "https://example.invalid/codex/install";
 
 pub(crate) async fn run(
     http_client_factory: HttpClientFactory,
@@ -648,12 +649,27 @@ async fn cancel_installer(child: &mut tokio::process::Child, package_root: &Path
 }
 
 async fn fetch_installer_script(http: &impl InstallerHttp) -> Result<Vec<u8>> {
-    match http.get(INSTALL_URL).await? {
+    let url = configured_installer_url()?;
+    match http.get(&url).await? {
         InstallerResponse::Success(body) => Ok(body),
         InstallerResponse::Unsuccessful { status } => {
             anyhow::bail!("standalone Codex updater request failed with status {status}")
         }
     }
+}
+
+fn configured_installer_url() -> Result<String> {
+    #[cfg(test)]
+    {
+        return Ok(INSTALL_URL.to_string());
+    }
+
+    #[cfg(not(test))]
+    std::env::var(INSTALLER_URL_ENV).with_context(|| {
+        format!(
+            "standalone Codex updates require a configured provider installer URL in {INSTALLER_URL_ENV}"
+        )
+    })
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

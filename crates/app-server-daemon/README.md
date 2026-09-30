@@ -74,14 +74,16 @@ running.
 For a new Linux or macOS machine:
 
 ```sh
-curl -fsSL https://chatgpt.com/codex/install.sh | sh
+Set `CODEX_INSTALLER_URL` to a provider installer endpoint before enabling
+standalone updates, then run the provider's documented installation command.
 $HOME/.codex/packages/standalone/current/codex app-server daemon bootstrap
 ```
 
 On Windows, use a non-elevated PowerShell terminal whose host allows breakaway:
 
 ```powershell
-irm https://chatgpt.com/codex/install.ps1 | iex
+The installer endpoint is provider-specific; configure it through
+`CODEX_INSTALLER_URL` rather than relying on a built-in hosted URL.
 $codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME '.codex' }
 & "$codexHome\packages\standalone\current\bin\codex.exe" app-server daemon bootstrap
 ```

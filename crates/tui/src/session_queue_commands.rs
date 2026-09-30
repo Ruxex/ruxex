@@ -98,7 +98,7 @@ pub(super) async fn run_session_queue_action_with_app_server(
             &[SessionCollection::Active],
             &[
                 super::resume_source_kinds(/*include_non_interactive*/ true),
-                // An empty filter includes Atlas/ChatGPT sessions.
+                // An empty filter includes the interactive client sessions.
                 Vec::new(),
             ],
             /*model_provider*/ None,

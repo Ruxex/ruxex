@@ -474,8 +474,6 @@ pub(crate) fn resolve_multi_agent_version(
 
 pub(crate) const INITIAL_SUBMIT_ID: &str = "";
 pub(crate) const SUBMISSION_CHANNEL_CAPACITY: usize = 512;
-const CYBER_VERIFY_URL: &str = "https://chatgpt.com/cyber";
-const CYBER_SAFETY_URL: &str = "https://developers.openai.com/codex/concepts/cyber-safety";
 
 impl Session {
     /// Spawn and initialize a new session.
@@ -3573,9 +3571,8 @@ impl Session {
 
         warn!("server reported model {server_model} while requested model was {requested_model}");
 
-        let warning_message = format!(
-            "Your account was flagged for potentially high-risk cyber activity and this request was routed to gpt-5.2 as a fallback. To regain access to gpt-5.3-codex, apply for trusted access: {CYBER_VERIFY_URL} or learn more: {CYBER_SAFETY_URL}"
-        );
+        let warning_message =
+            "Your account was flagged for potentially high-risk cyber activity and this request was routed to a safer fallback model. To regain access, follow your provider's trusted-access process.".to_string();
 
         self.send_event(
             turn_context,

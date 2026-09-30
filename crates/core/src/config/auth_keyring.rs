@@ -23,7 +23,8 @@ impl Config {
             auth_credentials_store_mode: self.cli_auth_credentials_store_mode,
             keyring_backend_kind: self.auth_keyring_backend_kind(),
             forced_login_method: self.forced_login_method,
-            managed_auth_base_url: Some(self.managed_auth_base_url.clone()),
+            managed_auth_base_url: (!self.managed_auth_base_url.is_empty())
+                .then(|| self.managed_auth_base_url.clone()),
             forced_managed_workspace_id: self.forced_managed_workspace_id.clone(),
             managed_auth_policy: self.config_layer_stack.requirements().managed_auth_policy(),
             auth_route_config: self.auth_route_config(),
@@ -35,7 +36,7 @@ impl Config {
 ///
 /// Use this before fetching cloud requirements, when a full [`Config`] is not
 /// yet available. Preserves the configured credential store, keyring backend,
-/// ChatGPT base URL, auth routing, and managed login/workspace restrictions.
+/// Managed-auth base URL, auth routing, and managed login/workspace restrictions.
 pub fn bootstrap_auth_config(
     codex_home: &Path,
     bootstrap_config: &ConfigTomlLoadResult,

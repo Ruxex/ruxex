@@ -487,8 +487,8 @@ impl ModelClient {
         responses_metadata.session_id.clone()
     }
 
-    // ChatGPT derives cache affinity from the Responses session-id header. Keep the
-    // actual session identity in turn metadata, hooks, and history/notes requests.
+    // Hosted Responses clients may derive cache affinity from the session-id header.
+    // Keep the actual session identity in turn metadata, hooks, and history/notes requests.
     fn responses_session_id(&self, metadata: &CodexResponsesMetadata) -> String {
         if self.state.session_source.is_non_root_agent() {
             metadata.session_id.clone()
@@ -2144,7 +2144,7 @@ where
     )
 }
 
-/// Handles a 401 response by optionally refreshing ChatGPT tokens once.
+/// Handles a 401 response by optionally refreshing external credentials once.
 ///
 /// When refresh succeeds, the caller should retry the API call; otherwise
 /// the mapped `CodexErr` is returned to the caller.

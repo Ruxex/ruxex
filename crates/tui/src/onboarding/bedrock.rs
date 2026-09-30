@@ -440,12 +440,7 @@ impl BedrockState {
                     "  Configure AWS credentials in your environment, then restart Codex.".into(),
                 );
                 lines.push("".into());
-                lines.push(Line::from(vec![
-                    "  Setup guide: ".into(),
-                    "https://learn.chatgpt.com/docs/amazon-bedrock"
-                        .cyan()
-                        .underlined(),
-                ]));
+                lines.push("  Configure the provider's Bedrock integration according to its setup guide.".into());
                 lines.push("".into());
                 self.render_methods(&mut lines);
             }

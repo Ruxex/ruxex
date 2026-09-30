@@ -188,7 +188,7 @@ pub struct McpServerOAuthConfig {
 }
 
 /// Authentication flow for an HTTP MCP server. Explicit credentials take
-/// precedence for OAuth and ChatGPT; EMA rejects alternate credentials and fallback.
+/// precedence over OAuth; EMA rejects alternate credentials and fallback.
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum McpServerAuth {

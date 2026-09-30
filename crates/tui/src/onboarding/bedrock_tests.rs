@@ -454,7 +454,7 @@ fn credential_entries_share_region_and_keep_aws_secrets_hidden() {
 
       Configure AWS credentials in your environment, then restart Codex.
 
-      Setup guide: https://learn.chatgpt.com/docs/amazon-bedrock
+      Configure the provider's Bedrock integration according to its setup guide.
 
     > 1. Choose another sign-in method
 

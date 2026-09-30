@@ -923,7 +923,9 @@ pub struct Config {
     /// Optional verbosity control for GPT-5 models (Responses API `text.verbosity`).
     pub model_verbosity: Option<Verbosity>,
 
-    /// Base URL for host-managed authentication requests.
+    /// Optional base URL for host-managed authentication requests.
+    ///
+    /// An empty value means that managed authentication is not configured.
     pub managed_auth_base_url: String,
 
     /// Whether Codex-owned clients should respect host system proxy settings.
@@ -3979,7 +3981,7 @@ impl Config {
             model_verbosity: cfg.model_verbosity,
             managed_auth_base_url: cfg
                 .managed_auth_base_url
-                .unwrap_or("https://chatgpt.com/backend-api/".to_string()),
+                .unwrap_or_default(),
             respect_system_proxy,
             responses_api_metadata: cfg.responses_api_metadata.unwrap_or_default(),
             experimental_thread_store: thread_store_config(cfg.experimental_thread_store),

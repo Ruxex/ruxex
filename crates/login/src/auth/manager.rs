@@ -1726,7 +1726,8 @@ fn auth_config_from(config: &impl AuthManagerConfig) -> AuthConfig {
         auth_credentials_store_mode: config.cli_auth_credentials_store_mode(),
         keyring_backend_kind: config.auth_keyring_backend_kind(),
         forced_login_method: config.forced_login_method(),
-        managed_auth_base_url: Some(config.managed_auth_base_url()),
+        managed_auth_base_url: (!config.managed_auth_base_url().is_empty())
+            .then(|| config.managed_auth_base_url()),
         forced_managed_workspace_id: config.forced_managed_workspace_id(),
         managed_auth_policy: config.managed_auth_policy(),
         auth_route_config: config.auth_route_config(),

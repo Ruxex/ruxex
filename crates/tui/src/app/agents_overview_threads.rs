@@ -270,8 +270,8 @@ impl App {
                         Ok::<_, TypedRequestError>(recent)
                     };
                     let recent = async {
-                        // Default interactive sources include Atlas/ChatGPT, which have no
-                        // explicit source kind. Exec/AppServer require a separate query.
+                        // Default interactive sources have no explicit source kind.
+                        // Exec/AppServer require a separate query.
                         let (interactive, non_interactive) = tokio::join!(
                             list_recent(Vec::new()),
                             list_recent(vec![ThreadSourceKind::Exec, ThreadSourceKind::AppServer]),
