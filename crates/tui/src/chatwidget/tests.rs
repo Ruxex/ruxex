@@ -280,7 +280,7 @@ mod usage;
 mod worktree_picker;
 
 pub(crate) use helpers::make_chatwidget_manual_with_sender;
-pub(crate) use helpers::set_chatgpt_auth;
+pub(crate) use helpers::set_managed_auth;
 pub(crate) use helpers::set_service_tier_test_catalog;
 pub(super) use helpers::*;
 

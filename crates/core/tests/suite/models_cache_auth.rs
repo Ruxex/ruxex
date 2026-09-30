@@ -20,7 +20,7 @@ use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn auth_and_provider_switches_do_not_reuse_chatgpt_catalog() -> Result<()> {
+async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()> {
     let server = wiremock::MockServer::start().await;
     let home = Arc::new(TempDir::new()?);
     let mut model = test_models_response()?
@@ -37,7 +37,7 @@ async fn auth_and_provider_switches_do_not_reuse_chatgpt_catalog() -> Result<()>
         },
     )
     .await;
-    let chatgpt = test_codex()
+    let managed = test_codex()
         .with_home(home.clone())
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.5")
@@ -45,7 +45,7 @@ async fn auth_and_provider_switches_do_not_reuse_chatgpt_catalog() -> Result<()>
         .await?;
     assert!(home.path().join("models_cache.json").exists());
     assert_eq!(
-        chatgpt
+        managed
             .thread_manager
             .get_models_manager()
             .get_remote_models()
@@ -58,8 +58,8 @@ async fn auth_and_provider_switches_do_not_reuse_chatgpt_catalog() -> Result<()>
         AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?;
-    assert!(chatgpt.thread_manager.auth_manager().reload().await);
-    let manager = chatgpt.thread_manager.get_models_manager();
+    assert!(managed.thread_manager.auth_manager().reload().await);
+    let manager = managed.thread_manager.get_models_manager();
     let bundled = test_models_response()?.models;
     assert_eq!(manager.get_remote_models().await, bundled);
     assert_eq!(
@@ -73,7 +73,7 @@ async fn auth_and_provider_switches_do_not_reuse_chatgpt_catalog() -> Result<()>
         bundled
     );
     assert_eq!(models_mock.requests().len(), 1);
-    drop(chatgpt);
+    drop(managed);
     server.reset().await;
 
     let mut api_model = model.clone();

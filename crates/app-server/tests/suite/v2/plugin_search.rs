@@ -44,7 +44,7 @@ plugin_sharing = false
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -154,7 +154,7 @@ remote_plugin = false
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -787,7 +787,7 @@ remote_plugin = {remote_plugin}
 fn write_api_key_search_auth(codex_home: &std::path::Path) -> Result<()> {
     write_api_key_auth(
         codex_home,
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),

@@ -252,7 +252,7 @@ async fn list_models_includes_hidden_models() -> Result<()> {
     Ok(())
 }
 
-#[test_case("chatgpt-access-token", None; "chatgpt")]
+#[test_case("test-token", None; "api key")]
 #[test_case("test-api-key", Some("test-api-key"); "api key")]
 #[tokio::test]
 async fn list_models_uses_remote_catalog_as_source_of_truth(

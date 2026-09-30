@@ -374,7 +374,7 @@ async fn skills_list_loads_remote_installed_plugin_skills_from_cache() -> Result
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -443,7 +443,7 @@ async fn skills_list_loads_remote_installed_plugin_skills_from_cache() -> Result
             .and(path("/backend-api/ps/plugins/list"))
             .and(query_param("scope", scope))
             .and(query_param("limit", "200"))
-            .and(header("authorization", "Bearer chatgpt-token"))
+            .and(header("authorization", "Bearer test-token"))
             .and(header("chatgpt-account-id", "account-123"))
             .respond_with(ResponseTemplate::new(200).set_body_string(body))
             .mount(&server)
@@ -483,7 +483,7 @@ async fn skills_list_loads_remote_installed_plugin_skills_from_cache() -> Result
         Mock::given(method("GET"))
             .and(path("/backend-api/ps/plugins/installed"))
             .and(query_param("scope", scope))
-            .and(header("authorization", "Bearer chatgpt-token"))
+            .and(header("authorization", "Bearer test-token"))
             .and(header("chatgpt-account-id", "account-123"))
             .respond_with(ResponseTemplate::new(200).set_body_string(body))
             .mount(&server)
@@ -492,7 +492,7 @@ async fn skills_list_loads_remote_installed_plugin_skills_from_cache() -> Result
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param_is_missing("scope"))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(global_installed_body))
         .mount(&server)

@@ -1170,7 +1170,7 @@ impl RemoteMarketplaceFixture {
         )?;
         write_api_key_auth(
             home.path(),
-            ApiKeyAuthFixture::new("chatgpt-token")
+            ApiKeyAuthFixture::new("test-token")
                 .account_id("account-123")
                 .workspace_id("account-123"),
             AuthCredentialsStoreMode::File,
@@ -1184,7 +1184,7 @@ impl RemoteMarketplaceFixture {
         Mock::given(method("GET"))
             .and(path("/backend-api/ps/plugins/list"))
             .and(query_param("scope", "GLOBAL"))
-            .and(header("authorization", "Bearer chatgpt-token"))
+            .and(header("authorization", "Bearer test-token"))
             .and(header("chatgpt-account-id", "account-123"))
             .respond_with(ResponseTemplate::new(200).set_body_json(
                 json!({"plugins": [plugin.clone()], "pagination": {"next_page_token": null}}),
@@ -1384,7 +1384,7 @@ async fn remote_plugin_add_list_and_remove() -> Result<()> {
     Mock::given(method("POST"))
         .and(path(format!("/backend-api/ps/plugins/{REMOTE_ID}/install")))
         .and(query_param("includeAppsNeedingAuth", "true"))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .respond_with(move |_: &wiremock::Request| {
             assert!(
                 manifest.is_file(),
@@ -1400,7 +1400,7 @@ async fn remote_plugin_add_list_and_remove() -> Result<()> {
         .and(path(format!(
             "/backend-api/ps/plugins/{REMOTE_ID}/uninstall"
         )))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .respond_with(move |_: &wiremock::Request| {
             installed.store(false, Ordering::SeqCst);
             ResponseTemplate::new(200).set_body_json(json!({"id": REMOTE_ID, "enabled": false}))
@@ -1863,7 +1863,7 @@ async fn remote_plugin_listing_uses_collection_when_remote_catalog_is_disabled()
     std::fs::remove_file(fixture.home.path().join("auth.json"))?;
     let output = fixture.run(&["plugin", "list", "-m", MARKETPLACE]).await?;
     assert!(!output.status.success());
-    assert!(String::from_utf8(output.stderr)?.contains("chatgpt authentication required"));
+    assert!(String::from_utf8(output.stderr)?.contains("managed authentication required"));
     let listed = fixture
         .success(&["plugin", "list", "--available", "--json"])
         .await?;

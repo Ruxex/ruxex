@@ -144,7 +144,7 @@ apps = true
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -229,7 +229,7 @@ apps = true
         .and(path(
             "/backend-api/ps/plugins/plugins~Plugin_00000000000000000000000000000000",
         ))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(detail_body))
         .mount(&server)
@@ -237,14 +237,14 @@ apps = true
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param("scope", "GLOBAL"))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(installed_body))
         .mount(&server)
         .await;
     Mock::given(method("POST"))
         .and(path("/backend-api/ps/apps/batch"))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .and(header("oai-product-sku", "codex"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
@@ -366,7 +366,7 @@ async fn plugin_read_returns_share_context_for_shared_remote_plugin() -> Result<
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -380,7 +380,7 @@ async fn plugin_read_returns_share_context_for_shared_remote_plugin() -> Result<
   "discoverability": "PRIVATE",
   "creator_account_user_id": "user-gavin__account-123",
   "creator_name": "Gavin",
-  "share_url": "https://chatgpt.example/plugins/share/share-key-1",
+  "share_url": "https://provider.example/plugins/share/share-key-1",
   "share_principals": [
     {
       "principal_type": "user",
@@ -419,7 +419,7 @@ async fn plugin_read_returns_share_context_for_shared_remote_plugin() -> Result<
         .and(path(
             "/backend-api/ps/plugins/plugins~Plugin_11111111111111111111111111111111",
         ))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(detail_body))
         .mount(&server)
@@ -427,7 +427,7 @@ async fn plugin_read_returns_share_context_for_shared_remote_plugin() -> Result<
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param("scope", "WORKSPACE"))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(installed_body))
         .mount(&server)
@@ -485,7 +485,7 @@ async fn plugin_read_returns_share_context_for_shared_remote_plugin() -> Result<
         assert_eq!(share_context.creator_name.as_deref(), Some("Gavin"));
         assert_eq!(
             share_context.share_url.as_deref(),
-            Some("https://chatgpt.example/plugins/share/share-key-1")
+            Some("https://provider.example/plugins/share/share-key-1")
         );
         assert_eq!(
             share_context.share_principals,
@@ -518,7 +518,7 @@ async fn plugin_read_includes_share_url_for_admin_disabled_remote_plugin() -> Re
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -529,7 +529,7 @@ async fn plugin_read_includes_share_url_for_admin_disabled_remote_plugin() -> Re
   "id": "plugins~Plugin_00000000000000000000000000000000",
   "name": "example-plugin",
   "scope": "GLOBAL",
-  "share_url": "https://chatgpt.example/plugins/share/example-plugin",
+  "share_url": "https://provider.example/plugins/share/example-plugin",
   "status": "DISABLED_BY_ADMIN",
   "installation_policy": "AVAILABLE",
   "authentication_policy": "ON_USE",
@@ -628,7 +628,7 @@ async fn plugin_read_includes_share_url_for_admin_disabled_remote_plugin() -> Re
         .and(path(
             "/backend-api/ps/plugins/plugins~Plugin_00000000000000000000000000000000",
         ))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(detail_body))
         .mount(&server)
@@ -636,7 +636,7 @@ async fn plugin_read_includes_share_url_for_admin_disabled_remote_plugin() -> Re
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param("scope", "GLOBAL"))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(installed_body))
         .mount(&server)
@@ -680,7 +680,7 @@ async fn plugin_read_includes_share_url_for_admin_disabled_remote_plugin() -> Re
     assert_eq!(response.plugin.summary.share_context, None);
     assert_eq!(
         response.plugin.share_url.as_deref(),
-        Some("https://chatgpt.example/plugins/share/example-plugin")
+        Some("https://provider.example/plugins/share/example-plugin")
     );
     assert_eq!(
         response.plugin.description.as_deref(),
@@ -760,7 +760,7 @@ async fn plugin_skill_read_reads_remote_skill_contents_when_remote_plugin_enable
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -781,7 +781,7 @@ async fn plugin_skill_read_reads_remote_skill_contents_when_remote_plugin_enable
         .and(path(
             "/backend-api/ps/plugins/plugins~Plugin_00000000000000000000000000000000/skills/plan-work",
         ))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(skill_body))
         .mount(&server)
@@ -823,7 +823,7 @@ async fn plugin_read_maps_missing_remote_plugin_to_invalid_request() -> Result<(
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -832,7 +832,7 @@ async fn plugin_read_maps_missing_remote_plugin_to_invalid_request() -> Result<(
 
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/plugins~Plugin_missing"))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(404).set_body_string(r#"{"detail":"not found"}"#))
         .mount(&server)
@@ -886,7 +886,7 @@ remote_plugin = true
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -1022,7 +1022,7 @@ async fn plugin_read_returns_share_context_for_shared_local_plugin() -> Result<(
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -1049,7 +1049,7 @@ async fn plugin_read_returns_share_context_for_shared_local_plugin() -> Result<(
     write_plugin_share_local_path_mapping(codex_home.path(), "plugins_123", &plugin_path)?;
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/plugins_123"))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": "plugins_123",
@@ -1058,7 +1058,7 @@ async fn plugin_read_returns_share_context_for_shared_local_plugin() -> Result<(
             "discoverability": "UNLISTED",
             "creator_account_user_id": "user-owner__account-123",
             "creator_name": "Owner",
-            "share_url": "https://chatgpt.example/plugins/share/share-key-1",
+            "share_url": "https://provider.example/plugins/share/share-key-1",
             "share_principals": [
                 {
                     "principal_type": "user",
@@ -1126,7 +1126,7 @@ async fn plugin_read_returns_share_context_for_shared_local_plugin() -> Result<(
     );
     assert_eq!(
         share_context.share_url.as_deref(),
-        Some("https://chatgpt.example/plugins/share/share-key-1")
+        Some("https://provider.example/plugins/share/share-key-1")
     );
     assert_eq!(
         share_context.creator_account_user_id.as_deref(),
@@ -1164,7 +1164,7 @@ async fn plugin_read_keeps_remote_version_when_share_principals_are_missing() ->
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -1191,7 +1191,7 @@ async fn plugin_read_keeps_remote_version_when_share_principals_are_missing() ->
     write_plugin_share_local_path_mapping(codex_home.path(), "plugins_123", &plugin_path)?;
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/plugins_123"))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": "plugins_123",
@@ -1200,7 +1200,7 @@ async fn plugin_read_keeps_remote_version_when_share_principals_are_missing() ->
             "discoverability": "UNLISTED",
             "creator_account_user_id": "user-owner__account-123",
             "creator_name": "Owner",
-            "share_url": "https://chatgpt.example/plugins/share/share-key-1",
+            "share_url": "https://provider.example/plugins/share/share-key-1",
             "share_principals": null,
             "installation_policy": "AVAILABLE",
             "authentication_policy": "ON_USE",
@@ -1427,7 +1427,7 @@ async fn plugin_read_returns_plugin_details_with_bundle_contents() -> Result<()>
     let codex_home = TempDir::new()?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -1440,7 +1440,7 @@ async fn plugin_read_returns_plugin_details_with_bundle_contents() -> Result<()>
     std::fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
     std::fs::create_dir_all(plugin_root.join("hooks"))?;
     std::fs::create_dir_all(plugin_root.join("skills/thread-summarizer"))?;
-    std::fs::create_dir_all(plugin_root.join("skills/chatgpt-only"))?;
+    std::fs::create_dir_all(plugin_root.join("skills/restricted-skill"))?;
     std::fs::write(
         repo_root.path().join(".agents/plugins/marketplace.json"),
         r#"{
@@ -1500,13 +1500,13 @@ description: Summarize email threads
 "#,
     )?;
     std::fs::write(
-        plugin_root.join("skills/chatgpt-only/SKILL.md"),
+        plugin_root.join("skills/restricted-skill/SKILL.md"),
         r#"---
-name: chatgpt-only
-description: Visible only for ChatGPT
+name: restricted-skill
+description: Visible only for another product
 ---
 
-# ChatGPT Only
+# Restricted Product Only
 "#,
     )?;
     std::fs::create_dir_all(plugin_root.join("skills/thread-summarizer/agents"))?;
@@ -1517,12 +1517,12 @@ description: Visible only for ChatGPT
     - CODEX
 "#,
     )?;
-    std::fs::create_dir_all(plugin_root.join("skills/chatgpt-only/agents"))?;
+    std::fs::create_dir_all(plugin_root.join("skills/restricted-skill/agents"))?;
     std::fs::write(
-        plugin_root.join("skills/chatgpt-only/agents/openai.yaml"),
+        plugin_root.join("skills/restricted-skill/agents/openai.yaml"),
         r#"policy:
   products:
-    - CHATGPT
+    - UNKNOWN
 "#,
     )?;
     std::fs::write(
@@ -1710,7 +1710,7 @@ enabled = false
     assert_eq!(response.plugin.apps[0].name, "gmail");
     assert_eq!(
         response.plugin.apps[0].install_url.as_deref(),
-        Some("https://chatgpt.com/apps/gmail/gmail")
+        Some("https://provider.example/apps/gmail/gmail")
     );
     assert_eq!(
         response.plugin.apps[0].category.as_deref(),
@@ -1752,7 +1752,7 @@ async fn plugin_read_batches_large_app_metadata_requests() -> Result<()> {
     write_connectors_config(codex_home.path(), &server_url)?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -1847,7 +1847,7 @@ async fn plugin_read_stops_batching_after_app_metadata_failure() -> Result<()> {
     write_connectors_config(codex_home.path(), &server.uri())?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -2308,7 +2308,7 @@ async fn batch_apps(
     let bearer_ok = headers
         .get(AUTHORIZATION)
         .and_then(|value| value.to_str().ok())
-        .is_some_and(|value| value == "Bearer chatgpt-token");
+        .is_some_and(|value| value == "Bearer test-token");
     let account_ok = headers
         .get("chatgpt-account-id")
         .and_then(|value| value.to_str().ok())

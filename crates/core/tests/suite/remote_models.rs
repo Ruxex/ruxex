@@ -824,7 +824,7 @@ async fn remote_models_truncation_policy_with_tool_output_override() -> Result<(
     Ok(())
 }
 
-#[test_case(CodexAuth::from_api_key("test-api-key"); "chatgpt")]
+#[test_case(CodexAuth::from_api_key("test-api-key"); "api key")]
 #[test_case(CodexAuth::from_api_key("test-api-key"); "api key")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_models_apply_legacy_instructions(auth: CodexAuth) -> Result<()> {

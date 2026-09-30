@@ -706,7 +706,7 @@ apps = true
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -1505,7 +1505,7 @@ async fn start_resource_test_app_server_with_extra_config(
         .write(codex_home.path())?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),

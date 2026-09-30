@@ -450,7 +450,7 @@ async fn start_authenticated_app(home: &Path, server: &MockServer) -> Result<Tes
     )?;
     write_api_key_auth(
         home,
-        ApiKeyAuthFixture::new("chatgpt-test-token").plan_type("pro"),
+        ApiKeyAuthFixture::new("test-token").plan_type("pro"),
         AuthCredentialsStoreMode::File,
     )?;
     TestAppServer::builder()

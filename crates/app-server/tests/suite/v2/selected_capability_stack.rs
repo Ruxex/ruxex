@@ -858,7 +858,7 @@ fn selected_capability_fixture(
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .email("selected-capability-stack@example.com")
             .plan_type("pro")

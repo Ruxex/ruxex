@@ -1437,7 +1437,7 @@ async fn thread_start_surfaces_cloud_config_bundle_load_errors() -> Result<()> {
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .refresh_token("stale-refresh-token")
             .plan_type("business")
             .user_id("user-123")

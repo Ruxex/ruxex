@@ -1555,7 +1555,7 @@ fn list_marketplaces_reads_marketplace_display_name() {
         r#"{
   "name": "test-curated",
   "interface": {
-    "displayName": "ChatGPT Official"
+    "displayName": "Official"
   },
   "plugins": [
     {
@@ -1580,7 +1580,7 @@ fn list_marketplaces_reads_marketplace_display_name() {
     assert_eq!(
         marketplaces[0].interface,
         Some(MarketplaceInterface {
-            display_name: Some("ChatGPT Official".to_string()),
+            display_name: Some("Official".to_string()),
         })
     );
 }
@@ -1895,7 +1895,7 @@ fn list_marketplaces_resolves_plugin_interface_paths_to_absolute() {
       "policy": {
         "installation": "AVAILABLE",
         "authentication": "ON_INSTALL",
-        "products": ["CODEX", "CHATGPT", "ATLAS"]
+        "products": ["CODEX", "UNKNOWN", "ATLAS"]
       },
       "category": "Design"
     }
@@ -2181,13 +2181,13 @@ fn find_installable_marketplace_plugin_rejects_disallowed_product() {
   "name": "codex-curated",
   "plugins": [
     {
-      "name": "chatgpt-plugin",
+      "name": "managed-plugin",
       "source": {
         "source": "local",
         "path": "./plugin"
       },
       "policy": {
-        "products": ["CHATGPT"]
+        "products": ["UNKNOWN"]
       }
     }
   ]
@@ -2197,14 +2197,14 @@ fn find_installable_marketplace_plugin_rejects_disallowed_product() {
 
     let err = find_installable_marketplace_plugin(
         &AbsolutePathBuf::try_from(repo_root.join(".agents/plugins/marketplace.json")).unwrap(),
-        "chatgpt-plugin",
+        "managed-plugin",
         Some(Product::Codex),
     )
     .unwrap_err();
 
     assert_eq!(
         err.to_string(),
-        "plugin `chatgpt-plugin` is not available for install in marketplace `codex-curated`"
+        "plugin `managed-plugin` is not available for install in marketplace `codex-curated`"
     );
 }
 

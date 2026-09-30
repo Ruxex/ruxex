@@ -4,7 +4,7 @@ use pretty_assertions::assert_eq;
 #[tokio::test]
 async fn rate_limit_recovery_holds_submissions_until_model_change() {
     let (mut chat, mut events, mut ops) = make_chatwidget_manual(Some("test-model-a")).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.thread_id = Some(ThreadId::new());
     handle_turn_started(&mut chat, "failed-turn");
     chat.queue_user_message(UserMessage::from("queued follow-up"));
@@ -44,7 +44,7 @@ async fn rate_limit_recovery_holds_submissions_until_model_change() {
 #[tokio::test]
 async fn rate_limit_recovery_preserves_settings_hold_and_clears_on_account_change() {
     let (mut chat, _events, mut ops) = make_chatwidget_manual(Some("test-model-a")).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.thread_id = Some(ThreadId::new());
     chat.set_queue_autosend_suppressed(/*suppressed*/ true);
     chat.on_rate_limit_error(RateLimitErrorKind::UsageLimit, "Usage exhausted".into());

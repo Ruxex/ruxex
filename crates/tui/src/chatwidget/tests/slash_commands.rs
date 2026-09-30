@@ -1324,7 +1324,7 @@ async fn usage_error_slash_command_is_available_from_local_recall() {
 #[tokio::test]
 async fn usage_command_with_invalid_view_reports_usage_snapshot() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
 
     submit_composer_text(&mut chat, "/usage monthly");
 
@@ -1346,7 +1346,7 @@ async fn usage_views_open_the_requested_summary_mode() {
         ("cumulative", TokenActivityView::Cumulative),
     ] {
         let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-        set_chatgpt_auth(&mut chat);
+        set_managed_auth(&mut chat);
         chat.dispatch_command_with_args(SlashCommand::Usage, argument.to_string(), Vec::new());
         match rx.try_recv().unwrap() {
             AppEvent::OpenAnalytics { view } => assert_eq!(view, Some(expected)),
@@ -1356,7 +1356,7 @@ async fn usage_views_open_the_requested_summary_mode() {
 }
 
 #[tokio::test]
-async fn usage_command_runs_with_backend_auth_without_chatgpt_account_flag() {
+async fn usage_command_runs_with_backend_auth_without_managed_account_flag() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     chat.update_account_state(
         /*status_account_display*/ None, /*plan_type*/ None,
@@ -1811,7 +1811,7 @@ async fn slash_copy_status_yields_to_later_turns_and_commands_even_after_refresh
         let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.4")).await;
         chat.thread_id = Some(ThreadId::new());
         complete_turn_with_message(&mut chat, "turn-1", Some("Original reply"));
-        set_chatgpt_auth(&mut chat);
+        set_managed_auth(&mut chat);
         chat.dispatch_command(SlashCommand::Status);
         drain_insert_history(&mut rx);
         chat.dispatch_command(SlashCommand::Copy);

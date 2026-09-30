@@ -1040,7 +1040,7 @@ async fn plugin_detail_popup_shows_local_share_context_as_read_only_snapshot() {
             remote_plugin_id: "plugins~Plugin_docs".to_string(),
             remote_version: Some("7".to_string()),
             discoverability: Some(PluginShareDiscoverability::Private),
-            share_url: Some("https://chatgpt.com/codex/plugins/share/docs".to_string()),
+            share_url: Some("https://provider.example/codex/plugins/share/docs".to_string()),
             creator_account_user_id: None,
             creator_name: Some("Test User".to_string()),
             share_principals: None,
@@ -1264,7 +1264,7 @@ async fn plugins_popup_remote_section_fallback_states_when_remote_plugin_disable
         vec![crate::app_event::PluginRemoteSectionError {
             section_id: "workspace".to_string(),
             label: "Workspace".to_string(),
-            message: "Sign in to ChatGPT to load workspace plugins.".to_string(),
+            message: "Sign in to load workspace plugins.".to_string(),
         }],
     );
     let workspace_error_popup = select_tab_containing(&mut chat, "Workspace unavailable.");
@@ -1302,7 +1302,7 @@ async fn plugins_popup_remote_section_fallback_states_when_remote_plugin_disable
         Loading Shared with me plugins...  This updates when shared plugins finish loading.
 
         Workspace unavailable.
-        Workspace unavailable  Sign in to ChatGPT to load workspace plugins.
+        Workspace unavailable  Sign in to load workspace plugins.
 
         Test Marketplace marketplace.
         No Test Marketplace plugins available  No Test Marketplace plugins available.
@@ -2088,7 +2088,7 @@ async fn plugins_popup_search_no_matches_and_backspace_restores_results() {
 async fn apps_popup_stays_loading_until_final_snapshot_updates() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     chat.thread_id = Some(ThreadId::new());
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.config
         .features
         .enable(Feature::Apps)
@@ -2197,7 +2197,7 @@ async fn apps_popup_stays_loading_until_final_snapshot_updates() {
 async fn apps_notification_update_excludes_inaccessible_apps_from_mentions() {
     let (mut chat, _rx, mut op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     chat.thread_id = Some(ThreadId::new());
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.config
         .features
         .enable(Feature::Apps)
@@ -2320,7 +2320,7 @@ async fn apps_notification_update_excludes_inaccessible_apps_from_mentions() {
 async fn apps_installed_mentions_revoke_access_and_reject_stale_account_results() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     chat.thread_id = Some(ThreadId::new());
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.set_feature_enabled(Feature::Apps, /*enabled*/ true);
     let generation = chat.connector_scope_generation();
     let connector_id = "account-app";
@@ -2385,7 +2385,7 @@ async fn apps_installed_mentions_revoke_access_and_reject_stale_account_results(
 #[tokio::test]
 async fn apps_refresh_failure_keeps_existing_full_snapshot() {
     let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.config
         .features
         .enable(Feature::Apps)
@@ -2480,7 +2480,7 @@ async fn apps_refresh_failure_keeps_existing_full_snapshot() {
 #[tokio::test]
 async fn apps_popup_preserves_selected_app_across_refresh() {
     let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.config
         .features
         .enable(Feature::Apps)
@@ -2610,7 +2610,7 @@ async fn apps_popup_preserves_selected_app_across_refresh() {
 #[tokio::test]
 async fn apps_refresh_failure_with_cached_snapshot_triggers_pending_force_refetch() {
     let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.config
         .features
         .enable(Feature::Apps)
@@ -2656,7 +2656,7 @@ async fn apps_refresh_failure_with_cached_snapshot_triggers_pending_force_refetc
 #[tokio::test]
 async fn apps_popup_keeps_existing_full_snapshot_while_partial_refresh_loads() {
     let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.config
         .features
         .enable(Feature::Apps)
@@ -2769,7 +2769,7 @@ async fn apps_popup_keeps_existing_full_snapshot_while_partial_refresh_loads() {
 async fn apps_popup_replaces_loading_state_after_initial_refresh_failure() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     chat.thread_id = Some(ThreadId::new());
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.config
         .features
         .enable(Feature::Apps)
@@ -2809,7 +2809,7 @@ async fn apps_popup_replaces_loading_state_after_initial_refresh_failure() {
 #[tokio::test]
 async fn apps_refresh_failure_without_full_snapshot_falls_back_to_installed_apps() {
     let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.config
         .features
         .enable(Feature::Apps)
@@ -2870,7 +2870,7 @@ async fn apps_refresh_failure_without_full_snapshot_falls_back_to_installed_apps
 #[tokio::test]
 async fn apps_popup_shows_disabled_status_for_installed_but_disabled_apps() {
     let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.config
         .features
         .enable(Feature::Apps)
@@ -2915,7 +2915,7 @@ async fn apps_popup_shows_disabled_status_for_installed_but_disabled_apps() {
 #[tokio::test]
 async fn apps_refresh_preserves_toggled_enabled_state() {
     let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.config
         .features
         .enable(Feature::Apps)
@@ -2990,7 +2990,7 @@ async fn apps_refresh_preserves_toggled_enabled_state() {
 #[tokio::test]
 async fn apps_popup_for_not_installed_app_uses_install_only_selected_description() {
     let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.config
         .features
         .enable(Feature::Apps)
@@ -3409,7 +3409,7 @@ async fn server_overloaded_error_does_not_switch_models() {
 async fn model_reasoning_selection_popup_snapshot() {
     let (mut chat, _rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.5")).await;
 
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.set_reasoning_effort(Some(ReasoningEffortConfig::High));
 
     let mut preset = get_available_model(&chat, "gpt-5.5");
@@ -3796,7 +3796,7 @@ async fn reasoning_down_shortcut_can_leave_advanced_effort() {
 async fn reasoning_popup_shows_extra_high_with_space() {
     let (mut chat, _rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.5")).await;
 
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
 
     let preset = get_available_model(&chat, "gpt-5.5");
     chat.open_reasoning_popup(preset);
@@ -3938,7 +3938,7 @@ async fn reasoning_popup_escape_returns_to_model_popup() {
 async fn account_change_dismisses_the_previous_app_directory_snapshot() {
     let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     chat.thread_id = Some(ThreadId::new());
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.on_connectors_loaded(
         Ok(ConnectorsSnapshot {
             connectors: vec![serde_json::from_str(

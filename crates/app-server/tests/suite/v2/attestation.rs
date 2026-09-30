@@ -62,7 +62,7 @@ async fn attestation_generate_round_trip_adds_header_to_responses_websocket_hand
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("access-chatgpt").plan_type("pro"),
+        ApiKeyAuthFixture::new("test-token").plan_type("pro"),
         AuthCredentialsStoreMode::File,
     )?;
     write_models_cache(codex_home.path()).await?;
@@ -182,7 +182,7 @@ sandbox_mode = "read-only"
 model_provider = "mock_provider"
 
 [model_providers.mock_provider]
-name = "Mock ChatGPT provider for test"
+name = "Mock managed provider for test"
 base_url = "{server_uri}/v1"
 wire_api = "responses"
 request_max_retries = 0

@@ -377,7 +377,7 @@ async fn startup_enforces_local_auth_requirements_before_cloud_fetch() -> Result
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .plan_type("enterprise")
             .user_id("user-123")
             .workspace_id("account-123")
@@ -397,7 +397,7 @@ async fn startup_enforces_local_auth_requirements_before_cloud_fetch() -> Result
             .await
             .expect("recorded requests")
             .is_empty(),
-        "disallowed ChatGPT auth must not fetch cloud requirements"
+        "disallowed managed auth must not fetch cloud requirements"
     );
 
     assert_eq!(read_account(&mut mcp).await?.account, None);
@@ -415,7 +415,7 @@ async fn mount_disabled_attribution_settings(mock_server: &MockServer) {
 }
 
 #[tokio::test]
-// 401 response triggers account/chatgptAuthTokens/refresh and retries with new tokens.
+// 401 response triggers account/managedAuthTokens/refresh and retries with new tokens.
 
 
 #[tokio::test]

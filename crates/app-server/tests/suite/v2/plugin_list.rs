@@ -1073,7 +1073,7 @@ async fn plugin_list_includes_install_and_enabled_state_from_config() -> Result<
         r#"{
   "name": "codex-curated",
   "interface": {
-    "displayName": "ChatGPT Official"
+    "displayName": "Official"
   },
   "plugins": [
     {
@@ -1149,7 +1149,7 @@ enabled = false
             .interface
             .as_ref()
             .and_then(|interface| interface.display_name.as_deref()),
-        Some("ChatGPT Official")
+        Some("Official")
     );
     assert_eq!(marketplace.plugins.len(), 3);
     assert_eq!(marketplace.plugins[0].id, "enabled-plugin@codex-curated");
@@ -1649,7 +1649,7 @@ async fn app_server_startup_sync_downloads_remote_installed_plugin_bundles() -> 
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -1717,7 +1717,7 @@ async fn plugin_list_sync_upgrades_and_removes_remote_installed_plugin_bundles()
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -1831,7 +1831,7 @@ async fn plugin_list_includes_remote_marketplaces_when_remote_plugin_enabled(
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -1940,7 +1940,7 @@ async fn plugin_list_includes_remote_marketplaces_when_remote_plugin_enabled(
         .and(path("/backend-api/ps/plugins/list"))
         .and(query_param("scope", "GLOBAL"))
         .and(query_param("limit", "200"))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .and(header("oai-product-sku", "codex"))
         .respond_with(ResponseTemplate::new(200).set_body_string(global_directory_body))
@@ -1950,7 +1950,7 @@ async fn plugin_list_includes_remote_marketplaces_when_remote_plugin_enabled(
         .and(path("/backend-api/ps/plugins/list"))
         .and(query_param("scope", "WORKSPACE"))
         .and(query_param("limit", "200"))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .and(header("oai-product-sku", "codex"))
         .respond_with(ResponseTemplate::new(200).set_body_string(empty_page_body))
@@ -1959,7 +1959,7 @@ async fn plugin_list_includes_remote_marketplaces_when_remote_plugin_enabled(
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param("scope", "GLOBAL"))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .and(header("oai-product-sku", "codex"))
         .respond_with(ResponseTemplate::new(200).set_body_string(global_installed_body))
@@ -1968,7 +1968,7 @@ async fn plugin_list_includes_remote_marketplaces_when_remote_plugin_enabled(
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param("scope", "WORKSPACE"))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .and(header("oai-product-sku", "codex"))
         .respond_with(ResponseTemplate::new(200).set_body_string(empty_page_body))
@@ -2146,7 +2146,7 @@ async fn plugin_list_honors_global_remote_catalog_cache_ttl() -> Result<()> {
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -2309,7 +2309,7 @@ async fn app_server_startup_refreshes_cached_remote_catalog_without_blocking_plu
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -2363,7 +2363,7 @@ async fn app_server_startup_refreshes_cached_remote_catalog_without_blocking_plu
         .and(path("/backend-api/ps/plugins/list"))
         .and(query_param("scope", "GLOBAL"))
         .and(query_param("limit", "200"))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .respond_with(
             ResponseTemplate::new(200)
@@ -2448,7 +2448,7 @@ async fn app_server_startup_skips_disabled_remote_plugin_catalog_scopes() -> Res
     write_remote_plugin_catalog_config(codex_home.path(), &base_url)?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -2567,7 +2567,7 @@ async fn plugin_list_force_refetch_bypasses_fresh_global_remote_catalog_cache() 
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -2699,7 +2699,7 @@ async fn plugin_list_includes_openai_curated_remote_collection_when_remote_plugi
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -2806,7 +2806,7 @@ async fn plugin_list_propagates_openai_curated_remote_collection_errors_when_rem
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -2818,7 +2818,7 @@ async fn plugin_list_propagates_openai_curated_remote_collection_errors_when_rem
         .and(query_param("scope", "GLOBAL"))
         .and(query_param("limit", "200"))
         .and(query_param("collection", "vertical"))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(500).set_body_string("temporary failure"))
         .mount(&server)
@@ -2902,7 +2902,7 @@ async fn plugin_list_does_not_query_openai_curated_remote_collection_by_default(
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -2954,7 +2954,7 @@ async fn plugin_list_vertical_kind_noops_when_remote_plugin_enabled() -> Result<
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -3007,7 +3007,7 @@ async fn plugin_list_does_not_append_global_remote_when_marketplace_kinds_are_ex
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -3060,7 +3060,7 @@ plugin_sharing = true
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -3169,7 +3169,7 @@ plugin_sharing = false
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -3252,7 +3252,7 @@ plugin_sharing = false
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -3508,7 +3508,7 @@ async fn plugin_list_fetches_workspace_directory_kind_when_remote_plugin_disable
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -3704,7 +3704,7 @@ plugin_sharing = false
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -3848,7 +3848,7 @@ async fn plugin_list_fetches_shared_with_me_kind() -> Result<()> {
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -3964,7 +3964,7 @@ async fn plugin_list_fetches_shared_with_me_kind() -> Result<()> {
     assert_eq!(share_context.creator_name.as_deref(), Some("Gavin"));
     assert_eq!(
         share_context.share_url.as_deref(),
-        Some("https://chatgpt.example/plugins/share/share-key-1")
+        Some("https://provider.example/plugins/share/share-key-1")
     );
     assert_eq!(share_context.share_principals, None);
     assert_eq!(
@@ -4051,7 +4051,7 @@ plugin_sharing = false
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -4110,7 +4110,7 @@ plugin_sharing = true
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -4182,7 +4182,7 @@ async fn assert_disabled_remote_plugin_metadata(
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -4239,7 +4239,7 @@ async fn assert_disabled_remote_plugin_metadata(
             .and(path("/backend-api/ps/plugins/list"))
             .and(query_param("scope", scope))
             .and(query_param("limit", "200"))
-            .and(header("authorization", "Bearer chatgpt-token"))
+            .and(header("authorization", "Bearer test-token"))
             .and(header("chatgpt-account-id", "account-123"))
             .respond_with(ResponseTemplate::new(200).set_body_json(body))
             .mount(&server)
@@ -4252,7 +4252,7 @@ async fn assert_disabled_remote_plugin_metadata(
         Mock::given(method("GET"))
             .and(path("/backend-api/ps/plugins/installed"))
             .and(query_param("scope", scope))
-            .and(header("authorization", "Bearer chatgpt-token"))
+            .and(header("authorization", "Bearer test-token"))
             .and(header("chatgpt-account-id", "account-123"))
             .respond_with(ResponseTemplate::new(200).set_body_json(body))
             .mount(&server)
@@ -4278,7 +4278,7 @@ async fn assert_disabled_remote_plugin_metadata(
         .marketplaces
         .into_iter()
         .find(|marketplace| marketplace.name == "openai-curated-remote")
-        .expect("expected ChatGPT remote marketplace");
+        .expect("expected managed remote marketplace");
     let plugin = remote_marketplace
         .plugins
         .first()
@@ -4318,7 +4318,7 @@ remote_plugin = true
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),

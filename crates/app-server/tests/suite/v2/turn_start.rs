@@ -424,7 +424,7 @@ async fn tool_call_metadata_stays_out_of_raw_response_item_notifications(
     config.write(codex_home.path())?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-test-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .workspace_id("account-123")
             .user_id("user-123")
@@ -677,7 +677,7 @@ async fn turn_start_steers_active_turn_and_returns_active_turn_id() -> Result<()
     )?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-test-token").plan_type("pro"),
+        ApiKeyAuthFixture::new("test-token").plan_type("pro"),
         AuthCredentialsStoreMode::File,
     )?;
     let mut mcp = TestAppServer::builder()

@@ -166,7 +166,7 @@ url = "{mcp_server_url}/mcp""#
             .write(&codex_home)?;
         write_api_key_auth(
             &codex_home,
-            ApiKeyAuthFixture::new("chatgpt-token")
+            ApiKeyAuthFixture::new("test-token")
                 .account_id("account-123")
                 .user_id("user-123")
                 .workspace_id("account-123"),

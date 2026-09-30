@@ -249,7 +249,7 @@ async fn start_app_server(server: &MockServer) -> Result<(TestAppServer, TempDir
         .write(codex_home.path())?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -271,7 +271,7 @@ async fn mount_installed_snapshot(server: &MockServer, plugins: Vec<Value>) {
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param("includeDownloadUrls", "true"))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "plugins": plugins,

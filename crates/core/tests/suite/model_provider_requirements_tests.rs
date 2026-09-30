@@ -73,7 +73,7 @@ cwd = {cwd}
 #[test_case("", "gateway"; "definition_only")]
 #[test_case("model_provider = 'gateway'", "matching"; "matching_configuration")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn required_provider_routes_models_and_inference_with_chatgpt_auth(
+async fn required_provider_routes_models_and_inference_with_managed_auth(
     required_selection: &str,
     local_selection: &str,
 ) -> Result<()> {

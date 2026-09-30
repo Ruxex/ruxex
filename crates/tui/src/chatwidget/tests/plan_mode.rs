@@ -265,7 +265,7 @@ async fn reasoning_selection_in_plan_mode_opens_scope_prompt_event() {
         .expect("expected plan collaboration mode");
     chat.set_collaboration_mask(plan_mask);
     let _ = drain_insert_history(&mut rx);
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.set_reasoning_effort(Some(ReasoningEffortConfig::High));
 
     let preset = get_available_model(&chat, "gpt-5.5");
@@ -292,7 +292,7 @@ async fn reasoning_selection_in_plan_mode_without_effort_change_does_not_open_sc
         .expect("expected plan collaboration mode");
     chat.set_collaboration_mask(plan_mask);
     let _ = drain_insert_history(&mut rx);
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
 
     chat.set_reasoning_effort(Some(ReasoningEffortConfig::Medium));
 
@@ -326,7 +326,7 @@ async fn reasoning_selection_in_plan_mode_matching_plan_effort_but_different_glo
         .expect("expected plan collaboration mode");
     chat.set_collaboration_mask(plan_mask);
     let _ = drain_insert_history(&mut rx);
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
 
     // Reproduce: Plan effective reasoning remains the preset (medium), but the
     // global default differs (high). Pressing Enter on the current Plan choice
@@ -444,7 +444,7 @@ async fn advanced_reasoning_selection_in_plan_mode_uses_expected_scope() {
 async fn plan_mode_reasoning_override_is_marked_current_in_reasoning_popup() {
     let (mut chat, _rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.5")).await;
     chat.set_feature_enabled(Feature::CollaborationModes, /*enabled*/ true);
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.set_reasoning_effort(Some(ReasoningEffortConfig::High));
     chat.set_plan_mode_reasoning_effort(Some(ReasoningEffortConfig::Low));
 
@@ -472,7 +472,7 @@ async fn reasoning_selection_in_plan_mode_model_switch_does_not_open_scope_promp
         .expect("expected plan collaboration mode");
     chat.set_collaboration_mask(plan_mask);
     let _ = drain_insert_history(&mut rx);
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
 
     let preset = get_available_model(&chat, "gpt-5.6-terra");
     chat.open_reasoning_popup(preset);

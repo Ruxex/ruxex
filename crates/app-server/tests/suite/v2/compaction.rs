@@ -97,7 +97,7 @@ async fn auto_compaction_emits_started_and_completed_items(route: CompactionRout
             .with_provider_config("requires_auth = true");
         write_api_key_auth(
             codex_home.path(),
-            ApiKeyAuthFixture::new("access-chatgpt").plan_type("pro"),
+            ApiKeyAuthFixture::new("test-token").plan_type("pro"),
             AuthCredentialsStoreMode::File,
         )?;
     }

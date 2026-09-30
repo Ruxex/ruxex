@@ -491,7 +491,7 @@ async fn mcp_server_tool_call_round_trips_user_input_for_custom_frontend_user_th
             thread_source: Some(codex_app_server_protocol::ThreadSource::User),
             ..Default::default()
         },
-        session_source: "chatgpt",
+        session_source: "external",
         client_advertises_standard_form_input: true,
     })
     .await

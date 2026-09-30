@@ -260,7 +260,7 @@ async fn worktree_start_and_fork_use_host_pool_and_preserve_legacy_resume() -> a
     fs::write(
         home.join("auth.json"),
         serde_json::to_vec(&serde_json::json!({
-            "auth_mode": "chatgpt",
+            "auth_mode": "managed",
             "tokens": {
                 "id_token": "e30.eyJodHRwczovL2FwaS5vcGVuYWkuY29tL2F1dGgiOnsiY2hhdGdwdF9wbGFuX3R5cGUiOiJlbnRlcnByaXNlIiwiY2hhdGdwdF9hY2NvdW50X2lkIjoid29ya3NwYWNlLTEyMyIsImNoYXRncHRfdXNlcl9pZCI6InVzZXItMTIzIn19.signature",
                 "access_token": "test-access-token",

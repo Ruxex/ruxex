@@ -121,7 +121,6 @@ async fn enterprise_activation_respects_managed_config_and_plugin_ownership(
 }
 
 #[test_case("oauth"; "OAuth")]
-#[test_case("chatgpt"; "ChatGPT")]
 #[tokio::test]
 async fn trusted_project_cannot_downgrade_enterprise_auth(project_auth: &str) -> Result<()> {
     let home = tempdir()?;

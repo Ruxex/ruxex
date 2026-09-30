@@ -77,7 +77,7 @@ async fn config_requirements_read_rejects_invalid_login_method() -> Result<()> {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn config_requirements_read_preserves_api_only_bedrock_without_chatgpt_requests() -> Result<()>
+async fn config_requirements_read_preserves_api_only_bedrock_without_managed_provider_requests() -> Result<()>
 {
     let backend = MockServer::start().await;
     let (_home, mut server) = start_server(

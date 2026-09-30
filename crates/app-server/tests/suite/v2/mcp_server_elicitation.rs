@@ -349,7 +349,7 @@ async fn openai_form_capability_follows_the_turn_starting_connection() -> Result
     write_config_toml(codex_home.path(), &responses_server.uri(), &apps_server_url)?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -691,7 +691,7 @@ impl ElicitationRoundTripFixture {
         }
         write_api_key_auth(
             codex_home.path(),
-            ApiKeyAuthFixture::new("chatgpt-token")
+            ApiKeyAuthFixture::new("test-token")
                 .account_id("account-123")
                 .user_id("user-123")
                 .workspace_id("account-123"),
@@ -1404,7 +1404,7 @@ fn sep1034_defaults() -> Value {
 
 async fn start_apps_server(scenario: ElicitationScenario) -> Result<(String, JoinHandle<()>)> {
     let state = Arc::new(AppsServerState {
-        expected_bearer: "Bearer chatgpt-token".to_string(),
+        expected_bearer: "Bearer test-token".to_string(),
         expected_account_id: "account-123".to_string(),
     });
 

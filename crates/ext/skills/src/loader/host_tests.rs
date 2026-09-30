@@ -121,7 +121,7 @@ async fn loads_host_frontmatter_dependencies_and_policy() {
         callbackPort: 3118
 policy:
   allow_implicit_invocation: false
-  products: [codex, CHATGPT, atlas]
+  products: [codex, unknown, unknown]
 "##,
     );
 

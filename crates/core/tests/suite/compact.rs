@@ -2586,7 +2586,7 @@ async fn pre_sampling_compact_falls_back_from_retired_previous_model_after_renam
                 ev_completed_with_tokens("r1", /*total_tokens*/ 100),
             ])),
             invalid_request_response(format!(
-                "The '{retired_model}' model is not supported when using Codex with a ChatGPT account."
+                "The '{retired_model}' model is not supported when using Codex with a managed account."
             )),
             sse_response(sse(vec![
                 json!({

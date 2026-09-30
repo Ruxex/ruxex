@@ -78,7 +78,7 @@ use crate::chatwidget::create_initial_user_message;
 use crate::chatwidget::tests::helpers::render_bottom_popup;
 use crate::chatwidget::tests::helpers::set_active_cell;
 use crate::chatwidget::tests::make_chatwidget_manual_with_sender;
-use crate::chatwidget::tests::set_chatgpt_auth;
+use crate::chatwidget::tests::set_managed_auth;
 use crate::file_search::FileSearchManager;
 use crate::goal_files;
 use crate::history_cell::AgentMarkdownCell;

@@ -245,7 +245,7 @@ async fn features_list_honors_cloud_managed_feature_requirements() -> Result<()>
 
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("workspace-123")
             .workspace_id("workspace-123")
             .user_id("user-123")
@@ -254,7 +254,7 @@ async fn features_list_honors_cloud_managed_feature_requirements() -> Result<()>
     )?;
     Mock::given(method("GET"))
         .and(path("/backend-api/wham/config/bundle"))
-        .and(header("authorization", "Bearer chatgpt-token"))
+        .and(header("authorization", "Bearer test-token"))
         .and(header("chatgpt-account-id", "workspace-123"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "requirements_toml": {

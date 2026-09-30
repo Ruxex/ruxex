@@ -6,9 +6,9 @@ use codex_app_server_protocol::ThreadUsageBreakdownGroup;
 use codex_utils_path_uri::PathUri;
 
 #[tokio::test]
-async fn status_command_renders_immediately_and_refreshes_rate_limits_for_chatgpt_auth() {
+async fn status_command_renders_immediately_and_refreshes_rate_limits_for_managed_auth() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
 
     chat.dispatch_command(SlashCommand::Status);
 
@@ -34,7 +34,7 @@ async fn status_command_renders_immediately_and_refreshes_rate_limits_for_chatgp
 #[tokio::test]
 async fn status_command_refresh_updates_cached_limits_for_future_status_outputs() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
 
     chat.dispatch_command(SlashCommand::Status);
 
@@ -84,7 +84,7 @@ async fn status_command_renders_immediately_without_rate_limit_refresh() {
     assert!(
         !std::iter::from_fn(|| rx.try_recv().ok())
             .any(|event| matches!(event, AppEvent::RefreshRateLimits { .. })),
-        "non-ChatGPT sessions should not request a rate-limit refresh for /status"
+        "unauthenticated sessions should not request a rate-limit refresh for /status"
     );
 }
 
@@ -147,7 +147,7 @@ async fn status_command_renders_native_and_foreign_instruction_sources() {
 #[tokio::test]
 async fn status_command_overlapping_refreshes_update_matching_cells_only() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
 
     chat.dispatch_command(SlashCommand::Status);
     match rx.try_recv() {
@@ -191,7 +191,7 @@ async fn status_command_overlapping_refreshes_update_matching_cells_only() {
 #[tokio::test]
 async fn account_update_rejects_stale_status_rate_limit_snapshots() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     chat.dispatch_command(SlashCommand::Status);
     assert_matches!(rx.try_recv(), Ok(AppEvent::InsertHistoryCell(_)));
     let request_id = match rx.try_recv() {
@@ -213,7 +213,7 @@ async fn account_update_rejects_stale_status_rate_limit_snapshots() {
 #[tokio::test]
 async fn status_command_renders_immediately_and_updates_first_card_without_status_line() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     let thread_id =
         ThreadId::from_string("019fc8ab-1fb2-7000-8000-000000000001").expect("valid thread id");
     chat.thread_id = Some(thread_id);
@@ -313,7 +313,7 @@ async fn status_command_omits_thread_usage_for_non_cbp_enterprise_plans() {
         None,
     ] {
         let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-        set_chatgpt_auth(&mut chat);
+        set_managed_auth(&mut chat);
         chat.thread_id = Some(ThreadId::new());
         chat.plan_type = plan_type;
 
@@ -337,7 +337,7 @@ async fn status_command_omits_thread_usage_for_non_cbp_enterprise_plans() {
 #[tokio::test]
 async fn status_command_stays_visible_and_updates_after_thread_usage_retry() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
     chat.plan_type = Some(PlanType::Business);
@@ -391,7 +391,7 @@ async fn status_command_stays_visible_and_updates_after_thread_usage_retry() {
 #[tokio::test]
 async fn status_command_renders_credits_and_breakdowns_without_usd_estimate() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
     chat.plan_type = Some(PlanType::Business);
@@ -459,7 +459,7 @@ async fn status_command_renders_credits_and_breakdowns_without_usd_estimate() {
 #[tokio::test]
 async fn status_command_drops_stale_usd_when_updated_usage_has_only_credits() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
     chat.plan_type = Some(PlanType::Business);
@@ -561,7 +561,7 @@ async fn status_command_requests_thread_usage_with_backend_only_authentication()
 #[tokio::test]
 async fn status_command_remains_visible_when_account_changes_during_usage_refresh() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
     chat.plan_type = Some(PlanType::Business);
@@ -595,7 +595,7 @@ async fn status_command_remains_visible_when_account_changes_during_usage_refres
 #[tokio::test]
 async fn status_command_remains_visible_when_thread_changes_during_usage_refresh() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
     chat.plan_type = Some(PlanType::Business);

@@ -698,9 +698,9 @@ async fn agent_plugin_skills_use_shared_catalog_and_direct_child_discovery() -> 
     Ok(())
 }
 
-#[test_case("CHATGPT", false, None; "product restricted skill is unavailable")]
+#[test_case("UNKNOWN", false, None; "product restricted skill is unavailable")]
 #[test_case("CODEX", true, Some("native review skill"); "native skill wins over migrated command")]
-#[test_case("CHATGPT", true, Some("migrated review command"); "migrated command replaces filtered native skill")]
+#[test_case("UNKNOWN", true, Some("migrated review command"); "migrated command replaces filtered native skill")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn plugin_skill_product_policy_and_migrated_command_precedence_reach_agent_turns(
     native_skill_product: &str,
@@ -1101,10 +1101,10 @@ async fn agent_plugin_root_mcp_stdio_tool_round_trip_expands_reserved_paths_and_
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
-    const CHATGPT_CURATED_PLUGIN_SKILL: &str = "chatgpt-plugin:chatgpt-skill";
+    const MANAGED_CURATED_PLUGIN_SKILL: &str = "managed-plugin:managed-skill";
     const API_CURATED_PLUGIN_SKILL: &str = "api-plugin:api-skill";
     const CURATED_PLUGIN_SKILLS: &[&str] =
-        &[CHATGPT_CURATED_PLUGIN_SKILL, API_CURATED_PLUGIN_SKILL];
+        &[MANAGED_CURATED_PLUGIN_SKILL, API_CURATED_PLUGIN_SKILL];
 
     #[derive(Clone, Copy)]
     enum TargetAuth {
@@ -1220,7 +1220,7 @@ async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
 plugins = true
 remote_plugin = false
 
-[plugins."chatgpt-plugin@openai-curated"]
+[plugins."managed-plugin@openai-curated"]
 enabled = true
 
 [plugins."api-plugin@openai-api-curated"]
@@ -1230,9 +1230,9 @@ enabled = true
         for (marketplace_name, plugin_name, skill_name, description) in [
             (
                 "openai-curated",
-                "chatgpt-plugin",
-                "chatgpt-skill",
-                "chatgpt description",
+                "managed-plugin",
+                "managed-skill",
+                "managed description",
             ),
             (
                 "openai-api-curated",
@@ -1268,11 +1268,11 @@ enabled = true
         let initial_skills = loaded_plugin_skills_for_config(&test_codex, &test_codex.config).await;
         assert_loaded_plugin_skills(
             fixture.name,
-            "initial ChatGPT config",
+            "initial managed config",
             &initial_skills,
-            &[CHATGPT_CURATED_PLUGIN_SKILL],
+            &[MANAGED_CURATED_PLUGIN_SKILL],
         );
-        assert!(initial_skills.contains("chatgpt description"));
+        assert!(initial_skills.contains("managed description"));
 
         std::fs::write(
             codex_home.path().join(
@@ -1337,7 +1337,7 @@ enabled = true
 #[test_case(true; "enabled app")]
 #[test_case(false; "disabled app")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn explicit_plugin_mentions_use_apps_for_chatgpt_dual_surface_plugins(
+async fn explicit_plugin_mentions_use_apps_for_managed_dual_surface_plugins(
     app_enabled: bool,
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
@@ -1392,7 +1392,7 @@ async fn explicit_plugin_mentions_use_apps_for_chatgpt_dual_surface_plugins(
         !developer_messages
             .iter()
             .any(|text| text.contains("MCP servers from this plugin")),
-        "expected plugin MCP guidance to be suppressed for ChatGPT auth: {developer_messages:?}"
+        "expected plugin MCP guidance to be suppressed for managed auth: {developer_messages:?}"
     );
     assert_eq!(
         developer_messages
@@ -1412,7 +1412,7 @@ async fn explicit_plugin_mentions_use_apps_for_chatgpt_dual_surface_plugins(
         request
             .tool_by_name(SAMPLE_PLUGIN_MCP_NAMESPACE, "echo")
             .is_none(),
-        "plugin MCP tool should not leak into the request for ChatGPT auth"
+        "plugin MCP tool should not leak into the request for managed auth"
     );
     let (calendar_tool, echo_tool) = searched_plugin_tools(&requests[1]);
     assert_eq!(
@@ -1425,14 +1425,14 @@ async fn explicit_plugin_mentions_use_apps_for_chatgpt_dual_surface_plugins(
     }
     assert!(
         echo_tool.is_none(),
-        "plugin MCP tool should be suppressed for ChatGPT auth"
+        "plugin MCP tool should be suppressed for managed auth"
     );
 
     Ok(())
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn explicit_plugin_mentions_keep_non_conflicting_mcp_for_chatgpt_auth() -> Result<()> {
+async fn explicit_plugin_mentions_keep_non_conflicting_mcp_for_managed_auth() -> Result<()> {
     skip_if_no_network!(Ok(()));
     let server = start_mock_server().await;
     let apps_server = AppsTestServer::mount_with_connector_name(&server, "Google Calendar").await?;

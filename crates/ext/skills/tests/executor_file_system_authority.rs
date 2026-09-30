@@ -563,7 +563,7 @@ async fn executor_discovery_routes_produce_equivalent_catalog_metadata() {
         "---\nname: excluded\ndescription: Excluded skill.\n---\n",
     )
     .expect("write excluded skill");
-    std::fs::write(&excluded_metadata, "policy:\n  products:\n    - chatgpt\n")
+    std::fs::write(&excluded_metadata, "policy:\n  products:\n    - unknown\n")
         .expect("write excluded metadata");
     std::fs::write(
         &repaired_skill,

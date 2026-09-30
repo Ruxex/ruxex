@@ -510,7 +510,7 @@ async fn invalid_url_elicitation_is_declined() {
 #[tokio::test]
 async fn thread_settings_updated_updates_visible_state_without_transcript() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.2")).await;
-    set_chatgpt_auth(&mut chat);
+    set_managed_auth(&mut chat);
     set_service_tier_test_catalog(&mut chat);
     chat.set_feature_enabled(Feature::Apps, /*enabled*/ true);
     let thread_id = ThreadId::new();

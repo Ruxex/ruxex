@@ -906,7 +906,7 @@ async fn external_agent_config_import_reports_failed_sync_import_in_completion()
     let codex_home = TempDir::new()?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -1053,7 +1053,7 @@ async fn external_agent_config_import_completed_tracks_analytics_event() -> Resu
     write_analytics_config(codex_home.path(), &analytics_server.uri())?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -1155,7 +1155,7 @@ async fn external_agent_config_import_reports_session_config_error_subtype() -> 
     write_analytics_config(codex_home.path(), &analytics_server.uri())?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
@@ -1260,7 +1260,7 @@ async fn external_agent_config_import_reinstalls_plugins_from_known_marketplaces
     write_analytics_config(codex_home.path(), &analytics_server.uri())?;
     write_api_key_auth(
         codex_home.path(),
-        ApiKeyAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),

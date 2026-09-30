@@ -51,7 +51,7 @@ async fn application_network_defaults_and_null_base_url_are_exposed() -> Result<
         assert_eq!(
             (
                 requirements.get("application"),
-                requirements.get("chatgptBaseUrl")
+                requirements.get("managedAuthBaseUrl")
             ),
             (Some(&application), Some(&Value::Null)),
         );
@@ -85,7 +85,7 @@ managed_auth_base_url = "https://managed.example.com/backend-api/"
         (
             &wire["requirements"]["application"],
             &wire["requirements"]["network"]["domains"],
-            &wire["requirements"]["chatgptBaseUrl"]
+            &wire["requirements"]["managedAuthBaseUrl"]
         ),
         (
             &json!({"network": {"enabled": true, "domains": {"gov.example.com": "allow", "github.com": "deny"}}}),
