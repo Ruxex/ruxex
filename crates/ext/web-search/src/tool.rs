@@ -278,12 +278,12 @@ mod tests {
 
     #[test]
     fn search_request_headers_forward_thread_originator_and_turn_metadata() {
-        let headers = search_request_headers(Some("chatgpt_cca"), Some("turn-metadata"));
+        let headers = search_request_headers(Some("codex_work_cca"), Some("turn-metadata"));
         assert_eq!(
             headers
                 .get("originator")
                 .and_then(|value| value.to_str().ok()),
-            Some("chatgpt_cca")
+            Some("codex_work_cca")
         );
         assert_eq!(
             headers

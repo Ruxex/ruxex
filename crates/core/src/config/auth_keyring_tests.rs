@@ -121,7 +121,7 @@ fn managed_auth_restrictions_intersect_workspaces_and_fail_closed() {
     };
     assert_eq!(
         bootstrap_auth_config(Path::new("codex-home"), &bootstrap_config)
-            .expect_err("ChatGPT-only policy without an allowed workspace must fail")
+            .expect_err("managed-auth policy without an allowed workspace must fail")
             .kind(),
         std::io::ErrorKind::PermissionDenied
     );

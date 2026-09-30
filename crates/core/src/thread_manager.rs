@@ -347,7 +347,6 @@ fn originator_from_service_name(service_name: Option<&str>) -> Option<String> {
         "codex_work_web",
         "codex_work_mobile",
         "codex_work_cca",
-        "chatgpt_cca",
     ] {
         if service_name.eq_ignore_ascii_case(originator) {
             return Some(originator.to_string());

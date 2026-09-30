@@ -16,19 +16,19 @@ fn only_matching_enforced_apple_security_events_are_failures() {
             "denied /Applications/Codex.app/Contents/MacOS/Codex",
             Evidence::Blocked,
         ),
-        ("malware detected ChatGPT.app", Evidence::Clear),
-        ("audit token blocked ChatGPT.app", Evidence::Clear),
+        ("malware detected Other.app", Evidence::Clear),
+        ("audit token blocked Other.app", Evidence::Clear),
         (
-            "audit token XP_MALWARE_DETECTED ChatGPT.app",
+            "audit token XP_MALWARE_DETECTED Other.app",
             Evidence::Clear,
         ),
-        ("XP_MALWARE_REMEDIATED ChatGPT.app", Evidence::Clear),
+        ("XP_MALWARE_REMEDIATED Other.app", Evidence::Clear),
         ("denied .plugin-appserver", Evidence::Blocked),
-        ("audit would block ChatGPT.app", Evidence::Clear),
-        ("OSStatus 100024 ChatGPT.app", Evidence::Clear),
-        ("not blocked ChatGPT.app", Evidence::Clear),
+        ("audit would block Other.app", Evidence::Clear),
+        ("OSStatus 100024 Other.app", Evidence::Clear),
+        ("not blocked Other.app", Evidence::Clear),
         ("denied EMFILE com.example.other", Evidence::Clear),
-        ("EMFILE\nmalware detected ChatGPT.app", Evidence::Clear),
+        ("EMFILE\nmalware detected Other.app", Evidence::Clear),
     ] {
         assert_eq!(classify_security_events(event), expected, "{event}");
     }
@@ -37,7 +37,7 @@ fn only_matching_enforced_apple_security_events_are_failures() {
 #[test]
 fn gatekeeper_failures_require_actionable_security_evidence() {
     for (message, expected) in [
-        ("ChatGPT.app: rejected", Evidence::Clear),
+        ("Other.app: rejected", Evidence::Clear),
         ("operation not permitted", Evidence::Unavailable),
     ] {
         let output = Output {
