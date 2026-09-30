@@ -258,11 +258,7 @@ async fn token_budget_guidance_precedes_standalone_context_window(
         .with_model_info_override("gpt-5.2", |model| {
             model.supports_experimental_context = true;
         })
-        .with_auth(CodexAuth::from_external_chatgpt_tokens(
-            "header.e30.signature",
-            "account-123",
-            Some("plus"),
-        )?)
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_pre_build_hook(move |home| {
             std::fs::write(
                 home.join("config.toml"),
@@ -328,11 +324,7 @@ async fn experimental_context_requires_capable_model_and_codex_backend(
         .with_model_info_override("gpt-5.2", move |model| {
             model.supports_experimental_context = supports_context;
         })
-        .with_auth(CodexAuth::from_external_chatgpt_tokens(
-            "header.e30.signature",
-            "account-123",
-            Some("plus"),
-        )?)
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config.model_provider.name = provider_name.to_string();
             config.model_provider.base_url = Some(base_url);
@@ -381,11 +373,7 @@ async fn token_budget_history_notes_requires_capable_starting_model(
     let server = start_mock_server().await;
     let backend_url = format!("{}/backend-api/codex", server.uri());
     let result = test_codex()
-        .with_auth(CodexAuth::from_external_chatgpt_tokens(
-            "header.e30.signature",
-            "account-123",
-            Some("plus"),
-        )?)
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_pre_build_hook(move |home| {
             let config = if use_model_defaults {
                 "[features.context_management]\nexperimental_mode = false\n".to_string()
@@ -542,11 +530,7 @@ async fn token_budget_defaults_follow_the_active_model(activation: Feature) -> R
     .await;
     let backend_url = format!("{}/backend-api/codex", server.uri());
     let test = test_codex()
-        .with_auth(CodexAuth::from_external_chatgpt_tokens(
-            "header.e30.signature",
-            "account-123",
-            Some("plus"),
-        )?)
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model_info_override("gpt-5.2", |model_info| {
             model_info.supports_experimental_context = true;
             let mut defaults = model_token_budget_config();

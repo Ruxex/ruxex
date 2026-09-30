@@ -164,9 +164,10 @@ OpenAI account/entitlement、host-owned Apps MCP、Apps 固有 UI/protocol と�
 4. TUI の BackendBanner/Reserve recovery と hosted/curated marketplace UI は**完了**。
    通常の status/account 表示と active bundled/runtime marketplace boundary は保持する。
 5. login/model-provider の first-party auth adapter は、共有 auth capability の名称を
-   `requires_first_party_auth` に移行済みだが、明示的な OpenAI-compatible adapter と
-   ChatGPT/workload-identity の active consumer が残っている。ユーザー要求により、
-   Workload Identityを含むChatGPT系token authを削除し、API Key、Bedrock、外部Bearer、
-   provider-neutralなcredential/MCP OAuthを残す作業へ移行する。
+   `requires_auth` に移行済みで、ChatGPT/workload-identity の runtime consumer と
+   token auth は `d22689112` で削除済み。API Key、Bedrock、外部Bearer、
+   provider-neutralなcredential/MCP OAuthは保持する。残る作業は未登録テストソース、
+   obsolete な環境変数マーカーの cleanup であり、generated index の更新は Hawk の
+   更新をユーザーが明示的に依頼した場合に行う。
    Apps/MCP の専用 adapter は削除済みで、通常の MCP/OAuth/elicitation/security は保持済み。
 6. 未完了の各項目について producer/consumer を台帳に記録し、`remove`、`retain`、`migrate-in-place` を決めた後、`just check`、必要に応じて `just check --tests`、生成物があれば `just generate` を実行する。

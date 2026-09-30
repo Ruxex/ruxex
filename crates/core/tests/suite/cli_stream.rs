@@ -52,8 +52,6 @@ async fn mount_personal_access_token_startup(server: &MockServer) {
             "email": "user@example.com",
             "user_id": "user-pat",
             "workspace_id": PERSONAL_ACCESS_TOKEN_ACCOUNT_ID,
-            "chatgpt_plan_type": "enterprise",
-            "chatgpt_account_is_fedramp": true,
         })))
         .expect(1..)
         .mount(server)

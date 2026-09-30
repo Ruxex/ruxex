@@ -71,7 +71,6 @@ async fn daemon_startup(command: &str) -> Result<()> {
         "OPENAI_API_KEY",
         "OPENAI_FEDERATION_RULE_ID",
         "OPENAI_IDENTITY_TOKEN_FILE",
-        "OPENAI_WORKLOAD_IDENTITY_CONTEXT",
     ] {
         env.remove(key);
     }

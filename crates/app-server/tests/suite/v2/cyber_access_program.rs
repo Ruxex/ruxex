@@ -382,8 +382,6 @@ async fn turn_start_forwards_cyber_access_program_with_personal_access_token() -
             "email": null,
             "user_id": "user-123",
             "workspace_id": "account-123",
-            "chatgpt_plan_type": "enterprise_cbp_automation",
-            "chatgpt_account_is_fedramp": false,
         })))
         .mount(&server)
         .await;

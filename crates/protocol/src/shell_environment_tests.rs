@@ -19,10 +19,6 @@ fn non_inheritable_environment_is_removed_after_policy_overrides() {
             "inherited-rule".to_string(),
         ),
         (
-            "OPENAI_WORKLOAD_IDENTITY_CONTEXT".to_string(),
-            r#"{"instance_id":"box-one"}"#.to_string(),
-        ),
-        (
             "codex_exec_server_noise_auth_token".to_string(),
             "inherited-noise-token".to_string(),
         ),
@@ -59,10 +55,6 @@ fn command_scrubber_removes_names_from_real_child_environment() {
             .env(CHILD_MODE_ENV_VAR, "1")
             .env("Node_Repl_Auth_Token", "inherited-token")
             .env("OpenAI_Federation_Rule_Id", "inherited-rule")
-            .env(
-                "OpenAI_Workload_Identity_Context",
-                r#"{"instance_id":"box-one"}"#,
-            )
             .env(
                 "Codex_Exec_Server_Noise_Auth_Token",
                 "inherited-noise-token",

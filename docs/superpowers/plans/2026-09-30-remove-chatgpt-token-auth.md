@@ -239,4 +239,12 @@ Expected: production workspaceのtype-check成功。
 
 Run: `git diff --check` および `git status --short`
 
-Expected: 意図した削除・移行だけが残り、秘密情報や不要な生成差分がないこと。
+Expected: 意図した削除・移行だけが残り、秘密情報や不要な生成差分がないこと。`codex-cli.json` の Hawk 出力は、ユーザー指定により更新せず現状を保持する。
+
+## 進捗追記（2026-09-30）
+
+- Workload Identity 削除後に残っていた未登録テストソース `crates/core/tests/suite/client.rs` と `code_mode.rs` を削除した。
+- `OPENAI_WORKLOAD_IDENTITY_CONTEXT` の環境変数スクラブ、obsolete な認証 claim、ChatGPT 専用テストヘルパーを削除した。
+- `docs/pre-release-compatibility-inventory.md` と `docs/openai-decoupling-candidates.md` に producer/consumer 監査結果と判断を反映した。
+- `codex-cli.json` は Hawk 更新を行わず、残存する古い finding は明示的に保留した。
+- 検証済み: `just check --tests`、`just check`、`git diff --check`。
