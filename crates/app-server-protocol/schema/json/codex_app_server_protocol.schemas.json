@@ -7832,7 +7832,7 @@
             ]
           },
           "reloadUserConfig": {
-            "description": "When true, hot-reload updated runtime settings into loaded threads after writing. Session-static model, reasoning-effort, Plan-mode reasoning-effort, and service-tier defaults are not reloaded. The deprecated personality setting is also not reloaded.",
+            "description": "When true, hot-reload updated runtime settings into loaded threads after writing. Session-static model, reasoning-effort, Plan-mode reasoning-effort, and service-tier defaults are not reloaded.",
             "type": "boolean"
           }
         },
@@ -12084,11 +12084,6 @@
             },
             "type": "array"
           },
-          "supportsPersonality": {
-            "default": false,
-            "description": "@deprecated Always false; models no longer support personality selection.",
-            "type": "boolean"
-          },
           "upgrade": {
             "type": [
               "string",
@@ -12761,15 +12756,6 @@
           "id"
         ],
         "type": "object"
-      },
-      "Personality": {
-        "description": "Deprecated: `friendly` and `pragmatic` no longer select a style.",
-        "enum": [
-          "none",
-          "friendly",
-          "pragmatic"
-        ],
-        "type": "string"
       },
       "PlanDeltaNotification": {
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -18738,17 +18724,6 @@
               "null"
             ]
           },
-          "personality": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/v2/Personality"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "@deprecated `friendly` and `pragmatic` no longer select a style. Changing this does not rewrite the thread's existing instructions."
-          },
           "sandbox": {
             "anyOf": [
               {
@@ -19264,17 +19239,6 @@
           "modelProvider": {
             "type": "string"
           },
-          "personality": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/v2/Personality"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "@deprecated Reports the saved setting; `friendly` and `pragmatic` no longer select a style."
-          },
           "sandboxPolicy": {
             "$ref": "#/definitions/v2/SandboxPolicy"
           },
@@ -19435,17 +19399,6 @@
               "string",
               "null"
             ]
-          },
-          "personality": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/v2/Personality"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "@deprecated `friendly` and `pragmatic` no longer select a style."
           },
           "sandbox": {
             "anyOf": [
@@ -20445,17 +20398,6 @@
           },
           "outputSchema": {
             "description": "Optional JSON Schema used to constrain the final assistant message for this turn."
-          },
-          "personality": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/v2/Personality"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "@deprecated `friendly` and `pragmatic` no longer select a style. Changing this does not rewrite the thread's existing instructions."
           },
           "sandboxPolicy": {
             "anyOf": [

@@ -1026,11 +1026,6 @@ async fn skills_list_uses_cached_result_after_session_default_writes_until_force
             value: serde_json::json!("fast"),
             merge_strategy: MergeStrategy::Replace,
         }],
-        vec![ConfigEdit {
-            key_path: "personality".to_string(),
-            value: serde_json::json!("friendly"),
-            merge_strategy: MergeStrategy::Replace,
-        }],
         vec![
             ConfigEdit {
                 key_path: "model".to_string(),
@@ -1266,7 +1261,6 @@ async fn skills_changed_notification_is_emitted_after_skill_change() -> Result<(
             service_name: None,
             base_instructions: None,
             developer_instructions: None,
-            personality: None,
             multi_agent_mode: None,
             ephemeral: None,
             history_mode: None,

@@ -369,12 +369,6 @@ impl TurnContext {
         self.initial_settings.selected_collaboration_mode().mode
     }
 
-    /// Legacy: returns the frozen initial-turn personality.
-    /// Step-scoped consumers should use their captured `StepContext::settings`.
-    pub(crate) fn personality(&self) -> Option<Personality> {
-        self.initial_settings.personality()
-    }
-
     pub(crate) fn skills_snapshot(&self) -> Arc<HostSkillsSnapshot> {
         let Some(snapshot) = self.extension_data.get::<HostSkillsSnapshot>() else {
             unreachable!("every turn has a host skills snapshot");
@@ -674,7 +668,6 @@ impl TurnContext {
             file_system_sandbox_policy: self.non_legacy_file_system_sandbox_policy(),
             model: self.model_info().slug.clone(),
             comp_hash: self.model_info().comp_hash.clone(),
-            personality: self.personality(),
             collaboration_mode: Some(self.collaboration_mode()),
             multi_agent_version: Some(self.multi_agent_version),
             multi_agent_mode: None,
@@ -741,7 +734,6 @@ impl Session {
         per_turn_config.model_reasoning_summary =
             session_configuration.step_settings.reasoning_summary;
         per_turn_config.service_tier = session_configuration.step_settings.service_tier.clone();
-        per_turn_config.personality = session_configuration.step_settings.personality;
         session_configuration
             .apply_permission_profile_to_permissions(&mut per_turn_config.permissions);
         let permission_profile = session_configuration.permission_profile();

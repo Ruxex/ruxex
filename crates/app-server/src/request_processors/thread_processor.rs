@@ -190,15 +190,6 @@ fn collect_resume_override_mismatches(
             config_snapshot.active_permission_profile
         ));
     }
-    if let Some(requested_personality) = request.personality.as_ref()
-        && config_snapshot.personality.as_ref() != Some(requested_personality)
-    {
-        mismatch_details.push(format!(
-            "personality requested={requested_personality:?} active={:?}",
-            config_snapshot.personality
-        ));
-    }
-
     if request.config.is_some() {
         mismatch_details
             .push("config overrides were provided and ignored while running".to_string());
@@ -1111,7 +1102,6 @@ impl ThreadRequestProcessor {
             selected_capability_roots,
             mock_experimental_field: _mock_experimental_field,
             experimental_raw_events,
-            personality,
             multi_agent_mode: _multi_agent_mode,
             ephemeral,
             history_mode,
@@ -1167,7 +1157,6 @@ impl ThreadRequestProcessor {
             permissions,
             base_instructions,
             developer_instructions,
-            personality,
         );
         typesafe_overrides.ephemeral = ephemeral;
         let listener_task_context = ListenerTaskContext {
@@ -1618,7 +1607,6 @@ impl ThreadRequestProcessor {
         permissions: Option<String>,
         base_instructions: Option<String>,
         developer_instructions: Option<String>,
-        personality: Option<Personality>,
     ) -> ConfigOverrides {
         ConfigOverrides {
             model,
@@ -1634,7 +1622,6 @@ impl ThreadRequestProcessor {
             main_execve_wrapper_exe: self.arg0_paths.main_execve_wrapper_exe.clone(),
             base_instructions,
             developer_instructions,
-            personality,
             ..Default::default()
         }
     }
@@ -3554,7 +3541,6 @@ impl ThreadRequestProcessor {
             config: mut request_overrides,
             base_instructions,
             developer_instructions,
-            personality,
             exclude_turns,
             initial_turns_page,
         } = params.clone();
@@ -3743,7 +3729,6 @@ impl ThreadRequestProcessor {
             permissions,
             base_instructions,
             developer_instructions,
-            personality,
         );
         if typesafe_overrides.approval_policy.is_none()
             && let Some(value) = request_overrides
@@ -4842,7 +4827,6 @@ impl ThreadRequestProcessor {
             permissions,
             base_instructions,
             developer_instructions,
-            /*personality*/ None,
         );
         typesafe_overrides.ephemeral = ephemeral.then_some(true);
         let restore_approval_policy = typesafe_overrides.approval_policy.is_none();

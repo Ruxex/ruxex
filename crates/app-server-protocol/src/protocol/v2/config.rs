@@ -952,7 +952,7 @@ pub struct ConfigBatchWriteParams {
     pub expected_version: Option<String>,
     /// When true, hot-reload updated runtime settings into loaded threads after writing.
     /// Session-static model, reasoning-effort, Plan-mode reasoning-effort, and service-tier
-    /// defaults are not reloaded. The deprecated personality setting is also not reloaded.
+    /// defaults are not reloaded.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub reload_user_config: bool,
 }

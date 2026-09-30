@@ -23,7 +23,6 @@ use crate::capabilities::SelectedCapabilityRoot;
 use crate::config_types::CollaborationMode;
 use crate::config_types::ModeKind;
 use crate::config_types::MultiAgentMode;
-use crate::config_types::Personality;
 use crate::config_types::ReasoningSummary as ReasoningSummaryConfig;
 use crate::config_types::WindowsSandboxLevel;
 use crate::dynamic_tools::DynamicToolCallOutputContentItem;
@@ -237,7 +236,6 @@ pub struct ThreadSettingsOverrides {
     pub summary: Option<ReasoningSummaryConfig>,
     pub service_tier: Option<Option<String>>,
     pub collaboration_mode: Option<CollaborationMode>,
-    pub personality: Option<Personality>,
     pub disabled_plugin_ids: Option<Vec<String>>,
 }
 
@@ -1772,8 +1770,6 @@ pub struct ThreadSettingsSnapshot {
     pub reasoning_effort: Option<ReasoningEffortConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reasoning_summary: Option<ReasoningSummaryConfig>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub personality: Option<Personality>,
     pub collaboration_mode: CollaborationMode,
     /// Thread-owned plugin selection, retained even when a plugin is unavailable.
     #[serde(default)]
@@ -2826,8 +2822,6 @@ pub struct TurnContextItem {
     pub model: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub comp_hash: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub personality: Option<Personality>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub collaboration_mode: Option<CollaborationMode>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -5578,12 +5572,14 @@ mod tests {
             "approval_policy": "never",
             "sandbox_policy": { "type": "danger-full-access" },
             "model": "gpt-5",
+            "personality": "friendly",
             "summary": "auto",
         }))?;
 
         assert_eq!(item.network, None);
         assert_eq!(item.file_system_sandbox_policy, None);
         assert_eq!(item.comp_hash, None);
+        assert!(!serde_json::to_value(&item)?.to_string().contains("personality"));
         Ok(())
     }
 
@@ -5632,7 +5628,6 @@ mod tests {
             ),
             model: "gpt-5".to_string(),
             comp_hash: None,
-            personality: None,
             collaboration_mode: None,
             multi_agent_version: None,
             multi_agent_mode: None,

@@ -210,15 +210,6 @@
         }
       ]
     },
-    "Personality": {
-      "description": "Deprecated: `friendly` and `pragmatic` no longer select a style.",
-      "enum": [
-        "none",
-        "friendly",
-        "pragmatic"
-      ],
-      "type": "string"
-    },
     "SandboxMode": {
       "enum": [
         "read-only",
@@ -344,17 +335,6 @@
         "string",
         "null"
       ]
-    },
-    "personality": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/Personality"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "@deprecated `friendly` and `pragmatic` no longer select a style."
     },
     "sandbox": {
       "anyOf": [

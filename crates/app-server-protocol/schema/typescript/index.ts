@@ -56,7 +56,6 @@ export type { NetworkPolicyAmendment } from "./NetworkPolicyAmendment";
 export type { NetworkPolicyRuleAction } from "./NetworkPolicyRuleAction";
 export type { ParsedCommand } from "./ParsedCommand";
 export type { PathUri } from "./PathUri";
-export type { Personality } from "./Personality";
 export type { PlanType } from "./PlanType";
 export type { ReasoningEffort } from "./ReasoningEffort";
 export type { ReasoningItemContent } from "./ReasoningItemContent";

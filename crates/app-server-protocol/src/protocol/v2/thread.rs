@@ -22,7 +22,6 @@ pub use codex_protocol::capabilities::CapabilityRootLocation;
 pub use codex_protocol::capabilities::SelectedCapabilityRoot;
 use codex_protocol::config_types::CollaborationMode;
 use codex_protocol::config_types::MultiAgentMode;
-use codex_protocol::config_types::Personality;
 use codex_protocol::config_types::ReasoningSummary;
 pub use codex_protocol::dynamic_tools::DynamicToolFunctionSpec;
 pub use codex_protocol::dynamic_tools::DynamicToolNamespaceSpec;
@@ -101,9 +100,6 @@ pub struct ThreadStartParams {
     pub base_instructions: Option<String>,
     #[ts(optional = nullable)]
     pub developer_instructions: Option<String>,
-    /// @deprecated `friendly` and `pragmatic` no longer select a style.
-    #[ts(optional = nullable)]
-    pub personality: Option<Personality>,
     /// @deprecated Ignored. Use Ultra reasoning effort for proactive multi-agent behavior.
     #[experimental("thread/start.multiAgentMode")]
     #[ts(optional = nullable)]
@@ -282,10 +278,6 @@ pub struct ThreadSettingsUpdateParams {
     #[experimental("thread/settings/update.multiAgentMode")]
     #[ts(optional = nullable)]
     pub multi_agent_mode: Option<MultiAgentMode>,
-    /// @deprecated `friendly` and `pragmatic` no longer select a style.
-    /// Changing this does not rewrite the thread's existing instructions.
-    #[ts(optional = nullable)]
-    pub personality: Option<Personality>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
@@ -314,8 +306,6 @@ pub struct ThreadSettings {
     #[experimental("thread/settings.multiAgentMode")]
     #[serde(default)]
     pub multi_agent_mode: MultiAgentMode,
-    /// @deprecated Reports the saved setting; `friendly` and `pragmatic` no longer select a style.
-    pub personality: Option<Personality>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
@@ -405,10 +395,6 @@ pub struct ThreadResumeParams {
     pub base_instructions: Option<String>,
     #[ts(optional = nullable)]
     pub developer_instructions: Option<String>,
-    /// @deprecated `friendly` and `pragmatic` no longer select a style.
-    /// Changing this does not rewrite the thread's existing instructions.
-    #[ts(optional = nullable)]
-    pub personality: Option<Personality>,
     /// When true, return only thread metadata and live-resume state without
     /// populating `thread.turns`. This is useful when the client plans to call
     /// `thread/turns/list` immediately after resuming. Full-history hydration

@@ -328,7 +328,6 @@ fn known_segment_name(text: &str, source: TextSource<'_>) -> Option<String> {
                 | "skills_instructions"
                 | "plugins_instructions"
                 | "model_switch"
-                | "personality_spec"
         ) | (TextSource::Message("user"), "environment_context")
     )
     .then(|| tag.replace(' ', "_").to_ascii_uppercase())

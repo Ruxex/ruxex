@@ -138,11 +138,6 @@
           },
           "type": "array"
         },
-        "supportsPersonality": {
-          "default": false,
-          "description": "@deprecated Always false; models no longer support personality selection.",
-          "type": "boolean"
-        },
         "upgrade": {
           "type": [
             "string",

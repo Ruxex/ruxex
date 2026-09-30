@@ -12,10 +12,6 @@ import type { ReasoningEffortOption } from "./ReasoningEffortOption";
 
 export type Model = { id: string, model: string, upgrade: string | null, upgradeInfo: ModelUpgradeInfo | null, availabilityNux: ModelAvailabilityNux | null, displayName: string, description: string, modelSpecialty: string | null, hidden: boolean, supportedReasoningEfforts: Array<ReasoningEffortOption>, defaultReasoningEffort: ReasoningEffort, inputModalities: Array<InputModality>,
 /**
- * @deprecated Always false; models no longer support personality selection.
- */
-supportsPersonality: boolean,
-/**
  * Multi-agent runtime declared by this model, when available.
  */
 multiAgentVersion: MultiAgentVersion | null,

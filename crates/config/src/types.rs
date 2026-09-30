@@ -17,7 +17,6 @@ pub use crate::mcp_types::RawMcpServerConfig;
 pub use crate::shell_environment_policy::ShellEnvironmentPolicyToml;
 pub use codex_protocol::config_types::AltScreenMode;
 pub use codex_protocol::config_types::ModeKind;
-pub use codex_protocol::config_types::Personality;
 pub use codex_protocol::config_types::ServiceTier;
 pub use codex_protocol::config_types::WebSearchMode;
 use codex_utils_absolute_path::AbsolutePathBuf;
@@ -491,7 +490,7 @@ pub struct Tui {
     /// When true, disables burst-paste detection for typed input entirely.
     /// All characters are inserted as they are received, and no buffering
     /// or placeholder replacement will occur for fast keypress bursts.
-    /// Overrides the legacy top-level `disable_paste_burst` setting. Defaults to `false`.
+    /// Defaults to `false`.
     pub disable_paste_burst: Option<bool>,
 
     /// Start the composer in Vim mode (`Normal`) by default.

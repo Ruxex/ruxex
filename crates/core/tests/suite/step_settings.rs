@@ -1071,7 +1071,6 @@ async fn active_model_switch_updates_core_context_from_captured_settings(
                 }
                 let messages = model.model_messages.as_mut().expect("model messages");
                 messages.instructions_template = Some(format!("Instructions for {slug}."));
-                messages.instructions_variables = None;
                 messages.collaboration_modes = Some(CollaborationModeMessages {
                     default: Some(format!("Default collaboration for {slug}.")),
                     plan: None,
@@ -1184,10 +1183,6 @@ async fn active_model_switch_updates_core_context_from_captured_settings(
             .collect::<Vec<_>>();
         assert_eq!(switches.len(), 1);
         assert!(switches[0].contains(&format!("Instructions for {MODEL_B}.")));
-        assert!(
-            !request.body_contains_text("<personality_spec>"),
-            "model-switch instructions should not contain a personality update"
-        );
         for text in [
             format!("Default collaboration for {MODEL_B}."),
             format!("Approval instructions for {MODEL_B}."),

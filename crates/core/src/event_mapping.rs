@@ -49,7 +49,6 @@ const CONTEXTUAL_DEVELOPER_PREFIXES: &[&str] = &[
     PLUGINS_INSTRUCTIONS_OPEN_TAG,
     SKILLS_INSTRUCTIONS_OPEN_TAG,
     TOOLS_OPEN_TAG,
-    "<personality_spec>",
     // Keep recognizing token-budget wrappers persisted by older versions.
     "<token_budget>",
     CONTEXT_WINDOW_OPEN_TAG,

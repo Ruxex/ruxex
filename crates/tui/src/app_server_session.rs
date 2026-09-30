@@ -116,7 +116,6 @@ use codex_app_server_protocol::UserInput;
 use codex_config::ConfigLayerSource;
 use codex_otel::TelemetryAuthMode;
 use codex_protocol::ThreadId;
-use codex_protocol::config_types::Personality;
 use codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
 use codex_protocol::models::ActivePermissionProfile;
 use codex_protocol::models::BaseInstructionsProvenance;
@@ -1224,7 +1223,7 @@ impl AppServerSession {
                 // request variant. Treat those as a session-level capability
                 // downgrade so local TUI setting changes stay best-effort instead
                 // of showing an error every time the user changes model, effort,
-                // personality, or mode.
+                // or mode.
                 self.thread_settings_update_supported = false;
                 Ok(false)
             }
@@ -1270,7 +1269,6 @@ impl AppServerSession {
         summary: Option<codex_protocol::config_types::ReasoningSummary>,
         service_tier: Option<Option<String>>,
         collaboration_mode: Option<codex_protocol::config_types::CollaborationMode>,
-        personality: Option<codex_protocol::config_types::Personality>,
         output_schema: Option<serde_json::Value>,
     ) -> Result<TurnStartResponse> {
         let request_id = self.next_request_id();
@@ -1299,7 +1297,6 @@ impl AppServerSession {
                     service_tier_for_turn: None,
                     effort,
                     summary,
-                    personality: personality_opt_out_only(personality),
                     output_schema,
                     collaboration_mode,
                     multi_agent_mode: None,
@@ -1674,7 +1671,6 @@ fn model_preset_from_api_model(model: ApiModel) -> ModelPreset {
                 description: effort.description,
             })
             .collect(),
-        supports_personality: model.supports_personality,
         additional_speed_tiers: model.additional_speed_tiers,
         service_tiers: model
             .service_tiers
@@ -1698,11 +1694,6 @@ fn model_preset_from_api_model(model: ApiModel) -> ModelPreset {
         supported_in_api: true,
         input_modalities: model.input_modalities,
     }
-}
-
-// Keep the explicit Bridge opt-out while retiring Friendly/Pragmatic selection.
-pub(crate) fn personality_opt_out_only(personality: Option<Personality>) -> Option<Personality> {
-    personality.filter(|personality| *personality == Personality::None)
 }
 
 fn config_request_overrides_from_config(
@@ -1759,10 +1750,6 @@ fn config_request_overrides_from_config(
         config
             .model_verbosity
             .map(|verbosity| verbosity.to_string()),
-    );
-    insert(
-        "personality",
-        personality_opt_out_only(config.personality).map(|personality| personality.to_string()),
     );
     insert(
         "web_search",
@@ -2182,7 +2169,6 @@ async fn thread_session_state_from_thread_start_response(
         response.runtime_workspace_roots.clone(),
         response.instruction_source_path_uris(),
         response.reasoning_effort.clone(),
-        config.personality,
         local_settings,
     )
     .await
@@ -2225,7 +2211,6 @@ async fn thread_session_state_from_thread_resume_response(
         response.runtime_workspace_roots.clone(),
         response.instruction_source_path_uris(),
         response.reasoning_effort.clone(),
-        config.personality,
         local_settings,
     )
     .await?;
@@ -2261,7 +2246,6 @@ async fn thread_session_state_from_thread_fork_response(
         response.runtime_workspace_roots.clone(),
         response.instruction_source_path_uris(),
         response.reasoning_effort.clone(),
-        config.personality,
         local_settings,
     )
     .await
@@ -2312,7 +2296,6 @@ async fn thread_session_state_from_thread_response(
     runtime_workspace_roots: Vec<AbsolutePathBuf>,
     instruction_source_paths: Vec<PathUri>,
     reasoning_effort: Option<codex_protocol::openai_models::ReasoningEffort>,
-    personality: Option<codex_protocol::config_types::Personality>,
     local_settings: &LocalSettings,
 ) -> Result<ThreadSessionState, String> {
     let thread_id = ThreadId::from_string(thread_id)
@@ -2344,7 +2327,6 @@ async fn thread_session_state_from_thread_response(
         instruction_source_paths,
         reasoning_effort,
         collaboration_mode: None,
-        personality,
         message_history: Some(MessageHistoryMetadata {
             log_id,
             entry_count,

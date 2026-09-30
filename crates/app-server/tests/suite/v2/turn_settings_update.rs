@@ -186,7 +186,6 @@ async fn settings_updates_report_results_and_preserve_the_target_on_saved_thread
         }
         UpdateScenario::Rejected => {
             for field in [
-                "personality",
                 "permissions",
                 "cwd",
                 "collaborationMode",

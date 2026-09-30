@@ -18,7 +18,6 @@ use codex_otel::SessionTelemetry;
 use codex_otel::current_span_w3c_trace_context;
 use codex_protocol::ThreadId;
 use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::Personality;
 use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::config_types::WindowsSandboxLevel;
 use codex_protocol::error::CodexErr;
@@ -92,7 +91,6 @@ pub struct ThreadConfigSnapshot {
     pub ephemeral: bool,
     pub reasoning_effort: Option<ReasoningEffort>,
     pub reasoning_summary: Option<ReasoningSummary>,
-    pub personality: Option<Personality>,
     pub collaboration_mode: CollaborationMode,
     pub session_source: SessionSource,
     pub history_mode: ThreadHistoryMode,
@@ -148,7 +146,6 @@ pub struct CodexThreadSettingsOverrides {
     pub summary: Option<ReasoningSummary>,
     pub service_tier: Option<Option<String>>,
     pub collaboration_mode: Option<CollaborationMode>,
-    pub personality: Option<Personality>,
     pub disabled_plugin_ids: Option<Vec<String>>,
 }
 
@@ -565,7 +562,6 @@ impl CodexThread {
             summary,
             service_tier,
             collaboration_mode,
-            personality,
             disabled_plugin_ids,
         } = overrides;
         SessionSettingsUpdate {
@@ -575,7 +571,6 @@ impl CodexThread {
                 collaboration_mode,
                 reasoning_summary: summary,
                 service_tier,
-                personality,
                 approval_policy,
             },
             environments,

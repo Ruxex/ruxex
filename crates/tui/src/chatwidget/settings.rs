@@ -403,7 +403,6 @@ impl ChatWidget {
         self.config.model_provider_id = settings.model_provider.clone();
         self.set_service_tier(settings.service_tier.clone());
         self.set_approval_policy(settings.approval_policy);
-        self.config.personality = settings.personality;
 
         let permission_profile = PermissionProfile::from_legacy_sandbox_policy_for_cwd(
             &settings.sandbox_policy.to_core(),
@@ -654,7 +653,6 @@ impl ChatWidget {
                 /*summary*/ None,
                 /*service_tier*/ None,
                 Some(self.effective_collaboration_mode()),
-                /*personality*/ None,
             ),
         });
     }

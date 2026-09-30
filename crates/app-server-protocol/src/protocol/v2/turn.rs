@@ -6,7 +6,6 @@ use crate::TS;
 use codex_experimental_api_macros::ExperimentalApi;
 use codex_protocol::config_types::CollaborationMode;
 use codex_protocol::config_types::MultiAgentMode;
-use codex_protocol::config_types::Personality;
 use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::models::FunctionCallOutputBody;
 use codex_protocol::models::ImageDetail;
@@ -245,10 +244,6 @@ pub struct TurnStartParams {
     /// Override the reasoning summary for this turn and subsequent turns.
     #[ts(optional = nullable)]
     pub summary: Option<ReasoningSummary>,
-    /// @deprecated `friendly` and `pragmatic` no longer select a style.
-    /// Changing this does not rewrite the thread's existing instructions.
-    #[ts(optional = nullable)]
-    pub personality: Option<Personality>,
     /// Optional JSON Schema used to constrain the final assistant message for
     /// this turn.
     #[ts(optional = nullable)]

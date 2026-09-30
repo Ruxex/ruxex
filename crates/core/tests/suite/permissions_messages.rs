@@ -91,7 +91,7 @@ async fn catalog_approval_message_is_sent_in_initial_permissions() -> Result<()>
     )
     .await;
     let model_slug = "catalog-approvals-model";
-    let override_instructions = "literal {{ personality }} override";
+    let override_instructions = "literal {{ user_placeholder }} override";
     let model = model_with_approval_messages(
         model_slug,
         "catalog user approval instructions",

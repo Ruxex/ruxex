@@ -28378,36 +28378,6 @@
       "code": "hawk::unnecessary_public",
       "expansion": null,
       "identity": {
-        "compiler_id": "d125c10f50626c3d2bb6d71d8321317b",
-        "crate": "codex_config",
-        "id": "v1|12:codex-config|12:codex_config|61:profile_toml::ConfigProfile::experimental_compact_prompt_file|5:field|6:source|33:crates/config/src/profile_toml.rs|45|5",
-        "item": "profile_toml::ConfigProfile::experimental_compact_prompt_file",
-        "kind": "field",
-        "module_scope": [
-          "profile_toml"
-        ],
-        "package": "codex-config",
-        "parent": "profile_toml::ConfigProfile"
-      },
-      "kind": "unnecessary_public",
-      "location": {
-        "byte_end": 2076,
-        "byte_start": 2014,
-        "column": 5,
-        "end_column": 67,
-        "end_line": 45,
-        "file": "crates/config/src/profile_toml.rs",
-        "line": 45
-      },
-      "severity": "warning",
-      "test_compiled_only": false,
-      "test_only": false
-    },
-    {
-      "category": "finding",
-      "code": "hawk::unnecessary_public",
-      "expansion": null,
-      "identity": {
         "compiler_id": "d125c10f50626c3d9e727234e0d1c975",
         "crate": "codex_config",
         "id": "v1|12:codex-config|12:codex_config|61:profile_toml::ConfigProfile::include_permissions_instructions|5:field|6:source|33:crates/config/src/profile_toml.rs|46|5",
@@ -28488,36 +28458,6 @@
         "end_line": 48,
         "file": "crates/config/src/profile_toml.rs",
         "line": 48
-      },
-      "severity": "warning",
-      "test_compiled_only": false,
-      "test_only": false
-    },
-    {
-      "category": "finding",
-      "code": "hawk::unnecessary_public",
-      "expansion": null,
-      "identity": {
-        "compiler_id": "d125c10f50626c3dbf580c970c6b0caa",
-        "crate": "codex_config",
-        "id": "v1|12:codex-config|12:codex_config|63:profile_toml::ConfigProfile::experimental_use_unified_exec_tool|5:field|6:source|33:crates/config/src/profile_toml.rs|49|5",
-        "item": "profile_toml::ConfigProfile::experimental_use_unified_exec_tool",
-        "kind": "field",
-        "module_scope": [
-          "profile_toml"
-        ],
-        "package": "codex-config",
-        "parent": "profile_toml::ConfigProfile"
-      },
-      "kind": "unnecessary_public",
-      "location": {
-        "byte_end": 2304,
-        "byte_start": 2251,
-        "column": 5,
-        "end_column": 58,
-        "end_line": 49,
-        "file": "crates/config/src/profile_toml.rs",
-        "line": 49
       },
       "severity": "warning",
       "test_compiled_only": false,

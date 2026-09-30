@@ -4,7 +4,6 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 use anyhow::Result;
-use codex_config::types::Personality;
 use codex_core::TurnInputRequest;
 use codex_core::config::Config;
 use codex_exec_server::LOCAL_ENVIRONMENT_ID;
@@ -503,7 +502,7 @@ async fn snapshot_model_visible_layout_cwd_change_refreshes_agents() -> Result<(
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn snapshot_model_visible_layout_resume_with_personality_change() -> Result<()> {
+async fn snapshot_model_visible_layout_resume_with_model_change() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
@@ -549,7 +548,6 @@ async fn snapshot_model_visible_layout_resume_with_personality_change() -> Resul
         .with_config(|config| {
             config.update_plan_enabled = true;
             config.model = Some("gpt-5.4".to_string());
-            config.personality = Some(Personality::Pragmatic);
         });
     let resumed = resume_builder.restart(&server, &initial).await?;
     let resume_override_cwd = resumed.cwd_path().join(PRETURN_CONTEXT_DIFF_CWD);
@@ -563,7 +561,7 @@ async fn snapshot_model_visible_layout_resume_with_personality_change() -> Resul
         .codex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
-                text: "resume and change personality".into(),
+                text: "resume and change model".into(),
                 text_elements: Vec::new(),
             }])
             .with_thread_settings(ThreadSettingsOverrides {
@@ -571,7 +569,6 @@ async fn snapshot_model_visible_layout_resume_with_personality_change() -> Resul
                 approval_policy: Some(AskForApproval::Never),
                 sandbox_policy: Some(sandbox_policy),
                 permission_profile,
-                personality: Some(Personality::Friendly),
                 collaboration_mode: Some(CollaborationMode {
                     mode: ModeKind::Default,
                     settings: Settings {
@@ -597,9 +594,9 @@ async fn snapshot_model_visible_layout_resume_with_personality_change() -> Resul
             .any(|text| text.contains(&format!("{PRETURN_CONTEXT_DIFF_CWD}</cwd>")))
     );
     insta::assert_snapshot!(
-        "model_visible_layout_resume_with_personality_change",
+        "model_visible_layout_resume_with_model_change",
         format_labeled_requests_snapshot(
-            "First post-resume turn where resumed config model differs from rollout and personality changes.",
+            "First post-resume turn where resumed config model differs from rollout.",
             &[
                 ("Last Request Before Resume", &initial_request),
                 ("First Request After Resume", &resumed_request),

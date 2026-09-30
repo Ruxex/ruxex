@@ -190,7 +190,6 @@ pub(crate) fn thread_settings_from_config_snapshot(
         summary: config_snapshot.reasoning_summary,
         collaboration_mode: config_snapshot.collaboration_mode.clone(),
         multi_agent_mode: MultiAgentMode::ExplicitRequestOnly,
-        personality: config_snapshot.personality,
     }
 }
 

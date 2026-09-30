@@ -869,7 +869,7 @@ impl App {
             AppEvent::ImagesPrepared(id) => {
                 self.chat_widget.on_images_prepared(id);
             }
-            AppEvent::CodexOp(mut op) => {
+            AppEvent::CodexOp(op) => {
                 if let AppCommand::OverrideTurnContext {
                     cwd,
                     approval_policy,
@@ -1621,7 +1621,6 @@ impl App {
                                         /*summary*/ None,
                                         /*service_tier*/ None,
                                         /*collaboration_mode*/ None,
-                                        /*personality*/ None,
                                     ),
                                 ));
                                 self.app_event_tx.send(AppEvent::UpdateAskForApprovalPolicy(

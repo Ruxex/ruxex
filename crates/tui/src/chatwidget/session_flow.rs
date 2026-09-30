@@ -131,7 +131,6 @@ impl ChatWidget {
                 );
             }
         }
-        self.config.personality = session.personality;
         self.status_line_project_root_name_cache = None;
         let forked_from_id = session.forked_from_id;
         let default_model = session.model.clone();

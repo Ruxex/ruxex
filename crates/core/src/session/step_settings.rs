@@ -7,7 +7,6 @@ use codex_models_manager::ModelsManagerConfig;
 use codex_models_manager::manager::ModelsManager;
 use codex_otel::SessionTelemetry;
 use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::Personality;
 use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
 use codex_protocol::config_types::ServiceTier;
@@ -26,7 +25,6 @@ pub(crate) struct StepSettings {
     /// Normalized requested tier. Startup retains initial-model filtering;
     /// resolution filters the effective tier against the pinned model.
     pub(crate) service_tier: Option<String>,
-    pub(crate) personality: Option<Personality>,
     pub(crate) approval_policy: Constrained<AskForApproval>,
 }
 
@@ -100,16 +98,12 @@ impl ResolvedStepSettings {
         &self.selected.collaboration_mode
     }
 
-    pub(crate) fn personality(&self) -> Option<Personality> {
-        self.selected.personality
-    }
-
     pub(super) fn constrained_approval_policy(&self) -> &Constrained<AskForApproval> {
         &self.selected.approval_policy
     }
 
     /// Applies sparse edits to the retained selection, preserving pinned metadata
-    /// unless model or personality selection changes, then resolves request values.
+    /// unless the model selection changes, then resolves request values.
     pub(super) async fn apply_update(
         &self,
         update: &StepSettingsUpdate,
@@ -120,7 +114,6 @@ impl ResolvedStepSettings {
         let selected = self.selected.apply(update, constraints)?;
         let model_info = if selected.collaboration_mode.model()
             == self.selected.collaboration_mode.model()
-            && selected.personality == self.selected.personality
         {
             Arc::clone(&self.model_info)
         } else {
@@ -177,16 +170,12 @@ impl From<ModelsManagerConfig> for ModelInfoOverrides {
 }
 
 impl ModelInfoOverrides {
-    pub(crate) fn models_manager_config(
-        &self,
-        personality: Option<Personality>,
-    ) -> ModelsManagerConfig {
+    pub(crate) fn models_manager_config(&self) -> ModelsManagerConfig {
         ModelsManagerConfig {
             model_context_window: self.context_window,
             model_auto_compact_token_limit: self.auto_compact_token_limit,
             tool_output_token_limit: self.tool_output_token_limit,
             base_instructions: self.base_instructions.clone(),
-            personality,
             // The models manager already owns its catalog.
             model_catalog: None,
         }
@@ -205,7 +194,6 @@ pub(crate) struct StepSettingsUpdate {
     pub(crate) collaboration_mode: Option<CollaborationMode>,
     pub(crate) reasoning_summary: Option<ReasoningSummary>,
     pub(crate) service_tier: Option<Option<String>>,
-    pub(crate) personality: Option<Personality>,
     pub(crate) approval_policy: Option<AskForApproval>,
 }
 
@@ -224,7 +212,7 @@ impl StepSettings {
         models_manager: &dyn ModelsManager,
         overrides: &ModelInfoOverrides,
     ) -> ModelInfo {
-        let config = overrides.models_manager_config(self.personality);
+        let config = overrides.models_manager_config();
         models_manager
             .get_model_info(self.collaboration_mode.model(), &config)
             .await
@@ -258,9 +246,6 @@ impl StepSettings {
                     }),
                 None => SERVICE_TIER_DEFAULT_REQUEST_VALUE.to_string(),
             });
-        }
-        if let Some(personality) = update.personality {
-            next.personality = Some(personality);
         }
         if let Some(approval_policy) = update.approval_policy {
             next.approval_policy.set(approval_policy)?;

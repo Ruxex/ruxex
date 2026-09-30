@@ -110,8 +110,6 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
             data: expected
                 .iter()
                 .map(|preset| Model {
-                    // These catalogs retain personality metadata; the cache fixture does not.
-                    supports_personality: preset.supports_personality,
                     ..model_from_preset(preset)
                 })
                 .collect(),
@@ -160,11 +158,6 @@ fn model_from_preset(preset: &ModelPreset) -> Model {
             .collect(),
         default_reasoning_effort: preset.default_reasoning_effort.clone(),
         input_modalities: preset.input_modalities.clone(),
-        // `write_models_cache().await` round-trips through a simplified ModelInfo fixture that does not
-        // preserve personality placeholders in base instructions, so app-server list results from
-        // cache report `supports_personality = false`.
-        // todo(sayan): fix, maybe make roundtrip use ModelInfo only
-        supports_personality: false,
         multi_agent_version: preset.multi_agent_version.map(Into::into),
         additional_speed_tiers: preset.additional_speed_tiers.clone(),
         service_tiers: preset

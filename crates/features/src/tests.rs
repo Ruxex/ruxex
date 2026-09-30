@@ -292,35 +292,6 @@ fn from_sources_ignores_removed_undo_feature_key() {
 }
 
 #[test]
-fn from_sources_accepts_and_ignores_removed_personality_feature_values() {
-    for enabled in [false, true] {
-        let features_toml: FeaturesToml = toml::from_str(&format!("personality = {enabled}"))
-            .expect("legacy personality feature should deserialize");
-        let source = FeatureConfigSource {
-            features: Some(&features_toml),
-            ..Default::default()
-        };
-
-        assert_eq!(
-            Features::from_sources(
-                source,
-                FeatureConfigSource::default(),
-                FeatureOverrides::default(),
-            ),
-            Features::with_defaults()
-        );
-        assert_eq!(
-            Features::from_sources(
-                FeatureConfigSource::default(),
-                source,
-                FeatureOverrides::default(),
-            ),
-            Features::with_defaults()
-        );
-    }
-}
-
-#[test]
 fn from_sources_ignores_removed_tool_search_always_defer_mcp_tools_feature_key() {
     let features_toml = FeaturesToml::from(BTreeMap::from([(
         "tool_search_always_defer_mcp_tools".to_string(),

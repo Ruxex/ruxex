@@ -134,7 +134,6 @@ struct ThreadSettingsBuildParams {
     effort: Option<ReasoningEffort>,
     summary: Option<ReasoningSummary>,
     collaboration_mode: Option<CollaborationMode>,
-    personality: Option<Personality>,
 }
 
 impl TurnRequestProcessor {
@@ -538,7 +537,6 @@ impl TurnRequestProcessor {
                     effort: params.effort,
                     summary: params.summary,
                     collaboration_mode: params.collaboration_mode,
-                    personality: params.personality,
                 },
             )
             .await?;
@@ -669,7 +667,6 @@ impl TurnRequestProcessor {
             effort,
             summary,
             collaboration_mode,
-            personality,
         } = params;
 
         if sandbox_policy.is_some() && permissions.is_some() {
@@ -699,8 +696,7 @@ impl TurnRequestProcessor {
             || service_tier.is_some()
             || effort.is_some()
             || summary.is_some()
-            || collaboration_mode.is_some()
-            || personality.is_some();
+            || collaboration_mode.is_some();
 
         let approval_policy =
             approval_policy.map(codex_app_server_protocol::AskForApproval::to_core);
@@ -759,7 +755,6 @@ impl TurnRequestProcessor {
                     summary,
                     service_tier: service_tier.clone(),
                     collaboration_mode: collaboration_mode.clone(),
-                    personality,
                 })
                 .await
                 .map_err(|err| {
@@ -782,7 +777,6 @@ impl TurnRequestProcessor {
             summary,
             service_tier,
             collaboration_mode,
-            personality,
         })
     }
 
@@ -818,7 +812,6 @@ impl TurnRequestProcessor {
                     effort: params.effort,
                     summary: params.summary,
                     collaboration_mode: params.collaboration_mode,
-                    personality: params.personality,
                 },
             )
             .await?;

@@ -2351,7 +2351,7 @@ mod tests {
             WebSearchModeRequirement::Live,
         ];
         let feature_requirements = FeatureRequirementsToml {
-            entries: BTreeMap::from([("personality".to_string(), true)]),
+            entries: BTreeMap::from([("example_feature".to_string(), true)]),
         };
         let browser_use = BrowserUseRequirementsToml {
             allow_webmcp: None,
@@ -2764,7 +2764,7 @@ mod tests {
                 allowed_web_search_modes = ["cached"]
                 enforce_residency = "us"
                 [features]
-                personality = true
+                example_feature = true
             "#,
         )?;
 
@@ -3249,7 +3249,7 @@ mod tests {
         let toml_str = r#"
             [features]
             apps = false
-            personality = true
+            example_feature = true
         "#;
         let config: ConfigRequirementsToml = from_str(toml_str)?;
         let requirements: ConfigRequirements = with_unknown_source(config).try_into()?;
@@ -3260,7 +3260,7 @@ mod tests {
                 FeatureRequirementsToml {
                     entries: BTreeMap::from([
                         ("apps".to_string(), false),
-                        ("personality".to_string(), true),
+                        ("example_feature".to_string(), true),
                     ]),
                 },
                 RequirementSource::Unknown,

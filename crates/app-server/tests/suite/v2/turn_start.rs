@@ -83,7 +83,6 @@ use codex_models_manager::model_info::model_info_from_slug;
 use codex_protocol::config_types::CollaborationMode;
 use codex_protocol::config_types::ModeKind;
 use codex_protocol::config_types::MultiAgentMode;
-use codex_protocol::config_types::Personality;
 use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::config_types::Settings;
 use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
@@ -2645,85 +2644,11 @@ fn assert_fallback_model_instructions(request: &responses::ResponsesRequest) {
         .lines()
         .next()
         .expect("fallback prompt has an opening sentence");
-    let expected_personality = BASE_INSTRUCTIONS
-        .lines()
-        .find(|line| line.starts_with("Your default personality and tone"))
-        .expect("fallback prompt has a Friendly personality section");
 
     assert!(
         instructions.contains(expected_intro),
         "expected fallback model identity instructions in the request"
     );
-    assert!(
-        instructions.contains(expected_personality),
-        "expected baked Friendly instructions in the request"
-    );
-}
-
-#[tokio::test]
-async fn turn_start_accepts_deprecated_personality_override_v2() -> Result<()> {
-    skip_if_no_network!(Ok(()));
-
-    let server = responses::start_mock_server().await;
-    let body = responses::sse(vec![
-        responses::ev_response_created("resp-1"),
-        responses::ev_assistant_message("msg-1", "Done"),
-        responses::ev_completed("resp-1"),
-    ]);
-    let response_mock = responses::mount_sse_once(&server, body).await;
-
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
-
-    let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
-        .build_initialized()
-        .await?;
-
-    let ThreadStartResponse { thread, .. } = mcp
-        .start_thread(ThreadStartParams {
-            model: Some("exp-codex-personality".to_string()),
-            ..Default::default()
-        })
-        .await?;
-
-    let _turn: TurnStartResponse = mcp
-        .request(|request_id| ClientRequest::TurnStart {
-            request_id,
-            params: TurnStartParams {
-                thread_id: thread.id.clone(),
-                client_user_message_id: None,
-                input: vec![V2UserInput::Text {
-                    text: "Hello".to_string(),
-                    text_elements: Vec::new(),
-                }],
-                personality: Some(Personality::Friendly),
-                ..Default::default()
-            },
-        })
-        .await?;
-
-    timeout(
-        DEFAULT_READ_TIMEOUT,
-        mcp.read_stream_until_notification_message("turn/completed"),
-    )
-    .await??;
-
-    let request = response_mock.single_request();
-    assert_fallback_model_instructions(&request);
-    let developer_texts = request.message_input_texts("developer");
-    if developer_texts.is_empty() {
-        eprintln!("request body: {}", request.body_json());
-    }
-
-    assert!(
-        developer_texts
-            .iter()
-            .all(|text| !text.contains("<personality_spec>")),
-        "deprecated personality override emitted a developer update: {developer_texts:?}"
-    );
-
-    Ok(())
 }
 
 #[tokio::test]
@@ -2866,105 +2791,6 @@ async fn thread_start_ignores_deprecated_multi_agent_mode() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-async fn turn_start_ignores_personality_change_mid_thread_v2() -> Result<()> {
-    skip_if_no_network!(Ok(()));
-
-    let server = responses::start_mock_server().await;
-    let sse1 = responses::sse(vec![
-        responses::ev_response_created("resp-1"),
-        responses::ev_assistant_message("msg-1", "Done"),
-        responses::ev_completed("resp-1"),
-    ]);
-    let sse2 = responses::sse(vec![
-        responses::ev_response_created("resp-2"),
-        responses::ev_assistant_message("msg-2", "Done"),
-        responses::ev_completed("resp-2"),
-    ]);
-    let response_mock = responses::mount_sse_sequence(&server, vec![sse1, sse2]).await;
-
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
-
-    let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
-        .build_initialized()
-        .await?;
-
-    let ThreadStartResponse { thread, .. } = mcp
-        .start_thread(ThreadStartParams {
-            model: Some("exp-codex-personality".to_string()),
-            ..Default::default()
-        })
-        .await?;
-
-    let _turn: TurnStartResponse = mcp
-        .request(|request_id| ClientRequest::TurnStart {
-            request_id,
-            params: TurnStartParams {
-                thread_id: thread.id.clone(),
-                client_user_message_id: None,
-                input: vec![V2UserInput::Text {
-                    text: "Hello".to_string(),
-                    text_elements: Vec::new(),
-                }],
-                personality: None,
-                ..Default::default()
-            },
-        })
-        .await?;
-
-    timeout(
-        DEFAULT_READ_TIMEOUT,
-        mcp.read_stream_until_notification_message("turn/completed"),
-    )
-    .await??;
-
-    let _turn2: TurnStartResponse = mcp
-        .request(|request_id| ClientRequest::TurnStart {
-            request_id,
-            params: TurnStartParams {
-                thread_id: thread.id.clone(),
-                client_user_message_id: None,
-                input: vec![V2UserInput::Text {
-                    text: "Hello again".to_string(),
-                    text_elements: Vec::new(),
-                }],
-                personality: Some(Personality::Friendly),
-                ..Default::default()
-            },
-        })
-        .await?;
-
-    timeout(
-        DEFAULT_READ_TIMEOUT,
-        mcp.read_stream_until_notification_message("turn/completed"),
-    )
-    .await??;
-
-    let requests = response_mock.requests();
-    assert_eq!(requests.len(), 2, "expected two requests");
-
-    let first_developer_texts = requests[0].message_input_texts("developer");
-    assert_fallback_model_instructions(&requests[0]);
-    assert!(
-        first_developer_texts
-            .iter()
-            .all(|text| !text.contains("<personality_spec>")),
-        "expected no personality update message in first request, got {first_developer_texts:?}"
-    );
-
-    let second_developer_texts = requests[1].message_input_texts("developer");
-    assert_fallback_model_instructions(&requests[1]);
-    assert!(
-        second_developer_texts
-            .iter()
-            .all(|text| !text.contains("<personality_spec>")),
-        "deprecated personality change emitted a developer update: {second_developer_texts:?}"
-    );
-
-    Ok(())
-}
 
 #[tokio::test]
 async fn turn_start_defaults_local_image_detail_to_high() -> Result<()> {
@@ -3486,7 +3312,6 @@ async fn turn_start_explicit_local_environment_updates_legacy_cwd_between_turns(
                 summary: Some(ReasoningSummary::Auto),
                 service_tier: None,
                 service_tier_for_turn: None,
-                personality: None,
                 output_schema: None,
                 collaboration_mode: None,
                 multi_agent_mode: None,
@@ -3534,7 +3359,6 @@ async fn turn_start_explicit_local_environment_updates_legacy_cwd_between_turns(
                 summary: Some(ReasoningSummary::Auto),
                 service_tier: None,
                 service_tier_for_turn: None,
-                personality: None,
                 output_schema: None,
                 collaboration_mode: None,
                 multi_agent_mode: None,

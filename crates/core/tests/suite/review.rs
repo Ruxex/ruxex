@@ -11,7 +11,6 @@ use codex_login::CodexAuth;
 use codex_protocol::config_types::ApprovalsReviewer;
 use codex_protocol::config_types::CollaborationMode;
 use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Personality;
 use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::config_types::ServiceTier;
 use codex_protocol::config_types::Settings;
@@ -677,7 +676,6 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
             approval_policy: Some(AskForApproval::Never),
             approvals_reviewer: Some(ApprovalsReviewer::User),
             permission_profile: Some(PermissionProfile::Disabled),
-            personality: Some(Personality::Friendly),
             collaboration_mode: Some(CollaborationMode {
                 mode: ModeKind::Plan,
                 settings: Settings {
@@ -783,7 +781,6 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
         review_context.approvals_reviewer,
         Some(ApprovalsReviewer::User)
     );
-    assert_eq!(review_context.personality, Some(Personality::Friendly));
     // The review delegate still starts in its own default mode, not the parent's Plan mode.
     assert_eq!(
         review_context.collaboration_mode,

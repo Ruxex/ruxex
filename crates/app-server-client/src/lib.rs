@@ -770,7 +770,6 @@ mod tests {
     use codex_app_server_protocol::ToolRequestUserInputQuestion;
     use codex_core::config::ConfigBuilder;
     use codex_core::init_state_db;
-    use codex_protocol::config_types::Personality;
     use codex_uds::UnixListener;
     use codex_utils_absolute_path::AbsolutePathBuf;
     use futures::SinkExt;
@@ -1174,84 +1173,6 @@ mod tests {
             })
             .await
             .expect("typed request should succeed");
-        client.shutdown().await.expect("shutdown should complete");
-    }
-
-    #[tokio::test]
-    async fn unread_lossless_notifications_do_not_block_in_process_requests() {
-        let mut client =
-            start_test_client_with_capacity(SessionSource::Cli, /*channel_capacity*/ 1).await;
-        let thread: ThreadStartResponse = client
-            .request_typed(ClientRequest::ThreadStart {
-                request_id: RequestId::Integer(1),
-                params: ThreadStartParams {
-                    ephemeral: Some(true),
-                    personality: Some(Personality::None),
-                    ..ThreadStartParams::default()
-                },
-            })
-            .await
-            .expect("thread/start should succeed");
-        let request_handle = client.request_handle();
-
-        timeout(Duration::from_secs(2), async {
-            for (index, personality) in [
-                Personality::Friendly,
-                Personality::Pragmatic,
-                Personality::Friendly,
-                Personality::Pragmatic,
-            ]
-            .into_iter()
-            .enumerate()
-            {
-                let _: ThreadSettingsUpdateResponse = request_handle
-                    .request_typed(ClientRequest::ThreadSettingsUpdate {
-                        request_id: RequestId::Integer((index + 2) as i64),
-                        params: ThreadSettingsUpdateParams {
-                            thread_id: thread.thread.id.clone(),
-                            personality: Some(personality),
-                            ..ThreadSettingsUpdateParams::default()
-                        },
-                    })
-                    .await
-                    .expect("thread/settings/update should succeed");
-            }
-
-            let _: ConfigRequirementsReadResponse = request_handle
-                .request_typed(ClientRequest::ConfigRequirementsRead {
-                    request_id: RequestId::Integer(10),
-                    params: None,
-                })
-                .await
-                .expect("configuration request should succeed");
-        })
-        .await
-        .expect("unread lossless notifications must not block app-server requests");
-
-        let mut personalities = Vec::new();
-        timeout(Duration::from_secs(2), async {
-            while personalities.len() < 4 {
-                if let Some(InProcessServerEvent::ServerNotification(notification)) =
-                    client.client.next_event().await
-                    && let ServerNotification::ThreadSettingsUpdated(notification) =
-                        notification.as_ref()
-                {
-                    personalities.push(notification.thread_settings.personality);
-                }
-            }
-        })
-        .await
-        .expect("queued settings notifications should remain readable");
-        assert_eq!(
-            personalities,
-            vec![
-                Some(Personality::Friendly),
-                Some(Personality::Pragmatic),
-                Some(Personality::Friendly),
-                Some(Personality::Pragmatic),
-            ]
-        );
-
         client.shutdown().await.expect("shutdown should complete");
     }
 

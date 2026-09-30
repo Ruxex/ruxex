@@ -1,5 +1,4 @@
 use anyhow::Result;
-use codex_config::types::Personality;
 use codex_core::CodexThread;
 use codex_core::ForkSnapshot;
 use codex_core::TurnInputRequest;
@@ -170,12 +169,8 @@ fn configure_model_switching_fixture(model: &mut ModelInfo) {
     model.comp_hash = None;
 }
 
-#[test_case(None; "model only")]
-#[test_case(Some(Personality::Pragmatic); "model and personality")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn first_turn_model_change_appends_model_instructions_developer_message(
-    personality: Option<Personality>,
-) -> Result<()> {
+async fn first_turn_model_change_appends_model_instructions_developer_message() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = MockServer::start().await;
@@ -189,10 +184,7 @@ async fn first_turn_model_change_appends_model_instructions_developer_message(
     submit_model_turn(
         &test.codex,
         next_model,
-        ThreadSettingsOverrides {
-            personality,
-            ..Default::default()
-        },
+        ThreadSettingsOverrides::default(),
     )
     .await?;
 
@@ -209,12 +201,6 @@ async fn first_turn_model_change_appends_model_instructions_developer_message(
         developer_texts.iter().any(|text| {
             text.contains("<model_switch>") && text.contains(&expected_instructions)
         })
-    );
-    assert!(
-        developer_texts
-            .iter()
-            .all(|text| !text.contains("<personality_spec>")),
-        "model switch should not emit a personality update"
     );
 
     Ok(())
@@ -378,77 +364,6 @@ async fn model_change_appends_model_instructions_developer_message() -> Result<(
             test.session_configured.model.clone(),
             next_model.to_string()
         ]
-    );
-
-    Ok(())
-}
-
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn model_change_with_legacy_personality_override_only_appends_model_instructions()
--> Result<()> {
-    skip_if_no_network!(Ok(()));
-
-    let server = start_mock_server().await;
-    let resp_mock = mount_sse_sequence(
-        &server,
-        vec![sse_completed("resp-1"), sse_completed("resp-2")],
-    )
-    .await;
-
-    let mut builder = test_codex().with_model("gpt-5.5");
-    let test = builder.build(&server).await?;
-    let next_model = "exp-codex-personality";
-
-    test.codex
-        .start_or_steer_turn(read_only_user_turn(
-            &test,
-            vec![UserInput::Text {
-                text: "hello".into(),
-                text_elements: Vec::new(),
-            }],
-            test.session_configured.model.clone(),
-        ))
-        .await?;
-    wait_for_event(&test.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
-
-    core_test_support::submit_thread_settings(
-        &test.codex,
-        ThreadSettingsOverrides {
-            model: Some(next_model.to_string()),
-            personality: Some(Personality::Pragmatic),
-            ..Default::default()
-        },
-    )
-    .await?;
-
-    test.codex
-        .start_or_steer_turn(read_only_user_turn(
-            &test,
-            vec![UserInput::Text {
-                text: "switch model and personality".into(),
-                text_elements: Vec::new(),
-            }],
-            next_model.to_string(),
-        ))
-        .await?;
-    wait_for_event(&test.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
-
-    let requests = resp_mock.requests();
-    assert_eq!(requests.len(), 2, "expected two model requests");
-
-    let second_request = requests.last().expect("expected second request");
-    let developer_texts = second_request.message_input_texts("developer");
-    assert!(
-        developer_texts
-            .iter()
-            .any(|text| text.contains("<model_switch>")),
-        "expected model switch message when model changes"
-    );
-    assert!(
-        !developer_texts
-            .iter()
-            .any(|text| text.contains("<personality_spec>")),
-        "did not expect personality update message when model changed in same turn"
     );
 
     Ok(())

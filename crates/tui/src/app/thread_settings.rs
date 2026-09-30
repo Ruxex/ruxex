@@ -3,7 +3,6 @@
 use super::App;
 use crate::app_command::AppCommand;
 use crate::app_server_session::AppServerSession;
-use crate::app_server_session::personality_opt_out_only;
 use crate::session_state::ThreadSessionState;
 use codex_app_server_protocol::ThreadSettings;
 use codex_app_server_protocol::ThreadSettingsUpdateParams;
@@ -96,7 +95,6 @@ impl App {
             summary,
             service_tier,
             collaboration_mode,
-            personality,
         } = op
         else {
             return;
@@ -115,7 +113,6 @@ impl App {
                 summary: *summary,
                 service_tier: service_tier.clone(),
                 collaboration_mode: collaboration_mode.clone(),
-                personality: *personality,
                 ..Default::default()
             },
         )
@@ -146,9 +143,8 @@ impl App {
     pub(super) async fn send_thread_settings_update(
         &mut self,
         app_server: &mut AppServerSession,
-        mut params: ThreadSettingsUpdateParams,
+        params: ThreadSettingsUpdateParams,
     ) -> bool {
-        params.personality = personality_opt_out_only(params.personality);
         if !thread_settings_update_has_changes(&params) {
             return false;
         }
@@ -187,7 +183,6 @@ fn apply_thread_settings_to_session(session: &mut ThreadSessionState, settings: 
     );
     session.active_permission_profile = settings.active_permission_profile.clone().map(Into::into);
     session.set_cwd_retargeting_implicit_runtime_workspace_root(settings.cwd.clone());
-    session.personality = settings.personality;
     let mut collaboration_mode = settings.collaboration_mode.clone();
     collaboration_mode
         .settings
@@ -206,5 +201,4 @@ fn thread_settings_update_has_changes(params: &ThreadSettingsUpdateParams) -> bo
         || params.effort.is_some()
         || params.summary.is_some()
         || params.collaboration_mode.is_some()
-        || params.personality.is_some()
 }

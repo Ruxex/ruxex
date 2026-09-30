@@ -75,6 +75,28 @@ fn config_schema_hides_unsupported_inline_mcp_bearer_token() {
 }
 
 #[test]
+fn config_schema_excludes_removed_legacy_fields() {
+    let schema_json = config_schema_json().expect("serialize config schema");
+    let schema_value: serde_json::Value =
+        serde_json::from_slice(&schema_json).expect("decode config schema");
+
+    let root_properties = schema_value
+        .pointer("/properties")
+        .and_then(serde_json::Value::as_object)
+        .expect("root config properties should be an object");
+    assert!(!root_properties.contains_key("experimental_compact_prompt_file"));
+    assert!(!root_properties.contains_key("disable_paste_burst"));
+    assert!(!root_properties.contains_key("experimental_use_unified_exec_tool"));
+
+    let profile_properties = schema_value
+        .pointer("/definitions/ConfigProfile/properties")
+        .and_then(serde_json::Value::as_object)
+        .expect("ConfigProfile properties should be an object");
+    assert!(!profile_properties.contains_key("experimental_compact_prompt_file"));
+    assert!(!profile_properties.contains_key("experimental_use_unified_exec_tool"));
+}
+
+#[test]
 fn shell_environment_policy_schema_rejects_mixed_filter_representations() {
     let schema_json = config_schema_json().expect("serialize config schema");
     let schema_value: serde_json::Value =

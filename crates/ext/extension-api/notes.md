@@ -5,7 +5,6 @@ guardian                     Context + Request
 goal                         Tool + Runtime
 image generation             Tool + Output
 skills                       Context + Turn
-personality                  Context
 plugins / apps / connectors  Context + Turn
 shell snapshot               Runtime
 web search                   Tool

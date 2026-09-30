@@ -72,7 +72,6 @@ pub(super) fn prepare_update(overrides: ThreadSettingsOverrides) -> SessionSetti
         summary,
         service_tier,
         collaboration_mode,
-        personality,
         disabled_plugin_ids,
     } = overrides;
     SessionSettingsUpdate {
@@ -82,7 +81,6 @@ pub(super) fn prepare_update(overrides: ThreadSettingsOverrides) -> SessionSetti
             collaboration_mode,
             reasoning_summary: summary,
             service_tier,
-            personality,
             approval_policy,
         },
         environments,

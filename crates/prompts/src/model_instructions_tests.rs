@@ -2,7 +2,6 @@
 
 use super::*;
 use codex_protocol::openai_models::ConfigShellToolType;
-use codex_protocol::openai_models::ModelInstructionsVariables;
 use codex_protocol::openai_models::ModelMessages;
 use codex_protocol::openai_models::ModelVisibility;
 use codex_protocol::openai_models::TruncationPolicyConfig;
@@ -53,27 +52,6 @@ fn test_model(model_messages: Option<ModelMessages>) -> ModelInfo {
         multi_agent_version: None,
         multi_agent_reasoning_effort: None,
     }
-}
-
-#[test]
-fn renders_literal_templates_with_legacy_personality_inputs() {
-    let template = "Hello {{ personality }}\n\n# Personality\n\nFixed instructions";
-    let model = test_model(Some(ModelMessages {
-        instructions_template: Some(template.to_string()),
-        instructions_variables: Some(ModelInstructionsVariables {
-            personality_default: Some("default".to_string()),
-            personality_friendly: Some("friendly".to_string()),
-            personality_pragmatic: Some("pragmatic".to_string()),
-        }),
-        ..Default::default()
-    }));
-    assert_eq!(
-        (
-            ResolvedModelMessages::from_model(&model).instructions_template(),
-            render_model_instructions(&model)
-        ),
-        (Some(template), template.to_string()),
-    );
 }
 
 #[test]

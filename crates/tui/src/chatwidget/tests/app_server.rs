@@ -37,7 +37,6 @@ fn thread_settings_for_test(
                 },
             },
             multi_agent_mode: Default::default(),
-            personality: Some(Personality::Pragmatic),
         },
     }
 }
@@ -61,7 +60,6 @@ fn configured_thread_session(thread_id: ThreadId) -> crate::session_state::Threa
         instruction_source_paths: Vec::new(),
         reasoning_effort: None,
         collaboration_mode: None,
-        personality: None,
         message_history: None,
         network_proxy: None,
         rollout_path: None,
@@ -560,7 +558,6 @@ async fn thread_settings_updated_updates_visible_state_without_transcript() {
             .id,
         codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY
     );
-    assert_eq!(chat.config_ref().personality, Some(Personality::Pragmatic));
     assert_eq!(chat.active_collaboration_mode_kind(), ModeKind::Plan);
     assert!(
         drain_insert_history(&mut rx).is_empty(),

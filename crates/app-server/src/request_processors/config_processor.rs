@@ -146,7 +146,6 @@ impl ConfigRequestProcessor {
                         | "model_reasoning_effort"
                         | "plan_mode_reasoning_effort"
                         | "service_tier"
-                        | "personality"
                 )
             });
         let should_reload = params.reload_user_config;

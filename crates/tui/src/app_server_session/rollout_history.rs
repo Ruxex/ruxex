@@ -88,7 +88,6 @@ impl AppServerSession {
             config.workspace_roots.clone(),
             Vec::new(),
             thread.reasoning_effort,
-            config.personality,
             local_settings,
         )
         .await

@@ -91,7 +91,6 @@ use codex_prompts::ResolvedModelMessages;
 use codex_protocol::config_types::AltScreenMode;
 use codex_protocol::config_types::AutoCompactTokenLimitScope;
 use codex_protocol::config_types::ForcedLoginMethod;
-use codex_protocol::config_types::Personality;
 use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
 use codex_protocol::config_types::SandboxMode;
@@ -605,9 +604,6 @@ pub struct Config {
 
     /// Info needed to make an API request to the model.
     pub model_provider: ModelProviderInfo,
-
-    /// Deprecated: `friendly` and `pragmatic` no longer select a style.
-    pub personality: Option<Personality>,
 
     /// Effective permission configuration for shell tool execution.
     pub permissions: Permissions,
@@ -1513,7 +1509,6 @@ impl Config {
                     Some(BaseInstructionsProvenance::Model { .. })
                 )
             }),
-            personality: self.personality,
             model_catalog: self.model_catalog.clone(),
         }
     }
@@ -2423,8 +2418,6 @@ pub struct ConfigOverrides {
     pub default_zsh_path: Option<AbsolutePathBuf>,
     pub base_instructions: Option<String>,
     pub developer_instructions: Option<String>,
-    /// Deprecated: `friendly` and `pragmatic` no longer select a style.
-    pub personality: Option<Personality>,
     pub compact_prompt: Option<String>,
     pub show_raw_agent_reasoning: Option<bool>,
     pub tools_web_search_request: Option<bool>,
@@ -2794,7 +2787,6 @@ pub fn resolve_bootstrap_respect_system_proxy(
     let configured_features = Features::from_sources(
         FeatureConfigSource {
             features: cfg.features.as_ref(),
-            experimental_use_unified_exec_tool: cfg.experimental_use_unified_exec_tool,
         },
         FeatureConfigSource::default(),
         FeatureOverrides::default(),
@@ -3062,7 +3054,6 @@ impl Config {
             default_zsh_path,
             base_instructions,
             developer_instructions,
-            personality,
             compact_prompt,
             show_raw_agent_reasoning,
             tools_web_search_request: override_tools_web_search_request,
@@ -3115,7 +3106,6 @@ impl Config {
         let configured_features = Features::from_sources(
             FeatureConfigSource {
                 features: cfg.features.as_ref(),
-                experimental_use_unified_exec_tool: cfg.experimental_use_unified_exec_tool,
             },
             FeatureConfigSource {
                 ..Default::default()
@@ -3666,16 +3656,6 @@ impl Config {
             .as_ref()
             .and_then(|skills| skills.max_context_tokens);
         let include_environment_context = cfg.include_environment_context.unwrap_or(true);
-        let personality = personality.or(cfg.personality);
-
-        let experimental_compact_prompt_path = cfg.experimental_compact_prompt_file.as_ref();
-        let file_compact_prompt = Self::try_read_non_empty_file(
-            fs,
-            experimental_compact_prompt_path,
-            "experimental compact prompt file",
-        )
-        .await?;
-        let compact_prompt = compact_prompt.or(file_compact_prompt);
         let zsh_path = default_zsh_path
             .or_else(|| InstallContext::current().bundled_zsh_path())
             .map(AbsolutePathBuf::into_path_buf);
@@ -3905,7 +3885,6 @@ impl Config {
             notify: cfg.notify,
             base_instructions,
             base_instructions_provenance,
-            personality,
             developer_instructions,
             compact_prompt,
             include_permissions_instructions,
@@ -4032,7 +4011,6 @@ impl Config {
                 .tui
                 .as_ref()
                 .and_then(|tui| tui.disable_paste_burst)
-                .or(cfg.disable_paste_burst)
                 .unwrap_or(false),
             metrics_enabled: cfg.metrics.as_ref().and_then(|a| a.enabled),
             tool_suggest,

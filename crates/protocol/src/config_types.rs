@@ -10,7 +10,6 @@ use std::ops::Deref;
 use std::str::FromStr;
 use std::time::Duration;
 use strum_macros::Display;
-use strum_macros::EnumIter;
 use ts_rs::TS;
 use wildmatch::WildMatchPattern;
 
@@ -255,30 +254,6 @@ pub enum WindowsSandboxProxySettingsMode {
     #[default]
     Reconcile,
     Preserve,
-}
-
-/// Deprecated: `friendly` and `pragmatic` no longer select a style.
-#[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    Display,
-    JsonSchema,
-    TS,
-    PartialOrd,
-    Ord,
-    EnumIter,
-)]
-#[serde(rename_all = "lowercase")]
-#[strum(serialize_all = "lowercase")]
-pub enum Personality {
-    None,
-    Friendly,
-    Pragmatic,
 }
 
 /// Controls the effective multi-agent delegation instructions for a turn. `custom` means the

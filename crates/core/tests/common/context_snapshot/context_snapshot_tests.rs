@@ -391,7 +391,7 @@ fn uuid_labels_preserve_identity_across_message_and_function_content() {
 }
 
 #[test]
-fn rewritten_model_and_personality_use_plain_tags() {
+fn rewritten_model_use_plain_tags() {
     let render = |text| {
         render_test_items(
             &[json!({ "type": "message", "role": "developer", "content": [{ "text": text }] })],
@@ -401,10 +401,6 @@ fn rewritten_model_and_personality_use_plain_tags() {
     assert_eq!(
         render("<model_switch>\nOriginal intro\n\nlong instructions\n</model_switch>"),
         "00:message/developer:\n    <MODEL_SWITCH>"
-    );
-    assert_eq!(
-        render("<personality_spec> Original intro \nlong instructions\n</personality_spec>"),
-        "00:message/developer:\n    <PERSONALITY_SPEC>"
     );
     assert_ne!(render("<model_switch>"), render("<model_switch>New intro"));
 }

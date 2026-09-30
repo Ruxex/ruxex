@@ -1,11 +1,9 @@
 use super::*;
 use crate::ModelsManagerConfig;
 use codex_prompts::render_model_instructions;
-use codex_protocol::config_types::Personality;
 use codex_protocol::openai_models::ApprovalMessages;
 use codex_protocol::openai_models::CollaborationModeMessages;
 use codex_protocol::openai_models::ConfirmationPolicies;
-use codex_protocol::openai_models::ModelInstructionsVariables;
 use codex_protocol::openai_models::ModelTokenBudgetConfig;
 use codex_protocol::openai_models::MultiAgentMessages;
 use codex_protocol::openai_models::MultiAgentModeMessages;
@@ -16,16 +14,9 @@ use codex_protocol::openai_models::ToolMessage;
 use codex_protocol::openai_models::ToolMessages;
 use pretty_assertions::assert_eq;
 
-fn config_with_personality(personality: Option<Personality>) -> ModelsManagerConfig {
-    ModelsManagerConfig {
-        personality,
-        ..Default::default()
-    }
-}
-
 #[test]
 fn base_instruction_override_is_literal_and_preserves_catalog_messages() {
-    let override_instructions = "override {{ personality }}\n# Personality\nKeep me";
+    let override_instructions = "override {{ literal }}\n# General\nKeep me";
     let persistent_instructions = "Follow up on the active task.";
     let async_message_description = "Catalog async message description.";
     let mut model = model_info_from_slug("unknown-model");
@@ -80,11 +71,6 @@ fn base_instruction_override_is_literal_and_preserves_catalog_messages() {
             }),
         }),
         instructions_template: Some("template".to_string()),
-        instructions_variables: Some(ModelInstructionsVariables {
-            personality_default: Some("default".to_string()),
-            personality_friendly: Some("friendly".to_string()),
-            personality_pragmatic: Some("pragmatic".to_string()),
-        }),
         approvals: Some(approvals),
         collaboration_modes: Some(collaboration_modes),
         permissions: Some(permissions),
@@ -95,110 +81,42 @@ fn base_instruction_override_is_literal_and_preserves_catalog_messages() {
     model.model_messages = Some(messages.clone());
     let config = ModelsManagerConfig {
         base_instructions: Some(override_instructions.to_string()),
-        personality: Some(Personality::None),
         ..Default::default()
     };
 
     let updated = with_config_overrides(model, &config);
 
     messages.instructions_template = Some(override_instructions.to_string());
-    messages.instructions_variables = None;
     assert_eq!(updated.model_messages, Some(messages));
     assert_eq!(render_model_instructions(&updated), override_instructions);
 }
 
 #[test]
-fn personality_none_strips_catalog_instruction_sources_through_the_next_h1() {
-    let config = config_with_personality(Some(Personality::None));
-    for (instructions, expected) in [
-        (
-            "Intro\n\n# Personality\n\nRemove me\n\n## Writing Style\n\nRemove me too\n\n# Safety\n\nKeep me",
-            "Intro\n\n# Safety\n\nKeep me",
-        ),
-        ("Intro\n\n# Personality\n\nRemove me", "Intro\n\n"),
-        (
-            "Intro\n\n## Personality\n\nKeep me",
-            "Intro\n\n## Personality\n\nKeep me",
-        ),
-        (
-            "Intro\n\n# Personality \n\nKeep me",
-            "Intro\n\n# Personality \n\nKeep me",
-        ),
-        (
-            "Intro\r\n\r\n# Personality\r\n\r\nRemove me\r\n\r\n## Writing Style\r\n\r\nRemove me too\r\n\r\n# General\r\n\r\nKeep me",
-            "Intro\r\n\r\n# General\r\n\r\nKeep me",
-        ),
-    ] {
-        let mut messages = ModelMessages {
-            instructions_template: Some(instructions.to_string()),
-            instructions_variables: Some(ModelInstructionsVariables {
-                personality_default: Some("default".to_string()),
-                personality_friendly: Some("friendly".to_string()),
-                personality_pragmatic: Some("pragmatic".to_string()),
-            }),
-            persistent_instructions: Some(String::new()),
-            tools: Some(ToolMessages {
-                send_user_message_async: Some(ToolMessage {
-                    description: Some(String::new()),
-                }),
-                multi_agent: Some(MultiAgentToolMessages {
-                    spawn_agent: Some(ToolMessage {
-                        description: Some(String::new()),
-                    }),
-                }),
-            }),
-            approvals: Some(ApprovalMessages {
-                on_request: Some("user approvals".to_string()),
-                never: None,
-                unless_trusted: None,
-            }),
-            ..Default::default()
-        };
-        let mut model = model_info_from_slug("unknown-model");
-        model.model_messages = Some(messages.clone());
-
-        let updated = with_config_overrides(model, &config);
-
-        messages.instructions_template = Some(expected.to_string());
-        assert_eq!(updated.model_messages, Some(messages));
-    }
-}
-
-#[test]
-fn baked_personality_section_is_preserved_without_explicit_none() {
-    let instructions = "Intro\n# Personality\nKeep me\n# General\nKeep me too";
-    let configs = [
-        config_with_personality(/*personality*/ None),
-        config_with_personality(Some(Personality::Friendly)),
-        config_with_personality(Some(Personality::Pragmatic)),
-    ];
-
-    for config in configs {
-        let mut model = model_info_from_slug("unknown-model");
-        model
-            .model_messages
-            .as_mut()
-            .expect("fallback model messages")
-            .instructions_template = Some(instructions.to_string());
-
-        assert_eq!(
-            render_model_instructions(&with_config_overrides(model, &config)),
-            instructions
-        );
-    }
-}
-
-#[test]
-fn explicit_empty_base_instructions_stay_empty_with_personality_none() {
+fn catalog_instruction_is_preserved_without_personality_processing() {
+    let instructions = "Intro\n# General\nKeep me";
     let mut model = model_info_from_slug("unknown-model");
     model
         .model_messages
         .as_mut()
         .expect("fallback model messages")
-        .instructions_template = Some("Intro\n# Personality\nRemove me".to_string());
+        .instructions_template = Some(instructions.to_string());
+
+    assert_eq!(
+        render_model_instructions(&with_config_overrides(model, &ModelsManagerConfig::default())),
+        instructions
+    );
+}
+
+#[test]
+fn explicit_empty_base_instructions_stay_empty() {
+    let mut model = model_info_from_slug("unknown-model");
+    model
+        .model_messages
+        .as_mut()
+        .expect("fallback model messages")
+        .instructions_template = Some("Intro\n# General\nKeep me".to_string());
     let config = ModelsManagerConfig {
         base_instructions: Some(String::new()),
-        personality: Some(Personality::None),
         ..Default::default()
     };
 
@@ -219,6 +137,7 @@ fn unknown_model_uses_builtin_instruction_template() {
     let model = model_info_from_slug("unknown-model");
 
     assert_eq!(render_model_instructions(&model), BASE_INSTRUCTIONS);
+    assert!(!BASE_INSTRUCTIONS.contains("# Personality"));
     assert!(model.used_fallback_model_metadata);
 }
 

@@ -20,7 +20,6 @@ fn model_preset(id: &str, show_in_picker: bool) -> ModelPreset {
             effort: ReasoningEffort::Medium,
             description: "Balanced".to_string(),
         }],
-        supports_personality: false,
         additional_speed_tiers: Vec::new(),
         service_tiers: vec![ModelServiceTier {
             id: "flex".to_string(),

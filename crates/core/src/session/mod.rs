@@ -324,7 +324,6 @@ use codex_protocol::ResponseItemId;
 use codex_protocol::approvals::ExecApprovalKind;
 use codex_protocol::config_types::CollaborationMode;
 use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Personality;
 use codex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
 use codex_protocol::config_types::Settings;
 use codex_protocol::config_types::WindowsSandboxLevel;
@@ -762,7 +761,6 @@ impl Session {
                 collaboration_mode,
                 reasoning_summary: config.model_reasoning_summary,
                 service_tier,
-                personality: config.personality,
                 approval_policy: config.permissions.approval_policy.clone(),
             }),
             model_info_overrides: config.to_models_manager_config().into(),

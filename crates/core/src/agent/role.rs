@@ -16,11 +16,9 @@ use codex_config::loader::resolve_relative_paths_in_config_toml;
 use codex_exec_server::read_sensitive_file_to_string;
 use codex_features::Feature;
 use codex_features::feature_for_key;
-use codex_protocol::config_types::Personality;
 use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::config_types::ServiceTier;
 use codex_protocol::config_types::Verbosity;
-use codex_protocol::models::BaseInstructionsProvenance;
 use codex_protocol::openai_models::ReasoningEffort;
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -40,7 +38,6 @@ struct AgentRoleOverrides {
     model_reasoning_effort: Option<ReasoningEffort>,
     model_reasoning_summary: Option<ReasoningSummary>,
     model_verbosity: Option<Verbosity>,
-    personality: Option<Personality>,
     service_tier: Option<String>,
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     features: BTreeMap<String, bool>,
@@ -83,7 +80,6 @@ async fn apply_role_to_config_inner(
         model_reasoning_effort: role_config.model_reasoning_effort,
         model_reasoning_summary: role_config.model_reasoning_summary,
         model_verbosity: role_config.model_verbosity,
-        personality: role_config.personality,
         service_tier: role_config.service_tier,
         ..Default::default()
     };
@@ -194,9 +190,6 @@ mod role_overrides {
         if let Some(verbosity) = overrides.model_verbosity {
             next_config.model_verbosity = Some(verbosity);
         }
-        if let Some(personality) = overrides.personality {
-            next_config.personality = Some(personality);
-        }
         if let Some(service_tier) = &overrides.service_tier {
             next_config.service_tier = match ServiceTier::from_request_value(service_tier) {
                 Some(ServiceTier::Flex) => Some(ServiceTier::Flex.request_value().to_string()),
@@ -214,17 +207,6 @@ mod role_overrides {
             .is_some_and(|skills| skills.include_instructions == Some(false))
         {
             next_config.include_skill_instructions = false;
-        }
-        let strips_baked_personality =
-            |config: &Config| config.personality == Some(Personality::None);
-        if strips_baked_personality(config) != strips_baked_personality(&next_config)
-            && matches!(
-                config.base_instructions_provenance,
-                Some(BaseInstructionsProvenance::Model { .. })
-            )
-        {
-            next_config.base_instructions = None;
-            next_config.base_instructions_provenance = None;
         }
         Ok(next_config)
     }

@@ -86,7 +86,6 @@ use codex_login::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
 use codex_protocol::ThreadId;
 use codex_protocol::config_types::CollaborationMode;
 use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Personality;
 use codex_protocol::config_types::Settings;
 use codex_protocol::mcp::CallToolResult;
 use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
@@ -6103,124 +6102,6 @@ async fn start_materialized_thread_and_restart(
     })
 }
 
-#[tokio::test]
-async fn thread_resume_accepts_deprecated_personality_override() -> Result<()> {
-    skip_if_no_network!(Ok(()));
-
-    let server = responses::start_mock_server().await;
-    let first_body = responses::sse(vec![
-        responses::ev_response_created("resp-1"),
-        responses::ev_assistant_message("msg-1", "Done"),
-        responses::ev_completed("resp-1"),
-    ]);
-    let second_body = responses::sse(vec![
-        responses::ev_response_created("resp-2"),
-        responses::ev_assistant_message("msg-2", "Done"),
-        responses::ev_completed("resp-2"),
-    ]);
-    let response_mock = responses::mount_sse_sequence(&server, vec![first_body, second_body]).await;
-
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
-
-    let mut primary = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
-        .build_initialized()
-        .await?;
-
-    let start_id = primary
-        .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("exp-codex-personality".to_string()),
-            ..Default::default()
-        })
-        .await?;
-    let ThreadStartResponse { thread, .. } =
-        timeout(DEFAULT_READ_TIMEOUT, primary.read_response(start_id)).await??;
-
-    let materialize_id = primary
-        .send_turn_start_request(TurnStartParams {
-            thread_id: thread.id.clone(),
-            client_user_message_id: None,
-            input: vec![UserInput::Text {
-                text: "seed history".to_string(),
-                text_elements: Vec::new(),
-            }],
-            ..Default::default()
-        })
-        .await?;
-    timeout(
-        DEFAULT_READ_TIMEOUT,
-        primary.read_stream_until_response_message(RequestId::Integer(materialize_id)),
-    )
-    .await??;
-    timeout(
-        DEFAULT_READ_TIMEOUT,
-        primary.read_stream_until_notification_message("turn/completed"),
-    )
-    .await??;
-
-    timeout(DEFAULT_READ_TIMEOUT, primary.shutdown_gracefully()).await??;
-    let mut secondary = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
-        .build_initialized()
-        .await?;
-
-    let resume_id = secondary
-        .send_thread_resume_request(ThreadResumeParams {
-            thread_id: thread.id,
-            model: Some("exp-codex-personality".to_string()),
-            personality: Some(Personality::Friendly),
-            ..Default::default()
-        })
-        .await?;
-    let resume: ThreadResumeResponse =
-        timeout(DEFAULT_READ_TIMEOUT, secondary.read_response(resume_id)).await??;
-    assert_eq!(resume.thread.status, ThreadStatus::Idle);
-
-    let turn_id = secondary
-        .send_turn_start_request(TurnStartParams {
-            thread_id: resume.thread.id,
-            client_user_message_id: None,
-            input: vec![UserInput::Text {
-                text: "Hello".to_string(),
-                text_elements: Vec::new(),
-            }],
-            ..Default::default()
-        })
-        .await?;
-    timeout(
-        DEFAULT_READ_TIMEOUT,
-        secondary.read_stream_until_response_message(RequestId::Integer(turn_id)),
-    )
-    .await??;
-
-    timeout(
-        DEFAULT_READ_TIMEOUT,
-        secondary.read_stream_until_notification_message("turn/completed"),
-    )
-    .await??;
-
-    let requests = response_mock.requests();
-    assert_eq!(requests.len(), 2, "expected initial and resumed turns");
-    let initial_instructions_text = requests[0].instructions_text();
-    let request = requests
-        .last()
-        .expect("expected request for resumed thread turn");
-    let developer_texts = request.message_input_texts("developer");
-    assert!(
-        developer_texts
-            .iter()
-            .all(|text| !text.contains("<personality_spec>")),
-        "deprecated personality override emitted a developer update: {developer_texts:?}"
-    );
-    let instructions_text = request.instructions_text();
-    assert_eq!(
-        instructions_text, initial_instructions_text,
-        "resume should retain the original base instructions"
-    );
-
-    Ok(())
-}
 
 fn mock_responses_config(server_uri: &str) -> MockResponsesConfig {
     MockResponsesConfig::new(server_uri).with_model("gpt-5.4")

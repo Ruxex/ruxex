@@ -5,7 +5,6 @@ use serde::Serialize;
 
 use crate::config_toml::ToolsToml;
 use crate::types::MetricsConfigToml;
-use crate::types::Personality;
 use crate::types::SessionPickerViewMode;
 use crate::types::WindowsToml;
 use codex_features::FeaturesToml;
@@ -37,16 +36,12 @@ pub struct ConfigProfile {
     pub model_verbosity: Option<Verbosity>,
     /// Optional path to a JSON model catalog (applied on startup only).
     pub model_catalog_json: Option<AbsolutePathBuf>,
-    /// Deprecated: `friendly` and `pragmatic` no longer select a style.
-    pub personality: Option<Personality>,
     pub managed_auth_base_url: Option<String>,
     /// Optional path to a file containing model instructions.
     pub model_instructions_file: Option<AbsolutePathBuf>,
-    pub experimental_compact_prompt_file: Option<AbsolutePathBuf>,
     pub include_permissions_instructions: Option<bool>,
     pub include_collaboration_mode_instructions: Option<bool>,
     pub include_environment_context: Option<bool>,
-    pub experimental_use_unified_exec_tool: Option<bool>,
     pub tools: Option<ToolsToml>,
     pub web_search: Option<WebSearchMode>,
     pub metrics: Option<MetricsConfigToml>,

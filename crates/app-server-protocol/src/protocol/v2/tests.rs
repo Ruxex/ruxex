@@ -4619,7 +4619,6 @@ fn turn_start_params_preserve_explicit_null_service_tier() {
         output_schema: None,
         collaboration_mode: None,
         multi_agent_mode: None,
-        personality: None,
         cyber_access_program: None,
     };
     let serialized_without_override =

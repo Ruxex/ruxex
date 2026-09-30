@@ -33,7 +33,6 @@ pub use feature_configs::SleepToolConfigToml;
 pub use feature_configs::SleepToolMode;
 pub use feature_configs::TokenBudgetConfigToml;
 pub use feature_configs::ToolRegistryConfigToml;
-use legacy::LegacyFeatureToggles;
 pub use legacy::legacy_feature_keys;
 
 /// High-level lifecycle stage for a feature.
@@ -288,8 +287,6 @@ pub enum Feature {
     ToolCallMcpElicitation,
     /// Offer Amazon Bedrock setup during TUI sign-in onboarding.
     BedrockSetupWizard,
-    /// Removed compatibility flag retained as a no-op.
-    Personality,
     /// Enable native artifact tools.
     Artifact,
     /// Enable explicitly requested model changes for later step captures.
@@ -374,7 +371,6 @@ pub struct FeatureOverrides {
 #[derive(Debug, Clone, Copy, Default)]
 pub struct FeatureConfigSource<'a> {
     pub features: Option<&'a FeaturesToml>,
-    pub experimental_use_unified_exec_tool: Option<bool>,
 }
 
 impl FeatureOverrides {
@@ -503,9 +499,6 @@ impl Features {
                 "resize_all_images" | "item_ids" => {
                     continue;
                 }
-                "personality" => {
-                    continue;
-                }
                 "terminal_resize_reflow" => {
                     continue;
                 }
@@ -543,11 +536,6 @@ impl Features {
         let mut features = Features::with_defaults();
 
         for source in [base, profile] {
-            LegacyFeatureToggles {
-                experimental_use_unified_exec_tool: source.experimental_use_unified_exec_tool,
-            }
-            .apply(&mut features);
-
             if let Some(feature_entries) = source.features {
                 features.apply_toml(feature_entries);
             }
@@ -1361,12 +1349,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         id: Feature::BedrockSetupWizard,
         key: "bedrock_setup_wizard",
         stage: Stage::UnderDevelopment,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::Personality,
-        key: "personality",
-        stage: Stage::Removed,
         default_enabled: false,
     },
     FeatureSpec {
