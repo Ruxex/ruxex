@@ -345,7 +345,7 @@ mod tests {
             (
                 "OpenAI",
                 None,
-                Some("https://chatgpt.com/backend-api/codex/models"),
+                Some("https://provider.example/models"),
                 "https://api.openai.com/v1",
             ),
             (

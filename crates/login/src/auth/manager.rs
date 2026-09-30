@@ -1741,7 +1741,7 @@ mod tests {
     #[tokio::test]
     async fn token_only_auth_is_not_loaded_as_codex_auth() {
         let auth: AuthDotJson = serde_json::from_value(serde_json::json!({
-            "auth_mode": "chatgpt",
+            "auth_mode": "legacy",
             "tokens": {"access_token": "old-token"},
             "last_refresh": "2026-09-30T00:00:00Z"
         }))
