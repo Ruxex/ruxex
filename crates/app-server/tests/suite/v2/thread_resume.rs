@@ -21,7 +21,6 @@ use chrono::Utc;
 use codex_app_server_protocol::ActivePermissionProfile;
 use codex_app_server_protocol::ApprovalsReviewer;
 use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::ClientInfo;
 use codex_app_server_protocol::ClientRequest;
 use codex_app_server_protocol::CommandExecutionApprovalDecision;
 use codex_app_server_protocol::CommandExecutionRequestApprovalResponse;
@@ -32,7 +31,6 @@ use codex_app_server_protocol::ItemStartedNotification;
 use codex_app_server_protocol::JSONRPCError;
 use codex_app_server_protocol::JSONRPCErrorError;
 use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::McpToolCallAppContext;
 use codex_app_server_protocol::PatchApplyStatus;
 use codex_app_server_protocol::PatchChangeKind;
 use codex_app_server_protocol::RequestId;
@@ -87,7 +85,6 @@ use codex_protocol::ThreadId;
 use codex_protocol::config_types::CollaborationMode;
 use codex_protocol::config_types::ModeKind;
 use codex_protocol::config_types::Settings;
-use codex_protocol::mcp::CallToolResult;
 use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
 use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
 use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
@@ -97,9 +94,6 @@ use codex_protocol::models::ResponseItem;
 use codex_protocol::openai_models::ReasoningEffort;
 use codex_protocol::protocol::AgentMessageEvent;
 use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ImageGenerationEndEvent;
-use codex_protocol::protocol::McpInvocation;
-use codex_protocol::protocol::McpToolCallEndEvent;
 use codex_protocol::protocol::MultiAgentVersion;
 use codex_protocol::protocol::SessionMeta;
 use codex_protocol::protocol::SessionMetaLine;
@@ -2552,254 +2546,6 @@ async fn thread_resume_returns_rollout_history() -> Result<()> {
         other => panic!("expected user message item, got {other:?}"),
     }
 
-    Ok(())
-}
-
-#[tokio::test]
-async fn thread_resume_redacts_payloads_for_named_remote_clients() -> Result<()> {
-    for client_name in ["codex_chatgpt_android_remote", "codex_chatgpt_ios_remote"] {
-        let remote_resume = resume_redaction_fixture(Some(client_name)).await?;
-        let remote_turn = remote_resume
-            .thread
-            .turns
-            .first()
-            .expect("remote resume should include a turn");
-        let remote_page_turn = remote_resume
-            .initial_turns_page
-            .as_ref()
-            .expect("remote resume should include the requested initial turns page")
-            .data
-            .first()
-            .expect("remote initial turns page should include a turn");
-        for remote_turn in [remote_turn, remote_page_turn] {
-            let remote_mcp_item = remote_turn
-                .items
-                .iter()
-                .find(|item| matches!(item, ThreadItem::McpToolCall { .. }))
-                .expect("remote resume should include redacted MCP item");
-            let ThreadItem::McpToolCall {
-                arguments,
-                app_context,
-                read_only_hint,
-                result,
-                error,
-                ..
-            } = remote_mcp_item
-            else {
-                unreachable!("matched MCP item");
-            };
-            assert_eq!(arguments, &json!("[redacted]"));
-            assert_eq!(
-                app_context,
-                &Some(McpToolCallAppContext {
-                    connector_id: "calendar".to_string(),
-                    link_id: Some("link_calendar".to_string()),
-                    resource_uri: Some("ui://widget/lookup.html".to_string()),
-                    app_name: Some("Calendar".to_string()),
-                    action_name: Some("lookup".to_string()),
-                })
-            );
-            assert_eq!(read_only_hint, &Some(false));
-            let result = result.as_ref().expect("redacted MCP result");
-            assert_eq!(
-                result.content,
-                vec![json!({
-                    "type": "text",
-                    "text": "[redacted]",
-                })]
-            );
-            assert_eq!(result.structured_content, None);
-            assert_eq!(result.meta, None);
-            assert_eq!(error, &None);
-            assert!(
-                !remote_turn
-                    .items
-                    .iter()
-                    .any(|item| matches!(item, ThreadItem::ImageGeneration(_))),
-                "remote resume should drop image generation items for {client_name}"
-            );
-        }
-    }
-
-    let normal_resume = resume_redaction_fixture(Some("some_other_client")).await?;
-    let normal_turn = normal_resume
-        .thread
-        .turns
-        .first()
-        .expect("normal resume should include a turn");
-    let normal_mcp_item = normal_turn
-        .items
-        .iter()
-        .find(|item| matches!(item, ThreadItem::McpToolCall { .. }))
-        .expect("normal resume should include MCP item");
-    let ThreadItem::McpToolCall {
-        arguments,
-        app_context,
-        read_only_hint,
-        result,
-        ..
-    } = normal_mcp_item
-    else {
-        unreachable!("matched MCP item");
-    };
-    assert_eq!(arguments, &json!({"secret":"argument"}));
-    assert_eq!(
-        app_context,
-        &Some(McpToolCallAppContext {
-            connector_id: "calendar".to_string(),
-            link_id: Some("link_calendar".to_string()),
-            resource_uri: Some("ui://widget/lookup.html".to_string()),
-            app_name: Some("Calendar".to_string()),
-            action_name: Some("lookup".to_string()),
-        })
-    );
-    assert_eq!(read_only_hint, &Some(false));
-    let result = result.as_ref().expect("normal MCP result");
-    assert_eq!(
-        result.content,
-        vec![json!({
-            "type": "text",
-            "text": "secret result",
-        })]
-    );
-    assert_eq!(
-        result.structured_content,
-        Some(json!({"secret":"structured"}))
-    );
-    assert_eq!(result.meta, Some(json!({"secret":"meta"})));
-    assert!(
-        normal_turn.items.iter().any(|item| matches!(
-            item,
-            ThreadItem::ImageGeneration(item)
-                if item.result == "base64-image-result"
-                    && item.revised_prompt.as_deref() == Some("secret revised prompt")
-        )),
-        "normal resume should keep image generation items"
-    );
-
-    Ok(())
-}
-
-async fn resume_redaction_fixture(client_name: Option<&str>) -> Result<ThreadResumeResponse> {
-    let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
-
-    let filename_ts = "2025-01-05T12-00-00";
-    let meta_rfc3339 = "2025-01-05T12:00:00Z";
-    let conversation_id = create_fake_rollout(
-        codex_home.path(),
-        filename_ts,
-        meta_rfc3339,
-        "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
-    )?;
-    append_resume_redaction_history(
-        codex_home.path(),
-        filename_ts,
-        meta_rfc3339,
-        &conversation_id,
-    )?;
-
-    let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
-        .build()
-        .await?;
-    if let Some(client_name) = client_name {
-        let _ = timeout(
-            DEFAULT_READ_TIMEOUT,
-            mcp.initialize_with_client_info(ClientInfo {
-                name: client_name.to_string(),
-                title: None,
-                version: "0.1.0".to_string(),
-            }),
-        )
-        .await??;
-    } else {
-        timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
-    }
-
-    let resume_id = mcp
-        .send_thread_resume_request(ThreadResumeParams {
-            thread_id: conversation_id,
-            initial_turns_page: Some(ThreadResumeInitialTurnsPageParams {
-                limit: None,
-                sort_direction: None,
-                items_view: Some(TurnItemsView::Full),
-            }),
-            ..Default::default()
-        })
-        .await?;
-    let resume_resp: JSONRPCResponse = timeout(
-        DEFAULT_READ_TIMEOUT,
-        mcp.read_stream_until_response_message(RequestId::Integer(resume_id)),
-    )
-    .await??;
-    to_response::<ThreadResumeResponse>(resume_resp)
-}
-
-fn append_resume_redaction_history(
-    codex_home: &Path,
-    filename_ts: &str,
-    meta_rfc3339: &str,
-    conversation_id: &str,
-) -> Result<()> {
-    let rollout_file_path = rollout_path(codex_home, filename_ts, conversation_id);
-    let persisted_rollout = std::fs::read_to_string(&rollout_file_path)?;
-    let appended_rollout = [
-        EventMsg::McpToolCallEnd(McpToolCallEndEvent {
-            turn_id: String::new(),
-            call_id: "mcp-1".to_string(),
-            invocation: McpInvocation {
-                server: "docs".to_string(),
-                tool: "lookup".to_string(),
-                arguments: Some(json!({"secret":"argument"})),
-            },
-            connector_id: Some("calendar".to_string()),
-            mcp_app_resource_uri: Some("ui://widget/lookup.html".to_string()),
-            mcp_app_ui: None,
-            link_id: Some("link_calendar".to_string()),
-            app_name: Some("Calendar".to_string()),
-            action_name: Some("lookup".to_string()),
-            plugin_id: None,
-            read_only_hint: Some(false),
-            duration: Duration::from_millis(8),
-            result: Ok(CallToolResult {
-                content: vec![json!({
-                    "type": "text",
-                    "text": "secret result",
-                })],
-                structured_content: Some(json!({"secret":"structured"})),
-                is_error: Some(false),
-                meta: Some(json!({"secret":"meta"})),
-            }),
-        }),
-        EventMsg::ImageGenerationEnd(ImageGenerationEndEvent {
-            call_id: "ig-1".to_string(),
-            status: "completed".to_string(),
-            revised_prompt: Some("secret revised prompt".to_string()),
-            result: "base64-image-result".to_string(),
-            transparent_background: None,
-            failure: None,
-            saved_path: Some(test_absolute_path("/tmp/ig-1.png")),
-        }),
-    ]
-    .into_iter()
-    .map(|payload| {
-        Ok(json!({
-            "timestamp": meta_rfc3339,
-            "type": "event_msg",
-            "payload": serde_json::to_value(payload)?,
-        })
-        .to_string())
-    })
-    .collect::<Result<Vec<_>>>()?
-    .join("\n");
-    std::fs::write(
-        &rollout_file_path,
-        format!("{persisted_rollout}{appended_rollout}\n"),
-    )?;
     Ok(())
 }
 

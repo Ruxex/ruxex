@@ -3488,9 +3488,6 @@ impl ThreadRequestProcessor {
                 "`permissions` cannot be combined with `sandbox`",
             ));
         }
-        let redact_resume_payloads =
-            should_redact_thread_resume_payloads(app_server_client_name.as_deref());
-
         let _thread_list_state_permit = self.acquire_thread_list_state_permit().await?;
         let stored_thread_from_running_probe = match target {
             ThreadResumeTarget::Client(request_id) => match self
@@ -3947,7 +3944,7 @@ impl ThreadRequestProcessor {
                 let active_permission_profile = thread_response_active_permission_profile(
                     config_snapshot.active_permission_profile,
                 );
-                let mut initial_turns_page = if let Some(params) = initial_turns_page.as_ref() {
+                let initial_turns_page = if let Some(params) = initial_turns_page.as_ref() {
                     let initial_turns_page_result = if paginated_resume {
                         self.paginated_resume_initial_turns_page(thread_id, params)
                             .await
@@ -3982,13 +3979,6 @@ impl ThreadRequestProcessor {
                         restored_token_usage_turn_id(response_history.get_rollout_items(), turns)
                     })
                     .filter(|turn_id| !turn_id.is_empty());
-                if redact_resume_payloads {
-                    redact_thread_resume_payloads(&mut thread.turns);
-                    if let Some(initial_turns_page) = initial_turns_page.as_mut() {
-                        redact_thread_resume_payloads(&mut initial_turns_page.data);
-                    }
-                }
-
                 let thread_originator = config_snapshot.originator.clone();
                 let response = ThreadResumeResponse {
                     thread,
@@ -4196,8 +4186,6 @@ impl ThreadRequestProcessor {
                     mismatch_details.join("; ")
                 );
             }
-            let redact_resume_payloads =
-                should_redact_thread_resume_payloads(app_server_client_name.as_deref());
             let include_turns = !params.exclude_turns;
             if paginated_resume && include_turns {
                 self.send_deprecation_notice(
@@ -4353,7 +4341,6 @@ impl ThreadRequestProcessor {
                     paginated_initial_turns_page,
                     paginated_initial_turns_page_with_active_slot,
                     resume_cursor_store,
-                    redact_resume_payloads,
                 }),
                 completion_tx,
             };
