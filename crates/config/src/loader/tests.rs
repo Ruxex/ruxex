@@ -899,7 +899,7 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
         .expect("write system config");
     std::fs::write(
         dot_codex.join(CONFIG_TOML_FILE),
-        "model_instructions_file = \"./project.md\"\nopenai_base_url = \"https://ignored\"",
+        "model_instructions_file = \"./project.md\"\nmanaged_auth_base_url = \"https://ignored\"",
     )
     .expect("write project config");
     let requirements_file = managed_dir.join("requirements.toml");

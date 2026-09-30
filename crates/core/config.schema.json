@@ -6012,10 +6012,6 @@
       },
       "type": "array"
     },
-    "openai_base_url": {
-      "description": "Base URL override for the built-in `openai` model provider.",
-      "type": "string"
-    },
     "orchestrator": {
       "allOf": [
         {

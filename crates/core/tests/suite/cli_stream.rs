@@ -74,7 +74,10 @@ fn personal_access_token_exec_command(server: &MockServer, home: &TempDir) -> Co
     cmd.arg("exec")
         .arg("--skip-git-repo-check")
         .arg("-c")
-        .arg(format!("openai_base_url=\"{}/api/codex\"", server.uri()))
+        .arg(format!(
+            "model_providers.openai.base_url=\"{}/api/codex\"",
+            server.uri()
+        ))
         .arg("-c")
         .arg(format!("managed_auth_base_url=\"{}/backend-api\"", server.uri()))
         .arg("-C")
@@ -255,9 +258,9 @@ async fn responses_mode_stream_cli() {
     assert_eq!(request.path(), "/v1/responses");
 }
 
-/// Ensures `openai_base_url` config override routes built-in openai provider requests.
+/// Ensures an explicit model provider base URL routes built-in provider requests.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn responses_mode_stream_cli_supports_openai_base_url_config_override() {
+async fn responses_mode_stream_cli_supports_model_provider_base_url_override() {
     skip_if_no_network!();
 
     let server = MockServer::start().await;
@@ -275,7 +278,10 @@ async fn responses_mode_stream_cli_supports_openai_base_url_config_override() {
     cmd.arg("exec")
         .arg("--skip-git-repo-check")
         .arg("-c")
-        .arg(format!("openai_base_url=\"{}/v1\"", server.uri()))
+        .arg(format!(
+            "model_providers.openai.base_url=\"{}/v1\"",
+            server.uri()
+        ))
         .arg("-C")
         .arg(&repo_root)
         .arg("hello?");
@@ -446,7 +452,10 @@ async fn responses_api_stream_cli() {
     cmd.arg("exec")
         .arg("--skip-git-repo-check")
         .arg("-c")
-        .arg(format!("openai_base_url=\"{}/v1\"", server.uri()))
+        .arg(format!(
+            "model_providers.openai.base_url=\"{}/v1\"",
+            server.uri()
+        ))
         .arg("-C")
         .arg(&repo_root)
         .arg("hello?");
@@ -487,7 +496,10 @@ async fn integration_creates_and_checks_session_file() -> anyhow::Result<()> {
     cmd.arg("exec")
         .arg("--skip-git-repo-check")
         .arg("-c")
-        .arg(format!("openai_base_url=\"{}/v1\"", server.uri()))
+        .arg(format!(
+            "model_providers.openai.base_url=\"{}/v1\"",
+            server.uri()
+        ))
         .arg("-C")
         .arg(&repo_root)
         .arg(&prompt);
@@ -603,7 +615,10 @@ async fn integration_creates_and_checks_session_file() -> anyhow::Result<()> {
     cmd2.arg("exec")
         .arg("--skip-git-repo-check")
         .arg("-c")
-        .arg(format!("openai_base_url=\"{}/v1\"", server.uri()))
+        .arg(format!(
+            "model_providers.openai.base_url=\"{}/v1\"",
+            server.uri()
+        ))
         .arg("-C")
         .arg(&repo_root)
         .arg(&prompt2)

@@ -161,19 +161,19 @@
 - Consumes: current configured URL and credential-broker trusted-host behavior.
 - Produces: an explicitly named provider-owned or credential-broker-owned replacement field.
 
-- [ ] **Step 1: Identify the replacement owner and field name.**
+- [x] **Step 1: Identify the replacement owner and field name.**
 
   Decide whether the URL belongs under `model_providers.<name>.base_url`, a credential-broker-specific setting, or both. Preserve host validation and prevent trusted local state from being forwarded to arbitrary providers.
 
-- [ ] **Step 2: Add migration and security tests.**
+- [x] **Step 2: Add migration and security tests.**
 
   Assert that the replacement preserves trusted-host binding and redaction behavior, while unrelated custom providers cannot inherit the trusted credential behavior accidentally.
 
-- [ ] **Step 3: Migrate consumers and fixtures.**
+- [x] **Step 3: Migrate consumers and fixtures.**
 
   Update core, credential-broker/network-proxy code, tests, and configuration schema to use the replacement. Keep `openai_base_url` only until all active consumers are migrated.
 
-- [ ] **Step 4: Remove the old field after the migration gate passes.**
+- [x] **Step 4: Remove the old field after the migration gate passes.**
 
   Delete `ConfigToml::openai_base_url`, regenerate artifacts, update the inventory to `remove`, then run `just check --tests` and `just check`.
 
@@ -182,5 +182,5 @@
 - `experimental_compact_prompt_file` and the selected legacy aliases have no active producers, consumers, schema entries, or generated source-index entries.
 - `compact_prompt`, `tui.disable_paste_burst`, and `features.unified_exec` remain functional.
 - `personality` is either explicitly retained with evidence or removed through a separate protocol-aware migration.
-- `openai_base_url` is not removed until its credential-broker security consumers have an equivalent provider-neutral configuration source.
+- `openai_base_url` was removed after its credential-broker security consumers gained the generic credential-provider configuration source.
 - The compatibility inventory records the final decision and verification evidence for every changed field.

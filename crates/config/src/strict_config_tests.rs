@@ -92,6 +92,18 @@ foo = true"#;
 }
 
 #[test]
+fn strict_config_rejects_removed_openai_base_url() {
+    let path = Path::new("/tmp/config.toml");
+    let error = config_error_from_ignored_toml_fields::<ConfigToml>(
+        path,
+        "openai_base_url = \"https://gateway.example/v1\"\n",
+    )
+    .expect("removed OpenAI base URL should be unknown");
+
+    assert_eq!(error.message, "unknown configuration field `openai_base_url`");
+}
+
+#[test]
 fn strict_config_accepts_tool_registry_config() {
     let path = Path::new("/tmp/config.toml");
 

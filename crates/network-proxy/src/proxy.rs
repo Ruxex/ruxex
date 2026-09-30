@@ -932,7 +932,6 @@ impl NetworkProxy {
         let mut broker_only_config = config::NetworkProxyConfig {
             enabled: config.enabled,
             credential_providers: config.credential_providers.clone(),
-            credential_broker_openai_host: config.credential_broker_openai_host.clone(),
             credential_broker_context: config.credential_broker_context.clone(),
             dangerously_allow_plaintext_credential_injection: config
                 .dangerously_allow_plaintext_credential_injection,

@@ -70,7 +70,9 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
     );
     std::fs::write(
         codex_home.path().join("config.toml"),
-        format!("openai_base_url = \"{server_uri}/v1\"\n{feature_config}"),
+        format!(
+            "[model_providers.openai]\nbase_url = \"{server_uri}/v1\"\n{feature_config}"
+        ),
     )?;
     login_with_api_key(
         codex_home.path(),
@@ -326,7 +328,8 @@ async fn list_models_uses_remote_catalog_as_source_of_truth(
 model = "mock-model"
 approval_policy = "never"
 sandbox_mode = "read-only"
-openai_base_url = "{server_uri}/v1"
+[model_providers.openai]
+base_url = "{server_uri}/v1"
 [features]
 api_key_model_discovery = true
 "#

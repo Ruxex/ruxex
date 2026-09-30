@@ -1035,11 +1035,6 @@ fn concurrent_commands_preserve_discovered_credential_destinations() {
             "ghp_abcdefghijklmnopqrstuvwxyz1234567890",
         ),
         (
-            "OPENAI_API_KEY",
-            "OPENAI_BASE_URL",
-            "sk-proj-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-        ),
-        (
             "PROVIDER_TOKEN",
             "PROVIDER_ENDPOINT",
             "provider_abcdefghijklmnopqrstuvwx",
@@ -1144,10 +1139,10 @@ fn builtin_credentials_use_private_destination_context() {
     let broker = CredentialBroker::new(/*enabled*/ true);
     let mut config = NetworkProxyConfig::default();
     config.set_credential_broker_enabled(/*enabled*/ true);
-    config.configure_credential_broker_environment(&env_map([
-        ("GH_HOST", "github.enterprise.example"),
-        ("OPENAI_BASE_URL", "https://gateway.example/v1"),
-    ]));
+    config.configure_credential_broker_environment(&env_map([(
+        "GH_HOST",
+        "github.enterprise.example",
+    )]));
     broker.configure(&config);
     for (key, context_key, token, host) in [
         (
@@ -1156,18 +1151,11 @@ fn builtin_credentials_use_private_destination_context() {
             "ghp-real",
             "github.enterprise.example",
         ),
-        (
-            "OPENAI_API_KEY",
-            "OPENAI_BASE_URL",
-            "sk-real",
-            "gateway.example",
-        ),
     ] {
         let mut env = env_map([(key, token)]);
         broker.virtualize_child_env(&mut env);
         assert_ne!(env[key], token);
         assert!(!env.contains_key("GH_HOST"));
-        assert!(!env.contains_key("OPENAI_BASE_URL"));
         let mut headers = headers_with_bearer(&env[key]);
         broker.inject_request_headers(host, &mut headers);
         assert_eq!(
@@ -1217,10 +1205,33 @@ fn builtin_credentials_use_private_destination_context() {
 }
 
 #[test]
+fn builtin_openai_credentials_ignore_base_url_environment_override() {
+    let broker = CredentialBroker::new(/*enabled*/ true);
+    let mut config = NetworkProxyConfig::default();
+    config.set_credential_broker_enabled(/*enabled*/ true);
+    config.configure_credential_broker_environment(&env_map([(
+        "OPENAI_BASE_URL",
+        "https://gateway.example/v1",
+    )]));
+    broker.configure(&config);
+
+    let mut env = env_map([("OPENAI_API_KEY", "sk-real")]);
+    broker.virtualize_child_env(&mut env);
+    let dummy = env["OPENAI_API_KEY"].clone();
+
+    let mut default_headers = headers_with_bearer(&dummy);
+    broker.inject_request_headers("api.openai.com", &mut default_headers);
+    assert_eq!(authorization(&default_headers), Some("Bearer sk-real"));
+
+    let mut gateway_headers = headers_with_bearer(&dummy);
+    broker.inject_request_headers("gateway.example", &mut gateway_headers);
+    assert_eq!(authorization(&gateway_headers), Some(dummy.as_str()));
+}
+
+#[test]
 fn private_destination_updates_reconcile_registered_fallbacks() {
     for ((key, context_key, token), previously_used_fallback) in [
         ("GH_ENTERPRISE_TOKEN", "GH_HOST", "ghp-real"),
-        ("OPENAI_API_KEY", "OPENAI_BASE_URL", "sk-real"),
         (
             "VENDOR_TOKEN",
             "VENDOR_HOST",
@@ -1300,11 +1311,7 @@ fn private_destination_updates_reconcile_registered_fallbacks() {
                 );
             }
         };
-        let unrelated_key = if context_key == "GH_HOST" {
-            "OPENAI_BASE_URL"
-        } else {
-            "GH_HOST"
-        };
+        let unrelated_key = "UNRELATED_DESTINATION";
         config.configure_credential_broker_environment(&env_map([
             (context_key, &destination("first.example")),
             (unrelated_key, "https://unrelated.example"),
@@ -1406,55 +1413,6 @@ fn private_destination_updates_reconcile_registered_fallbacks() {
             );
         }
     }
-}
-
-#[test]
-fn openai_credentials_bind_only_to_default_and_configured_trusted_hosts() {
-    let broker = CredentialBroker::new(/*enabled*/ true);
-    let mut config = NetworkProxyConfig::default();
-    config.set_credential_broker_enabled(/*enabled*/ true);
-    config.set_credential_broker_openai_base_url(
-        /*base_url*/ Some("https://gateway.example.com./v1"),
-    );
-    broker.configure(&config);
-
-    let mut env = env_map([
-        ("OPENAI_API_KEY", "sk-real"),
-        ("OPENAI_BASE_URL", "https://sdk.example.com./v1"),
-        ("GH_TOKEN", "ghp-real"),
-    ]);
-    broker.virtualize_child_env(&mut env);
-    assert!(brokered_credential_env_keys(&env).any(|key| key == "OPENAI_BASE_URL"));
-    assert!(brokered_credential_binding_env_keys(&env).any(|key| key == "OPENAI_BASE_URL"));
-    let dummy = &env["OPENAI_API_KEY"];
-
-    for (host, expected_credential) in [
-        ("api.openai.com", "sk-real"),
-        ("gateway.example.com", "sk-real"),
-        ("sdk.example.com", "sk-real"),
-        ("attacker.example", dummy.as_str()),
-    ] {
-        let mut headers = headers_with_bearer(dummy);
-        broker.inject_request_headers(host, &mut headers);
-        let expected = format!("Bearer {expected_credential}");
-        assert_eq!(authorization(&headers), Some(expected.as_str()), "{host}");
-    }
-
-    config.set_credential_broker_openai_base_url(
-        /*base_url*/ Some("https://replacement.example/v1"),
-    );
-    broker.configure(&config);
-
-    let mut github_headers = headers_with_bearer(&env["GH_TOKEN"]);
-    broker.inject_request_headers("api.github.com", &mut github_headers);
-    assert_eq!(authorization(&github_headers), Some("Bearer ghp-real"));
-
-    let mut openai_headers = headers_with_bearer(dummy);
-    broker.inject_request_headers("gateway.example.com", &mut openai_headers);
-    assert_eq!(
-        authorization(&openai_headers),
-        Some(format!("Bearer {dummy}").as_str())
-    );
 }
 
 #[test]

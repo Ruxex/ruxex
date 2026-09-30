@@ -30,7 +30,10 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
     let codex_home = tempdir()?;
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
-    let openai_base_url_config = format!("openai_base_url=\"{}/v1\"", server.uri());
+    let provider_base_url_config = format!(
+        "model_providers.openai.base_url=\"{}/v1\"",
+        server.uri()
+    );
     write_config(codex_home.path(), &repo_root)?;
     write_auth(codex_home.path())?;
 
@@ -61,7 +64,7 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
             .arg("-c")
             .arg("analytics.enabled=false")
             .arg("-c")
-            .arg(&openai_base_url_config)
+            .arg(&provider_base_url_config)
             .arg("--no-alt-screen")
             .arg("-C")
             .arg(&repo_root)
@@ -197,7 +200,10 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
     let codex_home = tempdir()?;
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
-    let openai_base_url_config = format!("openai_base_url=\"{}/v1\"", server.uri());
+    let provider_base_url_config = format!(
+        "model_providers.openai.base_url=\"{}/v1\"",
+        server.uri()
+    );
     write_config(codex_home.path(), &repo_root)?;
     write_auth(codex_home.path())?;
 
@@ -228,7 +234,7 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
             .arg("-c")
             .arg("analytics.enabled=false")
             .arg("-c")
-            .arg(&openai_base_url_config)
+            .arg(&provider_base_url_config)
             .arg("--no-alt-screen")
             .arg("-C")
             .arg(&repo_root)
@@ -327,7 +333,10 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
     let codex = codex_binary(&repo_root)?;
     let codex_home = tempdir()?;
     let server = MockServer::start().await;
-    let openai_base_url_config = format!("openai_base_url=\"{}/v1\"", server.uri());
+    let provider_base_url_config = format!(
+        "model_providers.openai.base_url=\"{}/v1\"",
+        server.uri()
+    );
     write_config(codex_home.path(), &repo_root)?;
     write_auth(codex_home.path())?;
 
@@ -359,7 +368,7 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
             .arg("-c")
             .arg("analytics.enabled=false")
             .arg("-c")
-            .arg(&openai_base_url_config)
+            .arg(&provider_base_url_config)
             .arg("--no-alt-screen")
             .arg("-C")
             .arg(&repo_root),
@@ -454,7 +463,10 @@ async fn run_repeated_resize_smoke() -> Result<()> {
     let codex_home = tempdir()?;
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
-    let openai_base_url_config = format!("openai_base_url=\"{}/v1\"", server.uri());
+    let provider_base_url_config = format!(
+        "model_providers.openai.base_url=\"{}/v1\"",
+        server.uri()
+    );
     write_config(codex_home.path(), &repo_root)?;
     write_auth(codex_home.path())?;
 
@@ -485,7 +497,7 @@ async fn run_repeated_resize_smoke() -> Result<()> {
             .arg("-c")
             .arg("analytics.enabled=false")
             .arg("-c")
-            .arg(&openai_base_url_config)
+            .arg(&provider_base_url_config)
             .arg("--no-alt-screen")
             .arg("-C")
             .arg(&repo_root)

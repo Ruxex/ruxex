@@ -39,7 +39,7 @@ fn mock_responses_config_composes_model_provider_features_and_extra_tables() {
 }
 
 #[test]
-fn legacy_mock_responses_writer_preserves_provider_auth_and_feature_overrides() {
+fn mock_responses_writer_preserves_provider_auth_and_feature_overrides() {
     let home = TempDir::new().expect("temporary CODEX_HOME");
     write_mock_responses_config_toml(
         home.path(),
@@ -53,14 +53,13 @@ fn legacy_mock_responses_writer_preserves_provider_auth_and_feature_overrides() 
         "openai",
         "compact this",
     )
-    .expect("write legacy-compatible mock Responses config");
+    .expect("write mock Responses config");
 
     let config =
         std::fs::read_to_string(home.path().join("config.toml")).expect("read config.toml");
     for expected in [
         "compact_prompt = \"compact this\"",
         "model_auto_compact_token_limit = 321",
-        "openai_base_url = \"http://127.0.0.1:1234/v1\"",
         "shell_snapshot = false",
         "network_proxy = true",
         "[model_providers.openai]\nname = \"OpenAI\"",

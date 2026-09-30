@@ -24,7 +24,10 @@ impl TestCodexExecBuilder {
         let mut cmd = self.cmd();
         let base = format!("{}/v1", server.uri());
         cmd.arg("-c")
-            .arg(format!("openai_base_url={}", toml_string_literal(&base)));
+            .arg(format!(
+                "model_providers.openai.base_url={}",
+                toml_string_literal(&base)
+            ));
         cmd
     }
 

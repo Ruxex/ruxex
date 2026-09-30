@@ -474,7 +474,8 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
 model_reasoning_effort = "high"
 developer_instructions = "{ROLE_DEVELOPER_INSTRUCTIONS}"
 model_provider = "{ROLE_MODEL_PROVIDER_ID}"
-openai_base_url = "{redirected_base_url}"
+[model_providers.{ROLE_MODEL_PROVIDER_ID}]
+base_url = "{redirected_base_url}"
 "#
         ),
     )?;

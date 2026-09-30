@@ -3412,7 +3412,6 @@ impl Config {
             feature_enabled: enable_network_proxy,
             features: cfg.features.as_ref(),
             candidate_permission_profile: &permission_profile,
-            credential_broker_base_url: cfg.openai_base_url.as_deref(),
         });
         if cfg.approval_policy == Some(AskForApproval::UnlessTrusted) {
             return Err(std::io::Error::new(
@@ -4216,8 +4215,6 @@ impl Config {
                         network_proxy,
                     );
                 }
-                configured_network_proxy_config
-                    .set_credential_broker_openai_base_url(cfg.openai_base_url.as_deref());
                 configured_network_proxy_config.enabled = true;
             }
             configured_network_proxy_config

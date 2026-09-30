@@ -173,9 +173,6 @@ pub fn write_mock_responses_config_toml(
         ))
         .with_provider_config("supports_websockets = false");
 
-    if model_provider_id == "openai" {
-        config = config.with_root_config(&format!("openai_base_url = \"{server_uri}/v1\""));
-    }
     if matches!(requires_auth, Some(true)) {
         config = config
             .with_provider_name("OpenAI")

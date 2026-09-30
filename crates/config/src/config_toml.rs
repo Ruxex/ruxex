@@ -360,9 +360,6 @@ pub struct ConfigToml {
     /// Orchestrator-owned feature settings.
     pub orchestrator: Option<OrchestratorToml>,
 
-    /// Base URL override for the built-in `openai` model provider.
-    pub openai_base_url: Option<String>,
-
     /// Experimental / do not use. Selects the thread store implementation.
     pub experimental_thread_store: Option<ThreadStoreToml>,
     pub projects: Option<HashMap<String, ProjectConfig>>,

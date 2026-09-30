@@ -509,7 +509,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
 
     let original_config = proxy.current_cfg().await?;
     let mut changed_config = original_config.clone();
-    changed_config.set_credential_broker_openai_base_url(Some("https://gateway.example/v1"));
+    changed_config.allow_local_binding = !changed_config.allow_local_binding;
     for (config, remains_valid) in [
         (original_config.clone(), true),
         (changed_config, false),
@@ -562,7 +562,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
             tokio::time::sleep(Duration::from_millis(10)).await;
         }
         let mut config = proxy.current_cfg().await?;
-        config.set_credential_broker_openai_base_url(Some("https://new-gateway.example/v1"));
+        config.allow_local_binding = !config.allow_local_binding;
         proxy
             .replace_config_state(codex_network_proxy::build_config_state(
                 config,

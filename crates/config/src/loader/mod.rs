@@ -73,7 +73,6 @@ const DEFAULT_PROGRAM_DATA_DIR_WINDOWS: &str = r"C:\ProgramData";
 // These settings are still supported from user, system, managed, and runtime
 // config layers.
 const PROJECT_LOCAL_CONFIG_DENYLIST: &[&str] = &[
-    "openai_base_url",
     "managed_auth_base_url",
     "responses_api_metadata",
     "model_provider",

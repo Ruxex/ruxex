@@ -671,7 +671,7 @@ async fn turn_start_steers_active_turn_and_returns_active_turn_id() -> Result<()
     std::fs::write(
         codex_home.path().join("config.toml"),
         format!(
-            "model = \"gpt-5.5\"\napproval_policy = \"never\"\nopenai_base_url = \"{}/v1\"\ncli_auth_credentials_store = \"file\"\n[features]\nenable_request_compression = false\n",
+            "model = \"gpt-5.5\"\napproval_policy = \"never\"\n[model_providers.openai]\nbase_url = \"{}/v1\"\ncli_auth_credentials_store = \"file\"\n[features]\nenable_request_compression = false\n",
             server.uri()
         ),
     )?;
