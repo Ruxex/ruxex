@@ -77,7 +77,6 @@ use codex_features::Stage;
 use codex_features::is_known_feature_key;
 use codex_home::CodexHomeUserInstructionsProvider;
 use codex_login::AuthManager;
-use codex_login::is_workload_identity_selected;
 use codex_models_manager::manager::RefreshStrategy;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::user_input::UserInput;
@@ -987,11 +986,6 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 {
                     anyhow::bail!(
                         "`codex agents` cannot apply additional-directory overrides to a remote server"
-                    );
-                }
-                if is_workload_identity_selected() {
-                    anyhow::bail!(
-                        "`codex agents` is unavailable while workload identity is active"
                     );
                 }
                 if root_remote.is_none() {

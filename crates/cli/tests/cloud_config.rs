@@ -5,8 +5,8 @@ use std::time::Duration;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::ensure;
-use app_test_support::WorkloadIdentityAuthFixture;
-use app_test_support::write_workload_identity_auth;
+use app_test_support::ApiKeyAuthFixture;
+use app_test_support::write_api_key_auth;
 use codex_config::ConfigLoadOptions;
 use codex_config::types::AuthCredentialsStoreMode;
 use codex_core::config::load_config_toml_with_layer_stack;
@@ -76,12 +76,12 @@ impl CloudManagedConfigFixture {
             return Ok(None);
         }
 
-        write_workload_identity_auth(
+        write_api_key_auth(
             codex_home.path(),
-            WorkloadIdentityAuthFixture::new("chatgpt-token")
+            ApiKeyAuthFixture::new("chatgpt-token")
                 .account_id("workspace-123")
-                .chatgpt_account_id("workspace-123")
-                .chatgpt_user_id("user-123")
+                .workspace_id("workspace-123")
+                .user_id("user-123")
                 .plan_type("enterprise"),
             AuthCredentialsStoreMode::File,
         )?;

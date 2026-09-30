@@ -378,7 +378,7 @@ async fn history_notes_require_an_openai_provider_and_codex_backend_auth() -> Te
         ),
         (
             ModelProviderInfo::create_amazon_bedrock_provider(/*aws*/ None),
-            CodexAuth::create_dummy_workload_identity_for_testing(),
+            CodexAuth::from_api_key("test-api-key"),
         ),
     ] {
         config.model_provider = provider;

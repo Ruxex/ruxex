@@ -1,6 +1,6 @@
 use anyhow::Context;
 use anyhow::Result;
-use app_test_support::WorkloadIdentityAuthFixture;
+use app_test_support::ApiKeyAuthFixture;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_apply_patch_sse_response;
@@ -13,7 +13,7 @@ use app_test_support::create_mock_responses_server_sequence;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
 use app_test_support::create_request_user_input_sse_response;
 use app_test_support::format_with_current_shell_display;
-use app_test_support::write_workload_identity_auth;
+use app_test_support::write_api_key_auth;
 use app_test_support::write_mock_responses_config_toml_with_managed_auth_base_url;
 use app_test_support::write_models_cache;
 use app_test_support::write_models_cache_with_models;
@@ -423,12 +423,12 @@ async fn tool_call_metadata_stays_out_of_raw_response_item_notifications(
         config = config.with_extra_config(&format!("[metrics]\nenabled = {enabled}"));
     }
     config.write(codex_home.path())?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-test-token")
+        ApiKeyAuthFixture::new("chatgpt-test-token")
             .account_id("account-123")
-            .chatgpt_account_id("account-123")
-            .chatgpt_user_id("user-123")
+            .workspace_id("account-123")
+            .user_id("user-123")
             .email("employee@openai.com"),
         AuthCredentialsStoreMode::File,
     )?;
@@ -676,9 +676,9 @@ async fn turn_start_steers_active_turn_and_returns_active_turn_id() -> Result<()
             server.uri()
         ),
     )?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-test-token").plan_type("pro"),
+        ApiKeyAuthFixture::new("chatgpt-test-token").plan_type("pro"),
         AuthCredentialsStoreMode::File,
     )?;
     let mut mcp = TestAppServer::builder()

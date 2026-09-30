@@ -1767,7 +1767,7 @@ fn result_metadata_apps_builder(base_url: String, account_email: &str) -> TestCo
     let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(
         serde_json::json!({
             "email": account_email,
-            "https://api.openai.com/auth": { "chatgpt_account_id": "account_id" },
+            "https://api.openai.com/auth": { "workspace_id": "account_id" },
         })
         .to_string(),
     );
@@ -2650,7 +2650,7 @@ if (!tool) {
 
     let apps_base_url = apps_server.managed_auth_base_url.clone();
     let mut builder = test_codex()
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config
                 .features

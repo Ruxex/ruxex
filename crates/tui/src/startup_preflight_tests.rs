@@ -191,7 +191,7 @@ fn startup_keeps_composer_when_home_state_cannot_be_confirmed() -> std::io::Resu
 }
 
 #[test]
-fn startup_keeps_composer_for_workload_identity_markers() -> std::io::Result<()> {
+fn startup_keeps_composer_for_external_identity_markers() -> std::io::Result<()> {
     let temporary_directory = TempDir::new()?;
     let codex_home = temporary_directory.path().join("codex-home");
     let system_config_path =
@@ -205,7 +205,7 @@ fn startup_keeps_composer_for_workload_identity_markers() -> std::io::Result<()>
             assert!(!should_delay_startup_composer_for_first_login(
                 &codex_home,
                 Ok(system_config_path.clone()),
-                || panic!("workload identity should not probe managed configuration"),
+                || panic!("external identity should not probe managed configuration"),
                 |name| (name == marker).then(|| value.into()),
             ));
         }
@@ -218,7 +218,7 @@ fn startup_keeps_composer_for_workload_identity_markers() -> std::io::Result<()>
         assert!(!should_delay_startup_composer_for_first_login(
             &codex_home,
             Ok(system_config_path),
-            || panic!("workload identity should not probe managed configuration"),
+            || panic!("external identity should not probe managed configuration"),
             |name| {
                 (name == codex_protocol::shell_environment::OPENAI_IDENTITY_TOKEN_FILE_ENV_VAR)
                     .then(|| std::ffi::OsString::from_vec(vec![b'/', 0xff]))

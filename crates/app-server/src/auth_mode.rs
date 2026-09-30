@@ -10,7 +10,6 @@ use codex_protocol::auth::AuthMode;
 pub(crate) fn auth_mode_to_api(auth_mode: AuthMode) -> ApiAuthMode {
     match auth_mode {
         AuthMode::ApiKey => ApiAuthMode::ApiKey,
-        AuthMode::WorkloadIdentity => ApiAuthMode::Headers,
         AuthMode::Headers => ApiAuthMode::Headers,
         AuthMode::BedrockApiKey => ApiAuthMode::BedrockApiKey,
         AuthMode::BedrockAccessKeys => ApiAuthMode::BedrockAccessKeys,

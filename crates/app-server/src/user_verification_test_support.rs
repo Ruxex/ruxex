@@ -12,8 +12,8 @@ use crate::outgoing_message::OutgoingMessage;
 use crate::outgoing_message::OutgoingMessageSender;
 use crate::transport::AppServerTransport;
 use anyhow::Result;
-use app_test_support::WorkloadIdentityAuthFixture;
-use app_test_support::write_workload_identity_auth;
+use app_test_support::ApiKeyAuthFixture;
+use app_test_support::write_api_key_auth;
 use base64::Engine as _;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use codex_arg0::Arg0DispatchPaths;
@@ -249,13 +249,13 @@ impl Harness {
 }
 
 pub(super) fn write_auth(home: &std::path::Path, token: &str) -> Result<()> {
-    let payload = URL_SAFE_NO_PAD.encode(serde_json::to_vec(&json!({"jti": token, "https://api.openai.com/auth": {"chatgpt_account_id": "account-1", "chatgpt_account_user_id": "membership-1"}}))?);
-    write_workload_identity_auth(
+    let payload = URL_SAFE_NO_PAD.encode(serde_json::to_vec(&json!({"jti": token, "https://api.openai.com/auth": {"workspace_id": "account-1", "chatgpt_account_user_id": "membership-1"}}))?);
+    write_api_key_auth(
         home,
-        WorkloadIdentityAuthFixture::new(format!("header.{payload}.signature"))
-            .chatgpt_user_id("user-1")
+        ApiKeyAuthFixture::new(format!("header.{payload}.signature"))
+            .user_id("user-1")
             .account_id("account-1")
-            .chatgpt_account_id("account-1"),
+            .workspace_id("account-1"),
         AuthCredentialsStoreMode::File,
     )
 }

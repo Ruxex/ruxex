@@ -291,7 +291,7 @@ impl App {
                 && app_server.app_server_platform_os() == Some("windows");
         self.chat_widget.windows_sandbox_host = WindowsSandboxHost::Unknown;
         self.chat_widget.cyber_policy_notice = Default::default();
-        self.chat_widget.requires_first_party_auth = bootstrap.requires_first_party_auth;
+        self.chat_widget.requires_auth = bootstrap.requires_auth;
         self.chat_widget.remote_connection =
             crate::status::remote_connection::remote_connection_status_value(
                 &self.app_server_target,

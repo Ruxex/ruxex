@@ -51,10 +51,8 @@ struct AuthManagerAuthProvider {
 
 impl AuthManagerAuthProvider {
     fn is_expected_auth(&self, auth: &CodexAuth) -> bool {
-        auth.uses_managed_auth()
+        auth.api_auth_mode() == self.expected_auth.api_auth_mode()
             && auth.get_account_id() == self.expected_auth.get_account_id()
-            && auth.get_chatgpt_user_id() == self.expected_auth.get_chatgpt_user_id()
-            && auth.is_workspace_account() == self.expected_auth.is_workspace_account()
     }
 
     fn current_auth(&self) -> Option<CodexAuth> {
@@ -88,7 +86,7 @@ impl AuthProvider for AuthManagerAuthProvider {
 }
 
 // Some providers are meant to send no auth headers. Examples include local OSS
-// providers and custom test providers with `requires_first_party_auth = false`.
+// providers and custom test providers with `requires_auth = false`.
 #[derive(Clone, Debug)]
 struct UnauthenticatedAuthProvider;
 
@@ -121,7 +119,7 @@ pub(crate) fn resolve_provider_auth(
         return Ok(Arc::new(auth));
     }
 
-    if !provider.requires_first_party_auth && provider.auth.is_none() {
+    if !provider.requires_auth && provider.auth.is_none() {
         return Ok(unauthenticated_auth_provider());
     }
 
@@ -164,14 +162,14 @@ fn bearer_auth_for_provider(
     Ok(None)
 }
 
-/// Builds request-header auth for a first-party Codex auth snapshot.
+/// Builds request-header auth for a stored Codex auth snapshot.
 pub fn auth_provider_from_auth(auth: &CodexAuth) -> SharedAuthProvider {
     match auth {
         CodexAuth::Headers(auth) => Arc::new(HeaderAuthProvider { auth: auth.clone() }),
         CodexAuth::BedrockApiKey(_) | CodexAuth::BedrockAccessKeys(_) => {
             unreachable!("{BEDROCK_API_KEY_UNSUPPORTED_MESSAGE}")
         }
-        CodexAuth::ApiKey(_) | CodexAuth::WorkloadIdentity(_) => Arc::new(BearerAuthProvider {
+        CodexAuth::ApiKey(_) => Arc::new(BearerAuthProvider {
             token: auth.get_token().ok(),
             account_id: auth.get_account_id(),
             is_fedramp_account: auth.is_fedramp_account(),
@@ -179,7 +177,7 @@ pub fn auth_provider_from_auth(auth: &CodexAuth) -> SharedAuthProvider {
     }
 }
 
-/// Builds request-header auth that reads the current managed auth snapshot on
+/// Builds request-header auth that reads the current auth snapshot on
 /// every request while remaining scoped to the expected auth identity.
 ///
 /// Callers with account-scoped state should pass the same snapshot that keyed

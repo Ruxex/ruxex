@@ -274,11 +274,11 @@ protocol slice として扱う。generic image input、local media、`view_image
 
 - **根拠:** ChatGPT OAuth/device code、OpenAI API key、Codex backend token を実装する一方、credential storage、keyring、認証状態管理は汎用責務である。
 - **機能:** login server/device flow、token refresh、API key、keyring/storage、AuthManager。
-- **内部依存先:** `codex-agent-identity`、`codex-config`、`codex-http-client`、`codex-keyring-store`、`codex-model-provider-info`、`codex-otel`、`codex-protocol`、`codex-secrets`、`codex-terminal-detection`、`codex-utils-template`、`codex-workload-identity`。
+- **内部依存先:** `codex-config`、`codex-http-client`、`codex-keyring-store`、`codex-model-provider-info`、`codex-otel`、`codex-protocol`、`codex-secrets`、`codex-terminal-detection`、`codex-utils-template`。`codex-agent-identity` と `codex-workload-identity` は削除済み。
 - **依存元:** 直接 26、推移 56。CLI/TUI/app-server/core と大半の hosted integration が直接利用する。
 - **到達経路:** `codex login status` と `codex logout`、TUI onboarding、app-server account API、model request auth。CLI からの ChatGPT OAuth、device auth、OpenAI API key、access token の各 login 経路は削除済み。
 - **影響:** `OPENAI_API_KEY`、forced login method、ChatGPT auth modes、credential files/keyring、非常に多数の fixture とテスト、認証文書。
-- **推奨:** **ChatGPT 部分を削除して汎用 credential 部分を保持**。provider-neutral credential interface、Bedrock、workload identity、keyring/storage を残し、ChatGPT login provider と専用 token consumer を削除する。クレート全体は即時削除しない。
+- **推奨:** **ChatGPT 部分を削除して汎用 credential 部分を保持**。provider-neutral credential interface、API Key、Bedrock、Headers/external bearer、keyring/storage を残し、ChatGPT login provider、Workload Identity、専用 token consumer を削除する。クレート全体は即時削除しない。
 - **難易度・リスク:** 非常に高。認証、保存形式、後方互換性、非 OpenAI provider の利用を同時に扱う必要がある。
 
 ### 16. `codex-agent-identity`

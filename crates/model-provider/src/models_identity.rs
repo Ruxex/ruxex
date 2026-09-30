@@ -1,6 +1,6 @@
 //! Model catalog cache identity follows provider routing and effective auth.
-//! Only a digest is persisted; access tokens for ChatGPT are excluded so token
-//! rotation does not discard a catalog for the same account, user, and plan.
+//! Only a digest is persisted; credential values are included only through the
+//! resulting request headers when the provider explicitly supplies them.
 
 use codex_login::CodexAuth;
 use codex_model_provider_info::ModelProviderInfo;
@@ -31,35 +31,18 @@ pub(crate) fn identity(
         field(name.as_bytes());
         field(value.as_bytes());
     }
-    field(&[u8::from(provider_info.requires_first_party_auth)]);
+    field(&[u8::from(provider_info.requires_auth)]);
     field(&[u8::from(provider_info.has_command_auth())]);
     field(format!("{:?}", auth.map(CodexAuth::api_auth_mode)).as_bytes());
     if let Some(auth) = auth {
         field(format!("{:?}", auth.get_account_id()).as_bytes());
-        field(format!("{:?}", auth.get_chatgpt_user_id()).as_bytes());
-        field(format!("{:?}", auth.get_account_email()).as_bytes());
-        field(format!("{:?}", auth.account_plan_type()).as_bytes());
-        field(
-            format!(
-                "{:?}",
-                auth.get_token_data()
-                    .ok()
-                    .and_then(|tokens| tokens.id_token.get_chatgpt_plan_type_raw())
-            )
-            .as_bytes(),
-        );
         field(&[u8::from(auth.is_fedramp_account())]);
     }
-    let has_stable_account = auth.is_some_and(|auth| {
-        matches!(auth, CodexAuth::WorkloadIdentity(_))
-            && auth.get_account_id().is_some()
-            && (auth.get_chatgpt_user_id().is_some() || auth.get_account_email().is_some())
-    });
     let explicit_bearer =
         provider_info.api_key()?.is_some() || provider_info.experimental_bearer_token.is_some();
     // Command auth also returns opaque API keys. A changed key may belong to a
     // different account, so only credentials with stable owner metadata can be reused.
-    if !has_stable_account || explicit_bearer {
+    if explicit_bearer || auth.is_some() {
         let headers = resolve_provider_auth(auth, provider_info)?.to_auth_headers();
         provider.headers.extend(headers);
     }

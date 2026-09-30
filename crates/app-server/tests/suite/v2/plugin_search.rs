@@ -1,9 +1,9 @@
 use std::time::Duration;
 
 use anyhow::Result;
-use app_test_support::WorkloadIdentityAuthFixture;
+use app_test_support::ApiKeyAuthFixture;
 use app_test_support::TestAppServer;
-use app_test_support::write_workload_identity_auth;
+use app_test_support::write_api_key_auth;
 use codex_app_server_protocol::PluginSearchParams;
 use codex_app_server_protocol::PluginSearchResponse;
 use codex_app_server_protocol::PluginSearchScope;
@@ -42,12 +42,12 @@ plugin_sharing = false
             server.uri()
         ),
     )?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
 
@@ -152,12 +152,12 @@ remote_plugin = false
             server.uri()
         ),
     )?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
 
@@ -312,7 +312,7 @@ async fn plugin_search_stitches_local_results_into_the_first_remote_page() -> Re
         &local_plugins,
     )?;
     write_remote_plugin_search_config(codex_home.path(), &server, /*remote_plugin*/ true)?;
-    write_workload_identity_search_auth(codex_home.path())?;
+    write_api_key_search_auth(codex_home.path())?;
 
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/search"))
@@ -629,7 +629,7 @@ enabled = true
             server.uri()
         ),
     )?;
-    write_workload_identity_search_auth(codex_home.path())?;
+    write_api_key_search_auth(codex_home.path())?;
 
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/search"))
@@ -784,13 +784,13 @@ remote_plugin = {remote_plugin}
     Ok(())
 }
 
-fn write_workload_identity_search_auth(codex_home: &std::path::Path) -> Result<()> {
-    write_workload_identity_auth(
+fn write_api_key_search_auth(codex_home: &std::path::Path) -> Result<()> {
+    write_api_key_auth(
         codex_home,
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
     Ok(())

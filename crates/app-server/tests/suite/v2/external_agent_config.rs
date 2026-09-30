@@ -2,12 +2,12 @@ use codex_utils_absolute_path::test_support::PathExt;
 use std::time::Duration;
 
 use anyhow::Result;
-use app_test_support::WorkloadIdentityAuthFixture;
+use app_test_support::ApiKeyAuthFixture;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::start_analytics_events_server;
-use app_test_support::write_workload_identity_auth;
+use app_test_support::write_api_key_auth;
 #[cfg(unix)]
 use codex_app_server_protocol::ConfigReadParams;
 #[cfg(unix)]
@@ -904,12 +904,12 @@ async fn external_agent_config_detects_non_memory_items_when_config_reload_fails
 #[tokio::test]
 async fn external_agent_config_import_reports_failed_sync_import_in_completion() -> Result<()> {
     let codex_home = TempDir::new()?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
     let source_home = external_agent_home(codex_home.path());
@@ -1051,12 +1051,12 @@ async fn external_agent_config_import_completed_tracks_analytics_event() -> Resu
     let analytics_server = start_analytics_events_server().await?;
     let codex_home = TempDir::new()?;
     write_analytics_config(codex_home.path(), &analytics_server.uri())?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
 
@@ -1153,12 +1153,12 @@ async fn external_agent_config_import_reports_session_config_error_subtype() -> 
     let analytics_server = start_analytics_events_server().await?;
     let codex_home = TempDir::new()?;
     write_analytics_config(codex_home.path(), &analytics_server.uri())?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
 
@@ -1258,12 +1258,12 @@ async fn external_agent_config_import_reinstalls_plugins_from_known_marketplaces
     let codex_home = TempDir::new()?;
     let analytics_server = start_analytics_events_server().await?;
     write_analytics_config(codex_home.path(), &analytics_server.uri())?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
     let marketplace_root = codex_home.path().join("marketplace");

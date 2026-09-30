@@ -39,7 +39,7 @@ async fn auth_and_provider_switches_do_not_reuse_chatgpt_catalog() -> Result<()>
     .await;
     let chatgpt = test_codex()
         .with_home(home.clone())
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.5")
         .build_with_auto_env(&server)
         .await?;
@@ -140,7 +140,7 @@ async fn auth_and_provider_switches_do_not_reuse_chatgpt_catalog() -> Result<()>
     .await;
     let other = test_codex()
         .with_home(home)
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.5")
         .with_config(|config| {
             config.model_provider_id = "second".into();

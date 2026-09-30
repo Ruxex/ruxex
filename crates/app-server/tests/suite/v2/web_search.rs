@@ -3,10 +3,10 @@ use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
-use app_test_support::WorkloadIdentityAuthFixture;
+use app_test_support::ApiKeyAuthFixture;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
-use app_test_support::write_workload_identity_auth;
+use app_test_support::write_api_key_auth;
 use codex_app_server_protocol::ItemCompletedNotification;
 use codex_app_server_protocol::ItemStartedNotification;
 use codex_app_server_protocol::ThreadItem;
@@ -114,21 +114,21 @@ async fn assert_standalone_web_search_round_trips_output(
             .with_model_provider("openai-custom")
             .with_provider_name("OpenAI")
             .with_provider_base_url(&format!("{}/api/codex", server.uri()))
-            .with_provider_config("requires_first_party_auth = true"),
+            .with_provider_config("requires_auth = true"),
         WebSearchProvider::CustomResponses => config
             .with_model_provider("custom-responses")
             .with_provider_name("Custom Responses")
             .with_provider_base_url(&format!("{}/v1", server.uri()))
             .with_provider_config("env_key = \"CUSTOM_RESPONSES_API_KEY\"")
             .with_provider_config("supports_standalone_web_search = true")
-            .with_provider_config("requires_first_party_auth = false"),
+            .with_provider_config("requires_auth = false"),
     };
     config.write(codex_home.path())?;
 
     if matches!(provider, WebSearchProvider::ChatGpt) {
-        write_workload_identity_auth(
+        write_api_key_auth(
             codex_home.path(),
-            WorkloadIdentityAuthFixture::new("access-chatgpt"),
+            ApiKeyAuthFixture::new("access-chatgpt"),
             AuthCredentialsStoreMode::File,
         )?;
     }

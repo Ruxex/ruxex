@@ -6,10 +6,10 @@
 //! 3) Assert: verify item/started + item/completed notifications for context compaction.
 
 use anyhow::Result;
-use app_test_support::WorkloadIdentityAuthFixture;
+use app_test_support::ApiKeyAuthFixture;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
-use app_test_support::write_workload_identity_auth;
+use app_test_support::write_api_key_auth;
 use codex_app_server_protocol::ItemCompletedNotification;
 use codex_app_server_protocol::ItemStartedNotification;
 use codex_app_server_protocol::JSONRPCError;
@@ -94,10 +94,10 @@ async fn auto_compaction_emits_started_and_completed_items(route: CompactionRout
     if let CompactionRoute::Remote = route {
         config = config
             .with_provider_name("OpenAI")
-            .with_provider_config("requires_first_party_auth = true");
-        write_workload_identity_auth(
+            .with_provider_config("requires_auth = true");
+        write_api_key_auth(
             codex_home.path(),
-            WorkloadIdentityAuthFixture::new("access-chatgpt").plan_type("pro"),
+            ApiKeyAuthFixture::new("access-chatgpt").plan_type("pro"),
             AuthCredentialsStoreMode::File,
         )?;
     }

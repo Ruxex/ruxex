@@ -115,7 +115,7 @@ impl AccountRequestProcessor {
             .map_err(|err| invalid_request(err.to_string()))?;
         Ok(GetAccountResponse {
             account: account_state.account.map(Account::from),
-            requires_first_party_auth: account_state.requires_first_party_auth,
+            requires_auth: account_state.requires_auth,
         })
     }
 
@@ -135,13 +135,14 @@ impl AccountRequestProcessor {
     }
 
     fn current_account_updated_notification(&self) -> AccountUpdatedNotification {
-        let auth = self.auth_manager.auth_cached();
         AccountUpdatedNotification {
-            auth_mode: auth
+            auth_mode: self
+                .auth_manager
+                .auth_cached()
                 .as_ref()
                 .map(CodexAuth::api_auth_mode)
                 .map(auth_mode_to_api),
-            plan_type: auth.as_ref().and_then(CodexAuth::account_plan_type),
+            plan_type: None,
         }
     }
 
@@ -211,9 +212,6 @@ impl AccountRequestProcessor {
         request_id: ConnectionRequestId,
         params: LoginAccountParams,
     ) -> Result<(), JSONRPCErrorError> {
-        if self.auth_manager.is_workload_identity_selected() {
-            return Err(self.configured_auth_owned_by_host_error());
-        }
         match params {
             LoginAccountParams::ApiKey { api_key } => {
                 self.login_api_key_v2(request_id, LoginApiKeyParams { api_key })
@@ -254,17 +252,8 @@ impl AccountRequestProcessor {
         )
     }
 
-    fn configured_auth_owned_by_host_error(&self) -> JSONRPCErrorError {
-        invalid_request(
-            "Configured external authentication is owned by the app-server host and cannot be changed through account RPCs.",
-        )
-    }
-
     fn ensure_bedrock_login_allowed(&self) -> Result<(), JSONRPCErrorError> {
-        if self.auth_manager.is_workload_identity_selected() {
-            return Err(self.configured_auth_owned_by_host_error());
-        }
-        if self.auth_manager.is_external_managed_auth_active() {
+        if self.auth_manager.has_external_auth() {
             return Err(self.external_auth_active_error());
         }
         if !self
@@ -282,7 +271,7 @@ impl AccountRequestProcessor {
         &self,
         params: &LoginApiKeyParams,
     ) -> std::result::Result<(), JSONRPCErrorError> {
-        if self.auth_manager.is_external_managed_auth_active() {
+        if self.auth_manager.has_external_auth() {
             return Err(self.external_auth_active_error());
         }
 
@@ -478,9 +467,6 @@ impl AccountRequestProcessor {
     }
 
     async fn logout_common(&self) -> std::result::Result<Option<AuthMode>, JSONRPCErrorError> {
-        if self.auth_manager.is_workload_identity_selected() {
-            return Err(self.configured_auth_owned_by_host_error());
-        }
         let config = self.load_latest_config().await;
 
         match self.auth_manager.logout().await {
@@ -534,7 +520,7 @@ impl AccountRequestProcessor {
     }
 
     async fn refresh_token_if_requested(&self, do_refresh: bool) -> RefreshTokenRequestOutcome {
-        if self.auth_manager.is_external_managed_auth_active() {
+        if self.auth_manager.has_external_auth() {
             return RefreshTokenRequestOutcome::NotAttemptedOrSucceeded;
         }
         if do_refresh && let Err(err) = self.auth_manager.refresh_token().await {
@@ -558,16 +544,16 @@ impl AccountRequestProcessor {
         self.refresh_token_if_requested(do_refresh).await;
 
         // Determine whether auth is required based on the active model provider.
-        // If a custom provider is configured with `requires_first_party_auth == false`,
+        // If a custom provider is configured with `requires_auth == false`,
         // then no auth step is required; otherwise, default to requiring auth.
         let config = self.load_latest_config().await;
-        let requires_first_party_auth = config.model_provider.requires_first_party_auth;
+        let requires_auth = config.model_provider.requires_auth;
 
-        let response = if !requires_first_party_auth {
+        let response = if !requires_auth {
             GetAuthStatusResponse {
                 auth_method: None,
                 auth_token: None,
-                requires_first_party_auth: Some(false),
+                requires_auth: Some(false),
             }
         } else {
             let auth = if do_refresh {
@@ -581,8 +567,7 @@ impl AccountRequestProcessor {
                         self.auth_manager.refresh_failure_for_auth(&auth).is_some();
                     let auth_mode = auth_mode_to_api(auth.api_auth_mode());
                     let (reported_auth_method, token_opt) =
-                        if self.auth_manager.is_workload_identity_selected()
-                            || matches!(auth, CodexAuth::Headers(_))
+                        if matches!(auth, CodexAuth::Headers(_))
                             || include_token && permanent_refresh_failure
                         {
                             // Host-owned and metadata-bearing credentials are never exported.
@@ -603,13 +588,13 @@ impl AccountRequestProcessor {
                     GetAuthStatusResponse {
                         auth_method: reported_auth_method,
                         auth_token: token_opt,
-                        requires_first_party_auth: Some(true),
+                        requires_auth: Some(true),
                     }
                 }
                 None => GetAuthStatusResponse {
                     auth_method: None,
                     auth_token: None,
-                    requires_first_party_auth: Some(true),
+                    requires_auth: Some(true),
                 },
             }
         };

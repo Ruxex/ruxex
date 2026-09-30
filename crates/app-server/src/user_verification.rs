@@ -125,7 +125,7 @@ impl GuardedResponse {
 }
 
 fn identity(auth_manager: &AuthManager) -> Option<String> {
-    auth_manager.auth_cached()?.get_chatgpt_account_user_id()
+    auth_manager.auth_cached()?.get_account_id()
 }
 
 enum NativeOperation {

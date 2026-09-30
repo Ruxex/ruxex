@@ -198,12 +198,12 @@ trust_level = "trusted"
         source.join(".codex/config.toml"),
         "model = \"source-model\"\nanalytics.enabled = true\n",
     )?;
-    app_test_support::write_workload_identity_auth(
+    app_test_support::write_api_key_auth(
         &home,
-        app_test_support::WorkloadIdentityAuthFixture::new("test-token")
+        app_test_support::ApiKeyAuthFixture::new("test-token")
             .account_id("workspace-123")
-            .chatgpt_account_id("workspace-123")
-            .chatgpt_user_id("user-123")
+            .workspace_id("workspace-123")
+            .user_id("user-123")
             .plan_type("enterprise"),
         codex_config::types::AuthCredentialsStoreMode::File,
     )?;

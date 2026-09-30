@@ -110,7 +110,7 @@ impl ModelProvider for MyModelProvider {
     fn account_state(&self) -> ProviderAccountResult {
         Ok(ProviderAccountState {
             account: Some(ProviderAccount::ApiKey),
-            requires_first_party_auth: false,
+            requires_auth: false,
         })
     }
 

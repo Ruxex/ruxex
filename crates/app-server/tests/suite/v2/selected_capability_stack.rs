@@ -3,12 +3,12 @@ use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
-use app_test_support::WorkloadIdentityAuthFixture;
+use app_test_support::ApiKeyAuthFixture;
 use app_test_support::TestAppServer;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_request_user_input_sse_response;
 use app_test_support::to_response;
-use app_test_support::write_workload_identity_auth;
+use app_test_support::write_api_key_auth;
 use app_test_support::write_mock_responses_config_toml_with_managed_auth_base_url;
 use codex_app_server_protocol::AppInfo;
 use codex_app_server_protocol::CapabilityRootLocation;
@@ -856,13 +856,13 @@ fn selected_capability_fixture(
             "{config}\n[features]\napps = true\ndeferred_executor = true\nexecutor_capability_discovery = true\n\n[skills]\ninclude_instructions = true\n"
         ),
     )?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .email("selected-capability-stack@example.com")
             .plan_type("pro")
-            .chatgpt_account_id("account-123"),
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
 

@@ -102,7 +102,6 @@ pub(crate) async fn set_test_auth(auth_manager: &AuthManager, auth: Option<Codex
 fn test_codex_auth(auth_mode: Option<AuthMode>) -> Option<CodexAuth> {
     auth_mode.map(|auth_mode| match auth_mode {
         AuthMode::ApiKey => CodexAuth::from_api_key("test-api-key"),
-        AuthMode::WorkloadIdentity => CodexAuth::create_dummy_workload_identity_for_testing(),
         AuthMode::Headers => CodexAuth::Headers(AuthHeaders::new(http::HeaderMap::new())),
         AuthMode::BedrockApiKey | AuthMode::BedrockAccessKeys => {
             panic!("test auth mode requires a purpose-built CodexAuth")

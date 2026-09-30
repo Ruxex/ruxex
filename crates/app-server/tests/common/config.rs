@@ -161,7 +161,7 @@ pub fn write_mock_responses_config_toml(
     server_uri: &str,
     feature_flags: &BTreeMap<Feature, bool>,
     auto_compact_limit: i64,
-    requires_first_party_auth: Option<bool>,
+    requires_auth: Option<bool>,
     model_provider_id: &str,
     compact_prompt: &str,
 ) -> std::io::Result<()> {
@@ -176,10 +176,10 @@ pub fn write_mock_responses_config_toml(
     if model_provider_id == "openai" {
         config = config.with_root_config(&format!("openai_base_url = \"{server_uri}/v1\""));
     }
-    if matches!(requires_first_party_auth, Some(true)) {
+    if matches!(requires_auth, Some(true)) {
         config = config
             .with_provider_name("OpenAI")
-            .with_provider_config("requires_first_party_auth = true");
+            .with_provider_config("requires_auth = true");
     }
 
     config.write(codex_home)

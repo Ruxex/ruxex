@@ -178,7 +178,7 @@ fn has_usable_workspace_credits(credits: &CreditsSnapshot) -> bool {
 }
 
 impl ChatWidget {
-    /// Poll more often near exhaustion for every ChatGPT account, independently of experiments.
+    /// Poll more often near exhaustion for managed providers, independently of experiments.
     pub(crate) fn rate_limit_refresh_interval(&self) -> Option<std::time::Duration> {
         if !self.should_prefetch_rate_limits() {
             return None;
@@ -376,7 +376,7 @@ impl ChatWidget {
 
     #[cfg_attr(not(test), allow(dead_code))]
     pub(super) fn should_prefetch_rate_limits(&self) -> bool {
-        self.requires_first_party_auth && self.has_managed_account
+        self.requires_auth && self.has_managed_account
     }
 
     fn lower_cost_preset(&self) -> Option<ModelPreset> {

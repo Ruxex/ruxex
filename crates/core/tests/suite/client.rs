@@ -635,7 +635,7 @@ async fn response_item_ids_are_sent_for_all_remote_v2_compaction_requests() -> a
     )
     .await;
     let test = test_codex()
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .build(&server)
         .await?;
 
@@ -683,7 +683,7 @@ fn write_auth_json(
         "email": "user@example.com",
         "https://api.openai.com/auth": {
             "chatgpt_plan_type": chatgpt_plan_type,
-            "chatgpt_account_id": account_id.unwrap_or("acc-123")
+            "workspace_id": account_id.unwrap_or("acc-123")
         }
     });
 
@@ -1523,7 +1523,7 @@ async fn send_provider_auth_request(server: &MockServer, auth: ModelProviderAuth
         stream_max_retries: Some(0),
         stream_idle_timeout_ms: Some(5_000),
         websocket_connect_timeout_ms: None,
-        requires_first_party_auth: false,
+        requires_auth: false,
         supports_websockets: false,
         supports_standalone_web_search: false,
     };
@@ -1700,7 +1700,7 @@ async fn chatgpt_auth_sends_correct_request() {
         .header("authorization")
         .expect("authorization header");
     let request_originator = request.header("originator").expect("originator header");
-    let request_chatgpt_account_id = request
+    let request_workspace_id = request
         .header("chatgpt-account-id")
         .expect("chatgpt-account-id header");
     let request_body = request.body_json();
@@ -1724,7 +1724,7 @@ async fn chatgpt_auth_sends_correct_request() {
 
     assert_eq!(request_originator, originator().value);
     assert_eq!(request_authorization, "Bearer Access Token");
-    assert_eq!(request_chatgpt_account_id, "account_id");
+    assert_eq!(request_workspace_id, "account_id");
     assert_codex_client_metadata(
         &request_body,
         installation_id.as_str(),
@@ -2242,7 +2242,7 @@ async fn sequential_cutoff_is_omitted_for_non_openai_provider() -> anyhow::Resul
     )
     .await;
     let TestCodex { codex, .. } = test_codex()
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model_provider.name = "mock".to_string();
             let _ = config
@@ -2749,7 +2749,7 @@ async fn azure_responses_request_does_not_store_and_preserves_prefixed_item_ids(
         stream_max_retries: Some(0),
         stream_idle_timeout_ms: Some(5_000),
         websocket_connect_timeout_ms: None,
-        requires_first_party_auth: false,
+        requires_auth: false,
         supports_websockets: false,
         supports_standalone_web_search: false,
     };
@@ -3437,7 +3437,7 @@ async fn azure_overrides_assign_properties_used_for_responses_url() {
         stream_max_retries: None,
         stream_idle_timeout_ms: None,
         websocket_connect_timeout_ms: None,
-        requires_first_party_auth: false,
+        requires_auth: false,
         supports_websockets: false,
         supports_standalone_web_search: false,
     };
@@ -3521,7 +3521,7 @@ async fn env_var_overrides_loaded_auth() {
         stream_max_retries: None,
         stream_idle_timeout_ms: None,
         websocket_connect_timeout_ms: None,
-        requires_first_party_auth: false,
+        requires_auth: false,
         supports_websockets: false,
         supports_standalone_web_search: false,
     };
@@ -3559,7 +3559,7 @@ async fn env_var_overrides_loaded_auth() {
 }
 
 fn create_dummy_codex_auth() -> CodexAuth {
-    CodexAuth::create_dummy_workload_identity_for_testing()
+    CodexAuth::from_api_key("test-api-key")
 }
 
 /// Scenario:

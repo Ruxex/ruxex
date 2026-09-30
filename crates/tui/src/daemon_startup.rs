@@ -9,14 +9,11 @@ pub(super) fn exclusion(
     cli: &Cli,
     cli_kv_overrides: &[(String, toml::Value)],
     loader_overrides: &LoaderOverrides,
-    workload_identity_selected: bool,
 ) -> Option<&'static str> {
     if cli.no_daemon {
         Some("--no-daemon")
     } else if cli.shared.worktree {
         Some("--worktree")
-    } else if workload_identity_selected {
-        Some("workload identity")
     } else if cli.agents_overview {
         None
     } else if cli.config_profile_v2.is_some() {

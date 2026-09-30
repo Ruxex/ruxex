@@ -151,9 +151,7 @@ async fn test_apply_patch_freeform_tool() -> anyhow::Result<()> {
 async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
     use codex_login::AuthDotJson;
     use codex_login::AuthKeyringBackendKind;
-    use codex_login::TokenData;
     use codex_login::save_auth;
-    use codex_login::token_data::IdTokenInfo;
     use codex_protocol::auth::AuthMode;
     use core_test_support::skip_if_no_network;
     use core_test_support::test_codex_exec::test_codex_exec;
@@ -193,20 +191,8 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
     save_auth(
         test.home_path(),
         &AuthDotJson {
-            auth_mode: Some(AuthMode::WorkloadIdentity),
-            openai_api_key: None,
-            tokens: Some(TokenData {
-                id_token: IdTokenInfo {
-                    raw_jwt: "header.eyJhbGciOiJub25lIn0.eyJzdWIiOiJ1c2VyLTEyMyJ9.".to_string(),
-                    ..Default::default()
-                },
-                access_token: "test-access-token".to_string(),
-                refresh_token: "test-refresh-token".to_string(),
-                account_id: None,
-            }),
-            last_refresh: None,
-            agent_identity: None,
-            personal_access_token: None,
+            auth_mode: Some(AuthMode::ApiKey),
+            openai_api_key: Some("test-api-key".to_string()),
             bedrock_api_key: None,
             bedrock_access_keys: None,
         },
@@ -253,7 +239,7 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
         .arg("model_provider=\"test\"")
         .arg("-c")
         .arg(format!(
-            "model_providers.test={{name=\"test\",base_url={:?},wire_api=\"responses\",requires_first_party_auth=false,supports_websockets=false}}",
+            "model_providers.test={{name=\"test\",base_url={:?},wire_api=\"responses\",requires_auth=false,supports_websockets=false}}",
             format!("{}/v1", server.uri())
         ))
         .arg("-c")

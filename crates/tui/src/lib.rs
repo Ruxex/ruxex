@@ -53,7 +53,6 @@ use codex_features::Feature;
 use codex_login::default_client::originator;
 use codex_login::default_client::set_default_client_residency_requirement;
 use codex_login::enforce_login_restrictions;
-use codex_login::is_workload_identity_selected;
 use codex_protocol::ThreadId;
 use codex_protocol::auth::AuthMode;
 use codex_protocol::config_types::AltScreenMode;
@@ -907,17 +906,7 @@ fn app_server_target_for_launch(
     explicit_remote_endpoint: Option<RemoteAppServerEndpoint>,
     default_daemon_socket: Option<AbsolutePathBuf>,
     can_reuse_implicit_local_daemon: bool,
-    workload_identity_selected: bool,
 ) -> std::io::Result<AppServerTarget> {
-    if workload_identity_selected {
-        if explicit_remote_endpoint.is_some() {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "workload identity must be configured on the remote app-server host",
-            ));
-        }
-        return Ok(AppServerTarget::Embedded);
-    }
     Ok(match explicit_remote_endpoint {
         Some(endpoint) => AppServerTarget::Remote { endpoint },
         None if can_reuse_implicit_local_daemon => {
@@ -1004,7 +993,6 @@ async fn run_ratatui_app(
     startup_draft: startup_draft::StartupDraft,
 ) -> color_eyre::Result<AppExitInfo> {
     let uses_remote_workspace = app_server_target.uses_remote_workspace();
-    let workload_identity_selected = is_workload_identity_selected();
     color_eyre::install()?;
 
     // Forward panic reports through tracing so they appear in the UI status
@@ -1086,34 +1074,29 @@ async fn run_ratatui_app(
     #[cfg(target_os = "windows")]
     let mut trust_decision_was_made = false;
     let startup_model_provider = initial_config.model_provider_id.clone();
-    let (login_status, mut startup_account) = if workload_identity_selected {
-        (LoginStatus::AuthMode(AuthMode::WorkloadIdentity), None)
-    } else {
-        let Some(active_app_server) = app_server.as_mut() else {
-            unreachable!("app server should exist when auth is required");
-        };
-        let login_status = startup_draft
-            .run_until(&mut tui, get_login_status(active_app_server))
-            .await;
-        match login_status {
-            Ok(Ok((login_status, account))) => (login_status, Some(account)),
-            Ok(Err(err)) => {
-                shutdown_startup_session(app_server.take(), &mut terminal_restore_guard).await;
-                return Err(err);
-            }
-            Err(err) => {
-                shutdown_startup_session(app_server.take(), &mut terminal_restore_guard).await;
-                return Err(err.into());
-            }
+    let Some(active_app_server) = app_server.as_mut() else {
+        unreachable!("app server should exist when auth is required");
+    };
+    let login_status = startup_draft
+        .run_until(&mut tui, get_login_status(active_app_server))
+        .await;
+    let (login_status, mut startup_account) = match login_status {
+        Ok(Ok((login_status, account))) => (login_status, Some(account)),
+        Ok(Err(err)) => {
+            shutdown_startup_session(app_server.take(), &mut terminal_restore_guard).await;
+            return Err(err);
+        }
+        Err(err) => {
+            shutdown_startup_session(app_server.take(), &mut terminal_restore_guard).await;
+            return Err(err.into());
         }
     };
-    // Workload identity bypasses interactive login; every other provider uses account/read.
-    let requires_first_party_auth = startup_account
+    let requires_auth = startup_account
         .as_ref()
-        .is_some_and(|account| account.requires_first_party_auth);
+        .is_some_and(|account| account.requires_auth);
     let should_show_onboarding = should_show_onboarding(
         login_status,
-        requires_first_party_auth,
+        requires_auth,
         should_show_trust_screen_flag,
     );
 
@@ -1124,10 +1107,10 @@ async fn run_ratatui_app(
         }
         // Authentication can change while any interactive onboarding screen is open.
         startup_account = None;
-        let show_login_screen = should_show_login_screen(login_status, requires_first_party_auth);
+        let show_login_screen = should_show_login_screen(login_status, requires_auth);
         let bedrock_setup_enabled = should_show_bedrock_setup_wizard(
             login_status,
-            requires_first_party_auth,
+            requires_auth,
             &initial_config,
             &app_server_target,
         );
@@ -2023,20 +2006,19 @@ fn should_show_trust_screen(config: &Config) -> bool {
 
 fn should_show_onboarding(
     login_status: LoginStatus,
-    requires_first_party_auth: bool,
+    requires_auth: bool,
     show_trust_screen: bool,
 ) -> bool {
     if show_trust_screen {
         return true;
     }
 
-    should_show_login_screen(login_status, requires_first_party_auth)
+    should_show_login_screen(login_status, requires_auth)
 }
 
-fn should_show_login_screen(login_status: LoginStatus, requires_first_party_auth: bool) -> bool {
-    // Only show the login screen for providers that actually require first-party auth
-    // (OpenAI or equivalents). For OSS/other providers, skip login entirely.
-    if !requires_first_party_auth {
+fn should_show_login_screen(login_status: LoginStatus, requires_auth: bool) -> bool {
+    // Only show the authentication screen for providers that require stored auth.
+    if !requires_auth {
         return false;
     }
 
@@ -2045,12 +2027,12 @@ fn should_show_login_screen(login_status: LoginStatus, requires_first_party_auth
 
 fn should_show_bedrock_setup_wizard(
     login_status: LoginStatus,
-    requires_first_party_auth: bool,
+    requires_auth: bool,
     config: &Config,
     app_server_target: &AppServerTarget,
 ) -> bool {
     matches!(app_server_target, AppServerTarget::Embedded)
-        && should_show_login_screen(login_status, requires_first_party_auth)
+        && should_show_login_screen(login_status, requires_auth)
         && config.features.enabled(Feature::BedrockSetupWizard)
         && config.model_provider_id == "openai"
         && config

@@ -1627,7 +1627,7 @@ async fn make_startup_chat_with_cli_overrides(
     let resolved_model = get_model_offline_for_tests(cfg.model.as_deref());
     let session_telemetry = test_session_telemetry(&cfg, resolved_model.as_str());
     let init = ChatWidgetInit {
-        requires_first_party_auth: true,
+        requires_auth: true,
         local_settings: crate::local_settings::LocalSettings::from(&cfg),
         config: cfg.clone(),
         frame_requester: FrameRequester::test_dummy(),

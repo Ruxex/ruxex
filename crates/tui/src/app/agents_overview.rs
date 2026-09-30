@@ -69,20 +69,16 @@ impl Drop for AgentsOverviewState {
 impl App {
     pub(super) fn open_agents_overview(&mut self, app_server: &AppServerSession) {
         if matches!(self.app_server_target, AppServerTarget::Embedded) {
-            let workload_identity_selected = codex_login::is_workload_identity_selected();
             self.chat_widget.show_selection_view(SelectionViewParams {
                 title: Some("Shared agents unavailable".to_string()),
-                subtitle: Some(
-                    if workload_identity_selected {
-                        "The agents dashboard is unavailable while workload identity is active."
-                    } else if cfg!(any(unix, windows)) {
+                subtitle: Some(if cfg!(any(unix, windows)) {
                         "This session isn’t connected to a shared background server."
                     } else {
                         "Connect to a remote background server to use the agents dashboard."
                     }
                     .to_string(),
                 ),
-                footer_note: (cfg!(any(unix, windows)) && !workload_identity_selected).then(|| {
+                footer_note: cfg!(any(unix, windows)).then(|| {
                     Line::from(
                         "Starting a background server will not interrupt or move this session."
                             .dim(),
@@ -91,7 +87,7 @@ impl App {
                 footer_hint: Some(standard_popup_hint_line_for_keymap(&self.keymap.list)),
                 items: [
                     #[cfg(any(unix, windows))]
-                    (!workload_identity_selected).then(|| SelectionItem {
+                    Some(SelectionItem {
                         name: "Start background server".to_string(),
                         description: Some(
                             "Open `codex agents` in another terminal afterward.".to_string(),

@@ -6,16 +6,11 @@ use crate::config::resolve_token_budget_config;
 use crate::context::ContextualUserFragment;
 use codex_features::Feature;
 use codex_login::CodexAuth;
-use codex_protocol::account::PlanType;
 use codex_protocol::auth::AuthMode;
 use codex_protocol::openai_models::ModelInfo;
 
-fn experimental_context_is_eligible(auth_mode: AuthMode, plan_type: Option<PlanType>) -> bool {
-    auth_mode == AuthMode::WorkloadIdentity
-        && matches!(
-            plan_type,
-            Some(PlanType::Plus | PlanType::Pro | PlanType::ProLite)
-        )
+fn experimental_context_is_eligible(_auth_mode: AuthMode) -> bool {
+    false
 }
 
 pub(super) fn apply_experimental_context(
@@ -26,13 +21,13 @@ pub(super) fn apply_experimental_context(
     let provider = &config.model_provider;
     if !config.features.enabled(Feature::ContextManagement)
         || !starting_model.supports_experimental_context
-        || !provider.requires_first_party_auth
+        || !provider.requires_auth
         || provider.env_key.is_some()
         || provider.experimental_bearer_token.is_some()
         || provider.auth.is_some()
         || provider.aws.is_some()
         || !auth.is_some_and(|auth| {
-            experimental_context_is_eligible(auth.auth_mode(), auth.account_plan_type())
+            experimental_context_is_eligible(auth.auth_mode())
         })
         || config.features.enable(Feature::TokenBudget).is_err()
         || !config.features.enabled(Feature::TokenBudget)
@@ -225,21 +220,13 @@ pub(super) async fn maybe_record(
 #[cfg(test)]
 mod tests {
     use super::experimental_context_is_eligible;
-    use codex_protocol::account::PlanType;
     use codex_protocol::auth::AuthMode;
 
     #[test]
-    fn experimental_context_requires_eligible_chatgpt_subscription() {
-        for (auth_mode, plan_type, expected) in [
-            (AuthMode::WorkloadIdentity, PlanType::Plus, true),
-            (AuthMode::WorkloadIdentity, PlanType::Pro, true),
-            (AuthMode::WorkloadIdentity, PlanType::ProLite, true),
-            (AuthMode::WorkloadIdentity, PlanType::Free, false),
-            (AuthMode::WorkloadIdentity, PlanType::Enterprise, false),
-            (AuthMode::ApiKey, PlanType::Pro, false),
-        ] {
+    fn experimental_context_is_disabled_without_subscription_auth() {
+        for (auth_mode, expected) in [(AuthMode::Headers, false), (AuthMode::ApiKey, false)] {
             assert_eq!(
-                experimental_context_is_eligible(auth_mode, Some(plan_type)),
+                experimental_context_is_eligible(auth_mode),
                 expected
             );
         }

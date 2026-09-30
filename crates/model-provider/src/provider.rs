@@ -69,7 +69,7 @@ impl Default for ProviderCapabilities {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProviderAccountState {
     pub account: Option<ProviderAccount>,
-    pub requires_first_party_auth: bool,
+    pub requires_auth: bool,
 }
 
 /// Outcome of a provider-owned attempt to recover from an authentication failure.
@@ -243,7 +243,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
         scope: ProviderAuthScope,
     ) -> ModelProviderFuture<'_, codex_protocol::error::Result<ResolvedProviderAuth>> {
         Box::pin(async move {
-            if !provider_uses_first_party_auth_path(self.info()) {
+            if !provider_uses_stored_auth_path(self.info()) {
                 return self.api_auth().await.map(ResolvedProviderAuth::new);
             }
             let auth = self.auth().await;
@@ -292,8 +292,8 @@ pub type ModelProviderFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a
 /// Shared runtime model provider handle.
 pub type SharedModelProvider = Arc<dyn ModelProvider>;
 
-fn provider_uses_first_party_auth_path(provider: &ModelProviderInfo) -> bool {
-    provider.requires_first_party_auth
+fn provider_uses_stored_auth_path(provider: &ModelProviderInfo) -> bool {
+    provider.requires_auth
         && provider.env_key.is_none()
         && provider.experimental_bearer_token.is_none()
         && provider.auth.is_none()
@@ -356,10 +356,7 @@ impl ModelProvider for ConfiguredModelProvider {
     }
 
     fn supports_attestation(&self) -> bool {
-        self.auth_manager
-            .as_ref()
-            .and_then(|auth_manager| auth_manager.auth_cached())
-            .is_some_and(|auth| auth.is_managed_auth())
+        false
     }
 
     fn auth(&self) -> ModelProviderFuture<'_, Option<CodexAuth>> {
@@ -372,7 +369,7 @@ impl ModelProvider for ConfiguredModelProvider {
     }
 
     fn account_state(&self) -> ProviderAccountResult {
-        let account = if self.info.requires_first_party_auth {
+        let account = if self.info.requires_auth {
             self.auth_manager
                 .as_ref()
                 .and_then(|auth_manager| {
@@ -390,7 +387,7 @@ impl ModelProvider for ConfiguredModelProvider {
                     CodexAuth::BedrockApiKey(_) | CodexAuth::BedrockAccessKeys(_) => {
                         Err(ProviderAccountError::UnsupportedBedrockApiKeyAuth)
                     }
-                    CodexAuth::WorkloadIdentity(_) | CodexAuth::Headers(_) => {
+                    CodexAuth::Headers(_) => {
                         Ok(ProviderAccount::ApiKey)
                     }
                 })
@@ -401,7 +398,7 @@ impl ModelProvider for ConfiguredModelProvider {
 
         Ok(ProviderAccountState {
             account,
-            requires_first_party_auth: self.info.requires_first_party_auth,
+            requires_auth: self.info.requires_auth,
         })
     }
 
@@ -541,7 +538,7 @@ mod tests {
                     .try_into()
                     .expect("current dir should be absolute"),
             }),
-            requires_first_party_auth: false,
+            requires_auth: false,
             ..ModelProviderInfo::create_openai_provider(/*base_url*/ None)
         }
     }
@@ -567,7 +564,7 @@ mod tests {
             stream_max_retries: Some(0),
             stream_idle_timeout_ms: Some(5_000),
             websocket_connect_timeout_ms: None,
-            requires_first_party_auth: false,
+            requires_auth: false,
             supports_websockets: false,
             supports_standalone_web_search: false,
         }
@@ -997,7 +994,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
             provider.account_state(),
             Ok(ProviderAccountState {
                 account: None,
-                requires_first_party_auth: true,
+                requires_auth: true,
             })
         );
     }
@@ -1015,7 +1012,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
             provider.account_state(),
             Ok(ProviderAccountState {
                 account: Some(ProviderAccount::ApiKey),
-                requires_first_party_auth: true,
+                requires_auth: true,
             })
         );
     }
@@ -1040,7 +1037,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
                 name: "Custom".to_string(),
                 base_url: Some("http://localhost:1234/v1".to_string()),
                 wire_api: WireApi::Responses,
-                requires_first_party_auth: false,
+                requires_auth: false,
                 ..Default::default()
             },
             /*auth_manager*/ None,
@@ -1050,7 +1047,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
             provider.account_state(),
             Ok(ProviderAccountState {
                 account: None,
-                requires_first_party_auth: false,
+                requires_auth: false,
             })
         );
     }
@@ -1068,7 +1065,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
                 account: Some(ProviderAccount::AmazonBedrock {
                     uses_codex_managed_credentials: false,
                 }),
-                requires_first_party_auth: false,
+                requires_auth: false,
             })
         );
     }

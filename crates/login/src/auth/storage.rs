@@ -1,6 +1,5 @@
-use chrono::DateTime;
-use chrono::Utc;
 use serde::Deserialize;
+use serde::Deserializer;
 use serde::Serialize;
 use sha2::Digest;
 use sha2::Sha256;
@@ -20,7 +19,6 @@ use tracing::warn;
 
 use super::BedrockAccessKeysAuth;
 use super::BedrockApiKeyAuth;
-use crate::token_data::TokenData;
 use codex_config::types::AuthCredentialsStoreMode;
 pub use codex_config::types::AuthKeyringBackendKind;
 use codex_keyring_store::DefaultKeyringStore;
@@ -36,23 +34,37 @@ use once_cell::sync::Lazy;
 /// Expected structure for $CODEX_HOME/auth.json.
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct AuthDotJson {
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_auth_mode",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub auth_mode: Option<AuthMode>,
 
     #[serde(rename = "OPENAI_API_KEY")]
     pub openai_api_key: Option<String>,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub tokens: Option<TokenData>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub last_refresh: Option<DateTime<Utc>>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bedrock_api_key: Option<BedrockApiKeyAuth>,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bedrock_access_keys: Option<BedrockAccessKeysAuth>,
+}
+
+/// Ignore authentication modes removed from the persisted format so old
+/// token-only auth.json files are treated as unauthenticated state.
+fn deserialize_auth_mode<'de, D>(deserializer: D) -> Result<Option<AuthMode>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = Option::<String>::deserialize(deserializer)?;
+    Ok(value.and_then(|value| match value.as_str() {
+        "apiKey" | "apikey" => Some(AuthMode::ApiKey),
+        "headers" => Some(AuthMode::Headers),
+        "bedrockApiKey" => Some(AuthMode::BedrockApiKey),
+        "bedrockAccessKeys" => Some(AuthMode::BedrockAccessKeys),
+        _ => None,
+    }))
 }
 
 pub(super) fn get_auth_file(codex_home: &Path) -> PathBuf {
@@ -186,7 +198,7 @@ impl DirectKeyringAuthStorage {
             Ok(()) => Ok(()),
             Err(error) => {
                 let message = format!(
-                    "failed to write OAuth tokens to keyring: {}",
+                    "failed to write stored credentials to keyring: {}",
                     error.message()
                 );
                 warn!("{message}");
@@ -284,7 +296,7 @@ impl AuthStorageBackend for SecretsKeyringAuthStorage {
             .set(&SecretScope::Global, &CODEX_AUTH_SECRET_NAME, &serialized)
             .map_err(|err| {
                 let message =
-                    format!("failed to write OAuth tokens to encrypted auth storage: {err}");
+                    format!("failed to write stored credentials to encrypted auth storage: {err}");
                 warn!("{message}");
                 std::io::Error::other(message)
             })?;

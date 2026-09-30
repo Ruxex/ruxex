@@ -15,7 +15,7 @@ model_provider = "gateway"
 [model_providers.gateway]
 name = "Managed gateway"
 base_url = "https://gateway.example.test/v1"
-requires_first_party_auth = true
+requires_auth = true
 [model_providers.gateway.http_headers]
 X-Managed = "yes"
 "#;
@@ -61,7 +61,7 @@ model_provider = "gateway"
 [model_providers.gateway]
 name = "Managed gateway"
 base_url = "https://gateway.example.test/v1"
-requires_first_party_auth = true
+requires_auth = true
 env_key = "OLD_KEY"
 supports_websockets = true
 [model_providers.gateway.http_headers]

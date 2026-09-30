@@ -9,13 +9,13 @@ use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
-use app_test_support::WorkloadIdentityAuthFixture;
+use app_test_support::ApiKeyAuthFixture;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_fake_rollout;
 use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::rollout_path;
-use app_test_support::write_workload_identity_auth;
+use app_test_support::write_api_key_auth;
 use axum::Router;
 use codex_app_server::in_process;
 use codex_app_server::in_process::InProcessServerEvent;
@@ -704,12 +704,12 @@ apps = true
 "#
         ),
     )?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
 
@@ -1503,12 +1503,12 @@ async fn start_resource_test_app_server_with_extra_config(
             "[skills]\ninclude_instructions = true\n{extra_config}"
         ))
         .write(codex_home.path())?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
 

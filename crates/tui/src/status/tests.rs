@@ -20,8 +20,8 @@ use crate::test_support::PathBufExt;
 use crate::test_support::test_path_buf;
 use crate::token_usage::TokenUsage;
 use crate::token_usage::TokenUsageInfo;
-use app_test_support::WorkloadIdentityAuthFixture;
-use app_test_support::write_workload_identity_auth;
+use app_test_support::ApiKeyAuthFixture;
+use app_test_support::write_api_key_auth;
 use app_test_support::write_models_cache;
 use chrono::Duration as ChronoDuration;
 use chrono::Local;
@@ -357,69 +357,6 @@ async fn status_snapshot_includes_reasoning_details() {
         }
     }
     let sanitized = sanitize_directory(rendered_lines).join("\n");
-    assert_snapshot!(sanitized);
-}
-
-#[tokio::test]
-async fn status_snapshot_shows_chatgpt_plan_without_email() {
-    let temp_home = TempDir::new().expect("temp home");
-    let mut config = test_config(&temp_home).await;
-    config.model = Some("gpt-5.1-codex-max".to_string());
-    config.model_provider_id = "openai".to_string();
-    config.cli_auth_credentials_store_mode = AuthCredentialsStoreMode::File;
-    set_workspace_cwd(&mut config, test_path_buf("/workspace/tests").abs());
-
-    write_workload_identity_auth(
-        temp_home.path(),
-        WorkloadIdentityAuthFixture::new("access-chatgpt").plan_type("enterprise_cbp_automation"),
-        AuthCredentialsStoreMode::File,
-    )
-    .expect("write email-less managed auth");
-    write_models_cache(temp_home.path())
-        .await
-        .expect("write models cache");
-    let mut app_server = crate::start_embedded_app_server_for_picker(&config)
-        .await
-        .expect("start embedded app server");
-    let bootstrap = app_server
-        .bootstrap(&config)
-        .await
-        .expect("bootstrap app server session");
-    app_server.shutdown().await.expect("shut down app server");
-    let account_display = bootstrap
-        .status_account_display
-        .expect("bootstrap should return ChatGPT account display");
-    assert_eq!(
-        account_display,
-        StatusAccountDisplay::ChatGpt {
-            email: None,
-            plan: Some("Enterprise (Automation)".to_string()),
-        }
-    );
-    let usage = TokenUsage::default();
-    let captured_at = chrono::Local
-        .with_ymd_and_hms(2024, 1, 2, 3, 4, 5)
-        .single()
-        .expect("timestamp");
-    let model_slug = get_model_offline_for_tests(config.model.as_deref());
-
-    let composite = new_status_output(
-        &config,
-        Some(&account_display),
-        /*token_info*/ None,
-        &usage,
-        &None,
-        /*thread_name*/ None,
-        /*forked_from*/ None,
-        /*rate_limits*/ None,
-        None,
-        captured_at,
-        &model_slug,
-        /*collaboration_mode*/ None,
-        /*reasoning_effort_override*/ None,
-    );
-    let sanitized =
-        sanitize_directory(render_lines(&composite.display_lines(/*width*/ 80))).join("\n");
     assert_snapshot!(sanitized);
 }
 
@@ -761,10 +698,8 @@ async fn status_uses_server_provider_id_and_auth_requirement() {
         .expect("timestamp");
     let model_slug = get_model_offline_for_tests(config.model.as_deref());
 
-    config.model_provider.requires_first_party_auth = true;
     let (composite, _handle) = new_status_output_with_rate_limits_handle(
         &config,
-        /*requires_first_party_auth*/ false,
         Some("server-ollama"),
         /*remote_connection*/ None,
         test_status_account_display().as_ref(),
@@ -790,12 +725,11 @@ async fn status_uses_server_provider_id_and_auth_requirement() {
     config.model_provider = ModelProviderInfo {
         name: "OpenAI Proxy".to_string(),
         base_url: Some("https://openai-proxy.example/v1".to_string()),
-        requires_first_party_auth: false,
+        requires_auth: false,
         ..ModelProviderInfo::default()
     };
     let (composite, _handle) = new_status_output_with_rate_limits_handle(
         &config,
-        /*requires_first_party_auth*/ true,
         Some("server-openai"),
         /*remote_connection*/ None,
         test_status_account_display().as_ref(),
@@ -823,10 +757,7 @@ async fn status_uses_server_provider_id_and_auth_requirement() {
         .flat_map(|line| line.hyperlinks.into_iter())
         .map(|link| link.destination)
         .collect();
-    assert_eq!(
-        wide_destinations,
-        vec!["https://chatgpt.com/codex/settings/usage"]
-    );
+    assert_eq!(wide_destinations, Vec::<String>::new());
 
     let narrow_destinations: Vec<String> = composite
         .display_hyperlink_lines(/*width*/ 24)
@@ -1540,10 +1471,7 @@ async fn status_snapshot_truncates_halfwidth_kana_in_narrow_terminal() {
     let mut config = test_config(&temp_home).await;
     set_workspace_cwd(&mut config, test_path_buf("/workspace/tests").abs());
 
-    let account = StatusAccountDisplay::ChatGpt {
-        email: Some("ｶﾞﾊﾟｶﾞﾊﾟｶﾞﾊﾟ@example.com".to_string()),
-        plan: Some("ｶﾞﾊﾟ plan".to_string()),
-    };
+    let account = StatusAccountDisplay::ApiKey;
     let usage = TokenUsage::default();
     let now = chrono::Local
         .with_ymd_and_hms(2024, 1, 2, 3, 4, 5)
@@ -1647,7 +1575,6 @@ async fn status_snapshot_uses_default_reasoning_when_config_empty() {
     let token_info = token_info_for(&model_slug, &config, &usage);
     let (composite, _) = new_status_output_with_rate_limits_handle(
         &config,
-        /*requires_first_party_auth*/ true,
         /*model_provider_id*/ None,
         Some(&remote_connection),
         account_display.as_ref(),
@@ -1758,7 +1685,6 @@ async fn transcript_overlay_remeasures_status_after_rate_limit_refresh() {
 
     let (status, handle) = new_status_output_with_rate_limits_handle(
         &config,
-        /*requires_first_party_auth*/ true,
         /*model_provider_id*/ None,
         /*remote_connection*/ None,
         /*account_display*/ None,

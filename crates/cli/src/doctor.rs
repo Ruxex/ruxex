@@ -1166,7 +1166,7 @@ fn auth_check(config: &Config) -> DoctorCheck {
         ));
     }
     if let Some(check) = provider_specific_auth_check(
-        config.model_provider.requires_first_party_auth,
+        config.model_provider.requires_auth,
         config.model_provider.env_key.as_deref(),
         config.model_provider.env_key_instructions.as_deref(),
         details.clone(),
@@ -1183,7 +1183,6 @@ fn auth_check(config: &Config) -> DoctorCheck {
         Ok(Some(auth)) => {
             details.push(format!("stored auth mode: {}", stored_auth_mode(&auth)));
             details.push(format!("stored API key: {}", auth.openai_api_key.is_some()));
-            details.push(format!("stored managed-auth tokens: {}", auth.tokens.is_some()));
             let auth_issues = stored_auth_issues(&auth, env_var_present);
             details.extend(
                 auth_issues
@@ -1247,16 +1246,16 @@ fn auth_check(config: &Config) -> DoctorCheck {
 }
 
 fn provider_specific_auth_check(
-    requires_first_party_auth: bool,
+    requires_auth: bool,
     provider_env_key: Option<&str>,
     provider_env_key_instructions: Option<&str>,
     mut details: Vec<String>,
     env_var_present: impl Fn(&str) -> bool,
 ) -> Option<DoctorCheck> {
     details.push(format!(
-        "model provider requires first-party auth: {requires_first_party_auth}"
+        "model provider requires authentication: {requires_auth}"
     ));
-    if requires_first_party_auth {
+    if requires_auth {
         return None;
     }
 
@@ -1294,7 +1293,7 @@ fn provider_specific_auth_check(
                 "auth.credentials",
                 "auth",
                 CheckStatus::Ok,
-                "First-party auth is not required for the active model provider",
+                "Stored authentication is not required for the active model provider",
             )
             .details(details),
         ),
@@ -1304,7 +1303,6 @@ fn provider_specific_auth_check(
 fn stored_auth_mode(auth: &codex_login::AuthDotJson) -> &'static str {
     match stored_auth_mode_value(auth) {
         AuthMode::ApiKey => "api_key",
-        AuthMode::WorkloadIdentity => "workload_identity",
         AuthMode::Headers => "headers",
         AuthMode::BedrockApiKey => "bedrock_api_key",
         AuthMode::BedrockAccessKeys => "bedrock_access_keys",
@@ -1322,7 +1320,7 @@ fn stored_auth_mode_value(auth: &AuthDotJson) -> AuthMode {
     } else if auth.openai_api_key.is_some() {
         AuthMode::ApiKey
     } else {
-        AuthMode::WorkloadIdentity
+        AuthMode::ApiKey
     }
 }
 
@@ -1343,17 +1341,6 @@ fn stored_auth_issues(
                 issues.push("API key auth is missing an API key");
             }
         }
-        AuthMode::WorkloadIdentity => match auth.tokens.as_ref() {
-            Some(tokens) => {
-                if tokens.access_token.trim().is_empty() {
-                    issues.push("workload identity auth is missing an access token");
-                }
-                if tokens.account_id.is_none() && tokens.id_token.chatgpt_account_id.is_none() {
-                    issues.push("workload identity auth is missing an account id");
-                }
-            }
-            None => issues.push("workload identity auth is missing token data"),
-        },
         AuthMode::Headers => {
             issues.push("header auth cannot be loaded from auth storage");
         }
@@ -2311,7 +2298,6 @@ fn websocket_error_detail(err: &ApiError) -> String {
 fn auth_mode_name(auth: &CodexAuth) -> &'static str {
     match auth.auth_mode() {
         AuthMode::ApiKey => "api_key",
-        AuthMode::WorkloadIdentity => "workload_identity",
         AuthMode::Headers => "headers",
         AuthMode::BedrockApiKey => "bedrock_api_key",
         AuthMode::BedrockAccessKeys => "bedrock_access_keys",
@@ -2384,7 +2370,6 @@ struct ReachabilityEndpoint {
 enum ProviderAuthReachabilityMode {
     NotRequired,
     ApiKey,
-    WorkloadIdentity,
 }
 
 impl ProviderAuthReachabilityMode {
@@ -2392,7 +2377,6 @@ impl ProviderAuthReachabilityMode {
         match self {
             Self::NotRequired => "provider auth",
             Self::ApiKey => "API key auth",
-            Self::WorkloadIdentity => "workload identity auth",
         }
     }
 }
@@ -2412,7 +2396,7 @@ fn provider_reachability_plan(config: &Config) -> ReachabilityPlan {
     .ok()
     .flatten();
     let mode = provider_auth_reachability_mode_from_auth(
-        config.model_provider.requires_first_party_auth,
+        config.model_provider.requires_auth,
         config.model_provider.env_key.as_deref(),
         config.model_provider.base_url.as_deref(),
         env_var_present,
@@ -2425,7 +2409,6 @@ fn provider_reachability_plan(config: &Config) -> ReachabilityPlan {
         config.model_provider.base_url.as_deref(),
         query_params.as_ref(),
         config.model_provider.is_amazon_bedrock(),
-        &config.managed_auth_base_url,
     );
     plan.http_client_factory = config.http_client_factory();
     plan
@@ -2433,24 +2416,23 @@ fn provider_reachability_plan(config: &Config) -> ReachabilityPlan {
 
 fn default_reachability_plan() -> ReachabilityPlan {
     provider_reachability_plan_from_parts(
-        ProviderAuthReachabilityMode::WorkloadIdentity,
+        ProviderAuthReachabilityMode::ApiKey,
         "openai",
         "OpenAI",
         /*provider_base_url*/ None,
         /*provider_query_params*/ None,
         /*is_amazon_bedrock*/ false,
-        "https://chatgpt.com/backend-api/",
     )
 }
 
 fn provider_auth_reachability_mode_from_auth(
-    requires_first_party_auth: bool,
+    requires_auth: bool,
     provider_env_key: Option<&str>,
     provider_base_url: Option<&str>,
     env_var_present: impl Fn(&str) -> bool,
     stored_auth: Option<&AuthDotJson>,
 ) -> ProviderAuthReachabilityMode {
-    if !requires_first_party_auth {
+    if !requires_auth {
         return ProviderAuthReachabilityMode::NotRequired;
     }
     if provider_base_url.is_some_and(|url| !url.trim().is_empty())
@@ -2464,9 +2446,7 @@ fn provider_auth_reachability_mode_from_auth(
         Some(AuthMode::ApiKey | AuthMode::BedrockApiKey | AuthMode::BedrockAccessKeys) => {
             ProviderAuthReachabilityMode::ApiKey
         }
-        Some(AuthMode::WorkloadIdentity | AuthMode::Headers) | None => {
-            ProviderAuthReachabilityMode::WorkloadIdentity
-        }
+        Some(AuthMode::Headers) | None => ProviderAuthReachabilityMode::ApiKey,
     }
 }
 
@@ -2477,7 +2457,6 @@ fn provider_reachability_plan_from_parts(
     provider_base_url: Option<&str>,
     provider_query_params: Option<&HashMap<String, String>>,
     is_amazon_bedrock: bool,
-    managed_auth_base_url: &str,
 ) -> ReachabilityPlan {
     let provider_route_probe_url = provider_base_url
         .or_else(|| {
@@ -2497,16 +2476,6 @@ fn provider_reachability_plan_from_parts(
             ),
             required: true,
             route_probe_url: provider_route_probe_url,
-        }],
-        (ProviderAuthReachabilityMode::WorkloadIdentity, None) => vec![ReachabilityEndpoint {
-            label: "workload identity backend".to_string(),
-            url: provider_url_for_path(
-                managed_auth_base_url,
-                "codex/responses",
-                provider_query_params,
-            ),
-            required: true,
-            route_probe_url: None,
         }],
         (ProviderAuthReachabilityMode::NotRequired, None) => Vec::new(),
     };

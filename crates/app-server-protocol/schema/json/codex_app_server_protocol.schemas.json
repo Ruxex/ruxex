@@ -10181,12 +10181,12 @@
               }
             ]
           },
-          "requiresFirstPartyAuth": {
+          "requiresAuth": {
             "type": "boolean"
           }
         },
         "required": [
-          "requiresFirstPartyAuth"
+          "requiresAuth"
         ],
         "title": "GetAccountResponse",
         "type": "object"

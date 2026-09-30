@@ -1169,7 +1169,7 @@ impl Session {
                 .map(CodexAuth::auth_mode)
                 .map(TelemetryAuthMode::from);
             let account_id = telemetry_auth.and_then(CodexAuth::get_account_id);
-            let account_email = telemetry_auth.and_then(CodexAuth::get_account_email);
+            let account_email = None;
             let originator = session_configuration.originator.clone();
             let terminal_type = user_agent();
             let session_model = session_configuration.step_settings.collaboration_mode.model().to_string();

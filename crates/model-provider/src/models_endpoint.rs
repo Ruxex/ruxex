@@ -81,13 +81,6 @@ impl OpenAiModelsEndpoint {
         }
     }
 
-    async fn uses_managed_auth(&self) -> bool {
-        self.auth()
-            .await
-            .as_ref()
-            .is_some_and(CodexAuth::uses_managed_auth)
-    }
-
     async fn list_models(
         &self,
         client_version: &str,
@@ -165,7 +158,7 @@ impl ModelsEndpointClient for OpenAiModelsEndpoint {
     }
 
     fn uses_managed_auth(&self) -> ModelsEndpointFuture<'_, bool> {
-        Box::pin(OpenAiModelsEndpoint::uses_managed_auth(self))
+        Box::pin(async { false })
     }
 
     fn list_models<'a>(
@@ -414,7 +407,7 @@ mod tests {
                     .try_into()
                     .expect("current dir should be absolute"),
             }),
-            requires_first_party_auth: false,
+            requires_auth: false,
             ..ModelProviderInfo::create_openai_provider(/*base_url*/ None)
         }
     }

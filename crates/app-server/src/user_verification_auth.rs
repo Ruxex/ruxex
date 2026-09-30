@@ -58,11 +58,7 @@ impl OutgoingMessageSender {
     }
 
     pub(super) fn verification_identity(&self) -> Option<Identity> {
-        let auth = self.verification_auth.get()?.auth_cached()?;
-        Some(Identity {
-            user_id: auth.get_chatgpt_user_id()?,
-            account_id: auth.get_account_id()?,
-        })
+        None
     }
 
     pub(super) fn verification_auth_revision(&self) -> Option<u64> {

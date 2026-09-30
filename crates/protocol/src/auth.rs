@@ -9,10 +9,6 @@ use thiserror::Error;
 pub enum AuthMode {
     /// API key provided by the caller and stored by Codex.
     ApiKey,
-    /// Credentials obtained from a host-managed workload identity exchange.
-    #[serde(rename = "workloadIdentity")]
-    #[strum(serialize = "workloadIdentity")]
-    WorkloadIdentity,
     /// Codex backend auth supplied as request headers.
     #[serde(rename = "headers")]
     #[strum(serialize = "headers")]
@@ -30,12 +26,12 @@ pub enum AuthMode {
 impl AuthMode {
     /// Returns whether this mode represents an authenticated account.
     pub fn has_managed_account(self) -> bool {
-        matches!(self, Self::WorkloadIdentity)
+        false
     }
 
     /// Returns whether this mode uses host-managed authentication rather than a direct model API.
     pub fn uses_managed_auth(self) -> bool {
-        matches!(self, Self::Headers | Self::WorkloadIdentity)
+        matches!(self, Self::Headers)
     }
 }
 

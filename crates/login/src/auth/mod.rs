@@ -5,7 +5,6 @@ mod change_state;
 pub mod default_client;
 pub mod error;
 mod storage;
-mod workload_identity;
 
 mod external_bearer;
 mod manager;
@@ -19,4 +18,3 @@ pub use change_state::AuthChangeState;
 pub use error::RefreshTokenFailedError;
 pub use error::RefreshTokenFailedReason;
 pub use manager::*;
-pub use workload_identity::is_workload_identity_selected;

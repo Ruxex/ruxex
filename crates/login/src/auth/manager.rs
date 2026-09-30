@@ -1,6 +1,3 @@
-use chrono::Utc;
-#[cfg(test)]
-use serial_test::serial;
 use std::env;
 use std::fmt::Debug;
 use std::future::Future;
@@ -8,7 +5,6 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::pin::Pin;
 use std::sync::Arc;
-use std::sync::Mutex;
 use std::sync::RwLock;
 use tokio::sync::Semaphore;
 use tokio::sync::watch;
@@ -21,8 +17,6 @@ use codex_protocol::config_types::ModelProviderAuthInfo;
 use super::change_state::AuthChangeState;
 use super::change_state::same_owner;
 use super::external_bearer::BearerTokenRefresher;
-use super::workload_identity::WorkloadIdentityExternalAuth;
-use super::workload_identity::WorkloadIdentitySessionError;
 use crate::auth::AuthHeaders;
 pub use crate::auth::bedrock_access_keys::BedrockAccessKeysAuth;
 pub use crate::auth::bedrock_api_key::BedrockApiKeyAuth;
@@ -30,15 +24,10 @@ pub use crate::auth::storage::AuthDotJson;
 pub use crate::auth::storage::AuthKeyringBackendKind;
 use crate::auth::storage::create_auth_storage;
 use crate::outbound_proxy::AuthRouteConfig;
-use crate::token_data::TokenData;
-use crate::token_data::parse_chatgpt_account_user_id;
-use crate::token_data::parse_chatgpt_jwt_claims;
 use codex_config::ManagedAuthPolicy;
 use codex_config::types::AuthCredentialsStoreMode;
 use codex_http_client::HttpClientFactory;
 use codex_http_client::OutboundProxyPolicy;
-use codex_protocol::account::PlanType as AccountPlanType;
-use codex_protocol::auth::PlanType as InternalPlanType;
 use codex_protocol::auth::RefreshTokenFailedError;
 use codex_protocol::auth::RefreshTokenFailedReason;
 use thiserror::Error;
@@ -47,7 +36,6 @@ use thiserror::Error;
 #[derive(Debug, Clone)]
 pub enum CodexAuth {
     ApiKey(ApiKeyAuth),
-    WorkloadIdentity(WorkloadIdentityAuth),
     Headers(AuthHeaders),
     BedrockApiKey(BedrockApiKeyAuth),
     BedrockAccessKeys(BedrockAccessKeysAuth),
@@ -67,16 +55,6 @@ impl PartialEq for CodexAuth {
 #[derive(Debug, Clone)]
 pub struct ApiKeyAuth {
     api_key: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct WorkloadIdentityAuth {
-    state: WorkloadIdentityAuthState,
-}
-
-#[derive(Debug, Clone)]
-struct WorkloadIdentityAuthState {
-    auth_dot_json: Arc<Mutex<Option<AuthDotJson>>>,
 }
 
 const REFRESH_TOKEN_UNKNOWN_MESSAGE: &str = "Authentication refresh is unavailable.";
@@ -99,15 +77,7 @@ pub struct AuthManagerInitializationError(AuthManagerInitializationErrorSource);
 #[derive(Debug, Error)]
 enum AuthManagerInitializationErrorSource {
     #[error(transparent)]
-    WorkloadIdentityConfiguration(WorkloadIdentitySessionError),
-    #[error(transparent)]
     InitialAuth(RefreshTokenError),
-}
-
-impl From<WorkloadIdentitySessionError> for AuthManagerInitializationError {
-    fn from(error: WorkloadIdentitySessionError) -> Self {
-        Self(AuthManagerInitializationErrorSource::WorkloadIdentityConfiguration(error))
-    }
 }
 
 impl From<RefreshTokenError> for AuthManagerInitializationError {
@@ -150,13 +120,6 @@ pub trait ExternalAuth: Send + Sync {
 }
 
 pub type ExternalAuthFuture<'a, T> = Pin<Box<dyn Future<Output = std::io::Result<T>> + Send + 'a>>;
-
-fn permanent_external_auth_error(message: impl Into<String>) -> RefreshTokenError {
-    RefreshTokenError::Permanent(RefreshTokenFailedError::new(
-        RefreshTokenFailedReason::Other,
-        message,
-    ))
-}
 
 impl RefreshTokenError {
     pub fn failed_reason(&self) -> Option<RefreshTokenFailedReason> {
@@ -214,14 +177,7 @@ impl CodexAuth {
             ));
         }
 
-        let state = WorkloadIdentityAuthState {
-            auth_dot_json: Arc::new(Mutex::new(Some(auth_dot_json))),
-        };
-
         match auth_mode {
-            AuthMode::WorkloadIdentity => {
-                Ok(Self::WorkloadIdentity(WorkloadIdentityAuth { state }))
-            }
             AuthMode::ApiKey => unreachable!("api key mode is handled above"),
             AuthMode::Headers => {
                 unreachable!("externally provided auth is never loaded from auth storage")
@@ -255,11 +211,9 @@ impl CodexAuth {
 
     /// Returns the effective backend auth mode.
     ///
-    /// Host-managed workload identity credentials use the Codex backend.
     pub fn auth_mode(&self) -> AuthMode {
         match self {
             Self::ApiKey(_) => AuthMode::ApiKey,
-            Self::WorkloadIdentity(_) => AuthMode::WorkloadIdentity,
             Self::Headers(_) => AuthMode::Headers,
             Self::BedrockApiKey(_) => AuthMode::BedrockApiKey,
             Self::BedrockAccessKeys(_) => AuthMode::BedrockAccessKeys,
@@ -270,7 +224,6 @@ impl CodexAuth {
     pub fn api_auth_mode(&self) -> AuthMode {
         match self {
             Self::ApiKey(_) => AuthMode::ApiKey,
-            Self::WorkloadIdentity(_) => AuthMode::WorkloadIdentity,
             Self::Headers(_) => AuthMode::Headers,
             Self::BedrockApiKey(_) => AuthMode::BedrockApiKey,
             Self::BedrockAccessKeys(_) => AuthMode::BedrockAccessKeys,
@@ -282,42 +235,24 @@ impl CodexAuth {
     }
 
     pub fn is_managed_auth(&self) -> bool {
-        self.api_auth_mode().has_managed_account()
+        matches!(self, Self::Headers(_))
     }
 
     pub fn uses_managed_auth(&self) -> bool {
-        self.api_auth_mode().uses_managed_auth()
-    }
-
-    pub fn is_workload_identity(&self) -> bool {
-        matches!(self, Self::WorkloadIdentity(_))
+        matches!(self, Self::Headers(_))
     }
 
     fn supports_unauthorized_recovery(&self) -> bool {
-        matches!(self, Self::WorkloadIdentity(_) | Self::Headers(_))
+        matches!(self, Self::Headers(_))
     }
 
     /// Returns `None` if `auth_mode() != AuthMode::ApiKey`.
     pub fn api_key(&self) -> Option<&str> {
         match self {
             Self::ApiKey(auth) => Some(auth.api_key.as_str()),
-            Self::WorkloadIdentity(_)
-            | Self::Headers(_)
+            Self::Headers(_)
             | Self::BedrockApiKey(_)
             | Self::BedrockAccessKeys(_) => None,
-        }
-    }
-
-    /// Returns `Err` if token-backed managed auth is unavailable.
-    pub fn get_token_data(&self) -> Result<TokenData, std::io::Error> {
-        let auth_dot_json: Option<AuthDotJson> = self.get_current_auth_json();
-        match auth_dot_json {
-            Some(AuthDotJson {
-                tokens: Some(tokens),
-                last_refresh: Some(_),
-                ..
-            }) => Ok(tokens),
-            _ => Err(std::io::Error::other("Token data is not available.")),
         }
     }
 
@@ -325,10 +260,6 @@ impl CodexAuth {
     pub fn get_token(&self) -> Result<String, std::io::Error> {
         match self {
             Self::ApiKey(auth) => Ok(auth.api_key.clone()),
-            Self::WorkloadIdentity(_) => {
-                let access_token = self.get_token_data()?.access_token;
-                Ok(access_token)
-            }
             Self::Headers(_) => Err(std::io::Error::other(
                 "header auth does not expose a bearer token",
             )),
@@ -347,7 +278,7 @@ impl CodexAuth {
                 .and_then(|value| value.to_str().ok())
                 .filter(|account_id| !account_id.is_empty() && account_id.trim() == *account_id)
                 .map(ToOwned::to_owned),
-            _ => self.get_current_token_data().and_then(|t| t.account_id),
+            _ => None,
         }
     }
 
@@ -355,133 +286,8 @@ impl CodexAuth {
     pub fn is_fedramp_account(&self) -> bool {
         match self {
             Self::Headers(_) => false,
-            _ => self
-                .get_current_token_data()
-                .is_some_and(|t| t.id_token.is_fedramp_account()),
+            _ => false,
         }
-    }
-
-    /// Returns `None` if Codex backend auth does not expose an account email.
-    pub fn get_account_email(&self) -> Option<String> {
-        match self {
-            Self::Headers(_) => None,
-            _ => self.get_current_token_data().and_then(|t| t.id_token.email),
-        }
-    }
-
-    /// Returns `None` if Codex backend auth does not expose a ChatGPT user id.
-    pub fn get_chatgpt_user_id(&self) -> Option<String> {
-        match self {
-            Self::Headers(_) => None,
-            _ => self
-                .get_current_token_data()
-                .and_then(|t| t.id_token.chatgpt_user_id),
-        }
-    }
-
-    /// Returns the access token's opaque account-user identity only when its workspace
-    /// matches the selected account. Missing claims never fall back to a user id.
-    /// Unlike `get_chatgpt_user_id`, this identifies one workspace membership, so keys
-    /// are not shared across a person's workspaces. Workload-identity exchange claims
-    /// describe an agent identity and cannot select a human verification credential.
-    /// This is local identity selection, not access-token or proof validation.
-    pub fn get_chatgpt_account_user_id(&self) -> Option<String> {
-        let tokens = self.get_current_token_data()?;
-        parse_chatgpt_account_user_id(&tokens.access_token, tokens.account_id.as_deref()?)
-            .ok()
-            .flatten()
-    }
-
-    /// Account-facing plan classification derived from the current auth.
-    /// Returns a high-level `AccountPlanType` (e.g., Free/Plus/Pro/Team/…)
-    /// for UI or product decisions based on the user's subscription.
-    pub fn account_plan_type(&self) -> Option<AccountPlanType> {
-        if matches!(self, Self::Headers(_)) {
-            return None;
-        }
-        self.get_current_token_data().map(|t| {
-            t.id_token
-                .chatgpt_plan_type
-                .map(AccountPlanType::from)
-                .unwrap_or(AccountPlanType::Unknown)
-        })
-    }
-
-    pub fn is_workspace_account(&self) -> bool {
-        self.account_plan_type()
-            .is_some_and(AccountPlanType::is_workspace_account)
-    }
-
-    /// Returns `None` if token-backed managed auth is unavailable.
-    fn get_current_auth_json(&self) -> Option<AuthDotJson> {
-        let state = match self {
-            Self::WorkloadIdentity(auth) => &auth.state,
-            Self::ApiKey(_)
-            | Self::Headers(_)
-            | Self::BedrockApiKey(_)
-            | Self::BedrockAccessKeys(_) => return None,
-        };
-        #[expect(clippy::unwrap_used)]
-        state.auth_dot_json.lock().unwrap().clone()
-    }
-
-    /// Returns `None` if token-backed managed auth is unavailable.
-    fn get_current_token_data(&self) -> Option<TokenData> {
-        self.get_current_auth_json().and_then(|t| t.tokens)
-    }
-
-    /// Consider this private to integration tests.
-    pub fn create_dummy_workload_identity_for_testing() -> Self {
-        let auth_dot_json = AuthDotJson {
-            auth_mode: Some(AuthMode::WorkloadIdentity),
-            openai_api_key: None,
-            tokens: Some(TokenData {
-                id_token: Default::default(),
-                access_token: "Access Token".to_string(),
-                refresh_token: "test".to_string(),
-                account_id: Some("account_id".to_string()),
-            }),
-            last_refresh: Some(Utc::now()),
-            bedrock_api_key: None,
-            bedrock_access_keys: None,
-        };
-
-        let state = WorkloadIdentityAuthState {
-            auth_dot_json: Arc::new(Mutex::new(Some(auth_dot_json))),
-        };
-        Self::WorkloadIdentity(WorkloadIdentityAuth { state })
-    }
-
-    /// Constructs in-memory workload identity auth from host-managed tokens.
-    pub fn from_external_workload_identity(
-        access_token: &str,
-        chatgpt_account_id: &str,
-        chatgpt_plan_type: Option<&str>,
-    ) -> std::io::Result<Self> {
-        let mut token_info =
-            parse_chatgpt_jwt_claims(access_token).map_err(std::io::Error::other)?;
-        token_info.chatgpt_account_id = Some(chatgpt_account_id.to_string());
-        token_info.chatgpt_plan_type = chatgpt_plan_type
-            .map(InternalPlanType::from_raw_value)
-            .or(token_info.chatgpt_plan_type)
-            .or(Some(InternalPlanType::Unknown("unknown".to_string())));
-        let auth_dot_json = AuthDotJson {
-            auth_mode: Some(AuthMode::WorkloadIdentity),
-            openai_api_key: None,
-            tokens: Some(TokenData {
-                id_token: token_info,
-                access_token: access_token.to_string(),
-                refresh_token: String::new(),
-                account_id: Some(chatgpt_account_id.to_string()),
-            }),
-            last_refresh: Some(Utc::now()),
-            bedrock_api_key: None,
-            bedrock_access_keys: None,
-        };
-        let state = WorkloadIdentityAuthState {
-            auth_dot_json: Arc::new(Mutex::new(Some(auth_dot_json))),
-        };
-        Ok(Self::WorkloadIdentity(WorkloadIdentityAuth { state }))
     }
 
     pub fn from_api_key(api_key: &str) -> Self {
@@ -537,8 +343,6 @@ pub fn login_with_api_key(
     let auth_dot_json = AuthDotJson {
         auth_mode: Some(AuthMode::ApiKey),
         openai_api_key: Some(api_key.to_string()),
-        tokens: None,
-        last_refresh: None,
         bedrock_api_key: None,
         bedrock_access_keys: None,
     };
@@ -694,11 +498,7 @@ fn validate_auth_restrictions(
         return Ok(());
     }
 
-    let actual_workspace = auth.get_account_id().or_else(|| {
-        auth.get_token_data()
-            .ok()
-            .and_then(|tokens| tokens.id_token.chatgpt_account_id)
-    });
+    let actual_workspace = auth.get_account_id();
     if actual_workspace
         .as_ref()
         .is_some_and(|workspace| expected_workspaces.contains(workspace))
@@ -740,10 +540,8 @@ pub async fn enforce_login_restrictions(config: &AuthConfig) -> std::io::Result<
             (ForcedLoginMethod::Api, AuthMode::ApiKey)
             | (ForcedLoginMethod::Api, AuthMode::BedrockApiKey)
             | (ForcedLoginMethod::Api, AuthMode::BedrockAccessKeys) => None,
-            (ForcedLoginMethod::Managed, AuthMode::WorkloadIdentity)
-            | (ForcedLoginMethod::Managed, AuthMode::Headers) => None,
-            (ForcedLoginMethod::Api, AuthMode::WorkloadIdentity)
-            | (ForcedLoginMethod::Api, AuthMode::Headers) => Some(
+            (ForcedLoginMethod::Managed, AuthMode::Headers) => None,
+            (ForcedLoginMethod::Api, AuthMode::Headers) => Some(
                 "API key login is required, but managed authentication is currently being used. Logging out."
                     .to_string(),
             ),
@@ -766,40 +564,24 @@ pub async fn enforce_login_restrictions(config: &AuthConfig) -> std::io::Result<
     }
 
     if let Some(expected_account_ids) = config.forced_managed_workspace_id.as_deref() {
-        let chatgpt_account_id = match &auth {
+        let workspace_id = match &auth {
             CodexAuth::ApiKey(_)
             | CodexAuth::BedrockApiKey(_)
             | CodexAuth::BedrockAccessKeys(_) => {
                 return Ok(());
             }
             CodexAuth::Headers(_) => auth.get_account_id(),
-            CodexAuth::WorkloadIdentity(_) => {
-                let token_data = match auth.get_token_data() {
-                    Ok(data) => data,
-                    Err(err) => {
-                        return logout_with_message(
-                            &config.codex_home,
-                            format!(
-                                "Failed to load managed-auth credentials while enforcing workspace restrictions: {err}. Logging out."
-                            ),
-                            config.auth_credentials_store_mode,
-                            config.keyring_backend_kind,
-                        );
-                    }
-                };
-                token_data.id_token.chatgpt_account_id
-            }
         };
 
         // workspace is the external identifier for account id.
-        let chatgpt_account_id = chatgpt_account_id.as_deref();
-        if !chatgpt_account_id.is_some_and(|actual| {
+        let workspace_id = workspace_id.as_deref();
+        if !workspace_id.is_some_and(|actual| {
             expected_account_ids
                 .iter()
                 .any(|expected| expected == actual)
         }) {
             let expected_workspaces = expected_account_ids.join(", ");
-            let message = match chatgpt_account_id {
+            let message = match workspace_id {
                 Some(actual) => format!(
                     "Login is restricted to workspace(s) {expected_workspaces}, but current credentials belong to {actual}. Logging out."
                 ),
@@ -883,14 +665,14 @@ async fn load_auth(
         return Ok(Some(CodexAuth::from_api_key(api_key.as_str())));
     }
 
-    // External ChatGPT auth tokens live in the in-memory (ephemeral) store. Always check this
-    // first so external auth takes precedence over any persisted credentials.
+    // Ephemeral credentials take precedence over persisted credentials.
     let ephemeral_storage = create_auth_storage(
         codex_home.to_path_buf(),
         AuthCredentialsStoreMode::Ephemeral,
         AuthKeyringBackendKind::default(),
     );
     if let Some(auth_dot_json) = ephemeral_storage.load()?
+        && auth_dot_json.has_supported_credentials()
         && auth_mode_is_allowed(allowed_login_methods, auth_dot_json.resolved_mode())
     {
         let auth = CodexAuth::from_auth_dot_json(
@@ -910,7 +692,7 @@ async fn load_auth(
         return Ok(None);
     }
 
-    // Fall back to the configured persistent store (file/keyring/auto) for managed auth.
+    // Fall back to the configured persistent store (file/keyring/auto).
     let storage = create_auth_storage(
         codex_home.to_path_buf(),
         auth_credentials_store_mode,
@@ -920,6 +702,9 @@ async fn load_auth(
         Some(auth) => auth,
         None => return Ok(None),
     };
+    if !auth_dot_json.has_supported_credentials() {
+        return Ok(None);
+    }
     if !auth_mode_is_allowed(allowed_login_methods, auth_dot_json.resolved_mode()) {
         return Ok(None);
     }
@@ -936,12 +721,15 @@ async fn load_auth(
 }
 
 impl AuthDotJson {
+    fn has_supported_credentials(&self) -> bool {
+        self.openai_api_key.is_some()
+            || self.bedrock_api_key.is_some()
+            || self.bedrock_access_keys.is_some()
+    }
+
     pub(super) fn resolved_mode(&self) -> AuthMode {
         if let Some(mode) = self.auth_mode {
             return mode;
-        }
-        if self.tokens.is_some() {
-            return AuthMode::WorkloadIdentity;
         }
         if self.bedrock_api_key.is_some() {
             return AuthMode::BedrockApiKey;
@@ -952,7 +740,7 @@ impl AuthDotJson {
         if self.openai_api_key.is_some() {
             return AuthMode::ApiKey;
         }
-        AuthMode::WorkloadIdentity
+        AuthMode::ApiKey
     }
 }
 
@@ -1015,11 +803,6 @@ enum UnauthorizedRecoveryMode {
 // to API fail with 401 status code.
 // The client calls next() every time it encounters a 401 error, one time per retry.
 // For API key based authentication, we don't do anything and let the error bubble to the user.
-//
-// For ChatGPT based authentication, we:
-// 1. Attempt to reload the auth data from disk. We only reload if the account id matches the one the current process is running as.
-// 2. Attempt to refresh the token using OAuth token refresh flow.
-// If after both steps the server still responds with 401 we let the error bubble to the user.
 //
 // For external auth sources, UnauthorizedRecovery retries once by asking the
 // configured provider to refresh and caching the returned auth through the same
@@ -1209,7 +992,6 @@ pub struct AuthManager {
     managed_auth_base_url: Option<String>,
     refresh_lock: Semaphore,
     external_auth: RwLock<Option<Arc<dyn ExternalAuth>>>,
-    workload_identity_selected: bool,
     auth_route_config: AuthRouteConfig,
 }
 
@@ -1265,10 +1047,6 @@ impl Debug for AuthManager {
             .field("managed_auth_base_url", &self.managed_auth_base_url)
             .field("auth_route_config", &self.auth_route_config)
             .field("has_external_auth", &self.has_external_auth())
-            .field(
-                "workload_identity_selected",
-                &self.workload_identity_selected,
-            )
             .finish_non_exhaustive()
     }
 }
@@ -1337,7 +1115,6 @@ impl AuthManager {
             managed_auth_base_url,
             refresh_lock: Semaphore::new(/*permits*/ 1),
             external_auth: RwLock::new(None),
-            workload_identity_selected: false,
             auth_route_config,
         }
     }
@@ -1369,7 +1146,6 @@ impl AuthManager {
             managed_auth_base_url: None,
             refresh_lock: Semaphore::new(/*permits*/ 1),
             external_auth: RwLock::new(None),
-            workload_identity_selected: false,
             auth_route_config: crate::test_support::transport_default_auth_route_config(),
         })
     }
@@ -1395,7 +1171,6 @@ impl AuthManager {
             managed_auth_base_url: None,
             refresh_lock: Semaphore::new(/*permits*/ 1),
             external_auth: RwLock::new(None),
-            workload_identity_selected: false,
             auth_route_config: crate::test_support::transport_default_auth_route_config(),
         })
     }
@@ -1419,7 +1194,6 @@ impl AuthManager {
             managed_auth_base_url: None,
             refresh_lock: Semaphore::new(/*permits*/ 1),
             external_auth: RwLock::new(Some(Arc::new(BearerTokenRefresher::new(config)))),
-            workload_identity_selected: false,
             // External bearer auth refreshes by running the provider's command and never makes
             // auth-owned HTTP requests, so this route is intentionally inert.
             auth_route_config: AuthRouteConfig::from_http_client_factory(HttpClientFactory::new(
@@ -1457,7 +1231,7 @@ impl AuthManager {
     }
 
     /// Current cached auth (clone). May be `None` if not logged in or load failed.
-    /// Workload identity is resolved from its host-managed external source.
+    /// Resolve current authentication, refreshing configured external credentials first.
     #[instrument(level = "trace", skip_all)]
     pub async fn auth(&self) -> Option<CodexAuth> {
         if self.has_external_auth() {
@@ -1515,9 +1289,6 @@ impl AuthManager {
             (None, None) => true,
             (Some(a), Some(b)) => match (a.api_auth_mode(), b.api_auth_mode()) {
                 (AuthMode::ApiKey, AuthMode::ApiKey) => a.api_key() == b.api_key(),
-                (AuthMode::WorkloadIdentity, AuthMode::WorkloadIdentity) => {
-                    a.get_current_token_data() == b.get_current_token_data()
-                }
                 (AuthMode::Headers, AuthMode::Headers) => a == b,
                 (AuthMode::BedrockApiKey, AuthMode::BedrockApiKey) => a == b,
                 (AuthMode::BedrockAccessKeys, AuthMode::BedrockAccessKeys) => a == b,
@@ -1637,11 +1408,6 @@ impl AuthManager {
         &self,
         external_auth: Arc<dyn ExternalAuth>,
     ) -> Result<(), RefreshTokenError> {
-        if self.workload_identity_selected {
-            return Err(permanent_external_auth_error(
-                "workload identity auth cannot be replaced at runtime",
-            ));
-        }
         self.install_external_auth(external_auth).await
     }
 
@@ -1662,9 +1428,6 @@ impl AuthManager {
     }
 
     pub fn clear_external_auth(&self) {
-        if self.workload_identity_selected {
-            return;
-        }
         if let Ok(mut external_auth) = self.external_auth.write()
             && external_auth.take().is_some()
         {
@@ -1712,16 +1475,6 @@ impl AuthManager {
         self.external_auth_provider().is_some()
     }
 
-    pub fn is_workload_identity_selected(&self) -> bool {
-        self.workload_identity_selected
-    }
-
-    pub fn is_external_managed_auth_active(&self) -> bool {
-        self.auth_cached()
-            .as_ref()
-            .is_some_and(CodexAuth::is_workload_identity)
-    }
-
     pub fn codex_api_key_env_enabled(&self) -> bool {
         self.enable_codex_api_key_env
     }
@@ -1750,7 +1503,7 @@ impl AuthManager {
         )
     }
 
-    /// Builds a shared manager and activates process-configured workload identity when selected.
+    /// Builds a shared manager from the resolved authentication configuration.
     pub async fn shared_from_config(
         config: &impl AuthManagerConfig,
         enable_codex_api_key_env: bool,
@@ -1758,21 +1511,13 @@ impl AuthManager {
         Self::shared_from_auth_config(auth_config_from(config), enable_codex_api_key_env).await
     }
 
-    /// Activates workload identity against an auth config resolved before full runtime config.
     pub async fn shared_from_auth_config(
         auth_config: AuthConfig,
         enable_codex_api_key_env: bool,
     ) -> Result<Arc<Self>, AuthManagerInitializationError> {
-        let external_auth = WorkloadIdentityExternalAuth::from_process_config(&auth_config)?;
-        let mut manager = Self::new_from_auth_config(auth_config, enable_codex_api_key_env).await;
-        manager.workload_identity_selected = external_auth.is_some();
-        let manager = Arc::new(manager);
-        if let Some(external_auth) = external_auth {
-            manager
-                .install_external_auth(Arc::new(external_auth))
-                .await?;
-        }
-        Ok(manager)
+        Ok(Arc::new(
+            Self::new_from_auth_config(auth_config, enable_codex_api_key_env).await,
+        ))
     }
 
     pub fn unauthorized_recovery(self: &Arc<Self>) -> UnauthorizedRecovery {
@@ -1877,7 +1622,6 @@ impl AuthManager {
             match attempted_auth.as_ref() {
                 Some(
                     CodexAuth::ApiKey(_)
-                    | CodexAuth::WorkloadIdentity(_)
                     | CodexAuth::Headers(_)
                     | CodexAuth::BedrockApiKey(_)
                     | CodexAuth::BedrockAccessKeys(_),
@@ -1911,12 +1655,6 @@ impl AuthManager {
     }
 
     fn ensure_logout_allowed(&self) -> std::io::Result<()> {
-        if self.workload_identity_selected {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::PermissionDenied,
-                "workload identity auth is managed by the host and cannot be logged out",
-            ));
-        }
         Ok(())
     }
 
@@ -1963,22 +1701,6 @@ impl AuthManager {
     }
 
     fn commit_external_auth(&self, auth: CodexAuth) -> Result<(), RefreshTokenError> {
-        if auth.is_workload_identity() {
-            let auth_dot_json = auth.get_current_auth_json().ok_or_else(|| {
-                RefreshTokenError::Transient(std::io::Error::other(
-                    "workload identity auth is missing auth state",
-                ))
-            })?;
-            // Independent AuthManagers share workload identity auth through the process-local store.
-            save_auth(
-                &self.codex_home,
-                &auth_dot_json,
-                AuthCredentialsStoreMode::Ephemeral,
-                AuthKeyringBackendKind::default(),
-            )
-            .map_err(RefreshTokenError::Transient)?;
-        }
-
         self.set_cached_auth(Some(auth));
         Ok(())
     }
@@ -2008,5 +1730,32 @@ fn auth_config_from(config: &impl AuthManagerConfig) -> AuthConfig {
         forced_managed_workspace_id: config.forced_managed_workspace_id(),
         managed_auth_policy: config.managed_auth_policy(),
         auth_route_config: config.auth_route_config(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn token_only_auth_is_not_loaded_as_codex_auth() {
+        let auth: AuthDotJson = serde_json::from_value(serde_json::json!({
+            "auth_mode": "chatgpt",
+            "tokens": {"access_token": "old-token"},
+            "last_refresh": "2026-09-30T00:00:00Z"
+        }))
+        .expect("legacy token fields should remain parseable as unknown fields");
+
+        let result = CodexAuth::from_auth_dot_json(
+            Path::new("/tmp/codex-test"),
+            auth,
+            AuthCredentialsStoreMode::File,
+            None,
+            AuthKeyringBackendKind::default(),
+            &crate::test_support::transport_default_auth_route_config(),
+        )
+        .await;
+
+        assert!(result.is_err(), "token-only auth must not be accepted");
     }
 }

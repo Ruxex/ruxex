@@ -321,7 +321,7 @@ impl ModelProvider for AmazonBedrockModelProvider {
                         | auth::BedrockAuthSource::ManagedAccessKeys
                 ),
             }),
-            requires_first_party_auth: false,
+            requires_auth: false,
         })
     }
 
@@ -448,7 +448,7 @@ mod tests {
                 account: Some(ProviderAccount::AmazonBedrock {
                     uses_codex_managed_credentials: false,
                 }),
-                requires_first_party_auth: false,
+                requires_auth: false,
             })
         );
 
@@ -510,7 +510,7 @@ mod tests {
                 account: Some(ProviderAccount::AmazonBedrock {
                     uses_codex_managed_credentials: true,
                 }),
-                requires_first_party_auth: false,
+                requires_auth: false,
             })
         );
         assert_eq!(
@@ -556,7 +556,7 @@ mod tests {
                     account: Some(ProviderAccount::AmazonBedrock {
                         uses_codex_managed_credentials: false,
                     }),
-                    requires_first_party_auth: false,
+                    requires_auth: false,
                 })
             );
             assert_eq!(
@@ -596,7 +596,7 @@ mod tests {
                 account: Some(ProviderAccount::AmazonBedrock {
                     uses_codex_managed_credentials: false,
                 }),
-                requires_first_party_auth: false,
+                requires_auth: false,
             })
         );
     }

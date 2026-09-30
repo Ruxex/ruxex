@@ -344,7 +344,6 @@ impl McpRuntime {
             (Some(previous), Some(latest)) => {
                 previous == latest
                     && previous.get_account_id() == latest.get_account_id()
-                    && previous.get_chatgpt_user_id() == latest.get_chatgpt_user_id()
                     && previous.is_fedramp_account() == latest.is_fedramp_account()
                     && current.auth_token == latest.get_token().ok()
             }

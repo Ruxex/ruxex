@@ -102,7 +102,7 @@ base_url = "{local_url}"
 [model_providers.gateway]
 name = "Managed gateway"
 base_url = "{gateway_url}"
-requires_first_party_auth = true
+requires_auth = true
 [model_providers.gateway.http_headers]
 X-Managed = "required"
 "#
@@ -122,7 +122,7 @@ X-Managed = "required"
         ]),
     )
     .await;
-    let auth = CodexAuth::create_dummy_workload_identity_for_testing();
+    let auth = CodexAuth::from_api_key("test-api-key");
     let expected_authorization = format!("Bearer {}", auth.get_token()?);
     let test = test_codex()
         .with_auth(auth)

@@ -1,13 +1,13 @@
 use anyhow::Context;
 use anyhow::Result;
-use app_test_support::WorkloadIdentityClaims;
+use app_test_support::AuthFixtureClaims;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::app_server_json_shutdown_event;
 use app_test_support::create_exec_command_sse_response;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_sequence;
-use app_test_support::encode_id_token;
+use app_test_support::encode_fixture_token;
 use app_test_support::write_models_cache;
 use codex_app_server_protocol::ClientInfo;
 use codex_app_server_protocol::ClientRequest;

@@ -334,7 +334,7 @@ async fn responses_websocket_omits_routing_hint_for_provider_with_own_credential
         /*runtime_metrics_enabled*/ false,
         /*concurrent_reasoning_summaries_enabled*/ false,
         /*enabled_features*/ &[],
-        Some(CodexAuth::create_dummy_workload_identity_for_testing()),
+        Some(CodexAuth::from_api_key("test-api-key")),
     )
     .await;
     let mut client_session = harness.client.new_session();
@@ -881,7 +881,7 @@ async fn responses_websocket_reuses_connection_after_session_drop() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn responses_websocket_reconnects_after_account_switch() {
+async fn responses_websocket_reconnects_after_api_key_switch() {
     skip_if_no_network!();
 
     for new_turn_on_switch in [false, true] {
@@ -916,23 +916,11 @@ async fn responses_websocket_reconnects_after_account_switch() {
 
         for index in 1..=5 {
             if index == 3 {
-                let mut tokens = harness
-                    .auth_manager
-                    .auth_cached()
-                    .unwrap()
-                    .get_token_data()
-                    .unwrap();
-                tokens.id_token.raw_jwt = "e30.e30.signature".into();
-                tokens.account_id = Some("second-account".into());
-                tokens.access_token = "second-account-token".into();
-                std::fs::write(
-                    harness.codex_home.path().join("auth.json"),
-                    serde_json::to_vec(&json!({
-                        "auth_mode": "chatgpt",
-                        "tokens": tokens,
-                        "last_refresh": chrono::Utc::now(),
-                    }))
-                    .unwrap(),
+                codex_login::login_with_api_key(
+                    harness.codex_home.path(),
+                    "second-account-token",
+                    codex_login::AuthCredentialsStoreMode::File,
+                    codex_login::AuthKeyringBackendKind::default(),
                 )
                 .unwrap();
                 harness.auth_manager.reload().await;
@@ -963,11 +951,11 @@ async fn responses_websocket_reconnects_after_account_switch() {
                 .collect::<Vec<_>>(),
             vec![
                 (
-                    Some("account_id".into()),
-                    Some("Bearer Access Token".into())
+                    None,
+                    Some("Bearer test-api-key".into())
                 ),
                 (
-                    Some("second-account".into()),
+                    None,
                     Some("Bearer second-account-token".into())
                 ),
             ],
@@ -2678,7 +2666,7 @@ fn websocket_provider_with_connect_timeout(
         stream_max_retries: Some(0),
         stream_idle_timeout_ms: Some(5_000),
         websocket_connect_timeout_ms,
-        requires_first_party_auth: false,
+        requires_auth: false,
         supports_websockets: true,
         supports_standalone_web_search: false,
     }
@@ -2695,7 +2683,7 @@ async fn websocket_harness_for_codex_backend(server: &WebSocketTestServer) -> We
         /*runtime_metrics_enabled*/ false,
         /*concurrent_reasoning_summaries_enabled*/ false,
         /*enabled_features*/ &[],
-        Some(CodexAuth::create_dummy_workload_identity_for_testing()),
+        Some(CodexAuth::from_api_key("test-api-key")),
     )
     .await
 }

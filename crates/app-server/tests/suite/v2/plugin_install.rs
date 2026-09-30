@@ -8,11 +8,11 @@ use std::time::Duration;
 
 use anyhow::Result;
 use anyhow::bail;
-use app_test_support::WorkloadIdentityAuthFixture;
+use app_test_support::ApiKeyAuthFixture;
 use app_test_support::DEFAULT_CLIENT_NAME;
 use app_test_support::TestAppServer;
 use app_test_support::start_analytics_events_server;
-use app_test_support::write_workload_identity_auth;
+use app_test_support::write_api_key_auth;
 use axum::Json;
 use axum::Router;
 use axum::extract::State;
@@ -835,12 +835,12 @@ async fn plugin_install_tracks_analytics_when_marketplace_file_cannot_be_read() 
     let analytics_server = start_analytics_events_server().await?;
     let codex_home = TempDir::new()?;
     write_analytics_config(codex_home.path(), &analytics_server.uri())?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
     let marketplace_path = codex_home.path().join("marketplace-dir");
@@ -988,12 +988,12 @@ async fn plugin_install_tracks_analytics_event() -> Result<()> {
     let analytics_server = start_analytics_events_server().await?;
     let codex_home = TempDir::new()?;
     write_analytics_config(codex_home.path(), &analytics_server.uri())?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
 
@@ -1055,12 +1055,12 @@ async fn plugin_install_failure_tracks_analytics_event() -> Result<()> {
     let analytics_server = start_analytics_events_server().await?;
     let codex_home = TempDir::new()?;
     write_analytics_config(codex_home.path(), &analytics_server.uri())?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
 
@@ -1296,12 +1296,12 @@ async fn plugin_install_returns_apps_needing_auth() -> Result<()> {
 
     let codex_home = TempDir::new()?;
     write_connectors_config(codex_home.path(), &server_url)?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
 
@@ -1393,12 +1393,12 @@ async fn plugin_install_skips_mcp_oauth_for_chatgpt_dual_surface_plugin() -> Res
 
     let codex_home = TempDir::new()?;
     write_connectors_config(codex_home.path(), &apps_server_url)?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
 
@@ -1668,12 +1668,12 @@ async fn plugin_install_starts_mcp_oauth_with_formerly_disallowed_plugin_app() -
 
     let codex_home = TempDir::new()?;
     write_connectors_config(codex_home.path(), &apps_server_url)?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
 
@@ -2308,12 +2308,12 @@ async fn plugin_install_includes_formerly_disallowed_apps_needing_auth() -> Resu
 
     let codex_home = TempDir::new()?;
     write_connectors_config(codex_home.path(), &server_url)?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
 
@@ -2857,12 +2857,12 @@ plugins = true
 
 fn configure_remote_plugin_test(codex_home: &std::path::Path, server: &MockServer) -> Result<()> {
     write_remote_plugin_catalog_config(codex_home, &format!("{}/backend-api/", server.uri()))?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home,
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )
 }
@@ -2884,12 +2884,12 @@ connectors = true
             server.uri()
         ),
     )?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home,
-        WorkloadIdentityAuthFixture::new("chatgpt-token")
+        ApiKeyAuthFixture::new("chatgpt-token")
             .account_id("account-123")
-            .chatgpt_user_id("user-123")
-            .chatgpt_account_id("account-123"),
+            .user_id("user-123")
+            .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )
 }

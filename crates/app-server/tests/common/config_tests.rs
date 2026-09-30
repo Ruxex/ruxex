@@ -14,7 +14,7 @@ fn mock_responses_config_composes_model_provider_features_and_extra_tables() {
         .enable_feature(Feature::NetworkProxy)
         .disable_feature(Feature::ShellSnapshot)
         .with_root_config("managed_auth_base_url = \"http://127.0.0.1:1234\"")
-        .with_provider_config("requires_first_party_auth = true")
+        .with_provider_config("requires_auth = true")
         .with_extra_config("[extra]\nenabled = true")
         .write(home.path())
         .expect("write composable mock Responses config");
@@ -31,7 +31,7 @@ fn mock_responses_config_composes_model_provider_features_and_extra_tables() {
         "network_proxy = true",
         "[model_providers.openai-custom]\nname = \"OpenAI\"",
         "base_url = \"http://127.0.0.1:1234/api/codex\"",
-        "requires_first_party_auth = true",
+        "requires_auth = true",
         "[extra]\nenabled = true",
     ] {
         assert!(config.contains(expected), "config is missing {expected}");
@@ -65,7 +65,7 @@ fn legacy_mock_responses_writer_preserves_provider_auth_and_feature_overrides() 
         "network_proxy = true",
         "[model_providers.openai]\nname = \"OpenAI\"",
         "supports_websockets = false",
-        "requires_first_party_auth = true",
+        "requires_auth = true",
     ] {
         assert!(config.contains(expected), "config is missing {expected}");
     }

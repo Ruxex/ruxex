@@ -242,9 +242,7 @@ pub(super) async fn start_app_server_for_session_command(
         launch_loader_overrides.user_config_profile = Some(profile_v2.clone());
     }
 
-    let workload_identity_selected = codex_login::is_workload_identity_selected();
     let reuse_implicit_local_daemon = !cli.no_daemon
-        && !workload_identity_selected
         && super::daemon_startup::config_exclusion(
             &cli_kv_overrides,
             &launch_loader_overrides,
@@ -261,7 +259,6 @@ pub(super) async fn start_app_server_for_session_command(
         explicit_remote_endpoint,
         default_daemon,
         reuse_implicit_local_daemon,
-        workload_identity_selected,
     )?;
     let remote_cwd_override = cli
         .cwd

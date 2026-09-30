@@ -2,7 +2,6 @@ pub mod auth;
 pub mod auth_env_telemetry;
 mod outbound_proxy;
 pub mod test_support;
-pub mod token_data;
 
 pub use codex_config::types::AuthCredentialsStoreMode;
 pub use codex_http_client::BuildCustomCaTransportError as BuildLoginHttpClientError;
@@ -26,7 +25,6 @@ pub use auth::RefreshTokenError;
 pub use auth::UnauthorizedRecovery;
 pub use auth::default_client;
 pub use auth::enforce_login_restrictions;
-pub use auth::is_workload_identity_selected;
 pub use auth::load_auth_dot_json;
 pub use auth::login_with_api_key;
 pub use auth::login_with_bedrock_access_keys;

@@ -1723,7 +1723,7 @@ async fn stdio_mcp_tool_call_includes_sandbox_state_meta(
 
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
     let fixture = test_codex()
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.5")
         .with_config(move |config| {
             insert_mcp_server(
@@ -2798,7 +2798,7 @@ async fn stdio_image_responses_are_sanitized_for_text_only_model() -> anyhow::Re
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
 
     let fixture = test_codex()
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             insert_mcp_server(
                 config,
@@ -3487,7 +3487,7 @@ async fn streamable_http_configured_auth_precedes_chatgpt_auth() -> anyhow::Resu
     let configured_auth_url = configured_auth_server.url().to_string();
 
     let configured_auth_fixture = test_codex()
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             insert_mcp_server(
                 config,
@@ -3530,7 +3530,7 @@ async fn streamable_http_chatgpt_auth_is_not_sent_to_configured_origin() -> anyh
     let untrusted_managed_auth_base_url = untrusted_apps.managed_auth_base_url;
 
     let fixture = test_codex()
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config.managed_auth_base_url = untrusted_managed_auth_base_url;
             insert_mcp_server(
@@ -3594,7 +3594,7 @@ async fn configured_managed_auth_base_url_does_not_grant_mcp_chatgpt_auth() -> a
     let untrusted_managed_auth_base_url = untrusted_apps.managed_auth_base_url;
 
     let fixture = test_codex()
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_pre_build_hook(move |codex_home| {
             fs::write(
                 codex_home.join("config.toml"),

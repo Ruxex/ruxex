@@ -76,7 +76,7 @@ async fn thread_start_with_auto_env_exposes_fixture_cwd_to_model() -> Result<()>
         &server.uri(),
         &BTreeMap::new(),
         /*auto_compact_limit*/ 100_000,
-        /*requires_first_party_auth*/ None,
+        /*requires_auth*/ None,
         "mock_provider",
         "compact",
     )?;

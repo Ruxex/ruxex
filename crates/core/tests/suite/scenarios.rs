@@ -237,7 +237,7 @@ async fn astra_asks_an_async_question_and_receives_the_answer_while_working() ->
     let base_url = format!("{}/v1", streaming.uri());
     let test = test_codex()
         .with_model("gpt-6-astra")
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             configure_scenario_catalog(config);
             config.model_provider.base_url = Some(base_url);
@@ -344,7 +344,7 @@ async fn astra_kickoff_with_skills_plugins_and_remote_compaction() -> Result<()>
     let mut builder = test_codex()
         .with_model("gpt-6-astra")
         .with_home(home)
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_extensions(skills_extensions())
         .with_workspace_setup(|cwd, fs| async move {
             fs.write_file(
@@ -470,7 +470,7 @@ async fn astra_omits_disabled_executor_skills_from_model_context() -> Result<()>
     .await;
     let test = test_codex()
         .with_model("gpt-6-astra")
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_extensions(Arc::new(extensions.build()))
         .with_config(configure_scenario_catalog)
         .build(&server)
@@ -539,7 +539,7 @@ async fn astra_settings_release_check_with_direct_and_code_mode_tools() -> Resul
     let mut builder = test_codex()
         .with_model("gpt-6-astra")
         .with_home(home)
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             configure_scenario_catalog(config);
             let mut servers = config.mcp_servers.get().clone();
@@ -700,7 +700,7 @@ async fn astra_refreshes_plugin_tools_and_skills_in_an_existing_thread() -> Resu
     let mut builder = test_codex()
         .with_model("gpt-6-astra")
         .with_home(Arc::clone(&home))
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_extensions(skills_extensions())
         .with_config(configure_scenario_catalog);
     let test = builder.build(&server).await?;

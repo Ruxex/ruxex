@@ -139,8 +139,6 @@ fn daemon_eligibility_preserves_launch_options_and_explains_exclusions() {
                 &cli,
                 &[],
                 &LoaderOverrides::default(),
-                /*workload_identity_selected*/ false,
-                /*exec_server_url*/ None
             ),
             expected
         );
@@ -151,32 +149,16 @@ fn daemon_eligibility_preserves_launch_options_and_explains_exclusions() {
         ignore_user_config: true,
         ..Default::default()
     };
-    for (kv, loader, workload, executor, expected) in [
+    for (kv, loader, expected) in [
         (
             &overrides[..],
             LoaderOverrides::default(),
-            false,
-            None,
             "command-line configuration overrides (-c, --enable, --disable, or --search)",
         ),
-        (&[][..], loader, false, None, "custom configuration loader"),
-        (
-            &[][..],
-            LoaderOverrides::default(),
-            true,
-            None,
-            "workload identity",
-        ),
-        (
-            &[][..],
-            LoaderOverrides::default(),
-            false,
-            Some(std::ffi::OsStr::new("executor")),
-            "executor selection (CODEX_EXEC_SERVER_URL)",
-        ),
+        (&[][..], loader, "custom configuration loader"),
     ] {
         assert_eq!(
-            daemon_startup::exclusion(&cli, kv, &loader, workload, executor),
+            daemon_startup::exclusion(&cli, kv, &loader),
             Some(expected)
         );
     }
@@ -187,8 +169,6 @@ fn daemon_eligibility_preserves_launch_options_and_explains_exclusions() {
             &cli,
             &overrides,
             &LoaderOverrides::default(),
-            /*workload_identity_selected*/ false,
-            /*exec_server_url*/ None
         ),
         None
     );

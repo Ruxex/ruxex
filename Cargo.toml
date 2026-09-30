@@ -85,7 +85,6 @@ members = [
     "crates/websocket-client",
     "crates/windows-sandbox-service",
     "crates/worktree",
-    "crates/workload-identity",
     "crates/utils/absolute-path",
     "crates/utils/audio",
     "crates/utils/path-uri",
@@ -252,7 +251,6 @@ codex-utils-stream-parser = { path = "crates/utils/stream-parser" }
 codex-utils-string = { path = "crates/utils/string" }
 codex-utils-template = { path = "crates/utils/template" }
 codex-user-verification = { path = "crates/user-verification" }
-codex-workload-identity = { path = "crates/workload-identity" }
 codex-windows-sandbox = { path = "crates/windows-sandbox-rs" }
 core_test_support = { path = "crates/core/tests/common" }
 

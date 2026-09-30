@@ -5,8 +5,8 @@ use std::process::Stdio;
 
 use anyhow::Context as _;
 use anyhow::Result;
-use app_test_support::WorkloadIdentityAuthFixture;
-use app_test_support::write_workload_identity_auth;
+use app_test_support::ApiKeyAuthFixture;
+use app_test_support::write_api_key_auth;
 use codex_config::types::AuthCredentialsStoreMode;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -58,12 +58,12 @@ trust_level = "trusted"
             workspace.path().join(".codex/config.toml"),
             "cli_auth_credentials_store = \"file\"\n",
         )?;
-        write_workload_identity_auth(
+        write_api_key_auth(
             codex_home.path(),
-            WorkloadIdentityAuthFixture::new("doctor-test-token")
+            ApiKeyAuthFixture::new("doctor-test-token")
                 .account_id("doctor-workspace")
-                .chatgpt_account_id("doctor-workspace")
-                .chatgpt_user_id("doctor-user")
+                .workspace_id("doctor-workspace")
+                .user_id("doctor-user")
                 .plan_type("enterprise"),
             AuthCredentialsStoreMode::File,
         )?;

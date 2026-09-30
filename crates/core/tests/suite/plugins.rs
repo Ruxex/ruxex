@@ -282,7 +282,7 @@ async fn build_analytics_plugin_test_codex(
     let managed_auth_base_url = server.uri();
     let mut builder = test_codex()
         .with_home(codex_home)
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.2")
         .with_config(move |config| {
             config.managed_auth_base_url = managed_auth_base_url;
@@ -297,7 +297,7 @@ async fn build_apps_enabled_plugin_test_codex(
 ) -> Result<TestCodex> {
     let mut builder = test_codex()
         .with_home(codex_home)
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config
                 .features
@@ -420,7 +420,7 @@ async fn persisted_remote_plugin_command_attribution_flows_through_turn_context(
     let managed_auth_base_url = server.uri();
     let mut builder = builder
         .with_home(Arc::clone(&codex_home))
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.2")
         .with_config(move |config| config.managed_auth_base_url = managed_auth_base_url);
     let test_codex = builder.build_with_auto_env(&server).await?;
@@ -514,7 +514,7 @@ async fn thread_disabled_plugins_filter_skills_and_tools_without_changing_shared
     let mut builder = test_codex()
         .with_home(home)
         .with_extensions(skills_extensions())
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config.features.enable(Feature::Apps).unwrap();
             config.managed_auth_base_url = apps.managed_auth_base_url;
@@ -914,7 +914,7 @@ enabled = true
     let mut builder = test_codex()
         .with_home(codex_home)
         .with_extensions(skills_extensions())
-        .with_auth(CodexAuth::create_dummy_workload_identity_for_testing())
+        .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| config.managed_auth_base_url = managed_auth_base_url);
     let test = builder.build_with_auto_env(&server).await?;
 
@@ -1108,7 +1108,6 @@ async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
 
     #[derive(Clone, Copy)]
     enum TargetAuth {
-        WorkloadIdentity,
         ApiKey,
         BedrockApiKey,
         NoCodexAuth,
@@ -1124,20 +1123,6 @@ async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
     }
 
     const FIXTURES: &[Fixture] = &[
-        Fixture {
-            name: "Workload Identity",
-            target_auth: TargetAuth::WorkloadIdentity,
-            target_model_provider_id: "openai",
-            expected_target_loaded_plugin_skills: &[CHATGPT_CURATED_PLUGIN_SKILL],
-            expected_target_skill_description: "chatgpt description",
-        },
-        Fixture {
-            name: "Workload Identity with a custom provider",
-            target_auth: TargetAuth::WorkloadIdentity,
-            target_model_provider_id: "ollama",
-            expected_target_loaded_plugin_skills: &[CHATGPT_CURATED_PLUGIN_SKILL],
-            expected_target_skill_description: "chatgpt description",
-        },
         Fixture {
             name: "API key",
             target_auth: TargetAuth::ApiKey,
@@ -1278,7 +1263,7 @@ enabled = true
         let mut builder = test_codex()
             .with_home(Arc::clone(&codex_home))
             .with_extensions(skills_extensions())
-            .with_auth(CodexAuth::create_dummy_workload_identity_for_testing());
+            .with_auth(CodexAuth::from_api_key("test-api-key"));
         let test_codex = builder.build_with_auto_env(&server).await?;
         let initial_skills = loaded_plugin_skills_for_config(&test_codex, &test_codex.config).await;
         assert_loaded_plugin_skills(
@@ -1297,7 +1282,6 @@ enabled = true
         )?;
 
         let expected_auth_mode = match fixture.target_auth {
-            TargetAuth::WorkloadIdentity => Some(AuthMode::WorkloadIdentity),
             TargetAuth::ApiKey => {
                 codex_login::login_with_api_key(
                     codex_home.path(),

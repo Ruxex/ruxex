@@ -7,6 +7,6 @@ pub(crate) fn for_auth(
     program: Option<CyberAccessProgram>,
 ) -> Option<AccessPrograms> {
     program
-        .filter(|_| auth.is_some_and(CodexAuth::is_managed_auth))
+        .filter(|_| false)
         .map(AccessPrograms::from)
 }

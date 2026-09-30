@@ -1,7 +1,7 @@
 use anyhow::Result;
 use anyhow::ensure;
-use app_test_support::WorkloadIdentityAuthFixture;
-use app_test_support::write_workload_identity_auth;
+use app_test_support::ApiKeyAuthFixture;
+use app_test_support::write_api_key_auth;
 use codex_config::CONFIG_TOML_FILE;
 use codex_config::MarketplaceConfigUpdate;
 use codex_config::record_user_marketplace;
@@ -1168,11 +1168,11 @@ impl RemoteMarketplaceFixture {
                 server.uri()
             ),
         )?;
-        write_workload_identity_auth(
+        write_api_key_auth(
             home.path(),
-            WorkloadIdentityAuthFixture::new("chatgpt-token")
+            ApiKeyAuthFixture::new("chatgpt-token")
                 .account_id("account-123")
-                .chatgpt_account_id("account-123"),
+                .workspace_id("account-123"),
             AuthCredentialsStoreMode::File,
         )?;
         let plugin = json!({

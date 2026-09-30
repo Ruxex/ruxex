@@ -50,8 +50,8 @@ async fn mount_personal_access_token_startup(server: &MockServer) {
         .and(header("authorization", PERSONAL_ACCESS_TOKEN_AUTHORIZATION))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
             "email": "user@example.com",
-            "chatgpt_user_id": "user-pat",
-            "chatgpt_account_id": PERSONAL_ACCESS_TOKEN_ACCOUNT_ID,
+            "user_id": "user-pat",
+            "workspace_id": PERSONAL_ACCESS_TOKEN_ACCOUNT_ID,
             "chatgpt_plan_type": "enterprise",
             "chatgpt_account_is_fedramp": true,
         })))

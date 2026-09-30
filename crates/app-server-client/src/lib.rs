@@ -1305,7 +1305,7 @@ mod tests {
                     id: request.id,
                     result: serde_json::to_value(GetAccountResponse {
                         account: None,
-                        requires_first_party_auth: false,
+                        requires_auth: false,
                     })
                     .expect("response should serialize"),
                 }),
@@ -1359,7 +1359,7 @@ mod tests {
                     id: request.id,
                     result: serde_json::to_value(GetAccountResponse {
                         account: None,
-                        requires_first_party_auth: false,
+                        requires_auth: false,
                     })
                     .expect("response should serialize"),
                 }),
@@ -1434,7 +1434,7 @@ mod tests {
             response,
             GetAccountResponse {
                 account: None,
-                requires_first_party_auth: false,
+                requires_auth: false,
             }
         );
 
@@ -1535,7 +1535,7 @@ mod tests {
                     id: request.id,
                     result: serde_json::to_value(GetAccountResponse {
                         account: None,
-                        requires_first_party_auth: false,
+                        requires_auth: false,
                     })
                     .expect("response should serialize"),
                 }),
@@ -1588,7 +1588,7 @@ mod tests {
             first_response,
             GetAccountResponse {
                 account: None,
-                requires_first_party_auth: false,
+                requires_auth: false,
             }
         );
 

@@ -1,9 +1,9 @@
 use anyhow::Result;
 use anyhow::bail;
-use app_test_support::WorkloadIdentityAuthFixture;
+use app_test_support::ApiKeyAuthFixture;
 use app_test_support::TestAppServer;
 use app_test_support::to_response;
-use app_test_support::write_workload_identity_auth;
+use app_test_support::write_api_key_auth;
 use app_test_support::write_models_cache;
 use codex_app_server_protocol::AttestationGenerateResponse;
 use codex_app_server_protocol::ClientInfo;
@@ -56,13 +56,13 @@ async fn attestation_generate_round_trip_adds_header_to_responses_websocket_hand
     .await;
 
     let codex_home = TempDir::new()?;
-    create_workload_identity_websocket_config(
+    create_authenticated_websocket_config(
         codex_home.path(),
         &websocket_server.uri().replacen("ws://", "http://", 1),
     )?;
-    write_workload_identity_auth(
+    write_api_key_auth(
         codex_home.path(),
-        WorkloadIdentityAuthFixture::new("access-chatgpt").plan_type("pro"),
+        ApiKeyAuthFixture::new("access-chatgpt").plan_type("pro"),
         AuthCredentialsStoreMode::File,
     )?;
     write_models_cache(codex_home.path()).await?;
@@ -167,7 +167,7 @@ async fn attestation_generate_round_trip_adds_header_to_responses_websocket_hand
     Ok(())
 }
 
-fn create_workload_identity_websocket_config(
+fn create_authenticated_websocket_config(
     codex_home: &Path,
     server_uri: &str,
 ) -> std::io::Result<()> {
@@ -187,7 +187,7 @@ base_url = "{server_uri}/v1"
 wire_api = "responses"
 request_max_retries = 0
 stream_max_retries = 0
-requires_first_party_auth = true
+requires_auth = true
 supports_websockets = true
 "#
         ),

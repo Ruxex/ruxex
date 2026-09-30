@@ -171,12 +171,13 @@ pub struct ModelProviderInfo {
     /// Maximum time (in milliseconds) to wait for a websocket connection attempt before treating
     /// it as failed.
     pub websocket_connect_timeout_ms: Option<u64>,
-    /// Does this provider require an OpenAI API Key or ChatGPT login token? If true,
-    /// user is presented with login screen on first run, and login preference and token/key
-    /// are stored in auth.json. If false (which is the default), login screen is skipped,
-    /// and API key (if needed) comes from the "env_key" environment variable.
+    /// Does this provider require stored authentication? If true, the user is
+    /// presented with the authentication screen on first run and the selected
+    /// credential is stored in auth.json. If false (which is the default), the
+    /// authentication screen is skipped and provider configuration supplies any
+    /// required credential.
     #[serde(default)]
-    pub requires_first_party_auth: bool,
+    pub requires_auth: bool,
     /// Whether this provider supports the Responses API WebSocket transport.
     #[serde(default)]
     pub supports_websockets: bool,
@@ -293,8 +294,8 @@ other non-default provider fields are not supported"
             if self.auth.is_some() {
                 conflicts.push("auth");
             }
-            if self.requires_first_party_auth {
-                conflicts.push("requires_first_party_auth");
+            if self.requires_auth {
+                conflicts.push("requires_auth");
             }
 
             if !conflicts.is_empty() {
@@ -355,8 +356,8 @@ other non-default provider fields are not supported"
         if self.experimental_bearer_token.is_some() {
             conflicts.push("experimental_bearer_token");
         }
-        if self.requires_first_party_auth {
-            conflicts.push("requires_first_party_auth");
+        if self.requires_auth {
+            conflicts.push("requires_auth");
         }
 
         if conflicts.is_empty() {
@@ -511,7 +512,7 @@ other non-default provider fields are not supported"
                 .into_iter()
                 .collect(),
             ),
-            requires_first_party_auth: true,
+            requires_auth: true,
             supports_websockets: true,
             ..ModelProviderInfo::default()
         }
@@ -547,7 +548,7 @@ other non-default provider fields are not supported"
             stream_max_retries: None,
             stream_idle_timeout_ms: None,
             websocket_connect_timeout_ms: None,
-            requires_first_party_auth: false,
+            requires_auth: false,
             supports_websockets: false,
             supports_standalone_web_search: false,
         }
@@ -571,12 +572,12 @@ other non-default provider fields are not supported"
         }
     }
 
-    /// Returns whether this explicitly configured provider opts into the
-    /// remaining first-party OpenAI behavior.
+    /// Returns whether this explicitly configured provider uses the
+    /// OpenAI-compatible provider name.
     ///
     /// The provider is no longer bundled by default; this check is retained
     /// for callers that still need to distinguish an explicitly configured
-    /// first-party-compatible entry until the auth boundary is removed.
+    /// provider entry.
     pub fn is_openai(&self) -> bool {
         self.name == "OpenAI"
     }
@@ -677,7 +678,7 @@ pub fn create_responses_provider_with_base_url(
         stream_max_retries: None,
         stream_idle_timeout_ms: None,
         websocket_connect_timeout_ms: None,
-        requires_first_party_auth: false,
+        requires_auth: false,
         supports_websockets: false,
         supports_standalone_web_search: false,
     }
