@@ -40,17 +40,10 @@ const DEFAULT_READ_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[tokio::test]
 async fn standalone_web_search_round_trips_output_for_custom_provider() -> Result<()> {
-    assert_standalone_web_search_round_trips_output(WebSearchProvider::CustomResponses).await
+    assert_standalone_web_search_round_trips_output().await
 }
 
-#[derive(Clone, Copy)]
-enum WebSearchProvider {
-    CustomResponses,
-}
-
-async fn assert_standalone_web_search_round_trips_output(
-    provider: WebSearchProvider,
-) -> Result<()> {
+async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
     let call_id = "web-run-1";
     let expected_model_id = "model-id-from-search-context";
     let search_context = json!({
