@@ -35,9 +35,9 @@
 - Modify: `docs/pre-release-compatibility-inventory.md`
 - Create: `.superpowers/sdd/2026-10-01-remove-chatgpt-contract-holds/progress.md`
 
-- [ ] Record that the exact account header, moderation metadata key/event, and named remote clients are `remove`, not `hold`, because their producers are deleted or outside this fork's product scope.
-- [ ] Run the pre-change negative guard proving the old Rust matches still exist.
-- [ ] Commit the inventory decision.
+- [x] Record that the exact account header, moderation metadata key/event, and named remote clients are `remove`, not `hold`, because their producers are deleted or outside this fork's product scope.
+- [x] Run the pre-change negative guard proving the old Rust matches still exist.
+- [x] Commit the inventory decision.
 
 ### Task 2: Remove the ChatGPT account-header adapter
 
@@ -53,10 +53,10 @@
 - Modify: `crates/codex-mcp/src/runtime.rs`
 - Modify: affected auth fixtures and tests under `crates/core`, `crates/cli`, `crates/app-server`, `crates/codex-api`, and `crates/tui`
 
-- [ ] Add the generic optional identity field/accessor to `AuthHeaders` and update external-auth tests to use it instead of a wire header.
-- [ ] Verify the old exact-header assertion fails after the fixture is made provider-neutral.
-- [ ] Remove `ChatGPT-Account-ID`, the FedRAMP-only bearer fields, and their tests; preserve arbitrary header forwarding and cache identity hashing.
-- [ ] Run `just check --tests`, `just check`, and `git diff --check`; commit the auth slice.
+- [x] Add the generic optional identity field/accessor to `AuthHeaders` and update external-auth tests to use it instead of a wire header.
+- [x] Verify the old exact-header assertion fails after the fixture is made provider-neutral.
+- [x] Remove `ChatGPT-Account-ID`, the FedRAMP-only bearer fields, and their tests; preserve arbitrary header forwarding and cache identity hashing.
+- [x] Run `just check --tests`, `just check`, and `git diff --check`; commit the auth slice.
 
 ### Task 3: Remove the OpenAI moderation metadata path
 
@@ -77,9 +77,9 @@
 - Delete/update: moderation fixtures and test assertions
 - Regenerate: checked-in app-server protocol schemas
 
-- [ ] Remove the parser, response event, core event, rollout handling, app-server notification, and test fixture for the ChatGPT-only moderation metadata.
-- [ ] Verify safety buffering and model verification paths remain present.
-- [ ] Run `just generate`, inspect the generated diff, then run `just check --tests`, `just check`, and commit the protocol slice.
+- [x] Remove the parser, response event, core event, rollout handling, app-server notification, and test fixture for the ChatGPT-only moderation metadata.
+- [x] Verify safety buffering and model verification paths remain present.
+- [x] Run `just generate`, inspect the generated diff, then run `just check --tests`, `just check`, and commit the protocol slice.
 
 ### Task 4: Remove the deleted Remote Control client branch
 
@@ -90,9 +90,9 @@
 - Modify: `crates/app-server/src/request_processors/thread_lifecycle.rs`
 - Modify/delete: `crates/app-server/tests/suite/v2/thread_resume.rs`
 
-- [ ] Remove the client-name predicate and response-only redaction state from thread resume.
-- [ ] Verify ordinary thread resume still returns persisted MCP/image items unchanged.
-- [ ] Run the required checks and commit the Remote Control slice.
+- [x] Remove the client-name predicate and response-only redaction state from thread resume.
+- [x] Verify ordinary thread resume still returns persisted MCP/image items unchanged.
+- [x] Run the required checks and commit the Remote Control slice.
 
 ### Task 5: Remove stale hosted fixtures and close the audit
 
@@ -102,6 +102,6 @@
 - Modify: `docs/pre-release-compatibility-inventory.md`
 - Regenerate: only artifacts changed by `just generate`
 
-- [ ] Remove exact header assertions from generic tests and delete tests whose sole producer/consumer was deleted hosted Apps or Remote Control behavior; retain Marketplace tests.
-- [ ] Run final case-insensitive Rust search and confirm zero matches.
-- [ ] Run `just generate`, `just check --tests`, `just check`, `git diff --check`, inspect status and all commits, then commit the final audit if documentation or generated output changed.
+- [x] Remove exact header assertions from generic tests and delete tests whose sole producer/consumer was deleted hosted Apps or Remote Control behavior; retain Marketplace tests.
+- [x] Run final case-insensitive Rust search and confirm zero matches.
+- [x] Run `just generate`, `just check --tests`, `just check`, `git diff --check`, inspect status and all commits, then commit the final audit if documentation or generated output changed.
