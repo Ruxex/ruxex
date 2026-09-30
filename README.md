@@ -52,6 +52,30 @@ This snapshot uses the same scope as the preceding one: source, tests,
 documentation, and generated files are included, while untracked and ignored
 files are excluded.
 
+## Current repository snapshot
+
+- Snapshot commit: `1b846427c7a092b96acb97ced6148d43cc1e1e23` (`Remove residual ChatGPT auth artifacts`)
+- Approximate size at this commit: 1,632,277 lines across 6,359 Git-tracked files
+
+Approximate line count by file type at this commit:
+
+| Category | Lines |
+| --- | ---: |
+| Rust | 1,267,670 |
+| TypeScript | 6,455 |
+| Python | 25,346 |
+| SQL | 753 |
+| Shell/PowerShell | 2,503 |
+| C/C headers | 6,265 |
+| Protocol Buffers | 269 |
+| Markdown | 18,690 |
+| Config/data (JSON, TOML, YAML, XML, lockfiles) | 269,814 |
+| Other tracked files | 34,512 |
+
+This snapshot uses the same scope as the preceding one: source, tests,
+documentation, and generated files are included, while untracked and ignored
+files are excluded.
+
 The Rust implementation remains in a root Cargo workspace. Member crates live
 under `crates/`; shared utility and extension crates retain their existing
 subdirectories. Vendored bubblewrap sources live in `crates/vendor/` to preserve
