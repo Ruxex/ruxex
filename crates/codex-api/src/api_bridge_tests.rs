@@ -364,7 +364,7 @@ fn map_api_error_preserves_generic_response_diagnostics() {
 
     let err = map_api_error(ApiError::Transport(TransportError::Http {
         status: http::StatusCode::UNAUTHORIZED,
-        url: Some("https://chatgpt.com/backend-api/codex/models".to_string()),
+        url: Some("https://provider.example/models".to_string()),
         headers: Some(headers),
         body: Some(r#"{"detail":"Unauthorized"}"#.to_string()),
     }));

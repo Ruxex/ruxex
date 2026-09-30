@@ -4317,7 +4317,7 @@ mod tests {
     #[test]
     fn session_source_restriction_product_maps_custom_sources_to_products() {
         assert_eq!(
-            SessionSource::Custom("chatgpt".to_string()).restriction_product(),
+            SessionSource::Custom("external".to_string()).restriction_product(),
             None
         );
         assert_eq!(
@@ -4341,7 +4341,7 @@ mod tests {
             Product::Codex
         );
         assert_eq!(
-            serde_json::from_str::<Product>(r#""chatgpt""#).unwrap(),
+            serde_json::from_str::<Product>(r#""external""#).unwrap(),
             Product::Unknown
         );
         assert_eq!(
@@ -4353,7 +4353,7 @@ mod tests {
             Some(Product::Codex)
         );
         assert_eq!(
-            SessionSource::Custom("chatgpt".to_string()).restriction_product(),
+            SessionSource::Custom("external".to_string()).restriction_product(),
             None
         );
         assert_eq!(
@@ -4366,7 +4366,7 @@ mod tests {
     #[test]
     fn session_source_matches_product_restriction() {
         assert!(
-            !SessionSource::Custom("chatgpt".to_string())
+            !SessionSource::Custom("external".to_string())
                 .matches_product_restriction(&[Product::Codex])
         );
         assert!(SessionSource::VSCode.matches_product_restriction(&[Product::Codex]));

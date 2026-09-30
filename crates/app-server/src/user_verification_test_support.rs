@@ -249,7 +249,9 @@ impl Harness {
 }
 
 pub(super) fn write_auth(home: &std::path::Path, token: &str) -> Result<()> {
-    let payload = URL_SAFE_NO_PAD.encode(serde_json::to_vec(&json!({"jti": token, "https://api.openai.com/auth": {"workspace_id": "account-1", "chatgpt_account_user_id": "membership-1"}}))?);
+    let payload = URL_SAFE_NO_PAD.encode(serde_json::to_vec(
+        &json!({"jti": token, "https://api.openai.com/auth": {"workspace_id": "account-1"}}),
+    )?);
     write_api_key_auth(
         home,
         ApiKeyAuthFixture::new(format!("header.{payload}.signature"))

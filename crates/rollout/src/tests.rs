@@ -50,13 +50,11 @@ const NO_SOURCE_FILTER: &[SessionSource] = &[];
 const TEST_PROVIDER: &str = "test-provider";
 
 #[test]
-fn interactive_session_sources_exclude_removed_non_codex_client_filters() {
-    assert!(!INTERACTIVE_SESSION_SOURCES.iter().any(|source| {
-        matches!(
-            source,
-            SessionSource::Custom(name) if name == "chatgpt" || name == "atlas"
-        )
-    }));
+fn interactive_session_sources_include_only_current_interactive_clients() {
+    assert_eq!(
+        INTERACTIVE_SESSION_SOURCES.as_slice(),
+        &[SessionSource::Cli, SessionSource::VSCode]
+    );
 }
 
 #[test]
