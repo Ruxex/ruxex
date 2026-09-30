@@ -3324,38 +3324,44 @@ impl fmt::Display for McpAuthStatus {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema, TS)]
-#[serde(rename_all = "lowercase")]
-#[ts(rename_all = "lowercase")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, JsonSchema, TS)]
+#[schemars(with = "String")]
+#[ts(type = "string")]
 pub enum Product {
-    #[serde(alias = "CHATGPT")]
-    Chatgpt,
-    #[serde(alias = "CODEX")]
+    /// Compatibility exception: retain `Product::Codex` even if this repository's name eventually
+    /// drops "codex".
+    #[serde(rename = "codex")]
     Codex,
-    #[serde(alias = "ATLAS")]
-    Atlas,
+    /// Product labels not supported by this Codex runtime are retained as non-matching values.
+    #[serde(rename = "unknown")]
+    Unknown,
 }
-impl Product {
-    pub fn to_app_platform(self) -> &'static str {
-        match self {
-            Self::Chatgpt => "chat",
-            Self::Codex => "codex",
-            Self::Atlas => "atlas",
-        }
-    }
 
+impl<'de> Deserialize<'de> for Product {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = String::deserialize(deserializer)?;
+        Ok(if value.eq_ignore_ascii_case("codex") {
+            Self::Codex
+        } else {
+            Self::Unknown
+        })
+    }
+}
+
+impl Product {
     pub fn from_session_source_name(value: &str) -> Option<Self> {
         let normalized = value.trim().to_ascii_lowercase();
         match normalized.as_str() {
-            "chatgpt" => Some(Self::Chatgpt),
             "codex" => Some(Self::Codex),
-            "atlas" => Some(Self::Atlas),
             _ => None,
         }
     }
 
     pub fn matches_product_restriction(&self, products: &[Product]) -> bool {
-        products.is_empty() || products.contains(self)
+        products.is_empty() || (matches!(self, Self::Codex) && products.contains(self))
     }
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema, TS)]
@@ -4312,11 +4318,11 @@ mod tests {
     fn session_source_restriction_product_maps_custom_sources_to_products() {
         assert_eq!(
             SessionSource::Custom("chatgpt".to_string()).restriction_product(),
-            Some(Product::Chatgpt)
+            None
         );
         assert_eq!(
             SessionSource::Custom("ATLAS".to_string()).restriction_product(),
-            Some(Product::Atlas)
+            None
         );
         assert_eq!(
             SessionSource::Custom("codex".to_string()).restriction_product(),
@@ -4329,11 +4335,36 @@ mod tests {
     }
 
     #[test]
-    fn session_source_matches_product_restriction() {
-        assert!(
-            SessionSource::Custom("chatgpt".to_string())
-                .matches_product_restriction(&[Product::Chatgpt])
+    fn product_deserialization_keeps_codex_and_discards_other_products() {
+        assert_eq!(
+            serde_json::from_str::<Product>(r#""CoDeX""#).unwrap(),
+            Product::Codex
         );
+        assert_eq!(
+            serde_json::from_str::<Product>(r#""chatgpt""#).unwrap(),
+            Product::Unknown
+        );
+        assert_eq!(
+            serde_json::from_str::<Product>(r#""atlas""#).unwrap(),
+            Product::Unknown
+        );
+        assert_eq!(
+            SessionSource::Custom("codex".to_string()).restriction_product(),
+            Some(Product::Codex)
+        );
+        assert_eq!(
+            SessionSource::Custom("chatgpt".to_string()).restriction_product(),
+            None
+        );
+        assert_eq!(
+            SessionSource::Custom("atlas".to_string()).restriction_product(),
+            None
+        );
+        assert!(!Product::Unknown.matches_product_restriction(&[Product::Unknown]));
+    }
+
+    #[test]
+    fn session_source_matches_product_restriction() {
         assert!(
             !SessionSource::Custom("chatgpt".to_string())
                 .matches_product_restriction(&[Product::Codex])
@@ -4341,7 +4372,7 @@ mod tests {
         assert!(SessionSource::VSCode.matches_product_restriction(&[Product::Codex]));
         assert!(
             !SessionSource::Custom("atlas-dev".to_string())
-                .matches_product_restriction(&[Product::Atlas])
+                .matches_product_restriction(&[Product::Codex])
         );
         assert!(SessionSource::Custom("atlas-dev".to_string()).matches_product_restriction(&[]));
     }

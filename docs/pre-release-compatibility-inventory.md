@@ -210,6 +210,14 @@ larger than a single compatibility symbol: each row must be audited from its
 hosted producer through protocol, configuration, UI, and runtime consumers
 before code is removed.
 
+### Persisted session/history compatibility
+
+| Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |
+|---|---|---|---|---|
+| `crates/rollout/src/lib.rs::INTERACTIVE_SESSION_SOURCES` and its old `chatgpt`/`atlas` entries | The rollout thread-listing producer used this allowlist to show interactive sessions. No current in-repository session producer writes either non-Codex source; persisted records are decoded by the generic `SessionSource::Custom(String)` reader instead. | Current CLI and VS Code interactive session sources; generic custom-source decoding remains available for existing records | `remove` the obsolete ChatGPT/Atlas interactive filter entries; `retain` generic persisted `SessionSource` decoding | `rg -n 'INTERACTIVE_SESSION_SOURCES|Custom\("(chatgpt|atlas)"' crates/rollout/src/lib.rs; `just check --tests`; `just check` |
+| `crates/app-server/src/request_processors/thread_resume_redaction.rs::CHATGPT_REMOTE_CLIENT_NAMES` | App-server initialization produces the client name; thread resume consumes it to redact MCP arguments/results and image-generation items for the two named remote clients. No in-repository client produces those names, but the branch remains a response privacy boundary for the active remote-client contract. | Response-only payload redaction for the named remote clients; persisted rollout and model history remain unchanged | `retain` the privacy/security behavior; do not remove it solely because the producer is outside this repository | `rg -n 'CHATGPT_REMOTE_CLIENT_NAMES|should_redact_thread_resume_payloads|redact_thread_resume_payloads' crates/app-server --glob '*.rs'; `just check --tests`; `just check` |
+| `crates/protocol/src/protocol.rs::Product`, `Product::from_session_source_name`, and product restriction consumers | Skill/plugin metadata producers and product-restriction consumers still use the active `products` boundary. The runtime now keeps `Product::Codex` as the sole supported value; unsupported serialized labels become `Product::Unknown` and cannot satisfy a non-empty restriction. | Codex-only product restriction model with generic unknown-value handling | `migrate-in-place` the product model; `retain` the `products` attribute and existing filtering path; remove ChatGPT/Atlas built-in values while preserving `Product::Codex` as a stable compatibility identifier | `rg -n 'Product::(Codex|Unknown)|from_session_source_name|products:' crates --glob '*.rs' --glob '!**/*test*.rs' --glob '!**/tests/**'; `just check --tests`; `just check` |
+
 ### Final dependency and documentation audit
 
 | Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |

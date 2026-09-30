@@ -170,4 +170,9 @@ OpenAI account/entitlement、host-owned Apps MCP、Apps 固有 UI/protocol と�
    obsolete な環境変数マーカーの cleanup であり、generated index の更新は Hawk の
    更新をユーザーが明示的に依頼した場合に行う。
    Apps/MCP の専用 adapter は削除済みで、通常の MCP/OAuth/elicitation/security は保持済み。
+   Session/history compatibility の監査では、`crates/rollout/src/lib.rs` の
+   ChatGPT/Atlas 専用 interactive filter entries を削除し、汎用の persisted
+   reader、remote resume の payload redaction、Codex-only product filtering は保持した。
+   詳細は compatibility inventory の `Persisted session/history compatibility`
+   セクションに記録した。
 6. 未完了の各項目について producer/consumer を台帳に記録し、`remove`、`retain`、`migrate-in-place` を決めた後、`just check`、必要に応じて `just check --tests`、生成物があれば `just generate` を実行する。

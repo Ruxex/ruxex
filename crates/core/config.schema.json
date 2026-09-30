@@ -1561,7 +1561,7 @@
       "type": "object"
     },
     "McpServerAuth": {
-      "description": "Authentication flow for an HTTP MCP server. Explicit credentials take precedence for OAuth and ChatGPT; EMA rejects alternate credentials and fallback.",
+      "description": "Authentication flow for an HTTP MCP server. Explicit credentials take precedence over OAuth; EMA rejects alternate credentials and fallback.",
       "oneOf": [
         {
           "description": "Use stored MCP OAuth credentials when available. Starting an OAuth login is a separate operation.",

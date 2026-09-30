@@ -73,16 +73,16 @@ policy:
             }),
             policy: Some(SkillPolicy {
                 allow_implicit_invocation: Some(false),
-                products: vec![Product::Codex, Product::Atlas],
+                products: vec![Product::Codex, Product::Unknown],
             }),
         }]
     );
-    let atlas =
-        load_environment_skills_from_root(LOCAL_FS.as_ref(), &root_uri, Some(Product::Atlas)).await;
-    assert_eq!(atlas.skills, outcome.skills);
-    let filtered =
-        load_environment_skills_from_root(LOCAL_FS.as_ref(), &root_uri, Some(Product::Chatgpt))
-            .await;
+    let filtered = load_environment_skills_from_root(
+        LOCAL_FS.as_ref(),
+        &root_uri,
+        Some(Product::Unknown),
+    )
+    .await;
     assert!(filtered.skills.is_empty());
 }
 

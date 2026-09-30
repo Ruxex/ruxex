@@ -1936,7 +1936,7 @@ fn list_marketplaces_resolves_plugin_interface_paths_to_absolute() {
     );
     assert_eq!(
         marketplaces[0].plugins[0].policy.products,
-        Some(vec![Product::Codex, Product::Chatgpt, Product::Atlas])
+        Some(vec![Product::Codex, Product::Unknown, Product::Unknown])
     );
     assert_eq!(
         marketplaces[0].plugins[0].interface,
@@ -2198,7 +2198,7 @@ fn find_installable_marketplace_plugin_rejects_disallowed_product() {
     let err = find_installable_marketplace_plugin(
         &AbsolutePathBuf::try_from(repo_root.join(".agents/plugins/marketplace.json")).unwrap(),
         "chatgpt-plugin",
-        Some(Product::Atlas),
+        Some(Product::Codex),
     )
     .unwrap_err();
 

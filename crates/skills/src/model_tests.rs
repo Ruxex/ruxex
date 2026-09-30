@@ -34,3 +34,23 @@ fn policy_restricts_implicit_invocation_and_products() {
     assert!(skill.matches_product_restriction(Some(Product::Codex)));
     assert!(!skill.matches_product_restriction(/*restriction_product*/ None));
 }
+
+#[test]
+fn policy_product_restrictions_reject_unknown_only_and_allow_codex_mixed() {
+    let skill = |products| EnvironmentSkillMetadata {
+        path_to_skills_md: PathUri::parse("file:///skills/demo/SKILL.md").expect("valid skill URI"),
+        name: "demo".to_string(),
+        description: "Demo skill".to_string(),
+        short_description: None,
+        dependencies: None,
+        policy: Some(SkillPolicy {
+            allow_implicit_invocation: None,
+            products,
+        }),
+    };
+
+    assert!(!skill(vec![Product::Unknown]).matches_product_restriction(Some(Product::Codex)));
+    assert!(skill(vec![Product::Codex, Product::Unknown])
+        .matches_product_restriction(Some(Product::Codex)));
+    assert!(skill(Vec::new()).matches_product_restriction(Some(Product::Codex)));
+}
