@@ -168,11 +168,6 @@ async fn responses_mode_stream_cli_supports_personal_access_tokens() {
         request.header("authorization").as_deref(),
         Some("Bearer at-cli-test")
     );
-    assert_eq!(
-        request.header("chatgpt-account-id").as_deref(),
-        Some(PERSONAL_ACCESS_TOKEN_ACCOUNT_ID)
-    );
-    assert_eq!(request.header("x-openai-fedramp").as_deref(), Some("true"));
     server.verify().await;
 }
 
@@ -186,11 +181,6 @@ async fn responses_mode_stream_cli_does_not_attempt_oauth_refresh_for_personal_a
     Mock::given(method("POST"))
         .and(path("/api/codex/responses"))
         .and(header("authorization", PERSONAL_ACCESS_TOKEN_AUTHORIZATION))
-        .and(header(
-            "chatgpt-account-id",
-            PERSONAL_ACCESS_TOKEN_ACCOUNT_ID,
-        ))
-        .and(header("x-openai-fedramp", "true"))
         .respond_with(ResponseTemplate::new(401).set_body_string("unauthorized"))
         .expect(1..)
         .mount(&server)

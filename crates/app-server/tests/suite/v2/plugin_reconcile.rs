@@ -272,7 +272,6 @@ async fn mount_installed_snapshot(server: &MockServer, plugins: Vec<Value>) {
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param("includeDownloadUrls", "true"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "plugins": plugins,
             "pagination": { "limit": 200, "next_page_token": null },

@@ -393,10 +393,13 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
     release_store.send(()).unwrap();
     timeout(Duration::from_secs(10), old_refresh).await??;
     assert_eq!(manager.get_remote_models().await, vec![new_model]);
-    for (mock, account) in [(old_request, "account_id"), (new_request, "second-account")] {
+    for (mock, token) in [(old_request, "test-api-key"), (new_request, "second-account-token")] {
         let requests = mock.requests();
         assert_eq!(requests.len(), 1);
-        assert_eq!(requests[0].headers["chatgpt-account-id"], account);
+        assert_eq!(
+            requests[0].headers["authorization"],
+            format!("Bearer {token}")
+        );
     }
 
     let response = mount_sse_once(
@@ -411,8 +414,8 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
         .await?;
     let request = response.single_request();
     assert_eq!(
-        request.header("chatgpt-account-id").as_deref(),
-        Some("second-account")
+        request.header("authorization").as_deref(),
+        Some("Bearer second-account-token")
     );
     assert_eq!(request.body_json()["reasoning"]["summary"], "detailed");
     Ok(())

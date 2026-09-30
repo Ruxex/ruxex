@@ -67,7 +67,6 @@ async fn plugin_share_save_uploads_local_plugin() -> Result<()> {
     Mock::given(method("POST"))
         .and(path("/backend-api/public/plugins/workspace/upload-url"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(201).set_body_json(json!({
             "file_id": "file_123",
             "upload_url": format!("{}/upload/file_123", server.uri()),
@@ -87,7 +86,6 @@ async fn plugin_share_save_uploads_local_plugin() -> Result<()> {
     Mock::given(method("POST"))
         .and(path("/backend-api/public/plugins/workspace"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .and(body_json(json!({
             "file_id": "file_123",
             "etag": "\"upload_etag_123\"",
@@ -132,7 +130,6 @@ async fn plugin_share_save_uploads_local_plugin() -> Result<()> {
         .and(path("/backend-api/ps/plugins/workspace/created"))
         .and(query_param("limit", "200"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "plugins": [remote_plugin_json("plugins_123")],
             "pagination": empty_pagination_json(),
@@ -144,7 +141,6 @@ async fn plugin_share_save_uploads_local_plugin() -> Result<()> {
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param("scope", "WORKSPACE"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "plugins": [installed_remote_plugin_json("plugins_123")],
             "pagination": empty_pagination_json(),
@@ -210,7 +206,6 @@ async fn plugin_share_save_forwards_access_policy() -> Result<()> {
     Mock::given(method("POST"))
         .and(path("/backend-api/public/plugins/workspace/upload-url"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(201).set_body_json(json!({
             "file_id": "file_123",
             "upload_url": format!("{}/upload/file_123", server.uri()),
@@ -547,7 +542,6 @@ async fn plugin_share_list_returns_created_workspace_plugins() -> Result<()> {
         .and(path("/backend-api/ps/plugins/workspace/created"))
         .and(query_param("limit", "200"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "plugins": [remote_plugin_json("plugins_123")],
             "pagination": empty_pagination_json(),
@@ -559,7 +553,6 @@ async fn plugin_share_list_returns_created_workspace_plugins() -> Result<()> {
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param("scope", "WORKSPACE"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "plugins": [installed_remote_plugin_json("plugins_123")],
             "pagination": empty_pagination_json(),
@@ -947,7 +940,6 @@ async fn plugin_share_update_targets_updates_share_targets() -> Result<()> {
     Mock::given(method("PUT"))
         .and(path("/backend-api/ps/plugins/plugins_123/shares"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .and(body_json(json!({
             "discoverability": "UNLISTED",
             "targets": [
@@ -1061,7 +1053,6 @@ async fn plugin_share_update_targets_publishes_workspace_plugin() -> Result<()> 
     Mock::given(method("PUT"))
         .and(path("/backend-api/ps/plugins/plugins_123/shares"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .and(body_json(json!({
             "discoverability": "LISTED",
             "targets": [],
@@ -1187,7 +1178,6 @@ async fn plugin_share_delete_removes_created_workspace_plugin() -> Result<()> {
     Mock::given(method("DELETE"))
         .and(path("/backend-api/public/plugins/workspace/plugins_123"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(204))
         .expect(1)
         .mount(&server)
@@ -1216,7 +1206,6 @@ async fn plugin_share_delete_removes_created_workspace_plugin() -> Result<()> {
         .and(path("/backend-api/ps/plugins/workspace/created"))
         .and(query_param("limit", "200"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "plugins": [remote_plugin_json("plugins_123")],
             "pagination": empty_pagination_json(),
@@ -1228,7 +1217,6 @@ async fn plugin_share_delete_removes_created_workspace_plugin() -> Result<()> {
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param("scope", "WORKSPACE"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "plugins": [installed_remote_plugin_json("plugins_123")],
             "pagination": empty_pagination_json(),
@@ -1319,7 +1307,6 @@ async fn mount_remote_plugin_detail_with_bundle(
         .and(path(format!("/backend-api/ps/plugins/{remote_plugin_id}")))
         .and(query_param("includeDownloadUrls", "true"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": remote_plugin_id,
             "name": plugin_name,
@@ -1357,7 +1344,6 @@ async fn mount_empty_remote_installed_plugins(server: &MockServer, scope: &str) 
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param("scope", scope))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "plugins": [],
             "pagination": {

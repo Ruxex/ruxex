@@ -743,7 +743,6 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
         {
             for (header, expected) in [
                 ("authorization", "Bearer test-token"),
-                ("chatgpt-account-id", "account-123"),
             ] {
                 assert_eq!(
                     request

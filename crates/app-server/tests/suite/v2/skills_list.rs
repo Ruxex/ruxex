@@ -444,7 +444,6 @@ async fn skills_list_loads_remote_installed_plugin_skills_from_cache() -> Result
             .and(query_param("scope", scope))
             .and(query_param("limit", "200"))
             .and(header("authorization", "Bearer test-token"))
-            .and(header("chatgpt-account-id", "account-123"))
             .respond_with(ResponseTemplate::new(200).set_body_string(body))
             .mount(&server)
             .await;
@@ -484,7 +483,6 @@ async fn skills_list_loads_remote_installed_plugin_skills_from_cache() -> Result
             .and(path("/backend-api/ps/plugins/installed"))
             .and(query_param("scope", scope))
             .and(header("authorization", "Bearer test-token"))
-            .and(header("chatgpt-account-id", "account-123"))
             .respond_with(ResponseTemplate::new(200).set_body_string(body))
             .mount(&server)
             .await;
@@ -493,7 +491,6 @@ async fn skills_list_loads_remote_installed_plugin_skills_from_cache() -> Result
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param_is_missing("scope"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(global_installed_body))
         .mount(&server)
         .await;

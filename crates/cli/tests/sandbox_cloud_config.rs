@@ -91,7 +91,6 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
     Mock::given(method("GET"))
         .and(path("/backend-api/wham/config/bundle"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "workspace-123"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "requirements_toml": {
                 "enterprise_managed": expected_requirements.clone(),

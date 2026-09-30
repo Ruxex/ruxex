@@ -1941,7 +1941,6 @@ async fn plugin_list_includes_remote_marketplaces_when_remote_plugin_enabled(
         .and(query_param("scope", "GLOBAL"))
         .and(query_param("limit", "200"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .and(header("oai-product-sku", "codex"))
         .respond_with(ResponseTemplate::new(200).set_body_string(global_directory_body))
         .mount(&server)
@@ -1951,7 +1950,6 @@ async fn plugin_list_includes_remote_marketplaces_when_remote_plugin_enabled(
         .and(query_param("scope", "WORKSPACE"))
         .and(query_param("limit", "200"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .and(header("oai-product-sku", "codex"))
         .respond_with(ResponseTemplate::new(200).set_body_string(empty_page_body))
         .mount(&server)
@@ -1960,7 +1958,6 @@ async fn plugin_list_includes_remote_marketplaces_when_remote_plugin_enabled(
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param("scope", "GLOBAL"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .and(header("oai-product-sku", "codex"))
         .respond_with(ResponseTemplate::new(200).set_body_string(global_installed_body))
         .mount(&server)
@@ -1969,7 +1966,6 @@ async fn plugin_list_includes_remote_marketplaces_when_remote_plugin_enabled(
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param("scope", "WORKSPACE"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .and(header("oai-product-sku", "codex"))
         .respond_with(ResponseTemplate::new(200).set_body_string(empty_page_body))
         .mount(&server)
@@ -2364,7 +2360,6 @@ async fn app_server_startup_refreshes_cached_remote_catalog_without_blocking_plu
         .and(query_param("scope", "GLOBAL"))
         .and(query_param("limit", "200"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(
             ResponseTemplate::new(200)
                 .set_body_string(refreshed_body)
@@ -2819,7 +2814,6 @@ async fn plugin_list_propagates_openai_curated_remote_collection_errors_when_rem
         .and(query_param("limit", "200"))
         .and(query_param("collection", "vertical"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(500).set_body_string("temporary failure"))
         .mount(&server)
         .await;
@@ -4240,7 +4234,6 @@ async fn assert_disabled_remote_plugin_metadata(
             .and(query_param("scope", scope))
             .and(query_param("limit", "200"))
             .and(header("authorization", "Bearer test-token"))
-            .and(header("chatgpt-account-id", "account-123"))
             .respond_with(ResponseTemplate::new(200).set_body_json(body))
             .mount(&server)
             .await;
@@ -4253,7 +4246,6 @@ async fn assert_disabled_remote_plugin_metadata(
             .and(path("/backend-api/ps/plugins/installed"))
             .and(query_param("scope", scope))
             .and(header("authorization", "Bearer test-token"))
-            .and(header("chatgpt-account-id", "account-123"))
             .respond_with(ResponseTemplate::new(200).set_body_json(body))
             .mount(&server)
             .await;

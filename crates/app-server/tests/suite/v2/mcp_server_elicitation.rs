@@ -1006,7 +1006,6 @@ impl ElicitationRoundTripFixture {
 #[derive(Clone)]
 struct AppsServerState {
     expected_bearer: String,
-    expected_account_id: String,
 }
 
 #[derive(Clone)]
@@ -1405,7 +1404,6 @@ fn sep1034_defaults() -> Value {
 async fn start_apps_server(scenario: ElicitationScenario) -> Result<(String, JoinHandle<()>)> {
     let state = Arc::new(AppsServerState {
         expected_bearer: "Bearer test-token".to_string(),
-        expected_account_id: "account-123".to_string(),
     });
 
     let listener = TcpListener::bind("127.0.0.1:0").await?;
@@ -1442,15 +1440,11 @@ async fn list_directory_connectors(
         .get(AUTHORIZATION)
         .and_then(|value| value.to_str().ok())
         .is_some_and(|value| value == state.expected_bearer);
-    let account_ok = headers
-        .get("chatgpt-account-id")
-        .and_then(|value| value.to_str().ok())
-        .is_some_and(|value| value == state.expected_account_id);
     let external_logos_ok = uri
         .query()
         .is_some_and(|query| query.split('&').any(|pair| pair == "external_logos=true"));
 
-    if !bearer_ok || !account_ok {
+    if !bearer_ok {
         Err(StatusCode::UNAUTHORIZED)
     } else if !external_logos_ok {
         Err(StatusCode::BAD_REQUEST)

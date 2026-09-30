@@ -346,7 +346,6 @@ async fn plugin_install_uses_remote_apps_needing_auth_response() -> Result<()> {
     Mock::given(method("POST"))
         .and(path("/backend-api/ps/apps/batch"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .and(header("oai-product-sku", "codex"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "apps": [{
@@ -624,7 +623,6 @@ async fn plugin_install_tracks_analytics_when_remote_install_is_rate_limited() -
             "/backend-api/ps/plugins/{REMOTE_PLUGIN_ID}/install"
         )))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(/*status_code*/ 429).set_body_string("rate limited"))
         .mount(&server)
         .await;
@@ -2646,15 +2644,11 @@ async fn list_directory_connectors(
         .get(AUTHORIZATION)
         .and_then(|value| value.to_str().ok())
         .is_some_and(|value| value == "Bearer test-token");
-    let account_ok = headers
-        .get("chatgpt-account-id")
-        .and_then(|value| value.to_str().ok())
-        .is_some_and(|value| value == "account-123");
     let external_logos_ok = uri
         .query()
         .is_some_and(|query| query.split('&').any(|pair| pair == "external_logos=true"));
 
-    if !bearer_ok || !account_ok {
+    if !bearer_ok {
         Err(StatusCode::UNAUTHORIZED)
     } else if !external_logos_ok {
         Err(StatusCode::BAD_REQUEST)
@@ -2676,16 +2670,12 @@ async fn batch_apps(
         .get(AUTHORIZATION)
         .and_then(|value| value.to_str().ok())
         .is_some_and(|value| value == "Bearer test-token");
-    let account_ok = headers
-        .get("chatgpt-account-id")
-        .and_then(|value| value.to_str().ok())
-        .is_some_and(|value| value == "account-123");
     let product_sku_ok = headers
         .get("oai-product-sku")
         .and_then(|value| value.to_str().ok())
         .is_some_and(|value| value == "codex");
 
-    if !bearer_ok || !account_ok || !product_sku_ok {
+    if !bearer_ok || !product_sku_ok {
         Err(StatusCode::UNAUTHORIZED)
     } else {
         let app_ids = body
@@ -3047,7 +3037,6 @@ async fn mount_remote_plugin_detail_with_options(
         .and(path(format!("/backend-api/ps/plugins/{remote_plugin_id}")))
         .and(query_param("includeDownloadUrls", "true"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(detail_body))
         .mount(server)
         .await;
@@ -3058,7 +3047,6 @@ async fn mount_empty_remote_installed_plugins(server: &MockServer) {
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param("scope", "GLOBAL"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(
             r#"{
   "plugins": [],
@@ -3078,7 +3066,6 @@ async fn mount_remote_plugin_install(server: &MockServer, remote_plugin_id: &str
             "/backend-api/ps/plugins/{remote_plugin_id}/install"
         )))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(
             ResponseTemplate::new(200)
                 .set_body_string(format!(r#"{{"id":"{remote_plugin_id}","enabled":true}}"#)),
@@ -3098,7 +3085,6 @@ async fn mount_remote_plugin_install_with_apps_needing_auth(
         )))
         .and(query_param("includeAppsNeedingAuth", "true"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": remote_plugin_id,
             "enabled": true,
@@ -3129,7 +3115,6 @@ async fn mount_remote_plugin_install_after_cache_write(
             "/backend-api/ps/plugins/{remote_plugin_id}/install"
         )))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .and(CacheManifestExists { manifest_path })
         .respond_with(
             ResponseTemplate::new(200)

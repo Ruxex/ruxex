@@ -44,8 +44,7 @@ impl AuthProvider for HeaderAuthProvider {
 
 struct AuthManagerAuthProvider {
     auth_manager: Arc<AuthManager>,
-    // Startup auth is only the account-scoped identity anchor. Request
-    // headers always come from the current AuthManager snapshot below.
+    // Request headers always come from the current AuthManager snapshot below.
     expected_auth: CodexAuth,
 }
 
@@ -171,8 +170,6 @@ pub fn auth_provider_from_auth(auth: &CodexAuth) -> SharedAuthProvider {
         }
         CodexAuth::ApiKey(_) => Arc::new(BearerAuthProvider {
             token: auth.get_token().ok(),
-            account_id: auth.get_account_id(),
-            is_fedramp_account: auth.is_fedramp_account(),
         }),
     }
 }
@@ -203,7 +200,6 @@ mod tests {
     use http::header::AUTHORIZATION;
     use pretty_assertions::assert_eq;
     use std::num::NonZeroU64;
-    use std::path::PathBuf;
 
     use super::*;
 
@@ -228,10 +224,6 @@ mod tests {
         ambient_headers.insert(
             AUTHORIZATION,
             HeaderValue::from_static("Bearer ambient-token"),
-        );
-        ambient_headers.insert(
-            "ChatGPT-Account-ID",
-            HeaderValue::from_static("account-123"),
         );
         let ambient_auth = CodexAuth::Headers(AuthHeaders::new(ambient_headers));
 
@@ -316,10 +308,6 @@ mod tests {
         expected.insert(
             AUTHORIZATION,
             HeaderValue::from_static("Bearer ambient-token"),
-        );
-        expected.insert(
-            "ChatGPT-Account-ID",
-            HeaderValue::from_static("account-123"),
         );
         let ambient_auth = CodexAuth::Headers(AuthHeaders::new(expected.clone()));
 

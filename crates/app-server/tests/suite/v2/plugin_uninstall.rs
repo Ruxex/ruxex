@@ -188,7 +188,6 @@ async fn plugin_uninstall_writes_remote_plugin_to_cloud_when_remote_plugin_enabl
             "/backend-api/ps/plugins/{REMOTE_PLUGIN_ID}/uninstall"
         )))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(
             ResponseTemplate::new(200)
                 .set_body_string(format!(r#"{{"id":"{REMOTE_PLUGIN_ID}","enabled":false}}"#)),
@@ -285,7 +284,6 @@ async fn plugin_uninstall_uses_detail_scope_for_cache_namespace() -> Result<()> 
             "/backend-api/ps/plugins/{REMOTE_PLUGIN_ID}/uninstall"
         )))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(
             ResponseTemplate::new(200)
                 .set_body_string(format!(r#"{{"id":"{REMOTE_PLUGIN_ID}","enabled":false}}"#)),
@@ -356,7 +354,6 @@ async fn plugin_uninstall_accepts_workspace_remote_plugin_id_shape() -> Result<(
             "/backend-api/ps/plugins/{WORKSPACE_REMOTE_PLUGIN_ID}/uninstall"
         )))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(format!(
             r#"{{"id":"{WORKSPACE_REMOTE_PLUGIN_ID}","enabled":false}}"#
         )))
@@ -657,7 +654,6 @@ async fn mount_remote_plugin_detail_with_name(
     Mock::given(method("GET"))
         .and(path(format!("/backend-api/ps/plugins/{remote_plugin_id}")))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(detail_body))
         .mount(server)
         .await;

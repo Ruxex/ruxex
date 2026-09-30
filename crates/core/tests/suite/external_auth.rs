@@ -48,12 +48,10 @@ async fn header_auth_is_attached_to_responses_requests() -> anyhow::Result<()> {
     .await;
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, HeaderValue::from_static("Bearer external"));
-    headers.insert(
-        "ChatGPT-Account-ID",
-        HeaderValue::from_static("account-123"),
-    );
     headers.insert("x-external-auth", HeaderValue::from_static("enabled"));
-    let mut builder = test_codex().with_auth(CodexAuth::Headers(AuthHeaders::new(headers)));
+    let mut builder = test_codex().with_auth(CodexAuth::Headers(
+        AuthHeaders::new(headers).with_account_id("account-123"),
+    ));
     let test = builder.build_with_auto_env(&server).await?;
 
     test.submit_turn("hello").await?;
@@ -66,10 +64,6 @@ async fn header_auth_is_attached_to_responses_requests() -> anyhow::Result<()> {
     assert_eq!(
         request.header("x-external-auth").as_deref(),
         Some("enabled")
-    );
-    assert_eq!(
-        request.header("chatgpt-account-id").as_deref(),
-        Some("account-123")
     );
     Ok(())
 }
@@ -86,10 +80,6 @@ async fn custom_provider_does_not_receive_ambient_auth_headers() -> anyhow::Resu
     .await;
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, HeaderValue::from_static("Bearer ambient"));
-    headers.insert(
-        "ChatGPT-Account-ID",
-        HeaderValue::from_static("account-123"),
-    );
     let provider =
         create_responses_provider_with_base_url(&format!("{}/v1", server.uri()), WireApi::Responses);
     let mut builder = test_codex()
@@ -104,7 +94,6 @@ async fn custom_provider_does_not_receive_ambient_auth_headers() -> anyhow::Resu
 
     let request = response_mock.single_request();
     assert_eq!(request.header("authorization"), None);
-    assert_eq!(request.header("chatgpt-account-id"), None);
     Ok(())
 }
 
@@ -120,10 +109,6 @@ async fn custom_provider_uses_explicit_bearer_without_ambient_account() -> anyho
     .await;
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, HeaderValue::from_static("Bearer ambient"));
-    headers.insert(
-        "ChatGPT-Account-ID",
-        HeaderValue::from_static("account-123"),
-    );
     let mut provider =
         create_responses_provider_with_base_url(&format!("{}/v1", server.uri()), WireApi::Responses);
     provider.experimental_bearer_token = Some("provider-token".into());
@@ -142,7 +127,6 @@ async fn custom_provider_uses_explicit_bearer_without_ambient_account() -> anyho
         request.header("authorization").as_deref(),
         Some("Bearer provider-token")
     );
-    assert_eq!(request.header("chatgpt-account-id"), None);
     Ok(())
 }
 

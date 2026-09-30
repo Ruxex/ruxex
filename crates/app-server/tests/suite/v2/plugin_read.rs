@@ -230,7 +230,6 @@ apps = true
             "/backend-api/ps/plugins/plugins~Plugin_00000000000000000000000000000000",
         ))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(detail_body))
         .mount(&server)
         .await;
@@ -238,14 +237,12 @@ apps = true
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param("scope", "GLOBAL"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(installed_body))
         .mount(&server)
         .await;
     Mock::given(method("POST"))
         .and(path("/backend-api/ps/apps/batch"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .and(header("oai-product-sku", "codex"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "apps": [{
@@ -420,7 +417,6 @@ async fn plugin_read_returns_share_context_for_shared_remote_plugin() -> Result<
             "/backend-api/ps/plugins/plugins~Plugin_11111111111111111111111111111111",
         ))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(detail_body))
         .mount(&server)
         .await;
@@ -428,7 +424,6 @@ async fn plugin_read_returns_share_context_for_shared_remote_plugin() -> Result<
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param("scope", "WORKSPACE"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(installed_body))
         .mount(&server)
         .await;
@@ -629,7 +624,6 @@ async fn plugin_read_includes_share_url_for_admin_disabled_remote_plugin() -> Re
             "/backend-api/ps/plugins/plugins~Plugin_00000000000000000000000000000000",
         ))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(detail_body))
         .mount(&server)
         .await;
@@ -637,7 +631,6 @@ async fn plugin_read_includes_share_url_for_admin_disabled_remote_plugin() -> Re
         .and(path("/backend-api/ps/plugins/installed"))
         .and(query_param("scope", "GLOBAL"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(installed_body))
         .mount(&server)
         .await;
@@ -782,7 +775,6 @@ async fn plugin_skill_read_reads_remote_skill_contents_when_remote_plugin_enable
             "/backend-api/ps/plugins/plugins~Plugin_00000000000000000000000000000000/skills/plan-work",
         ))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_string(skill_body))
         .mount(&server)
         .await;
@@ -833,7 +825,6 @@ async fn plugin_read_maps_missing_remote_plugin_to_invalid_request() -> Result<(
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/plugins~Plugin_missing"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(404).set_body_string(r#"{"detail":"not found"}"#))
         .mount(&server)
         .await;
@@ -1050,7 +1041,6 @@ async fn plugin_read_returns_share_context_for_shared_local_plugin() -> Result<(
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/plugins_123"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": "plugins_123",
             "name": "demo-plugin",
@@ -1192,7 +1182,6 @@ async fn plugin_read_keeps_remote_version_when_share_principals_are_missing() ->
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/plugins_123"))
         .and(header("authorization", "Bearer test-token"))
-        .and(header("chatgpt-account-id", "account-123"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": "plugins_123",
             "name": "demo-plugin",
@@ -2309,16 +2298,12 @@ async fn batch_apps(
         .get(AUTHORIZATION)
         .and_then(|value| value.to_str().ok())
         .is_some_and(|value| value == "Bearer test-token");
-    let account_ok = headers
-        .get("chatgpt-account-id")
-        .and_then(|value| value.to_str().ok())
-        .is_some_and(|value| value == "account-123");
     let product_sku_ok = headers
         .get("oai-product-sku")
         .and_then(|value| value.to_str().ok())
         .is_some_and(|value| value == "codex");
 
-    if !bearer_ok || !account_ok || !product_sku_ok {
+    if !bearer_ok || !product_sku_ok {
         Err(StatusCode::UNAUTHORIZED)
     } else {
         let app_ids = body

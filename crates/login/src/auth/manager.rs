@@ -269,24 +269,14 @@ impl CodexAuth {
         }
     }
 
-    /// Returns `None` if Codex backend auth does not expose an account id.
+    /// Returns an optional provider-supplied identity for managed auth.
     pub fn get_account_id(&self) -> Option<String> {
         match self {
             Self::Headers(headers) => headers
-                .headers()
-                .get("chatgpt-account-id")
-                .and_then(|value| value.to_str().ok())
+                .account_id()
                 .filter(|account_id| !account_id.is_empty() && account_id.trim() == *account_id)
                 .map(ToOwned::to_owned),
             _ => None,
-        }
-    }
-
-    /// Returns false if Codex backend auth omits the FedRAMP claim.
-    pub fn is_fedramp_account(&self) -> bool {
-        match self {
-            Self::Headers(_) => false,
-            _ => false,
         }
     }
 

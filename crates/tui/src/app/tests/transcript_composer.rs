@@ -89,10 +89,6 @@ async fn analytics_menu_reopen_preserves_navigation_and_explicit_view_selects_su
     let http = wiremock::MockServer::start().await;
     wiremock::Mock::given(wiremock::matchers::method("GET"))
         .and(wiremock::matchers::path("/backend-api/wham/accounts/check"))
-        .and(wiremock::matchers::header(
-            "chatgpt-account-id",
-            "test-account",
-        ))
         .respond_with(wiremock::ResponseTemplate::new(/*s*/ 200).set_body_json(
             serde_json::json!({"accounts": [{"id": "test-account", "plan_type": "plus"}]}),
         ))

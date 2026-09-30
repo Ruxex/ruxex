@@ -102,7 +102,6 @@ impl CloudManagedConfigFixture {
         Mock::given(method("GET"))
             .and(path("/backend-api/wham/config/bundle"))
             .and(header("authorization", "Bearer test-token"))
-            .and(header("chatgpt-account-id", "workspace-123"))
             .respond_with(ResponseTemplate::new(200).set_body_json(json!({
                 "config_toml": {
                     "enterprise_managed": [{

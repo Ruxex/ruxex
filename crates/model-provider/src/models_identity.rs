@@ -36,7 +36,6 @@ pub(crate) fn identity(
     field(format!("{:?}", auth.map(CodexAuth::api_auth_mode)).as_bytes());
     if let Some(auth) = auth {
         field(format!("{:?}", auth.get_account_id()).as_bytes());
-        field(&[u8::from(auth.is_fedramp_account())]);
     }
     let explicit_bearer =
         provider_info.api_key()?.is_some() || provider_info.experimental_bearer_token.is_some();

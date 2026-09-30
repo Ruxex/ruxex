@@ -944,20 +944,11 @@ async fn responses_websocket_reconnects_after_api_key_switch() {
             server
                 .handshakes()
                 .iter()
-                .map(|handshake| (
-                    handshake.header("chatgpt-account-id"),
-                    handshake.header("authorization"),
-                ))
+                .map(|handshake| handshake.header("authorization"))
                 .collect::<Vec<_>>(),
             vec![
-                (
-                    None,
-                    Some("Bearer test-api-key".into())
-                ),
-                (
-                    None,
-                    Some("Bearer second-account-token".into())
-                ),
+                Some("Bearer test-api-key".into()),
+                Some("Bearer second-account-token".into()),
             ],
         );
         assert_eq!(

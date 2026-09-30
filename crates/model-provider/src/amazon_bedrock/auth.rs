@@ -194,11 +194,9 @@ pub(super) async fn resolve_provider_auth(
 ) -> Result<SharedAuthProvider> {
     match resolve_auth_method(source, managed_auth, aws, endpoint).await? {
         BedrockAuthMethod::ManagedBearerToken { token, .. }
-        | BedrockAuthMethod::EnvBearerToken { token, .. } => Ok(Arc::new(BearerAuthProvider {
-            token: Some(token),
-            account_id: None,
-            is_fedramp_account: false,
-        })),
+        | BedrockAuthMethod::EnvBearerToken { token, .. } => {
+            Ok(Arc::new(BearerAuthProvider { token: Some(token) }))
+        }
         BedrockAuthMethod::AwsSdkAuth { context } => {
             Ok(Arc::new(BedrockSigV4AuthProvider::new(context, endpoint)))
         }
@@ -497,8 +495,6 @@ mod tests {
         .expect("configured region should resolve");
         let provider = BearerAuthProvider {
             token: Some(token),
-            account_id: None,
-            is_fedramp_account: false,
         };
         let mut headers = http::HeaderMap::new();
 

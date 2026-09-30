@@ -1185,7 +1185,6 @@ impl RemoteMarketplaceFixture {
             .and(path("/backend-api/ps/plugins/list"))
             .and(query_param("scope", "GLOBAL"))
             .and(header("authorization", "Bearer test-token"))
-            .and(header("chatgpt-account-id", "account-123"))
             .respond_with(ResponseTemplate::new(200).set_body_json(
                 json!({"plugins": [plugin.clone()], "pagination": {"next_page_token": null}}),
             ))
