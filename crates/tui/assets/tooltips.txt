@@ -11,7 +11,6 @@ Use /side to start a side conversation in a temporary fork without polluting the
 Use /init to create an AGENTS.md with project-specific guidance.
 Use /mcp to list configured MCP tools.
 Use /rename to rename your threads for easier thread resuming.
-Use the provider docs MCP for API questions; enable it with `codex mcp add providerDeveloperDocs --url https://developers.provider.com/mcp`.
 Join the provider community Discord: http://discord.gg/provider
 Visit the Codex community forum: https://community.provider.com/c/codex/37
 You can run any shell command from Codex using `!` (e.g. `!ls`)
