@@ -73,6 +73,43 @@ producer/consumer boundary:
 | `crates/code-mode-protocol/src/grpc/codex.code_mode.v1.proto`, `crates/execpolicy/examples/example.codexpolicy`, `crates/windows-sandbox-rs/codex-windows-sandbox-setup.manifest` | Protocol filename, security policy extension, and Windows setup manifest/binary contract are consumed by wire/build/security paths. | `retain` external/protocol/security contract |
 | `crates/core/*codex*prompt*`, model-instruction templates, `docs/hawk-codex-cli-result-analysis.md`, `docs/superpowers/plans/*codex-only*`, and `scripts/debug-codex.sh` | Model identifiers, historical audit/plan filenames, and a user-configured VS Code script path are external or historical documentation/tooling names, not internal Genex namespace boundaries. | `retain`; re-audit in user-facing/docs or model-contract stages |
 
+## 0.4 All-crate Rust symbol coverage (2026-10-02)
+
+`cargo metadata --no-deps` の全 123 workspace member を対象に Rust source を走査した。
+82 member は `Codex` / `codex_*` の Rust source match を持ち、41 member は
+`no-match` と確認した。詳細な symbol、match count、ファイル一覧は
+`target/genex-symbol-audit/rust-symbols.tsv` と
+`target/genex-symbol-audit/workspace-coverage.tsv` に生成している。
+
+今回の全クレート対応の coverage contract は次のとおり。
+
+- 82 の symbol-bearing member は、leaf/private、low-fan-out public、crate-local
+  shared model、high-fan-out core/API、protocol/auth/CLI/UI のいずれかの wave に割り当てる。
+- 41 の `no-match` member は、Rust symbol の対象外として監査済みとする。
+- `genex-core`、`genex-protocol`、`genex-app-server-protocol`、`genex-login`、
+  `genex-config`、`genex-rollout`、`genex-rollout-trace`、`genex-state`、
+  `genex-thread-store`、`genex-cli`、`genex-tui` は高 fan-out または外部境界候補として
+  初回 rename wave から分離する。
+- `genex-app-server-test-client`、`genex-git-utils`、`genex-network-proxy`、
+  `genex-linux-sandbox`、`genex-install-context`、`genex-history` は、private/test-only
+  または低 fan-out consumer を先に監査する初回候補とする。
+
+`no-match` member は次の 41 件である。
+
+`genex-agent-roles`, `genex-ansi-escape`, `genex-app-server-protocol-noop-macros`,
+`genex-attachment-store`, `genex-aws-auth`, `genex-code-mode`, `genex-code-mode-runtime`,
+`genex-collaboration-mode-templates`, `genex-config-schema`, `genex-context-fragments`,
+`genex-diagnostics`, `genex-exec-server-test-support`, `genex-experimental-api-macros`,
+`genex-file-search`, `genex-file-system`, `genex-file-watcher`, `genex-home`,
+`genex-keyring-store`, `genex-mermaid`, `genex-otel-trace-websocket`,
+`genex-response-debug-context`, `genex-shell-escalation`, `genex-stdio-to-uds`,
+`genex-tcp-tunnel`, `genex-terminal-detection`, `genex-uds`, `genex-user-verification`,
+`genex-utils-absolute-path`, `genex-utils-audio`, `genex-utils-cache`, `genex-utils-elapsed`,
+`genex-utils-fuzzy-match`, `genex-utils-git-discovery`, `genex-utils-image`,
+`genex-utils-json-to-toml`, `genex-utils-output-truncation`, `genex-utils-pty`,
+`genex-utils-redacted-string`, `genex-utils-sandbox-summary`, `genex-utils-stream-parser`,
+`genex-utils-string`.
+
 ## 1. 参照元が見つからないクレート・ソース
 
 | 対象 | 現時点の観測 | 現時点の扱い |
