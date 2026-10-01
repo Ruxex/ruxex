@@ -137,7 +137,9 @@ provider 固有機能を除去した後に残る、汎用プロバイダ版ク�
 7. `codex-otel` の Statsig hosted metrics。`https://ab.chatgpt.com/otlp/v1/metrics` と固定 Statsig client key を使う built-in exporter、Windows sandbox setup からの選択経路を削除し、汎用 OTLP exporter と `None` を保持する。**完了**。固定 endpoint/key、`OtelExporter::Statsig`、専用メトリクス抑制リスト、Windows sandbox の elevation payload/WFP setup 経路を削除した。
 8. `rmcp-client` の ChatGPT-hosted MCP OAuth CIMD。標準 MCP OAuth の metadata discovery、CIMD、DCR、elicitation は保持し、`https://chatgpt.com/oauth/codex/.../client.json` に固定された provider 専用 client metadata 経路を削除した。`Auto` は provider-specific URL を所有しないため advertised DCR を使い、汎用 CIMD は caller が所有する metadata URL を明示指定できる。**完了**
 
-**方針:** 全バイナリを起点にした Hawk の全面解析は、現時点では実行時間に対して得られる判断材料が少ないため後続へ延期する。まず依存グラフと参照検索を用いて、直接依存元が少ない hosted integration から削除可能な境界を作る。各変更では、対象クレートの公開 API と利用箇所を列挙し、provider 固有の利用機能を一つだけ外す。依存元がなくなったクレートだけを削除し、汎用責務を含むクレートは先に provider-neutral な境界へ分離する。
+**当初方針:** 全バイナリを起点にした Hawk の全面解析は、初期段階では実行時間に対して得られる判断材料が少なかったため後続へ延期した。先に依存グラフと参照検索を用いて、直接依存元が少ない hosted integration から削除可能な境界を作った。各変更では、対象クレートの公開 API と利用箇所を列挙し、provider 固有の利用機能を一つだけ外した。依存元がなくなったクレートだけを削除し、汎用責務を含むクレートは先に provider-neutral な境界へ分離した。
+
+**状態確認（2026-10-01）:** Hawk の二つの production root（`codex`、`codex-app-server`）を対象とする最新の `hawk.json` と監査台帳の照合が完了した。`dead_public` は525診断・521 unique itemで、現行項目は全て `retain`、監査中に削除した過去項目は6件として記録されている。Hawk の結果だけで追加削除を決めず、次の Level 3 作業はこの台帳を基に小さな単位へ分解する。単一rootの旧 `codex-cli.json` は履歴資料として保持し、最新の完了判定は二つの production root を含む `hawk.json` に基づく。
 
 **実施順序:**
 
