@@ -147,6 +147,12 @@ producer/consumer boundary:
 | persisted origin/observability values such as `codex_cli_rs`, `codex_state`, and existing `codex_*` metadata keys | State extraction, log filters, telemetry, and replay fixtures produce or inspect these values. They are data/observability identifiers, not unused Rust aliases. | `retain` current values; defer any cleanup to the persisted/observability compatibility inventory |
 | `.codex` project folders, code-mode/API URLs, marketplace/plugin identifiers, and `codex_apps` fixture names | Config discovery, app-server fixtures, MCP/plugin consumers, and external URLs use these strings. Some represent third-party or historical fixtures rather than an internal Genex namespace. | `retain` or defer per producer/consumer; do not rename as part of the Rust symbol migration |
 
+## 0.8 Final all-crate Genex audit (2026-10-02)
+
+The final coverage artifact contains all 123 workspace members: 82 members with Rust `Codex`/`codex_*` matches are `reviewed-in-inventory`, and 41 members are explicit `no-match`; `unreviewed=0`. Every residual name is covered by a recorded `migrate-in-place`, `retain`, or `defer` decision in the wave tables above. The remaining 19 path names are the previously audited generated, protocol, security, model/history, and tooling contracts; they are not unclassified path leftovers.
+
+The final audit intentionally leaves `CODEX_HOME`, persisted identifiers, wire/schema names, security/platform fields, provider-owned/external contracts, and user-facing binary/config vocabulary unchanged until their independent migration decisions are approved.
+
 ## 1. 参照元が見つからないクレート・ソース
 
 | 対象 | 現時点の観測 | 現時点の扱い |

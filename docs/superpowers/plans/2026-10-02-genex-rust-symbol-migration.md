@@ -304,11 +304,11 @@ Task 0 の coverage matrix は workspace member ごとに次のいずれかを�
 - Modify: `docs/provider-decoupling-candidates.md`
 - Modify: `docs/pre-release-compatibility-inventory.md`
 
-- [ ] **Step 1: Run `just generate` and inspect all checked-in diffs**
-- [ ] **Step 2: Search all repository paths and contents for unclassified `Codex` / `codex_`**
-- [ ] **Step 3: Verify every workspace member and remaining name has an explicit `migrate-in-place`, `retain`, `defer`, or `no-match` decision**
-- [ ] **Step 4: Run `just check --tests`, `just check`, and `git diff --check`**
-- [ ] **Step 5: Commit final audit separately**
+- [x] **Step 1: Run `just generate` and inspect all checked-in diffs**
+- [x] **Step 2: Search all repository paths and contents for unclassified `Codex` / `codex_`**
+- [x] **Step 3: Verify every workspace member and remaining name has an explicit `migrate-in-place`, `retain`, `defer`, or `no-match` decision**
+- [x] **Step 4: Run `just check --tests`, `just check`, and `git diff --check`**
+- [x] **Step 5: Commit final audit separately**
 
 ## Completion Gate
 

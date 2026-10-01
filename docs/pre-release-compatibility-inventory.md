@@ -124,6 +124,14 @@ earlier one being free of obsolete persisted data:
 | Persisted origin/observability values `codex_cli_rs`, `codex_state`, and existing `codex_*` metadata keys | State extraction, log filters, telemetry, and replay fixtures produce or inspect these values. | Existing persisted/observability identifiers | `retain`; defer cleanup audit | Audit `crates/state`, `crates/rollout`, telemetry filters, and fixtures |
 | `.codex` project folders, code-mode/API URLs, marketplace/plugin identifiers, and `codex_apps` fixture names | Config discovery, app-server fixtures, MCP/plugin consumers, and external URLs use these strings; some are third-party or historical fixtures. | Per-contract retained or versioned external name | `retain` / `defer` | Audit external consumers and fixture ownership before any rename |
 
+### Final all-crate Genex audit (2026-10-02)
+
+| Coverage scope | Audit result | Decision | Verification |
+|---|---|---|---|
+| All workspace members | `workspace-coverage.tsv` has all 123 members: 82 are `reviewed-in-inventory` with Rust `Codex`/`codex_*` matches, 41 are explicit `no-match`, and `unreviewed=0`. | Every member has an explicit `migrate-in-place`, `retain`, `defer`, or `no-match` outcome; no crate remains unreviewed. | `cargo metadata --no-deps`; `target/genex-symbol-audit/workspace-coverage.tsv` |
+| Remaining repository paths | 19 path names containing `codex` remain after the file/directory migration. They are the previously audited generated, protocol, security, model/history, and tooling contracts. | `retain` / `defer` by contract; no unclassified path rename remains. | `rg --files | rg '(^|/)(codex|[^/]*codex[^/]*)'` |
+| Final generated artifacts and working tree | `just generate` exited 0; checked-in generated diff is empty; `git diff --check` passes. | No generated artifact change is required by the completed Rust symbol waves. | `just generate`; `git status --short`; `git diff --check` |
+
 ### `just check` warning audit (2026-10-01)
 
 | Exact symbol/path | Current producer/consumer audit | Canonical replacement | Decision | Verification |
