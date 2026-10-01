@@ -263,15 +263,15 @@ Task 0 の coverage matrix は workspace member ごとに次のいずれかを�
 - Consumes: stable internal Rust names and explicit protocol/auth decisions from Tasks 1–5.
 - Produces: separate plan entries for binary, CLI, config, environment, UI, docs, fixture, and snapshot names; no implicit rename of `codex` binary or `CODEX_HOME`.
 
-- [ ] **Step 1: classify every remaining user/integration name**
+- [x] **Step 1: classify every remaining user/integration name**
 
   `codex_command`、`codex_binary`、`codex_home`、CLI command/help、snapshot basename、UI/docs text を binary/config/env/UI/docs/protocol/persisted に分類する。
 
-- [ ] **Step 2: choose independent slices**
+- [x] **Step 2: choose independent slices**
 
   Binary/CLI、config/env、UI/docs/fixtures/snapshots を別 task にし、each slice に producer/consumer、migration risk、verification command を記録する。
 
-- [ ] **Step 3: Do not implement protocol/persisted changes here**
+- [x] **Step 3: Do not implement protocol/persisted changes here**
 
   wire name、serialized field、rollout/session source、SQLite/JSON identifier は Task 7 へ送る。retain の名前は content と filename の両方を inventory に残す。
 

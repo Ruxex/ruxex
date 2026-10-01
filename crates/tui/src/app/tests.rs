@@ -531,7 +531,7 @@ async fn enqueue_primary_thread_session_replays_turns_before_initial_prompt_subm
                 assert_eq!(op_thread_id, thread_id);
                 submitted_items = Some(items);
             }
-            AppEvent::CodexOp(Op::UserTurn { items, .. }) => {
+            AppEvent::GenexOp(Op::UserTurn { items, .. }) => {
                 assert!(
                     saw_optimistic_prompt,
                     "expected optimistic prompt before turn submission"
@@ -2077,7 +2077,7 @@ fn selected_and_resumed_threads_use_server_capability_for_v1_and_v2_children() -
             .handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
         assert!(
             std::iter::from_fn(|| app_event_rx.try_recv().ok())
-                .any(|event| matches!(event, AppEvent::CodexOp(Op::UserTurn { .. })))
+                .any(|event| matches!(event, AppEvent::GenexOp(Op::UserTurn { .. })))
         );
 
         app.select_agent_thread(&mut tui, &mut app_server, child_thread_ids[1])
@@ -2092,7 +2092,7 @@ fn selected_and_resumed_threads_use_server_capability_for_v1_and_v2_children() -
         assert_eq!(app.chat_widget.composer_text_with_pending(), draft);
         assert!(
             !std::iter::from_fn(|| app_event_rx.try_recv().ok())
-                .any(|event| matches!(event, AppEvent::CodexOp(Op::UserTurn { .. })))
+                .any(|event| matches!(event, AppEvent::GenexOp(Op::UserTurn { .. })))
         );
 
         let resumed = Box::pin(app_server.resume_thread(
@@ -2120,7 +2120,7 @@ fn selected_and_resumed_threads_use_server_capability_for_v1_and_v2_children() -
         assert_eq!(app.chat_widget.composer_text_with_pending(), draft);
         assert!(
             !std::iter::from_fn(|| app_event_rx.try_recv().ok())
-                .any(|event| matches!(event, AppEvent::CodexOp(Op::UserTurn { .. })))
+                .any(|event| matches!(event, AppEvent::GenexOp(Op::UserTurn { .. })))
         );
         Ok(())
     }))
@@ -2454,8 +2454,8 @@ default_permissions = "locked-down"
         Some(RuntimePermissionProfileOverride::from_config(&app.config))
     );
     let op = match app_event_rx.try_recv() {
-        Ok(AppEvent::CodexOp(op)) => op,
-        other => panic!("expected CodexOp event, got {other:?}"),
+        Ok(AppEvent::GenexOp(op)) => op,
+        other => panic!("expected GenexOp event, got {other:?}"),
     };
     assert_eq!(
         op,

@@ -125,7 +125,7 @@ impl ChatWidget {
         label: String,
     ) -> Vec<SelectionAction> {
         vec![Box::new(move |tx| {
-            tx.send(AppEvent::CodexOp(AppCommand::override_turn_context(
+            tx.send(AppEvent::GenexOp(AppCommand::override_turn_context(
                 /*cwd*/ None,
                 Some(approval),
                 Some(permission_profile.clone()),

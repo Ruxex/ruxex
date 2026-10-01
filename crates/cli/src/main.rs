@@ -815,8 +815,8 @@ fn delete_action(target: &str, force: bool) -> anyhow::Result<genex_tui::Session
 async fn run_debug_app_server_command(cmd: DebugAppServerCommand) -> anyhow::Result<()> {
     match cmd.subcommand {
         DebugAppServerSubcommand::SendMessageV2(cmd) => {
-            let codex_bin = std::env::current_exe()?;
-            genex_app_server_test_client::send_message_v2(&codex_bin, &[], cmd.user_message, &None)
+            let genex_bin = std::env::current_exe()?;
+            genex_app_server_test_client::send_message_v2(&genex_bin, &[], cmd.user_message, &None)
                 .await
         }
     }

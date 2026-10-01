@@ -421,7 +421,7 @@ impl ChatWidget {
             self.clear_recap_loading();
         }
         let render_before_submit =
-            render_in_history && matches!(&self.codex_op_target, CodexOpTarget::AppEvent);
+            render_in_history && matches!(&self.codex_op_target, GenexOpTarget::AppEvent);
         if render_before_submit {
             self.on_user_message_display(user_message_display_for_history(
                 submitted_message.clone(),

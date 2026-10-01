@@ -831,7 +831,7 @@ async fn startup_draft_handoff_recognizes_late_user_input_as_new_protected_view(
     assert_eq!(app.chat_widget.composer_text_with_pending(), "x");
     while let Ok(event) = app_event_rx.try_recv() {
         assert!(
-            !matches!(event, AppEvent::CodexOp(Op::UserInputAnswer { .. })),
+            !matches!(event, AppEvent::GenexOp(Op::UserInputAnswer { .. })),
             "showing the protected user input request must not submit an answer: {event:?}"
         );
     }
@@ -1462,7 +1462,7 @@ async fn external_writer_startup_keeps_initial_prompt_as_draft() -> Result<()> {
             AppEvent::SubmitThreadOp {
                 op: Op::UserTurn { .. },
                 ..
-            } | AppEvent::CodexOp(Op::UserTurn { .. })
+            } | AppEvent::GenexOp(Op::UserTurn { .. })
         )
     }));
     Ok(())

@@ -83,8 +83,8 @@ async fn misalignment_policy_blocks_queued_turns_and_goal_resumption() -> Result
     app.maybe_prompt_resume_paused_goal_after_resume(&mut app_server, thread_id)
         .await;
     for event in [
-        AppEvent::CodexOp(queued_turn),
-        AppEvent::CodexOp(crate::app_command::AppCommand::ExecApproval {
+        AppEvent::GenexOp(queued_turn),
+        AppEvent::GenexOp(crate::app_command::AppCommand::ExecApproval {
             id: "queued-approval".to_string(),
             turn_id: None,
             decision: genex_app_server_protocol::CommandExecutionApprovalDecision::Accept,

@@ -518,7 +518,7 @@ pub(crate) enum ExternalEditorState {
 pub(crate) struct ChatWidget {
     pub(crate) cyber_policy_notice: crate::daybreak::NoticeCache,
     app_event_tx: AppEventSender,
-    codex_op_target: CodexOpTarget,
+    codex_op_target: GenexOpTarget,
     bottom_pane: BottomPane,
     transcript: TranscriptState,
     config: Config,
@@ -747,7 +747,7 @@ pub(crate) struct ChatWidget {
 }
 
 #[cfg_attr(not(test), allow(dead_code))]
-enum CodexOpTarget {
+enum GenexOpTarget {
     Direct(UnboundedSender<AppCommand>),
     AppEvent,
 }
@@ -1692,7 +1692,7 @@ impl ChatWidget {
             self.bottom_pane.set_task_running(/*running*/ true);
         }
         match &self.codex_op_target {
-            CodexOpTarget::Direct(codex_op_tx) => {
+            GenexOpTarget::Direct(codex_op_tx) => {
                 crate::session_log::log_outbound_op(&op);
                 let is_review = op.is_review();
                 if let Err(e) = codex_op_tx.send(op) {
@@ -1703,8 +1703,8 @@ impl ChatWidget {
                     self.on_review_started();
                 }
             }
-            CodexOpTarget::AppEvent => {
-                self.app_event_tx.send(AppEvent::CodexOp(op));
+            GenexOpTarget::AppEvent => {
+                self.app_event_tx.send(AppEvent::GenexOp(op));
             }
         }
         true

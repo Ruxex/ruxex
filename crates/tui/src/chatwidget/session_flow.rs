@@ -70,7 +70,7 @@ impl ChatWidget {
         self.thread_id = Some(session.thread_id);
         #[cfg(target_os = "windows")]
         if self.windows_sandbox_local_server
-            && matches!(self.codex_op_target, CodexOpTarget::AppEvent)
+            && matches!(self.codex_op_target, GenexOpTarget::AppEvent)
         {
             self.windows_sandbox_config = Default::default();
             self.set_windows_sandbox_mode(/*mode*/ None);

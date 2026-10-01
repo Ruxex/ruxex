@@ -551,7 +551,7 @@ pub(crate) enum AppEvent {
 
     /// Forward a command to the Agent. Using an `AppEvent` for this avoids
     /// bubbling channels through layers of widgets.
-    CodexOp(AppCommand),
+    GenexOp(AppCommand),
 
     /// A blocking image-preparation worker has finished; payload stays with its widget.
     ImagesPrepared(Uuid),

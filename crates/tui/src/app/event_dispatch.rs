@@ -869,7 +869,7 @@ impl App {
             AppEvent::ImagesPrepared(id) => {
                 self.chat_widget.on_images_prepared(id);
             }
-            AppEvent::CodexOp(op) => {
+            AppEvent::GenexOp(op) => {
                 if let AppCommand::OverrideTurnContext {
                     cwd,
                     approval_policy,
@@ -1610,7 +1610,7 @@ impl App {
                             if let Some(selection) = profile_selection {
                                 self.select_permission_profile(app_server, selection).await;
                             } else {
-                                self.app_event_tx.send(AppEvent::CodexOp(
+                                self.app_event_tx.send(AppEvent::GenexOp(
                                     AppCommand::override_turn_context(
                                         /*cwd*/ None,
                                         Some(AskForApproval::from(preset.approval)),

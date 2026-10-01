@@ -248,7 +248,7 @@ impl App {
         self.sync_active_thread_permission_settings_to_cached_session()
             .await;
         self.app_event_tx
-            .send(AppEvent::CodexOp(AppCommand::override_turn_context(
+            .send(AppEvent::GenexOp(AppCommand::override_turn_context(
                 /*cwd*/ None,
                 approval_policy,
                 Some(permission_profile.clone()),
