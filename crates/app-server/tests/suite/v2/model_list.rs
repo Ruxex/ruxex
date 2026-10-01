@@ -6,22 +6,22 @@ use app_test_support::ApiKeyAuthFixture;
 use app_test_support::TestAppServer;
 use app_test_support::write_api_key_auth;
 use app_test_support::write_models_cache;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::Model;
-use codex_app_server_protocol::ModelListParams;
-use codex_app_server_protocol::ModelListResponse;
-use codex_app_server_protocol::ModelServiceTier;
-use codex_app_server_protocol::ModelUpgradeInfo;
-use codex_app_server_protocol::ReasoningEffortOption;
-use codex_app_server_protocol::RequestId;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_login::AuthKeyringBackendKind;
-use codex_login::login_with_api_key;
-use codex_protocol::model_types::MODEL_SPECIALTY_CYBER;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelPreset;
-use codex_protocol::model_types::ModelsResponse;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::Model;
+use genex_app_server_protocol::ModelListParams;
+use genex_app_server_protocol::ModelListResponse;
+use genex_app_server_protocol::ModelServiceTier;
+use genex_app_server_protocol::ModelUpgradeInfo;
+use genex_app_server_protocol::ReasoningEffortOption;
+use genex_app_server_protocol::RequestId;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_login::AuthKeyringBackendKind;
+use genex_login::login_with_api_key;
+use genex_protocol::model_types::MODEL_SPECIALTY_CYBER;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelPreset;
+use genex_protocol::model_types::ModelsResponse;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -47,11 +47,11 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
     app_enablement: bool,
 ) -> Result<()> {
     let server = MockServer::start().await;
-    let mut remote_model = codex_models_manager::test_support::test_models_response()?
+    let mut remote_model = genex_models_manager::test_support::test_models_response()?
         .models
         .remove(0);
     remote_model.slug = "rollout-model".into();
-    remote_model.visibility = codex_protocol::model_types::ModelVisibility::List;
+    remote_model.visibility = genex_protocol::model_types::ModelVisibility::List;
     remote_model.supported_in_api = true;
     Mock::given(method("GET"))
         .and(path("/v1/models"))
@@ -85,7 +85,7 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
         .with_env_overrides(&[("PROVIDER_API_KEY", None), ("CODEX_API_KEY", None)])
         .build_initialized()
         .await?;
-    let mut bundled = codex_models_manager::test_support::test_models_response()?.models;
+    let mut bundled = genex_models_manager::test_support::test_models_response()?.models;
     bundled.sort_by_key(|model| model.priority);
     let mut bundled = ModelPreset::filter_by_auth(
         bundled.into_iter().map(Into::into).collect(),
@@ -180,7 +180,7 @@ fn model_from_preset(preset: &ModelPreset) -> Model {
 fn expected_visible_models() -> Vec<Model> {
     // Filter by supported_in_api to cover both managed and direct provider auth modes.
     let mut presets = ModelPreset::filter_by_auth(
-        codex_core::test_support::all_model_presets().clone(),
+        genex_core::test_support::all_model_presets().clone(),
         /*uses_managed_auth*/ false,
     );
 

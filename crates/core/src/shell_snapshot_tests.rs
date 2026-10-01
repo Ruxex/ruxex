@@ -8,13 +8,13 @@ use crate::tools::runtimes::maybe_wrap_shell_lc_with_snapshot;
 #[cfg(unix)]
 use crate::tools::runtimes::prepare_brokered_shell_snapshot_env;
 #[cfg(unix)]
-use codex_network_proxy::CredentialProviderConfig;
+use genex_network_proxy::CredentialProviderConfig;
 #[cfg(unix)]
-use codex_network_proxy::NetworkProxyConfig;
+use genex_network_proxy::NetworkProxyConfig;
 #[cfg(unix)]
-use codex_protocol::config_types::EnvironmentVariablePattern;
+use genex_protocol::config_types::EnvironmentVariablePattern;
 #[cfg(unix)]
-use codex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfile;
 use core_test_support::PathBufExt;
 use core_test_support::PathExt;
 use pretty_assertions::assert_eq;
@@ -189,14 +189,14 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     use crate::environment_selection::ThreadEnvironments;
     use crate::environment_selection::TurnEnvironmentSnapshot;
     use crate::tools::sandboxing::SandboxAttempt;
-    use codex_exec_server::EnvironmentManager;
-    use codex_exec_server::LOCAL_ENVIRONMENT_ID;
-    use codex_protocol::config_types::WindowsSandboxLevel;
-    use codex_protocol::protocol::EnvironmentConfig;
-    use codex_protocol::protocol::EnvironmentConfigState;
-    use codex_protocol::protocol::TurnEnvironmentSelection;
-    use codex_sandboxing::SandboxManager;
-    use codex_sandboxing::SandboxType;
+    use genex_exec_server::EnvironmentManager;
+    use genex_exec_server::LOCAL_ENVIRONMENT_ID;
+    use genex_protocol::config_types::WindowsSandboxLevel;
+    use genex_protocol::protocol::EnvironmentConfig;
+    use genex_protocol::protocol::EnvironmentConfigState;
+    use genex_protocol::protocol::TurnEnvironmentSelection;
+    use genex_sandboxing::SandboxManager;
+    use genex_sandboxing::SandboxType;
     use tokio_util::sync::CancellationToken;
 
     let dir = tempdir()?;
@@ -216,7 +216,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
         "test".to_string(),
         /*log_user_prompts*/ false,
         "test".to_string(),
-        codex_protocol::protocol::SessionSource::Cli,
+        genex_protocol::protocol::SessionSource::Cli,
     );
     let shell = Shell {
         shell_type: ShellType::Bash,
@@ -238,7 +238,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     let started_proxy = network_spec
         .start_proxy(
             &permission_profile,
-            codex_network_proxy::ManagedProxyRouting::SharedIngress,
+            genex_network_proxy::ManagedProxyRouting::SharedIngress,
             /*policy_decider*/ None,
             /*blocked_request_observer*/ None,
             /*enable_network_approval_flow*/ false,
@@ -401,7 +401,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
         .await?;
     tool_config
         .features
-        .enable(codex_features::Feature::ShellSnapshot)?;
+        .enable(genex_features::Feature::ShellSnapshot)?;
     tool_config.permissions.network = Some(network_spec);
     let cwd = dir.path().abs();
     let cwd_uri = PathUri::from_abs_path(&cwd);
@@ -516,9 +516,9 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
         (original_config, false),
     ] {
         proxy
-            .replace_config_state(codex_network_proxy::build_config_state(
+            .replace_config_state(genex_network_proxy::build_config_state(
                 config,
-                codex_network_proxy::NetworkProxyConstraints::default(),
+                genex_network_proxy::NetworkProxyConstraints::default(),
             )?)
             .await?;
         assert_eq!(
@@ -564,9 +564,9 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
         let mut config = proxy.current_cfg().await?;
         config.allow_local_binding = !config.allow_local_binding;
         proxy
-            .replace_config_state(codex_network_proxy::build_config_state(
+            .replace_config_state(genex_network_proxy::build_config_state(
                 config,
-                codex_network_proxy::NetworkProxyConstraints::default(),
+                genex_network_proxy::NetworkProxyConstraints::default(),
             )?)
             .await?;
         fs::write(dir.path().join("finish-startup"), "").await?;
@@ -664,7 +664,7 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
     let started_proxy = network_spec
         .start_proxy(
             &permission_profile,
-            codex_network_proxy::ManagedProxyRouting::SharedIngress,
+            genex_network_proxy::ManagedProxyRouting::SharedIngress,
             /*policy_decider*/ None,
             /*blocked_request_observer*/ None,
             /*enable_network_approval_flow*/ false,
@@ -960,7 +960,7 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
         Some("https://api.snapshot.example/v1")
     );
     let explicit_vendor_policy = ShellEnvironmentPolicy {
-        inherit: codex_protocol::config_types::ShellEnvironmentPolicyInherit::None,
+        inherit: genex_protocol::config_types::ShellEnvironmentPolicyInherit::None,
         r#set: HashMap::from([("VENDOR_PASSWORD".to_string(), "pin_abcdefgh".to_string())]),
         ..ShellEnvironmentPolicy::default()
     };

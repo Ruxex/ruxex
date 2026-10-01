@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::time::Instant;
 
-use codex_build_info::BuildInfo;
-use codex_exec_server_protocol::JSONRPCMessage;
+use genex_build_info::BuildInfo;
+use genex_exec_server_protocol::JSONRPCMessage;
 use tokio::sync::mpsc;
 use tracing::debug;
 use tracing::warn;
@@ -24,7 +24,7 @@ use crate::server::request_dispatcher::RequestTaskResult;
 use crate::server::session_registry::SessionRegistry;
 use crate::telemetry::ConnectionTransport;
 use crate::telemetry::ExecServerTelemetry;
-use codex_http_client::HttpClientFactory;
+use genex_http_client::HttpClientFactory;
 
 #[derive(Clone)]
 pub(crate) struct ConnectionProcessor {
@@ -41,8 +41,8 @@ impl ConnectionProcessor {
         Self::new_with_telemetry(
             runtime_paths,
             ExecServerTelemetry::default(),
-            codex_http_client::HttpClientFactory::new(
-                codex_http_client::OutboundProxyPolicy::ReqwestDefault,
+            genex_http_client::HttpClientFactory::new(
+                genex_http_client::OutboundProxyPolicy::ReqwestDefault,
             ),
             RequestDispatchMode::Inline,
         )
@@ -245,12 +245,12 @@ mod tests {
     use std::sync::Arc;
     use std::time::Duration;
 
-    use codex_exec_server_protocol::JSONRPCMessage;
-    use codex_exec_server_protocol::JSONRPCNotification;
-    use codex_exec_server_protocol::JSONRPCRequest;
-    use codex_exec_server_protocol::JSONRPCResponse;
-    use codex_exec_server_protocol::RequestId;
-    use codex_utils_path_uri::PathUri;
+    use genex_exec_server_protocol::JSONRPCMessage;
+    use genex_exec_server_protocol::JSONRPCNotification;
+    use genex_exec_server_protocol::JSONRPCRequest;
+    use genex_exec_server_protocol::JSONRPCResponse;
+    use genex_exec_server_protocol::RequestId;
+    use genex_utils_path_uri::PathUri;
     use pretty_assertions::assert_eq;
     use serde::Serialize;
     use serde::de::DeserializeOwned;

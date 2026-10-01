@@ -10,33 +10,33 @@ use app_test_support::create_request_user_input_sse_response;
 use app_test_support::to_response;
 use app_test_support::write_api_key_auth;
 use app_test_support::write_mock_responses_config_toml_with_managed_auth_base_url;
-use codex_app_server_protocol::AppInfo;
-use codex_app_server_protocol::CapabilityRootLocation;
-use codex_app_server_protocol::EnvironmentAddResponse;
-use codex_app_server_protocol::EnvironmentInfoResponse;
-use codex_app_server_protocol::ListMcpServerStatusParams;
-use codex_app_server_protocol::ListMcpServerStatusResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SelectedCapabilityRoot;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnEnvironmentParams;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnSteerParams;
-use codex_app_server_protocol::TurnSteerResponse;
-use codex_app_server_protocol::UserInput;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_exec_server::LOCAL_ENVIRONMENT_ID;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::protocol::PLUGINS_INSTRUCTIONS_OPEN_TAG;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_app_server_protocol::AppInfo;
+use genex_app_server_protocol::CapabilityRootLocation;
+use genex_app_server_protocol::EnvironmentAddResponse;
+use genex_app_server_protocol::EnvironmentInfoResponse;
+use genex_app_server_protocol::ListMcpServerStatusParams;
+use genex_app_server_protocol::ListMcpServerStatusResponse;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SelectedCapabilityRoot;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::TurnEnvironmentParams;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::TurnSteerParams;
+use genex_app_server_protocol::TurnSteerResponse;
+use genex_app_server_protocol::UserInput;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_exec_server::LOCAL_ENVIRONMENT_ID;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::protocol::PLUGINS_INSTRUCTIONS_OPEN_TAG;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use core_test_support::process::wait_for_pid_file;
 use core_test_support::responses;
 use core_test_support::responses::ResponsesRequest;
@@ -1151,7 +1151,7 @@ async fn wait_for_selected_mcp_server(
 }
 
 async fn spawn_exec_server(codex_home: &std::path::Path, url: &str) -> Result<Child> {
-    let mut child = Command::new(codex_utils_cargo_bin::cargo_bin("codex")?)
+    let mut child = Command::new(genex_utils_cargo_bin::cargo_bin("codex")?)
         .args(["exec-server", "--listen", url])
         .stdin(Stdio::null())
         .stdout(Stdio::piped())

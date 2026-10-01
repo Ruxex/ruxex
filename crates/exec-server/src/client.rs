@@ -10,11 +10,11 @@ use std::time::Duration;
 
 use arc_swap::ArcSwap;
 use arc_swap::ArcSwapOption;
-use codex_exec_server_protocol::JSONRPCNotification;
-use codex_network_proxy::NetworkPolicyDecider;
-use codex_network_proxy::NetworkProxyAuditMetadata;
-use codex_network_proxy::NetworkRequestCancellation;
-use codex_network_proxy::NetworkRequestCancellationReason;
+use genex_exec_server_protocol::JSONRPCNotification;
+use genex_network_proxy::NetworkPolicyDecider;
+use genex_network_proxy::NetworkProxyAuditMetadata;
+use genex_network_proxy::NetworkRequestCancellation;
+use genex_network_proxy::NetworkRequestCancellationReason;
 use futures::FutureExt;
 use futures::future::BoxFuture;
 use serde_json::Value;
@@ -134,7 +134,7 @@ use crate::protocol::WriteResponse;
 use crate::rpc::RpcCallError;
 use crate::rpc::RpcClient;
 use crate::rpc_server_requests::MAX_IN_FLIGHT_SERVER_CALLS;
-use codex_http_client::HttpClientFactory;
+use genex_http_client::HttpClientFactory;
 
 pub(crate) mod http_client;
 mod network_policy_audit;
@@ -1686,12 +1686,12 @@ async fn handle_server_notification(
 
 #[cfg(test)]
 mod tests {
-    use codex_exec_server_protocol::JSONRPCMessage;
-    use codex_exec_server_protocol::JSONRPCNotification;
-    use codex_exec_server_protocol::JSONRPCResponse;
-    use codex_http_client::HttpClientFactory;
-    use codex_http_client::OutboundProxyPolicy;
-    use codex_utils_path_uri::PathUri;
+    use genex_exec_server_protocol::JSONRPCMessage;
+    use genex_exec_server_protocol::JSONRPCNotification;
+    use genex_exec_server_protocol::JSONRPCResponse;
+    use genex_http_client::HttpClientFactory;
+    use genex_http_client::OutboundProxyPolicy;
+    use genex_utils_path_uri::PathUri;
     use opentelemetry::trace::TracerProvider as _;
     use opentelemetry_sdk::trace::SdkTracerProvider;
     use pretty_assertions::assert_eq;
@@ -1842,12 +1842,12 @@ mod tests {
         let subscriber = tracing_subscriber::registry().with(
             tracing_opentelemetry::layer()
                 .with_tracer(tracer)
-                .with_filter(filter_fn(codex_otel::OtelProvider::trace_export_filter)),
+                .with_filter(filter_fn(genex_otel::OtelProvider::trace_export_filter)),
         );
         let _subscriber_guard = tracing::subscriber::set_default(subscriber);
         tracing::callsite::rebuild_interest_cache();
         let parent_span = tracing::info_span!("process-start-parent");
-        let expected_trace = codex_otel::span_w3c_trace_context(&parent_span)
+        let expected_trace = genex_otel::span_w3c_trace_context(&parent_span)
             .expect("parent span should have trace context");
         let process_id = ProcessId::from("trace-process");
 
@@ -1933,8 +1933,8 @@ mod tests {
                 },
                 initialize_timeout: DEFAULT_EXEC_SERVER_INITIALIZE_TIMEOUT,
             },
-            codex_http_client::HttpClientFactory::new(
-                codex_http_client::OutboundProxyPolicy::ReqwestDefault,
+            genex_http_client::HttpClientFactory::new(
+                genex_http_client::OutboundProxyPolicy::ReqwestDefault,
             ),
         )
         .await

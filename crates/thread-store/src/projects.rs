@@ -29,7 +29,7 @@ pub struct StoredProjectsPage {
 pub struct ListProjectsParams {
     pub cursor: Option<String>,
     pub limit: usize,
-    pub sort_key: codex_state::ProjectSortKey,
+    pub sort_key: genex_state::ProjectSortKey,
     pub sort_direction: SortDirection,
 }
 

@@ -1,11 +1,11 @@
-use codex_protocol::AgentPath;
-use codex_protocol::ThreadId;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::CodexErrorDetails;
-use codex_protocol::error::Result;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::AgentPath;
+use genex_protocol::ThreadId;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::Result;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::TurnEnvironmentSelection;
 use rand::prelude::IndexedRandom;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -282,7 +282,7 @@ impl AgentRegistry {
             } else {
                 active_agents.used_agent_nicknames.clear();
                 active_agents.nickname_reset_count += 1;
-                if let Some(metrics) = codex_otel::global() {
+                if let Some(metrics) = genex_otel::global() {
                     let _ = metrics.counter(
                         "codex.multi_agent.nickname_pool_reset",
                         /*inc*/ 1,

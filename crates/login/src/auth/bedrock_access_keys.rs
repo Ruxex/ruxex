@@ -1,7 +1,7 @@
 use std::path::Path;
 
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_protocol::auth::AuthMode;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_protocol::auth::AuthMode;
 use serde::Deserialize;
 use serde::Serialize;
 

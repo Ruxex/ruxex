@@ -26,15 +26,15 @@ use crate::motion::shimmer_text;
 use crate::render::renderable::ColumnRenderable;
 use crate::render::renderable::Renderable;
 use crate::tui::FrameRequester;
-use codex_app_server_protocol::PluginAuthPolicy;
-use codex_app_server_protocol::PluginAvailability;
-use codex_app_server_protocol::PluginDetail;
-use codex_app_server_protocol::PluginInstallPolicy;
-use codex_app_server_protocol::PluginListResponse;
-use codex_app_server_protocol::PluginMarketplaceEntry;
-use codex_app_server_protocol::PluginSource;
-use codex_app_server_protocol::PluginSummary;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_app_server_protocol::PluginAuthPolicy;
+use genex_app_server_protocol::PluginAvailability;
+use genex_app_server_protocol::PluginDetail;
+use genex_app_server_protocol::PluginInstallPolicy;
+use genex_app_server_protocol::PluginListResponse;
+use genex_app_server_protocol::PluginMarketplaceEntry;
+use genex_app_server_protocol::PluginSource;
+use genex_app_server_protocol::PluginSummary;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use crossterm::event::KeyCode;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -972,7 +972,7 @@ impl ChatWidget {
                         let marketplace_path = location.clone().into_request_params();
                         tx.send(AppEvent::FetchPluginDetail {
                             cwd: cwd.clone(),
-                            params: codex_app_server_protocol::PluginReadParams {
+                            params: genex_app_server_protocol::PluginReadParams {
                                 marketplace_path,
                                 plugin_name: plugin_name.clone(),
                             },
@@ -1429,7 +1429,7 @@ fn plugin_hook_summary(plugin: &PluginDetail) -> String {
     if plugin.hooks.is_empty() {
         "No plugin hooks.".to_string()
     } else {
-        let mut event_counts = Vec::<(codex_app_server_protocol::HookEventName, usize)>::new();
+        let mut event_counts = Vec::<(genex_app_server_protocol::HookEventName, usize)>::new();
         for hook in &plugin.hooks {
             if let Some((_, handler_count)) = event_counts
                 .iter_mut()

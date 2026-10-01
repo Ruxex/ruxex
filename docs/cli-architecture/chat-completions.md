@@ -9,7 +9,7 @@ Chat Completions 経路の、現行ソースに基づく実装マップです。
 
 ```text
 model_providers.<name>.wire_api = "chat"
-  -> codex-core::ModelClient::stream_chat_completions
+  -> genex-core::ModelClient::stream_chat_completions
   -> ChatRequestBuilder
   -> ChatClient::stream
   -> POST {provider.base_url}/chat/completions
@@ -52,7 +52,7 @@ tool をネイティブに提供することを意味しません。
 
 ## リクエスト構築
 
-`codex-api::ChatRequestBuilder` が次の payload を構築します。
+`genex-api::ChatRequestBuilder` が次の payload を構築します。
 
 ```json
 {
@@ -80,7 +80,7 @@ tool をネイティブに提供することを意味しません。
 
 ## SSE から Core event への変換
 
-`codex-api::sse::chat::process_chat_sse` は SSE の各 JSON event の `choices` を読み、
+`genex-api::sse::chat::process_chat_sse` は SSE の各 JSON event の `choices` を読み、
 次の event に正規化します。
 
 | Chat Completions の入力 | Core event |
@@ -121,8 +121,8 @@ tool call は個別の出力 item として保持されます。
 
 - [`WireApi`](../../crates/model-provider-info/src/lib.rs): `chat` / `responses` の設定値と既定値
 - [`ModelClient::stream_chat_completions`](../../crates/core/src/client.rs): Chat 経路の選択、認証復旧、Core への接続
-- [`ChatRequestBuilder`](../../crates/codex-api/src/requests/chat.rs): 履歴・tool・ヘッダーの request 変換
-- [`ChatClient`](../../crates/codex-api/src/endpoint/chat.rs): `/chat/completions` への HTTP streaming
-- [`process_chat_sse`](../../crates/codex-api/src/sse/chat.rs): SSE の解析と `ResponseEvent` への正規化
+- [`ChatRequestBuilder`](../../crates/genex-api/src/requests/chat.rs): 履歴・tool・ヘッダーの request 変換
+- [`ChatClient`](../../crates/genex-api/src/endpoint/chat.rs): `/chat/completions` への HTTP streaming
+- [`process_chat_sse`](../../crates/genex-api/src/sse/chat.rs): SSE の解析と `ResponseEvent` への正規化
 - [`create_tools_json_for_chat_completions_api`](../../crates/tools/src/tool_spec.rs): function tool 定義の変換
 - [`G-7`](../provider-neutral-gaps.md#g-7): 非 Responses wire API の現状と今後の provider-neutral 化課題

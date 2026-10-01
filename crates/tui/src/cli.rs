@@ -1,10 +1,10 @@
 use clap::Args;
 use clap::FromArgMatches;
 use clap::Parser;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_cli::ApprovalModeCliArg;
-use codex_utils_cli::CliConfigOverrides;
-use codex_utils_cli::SharedCliOptions;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_cli::ApprovalModeCliArg;
+use genex_utils_cli::CliConfigOverrides;
+use genex_utils_cli::SharedCliOptions;
 
 #[derive(Parser, Clone, Debug)]
 #[command(version)]

@@ -1,11 +1,11 @@
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_utils_path_uri::PathUri;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::FileSystemSpecialPath;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tokio::io;
 

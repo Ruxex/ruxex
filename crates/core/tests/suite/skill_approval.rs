@@ -2,17 +2,17 @@
 #![cfg(unix)]
 
 use anyhow::Result;
-use codex_core::TurnInputRequest;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecApprovalRequestEvent;
-use codex_protocol::protocol::GranularApprovalConfig;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
+use genex_core::TurnInputRequest;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecApprovalRequestEvent;
+use genex_protocol::protocol::GranularApprovalConfig;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses::mount_function_call_agent_response;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;

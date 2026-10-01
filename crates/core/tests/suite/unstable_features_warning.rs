@@ -1,14 +1,14 @@
 #![allow(clippy::unwrap_used)]
 
-use codex_config::CONFIG_TOML_FILE;
-use codex_core::NewThread;
-use codex_features::Feature;
-use codex_history::InitialHistory;
-use codex_login::CodexAuth;
-use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::WarningEvent;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_config::CONFIG_TOML_FILE;
+use genex_core::NewThread;
+use genex_features::Feature;
+use genex_history::InitialHistory;
+use genex_login::CodexAuth;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::WarningEvent;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use core::time::Duration;
 use core_test_support::load_default_config_for_test;
 use core_test_support::wait_for_event;
@@ -35,12 +35,12 @@ async fn emits_warning_when_unstable_features_enabled_via_config() {
         )
         .expect("feature user config should be valid");
 
-    let thread_manager = codex_core::test_support::thread_manager_with_models_provider(
+    let thread_manager = genex_core::test_support::thread_manager_with_models_provider(
         CodexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );
     let auth_manager =
-        codex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("test"));
+        genex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("test"));
 
     let NewThread {
         thread: conversation,
@@ -85,12 +85,12 @@ async fn suppresses_warning_when_configured() {
         )
         .expect("feature user config should be valid");
 
-    let thread_manager = codex_core::test_support::thread_manager_with_models_provider(
+    let thread_manager = genex_core::test_support::thread_manager_with_models_provider(
         CodexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );
     let auth_manager =
-        codex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("test"));
+        genex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("test"));
 
     let NewThread {
         thread: conversation,

@@ -1,8 +1,8 @@
 use anyhow::Result;
 use anyhow::anyhow;
-use codex_config::types::McpServerEnvVar;
-use codex_network_proxy::CUSTOM_CA_ENV_KEYS;
-use codex_protocol::shell_environment::is_non_inheritable_env_var;
+use genex_config::types::McpServerEnvVar;
+use genex_network_proxy::CUSTOM_CA_ENV_KEYS;
+use genex_protocol::shell_environment::is_non_inheritable_env_var;
 use http::HeaderMap;
 use http::HeaderName;
 use http::HeaderValue;
@@ -176,7 +176,7 @@ pub(crate) const DEFAULT_ENV_VARS: &[&str] = &[
 
 #[cfg(windows)]
 pub(crate) const DEFAULT_ENV_VARS: &[&str] =
-    codex_protocol::shell_environment::WINDOWS_CORE_ENV_VARS;
+    genex_protocol::shell_environment::WINDOWS_CORE_ENV_VARS;
 
 #[cfg(test)]
 mod tests {

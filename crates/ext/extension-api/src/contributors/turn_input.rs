@@ -1,5 +1,5 @@
-use codex_protocol::user_input::UserInput;
-use codex_utils_path_uri::PathUri;
+use genex_protocol::user_input::UserInput;
+use genex_utils_path_uri::PathUri;
 use std::marker::PhantomData;
 
 /// Host-owned turn environment summary visible to turn-input contributors.

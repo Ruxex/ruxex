@@ -1,7 +1,7 @@
 use crate::OTEL_SERVICE_NAME;
 use crate::config_manager::ConfigManager;
-use codex_login::AuthManager;
-use codex_otel::OtelProvider;
+use genex_login::AuthManager;
+use genex_otel::OtelProvider;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::task::JoinHandle;
@@ -73,7 +73,7 @@ where
                             continue;
                         }
                     };
-                    let next_provider = match codex_core::otel_init::build_provider(
+                    let next_provider = match genex_core::otel_init::build_provider(
                         &config,
                         env!("CARGO_PKG_VERSION"),
                         Some(OTEL_SERVICE_NAME),

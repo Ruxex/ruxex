@@ -1,15 +1,15 @@
 //! Shared byte/token truncation for tool and exec output.
 
-use codex_protocol::models::FunctionCallOutputBody;
-use codex_protocol::models::FunctionCallOutputContentItem;
-use codex_protocol::models::FunctionCallOutputPayload;
-pub use codex_utils_string::approx_bytes_for_tokens;
-pub use codex_utils_string::approx_token_count;
-pub use codex_utils_string::approx_tokens_from_byte_count;
-use codex_utils_string::truncate_middle_chars;
-use codex_utils_string::truncate_middle_with_token_budget;
+use genex_protocol::models::FunctionCallOutputBody;
+use genex_protocol::models::FunctionCallOutputContentItem;
+use genex_protocol::models::FunctionCallOutputPayload;
+pub use genex_utils_string::approx_bytes_for_tokens;
+pub use genex_utils_string::approx_token_count;
+pub use genex_utils_string::approx_tokens_from_byte_count;
+use genex_utils_string::truncate_middle_chars;
+use genex_utils_string::truncate_middle_with_token_budget;
 
-pub use codex_protocol::protocol::TruncationPolicy;
+pub use genex_protocol::protocol::TruncationPolicy;
 
 /// Adds the existing 20% allowance for serialization and headers.
 /// Saved history budgets already include this allowance.

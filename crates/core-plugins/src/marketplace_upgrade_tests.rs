@@ -1,9 +1,9 @@
 use super::*;
 use crate::PluginGitMode;
-use codex_config::CONFIG_TOML_FILE;
-use codex_config::LoaderOverrides;
-use codex_config::loader::load_config_layers_state;
-use codex_exec_server::LOCAL_FS;
+use genex_config::CONFIG_TOML_FILE;
+use genex_config::LoaderOverrides;
+use genex_config::loader::load_config_layers_state;
+use genex_exec_server::LOCAL_FS;
 use pretty_assertions::assert_eq;
 use std::path::Path;
 use std::path::PathBuf;
@@ -404,7 +404,7 @@ fn config_reloader(codex_home: &Path) -> ConfigLayerReload {
             Some(AbsolutePathBuf::try_from(codex_home.join("project"))?),
             &[],
             options.clone(),
-            &codex_config::NoopThreadConfigLoader,
+            &genex_config::NoopThreadConfigLoader,
         ))
     })
 }

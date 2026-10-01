@@ -2,7 +2,7 @@ use std::future::pending;
 use std::sync::Arc;
 use std::time::Duration;
 
-use codex_code_mode_protocol::DEFAULT_EXEC_YIELD_TIME_MS;
+use genex_code_mode_protocol::DEFAULT_EXEC_YIELD_TIME_MS;
 use pretty_assertions::assert_eq;
 
 use super::MAX_ERROR_BYTES;

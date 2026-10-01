@@ -1,34 +1,34 @@
-use codex_api::ReqwestTransport;
-use codex_api::SearchClient;
-use codex_api::SearchCommands;
-use codex_api::SearchQuery;
-use codex_api::SearchRequest;
-use codex_api::SearchSettings;
-use codex_core::X_CODEX_TURN_METADATA_HEADER;
-use codex_core::web_search_action_detail;
-use codex_extension_api::ExtensionTurnItem;
-use codex_extension_api::FunctionCallError;
-use codex_extension_api::ResponsesApiTool;
-use codex_extension_api::ToolCall;
-use codex_extension_api::ToolExecutor;
-use codex_extension_api::ToolName;
-use codex_extension_api::ToolOutput;
-use codex_extension_api::ToolSpec;
-use codex_extension_api::parse_tool_input_schema_without_compaction;
-use codex_extension_items::ExtensionItem;
-use codex_extension_items::web_search::WebSearchAction;
-use codex_extension_items::web_search::WebSearchItem;
-use codex_login::default_client::add_originator_header;
-use codex_login::default_client::create_client;
-use codex_model_provider::SharedModelProvider;
-use codex_protocol::models::WebSearchAction as CoreWebSearchAction;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::WebSearchBeginEvent;
-use codex_protocol::protocol::WebSearchEndEvent;
-use codex_tools::ResponsesApiNamespace;
-use codex_tools::ResponsesApiNamespaceTool;
-use codex_tools::ToolExposure;
-use codex_tools::default_namespace_description;
+use genex_api::ReqwestTransport;
+use genex_api::SearchClient;
+use genex_api::SearchCommands;
+use genex_api::SearchQuery;
+use genex_api::SearchRequest;
+use genex_api::SearchSettings;
+use genex_core::X_CODEX_TURN_METADATA_HEADER;
+use genex_core::web_search_action_detail;
+use genex_extension_api::ExtensionTurnItem;
+use genex_extension_api::FunctionCallError;
+use genex_extension_api::ResponsesApiTool;
+use genex_extension_api::ToolCall;
+use genex_extension_api::ToolExecutor;
+use genex_extension_api::ToolName;
+use genex_extension_api::ToolOutput;
+use genex_extension_api::ToolSpec;
+use genex_extension_api::parse_tool_input_schema_without_compaction;
+use genex_extension_items::ExtensionItem;
+use genex_extension_items::web_search::WebSearchAction;
+use genex_extension_items::web_search::WebSearchItem;
+use genex_login::default_client::add_originator_header;
+use genex_login::default_client::create_client;
+use genex_model_provider::SharedModelProvider;
+use genex_protocol::models::WebSearchAction as CoreWebSearchAction;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::WebSearchBeginEvent;
+use genex_protocol::protocol::WebSearchEndEvent;
+use genex_tools::ResponsesApiNamespace;
+use genex_tools::ResponsesApiNamespaceTool;
+use genex_tools::ToolExposure;
+use genex_tools::default_namespace_description;
 use http::HeaderMap;
 use http::HeaderValue;
 use url::Url;
@@ -83,7 +83,7 @@ impl<'call> ToolExecutor<ToolCall<'call>> for WebSearchTool {
         true
     }
 
-    fn handle<'a>(&'a self, call: ToolCall<'call>) -> codex_extension_api::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, call: ToolCall<'call>) -> genex_extension_api::ToolExecutorFuture<'a>
     where
         'call: 'a,
     {
@@ -148,7 +148,7 @@ impl WebSearchTool {
         let output = response.output;
         let results = response.results;
         if let Some(results) = results.as_ref()
-            && let Some(metrics) = codex_otel::global()
+            && let Some(metrics) = genex_otel::global()
             && let Ok(payload) = serde_json::to_vec(results)
         {
             let payload_bytes = i64::try_from(payload.len()).unwrap_or(i64::MAX);
@@ -268,13 +268,13 @@ fn extension_turn_item(item: WebSearchItem, legacy_event: EventMsg) -> Extension
 
 #[cfg(test)]
 mod tests {
-    use codex_api::SearchCommands;
-    use codex_extension_items::web_search::WebSearchAction;
+    use genex_api::SearchCommands;
+    use genex_extension_items::web_search::WebSearchAction;
     use pretty_assertions::assert_eq;
 
     use super::command_action;
     use super::search_request_headers;
-    use codex_core::X_CODEX_TURN_METADATA_HEADER;
+    use genex_core::X_CODEX_TURN_METADATA_HEADER;
 
     #[test]
     fn search_request_headers_forward_thread_originator_and_turn_metadata() {

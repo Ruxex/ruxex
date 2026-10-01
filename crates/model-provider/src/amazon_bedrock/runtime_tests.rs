@@ -1,5 +1,5 @@
-use codex_aws_auth::AwsAuthConfig;
-use codex_model_provider_info::ModelProviderAwsAuthInfo;
+use genex_aws_auth::AwsAuthConfig;
+use genex_model_provider_info::ModelProviderAwsAuthInfo;
 use pretty_assertions::assert_eq;
 
 use super::aws_auth_config;

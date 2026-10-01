@@ -1,18 +1,18 @@
 use std::fs;
 use std::sync::Arc;
 
-use codex_exec_server::LOCAL_FS;
-use codex_protocol::protocol::Product;
-use codex_protocol::protocol::SkillScope;
-use codex_skills::SkillDependencies;
-use codex_skills::SkillInterface;
-use codex_skills::SkillMetadata;
-use codex_skills::SkillPolicy;
-use codex_skills::SkillToolDependency;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_plugins::PluginIdentity;
-use codex_utils_plugins::PluginSkillRoot;
-use codex_utils_plugins::SkillDiscoveryMode;
+use genex_exec_server::LOCAL_FS;
+use genex_protocol::protocol::Product;
+use genex_protocol::protocol::SkillScope;
+use genex_skills::SkillDependencies;
+use genex_skills::SkillInterface;
+use genex_skills::SkillMetadata;
+use genex_skills::SkillPolicy;
+use genex_skills::SkillToolDependency;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_plugins::PluginIdentity;
+use genex_utils_plugins::PluginSkillRoot;
+use genex_utils_plugins::SkillDiscoveryMode;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 

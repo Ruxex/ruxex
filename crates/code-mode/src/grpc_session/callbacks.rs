@@ -4,9 +4,9 @@ use std::sync::PoisonError;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use codex_code_mode_protocol::CellId;
-use codex_code_mode_protocol::grpc;
-use codex_protocol::protocol::W3cTraceContext;
+use genex_code_mode_protocol::CellId;
+use genex_code_mode_protocol::grpc;
+use genex_protocol::protocol::W3cTraceContext;
 use futures::FutureExt;
 use tokio_util::sync::CancellationToken;
 use tracing::Instrument;
@@ -123,7 +123,7 @@ impl SessionInner {
             invocation.id = %call.invocation_id,
         );
         if let Some(traceparent) = call.traceparent.as_ref() {
-            codex_otel::set_parent_from_w3c_trace_context(
+            genex_otel::set_parent_from_w3c_trace_context(
                 &callback_span,
                 &W3cTraceContext {
                     traceparent: Some(traceparent.clone()),

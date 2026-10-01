@@ -1,9 +1,9 @@
 //! Helpers for deciding which buffered events to replay when switching threads.
 
-use codex_app_server_protocol::CodexErrorInfo;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::CodexErrorInfo;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::ThreadItem;
 use std::collections::HashSet;
 
 use super::ThreadBufferedEvent;

@@ -11,7 +11,7 @@ impl ChatWidget {
     /// Its completion carries the full summary if the bounded event buffer lost earlier deltas.
     pub(crate) fn restore_active_reasoning_item(
         &mut self,
-        started: codex_app_server_protocol::ItemStartedNotification,
+        started: genex_app_server_protocol::ItemStartedNotification,
         parts: Option<(Vec<String>, Vec<String>)>,
     ) {
         let _turn_id = started.turn_id;
@@ -48,7 +48,7 @@ impl ChatWidget {
             ServerNotification::ReasoningTextDelta(delta) => (&delta.turn_id, &delta.item_id),
             ServerNotification::ReasoningSummaryPartAdded(part) => (&part.turn_id, &part.item_id),
             ServerNotification::ItemCompleted(
-                codex_app_server_protocol::ItemCompletedNotification {
+                genex_app_server_protocol::ItemCompletedNotification {
                     turn_id,
                     item: ThreadItem::Reasoning { id, .. },
                     ..
@@ -69,7 +69,7 @@ impl ChatWidget {
             return false;
         }
         self.restore_active_reasoning_item(
-            codex_app_server_protocol::ItemStartedNotification {
+            genex_app_server_protocol::ItemStartedNotification {
                 thread_id: self.thread_id.map(|id| id.to_string()).unwrap_or_default(),
                 turn_id: turn_id.clone(),
                 item: ThreadItem::Reasoning {
@@ -112,7 +112,7 @@ impl ChatWidget {
             // Defer completed metadata-only turns until their page loads. Active
             // turns must restore their lifecycle even before any items are available.
             if turn.status == TurnStatus::Completed
-                && turn.items_view == codex_app_server_protocol::TurnItemsView::NotLoaded
+                && turn.items_view == genex_app_server_protocol::TurnItemsView::NotLoaded
                 && turn.items.is_empty()
             {
                 continue;
@@ -152,7 +152,7 @@ impl ChatWidget {
                     } = item
                 {
                     self.restore_active_reasoning_item(
-                        codex_app_server_protocol::ItemStartedNotification {
+                        genex_app_server_protocol::ItemStartedNotification {
                             thread_id: self.thread_id.map(|id| id.to_string()).unwrap_or_default(),
                             turn_id: turn_id.clone(),
                             item: ThreadItem::Reasoning {
@@ -199,7 +199,7 @@ impl ChatWidget {
                         thread_id: self.thread_id.map(|id| id.to_string()).unwrap_or_default(),
                         turn: Turn {
                             id: turn_id,
-                            items_view: codex_app_server_protocol::TurnItemsView::NotLoaded,
+                            items_view: genex_app_server_protocol::TurnItemsView::NotLoaded,
                             items: Vec::new(),
                             status,
                             error,
@@ -297,24 +297,24 @@ impl ChatWidget {
                 self.on_agent_reasoning_final();
             }
             item @ ThreadItem::CommandExecution {
-                status: codex_app_server_protocol::CommandExecutionStatus::InProgress,
+                status: genex_app_server_protocol::CommandExecutionStatus::InProgress,
                 ..
             } => self.on_command_execution_started(item),
             item @ ThreadItem::CommandExecution {
                 source: ExecCommandSource::Agent | ExecCommandSource::UnifiedExecStartup,
                 status:
-                    codex_app_server_protocol::CommandExecutionStatus::Completed
-                    | codex_app_server_protocol::CommandExecutionStatus::Failed,
+                    genex_app_server_protocol::CommandExecutionStatus::Completed
+                    | genex_app_server_protocol::CommandExecutionStatus::Failed,
                 ..
             } if from_replay => self.handle_command_execution_completed_now(item),
             item @ ThreadItem::CommandExecution { .. } => self.on_command_execution_completed(item),
             ThreadItem::FileChange {
-                status: codex_app_server_protocol::PatchApplyStatus::InProgress,
+                status: genex_app_server_protocol::PatchApplyStatus::InProgress,
                 ..
             } => {}
             item @ ThreadItem::FileChange { .. } => self.on_file_change_completed(item),
             item @ ThreadItem::McpToolCall {
-                status: codex_app_server_protocol::McpToolCallStatus::InProgress,
+                status: genex_app_server_protocol::McpToolCallStatus::InProgress,
                 ..
             } => self.on_mcp_tool_call_started(item),
             item @ ThreadItem::McpToolCall { .. } => self.on_mcp_tool_call_completed(item),
@@ -324,7 +324,7 @@ impl ChatWidget {
                     item.id,
                     item.query,
                     item.action
-                        .unwrap_or(codex_app_server_protocol::WebSearchAction::Other),
+                        .unwrap_or(genex_app_server_protocol::WebSearchAction::Other),
                 );
             }
             ThreadItem::ImageView { id: _, path } => {

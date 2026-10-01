@@ -6,17 +6,17 @@ use std::collections::BTreeMap;
 use std::io::ErrorKind;
 use std::time::Duration;
 
-use codex_exec_server::HttpHeader;
-use codex_exec_server::HttpRedirectPolicy;
-use codex_exec_server::HttpRequestBodyDeltaNotification;
-use codex_exec_server::HttpRequestParams;
-use codex_exec_server::HttpRequestResponse;
-use codex_exec_server::InitializeParams;
-use codex_exec_server_protocol::JSONRPCError;
-use codex_exec_server_protocol::JSONRPCMessage;
-use codex_exec_server_protocol::JSONRPCNotification;
-use codex_exec_server_protocol::JSONRPCResponse;
-use codex_exec_server_protocol::RequestId;
+use genex_exec_server::HttpHeader;
+use genex_exec_server::HttpRedirectPolicy;
+use genex_exec_server::HttpRequestBodyDeltaNotification;
+use genex_exec_server::HttpRequestParams;
+use genex_exec_server::HttpRequestResponse;
+use genex_exec_server::InitializeParams;
+use genex_exec_server_protocol::JSONRPCError;
+use genex_exec_server_protocol::JSONRPCMessage;
+use genex_exec_server_protocol::JSONRPCNotification;
+use genex_exec_server_protocol::JSONRPCResponse;
+use genex_exec_server_protocol::RequestId;
 use common::SYSTEM_PROXY_REQUEST_URL_ENV;
 use common::SYSTEM_PROXY_URL_ENV;
 use common::exec_server::ExecServerHarness;
@@ -776,7 +776,7 @@ where
 async fn wait_for_error_response(
     server: &mut ExecServerHarness,
     request_id: RequestId,
-) -> anyhow::Result<codex_exec_server_protocol::JSONRPCErrorError> {
+) -> anyhow::Result<genex_exec_server_protocol::JSONRPCErrorError> {
     let response = server
         .wait_for_event(|event| {
             matches!(

@@ -1,8 +1,8 @@
 use crate::app_command::AppCommand;
-use codex_app_server_protocol::RequestId as AppServerRequestId;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::RequestId as AppServerRequestId;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::ThreadItem;
 use std::collections::HashMap;
 use std::collections::HashSet;
 

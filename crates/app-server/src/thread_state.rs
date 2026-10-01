@@ -1,25 +1,25 @@
 use crate::outgoing_message::ConnectionId;
 use crate::outgoing_message::ConnectionRequestId;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadGoal;
-use codex_app_server_protocol::ThreadHistoryBuilder;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadSettings;
-use codex_app_server_protocol::Turn;
-use codex_app_server_protocol::TurnError;
-use codex_core::CodexThread;
-use codex_core::ThreadConfigSnapshot;
-use codex_file_watcher::WatchRegistration;
-use codex_protocol::ThreadId;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ThreadGoal;
+use genex_app_server_protocol::ThreadHistoryBuilder;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadSettings;
+use genex_app_server_protocol::Turn;
+use genex_app_server_protocol::TurnError;
+use genex_core::CodexThread;
+use genex_core::ThreadConfigSnapshot;
+use genex_file_watcher::WatchRegistration;
+use genex_protocol::ThreadId;
 #[cfg(test)]
-use codex_protocol::config_types::MultiAgentMode;
-use codex_protocol::items::AgentMessageContent as CoreAgentMessageContent;
-use codex_protocol::items::TurnItem as CoreTurnItem;
-use codex_protocol::models::MessagePhase;
-use codex_protocol::protocol::EventMsg;
-use codex_rollout::RolloutItem;
-use codex_rollout::state_db::StateDbHandle;
-use codex_utils_path_uri::LegacyAppPathString;
+use genex_protocol::config_types::MultiAgentMode;
+use genex_protocol::items::AgentMessageContent as CoreAgentMessageContent;
+use genex_protocol::items::TurnItem as CoreTurnItem;
+use genex_protocol::models::MessagePhase;
+use genex_protocol::protocol::EventMsg;
+use genex_rollout::RolloutItem;
+use genex_rollout::state_db::StateDbHandle;
+use genex_utils_path_uri::LegacyAppPathString;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -40,17 +40,17 @@ pub(crate) struct PendingThreadResumeRequest {
     pub(crate) cold_resume_token_usage_turn_id: Option<String>,
     pub(crate) config_snapshot: ThreadConfigSnapshot,
     pub(crate) instruction_sources: Vec<LegacyAppPathString>,
-    pub(crate) thread_summary: codex_app_server_protocol::Thread,
+    pub(crate) thread_summary: genex_app_server_protocol::Thread,
     pub(crate) emit_thread_goal_update: bool,
     pub(crate) thread_goal_state_db: Option<StateDbHandle>,
     pub(crate) include_turns: bool,
     pub(crate) initial_turns_page:
-        Option<codex_app_server_protocol::ThreadResumeInitialTurnsPageParams>,
+        Option<genex_app_server_protocol::ThreadResumeInitialTurnsPageParams>,
     pub(crate) paginated_turns: Option<Vec<Turn>>,
-    pub(crate) paginated_initial_turns_page: Option<codex_app_server_protocol::TurnsPage>,
+    pub(crate) paginated_initial_turns_page: Option<genex_app_server_protocol::TurnsPage>,
     pub(crate) paginated_initial_turns_page_with_active_slot:
-        Option<codex_app_server_protocol::TurnsPage>,
-    pub(crate) resume_cursor_store: Option<Arc<dyn codex_thread_store::ThreadStore>>,
+        Option<genex_app_server_protocol::TurnsPage>,
+    pub(crate) resume_cursor_store: Option<Arc<dyn genex_thread_store::ThreadStore>>,
 }
 
 // ThreadListenerCommand is used to perform operations in the context of the thread listener, for serialization purposes.

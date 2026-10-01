@@ -1,22 +1,22 @@
 use anyhow::Context;
-use codex_core::exec::ExecCapturePolicy;
-use codex_core::exec::ExecParams;
-use codex_core::exec::process_exec_tool_call;
-use codex_core::sandboxing::SandboxPermissions;
-use codex_core::windows_sandbox::WindowsSandboxSetupMode;
-use codex_core::windows_sandbox::WindowsSandboxSetupRequest;
-use codex_core::windows_sandbox::run_windows_sandbox_setup;
-use codex_core::windows_sandbox::sandbox_setup_is_complete;
-use codex_features::Feature;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::exec_output::ExecToolCallOutput;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::permissions::NetworkSandboxPolicy;
+use genex_core::exec::ExecCapturePolicy;
+use genex_core::exec::ExecParams;
+use genex_core::exec::process_exec_tool_call;
+use genex_core::sandboxing::SandboxPermissions;
+use genex_core::windows_sandbox::WindowsSandboxSetupMode;
+use genex_core::windows_sandbox::WindowsSandboxSetupRequest;
+use genex_core::windows_sandbox::run_windows_sandbox_setup;
+use genex_core::windows_sandbox::sandbox_setup_is_complete;
+use genex_features::Feature;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::exec_output::ExecToolCallOutput;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::FileSystemSpecialPath;
+use genex_protocol::permissions::NetworkSandboxPolicy;
 use core_test_support::PathExt;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -97,7 +97,7 @@ fn stage_windows_sandbox_helpers() -> anyhow::Result<()> {
         }
     }
     for helper_name in ["codex-windows-sandbox-setup", "codex-command-runner"] {
-        let helper = codex_utils_cargo_bin::cargo_bin(helper_name)?;
+        let helper = genex_utils_cargo_bin::cargo_bin(helper_name)?;
         let file_name = Path::new(helper_name).with_extension("exe");
         let destination = resources_dir.join(file_name);
         if let Err(err) = std::fs::copy(&helper, &destination) {
@@ -128,18 +128,18 @@ fn stage_windows_sandbox_cli(fixture_bin: &Path) -> anyhow::Result<(PathBuf, Pat
     let resources_dir = fixture_bin.join("codex-resources");
     std::fs::create_dir_all(&resources_dir)?;
 
-    let codex_source = codex_utils_cargo_bin::cargo_bin("codex")?;
+    let codex_source = genex_utils_cargo_bin::cargo_bin("codex")?;
     let codex = fixture_bin.join("codex.exe");
     std::fs::copy(&codex_source, &codex)
         .with_context(|| format!("copy {} to {}", codex_source.display(), codex.display()))?;
     for helper_name in ["codex-windows-sandbox-setup", "codex-command-runner"] {
-        let helper = codex_utils_cargo_bin::cargo_bin(helper_name)?;
+        let helper = genex_utils_cargo_bin::cargo_bin(helper_name)?;
         let destination = resources_dir.join(Path::new(helper_name).with_extension("exe"));
         std::fs::copy(&helper, &destination)
             .with_context(|| format!("copy {} to {}", helper.display(), destination.display()))?;
     }
 
-    let probe_source = codex_utils_cargo_bin::cargo_bin("codex-windows-managed-deny-probe")?;
+    let probe_source = genex_utils_cargo_bin::cargo_bin("codex-windows-managed-deny-probe")?;
     let probe = fixture_bin.join("managed-deny-probe.exe");
     std::fs::copy(&probe_source, &probe)
         .with_context(|| format!("copy {} to {}", probe_source.display(), probe.display()))?;
@@ -423,7 +423,7 @@ async fn windows_elevated_does_not_create_missing_workspace_metadata() -> anyhow
     .await?;
 
     assert_eq!(output.exit_code, 0, "sandboxed command should complete");
-    for name in codex_protocol::permissions::PROTECTED_METADATA_PATH_NAMES {
+    for name in genex_protocol::permissions::PROTECTED_METADATA_PATH_NAMES {
         let path = cwd.join(name);
         assert!(
             !path.exists(),

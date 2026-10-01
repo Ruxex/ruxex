@@ -1,18 +1,18 @@
 use super::*;
 use crate::sandboxing::SandboxPermissions;
 use crate::tools::hook_names::HookToolName;
-use codex_network_proxy::ManagedNetworkSandboxContext;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::GranularApprovalConfig;
-use codex_sandboxing::SandboxCommand;
-use codex_sandboxing::SandboxManager;
-use codex_sandboxing::SandboxType;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_network_proxy::ManagedNetworkSandboxContext;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSpecialPath;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::GranularApprovalConfig;
+use genex_sandboxing::SandboxCommand;
+use genex_sandboxing::SandboxManager;
+use genex_sandboxing::SandboxType;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::collections::HashMap;
@@ -240,7 +240,7 @@ fn windows_sandbox_env_preserves_denied_reads_or_rejects_unsupported_backend() {
             missing_path_behavior: None,
         },
     ]);
-    let permissions = codex_protocol::models::PermissionProfile::from_runtime_permissions(
+    let permissions = genex_protocol::models::PermissionProfile::from_runtime_permissions(
         &file_system_policy,
         NetworkSandboxPolicy::Restricted,
     );
@@ -257,7 +257,7 @@ fn windows_sandbox_env_preserves_denied_reads_or_rejects_unsupported_backend() {
         workspace_roots: std::slice::from_ref(&cwd_uri),
         sandbox_exe: None,
         use_legacy_landlock: false,
-        windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel::Elevated,
+        windows_sandbox_level: genex_protocol::config_types::WindowsSandboxLevel::Elevated,
         windows_sandbox_private_desktop: false,
         network_denial_cancellation_token: None,
         network_proxy: None,
@@ -290,7 +290,7 @@ fn windows_sandbox_env_preserves_denied_reads_or_rejects_unsupported_backend() {
     assert_eq!(request.windows_sandbox_workspace_roots, vec![cwd]);
 
     attempt.windows_sandbox_level =
-        codex_protocol::config_types::WindowsSandboxLevel::RestrictedToken;
+        genex_protocol::config_types::WindowsSandboxLevel::RestrictedToken;
     let error = attempt
         .env_for(
             command(),
@@ -312,7 +312,7 @@ fn exec_server_env_keeps_command_native_and_carries_sandbox_context() {
         .try_into()
         .expect("absolute cwd");
     let cwd_uri = PathUri::from_abs_path(&cwd);
-    let exec_server_permissions = codex_protocol::models::PermissionProfile::workspace_write();
+    let exec_server_permissions = genex_protocol::models::PermissionProfile::workspace_write();
     let permissions = exec_server_permissions
         .clone()
         .materialize_project_roots_with_workspace_roots(std::slice::from_ref(&cwd));
@@ -328,7 +328,7 @@ fn exec_server_env_keeps_command_native_and_carries_sandbox_context() {
         workspace_roots: std::slice::from_ref(&cwd_uri),
         sandbox_exe: None,
         use_legacy_landlock: false,
-        windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel::Disabled,
+        windows_sandbox_level: genex_protocol::config_types::WindowsSandboxLevel::Disabled,
         windows_sandbox_private_desktop: false,
         network_denial_cancellation_token: None,
         network_proxy: None,
@@ -367,16 +367,16 @@ fn exec_server_env_keeps_command_native_and_carries_sandbox_context() {
     assert_eq!(request.sandbox, SandboxType::None);
     assert_eq!(
         request.exec_server_sandbox,
-        Some(codex_exec_server::FileSystemSandboxContext {
+        Some(genex_exec_server::FileSystemSandboxContext {
             permissions: exec_server_permissions.clone(),
             cwd: cwd_uri.clone(),
             workspace_roots: vec![cwd_uri.clone()],
             user_home_dir: None,
             temporary_directories: None,
             windows_sandbox_selection: if cfg!(windows) {
-                codex_file_system::WindowsSandboxSelection::RestrictedToken
+                genex_file_system::WindowsSandboxSelection::RestrictedToken
             } else {
-                codex_file_system::WindowsSandboxSelection::Disabled
+                genex_file_system::WindowsSandboxSelection::Disabled
             },
             windows_sandbox_private_desktop: false,
             windows_sandbox_proxy_settings_mode: None,
@@ -399,7 +399,7 @@ fn exec_server_env_keeps_command_native_and_carries_sandbox_context() {
     assert!(!request.exec_server_enforce_managed_network);
     assert_eq!(request.exec_server_managed_network, Some(managed_network));
 
-    let full_access = codex_protocol::models::PermissionProfile::Disabled;
+    let full_access = genex_protocol::models::PermissionProfile::Disabled;
     attempt.permissions = &full_access;
     attempt.exec_server_permissions = &full_access;
     attempt.enforce_managed_network = false;

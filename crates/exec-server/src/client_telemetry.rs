@@ -1,7 +1,7 @@
 //! Caller-side RPC attempt counts using the client's protocol method names, independent of tracing.
 
-use codex_otel::EXEC_SERVER_CLIENT_REQUEST_COUNT_METRIC;
-use codex_otel::MetricsClient;
+use genex_otel::EXEC_SERVER_CLIENT_REQUEST_COUNT_METRIC;
+use genex_otel::MetricsClient;
 
 pub(crate) fn record_client_request(metrics: Option<&MetricsClient>, method: &str) {
     let Some(metrics) = metrics else {

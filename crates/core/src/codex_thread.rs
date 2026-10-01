@@ -7,62 +7,62 @@ use crate::session::SessionSettingsUpdate;
 use crate::session::new_submission_id;
 use crate::session::session::Session;
 use crate::session::step_settings::StepSettingsUpdate;
-use codex_diagnostics::Gauge;
-use codex_diagnostics::GaugeGuard;
-use codex_exec_server::SelectedCapabilityRootsStatus;
-use codex_extension_api::ConversationHistorySnapshot;
-use codex_extension_api::ThreadIdleCause;
-use codex_features::Feature;
-use codex_history::RolloutItem;
-use codex_otel::SessionTelemetry;
-use codex_otel::current_span_w3c_trace_context;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::Result as CodexResult;
-use codex_protocol::mcp::CallToolResult;
-use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::models::ActivePermissionProfile;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::ProfileWorkspaceRoot;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EnvironmentConfig;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::SessionConfiguredEvent;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::Submission;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadSettingsSnapshot;
-use codex_protocol::protocol::ThreadSource;
-use codex_protocol::protocol::TokenUsageInfo;
-use codex_protocol::protocol::TurnEnvironmentSelection;
-use codex_protocol::protocol::TurnEnvironmentSelections;
-use codex_protocol::protocol::W3cTraceContext;
-use codex_protocol::turn_input::RecoverTurnRequest;
-use codex_protocol::turn_input::StartIfIdleSubmission;
-use codex_protocol::turn_input::SteerSubmission;
-use codex_protocol::turn_input::SuspendTurnOutcome;
-use codex_protocol::turn_input::TurnInputMode;
-use codex_protocol::turn_input::TurnInputRequest;
-use codex_protocol::turn_input::TurnInputSubmission;
-use codex_protocol::turn_input::TurnStartOptions;
-use codex_thread_store::PersistContext;
-use codex_thread_store::StoredThread;
-use codex_thread_store::StoredThreadHistory;
-use codex_thread_store::ThreadMetadataPatch;
-use codex_thread_store::ThreadStoreError;
-use codex_thread_store::ThreadStoreResult;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::LegacyAppPathString;
-use codex_utils_path_uri::PathUri;
+use genex_diagnostics::Gauge;
+use genex_diagnostics::GaugeGuard;
+use genex_exec_server::SelectedCapabilityRootsStatus;
+use genex_extension_api::ConversationHistorySnapshot;
+use genex_extension_api::ThreadIdleCause;
+use genex_features::Feature;
+use genex_history::RolloutItem;
+use genex_otel::SessionTelemetry;
+use genex_otel::current_span_w3c_trace_context;
+use genex_protocol::ThreadId;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::Result as CodexResult;
+use genex_protocol::mcp::CallToolResult;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::models::ActivePermissionProfile;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::ProfileWorkspaceRoot;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EnvironmentConfig;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::Event;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::SandboxPolicy;
+use genex_protocol::protocol::SessionConfiguredEvent;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::Submission;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::ThreadSettingsSnapshot;
+use genex_protocol::protocol::ThreadSource;
+use genex_protocol::protocol::TokenUsageInfo;
+use genex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::protocol::TurnEnvironmentSelections;
+use genex_protocol::protocol::W3cTraceContext;
+use genex_protocol::turn_input::RecoverTurnRequest;
+use genex_protocol::turn_input::StartIfIdleSubmission;
+use genex_protocol::turn_input::SteerSubmission;
+use genex_protocol::turn_input::SuspendTurnOutcome;
+use genex_protocol::turn_input::TurnInputMode;
+use genex_protocol::turn_input::TurnInputRequest;
+use genex_protocol::turn_input::TurnInputSubmission;
+use genex_protocol::turn_input::TurnStartOptions;
+use genex_thread_store::PersistContext;
+use genex_thread_store::StoredThread;
+use genex_thread_store::StoredThreadHistory;
+use genex_thread_store::ThreadMetadataPatch;
+use genex_thread_store::ThreadStoreError;
+use genex_thread_store::ThreadStoreResult;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::LegacyAppPathString;
+use genex_utils_path_uri::PathUri;
 use rmcp::model::ReadResourceRequestParams;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -71,7 +71,7 @@ use tokio::sync::oneshot;
 use tokio::sync::watch;
 use tokio_util::sync::CancellationToken;
 
-use codex_rollout::state_db::StateDbHandle;
+use genex_rollout::state_db::StateDbHandle;
 
 static LIVE_THREADS: Gauge = Gauge::new("core.threads.live");
 
@@ -123,7 +123,7 @@ impl ThreadConfigSnapshot {
     }
 
     pub fn sandbox_policy(&self) -> SandboxPolicy {
-        codex_sandboxing::compatibility_sandbox_policy_for_permission_profile(
+        genex_sandboxing::compatibility_sandbox_policy_for_permission_profile(
             &self.permission_profile,
             self.cwd().as_path(),
         )
@@ -205,7 +205,7 @@ impl CodexThread {
     }
 
     /// Returns extension-owned data attached to this thread runtime.
-    pub fn thread_extension_data(&self) -> &codex_extension_api::ExtensionData {
+    pub fn thread_extension_data(&self) -> &genex_extension_api::ExtensionData {
         &self.session.services.thread_extension_data
     }
 
@@ -232,7 +232,7 @@ impl CodexThread {
         let config = self.config().await;
         for contributor in contributors {
             contributor
-                .on_thread_ready(codex_extension_api::ThreadReadyInput {
+                .on_thread_ready(genex_extension_api::ThreadReadyInput {
                     config: config.as_ref(),
                     session_source: &self.session_source,
                     session_store: &self.session.services.session_extension_data,
@@ -250,7 +250,7 @@ impl CodexThread {
             .thread_lifecycle_contributors()
         {
             contributor
-                .on_thread_resume(codex_extension_api::ThreadResumeInput {
+                .on_thread_resume(genex_extension_api::ThreadResumeInput {
                     session_store: &self.session.services.session_extension_data,
                     thread_store: &self.session.services.thread_extension_data,
                 })
@@ -267,8 +267,8 @@ impl CodexThread {
         self.session
             .interrupt_turn_with_warning(
                 turn_id,
-                codex_protocol::protocol::EventMsg::Warning(
-                    codex_protocol::protocol::WarningEvent { message },
+                genex_protocol::protocol::EventMsg::Warning(
+                    genex_protocol::protocol::WarningEvent { message },
                 ),
             )
             .await;
@@ -781,8 +781,8 @@ impl CodexThread {
     /// Observes this thread's published MCP connections that match the requested config.
     pub async fn mcp_connection_statuses(
         &self,
-        config: &codex_mcp::McpConfig,
-    ) -> std::collections::HashMap<String, codex_protocol::mcp::McpServerConnectionStatus> {
+        config: &genex_mcp::McpConfig,
+    ) -> std::collections::HashMap<String, genex_protocol::mcp::McpServerConnectionStatus> {
         self.session
             .services
             .mcp_runtime
@@ -794,14 +794,14 @@ impl CodexThread {
     pub async fn runtime_mcp_config_and_context(
         &self,
         config: &crate::config::Config,
-    ) -> (codex_mcp::McpConfig, codex_mcp::McpRuntimeContext) {
+    ) -> (genex_mcp::McpConfig, genex_mcp::McpRuntimeContext) {
         self.session.runtime_mcp_config_and_context(config).await
     }
 
     /// Captures the exact MCP config and environment bindings for the current thread state.
     pub async fn current_mcp_config_and_runtime_context(
         &self,
-    ) -> (Arc<codex_mcp::McpConfig>, codex_mcp::McpRuntimeContext) {
+    ) -> (Arc<genex_mcp::McpConfig>, genex_mcp::McpRuntimeContext) {
         let config = self.session.get_config().await;
         let (mcp_config, runtime_context) = self.runtime_mcp_config_and_context(&config).await;
         (Arc::new(mcp_config), runtime_context)

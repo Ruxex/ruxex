@@ -3,7 +3,7 @@
 use std::fmt;
 use std::sync::OnceLock;
 
-use codex_install_context::InstallContext;
+use genex_install_context::InstallContext;
 use semver::Version;
 use serde::Deserialize;
 use serde::Serialize;

@@ -1,8 +1,8 @@
 use anyhow::Result;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use codex_core::StartThreadOptions;
-use codex_core::TurnInputRequest;
+use genex_core::StartThreadOptions;
+use genex_core::TurnInputRequest;
 use core_test_support::responses::ev_apply_patch_custom_tool_call;
 use core_test_support::responses::ev_apply_patch_exec_command_call_via_heredoc;
 use core_test_support::responses::ev_exec_command_call;
@@ -16,39 +16,39 @@ use std::time::Duration;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
-use codex_exec_server::CreateDirectoryOptions;
-use codex_exec_server::LOCAL_ENVIRONMENT_ID;
-use codex_exec_server::REMOTE_ENVIRONMENT_ID;
-use codex_exec_server::RemoveOptions;
-use codex_features::Feature;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_exec_server::LOCAL_ENVIRONMENT_ID;
+use genex_exec_server::REMOTE_ENVIRONMENT_ID;
+use genex_exec_server::RemoveOptions;
+use genex_features::Feature;
 #[cfg(unix)]
-use codex_protocol::config_types::ApprovalsReviewer;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::EventMsg;
+use genex_protocol::config_types::ApprovalsReviewer;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::FileSystemSpecialPath;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::EventMsg;
 #[cfg(unix)]
-use codex_protocol::protocol::Op;
+use genex_protocol::protocol::Op;
 #[cfg(unix)]
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::TurnEnvironmentSelection;
-use codex_protocol::protocol::TurnEnvironmentSelections;
-use codex_protocol::user_input::UserInput;
+use genex_protocol::protocol::ReviewDecision;
+use genex_protocol::protocol::SandboxPolicy;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::protocol::TurnEnvironmentSelections;
+use genex_protocol::user_input::UserInput;
 #[cfg(target_os = "linux")]
-use codex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use core_test_support::PathBufExt;
 use core_test_support::TestTargetOs;
 use core_test_support::assert_regex_match;
@@ -1260,7 +1260,7 @@ async fn apply_patch_cli_does_not_widen_permissions_for_workspace_directory_targ
     let harness_work_dir = work_dir.clone();
     let harness = apply_patch_harness_with(move |builder| {
         builder.with_config(move |config| {
-            config.approvals_reviewer = codex_protocol::config_types::ApprovalsReviewer::User;
+            config.approvals_reviewer = genex_protocol::config_types::ApprovalsReviewer::User;
             config.workspace_roots = vec![harness_work_dir.clone()];
             config
                 .permissions
@@ -1738,7 +1738,7 @@ async fn apply_patch_custom_tool_streaming_emits_updated_changes() -> Result<()>
             .expect("first update")
             .changes
             .get(&std::path::PathBuf::from("streamed.txt")),
-        Some(&codex_protocol::protocol::FileChange::Add {
+        Some(&genex_protocol::protocol::FileChange::Add {
             content: String::new(),
         })
     );
@@ -1748,7 +1748,7 @@ async fn apply_patch_custom_tool_streaming_emits_updated_changes() -> Result<()>
             .expect("last update")
             .changes
             .get(&std::path::PathBuf::from("streamed.txt")),
-        Some(&codex_protocol::protocol::FileChange::Add {
+        Some(&genex_protocol::protocol::FileChange::Add {
             content: "hello\nworld\n".to_string(),
         })
     );
@@ -2338,7 +2338,7 @@ async fn apply_patch_turn_diff_tracks_local_and_remote_environment_paths() -> Re
                 text_elements: Vec::new(),
             }])
             .with_thread_settings(ThreadSettingsOverrides {
-                environments: Some(codex_protocol::protocol::TurnEnvironmentSelections::new(
+                environments: Some(genex_protocol::protocol::TurnEnvironmentSelections::new(
                     test.config.cwd.clone(),
                     environments,
                 )),

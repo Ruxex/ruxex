@@ -1,6 +1,6 @@
 use super::*;
 use crate::runtime::test_support::unique_temp_dir;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 
 #[tokio::test]

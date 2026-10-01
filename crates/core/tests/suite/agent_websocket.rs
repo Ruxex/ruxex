@@ -1,10 +1,10 @@
 use anyhow::Result;
-use codex_core::TurnInputRequest;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::model_types::ToolMode;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
+use genex_core::TurnInputRequest;
+use genex_protocol::config_types::ServiceTier;
+use genex_protocol::model_types::ToolMode;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses::WebSocketConnectionConfig;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;

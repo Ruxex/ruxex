@@ -8,7 +8,7 @@ use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
 use anyhow::bail;
-use codex_exec_server::HttpClient;
+use genex_exec_server::HttpClient;
 use rmcp::transport::AuthorizationManager;
 use rmcp::transport::AuthorizationSession;
 use rmcp::transport::auth::AuthorizationMetadata;
@@ -42,8 +42,8 @@ use crate::oauth_client_registration::start_authorization as start_client_regist
 use crate::oauth_http_client::OAuthHttpClientAdapter;
 use crate::save_oauth_tokens;
 use crate::utils::build_default_headers;
-use codex_config::types::AuthKeyringBackendKind;
-use codex_config::types::OAuthCredentialsStoreMode;
+use genex_config::types::AuthKeyringBackendKind;
+use genex_config::types::OAuthCredentialsStoreMode;
 
 #[path = "oauth_callback_input.rs"]
 mod callback_input;
@@ -904,16 +904,16 @@ mod tests {
     use axum::Router;
     use axum::routing::get;
     use axum::routing::post;
-    use codex_config::types::AuthKeyringBackendKind;
-    use codex_config::types::OAuthCredentialsStoreMode;
-    use codex_exec_server::ExecServerError;
-    use codex_exec_server::HttpClient;
-    use codex_exec_server::HttpRequestParams;
-    use codex_exec_server::HttpRequestResponse;
-    use codex_exec_server::HttpResponseBodyStream;
-    use codex_exec_server::RouteAwareHttpClient;
-    use codex_http_client::HttpClientFactory;
-    use codex_http_client::OutboundProxyPolicy;
+    use genex_config::types::AuthKeyringBackendKind;
+    use genex_config::types::OAuthCredentialsStoreMode;
+    use genex_exec_server::ExecServerError;
+    use genex_exec_server::HttpClient;
+    use genex_exec_server::HttpRequestParams;
+    use genex_exec_server::HttpRequestResponse;
+    use genex_exec_server::HttpResponseBodyStream;
+    use genex_exec_server::RouteAwareHttpClient;
+    use genex_http_client::HttpClientFactory;
+    use genex_http_client::OutboundProxyPolicy;
     use futures::future::BoxFuture;
     use http::HeaderMap;
     use oauth2::TokenResponse;

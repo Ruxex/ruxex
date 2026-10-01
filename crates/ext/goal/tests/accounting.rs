@@ -5,15 +5,15 @@ mod accounting;
 
 use accounting::BudgetLimitedGoalDisposition;
 use accounting::GoalAccountingState;
-use codex_extension_api::ToolCallOutcome;
-use codex_extension_api::ToolName;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::items::AgentMessageContent;
-use codex_protocol::items::AgentMessageItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::MessagePhase;
-use codex_protocol::protocol::TokenUsage;
-use codex_state::ThreadGoalStatus;
+use genex_extension_api::ToolCallOutcome;
+use genex_extension_api::ToolName;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::items::AgentMessageContent;
+use genex_protocol::items::AgentMessageItem;
+use genex_protocol::items::TurnItem;
+use genex_protocol::models::MessagePhase;
+use genex_protocol::protocol::TokenUsage;
+use genex_state::ThreadGoalStatus;
 use pretty_assertions::assert_eq;
 
 #[test]

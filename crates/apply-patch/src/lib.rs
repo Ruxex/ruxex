@@ -12,15 +12,15 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_exec_server::CreateDirectoryOptions;
-use codex_exec_server::ExecutorFileSystem;
-use codex_exec_server::FileSystemSandboxContext;
-use codex_exec_server::GetMetadataOptions;
-use codex_exec_server::ReadFileOptions;
-use codex_exec_server::RemoveOptions;
-use codex_exec_server::WriteFileOptions;
-use codex_utils_path_uri::PathUri;
-use codex_utils_path_uri::PathUriParseError;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_exec_server::ExecutorFileSystem;
+use genex_exec_server::FileSystemSandboxContext;
+use genex_exec_server::GetMetadataOptions;
+use genex_exec_server::ReadFileOptions;
+use genex_exec_server::RemoveOptions;
+use genex_exec_server::WriteFileOptions;
+use genex_utils_path_uri::PathUri;
+use genex_utils_path_uri::PathUriParseError;
 pub use parser::Hunk;
 pub use parser::ParseError;
 use parser::ParseError::*;
@@ -857,7 +857,7 @@ pub fn print_summary(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_exec_server::LOCAL_FS;
+    use genex_exec_server::LOCAL_FS;
     use pretty_assertions::assert_eq;
     use std::fs;
     use tempfile::tempdir;

@@ -2,20 +2,20 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 use std::sync::Weak;
 
-use codex_protocol::items::TurnItem;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_tools::ConversationHistory;
-use codex_tools::ExtensionTurnItem;
-use codex_tools::ResponsesApiNamespaceTool;
-use codex_tools::ToolCall as ExtensionToolCall;
-use codex_tools::ToolEnvironment;
-use codex_tools::ToolName;
-use codex_tools::ToolSearchInfo;
-use codex_tools::ToolSpec;
-use codex_tools::TurnItemEmissionFuture;
-use codex_tools::TurnItemEmitter;
-use codex_utils_string::to_ascii_json_string;
+use genex_protocol::items::TurnItem;
+use genex_protocol::protocol::Event;
+use genex_protocol::protocol::EventMsg;
+use genex_tools::ConversationHistory;
+use genex_tools::ExtensionTurnItem;
+use genex_tools::ResponsesApiNamespaceTool;
+use genex_tools::ToolCall as ExtensionToolCall;
+use genex_tools::ToolEnvironment;
+use genex_tools::ToolName;
+use genex_tools::ToolSearchInfo;
+use genex_tools::ToolSpec;
+use genex_tools::TurnItemEmissionFuture;
+use genex_tools::TurnItemEmitter;
+use genex_utils_string::to_ascii_json_string;
 
 use crate::sandboxing::SandboxPermissions;
 use crate::session::session::Session;
@@ -29,12 +29,12 @@ use crate::tools::registry::ToolExecutor;
 use crate::turn_metadata::ExecutionMetadata;
 
 pub(crate) struct ExtensionToolAdapter(
-    Arc<dyn for<'call> codex_tools::ToolExecutor<ExtensionToolCall<'call>>>,
+    Arc<dyn for<'call> genex_tools::ToolExecutor<ExtensionToolCall<'call>>>,
 );
 
 impl ExtensionToolAdapter {
     pub(crate) fn new(
-        executor: Arc<dyn for<'call> codex_tools::ToolExecutor<ExtensionToolCall<'call>>>,
+        executor: Arc<dyn for<'call> genex_tools::ToolExecutor<ExtensionToolCall<'call>>>,
     ) -> Self {
         Self(executor)
     }
@@ -61,7 +61,7 @@ impl ToolExecutor<ToolInvocation> for ExtensionToolAdapter {
         self.0.search_info()
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> codex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

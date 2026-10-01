@@ -87,8 +87,8 @@ Install Rust with rustup and the native build dependencies for your platform.
 The pinned toolchain is selected by `rust-toolchain.toml`.
 
 ```sh
-cargo check --locked -p codex-cli
-cargo build --locked --release -p codex-cli --bin codex
+cargo check --locked -p genex-cli
+cargo build --locked --release -p genex-cli --bin codex
 ./target/release/codex
 ```
 

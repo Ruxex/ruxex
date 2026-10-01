@@ -3,7 +3,7 @@ use super::*;
 use chrono::DateTime;
 #[cfg(test)]
 use chrono::Utc;
-use codex_protocol::config_types::MultiAgentMode;
+use genex_protocol::config_types::MultiAgentMode;
 
 #[cfg(test)]
 pub(crate) async fn read_summary_from_rollout(
@@ -92,7 +92,7 @@ fn extract_conversation_summary(
     let preview = head
         .iter()
         .filter_map(|value| serde_json::from_value::<ResponseItem>(value.clone()).ok())
-        .find_map(|item| match codex_core::parse_turn_item(&item) {
+        .find_map(|item| match genex_core::parse_turn_item(&item) {
             Some(TurnItem::UserMessage(user)) => Some(user.message()),
             _ => None,
         })?;
@@ -136,25 +136,25 @@ fn map_git_info(git_info: &CoreGitInfo) -> ConversationGitInfo {
 }
 
 pub(super) fn with_thread_spawn_agent_metadata(
-    source: codex_protocol::protocol::SessionSource,
+    source: genex_protocol::protocol::SessionSource,
     agent_nickname: Option<String>,
     agent_role: Option<String>,
-) -> codex_protocol::protocol::SessionSource {
+) -> genex_protocol::protocol::SessionSource {
     if agent_nickname.is_none() && agent_role.is_none() {
         return source;
     }
 
     match source {
-        codex_protocol::protocol::SessionSource::SubAgent(
-            codex_protocol::protocol::SubAgentSource::ThreadSpawn {
+        genex_protocol::protocol::SessionSource::SubAgent(
+            genex_protocol::protocol::SubAgentSource::ThreadSpawn {
                 parent_thread_id,
                 depth,
                 agent_path,
                 agent_nickname: existing_agent_nickname,
                 agent_role: existing_agent_role,
             },
-        ) => codex_protocol::protocol::SessionSource::SubAgent(
-            codex_protocol::protocol::SubAgentSource::ThreadSpawn {
+        ) => genex_protocol::protocol::SessionSource::SubAgent(
+            genex_protocol::protocol::SubAgentSource::ThreadSpawn {
                 parent_thread_id,
                 depth,
                 agent_path,
@@ -167,8 +167,8 @@ pub(super) fn with_thread_spawn_agent_metadata(
 }
 
 pub(crate) fn thread_response_active_permission_profile(
-    active_permission_profile: Option<codex_protocol::models::ActivePermissionProfile>,
-) -> Option<codex_app_server_protocol::ActivePermissionProfile> {
+    active_permission_profile: Option<genex_protocol::models::ActivePermissionProfile>,
+) -> Option<genex_app_server_protocol::ActivePermissionProfile> {
     active_permission_profile.map(Into::into)
 }
 

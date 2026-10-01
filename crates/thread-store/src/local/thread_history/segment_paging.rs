@@ -1,4 +1,4 @@
-use codex_protocol::ThreadId;
+use genex_protocol::ThreadId;
 use sqlx::FromRow;
 use sqlx::QueryBuilder;
 use sqlx::Sqlite;

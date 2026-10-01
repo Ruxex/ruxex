@@ -3,7 +3,7 @@
 
 use super::*;
 use crate::wrapping::word_wrap_lines;
-use codex_app_server_protocol::ModelSafetyBufferingUpdatedNotification;
+use genex_app_server_protocol::ModelSafetyBufferingUpdatedNotification;
 
 const SAFETY_BUFFERING_PROMPT_VIEW_ID: &str = "safety-buffering-prompt";
 const SAFETY_BUFFERING_LEARN_MORE_URL: &str = "https://help.provider.com/en/articles/20001326";

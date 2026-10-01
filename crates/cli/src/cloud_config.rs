@@ -1,12 +1,12 @@
 use anyhow::Context;
 use anyhow::Result;
-use codex_core::config::Config;
-use codex_core::config::ConfigBuilder;
-use codex_core::config::ConfigOverrides;
-use codex_core::config::LoaderOverrides;
-use codex_core::config::find_codex_home;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_cli::CliConfigOverrides;
+use genex_core::config::Config;
+use genex_core::config::ConfigBuilder;
+use genex_core::config::ConfigOverrides;
+use genex_core::config::LoaderOverrides;
+use genex_core::config::find_codex_home;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_cli::CliConfigOverrides;
 
 pub(crate) async fn load_config(
     config_overrides: &CliConfigOverrides,

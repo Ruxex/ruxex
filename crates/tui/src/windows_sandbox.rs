@@ -1,13 +1,13 @@
 //! Windows sandbox configuration, managed requirements, and executor selection for the TUI.
 
-use codex_app_server_client::AppServerRequestHandle;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::ConfigReadResponse;
-use codex_app_server_protocol::ConfigRequirementsReadResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::WindowsSandboxImplementation;
-use codex_app_server_protocol::WindowsSandboxSetupMode;
-use codex_protocol::config_types::WindowsSandboxLevel;
+use genex_app_server_client::AppServerRequestHandle;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::ConfigReadResponse;
+use genex_app_server_protocol::ConfigRequirementsReadResponse;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::WindowsSandboxImplementation;
+use genex_app_server_protocol::WindowsSandboxSetupMode;
+use genex_protocol::config_types::WindowsSandboxLevel;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -130,7 +130,7 @@ impl WindowsSandboxConfig {
 
 /// A server-local connection can still select remote executors. Missing selections are unknown.
 pub(crate) fn host_from_environments(
-    environments: Option<&[codex_app_server_protocol::ThreadEnvironment]>,
+    environments: Option<&[genex_app_server_protocol::ThreadEnvironment]>,
 ) -> crate::app::WindowsSandboxHost {
     use crate::app::WindowsSandboxHost;
     let Some(environments) = environments.filter(|environments| !environments.is_empty()) else {
@@ -138,10 +138,10 @@ pub(crate) fn host_from_environments(
     };
     let local = environments
         .iter()
-        .any(|environment| environment.environment_id == codex_exec_server::LOCAL_ENVIRONMENT_ID);
+        .any(|environment| environment.environment_id == genex_exec_server::LOCAL_ENVIRONMENT_ID);
     let remote = environments
         .iter()
-        .any(|environment| environment.environment_id != codex_exec_server::LOCAL_ENVIRONMENT_ID);
+        .any(|environment| environment.environment_id != genex_exec_server::LOCAL_ENVIRONMENT_ID);
     match (local, remote) {
         (true, false) => WindowsSandboxHost::Local,
         (true, true) => WindowsSandboxHost::Mixed,

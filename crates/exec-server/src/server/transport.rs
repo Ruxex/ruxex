@@ -1,4 +1,4 @@
-use codex_http_client::HttpClientFactory;
+use genex_http_client::HttpClientFactory;
 use tokio::io;
 use tokio::io::AsyncRead;
 use tokio::io::AsyncWrite;

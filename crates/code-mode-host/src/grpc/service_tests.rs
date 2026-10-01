@@ -1,7 +1,7 @@
 use super::GrpcCodeModeHost;
 use super::GrpcStream;
-use codex_code_mode_protocol::grpc as proto;
-use codex_code_mode_protocol::grpc::code_mode_host_server::CodeModeHost;
+use genex_code_mode_protocol::grpc as proto;
+use genex_code_mode_protocol::grpc::code_mode_host_server::CodeModeHost;
 use futures::FutureExt;
 use futures::StreamExt;
 use pretty_assertions::assert_eq;

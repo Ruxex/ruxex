@@ -11,8 +11,8 @@
 
 use std::collections::BTreeSet;
 
-use codex_config::types::KeybindingsSpec;
-use codex_config::types::TuiKeymap;
+use genex_config::types::KeybindingsSpec;
+use genex_config::types::TuiKeymap;
 use crossterm::event::KeyEvent;
 
 use crate::keymap::RuntimeKeymap;

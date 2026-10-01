@@ -1,20 +1,20 @@
 use std::path::PathBuf;
 
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::CommandExecutionApprovalDecision;
-use codex_app_server_protocol::FileChangeApprovalDecision;
-use codex_app_server_protocol::McpServerElicitationAction;
-use codex_app_server_protocol::RequestId as AppServerRequestId;
-use codex_app_server_protocol::ReviewTarget;
-use codex_app_server_protocol::ToolRequestUserInputResponse;
-use codex_app_server_protocol::UserInput;
-use codex_app_server_protocol::UserVerificationProof;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
-use codex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
-use codex_protocol::models::ActivePermissionProfile;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::request_permissions::RequestPermissionsResponse;
+use genex_app_server_protocol::AskForApproval;
+use genex_app_server_protocol::CommandExecutionApprovalDecision;
+use genex_app_server_protocol::FileChangeApprovalDecision;
+use genex_app_server_protocol::McpServerElicitationAction;
+use genex_app_server_protocol::RequestId as AppServerRequestId;
+use genex_app_server_protocol::ReviewTarget;
+use genex_app_server_protocol::ToolRequestUserInputResponse;
+use genex_app_server_protocol::UserInput;
+use genex_app_server_protocol::UserVerificationProof;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
+use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use genex_protocol::models::ActivePermissionProfile;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::request_permissions::RequestPermissionsResponse;
 use serde::Serialize;
 use serde_json::Value;
 

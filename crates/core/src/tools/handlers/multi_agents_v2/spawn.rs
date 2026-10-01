@@ -14,11 +14,11 @@ use crate::session::multi_agents::resolve_usage_hints;
 use crate::tools::handlers::multi_agents_spec::SpawnAgentToolOptions;
 use crate::tools::handlers::multi_agents_spec::create_spawn_agent_tool_v2;
 use crate::tools::handlers::multi_agents_v2::message_tool::message_content;
-use codex_prompts::ResolvedModelMessages;
-use codex_protocol::AgentPath;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_tools::ToolSpec;
+use genex_prompts::ResolvedModelMessages;
+use genex_protocol::AgentPath;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_tools::ToolSpec;
 
 #[derive(Default)]
 pub(crate) struct Handler {
@@ -47,7 +47,7 @@ impl ToolExecutor<ToolInvocation> for Handler {
         create_spawn_agent_tool_v2(self.options.clone(), self.description_override.as_deref())
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> codex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

@@ -49,9 +49,9 @@
 - Modify: `crates/model-provider/src/auth.rs`
 - Modify: `crates/model-provider/src/models_identity.rs`
 - Modify: `crates/model-provider/src/amazon_bedrock/auth.rs`
-- Modify: `crates/codex-mcp/src/server.rs`
-- Modify: `crates/codex-mcp/src/runtime.rs`
-- Modify: affected auth fixtures and tests under `crates/core`, `crates/cli`, `crates/app-server`, `crates/codex-api`, and `crates/tui`
+- Modify: `crates/genex-mcp/src/server.rs`
+- Modify: `crates/genex-mcp/src/runtime.rs`
+- Modify: affected auth fixtures and tests under `crates/core`, `crates/cli`, `crates/app-server`, `crates/genex-api`, and `crates/tui`
 
 - [x] Add the generic optional identity field/accessor to `AuthHeaders` and update external-auth tests to use it instead of a wire header.
 - [x] Verify the old exact-header assertion fails after the fixture is made provider-neutral.
@@ -61,9 +61,9 @@
 ### Task 3: Remove the provider moderation metadata path
 
 **Files:**
-- Modify: `crates/codex-api/src/sse/responses.rs`
-- Modify: `crates/codex-api/src/endpoint/responses_websocket.rs`
-- Modify: `crates/codex-api/src/common.rs`
+- Modify: `crates/genex-api/src/sse/responses.rs`
+- Modify: `crates/genex-api/src/endpoint/responses_websocket.rs`
+- Modify: `crates/genex-api/src/common.rs`
 - Modify: `crates/protocol/src/protocol.rs`
 - Modify: `crates/core/src/session/mod.rs`
 - Modify: `crates/core/src/session/turn.rs`

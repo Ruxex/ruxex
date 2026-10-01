@@ -1,4 +1,4 @@
-# `codex-config` loader
+# `genex-config` loader
 
 This module is the canonical place to **load and describe Codex configuration layers** (user config, CLI/session overrides, cloud-managed config, system config, and MDM-managed preferences) and to produce:
 

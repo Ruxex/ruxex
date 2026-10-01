@@ -15,11 +15,11 @@ use std::time::Instant;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
-use codex_api::SharedAuthProvider;
-use codex_config::types::AuthKeyringBackendKind;
-use codex_config::types::McpServerEnvVar;
-use codex_exec_server::HttpClient;
-use codex_keyring_store::DefaultKeyringStore;
+use genex_api::SharedAuthProvider;
+use genex_config::types::AuthKeyringBackendKind;
+use genex_config::types::McpServerEnvVar;
+use genex_exec_server::HttpClient;
+use genex_keyring_store::DefaultKeyringStore;
 use futures::FutureExt;
 use futures::future::BoxFuture;
 use http::HeaderMap;
@@ -97,7 +97,7 @@ use crate::stdio_server_launcher::StdioServerLauncher;
 use crate::stdio_server_launcher::StdioServerProcessHandle;
 use crate::stdio_server_launcher::StdioServerTransport;
 use crate::utils::build_default_headers;
-use codex_config::types::OAuthCredentialsStoreMode;
+use genex_config::types::OAuthCredentialsStoreMode;
 
 #[path = "streamable_http_retry.rs"]
 mod streamable_http_retry;

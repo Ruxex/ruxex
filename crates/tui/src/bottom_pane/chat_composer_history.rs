@@ -23,9 +23,9 @@ use crate::app_event::AppEvent;
 use crate::app_event_sender::AppEventSender;
 use crate::bottom_pane::MentionBinding;
 use crate::mention_codec::decode_history_mentions_with_at_mentions;
-use codex_message_history::HistoryBatchCursor;
-use codex_protocol::ThreadId;
-use codex_protocol::user_input::TextElement;
+use genex_message_history::HistoryBatchCursor;
+use genex_protocol::ThreadId;
+use genex_protocol::user_input::TextElement;
 
 #[path = "chat_composer_history/search_batch.rs"]
 mod search_batch;

@@ -7,8 +7,8 @@
 
 use std::env;
 
-use codex_install_context::InstallContext;
-use codex_install_context::InstallMethod;
+use genex_install_context::InstallContext;
+use genex_install_context::InstallMethod;
 
 use super::CheckStatus;
 use super::DoctorCheck;

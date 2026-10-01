@@ -36,7 +36,7 @@ async fn bedrock_onboarding_leaves_a_running_daemon_untouched() -> Result<()> {
 }
 
 async fn daemon_startup(command: &str) -> Result<()> {
-    let codex = codex_utils_cargo_bin::cargo_bin("codex")?.canonicalize()?;
+    let codex = genex_utils_cargo_bin::cargo_bin("codex")?.canonicalize()?;
     let workspace = tempfile::tempdir()?;
     let workspace_path = workspace.path().canonicalize()?;
     #[cfg(unix)]
@@ -123,13 +123,13 @@ async fn daemon_startup(command: &str) -> Result<()> {
             steps.push_back(("gpt-5.6-terra", b"\x14"));
             "Runningwithoutthesharedbackgroundserver:--strict-config"
         };
-        let spawned = codex_utils_pty::spawn_pty_process(
+        let spawned = genex_utils_pty::spawn_pty_process(
             &codex.to_string_lossy(),
             &args,
             &workspace_path,
             &env,
             /*arg0*/ &None,
-            codex_utils_pty::TerminalSize {
+            genex_utils_pty::TerminalSize {
                 rows: 40,
                 cols: 120,
             },

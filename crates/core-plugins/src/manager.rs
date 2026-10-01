@@ -49,27 +49,27 @@ use crate::store::PluginStore;
 use crate::store::PluginStoreError;
 use crate::store::error_context_sub_error_type;
 use crate::tool_suggest_metadata::ToolSuggestMetadataCache;
-use codex_config::ConfigLayerStack;
-use codex_config::SkillConfigRules;
-use codex_config::clear_user_plugin;
-use codex_config::set_user_plugin_enabled;
-use codex_config::skill_config_rules_from_stack;
-use codex_config::types::PluginConfig;
-use codex_hooks::plugin_hook_declarations;
-use codex_login::AuthManager;
-use codex_plugin::PluginCapabilitySummary;
-use codex_plugin::PluginId;
-use codex_plugin::PluginIdError;
-use codex_plugin::prompt_safe_plugin_description;
-use codex_protocol::auth::AuthMode;
-use codex_protocol::protocol::HookEventName;
-use codex_protocol::protocol::Product;
-use codex_skills::SkillMetadata;
-use codex_skills::SkillRootLoader;
-use codex_skills::SkillRootSnapshots;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_plugins::PluginIdentity;
-use codex_utils_plugins::PluginSkillRoot;
+use genex_config::ConfigLayerStack;
+use genex_config::SkillConfigRules;
+use genex_config::clear_user_plugin;
+use genex_config::set_user_plugin_enabled;
+use genex_config::skill_config_rules_from_stack;
+use genex_config::types::PluginConfig;
+use genex_hooks::plugin_hook_declarations;
+use genex_login::AuthManager;
+use genex_plugin::PluginCapabilitySummary;
+use genex_plugin::PluginId;
+use genex_plugin::PluginIdError;
+use genex_plugin::prompt_safe_plugin_description;
+use genex_protocol::auth::AuthMode;
+use genex_protocol::protocol::HookEventName;
+use genex_protocol::protocol::Product;
+use genex_skills::SkillMetadata;
+use genex_skills::SkillRootLoader;
+use genex_skills::SkillRootSnapshots;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_plugins::PluginIdentity;
+use genex_utils_plugins::PluginSkillRoot;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -978,7 +978,7 @@ impl PluginsManager {
             ));
         }
         let loaded_manifest =
-            if codex_utils_plugins::find_plugin_manifest_path(source_path.as_path()).is_some() {
+            if genex_utils_plugins::find_plugin_manifest_path(source_path.as_path()).is_some() {
                 load_plugin_manifest_with_format(source_path.as_path())
             } else {
                 plugin

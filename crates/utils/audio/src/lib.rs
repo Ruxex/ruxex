@@ -2,13 +2,13 @@
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::FunctionCallOutputContentItem;
-use codex_protocol::models::MAX_PROMPT_AUDIO_INPUT_BYTES;
-use codex_protocol::models::ResponseItem;
-use codex_utils_cache::BlockingLruCache;
-use codex_utils_cache::sha1_digest;
-use codex_utils_string::approx_token_count;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::FunctionCallOutputContentItem;
+use genex_protocol::models::MAX_PROMPT_AUDIO_INPUT_BYTES;
+use genex_protocol::models::ResponseItem;
+use genex_utils_cache::BlockingLruCache;
+use genex_utils_cache::sha1_digest;
+use genex_utils_string::approx_token_count;
 use std::io::Cursor;
 use std::num::NonZeroUsize;
 use std::sync::LazyLock;

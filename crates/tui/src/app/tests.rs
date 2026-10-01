@@ -62,7 +62,7 @@ async fn drain_managed_worktree_start(app: &mut App, server: &mut AppServerSessi
         app.start_managed_worktree(server, mode, name).await;
     }
 }
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_utils_absolute_path::test_support::PathExt;
 
 use crate::chatwidget::ChatWidgetInit;
 use crate::chatwidget::create_initial_user_message;
@@ -88,79 +88,79 @@ use crate::diff_model::FileChange;
 use crate::legacy_core::config::ConfigBuilder;
 use crate::legacy_core::config::ConfigOverrides;
 use crate::legacy_core::config::PermissionProfileSnapshot;
-use codex_app_server_client::AppServerPath;
-use codex_app_server_protocol::AdditionalFileSystemPermissions;
-use codex_app_server_protocol::AdditionalNetworkPermissions;
-use codex_app_server_protocol::AdditionalPermissionProfile;
-use codex_app_server_protocol::AgentMessageDeltaNotification;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::CommandExecutionRequestApprovalParams;
-use codex_app_server_protocol::FileChangeRequestApprovalParams;
-use codex_app_server_protocol::FileUpdateChange;
-use codex_app_server_protocol::ItemStartedNotification;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::McpServerElicitationRequest;
-use codex_app_server_protocol::McpServerElicitationRequestParams;
-use codex_app_server_protocol::McpServerStartupState;
-use codex_app_server_protocol::McpServerStatusUpdatedNotification;
-use codex_app_server_protocol::NetworkApprovalContext as AppServerNetworkApprovalContext;
-use codex_app_server_protocol::NetworkApprovalProtocol as AppServerNetworkApprovalProtocol;
-use codex_app_server_protocol::NetworkPolicyAmendment as AppServerNetworkPolicyAmendment;
-use codex_app_server_protocol::NetworkPolicyRuleAction as AppServerNetworkPolicyRuleAction;
-use codex_app_server_protocol::NonSteerableTurnKind as AppServerNonSteerableTurnKind;
-use codex_app_server_protocol::PatchChangeKind;
-use codex_app_server_protocol::PermissionsRequestApprovalParams;
-use codex_app_server_protocol::RequestId as AppServerRequestId;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::Thread;
-use codex_app_server_protocol::ThreadArchivedNotification;
-use codex_app_server_protocol::ThreadAttachmentOperation;
-use codex_app_server_protocol::ThreadAttachmentUpdatedNotification;
-use codex_app_server_protocol::ThreadClosedNotification;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadSettings;
-use codex_app_server_protocol::ThreadSettingsUpdatedNotification;
-use codex_app_server_protocol::ThreadStartedNotification;
-use codex_app_server_protocol::ThreadTokenUsage;
-use codex_app_server_protocol::ThreadTokenUsageUpdatedNotification;
-use codex_app_server_protocol::TokenUsageBreakdown;
-use codex_app_server_protocol::ToolRequestUserInputParams;
-use codex_app_server_protocol::Turn;
-use codex_app_server_protocol::TurnCompletedNotification;
-use codex_app_server_protocol::TurnError as AppServerTurnError;
-use codex_app_server_protocol::TurnStartedNotification;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput;
-use codex_app_server_protocol::UserInput as AppServerUserInput;
-use codex_app_server_protocol::WarningNotification;
-use codex_history::RolloutItem;
-use codex_models_manager::test_support::construct_model_info_offline_for_tests;
-use codex_models_manager::test_support::get_model_offline_for_tests;
-use codex_otel::SessionTelemetry;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::SandboxMode;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::config_types::Settings;
-use codex_protocol::models::ActivePermissionProfile;
-use codex_protocol::models::FileSystemPermissions;
-use codex_protocol::models::NetworkPermissions;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::model_types::MODEL_SPECIALTY_CYBER;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::MAX_THREAD_GOAL_OBJECTIVE_CHARS;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionSource as RolloutSessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::TurnCompleteEvent;
-use codex_protocol::protocol::TurnStartedEvent;
-use codex_protocol::request_permissions::RequestPermissionProfile;
-use codex_protocol::user_input::TextElement;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_app_server_client::AppServerPath;
+use genex_app_server_protocol::AdditionalFileSystemPermissions;
+use genex_app_server_protocol::AdditionalNetworkPermissions;
+use genex_app_server_protocol::AdditionalPermissionProfile;
+use genex_app_server_protocol::AgentMessageDeltaNotification;
+use genex_app_server_protocol::AskForApproval;
+use genex_app_server_protocol::CommandExecutionRequestApprovalParams;
+use genex_app_server_protocol::FileChangeRequestApprovalParams;
+use genex_app_server_protocol::FileUpdateChange;
+use genex_app_server_protocol::ItemStartedNotification;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::McpServerElicitationRequest;
+use genex_app_server_protocol::McpServerElicitationRequestParams;
+use genex_app_server_protocol::McpServerStartupState;
+use genex_app_server_protocol::McpServerStatusUpdatedNotification;
+use genex_app_server_protocol::NetworkApprovalContext as AppServerNetworkApprovalContext;
+use genex_app_server_protocol::NetworkApprovalProtocol as AppServerNetworkApprovalProtocol;
+use genex_app_server_protocol::NetworkPolicyAmendment as AppServerNetworkPolicyAmendment;
+use genex_app_server_protocol::NetworkPolicyRuleAction as AppServerNetworkPolicyRuleAction;
+use genex_app_server_protocol::NonSteerableTurnKind as AppServerNonSteerableTurnKind;
+use genex_app_server_protocol::PatchChangeKind;
+use genex_app_server_protocol::PermissionsRequestApprovalParams;
+use genex_app_server_protocol::RequestId as AppServerRequestId;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::Thread;
+use genex_app_server_protocol::ThreadArchivedNotification;
+use genex_app_server_protocol::ThreadAttachmentOperation;
+use genex_app_server_protocol::ThreadAttachmentUpdatedNotification;
+use genex_app_server_protocol::ThreadClosedNotification;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadSettings;
+use genex_app_server_protocol::ThreadSettingsUpdatedNotification;
+use genex_app_server_protocol::ThreadStartedNotification;
+use genex_app_server_protocol::ThreadTokenUsage;
+use genex_app_server_protocol::ThreadTokenUsageUpdatedNotification;
+use genex_app_server_protocol::TokenUsageBreakdown;
+use genex_app_server_protocol::ToolRequestUserInputParams;
+use genex_app_server_protocol::Turn;
+use genex_app_server_protocol::TurnCompletedNotification;
+use genex_app_server_protocol::TurnError as AppServerTurnError;
+use genex_app_server_protocol::TurnStartedNotification;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::UserInput;
+use genex_app_server_protocol::UserInput as AppServerUserInput;
+use genex_app_server_protocol::WarningNotification;
+use genex_history::RolloutItem;
+use genex_models_manager::test_support::construct_model_info_offline_for_tests;
+use genex_models_manager::test_support::get_model_offline_for_tests;
+use genex_otel::SessionTelemetry;
+use genex_protocol::ThreadId;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::CollaborationModeMask;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::SandboxMode;
+use genex_protocol::config_types::ServiceTier;
+use genex_protocol::config_types::Settings;
+use genex_protocol::models::ActivePermissionProfile;
+use genex_protocol::models::FileSystemPermissions;
+use genex_protocol::models::NetworkPermissions;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::model_types::MODEL_SPECIALTY_CYBER;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::MAX_THREAD_GOAL_OBJECTIVE_CHARS;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::SessionMeta;
+use genex_protocol::protocol::SessionSource as RolloutSessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::TurnCompleteEvent;
+use genex_protocol::protocol::TurnStartedEvent;
+use genex_protocol::request_permissions::RequestPermissionProfile;
+use genex_protocol::user_input::TextElement;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use crossterm::event::KeyModifiers;
 use pretty_assertions::assert_eq;
 use ratatui::buffer::Buffer;
@@ -236,7 +236,7 @@ async fn next_thread_settings_updated(
         .await
         .expect("app-server should emit an event")
         .expect("app-server event stream should remain open");
-        if let codex_app_server_client::AppServerEvent::ServerNotification(notification) = event
+        if let genex_app_server_client::AppServerEvent::ServerNotification(notification) = event
             && let ServerNotification::ThreadSettingsUpdated(notification) = *notification
             && notification.thread_id == thread_id.to_string()
         {
@@ -265,7 +265,7 @@ async fn handle_mcp_inventory_result_respects_origin_thread() {
             tools: HashMap::new(),
             resources: Vec::new(),
             resource_templates: Vec::new(),
-            auth_status: codex_app_server_protocol::McpAuthStatus::Unsupported,
+            auth_status: genex_app_server_protocol::McpAuthStatus::Unsupported,
         }]),
         McpServerStatusDetail::ToolsAndAuthOnly,
         /*thread_id*/ None,
@@ -316,9 +316,9 @@ async fn enqueue_primary_thread_session_replays_buffered_approval_after_attach()
     .await?;
     app.handle_app_server_event(
         &app_server,
-        codex_app_server_client::AppServerEvent::ServerNotification(Box::new(
+        genex_app_server_client::AppServerEvent::ServerNotification(Box::new(
             ServerNotification::ServerRequestResolved(
-                codex_app_server_protocol::ServerRequestResolvedNotification {
+                genex_app_server_protocol::ServerRequestResolvedNotification {
                     thread_id: ThreadId::new().to_string(),
                     request_id: AppServerRequestId::Integer(1),
                 },
@@ -608,12 +608,12 @@ async fn history_lookup_response_is_routed_to_requesting_thread() -> Result<()> 
 
     let local_home = tempfile::tempdir()?;
     app.local_settings.codex_home = AbsolutePathBuf::from_absolute_path(local_home.path())?;
-    let history_config = codex_message_history::HistoryConfig::new(
+    let history_config = genex_message_history::HistoryConfig::new(
         app.local_settings.codex_home.clone(),
         &app.local_settings.history,
     );
-    codex_message_history::append_entry("local prompt", thread_id, &history_config).await?;
-    let (log_id, _) = codex_message_history::history_metadata(&history_config).await;
+    genex_message_history::append_entry("local prompt", thread_id, &history_config).await?;
+    let (log_id, _) = genex_message_history::history_metadata(&history_config).await;
 
     app.lookup_message_history_entry(thread_id, /*offset*/ 0, log_id)
         .await?;
@@ -640,7 +640,7 @@ async fn history_lookup_response_is_routed_to_requesting_thread() -> Result<()> 
         }
     );
 
-    let cursor = codex_message_history::HistoryBatchCursor::new(/*end_offset*/ 1);
+    let cursor = genex_message_history::HistoryBatchCursor::new(/*end_offset*/ 1);
     app.lookup_message_history_batch(thread_id, cursor, log_id)
         .await?;
     let app_event = tokio::time::timeout(Duration::from_secs(1), app_event_rx.recv())
@@ -829,7 +829,7 @@ async fn active_history_batch_is_delivered_without_replay_buffering() -> Result<
         .insert(thread_id, ThreadEventChannel::new(/*capacity*/ 4));
     app.set_thread_active(thread_id, /*active*/ true).await;
 
-    let cursor = codex_message_history::HistoryBatchCursor::new(/*end_offset*/ 1);
+    let cursor = genex_message_history::HistoryBatchCursor::new(/*end_offset*/ 1);
     let event = HistoryLookupResponse::Batch {
         cursor,
         log_id: 1,
@@ -837,7 +837,7 @@ async fn active_history_batch_is_delivered_without_replay_buffering() -> Result<
             offset: 1,
             entry: Some("history entry".to_string()),
         }],
-        next_older_cursor: Some(codex_message_history::HistoryBatchCursor::new(
+        next_older_cursor: Some(genex_message_history::HistoryBatchCursor::new(
             /*end_offset*/ 0,
         )),
     };
@@ -1629,8 +1629,8 @@ async fn collab_receiver_notification_caches_thread_without_app_server_read() {
             started_at_ms: 0,
             item: ThreadItem::CollabAgentToolCall {
                 id: "wait-1".to_string(),
-                tool: codex_app_server_protocol::CollabAgentTool::Wait,
-                status: codex_app_server_protocol::CollabAgentToolCallStatus::InProgress,
+                tool: genex_app_server_protocol::CollabAgentTool::Wait,
+                status: genex_app_server_protocol::CollabAgentToolCallStatus::InProgress,
                 sender_thread_id: ThreadId::new().to_string(),
                 receiver_thread_ids: vec![receiver_thread_id.to_string()],
                 prompt: None,
@@ -1660,14 +1660,14 @@ async fn collab_receiver_notification_does_not_cache_not_found_thread() {
         ThreadId::from_string("00000000-0000-0000-0000-000000000124").expect("valid thread id");
 
     app.handle_thread_event_now(ThreadBufferedEvent::Notification(Box::new(
-        ServerNotification::ItemCompleted(codex_app_server_protocol::ItemCompletedNotification {
+        ServerNotification::ItemCompleted(genex_app_server_protocol::ItemCompletedNotification {
             thread_id: ThreadId::new().to_string(),
             turn_id: "turn-1".to_string(),
             completed_at_ms: 0,
             item: ThreadItem::CollabAgentToolCall {
                 id: "send-1".to_string(),
-                tool: codex_app_server_protocol::CollabAgentTool::SendInput,
-                status: codex_app_server_protocol::CollabAgentToolCallStatus::Failed,
+                tool: genex_app_server_protocol::CollabAgentTool::SendInput,
+                status: genex_app_server_protocol::CollabAgentToolCallStatus::Failed,
                 sender_thread_id: ThreadId::new().to_string(),
                 receiver_thread_ids: vec![receiver_thread_id.to_string()],
                 prompt: Some("hello".to_string()),
@@ -1675,8 +1675,8 @@ async fn collab_receiver_notification_does_not_cache_not_found_thread() {
                 reasoning_effort: None,
                 agents_states: HashMap::from([(
                     receiver_thread_id.to_string(),
-                    codex_app_server_protocol::CollabAgentState {
-                        status: codex_app_server_protocol::CollabAgentStatus::NotFound,
+                    genex_app_server_protocol::CollabAgentState {
+                        status: genex_app_server_protocol::CollabAgentStatus::NotFound,
                         message: None,
                     },
                 )]),
@@ -2320,7 +2320,7 @@ async fn handle_start_side_seeds_navigation_before_thread_started() -> Result<()
         .await
         .expect("app-server should emit an event")
         .expect("app-server event stream should remain open");
-        if let codex_app_server_client::AppServerEvent::ServerNotification(notification) = event
+        if let genex_app_server_client::AppServerEvent::ServerNotification(notification) = event
             && let ServerNotification::ThreadStarted(notification) = notification.as_ref()
             && notification.thread.id == side_thread_id.to_string()
         {
@@ -2387,7 +2387,7 @@ async fn resume_rejects_selected_config_profile_permission_definitions() -> Resu
         &selected,
         "default_permissions = \":workspace\"\n[permissions.unused]\nextends = \":read-only\"\n",
     )?;
-    let mut loader = codex_config::LoaderOverrides::without_managed_config_for_tests();
+    let mut loader = genex_config::LoaderOverrides::without_managed_config_for_tests();
     loader.user_config_path = Some(selected.abs());
     loader.user_config_profile = Some("work".parse()?);
     let config = ConfigBuilder::default()
@@ -3079,7 +3079,7 @@ async fn side_defers_subagent_approval_overlay_until_side_exits() -> Result<()> 
         quiet_thread_id,
         ServerRequest::DynamicToolCall {
             request_id: AppServerRequestId::Integer(99),
-            params: codex_app_server_protocol::DynamicToolCallParams {
+            params: genex_app_server_protocol::DynamicToolCallParams {
                 thread_id: quiet_thread_id.to_string(),
                 turn_id: "turn-quiet".to_string(),
                 call_id: "call-quiet".to_string(),
@@ -3176,15 +3176,15 @@ async fn inactive_thread_exec_approval_preserves_context() {
     assert_eq!(
         approval.available_decisions,
         vec![
-            codex_app_server_protocol::CommandExecutionApprovalDecision::Accept,
-            codex_app_server_protocol::CommandExecutionApprovalDecision::AcceptForSession,
-            codex_app_server_protocol::CommandExecutionApprovalDecision::ApplyNetworkPolicyAmendment {
+            genex_app_server_protocol::CommandExecutionApprovalDecision::Accept,
+            genex_app_server_protocol::CommandExecutionApprovalDecision::AcceptForSession,
+            genex_app_server_protocol::CommandExecutionApprovalDecision::ApplyNetworkPolicyAmendment {
                 network_policy_amendment: AppServerNetworkPolicyAmendment {
                     host: "example.com".to_string(),
                     action: AppServerNetworkPolicyRuleAction::Allow,
                 },
             },
-            codex_app_server_protocol::CommandExecutionApprovalDecision::Cancel,
+            genex_app_server_protocol::CommandExecutionApprovalDecision::Cancel,
         ]
     );
 }
@@ -3241,7 +3241,7 @@ async fn inactive_thread_file_change_approval_recovers_buffered_changes() {
                     kind: PatchChangeKind::Add,
                     diff: "hello\n".to_string(),
                 }],
-                status: codex_app_server_protocol::PatchApplyStatus::InProgress,
+                status: genex_app_server_protocol::PatchApplyStatus::InProgress,
             },
         }),
     )
@@ -3312,7 +3312,7 @@ async fn active_thread_file_change_approval_recovers_buffered_changes() {
                     kind: PatchChangeKind::Add,
                     diff: "hello\n".to_string(),
                 }],
-                status: codex_app_server_protocol::PatchApplyStatus::InProgress,
+                status: genex_app_server_protocol::PatchApplyStatus::InProgress,
             },
         }),
     )
@@ -3346,7 +3346,7 @@ async fn active_thread_file_change_approval_recovers_buffered_changes() {
     assert!(!app.chat_widget.has_active_view());
     assert!(app.startup_pending_protected_request);
     app.chat_widget.handle_server_notification(
-        ServerNotification::ItemCompleted(codex_app_server_protocol::ItemCompletedNotification {
+        ServerNotification::ItemCompleted(genex_app_server_protocol::ItemCompletedNotification {
             thread_id: thread_id.to_string(),
             turn_id: "turn-active-approval".to_string(),
             completed_at_ms: 0,
@@ -3382,7 +3382,7 @@ async fn inactive_thread_permissions_approval_preserves_file_system_permissions(
             started_at_ms: 0,
             cwd: test_absolute_path("/tmp").into(),
             reason: Some("Need access to .git".to_string()),
-            permissions: codex_app_server_protocol::RequestPermissionProfile {
+            permissions: genex_app_server_protocol::RequestPermissionProfile {
                 network: Some(AdditionalNetworkPermissions {
                     enabled: Some(true),
                 }),
@@ -3491,7 +3491,7 @@ async fn inactive_thread_invalid_url_elicitation_is_declined() {
             op: Op::ResolveElicitation {
                 server_name,
                 request_id: AppServerRequestId::Integer(10),
-                decision: codex_app_server_protocol::McpServerElicitationAction::Decline,
+                decision: genex_app_server_protocol::McpServerElicitationAction::Decline,
                 content: None,
                 meta: None,
             },
@@ -3596,7 +3596,7 @@ async fn inactive_thread_started_notification_initializes_replay_session() -> Re
         ServerNotification::ThreadStarted(ThreadStartedNotification {
             thread: Thread {
                 originator: None,
-                environments: Some(vec![codex_app_server_protocol::ThreadEnvironment {
+                environments: Some(vec![genex_app_server_protocol::ThreadEnvironment {
                     environment_id: "remote".to_string(),
                     cwd: test_path_buf("/tmp/agent").abs().into(),
                     runtime_workspace_roots: Vec::new(),
@@ -3619,11 +3619,11 @@ async fn inactive_thread_started_notification_initializes_replay_session() -> Re
                 created_at: 1,
                 updated_at: 2,
                 recency_at: Some(2),
-                status: codex_app_server_protocol::ThreadStatus::Idle,
+                status: genex_app_server_protocol::ThreadStatus::Idle,
                 path: Some(rollout_path.clone()),
                 cwd: test_path_buf("/tmp/agent").abs(),
                 cli_version: "0.0.0".to_string(),
-                source: codex_app_server_protocol::SessionSource::Unknown,
+                source: genex_app_server_protocol::SessionSource::Unknown,
                 can_accept_direct_input: None,
                 thread_source: None,
                 agent_nickname: Some("Robie".to_string()),
@@ -3724,11 +3724,11 @@ async fn inactive_thread_started_notification_preserves_primary_model_when_path_
                 created_at: 1,
                 updated_at: 2,
                 recency_at: Some(2),
-                status: codex_app_server_protocol::ThreadStatus::Idle,
+                status: genex_app_server_protocol::ThreadStatus::Idle,
                 path: None,
                 cwd: test_path_buf("/tmp/agent").abs(),
                 cli_version: "0.0.0".to_string(),
-                source: codex_app_server_protocol::SessionSource::Unknown,
+                source: genex_app_server_protocol::SessionSource::Unknown,
                 can_accept_direct_input: None,
                 thread_source: None,
                 agent_nickname: Some("Robie".to_string()),
@@ -4054,7 +4054,7 @@ async fn primary_thread_ignores_child_mcp_startup_notifications() {
 
     app.handle_app_server_event(
         &app_server,
-        codex_app_server_client::AppServerEvent::ServerNotification(Box::new(
+        genex_app_server_client::AppServerEvent::ServerNotification(Box::new(
             ServerNotification::McpServerStatusUpdated(McpServerStatusUpdatedNotification {
                 thread_id: Some(child_thread_id.to_string()),
                 name: "sentry".to_string(),
@@ -4132,7 +4132,7 @@ async fn app_scoped_mcp_startup_notifications_do_not_render_in_active_thread() {
 
     app.handle_app_server_event(
         &app_server,
-        codex_app_server_client::AppServerEvent::ServerNotification(Box::new(
+        genex_app_server_client::AppServerEvent::ServerNotification(Box::new(
             ServerNotification::McpServerStatusUpdated(McpServerStatusUpdatedNotification {
                 thread_id: None,
                 name: "sentry".to_string(),
@@ -4198,7 +4198,7 @@ async fn active_side_thread_renders_live_mcp_startup_notifications() {
     ] {
         app.handle_app_server_event(
             &app_server,
-            codex_app_server_client::AppServerEvent::ServerNotification(Box::new(
+            genex_app_server_client::AppServerEvent::ServerNotification(Box::new(
                 ServerNotification::McpServerStatusUpdated(McpServerStatusUpdatedNotification {
                     thread_id: Some(side_thread_id.to_string()),
                     name: "sentry".to_string(),
@@ -4410,7 +4410,7 @@ async fn background_side_cleanup_removes_local_state_and_ignores_late_events() -
 
     app.handle_app_server_event(
         &app_server,
-        codex_app_server_client::AppServerEvent::ServerRequest(Box::new(exec_approval_request(
+        genex_app_server_client::AppServerEvent::ServerRequest(Box::new(exec_approval_request(
             side_thread_id,
             "turn-1",
             "item-1",
@@ -4425,7 +4425,7 @@ async fn background_side_cleanup_removes_local_state_and_ignores_late_events() -
             Op::ExecApproval {
                 id: "approval-1".to_string(),
                 turn_id: None,
-                decision: codex_app_server_protocol::CommandExecutionApprovalDecision::Accept,
+                decision: genex_app_server_protocol::CommandExecutionApprovalDecision::Accept,
             },
         )
         .expect("approval resolution should serialize");
@@ -4466,7 +4466,7 @@ async fn active_non_primary_shutdown_target_returns_none_for_non_shutdown_event(
 
     assert_eq!(
         app.active_non_primary_shutdown_target(&ServerNotification::SkillsChanged(
-            codex_app_server_protocol::SkillsChangedNotification {},
+            genex_app_server_protocol::SkillsChangedNotification {},
         )),
         None
     );
@@ -5241,7 +5241,7 @@ async fn copy_picker_opening_preserves_terminal_scrollback_without_reflow() {
     let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
     let response = "Existing response\n\n```rust\nkeep_scrollback();\n```";
     app.chat_widget.handle_server_notification(
-        ServerNotification::ItemCompleted(codex_app_server_protocol::ItemCompletedNotification {
+        ServerNotification::ItemCompleted(genex_app_server_protocol::ItemCompletedNotification {
             thread_id: String::new(),
             turn_id: "turn-1".to_string(),
             completed_at_ms: 0,
@@ -5438,7 +5438,7 @@ async fn resizing_empty_transcript_schedules_settled_size_recheck() {
 fn test_turn(turn_id: &str, status: TurnStatus, items: Vec<ThreadItem>) -> Turn {
     Turn {
         id: turn_id.to_string(),
-        items_view: codex_app_server_protocol::TurnItemsView::Full,
+        items_view: genex_app_server_protocol::TurnItemsView::Full,
         items,
         status,
         error: None,
@@ -5873,7 +5873,7 @@ async fn remote_exec_resume_current_cwd_is_rejected() -> Result<()> {
     app.environment_manager = Arc::new(
         EnvironmentManager::create_for_tests(
             Some("ws://127.0.0.1:8765".to_string()),
-            Some(codex_exec_server::ExecServerRuntimePaths::new(
+            Some(genex_exec_server::ExecServerRuntimePaths::new(
                 std::env::current_exe()?,
                 /*codex_linux_sandbox_exe*/ None,
             )?),
@@ -6038,7 +6038,7 @@ async fn in_app_resume_uses_configured_or_explicit_cwd() -> Result<()> {
             crate::legacy_core::config::set_project_trust_level(
                 &codex_home,
                 cwd,
-                codex_protocol::config_types::TrustLevel::Trusted,
+                genex_protocol::config_types::TrustLevel::Trusted,
             )
             .map_err(std::io::Error::other)?;
         }
@@ -6084,7 +6084,7 @@ async fn in_app_resume_uses_configured_or_explicit_cwd() -> Result<()> {
             Arc::new(
                 EnvironmentManager::create_for_tests(
                     Some("ws://127.0.0.1:8765".to_string()),
-                    Some(codex_exec_server::ExecServerRuntimePaths::new(
+                    Some(genex_exec_server::ExecServerRuntimePaths::new(
                         std::env::current_exe()?,
                         /*codex_linux_sandbox_exe*/ None,
                     )?),
@@ -6173,7 +6173,7 @@ async fn remembered_current_cwd_stays_at_launch_across_in_app_resumes() -> Resul
     crate::legacy_core::config::set_project_trust_level(
         &codex_home,
         &launch_cwd,
-        codex_protocol::config_types::TrustLevel::Trusted,
+        genex_protocol::config_types::TrustLevel::Trusted,
     )
     .map_err(std::io::Error::other)?;
     let config = ConfigBuilder::default()
@@ -6192,7 +6192,7 @@ async fn remembered_current_cwd_stays_at_launch_across_in_app_resumes() -> Resul
         &launch_cwd,
     ));
     crate::legacy_core::config::edit::ConfigEditsBuilder::for_config(&config)
-        .set_resume_cwd(codex_config::types::ResumeCwdMode::Current)
+        .set_resume_cwd(genex_config::types::ResumeCwdMode::Current)
         .apply()
         .await
         .map_err(std::io::Error::other)?;
@@ -6282,11 +6282,11 @@ async fn remembered_current_cwd_stays_at_launch_across_in_app_resumes() -> Resul
 
 #[tokio::test]
 async fn prompt_edit_reverts_earlier_and_first_visible_prompts_in_place() -> Result<()> {
-    use codex_protocol::items::TurnItem;
-    use codex_protocol::items::UserMessageItem;
-    use codex_protocol::models::ImageReference;
-    use codex_protocol::protocol::ItemCompletedEvent;
-    use codex_protocol::user_input::UserInput;
+    use genex_protocol::items::TurnItem;
+    use genex_protocol::items::UserMessageItem;
+    use genex_protocol::models::ImageReference;
+    use genex_protocol::protocol::ItemCompletedEvent;
+    use genex_protocol::user_input::UserInput;
     let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
     let config = app.chat_widget.config_ref().clone();
     let filename_ts = "2025-01-05T12-00-00";
@@ -6371,7 +6371,7 @@ async fn prompt_edit_reverts_earlier_and_first_visible_prompts_in_place() -> Res
                 time_to_first_token_ms: None,
             })),
         ] {
-            codex_rollout::append_rollout_item_to_path(&source_path, &item).await?;
+            genex_rollout::append_rollout_item_to_path(&source_path, &item).await?;
         }
     }
 
@@ -6408,7 +6408,7 @@ async fn prompt_edit_reverts_earlier_and_first_visible_prompts_in_place() -> Res
         ));
         for item in selected_turn.items {
             store.push_notification(ServerNotification::ItemCompleted(
-                codex_app_server_protocol::ItemCompletedNotification {
+                genex_app_server_protocol::ItemCompletedNotification {
                     thread_id: source_thread_id.to_string(),
                     turn_id: selected_turn.id.clone(),
                     completed_at_ms: 0,
@@ -6434,7 +6434,7 @@ async fn prompt_edit_reverts_earlier_and_first_visible_prompts_in_place() -> Res
         .thread_goal_set(
             source_thread_id,
             Some("Keep this goal".into()),
-            Some(codex_app_server_protocol::ThreadGoalStatus::Paused),
+            Some(genex_app_server_protocol::ThreadGoalStatus::Paused),
             /*token_budget*/ None,
         )
         .await?
@@ -6617,7 +6617,7 @@ async fn replay_thread_snapshot_replays_turn_history_in_order() {
             turns: vec![
                 Turn {
                     id: "turn-1".to_string(),
-                    items_view: codex_app_server_protocol::TurnItemsView::Full,
+                    items_view: genex_app_server_protocol::TurnItemsView::Full,
                     items: vec![ThreadItem::UserMessage {
                         id: "user-1".to_string(),
                         client_id: None,
@@ -6634,7 +6634,7 @@ async fn replay_thread_snapshot_replays_turn_history_in_order() {
                 },
                 Turn {
                     id: "turn-2".to_string(),
-                    items_view: codex_app_server_protocol::TurnItemsView::Full,
+                    items_view: genex_app_server_protocol::TurnItemsView::Full,
                     items: vec![
                         ThreadItem::UserMessage {
                             id: "user-2".to_string(),
@@ -6730,15 +6730,15 @@ async fn replace_chat_widget_reseeds_collab_agent_metadata_for_replay() {
             turns: Vec::new(),
             events: vec![ThreadBufferedEvent::Notification(Box::new(
                 ServerNotification::ItemStarted(
-                    codex_app_server_protocol::ItemStartedNotification {
+                    genex_app_server_protocol::ItemStartedNotification {
                         thread_id: "thread-1".to_string(),
                         turn_id: "turn-1".to_string(),
                         started_at_ms: 0,
                         item: ThreadItem::CollabAgentToolCall {
                             id: "wait-1".to_string(),
-                            tool: codex_app_server_protocol::CollabAgentTool::Wait,
+                            tool: genex_app_server_protocol::CollabAgentTool::Wait,
                             status:
-                                codex_app_server_protocol::CollabAgentToolCallStatus::InProgress,
+                                genex_app_server_protocol::CollabAgentToolCallStatus::InProgress,
                             sender_thread_id: ThreadId::new().to_string(),
                             receiver_thread_ids: vec![receiver_thread_id.to_string()],
                             prompt: None,
@@ -7005,7 +7005,7 @@ async fn override_turn_context_sends_thread_settings_update() {
             Some(ApprovalsReviewer::AutoReview),
             /*permission_profile*/ None,
             Some(ActivePermissionProfile::new(
-                codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE,
+                genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE,
             )),
             Some("gpt-5.4".to_string()),
             Some(Some(ReasoningEffortConfig::High)),
@@ -7060,7 +7060,7 @@ async fn override_turn_context_sends_thread_settings_update() {
 
         app.handle_app_server_event(
             &app_server,
-            codex_app_server_client::AppServerEvent::ServerNotification(Box::new(
+            genex_app_server_client::AppServerEvent::ServerNotification(Box::new(
                 ServerNotification::ThreadSettingsUpdated(notification),
             )),
         )
@@ -7096,7 +7096,7 @@ async fn override_turn_context_sends_thread_settings_update() {
                 .as_ref()
                 .expect("active profile")
                 .id,
-            codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE
+            genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE
         );
     })
     .await;
@@ -7189,7 +7189,7 @@ async fn selecting_cyber_model_defaults_active_thread_to_auto_review() {
                 .as_ref()
                 .expect("active permission profile")
                 .id,
-            codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE
+            genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE
         );
         app.enqueue_thread_notification(
             thread_id,
@@ -7219,7 +7219,7 @@ async fn changing_cyber_model_reasoning_preserves_selected_permissions() {
 
         assert!(
             app.apply_permission_profile_selection(PermissionProfileSelection {
-                profile_id: codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY
+                profile_id: genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY
                     .to_string(),
                 approval_policy: Some(AskForApproval::OnRequest),
                 approvals_reviewer: Some(ApprovalsReviewer::User),
@@ -7312,7 +7312,7 @@ async fn changing_cyber_model_reasoning_preserves_selected_permissions() {
                     .active_permission_profile
                     .expect("active permission profile")
                     .id,
-                codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY
+                genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY
             );
             assert_eq!(
                 settings.collaboration_mode.mode,
@@ -7347,11 +7347,11 @@ async fn selecting_cyber_model_falls_back_to_user_when_auto_review_is_unavailabl
 
     assert_eq!(
         params.approval_policy,
-        Some(codex_app_server_protocol::AskForApproval::OnRequest)
+        Some(genex_app_server_protocol::AskForApproval::OnRequest)
     );
     assert_eq!(
         params.approvals_reviewer,
-        Some(codex_app_server_protocol::ApprovalsReviewer::User)
+        Some(genex_app_server_protocol::ApprovalsReviewer::User)
     );
 }
 
@@ -7359,19 +7359,19 @@ async fn selecting_cyber_model_falls_back_to_user_when_auto_review_is_unavailabl
 async fn selecting_cyber_model_respects_auto_review_requirements() {
     Box::pin(async {
         let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
-        let requirements_toml = codex_config::ConfigRequirementsToml {
+        let requirements_toml = genex_config::ConfigRequirementsToml {
             allowed_approval_policies: Some(vec![AskForApproval::UnlessTrusted.to_core()]),
             ..Default::default()
         };
-        let mut requirements_with_sources = codex_config::ConfigRequirementsWithSources::default();
+        let mut requirements_with_sources = genex_config::ConfigRequirementsWithSources::default();
         requirements_with_sources.merge_unset_fields(
-            codex_config::RequirementSource::Unknown,
+            genex_config::RequirementSource::Unknown,
             requirements_toml.clone(),
         );
-        let requirements = codex_config::ConfigRequirements::try_from(requirements_with_sources)
+        let requirements = genex_config::ConfigRequirements::try_from(requirements_with_sources)
             .expect("reviewer requirements");
         app.config.config_layer_stack =
-            codex_config::ConfigLayerStack::new(Vec::new(), requirements, requirements_toml)
+            genex_config::ConfigLayerStack::new(Vec::new(), requirements, requirements_toml)
                 .expect("auto-review requirements stack");
         app.config
             .permissions
@@ -7528,12 +7528,12 @@ async fn inactive_thread_settings_notification_updates_cached_collaboration_mode
             disabled_plugin_ids: Vec::new(),
             cwd: test_absolute_path("/tmp/thread-settings"),
             approval_policy: AskForApproval::OnRequest,
-            approvals_reviewer: codex_app_server_protocol::ApprovalsReviewer::AutoReview,
-            sandbox_policy: codex_app_server_protocol::SandboxPolicy::ReadOnly {
+            approvals_reviewer: genex_app_server_protocol::ApprovalsReviewer::AutoReview,
+            sandbox_policy: genex_app_server_protocol::SandboxPolicy::ReadOnly {
                 network_access: false,
             },
             active_permission_profile: Some(
-                codex_app_server_protocol::ActivePermissionProfile::read_only(),
+                genex_app_server_protocol::ActivePermissionProfile::read_only(),
             ),
             model: "gpt-plan".to_string(),
             model_provider: "provider".to_string(),

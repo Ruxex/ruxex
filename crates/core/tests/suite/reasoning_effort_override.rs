@@ -1,21 +1,21 @@
 //! Trusted reasoning-effort updates follow surviving history and the next turn's selected settings.
 
-use codex_core::ForkSnapshot;
-use codex_core::RecoverTurnRequest;
-use codex_core::StartIfIdleSubmission;
-use codex_core::SuspendTurnOutcome;
-use codex_core::TurnInputRequest;
-use codex_core::TurnInputSubmission;
-use codex_core::config::Config;
-use codex_features::Feature;
-use codex_login::CodexAuth;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::model_types::ReasoningEffortPreset;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
+use genex_core::ForkSnapshot;
+use genex_core::RecoverTurnRequest;
+use genex_core::StartIfIdleSubmission;
+use genex_core::SuspendTurnOutcome;
+use genex_core::TurnInputRequest;
+use genex_core::TurnInputSubmission;
+use genex_core::config::Config;
+use genex_features::Feature;
+use genex_login::CodexAuth;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::skip_if_no_network;
@@ -441,7 +441,7 @@ async fn reasoning_effort_override_websocket_prewarm_preserves_baseline(
                 .thread_manager
                 .fork_thread(
                     ForkSnapshot::Interrupted,
-                    codex_core::StartThreadOptions::new(config.clone()),
+                    genex_core::StartThreadOptions::new(config.clone()),
                     previous.codex.rollout_path().expect("rollout path"),
                 )
                 .await?;

@@ -1,7 +1,7 @@
 use super::*;
 use crate::agent::control::ListedAgent;
 use crate::tools::handlers::multi_agents_spec::create_list_agents_tool;
-use codex_tools::ToolSpec;
+use genex_tools::ToolSpec;
 
 pub(crate) struct Handler;
 
@@ -14,7 +14,7 @@ impl ToolExecutor<ToolInvocation> for Handler {
         create_list_agents_tool()
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> codex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

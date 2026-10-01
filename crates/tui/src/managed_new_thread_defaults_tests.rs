@@ -1,10 +1,10 @@
 use super::*;
 use crate::legacy_core::config::ConfigBuilder;
-use codex_config::ConfigLayerSource;
-use codex_config::LoaderOverrides;
-use codex_protocol::config_types::TrustLevel;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_utils_absolute_path::test_support::PathBufExt;
+use genex_config::ConfigLayerSource;
+use genex_config::LoaderOverrides;
+use genex_protocol::config_types::TrustLevel;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_utils_absolute_path::test_support::PathBufExt;
 use pretty_assertions::assert_eq;
 
 async fn test_config() -> Config {

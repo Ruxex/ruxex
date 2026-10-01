@@ -5,15 +5,15 @@ use crate::linux_run_main::install_bwrap_signal_forwarders;
 #[cfg(test)]
 use crate::linux_run_main::wait_for_bwrap_child;
 #[cfg(test)]
-use codex_network_proxy::ManagedNetworkSandboxContext;
+use genex_network_proxy::ManagedNetworkSandboxContext;
 #[cfg(test)]
-use codex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfile;
 #[cfg(test)]
-use codex_protocol::protocol::FileSystemSandboxPolicy;
+use genex_protocol::protocol::FileSystemSandboxPolicy;
 #[cfg(test)]
-use codex_protocol::protocol::NetworkSandboxPolicy;
+use genex_protocol::protocol::NetworkSandboxPolicy;
 #[cfg(test)]
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::AbsolutePathBuf;
 #[cfg(test)]
 use pretty_assertions::assert_eq;
 #[cfg(test)]
@@ -72,7 +72,7 @@ fn inserts_bwrap_argv0_before_command_separator() {
         /*supports_argv0*/ true,
         "/tmp/codex-arg0-session/codex-linux-sandbox".to_string(),
     );
-    let daemon_directory = codex_uds::shared_daemon_socket_directory()
+    let daemon_directory = genex_uds::shared_daemon_socket_directory()
         .unwrap()
         .display()
         .to_string();
@@ -273,18 +273,18 @@ fn split_only_filesystem_policy_requires_direct_runtime_enforcement() {
     std::fs::create_dir_all(&docs).expect("create docs");
     let docs = AbsolutePathBuf::from_absolute_path(&docs).expect("absolute docs");
     let policy = FileSystemSandboxPolicy::restricted(vec![
-        codex_protocol::permissions::FileSystemSandboxEntry {
-            path: codex_protocol::permissions::FileSystemPath::Special {
-                value: codex_protocol::permissions::FileSystemSpecialPath::project_roots(
+        genex_protocol::permissions::FileSystemSandboxEntry {
+            path: genex_protocol::permissions::FileSystemPath::Special {
+                value: genex_protocol::permissions::FileSystemSpecialPath::project_roots(
                     /*subpath*/ None,
                 ),
             },
-            access: codex_protocol::permissions::FileSystemAccessMode::Write,
+            access: genex_protocol::permissions::FileSystemAccessMode::Write,
             missing_path_behavior: None,
         },
-        codex_protocol::permissions::FileSystemSandboxEntry {
+        genex_protocol::permissions::FileSystemSandboxEntry {
             path: docs.into(),
-            access: codex_protocol::permissions::FileSystemAccessMode::Read,
+            access: genex_protocol::permissions::FileSystemAccessMode::Read,
             missing_path_behavior: None,
         },
     ]);
@@ -301,16 +301,16 @@ fn root_write_read_only_carveout_requires_direct_runtime_enforcement() {
     std::fs::create_dir_all(&docs).expect("create docs");
     let docs = AbsolutePathBuf::from_absolute_path(&docs).expect("absolute docs");
     let policy = FileSystemSandboxPolicy::restricted(vec![
-        codex_protocol::permissions::FileSystemSandboxEntry {
-            path: codex_protocol::permissions::FileSystemPath::Special {
-                value: codex_protocol::permissions::FileSystemSpecialPath::Root,
+        genex_protocol::permissions::FileSystemSandboxEntry {
+            path: genex_protocol::permissions::FileSystemPath::Special {
+                value: genex_protocol::permissions::FileSystemSpecialPath::Root,
             },
-            access: codex_protocol::permissions::FileSystemAccessMode::Write,
+            access: genex_protocol::permissions::FileSystemAccessMode::Write,
             missing_path_behavior: None,
         },
-        codex_protocol::permissions::FileSystemSandboxEntry {
+        genex_protocol::permissions::FileSystemSandboxEntry {
             path: docs.into(),
-            access: codex_protocol::permissions::FileSystemAccessMode::Read,
+            access: genex_protocol::permissions::FileSystemAccessMode::Read,
             missing_path_behavior: None,
         },
     ]);
@@ -732,16 +732,16 @@ fn resolve_permission_profile_preserves_direct_runtime_profile() {
     std::fs::create_dir_all(&docs).expect("create docs");
     let docs = AbsolutePathBuf::from_absolute_path(&docs).expect("absolute docs");
     let file_system_sandbox_policy = FileSystemSandboxPolicy::restricted(vec![
-        codex_protocol::permissions::FileSystemSandboxEntry {
-            path: codex_protocol::permissions::FileSystemPath::Special {
-                value: codex_protocol::permissions::FileSystemSpecialPath::Root,
+        genex_protocol::permissions::FileSystemSandboxEntry {
+            path: genex_protocol::permissions::FileSystemPath::Special {
+                value: genex_protocol::permissions::FileSystemSpecialPath::Root,
             },
-            access: codex_protocol::permissions::FileSystemAccessMode::Read,
+            access: genex_protocol::permissions::FileSystemAccessMode::Read,
             missing_path_behavior: None,
         },
-        codex_protocol::permissions::FileSystemSandboxEntry {
+        genex_protocol::permissions::FileSystemSandboxEntry {
             path: docs.into(),
-            access: codex_protocol::permissions::FileSystemAccessMode::Write,
+            access: genex_protocol::permissions::FileSystemAccessMode::Write,
             missing_path_behavior: None,
         },
     ]);

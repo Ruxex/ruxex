@@ -1,42 +1,42 @@
-use codex_core::CodexThread;
-use codex_core::REVIEW_PROMPT;
-use codex_core::TurnInputRequest;
-use codex_core::config::Config;
-use codex_core::config::Constrained;
-use codex_core::find_thread_path_by_id_str;
-use codex_exec_server::CreateDirectoryOptions;
-use codex_features::Feature;
-use codex_history::RolloutItem;
-use codex_login::CodexAuth;
-use codex_protocol::config_types::ApprovalsReviewer;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::config_types::Settings;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::model_types::ModelServiceTier;
-use codex_protocol::model_types::ModelTokenBudgetConfig;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::model_types::ReasoningEffortPreset;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::ENVIRONMENT_CONTEXT_OPEN_TAG;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExitedReviewModeEvent;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ReviewCodeLocation;
-use codex_protocol::protocol::ReviewFinding;
-use codex_protocol::protocol::ReviewLineRange;
-use codex_protocol::protocol::ReviewOutputEvent;
-use codex_protocol::protocol::ReviewRequest;
-use codex_protocol::protocol::ReviewTarget;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::TurnEnvironmentSelections;
-use codex_protocol::review_format::render_review_output_text;
-use codex_protocol::user_input::UserInput;
+use genex_core::CodexThread;
+use genex_core::REVIEW_PROMPT;
+use genex_core::TurnInputRequest;
+use genex_core::config::Config;
+use genex_core::config::Constrained;
+use genex_core::find_thread_path_by_id_str;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_features::Feature;
+use genex_history::RolloutItem;
+use genex_login::CodexAuth;
+use genex_protocol::config_types::ApprovalsReviewer;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::ServiceTier;
+use genex_protocol::config_types::Settings;
+use genex_protocol::items::TurnItem;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::model_types::ModelServiceTier;
+use genex_protocol::model_types::ModelTokenBudgetConfig;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::ENVIRONMENT_CONTEXT_OPEN_TAG;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExitedReviewModeEvent;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ReviewCodeLocation;
+use genex_protocol::protocol::ReviewFinding;
+use genex_protocol::protocol::ReviewLineRange;
+use genex_protocol::protocol::ReviewOutputEvent;
+use genex_protocol::protocol::ReviewRequest;
+use genex_protocol::protocol::ReviewTarget;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::TurnEnvironmentSelections;
+use genex_protocol::review_format::render_review_output_text;
+use genex_protocol::user_input::UserInput;
 use core_test_support::PathBufExt;
 use core_test_support::responses;
 use core_test_support::responses::ResponseMock;
@@ -207,7 +207,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
         .lines()
         .filter(|line| !line.trim().is_empty())
         .find_map(|line| {
-            let rollout_line = codex_rollout::parse_rollout_line(line).expect("rollout line");
+            let rollout_line = genex_rollout::parse_rollout_line(line).expect("rollout line");
             match rollout_line.item {
                 RolloutItem::SessionMeta(session_meta) => Some(session_meta.meta.id.to_string()),
                 _ => None,
@@ -249,7 +249,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
             continue;
         }
         let v: serde_json::Value = serde_json::from_str(line).expect("jsonl line");
-        let rl = codex_rollout::decode_rollout_line(v).expect("rollout line");
+        let rl = genex_rollout::decode_rollout_line(v).expect("rollout line");
         if let RolloutItem::ResponseItem(envelope) = rl.item
             && let ResponseItem::Message { role, content, .. } = envelope.item
         {
@@ -756,7 +756,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
     let review_session_cwd = review_rollout
         .lines()
         .find_map(|line| {
-            let rollout_line = codex_rollout::parse_rollout_line(line)
+            let rollout_line = genex_rollout::parse_rollout_line(line)
                 .expect("review rollout line should be valid");
             match rollout_line.item {
                 RolloutItem::SessionMeta(session_meta) => Some(session_meta.meta.cwd),
@@ -768,7 +768,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
     let review_context = review_rollout
         .lines()
         .filter_map(|line| {
-            let rollout_line = codex_rollout::parse_rollout_line(line)
+            let rollout_line = genex_rollout::parse_rollout_line(line)
                 .expect("review rollout line should be valid");
             match rollout_line.item {
                 RolloutItem::TurnContext(turn_context) => Some(turn_context),
@@ -888,7 +888,7 @@ async fn review_uses_custom_review_model_from_config() {
     let codex = Arc::clone(&test.codex);
     std::fs::remove_file(codex_home.path().join("models_cache.json"))
         .expect("initial empty model catalog should be cached");
-    let mut models = codex_models_manager::test_support::test_models_response()
+    let mut models = genex_models_manager::test_support::test_models_response()
         .expect("bundled model catalog should parse");
     let model = models
         .models
@@ -1045,10 +1045,10 @@ async fn review_input_isolated_from_parent_history() {
             .unwrap();
 
         // Prior user message (enveloped response_item)
-        let user = codex_protocol::models::ResponseItem::Message {
+        let user = genex_protocol::models::ResponseItem::Message {
             id: None,
             role: "user".to_string(),
-            content: vec![codex_protocol::models::ContentItem::InputText {
+            content: vec![genex_protocol::models::ContentItem::InputText {
                 text: "parent: earlier user message".to_string(),
             }],
             phase: None,
@@ -1065,10 +1065,10 @@ async fn review_input_isolated_from_parent_history() {
             .unwrap();
 
         // Prior assistant message (enveloped response_item)
-        let assistant = codex_protocol::models::ResponseItem::Message {
+        let assistant = genex_protocol::models::ResponseItem::Message {
             id: None,
             role: "assistant".to_string(),
-            content: vec![codex_protocol::models::ContentItem::OutputText {
+            content: vec![genex_protocol::models::ContentItem::OutputText {
                 text: "parent: assistant reply".to_string(),
             }],
             phase: None,
@@ -1162,7 +1162,7 @@ async fn review_input_isolated_from_parent_history() {
             continue;
         }
         let v: serde_json::Value = serde_json::from_str(line).expect("jsonl line");
-        let rl = codex_rollout::decode_rollout_line(v).expect("rollout line");
+        let rl = genex_rollout::decode_rollout_line(v).expect("rollout line");
         if let RolloutItem::ResponseItem(envelope) = rl.item
             && let ResponseItem::Message { role, content, .. } = envelope.item
             && role == "user"

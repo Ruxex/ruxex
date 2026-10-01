@@ -1,9 +1,9 @@
 use super::*;
-use codex_network_proxy::BlockedRequest;
-use codex_network_proxy::BlockedRequestArgs;
-use codex_network_proxy::NetworkMode;
-use codex_protocol::exec_output::ExecToolCallOutput;
-use codex_protocol::exec_output::StreamOutput;
+use genex_network_proxy::BlockedRequest;
+use genex_network_proxy::BlockedRequestArgs;
+use genex_network_proxy::NetworkMode;
+use genex_protocol::exec_output::ExecToolCallOutput;
+use genex_protocol::exec_output::StreamOutput;
 use pretty_assertions::assert_eq;
 use std::time::Duration;
 

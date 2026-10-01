@@ -6,7 +6,7 @@ use super::checkpoint_existing_session_import;
 use super::read_imported_connector_candidates;
 use super::record_completed_session_imports;
 use super::record_detected_session_connectors;
-use codex_protocol::ThreadId;
+use genex_protocol::ThreadId;
 use pretty_assertions::assert_eq;
 use sha2::Digest;
 use sha2::Sha256;

@@ -1,31 +1,31 @@
-use codex_core::NotSubmittedReason;
-use codex_core::RecoverTurnRequest;
-use codex_core::StartIfIdleSubmission;
-use codex_core::StartThreadOptions;
-use codex_core::SteerSubmission;
-use codex_core::TurnInput;
-use codex_core::TurnInputRequest;
-use codex_core::TurnInputSubmission;
-use codex_core::TurnStartOptions;
-use codex_core::config::Constrained;
-use codex_core::context::ContextualUserFragment;
-use codex_core::context::InternalContextSource;
-use codex_core::context::InternalModelContextFragment;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_extension_api::TurnStartAdmission;
-use codex_protocol::AgentPath;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::InterAgentCommunication;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::TurnEnvironmentSelections;
-use codex_protocol::user_input::UserInput;
+use genex_core::NotSubmittedReason;
+use genex_core::RecoverTurnRequest;
+use genex_core::StartIfIdleSubmission;
+use genex_core::StartThreadOptions;
+use genex_core::SteerSubmission;
+use genex_core::TurnInput;
+use genex_core::TurnInputRequest;
+use genex_core::TurnInputSubmission;
+use genex_core::TurnStartOptions;
+use genex_core::config::Constrained;
+use genex_core::context::ContextualUserFragment;
+use genex_core::context::InternalContextSource;
+use genex_core::context::InternalModelContextFragment;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_extension_api::TurnStartAdmission;
+use genex_protocol::AgentPath;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::InterAgentCommunication;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::TurnEnvironmentSelections;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
@@ -175,9 +175,9 @@ async fn host_drain_allows_spawned_agent_input_but_not_automatic_work() -> anyho
 
 #[tokio::test]
 async fn host_drain_allows_running_review_to_finish_its_delegate() -> anyhow::Result<()> {
-    use codex_protocol::protocol::ReviewOutputEvent;
-    use codex_protocol::protocol::ReviewRequest;
-    use codex_protocol::protocol::ReviewTarget;
+    use genex_protocol::protocol::ReviewOutputEvent;
+    use genex_protocol::protocol::ReviewRequest;
+    use genex_protocol::protocol::ReviewTarget;
 
     let server = responses::start_mock_server().await;
     let expected = ReviewOutputEvent {
@@ -224,12 +224,12 @@ async fn host_drain_allows_running_review_to_finish_its_delegate() -> anyhow::Re
 
 #[tokio::test]
 async fn host_drain_closes_realtime_after_handoff_error() -> anyhow::Result<()> {
-    use codex_protocol::protocol::ConversationStartParams;
-    use codex_protocol::protocol::RealtimeConversationClosedEvent;
-    use codex_protocol::protocol::RealtimeConversationRealtimeEvent;
-    use codex_protocol::protocol::RealtimeEvent;
-    use codex_protocol::protocol::RealtimeHandoffRequested;
-    use codex_protocol::protocol::RealtimeTranscriptEntry;
+    use genex_protocol::protocol::ConversationStartParams;
+    use genex_protocol::protocol::RealtimeConversationClosedEvent;
+    use genex_protocol::protocol::RealtimeConversationRealtimeEvent;
+    use genex_protocol::protocol::RealtimeEvent;
+    use genex_protocol::protocol::RealtimeHandoffRequested;
+    use genex_protocol::protocol::RealtimeTranscriptEntry;
 
     let server = responses::start_mock_server().await;
     let response = responses::mount_sse_once(&server, responses::sse_completed("unexpected")).await;
@@ -254,7 +254,7 @@ async fn host_drain_closes_realtime_after_handoff_error() -> anyhow::Result<()> 
             let realtime_url = realtime.uri().to_string();
             move |config| {
                 config.experimental_realtime_ws_base_url = Some(realtime_url);
-                config.realtime.version = codex_config::config_toml::RealtimeWsVersion::V1;
+                config.realtime.version = genex_config::config_toml::RealtimeWsVersion::V1;
             }
         })
         .build_with_auto_env(&server)
@@ -267,10 +267,10 @@ async fn host_drain_closes_realtime_after_handoff_error() -> anyhow::Result<()> 
             codex_responses_as_items: false,
             codex_response_item_prefix: None,
             codex_response_handoff_mode:
-                codex_protocol::protocol::CodexResponseHandoffMode::Thinking,
+                genex_protocol::protocol::CodexResponseHandoffMode::Thinking,
             codex_response_handoff_channel_prefixes: None,
             model: None,
-            output_modality: codex_protocol::protocol::RealtimeOutputModality::Audio,
+            output_modality: genex_protocol::protocol::RealtimeOutputModality::Audio,
             include_startup_context: false,
             initial_items: Vec::new(),
             realtime_start_instructions: None,
@@ -365,9 +365,9 @@ fn user_message_request(text: &str) -> TurnInputRequest {
 }
 
 async fn submit_user_message(
-    codex: &codex_core::CodexThread,
+    codex: &genex_core::CodexThread,
     text: &str,
-) -> codex_protocol::error::Result<TurnInputSubmission> {
+) -> genex_protocol::error::Result<TurnInputSubmission> {
     codex.start_or_steer_turn(user_message_request(text)).await
 }
 
@@ -573,7 +573,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     wait_for_event(&test.codex, |event| {
         assert!(!matches!(event, EventMsg::UserMessage(_)));
         assert!(!matches!(event, EventMsg::ItemCompleted(event)
-            if matches!(event.item, codex_protocol::items::TurnItem::UserMessage(_))));
+            if matches!(event.item, genex_protocol::items::TurnItem::UserMessage(_))));
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

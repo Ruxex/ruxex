@@ -15,12 +15,12 @@ use crate::history_cell::split_reasoning_summary_parts;
 use crate::inline_visualization::InlineVisualizationContext;
 use crate::legacy_core::config::Config;
 use crate::multi_agents::sub_agent_activity_summary;
-use codex_app_server_protocol::Thread;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::UserInput;
-use codex_protocol::ThreadId;
-use codex_protocol::items::UserMessageItem;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_app_server_protocol::Thread;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::UserInput;
+use genex_protocol::ThreadId;
+use genex_protocol::items::UserMessageItem;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use ratatui::style::Stylize as _;
 use ratatui::text::Line;
 
@@ -116,7 +116,7 @@ pub(crate) fn thread_items_to_transcript_cells(
                     client_id,
                     content: content
                         .into_iter()
-                        .map(codex_app_server_protocol::UserInput::into_core)
+                        .map(genex_app_server_protocol::UserInput::into_core)
                         .collect(),
                 };
                 cells.push(Arc::new(UserHistoryCell {
@@ -190,7 +190,7 @@ pub(crate) fn thread_items_to_transcript_cells(
                     item.id,
                     item.query,
                     item.action
-                        .unwrap_or(codex_app_server_protocol::WebSearchAction::Other),
+                        .unwrap_or(genex_app_server_protocol::WebSearchAction::Other),
                 )));
             }
             ThreadItem::ImageView { path, .. } => {

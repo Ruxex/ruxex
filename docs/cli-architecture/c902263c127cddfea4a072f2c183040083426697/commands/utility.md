@@ -10,7 +10,7 @@
 
 ## `exec-server`
 
-実験的な `codex exec-server` サービスは stdio 経由で実行機能を公開し、リクエストの並行性は `RequestDispatchMode` が制御します。CLI ラッパーは [`ExecServerCommand`](../../../../crates/cli/src/main.rs#L525) で、ランタイムの担当は `codex-exec-server` と app-server の実行サポートにあります。[トランスポート/サーバー](../common/transport-and-server.md) と [テレメトリ](../common/telemetry.md)も参照してください。
+実験的な `codex exec-server` サービスは stdio 経由で実行機能を公開し、リクエストの並行性は `RequestDispatchMode` が制御します。CLI ラッパーは [`ExecServerCommand`](../../../../crates/cli/src/main.rs#L525) で、ランタイムの担当は `genex-exec-server` と app-server の実行サポートにあります。[トランスポート/サーバー](../common/transport-and-server.md) と [テレメトリ](../common/telemetry.md)も参照してください。
 
 ## 内部トランスポートヘルパー
 

@@ -41,11 +41,11 @@ use crate::pager_overlay::Overlay;
 use crate::pager_overlay::TranscriptHistoryState;
 use crate::tui;
 use crate::tui::TuiEvent;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::Turn;
-use codex_app_server_protocol::TurnStatus;
-use codex_protocol::ThreadId;
-use codex_protocol::models::local_image_label_text;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::Turn;
+use genex_app_server_protocol::TurnStatus;
+use genex_protocol::ThreadId;
+use genex_protocol::models::local_image_label_text;
 use color_eyre::eyre::Result;
 use color_eyre::eyre::bail;
 use crossterm::event::KeyCode;
@@ -652,7 +652,7 @@ mod tests {
     use crate::bottom_pane::MentionBinding;
     use crate::history_cell::AgentMessageCell;
     use crate::history_cell::HistoryCell;
-    use codex_app_server_protocol::UserInput;
+    use genex_app_server_protocol::UserInput;
     use pretty_assertions::assert_eq;
     use ratatui::prelude::Line;
     use std::path::PathBuf;
@@ -683,7 +683,7 @@ mod tests {
                     }],
                 })
                 .collect(),
-            items_view: codex_app_server_protocol::TurnItemsView::Full,
+            items_view: genex_app_server_protocol::TurnItemsView::Full,
             status,
             error: None,
             started_at: None,

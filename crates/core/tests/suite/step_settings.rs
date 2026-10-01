@@ -1,79 +1,79 @@
 use anyhow::Result;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use codex_config::McpServerConfig;
-use codex_core::CodexThread;
-use codex_core::ForkSnapshot;
-use codex_core::StartThreadOptions;
-use codex_core::TurnInputRequest;
-use codex_core::config::Config;
-use codex_core::config::Constrained;
-use codex_core::config::TokenBudgetConfig;
-use codex_extension_api::ContentItemKind;
-use codex_extension_api::ContextContributor;
-use codex_extension_api::ExtensionData;
-use codex_extension_api::ExtensionFuture;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_extension_api::PromptFragment;
-use codex_extension_api::ToolContributor;
-use codex_extension_api::TurnContextContributionInput;
-use codex_features::Feature;
-use codex_history::RolloutItem;
-use codex_login::CodexAuth;
-use codex_models_manager::test_support::test_models_response;
-use codex_models_manager::manager::RefreshStrategy;
-use codex_protocol::config_types::ApprovalsReviewer;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::dynamic_tools::DynamicToolCallOutputContentItem;
-use codex_protocol::dynamic_tools::DynamicToolFunctionSpec;
-use codex_protocol::dynamic_tools::DynamicToolResponse;
-use codex_protocol::dynamic_tools::DynamicToolSpec;
-use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::model_types::ApplyPatchToolType;
-use codex_protocol::model_types::ApprovalMessages;
-use codex_protocol::model_types::CollaborationModeMessages;
-use codex_protocol::model_types::ConfigShellToolType;
-use codex_protocol::model_types::ConfirmationPolicies;
-use codex_protocol::model_types::InputModality;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelTokenBudgetConfig;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::model_types::MultiAgentMessages;
-use codex_protocol::model_types::MultiAgentModeMessages;
-use codex_protocol::model_types::MultiAgentRoleMessages;
-use codex_protocol::model_types::MultiAgentToolMessages;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::model_types::ReasoningEffortPreset;
-use codex_protocol::model_types::ToolMessage;
-use codex_protocol::model_types::ToolMessages;
-use codex_protocol::model_types::ToolMode;
-use codex_protocol::model_types::TruncationPolicyConfig;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_CLOSE_TAG;
-use codex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_OPEN_TAG;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SafetyBufferingEvent;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::TurnSettingsUpdate;
-use codex_protocol::protocol::TurnSettingsUpdateOutcome;
-use codex_protocol::request_user_input::RequestUserInputAnswer;
-use codex_protocol::request_user_input::RequestUserInputEvent;
-use codex_protocol::request_user_input::RequestUserInputResponse;
-use codex_protocol::user_input::UserInput;
-use codex_tools::JsonToolOutput;
-use codex_tools::ToolCall;
-use codex_tools::ToolExecutor;
-use codex_tools::ToolExecutorFuture;
-use codex_tools::ToolName;
-use codex_tools::ToolOutput;
-use codex_tools::ToolSpec;
-use codex_utils_image::data_url_from_bytes;
-use codex_utils_output_truncation::TruncationPolicy;
-use codex_utils_output_truncation::truncate_text;
+use genex_config::McpServerConfig;
+use genex_core::CodexThread;
+use genex_core::ForkSnapshot;
+use genex_core::StartThreadOptions;
+use genex_core::TurnInputRequest;
+use genex_core::config::Config;
+use genex_core::config::Constrained;
+use genex_core::config::TokenBudgetConfig;
+use genex_extension_api::ContentItemKind;
+use genex_extension_api::ContextContributor;
+use genex_extension_api::ExtensionData;
+use genex_extension_api::ExtensionFuture;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_extension_api::PromptFragment;
+use genex_extension_api::ToolContributor;
+use genex_extension_api::TurnContextContributionInput;
+use genex_features::Feature;
+use genex_history::RolloutItem;
+use genex_login::CodexAuth;
+use genex_models_manager::test_support::test_models_response;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_protocol::config_types::ApprovalsReviewer;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::ServiceTier;
+use genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem;
+use genex_protocol::dynamic_tools::DynamicToolFunctionSpec;
+use genex_protocol::dynamic_tools::DynamicToolResponse;
+use genex_protocol::dynamic_tools::DynamicToolSpec;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::model_types::ApplyPatchToolType;
+use genex_protocol::model_types::ApprovalMessages;
+use genex_protocol::model_types::CollaborationModeMessages;
+use genex_protocol::model_types::ConfigShellToolType;
+use genex_protocol::model_types::ConfirmationPolicies;
+use genex_protocol::model_types::InputModality;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelTokenBudgetConfig;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::MultiAgentMessages;
+use genex_protocol::model_types::MultiAgentModeMessages;
+use genex_protocol::model_types::MultiAgentRoleMessages;
+use genex_protocol::model_types::MultiAgentToolMessages;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::model_types::ToolMessage;
+use genex_protocol::model_types::ToolMessages;
+use genex_protocol::model_types::ToolMode;
+use genex_protocol::model_types::TruncationPolicyConfig;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_CLOSE_TAG;
+use genex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_OPEN_TAG;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::SafetyBufferingEvent;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::TurnSettingsUpdate;
+use genex_protocol::protocol::TurnSettingsUpdateOutcome;
+use genex_protocol::request_user_input::RequestUserInputAnswer;
+use genex_protocol::request_user_input::RequestUserInputEvent;
+use genex_protocol::request_user_input::RequestUserInputResponse;
+use genex_protocol::user_input::UserInput;
+use genex_tools::JsonToolOutput;
+use genex_tools::ToolCall;
+use genex_tools::ToolExecutor;
+use genex_tools::ToolExecutorFuture;
+use genex_tools::ToolName;
+use genex_tools::ToolOutput;
+use genex_tools::ToolSpec;
+use genex_utils_image::data_url_from_bytes;
+use genex_utils_output_truncation::TruncationPolicy;
+use genex_utils_output_truncation::truncate_text;
 use core_test_support::apps_test_server::AppsTestServer;
 use core_test_support::apps_test_server::recorded_apps_tool_calls;
 use core_test_support::responses::ResponsesRequest;
@@ -528,7 +528,7 @@ async fn tool_result_history_keeps_originating_model_across_switch_and_replay() 
     test.codex.shutdown_and_wait().await?;
     let rollout_path = test.codex.rollout_path().expect("rollout path");
     async fn saved_outputs(path: &std::path::Path) -> Result<Vec<(Value, Option<usize>)>> {
-        let history = codex_rollout::RolloutRecorder::get_rollout_history(path).await?;
+        let history = genex_rollout::RolloutRecorder::get_rollout_history(path).await?;
         Ok(history
             .get_rollout_items()
             .iter()
@@ -569,7 +569,7 @@ async fn tool_result_history_keeps_originating_model_across_switch_and_replay() 
             .resume_thread_from_rollout(
                 replay_config.clone(),
                 rollout_path.clone(),
-                codex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("dummy")),
+                genex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("dummy")),
                 /*parent_trace*/ None,
                 ClientMcpExtensions::default(),
             )
@@ -670,7 +670,7 @@ async fn custom_tool_output_replay_preserves_originating_budget() -> Result<()> 
 
     test.codex.shutdown_and_wait().await?;
     let rollout_path = test.codex.rollout_path().expect("rollout path");
-    let history = codex_rollout::RolloutRecorder::get_rollout_history(&rollout_path).await?;
+    let history = genex_rollout::RolloutRecorder::get_rollout_history(&rollout_path).await?;
     let saved = history
         .get_rollout_items()
         .iter()
@@ -702,7 +702,7 @@ async fn custom_tool_output_replay_preserves_originating_budget() -> Result<()> 
         .resume_thread_from_rollout(
             replay_config.clone(),
             rollout_path.clone(),
-            codex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("dummy")),
+            genex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("dummy")),
             /*parent_trace*/ None,
             ClientMcpExtensions::default(),
         )
@@ -1739,12 +1739,12 @@ async fn captured_model_enables_and_executes_code_mode() -> Result<()> {
                 .set_permission_profile(PermissionProfile::Disabled)
                 .expect("test permissions");
             for model in &mut config.model_catalog.as_mut().expect("models").models {
-                model.input_modalities = vec![codex_protocol::model_types::InputModality::Text];
+                model.input_modalities = vec![genex_protocol::model_types::InputModality::Text];
                 model.supports_image_detail_original = false;
                 if model.slug == MODEL_B {
                     model
                         .input_modalities
-                        .push(codex_protocol::model_types::InputModality::Image);
+                        .push(genex_protocol::model_types::InputModality::Image);
                     model.supports_image_detail_original = true;
                     model.tool_mode = Some(ToolMode::CodeModeOnly);
                 }
@@ -2527,7 +2527,7 @@ async fn request_preference_activation_keeps_admitted_model_metadata() -> Result
         .get_models_manager()
         .list_models(
             RefreshStrategy::Online,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
     assert_eq!(refresh.requests().len(), 1);
@@ -2632,8 +2632,8 @@ async fn captured_step_controls_exec_completion_and_write_stdin_output() -> Resu
                 .expect("test permissions");
             for model in &mut config.model_catalog.as_mut().expect("models").models {
                 model.shell_type = ConfigShellToolType::UnifiedExec;
-                model.truncation_policy = codex_protocol::model_types::TruncationPolicyConfig {
-                    mode: codex_protocol::model_types::TruncationMode::Bytes,
+                model.truncation_policy = genex_protocol::model_types::TruncationPolicyConfig {
+                    mode: genex_protocol::model_types::TruncationMode::Bytes,
                     limit: match model.slug.as_str() {
                         MODEL_B => 400,
                         MODEL_C => 800,
@@ -2686,8 +2686,8 @@ async fn captured_step_controls_exec_completion_and_write_stdin_output() -> Resu
     .await;
     let end = end.expect("exec completion");
 
-    use codex_utils_output_truncation::TruncationPolicy;
-    use codex_utils_output_truncation::formatted_truncate_text;
+    use genex_utils_output_truncation::TruncationPolicy;
+    use genex_utils_output_truncation::formatted_truncate_text;
     let requests = responses.requests();
     let exec = requests[2]
         .function_call_output_text("exec-b")
@@ -2768,14 +2768,14 @@ async fn captured_step_controls_mcp_output_limit(supports_images: bool) -> Resul
         .with_config(move |config| {
             for model in &mut config.model_catalog.as_mut().expect("models").models {
                 model.supports_image_detail_original = model.slug != MODEL_B;
-                model.input_modalities = vec![codex_protocol::model_types::InputModality::Text];
+                model.input_modalities = vec![genex_protocol::model_types::InputModality::Text];
                 if model.slug != MODEL_B || supports_images {
                     model
                         .input_modalities
-                        .push(codex_protocol::model_types::InputModality::Image);
+                        .push(genex_protocol::model_types::InputModality::Image);
                 }
-                model.truncation_policy = codex_protocol::model_types::TruncationPolicyConfig {
-                    mode: codex_protocol::model_types::TruncationMode::Bytes,
+                model.truncation_policy = genex_protocol::model_types::TruncationPolicyConfig {
+                    mode: genex_protocol::model_types::TruncationMode::Bytes,
                     limit: if model.slug == MODEL_B { 80 } else { 8_000 },
                 };
             }
@@ -2868,11 +2868,11 @@ impl<'call> ToolExecutor<ToolCall<'call>> for SettingsEcho {
     }
 
     fn spec(&self) -> ToolSpec {
-        ToolSpec::Function(codex_tools::ResponsesApiTool {
+        ToolSpec::Function(genex_tools::ResponsesApiTool {
             name: "extension_settings".to_string(),
             description: "Report the settings received by this extension.".to_string(),
             strict: false,
-            parameters: codex_tools::JsonSchema::default(),
+            parameters: genex_tools::JsonSchema::default(),
             output_schema: None,
             defer_loading: None,
         })

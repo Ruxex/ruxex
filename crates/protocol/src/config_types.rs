@@ -1,5 +1,5 @@
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_redacted_string::RedactedString;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_redacted_string::RedactedString;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;

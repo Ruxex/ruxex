@@ -444,8 +444,8 @@ async fn startup_draft_applies_editor_keymap_without_enabling_vim() {
         .await
         .expect("build startup configuration");
     config.tui_vim_mode_default = true;
-    config.tui_keymap.editor.move_line_start = Some(codex_config::types::KeybindingsSpec::One(
-        codex_config::types::KeybindingSpec("ctrl-z".to_string()),
+    config.tui_keymap.editor.move_line_start = Some(genex_config::types::KeybindingsSpec::One(
+        genex_config::types::KeybindingSpec("ctrl-z".to_string()),
     ));
     let mut pump = startup_test_pump(std::iter::empty());
     pump.bottom_pane.insert_str("draft");

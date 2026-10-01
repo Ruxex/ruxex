@@ -6,15 +6,15 @@ use std::process::Stdio;
 use std::time::Duration;
 
 #[cfg(windows)]
-use codex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::config_types::WindowsSandboxLevel;
 #[cfg(windows)]
-use codex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfile;
 #[cfg(windows)]
-use codex_sandboxing::SandboxExecRequest;
+use genex_sandboxing::SandboxExecRequest;
 #[cfg(windows)]
-use codex_sandboxing::SandboxType;
+use genex_sandboxing::SandboxType;
 #[cfg(windows)]
-use codex_utils_path_uri::PathUri;
+use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 #[cfg(windows)]
 use tokio::io::AsyncReadExt;

@@ -1,8 +1,8 @@
-use codex_tools::JsonSchema;
-use codex_tools::LIST_AVAILABLE_PLUGINS_TO_INSTALL_TOOL_NAME;
-use codex_tools::REQUEST_PLUGIN_INSTALL_TOOL_NAME;
-use codex_tools::ResponsesApiTool;
-use codex_tools::ToolSpec;
+use genex_tools::JsonSchema;
+use genex_tools::LIST_AVAILABLE_PLUGINS_TO_INSTALL_TOOL_NAME;
+use genex_tools::REQUEST_PLUGIN_INSTALL_TOOL_NAME;
+use genex_tools::ResponsesApiTool;
+use genex_tools::ToolSpec;
 use std::collections::BTreeMap;
 
 use crate::tools::router::ToolSuggestPresentation;
@@ -83,7 +83,7 @@ pub(crate) fn create_request_plugin_install_tool(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_tools::JsonSchema;
+    use genex_tools::JsonSchema;
     use pretty_assertions::assert_eq;
     use std::collections::BTreeMap;
 

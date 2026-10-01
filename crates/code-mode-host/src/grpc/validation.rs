@@ -1,8 +1,8 @@
-use codex_code_mode_protocol::grpc as proto;
+use genex_code_mode_protocol::grpc as proto;
 use tonic::Status;
 use uuid::Uuid;
 
-pub(super) use codex_code_mode_protocol::grpc::MAX_IDENTIFIER_BYTES;
+pub(super) use genex_code_mode_protocol::grpc::MAX_IDENTIFIER_BYTES;
 pub(super) const MAX_TOOL_FILTERS: usize = 64;
 
 pub(super) fn identifier(value: &str, field: &str) -> Result<(), Status> {

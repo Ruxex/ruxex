@@ -1,16 +1,16 @@
 use assert_matches::assert_matches;
-use codex_core::StartThreadOptions;
-use codex_core::SuspendTurnOutcome;
-use codex_core::TurnInputRequest;
-use codex_history::RolloutItem;
+use genex_core::StartThreadOptions;
+use genex_core::SuspendTurnOutcome;
+use genex_core::TurnInputRequest;
+use genex_history::RolloutItem;
 use std::sync::Arc;
 use std::time::Duration;
 
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::user_input::UserInput;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_function_call;
 use core_test_support::responses::ev_response_created;
@@ -111,7 +111,7 @@ async fn root_turn_suspension_preserves_unfinished_turn_history() {
         }]))
         .await
         .expect("start root turn");
-    let codex_core::TurnInputSubmission::Started { turn_id } = submitted else {
+    let genex_core::TurnInputSubmission::Started { turn_id } = submitted else {
         panic!("expected a started root turn");
     };
     wait_for_event(&codex, |event| matches!(event, EventMsg::TurnStarted(_))).await;
@@ -151,7 +151,7 @@ async fn root_turn_suspension_preserves_unfinished_turn_history() {
     let items = rollout
         .lines()
         .map(|line| {
-            codex_rollout::parse_rollout_line(line)
+            genex_rollout::parse_rollout_line(line)
                 .expect("parse durable rollout")
                 .item
         })
@@ -182,7 +182,7 @@ async fn root_turn_suspension_preserves_unfinished_turn_history() {
     assert_eq!(
         resumed
             .codex
-            .recover_turn_if_idle(codex_core::RecoverTurnRequest {
+            .recover_turn_if_idle(genex_core::RecoverTurnRequest {
                 turn_id: turn_id.clone(),
                 thread_settings: Default::default(),
                 trace: None,
@@ -190,7 +190,7 @@ async fn root_turn_suspension_preserves_unfinished_turn_history() {
             })
             .await
             .expect("recover the unfinished turn"),
-        codex_core::StartIfIdleSubmission::Started {
+        genex_core::StartIfIdleSubmission::Started {
             turn_id: turn_id.clone(),
         },
     );

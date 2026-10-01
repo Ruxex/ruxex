@@ -4,11 +4,11 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::Weak;
 
-use codex_exec_server::Environment;
-use codex_exec_server::FileSystemSandboxContext;
-use codex_extension_api::ExtensionMetrics;
-use codex_mcp::McpResourceClient;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_exec_server::Environment;
+use genex_exec_server::FileSystemSandboxContext;
+use genex_extension_api::ExtensionMetrics;
+use genex_mcp::McpResourceClient;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
 use tokio::sync::OnceCell;
 
 use crate::SkillsExtensionConfig;

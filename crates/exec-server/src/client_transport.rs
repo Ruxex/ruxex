@@ -7,7 +7,7 @@ use tokio::sync::OwnedSemaphorePermit;
 use tracing::debug;
 use tracing::warn;
 
-use codex_protocol::shell_environment::scrub_non_inheritable_env_vars;
+use genex_protocol::shell_environment::scrub_non_inheritable_env_vars;
 
 use crate::ExecServerClient;
 use crate::ExecServerError;
@@ -51,7 +51,7 @@ impl ExecServerReconnectStrategy {
 impl ExecServerClient {
     pub(crate) async fn connect_for_transport(
         transport_params: ExecServerTransportParams,
-        _http_client_factory: codex_http_client::HttpClientFactory,
+        _http_client_factory: genex_http_client::HttpClientFactory,
     ) -> Result<Self, ExecServerError> {
         match transport_params {
             ExecServerTransportParams::StdioCommand {

@@ -5,9 +5,9 @@ use std::time::Instant;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_config::types::AuthKeyringBackendKind;
-use codex_keyring_store::KeyringStore;
-use codex_keyring_store::tests::MockKeyringStore;
+use genex_config::types::AuthKeyringBackendKind;
+use genex_keyring_store::KeyringStore;
+use genex_keyring_store::tests::MockKeyringStore;
 use oauth2::AccessToken;
 use oauth2::RefreshToken;
 use oauth2::Scope;
@@ -42,9 +42,9 @@ use crate::oauth::save_oauth_tokens_with_keyring;
 use crate::oauth::save_oauth_tokens_with_keyring_with_fallback_to_file;
 use crate::oauth::stored_oauth_credential_snapshot;
 use crate::oauth::test_support::TempCodexHome;
-use codex_config::types::OAuthCredentialsStoreMode;
+use genex_config::types::OAuthCredentialsStoreMode;
 
-const STORE_LOCK_CONTENTION_EVENT_TARGET: &str = "codex_rmcp_client::oauth::store_lock::contention";
+const STORE_LOCK_CONTENTION_EVENT_TARGET: &str = "genex_rmcp_client::oauth::store_lock::contention";
 // Contention is proven by the tracing event emitted after a real WouldBlock. Keep the timeout
 // generous because it only bounds a failed test; it must not turn worker scheduling latency into
 // a false failure on loaded CI hosts.
@@ -113,7 +113,7 @@ fn sample_tokens() -> StoredOAuthTokens {
 #[test]
 fn file_credentials_keep_repeated_local_prefixes_isolated() -> Result<()> {
     let _env = TempCodexHome::new();
-    let config: codex_config::McpServerConfig = serde_json::from_value(serde_json::json!({
+    let config: genex_config::McpServerConfig = serde_json::from_value(serde_json::json!({
         "url": "https://example.test",
     }))?;
     let mut first = sample_tokens();

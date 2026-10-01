@@ -1,11 +1,11 @@
 use std::path::Path;
 
-use codex_protocol::parse_command::ParsedCommand;
-use codex_shell_command::parse_command::parse_command_impl;
-use codex_shell_command::parse_command::tokenize_powershell_command;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathConvention;
-use codex_utils_path_uri::PathUri;
+use genex_protocol::parse_command::ParsedCommand;
+use genex_shell_command::parse_command::parse_command_impl;
+use genex_shell_command::parse_command::tokenize_powershell_command;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathConvention;
+use genex_utils_path_uri::PathUri;
 
 use crate::SkillMetadata;
 

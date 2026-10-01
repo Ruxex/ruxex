@@ -6,7 +6,7 @@
 
 **Architecture:** `EnvironmentManager`はlocal/stdio環境だけを扱い、`codex --remote`のapp-server clientは独立した機能として残す。Hosted registry、Noise/Direct rendezvous、forward、`CODEX_EXEC_SERVER_URL`、environment URLは公開面・protocol・依存グラフから取り除く。
 
-**Tech Stack:** Rust, `codex-exec-server`, app-server protocol, CLI/TUI, Cargo workspace, `just check`, `just generate`。
+**Tech Stack:** Rust, `genex-exec-server`, app-server protocol, CLI/TUI, Cargo workspace, `just check`, `just generate`。
 
 **Spec:** `docs/superpowers/specs/2026-09-21-remove-remote-environment-transports-design.md`
 
@@ -109,7 +109,7 @@
 
 - [x] **Step 2: unused dependenciesを削除する**
 
-  `codex-aws-auth`などremote登録専用依存のworkspace reverse dependencyを確認し、他のconsumerがなければ削除する。
+  `genex-aws-auth`などremote登録専用依存のworkspace reverse dependencyを確認し、他のconsumerがなければ削除する。
 
 - [x] **Step 3: core-apiとsnapshotsを更新する**
 

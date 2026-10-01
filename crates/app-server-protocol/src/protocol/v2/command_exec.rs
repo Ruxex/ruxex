@@ -1,7 +1,7 @@
 use super::SandboxPolicy;
 use crate::JsonSchema;
 use crate::TS;
-use codex_experimental_api_macros::ExperimentalApi;
+use genex_experimental_api_macros::ExperimentalApi;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;

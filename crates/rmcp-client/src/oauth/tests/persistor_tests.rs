@@ -4,12 +4,12 @@ use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_config::types::AuthKeyringBackendKind;
-use codex_config::types::OAuthCredentialsStoreMode;
-use codex_exec_server::RouteAwareHttpClient;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyPolicy;
-use codex_keyring_store::DefaultKeyringStore;
+use genex_config::types::AuthKeyringBackendKind;
+use genex_config::types::OAuthCredentialsStoreMode;
+use genex_exec_server::RouteAwareHttpClient;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyPolicy;
+use genex_keyring_store::DefaultKeyringStore;
 use http::HeaderMap;
 use keyring::Error as KeyringError;
 use oauth2::AccessToken;
@@ -62,7 +62,7 @@ use crate::oauth_http_client::PROACTIVE_REFRESH_TIMEOUT;
 use crate::startup_error::is_authentication_required_error;
 
 const REFRESH_LOCK_CONTENTION_EVENT_TARGET: &str =
-    "codex_rmcp_client::oauth::refresh_lock::contention";
+    "genex_rmcp_client::oauth::refresh_lock::contention";
 
 #[tokio::test(flavor = "current_thread")]
 async fn login_and_logout_follow_the_completed_refresh() -> Result<()> {

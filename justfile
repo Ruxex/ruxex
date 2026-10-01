@@ -42,8 +42,8 @@ code-mode-host *args:
 
 # Build the CLI and run the app-server test client
 app-server-test-client *args:
-    cargo build -p codex-cli
-    cargo run -p codex-app-server-test-client -- --codex-bin ./target/debug/codex {args}
+    cargo build -p genex-cli
+    cargo run -p genex-app-server-test-client -- --codex-bin ./target/debug/codex {args}
 
 # Format the justfile and Rust sources.
 fmt:
@@ -112,7 +112,7 @@ generate: write-config-schema write-app-server-schema write-hooks-schema
 
 # Regenerate the json schema for config.toml from the current config types.
 write-config-schema:
-    cargo run -p codex-config-schema --bin codex-write-config-schema
+    cargo run -p genex-config-schema --bin codex-write-config-schema
 
 # Regenerate app-server protocol schemas.
 write-app-server-schema *args:
@@ -124,7 +124,7 @@ crate-dependency-graph *args:
 
 [no-cd]
 write-hooks-schema:
-    cargo run --manifest-path {{ justfile_directory() }}/Cargo.toml -p codex-hooks --bin write_hooks_schema_fixtures
+    cargo run --manifest-path {{ justfile_directory() }}/Cargo.toml -p genex-hooks --bin write_hooks_schema_fixtures
 
 # Run argument-comment Dylint checks from source.
 [no-cd]
@@ -138,8 +138,8 @@ argument-comment-lint-from-source *args:
 # Tail logs from the state SQLite database
 [unix]
 log *args:
-    if [ "${1:-}" = "--" ]; then shift; fi; cargo run -p codex-cli --bin logs_client -- "$@"
+    if [ "${1:-}" = "--" ]; then shift; fi; cargo run -p genex-cli --bin logs_client -- "$@"
 
 [windows]
 log *args:
-    $forwarded_args = @($args | Select-Object -Skip 1); if ($forwarded_args.Count -gt 0 -and $forwarded_args[0] -eq "--") { $forwarded_args = @($forwarded_args | Select-Object -Skip 1) }; cargo run -p codex-cli --bin logs_client -- @forwarded_args
+    $forwarded_args = @($args | Select-Object -Skip 1); if ($forwarded_args.Count -gt 0 -and $forwarded_args[0] -eq "--") { $forwarded_args = @($forwarded_args | Select-Object -Skip 1) }; cargo run -p genex-cli --bin logs_client -- @forwarded_args

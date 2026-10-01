@@ -1,7 +1,7 @@
 use std::num::TryFromIntError;
 use std::time::Duration;
 
-use codex_protocol::ToolName;
+use genex_protocol::ToolName;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value as JsonValue;

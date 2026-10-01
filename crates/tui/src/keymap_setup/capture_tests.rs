@@ -10,7 +10,7 @@ use crate::app_event_sender::AppEventSender;
 use crate::bottom_pane::BottomPaneView;
 use crate::keymap::RuntimeKeymap;
 use crate::render::renderable::Renderable;
-use codex_config::types::TuiKeymap;
+use genex_config::types::TuiKeymap;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;

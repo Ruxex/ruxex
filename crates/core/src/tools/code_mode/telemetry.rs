@@ -1,6 +1,6 @@
 //! Code-mode tracing for handlers and queued nested dispatch.
 
-use codex_protocol::ThreadId;
+use genex_protocol::ThreadId;
 use std::time::Duration;
 use tracing::Span;
 
@@ -16,7 +16,7 @@ pub(super) fn record_code_mode_host_duration(
         return;
     };
     tracing::info!(
-        target: "codex_code_mode::timing",
+        target: "genex_code_mode::timing",
         {
             event.name = "codex.code_mode.host_timing",
             conversation_id = thread_id,

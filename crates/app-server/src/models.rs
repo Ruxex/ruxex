@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
-use codex_app_server_protocol::Model;
-use codex_app_server_protocol::ModelServiceTier;
-use codex_app_server_protocol::ModelUpgradeInfo;
-use codex_app_server_protocol::ReasoningEffortOption;
-use codex_core::ThreadManager;
-use codex_http_client::HttpClientFactory;
-use codex_models_manager::manager::RefreshStrategy;
-use codex_protocol::model_types::ModelPreset;
-use codex_protocol::model_types::ReasoningEffortPreset;
+use genex_app_server_protocol::Model;
+use genex_app_server_protocol::ModelServiceTier;
+use genex_app_server_protocol::ModelUpgradeInfo;
+use genex_app_server_protocol::ReasoningEffortOption;
+use genex_core::ThreadManager;
+use genex_http_client::HttpClientFactory;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_protocol::model_types::ModelPreset;
+use genex_protocol::model_types::ReasoningEffortPreset;
 
 pub async fn supported_models(
     thread_manager: Arc<ThreadManager>,

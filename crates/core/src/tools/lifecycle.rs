@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
-use codex_extension_api::McpToolContext;
-use codex_extension_api::McpToolResultInput;
-use codex_extension_api::ToolCallOutcome;
-use codex_extension_api::ToolCallSource as ExtensionToolCallSource;
-use codex_extension_api::ToolFinishInput;
-use codex_extension_api::ToolStartInput;
-use codex_protocol::mcp::CallToolResult;
-use codex_tools::ToolName;
+use genex_extension_api::McpToolContext;
+use genex_extension_api::McpToolResultInput;
+use genex_extension_api::ToolCallOutcome;
+use genex_extension_api::ToolCallSource as ExtensionToolCallSource;
+use genex_extension_api::ToolFinishInput;
+use genex_extension_api::ToolStartInput;
+use genex_protocol::mcp::CallToolResult;
+use genex_tools::ToolName;
 
 use crate::session::session::Session;
 use crate::session::turn_context::TurnContext;

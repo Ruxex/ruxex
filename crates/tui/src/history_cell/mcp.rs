@@ -5,7 +5,7 @@
 use super::*;
 use crate::line_truncation::truncate_line_with_ellipsis_if_overflow;
 
-use codex_protocol::mcp::is_node_repl_backed_server;
+use genex_protocol::mcp::is_node_repl_backed_server;
 
 #[path = "mcp_result.rs"]
 mod result;
@@ -17,7 +17,7 @@ pub(crate) use computer_activity::ComputerActivityCell;
 use crate::style::StatusTone;
 use crate::style::accent_style;
 use crate::style::status_style;
-use codex_app_server_protocol::McpServerConnectionStatus;
+use genex_app_server_protocol::McpServerConnectionStatus;
 use result::McpResultKind;
 use result::McpToolResult;
 
@@ -90,7 +90,7 @@ impl McpToolCallCell {
     pub(crate) fn complete(
         &mut self,
         duration: Duration,
-        result: Result<codex_protocol::mcp::CallToolResult, String>,
+        result: Result<genex_protocol::mcp::CallToolResult, String>,
     ) {
         let result = result.map(|result| McpToolResult::new(result, self.result_kind()));
         self.duration = Some(duration);
@@ -397,7 +397,7 @@ pub(crate) fn empty_mcp_output() -> WebHyperlinkHistoryCell {
 /// Render MCP tools grouped by connection using the fully-qualified tool names.
 pub(crate) fn new_mcp_tools_output(
     config: &Config,
-    tools: HashMap<String, codex_protocol::mcp::Tool>,
+    tools: HashMap<String, genex_protocol::mcp::Tool>,
     resources: HashMap<String, Vec<Resource>>,
     resource_templates: HashMap<String, Vec<ResourceTemplate>>,
     auth_statuses: &HashMap<String, McpAuthStatus>,
@@ -613,7 +613,7 @@ pub(crate) fn new_mcp_tools_output_from_statuses(
             Some(McpServerConnectionStatus::Cancelled) => ("cancelled", Style::default().dim()),
             None if matches!(
                 status.auth_status,
-                codex_app_server_protocol::McpAuthStatus::NotLoggedIn
+                genex_app_server_protocol::McpAuthStatus::NotLoggedIn
             ) =>
             {
                 (
@@ -639,11 +639,11 @@ pub(crate) fn new_mcp_tools_output_from_statuses(
             continue;
         }
         let auth_status = match status.auth_status {
-            codex_app_server_protocol::McpAuthStatus::Unknown => McpAuthStatus::Unknown,
-            codex_app_server_protocol::McpAuthStatus::Unsupported => McpAuthStatus::Unsupported,
-            codex_app_server_protocol::McpAuthStatus::NotLoggedIn => McpAuthStatus::NotLoggedIn,
-            codex_app_server_protocol::McpAuthStatus::BearerToken => McpAuthStatus::BearerToken,
-            codex_app_server_protocol::McpAuthStatus::OAuth => McpAuthStatus::OAuth,
+            genex_app_server_protocol::McpAuthStatus::Unknown => McpAuthStatus::Unknown,
+            genex_app_server_protocol::McpAuthStatus::Unsupported => McpAuthStatus::Unsupported,
+            genex_app_server_protocol::McpAuthStatus::NotLoggedIn => McpAuthStatus::NotLoggedIn,
+            genex_app_server_protocol::McpAuthStatus::BearerToken => McpAuthStatus::BearerToken,
+            genex_app_server_protocol::McpAuthStatus::OAuth => McpAuthStatus::OAuth,
         };
         lines.push(
             vec![

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use codex_app_server_protocol::PluginUninstallResponse;
+use genex_app_server_protocol::PluginUninstallResponse;
 
 use super::*;
 

@@ -5,12 +5,12 @@ use anyhow::Context;
 use chrono::DateTime;
 use clap::Parser;
 use clap::ValueEnum;
-use codex_core::config::ConfigBuilder;
-use codex_state::LogQuery;
-use codex_state::LogRow;
-use codex_state::SqliteConfig;
-use codex_state::StateRuntime;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_core::config::ConfigBuilder;
+use genex_state::LogQuery;
+use genex_state::LogRow;
+use genex_state::SqliteConfig;
+use genex_state::StateRuntime;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use owo_colors::OwoColorize;
 
 #[derive(Debug, Parser)]

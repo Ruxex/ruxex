@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 
-use codex_otel::MetricsClient;
-use codex_otel::MetricsConfig;
-use codex_protocol::config_types::ShellEnvironmentPolicyInherit;
+use genex_otel::MetricsClient;
+use genex_otel::MetricsConfig;
+use genex_protocol::config_types::ShellEnvironmentPolicyInherit;
 use opentelemetry_sdk::metrics::InMemoryMetricExporter;
 use opentelemetry_sdk::metrics::data::AggregatedMetrics;
 use opentelemetry_sdk::metrics::data::MetricData;
@@ -49,7 +49,7 @@ async fn snapshot_failure_retries_are_bounded_and_single_flight(
             "-lc".to_string(),
             "true".to_string(),
         ],
-        cwd: codex_utils_path_uri::PathUri::from_host_native_path(home.path())?,
+        cwd: genex_utils_path_uri::PathUri::from_host_native_path(home.path())?,
         env: HashMap::from([
             (
                 "HOME".to_string(),
@@ -324,4 +324,4 @@ fn snapshot_caches_only_unmanaged_proxy_state() {
         assert_eq!(snapshot.environment, expected);
     }
 }
-use codex_shell_command::shell_detect::ShellType;
+use genex_shell_command::shell_detect::ShellType;

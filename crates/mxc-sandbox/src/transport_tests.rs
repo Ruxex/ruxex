@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use anyhow::Result;
-use codex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfile;
 use pretty_assertions::assert_eq;
 
 use crate::MxcCommand;

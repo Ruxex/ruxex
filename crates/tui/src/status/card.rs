@@ -10,18 +10,18 @@ use crate::token_usage::TokenUsageInfo;
 use crate::version::CODEX_CLI_VERSION;
 use chrono::DateTime;
 use chrono::Local;
-use codex_app_server_protocol::AskForApproval;
-use codex_model_provider_info::WireApi;
-use codex_protocol::ThreadId;
-use codex_protocol::account::PlanType;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::models::ActivePermissionProfile;
-use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
-use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
-use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
-use codex_protocol::models::PermissionProfile;
-use codex_utils_path_uri::PathUri;
-use codex_utils_sandbox_summary::summarize_permission_profile;
+use genex_app_server_protocol::AskForApproval;
+use genex_model_provider_info::WireApi;
+use genex_protocol::ThreadId;
+use genex_protocol::account::PlanType;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::models::ActivePermissionProfile;
+use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
+use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
+use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
+use genex_protocol::models::PermissionProfile;
+use genex_utils_path_uri::PathUri;
+use genex_utils_sandbox_summary::summarize_permission_profile;
 use ratatui::prelude::*;
 use ratatui::style::Stylize;
 use std::collections::BTreeSet;
@@ -114,7 +114,7 @@ impl StatusHistoryHandle {
 
     pub(crate) fn set_thread_usage(
         &self,
-        estimate: Option<codex_app_server_protocol::ThreadUsage>,
+        estimate: Option<genex_app_server_protocol::ThreadUsage>,
     ) {
         self.card.thread_usage.set_estimate(estimate);
     }

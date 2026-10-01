@@ -1,12 +1,12 @@
 //! Resolves an executor sandbox context to a concrete local sandbox implementation.
 
-use codex_file_system::FileSystemSandboxContext;
-use codex_file_system::WindowsSandboxSelection;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::PermissionProfile;
-use codex_sandboxing::SandboxManager;
-use codex_sandboxing::SandboxType;
-use codex_sandboxing::SandboxablePreference;
+use genex_file_system::FileSystemSandboxContext;
+use genex_file_system::WindowsSandboxSelection;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::PermissionProfile;
+use genex_sandboxing::SandboxManager;
+use genex_sandboxing::SandboxType;
+use genex_sandboxing::SandboxablePreference;
 
 pub(crate) fn select_sandbox(
     manager: &SandboxManager,

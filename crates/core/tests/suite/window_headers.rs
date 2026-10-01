@@ -1,12 +1,12 @@
 use super::compact::COMPACT_WARNING_MESSAGE;
 use anyhow::Result;
-use codex_core::CodexThread;
-use codex_core::TurnInputRequest;
-use codex_core::compact::SUMMARIZATION_PROMPT;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::WarningEvent;
-use codex_protocol::user_input::UserInput;
+use genex_core::CodexThread;
+use genex_core::TurnInputRequest;
+use genex_core::compact::SUMMARIZATION_PROMPT;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::WarningEvent;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -69,7 +69,7 @@ async fn window_id_advances_after_compact_persists_on_resume_and_resets_on_fork(
         .thread_manager
         .fork_thread(
             /*snapshot*/ 0usize,
-            codex_core::StartThreadOptions::new(resumed.config.clone()),
+            genex_core::StartThreadOptions::new(resumed.config.clone()),
             rollout_path,
         )
         .await?;

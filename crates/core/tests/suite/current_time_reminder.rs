@@ -12,23 +12,23 @@ use anyhow::anyhow;
 use chrono::DateTime;
 use chrono::Local;
 use chrono::Utc;
-use codex_config::test_support::CloudConfigBundleFixture;
-use codex_core::SleepFuture;
-use codex_core::TimeFuture;
-use codex_core::TimeProvider;
-use codex_core::TurnInputRequest;
-use codex_core::config::CurrentTimeReminderConfig;
-use codex_features::CurrentTimeReminderDeliveryMode;
-use codex_features::CurrentTimeSource;
-use codex_features::Feature;
-use codex_model_provider_info::built_in_model_providers;
-use codex_protocol::ThreadId;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::protocol::CodexErrorInfo;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::user_input::UserInput;
+use genex_config::test_support::CloudConfigBundleFixture;
+use genex_core::SleepFuture;
+use genex_core::TimeFuture;
+use genex_core::TimeProvider;
+use genex_core::TurnInputRequest;
+use genex_core::config::CurrentTimeReminderConfig;
+use genex_features::CurrentTimeReminderDeliveryMode;
+use genex_features::CurrentTimeSource;
+use genex_features::Feature;
+use genex_model_provider_info::built_in_model_providers;
+use genex_protocol::ThreadId;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::user_input::UserInput;
 use core_test_support::assert_regex_match;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::responses::ev_assistant_message;
@@ -132,7 +132,7 @@ fn current_time_reminders(request: &ResponsesRequest) -> Vec<String> {
 }
 
 fn enable_current_time_reminder(
-    config: &mut codex_core::config::Config,
+    config: &mut genex_core::config::Config,
     interval: u64,
     clock_source: CurrentTimeSource,
 ) {

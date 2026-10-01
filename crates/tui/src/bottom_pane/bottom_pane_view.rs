@@ -3,7 +3,7 @@ use crate::bottom_pane::ApprovalRequest;
 use crate::bottom_pane::McpServerElicitationFormRequest;
 use crate::keymap::KeymapContextSet;
 use crate::render::renderable::Renderable;
-use codex_app_server_protocol::ToolRequestUserInputParams;
+use genex_app_server_protocol::ToolRequestUserInputParams;
 use crossterm::event::KeyEvent;
 use std::time::Instant;
 

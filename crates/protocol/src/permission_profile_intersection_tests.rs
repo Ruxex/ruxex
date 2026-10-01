@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 

@@ -13,56 +13,56 @@ use std::time::Duration;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
-use codex_attachment_store::AttachmentStore;
-use codex_core::CodexThread;
-pub use codex_core::StartThreadOptions;
-use codex_core::ThreadManager;
-use codex_core::TimeProvider;
-pub use codex_core::TurnInputRequest;
-use codex_core::config::Config;
-use codex_core::resolve_installation_id;
-use codex_core::shell::Shell;
-use codex_core::shell::get_shell_by_model_provided_path;
-use codex_core::thread_store_from_config;
-use codex_exec_server::CreateDirectoryOptions;
-use codex_exec_server::ExecutorFileSystem;
-use codex_exec_server::RemoveOptions;
-use codex_extension_api::ExtensionRegistry;
-use codex_extension_api::LoadInstructionsFuture;
-use codex_extension_api::UserInstructionsProvider;
-use codex_extension_api::empty_extension_registry;
-use codex_features::Feature;
-use codex_home::CodexHomeUserInstructionsProvider;
-use codex_login::CodexAuth;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_models_manager::manager::SharedModelsManager;
-use codex_models_manager::test_support::test_models_response;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::Settings;
-use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::model_types::TruncationPolicyConfig;
-use codex_protocol::model_types::WebSearchToolType;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::SessionConfiguredEvent;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::TurnEnvironmentSelection;
-use codex_protocol::protocol::TurnEnvironmentSelections;
-use codex_protocol::user_input::UserInput;
-use codex_thread_store::ThreadStore;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::LegacyAppPathString;
-use codex_utils_path_uri::PathConvention;
-use codex_utils_path_uri::PathUri;
+use genex_attachment_store::AttachmentStore;
+use genex_core::CodexThread;
+pub use genex_core::StartThreadOptions;
+use genex_core::ThreadManager;
+use genex_core::TimeProvider;
+pub use genex_core::TurnInputRequest;
+use genex_core::config::Config;
+use genex_core::resolve_installation_id;
+use genex_core::shell::Shell;
+use genex_core::shell::get_shell_by_model_provided_path;
+use genex_core::thread_store_from_config;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_exec_server::ExecutorFileSystem;
+use genex_exec_server::RemoveOptions;
+use genex_extension_api::ExtensionRegistry;
+use genex_extension_api::LoadInstructionsFuture;
+use genex_extension_api::UserInstructionsProvider;
+use genex_extension_api::empty_extension_registry;
+use genex_features::Feature;
+use genex_home::CodexHomeUserInstructionsProvider;
+use genex_login::CodexAuth;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_models_manager::manager::SharedModelsManager;
+use genex_models_manager::test_support::test_models_response;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::Settings;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::TruncationPolicyConfig;
+use genex_protocol::model_types::WebSearchToolType;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::SandboxPolicy;
+use genex_protocol::protocol::SessionConfiguredEvent;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::protocol::TurnEnvironmentSelections;
+use genex_protocol::user_input::UserInput;
+use genex_thread_store::ThreadStore;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::LegacyAppPathString;
+use genex_utils_path_uri::PathConvention;
+use genex_utils_path_uri::PathUri;
 use futures::future::BoxFuture;
 use serde_json::Value;
 use tempfile::TempDir;
@@ -118,7 +118,7 @@ impl UserInstructionsProvider for RecordingUserInstructionsProvider {
 
 pub fn local(cwd: AbsolutePathBuf) -> TurnEnvironmentSelection {
     TurnEnvironmentSelection {
-        environment_id: codex_exec_server::LOCAL_ENVIRONMENT_ID.to_string(),
+        environment_id: genex_exec_server::LOCAL_ENVIRONMENT_ID.to_string(),
         cwd: PathUri::from_abs_path(&cwd),
         workspace_roots: vec![PathUri::from_abs_path(&cwd)],
         config: EnvironmentConfigState::FromThread,
@@ -146,7 +146,7 @@ pub fn local_selections(cwd: AbsolutePathBuf) -> TurnEnvironmentSelections {
 
 #[derive(Debug)]
 pub struct TestEnv {
-    environment: codex_exec_server::Environment,
+    environment: genex_exec_server::Environment,
     exec_server_url: Option<String>,
     cwd: AbsolutePathBuf,
     selection: TurnEnvironmentSelection,
@@ -165,7 +165,7 @@ impl TestEnv {
         let local_cwd_temp_dir = Arc::new(TempDir::new()?);
         let cwd = local_cwd_temp_dir.abs();
         let selection = local(cwd.clone());
-        let environment = codex_exec_server::Environment::create_for_tests(None)?;
+        let environment = genex_exec_server::Environment::create_for_tests(None)?;
         Ok(Self {
             environment,
             exec_server_url: None,
@@ -180,7 +180,7 @@ impl TestEnv {
         &self.cwd
     }
 
-    pub fn environment(&self) -> &codex_exec_server::Environment {
+    pub fn environment(&self) -> &genex_exec_server::Environment {
         &self.environment
     }
 
@@ -580,18 +580,18 @@ impl TestCodexBuilder {
         );
         #[cfg(not(target_os = "linux"))]
         let codex_linux_sandbox_exe = None;
-        let local_runtime_paths = codex_exec_server::ExecServerRuntimePaths::new(
+        let local_runtime_paths = genex_exec_server::ExecServerRuntimePaths::new(
             std::env::current_exe()?,
             codex_linux_sandbox_exe,
         )?;
         let environment_manager = Arc::new(if include_local_environment {
-            codex_exec_server::EnvironmentManager::create_for_tests_with_local(
+            genex_exec_server::EnvironmentManager::create_for_tests_with_local(
                 exec_server_url,
                 local_runtime_paths,
             )
             .await
         } else {
-            codex_exec_server::EnvironmentManager::create_for_tests(
+            genex_exec_server::EnvironmentManager::create_for_tests(
                 exec_server_url,
                 Some(local_runtime_paths),
             )
@@ -622,10 +622,10 @@ impl TestCodexBuilder {
         home: Arc<TempDir>,
         resume_from: Option<PathBuf>,
         mut test_env: TestEnv,
-        environment_manager: Arc<codex_exec_server::EnvironmentManager>,
+        environment_manager: Arc<genex_exec_server::EnvironmentManager>,
     ) -> anyhow::Result<TestCodex> {
         let auth = self.auth.clone();
-        let state_db = codex_core::init_state_db(&config).await;
+        let state_db = genex_core::init_state_db(&config).await;
         let thread_store = self
             .thread_store
             .clone()
@@ -637,18 +637,18 @@ impl TestCodexBuilder {
                     config.codex_home.clone(),
                 ))
             });
-        let auth_manager = codex_core::test_support::auth_manager_from_auth_with_home(
+        let auth_manager = genex_core::test_support::auth_manager_from_auth_with_home(
             auth.clone(),
             config.codex_home.to_path_buf(),
         );
         let models_manager = self
             .models_manager
             .clone()
-            .unwrap_or_else(|| codex_core::build_models_manager(&config, auth_manager.clone()));
+            .unwrap_or_else(|| genex_core::build_models_manager(&config, auth_manager.clone()));
         let code_mode_host_program = self
             .code_mode_host_program
             .take()
-            .or_else(|| codex_utils_cargo_bin::cargo_bin("codex-code-mode-host").ok());
+            .or_else(|| genex_utils_cargo_bin::cargo_bin("codex-code-mode-host").ok());
         let thread_manager = Arc::new_cyclic(|_| {
             let extensions = self.extensions.to_builder();
             let thread_manager = ThreadManager::new(
@@ -661,7 +661,7 @@ impl TestCodexBuilder {
                 user_instructions_provider,
                 Arc::clone(&self.image_store),
                 Arc::clone(&thread_store),
-                codex_core::local_agent_graph_store_from_state_db(state_db.as_ref()),
+                genex_core::local_agent_graph_store_from_state_db(state_db.as_ref()),
                 installation_id,
                 /*attestation_provider*/ None,
                 /*external_time_provider*/ self.external_time_provider.clone(),
@@ -669,7 +669,7 @@ impl TestCodexBuilder {
             if config.features.enabled(Feature::CodeModeHost)
                 && let Some(code_mode_host_program) = code_mode_host_program
             {
-                codex_core::test_support::with_code_mode_host_program(
+                genex_core::test_support::with_code_mode_host_program(
                     thread_manager,
                     code_mode_host_program,
                     &config,
@@ -683,12 +683,12 @@ impl TestCodexBuilder {
 
         let new_conversation = match (resume_from, user_shell_override) {
             (Some(path), Some(user_shell_override)) => {
-                let auth_manager = codex_core::test_support::auth_manager_from_auth_with_home(
+                let auth_manager = genex_core::test_support::auth_manager_from_auth_with_home(
                     auth,
                     config.codex_home.to_path_buf(),
                 );
                 Box::pin(
-                    codex_core::test_support::resume_thread_from_rollout_with_user_shell_override(
+                    genex_core::test_support::resume_thread_from_rollout_with_user_shell_override(
                         thread_manager.as_ref(),
                         config.clone(),
                         path,
@@ -700,7 +700,7 @@ impl TestCodexBuilder {
                 .await?
             }
             (Some(path), None) => {
-                let auth_manager = codex_core::test_support::auth_manager_from_auth_with_home(
+                let auth_manager = genex_core::test_support::auth_manager_from_auth_with_home(
                     auth,
                     config.codex_home.to_path_buf(),
                 );
@@ -715,7 +715,7 @@ impl TestCodexBuilder {
             }
             (None, Some(user_shell_override)) => {
                 Box::pin(
-                    codex_core::test_support::start_thread_with_user_shell_override(
+                    genex_core::test_support::start_thread_with_user_shell_override(
                         thread_manager.as_ref(),
                         config.clone(),
                         user_shell_override,
@@ -783,9 +783,9 @@ impl TestCodexBuilder {
         config.model = Some("gpt-5.5".to_string());
         config.cwd = cwd_override;
         config.model_provider = model_provider;
-        if let Ok(path) = codex_utils_cargo_bin::cargo_bin("codex") {
+        if let Ok(path) = genex_utils_cargo_bin::cargo_bin("codex") {
             config.codex_self_exe = Some(path);
-        } else if let Ok(path) = codex_utils_cargo_bin::cargo_bin("codex-exec") {
+        } else if let Ok(path) = genex_utils_cargo_bin::cargo_bin("codex-exec") {
             // `codex-exec` also supports `--codex-run-as-apply-patch`, so use it
             // when the multitool binary is not available in test builds.
             config.codex_self_exe = Some(path);
@@ -1308,7 +1308,7 @@ pub fn test_codex() -> TestCodexBuilder {
         history_mode: None,
         models_manager: None,
         thread_store: None,
-        image_store: codex_core::passthrough_image_store(),
+        image_store: genex_core::passthrough_image_store(),
     }
 }
 

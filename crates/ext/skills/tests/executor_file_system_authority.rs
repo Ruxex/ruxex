@@ -5,53 +5,53 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 
-use codex_config::ConfigLayerEntry;
-use codex_config::ConfigLayerSource;
-use codex_config::ConfigLayerStack;
-use codex_config::ConfigRequirementsToml;
-use codex_exec_server::CapabilityRootDiscovery;
-use codex_exec_server::CapabilityTextFile;
-use codex_exec_server::CopyOptions;
-use codex_exec_server::CreateDirectoryOptions;
-use codex_exec_server::DiscoveredSkillFiles;
-use codex_exec_server::EnvironmentManager;
-use codex_exec_server::ExecutorCapabilityDiscoveryCache;
-use codex_exec_server::ExecutorCapabilityDiscoverySnapshot;
-use codex_exec_server::ExecutorFileSystem;
-use codex_exec_server::ExecutorFileSystemFuture;
-use codex_exec_server::FileMetadata;
-use codex_exec_server::FileSystemReadStream;
-use codex_exec_server::FileSystemSandboxContext;
-use codex_exec_server::GetMetadataOptions;
-use codex_exec_server::ReadDirectoryEntry;
-use codex_exec_server::ReadFileOptions;
-use codex_exec_server::RemoveOptions;
-use codex_exec_server::WalkEntry;
-use codex_exec_server::WalkEntryKind;
-use codex_exec_server::WalkOptions;
-use codex_exec_server::WalkOutcome;
-use codex_exec_server::WindowsSandboxSelection;
-use codex_exec_server::WriteFileOptions;
-use codex_protocol::capabilities::CapabilityRootLocation;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::Product;
-use codex_skills_extension::ExecutorSkillProvider;
-use codex_skills_extension::HostSkillsLoadInput;
-use codex_skills_extension::HostSkillsService;
-use codex_skills_extension::catalog::SkillAuthority;
-use codex_skills_extension::catalog::SkillCatalog;
-use codex_skills_extension::catalog::SkillCatalogEntry;
-use codex_skills_extension::catalog::SkillPackageId;
-use codex_skills_extension::catalog::SkillResourceId;
-use codex_skills_extension::catalog::SkillSourceKind;
-use codex_skills_extension::provider::SkillListQuery;
-use codex_skills_extension::provider::SkillProvider;
-use codex_skills_extension::provider::SkillReadRequest;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_config::ConfigLayerEntry;
+use genex_config::ConfigLayerSource;
+use genex_config::ConfigLayerStack;
+use genex_config::ConfigRequirementsToml;
+use genex_exec_server::CapabilityRootDiscovery;
+use genex_exec_server::CapabilityTextFile;
+use genex_exec_server::CopyOptions;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_exec_server::DiscoveredSkillFiles;
+use genex_exec_server::EnvironmentManager;
+use genex_exec_server::ExecutorCapabilityDiscoveryCache;
+use genex_exec_server::ExecutorCapabilityDiscoverySnapshot;
+use genex_exec_server::ExecutorFileSystem;
+use genex_exec_server::ExecutorFileSystemFuture;
+use genex_exec_server::FileMetadata;
+use genex_exec_server::FileSystemReadStream;
+use genex_exec_server::FileSystemSandboxContext;
+use genex_exec_server::GetMetadataOptions;
+use genex_exec_server::ReadDirectoryEntry;
+use genex_exec_server::ReadFileOptions;
+use genex_exec_server::RemoveOptions;
+use genex_exec_server::WalkEntry;
+use genex_exec_server::WalkEntryKind;
+use genex_exec_server::WalkOptions;
+use genex_exec_server::WalkOutcome;
+use genex_exec_server::WindowsSandboxSelection;
+use genex_exec_server::WriteFileOptions;
+use genex_protocol::capabilities::CapabilityRootLocation;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::Product;
+use genex_skills_extension::ExecutorSkillProvider;
+use genex_skills_extension::HostSkillsLoadInput;
+use genex_skills_extension::HostSkillsService;
+use genex_skills_extension::catalog::SkillAuthority;
+use genex_skills_extension::catalog::SkillCatalog;
+use genex_skills_extension::catalog::SkillCatalogEntry;
+use genex_skills_extension::catalog::SkillPackageId;
+use genex_skills_extension::catalog::SkillResourceId;
+use genex_skills_extension::catalog::SkillSourceKind;
+use genex_skills_extension::provider::SkillListQuery;
+use genex_skills_extension::provider::SkillProvider;
+use genex_skills_extension::provider::SkillReadRequest;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 
 const SKILL_CONTENTS: &str =
@@ -619,7 +619,7 @@ async fn executor_discovery_routes_produce_equivalent_catalog_metadata() {
         .expect("list bundled executor skills");
 
     assert_eq!(bundled.warnings, direct.warnings);
-    let comparable_entries = |catalog: &codex_skills_extension::catalog::SkillCatalog| {
+    let comparable_entries = |catalog: &genex_skills_extension::catalog::SkillCatalog| {
         catalog
             .entries
             .iter()
@@ -789,7 +789,7 @@ async fn pre_discovered_executor_catalog_snapshot() {
             .collect::<Vec<_>>(),
     });
     snapshot.sort_all_objects();
-    let snapshot_file = codex_utils_cargo_bin::find_resource!(
+    let snapshot_file = genex_utils_cargo_bin::find_resource!(
         "tests/snapshots/executor_file_system_authority__pre_discovered_executor_catalog.snap"
     )
     .expect("resolve catalog snapshot");

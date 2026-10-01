@@ -1,5 +1,5 @@
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::InterAgentCommunication;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::InterAgentCommunication;
 
 const AGENT_COMMUNICATION_TARGET: &str = "codex_otel.agent_communication";
 

@@ -1,4 +1,4 @@
-# codex-app-server-client
+# genex-app-server-client
 
 Shared in-process app-server client used by conversational CLI surfaces:
 

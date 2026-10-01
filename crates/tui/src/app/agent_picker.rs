@@ -1,13 +1,13 @@
 //! Root-scoped background refresh for the agent picker.
 
 use super::*;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SortDirection;
-use codex_app_server_protocol::Thread;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadListResponse;
-use codex_app_server_protocol::ThreadSourceKind;
-use codex_app_server_protocol::ThreadStatus;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SortDirection;
+use genex_app_server_protocol::Thread;
+use genex_app_server_protocol::ThreadListParams;
+use genex_app_server_protocol::ThreadListResponse;
+use genex_app_server_protocol::ThreadSourceKind;
+use genex_app_server_protocol::ThreadStatus;
 use std::collections::HashSet;
 
 pub(super) const AGENT_PICKER_VIEW_ID: &str = "agent-picker";

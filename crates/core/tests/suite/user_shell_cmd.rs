@@ -1,21 +1,21 @@
 use anyhow::Context;
-use codex_core::TurnInputRequest;
-use codex_features::Feature;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecCommandEndEvent;
-use codex_protocol::protocol::ExecCommandSource;
-use codex_protocol::protocol::ExecOutputStream;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::TurnAbortReason;
-use codex_protocol::protocol::TurnEnvironmentSelections;
-use codex_protocol::user_input::UserInput;
+use genex_core::TurnInputRequest;
+use genex_features::Feature;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecCommandEndEvent;
+use genex_protocol::protocol::ExecCommandSource;
+use genex_protocol::protocol::ExecOutputStream;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::TurnAbortReason;
+use genex_protocol::protocol::TurnEnvironmentSelections;
+use genex_protocol::user_input::UserInput;
 use core_test_support::PathBufExt;
 use core_test_support::PathExt;
 use core_test_support::assert_regex_match;
@@ -122,7 +122,7 @@ async fn user_shell_command_without_local_environment_emits_error() -> anyhow::R
     submit_thread_settings(
         &test.codex,
         ThreadSettingsOverrides {
-            environments: Some(codex_protocol::protocol::TurnEnvironmentSelections::new(
+            environments: Some(genex_protocol::protocol::TurnEnvironmentSelections::new(
                 test.config.cwd.clone(),
                 vec![],
             )),
@@ -264,7 +264,7 @@ async fn user_shell_command_honors_default_and_extended_deadlines() -> anyhow::R
 }
 
 fn slow_user_shell_command() -> &'static str {
-    match codex_core::shell::default_user_shell().name() {
+    match genex_core::shell::default_user_shell().name() {
         "powershell" => "Write-Output shell-timeout-ready; Start-Sleep -Seconds 60",
         "cmd" => "echo shell-timeout-ready & ping -n 61 127.0.0.1 > nul",
         _ => "printf 'shell-timeout-ready\\n'; exec sleep 60",

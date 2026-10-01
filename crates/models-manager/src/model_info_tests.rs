@@ -1,17 +1,17 @@
 use super::*;
 use crate::ModelsManagerConfig;
-use codex_prompts::render_model_instructions;
-use codex_protocol::model_types::ApprovalMessages;
-use codex_protocol::model_types::CollaborationModeMessages;
-use codex_protocol::model_types::ConfirmationPolicies;
-use codex_protocol::model_types::ModelTokenBudgetConfig;
-use codex_protocol::model_types::MultiAgentMessages;
-use codex_protocol::model_types::MultiAgentModeMessages;
-use codex_protocol::model_types::MultiAgentRoleMessages;
-use codex_protocol::model_types::MultiAgentToolMessages;
-use codex_protocol::model_types::PermissionMessages;
-use codex_protocol::model_types::ToolMessage;
-use codex_protocol::model_types::ToolMessages;
+use genex_prompts::render_model_instructions;
+use genex_protocol::model_types::ApprovalMessages;
+use genex_protocol::model_types::CollaborationModeMessages;
+use genex_protocol::model_types::ConfirmationPolicies;
+use genex_protocol::model_types::ModelTokenBudgetConfig;
+use genex_protocol::model_types::MultiAgentMessages;
+use genex_protocol::model_types::MultiAgentModeMessages;
+use genex_protocol::model_types::MultiAgentRoleMessages;
+use genex_protocol::model_types::MultiAgentToolMessages;
+use genex_protocol::model_types::PermissionMessages;
+use genex_protocol::model_types::ToolMessage;
+use genex_protocol::model_types::ToolMessages;
 use pretty_assertions::assert_eq;
 
 #[test]

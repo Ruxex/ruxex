@@ -83,9 +83,9 @@ impl ChatWidget {
             runtime_keymap.as_ref().unwrap_or(&default_keymap),
             current_terminal_info,
         );
-        let pet_http_client = codex_http_client::RouteAwareClientPool::new(
+        let pet_http_client = genex_http_client::RouteAwareClientPool::new(
             config.http_client_factory(),
-            codex_http_client::ClientRouteClass::Other,
+            genex_http_client::ClientRouteClass::Other,
         );
         pets::start_configured_pet_load_if_needed(
             &local_settings,

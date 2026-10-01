@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
-use codex_api::AuthError;
-use codex_api::AuthHeadersFuture;
-use codex_api::AuthProvider;
-use codex_api::SharedAuthProvider;
-use codex_login::AuthHeaders;
-use codex_login::AuthManager;
-use codex_login::CodexAuth;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_protocol::error::CodexErr;
+use genex_api::AuthError;
+use genex_api::AuthHeadersFuture;
+use genex_api::AuthProvider;
+use genex_api::SharedAuthProvider;
+use genex_login::AuthHeaders;
+use genex_login::AuthManager;
+use genex_login::CodexAuth;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_protocol::error::CodexErr;
 use http::HeaderMap;
 
 use crate::bearer_auth_provider::BearerAuthProvider;
@@ -113,7 +113,7 @@ pub(crate) fn auth_manager_for_provider(
 pub(crate) fn resolve_provider_auth(
     auth: Option<&CodexAuth>,
     provider: &ModelProviderInfo,
-) -> codex_protocol::error::Result<SharedAuthProvider> {
+) -> genex_protocol::error::Result<SharedAuthProvider> {
     if let Some(auth) = bearer_auth_for_provider(provider)? {
         return Ok(Arc::new(auth));
     }
@@ -142,14 +142,14 @@ pub(crate) async fn resolve_provider_auth_for_scope(
     auth: Option<&CodexAuth>,
     provider: &ModelProviderInfo,
     scope: ProviderAuthScope,
-) -> codex_protocol::error::Result<ResolvedProviderAuth> {
+) -> genex_protocol::error::Result<ResolvedProviderAuth> {
     let _ = (auth_manager, scope);
     resolve_provider_auth(auth, provider).map(ResolvedProviderAuth::new)
 }
 
 fn bearer_auth_for_provider(
     provider: &ModelProviderInfo,
-) -> codex_protocol::error::Result<Option<BearerAuthProvider>> {
+) -> genex_protocol::error::Result<Option<BearerAuthProvider>> {
     if let Some(api_key) = provider.api_key()? {
         return Ok(Some(BearerAuthProvider::new(api_key)));
     }
@@ -191,11 +191,11 @@ pub fn auth_provider_from_auth_manager(
 
 #[cfg(test)]
 mod tests {
-    use codex_login::auth::BedrockApiKeyAuth;
-    use codex_model_provider_info::WireApi;
-    use codex_model_provider_info::create_responses_provider_with_base_url;
-    use codex_protocol::config_types::ModelProviderAuthInfo;
-    use codex_protocol::error::CodexErrorDetails;
+    use genex_login::auth::BedrockApiKeyAuth;
+    use genex_model_provider_info::WireApi;
+    use genex_model_provider_info::create_responses_provider_with_base_url;
+    use genex_protocol::config_types::ModelProviderAuthInfo;
+    use genex_protocol::error::CodexErrorDetails;
     use http::HeaderValue;
     use http::header::AUTHORIZATION;
     use pretty_assertions::assert_eq;

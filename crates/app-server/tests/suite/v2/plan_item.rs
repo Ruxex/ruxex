@@ -4,22 +4,22 @@ use anyhow::bail;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::ItemCompletedNotification;
-use codex_app_server_protocol::ItemStartedNotification;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::PlanDeltaNotification;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::TurnCompletedNotification;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput as V2UserInput;
-use codex_features::Feature;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::ItemCompletedNotification;
+use genex_app_server_protocol::ItemStartedNotification;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::PlanDeltaNotification;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::TurnCompletedNotification;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::UserInput as V2UserInput;
+use genex_features::Feature;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use pretty_assertions::assert_eq;
@@ -130,7 +130,7 @@ async fn plan_mode_without_proposed_plan_does_not_emit_plan_item() -> Result<()>
     Ok(())
 }
 
-async fn start_plan_mode_turn(mcp: &mut TestAppServer) -> Result<codex_app_server_protocol::Turn> {
+async fn start_plan_mode_turn(mcp: &mut TestAppServer) -> Result<genex_app_server_protocol::Turn> {
     let thread = mcp
         .start_thread(ThreadStartParams {
             model: Some("mock-model".to_string()),

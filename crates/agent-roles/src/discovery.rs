@@ -1,6 +1,6 @@
-use codex_file_system::ExecutorFileSystem;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_file_system::ExecutorFileSystem;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use std::io;
 use std::io::ErrorKind;
 

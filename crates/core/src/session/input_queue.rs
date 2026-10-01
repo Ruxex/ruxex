@@ -1,13 +1,13 @@
 use crate::state::ActiveTurn;
 use crate::state::MailboxDeliveryPhase;
 use crate::state::TurnState;
-use codex_diagnostics::Gauge;
-use codex_diagnostics::GaugeGuard;
-use codex_history::ResponseItemEnvelope;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::InterAgentCommunication;
-use codex_protocol::turn_input::TurnStartOptions;
-use codex_protocol::user_input::UserInput;
+use genex_diagnostics::Gauge;
+use genex_diagnostics::GaugeGuard;
+use genex_history::ResponseItemEnvelope;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::InterAgentCommunication;
+use genex_protocol::turn_input::TurnStartOptions;
+use genex_protocol::user_input::UserInput;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::VecDeque;
@@ -364,9 +364,9 @@ impl TurnInputQueue {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_history::CodexHarnessMetadata;
-    use codex_protocol::AgentPath;
-    use codex_protocol::user_input::UserInput;
+    use genex_history::CodexHarnessMetadata;
+    use genex_protocol::AgentPath;
+    use genex_protocol::user_input::UserInput;
     use pretty_assertions::assert_eq;
 
     #[test_case::test_case("ResponseItem", TurnInput::ResponseItem)]
@@ -612,7 +612,7 @@ mod tests {
 
     #[tokio::test]
     async fn input_queue_uses_latest_followup_choice_and_ignores_queue_only_mail() {
-        use codex_protocol::turn_input::CyberAccessProgram;
+        use genex_protocol::turn_input::CyberAccessProgram;
 
         for latest in [Some(CyberAccessProgram::Standard), None] {
             let input_queue = InputQueue::new();

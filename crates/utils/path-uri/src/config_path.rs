@@ -123,7 +123,7 @@ impl PathUri {
         input: &str,
         convention: PathConvention,
     ) -> Result<(), LegacyAppPathStringError> {
-        let namespace_alias = codex_utils_absolute_path::normalize_windows_device_path(input);
+        let namespace_alias = genex_utils_absolute_path::normalize_windows_device_path(input);
         let native_input = namespace_alias.as_deref().unwrap_or(input);
         let has_windows_component_colon = convention == PathConvention::Windows
             && convention

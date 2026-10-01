@@ -13,14 +13,14 @@ use crate::context::MultiAgentModeInstructions;
 use crate::context::MultiAgentRoleInstructions;
 use crate::context::world_state::PersistentModeState;
 use crate::session::multi_agents::resolve_usage_hints;
-use codex_context_fragments::set_annotated_content;
-use codex_context_fragments::to_annotated_content;
-use codex_extension_api::ExtensionDataInit;
-use codex_history::ResponseItemEnvelope;
-use codex_prompts::ResolvedModelMessages;
-use codex_protocol::intersect_effective_permission_profiles;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_utils_path_uri::PathUri;
+use genex_context_fragments::set_annotated_content;
+use genex_context_fragments::to_annotated_content;
+use genex_extension_api::ExtensionDataInit;
+use genex_history::ResponseItemEnvelope;
+use genex_prompts::ResolvedModelMessages;
+use genex_protocol::intersect_effective_permission_profiles;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_utils_path_uri::PathUri;
 
 const AGENT_NAMES: &str = include_str!("../../../assets/agent/agent_names.txt");
 
@@ -164,7 +164,7 @@ impl AgentControl {
         let descendant_ids = match agent_graph_store
             .list_thread_spawn_descendants(
                 root_thread_id,
-                Some(codex_agent_graph_store::ThreadSpawnEdgeStatus::Open),
+                Some(genex_agent_graph_store::ThreadSpawnEdgeStatus::Open),
             )
             .await
         {
@@ -992,7 +992,7 @@ impl AgentControl {
                     // This checkpoint belongs to the inherited parent prefix.
                     compacted.latest_token_usage_record = None;
                     compacted.retained_context = (multi_agent_version == MultiAgentVersion::V2)
-                        .then(codex_history::RetainedContext::default);
+                        .then(genex_history::RetainedContext::default);
                     if let Some(replacement_history) = compacted.replacement_history.as_mut() {
                         // Matches before this checkpoint cannot survive its replacement history.
                         replaced_parent_developer_instructions = false;
@@ -1107,7 +1107,7 @@ impl AgentControl {
             let child_ids = match agent_graph_store
                 .list_thread_spawn_children(
                     parent_thread_id,
-                    Some(codex_agent_graph_store::ThreadSpawnEdgeStatus::Open),
+                    Some(genex_agent_graph_store::ThreadSpawnEdgeStatus::Open),
                 )
                 .await
             {

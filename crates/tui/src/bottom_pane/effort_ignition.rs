@@ -14,7 +14,7 @@ use std::cell::Cell;
 use std::time::Duration;
 use std::time::Instant;
 
-use codex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffort;
 use rand::Rng as _;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;

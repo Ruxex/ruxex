@@ -8,10 +8,10 @@ use super::session_lifecycle::ThreadAttachPresentation;
 use super::*;
 use crate::app_event::ThreadTitleDestination;
 use crate::chatwidget::ThreadInputStateRestoreMode;
-use codex_app_server_protocol::ThreadStartedNotification;
-use codex_app_server_protocol::TurnInterruptParams;
-use codex_app_server_protocol::TurnInterruptResponse;
-use codex_app_server_protocol::WarningNotification;
+use genex_app_server_protocol::ThreadStartedNotification;
+use genex_app_server_protocol::TurnInterruptParams;
+use genex_app_server_protocol::TurnInterruptResponse;
+use genex_app_server_protocol::WarningNotification;
 
 impl App {
     pub(super) async fn shutdown_current_thread(&mut self, app_server: &mut AppServerSession) {
@@ -286,7 +286,7 @@ impl App {
                     Some(ThreadInteractiveRequest::McpServerElicitation(request))
                 } else {
                     match &params.request {
-                        codex_app_server_protocol::McpServerElicitationRequest::Form {
+                        genex_app_server_protocol::McpServerElicitationRequest::Form {
                             message,
                             ..
                         } => Some(ThreadInteractiveRequest::Approval(
@@ -298,7 +298,7 @@ impl App {
                                 message: message.clone(),
                             }),
                         )),
-                        codex_app_server_protocol::McpServerElicitationRequest::UserVerification {
+                        genex_app_server_protocol::McpServerElicitationRequest::UserVerification {
                             title, description, ..
                         } => Some(ThreadInteractiveRequest::UserVerification {
                             thread_id,
@@ -310,12 +310,12 @@ impl App {
                                 description: description.clone(),
                             },
                         }),
-                        codex_app_server_protocol::McpServerElicitationRequest::Url { .. } => {
+                        genex_app_server_protocol::McpServerElicitationRequest::Url { .. } => {
                             self.app_event_tx.resolve_elicitation(
                                 thread_id,
                                 params.server_name.clone(),
                                 request_id.clone(),
-                                codex_app_server_protocol::McpServerElicitationAction::Decline,
+                                genex_app_server_protocol::McpServerElicitationAction::Decline,
                                 /*content*/ None,
                                 /*meta*/ None,
                             );
@@ -490,13 +490,13 @@ impl App {
 
     /// Persist prompt text in the local cross-session message history.
     pub(super) fn append_message_history_entry(&self, thread_id: ThreadId, text: String) {
-        let history_config = codex_message_history::HistoryConfig::new(
+        let history_config = genex_message_history::HistoryConfig::new(
             self.local_settings.codex_home.clone(),
             &self.local_settings.history,
         );
         tokio::spawn(async move {
             if let Err(err) =
-                codex_message_history::append_entry(&text, thread_id, &history_config).await
+                genex_message_history::append_entry(&text, thread_id, &history_config).await
             {
                 tracing::warn!(
                     thread_id = %thread_id,
@@ -514,14 +514,14 @@ impl App {
         offset: usize,
         log_id: u64,
     ) -> Result<()> {
-        let history_config = codex_message_history::HistoryConfig::new(
+        let history_config = genex_message_history::HistoryConfig::new(
             self.local_settings.codex_home.clone(),
             &self.local_settings.history,
         );
         let app_event_tx = self.app_event_tx.clone();
         tokio::spawn(async move {
             let entry_opt = tokio::task::spawn_blocking(move || {
-                codex_message_history::lookup(log_id, offset, &history_config)
+                genex_message_history::lookup(log_id, offset, &history_config)
             })
             .await
             .unwrap_or_else(|err| {
@@ -545,17 +545,17 @@ impl App {
     pub(super) async fn lookup_message_history_batch(
         &mut self,
         thread_id: ThreadId,
-        cursor: codex_message_history::HistoryBatchCursor,
+        cursor: genex_message_history::HistoryBatchCursor,
         log_id: u64,
     ) -> Result<()> {
-        let history_config = codex_message_history::HistoryConfig::new(
+        let history_config = genex_message_history::HistoryConfig::new(
             self.local_settings.codex_home.clone(),
             &self.local_settings.history,
         );
         let app_event_tx = self.app_event_tx.clone();
         tokio::spawn(async move {
             let event = match tokio::task::spawn_blocking(move || {
-                codex_message_history::lookup_batch(log_id, cursor, &history_config)
+                genex_message_history::lookup_batch(log_id, cursor, &history_config)
             })
             .await
             {
@@ -807,7 +807,7 @@ impl App {
             AppCommand::ListSkills { cwds, force_reload } => {
                 self.handle_skills_list_result(
                     app_server
-                        .skills_list(codex_app_server_protocol::SkillsListParams {
+                        .skills_list(genex_app_server_protocol::SkillsListParams {
                             cwds: cwds.clone(),
                             force_reload: *force_reload,
                         })
@@ -1798,9 +1798,9 @@ impl App {
         };
 
         match &params.request {
-            codex_app_server_protocol::McpServerElicitationRequest::UserVerification { .. } => true,
-            codex_app_server_protocol::McpServerElicitationRequest::Form { .. } => true,
-            codex_app_server_protocol::McpServerElicitationRequest::Url { .. } => false,
+            genex_app_server_protocol::McpServerElicitationRequest::UserVerification { .. } => true,
+            genex_app_server_protocol::McpServerElicitationRequest::Form { .. } => true,
+            genex_app_server_protocol::McpServerElicitationRequest::Url { .. } => false,
         }
     }
 
@@ -1940,7 +1940,7 @@ impl App {
                 content
                     .iter()
                     .filter_map(|item| match item {
-                        codex_app_server_protocol::UserInput::Text { text, .. } => {
+                        genex_app_server_protocol::UserInput::Text { text, .. } => {
                             Some(crate::ide_context::extract_prompt_request_with_offset(text).0)
                         }
                         _ => None,

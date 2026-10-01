@@ -1,7 +1,7 @@
 //! User-message and shell-prompt submission behavior for `ChatWidget`.
 
 use super::*;
-use codex_app_server_protocol::ImageReference;
+use genex_app_server_protocol::ImageReference;
 
 impl ChatWidget {
     pub(crate) fn set_task_mentions_enabled(&mut self, enabled: bool) {

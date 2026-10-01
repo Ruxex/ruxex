@@ -5,27 +5,27 @@ use std::fs;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_config::test_support::CloudConfigBundleFixture;
-use codex_core::StartThreadOptions;
-use codex_core::TurnInputRequest;
-use codex_core::config::Constrained;
-use codex_core::sandboxing::SandboxPermissions;
-use codex_features::Feature;
-use codex_protocol::dynamic_tools::DynamicToolFunctionSpec;
-use codex_protocol::dynamic_tools::DynamicToolNamespaceSpec;
-use codex_protocol::dynamic_tools::DynamicToolNamespaceTool;
-use codex_protocol::dynamic_tools::DynamicToolSpec;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::model_types::ConfigShellToolType;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
+use genex_config::test_support::CloudConfigBundleFixture;
+use genex_core::StartThreadOptions;
+use genex_core::TurnInputRequest;
+use genex_core::config::Constrained;
+use genex_core::sandboxing::SandboxPermissions;
+use genex_features::Feature;
+use genex_protocol::dynamic_tools::DynamicToolFunctionSpec;
+use genex_protocol::dynamic_tools::DynamicToolNamespaceSpec;
+use genex_protocol::dynamic_tools::DynamicToolNamespaceTool;
+use genex_protocol::dynamic_tools::DynamicToolSpec;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::model_types::ConfigShellToolType;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use core_test_support::assert_regex_match;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -126,7 +126,7 @@ async fn strict_tool_collisions_fail_the_turn_before_sampling(
             defer_loading: false,
         })]
     };
-    let codex_core::NewThread { thread, .. } = test
+    let genex_core::NewThread { thread, .. } = test
         .thread_manager
         .start_thread(StartThreadOptions {
             dynamic_tools,
@@ -140,7 +140,7 @@ async fn strict_tool_collisions_fail_the_turn_before_sampling(
                 text: "use the planning tool".to_string(),
                 text_elements: Vec::new(),
             }])
-            .on_start(codex_core::TurnStartOptions {
+            .on_start(genex_core::TurnStartOptions {
                 root_turn_id: Some("root-turn".into()),
                 ..Default::default()
             }),
@@ -168,7 +168,7 @@ async fn strict_tool_collisions_fail_the_turn_before_sampling(
     thread.flush_rollout().await?;
     let history = thread.load_history(/*include_archived*/ false).await?;
     let attribution = history.items.iter().find_map(|item| match item {
-        codex_history::RolloutItem::EventMsg(EventMsg::TurnStarted(event))
+        genex_history::RolloutItem::EventMsg(EventMsg::TurnStarted(event))
             if event.turn_id == completed.turn_id =>
         {
             event.root_turn_id.as_deref()
@@ -517,7 +517,7 @@ async fn namespaced_custom_tool_call_preserves_namespace_through_dispatch_and_re
             ev_response_created("resp-5"),
             ev_custom_tool_call(
                 direct_exec_call_id,
-                codex_code_mode::PUBLIC_TOOL_NAME,
+                genex_code_mode::PUBLIC_TOOL_NAME,
                 input,
             ),
             ev_completed("resp-5"),
@@ -558,7 +558,7 @@ async fn namespaced_custom_tool_call_preserves_namespace_through_dispatch_and_re
         tool_call_metadata(direct_exec_output),
         json!({
             "executed_tool_calls": [{
-                "name": codex_code_mode::PUBLIC_TOOL_NAME,
+                "name": genex_code_mode::PUBLIC_TOOL_NAME,
                 "arguments": input,
             }],
             "tool_calls_complete": true,

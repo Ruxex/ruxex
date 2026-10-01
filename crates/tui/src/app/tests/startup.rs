@@ -7,9 +7,9 @@ use crate::bottom_pane::BottomPane;
 use crate::bottom_pane::BottomPaneParams;
 use crate::tui::FrameRequester;
 use app_test_support::create_fake_parented_rollout_with_source;
-use codex_app_server_protocol::ToolRequestUserInputOption;
-use codex_app_server_protocol::ToolRequestUserInputQuestion;
-use codex_utils_approval_presets::builtin_approval_presets;
+use genex_app_server_protocol::ToolRequestUserInputOption;
+use genex_app_server_protocol::ToolRequestUserInputQuestion;
+use genex_utils_approval_presets::builtin_approval_presets;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
@@ -46,20 +46,20 @@ async fn windows_sandbox_setup_uses_observed_thread_host() {
         (None, WindowsSandboxHost::Unknown),
         (Some(vec![]), WindowsSandboxHost::Unknown),
         (
-            Some(vec![codex_exec_server::LOCAL_ENVIRONMENT_ID]),
+            Some(vec![genex_exec_server::LOCAL_ENVIRONMENT_ID]),
             WindowsSandboxHost::Local,
         ),
         (Some(vec!["remote"]), WindowsSandboxHost::Remote),
         (
-            Some(vec!["remote", codex_exec_server::LOCAL_ENVIRONMENT_ID]),
+            Some(vec!["remote", genex_exec_server::LOCAL_ENVIRONMENT_ID]),
             WindowsSandboxHost::Mixed,
         ),
     ] {
         let environments = ids.map(|ids| {
             ids.into_iter()
-                .map(|id| codex_app_server_protocol::ThreadEnvironment {
+                .map(|id| genex_app_server_protocol::ThreadEnvironment {
                     environment_id: id.to_string(),
-                    cwd: codex_utils_absolute_path::AbsolutePathBuf::try_from(std::env::temp_dir())
+                    cwd: genex_utils_absolute_path::AbsolutePathBuf::try_from(std::env::temp_dir())
                         .unwrap()
                         .into(),
                     runtime_workspace_roots: Vec::new(),
@@ -86,8 +86,8 @@ async fn windows_sandbox_setup_uses_observed_thread_host() {
 #[tokio::test]
 async fn windows_sandbox_setup_completion_requires_matching_pending_mode() -> Result<()> {
     use crate::app_event::WindowsSandboxEnableMode;
-    use codex_app_server_protocol::WindowsSandboxSetupCompletedNotification;
-    use codex_app_server_protocol::WindowsSandboxSetupMode;
+    use genex_app_server_protocol::WindowsSandboxSetupCompletedNotification;
+    use genex_app_server_protocol::WindowsSandboxSetupMode;
 
     let (mut app, mut events, _ops) = make_test_app_with_channels().await;
     app.chat_widget.windows_sandbox_local_server = true;
@@ -107,7 +107,7 @@ async fn windows_sandbox_setup_completion_requires_matching_pending_mode() -> Re
     ] {
         app.handle_app_server_event(
             &app_server,
-            codex_app_server_client::AppServerEvent::ServerNotification(Box::new(
+            genex_app_server_client::AppServerEvent::ServerNotification(Box::new(
                 ServerNotification::WindowsSandboxSetupCompleted(
                     WindowsSandboxSetupCompletedNotification {
                         mode,
@@ -644,9 +644,9 @@ async fn remotely_resolved_startup_approvals_release_the_draft_after_the_last_re
     for (request_id, still_pending) in [(1, true), (2, false)] {
         app.handle_app_server_event(
             &app_server,
-            codex_app_server_client::AppServerEvent::ServerNotification(Box::new(
+            genex_app_server_client::AppServerEvent::ServerNotification(Box::new(
                 ServerNotification::ServerRequestResolved(
-                    codex_app_server_protocol::ServerRequestResolvedNotification {
+                    genex_app_server_protocol::ServerRequestResolvedNotification {
                         thread_id: thread_id.to_string(),
                         request_id: AppServerRequestId::Integer(request_id),
                     },
@@ -772,7 +772,7 @@ async fn auto_declined_mcp_elicitations_do_not_leave_startup_quarantine_armed() 
                     op: Op::ResolveElicitation {
                         server_name,
                         request_id: AppServerRequestId::Integer(10),
-                        decision: codex_app_server_protocol::McpServerElicitationAction::Decline,
+                        decision: genex_app_server_protocol::McpServerElicitationAction::Decline,
                         content: None,
                         meta: None,
                     },
@@ -1010,11 +1010,11 @@ async fn known_thread_started_preserves_session_without_reading_unmaterialized_r
             created_at: 1,
             updated_at: 2,
             recency_at: Some(2),
-            status: codex_app_server_protocol::ThreadStatus::Idle,
+            status: genex_app_server_protocol::ThreadStatus::Idle,
             path: Some(temp_dir.path().join("not-yet-materialized.jsonl")),
             cwd: session.cwd.clone(),
             cli_version: "0.0.0".to_string(),
-            source: codex_app_server_protocol::SessionSource::Unknown,
+            source: genex_app_server_protocol::SessionSource::Unknown,
             can_accept_direct_input: None,
             thread_source: None,
             agent_nickname: Some("Robie".to_string()),
@@ -1154,10 +1154,10 @@ async fn startup_thread_started_discards_another_threads_buffered_events() {
     .expect("embedded app server");
     app.handle_app_server_event(
         &app_server,
-        codex_app_server_client::AppServerEvent::ServerRequest(Box::new(
+        genex_app_server_client::AppServerEvent::ServerRequest(Box::new(
             ServerRequest::CurrentTimeRead {
                 request_id: AppServerRequestId::Integer(2),
-                params: codex_app_server_protocol::CurrentTimeReadParams {
+                params: genex_app_server_protocol::CurrentTimeReadParams {
                     thread_id: other_thread_id.to_string(),
                 },
             },
@@ -1201,14 +1201,14 @@ async fn startup_thread_started_does_not_replay_resolved_approval() -> Result<()
 
     app.handle_app_server_event(
         &app_server,
-        codex_app_server_client::AppServerEvent::ServerRequest(Box::new(request.clone())),
+        genex_app_server_client::AppServerEvent::ServerRequest(Box::new(request.clone())),
     )
     .await;
     app.handle_app_server_event(
         &app_server,
-        codex_app_server_client::AppServerEvent::ServerNotification(Box::new(
+        genex_app_server_client::AppServerEvent::ServerNotification(Box::new(
             ServerNotification::ServerRequestResolved(
-                codex_app_server_protocol::ServerRequestResolvedNotification {
+                genex_app_server_protocol::ServerRequestResolvedNotification {
                     thread_id: thread_id.to_string(),
                     request_id,
                 },
@@ -1241,7 +1241,7 @@ async fn owned_subagent_approval_before_thread_started_is_preserved() -> Result<
     let (mut app, _app_event_rx, _op_rx) = make_test_app_with_channels().await;
     let codex_home = tempdir()?;
     app.config.codex_home = codex_home.path().to_path_buf().abs();
-    app.config.sqlite = codex_state::SqliteConfig::new_for_testing(codex_home.path().abs());
+    app.config.sqlite = genex_state::SqliteConfig::new_for_testing(codex_home.path().abs());
     let mut app_server = Box::pin(crate::start_embedded_app_server_for_picker(&app.config)).await?;
     let parent = app_server.start_thread(&app.config).await?;
     let parent_thread_id = parent.session.thread_id;
@@ -1284,7 +1284,7 @@ async fn owned_subagent_approval_before_thread_started_is_preserved() -> Result<
 
     app.handle_app_server_event(
         &app_server,
-        codex_app_server_client::AppServerEvent::ServerRequest(Box::new(request.clone())),
+        genex_app_server_client::AppServerEvent::ServerRequest(Box::new(request.clone())),
     )
     .await;
 

@@ -1,4 +1,4 @@
-use codex_api::AuthProvider;
+use genex_api::AuthProvider;
 use http::HeaderMap;
 use http::HeaderValue;
 
@@ -42,8 +42,8 @@ mod tests {
         };
 
         assert_eq!(
-            codex_api::auth_header_telemetry(&auth),
-            codex_api::AuthHeaderTelemetry {
+            genex_api::auth_header_telemetry(&auth),
+            genex_api::AuthHeaderTelemetry {
                 attached: true,
                 name: Some("authorization"),
             }

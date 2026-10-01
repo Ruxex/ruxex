@@ -61,7 +61,7 @@ bash -c '
   trap codex_remote_env_cleanup EXIT
 
   cd codex-rs
-  just test -p codex-core --test all
+  just test -p genex-core --test all
 '
 ```
 
@@ -75,7 +75,7 @@ bash -c '
   trap codex_remote_env_cleanup EXIT
 
   cd codex-rs
-  just test -p codex-app-server --test all
+  just test -p genex-app-server --test all
 '
 ```
 

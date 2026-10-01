@@ -6,12 +6,12 @@ fn canonicalizes_word_only_shell_scripts_to_inner_command() {
     let command_a = vec![
         "/bin/bash".to_string(),
         "-lc".to_string(),
-        "cargo test -p codex-core".to_string(),
+        "cargo test -p genex-core".to_string(),
     ];
     let command_b = vec![
         "bash".to_string(),
         "-lc".to_string(),
-        "cargo   test   -p codex-core".to_string(),
+        "cargo   test   -p genex-core".to_string(),
     ];
 
     assert_eq!(

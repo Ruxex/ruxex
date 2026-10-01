@@ -159,7 +159,7 @@ async fn yielded_notifications_keep_originating_budgets_after_model_switch() -> 
 
     test.codex.shutdown_and_wait().await?;
     let rollout_path = test.codex.rollout_path().expect("rollout path");
-    let history = codex_rollout::RolloutRecorder::get_rollout_history(&rollout_path).await?;
+    let history = genex_rollout::RolloutRecorder::get_rollout_history(&rollout_path).await?;
     let saved = history
         .get_rollout_items()
         .iter()

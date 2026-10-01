@@ -1,2 +1,2 @@
-pub use codex_protocol::auth::RefreshTokenFailedError;
-pub use codex_protocol::auth::RefreshTokenFailedReason;
+pub use genex_protocol::auth::RefreshTokenFailedError;
+pub use genex_protocol::auth::RefreshTokenFailedReason;

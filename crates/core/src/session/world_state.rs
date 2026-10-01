@@ -18,13 +18,13 @@ use crate::context::world_state::PersistentModeState;
 use crate::context::world_state::PluginsInstructionsState;
 use crate::context::world_state::ToolsState;
 use crate::context::world_state::WorldState;
-use codex_extension_api::WorldStateContributionInput;
-use codex_features::Feature;
-use codex_prompts::ApprovalPromptContext;
-use codex_prompts::ResolvedModelMessages;
-use codex_prompts::render_model_instructions;
-use codex_protocol::error::Result as CodexResult;
-use codex_protocol::models::BaseInstructionsProvenance;
+use genex_extension_api::WorldStateContributionInput;
+use genex_features::Feature;
+use genex_prompts::ApprovalPromptContext;
+use genex_prompts::ResolvedModelMessages;
+use genex_prompts::render_model_instructions;
+use genex_protocol::error::Result as CodexResult;
+use genex_protocol::models::BaseInstructionsProvenance;
 
 impl Session {
     #[tracing::instrument(name = "world_state.build", level = "info", skip_all)]
@@ -48,7 +48,7 @@ impl Session {
                     turn_context.config.base_instructions_provenance,
                     Some(BaseInstructionsProvenance::Model { .. })
                 )) {
-            codex_prompts::without_update_plan_instructions(&model_instructions)
+            genex_prompts::without_update_plan_instructions(&model_instructions)
         } else {
             model_instructions
         };
@@ -99,7 +99,7 @@ impl Session {
                 turn_context
                     .session_source
                     .get_agent_path()
-                    .unwrap_or_else(codex_protocol::AgentPath::root),
+                    .unwrap_or_else(genex_protocol::AgentPath::root),
                 window_ids.first_window_id,
                 window_ids.previous_window_id,
                 window_ids.window_id,

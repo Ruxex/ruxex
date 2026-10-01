@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 
-use codex_protocol::user_input::UserInput;
-use codex_skills::ToolMentionKind;
-use codex_skills::extract_tool_mentions_with_sigil;
-use codex_skills::plugin_config_name_from_path;
-use codex_skills::tool_kind_for_path;
+use genex_protocol::user_input::UserInput;
+use genex_skills::ToolMentionKind;
+use genex_skills::extract_tool_mentions_with_sigil;
+use genex_skills::plugin_config_name_from_path;
+use genex_skills::tool_kind_for_path;
 
 use crate::mention_syntax::PLUGIN_TEXT_MENTION_SIGIL;
 use crate::mention_syntax::TOOL_MENTION_SIGIL;

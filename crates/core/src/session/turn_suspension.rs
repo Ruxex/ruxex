@@ -1,11 +1,11 @@
 use super::handlers;
 use super::session::Session;
 use crate::state::TaskKind;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::Result as CodexResult;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::turn_input::SuspendTurnOutcome;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::Result as CodexResult;
+use genex_protocol::protocol::Event;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::turn_input::SuspendTurnOutcome;
 use std::sync::Arc;
 use std::time::Duration;
 use tracing::warn;

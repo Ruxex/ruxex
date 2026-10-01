@@ -24,7 +24,7 @@
 
 - 本番 build で discard される analytics queue/reducer が全て呼び出し側から除去されていること。
 - `TurnProfile` や `TurnAnalyticsMetadata` を削除しても、core の turn timing、metadata、TTFT/TTFM metrics が壊れないこと。
-- 重複する `ArtifactOperation` は `codex-core-plugins` 側を正とし、OTEL の artifact metrics を維持すること。
+- 重複する `ArtifactOperation` は `genex-core-plugins` 側を正とし、OTEL の artifact metrics を維持すること。
 - `analytics.enabled` の移行で OTEL metrics の既定値、明示的な無効化、daemon/app-server の flag が変わらないこと。
 - `AnalyticsEventsClient` を session、extension、app-server、core-api から除去しても、通常の MCP、Guardian、plugin、external-agent import の動作を残すこと。
 
@@ -50,8 +50,8 @@
   Run:
 
   ```bash
-  cargo tree -p codex-analytics --depth 1
-  cargo tree -i codex-analytics --depth 1
+  cargo tree -p genex-analytics --depth 1
+  cargo tree -i genex-analytics --depth 1
   rg -n 'codex-analytics|codex_analytics|AnalyticsEventsClient|AnalyticsFact|TurnProfile|TurnAnalyticsMetadata|ArtifactOperation' crates Cargo.toml docs --glob '*.{rs,toml,md}'
   ```
 
@@ -67,7 +67,7 @@
   | `AnalyticsEventsClient` injection in core, app-server, extensions, core-api, and external-agent migration | `remove`: no current event sink consumes the queue output |
   | `TurnProfile` and profile-only state in `crates/core/src/turn_timing.rs` | `remove` for analytics-only profile output; `retain` for existing TTFT/TTFM and other active OTEL timing behavior |
   | `TurnAnalyticsMetadata` and `turn_metadata: Arc<dyn TurnAnalyticsMetadata>` fields | `remove`: the trait has no consumer outside analytics; core retains its own metadata state |
-  | `codex_analytics::ArtifactOperation` and its construction in `crates/core/src/tools/events.rs` | `migrate-in-place`: use `codex-core-plugins::ArtifactOperation` as the canonical producer type and retain the existing OTEL counters/histograms |
+  | `codex_analytics::ArtifactOperation` and its construction in `crates/core/src/tools/events.rs` | `migrate-in-place`: use `genex-core-plugins::ArtifactOperation` as the canonical producer type and retain the existing OTEL counters/histograms |
   | `analytics.enabled`, `Config::analytics_enabled`, `analytics_enabled` response metadata, and `--analytics-default-enabled` | `migrate-in-place` for OTEL metrics gating, `remove` for analytics response metadata; rename the surviving control to `metrics_enabled` and `--metrics-default-enabled` |
 
 - [x] **Step 3: Update the phase handoff**
@@ -115,7 +115,7 @@
 
   ```bash
   rg -n 'analytics_enabled|AnalyticsConfigToml|\[analytics\]|analytics-default-enabled|default_analytics_enabled' crates docs --glob '*.{rs,toml,md,json,ts}'
-  cargo check -p codex-config -p codex-core -p codex-app-server -p codex-cli
+  cargo check -p genex-config -p genex-core -p genex-app-server -p genex-cli
   ```
 
   Expected production result: no old analytics configuration names; any remaining match must be an inventory entry explaining why it is not production code.
@@ -134,9 +134,9 @@
 - Modify: `crates/core/src/tasks/mod.rs`
 - Modify: files that construct `TurnResolvedConfigFact`, `CodeModeToolCallFact`, or `ControlToolCallFact`
 
-- [x] **Step 1: Make `codex-core-plugins::ArtifactOperation` canonical**
+- [x] **Step 1: Make `genex-core-plugins::ArtifactOperation` canonical**
 
-  Keep the existing recognition type and its fields in `codex-core-plugins`. In `crates/core/src/tools/events.rs`, pass those fields directly to the existing OTEL metric tags and remove the analytics-only envelope, `TrackEventsContext`, lifecycle field, timestamp helper, and `track_artifact_operation` call. Do not remove `ARTIFACT_OPERATION_STARTED_METRIC` or `ARTIFACT_OPERATION_EXPECTED_OUTPUT_COUNT_METRIC`.
+  Keep the existing recognition type and its fields in `genex-core-plugins`. In `crates/core/src/tools/events.rs`, pass those fields directly to the existing OTEL metric tags and remove the analytics-only envelope, `TrackEventsContext`, lifecycle field, timestamp helper, and `track_artifact_operation` call. Do not remove `ARTIFACT_OPERATION_STARTED_METRIC` or `ARTIFACT_OPERATION_EXPECTED_OUTPUT_COUNT_METRIC`.
 
 - [x] **Step 2: Remove analytics-only turn profile ownership**
 
@@ -156,7 +156,7 @@
 
   ```bash
   rg -n 'codex_analytics::(ArtifactOperation|TurnProfile|TurnAnalyticsMetadata|TurnResolvedConfigFact|TurnTokenUsageFact|TurnProfileFact|TurnCodexErrorFact|CodeModeToolCallFact|ControlToolCallFact)' crates --glob '*.rs'
-  cargo check -p codex-core-plugins -p codex-core
+  cargo check -p genex-core-plugins -p genex-core
   ```
 
   Expected result: no core-owned execution state imports an analytics type, and the artifact metrics producer still compiles.
@@ -193,7 +193,7 @@
 
   ```bash
   rg -n 'codex-analytics|codex_analytics|AnalyticsEventsClient|track_[a-z_]+\(' crates --glob '*.{rs,toml}'
-  cargo check -p codex-core -p codex-app-server -p codex-core-plugins -p codex-core-api -p codex-external-agent-migration
+  cargo check -p genex-core -p genex-app-server -p genex-core-plugins -p genex-core-api -p genex-external-agent-migration
   ```
 
   Remaining `track_` matches must belong to non-analytics APIs, and any `codex_analytics` match must be in the not-yet-removed crate itself or be eliminated in the next task.

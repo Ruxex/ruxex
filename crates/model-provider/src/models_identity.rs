@@ -2,9 +2,9 @@
 //! Only a digest is persisted; credential values are included only through the
 //! resulting request headers when the provider explicitly supplies them.
 
-use codex_login::CodexAuth;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_protocol::error::Result as CoreResult;
+use genex_login::CodexAuth;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_protocol::error::Result as CoreResult;
 use sha2::Digest;
 use sha2::Sha256;
 

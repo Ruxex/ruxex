@@ -93,7 +93,7 @@ pub(super) fn emit_migration_metric(
     item_type: ExternalAgentConfigMigrationItemType,
     skills_count: Option<usize>,
 ) {
-    let Some(metrics) = codex_otel::global() else {
+    let Some(metrics) = genex_otel::global() else {
         return;
     };
     let tags = migration_metric_tags(item_type, skills_count);

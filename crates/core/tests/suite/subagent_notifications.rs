@@ -1,33 +1,33 @@
 use anyhow::Result;
-use codex_core::StartThreadOptions;
-use codex_core::ThreadConfigSnapshot;
-use codex_core::TurnInputRequest;
-use codex_core::TurnStartOptions;
-use codex_core::config::AgentRoleConfig;
-use codex_core::config::CurrentTimeReminderConfig;
-use codex_features::Feature;
-use codex_history::RolloutItem;
-use codex_models_manager::test_support::test_models_response;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::items::SubAgentActivityItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::model_types::MultiAgentMessages;
-use codex_protocol::model_types::MultiAgentRoleMessages;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::model_types::ReasoningEffortPreset;
-use codex_protocol::protocol::AgentStatus;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentActivityKind;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
+use genex_core::StartThreadOptions;
+use genex_core::ThreadConfigSnapshot;
+use genex_core::TurnInputRequest;
+use genex_core::TurnStartOptions;
+use genex_core::config::AgentRoleConfig;
+use genex_core::config::CurrentTimeReminderConfig;
+use genex_features::Feature;
+use genex_history::RolloutItem;
+use genex_models_manager::test_support::test_models_response;
+use genex_protocol::ThreadId;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::items::SubAgentActivityItem;
+use genex_protocol::items::TurnItem;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::model_types::MultiAgentMessages;
+use genex_protocol::model_types::MultiAgentRoleMessages;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::protocol::AgentStatus;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentActivityKind;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use core_test_support::hooks::trust_discovered_hooks;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::responses::assert_parent_turn;
@@ -1630,7 +1630,7 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
             config.include_environment_context = false;
             config.current_time_reminder = Some(CurrentTimeReminderConfig {
                 reminder_interval_seconds: 0,
-                clock_source: codex_features::CurrentTimeSource::External,
+                clock_source: genex_features::CurrentTimeSource::External,
                 ..CurrentTimeReminderConfig::default()
             });
         }
@@ -1662,8 +1662,8 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
         #[derive(Default)]
         struct FailFirstClockRead(std::sync::atomic::AtomicBool);
 
-        impl codex_core::TimeProvider for FailFirstClockRead {
-            fn current_time(&self, _thread_id: ThreadId) -> codex_core::TimeFuture<'_> {
+        impl genex_core::TimeProvider for FailFirstClockRead {
+            fn current_time(&self, _thread_id: ThreadId) -> genex_core::TimeFuture<'_> {
                 let already_read = self.0.swap(true, std::sync::atomic::Ordering::Relaxed);
                 Box::pin(async move {
                     anyhow::ensure!(already_read, "parent clock unavailable");
@@ -1675,7 +1675,7 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
                 &self,
                 _thread_id: ThreadId,
                 _duration: Duration,
-            ) -> codex_core::SleepFuture<'_> {
+            ) -> genex_core::SleepFuture<'_> {
                 Box::pin(async { Ok(()) })
             }
         }
@@ -1864,7 +1864,7 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
         )?;
         let child_thread = test.thread_manager.get_thread(child_thread_id).await?;
         child_thread.flush_rollout().await?;
-        let child_rollout = codex_rollout::RolloutRecorder::get_rollout_history(
+        let child_rollout = genex_rollout::RolloutRecorder::get_rollout_history(
             &child_thread
                 .rollout_path()
                 .expect("child rollout should exist"),
@@ -2725,7 +2725,7 @@ async fn plaintext_multi_agent_v2_completion_sends_agent_message(
 
         test.codex.ensure_rollout_materialized().await;
         test.codex.flush_rollout().await?;
-        let rollout = codex_rollout::RolloutRecorder::get_rollout_history(
+        let rollout = genex_rollout::RolloutRecorder::get_rollout_history(
             &test.codex.rollout_path().expect("parent rollout path"),
         )
         .await?;
@@ -2766,7 +2766,7 @@ async fn plaintext_multi_agent_v2_completion_sends_agent_message(
                 id: format!("subagent-completed-{child_turn_id}"),
                 kind: SubAgentActivityKind::Completed,
                 agent_thread_id: child_thread_id,
-                agent_path: codex_protocol::AgentPath::root()
+                agent_path: genex_protocol::AgentPath::root()
                     .join("worker")
                     .expect("worker path"),
             }
@@ -3031,7 +3031,7 @@ async fn multi_agent_v2_peer_followup_completion_notifies_initiating_turn() -> R
                 id: format!("subagent-completed-{worker_followup_turn_id}"),
                 kind: SubAgentActivityKind::Completed,
                 agent_thread_id: worker_thread_id,
-                agent_path: codex_protocol::AgentPath::root()
+                agent_path: genex_protocol::AgentPath::root()
                     .join("worker")
                     .expect("worker path"),
             },

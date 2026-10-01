@@ -23,7 +23,7 @@ impl FailureMetric {
             Self::Scan(trigger) => ("codex.rollout_compression.scan", "outcome", Some(trigger)),
             Self::TempCleanup(trigger) => (metrics::TEMP_CLEANUP_COUNTER, "outcome", Some(trigger)),
         };
-        let Some(metrics) = codex_otel::global() else {
+        let Some(metrics) = genex_otel::global() else {
             return;
         };
         let tags = [

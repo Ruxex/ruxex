@@ -1,5 +1,5 @@
 [package]
-name = "codex-otel-trace-websocket"
+name = "genex-otel-trace-websocket"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

@@ -1,16 +1,16 @@
 use super::*;
 use crate::config::EnvironmentNetworkConfigError;
 use crate::config::validate_environment_network_policy;
-use codex_config::NetworkDomainPermissionToml;
-use codex_config::NetworkDomainPermissionsToml;
-use codex_execpolicy::Decision::Allow;
-use codex_execpolicy::NetworkRuleProtocol::Https;
-use codex_network_proxy::NetworkDomainPermission;
-use codex_network_proxy::NetworkUnixSocketPermission;
-use codex_network_proxy::NetworkUnixSocketPermissions;
-use codex_protocol::models::ManagedFileSystemPermissions;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::NetworkSandboxPolicy;
+use genex_config::NetworkDomainPermissionToml;
+use genex_config::NetworkDomainPermissionsToml;
+use genex_execpolicy::Decision::Allow;
+use genex_execpolicy::NetworkRuleProtocol::Https;
+use genex_network_proxy::NetworkDomainPermission;
+use genex_network_proxy::NetworkUnixSocketPermission;
+use genex_network_proxy::NetworkUnixSocketPermissions;
+use genex_protocol::models::ManagedFileSystemPermissions;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::NetworkSandboxPolicy;
 use pretty_assertions::assert_eq;
 
 fn domain_permissions(
@@ -63,7 +63,7 @@ async fn attachment_socket_grants_respect_configured_restrictions_at_remote_laun
             false,
         ),
     ] {
-        let configured: codex_config::permissions_toml::NetworkToml = toml::from_str(toml)?;
+        let configured: genex_config::permissions_toml::NetworkToml = toml::from_str(toml)?;
         let controller = NetworkProxySpec::from_config_and_constraints(
             configured.to_network_proxy_config(),
             Some(NetworkConstraints {

@@ -441,7 +441,7 @@ fn base_instructions_use_the_same_mode_in_settings_and_annotated_developer_conte
     let unmarked = captured(&json!({"input": [plain]}));
     assert!(unmarked.contains("A rule below the prefix"));
 
-    let catalog_prompt = codex_models_manager::model_info::BASE_INSTRUCTIONS;
+    let catalog_prompt = genex_models_manager::model_info::BASE_INSTRUCTIONS;
     let lite = |prompt: &str| {
         json!({"input": [
             {"type": "additional_tools", "role": "developer", "tools": []},

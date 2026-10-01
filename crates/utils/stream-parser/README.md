@@ -1,4 +1,4 @@
-# codex-utils-stream-parser
+# genex-utils-stream-parser
 
 Small, dependency-free utilities for parsing streamed text incrementally.
 

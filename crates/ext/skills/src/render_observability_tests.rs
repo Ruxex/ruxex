@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use codex_extension_api::ExtensionMetrics;
+use genex_extension_api::ExtensionMetrics;
 use pretty_assertions::assert_eq;
 
 use super::*;

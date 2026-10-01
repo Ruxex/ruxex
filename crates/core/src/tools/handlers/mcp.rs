@@ -19,18 +19,18 @@ use crate::tools::registry::PostToolUsePayload;
 use crate::tools::registry::PreToolUsePayload;
 use crate::tools::registry::ToolExecutor;
 use crate::tools::registry::ToolTelemetryTags;
-use codex_extension_api::McpToolContext;
-use codex_mcp::ToolInfo;
-use codex_tools::ResponsesApiNamespace;
-use codex_tools::ResponsesApiNamespaceTool;
-use codex_tools::ToolName;
-use codex_tools::ToolSearchInfo;
-use codex_tools::ToolSearchSourceInfo;
-use codex_tools::ToolSpec;
-use codex_tools::agent_plugin_mcp_tool_to_responses_api_tool;
-use codex_tools::mcp_tool_to_responses_api_tool;
-use codex_utils_output_truncation::TruncationPolicy;
-use codex_utils_string::take_bytes_at_char_boundary;
+use genex_extension_api::McpToolContext;
+use genex_mcp::ToolInfo;
+use genex_tools::ResponsesApiNamespace;
+use genex_tools::ResponsesApiNamespaceTool;
+use genex_tools::ToolName;
+use genex_tools::ToolSearchInfo;
+use genex_tools::ToolSearchSourceInfo;
+use genex_tools::ToolSpec;
+use genex_tools::agent_plugin_mcp_tool_to_responses_api_tool;
+use genex_tools::mcp_tool_to_responses_api_tool;
+use genex_utils_output_truncation::TruncationPolicy;
+use genex_utils_string::take_bytes_at_char_boundary;
 use futures::future::BoxFuture;
 use serde_json::Map;
 use serde_json::Value;
@@ -43,7 +43,7 @@ const MAX_MCP_NAMESPACE_DESCRIPTION_BYTES: usize = 512 * 1024;
 pub struct McpHandler {
     tool_info: ToolInfo,
     spec: Arc<ToolSpec>,
-    code_mode_tool_definitions: OnceLock<Vec<codex_code_mode::ToolDefinition>>,
+    code_mode_tool_definitions: OnceLock<Vec<genex_code_mode::ToolDefinition>>,
 }
 impl McpHandler {
     pub fn new(tool_info: ToolInfo) -> Result<Self, serde_json::Error> {
@@ -149,7 +149,7 @@ impl ToolExecutor<ToolInvocation> for McpHandler {
         )
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> codex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {
@@ -207,7 +207,7 @@ impl McpHandler {
         // Capture presentation policy from the same config snapshot used for execution.
         let truncation_policy = prepared_mcp_call
             .as_ref()
-            .and_then(codex_mcp::PreparedMcpCall::output_token_limit)
+            .and_then(genex_mcp::PreparedMcpCall::output_token_limit)
             .map(TruncationPolicy::Tokens)
             .unwrap_or(step_context.settings.model_info.truncation_policy.into());
         let started = Instant::now();
@@ -243,11 +243,11 @@ impl CoreToolRuntime for McpHandler {
         Some(&self.spec)
     }
 
-    fn cached_code_mode_definitions(&self) -> Option<&[codex_code_mode::ToolDefinition]> {
+    fn cached_code_mode_definitions(&self) -> Option<&[genex_code_mode::ToolDefinition]> {
         Some(
             self.code_mode_tool_definitions
                 .get_or_init(|| {
-                    let mut definitions = codex_tools::collect_code_mode_tool_definitions(
+                    let mut definitions = genex_tools::collect_code_mode_tool_definitions(
                         std::iter::once(self.spec.as_ref()),
                     );
                     for definition in &mut definitions {

@@ -1,10 +1,10 @@
 use super::MetadataOverrideFileSystem;
 use super::create_test_git_repo;
 use super::write_linked_worktree_metadata;
-use codex_exec_server::LOCAL_FS;
-use codex_git_utils::resolve_root_git_project_for_trust;
-use codex_utils_path::normalize_for_path_comparison;
-use codex_utils_path_uri::PathUri;
+use genex_exec_server::LOCAL_FS;
+use genex_git_utils::resolve_root_git_project_for_trust;
+use genex_utils_path::normalize_for_path_comparison;
+use genex_utils_path_uri::PathUri;
 use core_test_support::PathBufExt;
 use pretty_assertions::assert_eq;
 use std::fs;

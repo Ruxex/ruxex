@@ -1,11 +1,11 @@
 //! Safe user-facing messages for typed local verification failures.
 
-use codex_app_server_client::TypedRequestError;
-use codex_app_server_protocol::UserVerificationCancellationReason;
-use codex_app_server_protocol::UserVerificationErrorDetails;
-use codex_app_server_protocol::UserVerificationFailureReason;
-use codex_app_server_protocol::UserVerificationInvalidRequestReason;
-use codex_app_server_protocol::UserVerificationUnavailableReason;
+use genex_app_server_client::TypedRequestError;
+use genex_app_server_protocol::UserVerificationCancellationReason;
+use genex_app_server_protocol::UserVerificationErrorDetails;
+use genex_app_server_protocol::UserVerificationFailureReason;
+use genex_app_server_protocol::UserVerificationInvalidRequestReason;
+use genex_app_server_protocol::UserVerificationUnavailableReason;
 
 pub(super) fn verification_error_message(error: &TypedRequestError) -> &'static str {
     let TypedRequestError::Server { source, .. } = error else {

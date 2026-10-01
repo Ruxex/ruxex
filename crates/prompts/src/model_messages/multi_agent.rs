@@ -2,7 +2,7 @@
 //! Consumers own role assembly, suppression, and effort-dependent mode selection.
 
 use super::ResolvedMessage;
-use codex_protocol::model_types::MultiAgentMessages;
+use genex_protocol::model_types::MultiAgentMessages;
 
 const DEFAULT_MULTI_AGENT_V2_ROOT_AGENT_USAGE_HINT_TEXT: &str = r#"You are `/root`, the primary agent in a team of agents collaborating to fulfill the user's goals.
 

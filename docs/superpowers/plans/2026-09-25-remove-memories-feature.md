@@ -31,7 +31,7 @@
 ## File Map
 
 - **Persisted/runtime contracts:** `crates/rollout/src/{policy,recorder,config,metadata,lib}.rs`、`crates/protocol/src/{items,lib,protocol,memory_version}.rs`、`crates/state/src/{runtime,model,sqlite,migrations}.rs`、`crates/thread-store/src/` の memory fields/call sites。
-- **Memory implementation:** `crates/memories/`、`crates/ext/memories/`、`crates/codex-api/src/endpoint/memories.rs`。
+- **Memory implementation:** `crates/memories/`、`crates/ext/memories/`、`crates/genex-api/src/endpoint/memories.rs`。
 - **Protocol/app-server:** `crates/app-server-protocol/src/protocol/v2/`、`crates/app-server/src/request_processors/` と generated schema、history conversion。
 - **CLI/config/import:** `crates/features/src/lib.rs`、`crates/core/src/config/`、`crates/cli/src/`、`crates/external-agent-migration/src/`、関連 protocol/config schema。
 - **UI/runtime/telemetry:** `crates/core/src/context/`、`crates/core/src/session/`、`crates/core/src/stream_events_utils.rs`、`crates/tui/src/`、metrics/doctor/telemetry の関連箇所。

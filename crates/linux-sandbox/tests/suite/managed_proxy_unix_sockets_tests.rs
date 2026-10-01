@@ -1,14 +1,14 @@
 //! Explicit Unix-socket grants preserve managed-proxy network isolation.
 
 use super::*;
-use codex_network_proxy::ConfigReloader;
-use codex_network_proxy::ConfigReloaderFuture;
-use codex_network_proxy::ConfigState;
-use codex_network_proxy::NetworkProxy;
-use codex_network_proxy::NetworkProxyConfig;
-use codex_network_proxy::NetworkProxyConstraints;
-use codex_network_proxy::NetworkProxyState;
-use codex_network_proxy::build_config_state;
+use genex_network_proxy::ConfigReloader;
+use genex_network_proxy::ConfigReloaderFuture;
+use genex_network_proxy::ConfigState;
+use genex_network_proxy::NetworkProxy;
+use genex_network_proxy::NetworkProxyConfig;
+use genex_network_proxy::NetworkProxyConstraints;
+use genex_network_proxy::NetworkProxyState;
+use genex_network_proxy::build_config_state;
 use pretty_assertions::assert_eq;
 use std::os::unix::net::UnixListener;
 use std::os::unix::net::UnixStream;

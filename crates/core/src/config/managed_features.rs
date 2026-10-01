@@ -1,20 +1,20 @@
 use std::collections::BTreeMap;
 
-use codex_config::Constrained;
-use codex_config::ConstrainedWithSource;
-use codex_config::ConstraintError;
-use codex_config::ConstraintResult;
-use codex_config::FeatureRequirementsToml;
-use codex_config::RequirementSource;
-use codex_config::Sourced;
+use genex_config::Constrained;
+use genex_config::ConstrainedWithSource;
+use genex_config::ConstraintError;
+use genex_config::ConstraintResult;
+use genex_config::FeatureRequirementsToml;
+use genex_config::RequirementSource;
+use genex_config::Sourced;
 
-use codex_config::config_toml::ConfigToml;
-use codex_features::Feature;
-use codex_features::FeatureConfigSource;
-use codex_features::FeatureOverrides;
-use codex_features::Features;
-use codex_features::canonical_feature_for_key;
-use codex_features::feature_for_key;
+use genex_config::config_toml::ConfigToml;
+use genex_features::Feature;
+use genex_features::FeatureConfigSource;
+use genex_features::FeatureOverrides;
+use genex_features::Features;
+use genex_features::canonical_feature_for_key;
+use genex_features::feature_for_key;
 
 /// Wrapper around [`Features`] which enforces constraints defined in
 /// `FeatureRequirementsToml` and provides normalization to ensure constraints

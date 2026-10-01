@@ -1,13 +1,13 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use codex_code_mode_protocol::CellId;
-use codex_code_mode_protocol::CodeModeNestedToolCall;
-use codex_code_mode_protocol::CodeModeToolKind;
-use codex_code_mode_protocol::grpc as proto;
-use codex_code_mode_protocol::grpc::code_mode_host_server::CodeModeHost;
-use codex_code_mode_protocol::host::MAX_FRAME_BYTES;
-use codex_protocol::ToolName;
+use genex_code_mode_protocol::CellId;
+use genex_code_mode_protocol::CodeModeNestedToolCall;
+use genex_code_mode_protocol::CodeModeToolKind;
+use genex_code_mode_protocol::grpc as proto;
+use genex_code_mode_protocol::grpc::code_mode_host_server::CodeModeHost;
+use genex_code_mode_protocol::host::MAX_FRAME_BYTES;
+use genex_protocol::ToolName;
 use futures::FutureExt;
 use futures::StreamExt;
 use pretty_assertions::assert_eq;

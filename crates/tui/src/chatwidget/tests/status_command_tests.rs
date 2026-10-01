@@ -1,9 +1,9 @@
 use super::*;
 use crate::chatwidget::ThreadUsageOutcome;
 use assert_matches::assert_matches;
-use codex_app_server_protocol::ThreadUsage;
-use codex_app_server_protocol::ThreadUsageBreakdownGroup;
-use codex_utils_path_uri::PathUri;
+use genex_app_server_protocol::ThreadUsage;
+use genex_app_server_protocol::ThreadUsageBreakdownGroup;
+use genex_utils_path_uri::PathUri;
 
 #[tokio::test]
 async fn status_command_renders_immediately_and_refreshes_rate_limits_for_managed_auth() {

@@ -64,7 +64,7 @@ codex execpolicy check \
 - You can also run the standalone dev binary directly during development:
 
 ```bash
-cargo run -p codex-execpolicy -- check --rules path/to/policy.rules git status
+cargo run -p genex-execpolicy -- check --rules path/to/policy.rules git status
 ```
 
 - Example outcomes:

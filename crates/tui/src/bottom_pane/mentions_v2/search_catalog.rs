@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use codex_app_server_protocol::SkillMetadata;
-use codex_plugin::PluginCapabilitySummary;
+use genex_app_server_protocol::SkillMetadata;
+use genex_plugin::PluginCapabilitySummary;
 
 use crate::skills_helpers::skill_description;
 use crate::skills_helpers::skill_display_name;

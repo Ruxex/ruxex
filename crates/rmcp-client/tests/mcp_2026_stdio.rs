@@ -5,15 +5,15 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use codex_exec_server::Environment;
-use codex_rmcp_client::Elicitation;
-use codex_rmcp_client::ElicitationAction;
-use codex_rmcp_client::ElicitationResponse;
-use codex_rmcp_client::ExecutorStdioServerLauncher;
-use codex_rmcp_client::LocalStdioServerLauncher;
-use codex_rmcp_client::McpProtocolMode;
-use codex_rmcp_client::RmcpClient;
-use codex_rmcp_client::StdioServerLauncher;
+use genex_exec_server::Environment;
+use genex_rmcp_client::Elicitation;
+use genex_rmcp_client::ElicitationAction;
+use genex_rmcp_client::ElicitationResponse;
+use genex_rmcp_client::ExecutorStdioServerLauncher;
+use genex_rmcp_client::LocalStdioServerLauncher;
+use genex_rmcp_client::McpProtocolMode;
+use genex_rmcp_client::RmcpClient;
+use genex_rmcp_client::StdioServerLauncher;
 use futures::FutureExt;
 use pretty_assertions::assert_eq;
 use rmcp::model::ClientCapabilities;
@@ -31,7 +31,7 @@ async fn exercise_stdio_server(
     opt_in: bool,
     use_executor: bool,
 ) -> anyhow::Result<()> {
-    let server = codex_utils_cargo_bin::cargo_bin("test_mcp_2026_stdio_server")?;
+    let server = genex_utils_cargo_bin::cargo_bin("test_mcp_2026_stdio_server")?;
     let launcher: Arc<dyn StdioServerLauncher> = if use_executor {
         Arc::new(ExecutorStdioServerLauncher::new(
             Environment::default_for_tests().get_exec_backend(),

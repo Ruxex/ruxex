@@ -4,27 +4,27 @@ use super::super::permissions::CompiledPermissionProfile;
 use super::super::permissions::WorkspaceWriteSettings;
 use super::super::permissions::compile_permission_profile;
 use super::relative_subpath;
-use codex_config::ConfigPathContext;
-use codex_config::permissions_toml::FilesystemPermissionToml;
-use codex_config::permissions_toml::FilesystemPermissionToml::Access;
-use codex_config::permissions_toml::FilesystemPermissionsToml;
-use codex_config::permissions_toml::PermissionProfileToml;
-use codex_config::permissions_toml::PermissionsToml;
-use codex_config::permissions_toml::WorkspaceRootsToml;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemAccessMode::Deny;
-use codex_protocol::permissions::FileSystemAccessMode::Read;
-use codex_protocol::permissions::FileSystemAccessMode::Write;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::FileSystemSandboxPolicyContext;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::permissions::ReadDenyMatcher;
-use codex_protocol::permissions::project_roots_glob_pattern;
-use codex_utils_absolute_path::AbsolutePathBufGuard;
-use codex_utils_path_uri::PathConvention;
-use codex_utils_path_uri::PathUri;
+use genex_config::ConfigPathContext;
+use genex_config::permissions_toml::FilesystemPermissionToml;
+use genex_config::permissions_toml::FilesystemPermissionToml::Access;
+use genex_config::permissions_toml::FilesystemPermissionsToml;
+use genex_config::permissions_toml::PermissionProfileToml;
+use genex_config::permissions_toml::PermissionsToml;
+use genex_config::permissions_toml::WorkspaceRootsToml;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemAccessMode::Deny;
+use genex_protocol::permissions::FileSystemAccessMode::Read;
+use genex_protocol::permissions::FileSystemAccessMode::Write;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::FileSystemSandboxPolicyContext;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::permissions::ReadDenyMatcher;
+use genex_protocol::permissions::project_roots_glob_pattern;
+use genex_utils_absolute_path::AbsolutePathBufGuard;
+use genex_utils_path_uri::PathConvention;
+use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -318,7 +318,7 @@ fn interior_dot_workspace_glob_fails_closed_for_every_path_convention() {
         FileSystemSandboxPolicy::restricted(vec![
             FileSystemSandboxEntry::new(
                 FileSystemPath::Special {
-                    value: codex_protocol::permissions::FileSystemSpecialPath::project_roots(
+                    value: genex_protocol::permissions::FileSystemSpecialPath::project_roots(
                         /*subpath*/ None,
                     ),
                 },

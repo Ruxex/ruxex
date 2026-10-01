@@ -24,7 +24,7 @@ const FOCUS_PROBE_INPUT: &str = "focus-palette-24527";
 
 #[test]
 fn focus_gained_with_unanswered_palette_queries_preserves_immediate_input() -> Result<()> {
-    let repo_root = codex_utils_cargo_bin::repo_root()?;
+    let repo_root = genex_utils_cargo_bin::repo_root()?;
     let codex_home = tempfile::tempdir()?;
     write_test_config(codex_home.path(), &repo_root)?;
 
@@ -196,8 +196,8 @@ impl PtyCodex {
         let stdin = slave.try_clone().context("clone pseudo-terminal stdin")?;
         let stdout = slave.try_clone().context("clone pseudo-terminal stdout")?;
 
-        let codex = codex_utils_cargo_bin::cargo_bin("codex-tui")
-            .or_else(|_| codex_utils_cargo_bin::cargo_bin("codex"))?;
+        let codex = genex_utils_cargo_bin::cargo_bin("codex-tui")
+            .or_else(|_| genex_utils_cargo_bin::cargo_bin("codex"))?;
         let child = Command::new(codex)
             .args(extra_args)
             .arg("--no-alt-screen")
@@ -408,7 +408,7 @@ fn no_daemon_skips_startup_and_discovery() -> Result<()> {
             config,
             format!("features.daemon_auto_start = true\n{contents}"),
         )?;
-        let socket_path = codex_app_server_client::app_server_control_socket_path(home.path())?;
+        let socket_path = genex_app_server_client::app_server_control_socket_path(home.path())?;
         std::fs::create_dir_all(socket_path.as_path().parent().unwrap())?;
         let listener = if running {
             let listener = std::os::unix::net::UnixListener::bind(socket_path.as_path())?;

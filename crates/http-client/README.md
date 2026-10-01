@@ -1,6 +1,6 @@
-# codex-http-client
+# genex-http-client
 
-`codex-http-client` is the low-level HTTP transport shared by Codex crates. It is the intended
+`genex-http-client` is the low-level HTTP transport shared by Codex crates. It is the intended
 owner of the workspace's direct `reqwest` integration; product crates should use the types in this
 crate instead of constructing `reqwest::Client` values themselves.
 
@@ -18,7 +18,7 @@ feature requires more than enabling reqwest's default proxy behavior: Codex must
 system settings and PAC/WPAD for each destination, pool connections without mixing routes, and
 resolve redirect targets independently.
 
-Higher-level retry, SSE, and request-attempt telemetry policy remains in `codex-client`.
+Higher-level retry, SSE, and request-attempt telemetry policy remains in `genex-client`.
 
 ## Outbound proxy policy
 
@@ -120,5 +120,5 @@ let client = http_client_factory.build_client(api_url, ClientRouteClass::Api)?;
 let transport = ReqwestTransport::from_http_client(client);
 ```
 
-If the existing wrapper surface cannot support a use case, extend `codex-http-client` rather than
+If the existing wrapper surface cannot support a use case, extend `genex-http-client` rather than
 adding a direct `reqwest` dependency to another first-party crate.

@@ -9,9 +9,9 @@ use crate::bottom_pane::LocalImageAttachment;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
-use codex_app_server_client::AppServerPath;
-use codex_protocol::protocol::MAX_THREAD_GOAL_OBJECTIVE_CHARS;
-use codex_protocol::user_input::TextElement;
+use genex_app_server_client::AppServerPath;
+use genex_protocol::protocol::MAX_THREAD_GOAL_OBJECTIVE_CHARS;
+use genex_protocol::user_input::TextElement;
 use uuid::Uuid;
 
 const GOAL_ATTACHMENT_DIR: &str = "attachments";

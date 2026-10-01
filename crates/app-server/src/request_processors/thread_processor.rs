@@ -12,23 +12,23 @@ use super::thread_input::can_accept_direct_input;
 use super::thread_input::ensure_direct_input_allowed;
 use super::*;
 use crate::error_code::method_not_found;
-use codex_app_server_protocol::SelectedCapabilityRoot;
-use codex_app_server_protocol::ThreadHistoryMode as ApiThreadHistoryMode;
-use codex_app_server_protocol::ThreadRevertParams;
-use codex_app_server_protocol::ThreadRevertResponse;
-use codex_app_server_protocol::ThreadRevertedNotification;
-use codex_app_server_protocol::ThreadSection;
-use codex_app_server_protocol::ThreadSectionAppearance;
-use codex_app_server_protocol::ThreadSectionMoveParams;
-use codex_app_server_protocol::ThreadSectionMoveResponse;
-use codex_extension_api::ExtensionDataInit;
-use codex_extension_api::ThreadIdleCause;
-use codex_protocol::SanitizedGitUrl;
-use codex_protocol::config_types::MultiAgentMode;
-use codex_protocol::error::CodexErrorDetails;
-use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_thread_store::PersistContext;
+use genex_app_server_protocol::SelectedCapabilityRoot;
+use genex_app_server_protocol::ThreadHistoryMode as ApiThreadHistoryMode;
+use genex_app_server_protocol::ThreadRevertParams;
+use genex_app_server_protocol::ThreadRevertResponse;
+use genex_app_server_protocol::ThreadRevertedNotification;
+use genex_app_server_protocol::ThreadSection;
+use genex_app_server_protocol::ThreadSectionAppearance;
+use genex_app_server_protocol::ThreadSectionMoveParams;
+use genex_app_server_protocol::ThreadSectionMoveResponse;
+use genex_extension_api::ExtensionDataInit;
+use genex_extension_api::ThreadIdleCause;
+use genex_protocol::SanitizedGitUrl;
+use genex_protocol::config_types::MultiAgentMode;
+use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_thread_store::PersistContext;
 use std::ops::ControlFlow;
 
 pub(super) const THREAD_LIST_DEFAULT_LIMIT: usize = 25;
@@ -166,16 +166,16 @@ fn collect_resume_override_mismatches(
             (requested_sandbox, &active_sandbox),
             (
                 SandboxMode::ReadOnly,
-                codex_protocol::protocol::SandboxPolicy::ReadOnly { .. }
+                genex_protocol::protocol::SandboxPolicy::ReadOnly { .. }
             ) | (
                 SandboxMode::WorkspaceWrite,
-                codex_protocol::protocol::SandboxPolicy::WorkspaceWrite { .. }
+                genex_protocol::protocol::SandboxPolicy::WorkspaceWrite { .. }
             ) | (
                 SandboxMode::DangerFullAccess,
-                codex_protocol::protocol::SandboxPolicy::DangerFullAccess
+                genex_protocol::protocol::SandboxPolicy::DangerFullAccess
             ) | (
                 SandboxMode::DangerFullAccess,
-                codex_protocol::protocol::SandboxPolicy::ExternalSandbox { .. }
+                genex_protocol::protocol::SandboxPolicy::ExternalSandbox { .. }
             )
         );
         if !sandbox_matches {
@@ -355,7 +355,7 @@ fn validate_dynamic_tools(tools: &[DynamicToolSpec]) -> Result<(), String> {
             ));
         }
 
-        if let Err(err) = codex_tools::parse_tool_input_schema(&tool.input_schema) {
+        if let Err(err) = genex_tools::parse_tool_input_schema(&tool.input_schema) {
             return Err(format!(
                 "dynamic tool input schema is not supported for {name}: {err}"
             ));
@@ -445,7 +445,7 @@ pub(crate) struct ThreadRequestProcessor {
 /// Whether resume attaches a client or restores a cold runtime during daemon startup.
 pub(crate) enum ThreadResumeTarget {
     Client(ConnectionRequestId),
-    DaemonRecovery(Option<codex_app_server_transport::daemon_recovery::InterruptedTurn>),
+    DaemonRecovery(Option<genex_app_server_transport::daemon_recovery::InterruptedTurn>),
 }
 
 /// Outcome of trying to satisfy a resume request from an already loaded thread.
@@ -1113,7 +1113,7 @@ impl ThreadRequestProcessor {
         } = params;
         if matches!(
             history_mode,
-            Some(codex_app_server_protocol::ThreadHistoryMode::Paginated)
+            Some(genex_app_server_protocol::ThreadHistoryMode::Paginated)
         ) && !self.thread_store.supports_paginated_history_lists()
         {
             return Err(invalid_request(
@@ -1243,7 +1243,7 @@ impl ThreadRequestProcessor {
     async fn request_trace_context(
         &self,
         request_id: &ConnectionRequestId,
-    ) -> Option<codex_protocol::protocol::W3cTraceContext> {
+    ) -> Option<genex_protocol::protocol::W3cTraceContext> {
         self.outgoing.request_trace_context(request_id).await
     }
 
@@ -1272,8 +1272,8 @@ impl ThreadRequestProcessor {
         dynamic_tools: Option<Vec<DynamicToolSpec>>,
         selected_capability_roots: Vec<SelectedCapabilityRoot>,
         history_mode: Option<ThreadHistoryMode>,
-        session_start_source: Option<codex_app_server_protocol::ThreadStartSource>,
-        thread_source: Option<codex_protocol::protocol::ThreadSource>,
+        session_start_source: Option<genex_app_server_protocol::ThreadStartSource>,
+        thread_source: Option<genex_protocol::protocol::ThreadSource>,
         project_id: Option<String>,
         daybreak_enabled: Option<bool>,
         environment_selections: Option<Vec<TurnEnvironmentSelection>>,
@@ -1298,9 +1298,9 @@ impl ThreadRequestProcessor {
         // permissions after managed constraints can imply project trust.
         let effective_permission_profile = config.permissions.effective_permission_profile();
         let effective_permissions_trust_project = match &effective_permission_profile {
-            codex_protocol::models::PermissionProfile::Disabled
-            | codex_protocol::models::PermissionProfile::External { .. } => true,
-            codex_protocol::models::PermissionProfile::Managed { .. } => {
+            genex_protocol::models::PermissionProfile::Disabled
+            | genex_protocol::models::PermissionProfile::External { .. } => true,
+            genex_protocol::models::PermissionProfile::Managed { .. } => {
                 effective_permission_profile
                     .file_system_sandbox_policy()
                     .can_write_local_path_with_cwd(config.cwd.as_path(), config.cwd.as_path())
@@ -1317,7 +1317,7 @@ impl ThreadRequestProcessor {
             let current_cli_overrides = config_manager.current_cli_overrides();
             let cli_overrides_with_trust;
             let cli_overrides_for_reload = if let Err(err) =
-                codex_core::config::set_project_trust_level(
+                genex_core::config::set_project_trust_level(
                     &listener_task_context.codex_home,
                     trust_target.as_path(),
                     TrustLevel::Trusted,
@@ -1372,7 +1372,7 @@ impl ThreadRequestProcessor {
             })
             .collect::<Vec<_>>();
         if let Ok(Some(err)) =
-            codex_core::check_execpolicy_for_warnings(&config.config_layer_stack).await
+            genex_core::check_execpolicy_for_warnings(&config.config_layer_stack).await
         {
             config_warnings.push(crate::exec_policy_config_warning(&err));
         }
@@ -1436,10 +1436,10 @@ impl ThreadRequestProcessor {
             .start_thread(StartThreadOptions {
                 allow_provider_model_fallback,
                 initial_history: match session_start_source
-                    .unwrap_or(codex_app_server_protocol::ThreadStartSource::Startup)
+                    .unwrap_or(genex_app_server_protocol::ThreadStartSource::Startup)
                 {
-                    codex_app_server_protocol::ThreadStartSource::Startup => InitialHistory::New,
-                    codex_app_server_protocol::ThreadStartSource::Clear => InitialHistory::Cleared,
+                    genex_app_server_protocol::ThreadStartSource::Startup => InitialHistory::New,
+                    genex_app_server_protocol::ThreadStartSource::Clear => InitialHistory::Cleared,
                 },
                 history_mode,
                 thread_source,
@@ -1602,7 +1602,7 @@ impl ThreadRequestProcessor {
         service_tier: Option<Option<String>>,
         cwd: Option<String>,
         runtime_workspace_roots: Option<Vec<AbsolutePathBuf>>,
-        approval_policy: Option<codex_app_server_protocol::AskForApproval>,
+        approval_policy: Option<genex_app_server_protocol::AskForApproval>,
         sandbox: Option<SandboxMode>,
         permissions: Option<String>,
         base_instructions: Option<String>,
@@ -1616,7 +1616,7 @@ impl ThreadRequestProcessor {
             workspace_roots: runtime_workspace_roots,
             default_permissions: permissions,
             approval_policy: approval_policy
-                .map(codex_app_server_protocol::AskForApproval::to_core),
+                .map(genex_app_server_protocol::AskForApproval::to_core),
             sandbox_mode: sandbox.map(SandboxMode::to_core),
             codex_linux_sandbox_exe: self.arg0_paths.codex_linux_sandbox_exe.clone(),
             main_execve_wrapper_exe: self.arg0_paths.main_execve_wrapper_exe.clone(),
@@ -1770,7 +1770,7 @@ impl ThreadRequestProcessor {
         let ThreadSetNameParams { thread_id, name } = params;
         let thread_id = ThreadId::from_string(&thread_id)
             .map_err(|err| invalid_request(format!("invalid thread id: {err}")))?;
-        let Some(name) = codex_core::util::normalize_thread_name(&name) else {
+        let Some(name) = genex_core::util::normalize_thread_name(&name) else {
             return Err(invalid_request("thread name must not be empty"));
         };
 
@@ -2101,7 +2101,7 @@ impl ThreadRequestProcessor {
 
         let revert_result = self
             .thread_store
-            .revert_thread(codex_thread_store::RevertThreadParams {
+            .revert_thread(genex_thread_store::RevertThreadParams {
                 thread_id,
                 before_turn_id,
                 multi_agent_version: thread.multi_agent_version(),
@@ -2894,7 +2894,7 @@ impl ThreadRequestProcessor {
         if include_turns {
             if matches!(
                 thread.history_mode,
-                codex_app_server_protocol::ThreadHistoryMode::Paginated
+                genex_app_server_protocol::ThreadHistoryMode::Paginated
             ) {
                 self.thread_store
                     .persist_thread(thread_id, PersistContext::Standard)
@@ -3206,7 +3206,7 @@ impl ThreadRequestProcessor {
         &self,
         thread_id: ThreadId,
         params: &ThreadResumeInitialTurnsPageParams,
-    ) -> Result<codex_app_server_protocol::TurnsPage, JSONRPCErrorError> {
+    ) -> Result<genex_app_server_protocol::TurnsPage, JSONRPCErrorError> {
         self.paginated_thread_turns_list_response(
             thread_id,
             /*cursor*/ None,
@@ -3222,7 +3222,7 @@ impl ThreadRequestProcessor {
         &self,
         thread_id: ThreadId,
         params: &ThreadResumeInitialTurnsPageParams,
-    ) -> Result<codex_app_server_protocol::TurnsPage, JSONRPCErrorError> {
+    ) -> Result<genex_app_server_protocol::TurnsPage, JSONRPCErrorError> {
         // A running resume overlays the newest live turn on this durable page.
         // Reserve one row so the overlay keeps the requested limit and the
         // durable next cursor still starts after the last returned stored turn.
@@ -4451,8 +4451,8 @@ impl ThreadRequestProcessor {
                 .map_err(thread_store_resume_read_error)?;
             if let Some(current_path) = current_thread.rollout_path.as_ref()
                 && !path_utils::paths_match_after_normalization(
-                    codex_rollout::plain_rollout_path(requested_path).as_path(),
-                    codex_rollout::plain_rollout_path(current_path).as_path(),
+                    genex_rollout::plain_rollout_path(requested_path).as_path(),
+                    genex_rollout::plain_rollout_path(current_path).as_path(),
                 )
             {
                 return Err(invalid_request(format!(
@@ -4723,21 +4723,21 @@ impl ThreadRequestProcessor {
         let source_thread_name = source_thread
             .name
             .as_deref()
-            .and_then(codex_core::util::normalize_thread_name);
+            .and_then(genex_core::util::normalize_thread_name);
         let mut prepared_fork = if paginated_source {
             let boundary = match (last_turn_id.as_deref(), before_turn_id.as_deref()) {
                 (Some(turn_id), None) => {
-                    codex_thread_store::ForkBoundary::ThroughTurn(turn_id.to_string())
+                    genex_thread_store::ForkBoundary::ThroughTurn(turn_id.to_string())
                 }
                 (None, Some(turn_id)) => {
-                    codex_thread_store::ForkBoundary::BeforeTurn(turn_id.to_string())
+                    genex_thread_store::ForkBoundary::BeforeTurn(turn_id.to_string())
                 }
-                (None, None) => codex_thread_store::ForkBoundary::Latest,
+                (None, None) => genex_thread_store::ForkBoundary::Latest,
                 (Some(_), Some(_)) => unreachable!("fork boundaries are mutually exclusive"),
             };
             Some(
                 self.thread_store
-                    .prepare_fork(codex_thread_store::PrepareForkParams {
+                    .prepare_fork(genex_thread_store::PrepareForkParams {
                         thread_id: source_thread_id,
                         boundary,
                     })
@@ -5552,7 +5552,7 @@ pub(super) fn build_thread_resume_initial_turns_page(
     has_live_running_thread: bool,
     active_turn: Option<Turn>,
     params: &ThreadResumeInitialTurnsPageParams,
-) -> Result<codex_app_server_protocol::TurnsPage, JSONRPCErrorError> {
+) -> Result<genex_app_server_protocol::TurnsPage, JSONRPCErrorError> {
     build_thread_turns_page_response(
         items,
         loaded_status,
@@ -5672,7 +5672,7 @@ fn paginated_history_list_error(err: ThreadStoreError) -> JSONRPCErrorError {
 }
 
 fn deserialize_stored_thread_item(
-    item: codex_thread_store::StoredThreadItem,
+    item: genex_thread_store::StoredThreadItem,
 ) -> Result<ThreadItem, JSONRPCErrorError> {
     serde_json::from_slice::<ThreadItem>(&item.item_json).map_err(|err| {
         internal_error(format!(
@@ -5870,7 +5870,7 @@ pub(crate) fn thread_from_stored_thread(
     thread: StoredThread,
     fallback_provider: &str,
     fallback_cwd: &AbsolutePathBuf,
-) -> (Thread, Option<codex_thread_store::StoredThreadHistory>) {
+) -> (Thread, Option<genex_thread_store::StoredThreadHistory>) {
     let path = thread.rollout_path;
     let git_info = thread.git_info.map(|info| ApiGitInfo {
         sha: info.commit_hash.map(|sha| sha.0),
@@ -5999,7 +5999,7 @@ fn summary_from_state_db_metadata(
     cwd: PathBuf,
     cli_version: String,
     source: String,
-    _thread_source: Option<codex_protocol::protocol::ThreadSource>,
+    _thread_source: Option<genex_protocol::protocol::ThreadSource>,
     agent_nickname: Option<String>,
     agent_role: Option<String>,
     git_sha: Option<String>,
@@ -6009,7 +6009,7 @@ fn summary_from_state_db_metadata(
     let preview = preview.or(first_user_message).unwrap_or_default();
     let source = serde_json::from_str(&source)
         .or_else(|_| serde_json::from_value(serde_json::Value::String(source.clone())))
-        .unwrap_or(codex_protocol::protocol::SessionSource::Unknown);
+        .unwrap_or(genex_protocol::protocol::SessionSource::Unknown);
     let source = with_thread_spawn_agent_metadata(source, agent_nickname, agent_role);
     let git_info = if git_sha.is_none() && git_branch.is_none() && git_origin_url.is_none() {
         None
@@ -6064,8 +6064,8 @@ fn preview_from_rollout_items(items: &[RolloutItem]) -> String {
     items
         .iter()
         .find_map(|item| match item {
-            RolloutItem::ResponseItem(item) => match codex_core::parse_turn_item(&item.item) {
-                Some(codex_protocol::items::TurnItem::UserMessage(user)) => Some(user.message()),
+            RolloutItem::ResponseItem(item) => match genex_core::parse_turn_item(&item.item) {
+                Some(genex_protocol::items::TurnItem::UserMessage(user)) => Some(user.message()),
                 _ => None,
             },
             _ => None,
@@ -6077,7 +6077,7 @@ fn preview_from_rollout_items(items: &[RolloutItem]) -> String {
 fn build_thread_from_snapshot(
     thread_id: ThreadId,
     session_id: String,
-    multi_agent_version: Option<codex_protocol::protocol::MultiAgentVersion>,
+    multi_agent_version: Option<genex_protocol::protocol::MultiAgentVersion>,
     config_snapshot: &ThreadConfigSnapshot,
     path: Option<PathBuf>,
 ) -> Thread {

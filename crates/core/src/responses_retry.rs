@@ -6,12 +6,12 @@ use crate::client::ModelClientSession;
 use crate::session::session::Session;
 use crate::session::turn_context::TurnContext;
 use crate::util::backoff;
-use codex_client::RetryOperation;
-use codex_features::Feature;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::CodexErrorDetails;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::WarningEvent;
+use genex_client::RetryOperation;
+use genex_features::Feature;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::WarningEvent;
 use tracing::warn;
 
 const INITIAL_CONNECTION_RETRY_DELAY: Duration = Duration::from_secs(5);
@@ -74,7 +74,7 @@ pub(crate) async fn handle_retryable_response_stream_error(
         sess.notify_stream_error(turn_context, "Reconnecting... waiting for network", err)
             .await;
         retry_state.connection_retries = retry_state.connection_retries.saturating_add(1);
-        codex_client::record_retry!(retry_state.connection_retries, retry_delay, operation);
+        genex_client::record_retry!(retry_state.connection_retries, retry_delay, operation);
         tokio::time::sleep(retry_delay).await;
         retry_state.connection_retry_delay = retry_delay
             .saturating_mul(2)
@@ -120,7 +120,7 @@ pub(crate) async fn handle_retryable_response_stream_error(
             )
             .await;
         }
-        codex_client::record_retry!(retry_count, delay, operation);
+        genex_client::record_retry!(retry_count, delay, operation);
         tokio::time::sleep(delay).await;
         return Ok(());
     }

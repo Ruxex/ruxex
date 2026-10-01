@@ -1,11 +1,11 @@
 use crate::CurSource;
 use crate::RewriteProfile;
-use codex_core_plugins::CommandDescriptionMode;
-use codex_core_plugins::CommandMigrationProfile;
-use codex_core_plugins::CommandRewriteProfile;
-use codex_core_plugins::count_missing_commands_with_profile;
-use codex_core_plugins::import_commands_with_profile;
-use codex_core_plugins::missing_command_names_with_profile;
+use genex_core_plugins::CommandDescriptionMode;
+use genex_core_plugins::CommandMigrationProfile;
+use genex_core_plugins::CommandRewriteProfile;
+use genex_core_plugins::count_missing_commands_with_profile;
+use genex_core_plugins::import_commands_with_profile;
+use genex_core_plugins::missing_command_names_with_profile;
 use serde_json::Value as JsonValue;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;

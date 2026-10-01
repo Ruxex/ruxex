@@ -1,6 +1,6 @@
 //! Integration coverage for model catalogs supplied through the public cache interface.
 
-use codex_core::TurnInputRequest;
+use genex_core::TurnInputRequest;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::atomic::AtomicUsize;
@@ -9,30 +9,30 @@ use std::sync::atomic::Ordering;
 use anyhow::Result;
 use base64::Engine;
 use chrono::Utc;
-use codex_http_client::HttpClientFactory;
-use codex_login::AuthManager;
-use codex_login::CodexAuth;
-use codex_model_provider::create_model_provider;
-use codex_model_provider_info::built_in_model_providers;
-use codex_models_manager::cache::ModelsCache;
-use codex_models_manager::cache::ModelsCacheEntry;
-use codex_models_manager::cache::ModelsCacheError;
-use codex_models_manager::cache::ModelsCacheFuture;
-use codex_models_manager::manager::ModelsEndpointClient;
-use codex_models_manager::manager::ModelsEndpointFuture;
-use codex_models_manager::manager::ModelsEndpointResponse;
-use codex_models_manager::manager::RemoteModelsManager;
-use codex_models_manager::manager::RefreshStrategy;
-use codex_models_manager::manager::SharedModelsManager;
-use codex_models_manager::model_info::model_info_from_slug;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::error::Result as CoreResult;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelVisibility;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
+use genex_http_client::HttpClientFactory;
+use genex_login::AuthManager;
+use genex_login::CodexAuth;
+use genex_model_provider::create_model_provider;
+use genex_model_provider_info::built_in_model_providers;
+use genex_models_manager::cache::ModelsCache;
+use genex_models_manager::cache::ModelsCacheEntry;
+use genex_models_manager::cache::ModelsCacheError;
+use genex_models_manager::cache::ModelsCacheFuture;
+use genex_models_manager::manager::ModelsEndpointClient;
+use genex_models_manager::manager::ModelsEndpointFuture;
+use genex_models_manager::manager::ModelsEndpointResponse;
+use genex_models_manager::manager::RemoteModelsManager;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_models_manager::manager::SharedModelsManager;
+use genex_models_manager::model_info::model_info_from_slug;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::error::Result as CoreResult;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -210,7 +210,7 @@ async fn run_agent_with_model(models_manager: SharedModelsManager, model_slug: &
         .get_models_manager()
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
     assert!(
@@ -257,7 +257,7 @@ async fn injected_cache_hit_drives_agent_model_selection() -> Result<()> {
             identity: Some("test-provider".to_string()),
             fetched_at: Utc::now(),
             etag: None,
-            client_version: Some(codex_models_manager::client_version_to_whole()),
+            client_version: Some(genex_models_manager::client_version_to_whole()),
             models: vec![remote_model(model_slug)],
         }),
         load_error: false,
@@ -358,7 +358,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
             manager
                 .list_models(
                     RefreshStrategy::Online,
-                    codex_core::test_support::default_http_client_factory(),
+                    genex_core::test_support::default_http_client_factory(),
                 )
                 .await
         }
@@ -386,7 +386,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
     manager
         .list_models(
             RefreshStrategy::Online,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
     assert_eq!(manager.get_remote_models().await, vec![new_model.clone()]);

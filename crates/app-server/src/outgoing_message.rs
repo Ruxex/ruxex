@@ -7,20 +7,20 @@ use std::sync::atomic::Ordering;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
-use codex_app_server_protocol::ClientResponsePayload;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::Result;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerNotificationEnvelope;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ServerRequestPayload;
-use codex_diagnostics::Gauge;
-use codex_diagnostics::GaugeGuard;
-use codex_otel::span_w3c_trace_context;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::W3cTraceContext;
-use codex_protocol::request_permissions::RequestPermissionsResponse;
+use genex_app_server_protocol::ClientResponsePayload;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::Result;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ServerNotificationEnvelope;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::ServerRequestPayload;
+use genex_diagnostics::Gauge;
+use genex_diagnostics::GaugeGuard;
+use genex_otel::span_w3c_trace_context;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::W3cTraceContext;
+use genex_protocol::request_permissions::RequestPermissionsResponse;
 use tokio::sync::Mutex;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
@@ -30,14 +30,14 @@ use tracing::warn;
 
 use crate::error_code::internal_error;
 use crate::server_request_error::TURN_TRANSITION_PENDING_REQUEST_ERROR_REASON;
-pub(crate) use codex_app_server_transport::ConnectionId;
-pub(crate) use codex_app_server_transport::OutgoingError;
-pub(crate) use codex_app_server_transport::OutgoingMessage;
-pub(crate) use codex_app_server_transport::OutgoingResponse;
-pub(crate) use codex_app_server_transport::QueuedOutgoingMessage;
+pub(crate) use genex_app_server_transport::ConnectionId;
+pub(crate) use genex_app_server_transport::OutgoingError;
+pub(crate) use genex_app_server_transport::OutgoingMessage;
+pub(crate) use genex_app_server_transport::OutgoingResponse;
+pub(crate) use genex_app_server_transport::QueuedOutgoingMessage;
 
 #[cfg(test)]
-use codex_protocol::account::PlanType;
+use genex_protocol::account::PlanType;
 
 pub(crate) type ClientRequestResult = std::result::Result<Result, JSONRPCErrorError>;
 
@@ -125,7 +125,7 @@ pub(crate) enum OutgoingEnvelope {
 
 /// Sends messages to the client and manages request callbacks.
 pub(crate) struct OutgoingMessageSender {
-    verification_auth: OnceLock<Arc<codex_login::AuthManager>>,
+    verification_auth: OnceLock<Arc<genex_login::AuthManager>>,
     verification_connections: Mutex<HashSet<ConnectionId>>,
     next_server_request_id: AtomicI64,
     sender: mpsc::Sender<OutgoingEnvelope>,
@@ -323,7 +323,7 @@ impl OutgoingMessageSender {
         let user_verification = matches!(
             &request,
             ServerRequest::McpServerElicitationRequest { params, .. }
-                if matches!(&params.request, codex_app_server_protocol::McpServerElicitationRequest::UserVerification { .. })
+                if matches!(&params.request, genex_app_server_protocol::McpServerElicitationRequest::UserVerification { .. })
         );
         // Snapshot before waiting on eligibility or callback locks. A request cannot inherit
         // whichever account happens to be current after an unrelated operation releases a lock.

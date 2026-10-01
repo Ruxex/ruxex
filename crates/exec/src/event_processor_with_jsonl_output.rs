@@ -3,19 +3,19 @@ use std::path::PathBuf;
 use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering;
 
-use codex_app_server_protocol::CollabAgentTool;
-use codex_app_server_protocol::CollabAgentToolCallStatus;
-use codex_app_server_protocol::CommandExecutionStatus;
-use codex_app_server_protocol::McpToolCallStatus;
-use codex_app_server_protocol::PatchApplyStatus;
-use codex_app_server_protocol::PatchChangeKind;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadTokenUsage;
-use codex_app_server_protocol::TurnStatus;
-use codex_core::config::Config;
-use codex_protocol::models::WebSearchAction;
-use codex_protocol::protocol::SessionConfiguredEvent;
+use genex_app_server_protocol::CollabAgentTool;
+use genex_app_server_protocol::CollabAgentToolCallStatus;
+use genex_app_server_protocol::CommandExecutionStatus;
+use genex_app_server_protocol::McpToolCallStatus;
+use genex_app_server_protocol::PatchApplyStatus;
+use genex_app_server_protocol::PatchChangeKind;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadTokenUsage;
+use genex_app_server_protocol::TurnStatus;
+use genex_core::config::Config;
+use genex_protocol::models::WebSearchAction;
+use genex_protocol::protocol::SessionConfiguredEvent;
 use serde_json::json;
 
 pub use crate::event_processor::CodexStatus;
@@ -127,13 +127,13 @@ impl EventProcessorWithJsonOutput {
         }
     }
 
-    pub fn map_todo_items(plan: &[codex_app_server_protocol::TurnPlanStep]) -> Vec<TodoItem> {
+    pub fn map_todo_items(plan: &[genex_app_server_protocol::TurnPlanStep]) -> Vec<TodoItem> {
         plan.iter()
             .map(|step| TodoItem {
                 text: step.step.clone(),
                 completed: matches!(
                     step.status,
-                    codex_app_server_protocol::TurnPlanStepStatus::Completed
+                    genex_app_server_protocol::TurnPlanStepStatus::Completed
                 ),
             })
             .collect()
@@ -264,25 +264,25 @@ impl EventProcessorWithJsonOutput {
                                 thread_id,
                                 CollabAgentState {
                                     status: match state.status {
-                                        codex_app_server_protocol::CollabAgentStatus::PendingInit => {
+                                        genex_app_server_protocol::CollabAgentStatus::PendingInit => {
                                             CollabAgentStatus::PendingInit
                                         }
-                                        codex_app_server_protocol::CollabAgentStatus::Running => {
+                                        genex_app_server_protocol::CollabAgentStatus::Running => {
                                             CollabAgentStatus::Running
                                         }
-                                        codex_app_server_protocol::CollabAgentStatus::Interrupted => {
+                                        genex_app_server_protocol::CollabAgentStatus::Interrupted => {
                                             CollabAgentStatus::Interrupted
                                         }
-                                        codex_app_server_protocol::CollabAgentStatus::Completed => {
+                                        genex_app_server_protocol::CollabAgentStatus::Completed => {
                                             CollabAgentStatus::Completed
                                         }
-                                        codex_app_server_protocol::CollabAgentStatus::Errored => {
+                                        genex_app_server_protocol::CollabAgentStatus::Errored => {
                                             CollabAgentStatus::Errored
                                         }
-                                        codex_app_server_protocol::CollabAgentStatus::Shutdown => {
+                                        genex_app_server_protocol::CollabAgentStatus::Shutdown => {
                                             CollabAgentStatus::Shutdown
                                         }
-                                        codex_app_server_protocol::CollabAgentStatus::NotFound => {
+                                        genex_app_server_protocol::CollabAgentStatus::NotFound => {
                                             CollabAgentStatus::NotFound
                                         }
                                     },

@@ -5,7 +5,7 @@ use crate::selection_list::selection_option_row;
 use crate::session_start::SessionStartAction;
 use crate::tui::Tui;
 use crate::tui::TuiEvent;
-use codex_protocol::ThreadId;
+use genex_protocol::ThreadId;
 use color_eyre::Result;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;

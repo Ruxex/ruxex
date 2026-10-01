@@ -1,8 +1,8 @@
 use std::path::Path;
 
-use codex_app_server_protocol::ServerNotification;
-use codex_core::config::Config;
-use codex_protocol::protocol::SessionConfiguredEvent;
+use genex_app_server_protocol::ServerNotification;
+use genex_core::config::Config;
+use genex_protocol::protocol::SessionConfiguredEvent;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CodexStatus {

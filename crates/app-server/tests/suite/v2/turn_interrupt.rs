@@ -7,20 +7,20 @@ use app_test_support::create_command_execution_sse_response;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_sequence;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ServerRequestResolvedNotification;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnCompletedNotification;
-use codex_app_server_protocol::TurnInterruptParams;
-use codex_app_server_protocol::TurnInterruptResponse;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput as V2UserInput;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::ServerRequestResolvedNotification;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::TurnCompletedNotification;
+use genex_app_server_protocol::TurnInterruptParams;
+use genex_app_server_protocol::TurnInterruptResponse;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::UserInput as V2UserInput;
 use core_test_support::skip_if_remote;
 use tempfile::TempDir;
 use tokio::time::timeout;
@@ -255,7 +255,7 @@ async fn turn_interrupt_resolves_pending_command_approval_request() -> Result<()
                     text_elements: Vec::new(),
                 }],
                 cwd: Some(working_directory),
-                approval_policy: Some(codex_app_server_protocol::AskForApproval::UnlessTrusted),
+                approval_policy: Some(genex_app_server_protocol::AskForApproval::UnlessTrusted),
                 ..Default::default()
             },
         })

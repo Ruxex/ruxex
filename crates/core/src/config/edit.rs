@@ -1,16 +1,16 @@
 use crate::path_utils::resolve_symlink_write_paths;
 use crate::path_utils::write_atomically;
 use anyhow::Context;
-use codex_config::CONFIG_TOML_FILE;
-use codex_config::is_structured_feature_path;
-use codex_config::types::McpServerConfig;
-use codex_config::types::ResumeCwdMode;
-use codex_config::types::SessionPickerViewMode;
-use codex_config::types::ToolSuggestDisabledTool;
-use codex_features::FEATURES;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::config_types::TrustLevel;
-use codex_protocol::model_types::ReasoningEffort;
+use genex_config::CONFIG_TOML_FILE;
+use genex_config::is_structured_feature_path;
+use genex_config::types::McpServerConfig;
+use genex_config::types::ResumeCwdMode;
+use genex_config::types::SessionPickerViewMode;
+use genex_config::types::ToolSuggestDisabledTool;
+use genex_features::FEATURES;
+use genex_protocol::config_types::ServiceTier;
+use genex_protocol::config_types::TrustLevel;
+use genex_protocol::model_types::ReasoningEffort;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -792,7 +792,7 @@ impl ConfigEditsBuilder {
         let config_path = config
             .config_layer_stack
             .get_user_config_file()
-            .map(codex_utils_absolute_path::AbsolutePathBuf::to_path_buf)
+            .map(genex_utils_absolute_path::AbsolutePathBuf::to_path_buf)
             .unwrap_or_else(|| config.codex_home.join(CONFIG_TOML_FILE).to_path_buf());
         Self::for_config_path(&config_path)
     }

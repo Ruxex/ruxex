@@ -37,7 +37,7 @@
 - Inspect: `crates/login/src/auth/manager.rs`
 - Inspect: `crates/login/src/auth/workload_identity.rs`
 - Inspect: `crates/model-provider/src/auth.rs`
-- Inspect: `crates/codex-mcp/`
+- Inspect: `crates/genex-mcp/`
 
 **Interfaces:**
 
@@ -52,7 +52,7 @@
 
 `rg` と `cargo metadata --no-deps` で、削除対象と保持対象の境界を記録する。特にuser verification、attestation、managed model catalog、ChatGPT usage/rate-limit、cyber accessの各consumerを削除対象として列挙する。
 
-### Task 2: `codex-login` の認証モデルと保存形式をAPI Key中心へ移行
+### Task 2: `genex-login` の認証モデルと保存形式をAPI Key中心へ移行
 
 **Files:**
 
@@ -204,7 +204,7 @@ Workload Identity fixture、token exchange、refresh、managed account専用ケ�
 
 - [x] **Step 4: 参照がないことを確認してからクレートを削除する**
 
-Run: `cargo metadata --no-deps`、`cargo tree -i codex-workload-identity`、`rg -n 'WorkloadIdentity|workload_identity|codex-workload-identity' crates Cargo.toml`
+Run: `cargo metadata --no-deps`、`cargo tree -i genex-workload-identity`、`rg -n 'WorkloadIdentity|workload_identity|codex-workload-identity' crates Cargo.toml`
 
 Expected: production/test consumer、workspace member、dependency edgeが残っていないこと。
 
@@ -239,12 +239,12 @@ Expected: production workspaceのtype-check成功。
 
 Run: `git diff --check` および `git status --short`
 
-Expected: 意図した削除・移行だけが残り、秘密情報や不要な生成差分がないこと。`codex-cli.json` の Hawk 出力は、ユーザー指定により更新せず現状を保持する。
+Expected: 意図した削除・移行だけが残り、秘密情報や不要な生成差分がないこと。`genex-cli.json` の Hawk 出力は、ユーザー指定により更新せず現状を保持する。
 
 ## 進捗追記（2026-09-30）
 
 - Workload Identity 削除後に残っていた未登録テストソース `crates/core/tests/suite/client.rs` と `code_mode.rs` を削除した。
 - Workload Identity の環境変数スクラブ、obsolete な認証 claim、ChatGPT 専用テストヘルパーを削除した。
 - `docs/pre-release-compatibility-inventory.md` と `docs/provider-decoupling-candidates.md` に producer/consumer 監査結果と判断を反映した。
-- `codex-cli.json` は Hawk 更新を行わず、残存する古い finding は明示的に保留した。
+- `genex-cli.json` は Hawk 更新を行わず、残存する古い finding は明示的に保留した。
 - 検証済み: `just check --tests`、`just check`、`git diff --check`。

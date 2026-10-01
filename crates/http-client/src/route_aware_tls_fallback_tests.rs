@@ -335,7 +335,7 @@ async fn does_not_retry_a_non_replayable_streaming_request() {
 }
 
 fn spawn_successful_tls_fallback_server() -> io::Result<SuccessfulTlsFallbackServer> {
-    codex_utils_rustls_provider::ensure_rustls_crypto_provider();
+    genex_utils_rustls_provider::ensure_rustls_crypto_provider();
     let CertifiedKey { cert, signing_key } =
         generate_simple_self_signed(vec!["127.0.0.1".to_string()]).map_err(io::Error::other)?;
     let certificate = cert.der().clone();

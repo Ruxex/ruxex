@@ -1,12 +1,12 @@
-use codex_core::test_support::all_model_presets;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::model_types::ConfigShellToolType;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelMessages;
-use codex_protocol::model_types::ModelPreset;
-use codex_protocol::model_types::ModelVisibility;
-use codex_protocol::model_types::TruncationPolicyConfig;
-use codex_protocol::model_types::default_input_modalities;
+use genex_core::test_support::all_model_presets;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::model_types::ConfigShellToolType;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelMessages;
+use genex_protocol::model_types::ModelPreset;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::TruncationPolicyConfig;
+use genex_protocol::model_types::default_input_modalities;
 use std::path::Path;
 
 /// Convert a ModelPreset to ModelInfo for cache storage.
@@ -102,20 +102,20 @@ pub async fn write_models_cache_with_models(
     codex_home: &Path,
     models: Vec<ModelInfo>,
 ) -> std::io::Result<()> {
-    let config = codex_core::config::ConfigBuilder::default()
-        .loader_overrides(codex_config::LoaderOverrides::without_managed_config_for_tests())
+    let config = genex_core::config::ConfigBuilder::default()
+        .loader_overrides(genex_config::LoaderOverrides::without_managed_config_for_tests())
         .codex_home(codex_home.to_path_buf())
         .build()
         .await?;
-    let auth = codex_login::CodexAuth::from_auth_storage(
+    let auth = genex_login::CodexAuth::from_auth_storage(
         codex_home,
         config.cli_auth_credentials_store_mode,
         Some(&config.managed_auth_base_url),
         config.auth_keyring_backend_kind(),
-        &codex_login::test_support::transport_default_auth_route_config(),
+        &genex_login::test_support::transport_default_auth_route_config(),
     )
     .await?;
-    let cache = codex_model_provider::test_support::models_cache_entry(
+    let cache = genex_model_provider::test_support::models_cache_entry(
         &config.model_provider,
         auth.as_ref(),
         models,

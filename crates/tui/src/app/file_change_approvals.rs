@@ -12,7 +12,7 @@ impl App {
         thread_id: ThreadId,
         turn_id: &str,
         item_id: &str,
-    ) -> Option<Vec<codex_app_server_protocol::FileUpdateChange>> {
+    ) -> Option<Vec<genex_app_server_protocol::FileUpdateChange>> {
         let channel = self.thread_event_channels.get(&thread_id)?;
         let store = channel.store.lock().await;
         store.file_change_changes(turn_id, item_id)
@@ -48,7 +48,7 @@ impl App {
     pub(super) fn handle_file_change_request(
         &mut self,
         request: ServerRequest,
-        changes: Vec<codex_app_server_protocol::FileUpdateChange>,
+        changes: Vec<genex_app_server_protocol::FileUpdateChange>,
     ) {
         let ServerRequest::FileChangeRequestApproval { params, .. } = request else {
             return;

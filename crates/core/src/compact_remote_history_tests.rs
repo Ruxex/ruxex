@@ -1,5 +1,5 @@
 use super::*;
-use codex_history::CodexHarnessMetadata;
+use genex_history::CodexHarnessMetadata;
 
 #[test]
 fn rewritten_output_preserves_harness_metadata() {

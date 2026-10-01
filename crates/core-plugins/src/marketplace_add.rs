@@ -1,8 +1,8 @@
 use crate::installed_marketplaces::marketplace_install_root;
 use crate::marketplace_policy::validate_marketplace_name_for_add;
 use crate::marketplace_policy::validate_marketplace_source_for_add;
-use codex_config::ConfigRequirements;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_config::ConfigRequirements;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
@@ -218,9 +218,9 @@ where
 mod tests {
     use super::*;
     use anyhow::Result;
-    use codex_config::RequirementSource;
-    use codex_config::RequirementsLayerEntry;
-    use codex_config::compose_requirements;
+    use genex_config::RequirementSource;
+    use genex_config::RequirementsLayerEntry;
+    use genex_config::compose_requirements;
     use pretty_assertions::assert_eq;
     use std::cell::Cell;
     use tempfile::TempDir;
@@ -266,7 +266,7 @@ mod tests {
                 .is_file()
         );
 
-        let config = fs::read_to_string(codex_home.path().join(codex_config::CONFIG_TOML_FILE))?;
+        let config = fs::read_to_string(codex_home.path().join(genex_config::CONFIG_TOML_FILE))?;
         assert!(config.contains("[marketplaces.debug]"));
         assert!(config.contains("source_type = \"git\""));
         assert!(config.contains("source = \"https://github.com/owner/repo.git\""));
@@ -309,7 +309,7 @@ url = "https://github.com/example/allowed.git"
         assert!(
             !codex_home
                 .path()
-                .join(codex_config::CONFIG_TOML_FILE)
+                .join(genex_config::CONFIG_TOML_FILE)
                 .exists()
         );
     }
@@ -346,7 +346,7 @@ url = "https://github.com/example/allowed.git"
                 .exists()
         );
 
-        let config = fs::read_to_string(codex_home.path().join(codex_config::CONFIG_TOML_FILE))?;
+        let config = fs::read_to_string(codex_home.path().join(genex_config::CONFIG_TOML_FILE))?;
         let config: toml::Value = toml::from_str(&config)?;
         assert_eq!(
             config["marketplaces"]["debug"]["source_type"].as_str(),
@@ -386,7 +386,7 @@ url = "https://github.com/example/allowed.git"
         assert!(
             !codex_home
                 .path()
-                .join(codex_config::CONFIG_TOML_FILE)
+                .join(genex_config::CONFIG_TOML_FILE)
                 .exists()
         );
         Ok(())

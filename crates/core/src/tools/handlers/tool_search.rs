@@ -12,14 +12,14 @@ use bm25::Document;
 use bm25::Language;
 use bm25::SearchEngine;
 use bm25::SearchEngineBuilder;
-use codex_tools::LoadableToolSpec;
-use codex_tools::TOOL_SEARCH_DEFAULT_LIMIT;
-use codex_tools::TOOL_SEARCH_TOOL_NAME;
-use codex_tools::ToolName;
-use codex_tools::ToolSearchEntry;
-use codex_tools::ToolSearchInfo;
-use codex_tools::ToolSpec;
-use codex_tools::coalesce_loadable_tool_specs;
+use genex_tools::LoadableToolSpec;
+use genex_tools::TOOL_SEARCH_DEFAULT_LIMIT;
+use genex_tools::TOOL_SEARCH_TOOL_NAME;
+use genex_tools::ToolName;
+use genex_tools::ToolSearchEntry;
+use genex_tools::ToolSearchInfo;
+use genex_tools::ToolSpec;
+use genex_tools::coalesce_loadable_tool_specs;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::Weak;
@@ -179,7 +179,7 @@ impl ToolExecutor<ToolInvocation> for ToolSearchHandler {
         true
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> codex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

@@ -1,8 +1,8 @@
-use codex_features::Feature;
-use codex_features::Features;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::TUI_VISIBLE_COLLABORATION_MODES;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_features::Feature;
+use genex_features::Features;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::TUI_VISIBLE_COLLABORATION_MODES;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]

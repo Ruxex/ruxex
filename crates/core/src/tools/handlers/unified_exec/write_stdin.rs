@@ -12,8 +12,8 @@ use crate::unified_exec::UnifiedExecContext;
 use crate::unified_exec::UnifiedExecError;
 use crate::unified_exec::WriteStdinInteractionEvent;
 use crate::unified_exec::WriteStdinRequest;
-use codex_tools::ToolName;
-use codex_tools::ToolSpec;
+use genex_tools::ToolName;
+use genex_tools::ToolSpec;
 use serde::Deserialize;
 
 use super::super::shell_spec::create_write_stdin_tool;
@@ -46,7 +46,7 @@ impl ToolExecutor<ToolInvocation> for WriteStdinHandler {
         true
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> codex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

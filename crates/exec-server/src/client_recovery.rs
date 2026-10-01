@@ -2,12 +2,12 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use codex_network_proxy::NetworkDecision;
-use codex_network_proxy::NetworkPolicyDecision;
-use codex_network_proxy::NetworkPolicyRequest;
-use codex_network_proxy::NetworkProtocol;
-use codex_network_proxy::NetworkRequestCancellation;
-use codex_network_proxy::NetworkRequestCancellationReason;
+use genex_network_proxy::NetworkDecision;
+use genex_network_proxy::NetworkPolicyDecision;
+use genex_network_proxy::NetworkPolicyRequest;
+use genex_network_proxy::NetworkProtocol;
+use genex_network_proxy::NetworkRequestCancellation;
+use genex_network_proxy::NetworkRequestCancellationReason;
 use serde_json::Value;
 use tokio::sync::mpsc;
 use tokio::time::Instant;

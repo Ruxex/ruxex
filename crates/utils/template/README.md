@@ -1,4 +1,4 @@
-# codex-utils-template
+# genex-utils-template
 
 Small, strict string templating for prompt and text assets.
 

@@ -1,10 +1,10 @@
 #![cfg(unix)]
-use codex_core::spawn::StdioPolicy;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_absolute_path::test_support::PathBufExt;
-use codex_utils_path_uri::PathUri;
+use genex_core::spawn::StdioPolicy;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::test_support::PathBufExt;
+use genex_utils_path_uri::PathUri;
 use std::collections::HashMap;
 use std::future::Future;
 use std::io;
@@ -20,11 +20,11 @@ pub(super) async fn spawn_command_under_sandbox(
     stdio_policy: StdioPolicy,
     env: HashMap<String, String>,
 ) -> std::io::Result<Child> {
-    use codex_core::exec::ExecCapturePolicy;
-    use codex_core::exec::ExecParams;
-    use codex_core::exec::build_exec_request;
-    use codex_core::sandboxing::SandboxPermissions;
-    use codex_protocol::config_types::WindowsSandboxLevel;
+    use genex_core::exec::ExecCapturePolicy;
+    use genex_core::exec::ExecParams;
+    use genex_core::exec::build_exec_request;
+    use genex_core::sandboxing::SandboxPermissions;
+    use genex_protocol::config_types::WindowsSandboxLevel;
     use std::process::Stdio;
 
     #[cfg(target_os = "linux")]

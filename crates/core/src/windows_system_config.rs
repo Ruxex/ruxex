@@ -1,6 +1,6 @@
 //! Telemetry for the default Windows system-config namespace.
 
-use codex_config::loader::WindowsSystemConfigNamespaceProbe as Probe;
+use genex_config::loader::WindowsSystemConfigNamespaceProbe as Probe;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
@@ -10,7 +10,7 @@ static NAMESPACE_SQUATTING_PROBE_RECORDED: AtomicBool = AtomicBool::new(false);
 
 /// Records the coarse system-config namespace probe once after metrics exist.
 pub(crate) fn emit_namespace_squatting_probe() {
-    let Some(metrics) = codex_otel::global() else {
+    let Some(metrics) = genex_otel::global() else {
         return;
     };
     if NAMESPACE_SQUATTING_PROBE_RECORDED
@@ -19,7 +19,7 @@ pub(crate) fn emit_namespace_squatting_probe() {
     {
         return;
     }
-    let result = match codex_config::loader::probe_windows_system_config_namespace() {
+    let result = match genex_config::loader::probe_windows_system_config_namespace() {
         Probe::Missing => "missing",
         Probe::Expected => "expected",
         Probe::UnexpectedType => "unexpected_type",

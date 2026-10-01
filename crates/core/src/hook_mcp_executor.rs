@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use anyhow::bail;
-use codex_hooks::HookMcpCall;
-use codex_hooks::HookMcpExecutor;
-use codex_mcp::McpRuntime;
-use codex_protocol::ThreadId;
+use genex_hooks::HookMcpCall;
+use genex_hooks::HookMcpExecutor;
+use genex_mcp::McpRuntime;
+use genex_protocol::ThreadId;
 use futures::FutureExt;
 use futures::future::BoxFuture;
 use serde_json::Value;

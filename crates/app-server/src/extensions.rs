@@ -2,28 +2,28 @@ use std::sync::Arc;
 use std::sync::Weak;
 use std::time::Duration;
 
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ThreadGoal;
-use codex_app_server_protocol::ThreadGoalUpdatedNotification;
-use codex_app_server_protocol::ThreadQueueChangedNotification;
-use codex_app_server_protocol::WarningNotification;
-use codex_core::ThreadManager;
-use codex_core::config::Config;
-use codex_exec_server::EnvironmentManager;
-use codex_extension_api::ExtensionEventSink;
-use codex_extension_api::ExtensionRegistry;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_extension_api::ExtensionTurnInterrupt;
-use codex_extension_api::ExtensionWarning;
-use codex_extension_api::TurnStartAdmission;
-use codex_goal_extension::GoalExtensionConfig;
-use codex_goal_extension::GoalService;
-use codex_login::AuthManager;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_queue_extension::QueuedItemService;
-use codex_rollout::state_db::StateDbHandle;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ThreadGoal;
+use genex_app_server_protocol::ThreadGoalUpdatedNotification;
+use genex_app_server_protocol::ThreadQueueChangedNotification;
+use genex_app_server_protocol::WarningNotification;
+use genex_core::ThreadManager;
+use genex_core::config::Config;
+use genex_exec_server::EnvironmentManager;
+use genex_extension_api::ExtensionEventSink;
+use genex_extension_api::ExtensionRegistry;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_extension_api::ExtensionTurnInterrupt;
+use genex_extension_api::ExtensionWarning;
+use genex_extension_api::TurnStartAdmission;
+use genex_goal_extension::GoalExtensionConfig;
+use genex_goal_extension::GoalService;
+use genex_login::AuthManager;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::Event;
+use genex_protocol::protocol::EventMsg;
+use genex_queue_extension::QueuedItemService;
+use genex_rollout::state_db::StateDbHandle;
 
 use crate::outgoing_message::OutgoingMessageSender;
 use crate::outgoing_message::ThreadScopedOutgoingMessageSender;
@@ -37,7 +37,7 @@ pub(crate) struct ThreadExtensionDependencies {
     pub(crate) thread_manager: Weak<ThreadManager>,
     pub(crate) goal_service: Arc<GoalService>,
     pub(crate) environment_manager: Arc<EnvironmentManager>,
-    pub(crate) executor_skill_provider: Arc<dyn codex_skills_extension::SkillProvider>,
+    pub(crate) executor_skill_provider: Arc<dyn genex_skills_extension::SkillProvider>,
     /// Process-scoped queue shared by idle dispatch and app-server requests.
     pub(crate) queue_service: Option<Arc<QueuedItemService>>,
     pub(crate) turn_start_admission: Option<Arc<dyn TurnStartAdmission>>,
@@ -62,40 +62,40 @@ pub(crate) fn thread_extensions(
         builder.turn_start_admission(admission);
     }
     if let Some(queue_service) = queue_service {
-        codex_queue_extension::install(&mut builder, queue_service);
+        genex_queue_extension::install(&mut builder, queue_service);
     }
-    codex_history_notes_extension::install(&mut builder, auth_manager.clone());
+    genex_history_notes_extension::install(&mut builder, auth_manager.clone());
     if let Some(state_db) = state_db {
-        codex_goal_extension::install_with_backend(
+        genex_goal_extension::install_with_backend(
             &mut builder,
             state_db,
-            codex_otel::global(),
+            genex_otel::global(),
             thread_manager.clone(),
             goal_service,
             |config: &Config| GoalExtensionConfig {
-                enabled: config.features.enabled(codex_features::Feature::Goals),
+                enabled: config.features.enabled(genex_features::Feature::Goals),
                 max_goal_token_budget: config.max_goal_token_budget,
             },
         );
     }
-    codex_mcp_extension::install(&mut builder);
-    codex_mcp_extension::install_executor_plugins(&mut builder, environment_manager);
-    codex_web_search_extension::install(&mut builder, auth_manager.clone());
-    let skill_providers = codex_skills_extension::SkillProviders::new()
+    genex_mcp_extension::install(&mut builder);
+    genex_mcp_extension::install_executor_plugins(&mut builder, environment_manager);
+    genex_web_search_extension::install(&mut builder, auth_manager.clone());
+    let skill_providers = genex_skills_extension::SkillProviders::new()
         .with_executor_provider(executor_skill_provider)
-        .with_host_provider(Arc::new(codex_skills_extension::HostSkillProvider::new()));
-    codex_skills_extension::install_with_providers_and_metrics(
+        .with_host_provider(Arc::new(genex_skills_extension::HostSkillProvider::new()));
+    genex_skills_extension::install_with_providers_and_metrics(
         &mut builder,
         skill_providers,
-        codex_otel::global(),
-        |config: &Config| codex_skills_extension::SkillsExtensionConfig {
+        genex_otel::global(),
+        |config: &Config| genex_skills_extension::SkillsExtensionConfig {
             include_instructions: config.include_skill_instructions,
             max_context_tokens: config.skill_max_context_tokens,
             bundled_skills_enabled: config.bundled_skills_enabled(),
             orchestrator_skills_enabled: config.orchestrator_skills_enabled,
             shadow_selection_enabled: config
                 .features
-                .enabled(codex_features::Feature::SkillSearch),
+                .enabled(genex_features::Feature::SkillSearch),
         },
     );
     Arc::new(builder.build())
@@ -310,9 +310,9 @@ fn truncate_extension_warning(mut message: String) -> String {
 
 #[cfg(test)]
 mod tests {
-    use codex_protocol::protocol::ThreadGoal as CoreThreadGoal;
-    use codex_protocol::protocol::ThreadGoalStatus;
-    use codex_protocol::protocol::ThreadGoalUpdatedEvent;
+    use genex_protocol::protocol::ThreadGoal as CoreThreadGoal;
+    use genex_protocol::protocol::ThreadGoalStatus;
+    use genex_protocol::protocol::ThreadGoalUpdatedEvent;
     use pretty_assertions::assert_eq;
     use tokio::sync::mpsc;
     use tokio::time::timeout;

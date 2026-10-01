@@ -1,11 +1,11 @@
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 
-use codex_git_utils::SanitizedGitUrl;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::ThreadSource;
-use codex_utils_string::to_ascii_json_string;
+use genex_git_utils::SanitizedGitUrl;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::ThreadSource;
+use genex_utils_string::to_ascii_json_string;
 use http::HeaderMap as ApiHeaderMap;
 use http::HeaderValue;
 use serde::Serialize;

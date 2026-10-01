@@ -6,25 +6,25 @@ use std::sync::OnceLock;
 
 use arc_swap::ArcSwap;
 use async_channel::Sender;
-use codex_exec_server::Environment;
-use codex_exec_server::EnvironmentConnectionState;
-use codex_exec_server::EnvironmentInfo;
-use codex_exec_server::EnvironmentManager;
-use codex_exec_server::ExecServerError;
-use codex_exec_server::ExecutorFileSystem;
-use codex_exec_server::SelectedCapabilityRootsStatus;
-use codex_protocol::capabilities::CapabilityRootLocation;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_protocol::config_types::ShellEnvironmentPolicy;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::EnvironmentConfig;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::EnvironmentConnectionEvent;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::TurnEnvironmentSelection;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_exec_server::Environment;
+use genex_exec_server::EnvironmentConnectionState;
+use genex_exec_server::EnvironmentInfo;
+use genex_exec_server::EnvironmentManager;
+use genex_exec_server::ExecServerError;
+use genex_exec_server::ExecutorFileSystem;
+use genex_exec_server::SelectedCapabilityRootsStatus;
+use genex_protocol::capabilities::CapabilityRootLocation;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_protocol::config_types::ShellEnvironmentPolicy;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::EnvironmentConfig;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::EnvironmentConnectionEvent;
+use genex_protocol::protocol::Event;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::TurnEnvironmentSelection;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use futures::FutureExt;
 use futures::future::BoxFuture;
 use futures::future::Shared;
@@ -1006,7 +1006,7 @@ impl TurnEnvironmentSnapshot {
                 TurnEnvironmentState::Ready(_) => None,
                 TurnEnvironmentState::Starting(environment)
                     if environment.selection.environment_id
-                        == codex_exec_server::LOCAL_ENVIRONMENT_ID =>
+                        == genex_exec_server::LOCAL_ENVIRONMENT_ID =>
                 {
                     environment.selection.cwd.to_abs_path().ok()
                 }
@@ -1015,7 +1015,7 @@ impl TurnEnvironmentSnapshot {
     }
 
     #[cfg(test)]
-    pub(crate) fn primary_environment(&self) -> Option<Arc<codex_exec_server::Environment>> {
+    pub(crate) fn primary_environment(&self) -> Option<Arc<genex_exec_server::Environment>> {
         self.primary()
             .map(|environment| Arc::clone(&environment.environment))
     }

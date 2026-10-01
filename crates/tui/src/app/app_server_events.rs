@@ -11,18 +11,18 @@ use crate::app_event::AppEvent;
 use crate::app_event::WindowsSandboxEnableMode;
 use crate::app_server_session::AppServerSession;
 use crate::app_server_session::status_account_display_from_auth_mode;
-use codex_app_server_client::AppServerEvent;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::SessionSource;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadReadResponse;
-use codex_app_server_protocol::ThreadSource;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::SubAgentSource;
+use genex_app_server_client::AppServerEvent;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::SessionSource;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadReadParams;
+use genex_app_server_protocol::ThreadReadResponse;
+use genex_app_server_protocol::ThreadSource;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::SubAgentSource;
 
 impl App {
     pub(super) fn refresh_mcp_startup_expected_servers_from_config(&mut self) {
@@ -146,7 +146,7 @@ impl App {
                 .agents_overview
                 .dispatched_requests
                 .contains_key(parent_thread_id)
-            && let Ok(thread_id) = codex_protocol::ThreadId::from_string(&started.thread.id)
+            && let Ok(thread_id) = genex_protocol::ThreadId::from_string(&started.thread.id)
         {
             self.agents_overview
                 .dispatched_requests
@@ -173,7 +173,7 @@ impl App {
                     task.abort();
                 }
                 let notification_thread_id =
-                    codex_protocol::ThreadId::from_string(&notification.thread_id).ok();
+                    genex_protocol::ThreadId::from_string(&notification.thread_id).ok();
                 self.pending_primary_events.retain(|event| {
                     !matches!(event, ThreadBufferedEvent::Request(request)
                         if request.id() == &notification.request_id
@@ -346,10 +346,10 @@ impl App {
             };
             let expected_mode = match mode {
                 WindowsSandboxEnableMode::Elevated => {
-                    codex_app_server_protocol::WindowsSandboxSetupMode::Elevated
+                    genex_app_server_protocol::WindowsSandboxSetupMode::Elevated
                 }
                 WindowsSandboxEnableMode::Legacy => {
-                    codex_app_server_protocol::WindowsSandboxSetupMode::Unelevated
+                    genex_app_server_protocol::WindowsSandboxSetupMode::Unelevated
                 }
             };
             if result.mode != expected_mode {
@@ -407,7 +407,7 @@ impl App {
                 );
             if app_server_client.uses_embedded_app_server()
                 || requires_mcp
-                || codex_protocol::ThreadId::from_string(&params.thread_id)
+                || genex_protocol::ThreadId::from_string(&params.thread_id)
                     .is_ok_and(|thread_id| self.abandoned_side_threads.contains(&thread_id))
             {
                 let response = crate::dynamic_tools::failure_response(if requires_mcp {
@@ -458,7 +458,7 @@ impl App {
                 if inherits_task_tools
                     && response.success
                     && let [
-                        codex_app_server_protocol::DynamicToolCallOutputContentItem::InputText {
+                        genex_app_server_protocol::DynamicToolCallOutputContentItem::InputText {
                             text,
                         },
                     ] = response.content_items.as_slice()

@@ -5,7 +5,7 @@ use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
 use anyhow::Result;
-use codex_config::types::AuthKeyringBackendKind;
+use genex_config::types::AuthKeyringBackendKind;
 use keyring::Error as KeyringError;
 use oauth2::AccessToken;
 use oauth2::RefreshToken;

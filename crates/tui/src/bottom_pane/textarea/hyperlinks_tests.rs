@@ -6,7 +6,7 @@ use crate::bottom_pane::ChatComposer;
 use crate::render::renderable::Renderable;
 use crate::terminal_hyperlinks::strip_osc8;
 use crate::width::display_width;
-use codex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
+use genex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
 use pretty_assertions::assert_eq;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;

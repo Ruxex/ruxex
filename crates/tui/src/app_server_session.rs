@@ -25,110 +25,110 @@ use crate::session_state::MessageHistoryMetadata;
 use crate::session_state::ThreadSessionState;
 use crate::status::StatusAccountDisplay;
 use crate::terminal_visualization_instructions::with_terminal_visualization_instructions;
-use codex_app_server_client::AppServerClient;
-use codex_app_server_client::AppServerEvent;
-use codex_app_server_client::AppServerPath;
-use codex_app_server_client::AppServerRequestHandle;
-use codex_app_server_client::TypedRequestError;
-use codex_app_server_protocol::Account;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::AuthMode;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::ConfigBatchWriteParams;
-use codex_app_server_protocol::ConfigRequirementsReadResponse;
-use codex_app_server_protocol::ConfigWriteResponse;
-use codex_app_server_protocol::ExternalAgentConfigDetectParams;
-use codex_app_server_protocol::ExternalAgentConfigDetectResponse;
-use codex_app_server_protocol::ExternalAgentConfigImportParams;
-use codex_app_server_protocol::ExternalAgentConfigImportResponse;
-use codex_app_server_protocol::ExternalAgentConfigMigrationItem;
-use codex_app_server_protocol::GetAccountParams;
-use codex_app_server_protocol::GetAccountResponse;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::LogoutAccountResponse;
-use codex_app_server_protocol::Model as ApiModel;
-use codex_app_server_protocol::ModelListParams;
-use codex_app_server_protocol::ModelListResponse;
-use codex_app_server_protocol::NewThreadModelDefaults;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ReviewDelivery;
-use codex_app_server_protocol::ReviewStartParams;
-use codex_app_server_protocol::ReviewStartResponse;
-use codex_app_server_protocol::ReviewTarget;
-use codex_app_server_protocol::SessionSource;
-use codex_app_server_protocol::SkillsListParams;
-use codex_app_server_protocol::SkillsListResponse;
-use codex_app_server_protocol::Thread;
-use codex_app_server_protocol::ThreadArchiveParams;
-use codex_app_server_protocol::ThreadArchiveResponse;
-use codex_app_server_protocol::ThreadBackgroundTerminalsCleanParams;
-use codex_app_server_protocol::ThreadBackgroundTerminalsCleanResponse;
-use codex_app_server_protocol::ThreadCompactStartParams;
-use codex_app_server_protocol::ThreadCompactStartResponse;
-use codex_app_server_protocol::ThreadDeleteParams;
-use codex_app_server_protocol::ThreadDeleteResponse;
-use codex_app_server_protocol::ThreadForkParams;
-use codex_app_server_protocol::ThreadForkResponse;
-use codex_app_server_protocol::ThreadGoalClearParams;
-use codex_app_server_protocol::ThreadGoalClearResponse;
-use codex_app_server_protocol::ThreadGoalGetParams;
-use codex_app_server_protocol::ThreadGoalGetResponse;
-use codex_app_server_protocol::ThreadGoalSetParams;
-use codex_app_server_protocol::ThreadGoalSetResponse;
-use codex_app_server_protocol::ThreadGoalStatus;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_app_server_protocol::ThreadInjectItemsParams;
-use codex_app_server_protocol::ThreadInjectItemsResponse;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadListResponse;
-use codex_app_server_protocol::ThreadLoadedListParams;
-use codex_app_server_protocol::ThreadLoadedListResponse;
-use codex_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
-use codex_app_server_protocol::ThreadMetadataUpdateParams;
-use codex_app_server_protocol::ThreadMetadataUpdateResponse;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadReadResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadSetNameParams;
-use codex_app_server_protocol::ThreadSetNameResponse;
-use codex_app_server_protocol::ThreadSettingsUpdateParams;
-use codex_app_server_protocol::ThreadSettingsUpdateResponse;
-use codex_app_server_protocol::ThreadShellCommandParams;
-use codex_app_server_protocol::ThreadShellCommandResponse;
-use codex_app_server_protocol::ThreadSource;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadStartSource;
-use codex_app_server_protocol::ThreadStatusChangedNotification;
-use codex_app_server_protocol::ThreadUnarchiveParams;
-use codex_app_server_protocol::ThreadUnarchiveResponse;
-use codex_app_server_protocol::ThreadUnsubscribeParams;
-use codex_app_server_protocol::ThreadUnsubscribeResponse;
-use codex_app_server_protocol::Turn;
-use codex_app_server_protocol::TurnInterruptParams;
-use codex_app_server_protocol::TurnInterruptResponse;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnSteerParams;
-use codex_app_server_protocol::TurnSteerResponse;
-use codex_app_server_protocol::UserInput;
-use codex_config::ConfigLayerSource;
-use codex_otel::TelemetryAuthMode;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use codex_protocol::model_types::ModelAvailabilityNux;
-use codex_protocol::model_types::ModelPreset;
-use codex_protocol::model_types::ModelServiceTier;
-use codex_protocol::model_types::ModelUpgrade;
-use codex_protocol::model_types::ReasoningEffortPreset;
-use codex_protocol::models::ActivePermissionProfile;
-use codex_protocol::models::BaseInstructionsProvenance;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::SubAgentSource;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_app_server_client::AppServerClient;
+use genex_app_server_client::AppServerEvent;
+use genex_app_server_client::AppServerPath;
+use genex_app_server_client::AppServerRequestHandle;
+use genex_app_server_client::TypedRequestError;
+use genex_app_server_protocol::Account;
+use genex_app_server_protocol::AskForApproval;
+use genex_app_server_protocol::AuthMode;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::ConfigBatchWriteParams;
+use genex_app_server_protocol::ConfigRequirementsReadResponse;
+use genex_app_server_protocol::ConfigWriteResponse;
+use genex_app_server_protocol::ExternalAgentConfigDetectParams;
+use genex_app_server_protocol::ExternalAgentConfigDetectResponse;
+use genex_app_server_protocol::ExternalAgentConfigImportParams;
+use genex_app_server_protocol::ExternalAgentConfigImportResponse;
+use genex_app_server_protocol::ExternalAgentConfigMigrationItem;
+use genex_app_server_protocol::GetAccountParams;
+use genex_app_server_protocol::GetAccountResponse;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::LogoutAccountResponse;
+use genex_app_server_protocol::Model as ApiModel;
+use genex_app_server_protocol::ModelListParams;
+use genex_app_server_protocol::ModelListResponse;
+use genex_app_server_protocol::NewThreadModelDefaults;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ReviewDelivery;
+use genex_app_server_protocol::ReviewStartParams;
+use genex_app_server_protocol::ReviewStartResponse;
+use genex_app_server_protocol::ReviewTarget;
+use genex_app_server_protocol::SessionSource;
+use genex_app_server_protocol::SkillsListParams;
+use genex_app_server_protocol::SkillsListResponse;
+use genex_app_server_protocol::Thread;
+use genex_app_server_protocol::ThreadArchiveParams;
+use genex_app_server_protocol::ThreadArchiveResponse;
+use genex_app_server_protocol::ThreadBackgroundTerminalsCleanParams;
+use genex_app_server_protocol::ThreadBackgroundTerminalsCleanResponse;
+use genex_app_server_protocol::ThreadCompactStartParams;
+use genex_app_server_protocol::ThreadCompactStartResponse;
+use genex_app_server_protocol::ThreadDeleteParams;
+use genex_app_server_protocol::ThreadDeleteResponse;
+use genex_app_server_protocol::ThreadForkParams;
+use genex_app_server_protocol::ThreadForkResponse;
+use genex_app_server_protocol::ThreadGoalClearParams;
+use genex_app_server_protocol::ThreadGoalClearResponse;
+use genex_app_server_protocol::ThreadGoalGetParams;
+use genex_app_server_protocol::ThreadGoalGetResponse;
+use genex_app_server_protocol::ThreadGoalSetParams;
+use genex_app_server_protocol::ThreadGoalSetResponse;
+use genex_app_server_protocol::ThreadGoalStatus;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_app_server_protocol::ThreadInjectItemsParams;
+use genex_app_server_protocol::ThreadInjectItemsResponse;
+use genex_app_server_protocol::ThreadListParams;
+use genex_app_server_protocol::ThreadListResponse;
+use genex_app_server_protocol::ThreadLoadedListParams;
+use genex_app_server_protocol::ThreadLoadedListResponse;
+use genex_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
+use genex_app_server_protocol::ThreadMetadataUpdateParams;
+use genex_app_server_protocol::ThreadMetadataUpdateResponse;
+use genex_app_server_protocol::ThreadReadParams;
+use genex_app_server_protocol::ThreadReadResponse;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadSetNameParams;
+use genex_app_server_protocol::ThreadSetNameResponse;
+use genex_app_server_protocol::ThreadSettingsUpdateParams;
+use genex_app_server_protocol::ThreadSettingsUpdateResponse;
+use genex_app_server_protocol::ThreadShellCommandParams;
+use genex_app_server_protocol::ThreadShellCommandResponse;
+use genex_app_server_protocol::ThreadSource;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::ThreadStartSource;
+use genex_app_server_protocol::ThreadStatusChangedNotification;
+use genex_app_server_protocol::ThreadUnarchiveParams;
+use genex_app_server_protocol::ThreadUnarchiveResponse;
+use genex_app_server_protocol::ThreadUnsubscribeParams;
+use genex_app_server_protocol::ThreadUnsubscribeResponse;
+use genex_app_server_protocol::Turn;
+use genex_app_server_protocol::TurnInterruptParams;
+use genex_app_server_protocol::TurnInterruptResponse;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::TurnSteerParams;
+use genex_app_server_protocol::TurnSteerResponse;
+use genex_app_server_protocol::UserInput;
+use genex_config::ConfigLayerSource;
+use genex_otel::TelemetryAuthMode;
+use genex_protocol::ThreadId;
+use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use genex_protocol::model_types::ModelAvailabilityNux;
+use genex_protocol::model_types::ModelPreset;
+use genex_protocol::model_types::ModelServiceTier;
+use genex_protocol::model_types::ModelUpgrade;
+use genex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::models::ActivePermissionProfile;
+use genex_protocol::models::BaseInstructionsProvenance;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::SubAgentSource;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use color_eyre::eyre::ContextCompat;
 use color_eyre::eyre::Result;
 use color_eyre::eyre::WrapErr;
@@ -278,7 +278,7 @@ pub(crate) struct AppServerBootstrap {
     pub(crate) account_email: Option<String>,
     pub(crate) auth_mode: Option<TelemetryAuthMode>,
     pub(crate) status_account_display: Option<StatusAccountDisplay>,
-    pub(crate) plan_type: Option<codex_protocol::account::PlanType>,
+    pub(crate) plan_type: Option<genex_protocol::account::PlanType>,
     /// Whether the configured model provider needs provider-style auth. Combined
     /// with `has_managed_account` to decide if a startup rate-limit prefetch
     /// should be fired.
@@ -286,7 +286,7 @@ pub(crate) struct AppServerBootstrap {
     pub(crate) default_model: String,
     pub(crate) has_managed_account: bool,
     pub(crate) available_models: Vec<ModelPreset>,
-    pub(crate) collaboration_modes: Vec<codex_protocol::config_types::CollaborationModeMask>,
+    pub(crate) collaboration_modes: Vec<genex_protocol::config_types::CollaborationModeMask>,
 }
 
 pub(crate) struct AppServerSession {
@@ -1265,10 +1265,10 @@ impl AppServerSession {
         permissions_override: TurnPermissionsOverride,
         workspace_roots: &[AbsolutePathBuf],
         model: String,
-        effort: Option<codex_protocol::model_types::ReasoningEffort>,
-        summary: Option<codex_protocol::config_types::ReasoningSummary>,
+        effort: Option<genex_protocol::model_types::ReasoningEffort>,
+        summary: Option<genex_protocol::config_types::ReasoningSummary>,
         service_tier: Option<Option<String>>,
-        collaboration_mode: Option<codex_protocol::config_types::CollaborationMode>,
+        collaboration_mode: Option<genex_protocol::config_types::CollaborationMode>,
         output_schema: Option<serde_json::Value>,
     ) -> Result<TurnStartResponse> {
         let request_id = self.next_request_id();
@@ -1622,7 +1622,7 @@ pub(crate) async fn start_thread_with_request_handle(
 
 pub(crate) fn status_account_display_from_auth_mode(
     auth_mode: Option<AuthMode>,
-    _plan_type: Option<codex_protocol::account::PlanType>,
+    _plan_type: Option<genex_protocol::account::PlanType>,
 ) -> Option<StatusAccountDisplay> {
     match auth_mode {
         Some(AuthMode::ApiKey) => Some(StatusAccountDisplay::ApiKey),
@@ -1702,7 +1702,7 @@ fn config_request_overrides_from_config(
     let mut session_config = toml::Value::Table(toml::Table::new());
     for layer in config.config_layer_stack.layers_low_to_high() {
         if matches!(&layer.name, ConfigLayerSource::SessionFlags) {
-            codex_config::merge_toml_values(&mut session_config, &layer.config);
+            genex_config::merge_toml_values(&mut session_config, &layer.config);
         }
     }
     let mut overrides: HashMap<_, _> = session_config
@@ -1781,7 +1781,7 @@ fn new_thread_reasoning_overrides(config: &Config) -> Option<HashMap<String, ser
     let mut overrides = config_request_overrides_from_config(config).unwrap_or_default();
     let summary = config
         .model_reasoning_summary
-        .unwrap_or(codex_protocol::config_types::ReasoningSummary::Detailed);
+        .unwrap_or(genex_protocol::config_types::ReasoningSummary::Detailed);
     overrides.insert(
         "model_reasoning_summary".to_string(),
         serde_json::Value::String(summary.to_string()),
@@ -1799,7 +1799,7 @@ fn new_thread_reasoning_overrides(config: &Config) -> Option<HashMap<String, ser
         features.insert(
             "concurrent_reasoning_summaries".to_string(),
             serde_json::Value::Bool(
-                summary != codex_protocol::config_types::ReasoningSummary::None
+                summary != genex_protocol::config_types::ReasoningSummary::None
                     && explicit_feature.unwrap_or(/*default*/ false),
             ),
         );
@@ -1814,10 +1814,10 @@ fn service_tier_override_from_config(config: &Config) -> Option<Option<String>> 
 fn sandbox_mode_from_permission_profile(
     permission_profile: &PermissionProfile,
     cwd: &std::path::Path,
-) -> Option<codex_app_server_protocol::SandboxMode> {
+) -> Option<genex_app_server_protocol::SandboxMode> {
     match permission_profile {
         PermissionProfile::Disabled => {
-            Some(codex_app_server_protocol::SandboxMode::DangerFullAccess)
+            Some(genex_app_server_protocol::SandboxMode::DangerFullAccess)
         }
         PermissionProfile::External { .. } => None,
         PermissionProfile::Managed { .. } => {
@@ -1826,11 +1826,11 @@ fn sandbox_mode_from_permission_profile(
                 permission_profile
                     .network_sandbox_policy()
                     .is_enabled()
-                    .then_some(codex_app_server_protocol::SandboxMode::DangerFullAccess)
+                    .then_some(genex_app_server_protocol::SandboxMode::DangerFullAccess)
             } else if file_system_policy.can_write_local_path_with_cwd(cwd, cwd) {
-                Some(codex_app_server_protocol::SandboxMode::WorkspaceWrite)
+                Some(genex_app_server_protocol::SandboxMode::WorkspaceWrite)
             } else {
-                Some(codex_app_server_protocol::SandboxMode::ReadOnly)
+                Some(genex_app_server_protocol::SandboxMode::ReadOnly)
             }
         }
     }
@@ -1844,14 +1844,14 @@ pub(crate) fn permission_profile_is_safely_represented_by_sandbox_mode(
         return false;
     };
     let projected_profile = match sandbox_mode {
-        codex_app_server_protocol::SandboxMode::ReadOnly => PermissionProfile::read_only(),
-        codex_app_server_protocol::SandboxMode::WorkspaceWrite => {
+        genex_app_server_protocol::SandboxMode::ReadOnly => PermissionProfile::read_only(),
+        genex_app_server_protocol::SandboxMode::WorkspaceWrite => {
             PermissionProfile::from_legacy_sandbox_policy_for_cwd(
-                &codex_protocol::protocol::SandboxPolicy::new_workspace_write_policy(),
+                &genex_protocol::protocol::SandboxPolicy::new_workspace_write_policy(),
                 cwd,
             )
         }
-        codex_app_server_protocol::SandboxMode::DangerFullAccess => PermissionProfile::Disabled,
+        genex_app_server_protocol::SandboxMode::DangerFullAccess => PermissionProfile::Disabled,
     };
     permission_profile.network_sandbox_policy() == projected_profile.network_sandbox_policy()
         && permission_profile
@@ -1867,7 +1867,7 @@ pub(crate) fn turn_permissions_overrides(
     permissions_override: TurnPermissionsOverride,
     cwd: &std::path::Path,
 ) -> Result<(
-    Option<codex_app_server_protocol::SandboxPolicy>,
+    Option<genex_app_server_protocol::SandboxPolicy>,
     Option<String>,
 )> {
     Ok(match permissions_override {
@@ -2252,7 +2252,7 @@ async fn thread_session_state_from_thread_fork_response(
 }
 
 fn display_permission_profile_from_thread_response(
-    sandbox: &codex_app_server_protocol::SandboxPolicy,
+    sandbox: &genex_app_server_protocol::SandboxPolicy,
     cwd: &std::path::Path,
     config: &Config,
     thread_params_mode: ThreadParamsMode,
@@ -2264,7 +2264,7 @@ fn display_permission_profile_from_thread_response(
                 PermissionProfile::Disabled
             ) && !matches!(
                 sandbox,
-                codex_app_server_protocol::SandboxPolicy::DangerFullAccess
+                genex_app_server_protocol::SandboxPolicy::DangerFullAccess
             ) =>
         {
             PermissionProfile::from_legacy_sandbox_policy_for_cwd(&sandbox.to_core(), cwd)
@@ -2295,7 +2295,7 @@ async fn thread_session_state_from_thread_response(
     cwd: AbsolutePathBuf,
     runtime_workspace_roots: Vec<AbsolutePathBuf>,
     instruction_source_paths: Vec<PathUri>,
-    reasoning_effort: Option<codex_protocol::model_types::ReasoningEffort>,
+    reasoning_effort: Option<genex_protocol::model_types::ReasoningEffort>,
     local_settings: &LocalSettings,
 ) -> Result<ThreadSessionState, String> {
     let thread_id = ThreadId::from_string(thread_id)
@@ -2305,11 +2305,11 @@ async fn thread_session_state_from_thread_response(
         .map(ThreadId::from_string)
         .transpose()
         .map_err(|err| format!("forked_from_id is invalid: {err}"))?;
-    let history_config = codex_message_history::HistoryConfig::new(
+    let history_config = genex_message_history::HistoryConfig::new(
         local_settings.codex_home.clone(),
         &local_settings.history,
     );
-    let (log_id, entry_count) = codex_message_history::history_metadata(&history_config).await;
+    let (log_id, entry_count) = genex_message_history::history_metadata(&history_config).await;
     Ok(ThreadSessionState {
         windows_sandbox_host,
         thread_id,

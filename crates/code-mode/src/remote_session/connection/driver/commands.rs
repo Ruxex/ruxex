@@ -1,16 +1,16 @@
 use std::sync::Arc;
 
-use codex_code_mode_protocol::CellId;
-use codex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
-use codex_code_mode_protocol::CodeModeSessionDelegate;
-use codex_code_mode_protocol::ExecuteRequest;
-use codex_code_mode_protocol::WaitOutcome;
-use codex_code_mode_protocol::WaitRequest;
-use codex_code_mode_protocol::host::ClientToHost;
-use codex_code_mode_protocol::host::EncodedFrame;
-use codex_code_mode_protocol::host::HostRequest;
-use codex_code_mode_protocol::host::WireSessionCellExecutionLimits;
-use codex_code_mode_protocol::host::WireWaitRequest;
+use genex_code_mode_protocol::CellId;
+use genex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
+use genex_code_mode_protocol::CodeModeSessionDelegate;
+use genex_code_mode_protocol::ExecuteRequest;
+use genex_code_mode_protocol::WaitOutcome;
+use genex_code_mode_protocol::WaitRequest;
+use genex_code_mode_protocol::host::ClientToHost;
+use genex_code_mode_protocol::host::EncodedFrame;
+use genex_code_mode_protocol::host::HostRequest;
+use genex_code_mode_protocol::host::WireSessionCellExecutionLimits;
+use genex_code_mode_protocol::host::WireWaitRequest;
 use tokio::sync::oneshot;
 use tokio_util::sync::CancellationToken;
 

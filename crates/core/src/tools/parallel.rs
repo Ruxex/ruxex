@@ -26,10 +26,10 @@ use crate::tools::registry::AnyToolResult;
 use crate::tools::registry::ToolArgumentDiffConsumer;
 use crate::tools::router::ToolCall;
 use crate::tools::router::ToolCallSource;
-use codex_history::ResponseItemEnvelope;
-use codex_protocol::error::CodexErr;
-use codex_protocol::models::ResponseInputItem;
-use codex_protocol::models::ToolResultMetadata;
+use genex_history::ResponseItemEnvelope;
+use genex_protocol::error::CodexErr;
+use genex_protocol::models::ResponseInputItem;
+use genex_protocol::models::ToolResultMetadata;
 
 struct ToolCallTimingGuard {
     started_at: Instant,
@@ -37,7 +37,7 @@ struct ToolCallTimingGuard {
     conversation_id: String,
     turn_id: String,
     call_id: String,
-    tool_name: codex_tools::ToolName,
+    tool_name: genex_tools::ToolName,
 }
 
 #[derive(Clone)]
@@ -65,7 +65,7 @@ impl ToolCallRuntime {
 
     pub(crate) fn create_diff_consumer(
         &self,
-        tool_name: &codex_tools::ToolName,
+        tool_name: &genex_tools::ToolName,
     ) -> Option<Box<dyn ToolArgumentDiffConsumer>> {
         self.step_context
             .tool_router
@@ -270,15 +270,15 @@ impl ToolCallRuntime {
             ToolPayload::Custom { .. } => ResponseInputItem::CustomToolCallOutput {
                 call_id: call.call_id,
                 name: None,
-                output: codex_protocol::models::FunctionCallOutputPayload {
-                    body: codex_protocol::models::FunctionCallOutputBody::Text(message),
+                output: genex_protocol::models::FunctionCallOutputPayload {
+                    body: genex_protocol::models::FunctionCallOutputBody::Text(message),
                     success: Some(false),
                 },
             },
             _ => ResponseInputItem::FunctionCallOutput {
                 call_id: call.call_id,
-                output: codex_protocol::models::FunctionCallOutputPayload {
-                    body: codex_protocol::models::FunctionCallOutputBody::Text(message),
+                output: genex_protocol::models::FunctionCallOutputPayload {
+                    body: genex_protocol::models::FunctionCallOutputBody::Text(message),
                     success: Some(false),
                 },
             },
@@ -361,7 +361,7 @@ impl Drop for ToolCallTimingGuard {
             ($dispatch_duration_ms:expr, $handler_duration_ms:expr, $total_duration_ms:expr) => {
                 info!(
                     event.name = "codex.tool_call",
-                    trace_id = %codex_otel::current_span_trace_id().unwrap_or_default(),
+                    trace_id = %genex_otel::current_span_trace_id().unwrap_or_default(),
                     conversation.id = %self.conversation_id,
                     turn_id = %self.turn_id,
                     tool_name = %self.tool_name,

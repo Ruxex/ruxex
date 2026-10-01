@@ -4,15 +4,15 @@ use crate::AppServerTarget;
 #[cfg(windows)]
 use crate::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
 use crate::connect_remote_app_server;
-use codex_app_server_client::AppServerClient;
+use genex_app_server_client::AppServerClient;
 #[cfg(windows)]
-use codex_app_server_client::RemoteAppServerClient;
+use genex_app_server_client::RemoteAppServerClient;
 #[cfg(windows)]
-use codex_app_server_client::RemoteAppServerConnectArgs;
+use genex_app_server_client::RemoteAppServerConnectArgs;
 #[cfg(windows)]
-use codex_app_server_client::RemoteAppServerEndpoint;
+use genex_app_server_client::RemoteAppServerEndpoint;
 #[cfg(windows)]
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::AbsolutePathBuf;
 
 pub(crate) async fn connect(target: &AppServerTarget) -> color_eyre::Result<AppServerClient> {
     match target {
@@ -26,7 +26,7 @@ pub(crate) async fn connect(target: &AppServerTarget) -> color_eyre::Result<AppS
         } => {
             // Revalidate at the real connection, not just the earlier discovery probe.
             let (socket_path, _directory) =
-                codex_uds::validate_private_socket_path(socket_path.as_path())?;
+                genex_uds::validate_private_socket_path(socket_path.as_path())?;
             let app_server =
                 RemoteAppServerClient::connect_local_daemon(RemoteAppServerConnectArgs {
                     endpoint: RemoteAppServerEndpoint::UnixSocket {

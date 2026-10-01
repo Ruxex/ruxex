@@ -1,7 +1,7 @@
 //! Compaction checkpoints retain the summary captured after a mid-turn settings update.
 
 use super::*;
-use codex_history::RolloutItem;
+use genex_history::RolloutItem;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use test_case::test_case;
@@ -90,7 +90,7 @@ async fn compaction_preserves_updated_summary(mode: CompactionMode) -> Result<()
         std::fs::read_to_string(test.session_configured.rollout_path.expect("rollout path"))?;
     let items = rollout
         .lines()
-        .map(codex_rollout::parse_rollout_line)
+        .map(genex_rollout::parse_rollout_line)
         .collect::<std::result::Result<Vec<_>, _>>()?;
     let checkpoint = items
         .iter()

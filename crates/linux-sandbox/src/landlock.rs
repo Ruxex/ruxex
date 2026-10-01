@@ -5,13 +5,13 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use codex_network_proxy::ManagedNetworkSandboxContext;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::Result;
-use codex_protocol::error::SandboxErr;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::NetworkSandboxPolicy;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_network_proxy::ManagedNetworkSandboxContext;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::Result;
+use genex_protocol::error::SandboxErr;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::NetworkSandboxPolicy;
+use genex_utils_absolute_path::AbsolutePathBuf;
 
 use landlock::ABI;
 #[allow(unused_imports)]
@@ -304,7 +304,7 @@ mod tests {
     use super::NetworkSeccompMode;
     use super::network_seccomp_mode;
     use super::should_install_network_seccomp;
-    use codex_protocol::protocol::NetworkSandboxPolicy;
+    use genex_protocol::protocol::NetworkSandboxPolicy;
     use pretty_assertions::assert_eq;
 
     #[test]

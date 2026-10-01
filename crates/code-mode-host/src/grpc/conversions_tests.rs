@@ -1,12 +1,12 @@
 use std::time::Duration;
 
-use codex_code_mode_protocol::CellId;
-use codex_code_mode_protocol::FunctionCallOutputContentItem;
-use codex_code_mode_protocol::ImageDetail;
-use codex_code_mode_protocol::MissingCodeModeHostDuration;
-use codex_code_mode_protocol::RuntimeResponse;
-use codex_code_mode_protocol::WaitOutcome;
-use codex_code_mode_protocol::grpc as proto;
+use genex_code_mode_protocol::CellId;
+use genex_code_mode_protocol::FunctionCallOutputContentItem;
+use genex_code_mode_protocol::ImageDetail;
+use genex_code_mode_protocol::MissingCodeModeHostDuration;
+use genex_code_mode_protocol::RuntimeResponse;
+use genex_code_mode_protocol::WaitOutcome;
+use genex_code_mode_protocol::grpc as proto;
 use pretty_assertions::assert_eq;
 use tonic::Code;
 

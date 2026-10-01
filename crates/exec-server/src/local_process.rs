@@ -9,20 +9,20 @@ use std::time::Duration;
 
 use crate::process_telemetry::ProcessTelemetry;
 use crate::process_telemetry::ProcessTelemetryEvent;
-use codex_exec_server_protocol::JSONRPCErrorError;
-use codex_network_proxy::NetworkPolicyAuditEvent;
-use codex_network_proxy::NetworkPolicyAuditObserver;
-use codex_network_proxy::NetworkProtocol;
-use codex_network_proxy::NetworkProxyHandle;
-use codex_protocol::config_types::EnvironmentVariablePattern;
-use codex_protocol::config_types::ShellEnvironmentPolicy;
-use codex_protocol::exec_output::ExecToolCallOutput;
-use codex_protocol::exec_output::StreamOutput;
-use codex_protocol::shell_environment;
-use codex_sandboxing::SandboxType;
-use codex_sandboxing::is_likely_sandbox_denied;
-use codex_utils_pty::ExecCommandSession;
-use codex_utils_pty::ProcessSignal as PtyProcessSignal;
+use genex_exec_server_protocol::JSONRPCErrorError;
+use genex_network_proxy::NetworkPolicyAuditEvent;
+use genex_network_proxy::NetworkPolicyAuditObserver;
+use genex_network_proxy::NetworkProtocol;
+use genex_network_proxy::NetworkProxyHandle;
+use genex_protocol::config_types::EnvironmentVariablePattern;
+use genex_protocol::config_types::ShellEnvironmentPolicy;
+use genex_protocol::exec_output::ExecToolCallOutput;
+use genex_protocol::exec_output::StreamOutput;
+use genex_protocol::shell_environment;
+use genex_sandboxing::SandboxType;
+use genex_sandboxing::is_likely_sandbox_denied;
+use genex_utils_pty::ExecCommandSession;
+use genex_utils_pty::ProcessSignal as PtyProcessSignal;
 use opentelemetry::trace::SpanContext;
 use opentelemetry::trace::TraceContextExt;
 use tokio::sync::Mutex;
@@ -413,7 +413,7 @@ impl LocalProcess {
             );
         }
 
-        let spawned_result = codex_sandboxing::spawn_process(codex_sandboxing::SpawnRequest {
+        let spawned_result = genex_sandboxing::spawn_process(genex_sandboxing::SpawnRequest {
             command: &prepared.command,
             cwd: prepared.cwd.as_path(),
             env: &prepared.env,
@@ -1033,7 +1033,7 @@ fn watch_exit(
     // Set the copied OTEL parent before entering; never retain the RPC tracing span.
     let process_span = tracing::info_span!(parent: None, "codex.exec_server.process");
     if let Some(launch_context) = &telemetry.launch_context {
-        codex_otel::set_parent_from_context(
+        genex_otel::set_parent_from_context(
             &process_span,
             opentelemetry::Context::new().with_remote_span_context(launch_context.clone()),
         );
@@ -1218,18 +1218,18 @@ fn notification_sender(inner: &Inner) -> Option<RpcNotificationSender> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_exec_server_protocol::JSONRPCMessage;
-    use codex_exec_server_protocol::JSONRPCResponse;
-    use codex_exec_server_protocol::RequestId;
-    use codex_network_proxy::NetworkProxy;
-    use codex_network_proxy::NetworkProxyConfig;
-    use codex_network_proxy::NetworkProxyState;
-    use codex_network_proxy::RemoteNetworkProxyConfig;
-    use codex_network_proxy::RemoteNetworkProxyLaunchConfig;
-    use codex_otel::MetricsConfig;
-    use codex_protocol::config_types::ShellEnvironmentPolicyInherit;
-    use codex_utils_path_uri::PathUri;
-    use codex_utils_pty::ProcessDriver;
+    use genex_exec_server_protocol::JSONRPCMessage;
+    use genex_exec_server_protocol::JSONRPCResponse;
+    use genex_exec_server_protocol::RequestId;
+    use genex_network_proxy::NetworkProxy;
+    use genex_network_proxy::NetworkProxyConfig;
+    use genex_network_proxy::NetworkProxyState;
+    use genex_network_proxy::RemoteNetworkProxyConfig;
+    use genex_network_proxy::RemoteNetworkProxyLaunchConfig;
+    use genex_otel::MetricsConfig;
+    use genex_protocol::config_types::ShellEnvironmentPolicyInherit;
+    use genex_utils_path_uri::PathUri;
+    use genex_utils_pty::ProcessDriver;
     use opentelemetry_sdk::metrics::InMemoryMetricExporter;
     use opentelemetry_sdk::metrics::data::AggregatedMetrics;
     use opentelemetry_sdk::metrics::data::MetricData;
@@ -1368,11 +1368,11 @@ mod tests {
 
     fn telemetry_backend() -> (
         LocalProcess,
-        codex_otel::MetricsClient,
+        genex_otel::MetricsClient,
         InMemoryMetricExporter,
     ) {
         let exporter = InMemoryMetricExporter::default();
-        let metrics = codex_otel::MetricsClient::new(MetricsConfig::in_memory(
+        let metrics = genex_otel::MetricsClient::new(MetricsConfig::in_memory(
             "test",
             "codex-exec-server",
             env!("CARGO_PKG_VERSION"),
@@ -1394,7 +1394,7 @@ mod tests {
     }
 
     fn assert_finished_process_result(
-        metrics: codex_otel::MetricsClient,
+        metrics: genex_otel::MetricsClient,
         exporter: &InMemoryMetricExporter,
         expected: &str,
     ) {
@@ -2036,7 +2036,7 @@ mod tests {
         let (_stderr_tx, stderr_rx) = tokio::sync::broadcast::channel(1);
         let (_exit_tx, exit_rx) = oneshot::channel();
 
-        codex_utils_pty::spawn_from_driver(ProcessDriver {
+        genex_utils_pty::spawn_from_driver(ProcessDriver {
             writer_tx,
             stdout_rx,
             stderr_rx: Some(stderr_rx),

@@ -8,41 +8,41 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use anyhow::Context;
-use codex_core::NotSubmittedReason;
-use codex_core::StartIfIdleSubmission;
-use codex_core::StartThreadOptions;
-use codex_core::TurnInput;
-use codex_core::TurnInputRequest;
-use codex_core::TurnInputSubmission;
-use codex_extension_api::ExtensionData;
-use codex_extension_api::ExtensionEventSink;
-use codex_extension_api::ExtensionFuture;
-use codex_extension_api::ExtensionRegistry;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_extension_api::ExtensionWarning;
-use codex_extension_api::NoopExtensionEventSink;
-use codex_extension_api::ThreadIdleCause;
-use codex_extension_api::ThreadIdleInput;
-use codex_extension_api::ThreadLifecycleContributor;
-use codex_extension_api::ThreadResumeInput;
-use codex_extension_api::TurnStartAdmission;
-use codex_protocol::ThreadId;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::ImageDetail;
-use codex_protocol::models::ImageReference;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
-use codex_protocol::user_input::UserInput;
-use codex_queue_extension::QueueServiceError;
-use codex_queue_extension::QueuedItemService;
-use codex_state::SqliteConfig;
-use codex_state::StateRuntime;
-use codex_thread_store::LocalQueueStore;
-use codex_thread_store::QueueStore;
-use codex_thread_store::ThreadStoreError;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_core::NotSubmittedReason;
+use genex_core::StartIfIdleSubmission;
+use genex_core::StartThreadOptions;
+use genex_core::TurnInput;
+use genex_core::TurnInputRequest;
+use genex_core::TurnInputSubmission;
+use genex_extension_api::ExtensionData;
+use genex_extension_api::ExtensionEventSink;
+use genex_extension_api::ExtensionFuture;
+use genex_extension_api::ExtensionRegistry;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_extension_api::ExtensionWarning;
+use genex_extension_api::NoopExtensionEventSink;
+use genex_extension_api::ThreadIdleCause;
+use genex_extension_api::ThreadIdleInput;
+use genex_extension_api::ThreadLifecycleContributor;
+use genex_extension_api::ThreadResumeInput;
+use genex_extension_api::TurnStartAdmission;
+use genex_protocol::ThreadId;
+use genex_protocol::items::TurnItem;
+use genex_protocol::models::ImageDetail;
+use genex_protocol::models::ImageReference;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::Event;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
+use genex_protocol::user_input::UserInput;
+use genex_queue_extension::QueueServiceError;
+use genex_queue_extension::QueuedItemService;
+use genex_state::SqliteConfig;
+use genex_state::StateRuntime;
+use genex_thread_store::LocalQueueStore;
+use genex_thread_store::QueueStore;
+use genex_thread_store::ThreadStoreError;
+use genex_utils_absolute_path::test_support::PathExt;
 use core_test_support::hooks::trust_discovered_hooks;
 use core_test_support::responses;
 use core_test_support::responses::start_mock_server;
@@ -98,11 +98,11 @@ struct InstalledQueue {
     skip_next_idle: Mutex<Option<ThreadId>>,
 }
 
-impl ThreadLifecycleContributor<codex_core::config::Config> for InstalledQueue {
+impl ThreadLifecycleContributor<genex_core::config::Config> for InstalledQueue {
     fn on_thread_resume<'a>(&'a self, input: ThreadResumeInput<'a>) -> ExtensionFuture<'a, ()> {
         match self.service.get() {
             Some(service) => <QueuedItemService as ThreadLifecycleContributor<
-                codex_core::config::Config,
+                genex_core::config::Config,
             >>::on_thread_resume(service.as_ref(), input),
             None => Box::pin(async {}),
         }
@@ -120,7 +120,7 @@ impl ThreadLifecycleContributor<codex_core::config::Config> for InstalledQueue {
         }
         match self.service.get() {
             Some(service) => <QueuedItemService as ThreadLifecycleContributor<
-                codex_core::config::Config,
+                genex_core::config::Config,
             >>::on_thread_idle(service.as_ref(), input),
             None => Box::pin(async {}),
         }
@@ -129,7 +129,7 @@ impl ThreadLifecycleContributor<codex_core::config::Config> for InstalledQueue {
 
 fn registered_queue_extensions() -> (
     Arc<InstalledQueue>,
-    Arc<ExtensionRegistry<codex_core::config::Config>>,
+    Arc<ExtensionRegistry<genex_core::config::Config>>,
 ) {
     let installed = Arc::new(InstalledQueue::default());
     let mut extensions = ExtensionRegistryBuilder::new();
@@ -611,8 +611,8 @@ async fn externally_changed_queues_dispatch_independently_and_retry_failed_wakes
         Weak::new(),
         Arc::new(NoopExtensionEventSink),
     );
-    let mut watcher_extensions = ExtensionRegistryBuilder::<codex_core::config::Config>::new();
-    codex_queue_extension::install(&mut watcher_extensions, Arc::clone(&queue));
+    let mut watcher_extensions = ExtensionRegistryBuilder::<genex_core::config::Config>::new();
+    genex_queue_extension::install(&mut watcher_extensions, Arc::clone(&queue));
 
     tokio::time::sleep(Duration::from_secs(/*secs*/ 1)).await;
     assert!(model_responses.requests().is_empty());

@@ -9,15 +9,15 @@ use std::sync::atomic::AtomicI64;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use codex_exec_server_protocol::JSONRPCError;
-use codex_exec_server_protocol::JSONRPCErrorError;
-use codex_exec_server_protocol::JSONRPCMessage;
-use codex_exec_server_protocol::JSONRPCNotification;
-use codex_exec_server_protocol::JSONRPCRequest;
-use codex_exec_server_protocol::JSONRPCResponse;
-use codex_exec_server_protocol::RequestId;
-use codex_otel::MetricsClient;
-use codex_protocol::protocol::W3cTraceContext;
+use genex_exec_server_protocol::JSONRPCError;
+use genex_exec_server_protocol::JSONRPCErrorError;
+use genex_exec_server_protocol::JSONRPCMessage;
+use genex_exec_server_protocol::JSONRPCNotification;
+use genex_exec_server_protocol::JSONRPCRequest;
+use genex_exec_server_protocol::JSONRPCResponse;
+use genex_exec_server_protocol::RequestId;
+use genex_otel::MetricsClient;
+use genex_protocol::protocol::W3cTraceContext;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
@@ -404,7 +404,7 @@ impl RpcClient {
 
         (
             Self {
-                metrics: codex_otel::global(),
+                metrics: genex_otel::global(),
                 write_tx,
                 pending,
                 inbound_request_ids: Arc::new(StdMutex::new(HashSet::new())),
@@ -658,7 +658,7 @@ impl RpcClient {
                 id: request_id.clone(),
                 method: method.to_string(),
                 params: Some(params),
-                trace: codex_otel::current_span_w3c_trace_context(),
+                trace: genex_otel::current_span_w3c_trace_context(),
             }))
             .await
             .is_err()
@@ -866,11 +866,11 @@ mod tests {
     use std::sync::Arc;
     use std::time::Duration;
 
-    use codex_exec_server_protocol::JSONRPCMessage;
-    use codex_exec_server_protocol::JSONRPCNotification;
-    use codex_exec_server_protocol::JSONRPCRequest;
-    use codex_exec_server_protocol::JSONRPCResponse;
-    use codex_exec_server_protocol::RequestId;
+    use genex_exec_server_protocol::JSONRPCMessage;
+    use genex_exec_server_protocol::JSONRPCNotification;
+    use genex_exec_server_protocol::JSONRPCRequest;
+    use genex_exec_server_protocol::JSONRPCResponse;
+    use genex_exec_server_protocol::RequestId;
     use opentelemetry::trace::TracerProvider as _;
     use opentelemetry_sdk::trace::InMemorySpanExporter;
     use opentelemetry_sdk::trace::SdkTracerProvider;
@@ -954,7 +954,7 @@ mod tests {
         let subscriber = tracing_subscriber::registry().with(
             tracing_opentelemetry::layer()
                 .with_tracer(tracer_provider.tracer("exec-server-test"))
-                .with_filter(filter_fn(codex_otel::OtelProvider::trace_export_filter)),
+                .with_filter(filter_fn(genex_otel::OtelProvider::trace_export_filter)),
         );
         let _subscriber = tracing::subscriber::set_default(subscriber);
         tracing::callsite::rebuild_interest_cache();
@@ -1265,12 +1265,12 @@ mod tests {
         let subscriber = tracing_subscriber::registry().with(
             tracing_opentelemetry::layer()
                 .with_tracer(tracer)
-                .with_filter(filter_fn(codex_otel::OtelProvider::trace_export_filter)),
+                .with_filter(filter_fn(genex_otel::OtelProvider::trace_export_filter)),
         );
         let _subscriber_guard = tracing::subscriber::set_default(subscriber);
         tracing::callsite::rebuild_interest_cache();
         let parent_span = tracing::info_span!("outbound-parent");
-        let expected_trace = codex_otel::span_w3c_trace_context(&parent_span)
+        let expected_trace = genex_otel::span_w3c_trace_context(&parent_span)
             .expect("parent span should have trace context");
 
         let (client_stdin, server_reader) = tokio::io::duplex(4096);

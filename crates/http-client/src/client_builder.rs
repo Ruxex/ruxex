@@ -8,7 +8,7 @@
 use http::HeaderMap;
 use std::time::Duration;
 
-use codex_utils_rustls_provider::ensure_rustls_crypto_provider;
+use genex_utils_rustls_provider::ensure_rustls_crypto_provider;
 
 use crate::BuildCustomCaTransportError;
 use crate::BuildRouteAwareHttpClientError;

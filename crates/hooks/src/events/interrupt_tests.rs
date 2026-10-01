@@ -1,9 +1,9 @@
-use codex_protocol::protocol::HookEventName;
-use codex_protocol::protocol::HookOutputEntry;
-use codex_protocol::protocol::HookOutputEntryKind;
-use codex_protocol::protocol::HookRunStatus;
-use codex_utils_absolute_path::test_support::PathBufExt;
-use codex_utils_absolute_path::test_support::test_path_buf;
+use genex_protocol::protocol::HookEventName;
+use genex_protocol::protocol::HookOutputEntry;
+use genex_protocol::protocol::HookOutputEntryKind;
+use genex_protocol::protocol::HookRunStatus;
+use genex_utils_absolute_path::test_support::PathBufExt;
+use genex_utils_absolute_path::test_support::test_path_buf;
 use pretty_assertions::assert_eq;
 
 use super::InterruptHandlerData;
@@ -105,7 +105,7 @@ fn handler() -> ConfiguredHandler {
         status_message: None,
         additional_context_limit: Default::default(),
         source_path: test_path_buf("/tmp/hooks.json").abs().into(),
-        source: codex_protocol::protocol::HookSource::User,
+        source: genex_protocol::protocol::HookSource::User,
         display_order: 0,
         kind: ConfiguredHandlerKind::Command {
             command: "echo hook".to_string(),

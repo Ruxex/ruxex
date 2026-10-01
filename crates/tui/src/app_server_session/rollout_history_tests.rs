@@ -6,8 +6,8 @@ use crate::legacy_core::config::Config;
 use crate::legacy_core::config::ConfigBuilder;
 use app_test_support::create_fake_paginated_rollout;
 use app_test_support::create_fake_rollout;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_protocol::ThreadId;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_protocol::ThreadId;
 use color_eyre::eyre::Result;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
@@ -70,19 +70,19 @@ async fn remote_resume_restores_saved_server_profile_without_permission_override
         Some(":workspace".to_string())
     );
     server
-        .thread_settings_update(codex_app_server_protocol::ThreadSettingsUpdateParams {
+        .thread_settings_update(genex_app_server_protocol::ThreadSettingsUpdateParams {
             thread_id: thread_id.to_string(),
             permissions: Some("server-only".into()),
-            approval_policy: Some(codex_app_server_protocol::AskForApproval::Never),
-            approvals_reviewer: Some(codex_app_server_protocol::ApprovalsReviewer::AutoReview),
+            approval_policy: Some(genex_app_server_protocol::AskForApproval::Never),
+            approvals_reviewer: Some(genex_app_server_protocol::ApprovalsReviewer::AutoReview),
             ..Default::default()
         })
         .await?;
     tokio::time::timeout(std::time::Duration::from_secs(5), async {
         loop {
-            if let Some(codex_app_server_client::AppServerEvent::ServerNotification(notification)) =
+            if let Some(genex_app_server_client::AppServerEvent::ServerNotification(notification)) =
                 server.next_event().await
-                && let codex_app_server_protocol::ServerNotification::ThreadSettingsUpdated(
+                && let genex_app_server_protocol::ServerNotification::ThreadSettingsUpdated(
                     settings,
                 ) = *notification
                 && settings.thread_id == thread_id.to_string()
@@ -119,11 +119,11 @@ async fn remote_resume_restores_saved_server_profile_without_permission_override
     );
     assert_eq!(
         resumed.session.approval_policy,
-        codex_app_server_protocol::AskForApproval::Never
+        genex_app_server_protocol::AskForApproval::Never
     );
     assert_eq!(
         resumed.session.approvals_reviewer,
-        codex_protocol::config_types::ApprovalsReviewer::AutoReview
+        genex_protocol::config_types::ApprovalsReviewer::AutoReview
     );
     // A locally remembered profile may have been removed since selection.
     let stale_selection = crate::app_event::PermissionProfileSelection {
@@ -153,11 +153,11 @@ async fn remote_resume_restores_saved_server_profile_without_permission_override
     );
     assert_eq!(
         forked.session.approval_policy,
-        codex_app_server_protocol::AskForApproval::Never
+        genex_app_server_protocol::AskForApproval::Never
     );
     assert_eq!(
         forked.session.approvals_reviewer,
-        codex_protocol::config_types::ApprovalsReviewer::AutoReview
+        genex_protocol::config_types::ApprovalsReviewer::AutoReview
     );
     let side = server
         .fork_side_thread(&local_settings, client_config, thread_id)
@@ -169,8 +169,8 @@ async fn remote_resume_restores_saved_server_profile_without_permission_override
     let explicit_config = ConfigBuilder::default()
         .codex_home(home.path().to_path_buf())
         .harness_overrides(crate::legacy_core::config::ConfigOverrides {
-            sandbox_mode: Some(codex_protocol::config_types::SandboxMode::ReadOnly),
-            approval_policy: Some(codex_protocol::protocol::AskForApproval::OnRequest),
+            sandbox_mode: Some(genex_protocol::config_types::SandboxMode::ReadOnly),
+            approval_policy: Some(genex_protocol::protocol::AskForApproval::OnRequest),
             ..Default::default()
         })
         .build()
@@ -185,11 +185,11 @@ async fn remote_resume_restores_saved_server_profile_without_permission_override
         .await?;
     assert_eq!(
         explicit_fork.session.approval_policy,
-        codex_app_server_protocol::AskForApproval::OnRequest
+        genex_app_server_protocol::AskForApproval::OnRequest
     );
     assert_eq!(
         explicit_fork.session.permission_profile,
-        codex_protocol::models::PermissionProfile::read_only()
+        genex_protocol::models::PermissionProfile::read_only()
     );
     server.shutdown().await?;
     Ok(())
@@ -297,7 +297,7 @@ async fn rollout_maintenance_contention_disables_cached_legacy_resume_shortcut()
     let mut app_server = crate::start_embedded_app_server_for_picker(&config).await?;
     app_server.remember_thread_history_mode(thread_id, ThreadHistoryMode::Paginated);
     let _maintenance_guard =
-        codex_rollout::try_acquire_rollout_maintenance_lock(codex_home.path())?
+        genex_rollout::try_acquire_rollout_maintenance_lock(codex_home.path())?
             .expect("acquire rollout maintenance lock");
     let next_request_id = app_server.next_request_id;
 

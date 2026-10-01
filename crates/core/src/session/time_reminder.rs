@@ -1,10 +1,10 @@
 use chrono::DateTime;
 use chrono::Utc;
-use codex_features::CurrentTimeReminderDeliveryMode;
-use codex_features::Feature;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::Result as CodexResult;
-use codex_protocol::models::ResponseItem;
+use genex_features::CurrentTimeReminderDeliveryMode;
+use genex_features::Feature;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::Result as CodexResult;
+use genex_protocol::models::ResponseItem;
 
 use super::session::Session;
 use super::turn_context::TurnContext;

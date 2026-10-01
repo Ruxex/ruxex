@@ -12,7 +12,7 @@ use crate::selection_list::selection_option_row;
 use crate::tui::FrameRequester;
 use crate::tui::Tui;
 use crate::tui::TuiEvent;
-use codex_config::types::ResumeCwdMode;
+use genex_config::types::ResumeCwdMode;
 use color_eyre::Result;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;

@@ -4,11 +4,11 @@ use super::CheckStatus;
 use super::Config;
 use super::DoctorCheck;
 use super::DoctorIssue;
-use codex_history::RolloutItem;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_state::ThreadStateAuditRow;
-use codex_utils_path::normalize_for_path_comparison;
+use genex_history::RolloutItem;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_state::ThreadStateAuditRow;
+use genex_utils_path::normalize_for_path_comparison;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -99,7 +99,7 @@ pub(super) async fn thread_inventory_check(config: &Config) -> DoctorCheck {
 
 async fn thread_inventory_check_for_roots(
     codex_home: &Path,
-    sqlite: &codex_state::SqliteConfig,
+    sqlite: &genex_state::SqliteConfig,
     default_provider: &str,
 ) -> DoctorCheck {
     let scan = scan_rollout_files(codex_home).await;
@@ -134,7 +134,7 @@ async fn thread_inventory_check_for_roots(
         return missing_state_db_check(scan, details);
     }
 
-    let rows = match codex_state::read_thread_state_audit_rows(sqlite).await {
+    let rows = match genex_state::read_thread_state_audit_rows(sqlite).await {
         Ok(rows) => rows,
         Err(err) => {
             details.push(format!("rollout DB read error: {err}"));
@@ -488,7 +488,7 @@ async fn scan_rollout_root(root: &Path, archived: bool, scan: &mut RolloutScan) 
                 dirs.push(path);
                 continue;
             }
-            let logical_path = codex_rollout::plain_rollout_path(&path);
+            let logical_path = genex_rollout::plain_rollout_path(&path);
             if !file_type.is_file()
                 || !is_rollout_file(&logical_path)
                 || (path != logical_path && logical_path.is_file())
@@ -523,7 +523,7 @@ async fn scan_rollout_root(root: &Path, archived: bool, scan: &mut RolloutScan) 
 }
 
 async fn thread_id_from_rollout(path: &Path) -> RolloutThreadId {
-    let mut lines = match codex_rollout::open_rollout_line_reader(path).await {
+    let mut lines = match genex_rollout::open_rollout_line_reader(path).await {
         Ok(lines) => lines,
         Err(err) => return RolloutThreadId::Unusable(err.to_string()),
     };
@@ -541,7 +541,7 @@ async fn thread_id_from_rollout(path: &Path) -> RolloutThreadId {
             Err(_) => continue,
         };
         if item_type == "session_meta" {
-            return match codex_rollout::parse_rollout_line(line.trim()) {
+            return match genex_rollout::parse_rollout_line(line.trim()) {
                 Ok(line) => match line.item {
                     RolloutItem::SessionMeta(session_meta) => {
                         RolloutThreadId::Id(session_meta.meta.id.to_string())
@@ -558,7 +558,7 @@ async fn thread_id_from_rollout(path: &Path) -> RolloutThreadId {
             };
         }
         if !has_legacy_item {
-            has_legacy_item = codex_rollout::parse_rollout_line(line.trim()).is_ok();
+            has_legacy_item = genex_rollout::parse_rollout_line(line.trim()).is_ok();
         }
     }
 
@@ -570,8 +570,8 @@ async fn thread_id_from_rollout(path: &Path) -> RolloutThreadId {
     }
     // Legacy rollouts can omit session metadata, so use the validated filename fallback after
     // the bounded prefix without retaining the first item or loading the full history.
-    let logical_path = codex_rollout::plain_rollout_path(path);
-    codex_rollout::builder_from_items(&[], &logical_path)
+    let logical_path = genex_rollout::plain_rollout_path(path);
+    genex_rollout::builder_from_items(&[], &logical_path)
         .map(|builder| RolloutThreadId::Id(builder.id.to_string()))
         .unwrap_or(RolloutThreadId::MalformedName)
 }
@@ -597,7 +597,7 @@ fn path_key(path: &Path) -> PathBuf {
 }
 
 fn rollout_path_key(path: &Path) -> PathBuf {
-    path_key(&codex_rollout::plain_rollout_path(path))
+    path_key(&genex_rollout::plain_rollout_path(path))
 }
 
 fn archived_from_rollout_path(codex_home: &Path, path: &Path) -> Option<bool> {
@@ -736,9 +736,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_history::RolloutLine;
-    use codex_protocol::ThreadId;
-    use codex_utils_absolute_path::test_support::PathExt;
+    use genex_history::RolloutLine;
+    use genex_protocol::ThreadId;
+    use genex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
 
@@ -854,7 +854,7 @@ mod tests {
             fixture.write_rollout(/*archived*/ false, "2025-01-02T10-00-00", filename_id);
         let contents = std::fs::read_to_string(&path).expect("rollout file");
         let mut rollout_line =
-            codex_rollout::parse_rollout_line(contents.trim()).expect("rollout line");
+            genex_rollout::parse_rollout_line(contents.trim()).expect("rollout line");
         let RolloutItem::SessionMeta(session_meta) = &mut rollout_line.item else {
             panic!("expected session metadata");
         };
@@ -973,7 +973,7 @@ mod tests {
             fixture.write_rollout(/*archived*/ false, "2025-01-02T10-00-00", filename_id);
         let contents = std::fs::read_to_string(&metadata_path).expect("rollout file");
         let mut rollout_line =
-            codex_rollout::parse_rollout_line(contents.trim()).expect("rollout line");
+            genex_rollout::parse_rollout_line(contents.trim()).expect("rollout line");
         let RolloutItem::SessionMeta(session_meta) = &mut rollout_line.item else {
             panic!("expected session metadata");
         };
@@ -1106,7 +1106,7 @@ mod tests {
             fixture.write_rollout(/*archived*/ false, "2025-01-02T10-00-00", filename_id);
         let contents = std::fs::read_to_string(&path).expect("rollout file");
         let mut rollout_line =
-            codex_rollout::parse_rollout_line(contents.trim()).expect("rollout line");
+            genex_rollout::parse_rollout_line(contents.trim()).expect("rollout line");
         let RolloutItem::SessionMeta(session_meta) = &mut rollout_line.item else {
             panic!("expected session metadata");
         };
@@ -1140,7 +1140,7 @@ mod tests {
             fixture.write_rollout(/*archived*/ false, "2025-01-02T10-00-00", filename_id);
         let contents = std::fs::read_to_string(&path).expect("rollout file");
         let mut rollout_line =
-            codex_rollout::parse_rollout_line(contents.trim()).expect("rollout line");
+            genex_rollout::parse_rollout_line(contents.trim()).expect("rollout line");
         let RolloutItem::SessionMeta(session_meta) = &mut rollout_line.item else {
             panic!("expected session metadata");
         };
@@ -1296,8 +1296,8 @@ mod tests {
         async fn new() -> Self {
             let codex_home = TempDir::new().expect("codex home");
             let sqlite_home = TempDir::new().expect("sqlite home");
-            let _runtime = codex_state::StateRuntime::init(
-                codex_state::SqliteConfig::new_for_testing(sqlite_home.path().abs()),
+            let _runtime = genex_state::StateRuntime::init(
+                genex_state::SqliteConfig::new_for_testing(sqlite_home.path().abs()),
                 "test-provider".to_string(),
             )
             .await
@@ -1308,8 +1308,8 @@ mod tests {
             }
         }
 
-        fn sqlite(&self) -> codex_state::SqliteConfig {
-            codex_state::SqliteConfig::new_for_testing(self.sqlite_home.path().abs())
+        fn sqlite(&self) -> genex_state::SqliteConfig {
+            genex_state::SqliteConfig::new_for_testing(self.sqlite_home.path().abs())
         }
 
         fn write_rollout(&self, archived: bool, timestamp: &str, thread_id: &str) -> PathBuf {
@@ -1324,8 +1324,8 @@ mod tests {
             let rollout_line = RolloutLine {
                 timestamp: timestamp.to_string(),
                 ordinal: None,
-                item: RolloutItem::SessionMeta(codex_protocol::protocol::SessionMetaLine {
-                    meta: codex_protocol::protocol::SessionMeta {
+                item: RolloutItem::SessionMeta(genex_protocol::protocol::SessionMetaLine {
+                    meta: genex_protocol::protocol::SessionMeta {
                         session_id: parsed_thread_id.into(),
                         id: parsed_thread_id,
                         timestamp: timestamp.to_string(),

@@ -13,29 +13,29 @@ use std::sync::Arc;
 use tokio_util::sync::CancellationToken;
 
 use crate::inline_visualization::InlineVisualizationContext;
-use codex_app_server_protocol::DynamicToolCallResponse;
-use codex_app_server_protocol::MarketplaceAddResponse;
-use codex_app_server_protocol::MarketplaceRemoveResponse;
-use codex_app_server_protocol::MarketplaceUpgradeResponse;
-use codex_app_server_protocol::McpServerStatus;
-use codex_app_server_protocol::McpServerStatusDetail;
-use codex_app_server_protocol::PluginInstallResponse;
-use codex_app_server_protocol::PluginListResponse;
-use codex_app_server_protocol::PluginReadParams;
-use codex_app_server_protocol::PluginReadResponse;
-use codex_app_server_protocol::PluginUninstallResponse;
-use codex_app_server_protocol::RequestId as AppServerRequestId;
-use codex_app_server_protocol::SkillsListResponse;
-use codex_app_server_protocol::Thread;
-use codex_app_server_protocol::ThreadGoalStatus;
-use codex_app_server_protocol::ThreadItemsListResponse;
-use codex_file_search::FileMatch;
-use codex_message_history::HistoryBatchCursor;
-use codex_protocol::ThreadId;
-use codex_protocol::model_types::ModelPreset;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_approval_presets::ApprovalPreset;
+use genex_app_server_protocol::DynamicToolCallResponse;
+use genex_app_server_protocol::MarketplaceAddResponse;
+use genex_app_server_protocol::MarketplaceRemoveResponse;
+use genex_app_server_protocol::MarketplaceUpgradeResponse;
+use genex_app_server_protocol::McpServerStatus;
+use genex_app_server_protocol::McpServerStatusDetail;
+use genex_app_server_protocol::PluginInstallResponse;
+use genex_app_server_protocol::PluginListResponse;
+use genex_app_server_protocol::PluginReadParams;
+use genex_app_server_protocol::PluginReadResponse;
+use genex_app_server_protocol::PluginUninstallResponse;
+use genex_app_server_protocol::RequestId as AppServerRequestId;
+use genex_app_server_protocol::SkillsListResponse;
+use genex_app_server_protocol::Thread;
+use genex_app_server_protocol::ThreadGoalStatus;
+use genex_app_server_protocol::ThreadItemsListResponse;
+use genex_file_search::FileMatch;
+use genex_message_history::HistoryBatchCursor;
+use genex_protocol::ThreadId;
+use genex_protocol::model_types::ModelPreset;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_approval_presets::ApprovalPreset;
 use strum_macros::IntoStaticStr;
 use uuid::Uuid;
 
@@ -47,11 +47,11 @@ use crate::bottom_pane::TerminalTitleItem;
 use crate::chatwidget::AstraModelPickerAction;
 use crate::chatwidget::UserMessage;
 use crate::goal_files::GoalDraft;
-use codex_app_server_protocol::AskForApproval;
-use codex_features::Feature;
-use codex_plugin::PluginCapabilitySummary;
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::models::ActivePermissionProfile;
+use genex_app_server_protocol::AskForApproval;
+use genex_features::Feature;
+use genex_plugin::PluginCapabilitySummary;
+use genex_protocol::config_types::CollaborationModeMask;
+use genex_protocol::models::ActivePermissionProfile;
 
 use crate::history_cell::HistoryCell;
 
@@ -75,8 +75,8 @@ pub(crate) enum ManagedWorktreeMode {
 pub(crate) struct ManagedWorktreeTransition {
     pub(crate) source_thread_id: ThreadId,
     pub(crate) source_cwd: AbsolutePathBuf,
-    pub(crate) manager: codex_worktree::WorktreeManager,
-    pub(crate) checkout: codex_worktree::ManagedWorktree,
+    pub(crate) manager: genex_worktree::WorktreeManager,
+    pub(crate) checkout: genex_worktree::ManagedWorktree,
     pub(crate) config: Box<crate::legacy_core::config::Config>,
     pub(crate) mode: ManagedWorktreeMode,
     pub(crate) name: Option<String>,
@@ -90,8 +90,8 @@ pub(crate) struct ManagedWorktreeCreated {
     pub(crate) name: Option<String>,
     pub(crate) result: Result<
         (
-            codex_worktree::WorktreeManager,
-            codex_worktree::ManagedWorktree,
+            genex_worktree::WorktreeManager,
+            genex_worktree::ManagedWorktree,
         ),
         String,
     >,
@@ -335,7 +335,7 @@ pub(crate) enum AppEvent {
         server_name: String,
         request_id: AppServerRequestId,
         attempt_id: Uuid,
-        result: Result<codex_app_server_protocol::UserVerificationProof, String>,
+        result: Result<genex_app_server_protocol::UserVerificationProof, String>,
     },
 
     /// Interrupt, fork, and retry a safety-buffered turn with the server-selected model.
@@ -669,7 +669,7 @@ pub(crate) enum AppEvent {
     /// Result of fetching lifecycle hook inventory.
     HooksLoaded {
         cwd: PathBuf,
-        result: Result<codex_app_server_protocol::HooksListResponse, String>,
+        result: Result<genex_app_server_protocol::HooksListResponse, String>,
     },
 
     /// Open the prompt for adding a marketplace source.

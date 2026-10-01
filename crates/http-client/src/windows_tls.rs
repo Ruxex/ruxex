@@ -5,7 +5,7 @@
 
 use std::sync::Arc;
 
-use codex_utils_rustls_provider::ensure_rustls_crypto_provider;
+use genex_utils_rustls_provider::ensure_rustls_crypto_provider;
 use rustls::ClientConfig;
 use rustls_platform_verifier::ConfigVerifierExt;
 

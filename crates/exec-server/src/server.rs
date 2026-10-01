@@ -17,7 +17,7 @@ pub use transport::ExecServerListenUrlParseError;
 
 use crate::ExecServerRuntimePaths;
 use crate::ExecServerTelemetry;
-use codex_http_client::HttpClientFactory;
+use genex_http_client::HttpClientFactory;
 
 pub async fn run_main(
     listen_url: &str,
@@ -59,8 +59,8 @@ pub async fn run_main_with_telemetry(
 
 #[cfg(test)]
 mod tests {
-    use codex_http_client::HttpClientFactory;
-    use codex_http_client::OutboundProxyPolicy;
+    use genex_http_client::HttpClientFactory;
+    use genex_http_client::OutboundProxyPolicy;
     use opentelemetry::trace::TracerProvider as _;
     use opentelemetry_sdk::trace::InMemorySpanExporter;
     use opentelemetry_sdk::trace::SdkTracerProvider;

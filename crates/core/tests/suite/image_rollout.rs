@@ -1,33 +1,33 @@
 use anyhow::Context;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use codex_attachment_store::AttachmentStore;
-use codex_attachment_store::AttachmentStoreError;
-use codex_attachment_store::AttachmentStoreErrorKind;
-use codex_attachment_store::ResolveFuture;
-use codex_attachment_store::ResolveRequest;
-use codex_attachment_store::UploadFuture;
-use codex_attachment_store::UploadRequest;
-use codex_attachment_store::UploadResult;
-use codex_core::TurnInputRequest;
-use codex_features::Feature;
-use codex_history::RolloutItem;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::DEFAULT_IMAGE_DETAIL;
-use codex_protocol::models::ImageDetail;
-use codex_protocol::models::ImageReference;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::ResponseInputItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
-use codex_utils_image::data_url_from_bytes;
+use genex_attachment_store::AttachmentStore;
+use genex_attachment_store::AttachmentStoreError;
+use genex_attachment_store::AttachmentStoreErrorKind;
+use genex_attachment_store::ResolveFuture;
+use genex_attachment_store::ResolveRequest;
+use genex_attachment_store::UploadFuture;
+use genex_attachment_store::UploadRequest;
+use genex_attachment_store::UploadResult;
+use genex_core::TurnInputRequest;
+use genex_features::Feature;
+use genex_history::RolloutItem;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::DEFAULT_IMAGE_DETAIL;
+use genex_protocol::models::ImageDetail;
+use genex_protocol::models::ImageReference;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::ResponseInputItem;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
+use genex_utils_image::data_url_from_bytes;
 use core_test_support::TempDirExt;
 use core_test_support::responses;
 use core_test_support::responses::ev_assistant_message;
@@ -88,7 +88,7 @@ fn find_user_message_with_image(text: &str) -> Option<ResponseItem> {
         if trimmed.is_empty() {
             continue;
         }
-        let rollout = match codex_rollout::parse_rollout_line(trimmed) {
+        let rollout = match genex_rollout::parse_rollout_line(trimmed) {
             Ok(rollout) => rollout,
             Err(_) => continue,
         };
@@ -215,7 +215,7 @@ async fn copy_paste_local_image_persists_rollout_request_shape() -> anyhow::Resu
         role: "user".to_string(),
         content: vec![
             ContentItem::InputText {
-                text: codex_protocol::models::local_image_open_tag_text_with_path(
+                text: genex_protocol::models::local_image_open_tag_text_with_path(
                     /*label_number*/ 1, &abs_path,
                 ),
             },
@@ -224,7 +224,7 @@ async fn copy_paste_local_image_persists_rollout_request_shape() -> anyhow::Resu
                 detail: Some(DEFAULT_IMAGE_DETAIL),
             },
             ContentItem::InputText {
-                text: codex_protocol::models::image_close_tag_text(),
+                text: genex_protocol::models::image_close_tag_text(),
             },
             ContentItem::InputText {
                 text: "pasted image".to_string(),
@@ -441,7 +441,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
 
     let mut rollout_lines = fs::read_to_string(&rollout_path)?
         .lines()
-        .map(codex_rollout::parse_rollout_line)
+        .map(genex_rollout::parse_rollout_line)
         .collect::<serde_json::Result<Vec<_>>>()?;
     let historical_content = rollout_lines
         .iter_mut()
@@ -658,7 +658,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
         .lines()
         .skip(existing_rollout_lines)
         .filter_map(|line| {
-            let RolloutItem::ResponseItem(envelope) = codex_rollout::parse_rollout_line(line)
+            let RolloutItem::ResponseItem(envelope) = genex_rollout::parse_rollout_line(line)
                 .expect("new rollout line should deserialize")
                 .item
             else {

@@ -1,18 +1,18 @@
 //! MCP requests keep human input on the root and allow automatic approval in subagents.
 
 use anyhow::Result;
-use codex_core::StartThreadOptions;
-use codex_core::TurnInputRequest;
-use codex_protocol::approvals::ElicitationAction;
-use codex_protocol::config_types::ApprovalsReviewer;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
+use genex_core::StartThreadOptions;
+use genex_core::TurnInputRequest;
+use genex_protocol::approvals::ElicitationAction;
+use genex_protocol::config_types::ApprovalsReviewer;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::skip_if_no_network;
@@ -26,7 +26,7 @@ use serde_json::json;
 use test_case::test_case;
 use wiremock::matchers::body_partial_json;
 
-const ROOT_ONLY_MESSAGE: &str = codex_mcp::MCP_ELICITATION_HANDOFF_MESSAGE;
+const ROOT_ONLY_MESSAGE: &str = genex_mcp::MCP_ELICITATION_HANDOFF_MESSAGE;
 
 const SERVER: &str = r#"
 import json

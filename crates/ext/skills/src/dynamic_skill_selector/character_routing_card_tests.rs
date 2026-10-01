@@ -1,10 +1,10 @@
 use crate::SkillLoadOutcome;
-use codex_protocol::protocol::SkillScope;
-use codex_skills::SkillDependencies;
-use codex_skills::SkillInterface;
-use codex_skills::SkillMetadata;
-use codex_skills::SkillToolDependency;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_protocol::protocol::SkillScope;
+use genex_skills::SkillDependencies;
+use genex_skills::SkillInterface;
+use genex_skills::SkillMetadata;
+use genex_skills::SkillToolDependency;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 
 use crate::catalog::SkillAuthority;

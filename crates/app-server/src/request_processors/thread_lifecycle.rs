@@ -1,8 +1,8 @@
 use super::*;
 use crate::extensions::send_thread_warning;
-use codex_app_server_protocol::ThreadQueueChangedNotification;
-use codex_extension_api::ThreadIdleCause;
-use codex_protocol::config_types::MultiAgentMode;
+use genex_app_server_protocol::ThreadQueueChangedNotification;
+use genex_extension_api::ThreadIdleCause;
+use genex_protocol::config_types::MultiAgentMode;
 
 #[derive(Clone)]
 pub(super) struct ListenerTaskContext {
@@ -873,9 +873,9 @@ pub(super) fn merge_turn_history_with_active_turn(turns: &mut Vec<Turn>, active_
 }
 
 fn merge_active_turn_into_page(
-    page: &mut codex_app_server_protocol::TurnsPage,
+    page: &mut genex_app_server_protocol::TurnsPage,
     mut active_turn: Turn,
-    params: &codex_app_server_protocol::ThreadResumeInitialTurnsPageParams,
+    params: &genex_app_server_protocol::ThreadResumeInitialTurnsPageParams,
 ) {
     super::thread_processor::apply_thread_turns_items_view(
         std::slice::from_mut(&mut active_turn),

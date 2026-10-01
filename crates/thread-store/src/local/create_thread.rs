@@ -2,10 +2,10 @@ use super::LocalThreadStore;
 use crate::CreateThreadParams;
 use crate::ThreadStoreError;
 use crate::ThreadStoreResult;
-use codex_rollout::RolloutConfig;
-use codex_rollout::RolloutRecorder;
-use codex_rollout::RolloutRecorderParams;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_rollout::RolloutConfig;
+use genex_rollout::RolloutRecorder;
+use genex_rollout::RolloutRecorderParams;
+use genex_utils_absolute_path::AbsolutePathBuf;
 
 pub(super) async fn create_thread(
     store: &LocalThreadStore,

@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use codex_core::build_prompt_input;
-use codex_core::config::ConfigBuilder;
-use codex_core::config::ConfigOverrides;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_home::CodexHomeUserInstructionsProvider;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::user_input::UserInput;
+use genex_core::build_prompt_input;
+use genex_core::config::ConfigBuilder;
+use genex_core::config::ConfigOverrides;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_home::CodexHomeUserInstructionsProvider;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses::strip_metadata;
 use core_test_support::responses::strip_response_item_id;
 use pretty_assertions::assert_eq;

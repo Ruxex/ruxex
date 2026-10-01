@@ -17,24 +17,24 @@ use super::UserInput;
 use super::shared::v2_enum_from_core;
 use crate::JsonSchema;
 use crate::TS;
-use codex_experimental_api_macros::ExperimentalApi;
-pub use codex_protocol::capabilities::CapabilityRootLocation;
-pub use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::MultiAgentMode;
-use codex_protocol::config_types::ReasoningSummary;
-pub use codex_protocol::dynamic_tools::DynamicToolFunctionSpec;
-pub use codex_protocol::dynamic_tools::DynamicToolNamespaceSpec;
-pub use codex_protocol::dynamic_tools::DynamicToolNamespaceTool;
-pub use codex_protocol::dynamic_tools::DynamicToolSpec;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::ThreadGoalStatus as CoreThreadGoalStatus;
-use codex_protocol::protocol::TokenUsage as CoreTokenUsage;
-use codex_protocol::protocol::TokenUsageInfo as CoreTokenUsageInfo;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::LegacyAppPathString;
-use codex_utils_path_uri::PathUri;
+use genex_experimental_api_macros::ExperimentalApi;
+pub use genex_protocol::capabilities::CapabilityRootLocation;
+pub use genex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::MultiAgentMode;
+use genex_protocol::config_types::ReasoningSummary;
+pub use genex_protocol::dynamic_tools::DynamicToolFunctionSpec;
+pub use genex_protocol::dynamic_tools::DynamicToolNamespaceSpec;
+pub use genex_protocol::dynamic_tools::DynamicToolNamespaceTool;
+pub use genex_protocol::dynamic_tools::DynamicToolSpec;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::ThreadGoalStatus as CoreThreadGoalStatus;
+use genex_protocol::protocol::TokenUsage as CoreTokenUsage;
+use genex_protocol::protocol::TokenUsageInfo as CoreTokenUsageInfo;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::LegacyAppPathString;
+use genex_utils_path_uri::PathUri;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
@@ -138,7 +138,7 @@ pub struct ThreadStartParams {
     #[experimental("thread/start.dynamicTools")]
     #[serde(
         default,
-        deserialize_with = "codex_protocol::dynamic_tools::deserialize_dynamic_tool_specs"
+        deserialize_with = "genex_protocol::dynamic_tools::deserialize_dynamic_tool_specs"
     )]
     #[ts(optional = nullable)]
     pub dynamic_tools: Option<Vec<DynamicToolSpec>>,
@@ -802,8 +802,8 @@ pub struct ThreadGoal {
     pub updated_at: i64,
 }
 
-impl From<codex_protocol::protocol::ThreadGoal> for ThreadGoal {
-    fn from(value: codex_protocol::protocol::ThreadGoal) -> Self {
+impl From<genex_protocol::protocol::ThreadGoal> for ThreadGoal {
+    fn from(value: genex_protocol::protocol::ThreadGoal) -> Self {
         Self {
             thread_id: value.thread_id.to_string(),
             objective: value.objective,
@@ -1788,8 +1788,8 @@ pub struct ResponseUsageMetadata {
     pub metadata: Option<JsonValue>,
 }
 
-impl From<codex_protocol::ResponseUsageMetadata> for ResponseUsageMetadata {
-    fn from(value: codex_protocol::ResponseUsageMetadata) -> Self {
+impl From<genex_protocol::ResponseUsageMetadata> for ResponseUsageMetadata {
+    fn from(value: genex_protocol::ResponseUsageMetadata) -> Self {
         Self {
             amount: value.amount,
             metadata: value.metadata,

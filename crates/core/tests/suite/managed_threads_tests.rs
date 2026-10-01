@@ -7,14 +7,14 @@ use std::task::Wake;
 use std::time::Duration;
 
 use anyhow::Context;
-use codex_core::StartThreadOptions;
-use codex_core::TurnInputRequest;
-use codex_extension_api::AllowedTools;
-use codex_extension_api::SessionIsolation;
-use codex_extension_api::ToolName;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::user_input::UserInput;
-use codex_thread_store::ThreadStoreError;
+use genex_core::StartThreadOptions;
+use genex_core::TurnInputRequest;
+use genex_extension_api::AllowedTools;
+use genex_extension_api::SessionIsolation;
+use genex_extension_api::ToolName;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::user_input::UserInput;
+use genex_thread_store::ThreadStoreError;
 use core_test_support::apps_test_server::AppsTestServer;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
@@ -225,7 +225,7 @@ async fn owner_cancellation_closes_agent_and_preserves_history_and_parent() -> a
         .await?;
     assert!(history.items.iter().any(|item| matches!(
         item,
-        codex_history::RolloutItem::EventMsg(EventMsg::TurnComplete(_))
+        genex_history::RolloutItem::EventMsg(EventMsg::TurnComplete(_))
     )));
 
     let parent_response = responses::mount_sse_once(
@@ -260,7 +260,7 @@ async fn startup_allowlist_controls_advertising_and_execution(
             config.update_plan_enabled = true;
             config
                 .features
-                .disable(codex_features::Feature::CodeMode)
+                .disable(genex_features::Feature::CodeMode)
                 .expect("disable Code Mode for direct-tool assertions");
         })
         .build_with_auto_env(&server)

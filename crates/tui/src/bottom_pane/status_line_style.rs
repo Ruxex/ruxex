@@ -9,7 +9,7 @@ use ratatui::text::Span;
 use super::status_line_setup::StatusLineItem;
 use crate::render::highlight::foreground_style_for_scopes;
 use crate::thread_color::thread_color;
-use codex_protocol::ThreadId;
+use genex_protocol::ThreadId;
 
 const STATUS_LINE_SEPARATOR: &str = " · ";
 const STATUS_LINE_COLOR_SATURATION_PERCENT: u16 = 85;

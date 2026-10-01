@@ -45,7 +45,7 @@ CLI 起動
        └─ 追加の履歴を記録して応答を表示
 ```
 
-大きく分けると、TUI は表示とユーザー入力を担当し、app-server はプロトコルの窓口、Core はセッション・ターン・ツール実行の本体、`codex-api` / provider はモデル通信を担当します。
+大きく分けると、TUI は表示とユーザー入力を担当し、app-server はプロトコルの窓口、Core はセッション・ターン・ツール実行の本体、`genex-api` / provider はモデル通信を担当します。
 
 関連資料: [システムマップ](00-system-map.md)、[CLI エントリポイント](01-cli-entrypoint.md)、[対話コマンド](commands/interactive.md)
 
@@ -123,7 +123,7 @@ TUI の初期表示では `account/read` が送られます。続いて `model/l
 
 ### 2.3 モデルリクエストの直前に認証ヘッダーを作る
 
-実際のモデルリクエスト時には、`codex-api` の `AuthProvider` が現在の provider 設定と `AuthManager` の状態から、リクエスト用の認証情報を作ります。
+実際のモデルリクエスト時には、`genex-api` の `AuthProvider` が現在の provider 設定と `AuthManager` の状態から、リクエスト用の認証情報を作ります。
 
 ```text
 保存済み認証状態
@@ -336,4 +336,4 @@ SQLite のファイル名や細かい保存先はバージョン・設定で変�
 - [`crates/core/src/session/session.rs`](../../../crates/core/src/session/session.rs): Session 初期化、MCP・プラグイン・スキル準備
 - [`crates/core/src/session/turn.rs`](../../../crates/core/src/session/turn.rs): Turn 実行とモデル／ツールのループ
 - [`crates/core/src/client.rs`](../../../crates/core/src/client.rs): provider 接続、認証、モデルリクエスト
-- [`crates/codex-mcp/src/rmcp_client.rs`](../../../crates/codex-mcp/src/rmcp_client.rs): MCP initialize / tools/list
+- [`crates/genex-mcp/src/rmcp_client.rs`](../../../crates/genex-mcp/src/rmcp_client.rs): MCP initialize / tools/list

@@ -3,8 +3,8 @@
 //! This keeps user-facing backup and lock-contention handling out of the main
 //! CLI dispatch path while preserving the TUI startup error as the boundary type.
 
-use codex_state::RuntimeDbBackup;
-use codex_tui::LocalStateDbStartupError;
+use genex_state::RuntimeDbBackup;
+use genex_tui::LocalStateDbStartupError;
 use std::io::IsTerminal;
 use std::path::Path;
 
@@ -14,11 +14,11 @@ pub(crate) fn startup_error(err: &std::io::Error) -> Option<&LocalStateDbStartup
 }
 
 pub(crate) fn is_locked(detail: &str) -> bool {
-    codex_state::sqlite_error_detail_is_lock(detail)
+    genex_state::sqlite_error_detail_is_lock(detail)
 }
 
 pub(crate) fn is_corruption(detail: &str) -> bool {
-    codex_state::sqlite_error_detail_is_corruption(detail)
+    genex_state::sqlite_error_detail_is_corruption(detail)
 }
 
 pub(crate) fn is_auto_backup_recoverable(startup_error: &LocalStateDbStartupError) -> bool {
@@ -42,7 +42,7 @@ pub(crate) fn print_auto_backup_start(startup_error: &LocalStateDbStartupError) 
 pub(crate) async fn backup_files_for_fresh_start(
     startup_error: &LocalStateDbStartupError,
 ) -> std::io::Result<Vec<RuntimeDbBackup>> {
-    codex_state::backup_runtime_db_for_fresh_start(startup_error.database_path()).await
+    genex_state::backup_runtime_db_for_fresh_start(startup_error.database_path()).await
 }
 
 pub(crate) fn confirm_fresh_start_rebuild(
@@ -96,7 +96,7 @@ fn backup_folder(backups: &[RuntimeDbBackup]) -> Option<&Path> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_utils_absolute_path::test_support::PathExt;
+    use genex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
     use tempfile::TempDir;
@@ -104,7 +104,7 @@ mod tests {
     #[tokio::test]
     async fn backup_backs_up_only_failed_database_file() -> std::io::Result<()> {
         let temp_dir = TempDir::new()?;
-        let sqlite = codex_state::SqliteConfig::new_for_testing(temp_dir.path().abs());
+        let sqlite = genex_state::SqliteConfig::new_for_testing(temp_dir.path().abs());
         let state_path = sqlite.state_db_path();
         let failed_db_path = sqlite.logs_db_path();
         tokio::fs::write(state_path.as_path(), b"state").await?;
@@ -132,7 +132,7 @@ mod tests {
         let temp_dir = TempDir::new()?;
         let sqlite_home = temp_dir.path().join("sqlite-home");
         tokio::fs::write(sqlite_home.as_path(), b"not-a-directory").await?;
-        let sqlite = codex_state::SqliteConfig::new_for_testing(sqlite_home.as_path().abs());
+        let sqlite = genex_state::SqliteConfig::new_for_testing(sqlite_home.as_path().abs());
         let startup_error =
             LocalStateDbStartupError::new(sqlite.state_db_path(), "File exists".to_string());
 

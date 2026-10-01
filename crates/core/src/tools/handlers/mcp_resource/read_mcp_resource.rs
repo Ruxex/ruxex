@@ -4,9 +4,9 @@ use crate::tools::context::ToolPayload;
 use crate::tools::handlers::mcp_resource_spec::create_read_mcp_resource_tool;
 use crate::tools::registry::CoreToolRuntime;
 use crate::tools::registry::ToolExecutor;
-use codex_protocol::protocol::McpInvocation;
-use codex_tools::ToolName;
-use codex_tools::ToolSpec;
+use genex_protocol::protocol::McpInvocation;
+use genex_tools::ToolName;
+use genex_tools::ToolSpec;
 
 use rmcp::model::ReadResourceRequestParams;
 
@@ -33,7 +33,7 @@ impl ToolExecutor<ToolInvocation> for ReadMcpResourceHandler {
         true
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> codex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

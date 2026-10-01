@@ -1,16 +1,16 @@
-use codex_model_provider_info::AMAZON_BEDROCK_GPT_5_4_MODEL_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_GPT_5_5_MODEL_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_LUNA_MODEL_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_SOL_MODEL_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_TERRA_MODEL_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_GPT_6_ASTRA_MODEL_ID;
-use codex_models_manager::model_info::model_info_template_from_slug;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelVisibility;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::model_types::WebSearchToolType;
-use codex_protocol::protocol::MultiAgentVersion;
+use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_4_MODEL_ID;
+use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_5_MODEL_ID;
+use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_LUNA_MODEL_ID;
+use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_SOL_MODEL_ID;
+use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_TERRA_MODEL_ID;
+use genex_model_provider_info::AMAZON_BEDROCK_GPT_6_ASTRA_MODEL_ID;
+use genex_models_manager::model_info::model_info_template_from_slug;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::WebSearchToolType;
+use genex_protocol::protocol::MultiAgentVersion;
 
 const GPT_5_BEDROCK_CONTEXT_WINDOW: i64 = 272_000;
 const GPT_5_6_SOL_MODEL_ID: &str = "gpt-5.6-sol";
@@ -124,7 +124,7 @@ fn bedrock_model_template(slug: &str) -> ModelInfo {
 
 #[cfg(test)]
 mod tests {
-    use codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+    use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
     use pretty_assertions::assert_eq;
 
     use super::*;

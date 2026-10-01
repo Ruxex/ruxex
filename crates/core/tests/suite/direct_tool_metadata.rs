@@ -1,12 +1,12 @@
 //! Direct-call metadata coverage, including malformed calls and request-budget pruning.
 
 use anyhow::Result;
-use codex_features::Feature;
-use codex_model_provider::RemoteCompactionSupport;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
+use genex_features::Feature;
+use genex_model_provider::RemoteCompactionSupport;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
 use core_test_support::apps_test_server::configure_search_capable_model;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -132,7 +132,7 @@ async fn direct_call_metadata_during_compaction_respects_provider_support(
         RemoteCompactionSupport::Unsupported => assert!(compacted.iter().any(|item| {
             item["role"] == "user"
                 && item["content"][0]["text"]
-                    == format!("{}\n{summary}", codex_core::compact::SUMMARY_PREFIX)
+                    == format!("{}\n{summary}", genex_core::compact::SUMMARY_PREFIX)
         })),
         RemoteCompactionSupport::V2 => {
             assert!(compacted.iter().any(|item| {

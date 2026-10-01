@@ -73,8 +73,8 @@
 - Modify: `crates/rollout/src/tests.rs`
 - Inspect/modify: `crates/app-server/src/request_processors/thread_resume_redaction.rs`
 - Inspect/modify: `crates/app-server/src/user_verification_test_support.rs`
-- Inspect/modify: `crates/codex-api/src/sse/responses.rs`
-- Modify: adjacent protocol/app-server/codex-api tests and generated artifacts only when the producer/consumer audit requires it
+- Inspect/modify: `crates/genex-api/src/sse/responses.rs`
+- Modify: adjacent protocol/app-server/genex-api tests and generated artifacts only when the producer/consumer audit requires it
 - Modify: `docs/pre-release-compatibility-inventory.md`
 
 **Interfaces:**
@@ -96,7 +96,7 @@
 - [ ] **Step 4: Commit the persisted/protocol slice**
 
   ```bash
-  git add crates/protocol crates/rollout crates/app-server crates/codex-api docs/pre-release-compatibility-inventory.md
+  git add crates/protocol crates/rollout crates/app-server crates/genex-api docs/pre-release-compatibility-inventory.md
   git commit -m "refactor: remove ChatGPT-specific protocol remnants"
   ```
 
@@ -108,7 +108,7 @@
 - Modify: `crates/model-provider/src/models_endpoint.rs`
 - Modify: `crates/response-debug-context/src/lib.rs`
 - Inspect/modify: `crates/login/src/auth/manager.rs`
-- Modify: related model-provider, login, codex-api, core, and TUI auth fixtures
+- Modify: related model-provider, login, genex-api, core, and TUI auth fixtures
 - Modify: `docs/pre-release-compatibility-inventory.md`
 
 **Interfaces:**
@@ -135,7 +135,7 @@
   just check --tests
   just check
   git diff --check
-  git add crates/model-provider crates/response-debug-context crates/login crates/codex-api crates/core crates/tui docs/pre-release-compatibility-inventory.md
+  git add crates/model-provider crates/response-debug-context crates/login crates/genex-api crates/core crates/tui docs/pre-release-compatibility-inventory.md
   git commit -m "refactor: remove ChatGPT-specific auth endpoints"
   ```
 
@@ -177,7 +177,7 @@
 - Modify: `crates/tui/src/chatwidget/tests/helpers.rs` and its importing test modules
 - Modify: `crates/tui/src/app/tests.rs`, `crates/tui/src/app/agents_overview_tests.rs`, and related TUI fixtures
 - Modify: residual files under `crates/app-server/tests/suite/v2/`
-- Modify: the files under `crates/cli/tests/`, `crates/core/tests/`, `crates/ext/skills/`, and `crates/exec/tests/` returned by Task 1's baseline `rg -ni 'chatgpt' --glob '*.rs'` search, plus `crates/core-plugins/src/marketplace_tests.rs` and `crates/codex-api/tests/clients.rs`
+- Modify: the files under `crates/cli/tests/`, `crates/core/tests/`, `crates/ext/skills/`, and `crates/exec/tests/` returned by Task 1's baseline `rg -ni 'chatgpt' --glob '*.rs'` search, plus `crates/core-plugins/src/marketplace_tests.rs` and `crates/genex-api/tests/clients.rs`
 - Modify: `docs/pre-release-compatibility-inventory.md`
 
 **Interfaces:**
@@ -201,7 +201,7 @@
   Run `just check --tests`, `just check`, and `git diff --check`, then commit the fixture slice:
 
   ```bash
-  git add crates/tui crates/app-server/tests crates/cli/tests crates/core/tests crates/core-plugins crates/ext/skills crates/exec/tests crates/codex-api/tests docs/pre-release-compatibility-inventory.md
+  git add crates/tui crates/app-server/tests crates/cli/tests crates/core/tests crates/core-plugins crates/ext/skills crates/exec/tests crates/genex-api/tests docs/pre-release-compatibility-inventory.md
   git commit -m "test: remove ChatGPT-specific fixtures"
   ```
 

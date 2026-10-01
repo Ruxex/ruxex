@@ -4,10 +4,10 @@ use anyhow::Context;
 use anyhow::Result;
 use app_test_support::ApiKeyAuthFixture;
 use app_test_support::write_api_key_auth;
-use codex_config::ConfigLoadOptions;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_core::config::load_config_toml_with_layer_stack;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_config::ConfigLoadOptions;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_core::config::load_config_toml_with_layer_stack;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -100,7 +100,7 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
         .mount(&server)
         .await;
 
-    let codex = codex_utils_cargo_bin::cargo_bin("codex")?;
+    let codex = genex_utils_cargo_bin::cargo_bin("codex")?;
     let managed_auth_base_url_override =
         format!("managed_auth_base_url=\"{managed_auth_base_url}\"");
     let output = Command::new(&codex)

@@ -2,17 +2,17 @@ use std::fs;
 use std::time::Duration;
 
 use chrono::Utc;
-use codex_app_server_protocol::CodexErrorInfo;
-use codex_app_server_protocol::ThreadTimelineEntry;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::HistoryPosition;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_rollout::RolloutItem;
-use codex_rollout::RolloutLine;
+use genex_app_server_protocol::CodexErrorInfo;
+use genex_app_server_protocol::ThreadTimelineEntry;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::HistoryPosition;
+use genex_protocol::protocol::SessionMeta;
+use genex_protocol::protocol::SessionMetaLine;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_rollout::RolloutItem;
+use genex_rollout::RolloutLine;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -1015,13 +1015,13 @@ async fn store_with_mode(history_mode: ThreadHistoryMode) -> (TempDir, LocalThre
             /*history_base*/ None,
         );
     }
-    let runtime = codex_state::StateRuntime::init(
+    let runtime = genex_state::StateRuntime::init(
         config.sqlite.clone(),
         config.default_model_provider_id.clone(),
     )
     .await
     .expect("state runtime");
-    let mut builder = codex_state::ThreadMetadataBuilder::new(
+    let mut builder = genex_state::ThreadMetadataBuilder::new(
         thread_id,
         rollout_path,
         Utc::now(),
@@ -1113,7 +1113,7 @@ fn rollout_end_byte_offset(path: &std::path::Path, end_ordinal_exclusive: u64) -
     let end_byte_offset = bytes
         .split_inclusive(|byte| *byte == b'\n')
         .take_while(|line| {
-            codex_rollout::parse_rollout_line_bytes(line)
+            genex_rollout::parse_rollout_line_bytes(line)
                 .expect("parse rollout fixture")
                 .ordinal
                 .expect("paginated rollout ordinal")

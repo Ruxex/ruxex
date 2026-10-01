@@ -1,20 +1,20 @@
 use super::thread_input::ensure_direct_input_allowed;
 use super::*;
-use codex_agent_extension::AgentInvocation;
-use codex_agent_extension::AgentRun;
-use codex_agent_extension::AgentRunner;
-use codex_app_server_protocol::ImageReference as V2ImageReference;
-use codex_protocol::error::CodexErrorDetails;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::FunctionCallOutputBody;
-use codex_protocol::models::FunctionCallOutputContentItem;
-use codex_protocol::models::FunctionCallOutputPayload;
-use codex_protocol::models::ImageReference as CoreImageReference;
-use codex_protocol::protocol::AdditionalContextEntry as CoreAdditionalContextEntry;
-use codex_protocol::protocol::AdditionalContextKind as CoreAdditionalContextKind;
-use codex_protocol::protocol::TurnSettingsUpdate;
-use codex_protocol::protocol::TurnSettingsUpdateOutcome;
-use codex_skills::system_cache_root_dir;
+use genex_agent_extension::AgentInvocation;
+use genex_agent_extension::AgentRun;
+use genex_agent_extension::AgentRunner;
+use genex_app_server_protocol::ImageReference as V2ImageReference;
+use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::FunctionCallOutputBody;
+use genex_protocol::models::FunctionCallOutputContentItem;
+use genex_protocol::models::FunctionCallOutputPayload;
+use genex_protocol::models::ImageReference as CoreImageReference;
+use genex_protocol::protocol::AdditionalContextEntry as CoreAdditionalContextEntry;
+use genex_protocol::protocol::AdditionalContextKind as CoreAdditionalContextKind;
+use genex_protocol::protocol::TurnSettingsUpdate;
+use genex_protocol::protocol::TurnSettingsUpdateOutcome;
+use genex_skills::system_cache_root_dir;
 
 use crate::image_url::REMOTE_IMAGE_URL_ERROR;
 use crate::image_url::is_remote_image_url;
@@ -126,8 +126,8 @@ struct ThreadSettingsBuildParams {
     method: &'static str,
     disabled_plugin_ids: Option<Vec<String>>,
     environment_override: ThreadEnvironmentOverride,
-    approval_policy: Option<codex_app_server_protocol::AskForApproval>,
-    sandbox_policy: Option<codex_app_server_protocol::SandboxPolicy>,
+    approval_policy: Option<genex_app_server_protocol::AskForApproval>,
+    sandbox_policy: Option<genex_app_server_protocol::SandboxPolicy>,
     permissions: Option<String>,
     model: Option<String>,
     service_tier: Option<Option<String>>,
@@ -381,7 +381,7 @@ impl TurnRequestProcessor {
             CoreReviewTarget::Custom { instructions } => instructions.clone(),
         };
 
-        let hint = codex_core::review_prompts::user_facing_hint(&core_target);
+        let hint = genex_core::review_prompts::user_facing_hint(&core_target);
         let review_request = ReviewRequest {
             target: core_target,
             user_facing_hint: Some(hint.clone()),
@@ -393,7 +393,7 @@ impl TurnRequestProcessor {
     async fn request_trace_context(
         &self,
         request_id: &ConnectionRequestId,
-    ) -> Option<codex_protocol::protocol::W3cTraceContext> {
+    ) -> Option<genex_protocol::protocol::W3cTraceContext> {
         self.outgoing.request_trace_context(request_id).await
     }
 
@@ -650,7 +650,7 @@ impl TurnRequestProcessor {
         &self,
         thread: &CodexThread,
         params: ThreadSettingsBuildParams,
-    ) -> Result<codex_protocol::protocol::ThreadSettingsOverrides, JSONRPCErrorError> {
+    ) -> Result<genex_protocol::protocol::ThreadSettingsOverrides, JSONRPCErrorError> {
         let ThreadSettingsBuildParams {
             method,
             disabled_plugin_ids,
@@ -699,7 +699,7 @@ impl TurnRequestProcessor {
             || collaboration_mode.is_some();
 
         let approval_policy =
-            approval_policy.map(codex_app_server_protocol::AskForApproval::to_core);
+            approval_policy.map(genex_app_server_protocol::AskForApproval::to_core);
         let sandbox_policy = sandbox_policy.map(|policy| policy.to_core());
         let (permission_profile, active_permission_profile, profile_workspace_roots) =
             if let Some(permissions) = permissions {
@@ -762,7 +762,7 @@ impl TurnRequestProcessor {
                 })?;
         }
 
-        Ok(codex_protocol::protocol::ThreadSettingsOverrides {
+        Ok(genex_protocol::protocol::ThreadSettingsOverrides {
             disabled_plugin_ids,
             environments,
             runtime_workspace_roots,
@@ -816,7 +816,7 @@ impl TurnRequestProcessor {
             )
             .await?;
 
-        if thread_settings != codex_protocol::protocol::ThreadSettingsOverrides::default() {
+        if thread_settings != genex_protocol::protocol::ThreadSettingsOverrides::default() {
             self.submit_core_op(
                 request_id,
                 thread.as_ref(),
@@ -937,10 +937,10 @@ impl TurnRequestProcessor {
                     ),
                     NotSubmittedReason::ActiveTurnNotSteerable { turn_kind } => {
                         let message = match turn_kind {
-                            codex_protocol::protocol::NonSteerableTurnKind::Review => {
+                            genex_protocol::protocol::NonSteerableTurnKind::Review => {
                                 "cannot steer a review turn".to_string()
                             }
-                            codex_protocol::protocol::NonSteerableTurnKind::Compact => {
+                            genex_protocol::protocol::NonSteerableTurnKind::Compact => {
                                 "cannot steer a compact turn".to_string()
                             }
                         };
@@ -1058,7 +1058,7 @@ impl TurnRequestProcessor {
         // closed until detached review has a bounded fork path.
         if matches!(
             parent_thread.config_snapshot().await.history_mode,
-            codex_protocol::protocol::ThreadHistoryMode::Paginated
+            genex_protocol::protocol::ThreadHistoryMode::Paginated
         ) {
             return Err(invalid_request(
                 "paginated threads do not support detached review",

@@ -1,5 +1,5 @@
 use super::*;
-use codex_tui::DaemonUpdateSource;
+use genex_tui::DaemonUpdateSource;
 use pretty_assertions::assert_eq;
 use std::os::unix::fs::PermissionsExt;
 

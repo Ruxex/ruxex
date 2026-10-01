@@ -5,32 +5,32 @@ use std::time::Duration;
 use std::time::Instant;
 
 use anyhow::Result;
-use codex_config::LoaderOverrides;
-use codex_core::TurnInputRequest;
-use codex_core::config::Config;
-use codex_core::config::ConfigBuilder;
-use codex_core::config::set_project_trust_level;
-use codex_core_plugins::store::PluginStore;
-use codex_extension_api::ExtensionRegistry;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_features::Feature;
-use codex_login::CodexAuth;
-use codex_mcp::CODEX_APPS_MCP_SERVER_NAME;
-use codex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
-use codex_plugin::PluginId;
-use codex_protocol::auth::AuthMode;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::config_types::TrustLevel;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
-use codex_skills_extension::HostSkillsLoadInput;
-use codex_skills_extension::SkillsExtensionConfig;
-use codex_skills_extension::install;
+use genex_config::LoaderOverrides;
+use genex_core::TurnInputRequest;
+use genex_core::config::Config;
+use genex_core::config::ConfigBuilder;
+use genex_core::config::set_project_trust_level;
+use genex_core_plugins::store::PluginStore;
+use genex_extension_api::ExtensionRegistry;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_features::Feature;
+use genex_login::CodexAuth;
+use genex_mcp::CODEX_APPS_MCP_SERVER_NAME;
+use genex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
+use genex_plugin::PluginId;
+use genex_protocol::auth::AuthMode;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::config_types::TrustLevel;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
+use genex_skills_extension::HostSkillsLoadInput;
+use genex_skills_extension::SkillsExtensionConfig;
+use genex_skills_extension::install;
 use core_test_support::apps_test_server::AppsTestServer;
 use core_test_support::apps_test_server::SEARCH_CALENDAR_CREATE_TOOL;
 use core_test_support::apps_test_server::recorded_apps_tool_calls;
@@ -431,7 +431,7 @@ async fn persisted_remote_plugin_command_attribution_flows_through_turn_context(
         turn_permission_fields(PermissionProfile::read_only(), cwd.as_path());
     codex
         .start_or_steer_turn(
-            TurnInputRequest::user_input(vec![codex_protocol::user_input::UserInput::Text {
+            TurnInputRequest::user_input(vec![genex_protocol::user_input::UserInput::Text {
                 text: "run the remote plugin script".into(),
                 text_elements: Vec::new(),
             }])
@@ -1283,22 +1283,22 @@ enabled = true
 
         let expected_auth_mode = match fixture.target_auth {
             TargetAuth::ApiKey => {
-                codex_login::login_with_api_key(
+                genex_login::login_with_api_key(
                     codex_home.path(),
                     "test-api-key",
-                    codex_login::AuthCredentialsStoreMode::File,
-                    codex_login::AuthKeyringBackendKind::default(),
+                    genex_login::AuthCredentialsStoreMode::File,
+                    genex_login::AuthKeyringBackendKind::default(),
                 )?;
                 test_codex.thread_manager.auth_manager().reload().await;
                 Some(AuthMode::ApiKey)
             }
             TargetAuth::BedrockApiKey => {
-                codex_login::login_with_bedrock_api_key(
+                genex_login::login_with_bedrock_api_key(
                     codex_home.path(),
                     "test-bedrock-api-key",
                     "us-east-1",
-                    codex_login::AuthCredentialsStoreMode::File,
-                    codex_login::AuthKeyringBackendKind::default(),
+                    genex_login::AuthCredentialsStoreMode::File,
+                    genex_login::AuthKeyringBackendKind::default(),
                 )?;
                 test_codex.thread_manager.auth_manager().reload().await;
                 Some(AuthMode::BedrockApiKey)
@@ -1371,7 +1371,7 @@ async fn explicit_plugin_mentions_use_apps_for_managed_dual_surface_plugins(
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
-            codex_protocol::user_input::UserInput::Mention {
+            genex_protocol::user_input::UserInput::Mention {
                 name: "sample".into(),
                 path: format!("plugin://{SAMPLE_PLUGIN_CONFIG_NAME}"),
             },
@@ -1458,7 +1458,7 @@ async fn explicit_plugin_mentions_keep_non_conflicting_mcp_for_managed_auth() ->
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
-            codex_protocol::user_input::UserInput::Mention {
+            genex_protocol::user_input::UserInput::Mention {
                 name: "sample".into(),
                 path: format!("plugin://{SAMPLE_PLUGIN_CONFIG_NAME}"),
             },
@@ -1745,7 +1745,7 @@ async fn explicit_plugin_mentions_track_plugin_used_analytics() -> Result<()> {
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
-            codex_protocol::user_input::UserInput::Mention {
+            genex_protocol::user_input::UserInput::Mention {
                 name: "sample".into(),
                 path: format!("plugin://{SAMPLE_PLUGIN_CONFIG_NAME}"),
             },
@@ -1769,7 +1769,7 @@ async fn explicit_plugin_mentions_track_plugin_used_analytics() -> Result<()> {
     );
     assert_eq!(
         event["event_params"]["product_client_id"],
-        serde_json::json!(codex_login::default_client::originator().value)
+        serde_json::json!(genex_login::default_client::originator().value)
     );
     assert_eq!(event["event_params"]["model_slug"], "gpt-5.2");
     assert!(event["event_params"]["thread_id"].as_str().is_some());

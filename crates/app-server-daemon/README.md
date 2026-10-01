@@ -1,9 +1,9 @@
-# codex-app-server-daemon
+# genex-app-server-daemon
 
-> `codex-app-server-daemon` is experimental and its lifecycle contract may
+> `genex-app-server-daemon` is experimental and its lifecycle contract may
 > change while the daemon lifecycle flow is still being developed.
 
-`codex-app-server-daemon` backs the machine-readable `codex app-server`
+`genex-app-server-daemon` backs the machine-readable `codex app-server`
 lifecycle commands used by local and remote app-server clients.
 It is intended for Codex instances launched over SSH, including fresh developer
 machines that should expose app-server through the managed local socket.

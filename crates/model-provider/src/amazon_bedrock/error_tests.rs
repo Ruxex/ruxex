@@ -1,11 +1,11 @@
 use std::num::NonZeroU64;
 
-use codex_api::ApiError;
-use codex_api::TransportError;
-use codex_model_provider_info::AwsCredentialExportConfig;
-use codex_model_provider_info::ModelProviderAwsAuthInfo;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_protocol::error::CodexErrorDetails;
+use genex_api::ApiError;
+use genex_api::TransportError;
+use genex_model_provider_info::AwsCredentialExportConfig;
+use genex_model_provider_info::ModelProviderAwsAuthInfo;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_protocol::error::CodexErrorDetails;
 use http::HeaderMap;
 use http::HeaderValue;
 use http::StatusCode;

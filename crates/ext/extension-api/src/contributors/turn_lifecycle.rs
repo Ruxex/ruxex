@@ -1,7 +1,7 @@
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::protocol::CodexErrorInfo;
-use codex_protocol::protocol::TokenUsage;
-use codex_protocol::protocol::TurnAbortReason;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::TokenUsage;
+use genex_protocol::protocol::TurnAbortReason;
 
 use crate::ExtensionData;
 

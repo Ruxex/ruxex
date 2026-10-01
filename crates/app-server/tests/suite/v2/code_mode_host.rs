@@ -5,20 +5,20 @@ use anyhow::Context;
 use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
-use codex_app_server_protocol::ThreadDecrementElicitationParams;
-use codex_app_server_protocol::ThreadDecrementElicitationResponse;
-use codex_app_server_protocol::ThreadGoalSetResponse;
-use codex_app_server_protocol::ThreadGoalStatus;
-use codex_app_server_protocol::ThreadGoalUpdatedNotification;
-use codex_app_server_protocol::ThreadIncrementElicitationParams;
-use codex_app_server_protocol::ThreadIncrementElicitationResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::TurnCompletedNotification;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput;
-use codex_features::Feature;
+use genex_app_server_protocol::ThreadDecrementElicitationParams;
+use genex_app_server_protocol::ThreadDecrementElicitationResponse;
+use genex_app_server_protocol::ThreadGoalSetResponse;
+use genex_app_server_protocol::ThreadGoalStatus;
+use genex_app_server_protocol::ThreadGoalUpdatedNotification;
+use genex_app_server_protocol::ThreadIncrementElicitationParams;
+use genex_app_server_protocol::ThreadIncrementElicitationResponse;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::TurnCompletedNotification;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::UserInput;
+use genex_features::Feature;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -47,7 +47,7 @@ async fn code_mode_model_output_uses_structured_host_timing(
 ) -> Result<()> {
     let mut host = match transport {
         "grpc" => Some(
-            Command::new(codex_utils_cargo_bin::cargo_bin("codex-code-mode-host")?)
+            Command::new(genex_utils_cargo_bin::cargo_bin("codex-code-mode-host")?)
                 .args(["--listen", "grpc://127.0.0.1:0"])
                 .stdin(Stdio::null())
                 .stdout(Stdio::piped())
@@ -105,7 +105,7 @@ async fn code_mode_model_output_uses_structured_host_timing(
         .write(codex_home.path())?;
     let mut builder = TestAppServer::builder()
         .with_codex_home(codex_home.path())
-        .with_json_logging("codex_code_mode::timing=info,codex_core::tools::parallel=info");
+        .with_json_logging("genex_code_mode::timing=info,genex_core::tools::parallel=info");
     if let Some(host_url) = host_url.as_deref() {
         builder = builder.with_args(&["--code-mode-host", host_url]);
     }
@@ -181,7 +181,7 @@ async fn code_mode_model_output_uses_structured_host_timing(
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn app_server_shares_flag_selected_grpc_code_mode_host_across_threads() -> Result<()> {
-    let host_program = codex_utils_cargo_bin::cargo_bin("codex-code-mode-host")?;
+    let host_program = genex_utils_cargo_bin::cargo_bin("codex-code-mode-host")?;
     let mut code_mode_host = Command::new(host_program)
         .args(["--listen", "grpc://127.0.0.1:0"])
         .stdin(Stdio::null())

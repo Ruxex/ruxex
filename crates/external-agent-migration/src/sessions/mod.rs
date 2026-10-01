@@ -8,8 +8,8 @@ mod records_common;
 pub(crate) mod records_cur;
 mod title;
 
-use codex_protocol::ThreadId;
-use codex_rollout::RolloutItem;
+use genex_protocol::ThreadId;
+use genex_rollout::RolloutItem;
 use std::collections::BTreeSet;
 use std::io;
 use std::path::Path;
@@ -205,7 +205,7 @@ pub(crate) fn now_unix_seconds() -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_protocol::ThreadId;
+    use genex_protocol::ThreadId;
     use pretty_assertions::assert_eq;
     use sha2::Digest;
     use sha2::Sha256;

@@ -1,9 +1,9 @@
 [[production]]
-package = "codex-cli"
+package = "genex-cli"
 bin = "codex"
 reason = "codex CLI binary"
 
 [[production]]
-package = "codex-app-server"
+package = "genex-app-server"
 bin = "codex-app-server"
 reason = "app-server binary"

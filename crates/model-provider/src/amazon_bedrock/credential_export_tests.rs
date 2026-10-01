@@ -4,9 +4,9 @@ use std::sync::Arc;
 use std::task::Context;
 use std::task::Waker;
 
-use codex_model_provider_info::AwsAuthRefreshConfig;
-use codex_model_provider_info::ModelProviderAwsAuthInfo;
-use codex_model_provider_info::ModelProviderInfo;
+use genex_model_provider_info::AwsAuthRefreshConfig;
+use genex_model_provider_info::ModelProviderAwsAuthInfo;
+use genex_model_provider_info::ModelProviderInfo;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 

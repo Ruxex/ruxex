@@ -1,7 +1,7 @@
 //! Exercises native verification through the HTTP MRTR tool-input envelope.
 
 use super::*;
-use codex_rmcp_client::SendElicitation;
+use genex_rmcp_client::SendElicitation;
 use pretty_assertions::assert_eq;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
@@ -302,7 +302,7 @@ async fn mrtr_rejects_unsupported_elicitation_modes_without_prompting() -> anyho
         .await?;
         let error = call(&client).await.unwrap_err();
         assert_eq!(
-            codex_rmcp_client::mcp_error(&error),
+            genex_rmcp_client::mcp_error(&error),
             Some(&rmcp::ErrorData::invalid_request(
                 "unsupported provider elicitation mode",
                 /*data*/ None

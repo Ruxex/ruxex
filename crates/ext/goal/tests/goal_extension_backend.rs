@@ -1,51 +1,51 @@
 #![recursion_limit = "256"]
 #![allow(clippy::expect_used)]
 
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_utils_absolute_path::test_support::PathExt;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::PoisonError;
 use std::sync::Weak;
 use std::time::Duration;
 
-use codex_extension_api::ExtensionData;
-use codex_extension_api::ExtensionEventSink;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_extension_api::ExtensionWarning;
-use codex_extension_api::FunctionCallError;
-use codex_extension_api::NoopTurnItemEmitter;
-use codex_extension_api::ThreadResumeInput;
-use codex_extension_api::ThreadStartInput;
-use codex_extension_api::ThreadStopInput;
-use codex_extension_api::ToolCall;
-use codex_extension_api::ToolCallOutcome;
-use codex_extension_api::ToolCallSource;
-use codex_extension_api::ToolExecutor;
-use codex_extension_api::ToolFinishInput;
-use codex_extension_api::ToolPayload;
-use codex_extension_api::TurnErrorInput;
-use codex_extension_api::TurnStartInput;
-use codex_extension_api::TurnStopInput;
-use codex_goal_extension::GoalExtensionConfig;
-use codex_goal_extension::GoalObjectiveUpdate;
-use codex_goal_extension::GoalRuntimeHandle;
-use codex_goal_extension::GoalService;
-use codex_goal_extension::GoalSetRequest;
-use codex_goal_extension::GoalTokenBudgetUpdate;
-use codex_goal_extension::install_with_backend;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::protocol::CodexErrorInfo;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::ThreadGoalStatus;
-use codex_protocol::protocol::TokenUsage;
-use codex_protocol::protocol::TokenUsageInfo;
-use codex_protocol::protocol::TruncationPolicy;
+use genex_extension_api::ExtensionData;
+use genex_extension_api::ExtensionEventSink;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_extension_api::ExtensionWarning;
+use genex_extension_api::FunctionCallError;
+use genex_extension_api::NoopTurnItemEmitter;
+use genex_extension_api::ThreadResumeInput;
+use genex_extension_api::ThreadStartInput;
+use genex_extension_api::ThreadStopInput;
+use genex_extension_api::ToolCall;
+use genex_extension_api::ToolCallOutcome;
+use genex_extension_api::ToolCallSource;
+use genex_extension_api::ToolExecutor;
+use genex_extension_api::ToolFinishInput;
+use genex_extension_api::ToolPayload;
+use genex_extension_api::TurnErrorInput;
+use genex_extension_api::TurnStartInput;
+use genex_extension_api::TurnStopInput;
+use genex_goal_extension::GoalExtensionConfig;
+use genex_goal_extension::GoalObjectiveUpdate;
+use genex_goal_extension::GoalRuntimeHandle;
+use genex_goal_extension::GoalService;
+use genex_goal_extension::GoalSetRequest;
+use genex_goal_extension::GoalTokenBudgetUpdate;
+use genex_goal_extension::install_with_backend;
+use genex_protocol::ThreadId;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::Event;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::ThreadGoalStatus;
+use genex_protocol::protocol::TokenUsage;
+use genex_protocol::protocol::TokenUsageInfo;
+use genex_protocol::protocol::TruncationPolicy;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -488,7 +488,7 @@ async fn spawned_descendant_usage_exhausts_root_goal_budget_once() -> anyhow::Re
         .await?
         .ok_or_else(|| anyhow::anyhow!("goal should exist"))?;
     assert_eq!(62, goal.tokens_used);
-    assert_eq!(codex_state::ThreadGoalStatus::BudgetLimited, goal.status);
+    assert_eq!(genex_state::ThreadGoalStatus::BudgetLimited, goal.status);
     Ok(())
 }
 
@@ -662,7 +662,7 @@ async fn budget_limited_goal_keeps_accruing_until_turn_stop() -> anyhow::Result<
         .await?
         .ok_or_else(|| anyhow::anyhow!("goal should exist"))?;
     assert_eq!(35, goal.tokens_used);
-    assert_eq!(codex_state::ThreadGoalStatus::BudgetLimited, goal.status);
+    assert_eq!(genex_state::ThreadGoalStatus::BudgetLimited, goal.status);
 
     assert_eq!(
         vec![
@@ -739,7 +739,7 @@ async fn budget_limited_goal_keeps_accounting_after_later_tool_finish() -> anyho
         .await?
         .ok_or_else(|| anyhow::anyhow!("goal should exist"))?;
     assert_eq!(35, goal.tokens_used);
-    assert_eq!(codex_state::ThreadGoalStatus::BudgetLimited, goal.status);
+    assert_eq!(genex_state::ThreadGoalStatus::BudgetLimited, goal.status);
     Ok(())
 }
 
@@ -781,7 +781,7 @@ async fn turn_error_usage_limit_accounts_progress_and_clears_accounting() -> any
         .await?
         .ok_or_else(|| anyhow::anyhow!("goal should exist"))?;
     assert_eq!(23, goal.tokens_used);
-    assert_eq!(codex_state::ThreadGoalStatus::UsageLimited, goal.status);
+    assert_eq!(genex_state::ThreadGoalStatus::UsageLimited, goal.status);
     assert_eq!(
         vec![
             CapturedGoalEvent {
@@ -821,7 +821,7 @@ async fn turn_error_usage_limit_accounts_progress_and_clears_accounting() -> any
         .await?
         .ok_or_else(|| anyhow::anyhow!("goal should exist"))?;
     assert_eq!(23, goal.tokens_used);
-    assert_eq!(codex_state::ThreadGoalStatus::UsageLimited, goal.status);
+    assert_eq!(genex_state::ThreadGoalStatus::UsageLimited, goal.status);
     Ok(())
 }
 
@@ -851,7 +851,7 @@ async fn turn_error_blocks_goal() -> anyhow::Result<()> {
         .get_thread_goal(thread_id)
         .await?
         .ok_or_else(|| anyhow::anyhow!("goal should exist"))?;
-    assert_eq!(codex_state::ThreadGoalStatus::Blocked, goal.status);
+    assert_eq!(genex_state::ThreadGoalStatus::Blocked, goal.status);
     Ok(())
 }
 
@@ -905,9 +905,9 @@ async fn failed_execution_turns_block_goal_unless_a_tool_succeeds() -> anyhow::R
                 .await?
                 .ok_or_else(|| anyhow::anyhow!("goal should exist"))?;
             let expected = if turn == blocking_turn {
-                codex_state::ThreadGoalStatus::Blocked
+                genex_state::ThreadGoalStatus::Blocked
             } else {
-                codex_state::ThreadGoalStatus::Active
+                genex_state::ThreadGoalStatus::Active
             };
             assert_eq!(expected, goal.status);
         }
@@ -974,7 +974,7 @@ async fn usage_limit_budget_limited_goal_accounts_remaining_progress() -> anyhow
         .await?
         .ok_or_else(|| anyhow::anyhow!("goal should exist"))?;
     assert_eq!(35, goal.tokens_used);
-    assert_eq!(codex_state::ThreadGoalStatus::UsageLimited, goal.status);
+    assert_eq!(genex_state::ThreadGoalStatus::UsageLimited, goal.status);
     assert_eq!(
         vec![
             CapturedGoalEvent {
@@ -1027,7 +1027,7 @@ async fn usage_limit_plan_turn_does_not_stop_goal() -> anyhow::Result<()> {
         .get_thread_goal(thread_id)
         .await?
         .ok_or_else(|| anyhow::anyhow!("goal should exist"))?;
-    assert_eq!(codex_state::ThreadGoalStatus::Active, goal.status);
+    assert_eq!(genex_state::ThreadGoalStatus::Active, goal.status);
     assert_eq!(Vec::<CapturedGoalEvent>::new(), harness.sink.goal_events());
     Ok(())
 }
@@ -1064,7 +1064,7 @@ async fn usage_limit_stale_turn_does_not_stop_current_goal() -> anyhow::Result<(
         .get_thread_goal(thread_id)
         .await?
         .ok_or_else(|| anyhow::anyhow!("goal should exist"))?;
-    assert_eq!(codex_state::ThreadGoalStatus::Active, goal.status);
+    assert_eq!(genex_state::ThreadGoalStatus::Active, goal.status);
     assert_eq!(Vec::<CapturedGoalEvent>::new(), harness.sink.goal_events());
     Ok(())
 }
@@ -1076,19 +1076,19 @@ async fn update_goal_can_stop_and_accounts_final_progress() -> anyhow::Result<()
             ThreadGoalStatus::Blocked,
             100_i64,
             ThreadGoalStatus::Blocked,
-            codex_state::ThreadGoalStatus::Blocked,
+            genex_state::ThreadGoalStatus::Blocked,
         ),
         (
             ThreadGoalStatus::Paused,
             100,
             ThreadGoalStatus::Paused,
-            codex_state::ThreadGoalStatus::Paused,
+            genex_state::ThreadGoalStatus::Paused,
         ),
         (
             ThreadGoalStatus::Paused,
             20,
             ThreadGoalStatus::BudgetLimited,
-            codex_state::ThreadGoalStatus::BudgetLimited,
+            genex_state::ThreadGoalStatus::BudgetLimited,
         ),
     ] {
         let runtime = test_runtime().await?;
@@ -1419,7 +1419,7 @@ async fn thread_resume_rehydrates_active_goal_idle_accounting() -> anyhow::Resul
         .replace_thread_goal(
             thread_id,
             "ship goal extension backend",
-            codex_state::ThreadGoalStatus::Active,
+            genex_state::ThreadGoalStatus::Active,
             /*token_budget*/ None,
         )
         .await?;
@@ -1584,7 +1584,7 @@ async fn goal_service_enforces_maximum_token_budget_on_creation_and_updates() ->
 }
 
 async fn installed_tools(
-    runtime: Arc<codex_state::StateRuntime>,
+    runtime: Arc<genex_state::StateRuntime>,
     thread_id: ThreadId,
 ) -> Vec<Arc<dyn for<'call> ToolExecutor<ToolCall<'call>>>> {
     installed_tools_with_start(
@@ -1597,7 +1597,7 @@ async fn installed_tools(
 }
 
 async fn installed_tools_with_start(
-    runtime: Arc<codex_state::StateRuntime>,
+    runtime: Arc<genex_state::StateRuntime>,
     thread_id: ThreadId,
     session_source: SessionSource,
     persistent_thread_state_available: bool,
@@ -1645,7 +1645,7 @@ fn tool_names(tools: &[Arc<dyn for<'call> ToolExecutor<ToolCall<'call>>>]) -> Ve
 }
 
 struct GoalExtensionHarness {
-    registry: Arc<codex_extension_api::ExtensionRegistry<()>>,
+    registry: Arc<genex_extension_api::ExtensionRegistry<()>>,
     session_store: ExtensionData,
     thread_store: ExtensionData,
     goal_service: Arc<GoalService>,
@@ -1654,7 +1654,7 @@ struct GoalExtensionHarness {
 
 impl GoalExtensionHarness {
     async fn new(
-        runtime: Arc<codex_state::StateRuntime>,
+        runtime: Arc<genex_state::StateRuntime>,
         thread_id: ThreadId,
     ) -> anyhow::Result<Self> {
         let sink = Arc::new(RecordingEventSink::default());
@@ -1854,7 +1854,7 @@ impl GoalExtensionHarness {
         outcome: ToolCallOutcome,
     ) {
         let turn_store = ExtensionData::new(turn_id);
-        let tool_name = codex_extension_api::ToolName::plain(tool_name);
+        let tool_name = genex_extension_api::ToolName::plain(tool_name);
         for contributor in self.registry.tool_lifecycle_contributors() {
             contributor
                 .on_tool_finish(ToolFinishInput {
@@ -1907,12 +1907,12 @@ fn tool_call(tool_name: &str, call_id: &str, arguments: serde_json::Value) -> To
     ToolCall {
         turn_id: "turn-1".to_string(),
         call_id: call_id.to_string(),
-        tool_name: codex_extension_api::ToolName::plain(tool_name),
+        tool_name: genex_extension_api::ToolName::plain(tool_name),
         model: "gpt-test".to_string(),
         codex_turn_metadata: None,
         truncation_policy: TruncationPolicy::Bytes(1024),
         source: ToolCallSource::Direct,
-        conversation_history: codex_extension_api::ConversationHistory::default(),
+        conversation_history: genex_extension_api::ConversationHistory::default(),
         turn_item_emitter: Arc::new(NoopTurnItemEmitter),
         environments: Vec::new(),
         payload: ToolPayload::Function {
@@ -1921,10 +1921,10 @@ fn tool_call(tool_name: &str, call_id: &str, arguments: serde_json::Value) -> To
     }
 }
 
-async fn test_runtime() -> anyhow::Result<Arc<codex_state::StateRuntime>> {
+async fn test_runtime() -> anyhow::Result<Arc<genex_state::StateRuntime>> {
     let tempdir = TempDir::new()?;
-    codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(tempdir.keep().as_path().abs()),
+    genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(tempdir.keep().as_path().abs()),
         "test-provider".to_string(),
     )
     .await
@@ -1935,10 +1935,10 @@ fn test_thread_id() -> anyhow::Result<ThreadId> {
 }
 
 async fn seed_thread_metadata(
-    runtime: &codex_state::StateRuntime,
+    runtime: &genex_state::StateRuntime,
     thread_id: ThreadId,
 ) -> anyhow::Result<()> {
-    let builder = codex_state::ThreadMetadataBuilder::new(
+    let builder = genex_state::ThreadMetadataBuilder::new(
         thread_id,
         runtime
             .sqlite()
@@ -2035,13 +2035,13 @@ fn input_token_usage(input_tokens: i64) -> TokenUsage {
     }
 }
 
-fn protocol_status(status: codex_state::ThreadGoalStatus) -> ThreadGoalStatus {
+fn protocol_status(status: genex_state::ThreadGoalStatus) -> ThreadGoalStatus {
     match status {
-        codex_state::ThreadGoalStatus::Active => ThreadGoalStatus::Active,
-        codex_state::ThreadGoalStatus::Paused => ThreadGoalStatus::Paused,
-        codex_state::ThreadGoalStatus::Blocked => ThreadGoalStatus::Blocked,
-        codex_state::ThreadGoalStatus::UsageLimited => ThreadGoalStatus::UsageLimited,
-        codex_state::ThreadGoalStatus::BudgetLimited => ThreadGoalStatus::BudgetLimited,
-        codex_state::ThreadGoalStatus::Complete => ThreadGoalStatus::Complete,
+        genex_state::ThreadGoalStatus::Active => ThreadGoalStatus::Active,
+        genex_state::ThreadGoalStatus::Paused => ThreadGoalStatus::Paused,
+        genex_state::ThreadGoalStatus::Blocked => ThreadGoalStatus::Blocked,
+        genex_state::ThreadGoalStatus::UsageLimited => ThreadGoalStatus::UsageLimited,
+        genex_state::ThreadGoalStatus::BudgetLimited => ThreadGoalStatus::BudgetLimited,
+        genex_state::ThreadGoalStatus::Complete => ThreadGoalStatus::Complete,
     }
 }

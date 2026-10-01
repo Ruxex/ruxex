@@ -6,7 +6,7 @@
 //! mode via [`ApplyGitRequest::preflight`] and inspect the resulting paths to
 //! learn what would change before applying for real.
 
-use codex_protocol::shell_environment::scrub_non_inheritable_env_vars;
+use genex_protocol::shell_environment::scrub_non_inheritable_env_vars;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::ffi::OsStr;

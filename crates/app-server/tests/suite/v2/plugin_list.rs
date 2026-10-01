@@ -11,33 +11,33 @@ use app_test_support::to_response;
 use app_test_support::write_api_key_auth;
 use chrono::Duration as ChronoDuration;
 use chrono::Utc;
-use codex_app_server_protocol::HookMetadata;
-use codex_app_server_protocol::HookTrustStatus;
-use codex_app_server_protocol::HooksListParams;
-use codex_app_server_protocol::HooksListResponse;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::LoginAccountResponse;
-use codex_app_server_protocol::PluginAuthPolicy;
-use codex_app_server_protocol::PluginDisabledReason;
-use codex_app_server_protocol::PluginInstallParams;
-use codex_app_server_protocol::PluginInstallPolicy;
-use codex_app_server_protocol::PluginInstallPolicySource;
-use codex_app_server_protocol::PluginInstalledParams;
-use codex_app_server_protocol::PluginInstalledResponse;
-use codex_app_server_protocol::PluginListMarketplaceKind;
-use codex_app_server_protocol::PluginListParams;
-use codex_app_server_protocol::PluginListResponse;
-use codex_app_server_protocol::PluginMarketplaceEntry;
-use codex_app_server_protocol::PluginShareDiscoverability;
-use codex_app_server_protocol::PluginSource;
-use codex_app_server_protocol::PluginSummary;
-use codex_app_server_protocol::RequestId;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_core::config::set_project_trust_level;
-use codex_login::AuthKeyringBackendKind;
-use codex_login::login_with_api_key;
-use codex_protocol::config_types::TrustLevel;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_app_server_protocol::HookMetadata;
+use genex_app_server_protocol::HookTrustStatus;
+use genex_app_server_protocol::HooksListParams;
+use genex_app_server_protocol::HooksListResponse;
+use genex_app_server_protocol::JSONRPCResponse;
+use genex_app_server_protocol::LoginAccountResponse;
+use genex_app_server_protocol::PluginAuthPolicy;
+use genex_app_server_protocol::PluginDisabledReason;
+use genex_app_server_protocol::PluginInstallParams;
+use genex_app_server_protocol::PluginInstallPolicy;
+use genex_app_server_protocol::PluginInstallPolicySource;
+use genex_app_server_protocol::PluginInstalledParams;
+use genex_app_server_protocol::PluginInstalledResponse;
+use genex_app_server_protocol::PluginListMarketplaceKind;
+use genex_app_server_protocol::PluginListParams;
+use genex_app_server_protocol::PluginListResponse;
+use genex_app_server_protocol::PluginMarketplaceEntry;
+use genex_app_server_protocol::PluginShareDiscoverability;
+use genex_app_server_protocol::PluginSource;
+use genex_app_server_protocol::PluginSummary;
+use genex_app_server_protocol::RequestId;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_core::config::set_project_trust_level;
+use genex_login::AuthKeyringBackendKind;
+use genex_login::login_with_api_key;
+use genex_protocol::config_types::TrustLevel;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use flate2::Compression;
 use flate2::write::GzEncoder;
 use pretty_assertions::assert_eq;
@@ -383,7 +383,7 @@ async fn plugin_list_keeps_valid_marketplaces_when_another_marketplace_fails_to_
                 install_policy_source: None,
                 must_show_installation_interstitial: None,
                 auth_policy: PluginAuthPolicy::OnInstall,
-                availability: codex_app_server_protocol::PluginAvailability::Available,
+                availability: genex_app_server_protocol::PluginAvailability::Available,
                 disabled_reason: None,
                 eligible_plan_types: None,
                 interface: None,
@@ -504,10 +504,10 @@ async fn plugin_list_uses_alternate_discoverable_manifest_and_keeps_undiscoverab
                     install_policy_source: None,
                     must_show_installation_interstitial: None,
                     auth_policy: PluginAuthPolicy::OnInstall,
-                    availability: codex_app_server_protocol::PluginAvailability::Available,
+                    availability: genex_app_server_protocol::PluginAvailability::Available,
                     disabled_reason: None,
                     eligible_plan_types: None,
-                    interface: Some(codex_app_server_protocol::PluginInterface {
+                    interface: Some(genex_app_server_protocol::PluginInterface {
                         display_name: Some("Valid Plugin".to_string()),
                         short_description: None,
                         long_description: None,
@@ -549,7 +549,7 @@ async fn plugin_list_uses_alternate_discoverable_manifest_and_keeps_undiscoverab
                     install_policy_source: None,
                     must_show_installation_interstitial: None,
                     auth_policy: PluginAuthPolicy::OnInstall,
-                    availability: codex_app_server_protocol::PluginAvailability::Available,
+                    availability: genex_app_server_protocol::PluginAvailability::Available,
                     disabled_reason: None,
                     eligible_plan_types: None,
                     interface: None,
@@ -2058,7 +2058,7 @@ async fn plugin_list_includes_remote_marketplaces_when_remote_plugin_enabled(
     );
     assert_eq!(
         remote_marketplace.plugins[0].availability,
-        codex_app_server_protocol::PluginAvailability::Available
+        genex_app_server_protocol::PluginAvailability::Available
     );
     assert_eq!(
         remote_marketplace.plugins[0]
@@ -4279,7 +4279,7 @@ async fn assert_disabled_remote_plugin_metadata(
     assert_eq!(plugin.enabled, true);
     assert_eq!(
         plugin.availability,
-        codex_app_server_protocol::PluginAvailability::DisabledByAdmin
+        genex_app_server_protocol::PluginAvailability::DisabledByAdmin
     );
     assert_eq!(plugin.disabled_reason, Some(disabled_reason));
     assert_eq!(plugin.eligible_plan_types, eligible_plan_types);

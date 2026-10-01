@@ -1,14 +1,14 @@
 use std::fmt;
 use std::path::Path;
 
-use codex_config::types::AuthCredentialsStoreMode;
+use genex_config::types::AuthCredentialsStoreMode;
 use serde::Deserialize;
 use serde::Serialize;
 
 use super::manager::save_auth;
 use super::storage::AuthDotJson;
 use super::storage::AuthKeyringBackendKind;
-use codex_protocol::auth::AuthMode;
+use genex_protocol::auth::AuthMode;
 
 /// Managed Amazon Bedrock API key persisted in `auth.json`.
 #[derive(Deserialize, Serialize, Clone, PartialEq, Eq)]

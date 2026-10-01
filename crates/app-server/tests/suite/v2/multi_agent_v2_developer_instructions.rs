@@ -2,36 +2,36 @@ use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::write_models_cache;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SandboxMode;
-use codex_app_server_protocol::SandboxPolicy;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_app_server_protocol::ThreadLoadedListParams;
-use codex_app_server_protocol::ThreadLoadedListResponse;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadReadResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadStatus;
-use codex_app_server_protocol::ThreadTokenUsageUpdatedNotification;
-use codex_app_server_protocol::ThreadUnsubscribeParams;
-use codex_app_server_protocol::ThreadUnsubscribeResponse;
-use codex_app_server_protocol::ThreadUnsubscribeStatus;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput;
-use codex_protocol::ThreadId;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_state::StateRuntime;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::JSONRPCNotification;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SandboxMode;
+use genex_app_server_protocol::SandboxPolicy;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_app_server_protocol::ThreadLoadedListParams;
+use genex_app_server_protocol::ThreadLoadedListResponse;
+use genex_app_server_protocol::ThreadReadParams;
+use genex_app_server_protocol::ThreadReadResponse;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::ThreadStatus;
+use genex_app_server_protocol::ThreadTokenUsageUpdatedNotification;
+use genex_app_server_protocol::ThreadUnsubscribeParams;
+use genex_app_server_protocol::ThreadUnsubscribeResponse;
+use genex_app_server_protocol::ThreadUnsubscribeStatus;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::UserInput;
+use genex_protocol::ThreadId;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_state::StateRuntime;
+use genex_utils_absolute_path::test_support::PathExt;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -866,7 +866,7 @@ features.shell_tool = false
     let expected = baseline;
     if history_mode == ThreadHistoryMode::Paginated {
         let state_db = StateRuntime::init(
-            codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+            genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
             "mock_provider".into(),
         )
         .await?;

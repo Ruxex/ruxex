@@ -4,8 +4,8 @@
 use std::future::Future;
 use std::sync::Arc;
 
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::Result as CodexResult;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::Result as CodexResult;
 use tokio::sync::oneshot;
 use tokio_util::sync::CancellationToken;
 use tokio_util::task::TaskTracker;
@@ -31,7 +31,7 @@ impl ThreadManager {
     ) -> CodexResult<NewThread> {
         if matches!(
             options.initial_history,
-            codex_history::InitialHistory::Resumed(_)
+            genex_history::InitialHistory::Resumed(_)
         ) {
             return Err(CodexErr::InvalidRequest(
                 "owned thread startup requires new or forked history".to_owned(),
@@ -39,9 +39,9 @@ impl ThreadManager {
         }
         if options
             .thread_extension_init
-            .get::<codex_extension_api::SessionIsolation>()
+            .get::<genex_extension_api::SessionIsolation>()
             .as_deref()
-            != Some(&codex_extension_api::SessionIsolation::Isolated)
+            != Some(&genex_extension_api::SessionIsolation::Isolated)
         {
             return Err(CodexErr::InvalidRequest(
                 "owned thread startup requires explicit session isolation".to_owned(),

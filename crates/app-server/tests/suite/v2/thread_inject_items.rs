@@ -2,35 +2,35 @@ use anyhow::Context;
 use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
-use codex_app_server_protocol::AdditionalContextEntry;
-use codex_app_server_protocol::AdditionalContextKind;
-use codex_app_server_protocol::ItemCompletedNotification;
-use codex_app_server_protocol::ItemStartedNotification;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_app_server_protocol::ThreadInjectItemsParams;
-use codex_app_server_protocol::ThreadInjectItemsResponse;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStartedNotification;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::TurnToolOutput;
-use codex_app_server_protocol::UserInput as V2UserInput;
-use codex_core::RolloutRecorder;
-use codex_features::Feature;
-use codex_protocol::ThreadId;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::FunctionCallOutputBody;
-use codex_protocol::models::ResponseItem;
-use codex_rollout::InitialHistory;
-use codex_rollout::RolloutItem;
-use codex_state::StateRuntime;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_app_server_protocol::AdditionalContextEntry;
+use genex_app_server_protocol::AdditionalContextKind;
+use genex_app_server_protocol::ItemCompletedNotification;
+use genex_app_server_protocol::ItemStartedNotification;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_app_server_protocol::ThreadInjectItemsParams;
+use genex_app_server_protocol::ThreadInjectItemsResponse;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::TurnStartedNotification;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::TurnToolOutput;
+use genex_app_server_protocol::UserInput as V2UserInput;
+use genex_core::RolloutRecorder;
+use genex_features::Feature;
+use genex_protocol::ThreadId;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::FunctionCallOutputBody;
+use genex_protocol::models::ResponseItem;
+use genex_rollout::InitialHistory;
+use genex_rollout::RolloutItem;
+use genex_state::StateRuntime;
+use genex_utils_absolute_path::test_support::PathExt;
 use core_test_support::responses;
 use core_test_support::responses::strip_response_item_id;
 use core_test_support::responses::strip_response_item_ids_from_json;
@@ -63,7 +63,7 @@ async fn thread_inject_items_adds_raw_response_items_to_thread_history(
         .enable_feature(Feature::RetainClientDeveloperMessages)
         .write(codex_home.path())?;
     let state_db = StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;

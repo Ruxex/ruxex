@@ -1,8 +1,8 @@
-use codex_config::ConfigRequirements;
-use codex_config::Sourced;
-use codex_config::config_toml::ConfigToml;
-use codex_login::default_client::RESIDENCY_HEADER_NAME;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_config::ConfigRequirements;
+use genex_config::Sourced;
+use genex_config::config_toml::ConfigToml;
+use genex_login::default_client::RESIDENCY_HEADER_NAME;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::HashMap;
 use std::path::Path;
 

@@ -2,7 +2,7 @@ use super::*;
 use crate::agent::child_config::build_agent_resume_config;
 use crate::agent::control::render_input_preview;
 use crate::tools::handlers::multi_agents_spec::create_send_input_tool_v1;
-use codex_tools::ToolSpec;
+use genex_tools::ToolSpec;
 
 pub(crate) struct Handler;
 
@@ -22,7 +22,7 @@ impl ToolExecutor<ToolInvocation> for Handler {
         )
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> codex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

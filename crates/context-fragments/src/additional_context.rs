@@ -1,5 +1,5 @@
-use codex_protocol::models::ContentItemKind;
-use codex_utils_string::truncate_middle_with_token_budget;
+use genex_protocol::models::ContentItemKind;
+use genex_utils_string::truncate_middle_with_token_budget;
 
 use crate::ContextualUserFragment;
 

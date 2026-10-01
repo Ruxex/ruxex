@@ -15,10 +15,10 @@ use crate::config_update::format_config_error;
 use crate::external_agent_config_migration::flow::ExternalAgentConfigMigrationFlowOutcome;
 use crate::pager_overlay::TranscriptHistoryState;
 use crate::session_resume::cwds_differ;
-use codex_app_server_client::AppServerEvent;
-use codex_app_server_protocol::ThreadGoalStatus;
+use genex_app_server_client::AppServerEvent;
+use genex_app_server_protocol::ThreadGoalStatus;
 #[cfg(target_os = "windows")]
-use codex_app_server_protocol::WindowsSandboxSetupMode;
+use genex_app_server_protocol::WindowsSandboxSetupMode;
 
 pub(super) const SHUTDOWN_FIRST_EXIT_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 2);
 
@@ -619,7 +619,7 @@ impl App {
                     Err(err) => {
                     // Validation and unsupported-method errors leave history unchanged. Other
                     // failures can arrive after the server has already committed the revert.
-                    if matches!(&err, codex_app_server_client::TypedRequestError::Server { source, .. }
+                    if matches!(&err, genex_app_server_client::TypedRequestError::Server { source, .. }
                         if matches!(source.code, -32602..=-32600)) {
                         self.restore_backtrack_prompt_after_revert_error(prompt, err);
                         tui.frame_requester().schedule_frame();
@@ -825,7 +825,7 @@ impl App {
                             .thread_goal_set(
                                 thread_id,
                                 /*objective*/ None,
-                                Some(codex_app_server_protocol::ThreadGoalStatus::Paused),
+                                Some(genex_app_server_protocol::ThreadGoalStatus::Paused),
                                 /*token_budget*/ None,
                             )
                             .await
@@ -2656,7 +2656,7 @@ impl App {
             }
             Ok(()) => {
                 self.track_agents_overview_notification(&ServerNotification::ThreadArchived(
-                    codex_app_server_protocol::ThreadArchivedNotification {
+                    genex_app_server_protocol::ThreadArchivedNotification {
                         thread_id: thread_id.to_string(),
                     },
                 ));
@@ -2716,7 +2716,7 @@ impl App {
             }
             Ok(()) => {
                 self.track_agents_overview_notification(&ServerNotification::ThreadDeleted(
-                    codex_app_server_protocol::ThreadDeletedNotification {
+                    genex_app_server_protocol::ThreadDeletedNotification {
                         thread_id: thread_id.to_string(),
                     },
                 ));

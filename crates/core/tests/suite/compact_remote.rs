@@ -4,30 +4,30 @@ use anyhow::Context;
 use anyhow::Result;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use codex_core::StartThreadOptions;
-use codex_core::TurnInputRequest;
-use codex_features::Feature;
-use codex_history::CodexHarnessMetadata;
-use codex_history::InitialHistory;
-use codex_history::RolloutItem;
-use codex_login::CodexAuth;
-use codex_login::auth::BedrockApiKeyAuth;
-use codex_model_provider_info::AMAZON_BEDROCK_GPT_5_5_MODEL_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_protocol::AgentPath;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ImageReference;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::ConversationStartParams;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::InterAgentCommunication;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::RealtimeConversationRealtimeEvent;
-use codex_protocol::protocol::RealtimeEvent;
-use codex_protocol::protocol::RealtimeOutputModality;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::user_input::UserInput;
+use genex_core::StartThreadOptions;
+use genex_core::TurnInputRequest;
+use genex_features::Feature;
+use genex_history::CodexHarnessMetadata;
+use genex_history::InitialHistory;
+use genex_history::RolloutItem;
+use genex_login::CodexAuth;
+use genex_login::auth::BedrockApiKeyAuth;
+use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_5_MODEL_ID;
+use genex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_protocol::AgentPath;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::ImageReference;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::ConversationStartParams;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::InterAgentCommunication;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::RealtimeConversationRealtimeEvent;
+use genex_protocol::protocol::RealtimeEvent;
+use genex_protocol::protocol::RealtimeOutputModality;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
@@ -94,7 +94,7 @@ async fn start_remote_realtime_server() -> responses::WebSocketTestServer {
     .await
 }
 
-async fn start_realtime_conversation(codex: &codex_core::CodexThread) -> Result<()> {
+async fn start_realtime_conversation(codex: &genex_core::CodexThread) -> Result<()> {
     codex
         .submit(Op::RealtimeConversationStart(ConversationStartParams {
             client_managed_handoffs: false,
@@ -103,7 +103,7 @@ async fn start_realtime_conversation(codex: &codex_core::CodexThread) -> Result<
             codex_responses_as_items: false,
             codex_response_item_prefix: None,
             codex_response_handoff_mode:
-                codex_protocol::protocol::CodexResponseHandoffMode::Thinking,
+                genex_protocol::protocol::CodexResponseHandoffMode::Thinking,
             codex_response_handoff_channel_prefixes: None,
             model: None,
             output_modality: RealtimeOutputModality::Audio,
@@ -142,7 +142,7 @@ async fn start_realtime_conversation(codex: &codex_core::CodexThread) -> Result<
     Ok(())
 }
 
-async fn close_realtime_conversation(codex: &codex_core::CodexThread) -> Result<()> {
+async fn close_realtime_conversation(codex: &genex_core::CodexThread) -> Result<()> {
     codex.submit(Op::RealtimeConversationClose).await?;
     wait_for_event_match(codex, |msg| match msg {
         EventMsg::RealtimeConversationClosed(closed) => Some(closed.clone()),
@@ -171,7 +171,7 @@ fn assert_request_contains_custom_realtime_start(
     );
 }
 
-async fn wait_for_turn_complete(codex: &codex_core::CodexThread) {
+async fn wait_for_turn_complete(codex: &genex_core::CodexThread) {
     wait_for_event_with_timeout(
         codex,
         |ev| matches!(ev, EventMsg::TurnComplete(_)),
@@ -212,7 +212,7 @@ fn annotate_retained_user_in_rollout(path: &Path, retained_text: &str) -> Result
     let mut rollout = fs::read_to_string(path)?
         .lines()
         .filter(|line| !line.trim().is_empty())
-        .map(codex_rollout::parse_rollout_line)
+        .map(genex_rollout::parse_rollout_line)
         .collect::<std::result::Result<Vec<_>, _>>()?;
     rollout
         .iter_mut()
@@ -240,7 +240,7 @@ fn assert_compacted_user_metadata(path: &Path, retained_text: &str) -> Result<()
     let replacement_history = fs::read_to_string(path)?
         .lines()
         .filter(|line| !line.trim().is_empty())
-        .map(codex_rollout::parse_rollout_line)
+        .map(genex_rollout::parse_rollout_line)
         .collect::<std::result::Result<Vec<_>, _>>()?
         .into_iter()
         .rev()
@@ -413,7 +413,7 @@ async fn remote_compact_v2_retains_only_client_developer_messages_when_enabled(
     codex.shutdown_and_wait().await?;
     let replacement_history = fs::read_to_string(&rollout_path)?
         .lines()
-        .filter_map(|line| codex_rollout::parse_rollout_line(line).ok())
+        .filter_map(|line| genex_rollout::parse_rollout_line(line).ok())
         .filter_map(|line| match line.item {
             RolloutItem::Compacted(compacted) => compacted.replacement_history,
             _ => None,
@@ -515,7 +515,7 @@ async fn remote_compact_v2_records_usage_before_output_validation() -> Result<()
 
     let record = fs::read_to_string(&rollout_path)?
         .lines()
-        .filter_map(|line| codex_rollout::parse_rollout_line(line).ok())
+        .filter_map(|line| genex_rollout::parse_rollout_line(line).ok())
         .filter_map(|line| match line.item {
             RolloutItem::TokenUsageRecord(record) => Some(record),
             _ => None,
@@ -638,7 +638,7 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
                     image: ImageReference::File {
                         file_id: format!("file_{number}"),
                     },
-                    detail: Some(codex_protocol::models::ImageDetail::Original),
+                    detail: Some(genex_protocol::models::ImageDetail::Original),
                 });
             }
             let image = image::ImageBuffer::from_pixel(
@@ -655,7 +655,7 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
                         BASE64_STANDARD.encode(bytes.get_ref())
                     ),
                 },
-                detail: Some(codex_protocol::models::ImageDetail::Original),
+                detail: Some(genex_protocol::models::ImageDetail::Original),
             })
         })
         .collect::<Result<Vec<_>>>()?;

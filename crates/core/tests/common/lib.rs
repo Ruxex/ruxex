@@ -2,22 +2,22 @@
 
 use anyhow::Context as _;
 use anyhow::ensure;
-use codex_arg0::Arg0PathEntryGuard;
-use codex_utils_cargo_bin::CargoBinError;
+use genex_arg0::Arg0PathEntryGuard;
+use genex_utils_cargo_bin::CargoBinError;
 use ctor::ctor;
 use std::sync::OnceLock;
 use tempfile::TempDir;
 
-use codex_config::LoaderOverrides;
-use codex_core::CodexThread;
-use codex_core::config::Config;
-use codex_core::config::ConfigBuilder;
-use codex_core::config::ConfigOverrides;
-pub use codex_core::test_support::TestCodexResponsesRequestKind;
-pub use codex_core::test_support::responses_metadata;
-use codex_utils_absolute_path::AbsolutePathBuf;
-pub use codex_utils_absolute_path::test_support::PathBufExt;
-pub use codex_utils_absolute_path::test_support::PathExt;
+use genex_config::LoaderOverrides;
+use genex_core::CodexThread;
+use genex_core::config::Config;
+use genex_core::config::ConfigBuilder;
+use genex_core::config::ConfigOverrides;
+pub use genex_core::test_support::TestCodexResponsesRequestKind;
+pub use genex_core::test_support::responses_metadata;
+use genex_utils_absolute_path::AbsolutePathBuf;
+pub use genex_utils_absolute_path::test_support::PathBufExt;
+pub use genex_utils_absolute_path::test_support::PathExt;
 use regex_lite::Regex;
 use std::path::Path;
 use std::path::PathBuf;
@@ -48,13 +48,13 @@ static TEST_ARG0_PATH_ENTRY: OnceLock<Option<Arg0PathEntryGuard>> = OnceLock::ne
 
 #[ctor]
 fn enable_deterministic_unified_exec_process_ids_for_tests() {
-    codex_core::test_support::set_thread_manager_test_mode(/*enabled*/ true);
-    codex_core::test_support::set_deterministic_process_ids(/*enabled*/ true);
+    genex_core::test_support::set_thread_manager_test_mode(/*enabled*/ true);
+    genex_core::test_support::set_deterministic_process_ids(/*enabled*/ true);
 }
 
 #[ctor]
 fn configure_arg0_dispatch_for_test_binaries() {
-    let _ = TEST_ARG0_PATH_ENTRY.get_or_init(codex_arg0::arg0_dispatch);
+    let _ = TEST_ARG0_PATH_ENTRY.get_or_init(genex_arg0::arg0_dispatch);
 }
 
 #[ctor]
@@ -63,7 +63,7 @@ fn configure_insta_workspace_root_for_snapshot_tests() {
         return;
     }
 
-    let workspace_root = codex_utils_cargo_bin::repo_root()
+    let workspace_root = genex_utils_cargo_bin::repo_root()
         .ok()
         .map(|root| root.join("codex-rs"));
 
@@ -230,15 +230,15 @@ pub fn find_codex_linux_sandbox_exe() -> Result<PathBuf, CargoBinError> {
         return Ok(path);
     }
 
-    codex_utils_cargo_bin::cargo_bin("codex-linux-sandbox")
+    genex_utils_cargo_bin::cargo_bin("codex-linux-sandbox")
 }
 
 pub async fn wait_for_event<F>(
     codex: &CodexThread,
     predicate: F,
-) -> codex_protocol::protocol::EventMsg
+) -> genex_protocol::protocol::EventMsg
 where
-    F: FnMut(&codex_protocol::protocol::EventMsg) -> bool,
+    F: FnMut(&genex_protocol::protocol::EventMsg) -> bool,
 {
     use tokio::time::Duration;
     wait_for_event_with_timeout(codex, predicate, Duration::from_secs(1)).await
@@ -246,7 +246,7 @@ where
 
 /// Waits for a configured MCP server to finish startup and requires it to be ready.
 pub async fn wait_for_mcp_server(codex: &CodexThread, server_name: &str) -> anyhow::Result<()> {
-    use codex_protocol::protocol::EventMsg;
+    use genex_protocol::protocol::EventMsg;
 
     // Wait for the startup summary regardless of outcome, then interpret the
     // requested server's ready, failed, or cancelled entry below.
@@ -279,10 +279,10 @@ pub async fn wait_for_mcp_server(codex: &CodexThread, server_name: &str) -> anyh
 
 pub async fn submit_thread_settings(
     codex: &CodexThread,
-    thread_settings: codex_protocol::protocol::ThreadSettingsOverrides,
+    thread_settings: genex_protocol::protocol::ThreadSettingsOverrides,
 ) -> anyhow::Result<()> {
-    use codex_protocol::protocol::EventMsg;
-    use codex_protocol::protocol::Op;
+    use genex_protocol::protocol::EventMsg;
+    use genex_protocol::protocol::Op;
     use tokio::time::Duration;
     use tokio::time::timeout;
 
@@ -309,11 +309,11 @@ pub struct ThreadIdle;
 #[derive(Default)]
 struct ThreadIdleNotification(tokio::sync::Notify);
 
-impl codex_extension_api::ThreadLifecycleContributor<Config> for ThreadIdle {
+impl genex_extension_api::ThreadLifecycleContributor<Config> for ThreadIdle {
     fn on_thread_idle<'a>(
         &'a self,
-        input: codex_extension_api::ThreadIdleInput<'a>,
-    ) -> codex_extension_api::ExtensionFuture<'a, ()> {
+        input: genex_extension_api::ThreadIdleInput<'a>,
+    ) -> genex_extension_api::ExtensionFuture<'a, ()> {
         Box::pin(async move {
             input
                 .thread_store
@@ -338,7 +338,7 @@ impl ThreadIdle {
 
 pub async fn wait_for_event_match<T, F>(codex: &CodexThread, matcher: F) -> T
 where
-    F: Fn(&codex_protocol::protocol::EventMsg) -> Option<T>,
+    F: Fn(&genex_protocol::protocol::EventMsg) -> Option<T>,
 {
     let ev = wait_for_event(codex, |ev| matcher(ev).is_some()).await;
     matcher(&ev).expect("EventMsg should match matcher predicate")
@@ -348,9 +348,9 @@ pub async fn wait_for_event_with_timeout<F>(
     codex: &CodexThread,
     mut predicate: F,
     wait_time: tokio::time::Duration,
-) -> codex_protocol::protocol::EventMsg
+) -> genex_protocol::protocol::EventMsg
 where
-    F: FnMut(&codex_protocol::protocol::EventMsg) -> bool,
+    F: FnMut(&genex_protocol::protocol::EventMsg) -> bool,
 {
     use tokio::time::Duration;
     use tokio::time::timeout;
@@ -367,15 +367,15 @@ where
 }
 
 pub fn sandbox_env_var() -> &'static str {
-    codex_core::spawn::CODEX_SANDBOX_ENV_VAR
+    genex_core::spawn::CODEX_SANDBOX_ENV_VAR
 }
 
 pub fn sandbox_network_env_var() -> &'static str {
-    codex_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR
+    genex_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR
 }
 
 pub fn format_with_current_shell(command: &str) -> Vec<String> {
-    codex_core::shell::default_user_shell().derive_exec_args(command, /*use_login_shell*/ true)
+    genex_core::shell::default_user_shell().derive_exec_args(command, /*use_login_shell*/ true)
 }
 
 pub fn format_with_current_shell_display(command: &str) -> String {
@@ -384,7 +384,7 @@ pub fn format_with_current_shell_display(command: &str) -> String {
 }
 
 pub fn format_with_current_shell_non_login(command: &str) -> Vec<String> {
-    codex_core::shell::default_user_shell()
+    genex_core::shell::default_user_shell()
         .derive_exec_args(command, /*use_login_shell*/ false)
 }
 
@@ -395,7 +395,7 @@ pub fn format_with_current_shell_display_non_login(command: &str) -> String {
 }
 
 pub fn stdio_server_bin() -> Result<String, CargoBinError> {
-    codex_utils_cargo_bin::cargo_bin("test_stdio_server").map(|p| p.to_string_lossy().to_string())
+    genex_utils_cargo_bin::cargo_bin("test_stdio_server").map(|p| p.to_string_lossy().to_string())
 }
 
 pub mod fs_wait {

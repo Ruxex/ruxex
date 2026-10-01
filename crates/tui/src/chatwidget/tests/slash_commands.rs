@@ -461,7 +461,7 @@ async fn queued_bare_rename_drains_next_input_after_name_update() {
 
     chat.handle_server_notification(
         ServerNotification::ThreadNameUpdated(
-            codex_app_server_protocol::ThreadNameUpdatedNotification {
+            genex_app_server_protocol::ThreadNameUpdatedNotification {
                 thread_id: thread_id.to_string(),
                 thread_name: Some("Queued rename".to_string()),
             },
@@ -545,7 +545,7 @@ async fn queued_inline_rename_does_not_drain_again_before_turn_started() {
 
     chat.handle_server_notification(
         ServerNotification::ThreadNameUpdated(
-            codex_app_server_protocol::ThreadNameUpdatedNotification {
+            genex_app_server_protocol::ThreadNameUpdatedNotification {
                 thread_id: thread_id.to_string(),
                 thread_name: Some("Queued rename".to_string()),
             },
@@ -639,7 +639,7 @@ async fn ctrl_d_with_modal_open_does_not_quit() {
 #[tokio::test]
 async fn slash_init_does_not_depend_on_loaded_instruction_sources() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.instruction_source_paths = vec![codex_utils_path_uri::PathUri::from_abs_path(
+    chat.instruction_source_paths = vec![genex_utils_path_uri::PathUri::from_abs_path(
         &chat.config.cwd.join("project-instructions.md"),
     )];
 
@@ -884,7 +884,7 @@ async fn queued_goal_slash_command_preserves_large_paste() {
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
     handle_turn_started(&mut chat, "turn-1");
-    let paste = "x".repeat(codex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS + 1);
+    let paste = "x".repeat(genex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS + 1);
 
     queue_goal_with_large_paste(&mut chat, paste.clone());
 
@@ -905,7 +905,7 @@ async fn queued_goal_slash_command_restores_large_paste_for_edit() {
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
     handle_turn_started(&mut chat, "turn-1");
-    let paste = "x".repeat(codex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS + 1);
+    let paste = "x".repeat(genex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS + 1);
 
     queue_goal_with_large_paste(&mut chat, paste.clone());
     chat.handle_key_event(KeyEvent::new(KeyCode::Up, KeyModifiers::ALT));
@@ -925,7 +925,7 @@ async fn interrupt_disambiguates_same_sized_goal_pastes() {
     let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     chat.set_feature_enabled(Feature::Goals, /*enabled*/ true);
     handle_turn_started(&mut chat, "turn-1");
-    let first = "a".repeat(codex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS + 1);
+    let first = "a".repeat(genex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS + 1);
     let second = "b".repeat(first.len());
 
     queue_goal_with_large_paste(&mut chat, first);
@@ -2056,8 +2056,8 @@ async fn slash_keymap_invalid_args_show_usage() {
 async fn copy_shortcut_can_be_remapped() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     let mut keymap_config = chat.config_ref().tui_keymap.clone();
-    keymap_config.global.copy = Some(codex_config::types::KeybindingsSpec::One(
-        codex_config::types::KeybindingSpec("ctrl-x".to_string()),
+    keymap_config.global.copy = Some(genex_config::types::KeybindingsSpec::One(
+        genex_config::types::KeybindingSpec("ctrl-x".to_string()),
     ));
     let runtime_keymap =
         crate::keymap::RuntimeKeymap::from_config(&keymap_config).expect("valid copy remap");
@@ -2198,13 +2198,13 @@ async fn active_goal_without_follow_up_suppresses_agent_turn_complete_notificati
     chat.set_feature_enabled(Feature::Goals, /*enabled*/ true);
     chat.handle_server_notification(
         ServerNotification::ThreadGoalUpdated(
-            codex_app_server_protocol::ThreadGoalUpdatedNotification {
+            genex_app_server_protocol::ThreadGoalUpdatedNotification {
                 thread_id: "thread-1".to_string(),
                 turn_id: None,
-                goal: codex_app_server_protocol::ThreadGoal {
+                goal: genex_app_server_protocol::ThreadGoal {
                     thread_id: "thread-1".to_string(),
                     objective: "finish the benchmark".to_string(),
-                    status: codex_app_server_protocol::ThreadGoalStatus::Active,
+                    status: genex_app_server_protocol::ThreadGoalStatus::Active,
                     token_budget: None,
                     tokens_used: 0,
                     time_used_seconds: 0,

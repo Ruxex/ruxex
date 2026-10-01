@@ -1,10 +1,10 @@
-use codex_exec_server::ShellInfo;
-use codex_shell_command::shell_detect::DetectedShell;
+use genex_exec_server::ShellInfo;
+use genex_shell_command::shell_detect::DetectedShell;
 use serde::Deserialize;
 use serde::Serialize;
 use std::path::PathBuf;
 
-pub use codex_shell_command::shell_detect::ShellType;
+pub use genex_shell_command::shell_detect::ShellType;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Shell {
@@ -78,24 +78,24 @@ impl Shell {
 
 #[cfg(all(test, unix))]
 fn ultimate_fallback_shell() -> Shell {
-    codex_shell_command::shell_detect::ultimate_fallback_shell().into()
+    genex_shell_command::shell_detect::ultimate_fallback_shell().into()
 }
 
 pub fn get_shell_by_model_provided_path(shell_path: &PathBuf) -> Shell {
-    codex_shell_command::shell_detect::get_shell_by_model_provided_path(shell_path).into()
+    genex_shell_command::shell_detect::get_shell_by_model_provided_path(shell_path).into()
 }
 
 pub fn get_shell(shell_type: ShellType) -> Option<Shell> {
-    codex_shell_command::shell_detect::get_shell(shell_type).map(Into::into)
+    genex_shell_command::shell_detect::get_shell(shell_type).map(Into::into)
 }
 
 pub fn default_user_shell() -> Shell {
-    codex_shell_command::shell_detect::default_user_shell().into()
+    genex_shell_command::shell_detect::default_user_shell().into()
 }
 
 #[cfg(all(test, target_os = "macos"))]
 fn default_user_shell_from_path(user_shell_path: Option<PathBuf>) -> Shell {
-    codex_shell_command::shell_detect::default_user_shell_from_path(user_shell_path).into()
+    genex_shell_command::shell_detect::default_user_shell_from_path(user_shell_path).into()
 }
 
 #[cfg(test)]

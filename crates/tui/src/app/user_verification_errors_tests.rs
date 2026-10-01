@@ -1,5 +1,5 @@
 use super::*;
-use codex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::JSONRPCErrorError;
 use pretty_assertions::assert_eq;
 
 #[test]

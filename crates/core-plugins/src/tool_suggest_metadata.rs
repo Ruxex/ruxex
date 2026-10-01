@@ -2,15 +2,15 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::RwLock;
 
-use codex_config::SkillConfigRules;
-use codex_plugin::PluginCapabilitySummary;
-use codex_plugin::PluginId;
-use codex_plugin::PluginIdError;
-use codex_plugin::prompt_safe_plugin_description;
-use codex_protocol::protocol::Product;
-use codex_skills::SkillRootLoader;
-use codex_utils_plugins::PluginIdentity;
-use codex_utils_plugins::PluginSkillRoot;
+use genex_config::SkillConfigRules;
+use genex_plugin::PluginCapabilitySummary;
+use genex_plugin::PluginId;
+use genex_plugin::PluginIdError;
+use genex_plugin::prompt_safe_plugin_description;
+use genex_protocol::protocol::Product;
+use genex_skills::SkillRootLoader;
+use genex_utils_plugins::PluginIdentity;
+use genex_utils_plugins::PluginSkillRoot;
 use tokio::sync::Semaphore;
 
 use crate::loader::PluginSkillInventory;
@@ -59,7 +59,7 @@ impl ToolSuggestMetadataFragment {
     pub(crate) fn project(
         &self,
         skill_config_rules: &SkillConfigRules,
-        _auth_mode: Option<codex_protocol::auth::AuthMode>,
+        _auth_mode: Option<genex_protocol::auth::AuthMode>,
     ) -> PluginCapabilitySummary {
         let mcp_servers = self
             .mcp_server_names

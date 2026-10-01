@@ -1,15 +1,15 @@
-use codex_config::types::PluginMcpServerConfig;
-use codex_core::config::Config;
-use codex_core_plugins::ExecutorPluginProvider;
-use codex_core_plugins::loader::apply_configured_plugin_mcp_server_policies;
-use codex_core_plugins::loader::configured_plugin_mcp_server_policies;
-use codex_exec_server::EnvironmentManager;
-use codex_extension_api::ExtensionFuture;
-use codex_extension_api::McpServerContribution;
-use codex_extension_api::McpServerContributionContext;
-use codex_extension_api::McpServerContributor;
-use codex_features::Feature;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_config::types::PluginMcpServerConfig;
+use genex_core::config::Config;
+use genex_core_plugins::ExecutorPluginProvider;
+use genex_core_plugins::loader::apply_configured_plugin_mcp_server_policies;
+use genex_core_plugins::loader::configured_plugin_mcp_server_policies;
+use genex_exec_server::EnvironmentManager;
+use genex_extension_api::ExtensionFuture;
+use genex_extension_api::McpServerContribution;
+use genex_extension_api::McpServerContributionContext;
+use genex_extension_api::McpServerContributor;
+use genex_features::Feature;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -27,7 +27,7 @@ mod provider;
 struct SelectedPluginMetadata {
     plugin_id: String,
     plugin_display_name: String,
-    servers: Vec<(String, codex_config::McpServerConfig)>,
+    servers: Vec<(String, genex_config::McpServerConfig)>,
 }
 
 #[derive(Default)]

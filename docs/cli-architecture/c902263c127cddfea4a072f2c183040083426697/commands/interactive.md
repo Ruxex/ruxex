@@ -32,7 +32,7 @@ TUI はモデルのターン、ツール、承認、永続化を共有ランタ�
 
 | 関心事 | 定義 |
 | --- | --- |
-| ルートコマンド | `codex-cli::MultitoolCli`, `crates/cli/src/main.rs` |
+| ルートコマンド | `genex-cli::MultitoolCli`, `crates/cli/src/main.rs` |
 | TUI 引数 | `codex-tui::Cli`, `crates/tui/src/cli.rs` |
-| セッションランタイム | `codex-core`。TUI/app-server の起動経路から到達 |
+| セッションランタイム | `genex-core`。TUI/app-server の起動経路から到達 |
 | UI イベントソース | `codex-tui::EventSource`。[Trait 索引](../reference/trait-index.md#eventsource)を参照 |

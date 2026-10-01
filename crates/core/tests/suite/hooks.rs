@@ -3,51 +3,51 @@ use std::path::Path;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_config::HookStateToml;
-use codex_config::McpServerConfig;
-use codex_config::test_support::CloudConfigBundleFixture;
-use codex_core::ForkSnapshot;
-use codex_core::StartThreadOptions;
-use codex_core::TurnInput;
-use codex_core::TurnInputRequest;
-use codex_core::TurnStartOptions;
-use codex_core::config::Config;
-use codex_core::config::Constrained;
-use codex_core::config::ThreadStoreConfig;
-use codex_features::Feature;
-use codex_history::InitialHistory;
-use codex_history::RolloutItem;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_model_provider_info::built_in_model_providers;
-use codex_models_manager::test_support::test_models_response;
-use codex_plugin::PluginHookSource;
-use codex_plugin::PluginId;
-use codex_protocol::items::parse_hook_prompt_fragment;
-use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::NetworkPermissions;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::HookEventName;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::TurnSettingsUpdate;
-use codex_protocol::protocol::TurnSettingsUpdateOutcome;
-use codex_protocol::request_permissions::PermissionGrantScope;
-use codex_protocol::request_permissions::RequestPermissionProfile;
-use codex_protocol::request_permissions::RequestPermissionsResponse;
-use codex_protocol::request_user_input::RequestUserInputAnswer;
-use codex_protocol::request_user_input::RequestUserInputResponse;
-use codex_protocol::user_input::UserInput;
-use codex_thread_store::InMemoryThreadStore;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_config::HookStateToml;
+use genex_config::McpServerConfig;
+use genex_config::test_support::CloudConfigBundleFixture;
+use genex_core::ForkSnapshot;
+use genex_core::StartThreadOptions;
+use genex_core::TurnInput;
+use genex_core::TurnInputRequest;
+use genex_core::TurnStartOptions;
+use genex_core::config::Config;
+use genex_core::config::Constrained;
+use genex_core::config::ThreadStoreConfig;
+use genex_features::Feature;
+use genex_history::InitialHistory;
+use genex_history::RolloutItem;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_model_provider_info::built_in_model_providers;
+use genex_models_manager::test_support::test_models_response;
+use genex_plugin::PluginHookSource;
+use genex_plugin::PluginId;
+use genex_protocol::items::parse_hook_prompt_fragment;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::NetworkPermissions;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::HookEventName;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::TurnSettingsUpdate;
+use genex_protocol::protocol::TurnSettingsUpdateOutcome;
+use genex_protocol::request_permissions::PermissionGrantScope;
+use genex_protocol::request_permissions::RequestPermissionProfile;
+use genex_protocol::request_permissions::RequestPermissionsResponse;
+use genex_protocol::request_user_input::RequestUserInputAnswer;
+use genex_protocol::request_user_input::RequestUserInputResponse;
+use genex_protocol::user_input::UserInput;
+use genex_thread_store::InMemoryThreadStore;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::TestTargetOs;
 use core_test_support::fs_wait;
 use core_test_support::hooks::trust_discovered_hooks;
@@ -175,11 +175,11 @@ fn trust_plugin_hooks(config: &mut Config, plugin_hook_sources: Vec<PluginHookSo
         .features
         .enable(Feature::CodexHooks)
         .expect("test config should allow feature update");
-    let listed = codex_hooks::list_hooks(codex_hooks::HooksConfig {
+    let listed = genex_hooks::list_hooks(genex_hooks::HooksConfig {
         feature_enabled: true,
         config_layer_stack: Some(config.config_layer_stack.clone()),
         plugin_hook_sources,
-        ..codex_hooks::HooksConfig::default()
+        ..genex_hooks::HooksConfig::default()
     });
     assert!(
         !listed.hooks.is_empty(),
@@ -1156,7 +1156,7 @@ fn rollout_hook_prompt_texts(text: &str) -> Result<Vec<String>> {
         if trimmed.is_empty() {
             continue;
         }
-        let rollout = codex_rollout::parse_rollout_line(trimmed).context("parse rollout line")?;
+        let rollout = genex_rollout::parse_rollout_line(trimmed).context("parse rollout line")?;
         if let RolloutItem::ResponseItem(envelope) = rollout.item
             && let ResponseItem::Message { role, content, .. } = envelope.item
             && role == "user"
@@ -1823,7 +1823,7 @@ async fn async_hook_context_is_injected_into_the_active_turn() -> Result<()> {
                 text_elements: Vec::new(),
             }])
             .with_thread_settings(
-                codex_protocol::protocol::ThreadSettingsOverrides {
+                genex_protocol::protocol::ThreadSettingsOverrides {
                     approval_policy: Some(AskForApproval::Never),
                     sandbox_policy: Some(sandbox_policy),
                     permission_profile,
@@ -3444,7 +3444,7 @@ allow_local_binding = true
         .with_cloud_config_bundle(managed_network_requirements_loader())
         .with_config(move |config| {
             trust_discovered_hooks(config);
-            config.approvals_reviewer = codex_config::types::ApprovalsReviewer::AutoReview;
+            config.approvals_reviewer = genex_config::types::ApprovalsReviewer::AutoReview;
             config.permissions.approval_policy = Constrained::allow_any(approval_policy);
             config
                 .permissions
@@ -3981,7 +3981,7 @@ Path(r"{hook_finished_path}").write_text("finished", encoding="utf-8")
                 text_elements: Vec::new(),
             }])
             .with_thread_settings(
-                codex_protocol::protocol::ThreadSettingsOverrides {
+                genex_protocol::protocol::ThreadSettingsOverrides {
                     approval_policy: Some(AskForApproval::Never),
                     sandbox_policy: Some(sandbox_policy),
                     permission_profile,
@@ -4520,7 +4520,7 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
             "hooks": manifest_hooks,
         }))?,
     )?;
-    let hook_key = codex_hooks::hook_key(
+    let hook_key = genex_hooks::hook_key(
         &format!("{plugin_name}@codex-bundled:{source_relative_path}"),
         HookEventName::Stop,
         /*group_index*/ 0,
@@ -4576,7 +4576,7 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
         },
     )]);
     if !hooks_enabled {
-        let regular_hooks = codex_hooks::list_hooks(codex_hooks::HooksConfig {
+        let regular_hooks = genex_hooks::list_hooks(genex_hooks::HooksConfig {
             feature_enabled: true,
             config_layer_stack: Some(test.config.config_layer_stack.clone()),
             ..Default::default()
@@ -4593,7 +4593,7 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
         }
     }
     assert_eq!(
-        codex_hooks::hook_states_from_stack(Some(&test.config.config_layer_stack)),
+        genex_hooks::hook_states_from_stack(Some(&test.config.config_layer_stack)),
         expected_hook_states
     );
     wait_for_mcp_server(&test.codex, mcp_server_name).await?;
@@ -4749,7 +4749,7 @@ print(json.dumps({{
         plugin_data_root,
         source_path: plugin_hooks_path_abs,
         source_relative_path: "hooks/hooks.json".to_string(),
-        hooks: serde_json::from_str::<codex_config::HooksFile>(plugin_hooks_json)
+        hooks: serde_json::from_str::<genex_config::HooksFile>(plugin_hooks_json)
             .context("parse plugin hooks")?
             .hooks,
     }];
@@ -4771,7 +4771,7 @@ print(json.dumps({{
 
     test.submit_turn_with_policy(
         "run the shell command blocked by a plugin hook",
-        codex_protocol::protocol::SandboxPolicy::DangerFullAccess,
+        genex_protocol::protocol::SandboxPolicy::DangerFullAccess,
     )
     .await?;
 

@@ -1,11 +1,11 @@
 [package]
-name = "codex-exec-server-protocol"
+name = "genex-exec-server-protocol"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "codex_exec_server_protocol"
+name = "genex_exec_server_protocol"
 path = "src/lib.rs"
 doctest = false
 
@@ -14,16 +14,16 @@ workspace = true
 
 [dependencies]
 base64 = { workspace = true }
-codex-file-system = { workspace = true }
-codex-network-proxy = { workspace = true }
-codex-protocol = { workspace = true }
-codex-shell-command = { workspace = true }
-codex-utils-path-uri = { workspace = true }
+genex-file-system = { workspace = true }
+genex-network-proxy = { workspace = true }
+genex-protocol = { workspace = true }
+genex-shell-command = { workspace = true }
+genex-utils-path-uri = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true, features = ["arbitrary_precision", "raw_value"] }
 
 [target.'cfg(windows)'.dependencies]
-codex-mxc-sandbox = { workspace = true }
+genex-mxc-sandbox = { workspace = true }
 
 [dev-dependencies]
 pretty_assertions = { workspace = true }

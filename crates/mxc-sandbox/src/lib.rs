@@ -16,8 +16,8 @@ use std::path::PathBuf;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::ensure;
-use codex_network_proxy::ManagedNetworkSandboxContext;
-use codex_protocol::models::PermissionProfile;
+use genex_network_proxy::ManagedNetworkSandboxContext;
+use genex_protocol::models::PermissionProfile;
 use serde::Deserialize;
 use serde::Serialize;
 

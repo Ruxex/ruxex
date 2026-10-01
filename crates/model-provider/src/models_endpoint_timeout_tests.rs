@@ -1,6 +1,6 @@
 use super::*;
-use codex_http_client::OutboundProxyPolicy;
-use codex_protocol::error::CodexErrorDetails;
+use genex_http_client::OutboundProxyPolicy;
+use genex_protocol::error::CodexErrorDetails;
 use wiremock::Mock;
 use wiremock::MockServer;
 use wiremock::ResponseTemplate;

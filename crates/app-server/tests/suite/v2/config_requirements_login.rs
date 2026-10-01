@@ -2,11 +2,11 @@
 
 use anyhow::Result;
 use app_test_support::TestAppServer;
-use codex_app_server_protocol::Account;
-use codex_app_server_protocol::GetAccountParams;
-use codex_app_server_protocol::GetAccountResponse;
-use codex_app_server_protocol::RequestId;
-use codex_protocol::config_types::ForcedLoginMethod;
+use genex_app_server_protocol::Account;
+use genex_app_server_protocol::GetAccountParams;
+use genex_app_server_protocol::GetAccountResponse;
+use genex_app_server_protocol::RequestId;
+use genex_protocol::config_types::ForcedLoginMethod;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;

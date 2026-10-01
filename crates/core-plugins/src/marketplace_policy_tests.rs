@@ -3,11 +3,11 @@ use crate::TEST_API_CURATED_MARKETPLACE_NAME;
 use crate::TEST_CURATED_MARKETPLACE_NAME;
 use crate::marketplace_upgrade::upgrade_configured_git_marketplaces;
 use crate::test_support::curated_plugins_repo_path;
-use codex_config::ConfigLayerEntry;
-use codex_config::ConfigLayerSource;
-use codex_config::RequirementSource;
-use codex_config::RequirementsLayerEntry;
-use codex_config::compose_requirements;
+use genex_config::ConfigLayerEntry;
+use genex_config::ConfigLayerSource;
+use genex_config::RequirementSource;
+use genex_config::RequirementsLayerEntry;
+use genex_config::compose_requirements;
 use pretty_assertions::assert_eq;
 use std::fs;
 #[cfg(target_os = "windows")]
@@ -43,7 +43,7 @@ fn config_layer_stack_with_user_config(
     .expect("requirements should be present");
     let requirements_toml = with_sources.clone().into_toml();
     let requirements =
-        codex_config::ConfigRequirements::try_from(with_sources).expect("normalize requirements");
+        genex_config::ConfigRequirements::try_from(with_sources).expect("normalize requirements");
     let layers = user_config
         .map(|(contents, file)| {
             vec![ConfigLayerEntry::new(

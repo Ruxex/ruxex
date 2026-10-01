@@ -1,15 +1,15 @@
 use std::sync::Arc;
 
-use codex_exec_server::EnvironmentManager;
-use codex_exec_server::ExecServerRuntimePaths;
-use codex_extension_api::ExtensionRegistry;
-use codex_extension_api::UserInstructionsProvider;
-use codex_login::AuthManager;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::Result as CodexResult;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::user_input::UserInput;
+use genex_exec_server::EnvironmentManager;
+use genex_exec_server::ExecServerRuntimePaths;
+use genex_extension_api::ExtensionRegistry;
+use genex_extension_api::UserInstructionsProvider;
+use genex_login::AuthManager;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::Result as CodexResult;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::user_input::UserInput;
 use tokio_util::sync::CancellationToken;
 
 use crate::config::Config;

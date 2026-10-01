@@ -5,7 +5,7 @@ use crate::reasons::REASON_METHOD_NOT_ALLOWED;
 use crate::reasons::REASON_MITM_HOOK_DENIED;
 use crate::reasons::REASON_NOT_ALLOWED_LOCAL;
 use crate::runtime::network_proxy_state_for_policy;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use rama_http::Body;
 use rama_http::HeaderMap;

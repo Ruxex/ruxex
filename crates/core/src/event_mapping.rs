@@ -1,32 +1,32 @@
-use codex_protocol::items::AgentMessageContent;
-use codex_protocol::items::AgentMessageItem;
-use codex_protocol::items::ReasoningItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::items::UserMessageItem;
-use codex_protocol::items::WebSearchItem;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::MessagePhase;
-use codex_protocol::models::ReasoningItemContent;
-use codex_protocol::models::ReasoningItemReasoningSummary;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::models::WebSearchAction;
-use codex_protocol::models::is_audio_close_tag_text;
-use codex_protocol::models::is_audio_open_tag_text;
-use codex_protocol::models::is_image_close_tag_text;
-use codex_protocol::models::is_image_open_tag_text;
-use codex_protocol::models::is_local_audio_close_tag_text;
-use codex_protocol::models::is_local_audio_open_tag_text;
-use codex_protocol::models::is_local_image_close_tag_text;
-use codex_protocol::models::is_local_image_open_tag_text;
-use codex_protocol::protocol::COLLABORATION_MODE_OPEN_TAG;
-use codex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_OPEN_TAG;
-use codex_protocol::protocol::CONTEXT_WINDOW_OPEN_TAG;
-use codex_protocol::protocol::ENVIRONMENTS_INSTRUCTIONS_OPEN_TAG;
-use codex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
-use codex_protocol::protocol::PLUGINS_INSTRUCTIONS_OPEN_TAG;
-use codex_protocol::protocol::SKILLS_INSTRUCTIONS_OPEN_TAG;
-use codex_protocol::protocol::TOOLS_OPEN_TAG;
-use codex_protocol::user_input::UserInput;
+use genex_protocol::items::AgentMessageContent;
+use genex_protocol::items::AgentMessageItem;
+use genex_protocol::items::ReasoningItem;
+use genex_protocol::items::TurnItem;
+use genex_protocol::items::UserMessageItem;
+use genex_protocol::items::WebSearchItem;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::MessagePhase;
+use genex_protocol::models::ReasoningItemContent;
+use genex_protocol::models::ReasoningItemReasoningSummary;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::models::WebSearchAction;
+use genex_protocol::models::is_audio_close_tag_text;
+use genex_protocol::models::is_audio_open_tag_text;
+use genex_protocol::models::is_image_close_tag_text;
+use genex_protocol::models::is_image_open_tag_text;
+use genex_protocol::models::is_local_audio_close_tag_text;
+use genex_protocol::models::is_local_audio_open_tag_text;
+use genex_protocol::models::is_local_image_close_tag_text;
+use genex_protocol::models::is_local_image_open_tag_text;
+use genex_protocol::protocol::COLLABORATION_MODE_OPEN_TAG;
+use genex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_OPEN_TAG;
+use genex_protocol::protocol::CONTEXT_WINDOW_OPEN_TAG;
+use genex_protocol::protocol::ENVIRONMENTS_INSTRUCTIONS_OPEN_TAG;
+use genex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
+use genex_protocol::protocol::PLUGINS_INSTRUCTIONS_OPEN_TAG;
+use genex_protocol::protocol::SKILLS_INSTRUCTIONS_OPEN_TAG;
+use genex_protocol::protocol::TOOLS_OPEN_TAG;
+use genex_protocol::user_input::UserInput;
 use tracing::warn;
 use uuid::Uuid;
 
@@ -238,7 +238,7 @@ pub fn parse_turn_item(item: &ResponseItem) -> Option<TurnItem> {
             result,
             ..
         } => Some(TurnItem::ImageGeneration(
-            codex_protocol::items::ImageGenerationItem {
+            genex_protocol::items::ImageGenerationItem {
                 id: id.as_deref()?.to_string(),
                 status: status.clone(),
                 revised_prompt: revised_prompt.clone(),

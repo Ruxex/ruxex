@@ -1,5 +1,5 @@
 //! Windows deny-glob scan bounds shared by policy validation and native ACL expansion.
-use codex_utils_path_uri::PathConvention;
+use genex_utils_path_uri::PathConvention;
 
 /// Literal scan root and maximum traversal depth for a Windows deny glob.
 pub struct WindowsDenyReadGlobScan<'a> {

@@ -8,7 +8,7 @@ use super::StatusLineItem;
 use super::TerminalTitleItem;
 use super::ThreadId;
 use crate::status::StatusHistoryHandle;
-use codex_app_server_protocol::ThreadUsage;
+use genex_app_server_protocol::ThreadUsage;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) enum ThreadUsageOutcome {

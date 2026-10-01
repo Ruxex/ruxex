@@ -1,4 +1,4 @@
-use codex_core::TurnInputRequest;
+use genex_core::TurnInputRequest;
 use core_test_support::test_codex::local_selections;
 use std::path::Path;
 use std::sync::Arc;
@@ -7,29 +7,29 @@ use anyhow::Result;
 use chrono::DateTime;
 use chrono::TimeZone;
 use chrono::Utc;
-use codex_core::config::Constrained;
-use codex_login::CodexAuth;
-use codex_models_manager::client_version_to_whole;
-use codex_models_manager::manager::RefreshStrategy;
-use codex_protocol::config_types::ApprovalsReviewer;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::Settings;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::model_types::ConfigShellToolType;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelMessages;
-use codex_protocol::model_types::ModelVisibility;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::model_types::ReasoningEffortPreset;
-use codex_protocol::model_types::TruncationPolicyConfig;
-use codex_protocol::model_types::default_input_modalities;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
+use genex_core::config::Constrained;
+use genex_login::CodexAuth;
+use genex_models_manager::client_version_to_whole;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_protocol::config_types::ApprovalsReviewer;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::Settings;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::model_types::ConfigShellToolType;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelMessages;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::model_types::TruncationPolicyConfig;
+use genex_protocol::model_types::default_input_modalities;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -60,7 +60,7 @@ async fn guardian_reused_reviewer_avoids_stale_catalog_lookup() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = MockServer::start().await;
-    let bundled = codex_models_manager::test_support::test_models_response()?;
+    let bundled = genex_models_manager::test_support::test_models_response()?;
     let catalog = ModelsResponse {
         models: bundled
             .models
@@ -85,7 +85,7 @@ async fn guardian_reused_reviewer_avoids_stale_catalog_lookup() -> Result<()> {
         .get_models_manager()
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
     assert_eq!(initial_models.requests().len(), 1);
@@ -185,7 +185,7 @@ async fn renews_cache_ttl_on_matching_models_etag() -> Result<()> {
     let _ = models_manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
 
@@ -215,7 +215,7 @@ async fn renews_cache_ttl_on_matching_models_etag() -> Result<()> {
             }])
             .with_thread_settings(ThreadSettingsOverrides {
                 environments: Some(local_selections(test.config.cwd.clone())),
-                approval_policy: Some(codex_protocol::protocol::AskForApproval::Never),
+                approval_policy: Some(genex_protocol::protocol::AskForApproval::Never),
                 sandbox_policy: Some(sandbox_policy),
                 permission_profile,
                 collaboration_mode: Some(CollaborationMode {
@@ -249,7 +249,7 @@ async fn renews_cache_ttl_on_matching_models_etag() -> Result<()> {
         .thread_manager
         .list_models(
             RefreshStrategy::Offline,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
     assert!(
@@ -286,7 +286,7 @@ async fn matching_models_etag_does_not_rewrite_recent_cache() -> Result<()> {
     let _ = models_manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
 
@@ -346,7 +346,7 @@ async fn matching_models_etag_renews_cache_after_half_its_lifetime() -> Result<(
     let _ = models_manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
 
@@ -395,8 +395,8 @@ async fn uses_cache_when_version_matches() -> Result<()> {
     .await;
 
     let mut builder = test_codex().with_auth(CodexAuth::from_api_key("test-api-key"));
-    let identity = codex_model_provider::test_support::models_cache_entry(
-        &codex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
+    let identity = genex_model_provider::test_support::models_cache_entry(
+        &genex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/v1",
             server.uri()
         ))),
@@ -435,7 +435,7 @@ async fn uses_cache_when_version_matches() -> Result<()> {
     let models = models_manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
 
@@ -470,8 +470,8 @@ async fn refreshes_when_cache_version_missing() -> Result<()> {
     .await;
 
     let mut builder = test_codex().with_auth(CodexAuth::from_api_key("test-api-key"));
-    let identity = codex_model_provider::test_support::models_cache_entry(
-        &codex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
+    let identity = genex_model_provider::test_support::models_cache_entry(
+        &genex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/v1",
             server.uri()
         ))),
@@ -500,7 +500,7 @@ async fn refreshes_when_cache_version_missing() -> Result<()> {
     let models = models_manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
 
@@ -530,8 +530,8 @@ async fn refreshes_when_cache_version_differs() -> Result<()> {
     }
 
     let mut builder = test_codex().with_auth(CodexAuth::from_api_key("test-api-key"));
-    let identity = codex_model_provider::test_support::models_cache_entry(
-        &codex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
+    let identity = genex_model_provider::test_support::models_cache_entry(
+        &genex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/v1",
             server.uri()
         ))),
@@ -561,7 +561,7 @@ async fn refreshes_when_cache_version_differs() -> Result<()> {
     let models = models_manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
 

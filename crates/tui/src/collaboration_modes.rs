@@ -1,12 +1,12 @@
 //! Server collaboration-mode discovery and TUI-visible selection. Missing discovery adds no presets.
 
-use codex_app_server_client::AppServerRequestHandle;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::CollaborationModeListParams;
-use codex_app_server_protocol::CollaborationModeListResponse;
-use codex_app_server_protocol::RequestId;
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::config_types::ModeKind;
+use genex_app_server_client::AppServerRequestHandle;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::CollaborationModeListParams;
+use genex_app_server_protocol::CollaborationModeListResponse;
+use genex_app_server_protocol::RequestId;
+use genex_protocol::config_types::CollaborationModeMask;
+use genex_protocol::config_types::ModeKind;
 use std::time::Duration;
 
 use crate::model_catalog::ModelCatalog;

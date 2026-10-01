@@ -13,10 +13,10 @@ use crate::updates_cache::read_version_info;
 use crate::updates_cache::version_filepath;
 use chrono::Duration;
 use chrono::Utc;
-use codex_http_client::ClientRouteClass;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::RouteAwareClientPool;
-use codex_login::default_client::default_headers;
+use genex_http_client::ClientRouteClass;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::RouteAwareClientPool;
+use genex_login::default_client::default_headers;
 use serde::Deserialize;
 use std::path::Path;
 

@@ -4,33 +4,33 @@ use std::path::Path;
 use std::time::Duration;
 
 use chrono::Utc;
-use codex_app_server_protocol::ThreadItem;
-use codex_protocol::ThreadId;
-use codex_protocol::items::AgentMessageContent;
-use codex_protocol::items::AgentMessageItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::items::UserMessageItem;
-use codex_protocol::models::BaseInstructions;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::MessagePhase;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::HistoryPosition;
-use codex_protocol::protocol::ItemCompletedEvent;
-use codex_protocol::protocol::RateLimitSnapshot;
-use codex_protocol::protocol::RateLimitWindow;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::TokenCountEvent;
-use codex_protocol::protocol::TurnCompleteEvent;
-use codex_protocol::protocol::TurnStartedEvent;
-use codex_protocol::protocol::UserMessageEvent;
-use codex_rollout::RolloutConfig;
-use codex_rollout::RolloutItem;
-use codex_rollout::RolloutLine;
-use codex_rollout::RolloutRecorder;
-use codex_rollout::RolloutRecorderParams;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_app_server_protocol::ThreadItem;
+use genex_protocol::ThreadId;
+use genex_protocol::items::AgentMessageContent;
+use genex_protocol::items::AgentMessageItem;
+use genex_protocol::items::TurnItem;
+use genex_protocol::items::UserMessageItem;
+use genex_protocol::models::BaseInstructions;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::MessagePhase;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::HistoryPosition;
+use genex_protocol::protocol::ItemCompletedEvent;
+use genex_protocol::protocol::RateLimitSnapshot;
+use genex_protocol::protocol::RateLimitWindow;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::TokenCountEvent;
+use genex_protocol::protocol::TurnCompleteEvent;
+use genex_protocol::protocol::TurnStartedEvent;
+use genex_protocol::protocol::UserMessageEvent;
+use genex_rollout::RolloutConfig;
+use genex_rollout::RolloutItem;
+use genex_rollout::RolloutLine;
+use genex_rollout::RolloutRecorder;
+use genex_rollout::RolloutRecorderParams;
+use genex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -101,7 +101,7 @@ async fn split_homes_support_backfill_listing_and_paginated_history() {
     let codex_home = root.path().join("codex");
     let sqlite_home = root.path().join("sqlite");
     let thread_id = ThreadId::new();
-    let sqlite = codex_state::SqliteConfig::new_for_testing(sqlite_home.as_path().abs());
+    let sqlite = genex_state::SqliteConfig::new_for_testing(sqlite_home.as_path().abs());
     let rollout_config = RolloutConfig {
         codex_home: codex_home.clone(),
         sqlite: sqlite.clone(),
@@ -138,7 +138,7 @@ async fn split_homes_support_backfill_listing_and_paginated_history() {
     let rollout_path = recorder.rollout_path().to_path_buf();
     recorder.shutdown().await.expect("close paginated rollout");
 
-    let runtime = codex_rollout::state_db::try_init(&rollout_config)
+    let runtime = genex_rollout::state_db::try_init(&rollout_config)
         .await
         .expect("backfill state from Codex home");
     assert!(
@@ -333,7 +333,7 @@ async fn paginated_live_append_materializes_turn_items_and_state() {
         rollout_line_byte_offsets(rollout_path.as_path(), /*ordinal*/ 1);
     let (_, turn_end_byte_offset) =
         rollout_line_byte_offsets(rollout_path.as_path(), /*ordinal*/ 4);
-    let pool = codex_state::open_thread_history_db(&codex_state::SqliteConfig::new_for_testing(
+    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -515,7 +515,7 @@ async fn referenced_paginated_rollout_projects_inherited_ordinal_range() {
         );
     }
 
-    let pool = codex_state::open_thread_history_db(&codex_state::SqliteConfig::new_for_testing(
+    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -662,7 +662,7 @@ async fn active_turn_stores_only_its_start_position() {
         .expect("rollout path");
     let (turn_start_byte_offset, _) =
         rollout_line_byte_offsets(rollout_path.as_path(), /*ordinal*/ 1);
-    let pool = codex_state::open_thread_history_db(&codex_state::SqliteConfig::new_for_testing(
+    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1114,7 +1114,7 @@ async fn subagent_prefix_advances_projection_without_materializing_history() {
         .expect("rollout path");
     let (child_start_byte_offset, _) =
         rollout_line_byte_offsets(rollout_path.as_path(), /*ordinal*/ 5);
-    let pool = codex_state::open_thread_history_db(&codex_state::SqliteConfig::new_for_testing(
+    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1166,7 +1166,7 @@ async fn unexpected_duplicate_item_completion_does_not_poison_projection() {
         })
         .await
         .expect("append completed item");
-    let pool = codex_state::open_thread_history_db(&codex_state::SqliteConfig::new_for_testing(
+    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1253,7 +1253,7 @@ async fn terminal_turn_does_not_change_after_later_records() {
         .await
         .expect("append later records");
 
-    let pool = codex_state::open_thread_history_db(&codex_state::SqliteConfig::new_for_testing(
+    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1312,13 +1312,13 @@ async fn summary_items_use_final_answers_and_ignore_commentary() {
     let home = TempDir::new().expect("temp dir");
     let config = test_config(home.path());
     let thread_id = ThreadId::default();
-    let runtime = codex_state::StateRuntime::init(
+    let runtime = genex_state::StateRuntime::init(
         config.sqlite.clone(),
         config.default_model_provider_id.clone(),
     )
     .await
     .expect("state runtime");
-    let mut builder = codex_state::ThreadMetadataBuilder::new(
+    let mut builder = genex_state::ThreadMetadataBuilder::new(
         thread_id,
         home.path().join("missing-rollout.jsonl"),
         Utc::now(),
@@ -1364,7 +1364,7 @@ async fn summary_items_use_final_answers_and_ignore_commentary() {
         .await
         .expect("append items before turn lifecycle");
 
-    let pool = codex_state::open_thread_history_db(&codex_state::SqliteConfig::new_for_testing(
+    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1472,7 +1472,7 @@ async fn paginated_projection_accepts_float_rate_limits_and_later_final_answers(
         .await
         .expect("append projected turn start");
 
-    let pool = codex_state::open_thread_history_db(&codex_state::SqliteConfig::new_for_testing(
+    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1607,7 +1607,7 @@ async fn next_write_catches_up_unprojected_durable_suffix() {
         .await
         .expect("persist session metadata");
 
-    let pool = codex_state::open_thread_history_db(&codex_state::SqliteConfig::new_for_testing(
+    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1694,7 +1694,7 @@ async fn synchronized_catch_up_does_not_replay_old_rows() {
         .await
         .expect("append turn start");
 
-    let pool = codex_state::open_thread_history_db(&codex_state::SqliteConfig::new_for_testing(
+    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1734,7 +1734,7 @@ async fn catch_up_preserves_trailing_partial_line_boundaries() {
         .await
         .expect("persist session metadata");
 
-    let pool = codex_state::open_thread_history_db(&codex_state::SqliteConfig::new_for_testing(
+    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1820,8 +1820,8 @@ async fn catch_up_skips_invalid_complete_suffixes_and_projects_later_history() {
             .await
             .expect("persist session metadata");
 
-        let pool = codex_state::open_thread_history_db(
-            &codex_state::SqliteConfig::new_for_testing(home.path().abs()),
+        let pool = genex_state::open_thread_history_db(
+            &genex_state::SqliteConfig::new_for_testing(home.path().abs()),
         )
         .await
         .expect("open thread history db");
@@ -1870,7 +1870,7 @@ async fn jsonl_failure_does_not_create_projection_database() {
         .expect_err("JSONL append should fail");
 
     assert!(
-        !codex_state::SqliteConfig::new_for_testing(home.path().abs())
+        !genex_state::SqliteConfig::new_for_testing(home.path().abs())
             .thread_history_db_path()
             .exists()
     );
@@ -1945,7 +1945,7 @@ async fn blank_and_rejected_rollout_lines_advance_projection() {
         .await
         .expect("persist session metadata");
 
-    let pool = codex_state::open_thread_history_db(&codex_state::SqliteConfig::new_for_testing(
+    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -2030,7 +2030,7 @@ async fn unknown_rollout_lines_leave_ordinals_pending_for_valid_retries() {
         .await
         .expect("persist session metadata");
 
-    let pool = codex_state::open_thread_history_db(&codex_state::SqliteConfig::new_for_testing(
+    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -2123,7 +2123,7 @@ async fn event_timestamps_allow_invalid_rollout_timestamps() {
         .await
         .expect("project records with event timestamps");
 
-    let pool = codex_state::open_thread_history_db(&codex_state::SqliteConfig::new_for_testing(
+    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -2171,7 +2171,7 @@ async fn malformed_rollout_lines_skip_inferred_ordinal_gaps() {
         .await
         .expect("skip malformed gap and project later history");
 
-    let pool = codex_state::open_thread_history_db(&codex_state::SqliteConfig::new_for_testing(
+    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -2214,7 +2214,7 @@ async fn shutdown_materializes_items_queued_without_a_flush() {
         .await
         .expect("shutdown live thread");
 
-    let pool = codex_state::open_thread_history_db(&codex_state::SqliteConfig::new_for_testing(
+    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -2268,7 +2268,7 @@ async fn delete_waits_for_in_flight_projection_before_removing_rows() {
         .expect("finish in-flight append");
     delete.await.expect("join delete").expect("delete thread");
 
-    let pool = codex_state::open_thread_history_db(&codex_state::SqliteConfig::new_for_testing(
+    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -2292,7 +2292,7 @@ SELECT
 
 async fn projection_store(codex_home: &Path) -> LocalThreadStore {
     let config = test_config(codex_home);
-    let state_db = codex_state::StateRuntime::init(
+    let state_db = genex_state::StateRuntime::init(
         config.sqlite.clone(),
         config.default_model_provider_id.clone(),
     )
@@ -2435,7 +2435,7 @@ fn rollout_line_byte_offsets(path: &std::path::Path, ordinal: u64) -> (i64, i64)
     let mut start_byte_offset = 0;
     for line in bytes.split_inclusive(|byte| *byte == b'\n') {
         let end_byte_offset = start_byte_offset + line.len();
-        if codex_rollout::parse_rollout_line_bytes(line)
+        if genex_rollout::parse_rollout_line_bytes(line)
             .ok()
             .and_then(|line| line.ordinal)
             == Some(ordinal)

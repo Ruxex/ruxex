@@ -5,14 +5,14 @@ use super::App;
 use crate::app_command::AppCommand;
 use crate::app_server_approval_conversions::granted_permission_profile_from_request;
 use crate::app_server_session::AppServerSession;
-use codex_app_server_protocol::CommandExecutionRequestApprovalResponse;
-use codex_app_server_protocol::FileChangeRequestApprovalResponse;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::McpServerElicitationRequestResponse;
-use codex_app_server_protocol::PermissionsRequestApprovalResponse;
-use codex_app_server_protocol::RequestId as AppServerRequestId;
-use codex_app_server_protocol::ServerRequest;
-use codex_protocol::request_permissions::RequestPermissionProfile as CoreRequestPermissionProfile;
+use genex_app_server_protocol::CommandExecutionRequestApprovalResponse;
+use genex_app_server_protocol::FileChangeRequestApprovalResponse;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::McpServerElicitationRequestResponse;
+use genex_app_server_protocol::PermissionsRequestApprovalResponse;
+use genex_app_server_protocol::RequestId as AppServerRequestId;
+use genex_app_server_protocol::ServerRequest;
+use genex_protocol::request_permissions::RequestPermissionProfile as CoreRequestPermissionProfile;
 
 impl App {
     pub(super) async fn reject_app_server_request(
@@ -82,7 +82,7 @@ pub(super) struct PendingAppServerRequests {
 
 impl PendingAppServerRequests {
     fn canonical_thread_id(thread_id: &str) -> String {
-        codex_protocol::ThreadId::from_string(thread_id)
+        genex_protocol::ThreadId::from_string(thread_id)
             .map(|thread_id| thread_id.to_string())
             .unwrap_or_else(|_| thread_id.to_string())
     }
@@ -221,14 +221,14 @@ impl PendingAppServerRequests {
             } => {
                 let (decision, content) = match response {
                     crate::app_command::UserVerificationResponse::Accept { proof } => (
-                        codex_app_server_protocol::McpServerElicitationAction::Accept,
+                        genex_app_server_protocol::McpServerElicitationAction::Accept,
                         Some(
                             serde_json::to_value(proof)
                                 .map_err(|_| "Invalid verification proof".to_string())?,
                         ),
                     ),
                     crate::app_command::UserVerificationResponse::Cancel => (
-                        codex_app_server_protocol::McpServerElicitationAction::Cancel,
+                        genex_app_server_protocol::McpServerElicitationAction::Cancel,
                         None,
                     ),
                 };

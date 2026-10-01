@@ -5,8 +5,8 @@ use std::sync::atomic::AtomicI64;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use codex_exec_server_protocol::JSONRPCRequest;
-use codex_exec_server_protocol::RequestId;
+use genex_exec_server_protocol::JSONRPCRequest;
+use genex_exec_server_protocol::RequestId;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
@@ -102,7 +102,7 @@ impl RpcServerRequestSender {
             id: request_id,
             method: method.to_string(),
             params: Some(params),
-            trace: codex_otel::current_span_w3c_trace_context(),
+            trace: genex_otel::current_span_w3c_trace_context(),
         });
 
         let response = timeout(call_timeout, async {

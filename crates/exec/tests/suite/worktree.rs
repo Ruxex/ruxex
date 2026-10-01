@@ -2,10 +2,10 @@
 //! Observe ownership at the first model request, before the process can finish.
 
 use anyhow::Context;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_worktree::CreateWorktree;
-use codex_worktree::WorktreeManager;
-use codex_worktree::WorktreeSettings;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_worktree::CreateWorktree;
+use genex_worktree::WorktreeManager;
+use genex_worktree::WorktreeSettings;
 use core_test_support::responses;
 use core_test_support::test_codex_exec::test_codex_exec;
 use pretty_assertions::assert_eq;

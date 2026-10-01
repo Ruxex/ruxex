@@ -9,12 +9,12 @@
 
 use super::*;
 use crate::chatwidget::InterruptedTurnNoticeMode;
-use codex_app_server_protocol::ThreadUnsubscribeParams;
-use codex_app_server_protocol::ThreadUnsubscribeResponse;
-use codex_app_server_protocol::TurnInterruptParams;
-use codex_app_server_protocol::TurnInterruptResponse;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
+use genex_app_server_protocol::ThreadUnsubscribeParams;
+use genex_app_server_protocol::ThreadUnsubscribeResponse;
+use genex_app_server_protocol::TurnInterruptParams;
+use genex_app_server_protocol::TurnInterruptResponse;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::ResponseItem;
 
 const SIDE_RENAME_BLOCK_MESSAGE: &str = "Side conversations are ephemeral and cannot be renamed.";
 const SIDE_MAIN_THREAD_UNAVAILABLE_MESSAGE: &str =

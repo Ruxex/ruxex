@@ -1,7 +1,7 @@
 use crate::ToolDefinition;
 use crate::ToolOutputSchema;
 use crate::parse_tool_input_schema;
-use codex_utils_string::take_bytes_at_char_boundary;
+use genex_utils_string::take_bytes_at_char_boundary;
 use serde_json::Value as JsonValue;
 use serde_json::json;
 

@@ -2,7 +2,7 @@
 
 use super::*;
 use crate::CodexHarnessMetadata;
-use codex_protocol::ResponseItemId;
+use genex_protocol::ResponseItemId;
 use pretty_assertions::assert_eq;
 
 #[test]

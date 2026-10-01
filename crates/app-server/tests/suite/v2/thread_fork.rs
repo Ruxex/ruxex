@@ -10,71 +10,71 @@ use app_test_support::create_mock_responses_server_sequence_unchecked;
 use app_test_support::rollout_path;
 use app_test_support::to_response;
 use app_test_support::write_api_key_auth;
-use codex_app_server_protocol::ActivePermissionProfile;
-use codex_app_server_protocol::ApprovalsReviewer;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::DeprecationNoticeNotification;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SandboxMode;
-use codex_app_server_protocol::SandboxPolicy;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::SessionSource;
-use codex_app_server_protocol::ThreadAttachmentAddParams;
-use codex_app_server_protocol::ThreadAttachmentAddResponse;
-use codex_app_server_protocol::ThreadAttachmentListParams;
-use codex_app_server_protocol::ThreadAttachmentListResponse;
-use codex_app_server_protocol::ThreadAttachmentRemoveParams;
-use codex_app_server_protocol::ThreadAttachmentRemoveResponse;
-use codex_app_server_protocol::ThreadForkParams;
-use codex_app_server_protocol::ThreadForkResponse;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadListResponse;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadReadResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadSearchOccurrencesParams;
-use codex_app_server_protocol::ThreadSearchOccurrencesResponse;
-use codex_app_server_protocol::ThreadSource;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadStartedNotification;
-use codex_app_server_protocol::ThreadStatus;
-use codex_app_server_protocol::ThreadStatusChangedNotification;
-use codex_app_server_protocol::ThreadTurnsListParams;
-use codex_app_server_protocol::ThreadTurnsListResponse;
-use codex_app_server_protocol::TurnItemsView;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_features::Feature;
-use codex_login::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
-use codex_protocol::ThreadId;
-use codex_protocol::items::TurnItem as CoreTurnItem;
-use codex_protocol::items::UserMessageItem;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ItemCompletedEvent;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::TurnCompleteEvent;
-use codex_protocol::protocol::TurnStartedEvent;
-use codex_protocol::protocol::UserMessageEvent;
-use codex_rollout::RolloutItem;
-use codex_rollout::RolloutLine;
-use codex_rollout::append_rollout_item_to_path;
-use codex_rollout::append_thread_name;
-use codex_rollout::read_session_meta_line;
-use codex_state::StateRuntime;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_app_server_protocol::ActivePermissionProfile;
+use genex_app_server_protocol::ApprovalsReviewer;
+use genex_app_server_protocol::AskForApproval;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::DeprecationNoticeNotification;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::JSONRPCResponse;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SandboxMode;
+use genex_app_server_protocol::SandboxPolicy;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::SessionSource;
+use genex_app_server_protocol::ThreadAttachmentAddParams;
+use genex_app_server_protocol::ThreadAttachmentAddResponse;
+use genex_app_server_protocol::ThreadAttachmentListParams;
+use genex_app_server_protocol::ThreadAttachmentListResponse;
+use genex_app_server_protocol::ThreadAttachmentRemoveParams;
+use genex_app_server_protocol::ThreadAttachmentRemoveResponse;
+use genex_app_server_protocol::ThreadForkParams;
+use genex_app_server_protocol::ThreadForkResponse;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadListParams;
+use genex_app_server_protocol::ThreadListResponse;
+use genex_app_server_protocol::ThreadReadParams;
+use genex_app_server_protocol::ThreadReadResponse;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadSearchOccurrencesParams;
+use genex_app_server_protocol::ThreadSearchOccurrencesResponse;
+use genex_app_server_protocol::ThreadSource;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::ThreadStartedNotification;
+use genex_app_server_protocol::ThreadStatus;
+use genex_app_server_protocol::ThreadStatusChangedNotification;
+use genex_app_server_protocol::ThreadTurnsListParams;
+use genex_app_server_protocol::ThreadTurnsListResponse;
+use genex_app_server_protocol::TurnItemsView;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::UserInput;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_features::Feature;
+use genex_login::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
+use genex_protocol::ThreadId;
+use genex_protocol::items::TurnItem as CoreTurnItem;
+use genex_protocol::items::UserMessageItem;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ItemCompletedEvent;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::TurnCompleteEvent;
+use genex_protocol::protocol::TurnStartedEvent;
+use genex_protocol::protocol::UserMessageEvent;
+use genex_rollout::RolloutItem;
+use genex_rollout::RolloutLine;
+use genex_rollout::append_rollout_item_to_path;
+use genex_rollout::append_thread_name;
+use genex_rollout::read_session_meta_line;
+use genex_state::StateRuntime;
+use genex_utils_absolute_path::test_support::PathExt;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -642,7 +642,7 @@ async fn assert_thread_fork_at_named_boundary_keeps_only_terminal_prefix(
             },
         })
         .await?;
-    let sqlite = codex_state::SqliteConfig::new_for_testing(codex_home.path().abs());
+    let sqlite = genex_state::SqliteConfig::new_for_testing(codex_home.path().abs());
     let pool = sqlite.open_read_write_pool(&sqlite.state_db_path()).await?;
     sqlx::query(
         "CREATE TRIGGER fail_fork_attachment_copy BEFORE INSERT ON thread_attachments \
@@ -743,7 +743,7 @@ async fn assert_thread_fork_at_named_boundary_keeps_only_terminal_prefix(
     assert_ne!(copied.data[0].id, attachment.attachment.id);
     assert_eq!(
         copied.data[0],
-        codex_app_server_protocol::ThreadAttachment {
+        genex_app_server_protocol::ThreadAttachment {
             id: copied.data[0].id.clone(),
             created_at: copied.data[0].created_at,
             ..attachment.attachment.clone()
@@ -963,7 +963,7 @@ async fn thread_fork_defers_inherited_active_goal_until_next_turn() -> Result<()
         .await?;
 
     let state_db = StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -972,7 +972,7 @@ async fn thread_fork_defers_inherited_active_goal_until_next_turn() -> Result<()
         .replace_thread_goal(
             source_thread_id,
             "continue after the retry",
-            codex_state::ThreadGoalStatus::Active,
+            genex_state::ThreadGoalStatus::Active,
             /*token_budget*/ Some(150),
         )
         .await?;
@@ -982,7 +982,7 @@ async fn thread_fork_defers_inherited_active_goal_until_next_turn() -> Result<()
             source_thread_id,
             /*time_delta_seconds*/ 11,
             /*token_delta*/ 37,
-            codex_state::GoalAccountingMode::ActiveOnly,
+            genex_state::GoalAccountingMode::ActiveOnly,
             Some(source_goal.goal_id.as_str()),
         )
         .await?;
@@ -1124,7 +1124,7 @@ async fn thread_fork_defers_inherited_active_goal_until_next_turn() -> Result<()
     assert!(forked_goal.time_used_seconds >= source_goal.time_used_seconds);
     assert_eq!(
         forked_goal.status,
-        codex_state::ThreadGoalStatus::BudgetLimited
+        genex_state::ThreadGoalStatus::BudgetLimited
     );
     assert_eq!(
         state_db
@@ -1843,7 +1843,7 @@ async fn assert_thread_fork_freezes_active_paginated_turn_as_interrupted(
             item: CoreTurnItem::UserMessage(UserMessageItem {
                 id: id.to_string(),
                 client_id: None,
-                content: vec![codex_protocol::user_input::UserInput::Text {
+                content: vec![genex_protocol::user_input::UserInput::Text {
                     text: format!("{id} needle"),
                     text_elements: Vec::new(),
                 }],
@@ -1931,7 +1931,7 @@ async fn assert_thread_fork_freezes_active_paginated_turn_as_interrupted(
         .expect("fork history base");
     let child_rollout = std::fs::read_to_string(forked_path.as_path())?
         .lines()
-        .map(codex_rollout::parse_rollout_line)
+        .map(genex_rollout::parse_rollout_line)
         .collect::<Result<Vec<_>, _>>()?;
     assert!(matches!(
         child_rollout.as_slice(),
@@ -1951,7 +1951,7 @@ async fn assert_thread_fork_freezes_active_paginated_turn_as_interrupted(
             },
         ] if matches!(
             &response_item.item,
-            codex_protocol::models::ResponseItem::Message { role, .. }
+            genex_protocol::models::ResponseItem::Message { role, .. }
                 if role == expected_marker_role
         ) && aborted.turn_id.as_deref() == Some("active-turn")
     ));

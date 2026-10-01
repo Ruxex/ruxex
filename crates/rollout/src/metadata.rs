@@ -9,21 +9,21 @@ use chrono::DateTime;
 use chrono::NaiveDateTime;
 use chrono::Timelike;
 use chrono::Utc;
-use codex_protocol::RolloutId;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
-use codex_state::BackfillState;
-use codex_state::BackfillStats;
-use codex_state::BackfillStatus;
-use codex_state::DB_ERROR_METRIC;
-use codex_state::DB_METRIC_BACKFILL;
-use codex_state::DB_METRIC_BACKFILL_DURATION_MS;
-use codex_state::ExtractionOutcome;
-use codex_state::ThreadMetadataBuilder;
-use codex_state::apply_rollout_item;
+use genex_protocol::RolloutId;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::SandboxPolicy;
+use genex_protocol::protocol::SessionMeta;
+use genex_protocol::protocol::SessionMetaLine;
+use genex_protocol::protocol::SessionSource;
+use genex_state::BackfillState;
+use genex_state::BackfillStats;
+use genex_state::BackfillStatus;
+use genex_state::DB_ERROR_METRIC;
+use genex_state::DB_METRIC_BACKFILL;
+use genex_state::DB_METRIC_BACKFILL_DURATION_MS;
+use genex_state::ExtractionOutcome;
+use genex_state::ThreadMetadataBuilder;
+use genex_state::apply_rollout_item;
 use std::path::Path;
 use std::path::PathBuf;
 use tracing::info;
@@ -165,7 +165,7 @@ pub async fn extract_metadata_from_rollout(
 }
 
 pub(crate) async fn backfill_sessions(
-    runtime: &codex_state::StateRuntime,
+    runtime: &genex_state::StateRuntime,
     codex_home: &Path,
     default_provider: &str,
 ) {
@@ -179,12 +179,12 @@ pub(crate) async fn backfill_sessions(
 }
 
 pub(crate) async fn backfill_sessions_with_lease(
-    runtime: &codex_state::StateRuntime,
+    runtime: &genex_state::StateRuntime,
     codex_home: &Path,
     default_provider: &str,
     backfill_lease_seconds: i64,
 ) {
-    let metric_client = codex_otel::global();
+    let metric_client = genex_otel::global();
     let timer = metric_client
         .as_ref()
         .and_then(|otel| otel.start_timer(DB_METRIC_BACKFILL_DURATION_MS, &[]).ok());

@@ -1,7 +1,7 @@
-use codex_aws_auth::AwsAuthConfig;
-use codex_login::CodexAuth;
-use codex_model_provider_info::ModelProviderAwsAuthInfo;
-use codex_protocol::error::Result;
+use genex_aws_auth::AwsAuthConfig;
+use genex_login::CodexAuth;
+use genex_model_provider_info::ModelProviderAwsAuthInfo;
+use genex_protocol::error::Result;
 
 use super::BedrockEndpoint;
 use super::auth::BedrockAuthSource;

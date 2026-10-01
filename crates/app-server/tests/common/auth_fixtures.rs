@@ -2,11 +2,11 @@ use std::path::Path;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_login::AuthDotJson;
-use codex_login::AuthKeyringBackendKind;
-use codex_login::save_auth;
-use codex_protocol::auth::AuthMode;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_login::AuthDotJson;
+use genex_login::AuthKeyringBackendKind;
+use genex_login::save_auth;
+use genex_protocol::auth::AuthMode;
 use serde_json::json;
 
 /// Builder for writing API-key credentials in tests.

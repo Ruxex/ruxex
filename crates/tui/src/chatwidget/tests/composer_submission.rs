@@ -2,13 +2,13 @@ use super::*;
 use crate::app_event::ConnectorsSnapshot;
 use crate::history_cell::ThreadRecapLoadingCell;
 use base64::Engine;
-use codex_app_server_protocol::ImageReference;
-use codex_protocol::models::ManagedFileSystemPermissions;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::permissions::NetworkSandboxPolicy;
+use genex_app_server_protocol::ImageReference;
+use genex_protocol::models::ManagedFileSystemPermissions;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSpecialPath;
+use genex_protocol::permissions::NetworkSandboxPolicy;
 use pretty_assertions::assert_eq;
 use std::collections::VecDeque;
 
@@ -1829,9 +1829,9 @@ async fn shift_left_edits_most_recent_queued_message_in_tmux() {
 
 #[test]
 fn queued_message_edit_hint_displays_configured_chords() {
-    use codex_config::types::KeybindingSpec;
-    use codex_config::types::KeybindingsSpec;
-    use codex_config::types::TuiKeymap;
+    use genex_config::types::KeybindingSpec;
+    use genex_config::types::KeybindingsSpec;
+    use genex_config::types::TuiKeymap;
 
     let terminal_info = || TerminalInfo {
         name: TerminalName::Iterm2,

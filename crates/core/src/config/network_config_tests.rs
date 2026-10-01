@@ -1,7 +1,7 @@
 //! Covers policy presence and the environment-only configuration projection.
 
 use super::*;
-use codex_config::RequirementSource;
+use genex_config::RequirementSource;
 use pretty_assertions::assert_eq;
 
 #[test]

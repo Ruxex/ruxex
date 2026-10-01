@@ -9,8 +9,8 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::TokenUsage;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::TokenUsage;
 use http::HeaderMap;
 use http::HeaderValue;
 use serde::Serialize;
@@ -391,9 +391,9 @@ fn append_with_context_best_effort(
 mod tests {
     use std::sync::Arc;
 
-    use codex_protocol::ResponseItemId;
-    use codex_protocol::models::ReasoningItemContent;
-    use codex_protocol::models::ReasoningItemReasoningSummary;
+    use genex_protocol::ResponseItemId;
+    use genex_protocol::models::ReasoningItemContent;
+    use genex_protocol::models::ReasoningItemReasoningSummary;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use tempfile::TempDir;

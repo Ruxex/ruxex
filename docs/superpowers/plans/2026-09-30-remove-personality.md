@@ -108,7 +108,7 @@
 - Modify: `crates/features/src/lib.rs`
 - Modify: `crates/features/src/tests.rs`
 - Modify: `crates/core/src/config/schema_tests.rs`
-- Regenerate: `crates/core/config.schema.json`, `codex-cli.json`, and generated config indexes
+- Regenerate: `crates/core/config.schema.json`, `genex-cli.json`, and generated config indexes
 
 **Interfaces:**
 - Consumes: the prompt layer with no personality behavior from Task 2.

@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 use std::sync::OnceLock;
 
-use codex_utils_string::take_bytes_at_char_boundary;
+use genex_utils_string::take_bytes_at_char_boundary;
 use tracing_appender::rolling::RollingFileAppender;
 use tracing_appender::rolling::Rotation;
 

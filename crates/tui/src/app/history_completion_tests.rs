@@ -1,7 +1,7 @@
 //! Pagination boundaries preserve grouped item rendering and attach completion metadata once.
 
 use super::*;
-use codex_app_server_protocol::TurnItemsView;
+use genex_app_server_protocol::TurnItemsView;
 use pretty_assertions::assert_eq;
 
 fn turn(id: &str, status: TurnStatus, item_ids: &[&str]) -> Turn {

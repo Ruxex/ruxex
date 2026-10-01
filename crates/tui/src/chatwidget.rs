@@ -78,76 +78,76 @@ use crate::text_formatting::proper_join;
 use crate::token_usage::TokenUsage;
 use crate::token_usage::TokenUsageInfo;
 use crate::version::CODEX_CLI_VERSION;
-use codex_app_server_protocol::CodexErrorInfo as AppServerCodexErrorInfo;
-use codex_app_server_protocol::CollabAgentTool;
-use codex_app_server_protocol::CollabAgentToolCallStatus;
-use codex_app_server_protocol::CommandExecutionRequestApprovalParams;
-use codex_app_server_protocol::CommandExecutionSource as ExecCommandSource;
-use codex_app_server_protocol::CreditsSnapshot;
-use codex_app_server_protocol::ErrorNotification;
-use codex_app_server_protocol::FileChangeRequestApprovalParams;
-use codex_app_server_protocol::ItemCompletedNotification;
-use codex_app_server_protocol::ItemStartedNotification;
-use codex_app_server_protocol::McpServerElicitationRequest;
-use codex_app_server_protocol::McpServerElicitationRequestParams;
-use codex_app_server_protocol::McpServerStatusDetail;
-use codex_app_server_protocol::ModelVerification as AppServerModelVerification;
-use codex_app_server_protocol::RateLimitReachedType;
-use codex_app_server_protocol::RateLimitSnapshot;
-use codex_app_server_protocol::RequestId as AppServerRequestId;
-use codex_app_server_protocol::ReviewTarget;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::SkillMetadata;
-use codex_app_server_protocol::SkillsListResponse;
-use codex_app_server_protocol::ThreadGoal as AppThreadGoal;
-use codex_app_server_protocol::ThreadGoalStatus as AppThreadGoalStatus;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadSettings;
-use codex_app_server_protocol::ThreadSettingsUpdatedNotification;
-use codex_app_server_protocol::ThreadTokenUsage;
-use codex_app_server_protocol::ToolRequestUserInputParams;
-use codex_app_server_protocol::Turn;
-use codex_app_server_protocol::TurnCompletedNotification;
-use codex_app_server_protocol::TurnPlanStepStatus;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput;
-use codex_app_server_protocol::WindowsSandboxSetupMode;
-use codex_config::Constrained;
-use codex_config::ConstraintResult;
-use codex_config::types::Notifications;
-use codex_features::Feature;
+use genex_app_server_protocol::CodexErrorInfo as AppServerCodexErrorInfo;
+use genex_app_server_protocol::CollabAgentTool;
+use genex_app_server_protocol::CollabAgentToolCallStatus;
+use genex_app_server_protocol::CommandExecutionRequestApprovalParams;
+use genex_app_server_protocol::CommandExecutionSource as ExecCommandSource;
+use genex_app_server_protocol::CreditsSnapshot;
+use genex_app_server_protocol::ErrorNotification;
+use genex_app_server_protocol::FileChangeRequestApprovalParams;
+use genex_app_server_protocol::ItemCompletedNotification;
+use genex_app_server_protocol::ItemStartedNotification;
+use genex_app_server_protocol::McpServerElicitationRequest;
+use genex_app_server_protocol::McpServerElicitationRequestParams;
+use genex_app_server_protocol::McpServerStatusDetail;
+use genex_app_server_protocol::ModelVerification as AppServerModelVerification;
+use genex_app_server_protocol::RateLimitReachedType;
+use genex_app_server_protocol::RateLimitSnapshot;
+use genex_app_server_protocol::RequestId as AppServerRequestId;
+use genex_app_server_protocol::ReviewTarget;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::SkillMetadata;
+use genex_app_server_protocol::SkillsListResponse;
+use genex_app_server_protocol::ThreadGoal as AppThreadGoal;
+use genex_app_server_protocol::ThreadGoalStatus as AppThreadGoalStatus;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadSettings;
+use genex_app_server_protocol::ThreadSettingsUpdatedNotification;
+use genex_app_server_protocol::ThreadTokenUsage;
+use genex_app_server_protocol::ToolRequestUserInputParams;
+use genex_app_server_protocol::Turn;
+use genex_app_server_protocol::TurnCompletedNotification;
+use genex_app_server_protocol::TurnPlanStepStatus;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::UserInput;
+use genex_app_server_protocol::WindowsSandboxSetupMode;
+use genex_config::Constrained;
+use genex_config::ConstraintResult;
+use genex_config::types::Notifications;
+use genex_features::Feature;
 #[cfg(test)]
-use codex_git_utils::CommitLogEntry;
-use codex_git_utils::current_branch_name;
-use codex_git_utils::get_git_repo_root;
-use codex_git_utils::local_git_branches;
-use codex_git_utils::recent_commits;
-use codex_otel::RuntimeMetricsSummary;
-use codex_otel::SessionTelemetry;
-use codex_plugin::PluginCapabilitySummary;
-use codex_protocol::ThreadId;
-use codex_protocol::account::PlanType;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
+use genex_git_utils::CommitLogEntry;
+use genex_git_utils::current_branch_name;
+use genex_git_utils::get_git_repo_root;
+use genex_git_utils::local_git_branches;
+use genex_git_utils::recent_commits;
+use genex_otel::RuntimeMetricsSummary;
+use genex_otel::SessionTelemetry;
+use genex_plugin::PluginCapabilitySummary;
+use genex_protocol::ThreadId;
+use genex_protocol::account::PlanType;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::CollaborationModeMask;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
 #[cfg(target_os = "windows")]
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::items::AgentMessageContent;
-use codex_protocol::items::AgentMessageItem;
-use codex_protocol::models::MessagePhase;
-use codex_protocol::plan_tool::PlanItemArg as UpdatePlanItemArg;
-use codex_protocol::plan_tool::StepStatus as UpdatePlanItemStatus;
-use codex_protocol::request_permissions::RequestPermissionsEvent;
-use codex_protocol::user_input::ByteRange;
-use codex_protocol::user_input::TextElement;
-use codex_terminal_detection::Multiplexer;
-use codex_terminal_detection::TerminalInfo;
-use codex_terminal_detection::TerminalName;
-use codex_terminal_detection::terminal_info;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::items::AgentMessageContent;
+use genex_protocol::items::AgentMessageItem;
+use genex_protocol::models::MessagePhase;
+use genex_protocol::plan_tool::PlanItemArg as UpdatePlanItemArg;
+use genex_protocol::plan_tool::StepStatus as UpdatePlanItemStatus;
+use genex_protocol::request_permissions::RequestPermissionsEvent;
+use genex_protocol::user_input::ByteRange;
+use genex_protocol::user_input::TextElement;
+use genex_terminal_detection::Multiplexer;
+use genex_terminal_detection::TerminalInfo;
+use genex_terminal_detection::TerminalName;
+use genex_terminal_detection::terminal_info;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
@@ -447,17 +447,17 @@ use crate::streaming::controller::StreamController;
 use crate::workspace_command::WorkspaceCommandRunner;
 
 use chrono::Local;
-use codex_app_server_protocol::AskForApproval;
-use codex_file_search::FileMatch;
-use codex_protocol::model_types::InputModality;
-use codex_protocol::model_types::ModelPreset;
-use codex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
-use codex_protocol::models::ActivePermissionProfile;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::plan_tool::StepStatus;
-use codex_protocol::plan_tool::UpdatePlanArgs;
-use codex_utils_approval_presets::ApprovalPreset;
-use codex_utils_approval_presets::builtin_approval_presets;
+use genex_app_server_protocol::AskForApproval;
+use genex_file_search::FileMatch;
+use genex_protocol::model_types::InputModality;
+use genex_protocol::model_types::ModelPreset;
+use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use genex_protocol::models::ActivePermissionProfile;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::plan_tool::StepStatus;
+use genex_protocol::plan_tool::UpdatePlanArgs;
+use genex_utils_approval_presets::ApprovalPreset;
+use genex_utils_approval_presets::builtin_approval_presets;
 use strum::IntoEnumIterator;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -631,7 +631,7 @@ pub(crate) struct ChatWidget {
     // Active hook runs render in a dedicated live cell so they can run alongside tools.
     active_hook_cell: Option<HookCell>,
     // Reused for built-in pet CDN requests so redirects remain route-aware.
-    pub(crate) pet_http_client: codex_http_client::RouteAwareClientPool,
+    pub(crate) pet_http_client: genex_http_client::RouteAwareClientPool,
     // Ambient companion rendered over the transcript area, never inside the footer rows.
     ambient_pet: Option<crate::pets::AmbientPet>,
     pet_picker_preview_state: crate::pets::PetPickerPreviewState,
@@ -866,7 +866,7 @@ fn patch_approval_request_from_params(
 }
 
 fn request_permissions_from_params(
-    params: codex_app_server_protocol::PermissionsRequestApprovalParams,
+    params: genex_app_server_protocol::PermissionsRequestApprovalParams,
 ) -> std::io::Result<RequestPermissionsEvent> {
     Ok(RequestPermissionsEvent {
         turn_id: params.turn_id,

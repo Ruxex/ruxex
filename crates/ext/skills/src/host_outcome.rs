@@ -4,13 +4,13 @@ use std::fmt;
 use std::io;
 use std::sync::Arc;
 
-use codex_exec_server::ExecutorFileSystem;
-use codex_exec_server::LOCAL_FS;
-use codex_exec_server::ReadFileOptions;
-use codex_skills::SkillError;
-use codex_skills::SkillMetadata;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_exec_server::ExecutorFileSystem;
+use genex_exec_server::LOCAL_FS;
+use genex_exec_server::ReadFileOptions;
+use genex_skills::SkillError;
+use genex_skills::SkillMetadata;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 
 #[derive(Debug, Clone, Default)]
 pub struct SkillLoadOutcome {
@@ -123,7 +123,7 @@ impl SkillLoadOutcome {
     }
 }
 
-impl codex_skills::ImplicitSkillLookup for SkillLoadOutcome {
+impl genex_skills::ImplicitSkillLookup for SkillLoadOutcome {
     fn implicit_skill_for_scripts_dir(&self, path: &AbsolutePathBuf) -> Option<&SkillMetadata> {
         self.implicit_skills_by_scripts_dir.get(path)
     }
@@ -133,7 +133,7 @@ impl codex_skills::ImplicitSkillLookup for SkillLoadOutcome {
     }
 }
 
-impl codex_skills::ExplicitSkillLookup for SkillLoadOutcome {
+impl genex_skills::ExplicitSkillLookup for SkillLoadOutcome {
     fn skills(&self) -> &[SkillMetadata] {
         &self.skills
     }

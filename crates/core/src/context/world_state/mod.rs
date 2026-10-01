@@ -16,12 +16,12 @@ mod test_support;
 mod tools;
 
 use crate::context::ContextualUserFragment;
-use codex_extension_api::PreviousWorldStateSection;
-use codex_extension_api::RenderedWorldStateFragment;
-use codex_extension_api::WorldStateSectionContribution;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ContentItemKind;
-use codex_protocol::models::ResponseItem;
+use genex_extension_api::PreviousWorldStateSection;
+use genex_extension_api::RenderedWorldStateFragment;
+use genex_extension_api::WorldStateSectionContribution;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::ContentItemKind;
+use genex_protocol::models::ResponseItem;
 use indexmap::IndexMap;
 use serde::Deserialize;
 use serde::Serialize;

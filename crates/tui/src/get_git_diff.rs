@@ -11,9 +11,9 @@ use std::time::Duration;
 use crate::workspace_command::WorkspaceCommand;
 use crate::workspace_command::WorkspaceCommandExecutor;
 use crate::workspace_command::WorkspaceCommandOutput;
-use codex_git_utils::FsmonitorOverride;
-use codex_git_utils::FsmonitorProbeRunner;
-use codex_git_utils::detect_fsmonitor_override;
+use genex_git_utils::FsmonitorOverride;
+use genex_git_utils::FsmonitorProbeRunner;
+use genex_git_utils::detect_fsmonitor_override;
 
 const DIFF_COMMAND_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 30);
 const DISABLE_HOOKS_CONFIG: &str = if cfg!(windows) {
@@ -33,7 +33,7 @@ struct WorkspaceFsmonitorProbeRunner<'a> {
 
 impl FsmonitorProbeRunner for WorkspaceFsmonitorProbeRunner<'_> {
     async fn run_probe(&mut self, args: &[&str]) -> Option<Vec<u8>> {
-        let argv = ["git", "-c", codex_git_utils::SAFE_BARE_REPOSITORY_CONFIG]
+        let argv = ["git", "-c", genex_git_utils::SAFE_BARE_REPOSITORY_CONFIG]
             .into_iter()
             .chain(args.iter().copied());
         let command = WorkspaceCommand::new(argv).cwd(self.cwd.to_path_buf());
@@ -234,7 +234,7 @@ async fn run_git_command(
     let argv = [
         "git",
         "-c",
-        codex_git_utils::SAFE_BARE_REPOSITORY_CONFIG,
+        genex_git_utils::SAFE_BARE_REPOSITORY_CONFIG,
         "-c",
         fsmonitor.git_config_arg(),
         "-c",
@@ -749,7 +749,7 @@ mod tests {
         [
             "git",
             "-c",
-            codex_git_utils::SAFE_BARE_REPOSITORY_CONFIG,
+            genex_git_utils::SAFE_BARE_REPOSITORY_CONFIG,
             "-c",
             fsmonitor.git_config_arg(),
             "-c",
@@ -762,7 +762,7 @@ mod tests {
     }
 
     fn git_probe_command(args: &[&str]) -> Vec<String> {
-        ["git", "-c", codex_git_utils::SAFE_BARE_REPOSITORY_CONFIG]
+        ["git", "-c", genex_git_utils::SAFE_BARE_REPOSITORY_CONFIG]
             .into_iter()
             .chain(args.iter().copied())
             .map(str::to_string)

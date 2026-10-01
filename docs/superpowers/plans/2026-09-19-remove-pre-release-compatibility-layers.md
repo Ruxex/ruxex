@@ -169,11 +169,11 @@ The checked-in Hawk output is described in the [Hawk result analysis](../../hawk
 
 **Files:**
 - Delete: `crates/v8-poc/`.
-- Modify: `Cargo.toml`, `Cargo.lock`, and the checked-in Hawk output [`codex-cli.json`](../../codex-cli.json).
+- Modify: `Cargo.toml`, `Cargo.lock`, and the checked-in Hawk output [`genex-cli.json`](../../genex-cli.json).
 - Modify: `crates/utils/cargo-bin/`, `crates/code-mode-protocol/`, `crates/linux-sandbox/`, `crates/exec-server/`, and affected test/resource helpers selected by the inventory.
 - Modify: `docs/pre-release-compatibility-inventory.md` and the Phase 3 handoff in `docs/provider-decoupling-plan.md`.
 
-- [x] Record the producer/consumer audit before changing code: `codex-v8-poc` has no product consumer; active code-mode uses `codex-code-mode-runtime` and `rusty_v8` directly. Record the same distinction for each Bazel/runfiles branch.
+- [x] Record the producer/consumer audit before changing code: `codex-v8-poc` has no product consumer; active code-mode uses `genex-code-mode-runtime` and `rusty_v8` directly. Record the same distinction for each Bazel/runfiles branch.
 - [x] Remove the POC crate, workspace member/dependency, cargo-shear exception, lockfile package, and generated Hawk references together.
 - [x] Remove only the unmaintained Bazel/runfiles compatibility branches; preserve Cargo binary/resource resolution, active sandbox behavior, and the provider-neutral code-mode runtime.
 - [x] Remove the obsolete `bazel_native` lint feature after confirming the normal Dylint source-build path remains.

@@ -10,30 +10,30 @@ use crate::tools::approvals::ApprovalContext;
 use crate::tools::approvals::ApprovalReviewContext;
 use crate::tools::events::truncate_rejection_message;
 use crate::tools::sandboxing::ToolError;
-use codex_network_proxy::BlockedRequest;
-use codex_network_proxy::BlockedRequestObserver;
-use codex_network_proxy::EnvironmentNetworkPolicy;
-use codex_network_proxy::NetworkDecision;
-use codex_network_proxy::NetworkPolicyDecider;
-use codex_network_proxy::NetworkPolicyRequest;
-use codex_network_proxy::NetworkProtocol;
-use codex_network_proxy::NetworkProxy;
-use codex_network_proxy::NetworkRequestCancellation;
-use codex_network_proxy::NetworkRequestCancellationReason;
-use codex_network_proxy::NetworkRequestDisconnect;
-use codex_protocol::approvals::NetworkApprovalContext;
-use codex_protocol::approvals::NetworkApprovalProtocol;
-use codex_protocol::approvals::NetworkPolicyRuleAction;
-use codex_protocol::models::AdditionalPermissionProfile;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::WarningEvent;
-use codex_sandboxing::record_network_sandbox_violation;
-use codex_tools::ToolName;
-use codex_utils_path_uri::PathUri;
+use genex_network_proxy::BlockedRequest;
+use genex_network_proxy::BlockedRequestObserver;
+use genex_network_proxy::EnvironmentNetworkPolicy;
+use genex_network_proxy::NetworkDecision;
+use genex_network_proxy::NetworkPolicyDecider;
+use genex_network_proxy::NetworkPolicyRequest;
+use genex_network_proxy::NetworkProtocol;
+use genex_network_proxy::NetworkProxy;
+use genex_network_proxy::NetworkRequestCancellation;
+use genex_network_proxy::NetworkRequestCancellationReason;
+use genex_network_proxy::NetworkRequestDisconnect;
+use genex_protocol::approvals::NetworkApprovalContext;
+use genex_protocol::approvals::NetworkApprovalProtocol;
+use genex_protocol::approvals::NetworkPolicyRuleAction;
+use genex_protocol::models::AdditionalPermissionProfile;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::Event;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ReviewDecision;
+use genex_protocol::protocol::WarningEvent;
+use genex_sandboxing::record_network_sandbox_violation;
+use genex_tools::ToolName;
+use genex_utils_path_uri::PathUri;
 use indexmap::IndexMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -849,7 +849,7 @@ impl NetworkApprovalService {
             Err(ToolError::Codex(err)) => {
                 let telemetry_decision = if matches!(
                     err.details(),
-                    codex_protocol::error::CodexErrorDetails::TurnAborted
+                    genex_protocol::error::CodexErrorDetails::TurnAborted
                 ) {
                     ReviewDecision::Abort
                 } else {
@@ -858,7 +858,7 @@ impl NetworkApprovalService {
                 if let Some(owner_call) = owner_call.as_ref() {
                     let rejection = if matches!(
                         err.details(),
-                        codex_protocol::error::CodexErrorDetails::TurnAborted
+                        genex_protocol::error::CodexErrorDetails::TurnAborted
                     ) {
                         "rejected by user".to_string()
                     } else {
@@ -1206,7 +1206,7 @@ pub(crate) async fn begin_network_approval(
             fallback_policy_decider,
         )
         .map_err(|err| {
-            ToolError::Codex(codex_protocol::error::CodexErr::Io(io::Error::other(
+            ToolError::Codex(genex_protocol::error::CodexErr::Io(io::Error::other(
                 format!("failed to create execution-scoped network proxy: {err}"),
             )))
         })?;

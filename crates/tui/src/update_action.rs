@@ -1,9 +1,9 @@
 #[cfg(any(not(debug_assertions), test))]
-use codex_install_context::InstallContext;
+use genex_install_context::InstallContext;
 #[cfg(any(not(debug_assertions), test))]
-use codex_install_context::InstallMethod;
+use genex_install_context::InstallMethod;
 #[cfg(test)]
-use codex_install_context::StandalonePlatform;
+use genex_install_context::StandalonePlatform;
 
 /// Update action the CLI should perform after the TUI exits.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -64,7 +64,7 @@ pub fn get_update_action() -> Option<UpdateAction> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use genex_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
 
     #[test]

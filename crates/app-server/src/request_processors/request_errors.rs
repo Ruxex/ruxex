@@ -1,5 +1,5 @@
 use super::*;
-use codex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::CodexErrorDetails;
 
 pub(super) fn environment_selection_error(err: CodexErr) -> JSONRPCErrorError {
     match err.details() {

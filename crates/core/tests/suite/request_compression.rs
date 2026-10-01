@@ -1,10 +1,10 @@
 #![cfg(not(target_os = "windows"))]
 
-use codex_core::TurnInputRequest;
-use codex_features::Feature;
-use codex_login::CodexAuth;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::user_input::UserInput;
+use genex_core::TurnInputRequest;
+use genex_features::Feature;
+use genex_login::CodexAuth;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_once;

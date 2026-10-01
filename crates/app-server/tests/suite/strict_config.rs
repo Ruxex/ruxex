@@ -2,10 +2,10 @@
 
 use anyhow::Result;
 use app_test_support::TestAppServer;
-use codex_app_server_protocol::ConfigWarningNotification;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_core::config::set_project_trust_level;
-use codex_protocol::config_types::TrustLevel;
+use genex_app_server_protocol::ConfigWarningNotification;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_core::config::set_project_trust_level;
+use genex_protocol::config_types::TrustLevel;
 use pretty_assertions::assert_ne;
 use std::process::Command;
 use std::time::Duration;
@@ -82,7 +82,7 @@ foo = "bar"
 "#,
     )?;
 
-    let output = Command::new(codex_utils_cargo_bin::cargo_bin("codex-app-server")?)
+    let output = Command::new(genex_utils_cargo_bin::cargo_bin("codex-app-server")?)
         .env("CODEX_HOME", codex_home.path())
         .env(
             "CODEX_APP_SERVER_MANAGED_CONFIG_PATH",
@@ -122,7 +122,7 @@ fn managed_auth_requirements_fail_closed_for_standalone_app_server() -> Result<(
         std::fs::write(codex_home.path().join("requirements.toml"), requirements)?;
         std::fs::write(codex_home.path().join("config.toml"), config)?;
 
-        let output = Command::new(codex_utils_cargo_bin::cargo_bin("codex-app-server")?)
+        let output = Command::new(genex_utils_cargo_bin::cargo_bin("codex-app-server")?)
             .env("CODEX_HOME", codex_home.path())
             .env(
                 "CODEX_APP_SERVER_MANAGED_CONFIG_PATH",

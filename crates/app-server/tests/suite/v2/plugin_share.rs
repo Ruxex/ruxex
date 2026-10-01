@@ -6,28 +6,28 @@ use anyhow::Result;
 use app_test_support::ApiKeyAuthFixture;
 use app_test_support::TestAppServer;
 use app_test_support::write_api_key_auth;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::PluginAuthPolicy;
-use codex_app_server_protocol::PluginInstallPolicy;
-use codex_app_server_protocol::PluginInterface;
-use codex_app_server_protocol::PluginListParams;
-use codex_app_server_protocol::PluginListResponse;
-use codex_app_server_protocol::PluginShareCheckoutResponse;
-use codex_app_server_protocol::PluginShareContext;
-use codex_app_server_protocol::PluginShareDeleteResponse;
-use codex_app_server_protocol::PluginShareDiscoverability;
-use codex_app_server_protocol::PluginShareListItem;
-use codex_app_server_protocol::PluginShareListResponse;
-use codex_app_server_protocol::PluginSharePrincipal;
-use codex_app_server_protocol::PluginSharePrincipalRole;
-use codex_app_server_protocol::PluginSharePrincipalType;
-use codex_app_server_protocol::PluginShareSaveResponse;
-use codex_app_server_protocol::PluginShareUpdateTargetsResponse;
-use codex_app_server_protocol::PluginSource;
-use codex_app_server_protocol::PluginSummary;
-use codex_app_server_protocol::RequestId;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::PluginAuthPolicy;
+use genex_app_server_protocol::PluginInstallPolicy;
+use genex_app_server_protocol::PluginInterface;
+use genex_app_server_protocol::PluginListParams;
+use genex_app_server_protocol::PluginListResponse;
+use genex_app_server_protocol::PluginShareCheckoutResponse;
+use genex_app_server_protocol::PluginShareContext;
+use genex_app_server_protocol::PluginShareDeleteResponse;
+use genex_app_server_protocol::PluginShareDiscoverability;
+use genex_app_server_protocol::PluginShareListItem;
+use genex_app_server_protocol::PluginShareListResponse;
+use genex_app_server_protocol::PluginSharePrincipal;
+use genex_app_server_protocol::PluginSharePrincipalRole;
+use genex_app_server_protocol::PluginSharePrincipalType;
+use genex_app_server_protocol::PluginShareSaveResponse;
+use genex_app_server_protocol::PluginShareUpdateTargetsResponse;
+use genex_app_server_protocol::PluginSource;
+use genex_app_server_protocol::PluginSummary;
+use genex_app_server_protocol::RequestId;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use flate2::Compression;
 use flate2::write::GzEncoder;
 use pretty_assertions::assert_eq;
@@ -174,7 +174,7 @@ async fn plugin_share_save_uploads_local_plugin() -> Result<()> {
                     install_policy_source: None,
                     must_show_installation_interstitial: Some(false),
                     auth_policy: PluginAuthPolicy::OnUse,
-                    availability: codex_app_server_protocol::PluginAvailability::Available,
+                    availability: genex_app_server_protocol::PluginAvailability::Available,
                     disabled_reason: None,
                     eligible_plan_types: None,
                     interface: Some(expected_plugin_interface()),
@@ -592,7 +592,7 @@ async fn plugin_share_list_returns_created_workspace_plugins() -> Result<()> {
                     install_policy_source: None,
                     must_show_installation_interstitial: Some(false),
                     auth_policy: PluginAuthPolicy::OnUse,
-                    availability: codex_app_server_protocol::PluginAvailability::Available,
+                    availability: genex_app_server_protocol::PluginAvailability::Available,
                     disabled_reason: None,
                     eligible_plan_types: None,
                     interface: Some(expected_plugin_interface()),
@@ -724,7 +724,7 @@ async fn plugin_share_checkout_adds_personal_marketplace_entry() -> Result<()> {
         .send_plugin_list_request(PluginListParams {
             cwds: None,
             marketplace_kinds: Some(vec![
-                codex_app_server_protocol::PluginListMarketplaceKind::Local,
+                genex_app_server_protocol::PluginListMarketplaceKind::Local,
             ]),
             force_refetch: false,
         })
@@ -1030,7 +1030,7 @@ async fn plugin_share_update_targets_updates_share_targets() -> Result<()> {
                     name: "Workspace".to_string(),
                 },
             ],
-            discoverability: codex_app_server_protocol::PluginShareDiscoverability::Unlisted,
+            discoverability: genex_app_server_protocol::PluginShareDiscoverability::Unlisted,
         }
     );
     Ok(())
@@ -1100,7 +1100,7 @@ async fn plugin_share_update_targets_publishes_workspace_plugin() -> Result<()> 
                 role: PluginSharePrincipalRole::Owner,
                 name: "Owner".to_string(),
             }],
-            discoverability: codex_app_server_protocol::PluginShareDiscoverability::Listed,
+            discoverability: genex_app_server_protocol::PluginShareDiscoverability::Listed,
         }
     );
     Ok(())
@@ -1250,7 +1250,7 @@ async fn plugin_share_delete_removes_created_workspace_plugin() -> Result<()> {
                     install_policy_source: None,
                     must_show_installation_interstitial: Some(false),
                     auth_policy: PluginAuthPolicy::OnUse,
-                    availability: codex_app_server_protocol::PluginAvailability::Available,
+                    availability: genex_app_server_protocol::PluginAvailability::Available,
                     disabled_reason: None,
                     eligible_plan_types: None,
                     interface: Some(expected_plugin_interface()),

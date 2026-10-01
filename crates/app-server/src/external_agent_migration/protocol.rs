@@ -1,35 +1,35 @@
 use crate::error_code::internal_error;
-use codex_app_server_protocol::CommandMigration;
-use codex_app_server_protocol::ExternalAgentConfigDetectResponse;
-use codex_app_server_protocol::ExternalAgentConfigImportCompletedNotification;
-use codex_app_server_protocol::ExternalAgentConfigImportHistory;
-use codex_app_server_protocol::ExternalAgentConfigImportItemTypeFailure as ProtocolImportFailure;
-use codex_app_server_protocol::ExternalAgentConfigImportItemTypeSuccess as ProtocolImportSuccess;
-use codex_app_server_protocol::ExternalAgentConfigImportTypeResult as ProtocolImportTypeResult;
-use codex_app_server_protocol::ExternalAgentConfigMigrationItem;
-use codex_app_server_protocol::ExternalAgentConfigMigrationItemType;
-use codex_app_server_protocol::ExternalAgentDetectedConnectorCandidate;
-use codex_app_server_protocol::ExternalAgentDetectedConnectorSource;
-use codex_app_server_protocol::HookMigration;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::McpServerMigration;
-use codex_app_server_protocol::MigrationDetails;
-use codex_app_server_protocol::PluginsMigration;
-use codex_app_server_protocol::SkillMigration;
-use codex_app_server_protocol::SubagentMigration;
-use codex_external_agent_migration::DetectedConnectorCandidate as CoreDetectedConnectorCandidate;
-use codex_external_agent_migration::DetectedConnectorSource as CoreDetectedConnectorSource;
-use codex_external_agent_migration::ExternalAgentConfigImportItemResult as CoreImportItemResult;
-use codex_external_agent_migration::ExternalAgentConfigImportRawError as CoreImportRawError;
-use codex_external_agent_migration::ExternalAgentConfigImportSuccess;
-use codex_external_agent_migration::ExternalAgentConfigMigrationItem as CoreMigrationItem;
-use codex_external_agent_migration::ExternalAgentConfigMigrationItemType as CoreMigrationItemType;
-use codex_external_agent_migration::MigrationDetails as CoreMigrationDetails;
-use codex_external_agent_migration::NamedMigration;
-use codex_external_agent_migration::PluginsMigration as CorePluginsMigration;
-use codex_external_agent_migration::sessions::ExternalAgentSessionMigration;
-use codex_state::ExternalAgentConfigImportFailureRecord;
-use codex_state::ExternalAgentConfigImportSuccessRecord;
+use genex_app_server_protocol::CommandMigration;
+use genex_app_server_protocol::ExternalAgentConfigDetectResponse;
+use genex_app_server_protocol::ExternalAgentConfigImportCompletedNotification;
+use genex_app_server_protocol::ExternalAgentConfigImportHistory;
+use genex_app_server_protocol::ExternalAgentConfigImportItemTypeFailure as ProtocolImportFailure;
+use genex_app_server_protocol::ExternalAgentConfigImportItemTypeSuccess as ProtocolImportSuccess;
+use genex_app_server_protocol::ExternalAgentConfigImportTypeResult as ProtocolImportTypeResult;
+use genex_app_server_protocol::ExternalAgentConfigMigrationItem;
+use genex_app_server_protocol::ExternalAgentConfigMigrationItemType;
+use genex_app_server_protocol::ExternalAgentDetectedConnectorCandidate;
+use genex_app_server_protocol::ExternalAgentDetectedConnectorSource;
+use genex_app_server_protocol::HookMigration;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::McpServerMigration;
+use genex_app_server_protocol::MigrationDetails;
+use genex_app_server_protocol::PluginsMigration;
+use genex_app_server_protocol::SkillMigration;
+use genex_app_server_protocol::SubagentMigration;
+use genex_external_agent_migration::DetectedConnectorCandidate as CoreDetectedConnectorCandidate;
+use genex_external_agent_migration::DetectedConnectorSource as CoreDetectedConnectorSource;
+use genex_external_agent_migration::ExternalAgentConfigImportItemResult as CoreImportItemResult;
+use genex_external_agent_migration::ExternalAgentConfigImportRawError as CoreImportRawError;
+use genex_external_agent_migration::ExternalAgentConfigImportSuccess;
+use genex_external_agent_migration::ExternalAgentConfigMigrationItem as CoreMigrationItem;
+use genex_external_agent_migration::ExternalAgentConfigMigrationItemType as CoreMigrationItemType;
+use genex_external_agent_migration::MigrationDetails as CoreMigrationDetails;
+use genex_external_agent_migration::NamedMigration;
+use genex_external_agent_migration::PluginsMigration as CorePluginsMigration;
+use genex_external_agent_migration::sessions::ExternalAgentSessionMigration;
+use genex_state::ExternalAgentConfigImportFailureRecord;
+use genex_state::ExternalAgentConfigImportSuccessRecord;
 
 pub(super) fn detect_response(
     items: Vec<CoreMigrationItem>,
@@ -82,7 +82,7 @@ fn protocol_migration_details(details: CoreMigrationDetails) -> MigrationDetails
         sessions: details
             .sessions
             .into_iter()
-            .map(|session| codex_app_server_protocol::SessionMigration {
+            .map(|session| genex_app_server_protocol::SessionMigration {
                 path: session.path,
                 cwd: session.cwd,
                 title: session.title,
@@ -213,7 +213,7 @@ fn core_migration_item_type(
 }
 
 pub(super) fn protocol_import_history(
-    record: codex_state::ExternalAgentConfigImportHistoryRecord,
+    record: genex_state::ExternalAgentConfigImportHistoryRecord,
 ) -> Result<ExternalAgentConfigImportHistory, JSONRPCErrorError> {
     let successes = record
         .successes

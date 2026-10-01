@@ -22,7 +22,7 @@ use crate::OutboundProxyPolicy;
 
 #[tokio::test]
 async fn request_failures_classify_real_untrusted_certificate_handshakes() {
-    codex_utils_rustls_provider::ensure_rustls_crypto_provider();
+    genex_utils_rustls_provider::ensure_rustls_crypto_provider();
     let certificate = rcgen::generate_simple_self_signed(vec!["localhost".to_string()])
         .expect("self-signed certificate should generate");
     let private_key = rustls::pki_types::PrivateKeyDer::Pkcs8(

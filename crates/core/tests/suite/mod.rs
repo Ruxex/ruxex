@@ -1,12 +1,12 @@
 // Aggregates all former standalone integration tests as modules.
-use codex_apply_patch::CODEX_CORE_APPLY_PATCH_ARG1;
+use genex_apply_patch::CODEX_CORE_APPLY_PATCH_ARG1;
 #[cfg(unix)]
-use codex_exec_server::CODEX_ARG0_EXEC_HELPER_ARG1;
-use codex_exec_server::CODEX_FS_HELPER_ARG1;
-use codex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
-use codex_test_binary_support::TestBinaryDispatchGuard;
-use codex_test_binary_support::TestBinaryDispatchMode;
-use codex_test_binary_support::configure_test_binary_dispatch;
+use genex_exec_server::CODEX_ARG0_EXEC_HELPER_ARG1;
+use genex_exec_server::CODEX_FS_HELPER_ARG1;
+use genex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
+use genex_test_binary_support::TestBinaryDispatchGuard;
+use genex_test_binary_support::TestBinaryDispatchMode;
+use genex_test_binary_support::configure_test_binary_dispatch;
 use ctor::ctor;
 
 // This code runs before any other tests are run.

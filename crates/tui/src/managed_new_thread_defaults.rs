@@ -1,8 +1,8 @@
 use crate::app::has_launch_setting;
 use crate::legacy_core::config::Config;
 use crate::legacy_core::config::ConfigOverrides;
-use codex_app_server_protocol::NewThreadModelDefaults;
-use codex_protocol::config_types::ServiceTier;
+use genex_app_server_protocol::NewThreadModelDefaults;
+use genex_protocol::config_types::ServiceTier;
 use toml::Value as TomlValue;
 
 pub(crate) fn apply_managed_new_thread_defaults(

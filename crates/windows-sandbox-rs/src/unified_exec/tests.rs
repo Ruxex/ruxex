@@ -11,11 +11,11 @@ use crate::ipc_framed::read_frame;
 use crate::run_windows_sandbox_capture;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::PermissionProfile;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_pty::ProcessDriver;
-use codex_utils_pty::ProcessSignal;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::PermissionProfile;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_pty::ProcessDriver;
+use genex_utils_pty::ProcessSignal;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 use std::fs;
@@ -191,11 +191,11 @@ fn wait_for_frame_count(frames_path: &Path, expected_frames: usize) -> Vec<Messa
 }
 
 async fn collect_stdout_and_exit(
-    spawned: codex_utils_pty::SpawnedProcess,
+    spawned: genex_utils_pty::SpawnedProcess,
     codex_home: &Path,
     timeout_duration: Duration,
 ) -> (Vec<u8>, i32) {
-    let codex_utils_pty::SpawnedProcess {
+    let genex_utils_pty::SpawnedProcess {
         session: _session,
         mut stdout_rx,
         stderr_rx: _stderr_rx,
@@ -419,7 +419,7 @@ fn legacy_non_tty_powershell_interrupt_terminates_process() {
         .await
         .expect("spawn legacy non-tty powershell session");
         println!("pwsh spawn returned");
-        let codex_utils_pty::SpawnedProcess {
+        let genex_utils_pty::SpawnedProcess {
             session,
             mut stdout_rx,
             stderr_rx: _stderr_rx,
@@ -587,7 +587,7 @@ fn runner_resizer_sends_resize_frame() {
         let outbound_tx = super::start_runner_pipe_writer(file);
         let mut resizer = super::make_runner_resizer(outbound_tx);
 
-        resizer(codex_utils_pty::TerminalSize {
+        resizer(genex_utils_pty::TerminalSize {
             rows: 45,
             cols: 132,
         })

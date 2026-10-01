@@ -5,7 +5,7 @@ use super::super::tests::snapshot_composer_state_with_width;
 use crate::keymap::KeyChordMatch;
 use crate::keymap::KeyChordMatcher;
 use crate::keymap::RuntimeKeymap;
-use codex_config::types::TuiKeymap;
+use genex_config::types::TuiKeymap;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;

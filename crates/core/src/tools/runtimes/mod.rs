@@ -11,24 +11,24 @@ use crate::exec_env::CODEX_VERSION_ENV_VAR;
 use crate::sandboxing::SandboxPermissions;
 use crate::shell::Shell;
 use crate::shell::ShellType;
-use codex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
-use codex_core_plugins::PLUGIN_METRICS_OUTPUT_ENV_VAR;
+use genex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
+use genex_core_plugins::PLUGIN_METRICS_OUTPUT_ENV_VAR;
 #[cfg(unix)]
-use codex_install_context::InstallContext;
+use genex_install_context::InstallContext;
 #[cfg(target_os = "macos")]
-use codex_network_proxy::CODEX_PROXY_GIT_SSH_COMMAND_MARKER;
-use codex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY;
-use codex_network_proxy::CUSTOM_CA_ENV_KEYS;
-use codex_network_proxy::PROXY_ACTIVE_ENV_KEY;
-use codex_network_proxy::PROXY_ENV_KEYS;
+use genex_network_proxy::CODEX_PROXY_GIT_SSH_COMMAND_MARKER;
+use genex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY;
+use genex_network_proxy::CUSTOM_CA_ENV_KEYS;
+use genex_network_proxy::PROXY_ACTIVE_ENV_KEY;
+use genex_network_proxy::PROXY_ENV_KEYS;
 #[cfg(target_os = "macos")]
-use codex_network_proxy::PROXY_GIT_SSH_COMMAND_ENV_KEY;
-pub(crate) use codex_network_proxy::is_managed_proxy_env_var;
-pub(crate) use codex_network_proxy::strip_managed_proxy_env;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::shell_environment::is_non_inheritable_env_var;
-use codex_shell_command::shell_snapshot::posix_env_path_expansion_function;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_network_proxy::PROXY_GIT_SSH_COMMAND_ENV_KEY;
+pub(crate) use genex_network_proxy::is_managed_proxy_env_var;
+pub(crate) use genex_network_proxy::strip_managed_proxy_env;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::shell_environment::is_non_inheritable_env_var;
+use genex_shell_command::shell_snapshot::posix_env_path_expansion_function;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -166,7 +166,7 @@ pub(crate) fn prepare_powershell_command_for_elevated_windows_sandbox(
         windows_sandbox_level,
         environment_is_remote,
         |path| {
-            codex_shell_command::shell_detect::fallback_powershell_shell_for_elevated_windows_sandbox(
+            genex_shell_command::shell_detect::fallback_powershell_shell_for_elevated_windows_sandbox(
                 path,
             )
         },
@@ -179,7 +179,7 @@ fn prepare_powershell_command_for_elevated_windows_sandbox_with_fallback(
     sandbox_requested: bool,
     windows_sandbox_level: WindowsSandboxLevel,
     environment_is_remote: bool,
-    find_fallback: impl FnOnce(&Path) -> Option<codex_shell_command::shell_detect::DetectedShell>,
+    find_fallback: impl FnOnce(&Path) -> Option<genex_shell_command::shell_detect::DetectedShell>,
 ) -> Vec<String> {
     if shell_type != Some(&ShellType::PowerShell)
         || !sandbox_requested
@@ -223,14 +223,14 @@ pub(crate) fn prepare_brokered_shell_snapshot_env(
                 !key.starts_with(SNAPSHOT_BROKERED_VALUE_ENV_PREFIX)
                     && !key.starts_with(SNAPSHOT_BROKERED_UNSET_ENV_PREFIX)
             });
-            for key in codex_network_proxy::brokered_credential_value_env_keys(env) {
+            for key in genex_network_proxy::brokered_credential_value_env_keys(env) {
                 if is_valid_shell_variable_name(&key)
                     && let Some(value) = env.get(&key).cloned()
                 {
                     env.insert(format!("{SNAPSHOT_BROKERED_VALUE_ENV_PREFIX}{key}"), value);
                 }
             }
-            for key in codex_network_proxy::brokered_credential_marker_env_keys(env) {
+            for key in genex_network_proxy::brokered_credential_marker_env_keys(env) {
                 if !is_valid_shell_variable_name(&key) {
                     continue;
                 }
@@ -334,7 +334,7 @@ pub(crate) fn maybe_wrap_shell_lc_with_snapshot(
         && command[0] == shell_path.as_ref()
         && matches!(session_shell.shell_type, ShellType::Bash | ShellType::Zsh);
     let original_shell_is_zsh = command_uses_session_zsh
-        || codex_shell_command::shell_detect::detect_shell_type(&command[0])
+        || genex_shell_command::shell_detect::detect_shell_type(&command[0])
             == Some(ShellType::Zsh);
     let brokered_zsh_flag = if flag == "-lc" { "-lfc" } else { "-fc" };
     let original_shell_flag = if brokered && original_shell_is_zsh {
@@ -602,7 +602,7 @@ fn build_proxy_env_exports(env: &HashMap<String, String>) -> (String, String) {
     let mut keys = PROXY_ENV_KEYS
         .iter()
         .copied()
-        .chain(codex_network_proxy::brokered_credential_env_keys(env))
+        .chain(genex_network_proxy::brokered_credential_env_keys(env))
         .chain(CUSTOM_CA_ENV_KEYS)
         .chain(
             env.get(CREDENTIAL_BROKER_ACTIVE_ENV_KEY)
@@ -857,7 +857,7 @@ mod prepare_powershell_command_tests {
             WindowsSandboxLevel::Elevated,
             /*environment_is_remote*/ false,
             |_| {
-                Some(codex_shell_command::shell_detect::DetectedShell {
+                Some(genex_shell_command::shell_detect::DetectedShell {
                     shell_type: ShellType::PowerShell,
                     shell_path: fallback_path.clone(),
                 })
@@ -893,7 +893,7 @@ mod prepare_powershell_command_tests {
             /*environment_is_remote*/ true,
             |_| {
                 discovery_called = true;
-                Some(codex_shell_command::shell_detect::DetectedShell {
+                Some(genex_shell_command::shell_detect::DetectedShell {
                     shell_type: ShellType::PowerShell,
                     shell_path: std::path::PathBuf::from(r"C:\Program Files\PowerShell\7\pwsh.exe"),
                 })

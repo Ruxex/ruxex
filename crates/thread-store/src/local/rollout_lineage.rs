@@ -2,8 +2,8 @@ use std::collections::HashSet;
 use std::path::Path;
 use std::path::PathBuf;
 
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::HistoryPosition;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::HistoryPosition;
 
 use super::LocalThreadStore;
 use super::thread_rollout_resolver;
@@ -106,10 +106,10 @@ impl LocalThreadStore {
                     // target. Keep references inside canonical managed roots so nested symlinks
                     // cannot escape them.
                     let is_managed_rollout = [
-                        self.config.codex_home.join(codex_rollout::SESSIONS_SUBDIR),
+                        self.config.codex_home.join(genex_rollout::SESSIONS_SUBDIR),
                         self.config
                             .codex_home
-                            .join(codex_rollout::ARCHIVED_SESSIONS_SUBDIR),
+                            .join(genex_rollout::ARCHIVED_SESSIONS_SUBDIR),
                     ]
                     .into_iter()
                     .filter_map(|root| std::fs::canonicalize(root).ok())
@@ -120,7 +120,7 @@ impl LocalThreadStore {
                     canonical_rollout_path
                 }
             };
-            let meta = codex_rollout::read_session_meta_line(rollout_path.as_path())
+            let meta = genex_rollout::read_session_meta_line(rollout_path.as_path())
                 .await
                 .map_err(|err| ThreadStoreError::Internal {
                     message: format!(
@@ -140,7 +140,7 @@ impl LocalThreadStore {
                     if next_rollout_id.is_none() && meta.meta.history_base.is_none() =>
                 {
                     // A newly shared standalone source must remain readable by older binaries.
-                    codex_rollout::materialize_rollout_for_reference(rollout_path.as_path())
+                    genex_rollout::materialize_rollout_for_reference(rollout_path.as_path())
                         .await
                         .map_err(|err| ThreadStoreError::Internal {
                             message: format!(
@@ -186,7 +186,7 @@ async fn resolve_rollout_path_by_id(
     store: &LocalThreadStore,
     rollout_id: ThreadId,
 ) -> ThreadStoreResult<Option<PathBuf>> {
-    codex_rollout::find_rollout_path_by_rollout_id(store.config.codex_home.as_path(), rollout_id)
+    genex_rollout::find_rollout_path_by_rollout_id(store.config.codex_home.as_path(), rollout_id)
         .await
         .map_err(|err| ThreadStoreError::Internal {
             message: format!("failed to locate rollout {rollout_id}: {err}"),
@@ -265,7 +265,7 @@ async fn validate_cutoff_bounds(
     let path = rollout_path.to_path_buf();
     let end_byte_offset = end.end_byte_offset;
     let contains_prefix = tokio::task::spawn_blocking(move || {
-        codex_rollout::rollout_contains_prefix(&path, end_byte_offset)
+        genex_rollout::rollout_contains_prefix(&path, end_byte_offset)
     })
     .await
     .map_err(|err| ThreadStoreError::Internal {

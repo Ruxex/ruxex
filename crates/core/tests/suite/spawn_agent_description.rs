@@ -2,24 +2,24 @@
 #![allow(clippy::unwrap_used)]
 
 use anyhow::Result;
-use codex_core::config::AgentRoleConfig;
-use codex_core::config::Config;
-use codex_features::Feature;
-use codex_history::RolloutItem;
-use codex_login::CodexAuth;
-use codex_models_manager::manager::RefreshStrategy;
-use codex_models_manager::manager::SharedModelsManager;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::model_types::ConfigShellToolType;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelServiceTier;
-use codex_protocol::model_types::ModelVisibility;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::model_types::ReasoningEffortPreset;
-use codex_protocol::model_types::TruncationPolicyConfig;
-use codex_protocol::model_types::default_input_modalities;
-use codex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
+use genex_core::config::AgentRoleConfig;
+use genex_core::config::Config;
+use genex_features::Feature;
+use genex_history::RolloutItem;
+use genex_login::CodexAuth;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_models_manager::manager::SharedModelsManager;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::model_types::ConfigShellToolType;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelServiceTier;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::model_types::TruncationPolicyConfig;
+use genex_protocol::model_types::default_input_modalities;
+use genex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
@@ -133,7 +133,7 @@ async fn wait_for_model_available(manager: &SharedModelsManager, slug: &str) {
         let available_models = manager
             .list_models(
                 RefreshStrategy::Online,
-                codex_core::test_support::default_http_client_factory(),
+                genex_core::test_support::default_http_client_factory(),
             )
             .await;
         if available_models.iter().any(|model| model.model == slug) {
@@ -455,7 +455,7 @@ async fn multi_agent_v2_cold_resume_refreshes_legacy_usage_hints_once(
     let mut removed_usage_hint_presence = false;
     let legacy_rollout = std::fs::read_to_string(&rollout_path)?
         .lines()
-        .map(codex_rollout::parse_rollout_line)
+        .map(genex_rollout::parse_rollout_line)
         .collect::<std::result::Result<Vec<_>, _>>()?
         .into_iter()
         .map(|mut line| {

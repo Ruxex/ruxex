@@ -5,79 +5,79 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 
 use assert_matches::assert_matches;
-use codex_config::ConfigLayerEntry;
-use codex_config::ConfigLayerSource;
-use codex_config::ConfigLayerStack;
-use codex_config::ConfigRequirementsToml;
-use codex_exec_server::CapabilityRootDiscovery;
-use codex_exec_server::ExecutorCapabilityDiscoverySnapshot;
-use codex_exec_server::LOCAL_FS;
-use codex_extension_api::ConversationHistory;
-use codex_extension_api::ExtensionData;
-use codex_extension_api::ExtensionEventSink;
-use codex_extension_api::ExtensionMetrics;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_extension_api::ExtensionWarning;
-use codex_extension_api::FunctionCallError;
-use codex_extension_api::NoopTurnItemEmitter;
-use codex_extension_api::PreviousWorldStateSection;
-use codex_extension_api::RenderedWorldStateFragment;
-use codex_extension_api::SkillInvocationInput;
-use codex_extension_api::SkillInvocationKind;
-use codex_extension_api::ThreadStartInput;
-use codex_extension_api::ToolCall;
-use codex_extension_api::ToolCallSource;
-use codex_extension_api::ToolPayload;
-use codex_extension_api::TurnInputContext;
-use codex_extension_api::WorldStateContributionInput;
-use codex_extension_api::WorldStateSectionContribution;
-use codex_models_manager::model_info::model_info_from_slug;
-use codex_otel::MetricsClient;
-use codex_otel::MetricsConfig;
-use codex_otel::THREAD_SKILLS_DESCRIPTION_TRUNCATED_CHARS_METRIC;
-use codex_otel::THREAD_SKILLS_ENABLED_TOTAL_METRIC;
-use codex_otel::THREAD_SKILLS_KEPT_TOTAL_METRIC;
-use codex_otel::THREAD_SKILLS_TRUNCATED_METRIC;
-use codex_protocol::capabilities::CapabilityRootLocation;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::SKILLS_INSTRUCTIONS_CLOSE_TAG;
-use codex_protocol::protocol::SKILLS_INSTRUCTIONS_OPEN_TAG;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SkillScope;
-use codex_protocol::protocol::TruncationPolicy;
-use codex_protocol::protocol::TurnEnvironmentSelection;
-use codex_protocol::user_input::UserInput;
-use codex_skills::SkillMetadata;
-use codex_skills_extension::HostSkillProvider;
-use codex_skills_extension::HostSkillsLoadInput;
-use codex_skills_extension::HostSkillsService;
-use codex_skills_extension::HostSkillsSnapshot;
-use codex_skills_extension::InjectedHostSkillPrompts;
-use codex_skills_extension::SkillLoadOutcome;
-use codex_skills_extension::SkillProviders;
-use codex_skills_extension::SkillsExtensionConfig;
-use codex_skills_extension::catalog::SkillAuthority;
-use codex_skills_extension::catalog::SkillCatalog;
-use codex_skills_extension::catalog::SkillCatalogEntry;
-use codex_skills_extension::catalog::SkillPackageId;
-use codex_skills_extension::catalog::SkillProviderError;
-use codex_skills_extension::catalog::SkillReadResult;
-use codex_skills_extension::catalog::SkillResourceId;
-use codex_skills_extension::catalog::SkillSearchResult;
-use codex_skills_extension::catalog::SkillSourceKind;
-use codex_skills_extension::install;
-use codex_skills_extension::install_with_providers;
-use codex_skills_extension::install_with_providers_and_metrics;
-use codex_skills_extension::provider::SkillListQuery;
-use codex_skills_extension::provider::SkillProvider;
-use codex_skills_extension::provider::SkillProviderFuture;
-use codex_skills_extension::provider::SkillReadRequest;
-use codex_skills_extension::provider::SkillSearchRequest;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_config::ConfigLayerEntry;
+use genex_config::ConfigLayerSource;
+use genex_config::ConfigLayerStack;
+use genex_config::ConfigRequirementsToml;
+use genex_exec_server::CapabilityRootDiscovery;
+use genex_exec_server::ExecutorCapabilityDiscoverySnapshot;
+use genex_exec_server::LOCAL_FS;
+use genex_extension_api::ConversationHistory;
+use genex_extension_api::ExtensionData;
+use genex_extension_api::ExtensionEventSink;
+use genex_extension_api::ExtensionMetrics;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_extension_api::ExtensionWarning;
+use genex_extension_api::FunctionCallError;
+use genex_extension_api::NoopTurnItemEmitter;
+use genex_extension_api::PreviousWorldStateSection;
+use genex_extension_api::RenderedWorldStateFragment;
+use genex_extension_api::SkillInvocationInput;
+use genex_extension_api::SkillInvocationKind;
+use genex_extension_api::ThreadStartInput;
+use genex_extension_api::ToolCall;
+use genex_extension_api::ToolCallSource;
+use genex_extension_api::ToolPayload;
+use genex_extension_api::TurnInputContext;
+use genex_extension_api::WorldStateContributionInput;
+use genex_extension_api::WorldStateSectionContribution;
+use genex_models_manager::model_info::model_info_from_slug;
+use genex_otel::MetricsClient;
+use genex_otel::MetricsConfig;
+use genex_otel::THREAD_SKILLS_DESCRIPTION_TRUNCATED_CHARS_METRIC;
+use genex_otel::THREAD_SKILLS_ENABLED_TOTAL_METRIC;
+use genex_otel::THREAD_SKILLS_KEPT_TOTAL_METRIC;
+use genex_otel::THREAD_SKILLS_TRUNCATED_METRIC;
+use genex_protocol::capabilities::CapabilityRootLocation;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::Event;
+use genex_protocol::protocol::SKILLS_INSTRUCTIONS_CLOSE_TAG;
+use genex_protocol::protocol::SKILLS_INSTRUCTIONS_OPEN_TAG;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SkillScope;
+use genex_protocol::protocol::TruncationPolicy;
+use genex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::user_input::UserInput;
+use genex_skills::SkillMetadata;
+use genex_skills_extension::HostSkillProvider;
+use genex_skills_extension::HostSkillsLoadInput;
+use genex_skills_extension::HostSkillsService;
+use genex_skills_extension::HostSkillsSnapshot;
+use genex_skills_extension::InjectedHostSkillPrompts;
+use genex_skills_extension::SkillLoadOutcome;
+use genex_skills_extension::SkillProviders;
+use genex_skills_extension::SkillsExtensionConfig;
+use genex_skills_extension::catalog::SkillAuthority;
+use genex_skills_extension::catalog::SkillCatalog;
+use genex_skills_extension::catalog::SkillCatalogEntry;
+use genex_skills_extension::catalog::SkillPackageId;
+use genex_skills_extension::catalog::SkillProviderError;
+use genex_skills_extension::catalog::SkillReadResult;
+use genex_skills_extension::catalog::SkillResourceId;
+use genex_skills_extension::catalog::SkillSearchResult;
+use genex_skills_extension::catalog::SkillSourceKind;
+use genex_skills_extension::install;
+use genex_skills_extension::install_with_providers;
+use genex_skills_extension::install_with_providers_and_metrics;
+use genex_skills_extension::provider::SkillListQuery;
+use genex_skills_extension::provider::SkillProvider;
+use genex_skills_extension::provider::SkillProviderFuture;
+use genex_skills_extension::provider::SkillReadRequest;
+use genex_skills_extension::provider::SkillSearchRequest;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use opentelemetry_sdk::metrics::InMemoryMetricExporter;
 use opentelemetry_sdk::metrics::data::AggregatedMetrics;
 use opentelemetry_sdk::metrics::data::MetricData;
@@ -113,7 +113,7 @@ fn world_state_section<'a>(
 }
 
 async fn skill_world_state_fragments(
-    registry: &codex_extension_api::ExtensionRegistry<TestConfig>,
+    registry: &genex_extension_api::ExtensionRegistry<TestConfig>,
     session_store: &ExtensionData,
     thread_store: &ExtensionData,
     turn_id: &str,
@@ -129,7 +129,7 @@ async fn skill_world_state_fragments(
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id,
             environments: &[],
             ready_selected_capability_roots: &selected_roots,
@@ -284,7 +284,7 @@ async fn host_world_state_records_catalog_metrics_on_publish_and_change() -> Tes
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &[],
@@ -311,7 +311,7 @@ async fn host_world_state_records_catalog_metrics_on_publish_and_change() -> Tes
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &[],
@@ -348,7 +348,7 @@ async fn host_world_state_records_catalog_metrics_on_publish_and_change() -> Tes
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &[],
@@ -419,7 +419,7 @@ async fn persisted_host_snapshot_deduplicates_warning_after_reinitialization() -
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &model_info,
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &[],
@@ -460,7 +460,7 @@ async fn persisted_host_snapshot_deduplicates_warning_after_reinitialization() -
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &model_info,
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id: "turn-2",
             environments: &[],
             ready_selected_capability_roots: &[],
@@ -549,7 +549,7 @@ async fn executor_orchestrator_and_host_share_catalog_world_state_flow() -> Test
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &selected_roots,
@@ -657,7 +657,7 @@ async fn nonempty_executor_empty_host_records_catalog_metrics() -> TestResult {
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &selected_roots,
@@ -735,7 +735,7 @@ async fn host_world_state_uses_provider_catalog_with_core_compatible_rendering()
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &[],
@@ -815,7 +815,7 @@ async fn shadow_selection_uses_host_catalog_when_instructions_are_disabled() -> 
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &[],
@@ -1073,7 +1073,7 @@ async fn selected_executor_catalog_follows_step_availability_and_reuses_its_cach
     let available_sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: std::slice::from_ref(&turn_environment),
             ready_selected_capability_roots: &selected_roots,
@@ -1129,7 +1129,7 @@ async fn selected_executor_catalog_follows_step_availability_and_reuses_its_cach
     let unavailable_sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id: "turn-2",
             environments: &[],
             ready_selected_capability_roots: &[],
@@ -1154,7 +1154,7 @@ async fn selected_executor_catalog_follows_step_availability_and_reuses_its_cach
     let restored_sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id: "turn-3",
             environments: &[turn_environment],
             ready_selected_capability_roots: &selected_roots,
@@ -1198,7 +1198,7 @@ async fn selected_executor_catalog_follows_step_availability_and_reuses_its_cach
         registry.context_contributors()[0]
             .contribute_world_state(WorldStateContributionInput {
                 model_info: &catalog_model_info(),
-                thread_id: codex_protocol::ThreadId::new(),
+                thread_id: genex_protocol::ThreadId::new(),
                 turn_id,
                 environments: &[],
                 ready_selected_capability_roots: &selected_roots,
@@ -1224,7 +1224,7 @@ async fn selected_executor_catalog_follows_step_availability_and_reuses_its_cach
     let listing_disabled_sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id: "turn-4",
             environments: &[],
             ready_selected_capability_roots: &selected_roots,
@@ -1995,7 +1995,7 @@ async fn root_qualified_locator_selects_only_the_matching_executor_skill() -> Te
     registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[TurnEnvironmentSelection {
                 environment_id: "env-1".to_string(),
@@ -2123,7 +2123,7 @@ async fn model_context_window_scales_executor_and_orchestrator_catalogs() -> Tes
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &model_info,
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &selected_roots,
@@ -2138,7 +2138,7 @@ async fn model_context_window_scales_executor_and_orchestrator_catalogs() -> Tes
     let _repeated_sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &model_info,
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &selected_roots,
@@ -2238,7 +2238,7 @@ async fn executor_catalog_emits_at_most_four_warnings() -> TestResult {
     registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: genex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &selected_roots,

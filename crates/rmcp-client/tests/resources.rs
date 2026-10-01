@@ -3,12 +3,12 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
-use codex_rmcp_client::ElicitationAction;
-use codex_rmcp_client::ElicitationResponse;
-use codex_rmcp_client::LocalStdioServerLauncher;
-use codex_rmcp_client::RmcpClient;
-use codex_rmcp_client::mcp_error;
-use codex_utils_cargo_bin::CargoBinError;
+use genex_rmcp_client::ElicitationAction;
+use genex_rmcp_client::ElicitationResponse;
+use genex_rmcp_client::LocalStdioServerLauncher;
+use genex_rmcp_client::RmcpClient;
+use genex_rmcp_client::mcp_error;
+use genex_utils_cargo_bin::CargoBinError;
 use futures::FutureExt as _;
 use pretty_assertions::assert_eq;
 use rmcp::model::ClientCapabilities;
@@ -25,7 +25,7 @@ use serde_json::json;
 const RESOURCE_URI: &str = "memo://codex/example-note";
 
 fn stdio_server_bin() -> Result<PathBuf, CargoBinError> {
-    codex_utils_cargo_bin::cargo_bin("test_stdio_server")
+    genex_utils_cargo_bin::cargo_bin("test_stdio_server")
 }
 
 fn init_params() -> InitializeRequestParams {

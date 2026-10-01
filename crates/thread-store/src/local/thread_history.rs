@@ -1,8 +1,8 @@
-use codex_app_server_protocol::ThreadHistoryChangeSet;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::TurnStatus;
-use codex_protocol::ThreadId;
-use codex_protocol::models::MessagePhase;
+use genex_app_server_protocol::ThreadHistoryChangeSet;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::TurnStatus;
+use genex_protocol::ThreadId;
+use genex_protocol::models::MessagePhase;
 
 use super::LocalThreadStore;
 use crate::ThreadStoreError;

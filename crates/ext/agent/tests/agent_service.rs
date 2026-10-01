@@ -1,7 +1,7 @@
 use anyhow::Result;
-use codex_agent_extension::AgentInvocation;
-use codex_agent_extension::AgentRunner;
-use codex_protocol::protocol::EventMsg;
+use genex_agent_extension::AgentInvocation;
+use genex_agent_extension::AgentRunner;
+use genex_protocol::protocol::EventMsg;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_codex::test_codex;

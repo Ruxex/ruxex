@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::SkillLoadOutcome;
-use codex_skills::SkillMetadata;
+use genex_skills::SkillMetadata;
 
 use crate::catalog::SkillAuthority;
 use crate::catalog::SkillCatalog;

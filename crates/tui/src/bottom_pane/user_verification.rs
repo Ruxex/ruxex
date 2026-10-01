@@ -4,7 +4,7 @@
 //! always requires explicit approval. The controller owns the app-server request and its proof;
 //! this view only calls its decision callback and displays the pending state.
 
-use codex_app_server_protocol::RequestId;
+use genex_app_server_protocol::RequestId;
 use crossterm::event::KeyEvent;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -303,7 +303,7 @@ fn waiting_view(request: &UserVerificationRequest, keymap: &ListKeymap) -> Box<d
 impl super::BottomPane {
     pub(crate) fn push_user_verification_request(
         &mut self,
-        thread_id: codex_protocol::ThreadId,
+        thread_id: genex_protocol::ThreadId,
         request: UserVerificationRequest,
     ) {
         // App-server request IDs are shared across threads, unlike raw MCP request IDs.

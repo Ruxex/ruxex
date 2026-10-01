@@ -1,14 +1,14 @@
 use anyhow::Result;
 use chrono::DateTime;
 use chrono::Utc;
-use codex_protocol::SanitizedGitUrl;
-use codex_protocol::ThreadId;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadSource;
+use genex_protocol::SanitizedGitUrl;
+use genex_protocol::ThreadId;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::SandboxPolicy;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::ThreadSource;
 use serde::Deserialize;
 use serde::Serialize;
 use sqlx::Row;
@@ -701,10 +701,10 @@ mod tests {
     use super::ThreadRow;
     use chrono::DateTime;
     use chrono::Utc;
-    use codex_protocol::SanitizedGitUrl;
-    use codex_protocol::ThreadId;
-    use codex_protocol::model_types::ReasoningEffort;
-    use codex_protocol::protocol::ThreadHistoryMode;
+    use genex_protocol::SanitizedGitUrl;
+    use genex_protocol::ThreadId;
+    use genex_protocol::model_types::ReasoningEffort;
+    use genex_protocol::protocol::ThreadHistoryMode;
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
 

@@ -1,8 +1,8 @@
 //! Temporary cleanup-hook allowlist shared by local and executor plugin discovery.
 //! This narrowly authorizes known MCP cleanup calls; it does not verify plugin signatures.
 
-use codex_config::HookHandlerConfig;
-use codex_protocol::protocol::HookEventName;
+use genex_config::HookHandlerConfig;
+use genex_protocol::protocol::HookEventName;
 
 struct BundledHook {
     plugin_id: &'static str,

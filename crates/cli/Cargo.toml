@@ -1,5 +1,5 @@
 [package]
-name = "codex-cli"
+name = "genex-cli"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -15,7 +15,7 @@ name = "logs_client"
 path = "src/bin/logs_client.rs"
 
 [lib]
-name = "codex_cli"
+name = "genex_cli"
 path = "src/lib.rs"
 doctest = false
 
@@ -27,47 +27,47 @@ anyhow = { workspace = true }
 chrono = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 clap_complete = { workspace = true }
-codex-app-server = { workspace = true }
-codex-app-server-daemon = { workspace = true }
-codex-app-server-protocol = { workspace = true }
-codex-app-server-test-client = { workspace = true }
-codex-arg0 = { workspace = true }
-codex-build-info = { workspace = true }
-codex-api = { workspace = true }
-codex-utils-cli = { workspace = true }
-codex-config = { workspace = true }
-codex-core = { workspace = true }
-codex-core-plugins = { workspace = true }
-codex-history = { workspace = true }
-codex-home = { workspace = true }
-codex-http-client = { workspace = true }
-codex-exec = { workspace = true }
-codex-exec-server = { workspace = true }
-codex-execpolicy = { workspace = true }
-codex-extension-api = { workspace = true }
-codex-features = { workspace = true }
-codex-git-utils = { workspace = true }
-codex-install-context = { workspace = true }
-codex-login = { workspace = true }
-codex-mcp = { workspace = true }
-codex-model-provider = { workspace = true }
-codex-models-manager = { workspace = true }
-codex-plugin = { workspace = true }
-codex-protocol = { workspace = true }
-codex-tcp-tunnel = { workspace = true }
-codex-rmcp-client = { workspace = true }
-codex-rollout = { workspace = true }
-codex-rollout-trace = { workspace = true }
-codex-sandboxing = { workspace = true }
-codex-skills-extension = { workspace = true }
-codex-state = { workspace = true }
-codex-stdio-to-uds = { workspace = true }
-codex-terminal-detection = { workspace = true }
-codex-thread-store = { workspace = true }
-codex-tui = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-path = { workspace = true }
-codex-utils-path-uri = { workspace = true }
+genex-app-server = { workspace = true }
+genex-app-server-daemon = { workspace = true }
+genex-app-server-protocol = { workspace = true }
+genex-app-server-test-client = { workspace = true }
+genex-arg0 = { workspace = true }
+genex-build-info = { workspace = true }
+genex-api = { workspace = true }
+genex-utils-cli = { workspace = true }
+genex-config = { workspace = true }
+genex-core = { workspace = true }
+genex-core-plugins = { workspace = true }
+genex-history = { workspace = true }
+genex-home = { workspace = true }
+genex-http-client = { workspace = true }
+genex-exec = { workspace = true }
+genex-exec-server = { workspace = true }
+genex-execpolicy = { workspace = true }
+genex-extension-api = { workspace = true }
+genex-features = { workspace = true }
+genex-git-utils = { workspace = true }
+genex-install-context = { workspace = true }
+genex-login = { workspace = true }
+genex-mcp = { workspace = true }
+genex-model-provider = { workspace = true }
+genex-models-manager = { workspace = true }
+genex-plugin = { workspace = true }
+genex-protocol = { workspace = true }
+genex-tcp-tunnel = { workspace = true }
+genex-rmcp-client = { workspace = true }
+genex-rollout = { workspace = true }
+genex-rollout-trace = { workspace = true }
+genex-sandboxing = { workspace = true }
+genex-skills-extension = { workspace = true }
+genex-state = { workspace = true }
+genex-stdio-to-uds = { workspace = true }
+genex-terminal-detection = { workspace = true }
+genex-thread-store = { workspace = true }
+genex-tui = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
+genex-utils-path = { workspace = true }
+genex-utils-path-uri = { workspace = true }
 crossterm = { workspace = true, features = ["event-stream"] }
 futures = { workspace = true }
 http = { workspace = true }
@@ -100,7 +100,7 @@ which = { workspace = true }
 tikv-jemallocator = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-codex_windows_sandbox = { package = "codex-windows-sandbox", path = "../windows-sandbox-rs" }
+genex_windows_sandbox = { package = "genex-windows-sandbox", path = "../windows-sandbox-rs" }
 windows-sys = { version = "0.52", features = [
     "Win32_Foundation",
     "Win32_Storage_Packaging_Appx",
@@ -112,8 +112,8 @@ windows-sys = { version = "0.52", features = [
 app_test_support = { workspace = true }
 assert_cmd = { workspace = true }
 assert_matches = { workspace = true }
-codex-utils-cargo-bin = { workspace = true }
-codex-utils-pty = { workspace = true }
+genex-utils-cargo-bin = { workspace = true }
+genex-utils-pty = { workspace = true }
 flate2 = { workspace = true }
 insta = { workspace = true }
 predicates = { workspace = true }

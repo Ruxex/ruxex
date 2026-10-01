@@ -1,9 +1,9 @@
 use super::thread_input::ensure_direct_input_allowed;
 use super::*;
-use codex_core::McpManager;
-use codex_mcp::McpServerSource;
-use codex_mcp::ReadResourceRequestParams;
-use codex_mcp::resolve_oauth_callback;
+use genex_core::McpManager;
+use genex_mcp::McpServerSource;
+use genex_mcp::ReadResourceRequestParams;
+use genex_mcp::resolve_oauth_callback;
 
 use crate::thread_state::ThreadStateManager;
 
@@ -163,7 +163,7 @@ impl McpRequestProcessor {
                 (mcp_config, runtime_context)
             }
         };
-        let effective_servers = codex_mcp::effective_mcp_servers(&mcp_config, auth.as_ref());
+        let effective_servers = genex_mcp::effective_mcp_servers(&mcp_config, auth.as_ref());
         let Some(server) = effective_servers.get(&name) else {
             return Err(invalid_request(format!(
                 "No MCP server named '{name}' found."
@@ -175,7 +175,7 @@ impl McpRequestProcessor {
             StreamableHttpRedirectMode::Legacy
         };
         let server = server.config();
-        if matches!(server.auth, codex_config::McpServerAuth::EmaAuth) {
+        if matches!(server.auth, genex_config::McpServerAuth::EmaAuth) {
             return Err(invalid_request(
                 "EMA MCP connections are not enabled in this version",
             ));
@@ -205,7 +205,7 @@ impl McpRequestProcessor {
             discover_supported_scopes(
                 &server.transport,
                 Arc::clone(&http_client),
-                codex_rmcp_client::OAuthDiscoveryTimeout::Requested,
+                genex_rmcp_client::OAuthDiscoveryTimeout::Requested,
                 redirect_mode,
             )
             .await
@@ -327,11 +327,11 @@ impl McpRequestProcessor {
     async fn list_mcp_server_status_response(
         request_id: String,
         params: ListMcpServerStatusParams,
-        mcp_config: codex_mcp::McpConfig,
+        mcp_config: genex_mcp::McpConfig,
         auth: Option<CodexAuth>,
         runtime_context: McpRuntimeContext,
         mcp_manager: Arc<McpManager>,
-        thread: Option<Arc<codex_core::CodexThread>>,
+        thread: Option<Arc<genex_core::CodexThread>>,
     ) -> Result<ListMcpServerStatusResponse, JSONRPCErrorError> {
         let detail = match params.detail.unwrap_or(McpServerStatusDetail::Full) {
             McpServerStatusDetail::Full => McpSnapshotDetail::Full,
@@ -526,7 +526,7 @@ impl McpRequestProcessor {
 }
 
 fn mcp_operation_error(error: anyhow::Error) -> JSONRPCErrorError {
-    match codex_rmcp_client::mcp_error(&error) {
+    match genex_rmcp_client::mcp_error(&error) {
         Some(error) => JSONRPCErrorError {
             code: i64::from(error.code.0),
             message: error.message.to_string(),

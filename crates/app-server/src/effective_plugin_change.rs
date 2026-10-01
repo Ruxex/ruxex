@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use codex_core::ThreadManager;
-use codex_core_plugins::EffectivePluginsChange;
-use codex_login::AuthManager;
+use genex_core::ThreadManager;
+use genex_core_plugins::EffectivePluginsChange;
+use genex_login::AuthManager;
 
 use crate::config_manager::ConfigManager;
 use crate::request_processors::ConfigRequestProcessor;

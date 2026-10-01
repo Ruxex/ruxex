@@ -8,7 +8,7 @@ use crate::app::tests::session_lifecycle_requests::start_recording_app_server_wi
 use crate::model_catalog::ModelCatalog;
 use crate::test_support::PathBufExt;
 use crate::tui::test_support::make_test_tui;
-use codex_state::SqliteConfig;
+use genex_state::SqliteConfig;
 use pretty_assertions::assert_eq;
 
 async fn confirm_permission_selection(
@@ -39,7 +39,7 @@ fn trust_launch_folder(app: &mut App) {
         "projects".into(),
         TomlValue::try_from(projects).expect("trust fixture"),
     ));
-    app.config.active_project.trust_level = Some(codex_protocol::config_types::TrustLevel::Trusted);
+    app.config.active_project.trust_level = Some(genex_protocol::config_types::TrustLevel::Trusted);
 }
 
 
@@ -110,7 +110,7 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
             crate::legacy_core::config::set_project_trust_level(
                 home,
                 destination.path(),
-                codex_protocol::config_types::TrustLevel::Trusted,
+                genex_protocol::config_types::TrustLevel::Trusted,
             )
             .map_err(|error| color_eyre::eyre::eyre!(error.to_string()))?;
         }
@@ -174,12 +174,12 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
             let mut restored = app.config.clone();
             restored
                 .permissions
-                .set_permission_profile(codex_protocol::models::PermissionProfile::Disabled)?;
+                .set_permission_profile(genex_protocol::models::PermissionProfile::Disabled)?;
             app.runtime_permission_profile_override = Some(
                 RuntimePermissionProfileOverride::from_restored_config(&restored),
             );
             app.runtime_approval_policy_override = Some(RuntimeApprovalPolicyOverride::Restored(
-                codex_app_server_protocol::AskForApproval::Never,
+                genex_app_server_protocol::AskForApproval::Never,
             ));
         }
         let bootstrap = server.bootstrap(&app.config).await?;
@@ -404,8 +404,8 @@ async fn command_center_new_preserves_permissions_across_sessions() -> Result<()
                     .active_permission_profile(),
             ),
             (
-                &codex_protocol::models::PermissionProfile::read_only(),
-                codex_protocol::protocol::AskForApproval::UnlessTrusted,
+                &genex_protocol::models::PermissionProfile::read_only(),
+                genex_protocol::protocol::AskForApproval::UnlessTrusted,
                 Some(ActivePermissionProfile::new(":read-only")),
             ),
         );

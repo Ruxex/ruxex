@@ -15,38 +15,38 @@ use crate::session::turn_context::TurnContext;
 use crate::utils::json::serialized_json_bytes;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use codex_context_fragments::set_annotated_content;
-use codex_context_fragments::to_annotated_content;
-use codex_extension_api::ConversationHistorySnapshot;
-use codex_history::CodexHarnessMetadata;
-use codex_history::ResponseItemEnvelope;
-use codex_history::RetainedContext;
-use codex_history::RetainedContextEvent;
-use codex_prompts::render_model_instructions;
-use codex_protocol::DEFAULT_FUNCTION_NAMESPACE;
-use codex_protocol::model_types::InputModality;
-use codex_protocol::models::AgentMessageInputContent;
-use codex_protocol::models::BaseInstructions;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::FunctionCallOutputBody;
-use codex_protocol::models::FunctionCallOutputContentItem;
-use codex_protocol::models::ImageDetail;
-use codex_protocol::models::ImageReference;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::InterAgentCommunication;
-use codex_protocol::protocol::TokenUsage;
-use codex_protocol::protocol::TokenUsageInfo;
-use codex_protocol::protocol::TurnContextItem;
-use codex_protocol::protocol::WorldStateItem;
-use codex_utils_audio::estimate_audio_token_count;
-use codex_utils_cache::BlockingLruCache;
-use codex_utils_cache::sha1_digest;
-use codex_utils_output_truncation::TruncationPolicy;
-use codex_utils_output_truncation::approx_bytes_for_tokens;
-use codex_utils_output_truncation::approx_token_count;
-use codex_utils_output_truncation::approx_tokens_from_byte_count_i64;
-use codex_utils_output_truncation::truncate_function_output_payload;
-use codex_utils_output_truncation::with_serialization_allowance;
+use genex_context_fragments::set_annotated_content;
+use genex_context_fragments::to_annotated_content;
+use genex_extension_api::ConversationHistorySnapshot;
+use genex_history::CodexHarnessMetadata;
+use genex_history::ResponseItemEnvelope;
+use genex_history::RetainedContext;
+use genex_history::RetainedContextEvent;
+use genex_prompts::render_model_instructions;
+use genex_protocol::DEFAULT_FUNCTION_NAMESPACE;
+use genex_protocol::model_types::InputModality;
+use genex_protocol::models::AgentMessageInputContent;
+use genex_protocol::models::BaseInstructions;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::FunctionCallOutputBody;
+use genex_protocol::models::FunctionCallOutputContentItem;
+use genex_protocol::models::ImageDetail;
+use genex_protocol::models::ImageReference;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::InterAgentCommunication;
+use genex_protocol::protocol::TokenUsage;
+use genex_protocol::protocol::TokenUsageInfo;
+use genex_protocol::protocol::TurnContextItem;
+use genex_protocol::protocol::WorldStateItem;
+use genex_utils_audio::estimate_audio_token_count;
+use genex_utils_cache::BlockingLruCache;
+use genex_utils_cache::sha1_digest;
+use genex_utils_output_truncation::TruncationPolicy;
+use genex_utils_output_truncation::approx_bytes_for_tokens;
+use genex_utils_output_truncation::approx_token_count;
+use genex_utils_output_truncation::approx_tokens_from_byte_count_i64;
+use genex_utils_output_truncation::truncate_function_output_payload;
+use genex_utils_output_truncation::with_serialization_allowance;
 use std::num::NonZeroUsize;
 use std::ops::Deref;
 use std::sync::Arc;
@@ -95,8 +95,8 @@ pub(crate) enum HistoryReplacement {
 }
 
 impl ConversationHistorySnapshot for SharedConversationHistory {
-    fn latest_compaction(&self) -> Option<codex_history::CompactionCheckpoint<'_>> {
-        codex_history::CompactionCheckpoint::latest(&self.items)
+    fn latest_compaction(&self) -> Option<genex_history::CompactionCheckpoint<'_>> {
+        genex_history::CompactionCheckpoint::latest(&self.items)
     }
 
     fn retained_context(&self) -> Option<&RetainedContext> {

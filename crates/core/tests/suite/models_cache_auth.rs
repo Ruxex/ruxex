@@ -3,14 +3,14 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use codex_login::AuthCredentialsStoreMode;
-use codex_login::AuthKeyringBackendKind;
-use codex_login::CodexAuth;
-use codex_login::login_with_api_key;
-use codex_models_manager::test_support::test_models_response;
-use codex_models_manager::manager::RefreshStrategy;
-use codex_protocol::model_types::ModelVisibility;
-use codex_protocol::model_types::ModelsResponse;
+use genex_login::AuthCredentialsStoreMode;
+use genex_login::AuthKeyringBackendKind;
+use genex_login::CodexAuth;
+use genex_login::login_with_api_key;
+use genex_models_manager::test_support::test_models_response;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::ModelsResponse;
 use core_test_support::responses;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
@@ -66,7 +66,7 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
         manager
             .raw_model_catalog(
                 RefreshStrategy::Offline,
-                codex_core::test_support::default_http_client_factory()
+                genex_core::test_support::default_http_client_factory()
             )
             .await
             .models,
@@ -91,7 +91,7 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
         .with_config(|config| {
             config
                 .features
-                .enable(codex_features::Feature::ApiKeyModelDiscovery)
+                .enable(genex_features::Feature::ApiKeyModelDiscovery)
                 .expect("enable API-key model discovery");
         })
         .with_model("gpt-5.5")

@@ -2,7 +2,7 @@ use std::io;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use codex_code_mode_protocol::CodeModeSessionProvider;
+use genex_code_mode_protocol::CodeModeSessionProvider;
 use pretty_assertions::assert_eq;
 
 use super::ProcessOwnedCodeModeSession;
@@ -77,7 +77,7 @@ async fn shutdown_before_open_does_not_spawn_the_host() {
     session.shutdown().await.expect("shutdown session");
     let error = session
         .execute(
-            codex_code_mode_protocol::ExecuteRequest {
+            genex_code_mode_protocol::ExecuteRequest {
                 tool_call_id: "call-1".to_string(),
                 enabled_tools: Vec::new(),
                 source: "text('unreachable')".to_string(),

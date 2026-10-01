@@ -1,7 +1,7 @@
 //! Regression coverage for conflict diagnostics and validation pass ordering.
 
 use super::RuntimeKeymap;
-use codex_config::types::TuiKeymap;
+use genex_config::types::TuiKeymap;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;

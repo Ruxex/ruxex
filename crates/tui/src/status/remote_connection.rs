@@ -52,7 +52,7 @@ pub(crate) fn server_version_notice(client: &str, server: Option<&str>) -> Optio
 }
 
 pub(crate) fn server_version_notice_for_tui(
-    settings: &codex_config::types::Tui,
+    settings: &genex_config::types::Tui,
     client: &str,
     server: Option<&str>,
 ) -> Option<String> {
@@ -135,7 +135,7 @@ pub(crate) fn server_version_notice_key(
 }
 
 pub(crate) fn pending_server_version_notice(
-    settings: &codex_config::types::Tui,
+    settings: &genex_config::types::Tui,
     target: &AppServerTarget,
     server_home: Option<&str>,
     client: &str,

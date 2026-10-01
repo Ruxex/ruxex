@@ -8,10 +8,10 @@
 use crate::legacy_core::config::Config;
 use crate::legacy_core::config::TerminalResizeReflowConfig;
 use crate::legacy_core::config::TerminalResizeReflowMaxRows;
-use codex_config::types::History;
-use codex_config::types::Notice;
-use codex_config::types::Tui;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_config::types::History;
+use genex_config::types::Notice;
+use genex_config::types::Tui;
+use genex_utils_absolute_path::AbsolutePathBuf;
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct LocalSettings {

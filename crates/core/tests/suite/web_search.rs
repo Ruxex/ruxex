@@ -1,16 +1,16 @@
 #![allow(clippy::unwrap_used)]
 
-use codex_config::test_support::CloudConfigBundleFixture;
-use codex_features::Feature;
-use codex_login::CodexAuth;
-use codex_login::auth::BedrockApiKeyAuth;
-use codex_model_provider_info::AMAZON_BEDROCK_GPT_5_4_MODEL_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_RUNTIME_PROVIDER_ID;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_protocol::config_types::WebSearchMode;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::model_types::WebSearchToolType;
+use genex_config::test_support::CloudConfigBundleFixture;
+use genex_features::Feature;
+use genex_login::CodexAuth;
+use genex_login::auth::BedrockApiKeyAuth;
+use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_4_MODEL_ID;
+use genex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
+use genex_model_provider_info::AMAZON_BEDROCK_RUNTIME_PROVIDER_ID;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_protocol::config_types::WebSearchMode;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::model_types::WebSearchToolType;
 use core_test_support::responses;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;

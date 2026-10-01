@@ -43,7 +43,7 @@
 - Modify: `docs/hawk-dead-public-audit.tsv`
 - Modify: `docs/pre-release-compatibility-inventory.md`
 
-- [x] `codex-code-mode-protocol` の生成protobuf項目を、proto/build.rs/consumer/re-export単位で確認し、個別に `retain` と記録する。
+- [x] `genex-code-mode-protocol` の生成protobuf項目を、proto/build.rs/consumer/re-export単位で確認し、個別に `retain` と記録する。
 - [x] `app_test_support` と `core_test_support` の各項目について、テストtargetからの参照またはfixture用途を確認する。
 - [x] 参照のない test-only helper だけを削除候補として抽出し、監査台帳に削除結果を記録する。
 
@@ -82,4 +82,4 @@
 - [x] `git diff --check`、`just fmt-check`、`just check --tests`、`just check`、JSON妥当性確認を実行する。
 - [x] 最終件数、削除件数、retain理由、未変更の生成コード、検証結果を監査台帳とインベントリへ記録する。
 
-監査完了: 最新の `hawk.json` は `codex` と `codex-app-server` の二つの production root を含み、`dead_public` は525診断・521 unique item。現行521件は全て `retain`、監査中に削除した過去項目は6件である。単一rootの旧 `codex-cli.json` は履歴資料として保持する。
+監査完了: 最新の `hawk.json` は `codex` と `codex-app-server` の二つの production root を含み、`dead_public` は525診断・521 unique item。現行521件は全て `retain`、監査中に削除した過去項目は6件である。単一rootの旧 `genex-cli.json` は履歴資料として保持する。

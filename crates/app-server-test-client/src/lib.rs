@@ -25,55 +25,55 @@ use anyhow::bail;
 use clap::ArgAction;
 use clap::Parser;
 use clap::Subcommand;
-use codex_app_server_protocol::AccountLoginCompletedNotification;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::CommandExecutionApprovalDecision;
-use codex_app_server_protocol::CommandExecutionRequestApprovalParams;
-use codex_app_server_protocol::CommandExecutionRequestApprovalResponse;
-use codex_app_server_protocol::CommandExecutionStatus;
-use codex_app_server_protocol::DynamicToolSpec;
-use codex_app_server_protocol::FileChangeApprovalDecision;
-use codex_app_server_protocol::FileChangeRequestApprovalParams;
-use codex_app_server_protocol::FileChangeRequestApprovalResponse;
-use codex_app_server_protocol::InitializeCapabilities;
-use codex_app_server_protocol::InitializeParams;
-use codex_app_server_protocol::InitializeResponse;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_app_server_protocol::JSONRPCRequest;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::LoginAccountResponse;
-use codex_app_server_protocol::LogoutAccountResponse;
-use codex_app_server_protocol::ModelListParams;
-use codex_app_server_protocol::ModelListResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SandboxPolicy;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ThreadDecrementElicitationParams;
-use codex_app_server_protocol::ThreadDecrementElicitationResponse;
-use codex_app_server_protocol::ThreadIncrementElicitationParams;
-use codex_app_server_protocol::ThreadIncrementElicitationResponse;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadListResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput as V2UserInput;
-use codex_core::config::Config;
-use codex_otel::OtelProvider;
-use codex_otel::current_span_w3c_trace_context;
-use codex_protocol::dynamic_tools::normalize_dynamic_tool_specs;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::protocol::W3cTraceContext;
-use codex_utils_cli::CliConfigOverrides;
+use genex_app_server_protocol::AccountLoginCompletedNotification;
+use genex_app_server_protocol::AskForApproval;
+use genex_app_server_protocol::ClientInfo;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::CommandExecutionApprovalDecision;
+use genex_app_server_protocol::CommandExecutionRequestApprovalParams;
+use genex_app_server_protocol::CommandExecutionRequestApprovalResponse;
+use genex_app_server_protocol::CommandExecutionStatus;
+use genex_app_server_protocol::DynamicToolSpec;
+use genex_app_server_protocol::FileChangeApprovalDecision;
+use genex_app_server_protocol::FileChangeRequestApprovalParams;
+use genex_app_server_protocol::FileChangeRequestApprovalResponse;
+use genex_app_server_protocol::InitializeCapabilities;
+use genex_app_server_protocol::InitializeParams;
+use genex_app_server_protocol::InitializeResponse;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::JSONRPCNotification;
+use genex_app_server_protocol::JSONRPCRequest;
+use genex_app_server_protocol::JSONRPCResponse;
+use genex_app_server_protocol::LoginAccountResponse;
+use genex_app_server_protocol::LogoutAccountResponse;
+use genex_app_server_protocol::ModelListParams;
+use genex_app_server_protocol::ModelListResponse;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SandboxPolicy;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::ThreadDecrementElicitationParams;
+use genex_app_server_protocol::ThreadDecrementElicitationResponse;
+use genex_app_server_protocol::ThreadIncrementElicitationParams;
+use genex_app_server_protocol::ThreadIncrementElicitationResponse;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadListParams;
+use genex_app_server_protocol::ThreadListResponse;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::UserInput as V2UserInput;
+use genex_core::config::Config;
+use genex_otel::OtelProvider;
+use genex_otel::current_span_w3c_trace_context;
+use genex_protocol::dynamic_tools::normalize_dynamic_tool_specs;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::protocol::W3cTraceContext;
+use genex_utils_cli::CliConfigOverrides;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
@@ -1072,7 +1072,7 @@ async fn test_login(
                 let login_response: LoginAccountResponse = client.send_request(
                     ClientRequest::LoginAccount {
                         request_id: request_id.clone(),
-                        params: codex_app_server_protocol::LoginAccountParams::AmazonBedrock {
+                        params: genex_app_server_protocol::LoginAccountParams::AmazonBedrock {
                             api_key,
                             region,
                         },
@@ -2171,7 +2171,7 @@ impl TestClientTracing {
         let config = Config::load_with_cli_overrides(cli_kv_overrides)
             .await
             .context("error loading config")?;
-        let otel_provider = codex_core::otel_init::build_provider(
+        let otel_provider = genex_core::otel_init::build_provider(
             &config,
             env!("CARGO_PKG_VERSION"),
             Some(OTEL_SERVICE_NAME),

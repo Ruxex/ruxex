@@ -3,12 +3,12 @@ use super::TemporaryStructuredThreadOptions;
 use super::collect_structured_response;
 use super::start_temporary_thread;
 use crate::test_support::PathBufExt;
-use codex_app_server_protocol::ItemCompletedNotification;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::Turn;
-use codex_app_server_protocol::TurnCompletedNotification;
-use codex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::ItemCompletedNotification;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::Turn;
+use genex_app_server_protocol::TurnCompletedNotification;
+use genex_app_server_protocol::TurnStatus;
 use pretty_assertions::assert_eq;
 use tempfile::tempdir;
 use tokio::sync::mpsc::unbounded_channel;
@@ -67,7 +67,7 @@ async fn preserves_custom_permissions_and_disables_required_mcp_servers() -> col
     )?;
     config.codex_home = codex_home.path().to_path_buf().abs();
     config.sqlite =
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().to_path_buf().abs());
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().to_path_buf().abs());
 
     let app_server = crate::start_embedded_app_server_for_picker(&config).await?;
     let response = start_temporary_thread(

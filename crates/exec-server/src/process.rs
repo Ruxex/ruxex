@@ -4,8 +4,8 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::sync::Mutex as StdMutex;
 
-use codex_network_proxy::NetworkPolicyDecider;
-use codex_sandboxing::SandboxType;
+use genex_network_proxy::NetworkPolicyDecider;
+use genex_sandboxing::SandboxType;
 use tokio::sync::broadcast;
 use tokio::sync::watch;
 

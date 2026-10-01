@@ -2,8 +2,8 @@
 //! Reloads must use the same normal or fallback entry point as the initial load.
 
 use crate::config_manager::ConfigManager;
-use codex_core_plugins::ConfigLayerReload;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_core_plugins::ConfigLayerReload;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use std::sync::Arc;
 
 /// The config-loading path used to select marketplaces for startup tasks.

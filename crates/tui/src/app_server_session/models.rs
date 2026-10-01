@@ -4,11 +4,11 @@ use super::AppServerSession;
 use super::model_preset_from_api_model;
 use crate::app_event::AppEvent;
 use crate::app_event_sender::AppEventSender;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::ModelListParams;
-use codex_app_server_protocol::ModelListResponse;
-use codex_app_server_protocol::RequestId;
-use codex_protocol::model_types::ModelPreset;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::ModelListParams;
+use genex_app_server_protocol::ModelListResponse;
+use genex_app_server_protocol::RequestId;
+use genex_protocol::model_types::ModelPreset;
 use uuid::Uuid;
 
 impl AppServerSession {

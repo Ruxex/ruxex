@@ -11,11 +11,11 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Instant;
 
-use codex_code_mode_protocol::CellId;
-use codex_code_mode_protocol::WaitRequest;
-use codex_code_mode_protocol::grpc as proto;
-use codex_code_mode_protocol::grpc::code_mode_host_server::CodeModeHost;
-use codex_protocol::protocol::W3cTraceContext;
+use genex_code_mode_protocol::CellId;
+use genex_code_mode_protocol::WaitRequest;
+use genex_code_mode_protocol::grpc as proto;
+use genex_code_mode_protocol::grpc::code_mode_host_server::CodeModeHost;
+use genex_protocol::protocol::W3cTraceContext;
 use futures::Stream;
 use futures::StreamExt;
 use tokio::sync::mpsc;
@@ -303,7 +303,7 @@ impl CodeModeHost for GrpcCodeModeHost {
         let request = request.into_inner();
         let open_session_span = tracing::info_span!("code_mode_host.grpc.open_session");
         if let Some(trace) = trace.as_ref() {
-            codex_otel::set_parent_from_w3c_trace_context(&open_session_span, trace);
+            genex_otel::set_parent_from_w3c_trace_context(&open_session_span, trace);
         }
         Box::pin(
             self.open_session_request(request)
@@ -373,10 +373,10 @@ impl CodeModeHost for GrpcCodeModeHost {
             call_id = %request.tool_call_id,
         );
         if let Some(trace) = trace.as_ref() {
-            codex_otel::set_parent_from_w3c_trace_context(&execute_span, trace);
+            genex_otel::set_parent_from_w3c_trace_context(&execute_span, trace);
         }
         let callback_traceparent =
-            codex_otel::span_w3c_trace_context(&execute_span).and_then(|trace| trace.traceparent);
+            genex_otel::span_w3c_trace_context(&execute_span).and_then(|trace| trace.traceparent);
         Box::pin(
             self.execute_request(request, callback_traceparent)
                 .instrument(execute_span),

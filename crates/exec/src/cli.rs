@@ -2,9 +2,9 @@ use clap::Args;
 use clap::FromArgMatches;
 use clap::Parser;
 use clap::ValueEnum;
-use codex_protocol::protocol::ThreadSource;
-use codex_utils_cli::CliConfigOverrides;
-use codex_utils_cli::SharedCliOptions;
+use genex_protocol::protocol::ThreadSource;
+use genex_utils_cli::CliConfigOverrides;
+use genex_utils_cli::SharedCliOptions;
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]

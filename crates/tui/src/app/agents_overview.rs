@@ -24,10 +24,10 @@ use crate::bottom_pane::SelectionViewParams;
 use crate::bottom_pane::popup_consts::standard_popup_hint_line_for_keymap;
 use crate::chatwidget::ThreadInputStateRestoreMode;
 use crate::startup_draft::StartupDraftPump;
-use codex_app_server_protocol::SessionSource;
-use codex_app_server_protocol::Thread;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_protocol::protocol::SubAgentSource;
+use genex_app_server_protocol::SessionSource;
+use genex_app_server_protocol::Thread;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_protocol::protocol::SubAgentSource;
 
 pub(crate) const AGENTS_OVERVIEW_VIEW_ID: &str = "agents-overview";
 
@@ -407,7 +407,7 @@ impl App {
             };
             let unloaded = matches!(
                 target_thread.status,
-                codex_app_server_protocol::ThreadStatus::NotLoaded
+                genex_app_server_protocol::ThreadStatus::NotLoaded
             );
             let preserve_explicit_permissions = unloaded || started.is_some();
             let (mut resume_config, mut local_settings) = if let Some((config, _)) = &started {
@@ -471,7 +471,7 @@ impl App {
             let baseline_permissions =
                 RuntimePermissionProfileOverride::from_config(&resume_config);
             let resume_model_settings = match target_thread.status {
-                codex_app_server_protocol::ThreadStatus::NotLoaded => {
+                genex_app_server_protocol::ThreadStatus::NotLoaded => {
                     self.apply_runtime_policy_overrides(
                         &mut resume_config,
                         RuntimePolicyOverrideScope::ExplicitOnly,
@@ -496,9 +496,9 @@ impl App {
                     }
                     self.resume_model_settings()
                 }
-                codex_app_server_protocol::ThreadStatus::Idle
-                | codex_app_server_protocol::ThreadStatus::Active { .. }
-                | codex_app_server_protocol::ThreadStatus::SystemError => {
+                genex_app_server_protocol::ThreadStatus::Idle
+                | genex_app_server_protocol::ThreadStatus::Active { .. }
+                | genex_app_server_protocol::ThreadStatus::SystemError => {
                     crate::app_server_session::ResumeModelSettings::PreserveExistingThread
                 }
             };
@@ -760,7 +760,7 @@ impl App {
         for request in requests {
             self.handle_app_server_event(
                 app_server,
-                codex_app_server_client::AppServerEvent::ServerRequest(Box::new(request)),
+                genex_app_server_client::AppServerEvent::ServerRequest(Box::new(request)),
             )
             .await;
         }

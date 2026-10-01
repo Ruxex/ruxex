@@ -1,29 +1,29 @@
-use codex_core::EnvironmentConfig;
-use codex_core::EnvironmentMcpPolicy;
-use codex_core::TurnInputRequest;
-use codex_core::windows_sandbox::WindowsSandboxLevelExt;
+use genex_core::EnvironmentConfig;
+use genex_core::EnvironmentMcpPolicy;
+use genex_core::TurnInputRequest;
+use genex_core::windows_sandbox::WindowsSandboxLevelExt;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::time::Duration;
 
 use anyhow::Result;
-use codex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID;
-use codex_config::McpServerConfig;
-use codex_config::McpServerOAuthConfig;
-use codex_config::McpServerTransportConfig;
-use codex_exec_server::CreateDirectoryOptions;
-use codex_features::Feature;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::mcp_policy::McpServerIdentity;
-use codex_protocol::mcp_policy::McpServerRequirement;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::PermissionProfileSnapshot;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
-use codex_utils_path_uri::PathUri;
+use genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID;
+use genex_config::McpServerConfig;
+use genex_config::McpServerOAuthConfig;
+use genex_config::McpServerTransportConfig;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_features::Feature;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::mcp_policy::McpServerIdentity;
+use genex_protocol::mcp_policy::McpServerRequirement;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfileSnapshot;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
+use genex_utils_path_uri::PathUri;
 use core_test_support::apps_test_server::AppsTestServer;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
@@ -64,15 +64,15 @@ async fn local_mcp_startup_and_refresh_use_configured_http_client() -> Result<()
         let _apps_server = AppsTestServer::mount(&proxy).await?;
         let mut command = Command::new(std::env::current_exe()?);
         command.arg("--exact").arg(TEST_NAME);
-        for &key in codex_network_proxy::PROXY_ENV_KEYS {
+        for &key in genex_network_proxy::PROXY_ENV_KEYS {
             command.env_remove(key);
         }
         command
             .env(PROXY_TEST_SUBPROCESS_ENV_VAR, "1")
             .env("HTTP_PROXY", proxy.uri())
             .env("http_proxy", proxy.uri())
-            .env("NO_PROXY", codex_network_proxy::DEFAULT_NO_PROXY_VALUE)
-            .env("no_proxy", codex_network_proxy::DEFAULT_NO_PROXY_VALUE);
+            .env("NO_PROXY", genex_network_proxy::DEFAULT_NO_PROXY_VALUE)
+            .env("no_proxy", genex_network_proxy::DEFAULT_NO_PROXY_VALUE);
 
         let output = command.output().await?;
         let requests = proxy
@@ -239,7 +239,7 @@ async fn skill_mcp_dependency_oauth_uses_configured_http_client() -> Result<()> 
 
         let mut command = Command::new(std::env::current_exe()?);
         command.arg("--exact").arg(SKILL_TEST_NAME);
-        for &key in codex_network_proxy::PROXY_ENV_KEYS {
+        for &key in genex_network_proxy::PROXY_ENV_KEYS {
             command.env_remove(key);
         }
         command
@@ -251,8 +251,8 @@ async fn skill_mcp_dependency_oauth_uses_configured_http_client() -> Result<()> 
             )
             .env("HTTP_PROXY", proxy.uri())
             .env("http_proxy", proxy.uri())
-            .env("NO_PROXY", codex_network_proxy::DEFAULT_NO_PROXY_VALUE)
-            .env("no_proxy", codex_network_proxy::DEFAULT_NO_PROXY_VALUE);
+            .env("NO_PROXY", genex_network_proxy::DEFAULT_NO_PROXY_VALUE)
+            .env("no_proxy", genex_network_proxy::DEFAULT_NO_PROXY_VALUE);
 
         let output = command.output().await?;
         let requests = proxy
@@ -410,7 +410,7 @@ async fn skill_mcp_dependency_oauth_uses_configured_http_client() -> Result<()> 
     })
     .await;
 
-    let servers = codex_config::load_global_mcp_servers(&fixture.config.codex_home).await?;
+    let servers = genex_config::load_global_mcp_servers(&fixture.config.codex_home).await?;
     assert_eq!(
         servers
             .get(SERVER_NAME)

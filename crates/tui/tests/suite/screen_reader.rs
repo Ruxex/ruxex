@@ -9,7 +9,7 @@ use std::time::Instant;
 
 #[test]
 fn startup_records_screen_reader_detection() -> Result<()> {
-    let repo_root = codex_utils_cargo_bin::repo_root()?;
+    let repo_root = genex_utils_cargo_bin::repo_root()?;
     let home = tempfile::tempdir()?;
     write_test_config(home.path(), &repo_root)?;
     let path = home.path().join("config.toml");

@@ -1,14 +1,14 @@
 //! Convert resolved filesystem denials into portable policy entries.
 
 use crate::FilesystemConstraints;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_utils_path_uri::LegacyAppPathString;
-use codex_utils_path_uri::LegacyAppPathStringError;
-use codex_utils_path_uri::PathConvention;
-use codex_utils_path_uri::PathUri;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_utils_path_uri::LegacyAppPathString;
+use genex_utils_path_uri::LegacyAppPathStringError;
+use genex_utils_path_uri::PathConvention;
+use genex_utils_path_uri::PathUri;
 use std::io;
 
 impl FilesystemConstraints {

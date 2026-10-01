@@ -1,6 +1,6 @@
 //! Verify question input delivery, retained drafts, and visible editor behavior.
 use super::*;
-use codex_protocol::items::AsyncUserInputQuestion;
+use genex_protocol::items::AsyncUserInputQuestion;
 use pretty_assertions::assert_eq;
 
 fn questions() -> Vec<AsyncUserInputQuestion> {

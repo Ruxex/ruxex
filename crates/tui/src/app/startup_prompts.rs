@@ -4,7 +4,7 @@
 //! catalog state into one-time TUI prompts or warning cells without owning the main event loop.
 
 use super::*;
-use codex_config::ConfigLayerSource;
+use genex_config::ConfigLayerSource;
 use std::collections::HashSet;
 use std::path::PathBuf;
 
@@ -100,7 +100,7 @@ pub(super) fn project_config_warning(config: &Config) -> Option<String> {
 
 pub(super) fn emit_system_bwrap_warning(app_event_tx: &AppEventSender, config: &Config) {
     let Some(message) =
-        codex_sandboxing::system_bwrap_warning(config.permissions.permission_profile())
+        genex_sandboxing::system_bwrap_warning(config.permissions.permission_profile())
     else {
         return;
     };

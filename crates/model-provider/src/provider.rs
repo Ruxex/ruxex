@@ -4,24 +4,24 @@ use std::path::PathBuf;
 use std::pin::Pin;
 use std::sync::Arc;
 
-use codex_api::ApiError;
-use codex_api::ChatCompletionApi;
-use codex_api::Provider;
-use codex_api::SharedAuthProvider;
-use codex_api::StandardChatCompletionApi;
-use codex_api::TransportError;
-use codex_api::is_azure_responses_provider;
-use codex_login::AuthManager;
-use codex_login::CodexAuth;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_model_provider_info::WireApi;
-use codex_models_manager::cache::ModelsCache;
-use codex_models_manager::manager::RemoteModelsManager;
-use codex_models_manager::manager::SharedModelsManager;
-use codex_models_manager::manager::StaticModelsManager;
-use codex_protocol::account::ProviderAccount;
-use codex_protocol::error::CodexErr;
-use codex_protocol::model_types::ModelsResponse;
+use genex_api::ApiError;
+use genex_api::ChatCompletionApi;
+use genex_api::Provider;
+use genex_api::SharedAuthProvider;
+use genex_api::StandardChatCompletionApi;
+use genex_api::TransportError;
+use genex_api::is_azure_responses_provider;
+use genex_login::AuthManager;
+use genex_login::CodexAuth;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_model_provider_info::WireApi;
+use genex_models_manager::cache::ModelsCache;
+use genex_models_manager::manager::RemoteModelsManager;
+use genex_models_manager::manager::SharedModelsManager;
+use genex_models_manager::manager::StaticModelsManager;
+use genex_protocol::account::ProviderAccount;
+use genex_protocol::error::CodexErr;
+use genex_protocol::model_types::ModelsResponse;
 
 use crate::amazon_bedrock::AmazonBedrockModelProvider;
 use crate::auth::ProviderAuthScope;
@@ -196,7 +196,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
     /// Attempts provider-owned authentication recovery before using the auth manager.
     fn recover_from_unauthorized(
         &self,
-    ) -> ModelProviderFuture<'_, codex_protocol::error::Result<ProviderUnauthorizedRecovery>> {
+    ) -> ModelProviderFuture<'_, genex_protocol::error::Result<ProviderUnauthorizedRecovery>> {
         Box::pin(async { Ok(ProviderUnauthorizedRecovery::NotConfigured) })
     }
 
@@ -208,11 +208,11 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
 
     /// Maps an API client error into the provider's user-facing error representation.
     fn map_api_error(&self, error: ApiError) -> CodexErr {
-        codex_api::map_api_error(error)
+        genex_api::map_api_error(error)
     }
 
     /// Returns provider configuration adapted for the API client.
-    fn api_provider(&self) -> ModelProviderFuture<'_, codex_protocol::error::Result<Provider>> {
+    fn api_provider(&self) -> ModelProviderFuture<'_, genex_protocol::error::Result<Provider>> {
         Box::pin(async move {
             let auth = self.auth().await;
             self.info()
@@ -223,14 +223,14 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
     /// Returns the provider base URL that will be used at request time.
     fn runtime_base_url(
         &self,
-    ) -> ModelProviderFuture<'_, codex_protocol::error::Result<Option<String>>> {
+    ) -> ModelProviderFuture<'_, genex_protocol::error::Result<Option<String>>> {
         Box::pin(async { Ok(self.info().base_url.clone()) })
     }
 
     /// Returns the auth provider used to attach request credentials.
     fn api_auth(
         &self,
-    ) -> ModelProviderFuture<'_, codex_protocol::error::Result<SharedAuthProvider>> {
+    ) -> ModelProviderFuture<'_, genex_protocol::error::Result<SharedAuthProvider>> {
         Box::pin(async move {
             let auth = self.auth().await;
             resolve_provider_auth(auth.as_ref(), self.info())
@@ -241,7 +241,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
     fn api_auth_for_scope(
         &self,
         scope: ProviderAuthScope,
-    ) -> ModelProviderFuture<'_, codex_protocol::error::Result<ResolvedProviderAuth>> {
+    ) -> ModelProviderFuture<'_, genex_protocol::error::Result<ResolvedProviderAuth>> {
         Box::pin(async move {
             if !provider_uses_stored_auth_path(self.info()) {
                 return self.api_auth().await.map(ResolvedProviderAuth::new);
@@ -307,7 +307,7 @@ pub fn create_model_provider(
 ) -> SharedModelProvider {
     if provider_info.is_amazon_bedrock() {
         Arc::new(AmazonBedrockModelProvider::new(provider_info, auth_manager))
-    } else if provider_info.name == codex_model_provider_info::MY_PROVIDER_NAME {
+    } else if provider_info.name == genex_model_provider_info::MY_PROVIDER_NAME {
         Arc::new(MyModelProvider::new(provider_info, auth_manager))
     } else {
         Arc::new(ConfiguredModelProvider::new(provider_info, auth_manager))
@@ -478,20 +478,20 @@ mod tests {
     use std::task::Context;
     use std::task::Waker;
 
-    use codex_http_client::HttpClientFactory;
-    use codex_http_client::OutboundProxyPolicy;
-    use codex_login::auth::BedrockApiKeyAuth;
-    use codex_model_provider_info::AwsAuthRefreshConfig;
-    use codex_model_provider_info::AwsCredentialExportConfig;
-    use codex_model_provider_info::ModelProviderAwsAuthInfo;
-    use codex_model_provider_info::WireApi;
-    use codex_model_provider_info::create_responses_provider_with_base_url;
-    use codex_models_manager::ModelsManagerConfig;
-    use codex_models_manager::manager::RefreshStrategy;
-    use codex_protocol::config_types::ModelProviderAuthInfo;
-    use codex_protocol::model_types::ModelInfo;
-    use codex_protocol::model_types::ModelsResponse;
-    use codex_utils_redacted_string::RedactedString;
+    use genex_http_client::HttpClientFactory;
+    use genex_http_client::OutboundProxyPolicy;
+    use genex_login::auth::BedrockApiKeyAuth;
+    use genex_model_provider_info::AwsAuthRefreshConfig;
+    use genex_model_provider_info::AwsCredentialExportConfig;
+    use genex_model_provider_info::ModelProviderAwsAuthInfo;
+    use genex_model_provider_info::WireApi;
+    use genex_model_provider_info::create_responses_provider_with_base_url;
+    use genex_models_manager::ModelsManagerConfig;
+    use genex_models_manager::manager::RefreshStrategy;
+    use genex_protocol::config_types::ModelProviderAuthInfo;
+    use genex_protocol::model_types::ModelInfo;
+    use genex_protocol::model_types::ModelsResponse;
+    use genex_utils_redacted_string::RedactedString;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use wiremock::Mock;
@@ -1158,7 +1158,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
 
     #[tokio::test]
     async fn configured_bedrock_catalog_only_allows_default_service_tier() {
-        let configured_model = codex_models_manager::test_support::test_models_response()
+        let configured_model = genex_models_manager::test_support::test_models_response()
             .expect("bundled models should parse")
             .models
             .into_iter()

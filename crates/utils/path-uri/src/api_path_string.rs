@@ -2,7 +2,7 @@ use crate::PathConvention;
 use crate::PathUri;
 use crate::PathUriParseError;
 use crate::is_windows_separator_byte;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;

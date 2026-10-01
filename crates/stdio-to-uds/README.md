@@ -17,4 +17,4 @@ Unfortunately, the Rust standard library does not provide support for UNIX domai
 
 https://github.com/rust-lang/rust/issues/56533
 
-As a workaround, this crate uses `codex-uds`, which provides a cross-platform async UDS API backed by https://crates.io/crates/uds_windows on Windows.
+As a workaround, this crate uses `genex-uds`, which provides a cross-platform async UDS API backed by https://crates.io/crates/uds_windows on Windows.

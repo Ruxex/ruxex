@@ -12,26 +12,26 @@ use crate::tools::runtimes::unified_exec::UnifiedExecApprovalKey;
 use crate::tools::sandboxing::PermissionRequestPayload;
 use crate::tools::sandboxing::ToolError;
 use crate::tools::sandboxing::with_cached_approval;
-use codex_config::types::AppToolApproval;
-use codex_hooks::PermissionRequestDecision;
-use codex_otel::ToolDecisionSource;
-use codex_protocol::approvals::ExecApprovalKind;
-use codex_protocol::approvals::ExecPolicyAmendment;
+use genex_config::types::AppToolApproval;
+use genex_hooks::PermissionRequestDecision;
+use genex_otel::ToolDecisionSource;
+use genex_protocol::approvals::ExecApprovalKind;
+use genex_protocol::approvals::ExecPolicyAmendment;
 #[cfg(unix)]
-use codex_protocol::approvals::NetworkApprovalContext;
-use codex_protocol::approvals::NetworkApprovalProtocol;
-use codex_protocol::error::CodexErr;
-use codex_protocol::items::ModelInvocationContext;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::models::AdditionalPermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::FileChange;
-use codex_protocol::protocol::NetworkPolicyRuleAction;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::request_permissions::RequestPermissionProfile;
-use codex_tools::ToolName;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_protocol::approvals::NetworkApprovalContext;
+use genex_protocol::approvals::NetworkApprovalProtocol;
+use genex_protocol::error::CodexErr;
+use genex_protocol::items::ModelInvocationContext;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::models::AdditionalPermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::FileChange;
+use genex_protocol::protocol::NetworkPolicyRuleAction;
+use genex_protocol::protocol::ReviewDecision;
+use genex_protocol::request_permissions::RequestPermissionProfile;
+use genex_tools::ToolName;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -245,7 +245,7 @@ impl ApprovalAction {
             },
             #[cfg(unix)]
             Self::Execve { command, .. } => PermissionRequestPayload::bash(
-                codex_shell_command::parse_command::shlex_join(command),
+                genex_shell_command::parse_command::shlex_join(command),
                 /*description*/ None,
             ),
             Self::ApplyPatch { patch, .. } => PermissionRequestPayload {
@@ -466,7 +466,7 @@ impl Session {
                     .turn_environments()
                     .find(|environment| environment.selection.environment_id == *environment_id)
                     .and_then(|environment| environment.config().exec_policy.as_ref())
-                    .map(codex_execpolicy::RequirementsExecPolicy::fingerprint);
+                    .map(genex_execpolicy::RequirementsExecPolicy::fingerprint);
                 let cache_keys = action
                     .cache_keys()
                     .into_iter()

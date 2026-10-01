@@ -8,20 +8,20 @@ use std::time::SystemTime;
 
 use chrono::DateTime;
 use chrono::Utc;
-use codex_git_utils::GitSha;
-use codex_protocol::SanitizedGitUrl;
-use codex_protocol::ThreadId;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::GitInfo;
-use codex_protocol::protocol::NetworkAccess;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_rollout::ARCHIVED_SESSIONS_SUBDIR;
-use codex_rollout::RolloutReferenceIndex;
-use codex_rollout::ThreadItem;
-use codex_state::ThreadMetadata;
+use genex_git_utils::GitSha;
+use genex_protocol::SanitizedGitUrl;
+use genex_protocol::ThreadId;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::GitInfo;
+use genex_protocol::protocol::NetworkAccess;
+use genex_protocol::protocol::SandboxPolicy;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_rollout::ARCHIVED_SESSIONS_SUBDIR;
+use genex_rollout::RolloutReferenceIndex;
+use genex_rollout::ThreadItem;
+use genex_state::ThreadMetadata;
 
 use super::LocalThreadStore;
 use crate::StoredThread;
@@ -101,7 +101,7 @@ pub(super) fn validated_rollout_file_name(
             ),
         });
     };
-    if codex_rollout::rollout_id_from_path(rollout_path).is_some() {
+    if genex_rollout::rollout_id_from_path(rollout_path).is_some() {
         Ok(file_name)
     } else {
         Err(ThreadStoreError::InvalidRequest {
@@ -148,7 +148,7 @@ pub(super) fn stored_thread_from_rollout_item(
         .clone()
         .or_else(|| item.first_user_message.clone())
         .unwrap_or_default();
-    let rollout_path = codex_rollout::plain_rollout_path(item.path.as_path());
+    let rollout_path = genex_rollout::plain_rollout_path(item.path.as_path());
 
     Some(StoredThread {
         thread_id,
@@ -222,7 +222,7 @@ pub(super) fn sqlite_thread_name(metadata: &ThreadMetadata) -> Option<String> {
 }
 
 pub(super) async fn resolve_thread_section_metadata(
-    state_db: &codex_state::StateRuntime,
+    state_db: &genex_state::StateRuntime,
     thread_ids: &[ThreadId],
 ) -> HashMap<ThreadId, (Option<i64>, Option<DateTime<Utc>>)> {
     if thread_ids.is_empty() {
@@ -308,7 +308,7 @@ fn thread_id_from_rollout_path(path: &Path) -> Option<ThreadId> {
 
 #[cfg(test)]
 mod tests {
-    use codex_rollout::ThreadItem;
+    use genex_rollout::ThreadItem;
     use pretty_assertions::assert_eq;
     use uuid::Uuid;
 

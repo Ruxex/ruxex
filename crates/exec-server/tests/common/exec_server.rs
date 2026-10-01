@@ -5,10 +5,10 @@ use std::process::Stdio;
 use std::time::Duration;
 
 use anyhow::anyhow;
-use codex_exec_server_protocol::JSONRPCMessage;
-use codex_exec_server_protocol::JSONRPCNotification;
-use codex_exec_server_protocol::JSONRPCRequest;
-use codex_exec_server_protocol::RequestId;
+use genex_exec_server_protocol::JSONRPCMessage;
+use genex_exec_server_protocol::JSONRPCNotification;
+use genex_exec_server_protocol::JSONRPCRequest;
+use genex_exec_server_protocol::RequestId;
 use tempfile::TempDir;
 use tokio::io::AsyncBufReadExt;
 use tokio::io::AsyncWriteExt;

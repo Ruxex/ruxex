@@ -1,9 +1,9 @@
 use std::fs;
 use std::time::Duration;
 
-use codex_exec_server::LOCAL_FS;
-use codex_skills::EnvironmentSkillMetadata;
-use codex_utils_path_uri::PathUri;
+use genex_exec_server::LOCAL_FS;
+use genex_skills::EnvironmentSkillMetadata;
+use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tempfile::tempdir;
 

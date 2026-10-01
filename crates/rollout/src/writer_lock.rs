@@ -11,7 +11,7 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
-use codex_protocol::ThreadId;
+use genex_protocol::ThreadId;
 use tracing::warn;
 
 const WRITER_LOCK_DIR: &str = "thread-writer-locks";

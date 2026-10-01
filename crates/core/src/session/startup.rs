@@ -4,8 +4,8 @@
 use std::sync::Arc;
 use std::sync::OnceLock;
 
-use codex_protocol::protocol::Op;
-use codex_thread_store::LiveThreadInitGuard;
+use genex_protocol::protocol::Op;
+use genex_thread_store::LiveThreadInitGuard;
 use tokio::sync::Mutex;
 
 use super::SessionIo;

@@ -20,28 +20,28 @@ use crate::shell_snapshot::ShellSnapshot;
 use crate::shell_snapshot::SnapshotCredentialBrokerState;
 use crate::state::ActiveTurn;
 use crate::turn_metadata::ExecutionMetadata;
-use codex_attachment_store::AttachmentStore;
-use codex_extension_api::ExtensionDataInit;
-use codex_model_provider::SharedModelProvider;
-use codex_prompts::render_model_instructions;
-use codex_protocol::SessionId;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_protocol::config_types::ShellEnvironmentPolicy;
-use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::models::ProfileWorkspaceRoot;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::protocol::EnvironmentConfig;
-use codex_protocol::protocol::HookCompletedEvent;
-use codex_protocol::protocol::McpInvocation;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadSource;
-use codex_protocol::protocol::TurnEnvironmentSelections;
-use codex_sandboxing::SandboxType;
-use codex_skills::SkillError;
-use codex_utils_git_discovery::GitRootDiscovery;
-use codex_utils_path::replace_path_and_deduplicate;
+use genex_attachment_store::AttachmentStore;
+use genex_extension_api::ExtensionDataInit;
+use genex_model_provider::SharedModelProvider;
+use genex_prompts::render_model_instructions;
+use genex_protocol::SessionId;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_protocol::config_types::ShellEnvironmentPolicy;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::models::ProfileWorkspaceRoot;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSpecialPath;
+use genex_protocol::protocol::EnvironmentConfig;
+use genex_protocol::protocol::HookCompletedEvent;
+use genex_protocol::protocol::McpInvocation;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::ThreadSource;
+use genex_protocol::protocol::TurnEnvironmentSelections;
+use genex_sandboxing::SandboxType;
+use genex_skills::SkillError;
+use genex_utils_git_discovery::GitRootDiscovery;
+use genex_utils_path::replace_path_and_deduplicate;
 use std::sync::OnceLock;
 use tokio::sync::Semaphore;
 
@@ -66,17 +66,17 @@ pub(crate) struct Session {
     /// The set of enabled features should be invariant for the lifetime of the
     /// session.
     pub(super) features: ManagedFeatures,
-    pub(super) isolation: codex_extension_api::SessionIsolation,
-    pub(crate) allowed_tools: Option<Arc<codex_extension_api::AllowedTools>>,
+    pub(super) isolation: genex_extension_api::SessionIsolation,
+    pub(crate) allowed_tools: Option<Arc<genex_extension_api::AllowedTools>>,
     pub(crate) windows_sandbox_proxy_settings_mode:
-        codex_sandboxing::WindowsSandboxProxySettingsMode,
+        genex_sandboxing::WindowsSandboxProxySettingsMode,
     pub(super) multi_agent_version: OnceLock<MultiAgentVersion>,
     /// Owns invalidation and serializes refreshes without blocking captured calls.
     pub(super) mcp_refresh: McpRefresh,
     /// Non-owning lookup for approval data retained by running MCP invocations.
     pub(crate) mcp_tool_approval_metadata: std::sync::Mutex<McpToolApprovalMetadataMap>,
-    pub(super) mcp_elicitation_reviewer_handle: OnceLock<codex_mcp::ElicitationReviewerHandle>,
-    pub(super) mcp_elicitation_lifecycle_handle: OnceLock<codex_mcp::ElicitationLifecycle>,
+    pub(super) mcp_elicitation_reviewer_handle: OnceLock<genex_mcp::ElicitationReviewerHandle>,
+    pub(super) mcp_elicitation_lifecycle_handle: OnceLock<genex_mcp::ElicitationLifecycle>,
     pub(super) mcp_prewarm_tx: async_channel::Sender<()>,
     pub(super) mcp_prewarm_shutdown: CancellationToken,
     pub(super) mcp_prewarm_task: std::sync::Mutex<Option<JoinHandle<()>>>,
@@ -230,7 +230,7 @@ impl SessionConfiguration {
         environments: &[TurnEnvironmentSelection],
     ) -> SandboxPolicy {
         let permission_profile = self.materialized_permission_profile(environments);
-        codex_sandboxing::compatibility_sandbox_policy_for_permission_profile(
+        genex_sandboxing::compatibility_sandbox_policy_for_permission_profile(
             &permission_profile,
             self.cwd(),
         )
@@ -265,7 +265,7 @@ impl SessionConfiguration {
             service_tier: self.step_settings.service_tier.clone(),
             approval_policy: self.step_settings.approval_policy.value(),
             permission_profile: self.effective_permission_profile(&environment_selections),
-            full_access: codex_protocol::protocol::has_full_access(
+            full_access: genex_protocol::protocol::has_full_access(
                 self.step_settings.approval_policy.value(),
                 &self.permission_profile(),
                 environment_selections
@@ -440,7 +440,7 @@ impl SessionConfiguration {
                         allowed: format!(
                             "configured permission profile with valid network policy ({err})"
                         ),
-                        requirement_source: codex_config::RequirementSource::Unknown,
+                        requirement_source: genex_config::RequirementSource::Unknown,
                     })?;
                 config
                     .permissions
@@ -592,7 +592,7 @@ async fn warm_plugins_and_skills_for_session_init(
     plugins_manager: Arc<PluginsManager>,
     skills_service: Arc<HostSkillsService>,
     turn_environments: &TurnEnvironmentSnapshot,
-    extensions: &codex_extension_api::ExtensionRegistry<Config>,
+    extensions: &genex_extension_api::ExtensionRegistry<Config>,
 ) -> Vec<SkillError> {
     let plugins_input = config.plugins_config_input();
     let plugin_outcome = plugins_manager.plugins_for_config(&plugins_input).await;
@@ -729,8 +729,8 @@ impl Session {
         skills_service: Arc<HostSkillsService>,
         plugins_manager: Arc<PluginsManager>,
         mcp_manager: Arc<McpManager>,
-        code_mode_session_provider: Arc<dyn codex_code_mode::CodeModeSessionProvider>,
-        extensions: Arc<codex_extension_api::ExtensionRegistry<crate::config::Config>>,
+        code_mode_session_provider: Arc<dyn genex_code_mode::CodeModeSessionProvider>,
+        extensions: Arc<genex_extension_api::ExtensionRegistry<crate::config::Config>>,
         mut thread_extension_init: ExtensionDataInit,
         client_mcp_extensions: ClientMcpExtensions,
         agent_control: AgentControl,
@@ -744,7 +744,7 @@ impl Session {
         external_time_provider: Option<Arc<dyn TimeProvider>>,
         multi_agent_version: Option<MultiAgentVersion>,
         git_enrichment_policy: GitEnrichmentPolicy,
-        windows_sandbox_proxy_settings_mode: codex_sandboxing::WindowsSandboxProxySettingsMode,
+        windows_sandbox_proxy_settings_mode: genex_sandboxing::WindowsSandboxProxySettingsMode,
     ) -> anyhow::Result<Arc<Self>> {
         debug!(
             "Configuring session: model={}; provider={:?}",
@@ -792,7 +792,7 @@ impl Session {
                         RolloutItem::SessionMeta(meta)
                             if meta.meta.id == resumed.conversation_id =>
                         {
-                            codex_rollout::forked_from_ordinal_exclusive(
+                            genex_rollout::forked_from_ordinal_exclusive(
                                 &meta.meta,
                                 resumed.rollout_path.as_deref(),
                             )
@@ -919,19 +919,19 @@ impl Session {
                     roots
                 }
             };
-        thread_extension_init.insert(codex_extension_api::ThreadOriginator(
+        thread_extension_init.insert(genex_extension_api::ThreadOriginator(
             session_configuration.originator.clone(),
         ));
         // Publish the already resolved model before extensions make startup decisions.
         // Turn construction refreshes this attachment when the selected model changes.
         thread_extension_init.insert(model_info);
         let isolation = thread_extension_init
-            .get::<codex_extension_api::SessionIsolation>()
+            .get::<genex_extension_api::SessionIsolation>()
             .map(|policy| *policy)
             .unwrap_or_default();
-        let allowed_tools = thread_extension_init.get::<codex_extension_api::AllowedTools>();
+        let allowed_tools = thread_extension_init.get::<genex_extension_api::AllowedTools>();
         let mcp_thread_init = thread_extension_init.clone();
-        let thread_extension_data = codex_extension_api::ExtensionData::new_with_init(
+        let thread_extension_data = genex_extension_api::ExtensionData::new_with_init(
             thread_id.to_string(),
             thread_extension_init,
         );
@@ -1100,7 +1100,7 @@ impl Session {
             let trace_agent_path = session_configuration
                 .session_source
                 .get_agent_path()
-                .unwrap_or_else(codex_protocol::AgentPath::root);
+                .unwrap_or_else(genex_protocol::AgentPath::root);
             let trace_task_name =
                 (!trace_agent_path.is_root()).then(|| trace_agent_path.name().to_string());
             let trace_metadata = ThreadStartedTraceMetadata {
@@ -1188,7 +1188,7 @@ impl Session {
             )
             .with_auth_env(auth_env_telemetry.to_otel_metadata())
             .with_tool_result_log_config(config.otel.tool_result);
-            if let Some(metrics) = thread_extension_data.get::<codex_otel::MetricsClient>() {
+            if let Some(metrics) = thread_extension_data.get::<genex_otel::MetricsClient>() {
                 session_telemetry = session_telemetry.with_metrics(metrics.as_ref().clone());
             }
             if let Some(service_name) = session_configuration.metrics_service_name.as_deref() {
@@ -1207,7 +1207,7 @@ impl Session {
             };
             crate::config::emit_session_start_metrics(config.as_ref(), &session_telemetry);
             let is_worktree = session_configuration.cwd().canonicalize().ok().and_then(|cwd| {
-                codex_git_utils::repository_identity(&cwd).and_then(|_| {
+                genex_git_utils::repository_identity(&cwd).and_then(|_| {
                     get_git_repo_root(&cwd).map(|root| root.join(".git").is_file())
                 })
             });
@@ -1228,7 +1228,7 @@ impl Session {
             );
 
             let mcp_server_names =
-                codex_mcp::effective_mcp_servers(
+                genex_mcp::effective_mcp_servers(
                     &mcp_projection.config,
                     auth.as_ref(),
                 )
@@ -1301,13 +1301,13 @@ impl Session {
                 && config.features.enabled(Feature::ShellTool)
                 && config.features.enabled(Feature::UnifiedExec)
                 && matches!(
-                    codex_tools::UnifiedExecShellMode::for_session(
+                    genex_tools::UnifiedExecShellMode::for_session(
                         config.features.get(),
                         crate::tools::tool_user_shell_type(&default_shell),
                         config.zsh_path.as_ref(),
                         config.main_execve_wrapper_exe.as_ref(),
                     ),
-                    codex_tools::UnifiedExecShellMode::Direct
+                    genex_tools::UnifiedExecShellMode::Direct
                 );
             let use_executor_shell_snapshots =
                 prefer_executor_shell_snapshots && !credential_broker_active;
@@ -1514,12 +1514,12 @@ impl Session {
                 }
             }
             let session_extension_data =
-                codex_extension_api::ExtensionData::new(session_id.to_string());
+                genex_extension_api::ExtensionData::new(session_id.to_string());
             let mcp_resource_client = Arc::new(McpResourceClient::new(Arc::clone(&mcp_runtime)));
             let extension_metrics =
                 extension_metrics::from_session_telemetry(session_telemetry.clone());
             for contributor in extensions.thread_lifecycle_contributors() {
-                contributor.on_thread_start(codex_extension_api::ThreadStartInput {
+                contributor.on_thread_start(genex_extension_api::ThreadStartInput {
                     config: config.as_ref(),
                     session_source: &session_configuration.session_source,
                     persistent_thread_state_available: state_db_ctx.is_some(),
@@ -1732,15 +1732,15 @@ impl Session {
                 .await;
             let session_start_source = match &initial_history {
                 InitialHistory::Forked(_) if forked_from_id.is_some() => {
-                    codex_hooks::SessionStartSource::Fork
+                    genex_hooks::SessionStartSource::Fork
                 }
                 // `thread/resume` with supplied history uses `Forked` internally
                 // without a fork parent, so it should still report `resume`.
                 InitialHistory::Resumed(_) | InitialHistory::Forked(_) => {
-                    codex_hooks::SessionStartSource::Resume
+                    genex_hooks::SessionStartSource::Resume
                 }
-                InitialHistory::New => codex_hooks::SessionStartSource::Startup,
-                InitialHistory::Cleared => codex_hooks::SessionStartSource::Clear,
+                InitialHistory::New => genex_hooks::SessionStartSource::Startup,
+                InitialHistory::Cleared => genex_hooks::SessionStartSource::Clear,
             };
 
             // record_initial_history can emit events. We record only after the SessionConfiguredEvent is emitted.

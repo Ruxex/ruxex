@@ -17,8 +17,8 @@ use crate::tools::handlers::parse_arguments;
 use crate::tools::handlers::test_sync_spec::create_test_sync_tool;
 use crate::tools::registry::CoreToolRuntime;
 use crate::tools::registry::ToolExecutor;
-use codex_tools::ToolName;
-use codex_tools::ToolSpec;
+use genex_tools::ToolName;
+use genex_tools::ToolSpec;
 
 pub struct TestSyncHandler;
 
@@ -73,7 +73,7 @@ impl ToolExecutor<ToolInvocation> for TestSyncHandler {
         true
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> codex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

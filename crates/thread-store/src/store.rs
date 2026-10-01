@@ -1,5 +1,5 @@
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::ThreadHistoryMode;
 use std::any::Any;
 use std::future::Future;
 use std::pin::Pin;

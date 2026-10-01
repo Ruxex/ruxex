@@ -1,7 +1,7 @@
-use codex_code_mode_protocol::CellId;
-use codex_code_mode_protocol::NoopCodeModeSessionDelegate;
-use codex_code_mode_protocol::grpc;
-use codex_code_mode_protocol::host::MAX_PENDING_DELEGATE_CALLS;
+use genex_code_mode_protocol::CellId;
+use genex_code_mode_protocol::NoopCodeModeSessionDelegate;
+use genex_code_mode_protocol::grpc;
+use genex_code_mode_protocol::host::MAX_PENDING_DELEGATE_CALLS;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -63,7 +63,7 @@ fn notification(execution_id: &str, notification_id: u128) -> grpc::Notification
 #[test]
 fn callbacks_use_their_execution_delegate_before_cell_admission() {
     let mut state = SessionState::default();
-    let delegates: Vec<Arc<dyn codex_code_mode_protocol::CodeModeSessionDelegate>> = vec![
+    let delegates: Vec<Arc<dyn genex_code_mode_protocol::CodeModeSessionDelegate>> = vec![
         Arc::new(NoopCodeModeSessionDelegate),
         Arc::new(NoopCodeModeSessionDelegate),
     ];

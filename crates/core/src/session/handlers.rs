@@ -1,6 +1,6 @@
 use async_channel::Receiver;
-use codex_otel::set_parent_from_w3c_trace_context;
-use codex_protocol::protocol::Submission;
+use genex_otel::set_parent_from_w3c_trace_context;
+use genex_protocol::protocol::Submission;
 use tracing::Instrument;
 use tracing::info_span;
 
@@ -15,24 +15,24 @@ use crate::tasks::CompactTask;
 use crate::tasks::UserShellCommandMode;
 use crate::tasks::UserShellCommandTask;
 use crate::tasks::execute_user_shell_command;
-use codex_protocol::protocol::CodexErrorInfo;
-use codex_protocol::protocol::ErrorEvent;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::InterAgentCommunication;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::ReviewRequest;
-use codex_protocol::protocol::TurnAbortReason;
-use codex_protocol::protocol::WarningEvent;
-use codex_protocol::request_permissions::RequestPermissionsResponse;
-use codex_protocol::request_user_input::RequestUserInputResponse;
+use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::ErrorEvent;
+use genex_protocol::protocol::Event;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::InterAgentCommunication;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ReviewDecision;
+use genex_protocol::protocol::ReviewRequest;
+use genex_protocol::protocol::TurnAbortReason;
+use genex_protocol::protocol::WarningEvent;
+use genex_protocol::request_permissions::RequestPermissionsResponse;
+use genex_protocol::request_user_input::RequestUserInputResponse;
 
 use crate::context_manager::is_user_turn_boundary;
-use codex_protocol::dynamic_tools::DynamicToolResponse;
-use codex_protocol::mcp::RequestId as ProtocolRequestId;
-use codex_rmcp_client::ElicitationAction;
-use codex_rmcp_client::ElicitationResponse;
+use genex_protocol::dynamic_tools::DynamicToolResponse;
+use genex_protocol::mcp::RequestId as ProtocolRequestId;
+use genex_rmcp_client::ElicitationAction;
+use genex_rmcp_client::ElicitationResponse;
 use serde_json::Value;
 use std::sync::Arc;
 use tracing::debug;
@@ -53,7 +53,7 @@ pub async fn inter_agent_communication(
     sess: &Arc<Session>,
     sub_id: String,
     communication: InterAgentCommunication,
-    start_options: codex_protocol::turn_input::TurnStartOptions,
+    start_options: genex_protocol::turn_input::TurnStartOptions,
 ) {
     let trigger_turn = communication.trigger_turn;
     sess.input_queue
@@ -105,14 +105,14 @@ pub async fn resolve_elicitation(
     sess: &Arc<Session>,
     server_name: String,
     request_id: ProtocolRequestId,
-    decision: codex_protocol::approvals::ElicitationAction,
+    decision: genex_protocol::approvals::ElicitationAction,
     content: Option<Value>,
     meta: Option<Value>,
 ) {
     let action = match decision {
-        codex_protocol::approvals::ElicitationAction::Accept => ElicitationAction::Accept,
-        codex_protocol::approvals::ElicitationAction::Decline => ElicitationAction::Decline,
-        codex_protocol::approvals::ElicitationAction::Cancel => ElicitationAction::Cancel,
+        genex_protocol::approvals::ElicitationAction::Accept => ElicitationAction::Accept,
+        genex_protocol::approvals::ElicitationAction::Decline => ElicitationAction::Decline,
+        genex_protocol::approvals::ElicitationAction::Cancel => ElicitationAction::Cancel,
     };
     let content = match action {
         // Preserve the legacy fallback for clients that only send an action.
@@ -256,7 +256,7 @@ pub(super) async fn shutdown_session_runtime(sess: &Arc<Session>) {
 async fn emit_thread_stop_lifecycle(sess: &Session) {
     for contributor in sess.services.extensions.thread_lifecycle_contributors() {
         contributor
-            .on_thread_stop(codex_extension_api::ThreadStopInput {
+            .on_thread_stop(genex_extension_api::ThreadStopInput {
                 session_store: &sess.services.session_extension_data,
                 thread_store: &sess.services.thread_extension_data,
             })
@@ -305,7 +305,7 @@ pub async fn shutdown(sess: &Arc<Session>, sub_id: String) -> bool {
     sess.deliver_event_raw(event).await;
     sess.services
         .rollout_thread_trace
-        .record_ended(codex_rollout_trace::RolloutStatus::Completed);
+        .record_ended(genex_rollout_trace::RolloutStatus::Completed);
     true
 }
 
@@ -402,7 +402,7 @@ pub(super) async fn submission_loop(
                     // must leave responsibility for the thread with the current worker.
                     let should_exit = matches!(
                         &result,
-                        Ok(codex_protocol::turn_input::SuspendTurnOutcome::Suspended { .. })
+                        Ok(genex_protocol::turn_input::SuspendTurnOutcome::Suspended { .. })
                     );
                     let _ = reply.send(result);
                     should_exit

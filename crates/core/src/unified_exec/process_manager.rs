@@ -68,25 +68,25 @@ use crate::unified_exec::process::UnifiedExecProcess;
 use crate::unified_exec::shell_snapshot::shell_snapshot_request;
 use crate::unified_exec::take_plugin_metrics_sidecar;
 use crate::unified_exec::trace_id;
-use codex_core_plugins::PLUGIN_METRICS_OUTPUT_ENV_VAR;
-use codex_core_plugins::PluginCommandAttribution;
-use codex_core_plugins::PluginMetricsSidecar;
-use codex_core_plugins::strip_output_env;
-use codex_network_proxy::NetworkPolicyDecider;
-use codex_network_proxy::NetworkProxy;
-use codex_protocol::config_types::ShellEnvironmentPolicy;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::CodexErrorDetails;
-use codex_protocol::error::SandboxErr;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecCommandSource;
-use codex_protocol::protocol::TerminalInteractionEvent;
-use codex_protocol::shell_environment::is_non_inheritable_env_var;
-use codex_sandboxing::SandboxCommand;
-use codex_shell_command::is_dangerous_command::DangerousCommandPlatform;
-use codex_tools::ToolName;
-use codex_utils_output_truncation::approx_tokens_from_byte_count;
-use codex_utils_path_uri::PathUri;
+use genex_core_plugins::PLUGIN_METRICS_OUTPUT_ENV_VAR;
+use genex_core_plugins::PluginCommandAttribution;
+use genex_core_plugins::PluginMetricsSidecar;
+use genex_core_plugins::strip_output_env;
+use genex_network_proxy::NetworkPolicyDecider;
+use genex_network_proxy::NetworkProxy;
+use genex_protocol::config_types::ShellEnvironmentPolicy;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::SandboxErr;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecCommandSource;
+use genex_protocol::protocol::TerminalInteractionEvent;
+use genex_protocol::shell_environment::is_non_inheritable_env_var;
+use genex_sandboxing::SandboxCommand;
+use genex_shell_command::is_dangerous_command::DangerousCommandPlatform;
+use genex_tools::ToolName;
+use genex_utils_output_truncation::approx_tokens_from_byte_count;
+use genex_utils_path_uri::PathUri;
 
 const UNIFIED_EXEC_ENV: [(&str, &str); 10] = [
     ("NO_COLOR", "1"),
@@ -133,7 +133,7 @@ pub(super) fn apply_unified_exec_env(mut env: HashMap<String, String>) -> HashMa
 
 pub(super) fn exec_env_policy_from_shell_policy(
     policy: &ShellEnvironmentPolicy,
-) -> codex_exec_server::ExecEnvPolicy {
+) -> genex_exec_server::ExecEnvPolicy {
     let mut exclude = policy
         .exclude
         .iter()
@@ -142,7 +142,7 @@ pub(super) fn exec_env_policy_from_shell_policy(
     exclude.extend([
         CODEX_PERMISSION_PROFILE_ENV_VAR.to_string(),
         CODEX_VERSION_ENV_VAR.to_string(),
-        codex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
+        genex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
         PLUGIN_METRICS_OUTPUT_ENV_VAR.to_string(),
     ]);
     let mut r#set = policy.r#set.clone();
@@ -150,14 +150,14 @@ pub(super) fn exec_env_policy_from_shell_policy(
         ![
             CODEX_PERMISSION_PROFILE_ENV_VAR,
             CODEX_VERSION_ENV_VAR,
-            codex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
+            genex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
             PLUGIN_METRICS_OUTPUT_ENV_VAR,
         ]
         .iter()
         .any(|runtime_key| key.eq_ignore_ascii_case(runtime_key))
             && !is_non_inheritable_env_var(key)
     });
-    codex_exec_server::ExecEnvPolicy {
+    genex_exec_server::ExecEnvPolicy {
         inherit: policy.inherit.clone(),
         ignore_default_excludes: policy.ignore_default_excludes,
         exclude,
@@ -182,7 +182,7 @@ fn env_overlay_for_exec_server(
                     key.as_str(),
                     CODEX_PERMISSION_PROFILE_ENV_VAR
                         | CODEX_VERSION_ENV_VAR
-                        | codex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR
+                        | genex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR
                 ) || local_policy_env.get(*key) != Some(*value))
         })
         .map(|(key, value)| (key.clone(), value.clone()))
@@ -192,7 +192,7 @@ fn env_overlay_for_exec_server(
 fn exec_server_env_for_request(
     request: &ExecRequest,
 ) -> (
-    Option<codex_exec_server::ExecEnvPolicy>,
+    Option<genex_exec_server::ExecEnvPolicy>,
     HashMap<String, String>,
 ) {
     if let Some(exec_server_env_config) = &request.exec_server_env_config {
@@ -220,9 +220,9 @@ fn exec_server_params_for_request(
     process_id: i32,
     request: &ExecRequest,
     tool_ctx: Option<&ToolCtx>,
-    windows_sandbox_proxy_settings_mode: codex_sandboxing::WindowsSandboxProxySettingsMode,
+    windows_sandbox_proxy_settings_mode: genex_sandboxing::WindowsSandboxProxySettingsMode,
     tty: bool,
-) -> codex_exec_server::ExecParams {
+) -> genex_exec_server::ExecParams {
     let (env_policy, env) = exec_server_env_for_request(request);
     let sandbox = request.exec_server_sandbox.clone().map(|mut sandbox| {
         sandbox.windows_sandbox_proxy_settings_mode = Some(windows_sandbox_proxy_settings_mode);
@@ -236,9 +236,9 @@ fn exec_server_params_for_request(
         } else {
             process_id.to_string()
         };
-    codex_exec_server::ExecParams {
+    genex_exec_server::ExecParams {
         process_id: exec_server_process_id.into(),
-        metadata: tool_ctx.map(|ctx| codex_exec_server::ExecMetadata {
+        metadata: tool_ctx.map(|ctx| genex_exec_server::ExecMetadata {
             thread_id: Some(ctx.session.thread_id()),
             tool_call_id: Some(ctx.call_id.clone()),
         }),
@@ -1245,14 +1245,14 @@ impl UnifiedExecProcessManager {
         options: ExecOptions,
         attempt: &SandboxAttempt<'_>,
         network: Option<&NetworkProxy>,
-        network_proxy_launch: Option<codex_network_proxy::RemoteNetworkProxyLaunchConfig>,
+        network_proxy_launch: Option<genex_network_proxy::RemoteNetworkProxyLaunchConfig>,
         environment_id: Option<&str>,
         exec_server_env_config: Option<ExecServerEnvConfig>,
-        shell_snapshot: Option<codex_exec_server::ShellSnapshotRequest>,
-        windows_sandbox_proxy_settings_mode: codex_sandboxing::WindowsSandboxProxySettingsMode,
+        shell_snapshot: Option<genex_exec_server::ShellSnapshotRequest>,
+        windows_sandbox_proxy_settings_mode: genex_sandboxing::WindowsSandboxProxySettingsMode,
         tty: bool,
         spawn_lifecycle: SpawnLifecycleHandle,
-        environment: &codex_exec_server::Environment,
+        environment: &genex_exec_server::Environment,
     ) -> Result<UnifiedExecProcess, ToolError> {
         let mut request = if environment.is_remote() || shell_snapshot.is_some() {
             attempt.env_for_exec_server(command, options)
@@ -1298,11 +1298,11 @@ impl UnifiedExecProcessManager {
         process_id: i32,
         request: &ExecRequest,
         tool_ctx: Option<&ToolCtx>,
-        windows_sandbox_proxy_settings_mode: codex_sandboxing::WindowsSandboxProxySettingsMode,
+        windows_sandbox_proxy_settings_mode: genex_sandboxing::WindowsSandboxProxySettingsMode,
         network_policy_decider: Option<Arc<dyn NetworkPolicyDecider>>,
         tty: bool,
         mut spawn_lifecycle: SpawnLifecycleHandle,
-        environment: &codex_exec_server::Environment,
+        environment: &genex_exec_server::Environment,
     ) -> Result<UnifiedExecProcess, UnifiedExecError> {
         let inherited_fds = spawn_lifecycle.inherited_fds();
 
@@ -1357,7 +1357,7 @@ impl UnifiedExecProcessManager {
         let network_proxy_restricting_sid = {
             #[cfg(target_os = "windows")]
             {
-                if request.sandbox == codex_sandboxing::SandboxType::WindowsRestrictedToken {
+                if request.sandbox == genex_sandboxing::SandboxType::WindowsRestrictedToken {
                     request
                         .network
                         .as_ref()
@@ -1384,8 +1384,8 @@ impl UnifiedExecProcessManager {
             }
         };
         let windows_sandbox =
-            if request.sandbox == codex_sandboxing::SandboxType::WindowsRestrictedToken {
-                Some(codex_sandboxing::WindowsSandboxSpawnRequest {
+            if request.sandbox == genex_sandboxing::SandboxType::WindowsRestrictedToken {
+                Some(genex_sandboxing::WindowsSandboxSpawnRequest {
                     permission_profile: &request.permission_profile,
                     workspace_roots: &request.windows_sandbox_workspace_roots,
                     windows_sandbox_level: request.windows_sandbox_level,
@@ -1398,7 +1398,7 @@ impl UnifiedExecProcessManager {
             } else {
                 None
             };
-        let spawn_result = codex_sandboxing::spawn_process(codex_sandboxing::SpawnRequest {
+        let spawn_result = genex_sandboxing::spawn_process(genex_sandboxing::SpawnRequest {
             command: &request.command,
             cwd: native_cwd.as_path(),
             env: &request.env,

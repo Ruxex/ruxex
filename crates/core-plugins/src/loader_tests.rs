@@ -3,12 +3,12 @@ use crate::manifest::load_plugin_manifest;
 use crate::manifest::load_plugin_manifest_with_format;
 use crate::test_support::test_skill_root_loader;
 use crate::test_support::write_file;
-use codex_config::ConfigLayerEntry;
-use codex_config::ConfigLayerSource;
-use codex_config::ConfigRequirements;
-use codex_config::ConfigRequirementsToml;
-use codex_plugin::PluginId;
-use codex_utils_plugins::AGENT_PLUGIN_SCHEMA_URI;
+use genex_config::ConfigLayerEntry;
+use genex_config::ConfigLayerSource;
+use genex_config::ConfigRequirements;
+use genex_config::ConfigRequirementsToml;
+use genex_plugin::PluginId;
+use genex_utils_plugins::AGENT_PLUGIN_SCHEMA_URI;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -99,10 +99,10 @@ async fn ema_policy_overlays_native_and_agent_plugins_without_changing_endpoints
             let server = &selected["example"];
             assert_eq!(server.transport, transport);
             assert_eq!(server.enabled, endpoint == "https://resource.example/mcp");
-            assert_eq!(server.auth, codex_config::McpServerAuth::EmaAuth);
+            assert_eq!(server.auth, genex_config::McpServerAuth::EmaAuth);
             assert_eq!(
                 server.oauth,
-                Some(codex_config::McpServerOAuthConfig {
+                Some(genex_config::McpServerOAuthConfig {
                     client_id: Some("resource-client".into()),
                     authorization_server_issuer: Some("https://as.example".into()),
                     ema_registration_error: (endpoint != "https://resource.example/mcp")

@@ -1,7 +1,7 @@
 //! Public-RPC compatibility keeps modern grouping and narrows only legacy array errors.
 
 use super::*;
-use codex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::JSONRPCMessage;
 use futures::SinkExt;
 use futures::StreamExt;
 use pretty_assertions::assert_eq;

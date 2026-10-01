@@ -78,66 +78,66 @@ use crate::update_action::UpdateAction;
 use crate::version::CODEX_CLI_VERSION;
 use crate::workspace_command::AppServerWorkspaceCommandRunner;
 use crate::workspace_command::WorkspaceCommandRunner;
-use codex_ansi_escape::ansi_escape_line;
-use codex_app_server_client::AppServerRequestHandle;
-use codex_app_server_client::TypedRequestError;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::CodexErrorInfo as AppServerCodexErrorInfo;
-use codex_app_server_protocol::ConfigBatchWriteParams;
-use codex_app_server_protocol::ConfigReadResponse;
-use codex_app_server_protocol::ConfigValueWriteParams;
-use codex_app_server_protocol::ConfigWriteResponse;
-use codex_app_server_protocol::HooksListEntry;
-use codex_app_server_protocol::ListMcpServerStatusParams;
-use codex_app_server_protocol::ListMcpServerStatusResponse;
+use genex_ansi_escape::ansi_escape_line;
+use genex_app_server_client::AppServerRequestHandle;
+use genex_app_server_client::TypedRequestError;
+use genex_app_server_protocol::AskForApproval;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::CodexErrorInfo as AppServerCodexErrorInfo;
+use genex_app_server_protocol::ConfigBatchWriteParams;
+use genex_app_server_protocol::ConfigReadResponse;
+use genex_app_server_protocol::ConfigValueWriteParams;
+use genex_app_server_protocol::ConfigWriteResponse;
+use genex_app_server_protocol::HooksListEntry;
+use genex_app_server_protocol::ListMcpServerStatusParams;
+use genex_app_server_protocol::ListMcpServerStatusResponse;
 #[cfg(test)]
-use codex_app_server_protocol::McpAuthStatus;
-use codex_app_server_protocol::McpServerStatus;
-use codex_app_server_protocol::McpServerStatusDetail;
-use codex_app_server_protocol::MergeStrategy;
-use codex_app_server_protocol::PluginInstallParams;
-use codex_app_server_protocol::PluginInstallResponse;
-use codex_app_server_protocol::PluginListMarketplaceKind;
-use codex_app_server_protocol::PluginListParams;
-use codex_app_server_protocol::PluginListResponse;
-use codex_app_server_protocol::PluginReadParams;
-use codex_app_server_protocol::PluginReadResponse;
-use codex_app_server_protocol::PluginUninstallParams;
-use codex_app_server_protocol::PluginUninstallResponse;
-use codex_app_server_protocol::SandboxMode as AppServerSandboxMode;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::SkillErrorInfo;
-use codex_app_server_protocol::SkillsListParams;
-use codex_app_server_protocol::SkillsListResponse;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadLoadedListParams;
-use codex_app_server_protocol::ThreadSettingsUpdateParams;
-use codex_app_server_protocol::ThreadStartSource;
-use codex_app_server_protocol::Turn;
-use codex_app_server_protocol::TurnError as AppServerTurnError;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::WriteStatus;
-use codex_config::LoaderOverrides;
-use codex_config::types::ModelAvailabilityNuxConfig;
-use codex_exec_server::EnvironmentManager;
-use codex_features::Feature;
-use codex_features::FeaturesToml;
-use codex_models_manager::model_presets::HIDE_GPT_5_1_CODEX_MAX_MIGRATION_PROMPT_CONFIG;
-use codex_models_manager::model_presets::HIDE_GPT5_1_MIGRATION_PROMPT_CONFIG;
-use codex_otel::SessionTelemetry;
-use codex_protocol::ThreadId;
-use codex_protocol::model_types::ModelAvailabilityNux;
-use codex_protocol::model_types::ModelPreset;
-use codex_protocol::model_types::ModelUpgrade;
-use codex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
-use codex_protocol::models::ActivePermissionProfile;
-use codex_protocol::models::PermissionProfile;
-use codex_rollout::StateDbHandle;
-use codex_terminal_detection::user_agent;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_approval_presets::builtin_permission_profile_for_active_permission_profile;
+use genex_app_server_protocol::McpAuthStatus;
+use genex_app_server_protocol::McpServerStatus;
+use genex_app_server_protocol::McpServerStatusDetail;
+use genex_app_server_protocol::MergeStrategy;
+use genex_app_server_protocol::PluginInstallParams;
+use genex_app_server_protocol::PluginInstallResponse;
+use genex_app_server_protocol::PluginListMarketplaceKind;
+use genex_app_server_protocol::PluginListParams;
+use genex_app_server_protocol::PluginListResponse;
+use genex_app_server_protocol::PluginReadParams;
+use genex_app_server_protocol::PluginReadResponse;
+use genex_app_server_protocol::PluginUninstallParams;
+use genex_app_server_protocol::PluginUninstallResponse;
+use genex_app_server_protocol::SandboxMode as AppServerSandboxMode;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::SkillErrorInfo;
+use genex_app_server_protocol::SkillsListParams;
+use genex_app_server_protocol::SkillsListResponse;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadLoadedListParams;
+use genex_app_server_protocol::ThreadSettingsUpdateParams;
+use genex_app_server_protocol::ThreadStartSource;
+use genex_app_server_protocol::Turn;
+use genex_app_server_protocol::TurnError as AppServerTurnError;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::WriteStatus;
+use genex_config::LoaderOverrides;
+use genex_config::types::ModelAvailabilityNuxConfig;
+use genex_exec_server::EnvironmentManager;
+use genex_features::Feature;
+use genex_features::FeaturesToml;
+use genex_models_manager::model_presets::HIDE_GPT_5_1_CODEX_MAX_MIGRATION_PROMPT_CONFIG;
+use genex_models_manager::model_presets::HIDE_GPT5_1_MIGRATION_PROMPT_CONFIG;
+use genex_otel::SessionTelemetry;
+use genex_protocol::ThreadId;
+use genex_protocol::model_types::ModelAvailabilityNux;
+use genex_protocol::model_types::ModelPreset;
+use genex_protocol::model_types::ModelUpgrade;
+use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use genex_protocol::models::ActivePermissionProfile;
+use genex_protocol::models::PermissionProfile;
+use genex_rollout::StateDbHandle;
+use genex_terminal_detection::user_agent;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_approval_presets::builtin_permission_profile_for_active_permission_profile;
 use color_eyre::eyre::Result;
 use color_eyre::eyre::WrapErr;
 use crossterm::event::KeyCode;
@@ -305,7 +305,7 @@ fn collab_receiver_is_not_found(
                 agents_states.get(receiver_thread_id).is_some_and(|state| {
                     matches!(
                         &state.status,
-                        codex_app_server_protocol::CollabAgentStatus::NotFound
+                        genex_app_server_protocol::CollabAgentStatus::NotFound
                     )
                 })
             }
@@ -316,15 +316,15 @@ fn collab_receiver_is_not_found(
 }
 
 fn default_exec_approval_decisions(
-    network_approval_context: Option<&codex_app_server_protocol::NetworkApprovalContext>,
-    proposed_execpolicy_amendment: Option<&codex_app_server_protocol::ExecPolicyAmendment>,
+    network_approval_context: Option<&genex_app_server_protocol::NetworkApprovalContext>,
+    proposed_execpolicy_amendment: Option<&genex_app_server_protocol::ExecPolicyAmendment>,
     proposed_network_policy_amendments: Option<
-        &[codex_app_server_protocol::NetworkPolicyAmendment],
+        &[genex_app_server_protocol::NetworkPolicyAmendment],
     >,
-    additional_permissions: Option<&codex_app_server_protocol::AdditionalPermissionProfile>,
-) -> Vec<codex_app_server_protocol::CommandExecutionApprovalDecision> {
-    use codex_app_server_protocol::CommandExecutionApprovalDecision;
-    use codex_app_server_protocol::NetworkPolicyRuleAction;
+    additional_permissions: Option<&genex_app_server_protocol::AdditionalPermissionProfile>,
+) -> Vec<genex_app_server_protocol::CommandExecutionApprovalDecision> {
+    use genex_app_server_protocol::CommandExecutionApprovalDecision;
+    use genex_app_server_protocol::NetworkPolicyRuleAction;
 
     if network_approval_context.is_some() {
         let mut decisions = vec![
@@ -451,7 +451,7 @@ fn resume_hint_for_resumable_thread(
     rollout_path: Option<&Path>,
 ) -> Option<String> {
     let thread = resumable_thread(thread_id, thread_name, rollout_path)?;
-    codex_utils_cli::resume_hint(thread.thread_name.as_deref(), Some(thread.thread_id))
+    genex_utils_cli::resume_hint(thread.thread_name.as_deref(), Some(thread.thread_id))
 }
 
 fn rollout_path_is_resumable(rollout_path: &Path) -> bool {
@@ -572,8 +572,8 @@ pub(crate) struct App {
     pending_primary_events: VecDeque<ThreadBufferedEvent>,
     pending_app_server_requests: PendingAppServerRequests,
     dynamic_tool_status_updates:
-        tokio::sync::broadcast::Sender<codex_app_server_protocol::ThreadStatusChangedNotification>,
-    dynamic_tool_tasks: HashMap<codex_app_server_protocol::RequestId, (String, JoinHandle<()>)>,
+        tokio::sync::broadcast::Sender<genex_app_server_protocol::ThreadStatusChangedNotification>,
+    dynamic_tool_tasks: HashMap<genex_app_server_protocol::RequestId, (String, JoinHandle<()>)>,
     pending_startup_thread_start: bool,
     pending_server_version_notice: Option<crate::status::remote_connection::ServerVersionNotice>,
     /// Opens the session picker after event dispatch returns, with a fresh stack.

@@ -1,11 +1,11 @@
-use codex_config::test_support::CloudConfigBundleFixture;
-use codex_core::EnvironmentConfig;
-use codex_core::TurnInputRequest;
-use codex_core::windows_sandbox::WindowsSandboxLevelExt;
-use codex_features::Feature;
-use codex_protocol::approvals::ExecApprovalKind;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::SandboxPolicy;
+use genex_config::test_support::CloudConfigBundleFixture;
+use genex_core::EnvironmentConfig;
+use genex_core::TurnInputRequest;
+use genex_core::windows_sandbox::WindowsSandboxLevelExt;
+use genex_features::Feature;
+use genex_protocol::approvals::ExecApprovalKind;
+use genex_protocol::protocol::ReviewDecision;
+use genex_protocol::protocol::SandboxPolicy;
 use core_test_support::test_codex::local_selections;
 use std::collections::HashMap;
 use std::ffi::OsStr;
@@ -14,28 +14,28 @@ use std::sync::OnceLock;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_exec_server::CreateDirectoryOptions;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::EnvironmentVariablePattern;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::config_types::ShellEnvironmentPolicy;
-use codex_protocol::config_types::ShellEnvironmentPolicyInherit;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::PermissionProfileSnapshot;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecCommandSource;
-use codex_protocol::protocol::ExecCommandStatus;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::shell_environment::CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
-use codex_protocol::user_input::UserInput;
-use codex_utils_output_truncation::approx_tokens_from_byte_count;
-use codex_utils_path_uri::PathUri;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::EnvironmentVariablePattern;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::config_types::ShellEnvironmentPolicy;
+use genex_protocol::config_types::ShellEnvironmentPolicyInherit;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfileSnapshot;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecCommandSource;
+use genex_protocol::protocol::ExecCommandStatus;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::shell_environment::CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
+use genex_protocol::user_input::UserInput;
+use genex_utils_output_truncation::approx_tokens_from_byte_count;
+use genex_utils_path_uri::PathUri;
 use core_test_support::TempDirExt;
 use core_test_support::assert_regex_match;
 use core_test_support::managed_network_requirements_loader;
@@ -1345,7 +1345,7 @@ async fn unified_exec_rejects_unelevated_windows_sandbox_with_managed_network() 
 async fn unified_exec_network_denial_test(
     server: &wiremock::MockServer,
 ) -> Result<(TestCodex, PermissionProfile)> {
-    use codex_config::Constrained;
+    use genex_config::Constrained;
     use std::sync::Arc;
     use tempfile::TempDir;
 
@@ -1415,7 +1415,7 @@ async fn wait_for_unified_exec_end(
     test: &TestCodex,
     call_id: &str,
     response_mock: &core_test_support::responses::ResponseMock,
-) -> (codex_protocol::protocol::ExecCommandEndEvent, bool) {
+) -> (genex_protocol::protocol::ExecCommandEndEvent, bool) {
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(15);
     let mut observed_events = Vec::new();
     let mut turn_completed = false;
@@ -3633,12 +3633,12 @@ async fn unified_exec_runs_under_sandbox() -> Result<()> {
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_enforces_glob_deny_read_policy() -> Result<()> {
-    use codex_protocol::models::PermissionProfile;
-    use codex_protocol::permissions::FileSystemAccessMode;
-    use codex_protocol::permissions::FileSystemPath;
-    use codex_protocol::permissions::FileSystemSandboxEntry;
-    use codex_protocol::permissions::FileSystemSandboxPolicy;
-    use codex_protocol::permissions::NetworkSandboxPolicy;
+    use genex_protocol::models::PermissionProfile;
+    use genex_protocol::permissions::FileSystemAccessMode;
+    use genex_protocol::permissions::FileSystemPath;
+    use genex_protocol::permissions::FileSystemSandboxEntry;
+    use genex_protocol::permissions::FileSystemSandboxPolicy;
+    use genex_protocol::permissions::NetworkSandboxPolicy;
 
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));

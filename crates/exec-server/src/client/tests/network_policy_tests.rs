@@ -2,16 +2,16 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
 
-use codex_exec_server_protocol::JSONRPCMessage;
-use codex_exec_server_protocol::JSONRPCNotification;
-use codex_exec_server_protocol::JSONRPCRequest;
-use codex_exec_server_protocol::JSONRPCResponse;
-use codex_exec_server_protocol::RequestId;
-use codex_network_proxy::NetworkDecision;
-use codex_network_proxy::NetworkPolicyDecider;
-use codex_network_proxy::NetworkPolicyRequest;
-use codex_network_proxy::NetworkProxyAuditMetadata;
-use codex_utils_path_uri::PathUri;
+use genex_exec_server_protocol::JSONRPCMessage;
+use genex_exec_server_protocol::JSONRPCNotification;
+use genex_exec_server_protocol::JSONRPCRequest;
+use genex_exec_server_protocol::JSONRPCResponse;
+use genex_exec_server_protocol::RequestId;
+use genex_network_proxy::NetworkDecision;
+use genex_network_proxy::NetworkPolicyDecider;
+use genex_network_proxy::NetworkPolicyRequest;
+use genex_network_proxy::NetworkProxyAuditMetadata;
+use genex_utils_path_uri::PathUri;
 use opentelemetry::trace::TracerProvider as _;
 use opentelemetry_sdk::trace::InMemorySpanExporter;
 use opentelemetry_sdk::trace::SdkTracerProvider;
@@ -367,7 +367,7 @@ async fn policy_requests_use_process_decider_and_cancel_on_unregister() {
     let subscriber = tracing_subscriber::registry().with(
         tracing_opentelemetry::layer()
             .with_tracer(tracer_provider.tracer("exec-server-test"))
-            .with_filter(filter_fn(codex_otel::OtelProvider::trace_export_filter)),
+            .with_filter(filter_fn(genex_otel::OtelProvider::trace_export_filter)),
     );
     let _subscriber = tracing::subscriber::set_default(subscriber);
     tracing::callsite::rebuild_interest_cache();

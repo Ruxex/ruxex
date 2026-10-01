@@ -2,8 +2,8 @@
 //! History selection belongs to the caller; this fragment caps the complete prompt.
 
 use crate::ContextualUserFragment;
-use codex_protocol::models::ContentItemKind;
-use codex_utils_string::approx_bytes_for_tokens;
+use genex_protocol::models::ContentItemKind;
+use genex_utils_string::approx_bytes_for_tokens;
 
 const PROMPT_PREFIX: &str = r#"Write a brief catch-up for a user returning to this task. Return JSON with summary and nullable next_action.
 

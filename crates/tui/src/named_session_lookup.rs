@@ -3,12 +3,12 @@
 use std::path::Path;
 
 use crate::app_server_session::AppServerSession;
-use codex_app_server_client::TypedRequestError;
-use codex_app_server_protocol::Thread;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadSortKey;
-use codex_app_server_protocol::ThreadSourceKind;
-use codex_protocol::ThreadId;
+use genex_app_server_client::TypedRequestError;
+use genex_app_server_protocol::Thread;
+use genex_app_server_protocol::ThreadListParams;
+use genex_app_server_protocol::ThreadSortKey;
+use genex_app_server_protocol::ThreadSourceKind;
+use genex_protocol::ThreadId;
 use color_eyre::eyre::Result;
 use color_eyre::eyre::WrapErr;
 
@@ -95,11 +95,11 @@ pub(super) async fn lookup(
                         && let Some(path) = thread.path.as_ref()
                     {
                         let expected_root = codex_home.join(match collection {
-                            SessionCollection::Active => codex_rollout::SESSIONS_SUBDIR,
-                            SessionCollection::Archived => codex_rollout::ARCHIVED_SESSIONS_SUBDIR,
+                            SessionCollection::Active => genex_rollout::SESSIONS_SUBDIR,
+                            SessionCollection::Archived => genex_rollout::ARCHIVED_SESSIONS_SUBDIR,
                         });
                         if !path.starts_with(expected_root)
-                            || codex_rollout::existing_rollout_path(path).await.is_none()
+                            || genex_rollout::existing_rollout_path(path).await.is_none()
                         {
                             continue;
                         }

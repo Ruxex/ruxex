@@ -41,7 +41,7 @@ Codex のメモリーズ機能を、機能単位で削除する。対象は、�
 - `crates/state/src/runtime/memories.rs`、`memory_readiness.rs`、`memory_versions.rs`、`state::MemoryStore`。
 - `crates/protocol/src/memory_version.rs`、`memory_citation.rs`、thread memory mode と rollout item の memory fields。
 - `crates/app-server-protocol/src/protocol/v2/memory.rs`、thread history の memory citation、生成 JSON/TypeScript schema。
-- `crates/codex-api/src/endpoint/memories.rs` と memory extraction/consolidation request types。
+- `crates/genex-api/src/endpoint/memories.rs` と memory extraction/consolidation request types。
 - TUI の `memories_settings_view`、memory settings snapshot、reset confirmation、enable prompt。
 
 ## 設計方針

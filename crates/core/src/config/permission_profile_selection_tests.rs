@@ -1,7 +1,7 @@
 use crate::config::ResolvedPermissionProfileSelection;
 use crate::config::resolve_permission_profile_selection;
-use codex_config::ConfigRequirementsToml;
-use codex_config::permissions_toml::PermissionsToml;
+use genex_config::ConfigRequirementsToml;
+use genex_config::permissions_toml::PermissionsToml;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 

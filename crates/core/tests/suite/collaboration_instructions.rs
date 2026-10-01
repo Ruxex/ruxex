@@ -1,20 +1,20 @@
 use anyhow::Result;
-use codex_core::TurnInputRequest;
-use codex_features::Feature;
-use codex_history::RolloutItem;
-use codex_login::CodexAuth;
-use codex_models_manager::model_info::model_info_from_slug;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::model_types::CollaborationModeMessages;
-use codex_protocol::model_types::ModelMessages;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::protocol::COLLABORATION_MODE_CLOSE_TAG;
-use codex_protocol::protocol::COLLABORATION_MODE_OPEN_TAG;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
+use genex_core::TurnInputRequest;
+use genex_features::Feature;
+use genex_history::RolloutItem;
+use genex_login::CodexAuth;
+use genex_models_manager::model_info::model_info_from_slug;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::model_types::CollaborationModeMessages;
+use genex_protocol::model_types::ModelMessages;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::protocol::COLLABORATION_MODE_CLOSE_TAG;
+use genex_protocol::protocol::COLLABORATION_MODE_OPEN_TAG;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
@@ -71,7 +71,7 @@ fn model_with_collaboration_messages(
     slug: &str,
     default: Option<&str>,
     plan: Option<&str>,
-) -> codex_protocol::model_types::ModelInfo {
+) -> genex_protocol::model_types::ModelInfo {
     let mut model = model_info_from_slug(slug);
     let model_messages = model.model_messages.get_or_insert(ModelMessages {
         persistent_instructions: None,
@@ -547,7 +547,7 @@ async fn collaboration_instructions_added_on_user_turn() -> Result<()> {
                 summary: Some(
                     test.config
                         .model_reasoning_summary
-                        .unwrap_or(codex_protocol::config_types::ReasoningSummary::Auto),
+                        .unwrap_or(genex_protocol::config_types::ReasoningSummary::Auto),
                 ),
                 collaboration_mode: Some(collaboration_mode),
                 ..Default::default()
@@ -594,7 +594,7 @@ async fn collaboration_instructions_omitted_when_disabled() -> Result<()> {
                 summary: Some(
                     test.config
                         .model_reasoning_summary
-                        .unwrap_or(codex_protocol::config_types::ReasoningSummary::Auto),
+                        .unwrap_or(genex_protocol::config_types::ReasoningSummary::Auto),
                 ),
                 collaboration_mode: Some(collaboration_mode),
                 ..Default::default()
@@ -652,7 +652,7 @@ async fn user_turn_overrides_collaboration_instructions_after_override() -> Resu
                 summary: Some(
                     test.config
                         .model_reasoning_summary
-                        .unwrap_or(codex_protocol::config_types::ReasoningSummary::Auto),
+                        .unwrap_or(genex_protocol::config_types::ReasoningSummary::Auto),
                 ),
                 collaboration_mode: Some(turn_mode),
                 ..Default::default()
@@ -1045,7 +1045,7 @@ async fn cold_resume_refreshes_legacy_collaboration_snapshot_once(
     let legacy_rollout = std::fs::read_to_string(&rollout_path)?
         .lines()
         .map(|original_line| {
-            let mut line = codex_rollout::parse_rollout_line(original_line)?;
+            let mut line = genex_rollout::parse_rollout_line(original_line)?;
             if let RolloutItem::WorldState(world_state) = &mut line.item
                 && let Some(snapshot) = world_state.state.get_mut("collaboration_mode")
             {

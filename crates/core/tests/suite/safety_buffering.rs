@@ -1,8 +1,8 @@
 use anyhow::Ok;
-use codex_core::TurnInputRequest;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::SafetyBufferingEvent;
-use codex_protocol::user_input::UserInput;
+use genex_core::TurnInputRequest;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::SafetyBufferingEvent;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_response_once;

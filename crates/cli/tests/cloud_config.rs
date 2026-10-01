@@ -7,12 +7,12 @@ use anyhow::Result;
 use anyhow::ensure;
 use app_test_support::ApiKeyAuthFixture;
 use app_test_support::write_api_key_auth;
-use codex_config::ConfigLoadOptions;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_core::config::load_config_toml_with_layer_stack;
-use codex_core::config::load_global_mcp_servers;
-use codex_core_plugins::installed_marketplaces::marketplace_install_root;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_config::ConfigLoadOptions;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_core::config::load_config_toml_with_layer_stack;
+use genex_core::config::load_global_mcp_servers;
+use genex_core_plugins::installed_marketplaces::marketplace_install_root;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -124,7 +124,7 @@ impl CloudManagedConfigFixture {
     }
 
     fn command(&self, args: &[&str]) -> Result<Command> {
-        let mut command = Command::new(codex_utils_cargo_bin::cargo_bin("codex")?);
+        let mut command = Command::new(genex_utils_cargo_bin::cargo_bin("codex")?);
         command
             .kill_on_drop(true)
             .current_dir(self.codex_home.path())

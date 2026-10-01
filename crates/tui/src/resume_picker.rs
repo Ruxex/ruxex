@@ -35,21 +35,21 @@ use crate::wrapping::RtOptions;
 use crate::wrapping::adaptive_wrap_lines;
 use chrono::DateTime;
 use chrono::Utc;
-use codex_app_server_client::AppServerRequestHandle;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::Thread;
-use codex_app_server_protocol::ThreadArchiveParams;
-use codex_app_server_protocol::ThreadArchiveResponse;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_app_server_protocol::ThreadListCwdFilter;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadSortKey;
-use codex_app_server_protocol::ThreadUnarchiveParams;
-use codex_app_server_protocol::ThreadUnarchiveResponse;
-use codex_config::types::SessionPickerViewMode;
-use codex_protocol::ThreadId;
-use codex_utils_path as path_utils;
+use genex_app_server_client::AppServerRequestHandle;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::Thread;
+use genex_app_server_protocol::ThreadArchiveParams;
+use genex_app_server_protocol::ThreadArchiveResponse;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_app_server_protocol::ThreadListCwdFilter;
+use genex_app_server_protocol::ThreadListParams;
+use genex_app_server_protocol::ThreadSortKey;
+use genex_app_server_protocol::ThreadUnarchiveParams;
+use genex_app_server_protocol::ThreadUnarchiveResponse;
+use genex_config::types::SessionPickerViewMode;
+use genex_protocol::ThreadId;
+use genex_utils_path as path_utils;
 use color_eyre::eyre::Result;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
@@ -449,7 +449,7 @@ async fn run_resume_picker_with_launch_context(
         show_all,
         filter_cwd: cwd_filter,
         local_filter_cwd,
-        worktrees_enabled: config.features.enabled(codex_features::Feature::Worktrees),
+        worktrees_enabled: config.features.enabled(genex_features::Feature::Worktrees),
         action: SessionPickerAction::Resume,
         launch_context,
         provider_filter,
@@ -510,7 +510,7 @@ pub async fn run_fork_picker_with_app_server(
         show_all,
         filter_cwd: cwd_filter,
         local_filter_cwd,
-        worktrees_enabled: config.features.enabled(codex_features::Feature::Worktrees),
+        worktrees_enabled: config.features.enabled(genex_features::Feature::Worktrees),
         action: SessionPickerAction::Fork,
         launch_context: SessionPickerLaunchContext::Startup,
         provider_filter,
@@ -710,7 +710,7 @@ fn spawn_app_server_page_loader(
                         request.cwd_filter.as_deref(),
                         uses_remote_filesystem,
                         config.as_ref().is_some_and(|config| {
-                            config.features.enabled(codex_features::Feature::Worktrees)
+                            config.features.enabled(genex_features::Feature::Worktrees)
                         }),
                     );
                     let cursor = request.cursor.map(|PageCursor::AppServer(cursor)| cursor);
@@ -1657,8 +1657,8 @@ impl PickerState {
         };
         paths_match(row_cwd, filter_cwd)
             || (self.worktrees_enabled
-                && codex_git_utils::repository_identity(row_cwd)
-                    .zip(codex_git_utils::repository_identity(filter_cwd))
+                && genex_git_utils::repository_identity(row_cwd)
+                    .zip(genex_git_utils::repository_identity(filter_cwd))
                     .is_some_and(|(row, filter)| {
                         row.common_dir == filter.common_dir
                             && row.relative_cwd == filter.relative_cwd
@@ -2083,7 +2083,7 @@ pub(crate) fn repository_cwd_filter(
 ) -> ThreadListCwdFilter {
     if worktrees_enabled
         && !uses_remote_filesystem
-        && let Some(cwds) = codex_git_utils::linked_worktree_cwds(cwd)
+        && let Some(cwds) = genex_git_utils::linked_worktree_cwds(cwd)
         && cwds.len() > 1
     {
         return ThreadListCwdFilter::Many(

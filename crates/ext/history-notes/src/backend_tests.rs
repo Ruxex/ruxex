@@ -1,9 +1,9 @@
-use codex_login::AuthHeaders;
-use codex_login::AuthManager;
-use codex_login::CodexAuth;
-use codex_model_provider::create_model_provider;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_utils_output_truncation::TruncationPolicy;
+use genex_login::AuthHeaders;
+use genex_login::AuthManager;
+use genex_login::CodexAuth;
+use genex_model_provider::create_model_provider;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_utils_output_truncation::TruncationPolicy;
 use http::HeaderMap;
 use http::HeaderValue;
 use pretty_assertions::assert_eq;

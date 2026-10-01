@@ -7,8 +7,8 @@ use crate::app_event::ManagedWorktreeTransition;
 use crate::app_server_session::ForkGoalContinuation::DeferUntilNextTurn;
 use crate::history_cell::McpInventoryLoadingCell as LoadingCell;
 use crate::terminal_visualization_instructions::with_terminal_visualization_instructions;
-use codex_app_server_protocol::ThreadBackgroundTerminalsListParams;
-use codex_app_server_protocol::ThreadBackgroundTerminalsListResponse as ListResponse;
+use genex_app_server_protocol::ThreadBackgroundTerminalsListParams;
+use genex_app_server_protocol::ThreadBackgroundTerminalsListResponse as ListResponse;
 
 enum DestinationConfig {
     Load,
@@ -147,8 +147,8 @@ impl App {
         app_server: &mut AppServerSession,
         cwd: AbsolutePathBuf,
         managed_worktree: Option<(
-            codex_worktree::WorktreeManager,
-            codex_worktree::ManagedWorktree,
+            genex_worktree::WorktreeManager,
+            genex_worktree::ManagedWorktree,
             crate::app_event::ManagedWorktreeMode,
             Option<String>,
         )>,

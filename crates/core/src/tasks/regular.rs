@@ -10,7 +10,7 @@ use crate::session::turn::run_turn;
 use crate::session::turn_context::TurnContext;
 use crate::session_startup_prewarm::SessionStartupPrewarmResolution;
 use crate::state::TaskKind;
-use codex_thread_store::PersistContext;
+use genex_thread_store::PersistContext;
 use tracing::Instrument;
 use tracing::trace_span;
 

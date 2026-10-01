@@ -4,17 +4,17 @@ use super::super::bedrock_auth::ensure_user_model_provider_can_be_bedrock;
 use super::AccountRequestProcessor;
 use crate::error_code::internal_error;
 use crate::error_code::invalid_request;
-use codex_app_server_protocol::AwsCredentialType;
-use codex_app_server_protocol::BedrockAwsProfile;
-use codex_app_server_protocol::BedrockDiscoverParams;
-use codex_app_server_protocol::BedrockDiscoverResponse;
-use codex_app_server_protocol::BedrockEnvironmentCredential;
-use codex_app_server_protocol::BedrockSetupParams;
-use codex_app_server_protocol::BedrockSetupResponse;
-use codex_app_server_protocol::ClientResponsePayload;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_login::CodexAuth;
-use codex_model_provider::is_supported_amazon_bedrock_region;
+use genex_app_server_protocol::AwsCredentialType;
+use genex_app_server_protocol::BedrockAwsProfile;
+use genex_app_server_protocol::BedrockDiscoverParams;
+use genex_app_server_protocol::BedrockDiscoverResponse;
+use genex_app_server_protocol::BedrockEnvironmentCredential;
+use genex_app_server_protocol::BedrockSetupParams;
+use genex_app_server_protocol::BedrockSetupResponse;
+use genex_app_server_protocol::ClientResponsePayload;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_login::CodexAuth;
+use genex_model_provider::is_supported_amazon_bedrock_region;
 
 const AWS_ACCESS_KEY_ID: &str = "AWS_ACCESS_KEY_ID";
 const AWS_SECRET_ACCESS_KEY: &str = "AWS_SECRET_ACCESS_KEY";
@@ -26,7 +26,7 @@ impl AccountRequestProcessor {
         _params: BedrockDiscoverParams,
     ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
         self.ensure_bedrock_login_allowed()?;
-        let profiles = codex_aws_auth::discover_aws_profiles()
+        let profiles = genex_aws_auth::discover_aws_profiles()
             .await
             .map_err(|err| internal_error(format!("failed to discover AWS profiles: {err}")))?
             .into_iter()
@@ -98,7 +98,7 @@ impl AccountRequestProcessor {
                 if profile.is_empty() {
                     return Err(invalid_request("AWS profile name must not be empty."));
                 }
-                codex_aws_auth::validate_aws_profile(profile, region)
+                genex_aws_auth::validate_aws_profile(profile, region)
                     .await
                     .map_err(|err| {
                         invalid_request(format!(

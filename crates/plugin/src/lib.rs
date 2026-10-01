@@ -1,6 +1,6 @@
 //! Shared plugin package models, source providers, identifiers, and telemetry summaries.
 
-pub use codex_utils_plugins::mention_syntax;
+pub use genex_utils_plugins::mention_syntax;
 
 mod bundled_hooks;
 mod load_outcome;
@@ -9,9 +9,9 @@ mod plugin_id;
 mod provider;
 
 pub use bundled_hooks::is_allowlisted_bundled_cleanup_hook;
-use codex_config::HookEventsToml;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_config::HookEventsToml;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 pub use load_outcome::LoadedPlugin;
 pub use load_outcome::PluginLoadOutcome;
 pub use load_outcome::prompt_safe_plugin_description;

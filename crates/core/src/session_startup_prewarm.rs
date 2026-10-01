@@ -17,12 +17,12 @@ use crate::session::INITIAL_SUBMIT_ID;
 use crate::session::RequestEffortUsage;
 use crate::session::session::Session;
 use crate::session::turn::build_prompt;
-use codex_features::Feature;
-use codex_otel::STARTUP_PREWARM_AGE_AT_FIRST_TURN_METRIC;
-use codex_otel::STARTUP_PREWARM_DURATION_METRIC;
-use codex_otel::SessionTelemetry;
-use codex_protocol::error::Result as CodexResult;
-use codex_protocol::models::BaseInstructions;
+use genex_features::Feature;
+use genex_otel::STARTUP_PREWARM_AGE_AT_FIRST_TURN_METRIC;
+use genex_otel::STARTUP_PREWARM_DURATION_METRIC;
+use genex_otel::SessionTelemetry;
+use genex_protocol::error::Result as CodexResult;
+use genex_protocol::models::BaseInstructions;
 
 pub(crate) struct SessionStartupPrewarmHandle {
     task: AbortOnDropHandle<CodexResult<ModelClientSession>>,

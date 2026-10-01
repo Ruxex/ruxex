@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use codex_exec_server::Environment;
-use codex_exec_server::HttpHeader;
+use genex_exec_server::Environment;
+use genex_exec_server::HttpHeader;
 use pretty_assertions::assert_eq;
 use wiremock::Mock;
 use wiremock::MockServer;

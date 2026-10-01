@@ -1,21 +1,21 @@
 use anyhow::Result;
-use codex_core::TurnInputRequest;
-use codex_core::config::Config;
-use codex_features::Feature;
-use codex_login::CodexAuth;
-use codex_models_manager::manager::RefreshStrategy;
-use codex_models_manager::manager::SharedModelsManager;
-use codex_models_manager::model_info::model_info_from_slug;
-use codex_protocol::model_types::InputModality;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelPreset;
-use codex_protocol::model_types::ModelVisibility;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::model_types::ToolMode;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
+use genex_core::TurnInputRequest;
+use genex_core::config::Config;
+use genex_features::Feature;
+use genex_login::CodexAuth;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_models_manager::manager::SharedModelsManager;
+use genex_models_manager::model_info::model_info_from_slug;
+use genex_protocol::model_types::InputModality;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelPreset;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ToolMode;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -76,7 +76,7 @@ async fn wait_for_model_available(manager: &SharedModelsManager, slug: &str) -> 
         if let Some(model) = manager
             .list_models(
                 RefreshStrategy::Online,
-                codex_core::test_support::default_http_client_factory(),
+                genex_core::test_support::default_http_client_factory(),
             )
             .await
             .iter()
@@ -179,8 +179,8 @@ async fn remote_tool_mode_selector_overrides_feature_flags() -> Result<()> {
     assert!(
         direct_tools
             .iter()
-            .all(|name| name != codex_code_mode::PUBLIC_TOOL_NAME
-                && name != codex_code_mode::WAIT_TOOL_NAME),
+            .all(|name| name != genex_code_mode::PUBLIC_TOOL_NAME
+                && name != genex_code_mode::WAIT_TOOL_NAME),
         "direct mode should override enabled code mode flags: {direct_tools:?}"
     );
 
@@ -192,8 +192,8 @@ async fn remote_tool_mode_selector_overrides_feature_flags() -> Result<()> {
         tool_names(&code_mode_only_body),
         vec![
             // Code-mode entrypoints.
-            codex_code_mode::PUBLIC_TOOL_NAME.to_string(),
-            codex_code_mode::WAIT_TOOL_NAME.to_string(),
+            genex_code_mode::PUBLIC_TOOL_NAME.to_string(),
+            genex_code_mode::WAIT_TOOL_NAME.to_string(),
             "request_user_input".to_string(),
             // Hosted Responses tool.
             "web_search".to_string(),
@@ -211,7 +211,7 @@ async fn remote_tool_mode_selector_overrides_feature_flags() -> Result<()> {
     assert!(
         tool_names(&unsupported_response.body)
             .iter()
-            .any(|name| name == codex_code_mode::PUBLIC_TOOL_NAME)
+            .any(|name| name == genex_code_mode::PUBLIC_TOOL_NAME)
     );
     assert_eq!(
         unsupported_response
@@ -243,10 +243,10 @@ async fn remote_code_mode_only_selector_fails_closed_when_host_is_disabled() -> 
     assert!(
         tools
             .iter()
-            .any(|name| name == codex_code_mode::PUBLIC_TOOL_NAME)
+            .any(|name| name == genex_code_mode::PUBLIC_TOOL_NAME)
             && tools
                 .iter()
-                .any(|name| name == codex_code_mode::WAIT_TOOL_NAME),
+                .any(|name| name == genex_code_mode::WAIT_TOOL_NAME),
         "code-mode-only must retain code-mode tools: {tools:?}"
     );
     assert!(

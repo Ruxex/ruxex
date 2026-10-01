@@ -14,12 +14,12 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 use chrono::SecondsFormat;
-use codex_protocol::RolloutId;
-use codex_protocol::SessionId;
-use codex_protocol::ThreadId;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_protocol::dynamic_tools::DynamicToolSpec;
-use codex_protocol::models::BaseInstructions;
+use genex_protocol::RolloutId;
+use genex_protocol::SessionId;
+use genex_protocol::ThreadId;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_protocol::dynamic_tools::DynamicToolSpec;
+use genex_protocol::models::BaseInstructions;
 use serde_json::Value;
 use time::OffsetDateTime;
 use time::format_description::FormatItem;
@@ -60,19 +60,19 @@ use crate::RolloutItem;
 use crate::config::RolloutConfigView;
 use crate::state_db;
 use crate::state_db::StateDbHandle;
-use codex_git_utils::collect_git_info;
-use codex_git_utils::get_git_repo_root;
-use codex_protocol::protocol::GitInfo as ProtocolGitInfo;
-use codex_protocol::protocol::HistoryPosition;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::SessionContextWindow;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadSource;
-use codex_state::StateRuntime;
-use codex_utils_path as path_utils;
+use genex_git_utils::collect_git_info;
+use genex_git_utils::get_git_repo_root;
+use genex_protocol::protocol::GitInfo as ProtocolGitInfo;
+use genex_protocol::protocol::HistoryPosition;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::SessionContextWindow;
+use genex_protocol::protocol::SessionMeta;
+use genex_protocol::protocol::SessionMetaLine;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::ThreadSource;
+use genex_state::StateRuntime;
+use genex_utils_path as path_utils;
 
 /// Writes canonical session rollout items to JSONL.
 ///
@@ -583,7 +583,7 @@ impl RolloutRecorder {
         if state_db_ctx.is_none() {
             // Keep legacy behavior when SQLite is unavailable: return filesystem results
             // at the requested page size.
-            codex_state::record_fallback(
+            genex_state::record_fallback(
                 "list_threads",
                 "db_unavailable",
                 /*telemetry_override*/ None,
@@ -722,7 +722,7 @@ impl RolloutRecorder {
                     }
                     return Ok(db_page.into());
                 }
-                codex_state::record_fallback(
+                genex_state::record_fallback(
                     "list_threads",
                     "metadata_filter",
                     /*telemetry_override*/ None,
@@ -738,7 +738,7 @@ impl RolloutRecorder {
         }
         if listing_has_metadata_filters {
             let page = page_from_filesystem_scan(fs_page, sort_direction, page_size, sort_key);
-            codex_state::record_fallback(
+            genex_state::record_fallback(
                 "list_threads",
                 "db_error",
                 /*telemetry_override*/ None,
@@ -752,7 +752,7 @@ impl RolloutRecorder {
         // If SQLite listing still fails, return the filesystem page rather than failing the list.
         tracing::error!("Falling back on rollout system");
         tracing::warn!("state db discrepancy during list_threads_with_db_fallback: falling_back");
-        codex_state::record_fallback("list_threads", "db_error", /*telemetry_override*/ None);
+        genex_state::record_fallback("list_threads", "db_error", /*telemetry_override*/ None);
         Ok(page_from_filesystem_scan(
             fs_page,
             sort_direction,
@@ -815,7 +815,7 @@ impl RolloutRecorder {
             }
         }
         if let Some(reason) = fallback_reason {
-            codex_state::record_fallback(
+            genex_state::record_fallback(
                 "find_latest_thread_path",
                 reason,
                 /*telemetry_override*/ None,
@@ -2003,9 +2003,9 @@ impl JsonlWriter {
     }
 }
 
-impl From<codex_state::ThreadsPage> for ThreadsPage {
-    fn from(db_page: codex_state::ThreadsPage) -> Self {
-        let codex_state::ThreadsPage {
+impl From<genex_state::ThreadsPage> for ThreadsPage {
+    fn from(db_page: genex_state::ThreadsPage) -> Self {
+        let genex_state::ThreadsPage {
             items,
             parent_thread_ids,
             next_anchor,
@@ -2028,7 +2028,7 @@ impl From<codex_state::ThreadsPage> for ThreadsPage {
 }
 
 fn thread_item_from_state_metadata(
-    item: codex_state::ThreadMetadata,
+    item: genex_state::ThreadMetadata,
     parent_thread_id: Option<ThreadId>,
 ) -> ThreadItem {
     ThreadItem {
@@ -2122,7 +2122,7 @@ async fn resume_candidate_matches_cwd(
 }
 
 async fn select_resume_path_from_db_page(
-    page: &codex_state::ThreadsPage,
+    page: &genex_state::ThreadsPage,
     filter_cwd: Option<&Path>,
     default_provider: &str,
 ) -> Option<PathBuf> {

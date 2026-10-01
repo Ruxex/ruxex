@@ -2,7 +2,7 @@
 //! Missing templates produce a warning; supplied empty templates remain valid input.
 
 use crate::ResolvedModelMessages;
-use codex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelInfo;
 
 /// Renders base instructions from the caller's captured model, retaining missing-template warnings.
 pub fn render_model_instructions(model_info: &ModelInfo) -> String {

@@ -262,7 +262,7 @@ mod tests {
             command.get_args().collect::<Vec<_>>(),
             [
                 OsStr::new("-c"),
-                OsStr::new(codex_git_utils::SAFE_BARE_REPOSITORY_CONFIG),
+                OsStr::new(genex_git_utils::SAFE_BARE_REPOSITORY_CONFIG),
             ]
         );
         assert_eq!(

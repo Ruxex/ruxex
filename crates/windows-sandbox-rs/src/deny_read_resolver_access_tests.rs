@@ -1,12 +1,12 @@
 use super::resolve_windows_deny_read_paths;
 use super::walker::DirectoryScanMode;
 use super::walker::collect_existing_glob_directory_matches;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::ReadDenyMatcher;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::ReadDenyMatcher;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::collections::HashSet;
 use std::path::Path;
@@ -117,7 +117,7 @@ fn protected_directory_does_not_discard_accessible_deny_matches() {
             }
         }
         let result = crate::run_windows_sandbox_capture(
-            &codex_protocol::models::PermissionProfile::workspace_write(),
+            &genex_protocol::models::PermissionProfile::workspace_write(),
             std::slice::from_ref(&cwd),
             codex_home.path(),
             vec![

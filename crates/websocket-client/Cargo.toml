@@ -1,11 +1,11 @@
 [package]
-name = "codex-websocket-client"
+name = "genex-websocket-client"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
-codex-http-client = { workspace = true }
+genex-http-client = { workspace = true }
 futures = { workspace = true }
 rustls = { workspace = true }
 tokio = { workspace = true, features = ["net", "rt", "time"] }
@@ -14,7 +14,7 @@ tokio-tungstenite = { workspace = true }
 url = { workspace = true }
 
 [dev-dependencies]
-codex-utils-rustls-provider = { workspace = true }
+genex-utils-rustls-provider = { workspace = true }
 pretty_assertions = { workspace = true }
 rcgen = { workspace = true }
 tokio = { workspace = true, features = ["macros", "test-util"] }

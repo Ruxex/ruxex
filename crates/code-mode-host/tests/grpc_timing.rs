@@ -6,16 +6,16 @@ use std::time::Instant;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_code_mode::CodeModeSessionProvider;
-use codex_code_mode::ExecuteRequest;
-use codex_code_mode::GrpcCodeModeSessionProvider;
-use codex_code_mode::NoopCodeModeSessionDelegate;
-use codex_code_mode::ProcessOwnedCodeModeSessionProvider;
-use codex_code_mode::RuntimeResponse;
-use codex_code_mode::WaitOutcome;
-use codex_code_mode::WaitRequest;
-use codex_code_mode_protocol::grpc;
-use codex_code_mode_protocol::grpc::code_mode_host_client::CodeModeHostClient;
+use genex_code_mode::CodeModeSessionProvider;
+use genex_code_mode::ExecuteRequest;
+use genex_code_mode::GrpcCodeModeSessionProvider;
+use genex_code_mode::NoopCodeModeSessionDelegate;
+use genex_code_mode::ProcessOwnedCodeModeSessionProvider;
+use genex_code_mode::RuntimeResponse;
+use genex_code_mode::WaitOutcome;
+use genex_code_mode::WaitRequest;
+use genex_code_mode_protocol::grpc;
+use genex_code_mode_protocol::grpc::code_mode_host_client::CodeModeHostClient;
 use pretty_assertions::assert_eq;
 use tokio::time::sleep;
 use tokio::time::timeout;
@@ -115,7 +115,7 @@ async fn execution_timing_includes_javascript_but_excludes_delayed_reads() -> Re
 #[tokio::test]
 async fn stdio_execution_timing_includes_javascript_but_excludes_delayed_reads() -> Result<()> {
     let provider = ProcessOwnedCodeModeSessionProvider::with_host_program(
-        codex_utils_cargo_bin::cargo_bin("codex-code-mode-host")?,
+        genex_utils_cargo_bin::cargo_bin("codex-code-mode-host")?,
     );
     let delegate = Arc::new(RecordingDelegate::default());
     let session = provider
@@ -181,7 +181,7 @@ async fn observation_timing_excludes_previous_requests_and_background_time() -> 
     let host = HostHarness::start("grpc://127.0.0.1:0").await?;
     let providers: [Arc<dyn CodeModeSessionProvider>; 2] = [
         Arc::new(ProcessOwnedCodeModeSessionProvider::with_host_program(
-            codex_utils_cargo_bin::cargo_bin("codex-code-mode-host")?,
+            genex_utils_cargo_bin::cargo_bin("codex-code-mode-host")?,
         )),
         Arc::new(GrpcCodeModeSessionProvider::new(host.endpoint)),
     ];

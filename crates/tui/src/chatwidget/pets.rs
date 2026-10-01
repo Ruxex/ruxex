@@ -1,7 +1,7 @@
 //! Chat widget helpers for ambient terminal pets and the pets picker.
 
 use super::*;
-use codex_config::types::TuiPetAnchor;
+use genex_config::types::TuiPetAnchor;
 
 pub(super) fn load_ambient_pet(
     config: &crate::local_settings::LocalSettings,
@@ -26,7 +26,7 @@ pub(super) fn start_configured_pet_load_if_needed(
     ambient_pet_missing: bool,
     frame_requester: FrameRequester,
     app_event_tx: AppEventSender,
-    pet_http_client: codex_http_client::RouteAwareClientPool,
+    pet_http_client: genex_http_client::RouteAwareClientPool,
 ) {
     let Some(pet_id) = config.tui.pet.clone() else {
         return;

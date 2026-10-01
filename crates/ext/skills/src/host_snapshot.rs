@@ -2,7 +2,7 @@ use std::io;
 use std::sync::Arc;
 
 use crate::SkillLoadOutcome;
-use codex_skills::SkillMetadata;
+use genex_skills::SkillMetadata;
 
 /// Immutable snapshot of host-owned skills and their source filesystems.
 #[derive(Debug, Clone)]

@@ -38,7 +38,7 @@ impl fmt::Debug for WindowsSandboxCancellationToken {
     }
 }
 
-pub use codex_protocol::config_types::WindowsSandboxProxySettingsMode;
+pub use genex_protocol::config_types::WindowsSandboxProxySettingsMode;
 
 /// Network settings installed by an administrator during managed Windows sandbox setup.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
@@ -455,8 +455,8 @@ mod windows_impl {
     use super::spawn_prep::prepare_legacy_spawn_context;
     use super::spawn_prep::root_capability_sids;
     use anyhow::Result;
-    use codex_protocol::models::PermissionProfile;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use genex_protocol::models::PermissionProfile;
+    use genex_utils_absolute_path::AbsolutePathBuf;
     use std::collections::HashMap;
     use std::io;
     use std::path::Path;
@@ -856,8 +856,8 @@ mod windows_impl {
     #[cfg(test)]
     mod tests {
         use crate::resolved_permissions::ResolvedWindowsSandboxPermissions;
-        use codex_protocol::models::PermissionProfile;
-        use codex_protocol::permissions::NetworkSandboxPolicy;
+        use genex_protocol::models::PermissionProfile;
+        use genex_protocol::permissions::NetworkSandboxPolicy;
         use std::collections::HashMap;
         use std::path::Path;
 
@@ -924,8 +924,8 @@ mod stub {
     use super::WindowsSandboxCancellationToken;
     use anyhow::Result;
     use anyhow::bail;
-    use codex_protocol::models::PermissionProfile;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use genex_protocol::models::PermissionProfile;
+    use genex_utils_absolute_path::AbsolutePathBuf;
     use std::collections::HashMap;
     use std::path::Path;
 

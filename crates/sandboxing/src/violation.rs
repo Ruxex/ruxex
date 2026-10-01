@@ -1,7 +1,7 @@
 use crate::SandboxType;
-use codex_network_proxy::BlockedRequest;
-use codex_network_proxy::NetworkMode;
-use codex_protocol::exec_output::ExecToolCallOutput;
+use genex_network_proxy::BlockedRequest;
+use genex_network_proxy::NetworkMode;
+use genex_protocol::exec_output::ExecToolCallOutput;
 use tracing::warn;
 
 #[cfg(unix)]

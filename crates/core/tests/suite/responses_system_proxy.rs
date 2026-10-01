@@ -1,6 +1,6 @@
 use anyhow::Result;
-use codex_features::Feature;
-use codex_models_manager::test_support::test_models_response;
+use genex_features::Feature;
+use genex_models_manager::test_support::test_models_response;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
@@ -74,7 +74,7 @@ async fn regular_responses_turn_honors_respect_system_proxy() -> Result<()> {
 
         let mut command = Command::new(std::env::current_exe()?);
         command.arg("--exact").arg(TEST_NAME);
-        for &key in codex_network_proxy::PROXY_ENV_KEYS {
+        for &key in genex_network_proxy::PROXY_ENV_KEYS {
             command.env_remove(key);
         }
         // Keep the test harness's loopback HTTP and WebSocket traffic out of the proxy. The fake
@@ -83,8 +83,8 @@ async fn regular_responses_turn_honors_respect_system_proxy() -> Result<()> {
             .env(SYSTEM_PROXY_TEST_SUBPROCESS_ENV_VAR, "1")
             .env("HTTP_PROXY", &proxy_url)
             .env("http_proxy", proxy_url)
-            .env("NO_PROXY", codex_network_proxy::DEFAULT_NO_PROXY_VALUE)
-            .env("no_proxy", codex_network_proxy::DEFAULT_NO_PROXY_VALUE);
+            .env("NO_PROXY", genex_network_proxy::DEFAULT_NO_PROXY_VALUE)
+            .env("no_proxy", genex_network_proxy::DEFAULT_NO_PROXY_VALUE);
 
         let output = command.output().await?;
         if !output.status.success() {

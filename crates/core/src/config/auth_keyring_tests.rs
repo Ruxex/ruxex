@@ -1,15 +1,15 @@
 use super::*;
-use codex_config::ConfigLayerStack;
-use codex_config::ConfigRequirements;
-use codex_config::ConfigRequirementsToml;
-use codex_config::FeatureRequirementsToml;
-use codex_config::RequirementSource;
-use codex_config::Sourced;
-use codex_config::config_toml::ConfigToml;
-use codex_config::config_toml::ForcedManagedWorkspaceIds;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_features::FeaturesToml;
-use codex_protocol::config_types::ForcedLoginMethod;
+use genex_config::ConfigLayerStack;
+use genex_config::ConfigRequirements;
+use genex_config::ConfigRequirementsToml;
+use genex_config::FeatureRequirementsToml;
+use genex_config::RequirementSource;
+use genex_config::Sourced;
+use genex_config::config_toml::ConfigToml;
+use genex_config::config_toml::ForcedManagedWorkspaceIds;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_features::FeaturesToml;
+use genex_protocol::config_types::ForcedLoginMethod;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 

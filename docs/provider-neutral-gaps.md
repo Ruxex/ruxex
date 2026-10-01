@@ -27,7 +27,7 @@ provider 固有機能の除去後に残ったコードを調査し、汎用プ�
 
 ### 現状
 
-[`ClientToolCatalog::refresh`](../crates/codex-mcp/src/client_tool_catalog.rs) は、fetch・publication・revision 管理・実行中 call との整合性を実装している。現在は `McpConnectionSet` の server 単位 API からこの処理を呼び出せる。
+[`ClientToolCatalog::refresh`](../crates/genex-mcp/src/client_tool_catalog.rs) は、fetch・publication・revision 管理・実行中 call との整合性を実装している。現在は `McpConnectionSet` の server 単位 API からこの処理を呼び出せる。
 
 以前の呼び出し側は ChatGPT Apps/Connectors の専用カタログ更新処理だった。これは provider のモデルプロバイダ機能ではなく、Apps の削除時に呼び出し側が削除されたものだが、通常の MCP server に対しても次のような更新要求は汎用機能になり得る。
 

@@ -1,4 +1,4 @@
-# codex-shell-escalation
+# genex-shell-escalation
 
 This crate contains the Unix shell-escalation protocol implementation and the
 `codex-execve-wrapper` executable.

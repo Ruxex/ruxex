@@ -7,8 +7,8 @@
 //! canonical target to avoid duplicate file references.
 //!
 
-use codex_utils_path_uri::PathUri;
-use codex_utils_string::normalize_markdown_hash_location_suffix;
+use genex_utils_path_uri::PathUri;
+use genex_utils_string::normalize_markdown_hash_location_suffix;
 use regex_lite::Regex;
 use std::path::Path;
 use std::sync::LazyLock;

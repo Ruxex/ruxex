@@ -5,30 +5,30 @@ use app_test_support::create_fake_paginated_rollout;
 use app_test_support::create_fake_parented_rollout_with_source;
 use app_test_support::create_fake_rollout;
 use app_test_support::rollout_path;
-use codex_app_server_client::AppServerEvent;
-use codex_app_server_protocol::ClientNotification;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCRequest;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::SortDirection;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_app_server_protocol::ThreadItemsListParams;
-use codex_app_server_protocol::ThreadItemsListResponse;
-use codex_app_server_protocol::ThreadStatus;
-use codex_protocol::AgentPath;
-use codex_protocol::items::AgentMessageContent;
-use codex_protocol::items::AgentMessageItem;
-use codex_protocol::items::EnteredReviewModeItem;
-use codex_protocol::items::ExitedReviewModeItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::items::UserMessageItem;
-use codex_protocol::protocol::ItemCompletedEvent;
-use codex_protocol::protocol::ReviewTarget;
-use codex_protocol::user_input::UserInput as CoreUserInput;
-use codex_state::SqliteConfig;
+use genex_app_server_client::AppServerEvent;
+use genex_app_server_protocol::ClientNotification;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::JSONRPCRequest;
+use genex_app_server_protocol::JSONRPCResponse;
+use genex_app_server_protocol::SortDirection;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_app_server_protocol::ThreadItemsListParams;
+use genex_app_server_protocol::ThreadItemsListResponse;
+use genex_app_server_protocol::ThreadStatus;
+use genex_protocol::AgentPath;
+use genex_protocol::items::AgentMessageContent;
+use genex_protocol::items::AgentMessageItem;
+use genex_protocol::items::EnteredReviewModeItem;
+use genex_protocol::items::ExitedReviewModeItem;
+use genex_protocol::items::TurnItem;
+use genex_protocol::items::UserMessageItem;
+use genex_protocol::protocol::ItemCompletedEvent;
+use genex_protocol::protocol::ReviewTarget;
+use genex_protocol::user_input::UserInput as CoreUserInput;
+use genex_state::SqliteConfig;
 use futures::SinkExt;
 use futures::StreamExt;
 use pretty_assertions::assert_eq;
@@ -115,7 +115,7 @@ async fn same_thread_retry_keeps_subscription_and_restores_draft() -> Result<()>
     crate::legacy_core::config::set_project_trust_level(
         app.config.codex_home.as_path(),
         app.config.cwd.as_path(),
-        codex_protocol::config_types::TrustLevel::Trusted,
+        genex_protocol::config_types::TrustLevel::Trusted,
     )
     .map_err(std::io::Error::other)?;
     app.harness_overrides.cwd = Some(app.config.cwd.to_path_buf());
@@ -266,15 +266,15 @@ pub(super) async fn start_recording_app_server_with_realtime_speech(
         crate::init_state_db_for_app_server_target(config, &crate::AppServerTarget::Embedded)
             .await?;
     let mut embedded = crate::start_embedded_app_server(
-        codex_arg0::Arg0DispatchPaths::default(),
+        genex_arg0::Arg0DispatchPaths::default(),
         config.clone(),
         Vec::new(),
         loader_overrides,
         /*strict_config*/ false,
-        codex_config::CloudConfigBundleLoader::default(),
+        genex_config::CloudConfigBundleLoader::default(),
         /*log_db*/ None,
         state_db,
-        Arc::new(codex_exec_server::EnvironmentManager::default_for_tests()),
+        Arc::new(genex_exec_server::EnvironmentManager::default_for_tests()),
     )
     .await?;
     let codex_home = config.codex_home.display().to_string();
@@ -293,7 +293,7 @@ pub(super) async fn start_recording_app_server_with_realtime_speech(
                 frame = websocket.next() => frame,
                 event = embedded.next_event() => {
                     let Some(event) = event else { break };
-                    if let codex_app_server_client::InProcessServerEvent::ServerNotification(notification) = event
+                    if let genex_app_server_client::InProcessServerEvent::ServerNotification(notification) = event
                         && matches!(*notification, ServerNotification::ThreadSettingsUpdated(_))
                     {
                         websocket.send(Message::Text(serde_json::to_string(&notification)?.into())).await?;
@@ -801,7 +801,7 @@ fn spawn_approved_task_tool_call(
     app: &App,
     app_server: &AppServerSession,
     request_id: AppServerRequestId,
-    params: codex_app_server_protocol::DynamicToolCallParams,
+    params: genex_app_server_protocol::DynamicToolCallParams,
 ) {
     let request_handle = app_server.request_handle();
     let app_event_tx = app.app_event_tx.clone();
@@ -985,7 +985,7 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
     app.config.sqlite = SqliteConfig::new_for_testing(codex_home.path().abs());
     app.config
         .web_search_mode
-        .set(codex_protocol::config_types::WebSearchMode::Live)?;
+        .set(genex_protocol::config_types::WebSearchMode::Live)?;
     std::fs::write(
         codex_home.path().join("config.toml"),
         "web_search = \"disabled\"\n",
@@ -1020,14 +1020,14 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
     .await?;
     assert!(startup.task_tools_available);
 
-    let inventory: codex_app_server_protocol::ListMcpServerStatusResponse = app_server
+    let inventory: genex_app_server_protocol::ListMcpServerStatusResponse = app_server
         .request_handle()
         .request_typed(ClientRequest::McpServerStatusList {
             request_id: AppServerRequestId::String("tui-tool-inventory".to_string()),
-            params: codex_app_server_protocol::ListMcpServerStatusParams {
+            params: genex_app_server_protocol::ListMcpServerStatusParams {
                 cursor: None,
                 limit: None,
-                detail: Some(codex_app_server_protocol::McpServerStatusDetail::ToolsAndAuthOnly),
+                detail: Some(genex_app_server_protocol::McpServerStatusDetail::ToolsAndAuthOnly),
                 thread_id: Some(thread_id.to_string()),
             },
         })
@@ -1075,7 +1075,7 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
     let mcp_url = starts[0]["config"]["mcp_servers.codex_tui"]["url"]
         .as_str()
         .expect("MCP server URL");
-    let unauthorized = codex_http_client::HttpClientBuilder::new()
+    let unauthorized = genex_http_client::HttpClientBuilder::new()
         .build_direct()?
         .post(mcp_url)
         .send()
@@ -1084,7 +1084,7 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
 
     app.config
         .web_search_mode
-        .set(codex_protocol::config_types::WebSearchMode::Disabled)?;
+        .set(genex_protocol::config_types::WebSearchMode::Disabled)?;
     let delegation_source = create_history_rollout(
         &app.config,
         ThreadHistoryMode::Paginated,
@@ -1131,7 +1131,7 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
         starts[0]["config"]["mcp_servers.codex_tui"]["http_headers"]["Authorization"]
             .as_str()
             .expect("MCP bearer token");
-    let client = codex_http_client::HttpClientBuilder::new().build_direct()?;
+    let client = genex_http_client::HttpClientBuilder::new().build_direct()?;
     let call_tool = |id: u32, tool: &'static str, arguments: serde_json::Value| {
         client
             .post(mcp_url)
@@ -1265,13 +1265,13 @@ async fn local_mcp_respects_configured_servers_and_managed_requirements() -> Res
     for scenario in ["conflicting", "blocked", "mismatched", "allowed"] {
         let (mut app, _codex_home) = make_history_test_app().await?;
         if scenario == "conflicting" {
-            let raw = serde_json::from_value::<codex_config::RawMcpServerConfig>(
+            let raw = serde_json::from_value::<genex_config::RawMcpServerConfig>(
                 serde_json::json!({"url": "http://127.0.0.1:1/mcp", "enabled": false}),
             )?;
             let mut servers = app.config.mcp_servers.get().clone();
             servers.insert(
                 crate::dynamic_tools::NAMESPACE.to_string(),
-                codex_config::McpServerConfig::try_from(raw)
+                genex_config::McpServerConfig::try_from(raw)
                     .map_err(color_eyre::eyre::Report::msg)?,
             );
             app.config.mcp_servers.set(servers)?;
@@ -1279,31 +1279,31 @@ async fn local_mcp_respects_configured_servers_and_managed_requirements() -> Res
             let mut allowed_servers = std::collections::BTreeMap::new();
             if matches!(scenario, "mismatched" | "allowed") {
                 let requirement = if scenario == "allowed" {
-                    codex_config::McpServerRequirement::Url(
-                        codex_protocol::mcp_policy::McpServerValueMatcher::Prefix {
+                    genex_config::McpServerRequirement::Url(
+                        genex_protocol::mcp_policy::McpServerValueMatcher::Prefix {
                             value: "http://127.0.0.1:".to_string(),
                         },
                     )
                 } else {
-                    codex_config::McpServerRequirement::Identity {
-                        identity: codex_config::McpServerIdentity::Url {
+                    genex_config::McpServerRequirement::Identity {
+                        identity: genex_config::McpServerIdentity::Url {
                             url: "http://127.0.0.1:1/mcp".to_string(),
                         },
                     }
                 };
                 allowed_servers.insert(crate::dynamic_tools::NAMESPACE.to_string(), requirement);
             }
-            let requirements = codex_config::ConfigRequirements {
-                mcp_servers: Some(codex_config::Sourced::new(
+            let requirements = genex_config::ConfigRequirements {
+                mcp_servers: Some(genex_config::Sourced::new(
                     allowed_servers,
-                    codex_config::RequirementSource::Unknown,
+                    genex_config::RequirementSource::Unknown,
                 )),
                 ..Default::default()
             };
-            app.config.config_layer_stack = codex_config::ConfigLayerStack::new(
+            app.config.config_layer_stack = genex_config::ConfigLayerStack::new(
                 Vec::new(),
                 requirements,
-                codex_config::ConfigRequirementsToml::default(),
+                genex_config::ConfigRequirementsToml::default(),
             )?;
         }
         let (mut app_server, requests, proxy) = start_recording_app_server(
@@ -1404,10 +1404,10 @@ async fn embedded_server_rejects_unowned_dynamic_tool_calls() -> Result<()> {
     let app_server = crate::start_embedded_app_server_for_picker(&app.config).await?;
     app.handle_app_server_event(
         &app_server,
-        codex_app_server_client::AppServerEvent::ServerRequest(Box::new(
+        genex_app_server_client::AppServerEvent::ServerRequest(Box::new(
             ServerRequest::DynamicToolCall {
                 request_id: AppServerRequestId::Integer(100),
-                params: codex_app_server_protocol::DynamicToolCallParams {
+                params: genex_app_server_protocol::DynamicToolCallParams {
                     thread_id: "thread-1".to_string(),
                     turn_id: "turn-1".to_string(),
                     call_id: "call-1".to_string(),
@@ -1440,7 +1440,7 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
         .permissions
         .set_permission_profile(PermissionProfile::workspace_write_with(
             &[app.config.cwd.clone()],
-            codex_protocol::permissions::NetworkSandboxPolicy::Restricted,
+            genex_protocol::permissions::NetworkSandboxPolicy::Restricted,
             /*exclude_tmpdir_env_var*/ true,
             /*exclude_slash_tmp*/ true,
         ))?;
@@ -1460,10 +1460,10 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
     for namespace in [Some("codex_app"), None] {
         app.handle_app_server_event(
             &app_server,
-            codex_app_server_client::AppServerEvent::ServerRequest(Box::new(
+            genex_app_server_client::AppServerEvent::ServerRequest(Box::new(
                 ServerRequest::DynamicToolCall {
                     request_id: AppServerRequestId::Integer(100),
-                    params: codex_app_server_protocol::DynamicToolCallParams {
+                    params: genex_app_server_protocol::DynamicToolCallParams {
                         thread_id: thread_id.clone(),
                         turn_id: "turn-1".to_string(),
                         call_id: "call-1".to_string(),
@@ -1480,10 +1480,10 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
 
     app.handle_app_server_event(
         &app_server,
-        codex_app_server_client::AppServerEvent::ServerRequest(Box::new(
+        genex_app_server_client::AppServerEvent::ServerRequest(Box::new(
             ServerRequest::DynamicToolCall {
                 request_id: AppServerRequestId::Integer(101),
-                params: codex_app_server_protocol::DynamicToolCallParams {
+                params: genex_app_server_protocol::DynamicToolCallParams {
                     thread_id: thread_id.clone(),
                     turn_id: "turn-1".to_string(),
                     call_id: "call-2".to_string(),
@@ -1537,10 +1537,10 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
 
     app.handle_app_server_event(
         &app_server,
-        codex_app_server_client::AppServerEvent::ServerRequest(Box::new(
+        genex_app_server_client::AppServerEvent::ServerRequest(Box::new(
             ServerRequest::DynamicToolCall {
                 request_id: AppServerRequestId::Integer(102),
-                params: codex_app_server_protocol::DynamicToolCallParams {
+                params: genex_app_server_protocol::DynamicToolCallParams {
                     thread_id: thread_id.clone(),
                     turn_id: "turn-1".to_string(),
                     call_id: "call-3".to_string(),
@@ -1571,10 +1571,10 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
     {
         app.handle_app_server_event(
             &app_server,
-            codex_app_server_client::AppServerEvent::ServerRequest(Box::new(
+            genex_app_server_client::AppServerEvent::ServerRequest(Box::new(
                 ServerRequest::DynamicToolCall {
                     request_id: AppServerRequestId::String(format!("rejected-{index}")),
-                    params: codex_app_server_protocol::DynamicToolCallParams {
+                    params: genex_app_server_protocol::DynamicToolCallParams {
                         thread_id: thread_id.clone(),
                         turn_id: "turn-1".to_string(),
                         call_id: format!("rejected-{index}"),
@@ -1608,13 +1608,13 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
             crate::app_server_session::ResumeModelSettings::RestoreFromThread,
         )
         .await?;
-    let project: codex_app_server_protocol::ProjectCreateResponse = app_server
+    let project: genex_app_server_protocol::ProjectCreateResponse = app_server
         .request_handle()
         .request_typed(ClientRequest::ProjectCreate {
             request_id: AppServerRequestId::String("create-source-project".to_string()),
-            params: codex_app_server_protocol::ProjectCreateParams {
+            params: genex_app_server_protocol::ProjectCreateParams {
                 name: "Source project".to_string(),
-                roots: vec![codex_app_server_protocol::ProjectRoot {
+                roots: vec![genex_app_server_protocol::ProjectRoot {
                     path: app.config.cwd.clone(),
                 }],
                 metadata: None,
@@ -1622,11 +1622,11 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
             },
         })
         .await?;
-    let _: codex_app_server_protocol::ThreadMetadataUpdateResponse = app_server
+    let _: genex_app_server_protocol::ThreadMetadataUpdateResponse = app_server
         .request_handle()
         .request_typed(ClientRequest::ThreadMetadataUpdate {
             request_id: AppServerRequestId::String("assign-source-project".to_string()),
-            params: codex_app_server_protocol::ThreadMetadataUpdateParams {
+            params: genex_app_server_protocol::ThreadMetadataUpdateParams {
                 thread_id: creation_source.to_string(),
                 project_id: Some(project.project.id.clone()),
                 daybreak_enabled: None,
@@ -1634,13 +1634,13 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
             },
         })
         .await?;
-    let source_settings: codex_app_server_protocol::ThreadResumeResponse = app_server
+    let source_settings: genex_app_server_protocol::ThreadResumeResponse = app_server
         .request_handle()
         .request_typed(ClientRequest::ThreadResume {
             request_id: AppServerRequestId::String("read-source-sandbox".to_string()),
-            params: codex_app_server_protocol::ThreadResumeParams {
+            params: genex_app_server_protocol::ThreadResumeParams {
                 thread_id: creation_source.to_string(),
-                ..codex_app_server_protocol::ThreadResumeParams::default()
+                ..genex_app_server_protocol::ThreadResumeParams::default()
             },
         })
         .await?;
@@ -1650,7 +1650,7 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
         &app,
         &app_server,
         AppServerRequestId::Integer(103),
-        codex_app_server_protocol::DynamicToolCallParams {
+        genex_app_server_protocol::DynamicToolCallParams {
             thread_id: creation_source.to_string(),
             turn_id: "turn-1".to_string(),
             call_id: "call-4".to_string(),
@@ -1722,7 +1722,7 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
     assert_eq!(turn["sandboxPolicy"], source_sandbox);
     app.handle_app_server_event(
         &app_server,
-        codex_app_server_client::AppServerEvent::ServerRequest(Box::new(exec_approval_request(
+        genex_app_server_client::AppServerEvent::ServerRequest(Box::new(exec_approval_request(
             created_thread_id,
             "turn-2",
             "item-1",
@@ -1739,7 +1739,7 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
         &app,
         &app_server,
         AppServerRequestId::Integer(104),
-        codex_app_server_protocol::DynamicToolCallParams {
+        genex_app_server_protocol::DynamicToolCallParams {
             thread_id: thread_id.clone(),
             turn_id: "turn-1".to_string(),
             call_id: "call-5".to_string(),
@@ -2072,7 +2072,7 @@ async fn remote_legacy_history_start_negotiates_once_for_resume_and_fork() -> Re
     let (_status_sender, status_updates) = tokio::sync::broadcast::channel(/*capacity*/ 1);
     let response = crate::dynamic_tools::execute(
         app_server.request_handle(),
-        codex_app_server_protocol::DynamicToolCallParams {
+        genex_app_server_protocol::DynamicToolCallParams {
             thread_id: started.session.thread_id.to_string(),
             turn_id: "source-turn".to_string(),
             call_id: "legacy-wait".to_string(),
@@ -2083,7 +2083,7 @@ async fn remote_legacy_history_start_negotiates_once_for_resume_and_fork() -> Re
                 "timeoutMs": 0
             }),
         },
-        codex_app_server_protocol::ThreadStartParams::default(),
+        genex_app_server_protocol::ThreadStartParams::default(),
         status_updates,
         /*app_event_tx*/ None,
     )
@@ -2634,9 +2634,9 @@ async fn agents_overview_seeds_loaded_threads_when_recent_listing_is_unavailable
                     &app_server,
                     AppServerEvent::ServerNotification(Box::new(
                         ServerNotification::ThreadStatusChanged(
-                            codex_app_server_protocol::ThreadStatusChangedNotification {
+                            genex_app_server_protocol::ThreadStatusChangedNotification {
                                 thread_id: started.session.thread_id.to_string(),
-                                status: codex_app_server_protocol::ThreadStatus::Idle,
+                                status: genex_app_server_protocol::ThreadStatus::Idle,
                             },
                         ),
                     )),

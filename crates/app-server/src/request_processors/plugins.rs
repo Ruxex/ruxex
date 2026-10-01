@@ -1,28 +1,28 @@
 use super::*;
-use codex_app_server_protocol::PluginAvailability;
-use codex_app_server_protocol::PluginDetail;
-use codex_app_server_protocol::PluginInstallParams;
-use codex_app_server_protocol::PluginInstallResponse;
-use codex_app_server_protocol::PluginInstalledParams;
-use codex_app_server_protocol::PluginInstalledResponse;
-use codex_app_server_protocol::PluginListParams;
-use codex_app_server_protocol::PluginListResponse;
-use codex_app_server_protocol::PluginMarketplaceEntry;
-use codex_app_server_protocol::PluginReadParams;
-use codex_app_server_protocol::PluginReadResponse;
-use codex_app_server_protocol::PluginSource;
-use codex_app_server_protocol::PluginSummary;
-use codex_app_server_protocol::PluginUninstallParams;
-use codex_app_server_protocol::PluginUninstallResponse;
-use codex_core::ThreadManager;
-use codex_core::config::Config;
-use codex_core_plugins::ConfiguredMarketplace;
-use codex_core_plugins::ConfiguredMarketplacePlugin;
-use codex_core_plugins::PluginInstallRequest;
-use codex_core_plugins::PluginMarketplaceContext;
-use codex_core_plugins::PluginReadRequest;
-use codex_core_plugins::marketplace::MarketplacePluginSource;
-use codex_login::AuthManager;
+use genex_app_server_protocol::PluginAvailability;
+use genex_app_server_protocol::PluginDetail;
+use genex_app_server_protocol::PluginInstallParams;
+use genex_app_server_protocol::PluginInstallResponse;
+use genex_app_server_protocol::PluginInstalledParams;
+use genex_app_server_protocol::PluginInstalledResponse;
+use genex_app_server_protocol::PluginListParams;
+use genex_app_server_protocol::PluginListResponse;
+use genex_app_server_protocol::PluginMarketplaceEntry;
+use genex_app_server_protocol::PluginReadParams;
+use genex_app_server_protocol::PluginReadResponse;
+use genex_app_server_protocol::PluginSource;
+use genex_app_server_protocol::PluginSummary;
+use genex_app_server_protocol::PluginUninstallParams;
+use genex_app_server_protocol::PluginUninstallResponse;
+use genex_core::ThreadManager;
+use genex_core::config::Config;
+use genex_core_plugins::ConfiguredMarketplace;
+use genex_core_plugins::ConfiguredMarketplacePlugin;
+use genex_core_plugins::PluginInstallRequest;
+use genex_core_plugins::PluginMarketplaceContext;
+use genex_core_plugins::PluginReadRequest;
+use genex_core_plugins::marketplace::MarketplacePluginSource;
+use genex_login::AuthManager;
 use std::sync::Arc;
 
 mod local;
@@ -36,7 +36,7 @@ pub(crate) struct PluginRequestProcessor {
     outgoing: Arc<OutgoingMessageSender>,
     config_manager: ConfigManager,
     on_effective_plugins_changed:
-        Arc<dyn Fn(codex_core_plugins::EffectivePluginsChange) + Send + Sync>,
+        Arc<dyn Fn(genex_core_plugins::EffectivePluginsChange) + Send + Sync>,
 }
 
 impl PluginRequestProcessor {
@@ -56,7 +56,7 @@ impl PluginRequestProcessor {
         outgoing: Arc<OutgoingMessageSender>,
         config_manager: ConfigManager,
         on_effective_plugins_changed: Arc<
-            dyn Fn(codex_core_plugins::EffectivePluginsChange) + Send + Sync,
+            dyn Fn(genex_core_plugins::EffectivePluginsChange) + Send + Sync,
         >,
     ) -> Self {
         Self {
@@ -70,7 +70,7 @@ impl PluginRequestProcessor {
 
     pub(crate) fn effective_plugins_changed_callback(
         &self,
-    ) -> Arc<dyn Fn(codex_core_plugins::EffectivePluginsChange) + Send + Sync> {
+    ) -> Arc<dyn Fn(genex_core_plugins::EffectivePluginsChange) + Send + Sync> {
         Arc::clone(&self.on_effective_plugins_changed)
     }
 
@@ -166,7 +166,7 @@ impl PluginRequestProcessor {
             )
             .await
             .map_err(|err| internal_error(format!("failed to install plugin: {err}")))?;
-        (self.on_effective_plugins_changed)(codex_core_plugins::EffectivePluginsChange::default());
+        (self.on_effective_plugins_changed)(genex_core_plugins::EffectivePluginsChange::default());
         Ok(Some(
             PluginInstallResponse {
                 auth_policy: outcome.auth_policy.into(),
@@ -184,7 +184,7 @@ impl PluginRequestProcessor {
             .uninstall_plugin(params.plugin_id)
             .await
             .map_err(|err| internal_error(format!("failed to uninstall plugin: {err}")))?;
-        (self.on_effective_plugins_changed)(codex_core_plugins::EffectivePluginsChange::default());
+        (self.on_effective_plugins_changed)(genex_core_plugins::EffectivePluginsChange::default());
         Ok(Some(PluginUninstallResponse {}.into()))
     }
 
@@ -194,7 +194,7 @@ impl PluginRequestProcessor {
     ) -> Result<
         (
             Vec<PluginMarketplaceEntry>,
-            Vec<codex_app_server_protocol::MarketplaceLoadErrorInfo>,
+            Vec<genex_app_server_protocol::MarketplaceLoadErrorInfo>,
         ),
         JSONRPCErrorError,
     > {
@@ -213,7 +213,7 @@ impl PluginRequestProcessor {
                 .errors
                 .into_iter()
                 .map(
-                    |error| codex_app_server_protocol::MarketplaceLoadErrorInfo {
+                    |error| genex_app_server_protocol::MarketplaceLoadErrorInfo {
                         marketplace_path: error.path,
                         message: error.message,
                     },
@@ -228,7 +228,7 @@ fn marketplace_to_api(marketplace: ConfiguredMarketplace) -> PluginMarketplaceEn
         name: marketplace.name,
         path: Some(marketplace.path),
         interface: marketplace.interface.map(|interface| {
-            codex_app_server_protocol::MarketplaceInterface {
+            genex_app_server_protocol::MarketplaceInterface {
                 display_name: interface.display_name,
             }
         }),
@@ -278,7 +278,7 @@ fn plugin_to_summary(plugin: ConfiguredMarketplacePlugin) -> PluginSummary {
     }
 }
 
-fn plugin_detail_to_api(outcome: codex_core_plugins::PluginReadOutcome) -> PluginDetail {
+fn plugin_detail_to_api(outcome: genex_core_plugins::PluginReadOutcome) -> PluginDetail {
     let summary = PluginSummary {
         id: outcome.plugin.id.clone(),
         local_version: outcome.plugin.local_version.clone(),

@@ -20,7 +20,7 @@ impl PidBackend {
         #[cfg(windows)]
         crate::backend::windows::ensure_not_elevated()?;
         if let Some(parent) = self.pid_file.parent() {
-            codex_uds::prepare_private_socket_directory(parent)
+            genex_uds::prepare_private_socket_directory(parent)
                 .await
                 .with_context(|| format!("failed to create pid directory {}", parent.display()))?;
         }
@@ -119,7 +119,7 @@ impl PidBackend {
                 .parent()
                 .and_then(std::path::Path::parent)
                 .context("daemon pid path has no Codex home")?;
-            let recovery_file = codex_app_server_transport::daemon_recovery_file_path(codex_home);
+            let recovery_file = genex_app_server_transport::daemon_recovery_file_path(codex_home);
             match fs::remove_file(&recovery_file).await {
                 Ok(()) => {}
                 Err(err) if err.kind() == std::io::ErrorKind::NotFound => {}
@@ -211,7 +211,7 @@ impl PidBackend {
             }
             match self.command_kind {
                 PidCommandKind::AppServer { .. } => {
-                    command.env(codex_app_server_transport::DAEMON_SHUTDOWN_SOCKET_ENV, "1");
+                    command.env(genex_app_server_transport::DAEMON_SHUTDOWN_SOCKET_ENV, "1");
                 }
                 PidCommandKind::UpdateLoop { .. } => {
                     let shutdown_file = self.pid_file.with_extension("shutdown");
@@ -223,7 +223,7 @@ impl PidBackend {
                         }
                     }
                     command.env(
-                        codex_app_server_transport::DAEMON_SHUTDOWN_FILE_ENV,
+                        genex_app_server_transport::DAEMON_SHUTDOWN_FILE_ENV,
                         shutdown_file,
                     );
                 }

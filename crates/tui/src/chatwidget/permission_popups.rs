@@ -5,7 +5,7 @@
 //! `windows_sandbox_prompts`.
 
 use super::*;
-use codex_protocol::model_types::MODEL_SPECIALTY_CYBER;
+use genex_protocol::model_types::MODEL_SPECIALTY_CYBER;
 
 impl ChatWidget {
     /// Open the permissions popup.

@@ -1,7 +1,7 @@
-use codex_history::CompactionCheckpoint;
-use codex_history::RetainedContext;
+use genex_history::CompactionCheckpoint;
+use genex_history::RetainedContext;
 
-use codex_protocol::models::ResponseItem;
+use genex_protocol::models::ResponseItem;
 
 /// Read-only conversation-history snapshot supplied by the extension host.
 ///

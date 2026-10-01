@@ -1,11 +1,11 @@
-use codex_code_mode_protocol::CellId;
-use codex_code_mode_protocol::RuntimeResponse;
-use codex_code_mode_protocol::WaitOutcome;
-use codex_code_mode_protocol::WaitRequest;
-use codex_code_mode_protocol::host::WireCellId;
-use codex_code_mode_protocol::host::WireRuntimeResponse;
-use codex_code_mode_protocol::host::WireWaitOutcome;
-use codex_code_mode_protocol::host::WireWaitRequest;
+use genex_code_mode_protocol::CellId;
+use genex_code_mode_protocol::RuntimeResponse;
+use genex_code_mode_protocol::WaitOutcome;
+use genex_code_mode_protocol::WaitRequest;
+use genex_code_mode_protocol::host::WireCellId;
+use genex_code_mode_protocol::host::WireRuntimeResponse;
+use genex_code_mode_protocol::host::WireWaitOutcome;
+use genex_code_mode_protocol::host::WireWaitRequest;
 
 use super::RemoteSession;
 

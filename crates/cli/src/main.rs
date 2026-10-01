@@ -3,29 +3,29 @@ use clap::CommandFactory;
 use clap::Parser;
 use clap_complete::Shell;
 use clap_complete::generate;
-use codex_app_server_daemon::BootstrapOptions as AppServerBootstrapOptions;
-use codex_app_server_daemon::LifecycleCommand as AppServerLifecycleCommand;
-use codex_arg0::Arg0DispatchPaths;
-use codex_arg0::arg0_dispatch_or_else;
-use codex_cli::run_login_status;
-use codex_cli::run_logout;
-use codex_exec::Cli as ExecCli;
-use codex_exec::Command as ExecCommand;
-use codex_exec::ReviewArgs;
-use codex_exec_server::ExecServerRuntimePaths;
-use codex_execpolicy::ExecPolicyCheckCommand;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyPolicy;
-use codex_rollout_trace::REDUCED_STATE_FILE_NAME;
-use codex_rollout_trace::replay_bundle;
-use codex_tui::AppExitInfo;
-use codex_tui::Cli as TuiCli;
-use codex_tui::ExitReason;
-use codex_tui::UpdateAction;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_cli::CliConfigOverrides;
-use codex_utils_cli::ProfileV2Name;
-use codex_utils_cli::SharedCliOptions;
+use genex_app_server_daemon::BootstrapOptions as AppServerBootstrapOptions;
+use genex_app_server_daemon::LifecycleCommand as AppServerLifecycleCommand;
+use genex_arg0::Arg0DispatchPaths;
+use genex_arg0::arg0_dispatch_or_else;
+use genex_cli::run_login_status;
+use genex_cli::run_logout;
+use genex_exec::Cli as ExecCli;
+use genex_exec::Command as ExecCommand;
+use genex_exec::ReviewArgs;
+use genex_exec_server::ExecServerRuntimePaths;
+use genex_execpolicy::ExecPolicyCheckCommand;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyPolicy;
+use genex_rollout_trace::REDUCED_STATE_FILE_NAME;
+use genex_rollout_trace::replay_bundle;
+use genex_tui::AppExitInfo;
+use genex_tui::Cli as TuiCli;
+use genex_tui::ExitReason;
+use genex_tui::UpdateAction;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_cli::CliConfigOverrides;
+use genex_utils_cli::ProfileV2Name;
+use genex_utils_cli::SharedCliOptions;
 use std::collections::HashSet;
 use std::io::IsTerminal;
 use std::io::Write;
@@ -64,23 +64,23 @@ use crate::queue_cmd::QueueCommand;
 use doctor::DoctorCommand;
 use state_db_recovery as local_state_db;
 
-use codex_config::LoaderOverrides;
-use codex_core::build_models_manager;
-use codex_core::config::Config;
-use codex_core::config::ConfigBuilder;
-use codex_core::config::ConfigOverrides;
-use codex_core::config::edit::ConfigEditsBuilder;
-use codex_core::config::find_codex_home;
-use codex_core::config::resolve_profile_v2_config_path;
-use codex_features::FEATURES;
-use codex_features::Stage;
-use codex_features::is_known_feature_key;
-use codex_home::CodexHomeUserInstructionsProvider;
-use codex_login::AuthManager;
-use codex_models_manager::manager::RefreshStrategy;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::user_input::UserInput;
-use codex_terminal_detection::TerminalName;
+use genex_config::LoaderOverrides;
+use genex_core::build_models_manager;
+use genex_core::config::Config;
+use genex_core::config::ConfigBuilder;
+use genex_core::config::ConfigOverrides;
+use genex_core::config::edit::ConfigEditsBuilder;
+use genex_core::config::find_codex_home;
+use genex_core::config::resolve_profile_v2_config_path;
+use genex_features::FEATURES;
+use genex_features::Stage;
+use genex_features::is_known_feature_key;
+use genex_home::CodexHomeUserInstructionsProvider;
+use genex_login::AuthManager;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::user_input::UserInput;
+use genex_terminal_detection::TerminalName;
 
 /// Codex CLI
 ///
@@ -121,7 +121,7 @@ enum Subcommand {
 
     /// Internal: forward a local TCP socket through an HTTP/3 CONNECT proxy.
     #[clap(hide = true)]
-    TcpTunnel(codex_tcp_tunnel::Args),
+    TcpTunnel(genex_tcp_tunnel::Args),
     /// Run Codex non-interactively.
     #[clap(visible_alias = "e")]
     Exec(ExecCli),
@@ -399,11 +399,11 @@ impl clap::FromArgMatches for SessionTuiCli {
 }
 
 #[cfg(target_os = "macos")]
-type HostSandboxArgs = codex_cli::SeatbeltCommand;
+type HostSandboxArgs = genex_cli::SeatbeltCommand;
 #[cfg(target_os = "linux")]
-type HostSandboxArgs = codex_cli::LandlockCommand;
+type HostSandboxArgs = genex_cli::LandlockCommand;
 #[cfg(target_os = "windows")]
-type HostSandboxArgs = codex_cli::WindowsCommand;
+type HostSandboxArgs = genex_cli::WindowsCommand;
 
 #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
 type HostSandboxArgs = UnsupportedSandboxArgs;
@@ -464,7 +464,7 @@ struct AppServerCommand {
     subcommand: Option<AppServerSubcommand>,
 
     #[command(flatten)]
-    code_mode_host: codex_app_server::AppServerCodeModeHostArgs,
+    code_mode_host: genex_app_server::AppServerCodeModeHostArgs,
 
     /// Error out when config.toml contains fields that are not recognized by this version of Codex.
     #[arg(long = "strict-config", default_value_t = false)]
@@ -475,9 +475,9 @@ struct AppServerCommand {
     #[arg(
         long = "listen",
         value_name = "URL",
-        default_value = codex_app_server::AppServerTransport::DEFAULT_LISTEN_URL
+        default_value = genex_app_server::AppServerTransport::DEFAULT_LISTEN_URL
     )]
-    listen: codex_app_server::AppServerTransport,
+    listen: genex_app_server::AppServerTransport,
 
     /// Use stdio as the transport (equivalent to `--listen stdio://`).
     #[arg(long = "stdio", conflicts_with = "listen")]
@@ -506,7 +506,7 @@ struct AppServerCommand {
     metrics_default_enabled: bool,
 
     #[command(flatten)]
-    auth: codex_app_server::AppServerWebsocketAuthArgs,
+    auth: genex_app_server::AppServerWebsocketAuthArgs,
 }
 
 #[derive(Debug, Parser)]
@@ -526,7 +526,7 @@ struct ExecServerCommand {
         value_name = "COUNT",
         default_value = "1"
     )]
-    request_dispatch_mode: codex_exec_server::RequestDispatchMode,
+    request_dispatch_mode: genex_exec_server::RequestDispatchMode,
 
     /// Transport endpoint URL. Supported values: `stdio` or `stdio://`.
     #[arg(long = "listen", value_name = "URL")]
@@ -690,7 +690,7 @@ fn run_update_action(
         println!("Updating the local background server...");
         let status = std::process::Command::new(executable)
             .args(source.command_args())
-            .env(codex_app_server_daemon::telemetry::HANDOFF_ENV, "1")
+            .env(genex_app_server_daemon::telemetry::HANDOFF_ENV, "1")
             .status()?;
         anyhow::ensure!(
             status.success(),
@@ -769,7 +769,7 @@ fn run_execpolicycheck(cmd: ExecPolicyCheckCommand) -> anyhow::Result<()> {
 }
 
 async fn run_session_archive_cli_command(
-    action: codex_tui::SessionArchiveAction,
+    action: genex_tui::SessionArchiveAction,
     cmd: SessionArchiveCommand,
     mut interactive: TuiCli,
     root_config_overrides: CliConfigOverrides,
@@ -788,10 +788,10 @@ async fn run_session_archive_cli_command(
         remote.remote.or(root_remote),
         remote.remote_auth_token_env.or(root_remote_auth_token_env),
     )?;
-    codex_tui::run_session_archive_command(
+    genex_tui::run_session_archive_command(
         action,
         target,
-        codex_tui::SessionArchiveCommandOptions {
+        genex_tui::SessionArchiveCommandOptions {
             cli: interactive,
             arg0_paths,
             explicit_remote_endpoint,
@@ -801,22 +801,22 @@ async fn run_session_archive_cli_command(
     .map_err(|err| anyhow::anyhow!("{err}"))
 }
 
-fn delete_action(target: &str, force: bool) -> anyhow::Result<codex_tui::SessionArchiveAction> {
-    if force && codex_protocol::ThreadId::from_string(target).is_err() {
+fn delete_action(target: &str, force: bool) -> anyhow::Result<genex_tui::SessionArchiveAction> {
+    if force && genex_protocol::ThreadId::from_string(target).is_err() {
         anyhow::bail!("--force requires a session UUID; names must be confirmed interactively");
     }
     let confirmation = match force {
-        true => codex_tui::DeleteConfirmation::Skip,
-        false => codex_tui::DeleteConfirmation::Prompt,
+        true => genex_tui::DeleteConfirmation::Skip,
+        false => genex_tui::DeleteConfirmation::Prompt,
     };
-    Ok(codex_tui::SessionArchiveAction::Delete(confirmation))
+    Ok(genex_tui::SessionArchiveAction::Delete(confirmation))
 }
 
 async fn run_debug_app_server_command(cmd: DebugAppServerCommand) -> anyhow::Result<()> {
     match cmd.subcommand {
         DebugAppServerSubcommand::SendMessageV2(cmd) => {
             let codex_bin = std::env::current_exe()?;
-            codex_app_server_test_client::send_message_v2(&codex_bin, &[], cmd.user_message, &None)
+            genex_app_server_test_client::send_message_v2(&codex_bin, &[], cmd.user_message, &None)
                 .await
         }
     }
@@ -903,7 +903,7 @@ fn stage_str(stage: Stage) -> &'static str {
 }
 
 fn main() -> anyhow::Result<()> {
-    codex_build_info::initialize!();
+    genex_build_info::initialize!();
     arg0_dispatch_or_else(move |arg0_paths: Arg0DispatchPaths| async move {
         cli_main(arg0_paths).await?;
         Ok(())
@@ -1007,7 +1007,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
             handle_app_exit(exit_info, daemon_cli_executable.as_deref())?;
         }
         Some(Subcommand::TcpTunnel(args)) => {
-            return codex_tcp_tunnel::run(args).await;
+            return genex_tcp_tunnel::run(args).await;
         }
         Some(Subcommand::Exec(mut exec_cli)) => {
             reject_remote_mode_for_subcommand(
@@ -1023,7 +1023,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 &mut exec_cli.config_overrides,
                 root_config_overrides.clone(),
             );
-            codex_exec::run_main(exec_cli, arg0_paths.clone()).await?;
+            genex_exec::run_main(exec_cli, arg0_paths.clone()).await?;
         }
         Some(Subcommand::Review(ReviewCommand {
             strict_config,
@@ -1044,7 +1044,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 &mut exec_cli.config_overrides,
                 root_config_overrides.clone(),
             );
-            codex_exec::run_main(exec_cli, arg0_paths.clone()).await?;
+            genex_exec::run_main(exec_cli, arg0_paths.clone()).await?;
         }
         Some(Subcommand::Mcp(mut mcp_cli)) => {
             reject_remote_mode_for_subcommand(
@@ -1110,29 +1110,29 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
             match subcommand {
                 None => {
                     let transport = if stdio {
-                        codex_app_server::AppServerTransport::Stdio
+                        genex_app_server::AppServerTransport::Stdio
                     } else {
                         listen
                     };
                     let auth = auth.try_into_settings()?;
-                    let runtime_options = codex_app_server::AppServerRuntimeOptions {
+                    let runtime_options = genex_app_server::AppServerRuntimeOptions {
                         code_mode_host_transport: code_mode_host.into(),
                         managed_daemon,
                         ..Default::default()
                     };
-                    let exit = codex_app_server::run_main_with_transport_options(
+                    let exit = genex_app_server::run_main_with_transport_options(
                         arg0_paths.clone(),
                         root_config_overrides,
                         LoaderOverrides::default(),
                         strict_config,
                         metrics_default_enabled,
                         transport,
-                        codex_protocol::protocol::SessionSource::VSCode,
+                        genex_protocol::protocol::SessionSource::VSCode,
                         auth,
                         runtime_options,
                     )
                     .await?;
-                    if exit == codex_app_server::AppServerExit::Forced {
+                    if exit == genex_app_server::AppServerExit::Forced {
                         // Runtime teardown can wait forever for blocked rollout I/O.
                         std::process::exit(0);
                     }
@@ -1143,7 +1143,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                     }
                     AppServerDaemonSubcommand::Bootstrap => {
                         let output =
-                            codex_app_server_daemon::bootstrap(AppServerBootstrapOptions {})
+                            genex_app_server_daemon::bootstrap(AppServerBootstrapOptions {})
                                 .await?;
                         println!("{}", serde_json::to_string(&output)?);
                     }
@@ -1154,7 +1154,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                         from_cli: true,
                         yes,
                     } => {
-                        let result = codex_app_server_daemon::update_from_cli(|request| {
+                        let result = genex_app_server_daemon::update_from_cli(|request| {
                             daemon_install::confirm_install(request, yes)
                         })
                         .await;
@@ -1199,7 +1199,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                             daemon_cli.subcommand,
                             AppServerDaemonSubcommand::Update { .. }
                         ) {
-                            let result = codex_app_server_daemon::update(http_client_factory)
+                            let result = genex_app_server_daemon::update(http_client_factory)
                                 .await
                                 .map(Some);
                             daemon_telemetry::record_command(
@@ -1219,7 +1219,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                             else {
                                 unreachable!()
                             };
-                            codex_app_server_daemon::run_pid_update_loop(
+                            genex_app_server_daemon::run_pid_update_loop(
                                 http_client_factory,
                                 restore_release,
                             )
@@ -1232,26 +1232,26 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                         Some(socket_path) => socket_path,
                         None => {
                             let codex_home = find_codex_home()?;
-                            codex_app_server::app_server_control_socket_path(&codex_home)?
+                            genex_app_server::app_server_control_socket_path(&codex_home)?
                         }
                     };
-                    codex_stdio_to_uds::run(socket_path.as_path()).await?;
+                    genex_stdio_to_uds::run(socket_path.as_path()).await?;
                 }
                 Some(AppServerSubcommand::GenerateTs(gen_cli)) => {
-                    let options = codex_app_server_protocol::GenerateTsOptions {
+                    let options = genex_app_server_protocol::GenerateTsOptions {
                         experimental_api: gen_cli.experimental,
                         ..Default::default()
                     };
-                    codex_app_server_protocol::generate_ts_with_options(&gen_cli.out_dir, options)?;
+                    genex_app_server_protocol::generate_ts_with_options(&gen_cli.out_dir, options)?;
                 }
                 Some(AppServerSubcommand::GenerateJsonSchema(gen_cli)) => {
-                    codex_app_server_protocol::generate_json_with_experimental(
+                    genex_app_server_protocol::generate_json_with_experimental(
                         &gen_cli.out_dir,
                         gen_cli.experimental,
                     )?;
                 }
                 Some(AppServerSubcommand::GenerateInternalJsonSchema(gen_cli)) => {
-                    codex_app_server_protocol::generate_internal_json_schema(&gen_cli.out_dir)?;
+                    genex_app_server_protocol::generate_internal_json_schema(&gen_cli.out_dir)?;
                 }
             }
         }
@@ -1286,7 +1286,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
         }
         Some(Subcommand::Archive(cmd)) => {
             let output = run_session_archive_cli_command(
-                codex_tui::SessionArchiveAction::Archive,
+                genex_tui::SessionArchiveAction::Archive,
                 cmd,
                 interactive,
                 root_config_overrides.clone(),
@@ -1325,7 +1325,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
         }
         Some(Subcommand::Unarchive(cmd)) => {
             let output = run_session_archive_cli_command(
-                codex_tui::SessionArchiveAction::Unarchive,
+                genex_tui::SessionArchiveAction::Unarchive,
                 cmd,
                 interactive,
                 root_config_overrides.clone(),
@@ -1443,21 +1443,21 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
             )?;
             let loader_overrides = loader_overrides_for_profile(config_profile)?;
             #[cfg(target_os = "macos")]
-            codex_cli::run_command_under_seatbelt(
+            genex_cli::run_command_under_seatbelt(
                 sandbox_cli,
                 arg0_paths.codex_linux_sandbox_exe.clone(),
                 loader_overrides,
             )
             .await?;
             #[cfg(target_os = "linux")]
-            codex_cli::run_command_under_landlock(
+            genex_cli::run_command_under_landlock(
                 sandbox_cli,
                 arg0_paths.codex_linux_sandbox_exe.clone(),
                 loader_overrides,
             )
             .await?;
             #[cfg(target_os = "windows")]
-            codex_cli::run_command_under_windows_sandbox(
+            genex_cli::run_command_under_windows_sandbox(
                 sandbox_cli,
                 arg0_paths.codex_linux_sandbox_exe.clone(),
                 loader_overrides,
@@ -1526,7 +1526,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 "stdio-to-uds",
             )?;
             let socket_path = cmd.socket_path;
-            codex_stdio_to_uds::run(socket_path.as_path()).await?;
+            genex_stdio_to_uds::run(socket_path.as_path()).await?;
         }
         Some(Subcommand::ExecServer(cmd)) => {
             reject_remote_mode_for_subcommand(
@@ -1645,7 +1645,7 @@ async fn run_exec_server_command(
     #[cfg(target_os = "macos")]
     let runtime_paths =
         runtime_paths.with_allowed_symlinked_codex_home(config.as_ref().and_then(|config| {
-            codex_config::allowed_symlinked_codex_home(
+            genex_config::allowed_symlinked_codex_home(
                 &config.config_layer_stack,
                 &config.codex_home,
             )
@@ -1656,9 +1656,9 @@ async fn run_exec_server_command(
         .unwrap_or_else(|| HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault));
     let listen_url = cmd
         .listen
-        .unwrap_or_else(|| codex_exec_server::DEFAULT_LISTEN_URL.to_string());
+        .unwrap_or_else(|| genex_exec_server::DEFAULT_LISTEN_URL.to_string());
     let run = exec_server_telemetry::run_until_shutdown(
-        codex_exec_server::run_main_with_telemetry(
+        genex_exec_server::run_main_with_telemetry(
             &listen_url,
             runtime_paths,
             telemetry,
@@ -1674,7 +1674,7 @@ async fn run_exec_server_command(
 async fn load_exec_server_config(
     root_config_overrides: &CliConfigOverrides,
     strict_config: bool,
-) -> anyhow::Result<codex_core::config::Config> {
+) -> anyhow::Result<genex_core::config::Config> {
     let cli_kv_overrides = root_config_overrides
         .parse_overrides()
         .map_err(anyhow::Error::msg)?;
@@ -1744,7 +1744,7 @@ fn maybe_print_under_development_feature_warning(codex_home: &std::path::Path, f
         return;
     }
 
-    let config_path = codex_home.join(codex_config::CONFIG_TOML_FILE);
+    let config_path = codex_home.join(genex_config::CONFIG_TOML_FILE);
     eprintln!(
         "Under-development features enabled: {feature}. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in {}.",
         config_path.display()
@@ -1788,7 +1788,7 @@ async fn run_debug_prompt_input_command(
         interactive.approval_policy.map(Into::into)
     };
     let sandbox_mode = if shared.dangerously_bypass_approvals_and_sandbox {
-        Some(codex_protocol::config_types::SandboxMode::DangerFullAccess)
+        Some(genex_protocol::config_types::SandboxMode::DangerFullAccess)
     } else {
         shared.sandbox_mode.map(Into::into)
     };
@@ -1829,19 +1829,19 @@ async fn run_debug_prompt_input_command(
     let user_instructions_provider = Arc::new(CodexHomeUserInstructionsProvider::new(
         config.codex_home.clone(),
     ));
-    let mut extensions = codex_extension_api::ExtensionRegistryBuilder::new();
-    codex_skills_extension::install(&mut extensions, |config: &Config| {
-        codex_skills_extension::SkillsExtensionConfig {
+    let mut extensions = genex_extension_api::ExtensionRegistryBuilder::new();
+    genex_skills_extension::install(&mut extensions, |config: &Config| {
+        genex_skills_extension::SkillsExtensionConfig {
             include_instructions: config.include_skill_instructions,
             max_context_tokens: config.skill_max_context_tokens,
             bundled_skills_enabled: config.bundled_skills_enabled(),
             orchestrator_skills_enabled: config.orchestrator_skills_enabled,
             shadow_selection_enabled: config
                 .features
-                .enabled(codex_features::Feature::SkillSearch),
+                .enabled(genex_features::Feature::SkillSearch),
         }
     });
-    let prompt_input = codex_core::build_prompt_input(
+    let prompt_input = genex_core::build_prompt_input(
         config,
         input,
         /*state_db*/ None,
@@ -2083,20 +2083,20 @@ fn app_server_subcommand_name(subcommand: Option<&AppServerSubcommand>) -> &'sta
 }
 
 async fn print_app_server_daemon_output(command: AppServerLifecycleCommand) -> anyhow::Result<()> {
-    let output = codex_app_server_daemon::run(command).await?;
+    let output = genex_app_server_daemon::run(command).await?;
     println!("{}", serde_json::to_string(&output)?);
     Ok(())
 }
 
 fn updater_http_client_factory(
-    config: anyhow::Result<codex_core::config::Config>,
-) -> codex_http_client::HttpClientFactory {
+    config: anyhow::Result<genex_core::config::Config>,
+) -> genex_http_client::HttpClientFactory {
     match config {
         Ok(config) => config.http_client_factory(),
         Err(error) => {
             eprintln!("warning: failed to load updater network configuration: {error}");
-            codex_http_client::HttpClientFactory::new(
-                codex_http_client::OutboundProxyPolicy::ReqwestDefault,
+            genex_http_client::HttpClientFactory::new(
+                genex_http_client::OutboundProxyPolicy::ReqwestDefault,
             )
         }
     }
@@ -2145,7 +2145,7 @@ async fn run_interactive_tui(
         interactive.prompt = Some(prompt.replace("\r\n", "\n").replace('\r', "\n"));
     }
 
-    let terminal_info = codex_terminal_detection::terminal_info();
+    let terminal_info = genex_terminal_detection::terminal_info();
     if terminal_info.name == TerminalName::Dumb {
         if !(std::io::stdin().is_terminal() && std::io::stderr().is_terminal()) {
             return Ok(AppExitInfo::fatal(
@@ -2174,7 +2174,7 @@ async fn run_interactive_tui(
         cloud_config::load_config(&interactive.config_overrides, LoaderOverrides::default())
             .await
             .map_err(std::io::Error::other)?;
-        codex_app_server_daemon::run(AppServerLifecycleCommand::Start)
+        genex_app_server_daemon::run(AppServerLifecycleCommand::Start)
             .await
             .map_err(|err| std::io::Error::other(format!(
                 "{err:#}\nThe agents overview requires a shared server. Use codex --no-daemon to work without it."
@@ -2189,10 +2189,10 @@ async fn run_interactive_tui(
         Err(err) => return Err(err),
     };
     let start_tui = || {
-        codex_tui::run_main(
+        genex_tui::run_main(
             interactive.clone(),
             arg0_paths.clone(),
-            codex_config::LoaderOverrides::default(),
+            genex_config::LoaderOverrides::default(),
             remote_endpoint.clone(),
         )
     };
@@ -2255,10 +2255,10 @@ where
 fn resolve_remote_endpoint(
     remote: Option<String>,
     remote_auth_token_env: Option<String>,
-) -> std::io::Result<Option<codex_tui::RemoteAppServerEndpoint>> {
+) -> std::io::Result<Option<genex_tui::RemoteAppServerEndpoint>> {
     let mut remote_endpoint = remote
         .as_deref()
-        .map(codex_tui::resolve_remote_addr)
+        .map(genex_tui::resolve_remote_addr)
         .transpose()
         .map_err(std::io::Error::other)?;
     if let Some(remote_auth_token_env) = remote_auth_token_env {
@@ -2267,14 +2267,14 @@ fn resolve_remote_endpoint(
                 "`--remote-auth-token-env` requires `--remote`.",
             ));
         };
-        if !codex_tui::remote_addr_supports_auth_token(endpoint) {
+        if !genex_tui::remote_addr_supports_auth_token(endpoint) {
             return Err(std::io::Error::other(
                 "`--remote-auth-token-env` requires a `wss://` or loopback `ws://` remote.",
             ));
         }
         let auth_token = read_remote_auth_token_from_env_var(&remote_auth_token_env)
             .map_err(std::io::Error::other)?;
-        let codex_tui::RemoteAppServerEndpoint::WebSocket {
+        let genex_tui::RemoteAppServerEndpoint::WebSocket {
             auth_token: slot, ..
         } = endpoint
         else {

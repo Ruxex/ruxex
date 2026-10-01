@@ -1,5 +1,5 @@
 [package]
-name = "codex-login"
+name = "genex-login"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -10,15 +10,15 @@ workspace = true
 [dependencies]
 base64 = { workspace = true }
 chrono = { workspace = true }
-codex-http-client = { workspace = true }
-codex-config = { workspace = true }
-codex-keyring-store = { workspace = true }
-codex-model-provider-info = { workspace = true }
-codex-otel = { workspace = true }
-codex-protocol = { workspace = true }
-codex-secrets = { workspace = true }
-codex-terminal-detection = { workspace = true }
-codex-utils-template = { workspace = true }
+genex-http-client = { workspace = true }
+genex-config = { workspace = true }
+genex-keyring-store = { workspace = true }
+genex-model-provider-info = { workspace = true }
+genex-otel = { workspace = true }
+genex-protocol = { workspace = true }
+genex-secrets = { workspace = true }
+genex-terminal-detection = { workspace = true }
+genex-utils-template = { workspace = true }
 http = { workspace = true }
 once_cell = { workspace = true }
 os_info = { workspace = true }

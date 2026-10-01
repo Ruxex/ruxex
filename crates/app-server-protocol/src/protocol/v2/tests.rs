@@ -1,53 +1,53 @@
 use super::*;
 use crate::ServerNotification;
-use codex_protocol::approvals::ElicitationRequest as CoreElicitationRequest;
-use codex_protocol::config_types::MultiAgentMode;
-use codex_protocol::items::AgentMessageContent;
-use codex_protocol::items::AgentMessageItem;
-use codex_protocol::items::CollabAgentTool as CoreCollabAgentTool;
-use codex_protocol::items::CollabAgentToolCallItem;
-use codex_protocol::items::CollabAgentToolCallStatus as CoreCollabAgentToolCallStatus;
-use codex_protocol::items::CommandExecutionItem;
-use codex_protocol::items::CommandExecutionStatus as CoreCommandExecutionStatus;
-use codex_protocol::items::DynamicToolCallItem;
-use codex_protocol::items::DynamicToolCallStatus as CoreDynamicToolCallStatus;
-use codex_protocol::items::FileChangeItem;
-use codex_protocol::items::ImageViewItem;
-use codex_protocol::items::McpToolCallItem;
-use codex_protocol::items::McpToolCallStatus as CoreMcpToolCallStatus;
-use codex_protocol::items::ReasoningItem;
-use codex_protocol::items::SubAgentActivityItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::items::UserMessageItem;
-use codex_protocol::items::WebSearchItem as CoreWebSearchItem;
-use codex_protocol::mcp::CallToolResult;
-use codex_protocol::mcp::McpServerInfo;
-use codex_protocol::models::AdditionalPermissionProfile as CoreAdditionalPermissionProfile;
-use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
-use codex_protocol::models::FileSystemPermissions as CoreFileSystemPermissions;
-use codex_protocol::models::ImageDetail;
-use codex_protocol::models::ImageReference as CoreImageReference;
-use codex_protocol::models::MessagePhase;
-use codex_protocol::models::NetworkPermissions as CoreNetworkPermissions;
-use codex_protocol::models::WebSearchAction as CoreWebSearchAction;
-use codex_protocol::permissions::FileSystemAccessMode as CoreFileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath as CoreFileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry as CoreFileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSpecialPath as CoreFileSystemSpecialPath;
-use codex_protocol::protocol::AgentStatus as CoreAgentStatus;
-use codex_protocol::protocol::AskForApproval as CoreAskForApproval;
-use codex_protocol::protocol::CodexErrorInfo as CoreCodexErrorInfo;
-use codex_protocol::protocol::ExecCommandSource as CoreExecCommandSource;
-use codex_protocol::protocol::GranularApprovalConfig as CoreGranularApprovalConfig;
-use codex_protocol::protocol::NetworkAccess as CoreNetworkAccess;
-use codex_protocol::protocol::SubAgentActivityKind as CoreSubAgentActivityKind;
-use codex_protocol::request_permissions::RequestPermissionProfile as CoreRequestPermissionProfile;
-use codex_protocol::user_input::UserInput as CoreUserInput;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_absolute_path::test_support::PathBufExt;
-use codex_utils_absolute_path::test_support::test_path_buf;
-use codex_utils_path_uri::LegacyAppPathString;
-use codex_utils_path_uri::PathUri;
+use genex_protocol::approvals::ElicitationRequest as CoreElicitationRequest;
+use genex_protocol::config_types::MultiAgentMode;
+use genex_protocol::items::AgentMessageContent;
+use genex_protocol::items::AgentMessageItem;
+use genex_protocol::items::CollabAgentTool as CoreCollabAgentTool;
+use genex_protocol::items::CollabAgentToolCallItem;
+use genex_protocol::items::CollabAgentToolCallStatus as CoreCollabAgentToolCallStatus;
+use genex_protocol::items::CommandExecutionItem;
+use genex_protocol::items::CommandExecutionStatus as CoreCommandExecutionStatus;
+use genex_protocol::items::DynamicToolCallItem;
+use genex_protocol::items::DynamicToolCallStatus as CoreDynamicToolCallStatus;
+use genex_protocol::items::FileChangeItem;
+use genex_protocol::items::ImageViewItem;
+use genex_protocol::items::McpToolCallItem;
+use genex_protocol::items::McpToolCallStatus as CoreMcpToolCallStatus;
+use genex_protocol::items::ReasoningItem;
+use genex_protocol::items::SubAgentActivityItem;
+use genex_protocol::items::TurnItem;
+use genex_protocol::items::UserMessageItem;
+use genex_protocol::items::WebSearchItem as CoreWebSearchItem;
+use genex_protocol::mcp::CallToolResult;
+use genex_protocol::mcp::McpServerInfo;
+use genex_protocol::models::AdditionalPermissionProfile as CoreAdditionalPermissionProfile;
+use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
+use genex_protocol::models::FileSystemPermissions as CoreFileSystemPermissions;
+use genex_protocol::models::ImageDetail;
+use genex_protocol::models::ImageReference as CoreImageReference;
+use genex_protocol::models::MessagePhase;
+use genex_protocol::models::NetworkPermissions as CoreNetworkPermissions;
+use genex_protocol::models::WebSearchAction as CoreWebSearchAction;
+use genex_protocol::permissions::FileSystemAccessMode as CoreFileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath as CoreFileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry as CoreFileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSpecialPath as CoreFileSystemSpecialPath;
+use genex_protocol::protocol::AgentStatus as CoreAgentStatus;
+use genex_protocol::protocol::AskForApproval as CoreAskForApproval;
+use genex_protocol::protocol::CodexErrorInfo as CoreCodexErrorInfo;
+use genex_protocol::protocol::ExecCommandSource as CoreExecCommandSource;
+use genex_protocol::protocol::GranularApprovalConfig as CoreGranularApprovalConfig;
+use genex_protocol::protocol::NetworkAccess as CoreNetworkAccess;
+use genex_protocol::protocol::SubAgentActivityKind as CoreSubAgentActivityKind;
+use genex_protocol::request_permissions::RequestPermissionProfile as CoreRequestPermissionProfile;
+use genex_protocol::user_input::UserInput as CoreUserInput;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::test_support::PathBufExt;
+use genex_utils_absolute_path::test_support::test_path_buf;
+use genex_utils_path_uri::LegacyAppPathString;
+use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use serde_json::Value as JsonValue;
 use serde_json::json;
@@ -180,7 +180,7 @@ fn thread_sources_round_trip_as_scalar_labels() {
             source
         );
 
-        let core_source: codex_protocol::protocol::ThreadSource = source.clone().into();
+        let core_source: genex_protocol::protocol::ThreadSource = source.clone().into();
         assert_eq!(ThreadSource::from(core_source), source);
     }
 }
@@ -1903,7 +1903,7 @@ fn sandbox_policy_round_trips_external_sandbox_network_access() {
     let core_policy = v2_policy.to_core();
     assert_eq!(
         core_policy,
-        codex_protocol::protocol::SandboxPolicy::ExternalSandbox {
+        genex_protocol::protocol::SandboxPolicy::ExternalSandbox {
             network_access: CoreNetworkAccess::Enabled,
         }
     );
@@ -1921,7 +1921,7 @@ fn sandbox_policy_round_trips_read_only_network_access() {
     let core_policy = v2_policy.to_core();
     assert_eq!(
         core_policy,
-        codex_protocol::protocol::SandboxPolicy::ReadOnly {
+        genex_protocol::protocol::SandboxPolicy::ReadOnly {
             network_access: true,
         }
     );
@@ -2648,7 +2648,7 @@ fn sandbox_policy_round_trips_workspace_write_access() {
     let core_policy = v2_policy.to_core();
     assert_eq!(
         core_policy,
-        codex_protocol::protocol::SandboxPolicy::WorkspaceWrite {
+        genex_protocol::protocol::SandboxPolicy::WorkspaceWrite {
             writable_roots: vec![],
             network_access: true,
             exclude_tmpdir_env_var: false,
@@ -3010,7 +3010,7 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
             "push".to_string(),
         ],
         cwd: PathUri::from_abs_path(&test_path_buf("/tmp").abs()),
-        parsed_cmd: vec![codex_protocol::parse_command::ParsedCommand::Unknown {
+        parsed_cmd: vec![genex_protocol::parse_command::ParsedCommand::Unknown {
             cmd: "git -c 'http.extraHeader=Authorization: Bearer example_synthetic_bearer_token_123456' -c http.extraHeader=X-Trace:example push"
                 .to_string(),
         }],
@@ -3055,13 +3055,13 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
         arguments: json!({"id": "123"}),
         status: CoreDynamicToolCallStatus::Completed,
         content_items: Some(vec![
-            codex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputText {
+            genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputText {
                 text: "ok".to_string(),
             },
-            codex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputImage {
+            genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputImage {
                 image_url: "data:image/png;base64,AAA".to_string(),
             },
-            codex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputAudio {
+            genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputAudio {
                 audio_url: "data:audio/wav;base64,YXVkaW8=".to_string(),
             },
         ]),
@@ -3094,8 +3094,8 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
         }
     );
 
-    let sender_thread_id = codex_protocol::ThreadId::default();
-    let receiver_thread_id = codex_protocol::ThreadId::default();
+    let sender_thread_id = genex_protocol::ThreadId::default();
+    let receiver_thread_id = genex_protocol::ThreadId::default();
     let collab_item = TurnItem::CollabAgentToolCall(CollabAgentToolCallItem {
         id: "collab-1".to_string(),
         tool: CoreCollabAgentTool::SendInput,
@@ -3138,7 +3138,7 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
         id: "activity-1".to_string(),
         kind: CoreSubAgentActivityKind::Completed,
         agent_thread_id: receiver_thread_id,
-        agent_path: codex_protocol::AgentPath::root()
+        agent_path: genex_protocol::AgentPath::root()
             .join("worker")
             .expect("worker path"),
     });
@@ -3187,7 +3187,7 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
     );
     assert_eq!(
         ThreadItem::from(TurnItem::Extension(
-            codex_extension_items::ExtensionItem::WebSearch(expected_search_item.clone()),
+            genex_extension_items::ExtensionItem::WebSearch(expected_search_item.clone()),
         )),
         ThreadItem::WebSearch(expected_search_item)
     );
@@ -3209,13 +3209,13 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
         id: "patch-1".to_string(),
         changes: [(
             PathBuf::from("README.md"),
-            codex_protocol::protocol::FileChange::Add {
+            genex_protocol::protocol::FileChange::Add {
                 content: "hello\n".to_string(),
             },
         )]
         .into_iter()
         .collect(),
-        status: Some(codex_protocol::protocol::PatchApplyStatus::Completed),
+        status: Some(genex_protocol::protocol::PatchApplyStatus::Completed),
         auto_approved: None,
         stdout: Some("Done!".to_string()),
         stderr: Some(String::new()),
@@ -4642,7 +4642,7 @@ fn turn_start_cyber_access_program_uses_separate_wire_formats() {
             "cyberAccessProgram": app_server_value,
         }))
         .expect("params should deserialize");
-        let core_program: codex_protocol::turn_input::CyberAccessProgram = params
+        let core_program: genex_protocol::turn_input::CyberAccessProgram = params
             .cyber_access_program
             .expect("explicit program")
             .into();
@@ -4669,7 +4669,7 @@ fn turn_start_params_round_trip_multi_agent_mode() {
 
     assert_eq!(
         params.multi_agent_mode,
-        Some(codex_protocol::config_types::MultiAgentMode::Proactive)
+        Some(genex_protocol::config_types::MultiAgentMode::Proactive)
     );
     assert_eq!(
         crate::experimental_api::ExperimentalApi::experimental_reason(&params),
@@ -4690,7 +4690,7 @@ fn thread_start_params_round_trip_multi_agent_mode() {
 
     assert_eq!(
         params.multi_agent_mode,
-        Some(codex_protocol::config_types::MultiAgentMode::Proactive)
+        Some(genex_protocol::config_types::MultiAgentMode::Proactive)
     );
     assert_eq!(
         crate::experimental_api::ExperimentalApi::experimental_reason(&params),
@@ -4757,9 +4757,9 @@ fn thread_settings_update_params_preserve_field_level_experimental_gates() {
 
     let collaboration_mode = ThreadSettingsUpdateParams {
         thread_id: "thread_123".to_string(),
-        collaboration_mode: Some(codex_protocol::config_types::CollaborationMode {
-            mode: codex_protocol::config_types::ModeKind::Plan,
-            settings: codex_protocol::config_types::Settings {
+        collaboration_mode: Some(genex_protocol::config_types::CollaborationMode {
+            mode: genex_protocol::config_types::ModeKind::Plan,
+            settings: genex_protocol::config_types::Settings {
                 model: "mock-model".to_string(),
                 reasoning_effort: None,
                 developer_instructions: None,

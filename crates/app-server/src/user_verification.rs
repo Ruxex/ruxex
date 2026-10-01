@@ -3,9 +3,9 @@
 
 use crate::connection_rpc_gate::ConnectionRpcGate;
 use crate::transport::ConnectionOrigin;
-use codex_app_server_protocol as rpc;
-use codex_login::AuthManager;
-use codex_user_verification as native;
+use genex_app_server_protocol as rpc;
+use genex_login::AuthManager;
+use genex_user_verification as native;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Semaphore;

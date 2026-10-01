@@ -54,7 +54,7 @@ compatibility branches still exist in shared test and resource-resolution
 helpers. Remove those branches in stages rather than deleting shared helpers
 or Cargo behavior wholesale:
 
-- Keep Cargo binary and resource resolution in `codex-utils-cargo-bin` while
+- Keep Cargo binary and resource resolution in `genex-utils-cargo-bin` while
   removing its runfiles-only branch and the `runfiles` dependency.
 - Remove the Bazel-only `codex_bazel` protocol path after the canonical Cargo
   protobuf path is confirmed as the sole supported path.
@@ -65,7 +65,7 @@ or Cargo behavior wholesale:
 - Remove stale Bazel metadata, comments, fixtures, and generated references
   after the code paths are gone.
 
-This slice does not remove `rusty_v8`, `codex-code-mode-runtime`, or the
+This slice does not remove `rusty_v8`, `genex-code-mode-runtime`, or the
 provider-neutral code-mode capability. It removes only the unintegrated POC
 crate and build-system compatibility that has no maintained Bazel consumer.
 

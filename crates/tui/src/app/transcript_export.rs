@@ -5,11 +5,11 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use codex_app_server_client::TypedRequestError;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::Turn;
-use codex_protocol::ThreadId;
-use codex_protocol::models::local_image_label_text;
+use genex_app_server_client::TypedRequestError;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::Turn;
+use genex_protocol::ThreadId;
+use genex_protocol::models::local_image_label_text;
 
 use super::App;
 use crate::app_event::TranscriptExportDestination;

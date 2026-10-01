@@ -296,11 +296,11 @@ impl App {
                 let agent_path = source_agent_path(&thread.source);
                 let is_running = matches!(
                     thread.status,
-                    codex_app_server_protocol::ThreadStatus::Active { .. }
+                    genex_app_server_protocol::ThreadStatus::Active { .. }
                 );
                 let is_closed = matches!(
                     thread.status,
-                    codex_app_server_protocol::ThreadStatus::NotLoaded
+                    genex_app_server_protocol::ThreadStatus::NotLoaded
                 );
                 self.upsert_agent_picker_thread(
                     thread_id,

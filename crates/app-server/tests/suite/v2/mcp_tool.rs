@@ -11,41 +11,41 @@ use app_test_support::create_fake_rollout_with_session_and_thread_source;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_sequence;
 use axum::Router;
-use codex_app_server_protocol::CapabilityRootLocation;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::EnvironmentAddResponse;
-use codex_app_server_protocol::InitializeCapabilities;
-use codex_app_server_protocol::ItemCompletedNotification;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::McpElicitationSchema;
-use codex_app_server_protocol::McpServerElicitationAction;
-use codex_app_server_protocol::McpServerElicitationRequest;
-use codex_app_server_protocol::McpServerElicitationRequestParams;
-use codex_app_server_protocol::McpServerElicitationRequestResponse;
-use codex_app_server_protocol::McpServerToolCallParams;
-use codex_app_server_protocol::McpServerToolCallResponse;
-use codex_app_server_protocol::McpToolCallStatus;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SelectedCapabilityRoot;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadReadResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnEnvironmentParams;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::UserInput as V2UserInput;
-use codex_features::Feature;
-use codex_protocol::mcp::provider_STANDARD_FORM_INPUT_EXTENSION_ID;
-use codex_protocol::protocol::SessionSource as CoreSessionSource;
-use codex_protocol::protocol::ThreadSource as CoreThreadSource;
-use codex_utils_path_uri::PathUri;
-use codex_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
+use genex_app_server_protocol::CapabilityRootLocation;
+use genex_app_server_protocol::ClientInfo;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::EnvironmentAddResponse;
+use genex_app_server_protocol::InitializeCapabilities;
+use genex_app_server_protocol::ItemCompletedNotification;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::McpElicitationSchema;
+use genex_app_server_protocol::McpServerElicitationAction;
+use genex_app_server_protocol::McpServerElicitationRequest;
+use genex_app_server_protocol::McpServerElicitationRequestParams;
+use genex_app_server_protocol::McpServerElicitationRequestResponse;
+use genex_app_server_protocol::McpServerToolCallParams;
+use genex_app_server_protocol::McpServerToolCallResponse;
+use genex_app_server_protocol::McpToolCallStatus;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SelectedCapabilityRoot;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadReadParams;
+use genex_app_server_protocol::ThreadReadResponse;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::TurnEnvironmentParams;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::UserInput as V2UserInput;
+use genex_features::Feature;
+use genex_protocol::mcp::provider_STANDARD_FORM_INPUT_EXTENSION_ID;
+use genex_protocol::protocol::SessionSource as CoreSessionSource;
+use genex_protocol::protocol::ThreadSource as CoreThreadSource;
+use genex_utils_path_uri::PathUri;
+use genex_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
 use core_test_support::responses;
 use futures::SinkExt;
 use pretty_assertions::assert_eq;
@@ -454,7 +454,7 @@ async fn mcp_server_tool_call_round_trips_elicitation() -> Result<()> {
     mcp_server_tool_call_round_trips_elicitation_for_thread(ElicitationThread::Start {
         params: ThreadStartParams {
             model: Some("mock-model".to_string()),
-            approval_policy: Some(codex_app_server_protocol::AskForApproval::UnlessTrusted),
+            approval_policy: Some(genex_app_server_protocol::AskForApproval::UnlessTrusted),
             ..Default::default()
         },
         session_source: "vscode",
@@ -469,9 +469,9 @@ async fn mcp_server_tool_call_round_trips_user_input_in_full_access_for_user_thr
     mcp_server_tool_call_round_trips_elicitation_for_thread(ElicitationThread::Start {
         params: ThreadStartParams {
             model: Some("mock-model".to_string()),
-            approval_policy: Some(codex_app_server_protocol::AskForApproval::Never),
-            sandbox: Some(codex_app_server_protocol::SandboxMode::DangerFullAccess),
-            thread_source: Some(codex_app_server_protocol::ThreadSource::User),
+            approval_policy: Some(genex_app_server_protocol::AskForApproval::Never),
+            sandbox: Some(genex_app_server_protocol::SandboxMode::DangerFullAccess),
+            thread_source: Some(genex_app_server_protocol::ThreadSource::User),
             ..Default::default()
         },
         session_source: "vscode",
@@ -486,9 +486,9 @@ async fn mcp_server_tool_call_round_trips_user_input_for_custom_frontend_user_th
     mcp_server_tool_call_round_trips_elicitation_for_thread(ElicitationThread::Start {
         params: ThreadStartParams {
             model: Some("mock-model".to_string()),
-            approval_policy: Some(codex_app_server_protocol::AskForApproval::Never),
-            sandbox: Some(codex_app_server_protocol::SandboxMode::DangerFullAccess),
-            thread_source: Some(codex_app_server_protocol::ThreadSource::User),
+            approval_policy: Some(genex_app_server_protocol::AskForApproval::Never),
+            sandbox: Some(genex_app_server_protocol::SandboxMode::DangerFullAccess),
+            thread_source: Some(genex_app_server_protocol::ThreadSource::User),
             ..Default::default()
         },
         session_source: "external",
@@ -503,8 +503,8 @@ async fn mcp_server_tool_call_uses_current_frontend_for_full_access_elicitation(
         source: CoreSessionSource::Exec,
         params: ThreadResumeParams {
             model: Some("mock-model".to_string()),
-            approval_policy: Some(codex_app_server_protocol::AskForApproval::Never),
-            sandbox: Some(codex_app_server_protocol::SandboxMode::DangerFullAccess),
+            approval_policy: Some(genex_app_server_protocol::AskForApproval::Never),
+            sandbox: Some(genex_app_server_protocol::SandboxMode::DangerFullAccess),
             ..Default::default()
         },
     })
@@ -515,7 +515,7 @@ async fn mcp_server_tool_call_uses_current_frontend_for_full_access_elicitation(
 async fn mcp_server_tool_call_declines_full_access_elicitation_without_form_input_capability()
 -> Result<()> {
     assert_full_access_form_elicitation_is_declined(FullAccessElicitationCase {
-        thread_source: Some(codex_app_server_protocol::ThreadSource::User),
+        thread_source: Some(genex_app_server_protocol::ThreadSource::User),
         client_advertises_standard_form_input: false,
     })
     .await
@@ -535,7 +535,7 @@ async fn mcp_server_tool_call_declines_full_access_elicitation_with_unspecified_
 async fn mcp_server_tool_call_declines_full_access_elicitation_for_automation_thread() -> Result<()>
 {
     assert_full_access_form_elicitation_is_declined(FullAccessElicitationCase {
-        thread_source: Some(codex_app_server_protocol::ThreadSource::Feature(
+        thread_source: Some(genex_app_server_protocol::ThreadSource::Feature(
             "automation".to_string(),
         )),
         client_advertises_standard_form_input: true,
@@ -546,14 +546,14 @@ async fn mcp_server_tool_call_declines_full_access_elicitation_for_automation_th
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn mcp_server_tool_call_declines_full_access_elicitation_for_subagent_thread() -> Result<()> {
     assert_full_access_form_elicitation_is_declined(FullAccessElicitationCase {
-        thread_source: Some(codex_app_server_protocol::ThreadSource::Subagent),
+        thread_source: Some(genex_app_server_protocol::ThreadSource::Subagent),
         client_advertises_standard_form_input: true,
     })
     .await
 }
 
 struct FullAccessElicitationCase {
-    thread_source: Option<codex_app_server_protocol::ThreadSource>,
+    thread_source: Option<genex_app_server_protocol::ThreadSource>,
     client_advertises_standard_form_input: bool,
 }
 
@@ -580,19 +580,19 @@ async fn assert_full_access_form_elicitation_is_declined(
     } = mcp
         .start_thread(ThreadStartParams {
             model: Some("mock-model".to_string()),
-            approval_policy: Some(codex_app_server_protocol::AskForApproval::Never),
-            sandbox: Some(codex_app_server_protocol::SandboxMode::DangerFullAccess),
+            approval_policy: Some(genex_app_server_protocol::AskForApproval::Never),
+            sandbox: Some(genex_app_server_protocol::SandboxMode::DangerFullAccess),
             thread_source: case.thread_source,
             ..Default::default()
         })
         .await?;
     assert_eq!(
         approval_policy,
-        codex_app_server_protocol::AskForApproval::Never
+        genex_app_server_protocol::AskForApproval::Never
     );
     assert_eq!(
         sandbox,
-        codex_app_server_protocol::SandboxPolicy::DangerFullAccess
+        genex_app_server_protocol::SandboxPolicy::DangerFullAccess
     );
 
     let request_id = mcp
@@ -679,15 +679,15 @@ async fn mcp_server_tool_call_round_trips_elicitation_for_thread(
             } = timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(resume_id)).await??;
             assert_eq!(
                 thread.source,
-                codex_app_server_protocol::SessionSource::from(source)
+                genex_app_server_protocol::SessionSource::from(source)
             );
             assert_eq!(
                 approval_policy,
-                codex_app_server_protocol::AskForApproval::Never
+                genex_app_server_protocol::AskForApproval::Never
             );
             assert_eq!(
                 sandbox,
-                codex_app_server_protocol::SandboxPolicy::DangerFullAccess
+                genex_app_server_protocol::SandboxPolicy::DangerFullAccess
             );
             thread
         }
@@ -828,10 +828,10 @@ async fn mcp_server_elicitation_survives_environment_runtime_refresh() -> Result
     let thread_start_id = mcp
         .send_thread_start_request(ThreadStartParams {
             model: Some("mock-model".to_string()),
-            approval_policy: Some(codex_app_server_protocol::AskForApproval::UnlessTrusted),
+            approval_policy: Some(genex_app_server_protocol::AskForApproval::UnlessTrusted),
             environments: Some(vec![TurnEnvironmentParams {
                 environment_id: LATE_ENVIRONMENT_ID.to_string(),
-                cwd: codex_utils_absolute_path::AbsolutePathBuf::try_from(
+                cwd: genex_utils_absolute_path::AbsolutePathBuf::try_from(
                     capability_root.path().to_path_buf(),
                 )?
                 .into(),
@@ -929,7 +929,7 @@ async fn mcp_server_tool_call_forwards_url_elicitation() -> Result<()> {
     let ThreadStartResponse { thread, .. } = mcp
         .start_thread(ThreadStartParams {
             model: Some("mock-model".to_string()),
-            approval_policy: Some(codex_app_server_protocol::AskForApproval::UnlessTrusted),
+            approval_policy: Some(genex_app_server_protocol::AskForApproval::UnlessTrusted),
             ..Default::default()
         })
         .await?;
@@ -1140,7 +1140,7 @@ async fn mcp_tool_call_hint_survives_mid_call_thread_read_and_resume() -> Result
     let ThreadStartResponse { thread, .. } = mcp
         .start_thread(ThreadStartParams {
             model: Some("mock-model".to_string()),
-            approval_policy: Some(codex_app_server_protocol::AskForApproval::UnlessTrusted),
+            approval_policy: Some(genex_app_server_protocol::AskForApproval::UnlessTrusted),
             ..Default::default()
         })
         .await?;

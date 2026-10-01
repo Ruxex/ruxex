@@ -66,7 +66,7 @@
 - Modify: `crates/config/src/config_toml.rs:444`
 - Modify: `crates/config/src/profile_toml.rs:45`
 - Modify: `crates/core/src/config/mod.rs:3671-3678`
-- Regenerate: `crates/core/config.schema.json`, `codex-cli.json`, and any generated config artifacts produced by `just generate`
+- Regenerate: `crates/core/config.schema.json`, `genex-cli.json`, and any generated config artifacts produced by `just generate`
 - Test: config schema/strict-config coverage for the removed field
 
 **Interfaces:**
@@ -91,7 +91,7 @@
 
 - [ ] **Step 5: Verify the slice.**
 
-  Run `just check --tests`, then `just check`. Confirm `rg -n 'experimental_compact_prompt_file' crates docs codex-cli.json` returns no active references.
+  Run `just check --tests`, then `just check`. Confirm `rg -n 'experimental_compact_prompt_file' crates docs genex-cli.json` returns no active references.
 
 ### Task 3: Remove legacy top-level config aliases
 

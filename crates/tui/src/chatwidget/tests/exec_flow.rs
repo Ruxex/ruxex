@@ -153,7 +153,7 @@ async fn exec_approval_uses_approval_id_when_present() {
             assert_eq!(id, "approval-subcommand");
             assert_matches!(
                 decision,
-                codex_app_server_protocol::CommandExecutionApprovalDecision::Accept
+                genex_app_server_protocol::CommandExecutionApprovalDecision::Accept
             );
             found = true;
             break;
@@ -244,7 +244,7 @@ async fn exec_end_without_begin_uses_event_command() {
         "-lc".to_string(),
         "echo orphaned".to_string(),
     ];
-    let command_actions = codex_shell_command::parse_command::parse_command(&command)
+    let command_actions = genex_shell_command::parse_command::parse_command(&command)
         .into_iter()
         .map(|parsed| AppServerCommandAction::from_core_with_cwd(parsed, &chat.config.cwd))
         .collect();
@@ -254,7 +254,7 @@ async fn exec_end_without_begin_uses_event_command() {
         AppServerThreadItem::CommandExecution {
             model_context: None,
             id: "call-orphan".to_string(),
-            command: codex_shell_command::parse_command::shlex_join(&command),
+            command: genex_shell_command::parse_command::shlex_join(&command),
             cwd: cwd.into(),
             process_id: None,
             plugin_id: None,
@@ -778,7 +778,7 @@ async fn apply_patch_approval_sends_op_with_call_id() {
             assert_eq!(id, "call-999");
             assert_matches!(
                 decision,
-                codex_app_server_protocol::FileChangeApprovalDecision::Accept
+                genex_app_server_protocol::FileChangeApprovalDecision::Accept
             );
             found = true;
             break;
@@ -830,7 +830,7 @@ async fn apply_patch_full_flow_integration_like() {
             assert_eq!(id, "call-1");
             assert_matches!(
                 decision,
-                codex_app_server_protocol::FileChangeApprovalDecision::Accept
+                genex_app_server_protocol::FileChangeApprovalDecision::Accept
             );
         }
         other => panic!("unexpected op forwarded: {other:?}"),

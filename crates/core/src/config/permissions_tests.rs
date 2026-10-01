@@ -1,24 +1,24 @@
 use super::*;
 use crate::config::Config;
 use crate::config::ConfigOverrides;
-use codex_config::config_toml::ConfigToml;
-use codex_config::permissions_toml::FilesystemPermissionToml;
-use codex_config::permissions_toml::FilesystemPermissionsToml;
-use codex_config::permissions_toml::NetworkDomainPermissionToml;
-use codex_config::permissions_toml::NetworkDomainPermissionsToml;
-use codex_config::permissions_toml::NetworkToml;
-use codex_config::permissions_toml::NetworkUnixSocketPermissionToml;
-use codex_config::permissions_toml::NetworkUnixSocketPermissionsToml;
-use codex_config::permissions_toml::PermissionProfileToml;
-use codex_config::permissions_toml::PermissionsToml;
-use codex_config::permissions_toml::WorkspaceRootsToml;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathConvention;
+use genex_config::config_toml::ConfigToml;
+use genex_config::permissions_toml::FilesystemPermissionToml;
+use genex_config::permissions_toml::FilesystemPermissionsToml;
+use genex_config::permissions_toml::NetworkDomainPermissionToml;
+use genex_config::permissions_toml::NetworkDomainPermissionsToml;
+use genex_config::permissions_toml::NetworkToml;
+use genex_config::permissions_toml::NetworkUnixSocketPermissionToml;
+use genex_config::permissions_toml::NetworkUnixSocketPermissionsToml;
+use genex_config::permissions_toml::PermissionProfileToml;
+use genex_config::permissions_toml::PermissionsToml;
+use genex_config::permissions_toml::WorkspaceRootsToml;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::FileSystemSpecialPath;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathConvention;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 use tempfile::TempDir;
@@ -213,7 +213,7 @@ fn network_toml_overlays_unix_socket_permissions_by_path() {
 
     assert_eq!(
         config.unix_sockets,
-        Some(codex_network_proxy::NetworkUnixSocketPermissions {
+        Some(genex_network_proxy::NetworkUnixSocketPermissions {
             entries: BTreeMap::from([
                 (
                     "/tmp/base.sock".to_string(),
@@ -414,10 +414,10 @@ fn profile_network_proxy_config_keeps_proxy_disabled_for_proxy_policy() {
     assert!(!config.enable_socks5);
     assert_eq!(
         config.domains,
-        Some(codex_network_proxy::NetworkDomainPermissions {
-            entries: vec![codex_network_proxy::NetworkDomainPermissionEntry {
+        Some(genex_network_proxy::NetworkDomainPermissions {
+            entries: vec![genex_network_proxy::NetworkDomainPermissionEntry {
                 pattern: "provider.com".to_string(),
-                permission: codex_network_proxy::NetworkDomainPermission::Allow,
+                permission: genex_network_proxy::NetworkDomainPermission::Allow,
             }],
         })
     );

@@ -12,25 +12,25 @@ use crate::session::turn_context::TurnEnvironment;
 use crate::state::SessionServices;
 use crate::tools::hook_names::HookToolName;
 use crate::tools::network_approval::NetworkApprovalSpec;
-use codex_file_system::FileSystemSandboxContext;
-use codex_file_system::WindowsSandboxSelection;
-use codex_network_proxy::NetworkProxy;
-use codex_protocol::approvals::ExecPolicyAmendment;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::error::CodexErr;
-use codex_protocol::permissions::FileSystemSandboxKind;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::ReviewDecision;
-use codex_sandboxing::SandboxCommand;
-use codex_sandboxing::SandboxManager;
-use codex_sandboxing::SandboxTransformRequest;
-use codex_sandboxing::SandboxType;
-use codex_sandboxing::SandboxablePreference;
-use codex_sandboxing::policy_transforms::effective_permission_profile;
-use codex_tools::ToolName;
-use codex_utils_path_uri::PathConvention;
-use codex_utils_path_uri::PathUri;
+use genex_file_system::FileSystemSandboxContext;
+use genex_file_system::WindowsSandboxSelection;
+use genex_network_proxy::NetworkProxy;
+use genex_protocol::approvals::ExecPolicyAmendment;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::error::CodexErr;
+use genex_protocol::permissions::FileSystemSandboxKind;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::ReviewDecision;
+use genex_sandboxing::SandboxCommand;
+use genex_sandboxing::SandboxManager;
+use genex_sandboxing::SandboxTransformRequest;
+use genex_sandboxing::SandboxType;
+use genex_sandboxing::SandboxablePreference;
+use genex_sandboxing::policy_transforms::effective_permission_profile;
+use genex_tools::ToolName;
+use genex_utils_path_uri::PathConvention;
+use genex_utils_path_uri::PathUri;
 use futures::Future;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -388,9 +388,9 @@ pub(crate) struct SandboxAttempt<'a> {
     pub sandbox: SandboxType,
     /// Whether policy requested sandboxing, independent of this host's concrete wrapper.
     pub sandbox_requested: bool,
-    pub permissions: &'a codex_protocol::models::PermissionProfile,
+    pub permissions: &'a genex_protocol::models::PermissionProfile,
     /// Canonical permissions before this host materializes workspace roots.
-    pub exec_server_permissions: &'a codex_protocol::models::PermissionProfile,
+    pub exec_server_permissions: &'a genex_protocol::models::PermissionProfile,
     pub enforce_managed_network: bool,
     pub(crate) manager: &'a SandboxManager,
     pub(crate) sandbox_cwd: &'a PathUri,
@@ -399,7 +399,7 @@ pub(crate) struct SandboxAttempt<'a> {
     // TODO(anp): Reconcile these attempt settings with TurnEnvironment::sandbox_context
     // so process execution and patch writes honor the selected environment's backend.
     pub use_legacy_landlock: bool,
-    pub windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel,
+    pub windows_sandbox_level: genex_protocol::config_types::WindowsSandboxLevel,
     pub windows_sandbox_private_desktop: bool,
     pub network_denial_cancellation_token: Option<CancellationToken>,
     pub(crate) network_proxy: Option<&'a NetworkProxy>,

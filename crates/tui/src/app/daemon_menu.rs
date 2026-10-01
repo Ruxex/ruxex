@@ -48,7 +48,7 @@ impl App {
             header.push(Line::from(guidance.dim()));
         }
         let has_package = self.daemon_cli_executable.as_ref().is_some_and(|path| {
-            codex_install_context::InstallContext::from_exe(
+            genex_install_context::InstallContext::from_exe(
                 cfg!(target_os = "macos"),
                 Some(path.as_path()),
                 /*method_override*/ None,
@@ -95,7 +95,7 @@ impl App {
         let mut explanation = match source {
             DaemonUpdateSource::PublicStable => "Install the latest public stable release (version resolved when the command runs). Production update eligibility will be restored; your automatic-update setting is preserved.".to_string(),
             DaemonUpdateSource::ThisCli => {
-                let version = codex_install_context::InstallContext::current()
+                let version = genex_install_context::InstallContext::current()
                     .package_manifest()
                     .map_or_else(|| CODEX_CLI_VERSION.to_string(), |manifest| manifest.version.to_string());
                 format!("Use this CLI package v{version} from {}. The complete local package will be copied and pinned against automatic updates.", executable.display())

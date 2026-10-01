@@ -8,19 +8,19 @@ use std::time::SystemTime;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_core::CodexThread;
-use codex_core::TurnInputRequest;
-use codex_features::Feature;
-use codex_history::InitialHistory;
-use codex_history::ResumedHistory;
-use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::user_input::UserInput;
-use codex_thread_store::ForkBoundary;
-use codex_thread_store::LoadThreadHistoryParams;
-use codex_thread_store::PrepareForkParams;
+use genex_core::CodexThread;
+use genex_core::TurnInputRequest;
+use genex_features::Feature;
+use genex_history::InitialHistory;
+use genex_history::ResumedHistory;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::user_input::UserInput;
+use genex_thread_store::ForkBoundary;
+use genex_thread_store::LoadThreadHistoryParams;
+use genex_thread_store::PrepareForkParams;
 use core_test_support::responses::ResponseMock;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -88,7 +88,7 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
     let child = test
         .thread_manager
         .fork_prepared_thread(
-            codex_core::StartThreadOptions::new(test.config.clone()),
+            genex_core::StartThreadOptions::new(test.config.clone()),
             prepared,
         )
         .await?;
@@ -112,7 +112,7 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
     test.codex.shutdown_and_wait().await?;
     child.thread.shutdown_and_wait().await?;
     assert_eq!(
-        codex_rollout::read_session_meta_line(&child_path)
+        genex_rollout::read_session_meta_line(&child_path)
             .await?
             .meta
             .history_base
@@ -138,7 +138,7 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
         .enable(Feature::LocalThreadStoreCompression)?;
     // Use production feature wiring, rather than manually writing zstd files or calling the worker.
     let store =
-        codex_core::thread_store_from_config(&config, codex_core::init_state_db(&config).await);
+        genex_core::thread_store_from_config(&config, genex_core::init_state_db(&config).await);
     tokio::time::timeout(Duration::from_secs(30), async {
         loop {
             if paths
@@ -173,7 +173,7 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
                 history: Arc::new(context.items),
                 rollout_path: Some(child_path),
             }),
-            codex_core::test_support::auth_manager_from_auth(codex_login::CodexAuth::from_api_key(
+            genex_core::test_support::auth_manager_from_auth(genex_login::CodexAuth::from_api_key(
                 "dummy",
             )),
             /*parent_trace*/ None,

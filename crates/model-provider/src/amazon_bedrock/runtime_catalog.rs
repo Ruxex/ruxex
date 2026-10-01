@@ -1,8 +1,8 @@
-use codex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_LUNA_MODEL_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_SOL_MODEL_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_TERRA_MODEL_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_GPT_6_ASTRA_MODEL_ID;
-use codex_protocol::model_types::ModelsResponse;
+use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_LUNA_MODEL_ID;
+use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_SOL_MODEL_ID;
+use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_TERRA_MODEL_ID;
+use genex_model_provider_info::AMAZON_BEDROCK_GPT_6_ASTRA_MODEL_ID;
+use genex_protocol::model_types::ModelsResponse;
 
 use super::catalog::static_model_catalog;
 

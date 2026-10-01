@@ -2,7 +2,7 @@ use std::io;
 
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD;
-use codex_exec_server_protocol::JSONRPCErrorError;
+use genex_exec_server_protocol::JSONRPCErrorError;
 
 use crate::CapabilityRootsDiscoverParams;
 use crate::CapabilityRootsDiscoverResponse;
@@ -356,9 +356,9 @@ fn map_fs_error(err: io::Error) -> JSONRPCErrorError {
 
 #[cfg(test)]
 mod tests {
-    use codex_protocol::protocol::NetworkAccess;
-    use codex_protocol::protocol::SandboxPolicy;
-    use codex_utils_path_uri::PathUri;
+    use genex_protocol::protocol::NetworkAccess;
+    use genex_protocol::protocol::SandboxPolicy;
+    use genex_utils_path_uri::PathUri;
     use pretty_assertions::assert_eq;
 
     use super::*;

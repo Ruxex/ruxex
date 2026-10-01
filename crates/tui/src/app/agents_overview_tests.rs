@@ -14,30 +14,30 @@ use crate::render::renderable::Renderable;
 use crate::test_support::PathBufExt;
 use crate::test_support::test_path_buf;
 use crate::test_support::test_path_display;
-use codex_app_server_client::AppServerEvent;
-use codex_app_server_protocol::CurrentTimeReadParams;
-use codex_app_server_protocol::ReasoningSummaryTextDeltaNotification;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::SessionSource;
-use codex_app_server_protocol::ThreadActiveFlag;
-use codex_app_server_protocol::ThreadArchivedNotification;
-use codex_app_server_protocol::ThreadClosedNotification;
-use codex_app_server_protocol::ThreadDeletedNotification;
-use codex_app_server_protocol::ThreadNameUpdatedNotification;
-use codex_app_server_protocol::ThreadSource;
-use codex_app_server_protocol::ThreadStartedNotification;
-use codex_app_server_protocol::ThreadStatus;
-use codex_app_server_protocol::ThreadUnsubscribeParams;
-use codex_app_server_protocol::ThreadUnsubscribeResponse;
-use codex_app_server_protocol::ThreadUnsubscribeStatus;
-use codex_app_server_protocol::ToolRequestUserInputParams;
-use codex_app_server_protocol::ToolRequestUserInputQuestion;
-use codex_config::types::KeybindingSpec;
-use codex_config::types::KeybindingsSpec;
-use codex_config::types::TuiKeymap;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::SubAgentSource;
+use genex_app_server_client::AppServerEvent;
+use genex_app_server_protocol::CurrentTimeReadParams;
+use genex_app_server_protocol::ReasoningSummaryTextDeltaNotification;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::SessionSource;
+use genex_app_server_protocol::ThreadActiveFlag;
+use genex_app_server_protocol::ThreadArchivedNotification;
+use genex_app_server_protocol::ThreadClosedNotification;
+use genex_app_server_protocol::ThreadDeletedNotification;
+use genex_app_server_protocol::ThreadNameUpdatedNotification;
+use genex_app_server_protocol::ThreadSource;
+use genex_app_server_protocol::ThreadStartedNotification;
+use genex_app_server_protocol::ThreadStatus;
+use genex_app_server_protocol::ThreadUnsubscribeParams;
+use genex_app_server_protocol::ThreadUnsubscribeResponse;
+use genex_app_server_protocol::ThreadUnsubscribeStatus;
+use genex_app_server_protocol::ToolRequestUserInputParams;
+use genex_app_server_protocol::ToolRequestUserInputQuestion;
+use genex_config::types::KeybindingSpec;
+use genex_config::types::KeybindingsSpec;
+use genex_config::types::TuiKeymap;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::SubAgentSource;
 use pretty_assertions::assert_eq;
 use ratatui::Terminal;
 use ratatui::backend::TestBackend;
@@ -224,7 +224,7 @@ async fn shared_overview_keeps_rows_and_replays_changes_over_stale_reads() -> Re
     let stale_messages = HashMap::from([(retained, "Removed answer".into())]);
     for event in [
         AppServerEvent::ServerNotification(Box::new(ServerNotification::ThreadReverted(
-            codex_app_server_protocol::ThreadRevertedNotification {
+            genex_app_server_protocol::ThreadRevertedNotification {
                 thread_id: retained.to_string(),
             },
         ))),
@@ -273,11 +273,11 @@ async fn shared_overview_seeds_once_and_retains_locally_resumed_history() -> Res
     let mut ids = Vec::new();
     for day in 1..=22 {
         let source = match day {
-            3 => codex_protocol::protocol::SessionSource::Custom("custom".to_string()),
-            4 => codex_protocol::protocol::SessionSource::Custom("external".to_string()),
-            5 => codex_protocol::protocol::SessionSource::Exec,
-            6 => codex_protocol::protocol::SessionSource::Mcp,
-            _ => codex_protocol::protocol::SessionSource::Cli,
+            3 => genex_protocol::protocol::SessionSource::Custom("custom".to_string()),
+            4 => genex_protocol::protocol::SessionSource::Custom("external".to_string()),
+            5 => genex_protocol::protocol::SessionSource::Exec,
+            6 => genex_protocol::protocol::SessionSource::Mcp,
+            _ => genex_protocol::protocol::SessionSource::Cli,
         };
         ids.push(ThreadId::from_string(
             &app_test_support::create_fake_rollout_with_source(
@@ -332,7 +332,7 @@ async fn shared_overview_seeds_once_and_retains_locally_resumed_history() -> Res
         "Unindexed task",
         Some(&app.config.model_provider_id),
         /*git_info*/ None,
-        codex_protocol::protocol::SessionSource::Cli,
+        genex_protocol::protocol::SessionSource::Cli,
     )
     .expect("materialize unindexed session");
     app.app_server_target = AppServerTarget::LocalDaemon {
@@ -419,7 +419,7 @@ async fn shared_overview_seeds_once_and_retains_locally_resumed_history() -> Res
     crate::legacy_core::config::set_project_trust_level(
         app.config.codex_home.as_path(),
         &test_path_buf("/"),
-        codex_protocol::config_types::TrustLevel::Trusted,
+        genex_protocol::config_types::TrustLevel::Trusted,
     )
     .map_err(std::io::Error::other)?;
     let mut tui = crate::tui::test_support::make_test_tui()?;
@@ -813,7 +813,7 @@ async fn overview_selection_applies_user_permissions_only_to_unloaded_threads() 
     server_config
         .permissions
         .approval_policy
-        .set(codex_protocol::protocol::AskForApproval::Never)?;
+        .set(genex_protocol::protocol::AskForApproval::Never)?;
     let mut thread_ids = Vec::new();
     for day in 1..=5 {
         thread_ids.push(ThreadId::from_string(
@@ -839,9 +839,9 @@ async fn overview_selection_applies_user_permissions_only_to_unloaded_threads() 
         )
         .await?
         .session;
-    app.harness_overrides.sandbox_mode = Some(codex_protocol::config_types::SandboxMode::ReadOnly);
+    app.harness_overrides.sandbox_mode = Some(genex_protocol::config_types::SandboxMode::ReadOnly);
     app.harness_overrides.approval_policy =
-        Some(codex_protocol::protocol::AskForApproval::UnlessTrusted);
+        Some(genex_protocol::protocol::AskForApproval::UnlessTrusted);
     app.config
         .permissions
         .set_permission_profile(PermissionProfile::read_only())?;
@@ -860,17 +860,17 @@ async fn overview_selection_applies_user_permissions_only_to_unloaded_threads() 
         (
             thread_ids[1],
             PermissionProfile::read_only(),
-            codex_app_server_protocol::AskForApproval::UnlessTrusted,
+            genex_app_server_protocol::AskForApproval::UnlessTrusted,
         ),
         (
             thread_ids[2],
             PermissionProfile::read_only(),
-            codex_app_server_protocol::AskForApproval::UnlessTrusted,
+            genex_app_server_protocol::AskForApproval::UnlessTrusted,
         ),
         (
             thread_ids[3],
             PermissionProfile::read_only(),
-            codex_app_server_protocol::AskForApproval::UnlessTrusted,
+            genex_app_server_protocol::AskForApproval::UnlessTrusted,
         ),
     ] {
         if thread_id == thread_ids[2] {
@@ -880,9 +880,9 @@ async fn overview_selection_applies_user_permissions_only_to_unloaded_threads() 
                 "approvals_reviewer = \"auto_review\"\n[tui]\nresume_cwd = \"session\"\n",
             )?;
             app.harness_overrides.sandbox_mode =
-                Some(codex_protocol::config_types::SandboxMode::WorkspaceWrite);
+                Some(genex_protocol::config_types::SandboxMode::WorkspaceWrite);
             app.harness_overrides.approval_policy =
-                Some(codex_protocol::protocol::AskForApproval::Never);
+                Some(genex_protocol::protocol::AskForApproval::Never);
             app.runtime_permission_profile_override =
                 Some(RuntimePermissionProfileOverride::from_config(&app.config));
             app.runtime_approval_policy_override = Some(RuntimeApprovalPolicyOverride::Explicit(
@@ -933,7 +933,7 @@ async fn overview_selection_applies_user_permissions_only_to_unloaded_threads() 
         ),
         (
             Some(thread_ids[3]),
-            codex_app_server_protocol::ThreadStatus::NotLoaded
+            genex_app_server_protocol::ThreadStatus::NotLoaded
         ),
     );
     app_server.shutdown().await?;
@@ -949,7 +949,7 @@ async fn restored_server_permission_profile_survives_cd_without_turn_override() 
     crate::legacy_core::config::set_project_trust_level(
         app.config.codex_home.as_path(),
         &destination,
-        codex_protocol::config_types::TrustLevel::Trusted,
+        genex_protocol::config_types::TrustLevel::Trusted,
     )
     .map_err(|error| color_eyre::eyre::eyre!(error.to_string()))?;
     let mut app_server =
@@ -1200,13 +1200,13 @@ async fn resume_picker_round_trip_preserves_each_threads_input() -> Result<()> {
             assert!(app.chat_widget.queued_user_message_texts().is_empty());
             app.chat_widget.handle_server_notification(
                 ServerNotification::TurnStarted(
-                    codex_app_server_protocol::TurnStartedNotification {
+                    genex_app_server_protocol::TurnStartedNotification {
                         thread_id: target.thread_id.to_string(),
-                        turn: codex_app_server_protocol::Turn {
+                        turn: genex_app_server_protocol::Turn {
                             id: "turn-with-follow-up".to_string(),
-                            items_view: codex_app_server_protocol::TurnItemsView::Full,
+                            items_view: genex_app_server_protocol::TurnItemsView::Full,
                             items: Vec::new(),
-                            status: codex_app_server_protocol::TurnStatus::InProgress,
+                            status: genex_app_server_protocol::TurnStatus::InProgress,
                             error: None,
                             started_at: None,
                             completed_at: None,
@@ -1401,13 +1401,13 @@ async fn command_center_escape_cancels_editors_and_never_closes_list() {
         if running {
             app.chat_widget.handle_server_notification(
                 ServerNotification::TurnStarted(
-                    codex_app_server_protocol::TurnStartedNotification {
+                    genex_app_server_protocol::TurnStartedNotification {
                         thread_id: ThreadId::new().to_string(),
-                        turn: codex_app_server_protocol::Turn {
+                        turn: genex_app_server_protocol::Turn {
                             id: "running".into(),
-                            items_view: codex_app_server_protocol::TurnItemsView::Full,
+                            items_view: genex_app_server_protocol::TurnItemsView::Full,
                             items: Vec::new(),
-                            status: codex_app_server_protocol::TurnStatus::InProgress,
+                            status: genex_app_server_protocol::TurnStatus::InProgress,
                             error: None,
                             started_at: None,
                             completed_at: None,

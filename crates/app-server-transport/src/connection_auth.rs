@@ -1,8 +1,8 @@
 //! Binds a transport connection to the authentication owner that established it.
 //! Owner revisions invalidate queued work even before transport closure is delivered.
 
-use codex_login::AuthChangeState;
-use codex_login::AuthManager;
+use genex_login::AuthChangeState;
+use genex_login::AuthManager;
 use std::io;
 use tokio::sync::watch;
 

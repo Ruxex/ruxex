@@ -1,30 +1,30 @@
 use anyhow::Result;
-use codex_config::types::McpServerConfig;
-use codex_config::types::McpServerTransportConfig;
-use codex_core::TurnInputRequest;
-use codex_core::config::Config;
-use codex_core::config::TokenBudgetConfig;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_features::Feature;
-use codex_login::CodexAuth;
-use codex_model_provider_info::built_in_model_providers;
-use codex_protocol::config_types::AutoCompactTokenLimitScope;
-use codex_protocol::items::TurnItem;
-use codex_protocol::model_types::ModelTokenBudgetConfig;
-use codex_protocol::protocol::CONTEXT_WINDOW_CLOSE_TAG;
-use codex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_CLOSE_TAG;
-use codex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_OPEN_TAG;
-use codex_protocol::protocol::CONTEXT_WINDOW_OPEN_TAG;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::HookEventName;
-use codex_protocol::protocol::HookRunStatus;
-use codex_protocol::protocol::ItemCompletedEvent;
-use codex_protocol::protocol::ItemStartedEvent;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
-use codex_skills_extension::SkillsExtensionConfig;
-use codex_skills_extension::install;
+use genex_config::types::McpServerConfig;
+use genex_config::types::McpServerTransportConfig;
+use genex_core::TurnInputRequest;
+use genex_core::config::Config;
+use genex_core::config::TokenBudgetConfig;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_features::Feature;
+use genex_login::CodexAuth;
+use genex_model_provider_info::built_in_model_providers;
+use genex_protocol::config_types::AutoCompactTokenLimitScope;
+use genex_protocol::items::TurnItem;
+use genex_protocol::model_types::ModelTokenBudgetConfig;
+use genex_protocol::protocol::CONTEXT_WINDOW_CLOSE_TAG;
+use genex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_CLOSE_TAG;
+use genex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_OPEN_TAG;
+use genex_protocol::protocol::CONTEXT_WINDOW_OPEN_TAG;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::HookEventName;
+use genex_protocol::protocol::HookRunStatus;
+use genex_protocol::protocol::ItemCompletedEvent;
+use genex_protocol::protocol::ItemStartedEvent;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
+use genex_skills_extension::SkillsExtensionConfig;
+use genex_skills_extension::install;
 use core_test_support::PathBufExt;
 use core_test_support::assert_regex_match;
 use core_test_support::context_snapshot;
@@ -162,7 +162,7 @@ fn write_token_budget_compact_hooks(home: &Path) {
     std::fs::write(home.join("hooks.json"), hooks.to_string()).expect("write hooks.json");
 }
 
-async fn assert_context_compaction_item_lifecycle(codex: &std::sync::Arc<codex_core::CodexThread>) {
+async fn assert_context_compaction_item_lifecycle(codex: &std::sync::Arc<genex_core::CodexThread>) {
     let mut saw_compaction_started = false;
     let mut saw_compaction_completed = false;
 

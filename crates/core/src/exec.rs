@@ -23,40 +23,40 @@ use crate::sandboxing::SandboxPermissions;
 use crate::spawn::SpawnChildRequest;
 use crate::spawn::StdioPolicy;
 use crate::spawn::spawn_child_async;
-use codex_network_proxy::NetworkProxy;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::Result;
-use codex_protocol::error::SandboxErr;
-use codex_protocol::exec_output::ExecToolCallOutput;
-use codex_protocol::exec_output::StreamOutput;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecCommandOutputDeltaEvent;
-use codex_protocol::protocol::ExecOutputStream;
-use codex_sandboxing::SandboxCommand;
-use codex_sandboxing::SandboxManager;
-use codex_sandboxing::SandboxTransformRequest;
-use codex_sandboxing::SandboxType;
-use codex_sandboxing::SandboxablePreference;
-use codex_sandboxing::WindowsSandboxFilesystemOverrides;
-pub(crate) use codex_sandboxing::is_likely_sandbox_denied;
+use genex_network_proxy::NetworkProxy;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::Result;
+use genex_protocol::error::SandboxErr;
+use genex_protocol::exec_output::ExecToolCallOutput;
+use genex_protocol::exec_output::StreamOutput;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::Event;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecCommandOutputDeltaEvent;
+use genex_protocol::protocol::ExecOutputStream;
+use genex_sandboxing::SandboxCommand;
+use genex_sandboxing::SandboxManager;
+use genex_sandboxing::SandboxTransformRequest;
+use genex_sandboxing::SandboxType;
+use genex_sandboxing::SandboxablePreference;
+use genex_sandboxing::WindowsSandboxFilesystemOverrides;
+pub(crate) use genex_sandboxing::is_likely_sandbox_denied;
 #[cfg(test)]
-use codex_sandboxing::permission_profile_supports_windows_restricted_token_sandbox;
-use codex_sandboxing::record_filesystem_sandbox_violation;
+use genex_sandboxing::permission_profile_supports_windows_restricted_token_sandbox;
+use genex_sandboxing::record_filesystem_sandbox_violation;
 #[cfg(test)]
-use codex_sandboxing::resolve_windows_elevated_filesystem_overrides;
+use genex_sandboxing::resolve_windows_elevated_filesystem_overrides;
 #[cfg(test)]
-use codex_sandboxing::resolve_windows_restricted_token_filesystem_overrides;
+use genex_sandboxing::resolve_windows_restricted_token_filesystem_overrides;
 #[cfg(test)]
-use codex_sandboxing::unsupported_windows_restricted_token_sandbox_reason;
+use genex_sandboxing::unsupported_windows_restricted_token_sandbox_reason;
 #[cfg(any(test, target_os = "windows"))]
-use codex_sandboxing::windows_sandbox_uses_elevated_backend;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
-use codex_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
-use codex_utils_pty::process_group::kill_child_process_group;
+use genex_sandboxing::windows_sandbox_uses_elevated_backend;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
+use genex_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
+use genex_utils_pty::process_group::kill_child_process_group;
 
 pub const DEFAULT_EXEC_COMMAND_TIMEOUT_MS: u64 = 10_000;
 
@@ -103,7 +103,7 @@ pub struct ExecParams {
     pub sandbox_permissions: SandboxPermissions,
     // TODO(anp): Reconcile these launch settings with TurnEnvironment::sandbox_context
     // so turn-scoped execution uses the selected environment's backend.
-    pub windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel,
+    pub windows_sandbox_level: genex_protocol::config_types::WindowsSandboxLevel,
     pub windows_sandbox_private_desktop: bool,
     pub justification: Option<String>,
     pub arg0: Option<String>,
@@ -125,7 +125,7 @@ pub enum ExecCapturePolicy {
 
 fn select_process_exec_tool_sandbox_type(
     permission_profile: &PermissionProfile,
-    windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel,
+    windows_sandbox_level: genex_protocol::config_types::WindowsSandboxLevel,
     enforce_managed_network: bool,
 ) -> SandboxType {
     SandboxManager::new().select_initial(
@@ -565,7 +565,7 @@ fn windowsapps_path_kind(path: &str) -> &'static str {
 #[cfg(target_os = "windows")]
 fn record_windows_sandbox_spawn_failure(
     command_path: Option<&str>,
-    windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel,
+    windows_sandbox_level: genex_protocol::config_types::WindowsSandboxLevel,
     err: &str,
 ) {
     let Some(error_code) = extract_create_process_as_user_error_code(err) else {
@@ -580,13 +580,13 @@ fn record_windows_sandbox_spawn_failure(
     let path_kind = windowsapps_path_kind(path);
     let level = if matches!(
         windows_sandbox_level,
-        codex_protocol::config_types::WindowsSandboxLevel::Elevated
+        genex_protocol::config_types::WindowsSandboxLevel::Elevated
     ) {
         "elevated"
     } else {
         "legacy"
     };
-    if let Some(metrics) = codex_otel::global() {
+    if let Some(metrics) = genex_otel::global() {
         let _ = metrics.counter(
             "codex.windows_sandbox.createprocessasuserw_failed",
             /*inc*/ 1,
@@ -609,8 +609,8 @@ async fn exec_windows_sandbox(
     windows_sandbox_filesystem_overrides: Option<&WindowsSandboxFilesystemOverrides>,
 ) -> Result<RawExecToolCallOutput> {
     use crate::config::find_codex_home;
-    use codex_windows_sandbox::run_windows_sandbox_capture_for_permission_profile_elevated;
-    use codex_windows_sandbox::run_windows_sandbox_capture_with_filesystem_overrides;
+    use genex_windows_sandbox::run_windows_sandbox_capture_for_permission_profile_elevated;
+    use genex_windows_sandbox::run_windows_sandbox_capture_with_filesystem_overrides;
 
     let ExecParams {
         command,
@@ -647,7 +647,7 @@ async fn exec_windows_sandbox(
     // Windows sandbox capture still receives timeout and cancellation separately.
     let (cancellation, timeout_ms) = if capture_policy.uses_expiration() {
         let cancellation = expiration.cancellation_token().map(|token| {
-            codex_windows_sandbox::WindowsSandboxCancellationToken::new(move || {
+            genex_windows_sandbox::WindowsSandboxCancellationToken::new(move || {
                 token.is_cancelled()
             })
         });
@@ -686,7 +686,7 @@ async fn exec_windows_sandbox(
     let spawn_res = tokio::task::spawn_blocking(move || {
         if use_elevated {
             run_windows_sandbox_capture_for_permission_profile_elevated(
-                codex_windows_sandbox::ElevatedSandboxProfileCaptureRequest {
+                genex_windows_sandbox::ElevatedSandboxProfileCaptureRequest {
                     permission_profile: &permission_profile,
                     workspace_roots: workspace_roots.as_slice(),
                     codex_home: codex_home.as_ref(),
@@ -1041,7 +1041,7 @@ async fn consume_output(
                     // remaining members of the original process group.
                     let process_group_id = child.id();
                     let should_escalate = if let Some(process_group_id) = process_group_id {
-                        codex_utils_pty::process_group::terminate_process_group(process_group_id)?
+                        genex_utils_pty::process_group::terminate_process_group(process_group_id)?
                     } else {
                         false
                     };
@@ -1056,7 +1056,7 @@ async fn consume_output(
                             if should_escalate
                                 && let Some(process_group_id) = process_group_id
                             {
-                                codex_utils_pty::process_group::kill_process_group(
+                                genex_utils_pty::process_group::kill_process_group(
                                     process_group_id,
                                 )?;
                             }
@@ -1147,7 +1147,7 @@ async fn consume_output(
             Some(Ok(output)) => output,
             failure => {
                 let cleanup = process_group_id
-                    .map_or(Ok(()), codex_utils_pty::process_group::kill_process_group);
+                    .map_or(Ok(()), genex_utils_pty::process_group::kill_process_group);
                 stdout_handle.abort();
                 stderr_handle.abort();
                 if !stdout_done {

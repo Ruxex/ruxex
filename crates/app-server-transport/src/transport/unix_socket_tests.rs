@@ -5,11 +5,11 @@ use super::TransportEvent;
 use super::acquire_app_server_startup_lock;
 use super::app_server_control_socket_path;
 use super::start_control_socket_acceptor;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_core::config::find_codex_home;
-use codex_uds::UnixStream;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::JSONRPCNotification;
+use genex_core::config::find_codex_home;
+use genex_uds::UnixStream;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use futures::SinkExt;
 use futures::StreamExt;
 use pretty_assertions::assert_eq;
@@ -309,7 +309,7 @@ async fn control_socket_file_is_private_after_bind() {
     assert_eq!(
         physical_path.parent(),
         Some(
-            codex_uds::shared_daemon_socket_directory()
+            genex_uds::shared_daemon_socket_directory()
                 .unwrap()
                 .as_path()
         )

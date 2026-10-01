@@ -1,6 +1,6 @@
 use anyhow::Context;
-use codex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
-use codex_utils_cargo_bin::find_resource;
+use genex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
+use genex_utils_cargo_bin::find_resource;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 use std::fs;
@@ -47,7 +47,7 @@ fn run_apply_patch_scenario(dir: &Path) -> anyhow::Result<()> {
     // Run apply_patch in the temporary directory. We intentionally do not assert
     // on the exit status here; the scenarios are specified purely in terms of
     // final filesystem state, which we compare below.
-    Command::new(codex_utils_cargo_bin::cargo_bin("apply_patch")?)
+    Command::new(genex_utils_cargo_bin::cargo_bin("apply_patch")?)
         .arg(patch)
         .env(CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR, "1")
         .current_dir(tmp.path())

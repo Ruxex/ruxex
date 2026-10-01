@@ -2,10 +2,10 @@
 
 use std::collections::HashMap;
 
-use codex_app_server_protocol::McpServerElicitationRequest;
-use codex_app_server_protocol::McpServerElicitationRequestParams;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::UserVerificationVerifyParams;
+use genex_app_server_protocol::McpServerElicitationRequest;
+use genex_app_server_protocol::McpServerElicitationRequestParams;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::UserVerificationVerifyParams;
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 

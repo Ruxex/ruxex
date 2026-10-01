@@ -18,8 +18,8 @@ use std::sync::Weak;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_keyring_store::DefaultKeyringStore;
-use codex_keyring_store::KeyringStore;
+use genex_keyring_store::DefaultKeyringStore;
+use genex_keyring_store::KeyringStore;
 use futures::future::BoxFuture;
 use oauth2::Scope;
 use oauth2::TokenResponse;

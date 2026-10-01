@@ -1,10 +1,10 @@
 use super::AgentControl;
 use crate::codex_thread::CodexThread;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::CodexErrorDetails;
-use codex_protocol::error::Result as CodexResult;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::SessionSource;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::Result as CodexResult;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::SessionSource;
 use std::sync::Arc;
 use std::sync::OnceLock;
 use std::sync::atomic::AtomicUsize;

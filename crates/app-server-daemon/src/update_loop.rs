@@ -8,9 +8,9 @@ use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_http_client::ClientRouteClass;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::RouteAwareClientPool;
+use genex_http_client::ClientRouteClass;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::RouteAwareClientPool;
 use futures::FutureExt;
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
@@ -117,7 +117,7 @@ async fn run_with_http(
     #[cfg(windows)]
     let _installer_job = crate::backend::windows::updater_job()?;
     let socket_path = daemon.manual_update_socket_path();
-    codex_uds::prepare_private_socket_directory(
+    genex_uds::prepare_private_socket_directory(
         socket_path
             .parent()
             .context("updater socket has no parent")?,
@@ -126,7 +126,7 @@ async fn run_with_http(
     if socket_path.exists() {
         tokio::fs::remove_file(&socket_path).await?;
     }
-    let mut listener = Some(codex_uds::UnixListener::bind(&socket_path).await?);
+    let mut listener = Some(genex_uds::UnixListener::bind(&socket_path).await?);
     #[cfg(windows)]
     updater.mark_ready().await?;
     let needs_managed_handoff =
@@ -250,7 +250,7 @@ async fn next_update_delay(daemon: &Daemon) -> Option<Duration> {
 async fn adopt_managed_updater(
     daemon: &Daemon,
     running_identity: &ExecutableIdentity,
-    listener: &mut Option<codex_uds::UnixListener>,
+    listener: &mut Option<genex_uds::UnixListener>,
 ) -> Result<UpdateLoopControl> {
     let managed_bin = resolved_managed_codex_bin(&daemon.current_managed_codex_bin()?).await?;
     if executable_identity(&managed_bin).await? == *running_identity {
@@ -278,7 +278,7 @@ async fn adopt_managed_updater(
             if socket_path.exists() {
                 tokio::fs::remove_file(&socket_path).await?;
             }
-            *listener = Some(codex_uds::UnixListener::bind(&socket_path).await?);
+            *listener = Some(genex_uds::UnixListener::bind(&socket_path).await?);
             return Err(err);
         }
         Ok(UpdateLoopControl::Stop)
@@ -720,7 +720,7 @@ struct Signal;
 impl Signal {
     async fn recv(&mut self) -> Option<()> {
         // An unreadable control path must stop the updater rather than disable shutdown.
-        let _ = codex_app_server_transport::daemon_shutdown_signal().await;
+        let _ = genex_app_server_transport::daemon_shutdown_signal().await;
         Some(())
     }
 }

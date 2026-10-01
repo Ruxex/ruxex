@@ -3,23 +3,23 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 
-use codex_config::CONFIG_TOML_FILE;
-use codex_config::ConfigLayerEntry;
-use codex_config::ConfigLayerSource;
-use codex_config::ConfigLayerStack;
-use codex_config::HookEventsToml;
-use codex_config::HookHandlerConfig;
-use codex_config::HookStateToml;
-use codex_config::HooksFile;
-use codex_config::ManagedHooksRequirementsToml;
-use codex_config::MatcherGroup;
-use codex_config::RequirementSource;
-use codex_config::TomlValue;
-use codex_config::version_for_toml;
-use codex_plugin::PluginHookSource;
-use codex_plugin::is_allowlisted_bundled_cleanup_hook;
-use codex_protocol::protocol::HookEventName;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_config::CONFIG_TOML_FILE;
+use genex_config::ConfigLayerEntry;
+use genex_config::ConfigLayerSource;
+use genex_config::ConfigLayerStack;
+use genex_config::HookEventsToml;
+use genex_config::HookHandlerConfig;
+use genex_config::HookStateToml;
+use genex_config::HooksFile;
+use genex_config::ManagedHooksRequirementsToml;
+use genex_config::MatcherGroup;
+use genex_config::RequirementSource;
+use genex_config::TomlValue;
+use genex_config::version_for_toml;
+use genex_plugin::PluginHookSource;
+use genex_plugin::is_allowlisted_bundled_cleanup_hook;
+use genex_protocol::protocol::HookEventName;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -35,8 +35,8 @@ use crate::events::session_end::SESSION_END_DEFAULT_TIMEOUT_SEC;
 use crate::events::session_end::SESSION_END_MAX_TIMEOUT_SEC;
 use crate::output_spill::AdditionalContextLimit;
 use crate::output_spill::DEFAULT_HOOK_OUTPUT_TOKEN_LIMIT;
-use codex_protocol::protocol::HookSource;
-use codex_protocol::protocol::HookTrustStatus;
+use genex_protocol::protocol::HookSource;
+use genex_protocol::protocol::HookTrustStatus;
 
 pub(crate) struct DiscoveryResult {
     pub handlers: Vec<ConfiguredHandler>,
@@ -473,7 +473,7 @@ fn append_matcher_groups(
     warnings: &mut Vec<String>,
     display_order: &mut i64,
     source: &mut HookHandlerSource<'_>,
-    event_name: codex_protocol::protocol::HookEventName,
+    event_name: genex_protocol::protocol::HookEventName,
     groups: Vec<MatcherGroup>,
 ) {
     for (group_index, group) in groups.into_iter().enumerate() {
@@ -530,11 +530,11 @@ fn append_matcher_groups(
                     }
                     let additional_context_limit = if matches!(
                         event_name,
-                        codex_protocol::protocol::HookEventName::PreToolUse
-                            | codex_protocol::protocol::HookEventName::PostToolUse
-                            | codex_protocol::protocol::HookEventName::SessionStart
-                            | codex_protocol::protocol::HookEventName::UserPromptSubmit
-                            | codex_protocol::protocol::HookEventName::SubagentStart
+                        genex_protocol::protocol::HookEventName::PreToolUse
+                            | genex_protocol::protocol::HookEventName::PostToolUse
+                            | genex_protocol::protocol::HookEventName::SessionStart
+                            | genex_protocol::protocol::HookEventName::UserPromptSubmit
+                            | genex_protocol::protocol::HookEventName::SubagentStart
                     ) {
                         additional_context_limit
                     } else {
@@ -764,7 +764,7 @@ struct NormalizedHookIdentity {
 }
 
 fn hook_hash(
-    event_name: codex_protocol::protocol::HookEventName,
+    event_name: genex_protocol::protocol::HookEventName,
     matcher: Option<&str>,
     group: &MatcherGroup,
     normalized_handler: &HookHandlerConfig,
@@ -841,16 +841,16 @@ fn hook_source_for_requirement_source(source: Option<&RequirementSource>) -> Hoo
 
 #[cfg(test)]
 mod tests {
-    use codex_config::ConfigLayerEntry;
-    use codex_config::ConfigLayerSource;
-    use codex_config::HookEventsToml;
-    use codex_config::RequirementSource;
-    use codex_protocol::protocol::HookEventName;
-    use codex_protocol::protocol::HookExecutionMode;
-    use codex_protocol::protocol::HookSource;
-    use codex_utils_absolute_path::AbsolutePathBuf;
-    use codex_utils_absolute_path::test_support::PathBufExt;
-    use codex_utils_absolute_path::test_support::test_path_buf;
+    use genex_config::ConfigLayerEntry;
+    use genex_config::ConfigLayerSource;
+    use genex_config::HookEventsToml;
+    use genex_config::RequirementSource;
+    use genex_protocol::protocol::HookEventName;
+    use genex_protocol::protocol::HookExecutionMode;
+    use genex_protocol::protocol::HookSource;
+    use genex_utils_absolute_path::AbsolutePathBuf;
+    use genex_utils_absolute_path::test_support::PathBufExt;
+    use genex_utils_absolute_path::test_support::test_path_buf;
     use pretty_assertions::assert_eq;
 
     use super::ConfiguredHandler;
@@ -861,11 +861,11 @@ mod tests {
     use super::normalize_command_hook;
     use crate::output_spill::AdditionalContextLimit;
     use crate::output_spill::DEFAULT_HOOK_OUTPUT_TOKEN_LIMIT;
-    use codex_config::HookHandlerConfig;
-    use codex_config::HookStateToml;
-    use codex_config::MatcherGroup;
-    use codex_config::TomlValue;
-    use codex_protocol::protocol::HookTrustStatus;
+    use genex_config::HookHandlerConfig;
+    use genex_config::HookStateToml;
+    use genex_config::MatcherGroup;
+    use genex_config::TomlValue;
+    use genex_protocol::protocol::HookTrustStatus;
 
     fn source_path() -> AbsolutePathBuf {
         test_path_buf("/tmp/hooks.json").abs()

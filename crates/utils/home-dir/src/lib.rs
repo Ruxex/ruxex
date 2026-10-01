@@ -1,4 +1,4 @@
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use dirs::home_dir;
 use std::path::PathBuf;
 
@@ -65,7 +65,7 @@ fn find_codex_home_from_env(codex_home_env: Option<&str>) -> std::io::Result<Abs
 #[cfg(test)]
 mod tests {
     use super::find_codex_home_from_env;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use genex_utils_absolute_path::AbsolutePathBuf;
     use dirs::home_dir;
     use pretty_assertions::assert_eq;
     use std::fs;

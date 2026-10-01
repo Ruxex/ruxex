@@ -13,35 +13,35 @@ use axum::http::HeaderMap;
 use axum::http::StatusCode;
 use axum::http::header::AUTHORIZATION;
 use axum::routing::post;
-use codex_app_server_protocol::AppInfo;
-use codex_app_server_protocol::AppMetadata;
-use codex_app_server_protocol::AppTemplateSummary;
-use codex_app_server_protocol::AppTemplateUnavailableReason;
-use codex_app_server_protocol::AppsReadParams;
-use codex_app_server_protocol::AppsReadResponse;
-use codex_app_server_protocol::HookEventName;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::PluginAuthPolicy;
-use codex_app_server_protocol::PluginAvailability;
-use codex_app_server_protocol::PluginInstallPolicy;
-use codex_app_server_protocol::PluginInstallPolicySource;
-use codex_app_server_protocol::PluginReadParams;
-use codex_app_server_protocol::PluginReadResponse;
-use codex_app_server_protocol::PluginShareDiscoverability;
-use codex_app_server_protocol::PluginSharePrincipal;
-use codex_app_server_protocol::PluginSharePrincipalRole;
-use codex_app_server_protocol::PluginSharePrincipalType;
-use codex_app_server_protocol::PluginSkillReadParams;
-use codex_app_server_protocol::PluginSkillReadResponse;
-use codex_app_server_protocol::PluginSource;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ScheduledTaskSchedule;
-use codex_app_server_protocol::ScheduledTaskSummary;
-use codex_app_server_protocol::ScheduledTaskWeekday;
-use codex_app_server_protocol::SkillInterface;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_app_server_protocol::AppInfo;
+use genex_app_server_protocol::AppMetadata;
+use genex_app_server_protocol::AppTemplateSummary;
+use genex_app_server_protocol::AppTemplateUnavailableReason;
+use genex_app_server_protocol::AppsReadParams;
+use genex_app_server_protocol::AppsReadResponse;
+use genex_app_server_protocol::HookEventName;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::JSONRPCResponse;
+use genex_app_server_protocol::PluginAuthPolicy;
+use genex_app_server_protocol::PluginAvailability;
+use genex_app_server_protocol::PluginInstallPolicy;
+use genex_app_server_protocol::PluginInstallPolicySource;
+use genex_app_server_protocol::PluginReadParams;
+use genex_app_server_protocol::PluginReadResponse;
+use genex_app_server_protocol::PluginShareDiscoverability;
+use genex_app_server_protocol::PluginSharePrincipal;
+use genex_app_server_protocol::PluginSharePrincipalRole;
+use genex_app_server_protocol::PluginSharePrincipalType;
+use genex_app_server_protocol::PluginSkillReadParams;
+use genex_app_server_protocol::PluginSkillReadResponse;
+use genex_app_server_protocol::PluginSource;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ScheduledTaskSchedule;
+use genex_app_server_protocol::ScheduledTaskSummary;
+use genex_app_server_protocol::ScheduledTaskWeekday;
+use genex_app_server_protocol::SkillInterface;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -1397,7 +1397,7 @@ async fn plugin_read_agent_plugin_excludes_nested_skills() -> Result<()> {
 
     assert_eq!(
         response.plugin.skills,
-        vec![codex_app_server_protocol::SkillSummary {
+        vec![genex_app_server_protocol::SkillSummary {
             name: "demo-plugin:direct".to_string(),
             description: "Direct skill".to_string(),
             short_description: None,
@@ -1680,15 +1680,15 @@ enabled = false
     assert_eq!(
         response.plugin.hooks,
         vec![
-            codex_app_server_protocol::PluginHookSummary {
+            genex_app_server_protocol::PluginHookSummary {
                 key: "demo-plugin@codex-curated:hooks/hooks.json:pre_tool_use:0:0".to_string(),
                 event_name: HookEventName::PreToolUse,
             },
-            codex_app_server_protocol::PluginHookSummary {
+            genex_app_server_protocol::PluginHookSummary {
                 key: "demo-plugin@codex-curated:hooks/hooks.json:pre_tool_use:0:1".to_string(),
                 event_name: HookEventName::PreToolUse,
             },
-            codex_app_server_protocol::PluginHookSummary {
+            genex_app_server_protocol::PluginHookSummary {
                 key: "demo-plugin@codex-curated:hooks/hooks.json:session_start:0:0".to_string(),
                 event_name: HookEventName::SessionStart,
             },

@@ -8,20 +8,20 @@ use crate::legacy_core::config::Config;
 use crate::resize_reflow_cap::resize_reflow_max_rows;
 use crate::thread_transcript::RawReasoningVisibility;
 use crate::thread_transcript::thread_items_to_transcript_cells;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::SortDirection;
-use codex_app_server_protocol::Thread;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadItemsListParams;
-use codex_app_server_protocol::ThreadItemsListResponse;
-use codex_app_server_protocol::ThreadRevertParams;
-use codex_app_server_protocol::ThreadRevertResponse;
-use codex_app_server_protocol::ThreadTurnsListParams;
-use codex_app_server_protocol::ThreadTurnsListResponse;
-use codex_app_server_protocol::Turn;
-use codex_app_server_protocol::TurnItemsView;
-use codex_protocol::ThreadId;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::SortDirection;
+use genex_app_server_protocol::Thread;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadItemsListParams;
+use genex_app_server_protocol::ThreadItemsListResponse;
+use genex_app_server_protocol::ThreadRevertParams;
+use genex_app_server_protocol::ThreadRevertResponse;
+use genex_app_server_protocol::ThreadTurnsListParams;
+use genex_app_server_protocol::ThreadTurnsListResponse;
+use genex_app_server_protocol::Turn;
+use genex_app_server_protocol::TurnItemsView;
+use genex_protocol::ThreadId;
 use color_eyre::eyre::Result;
 use color_eyre::eyre::WrapErr;
 
@@ -78,7 +78,7 @@ impl AppServerSession {
         thread_id: ThreadId,
         before_turn_id: String,
         retained_turns: &[Turn],
-    ) -> std::result::Result<ThreadRevertResponse, codex_app_server_client::TypedRequestError> {
+    ) -> std::result::Result<ThreadRevertResponse, genex_app_server_client::TypedRequestError> {
         let request_id = self.next_request_id();
         let response: ThreadRevertResponse = self
             .client

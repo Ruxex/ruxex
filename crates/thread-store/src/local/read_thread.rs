@@ -1,13 +1,13 @@
 use chrono::DateTime;
 use chrono::Utc;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
-use codex_rollout::RolloutRecorder;
-use codex_rollout::read_session_meta_line;
-use codex_rollout::read_thread_item_from_rollout;
-use codex_state::ThreadMetadata;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::SessionMetaLine;
+use genex_protocol::protocol::SessionSource;
+use genex_rollout::RolloutRecorder;
+use genex_rollout::read_session_meta_line;
+use genex_rollout::read_thread_item_from_rollout;
+use genex_state::ThreadMetadata;
 
 use super::LocalThreadStore;
 use super::helpers::git_info_from_parts;
@@ -79,9 +79,9 @@ pub(super) async fn read_thread(
 
 async fn sqlite_rollout_path_can_load_history_for_thread(
     path: &std::path::Path,
-    thread_id: codex_protocol::ThreadId,
+    thread_id: genex_protocol::ThreadId,
 ) -> bool {
-    if codex_rollout::existing_rollout_path(path).await.is_none() {
+    if genex_rollout::existing_rollout_path(path).await.is_none() {
         return false;
     }
     // SQLite metadata can outlive a moved/recreated rollout path. When history is
@@ -143,7 +143,7 @@ async fn resolve_requested_rollout_path(
         }
         _ => {}
     }
-    let Some(path) = codex_rollout::existing_rollout_path(path.as_path()).await else {
+    let Some(path) = genex_rollout::existing_rollout_path(path.as_path()).await else {
         return Err(ThreadStoreError::InvalidRequest {
             message: format!(
                 "failed to resolve rollout path `{}`: file does not exist",
@@ -176,7 +176,7 @@ async fn attach_history_if_requested(
 
 async fn load_rollout_history_items(
     path: &std::path::Path,
-) -> ThreadStoreResult<Vec<codex_rollout::RolloutItem>> {
+) -> ThreadStoreResult<Vec<genex_rollout::RolloutItem>> {
     let (items, _, _) = RolloutRecorder::load_rollout_items(path)
         .await
         .map_err(|err| ThreadStoreError::Internal {
@@ -201,7 +201,7 @@ async fn read_thread_from_rollout_path(
     .ok_or_else(|| ThreadStoreError::Internal {
         message: format!("failed to read thread id from {}", path.display()),
     })?;
-    thread.rollout_path = Some(codex_rollout::plain_rollout_path(path.as_path()));
+    thread.rollout_path = Some(genex_rollout::plain_rollout_path(path.as_path()));
     let meta_line = read_required_session_meta_line(path.as_path()).await?;
     thread.forked_from_id = meta_line.meta.forked_from_id;
     thread.parent_thread_id = meta_line.meta.parent_thread_id;
@@ -218,7 +218,7 @@ async fn read_thread_from_rollout_path(
 
 async fn read_sqlite_metadata(
     store: &LocalThreadStore,
-    thread_id: codex_protocol::ThreadId,
+    thread_id: genex_protocol::ThreadId,
 ) -> Option<ThreadMetadata> {
     let runtime = store.state_db().await?;
     runtime.get_thread(thread_id).await.ok().flatten()
@@ -242,7 +242,7 @@ pub(super) async fn stored_thread_from_sqlite_metadata(
         }
         Ok(meta_line) => Some(meta_line.meta),
         Err(_)
-            if codex_rollout::existing_rollout_path(metadata.rollout_path.as_path())
+            if genex_rollout::existing_rollout_path(metadata.rollout_path.as_path())
                 .await
                 .is_none() =>
         {
@@ -279,10 +279,10 @@ pub(super) async fn stored_thread_from_sqlite_metadata(
 pub(super) fn stored_thread_from_state_metadata(
     store: &LocalThreadStore,
     metadata: ThreadMetadata,
-    parent_thread_id: Option<codex_protocol::ThreadId>,
+    parent_thread_id: Option<genex_protocol::ThreadId>,
 ) -> StoredThread {
     let name = sqlite_thread_name(&metadata);
-    let rollout_path = codex_rollout::plain_rollout_path(metadata.rollout_path.as_path());
+    let rollout_path = genex_rollout::plain_rollout_path(metadata.rollout_path.as_path());
     let preview = metadata
         .preview
         .clone()
@@ -369,7 +369,7 @@ fn stored_thread_from_meta_line(
         .and_then(|meta| meta.modified().ok())
         .map(DateTime::<Utc>::from)
         .unwrap_or(created_at);
-    let rollout_path = codex_rollout::plain_rollout_path(path.as_path());
+    let rollout_path = genex_rollout::plain_rollout_path(path.as_path());
     StoredThread {
         thread_id: meta_line.meta.id,
         extra_config: None,
@@ -439,17 +439,17 @@ mod tests {
     use std::path::PathBuf;
 
     use chrono::Utc;
-    use codex_protocol::ThreadId;
-    use codex_protocol::items::TurnItem;
-    use codex_protocol::items::UserMessageItem;
-    use codex_protocol::protocol::EventMsg;
-    use codex_protocol::protocol::ItemCompletedEvent;
-    use codex_protocol::protocol::SandboxPolicy;
-    use codex_protocol::protocol::SessionSource;
-    use codex_protocol::protocol::ThreadHistoryMode;
-    use codex_protocol::user_input::UserInput;
-    use codex_rollout::RolloutItem;
-    use codex_state::ThreadMetadataBuilder;
+    use genex_protocol::ThreadId;
+    use genex_protocol::items::TurnItem;
+    use genex_protocol::items::UserMessageItem;
+    use genex_protocol::protocol::EventMsg;
+    use genex_protocol::protocol::ItemCompletedEvent;
+    use genex_protocol::protocol::SandboxPolicy;
+    use genex_protocol::protocol::SessionSource;
+    use genex_protocol::protocol::ThreadHistoryMode;
+    use genex_protocol::user_input::UserInput;
+    use genex_rollout::RolloutItem;
+    use genex_state::ThreadMetadataBuilder;
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
     use uuid::Uuid;
@@ -529,7 +529,7 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let active_path =
             write_session_file(home.path(), "2025-01-03T12-00-00", uuid).expect("session file");
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -550,9 +550,9 @@ mod tests {
         builder.recency_at = Some(recency_at);
         let mut metadata = builder.build(config.default_model_provider_id.as_str());
         metadata.name = Some("Canonical SQLite name".to_string());
-        metadata.section = Some(codex_state::ThreadSection {
-            id: codex_state::PINNED_THREAD_SECTION_ID.to_string(),
-            name: codex_state::PINNED_THREAD_SECTION_NAME.to_string(),
+        metadata.section = Some(genex_state::ThreadSection {
+            id: genex_state::PINNED_THREAD_SECTION_ID.to_string(),
+            name: genex_state::PINNED_THREAD_SECTION_NAME.to_string(),
             appearance: None,
         });
         metadata.section_position = Some(2_000_000);
@@ -575,7 +575,7 @@ mod tests {
         assert_eq!(thread.recency_at, recency_at);
         assert_eq!(
             thread.section.as_ref().map(|section| section.id.as_str()),
-            Some(codex_state::PINNED_THREAD_SECTION_ID)
+            Some(genex_state::PINNED_THREAD_SECTION_ID)
         );
         assert_eq!(thread.section_position, Some(2_000_000));
         assert_eq!(thread.section_entered_at, Some(recency_at));
@@ -694,7 +694,7 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let rollout_path =
             write_session_file(home.path(), "2025-01-03T12-00-00", uuid).expect("session file");
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -739,7 +739,7 @@ mod tests {
             ThreadHistoryMode::Paginated,
         )
         .expect("session file");
-        codex_rollout::append_rollout_item_to_path(
+        genex_rollout::append_rollout_item_to_path(
             &rollout_path,
             &RolloutItem::EventMsg(EventMsg::ItemCompleted(ItemCompletedEvent {
                 thread_id,
@@ -754,7 +754,7 @@ mod tests {
         )
         .await
         .expect("append rollout user message");
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -780,7 +780,7 @@ mod tests {
             .upsert_thread(&metadata)
             .await
             .expect("state db upsert should succeed");
-        codex_rollout::append_thread_name(home.path(), thread_id, "Stale index name")
+        genex_rollout::append_thread_name(home.path(), thread_id, "Stale index name")
             .await
             .expect("append legacy thread name");
 
@@ -831,7 +831,7 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let rollout_path =
             write_session_file(home.path(), "2025-01-03T12-00-00", uuid).expect("session file");
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -873,7 +873,7 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let rollout_path =
             write_session_file(home.path(), "2025-01-03T12-00-00", uuid).expect("session file");
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -907,7 +907,7 @@ mod tests {
     async fn read_thread_preserves_sqlite_cwd_when_rollout_metadata_is_stale() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -1082,7 +1082,7 @@ mod tests {
         });
         writeln!(file, "{meta}").expect("write session meta");
 
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -1209,7 +1209,7 @@ mod tests {
         let rollout_path = external
             .path()
             .join(format!("rollout-2025-01-03T12-00-00-{uuid}.jsonl"));
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -1271,7 +1271,7 @@ mod tests {
         let rollout_path = external
             .path()
             .join(format!("rollout-2025-01-03T12-00-00-{uuid}.jsonl"));
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -1326,7 +1326,7 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let archived_path = write_archived_session_file(home.path(), "2025-01-03T12-00-00", uuid)
             .expect("archived session file");
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )

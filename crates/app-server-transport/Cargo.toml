@@ -1,11 +1,11 @@
 [package]
-name = "codex-app-server-transport"
+name = "genex-app-server-transport"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "codex_app_server_transport"
+name = "genex_app_server_transport"
 path = "src/lib.rs"
 doctest = false
 
@@ -22,16 +22,16 @@ axum = { workspace = true, default-features = false, features = [
 ] }
 base64 = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
-codex-api = { workspace = true }
-codex-app-server-protocol = { workspace = true }
-codex-core = { workspace = true }
-codex-login = { workspace = true }
-codex-model-provider = { workspace = true }
-codex-protocol = { workspace = true }
-codex-state = { workspace = true }
-codex-uds = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-rustls-provider = { workspace = true }
+genex-api = { workspace = true }
+genex-app-server-protocol = { workspace = true }
+genex-core = { workspace = true }
+genex-login = { workspace = true }
+genex-model-provider = { workspace = true }
+genex-protocol = { workspace = true }
+genex-state = { workspace = true }
+genex-uds = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
+genex-utils-rustls-provider = { workspace = true }
 constant_time_eq = { workspace = true }
 futures = { workspace = true }
 gethostname = { workspace = true }
@@ -62,7 +62,7 @@ signal-hook = { workspace = true }
 
 [dev-dependencies]
 chrono = { workspace = true }
-codex-config = { workspace = true }
+genex-config = { workspace = true }
 pretty_assertions = { workspace = true }
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["test-util"] }

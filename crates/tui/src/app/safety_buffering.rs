@@ -8,8 +8,8 @@ use crate::app_server_session::turn_permissions_overrides;
 use crate::chatwidget::ThreadInputState;
 use crate::chatwidget::ThreadInputStateRestoreMode;
 use crate::chatwidget::UserMessage;
-use codex_app_server_protocol::TurnItemsView;
-use codex_app_server_protocol::UserInput;
+use genex_app_server_protocol::TurnItemsView;
+use genex_app_server_protocol::UserInput;
 
 pub(super) struct SafetyBufferedRetry {
     pub(super) thread_id: ThreadId,

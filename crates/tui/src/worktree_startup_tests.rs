@@ -45,11 +45,11 @@ async fn refreshed_bundle_rechecks_source_during_config_reload() -> anyhow::Resu
     }
     let mut loader_overrides = LoaderOverrides::without_managed_config_for_tests();
     loader_overrides.ignore_user_config = true;
-    let manager = codex_worktree::WorktreeManager::new(codex_worktree::WorktreeSettings::for_cli(
+    let manager = genex_worktree::WorktreeManager::new(genex_worktree::WorktreeSettings::for_cli(
         dir.path(),
         /*desktop*/ None,
     )?);
-    let checkout = codex_worktree::ManagedWorktree {
+    let checkout = genex_worktree::ManagedWorktree {
         root: destination.clone(),
         cwd: destination.clone(),
         source_root: source,
@@ -81,10 +81,10 @@ async fn refreshed_bundle_rechecks_source_during_config_reload() -> anyhow::Resu
     )
     .await?;
     let refreshed =
-        codex_config::test_support::CloudConfigBundleFixture::loader_with_enterprise_config(
+        genex_config::test_support::CloudConfigBundleFixture::loader_with_enterprise_config(
             format!(
                 "[projects.{}]\ntrust_level = \"untrusted\"\n",
-                serde_json::to_string(&codex_config::loader::project_trust_key(&nested))?
+                serde_json::to_string(&genex_config::loader::project_trust_key(&nested))?
             ),
         );
     let err = crate::load_config_with_worktree_source_policy(

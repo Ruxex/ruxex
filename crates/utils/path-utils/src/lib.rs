@@ -6,7 +6,7 @@ mod system_commands;
 pub use system_commands::system_executable;
 pub use system_commands::system_path;
 
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::HashSet;
 use std::hash::Hash;
 use std::io;

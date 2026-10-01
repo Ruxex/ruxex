@@ -1,20 +1,20 @@
 use anyhow::Result;
-use codex_core::StartIfIdleSubmission;
-use codex_core::TurnInputRequest;
-use codex_core::TurnInputSubmission;
-use codex_core::config::Config;
-use codex_extension_api::ConfigContributor;
-use codex_extension_api::ExtensionData;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_history::RolloutItem;
-use codex_history::RolloutLine;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::ThreadSettingsSnapshot;
-use codex_protocol::user_input::UserInput;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_core::StartIfIdleSubmission;
+use genex_core::TurnInputRequest;
+use genex_core::TurnInputSubmission;
+use genex_core::config::Config;
+use genex_extension_api::ConfigContributor;
+use genex_extension_api::ExtensionData;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_history::RolloutItem;
+use genex_history::RolloutLine;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::ThreadSettingsSnapshot;
+use genex_protocol::user_input::UserInput;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use core_test_support::streaming_sse::StreamingSseChunk;
@@ -42,7 +42,7 @@ fn assert_checkpoints(test: &TestCodex, expected: &[ThreadSettingsSnapshot]) -> 
     let rollout_path = test.codex.rollout_path().expect("rollout path");
     let rollout: Vec<RolloutLine> = std::fs::read_to_string(rollout_path)?
         .lines()
-        .map(codex_rollout::parse_rollout_line)
+        .map(genex_rollout::parse_rollout_line)
         .collect::<std::result::Result<_, _>>()?;
     let snapshots: Vec<_> = rollout
         .into_iter()
@@ -97,7 +97,7 @@ async fn initial_plugin_ids_use_turn_context_without_extra_settings_checkpoints(
     assert_checkpoints(&test, &[])?;
     let rollout_path = test.codex.rollout_path().expect("rollout path");
     let (items, _, parse_errors) =
-        codex_rollout::RolloutRecorder::load_rollout_items(&rollout_path).await?;
+        genex_rollout::RolloutRecorder::load_rollout_items(&rollout_path).await?;
     assert_eq!(parse_errors, 0);
     let context = items.iter().find_map(|item| match item {
         RolloutItem::TurnContext(context)
@@ -350,7 +350,7 @@ async fn compaction_checkpoints_settings_changed_during_its_model_request() -> R
     let rollout_path = test.session_configured.rollout_path.expect("rollout path");
     let rollout: Vec<RolloutLine> = std::fs::read_to_string(rollout_path)?
         .lines()
-        .map(codex_rollout::parse_rollout_line)
+        .map(genex_rollout::parse_rollout_line)
         .collect::<std::result::Result<_, _>>()?;
     let checkpoint = rollout
         .iter()

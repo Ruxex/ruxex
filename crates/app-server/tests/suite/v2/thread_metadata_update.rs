@@ -5,41 +5,41 @@ use app_test_support::create_fake_rollout;
 use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::rollout_path;
 use app_test_support::to_response;
-use codex_app_server_protocol::GitInfo;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadListResponse;
-use codex_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
-use codex_app_server_protocol::ThreadMetadataUpdateParams;
-use codex_app_server_protocol::ThreadMetadataUpdateResponse;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadReadResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadSection;
-use codex_app_server_protocol::ThreadSectionListParams;
-use codex_app_server_protocol::ThreadSectionListResponse;
-use codex_app_server_protocol::ThreadSectionMoveParams;
-use codex_app_server_protocol::ThreadSectionMoveResponse;
-use codex_app_server_protocol::ThreadSortKey;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadStatus;
-use codex_core::ARCHIVED_SESSIONS_SUBDIR;
-use codex_features::Feature;
-use codex_git_utils::GitSha;
-use codex_protocol::SanitizedGitUrl;
-use codex_protocol::ThreadId;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::protocol::GitInfo as RolloutGitInfo;
-use codex_rollout::state_db::reconcile_rollout;
-use codex_state::PINNED_THREAD_SECTION_ID;
-use codex_state::PINNED_THREAD_SECTION_NAME;
-use codex_state::StateRuntime;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_app_server_protocol::GitInfo;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::JSONRPCResponse;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_app_server_protocol::ThreadListParams;
+use genex_app_server_protocol::ThreadListResponse;
+use genex_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
+use genex_app_server_protocol::ThreadMetadataUpdateParams;
+use genex_app_server_protocol::ThreadMetadataUpdateResponse;
+use genex_app_server_protocol::ThreadReadParams;
+use genex_app_server_protocol::ThreadReadResponse;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadSection;
+use genex_app_server_protocol::ThreadSectionListParams;
+use genex_app_server_protocol::ThreadSectionListResponse;
+use genex_app_server_protocol::ThreadSectionMoveParams;
+use genex_app_server_protocol::ThreadSectionMoveResponse;
+use genex_app_server_protocol::ThreadSortKey;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::ThreadStatus;
+use genex_core::ARCHIVED_SESSIONS_SUBDIR;
+use genex_features::Feature;
+use genex_git_utils::GitSha;
+use genex_protocol::SanitizedGitUrl;
+use genex_protocol::ThreadId;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::protocol::GitInfo as RolloutGitInfo;
+use genex_rollout::state_db::reconcile_rollout;
+use genex_state::PINNED_THREAD_SECTION_ID;
+use genex_state::PINNED_THREAD_SECTION_NAME;
+use genex_state::StateRuntime;
+use genex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -252,7 +252,7 @@ async fn thread_section_move_pins_and_unpins_with_filtered_recency_pagination() 
             .expect("pinned thread should remain persisted");
         assert_eq!(
             thread.section,
-            Some(codex_state::ThreadSection {
+            Some(genex_state::ThreadSection {
                 id: pinned_section.id.clone(),
                 name: pinned_section.name.clone(),
                 appearance: None,
@@ -1163,7 +1163,7 @@ async fn thread_metadata_update_can_clear_stored_git_fields() -> Result<()> {
 
 async fn init_state_db(codex_home: &Path) -> Result<Arc<StateRuntime>> {
     let state_db = StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.abs()),
+        genex_state::SqliteConfig::new_for_testing(codex_home.abs()),
         "mock_provider".into(),
     )
     .await?;

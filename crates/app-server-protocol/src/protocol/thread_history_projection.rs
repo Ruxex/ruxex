@@ -3,9 +3,9 @@
 //! This module is only for the new paginated rollout format that persists canonical
 //! `ItemCompleted(TurnItem)` records, not legacy event-only rollouts.
 
-use codex_protocol::protocol::EventMsg;
-use codex_rollout::RolloutItem;
-use codex_rollout::RolloutLine;
+use genex_protocol::protocol::EventMsg;
+use genex_rollout::RolloutItem;
+use genex_rollout::RolloutLine;
 
 use crate::protocol::thread_history::ThreadHistoryChangeSet;
 use crate::protocol::thread_history::ThreadHistoryItemChange;

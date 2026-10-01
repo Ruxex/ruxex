@@ -5,10 +5,10 @@ use super::*;
 use crate::app_server_session::turn_permissions_overrides;
 use crate::chatwidget::MisalignmentReview;
 use crate::chatwidget::MisalignmentTurnSource;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::UserInput;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::UserInput;
 
 impl App {
     pub(super) fn open_misalignment_review(
@@ -167,7 +167,7 @@ impl App {
                 );
                 self.chat_widget.handle_server_notification(
                     ServerNotification::TurnStarted(
-                        codex_app_server_protocol::TurnStartedNotification {
+                        genex_app_server_protocol::TurnStartedNotification {
                             thread_id: review.thread_id.to_string(),
                             turn: response.turn,
                         },

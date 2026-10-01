@@ -21,4 +21,4 @@ codex plugin <operation>
 
 ## 境界
 
-コマンド文法は `codex-cli` にあり、プラグインのライフサイクルと入力/設定の意味論は `codex-plugin` および app-server 統合にあります。[設定](../common/configuration.md)、[トランスポート/サーバー](../common/transport-and-server.md)、[出力/エラー](../common/output-and-errors.md)も参照してください。
+コマンド文法は `genex-cli` にあり、プラグインのライフサイクルと入力/設定の意味論は `genex-plugin` および app-server 統合にあります。[設定](../common/configuration.md)、[トランスポート/サーバー](../common/transport-and-server.md)、[出力/エラー](../common/output-and-errors.md)も参照してください。

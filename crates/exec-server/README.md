@@ -1,8 +1,8 @@
-# codex-exec-server
+# genex-exec-server
 
-`codex-exec-server` is the library backing `codex exec-server`, a small
+`genex-exec-server` is the library backing `codex exec-server`, a small
 JSON-RPC server for spawning and controlling subprocesses through
-`codex-utils-pty`.
+`genex-utils-pty`.
 
 It provides:
 
@@ -16,7 +16,7 @@ filesystem operations and `codex-linux-sandbox`.
 
 ## Transport
 
-The server speaks the exec-specific `codex-exec-server-protocol` message
+The server speaks the exec-specific `genex-exec-server-protocol` message
 envelope over standard input and standard output. The CLI accepts `stdio` or
 `stdio://` through `--listen`; this is also the default transport.
 
@@ -120,7 +120,7 @@ Field definitions:
 - `env`: environment variables passed to the child process.
 - `tty`: when `true`, spawn a PTY-backed interactive process.
 - `pipeStdin`: when `true`, keep non-PTY stdin writable via `process/write`.
-- `arg0`: optional argv0 override forwarded to `codex-utils-pty`.
+- `arg0`: optional argv0 override forwarded to `genex-utils-pty`.
 
 Response:
 

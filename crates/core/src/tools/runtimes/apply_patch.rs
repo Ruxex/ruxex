@@ -14,23 +14,23 @@ use crate::tools::sandboxing::ToolCtx;
 use crate::tools::sandboxing::ToolError;
 use crate::tools::sandboxing::ToolRuntime;
 use crate::tools::sandboxing::executor_windows_sandbox_selection;
-use codex_apply_patch::AppliedPatchDelta;
-use codex_apply_patch::ApplyPatchAction;
-use codex_apply_patch::ApplyPatchOptions;
-use codex_exec_server::FileSystemSandboxContext;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::SandboxErr;
-use codex_protocol::exec_output::ExecToolCallOutput;
-use codex_protocol::exec_output::StreamOutput;
-use codex_protocol::models::AdditionalPermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::FileChange;
-use codex_sandboxing::SandboxType;
-use codex_sandboxing::SandboxablePreference;
-use codex_sandboxing::is_likely_executor_managed_sandbox_denied;
-use codex_sandboxing::policy_transforms::effective_permission_profile;
-use codex_sandboxing::record_filesystem_sandbox_violation;
-use codex_utils_path_uri::PathUri;
+use genex_apply_patch::AppliedPatchDelta;
+use genex_apply_patch::ApplyPatchAction;
+use genex_apply_patch::ApplyPatchOptions;
+use genex_exec_server::FileSystemSandboxContext;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::SandboxErr;
+use genex_protocol::exec_output::ExecToolCallOutput;
+use genex_protocol::exec_output::StreamOutput;
+use genex_protocol::models::AdditionalPermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::FileChange;
+use genex_sandboxing::SandboxType;
+use genex_sandboxing::SandboxablePreference;
+use genex_sandboxing::is_likely_executor_managed_sandbox_denied;
+use genex_sandboxing::policy_transforms::effective_permission_profile;
+use genex_sandboxing::record_filesystem_sandbox_violation;
+use genex_utils_path_uri::PathUri;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
@@ -176,7 +176,7 @@ impl ToolRuntime<ApplyPatchRequest, ApplyPatchRuntimeOutput> for ApplyPatchRunti
         let sandbox = Self::file_system_sandbox_context_for_attempt(req, attempt);
         let mut stdout = Vec::new();
         let mut stderr = Vec::new();
-        let result = codex_apply_patch::apply_patch_with_options(
+        let result = genex_apply_patch::apply_patch_with_options(
             &req.action.patch,
             ApplyPatchOptions {
                 update_file_mode: req.action.update_file_mode(),

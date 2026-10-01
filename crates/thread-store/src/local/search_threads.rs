@@ -2,12 +2,12 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
 
-use codex_install_context::InstallContext;
-use codex_rollout::RolloutConfig;
-use codex_rollout::first_rollout_content_match_snippet;
-use codex_rollout::parse_cursor;
-use codex_rollout::search_rollout_matches;
-use codex_utils_absolute_path::normalize_windows_device_path;
+use genex_install_context::InstallContext;
+use genex_rollout::RolloutConfig;
+use genex_rollout::first_rollout_content_match_snippet;
+use genex_rollout::parse_cursor;
+use genex_rollout::search_rollout_matches;
+use genex_utils_absolute_path::normalize_windows_device_path;
 
 use super::LocalThreadStore;
 use super::helpers::resolve_thread_names;
@@ -29,7 +29,7 @@ use crate::ThreadStoreResult;
 mod tests;
 
 struct ThreadSearchItem {
-    item: codex_rollout::ThreadItem,
+    item: genex_rollout::ThreadItem,
     snippet: String,
 }
 
@@ -53,9 +53,9 @@ pub(super) async fn search_threads(
         })
         .transpose()?;
     let sort_key = match params.sort_key {
-        ThreadSortKey::CreatedAt => codex_rollout::ThreadSortKey::CreatedAt,
-        ThreadSortKey::UpdatedAt => codex_rollout::ThreadSortKey::UpdatedAt,
-        ThreadSortKey::RecencyAt => codex_rollout::ThreadSortKey::RecencyAt,
+        ThreadSortKey::CreatedAt => genex_rollout::ThreadSortKey::CreatedAt,
+        ThreadSortKey::UpdatedAt => genex_rollout::ThreadSortKey::UpdatedAt,
+        ThreadSortKey::RecencyAt => genex_rollout::ThreadSortKey::RecencyAt,
         ThreadSortKey::SectionPosition => {
             return Err(ThreadStoreError::InvalidRequest {
                 message: "section-position sorting requires a section filter".to_owned(),
@@ -63,8 +63,8 @@ pub(super) async fn search_threads(
         }
     };
     let sort_direction = match params.sort_direction {
-        SortDirection::Asc => codex_rollout::SortDirection::Asc,
-        SortDirection::Desc => codex_rollout::SortDirection::Desc,
+        SortDirection::Asc => genex_rollout::SortDirection::Asc,
+        SortDirection::Desc => genex_rollout::SortDirection::Desc,
     };
     let state_db = store.state_db().await;
     let rollout_config = RolloutConfig {
@@ -201,7 +201,7 @@ pub(super) async fn search_threads(
 }
 
 fn rollout_search_path(path: &Path) -> PathBuf {
-    let path = codex_rollout::plain_rollout_path(path);
+    let path = genex_rollout::plain_rollout_path(path);
     // Resume can persist a Windows namespace prefix while filesystem search returns the
     // ordinary spelling. Normalize both join keys without requiring the uncompressed file
     // to exist, and retain the filename identifying the selected rollout after a revert.
@@ -216,7 +216,7 @@ fn rollout_search_path(path: &Path) -> PathBuf {
 fn cursor_from_thread_search_item(
     item: &ThreadSearchItem,
     sort_key: ThreadSortKey,
-) -> Option<codex_rollout::Cursor> {
+) -> Option<genex_rollout::Cursor> {
     let timestamp = match sort_key {
         ThreadSortKey::CreatedAt => item.item.created_at.as_deref()?,
         ThreadSortKey::UpdatedAt => item

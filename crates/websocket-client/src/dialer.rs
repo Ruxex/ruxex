@@ -5,8 +5,8 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
-use codex_http_client::OutboundProxyRoute;
-use codex_http_client::build_rustls_client_config_with_custom_ca;
+use genex_http_client::OutboundProxyRoute;
+use genex_http_client::build_rustls_client_config_with_custom_ca;
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
 use rustls::ClientConfig;

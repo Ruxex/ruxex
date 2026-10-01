@@ -3,10 +3,10 @@ use super::WorldStateContextFragment;
 use super::WorldStateSection;
 use crate::context::ContextualUserFragment;
 use crate::context::environment_context::push_xml_escaped_text;
-use codex_extension_api::RenderedWorldStateFragment;
-use codex_protocol::models::ContentItemKind;
-use codex_protocol::protocol::TOOLS_CLOSE_TAG;
-use codex_protocol::protocol::TOOLS_OPEN_TAG;
+use genex_extension_api::RenderedWorldStateFragment;
+use genex_protocol::models::ContentItemKind;
+use genex_protocol::protocol::TOOLS_CLOSE_TAG;
+use genex_protocol::protocol::TOOLS_OPEN_TAG;
 use std::collections::BTreeMap;
 
 const MAX_RENDERED_FRAGMENT_BYTES: usize = 4 * 1024;

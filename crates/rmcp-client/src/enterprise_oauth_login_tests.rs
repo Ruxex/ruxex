@@ -8,9 +8,9 @@ use std::sync::atomic::Ordering;
 
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use codex_exec_server::RouteAwareHttpClient;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyPolicy;
+use genex_exec_server::RouteAwareHttpClient;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyPolicy;
 use keyring::credential::Credential;
 use keyring::credential::CredentialApi;
 use keyring::credential::CredentialBuilderApi;

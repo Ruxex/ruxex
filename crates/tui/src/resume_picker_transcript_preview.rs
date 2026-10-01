@@ -10,8 +10,8 @@ use crate::app_server_session::HISTORY_ITEM_SCAN_LIMIT;
 use crate::git_action_directives::parse_assistant_markdown;
 use crate::inline_visualization::InlineVisualizationContext;
 use crate::legacy_core::config::Config;
-use codex_app_server_protocol::ThreadItem;
-use codex_protocol::ThreadId;
+use genex_app_server_protocol::ThreadItem;
+use genex_protocol::ThreadId;
 
 const MAX_TRANSCRIPT_PREVIEW_LINES: usize = 6;
 const TRANSCRIPT_PREVIEW_ITEMS_PAGE_SIZE: u32 = 6;
@@ -94,7 +94,7 @@ fn append_transcript_preview_lines<'a>(
                 let text = content
                     .iter()
                     .filter_map(|input| match input {
-                        codex_app_server_protocol::UserInput::Text { text, .. } => {
+                        genex_app_server_protocol::UserInput::Text { text, .. } => {
                             Some(text.as_str())
                         }
                         _ => None,

@@ -1,9 +1,9 @@
-use codex_app_server_protocol::ConfigLayer as ApiConfigLayer;
-use codex_app_server_protocol::ConfigLayerMetadata as ApiConfigLayerMetadata;
-use codex_app_server_protocol::ConfigLayerSource as ApiConfigLayerSource;
-use codex_config::ConfigLayer;
-use codex_config::ConfigLayerMetadata;
-use codex_config::ConfigLayerSource;
+use genex_app_server_protocol::ConfigLayer as ApiConfigLayer;
+use genex_app_server_protocol::ConfigLayerMetadata as ApiConfigLayerMetadata;
+use genex_app_server_protocol::ConfigLayerSource as ApiConfigLayerSource;
+use genex_config::ConfigLayer;
+use genex_config::ConfigLayerMetadata;
+use genex_config::ConfigLayerSource;
 
 /// Converts a config-layer source owned by `codex-config` into the app-server wire type owned by
 /// `codex-app-server-protocol`.

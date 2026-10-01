@@ -1,9 +1,9 @@
 use super::invalid_request;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_core::CodexThread;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_core::CodexThread;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
 
 pub(super) const DIRECT_INPUT_TO_MULTI_AGENT_V2_SUBAGENT_ERROR: &str =
     "direct app-server input is not allowed for multi-agent v2 sub-agents";

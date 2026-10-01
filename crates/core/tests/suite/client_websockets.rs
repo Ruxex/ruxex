@@ -1,53 +1,53 @@
 #![allow(clippy::unwrap_used)]
-use codex_api::WS_REQUEST_HEADER_TRACEPARENT_CLIENT_METADATA_KEY;
-use codex_api::WS_REQUEST_HEADER_TRACESTATE_CLIENT_METADATA_KEY;
-use codex_core::CodexResponsesMetadata;
-use codex_core::ModelClient;
-use codex_core::ModelClientSession;
-use codex_core::Prompt;
-use codex_core::ResponseEvent;
-use codex_core::TurnInputRequest;
-use codex_core::X_CODEX_ROUTING_HINT_HEADER;
-use codex_core::X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER;
-use codex_core::test_support::with_parent_turn;
-use codex_features::Feature;
-use codex_http_client::OutboundProxyPolicy;
-use codex_login::AuthManager;
-use codex_login::CodexAuth;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_model_provider_info::WireApi;
-use codex_otel::MetricsClient;
-use codex_otel::MetricsConfig;
-use codex_otel::SessionTelemetry;
-use codex_otel::TelemetryAuthMode;
-use codex_otel::current_span_w3c_trace_context;
-use codex_protocol::ResponseItemId;
-use codex_protocol::SessionId;
-use codex_protocol::ThreadId;
-use codex_protocol::account::PlanType;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::models::BaseInstructions;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ExecutedToolCall;
-use codex_protocol::models::FunctionCallOutputPayload;
-use codex_protocol::models::ResponseInputItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::models::ToolResultMetadata;
-use codex_protocol::models::ToolResultSource;
-use codex_protocol::models::ToolResultSources;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelServiceTier;
-use codex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::W3cTraceContext;
-use codex_protocol::user_input::UserInput;
-use codex_rollout_trace::ConversationPart;
-use codex_rollout_trace::InferenceTraceContext;
-use codex_rollout_trace::RawTraceEventPayload;
-use codex_rollout_trace::TraceWriter;
-use codex_rollout_trace::replay_bundle;
+use genex_api::WS_REQUEST_HEADER_TRACEPARENT_CLIENT_METADATA_KEY;
+use genex_api::WS_REQUEST_HEADER_TRACESTATE_CLIENT_METADATA_KEY;
+use genex_core::CodexResponsesMetadata;
+use genex_core::ModelClient;
+use genex_core::ModelClientSession;
+use genex_core::Prompt;
+use genex_core::ResponseEvent;
+use genex_core::TurnInputRequest;
+use genex_core::X_CODEX_ROUTING_HINT_HEADER;
+use genex_core::X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER;
+use genex_core::test_support::with_parent_turn;
+use genex_features::Feature;
+use genex_http_client::OutboundProxyPolicy;
+use genex_login::AuthManager;
+use genex_login::CodexAuth;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_model_provider_info::WireApi;
+use genex_otel::MetricsClient;
+use genex_otel::MetricsConfig;
+use genex_otel::SessionTelemetry;
+use genex_otel::TelemetryAuthMode;
+use genex_otel::current_span_w3c_trace_context;
+use genex_protocol::ResponseItemId;
+use genex_protocol::SessionId;
+use genex_protocol::ThreadId;
+use genex_protocol::account::PlanType;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::ServiceTier;
+use genex_protocol::models::BaseInstructions;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::ExecutedToolCall;
+use genex_protocol::models::FunctionCallOutputPayload;
+use genex_protocol::models::ResponseInputItem;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::models::ToolResultMetadata;
+use genex_protocol::models::ToolResultSource;
+use genex_protocol::models::ToolResultSources;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelServiceTier;
+use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::W3cTraceContext;
+use genex_protocol::user_input::UserInput;
+use genex_rollout_trace::ConversationPart;
+use genex_rollout_trace::InferenceTraceContext;
+use genex_rollout_trace::RawTraceEventPayload;
+use genex_rollout_trace::TraceWriter;
+use genex_rollout_trace::replay_bundle;
 use core_test_support::TestCodexResponsesRequestKind;
 use core_test_support::load_default_config_for_test;
 use core_test_support::responses::WebSocketConnectionConfig;
@@ -197,7 +197,7 @@ async fn responses_websocket_preserves_credit_usage_metadata() {
     }
     assert_eq!(
         usage_metadata,
-        Some(codex_protocol::ResponseUsageMetadata {
+        Some(genex_protocol::ResponseUsageMetadata {
             amount: Some("0.12345678901234567890".to_string()),
             metadata: Some(expected_metadata),
         }),
@@ -299,7 +299,7 @@ async fn responses_websocket_streams_request() {
     );
     assert_eq!(
         handshake.header(USER_AGENT_HEADER),
-        Some(codex_login::default_client::get_codex_user_agent())
+        Some(genex_login::default_client::get_codex_user_agent())
     );
     assert_eq!(
         body["client_metadata"]["x-codex-installation-id"].as_str(),
@@ -502,7 +502,7 @@ async fn responses_websocket_reuses_connection_with_per_turn_trace_payloads() {
     assert_eq!(server.handshakes().len(), 1);
     assert_eq!(
         server.single_handshake().header(USER_AGENT_HEADER),
-        Some(codex_login::default_client::get_codex_user_agent())
+        Some(genex_login::default_client::get_codex_user_agent())
     );
     let connection = server.single_connection();
     assert_eq!(connection.len(), 2);
@@ -601,7 +601,7 @@ async fn responses_websocket_preconnect_reuses_connection() {
     assert_eq!(server.handshakes().len(), 1);
     assert_eq!(
         server.single_handshake().header(USER_AGENT_HEADER),
-        Some(codex_login::default_client::get_codex_user_agent())
+        Some(genex_login::default_client::get_codex_user_agent())
     );
     assert_eq!(
         server.single_handshake().header("x-codex-window-id"),
@@ -652,7 +652,7 @@ async fn responses_websocket_request_prewarm_reuses_connection() {
     assert_eq!(server.handshakes().len(), 1);
     assert_eq!(
         server.single_handshake().header(USER_AGENT_HEADER),
-        Some(codex_login::default_client::get_codex_user_agent())
+        Some(genex_login::default_client::get_codex_user_agent())
     );
     let connection = server.single_connection();
     assert_eq!(connection.len(), 2);
@@ -916,11 +916,11 @@ async fn responses_websocket_reconnects_after_api_key_switch() {
 
         for index in 1..=5 {
             if index == 3 {
-                codex_login::login_with_api_key(
+                genex_login::login_with_api_key(
                     harness.codex_home.path(),
                     "second-account-token",
-                    codex_login::AuthCredentialsStoreMode::File,
-                    codex_login::AuthKeyringBackendKind::default(),
+                    genex_login::AuthCredentialsStoreMode::File,
+                    genex_login::AuthKeyringBackendKind::default(),
                 )
                 .unwrap();
                 harness.auth_manager.reload().await;
@@ -1102,7 +1102,7 @@ async fn responses_websocket_preconnect_is_reused_even_with_header_changes() {
             harness.summary,
             /*service_tier*/ None,
             &responses_metadata,
-            &codex_rollout_trace::InferenceTraceContext::disabled(),
+            &genex_rollout_trace::InferenceTraceContext::disabled(),
         )
         .await
         .expect("websocket stream failed");
@@ -1155,7 +1155,7 @@ async fn responses_websocket_request_prewarm_is_reused_even_with_header_changes(
             harness.summary,
             /*service_tier*/ None,
             &responses_metadata,
-            &codex_rollout_trace::InferenceTraceContext::disabled(),
+            &genex_rollout_trace::InferenceTraceContext::disabled(),
         )
         .await
         .expect("websocket stream failed");
@@ -1644,7 +1644,7 @@ async fn responses_websocket_emits_reasoning_included_event() {
             harness.summary,
             /*service_tier*/ None,
             &responses_metadata,
-            &codex_rollout_trace::InferenceTraceContext::disabled(),
+            &genex_rollout_trace::InferenceTraceContext::disabled(),
         )
         .await
         .expect("websocket stream failed");
@@ -1720,7 +1720,7 @@ async fn responses_websocket_emits_rate_limit_events() {
             harness.summary,
             /*service_tier*/ None,
             &responses_metadata,
-            &codex_rollout_trace::InferenceTraceContext::disabled(),
+            &genex_rollout_trace::InferenceTraceContext::disabled(),
         )
         .await
         .expect("websocket stream failed");
@@ -1961,8 +1961,8 @@ async fn responses_websocket_connection_limit_error_reconnects_and_completes() {
     assert_eq!(
         handshake_user_agents,
         vec![
-            Some(codex_login::default_client::get_codex_user_agent()),
-            Some(codex_login::default_client::get_codex_user_agent()),
+            Some(genex_login::default_client::get_codex_user_agent()),
+            Some(genex_login::default_client::get_codex_user_agent()),
         ]
     );
 
@@ -2459,7 +2459,7 @@ async fn responses_websocket_v2_after_error_uses_full_create_without_previous_re
             harness.summary,
             /*service_tier*/ None,
             &responses_metadata,
-            &codex_rollout_trace::InferenceTraceContext::disabled(),
+            &genex_rollout_trace::InferenceTraceContext::disabled(),
         )
         .await
         .expect("websocket stream failed");
@@ -2557,7 +2557,7 @@ async fn responses_websocket_v2_surfaces_terminal_error_without_close_handshake(
             harness.summary,
             /*service_tier*/ None,
             &responses_metadata,
-            &codex_rollout_trace::InferenceTraceContext::disabled(),
+            &genex_rollout_trace::InferenceTraceContext::disabled(),
         )
         .await
         .expect("websocket stream failed");
@@ -2754,17 +2754,17 @@ async fn websocket_harness_with_provider_options_and_auth(
     let http_client_factory = config.http_client_factory();
     let outbound_proxy_policy = http_client_factory.outbound_proxy_policy();
     let config = Arc::new(config);
-    let model_info = codex_core::test_support::construct_model_info_offline(MODEL, &config);
+    let model_info = genex_core::test_support::construct_model_info_offline(MODEL, &config);
     let thread_id = ThreadId::new();
     let session_id = SessionId::new();
     let client_auth_manager = auth.map(|auth| {
-        codex_core::test_support::auth_manager_from_auth_with_home(
+        genex_core::test_support::auth_manager_from_auth_with_home(
             auth,
             codex_home.path().to_path_buf(),
         )
     });
     let auth_manager = client_auth_manager.clone().unwrap_or_else(|| {
-        codex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("Test API Key"))
+        genex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("Test API Key"))
     });
     let exporter = InMemoryMetricExporter::default();
     let metrics = MetricsClient::new(
@@ -2839,15 +2839,15 @@ async fn responses_websocket_restored_history_metric(fork: bool) -> anyhow::Resu
     initial.codex.shutdown_and_wait().await?;
 
     let manager = &initial.thread_manager;
-    let mut options = codex_core::StartThreadOptions::new(initial.config.clone());
+    let mut options = genex_core::StartThreadOptions::new(initial.config.clone());
     options.thread_extension_init.insert(metrics);
     let restored = if fork {
         manager
-            .fork_thread(codex_core::ForkSnapshot::Interrupted, options, rollout_path)
+            .fork_thread(genex_core::ForkSnapshot::Interrupted, options, rollout_path)
             .await?
     } else {
         options.initial_history =
-            codex_rollout::RolloutRecorder::get_rollout_history(&rollout_path).await?;
+            genex_rollout::RolloutRecorder::get_rollout_history(&rollout_path).await?;
         manager.start_thread(options).await?
     };
     initial.codex = restored.thread;
@@ -2877,7 +2877,7 @@ fn assert_continuation_metrics(telemetry: &SessionTelemetry, expected: &[([&str;
     let metric = snapshot
         .scope_metrics()
         .flat_map(opentelemetry_sdk::metrics::data::ScopeMetrics::metrics)
-        .find(|metric| metric.name() == codex_otel::WEBSOCKET_CONTINUATION_COUNT_METRIC)
+        .find(|metric| metric.name() == genex_otel::WEBSOCKET_CONTINUATION_COUNT_METRIC)
         .expect("continuation counter");
     let AggregatedMetrics::U64(MetricData::Sum(sum)) = metric.data() else {
         panic!("expected counter");
@@ -2936,7 +2936,7 @@ async fn stream_until_complete_with_model_info(
             harness.summary,
             /*service_tier*/ None,
             &responses_metadata,
-            &codex_rollout_trace::InferenceTraceContext::disabled(),
+            &genex_rollout_trace::InferenceTraceContext::disabled(),
         )
         .await
         .expect("websocket stream failed");
@@ -2985,7 +2985,7 @@ async fn stream_until_complete_with_metadata(
             harness.summary,
             service_tier.map(|service_tier| service_tier.request_value().to_string()),
             responses_metadata,
-            &codex_rollout_trace::InferenceTraceContext::disabled(),
+            &genex_rollout_trace::InferenceTraceContext::disabled(),
         )
         .await
         .expect("websocket stream failed");

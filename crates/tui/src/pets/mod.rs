@@ -27,8 +27,8 @@ mod sixel;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_http_client::RouteAwareClientPool;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_http_client::RouteAwareClientPool;
+use genex_utils_absolute_path::AbsolutePathBuf;
 
 use crate::tui::FrameRequester;
 

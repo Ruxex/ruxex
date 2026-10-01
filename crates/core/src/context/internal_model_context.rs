@@ -1,7 +1,7 @@
 //! Hidden user-context fragment for extension-owned model steering.
 
 use super::ContextualUserFragment;
-use codex_protocol::models::ContentItemKind;
+use genex_protocol::models::ContentItemKind;
 use std::error::Error;
 use std::fmt;
 

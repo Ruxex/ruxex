@@ -1,6 +1,6 @@
 #![cfg(windows)]
 
-use codex_utils_pty::RawConPty;
+use genex_utils_pty::RawConPty;
 use std::ffi::OsStr;
 use std::fs;
 use std::os::windows::ffi::OsStrExt;

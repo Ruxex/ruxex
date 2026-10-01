@@ -12,9 +12,9 @@ use crate::cwd_prompt::CwdPromptAction;
 use crate::cwd_prompt::CwdPromptOutcome;
 use crate::legacy_core::config::Config;
 use crate::tui::Tui;
-use codex_config::types::ResumeCwdMode;
-use codex_protocol::ThreadId;
-use codex_utils_path as path_utils;
+use genex_config::types::ResumeCwdMode;
+use genex_protocol::ThreadId;
+use genex_utils_path as path_utils;
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum ResolveCwdOutcome {

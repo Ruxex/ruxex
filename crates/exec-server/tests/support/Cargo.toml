@@ -1,5 +1,5 @@
 [package]
-name = "codex-exec-server-test-support"
+name = "genex-exec-server-test-support"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -14,8 +14,8 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-codex-exec-server = { workspace = true }
-codex-http-client = { workspace = true }
+genex-exec-server = { workspace = true }
+genex-http-client = { workspace = true }
 futures = { workspace = true }
 prost = "0.14.3"
 serde_json = { workspace = true }

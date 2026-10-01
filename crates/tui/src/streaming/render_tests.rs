@@ -5,7 +5,7 @@ use crate::inline_visualization::InlineVisualizationContext;
 use crate::markdown::render_streaming_markdown_agent_with_links_and_cwd;
 use crate::terminal_hyperlinks::HyperlinkLine;
 use crate::terminal_hyperlinks::visible_lines;
-use codex_protocol::ThreadId;
+use genex_protocol::ThreadId;
 use pretty_assertions::assert_eq;
 use std::path::Path;
 use std::path::PathBuf;

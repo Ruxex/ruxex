@@ -41,8 +41,8 @@ pub(crate) const TEST_CURATED_MARKETPLACE_NAME: &str = "test-curated";
 #[cfg(test)]
 pub(crate) const TEST_API_CURATED_MARKETPLACE_NAME: &str = "test-api-curated";
 
-pub type LoadedPlugin = codex_plugin::LoadedPlugin<codex_config::McpServerConfig>;
-pub type PluginLoadOutcome = codex_plugin::PluginLoadOutcome<codex_config::McpServerConfig>;
+pub type LoadedPlugin = genex_plugin::LoadedPlugin<genex_config::McpServerConfig>;
+pub type PluginLoadOutcome = genex_plugin::PluginLoadOutcome<genex_config::McpServerConfig>;
 
 pub use artifact_operation::ArtifactOperation;
 pub use artifact_operation::recognize_artifact_operation;

@@ -11,43 +11,43 @@ use app_test_support::rollout_path;
 use app_test_support::test_absolute_path;
 use chrono::DateTime;
 use chrono::Utc;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::GitInfo as ApiGitInfo;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SessionSource;
-use codex_app_server_protocol::SortDirection;
-use codex_app_server_protocol::ThreadListCwdFilter;
-use codex_app_server_protocol::ThreadListResponse;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadReadResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadSearchResponse;
-use codex_app_server_protocol::ThreadSectionMoveParams;
-use codex_app_server_protocol::ThreadSectionMoveResponse;
-use codex_app_server_protocol::ThreadSortKey;
-use codex_app_server_protocol::ThreadSourceKind;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadStatus;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::UserInput;
-use codex_core::ARCHIVED_SESSIONS_SUBDIR;
-use codex_features::Feature;
-use codex_git_utils::GitSha;
-use codex_protocol::SanitizedGitUrl;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::GitInfo as CoreGitInfo;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::SessionSource as CoreSessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_rollout::RolloutItem;
-use codex_rollout::append_rollout_item_to_path;
-use codex_rollout::read_session_meta_line;
-use codex_state::DirectionalThreadSpawnEdgeStatus;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::GitInfo as ApiGitInfo;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SessionSource;
+use genex_app_server_protocol::SortDirection;
+use genex_app_server_protocol::ThreadListCwdFilter;
+use genex_app_server_protocol::ThreadListResponse;
+use genex_app_server_protocol::ThreadReadParams;
+use genex_app_server_protocol::ThreadReadResponse;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadSearchResponse;
+use genex_app_server_protocol::ThreadSectionMoveParams;
+use genex_app_server_protocol::ThreadSectionMoveResponse;
+use genex_app_server_protocol::ThreadSortKey;
+use genex_app_server_protocol::ThreadSourceKind;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::ThreadStatus;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::UserInput;
+use genex_core::ARCHIVED_SESSIONS_SUBDIR;
+use genex_features::Feature;
+use genex_git_utils::GitSha;
+use genex_protocol::SanitizedGitUrl;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::GitInfo as CoreGitInfo;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::SessionSource as CoreSessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_rollout::RolloutItem;
+use genex_rollout::append_rollout_item_to_path;
+use genex_rollout::read_session_meta_line;
+use genex_state::DirectionalThreadSpawnEdgeStatus;
+use genex_utils_absolute_path::test_support::PathExt;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -101,7 +101,7 @@ async fn list_threads_with_sort(
 ) -> Result<ThreadListResponse> {
     mcp.request(|request_id| ClientRequest::ThreadList {
         request_id,
-        params: codex_app_server_protocol::ThreadListParams {
+        params: genex_app_server_protocol::ThreadListParams {
             originators: None,
             cursor,
             limit,
@@ -141,7 +141,7 @@ async fn list_threads_for_relation(
     };
     mcp.request(|request_id| ClientRequest::ThreadList {
         request_id,
-        params: codex_app_server_protocol::ThreadListParams {
+        params: genex_app_server_protocol::ThreadListParams {
             originators: None,
             cursor,
             limit: Some(limit),
@@ -219,7 +219,7 @@ fn set_rollout_cwd(path: &Path, cwd: &Path) -> Result<()> {
     let first_line = lines
         .first_mut()
         .ok_or_else(|| anyhow::anyhow!("rollout at {} is empty", path.display()))?;
-    let mut rollout_line = codex_rollout::parse_rollout_line(first_line)?;
+    let mut rollout_line = genex_rollout::parse_rollout_line(first_line)?;
     let RolloutItem::SessionMeta(mut session_meta_line) = rollout_line.item else {
         return Err(anyhow::anyhow!(
             "rollout at {} does not start with session metadata",
@@ -547,7 +547,7 @@ async fn thread_list_respects_cwd_filters() -> Result<()> {
 
     let mut mcp = init_mcp(codex_home.path()).await?;
     let request_id = mcp
-        .send_thread_list_request(codex_app_server_protocol::ThreadListParams {
+        .send_thread_list_request(genex_app_server_protocol::ThreadListParams {
             originators: None,
             cursor: None,
             limit: Some(10),
@@ -628,27 +628,27 @@ sqlite = true
     // `thread/list` applies `search_term` on the sqlite fast path. This test creates
     // rollouts manually, so mark the DB backfill complete and then run an unsearched
     // list large enough to repair every rollout the searched list should find.
-    let state_db = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+    let state_db = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
     state_db
         .mark_backfill_complete(/*last_watermark*/ None)
         .await?;
-    let rollout_config = codex_rollout::RolloutConfig {
+    let rollout_config = genex_rollout::RolloutConfig {
         codex_home: codex_home.path().to_path_buf(),
-        sqlite: codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        sqlite: genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         cwd: codex_home.path().to_path_buf(),
         model_provider_id: "mock_provider".to_string(),
     };
-    let repaired_page = codex_core::RolloutRecorder::list_threads(
+    let repaired_page = genex_core::RolloutRecorder::list_threads(
         Some(state_db.clone()),
         &rollout_config,
         /*page_size*/ 10,
         /*cursor*/ None,
-        codex_core::ThreadSortKey::CreatedAt,
-        codex_core::SortDirection::Desc,
+        genex_core::ThreadSortKey::CreatedAt,
+        genex_core::SortDirection::Desc,
         &[],
         /*model_providers*/ None,
         /*cwd_filters*/ None,
@@ -660,7 +660,7 @@ sqlite = true
 
     let mut mcp = init_mcp(codex_home.path()).await?;
     let request_id = mcp
-        .send_thread_list_request(codex_app_server_protocol::ThreadListParams {
+        .send_thread_list_request(genex_app_server_protocol::ThreadListParams {
             originators: None,
             cursor: None,
             limit: Some(10),
@@ -729,7 +729,7 @@ async fn thread_search_returns_content_matches() -> Result<()> {
 
     let mut mcp = init_mcp(codex_home.path()).await?;
     let request_id = mcp
-        .send_thread_search_request(codex_app_server_protocol::ThreadSearchParams {
+        .send_thread_search_request(genex_app_server_protocol::ThreadSearchParams {
             cursor: None,
             limit: Some(10),
             sort_key: None,
@@ -763,7 +763,7 @@ async fn thread_search_returns_content_matches() -> Result<()> {
         let request_id = mcp
             .send_thread_section_move_request(ThreadSectionMoveParams {
                 thread_id: thread_id.clone(),
-                section_id: Some(codex_state::PINNED_THREAD_SECTION_ID.to_string()),
+                section_id: Some(genex_state::PINNED_THREAD_SECTION_ID.to_string()),
                 before_thread_id: None,
             })
             .await?;
@@ -784,7 +784,7 @@ async fn thread_search_returns_content_matches() -> Result<()> {
     };
 
     let request_id = mcp
-        .send_thread_search_request(codex_app_server_protocol::ThreadSearchParams {
+        .send_thread_search_request(genex_app_server_protocol::ThreadSearchParams {
             cursor: None,
             limit: Some(10),
             sort_key: None,
@@ -846,7 +846,7 @@ async fn thread_search_matches_json_escaped_content() -> Result<()> {
 
     let mut mcp = init_mcp(codex_home.path()).await?;
     let request_id = mcp
-        .send_thread_search_request(codex_app_server_protocol::ThreadSearchParams {
+        .send_thread_search_request(genex_app_server_protocol::ThreadSearchParams {
             cursor: None,
             limit: Some(10),
             sort_key: None,
@@ -891,7 +891,7 @@ async fn thread_search_filters_by_source_kind() -> Result<()> {
 
     let mut mcp = init_mcp(codex_home.path()).await?;
     let request_id = mcp
-        .send_thread_search_request(codex_app_server_protocol::ThreadSearchParams {
+        .send_thread_search_request(genex_app_server_protocol::ThreadSearchParams {
             cursor: None,
             limit: Some(10),
             sort_key: None,
@@ -937,8 +937,8 @@ sqlite = true
         Some("mock_provider"),
         /*git_info*/ None,
     )?;
-    let state_db = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+    let state_db = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -948,7 +948,7 @@ sqlite = true
     let mut mcp = init_mcp(codex_home.path()).await?;
 
     let request_id = mcp
-        .send_thread_list_request(codex_app_server_protocol::ThreadListParams {
+        .send_thread_list_request(genex_app_server_protocol::ThreadListParams {
             originators: None,
             cursor: None,
             limit: Some(10),
@@ -985,7 +985,7 @@ sqlite = true
     state_db.upsert_thread(&metadata).await?;
 
     let request_id = mcp
-        .send_thread_list_request(codex_app_server_protocol::ThreadListParams {
+        .send_thread_list_request(genex_app_server_protocol::ThreadListParams {
             originators: None,
             cursor: None,
             limit: Some(10),
@@ -1015,7 +1015,7 @@ sqlite = true
     assert_eq!(ids, vec![thread_id.as_str()]);
 
     let request_id = mcp
-        .send_thread_list_request(codex_app_server_protocol::ThreadListParams {
+        .send_thread_list_request(genex_app_server_protocol::ThreadListParams {
             originators: None,
             cursor: None,
             limit: Some(10),
@@ -1051,8 +1051,8 @@ async fn thread_list_relation_filters_read_spawn_graph_from_state_db() -> Result
     let older_child_id = ThreadId::new();
     let newer_child_id = ThreadId::new();
     let grandchild_id = ThreadId::new();
-    let state_db = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+    let state_db = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".to_string(),
     )
     .await?;
@@ -1077,7 +1077,7 @@ async fn thread_list_relation_filters_read_spawn_graph_from_state_db() -> Result
         ),
     ] {
         let created_at = DateTime::parse_from_rfc3339(created_at)?.with_timezone(&Utc);
-        let mut builder = codex_state::ThreadMetadataBuilder::new(
+        let mut builder = genex_state::ThreadMetadataBuilder::new(
             thread_id,
             codex_home.path().join(format!("{thread_id}.jsonl")),
             created_at,
@@ -1201,7 +1201,7 @@ async fn thread_list_relation_filters_reject_invalid_requests() -> Result<()> {
     create_minimal_config(codex_home.path())?;
     let mut mcp = init_mcp(codex_home.path()).await?;
     let request_id = mcp
-        .send_thread_list_request(codex_app_server_protocol::ThreadListParams {
+        .send_thread_list_request(genex_app_server_protocol::ThreadListParams {
             originators: None,
             cursor: None,
             limit: Some(10),
@@ -1228,7 +1228,7 @@ async fn thread_list_relation_filters_reject_invalid_requests() -> Result<()> {
 
     let thread_id = ThreadId::new().to_string();
     let request_id = mcp
-        .send_thread_list_request(codex_app_server_protocol::ThreadListParams {
+        .send_thread_list_request(genex_app_server_protocol::ThreadListParams {
             originators: None,
             cursor: None,
             limit: Some(10),
@@ -1462,7 +1462,7 @@ async fn thread_list_reports_loaded_subagent_direct_input_capability() -> Result
     assert_eq!(response.next_cursor, None);
 
     let request_id = mcp
-        .send_thread_search_request(codex_app_server_protocol::ThreadSearchParams {
+        .send_thread_search_request(genex_app_server_protocol::ThreadSearchParams {
             cursor: None,
             limit: Some(10),
             sort_key: None,
@@ -1494,8 +1494,8 @@ async fn thread_list_reports_loaded_subagent_direct_input_capability() -> Result
         expected_subagents
     );
 
-    let state_db = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+    let state_db = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".to_string(),
     )
     .await?;
@@ -1515,7 +1515,7 @@ async fn thread_list_reports_loaded_subagent_direct_input_capability() -> Result
     let response: ThreadListResponse = mcp
         .request(|request_id| ClientRequest::ThreadList {
             request_id,
-            params: codex_app_server_protocol::ThreadListParams {
+            params: genex_app_server_protocol::ThreadListParams {
                 originators: None,
                 cursor: None,
                 limit: Some(10),
@@ -2155,28 +2155,28 @@ async fn thread_list_sort_recency_at_uses_state_db_order_with_provider_filter() 
         "2025-01-03T00:00:00Z",
     )?;
 
-    let state_db = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+    let state_db = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
     state_db
         .mark_backfill_complete(/*last_watermark*/ None)
         .await?;
-    let rollout_config = codex_rollout::RolloutConfig {
+    let rollout_config = genex_rollout::RolloutConfig {
         codex_home: codex_home.path().to_path_buf(),
-        sqlite: codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        sqlite: genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         cwd: codex_home.path().to_path_buf(),
         model_provider_id: "mock_provider".to_string(),
     };
-    codex_core::RolloutRecorder::list_threads(
+    genex_core::RolloutRecorder::list_threads(
         Some(state_db.clone()),
         &rollout_config,
         /*page_size*/ 10,
         /*cursor*/ None,
-        codex_core::ThreadSortKey::CreatedAt,
-        codex_core::SortDirection::Desc,
-        codex_core::INTERACTIVE_SESSION_SOURCES.as_slice(),
+        genex_core::ThreadSortKey::CreatedAt,
+        genex_core::SortDirection::Desc,
+        genex_core::INTERACTIVE_SESSION_SOURCES.as_slice(),
         /*model_providers*/ None,
         /*cwd_filters*/ None,
         "mock_provider",
@@ -2336,7 +2336,7 @@ async fn thread_list_backwards_cursor_can_seed_forward_delta_sync() -> Result<()
         ..
     } = {
         let request_id = mcp
-            .send_thread_list_request(codex_app_server_protocol::ThreadListParams {
+            .send_thread_list_request(genex_app_server_protocol::ThreadListParams {
                 originators: None,
                 cursor: None,
                 limit: Some(1),
@@ -2378,7 +2378,7 @@ async fn thread_list_backwards_cursor_can_seed_forward_delta_sync() -> Result<()
         data: delta_page, ..
     } = {
         let request_id = mcp
-            .send_thread_list_request(codex_app_server_protocol::ThreadListParams {
+            .send_thread_list_request(genex_app_server_protocol::ThreadListParams {
                 originators: None,
                 cursor: Some(backwards_cursor),
                 limit: Some(10),
@@ -2660,7 +2660,7 @@ async fn thread_originator_is_preserved_in_list_read_and_resume(originator: &str
         })
         .await?;
     assert_eq!(thread.originator.as_deref(), Some(originator));
-    let started: codex_app_server_protocol::ThreadStartedNotification = timeout(
+    let started: genex_app_server_protocol::ThreadStartedNotification = timeout(
         DEFAULT_READ_TIMEOUT,
         mcp.read_notification("thread/started"),
     )
@@ -2682,14 +2682,14 @@ async fn thread_originator_is_preserved_in_list_read_and_resume(originator: &str
             },
         })
         .await?;
-    let completed: codex_app_server_protocol::TurnCompletedNotification = timeout(
+    let completed: genex_app_server_protocol::TurnCompletedNotification = timeout(
         DEFAULT_READ_TIMEOUT,
         mcp.read_notification("turn/completed"),
     )
     .await??;
     assert_eq!(
         completed.turn.status,
-        codex_app_server_protocol::TurnStatus::Completed
+        genex_app_server_protocol::TurnStatus::Completed
     );
 
     for restart in [false, true] {
@@ -2748,7 +2748,7 @@ async fn thread_list_invalid_cursor_returns_error() -> Result<()> {
     let mut mcp = init_mcp(codex_home.path()).await?;
 
     let request_id = mcp
-        .send_thread_list_request(codex_app_server_protocol::ThreadListParams {
+        .send_thread_list_request(genex_app_server_protocol::ThreadListParams {
             originators: None,
             cursor: Some("not-a-cursor".to_string()),
             limit: Some(2),

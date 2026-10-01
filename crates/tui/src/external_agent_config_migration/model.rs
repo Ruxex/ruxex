@@ -1,5 +1,5 @@
-use codex_app_server_protocol::ExternalAgentConfigMigrationItem;
-use codex_app_server_protocol::ExternalAgentConfigMigrationItemType;
+use genex_app_server_protocol::ExternalAgentConfigMigrationItem;
+use genex_app_server_protocol::ExternalAgentConfigMigrationItemType;
 use std::collections::BTreeSet;
 
 #[derive(Clone, Debug)]

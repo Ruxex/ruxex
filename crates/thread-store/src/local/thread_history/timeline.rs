@@ -1,6 +1,6 @@
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadTimelineEntry;
-use codex_protocol::ThreadId;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadTimelineEntry;
+use genex_protocol::ThreadId;
 use serde::Deserialize;
 use serde::Serialize;
 

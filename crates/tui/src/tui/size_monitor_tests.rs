@@ -4,7 +4,7 @@ use std::sync::atomic::AtomicBool;
 use std::task::Context;
 use std::task::Poll;
 
-use codex_terminal_detection::TerminalName;
+use genex_terminal_detection::TerminalName;
 use crossterm::event::Event;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;

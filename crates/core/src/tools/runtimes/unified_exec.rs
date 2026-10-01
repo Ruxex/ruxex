@@ -40,19 +40,19 @@ use crate::unified_exec::TerminalSandboxSource;
 use crate::unified_exec::UnifiedExecError;
 use crate::unified_exec::UnifiedExecProcess;
 use crate::unified_exec::UnifiedExecProcessManager;
-use codex_core_plugins::PluginMetricsSidecar;
-use codex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY;
-use codex_network_proxy::ManagedNetworkSandboxContext;
-use codex_network_proxy::NetworkProxy;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::SandboxErr;
-use codex_protocol::models::AdditionalPermissionProfile;
-use codex_sandboxing::SandboxCommand;
-use codex_sandboxing::SandboxablePreference;
-use codex_sandboxing::policy_transforms::merge_permission_profiles;
-use codex_shell_command::powershell::prefix_powershell_script_with_utf8;
-use codex_tools::UnifiedExecShellMode;
-use codex_utils_path_uri::PathUri;
+use genex_core_plugins::PluginMetricsSidecar;
+use genex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY;
+use genex_network_proxy::ManagedNetworkSandboxContext;
+use genex_network_proxy::NetworkProxy;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::SandboxErr;
+use genex_protocol::models::AdditionalPermissionProfile;
+use genex_sandboxing::SandboxCommand;
+use genex_sandboxing::SandboxablePreference;
+use genex_sandboxing::policy_transforms::merge_permission_profiles;
+use genex_shell_command::powershell::prefix_powershell_script_with_utf8;
+use genex_tools::UnifiedExecShellMode;
+use genex_utils_path_uri::PathUri;
 use std::collections::HashMap;
 use std::io;
 use std::path::PathBuf;
@@ -75,7 +75,7 @@ pub struct UnifiedExecRequest {
     pub turn_environment: TurnEnvironment,
     pub env: HashMap<String, String>,
     pub exec_server_env_config: Option<ExecServerEnvConfig>,
-    pub shell_snapshot: Option<codex_exec_server::ShellSnapshotRequest>,
+    pub shell_snapshot: Option<genex_exec_server::ShellSnapshotRequest>,
     pub explicit_env_overrides: HashMap<String, String>,
     pub network: Option<NetworkProxy>,
     pub tty: bool,
@@ -444,7 +444,7 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
                 .into_iter()
                 .chain(broker.context_keys)
             {
-                if !codex_network_proxy::is_credential_broker_provider_env_key(&key)
+                if !genex_network_proxy::is_credential_broker_provider_env_key(&key)
                     && let Some(value) = env.get(&key)
                 {
                     explicit_env_overrides.insert(key, value.clone());
@@ -496,7 +496,7 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
         let brokered_shell_snapshot_missing = !environment_is_remote
             && managed_network.is_some()
             && env
-                .get(codex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY)
+                .get(genex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY)
                 .is_some_and(|active| active == "1")
             && command
                 .get(1)
@@ -553,7 +553,7 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
         let snapshot_permissions = shell_snapshot_location
             .as_ref()
             .filter(|_| {
-                env.get(codex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY)
+                env.get(genex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY)
                     .is_some_and(|active| active == "1")
             })
             .and_then(|path| {
@@ -706,16 +706,16 @@ mod tests {
     use crate::environment_selection::EnvironmentConfigOrigin;
     use crate::exec::DEFAULT_EXEC_COMMAND_TIMEOUT_MS;
     use crate::tools::sandboxing::ToolRuntime;
-    use codex_exec_server::Environment;
-    use codex_exec_server::LOCAL_ENVIRONMENT_ID;
-    use codex_protocol::config_types::WindowsSandboxLevel;
-    use codex_protocol::models::PermissionProfile;
-    use codex_protocol::protocol::EnvironmentConfig;
-    use codex_protocol::protocol::EnvironmentConfigState;
-    use codex_protocol::protocol::TurnEnvironmentSelection;
-    use codex_tools::ZshForkConfig;
-    use codex_utils_absolute_path::AbsolutePathBuf;
-    use codex_utils_path_uri::PathUri;
+    use genex_exec_server::Environment;
+    use genex_exec_server::LOCAL_ENVIRONMENT_ID;
+    use genex_protocol::config_types::WindowsSandboxLevel;
+    use genex_protocol::models::PermissionProfile;
+    use genex_protocol::protocol::EnvironmentConfig;
+    use genex_protocol::protocol::EnvironmentConfigState;
+    use genex_protocol::protocol::TurnEnvironmentSelection;
+    use genex_tools::ZshForkConfig;
+    use genex_utils_absolute_path::AbsolutePathBuf;
+    use genex_utils_path_uri::PathUri;
     use pretty_assertions::assert_eq;
     use std::sync::Arc;
     use std::time::Duration;

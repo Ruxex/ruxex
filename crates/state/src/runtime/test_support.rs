@@ -3,15 +3,15 @@ use chrono::DateTime;
 #[cfg(test)]
 use chrono::Utc;
 #[cfg(test)]
-use codex_protocol::ThreadId;
+use genex_protocol::ThreadId;
 #[cfg(test)]
-use codex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffort;
 #[cfg(test)]
-use codex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::AskForApproval;
 #[cfg(test)]
-use codex_protocol::protocol::SandboxPolicy;
+use genex_protocol::protocol::SandboxPolicy;
 #[cfg(test)]
-use codex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::ThreadHistoryMode;
 #[cfg(test)]
 use std::path::Path;
 #[cfg(test)]

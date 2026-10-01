@@ -65,7 +65,7 @@ fn private_tmp_fixture() {
     if !mount.status.success() {
         std::process::exit(/*code*/ 77);
     }
-    let root = codex_uds::prepare_shared_daemon_socket_directory().unwrap();
+    let root = genex_uds::prepare_shared_daemon_socket_directory().unwrap();
     let endpoint = root.join("rpc.sock");
     let _daemon = UnixListener::bind(&endpoint).unwrap();
     let _other = UnixListener::bind("/tmp/other.sock").unwrap();
@@ -132,7 +132,7 @@ async fn daemon_socket_bind_mount_alias_rejects_sandbox_startup() {
     if should_skip_bwrap_tests().await {
         return;
     }
-    let root = codex_uds::prepare_shared_daemon_socket_directory().unwrap();
+    let root = genex_uds::prepare_shared_daemon_socket_directory().unwrap();
     let private = tempfile::tempdir_in(&root).unwrap();
     let alias = tempfile::tempdir().unwrap();
     let _listener = UnixListener::bind(private.path().join("rpc.sock")).unwrap();
@@ -193,7 +193,7 @@ async fn daemon_sockets_are_hidden_with_network_and_tmp_write_grants() {
     if should_skip_bwrap_tests().await {
         return;
     }
-    let root = codex_uds::prepare_shared_daemon_socket_directory().unwrap();
+    let root = genex_uds::prepare_shared_daemon_socket_directory().unwrap();
     let private = tempfile::tempdir_in(&root).unwrap();
     let workspace = tempfile::tempdir().unwrap();
     let socket = private.path().join("rpc.sock");

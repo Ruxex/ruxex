@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
-use codex_exec_server::ExecutorFileSystem;
+use genex_exec_server::ExecutorFileSystem;
 use tree_sitter::Parser;
 use tree_sitter::Query;
 use tree_sitter::QueryCursor;
@@ -20,8 +20,8 @@ use crate::parser::Hunk;
 use crate::parser::ParseError;
 use crate::parser::parse_patch;
 use crate::unified_diff_from_chunks_with_mode;
-use codex_utils_path_uri::PathConvention;
-use codex_utils_path_uri::PathUri;
+use genex_utils_path_uri::PathConvention;
+use genex_utils_path_uri::PathUri;
 use std::str::Utf8Error;
 use tree_sitter::LanguageError;
 
@@ -143,7 +143,7 @@ pub async fn maybe_parse_apply_patch_verified(
     argv: &[String],
     cwd: &PathUri,
     fs: &dyn ExecutorFileSystem,
-    sandbox: Option<&codex_exec_server::FileSystemSandboxContext>,
+    sandbox: Option<&genex_exec_server::FileSystemSandboxContext>,
 ) -> MaybeApplyPatchVerified {
     maybe_parse_apply_patch_verified_with_mode(
         argv,
@@ -162,7 +162,7 @@ pub async fn maybe_parse_apply_patch_verified_with_mode(
     cwd: &PathUri,
     update_file_mode: ApplyPatchFileUpdateMode,
     fs: &dyn ExecutorFileSystem,
-    sandbox: Option<&codex_exec_server::FileSystemSandboxContext>,
+    sandbox: Option<&genex_exec_server::FileSystemSandboxContext>,
 ) -> MaybeApplyPatchVerified {
     // Detect a raw patch body passed directly as the command or as the body of a shell
     // script. In these cases, report an explicit error rather than applying the patch.
@@ -191,7 +191,7 @@ pub async fn verify_apply_patch_args(
     args: ApplyPatchArgs,
     cwd: &PathUri,
     fs: &dyn ExecutorFileSystem,
-    sandbox: Option<&codex_exec_server::FileSystemSandboxContext>,
+    sandbox: Option<&genex_exec_server::FileSystemSandboxContext>,
 ) -> MaybeApplyPatchVerified {
     verify_apply_patch_args_with_mode(args, cwd, ApplyPatchFileUpdateMode::default(), fs, sandbox)
         .await
@@ -203,7 +203,7 @@ pub async fn verify_apply_patch_args_with_mode(
     cwd: &PathUri,
     update_file_mode: ApplyPatchFileUpdateMode,
     fs: &dyn ExecutorFileSystem,
-    sandbox: Option<&codex_exec_server::FileSystemSandboxContext>,
+    sandbox: Option<&genex_exec_server::FileSystemSandboxContext>,
 ) -> MaybeApplyPatchVerified {
     match try_verify_apply_patch_args(args, cwd, update_file_mode, fs, sandbox).await {
         Ok(action) => MaybeApplyPatchVerified::Body(action),
@@ -216,7 +216,7 @@ async fn try_verify_apply_patch_args(
     cwd: &PathUri,
     update_file_mode: ApplyPatchFileUpdateMode,
     fs: &dyn ExecutorFileSystem,
-    sandbox: Option<&codex_exec_server::FileSystemSandboxContext>,
+    sandbox: Option<&genex_exec_server::FileSystemSandboxContext>,
 ) -> Result<ApplyPatchAction, ApplyPatchError> {
     let ApplyPatchArgs {
         patch,
@@ -451,7 +451,7 @@ mod tests {
     use super::*;
     use crate::unified_diff_from_chunks;
     use assert_matches::assert_matches;
-    use codex_exec_server::LOCAL_FS;
+    use genex_exec_server::LOCAL_FS;
     use pretty_assertions::assert_eq;
     use std::fs;
     use std::path::PathBuf;

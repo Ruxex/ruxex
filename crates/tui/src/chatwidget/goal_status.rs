@@ -1,7 +1,7 @@
 //! Helpers for mapping thread-goal state into the compact status-line indicator.
 
-use codex_app_server_protocol::ThreadGoal as AppThreadGoal;
-use codex_app_server_protocol::ThreadGoalStatus as AppThreadGoalStatus;
+use genex_app_server_protocol::ThreadGoal as AppThreadGoal;
+use genex_app_server_protocol::ThreadGoalStatus as AppThreadGoalStatus;
 use std::time::Instant;
 
 use crate::bottom_pane::GoalStatusIndicator;

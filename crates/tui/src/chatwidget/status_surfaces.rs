@@ -13,11 +13,11 @@ use crate::model_catalog::LUNA_RESERVE_MODEL;
 use crate::status::format_credit_micros;
 use crate::status::format_estimated_usd_micros;
 use crate::status::format_tokens_compact;
-use codex_app_server_protocol::AskForApproval;
-use codex_config::ConfigLayerSource;
-use codex_config::os_host_name;
-use codex_protocol::models::PermissionProfile;
-use codex_utils_sandbox_summary::summarize_permission_profile;
+use genex_app_server_protocol::AskForApproval;
+use genex_config::ConfigLayerSource;
+use genex_config::os_host_name;
+use genex_protocol::models::PermissionProfile;
+use genex_utils_sandbox_summary::summarize_permission_profile;
 
 use super::status_state::TerminalTitleStatusKind;
 

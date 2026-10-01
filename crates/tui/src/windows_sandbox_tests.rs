@@ -1,6 +1,6 @@
 use super::*;
-use codex_app_server_protocol::WindowsSandboxSetupMode::Elevated;
-use codex_app_server_protocol::WindowsSandboxSetupMode::Unelevated;
+use genex_app_server_protocol::WindowsSandboxSetupMode::Elevated;
+use genex_app_server_protocol::WindowsSandboxSetupMode::Unelevated;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 

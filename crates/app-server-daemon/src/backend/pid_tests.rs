@@ -111,7 +111,7 @@ async fn stop_waits_for_live_reservation_to_resolve() {
 async fn start_retries_stale_empty_pid_file_under_its_own_lock() {
     let temp_dir = TempDir::new().expect("temp dir");
     let state_dir = temp_dir.path().join("state");
-    codex_uds::prepare_private_socket_directory(&state_dir)
+    genex_uds::prepare_private_socket_directory(&state_dir)
         .await
         .expect("private state directory");
     let pid_file = state_dir.join("app-server.pid");
@@ -144,7 +144,7 @@ async fn legacy_launch_clears_recovery_best_effort() {
         let home = TempDir::new().expect("temp dir");
         let state_dir = home.path().join("app-server-daemon");
         std::fs::create_dir_all(&state_dir).expect("state dir");
-        let recovery_file = codex_app_server_transport::daemon_recovery_file_path(home.path());
+        let recovery_file = genex_app_server_transport::daemon_recovery_file_path(home.path());
         if snapshot_is_directory {
             std::fs::create_dir(&recovery_file).expect("invalid snapshot directory");
         } else {
@@ -630,7 +630,7 @@ async fn failed_updater_handoff_preserves_predecessor_record() {
     let elevated = is_elevated_test_process().expect("query administrator membership");
     let temp = TempDir::new().expect("temp");
     let state_dir = temp.path().join("state");
-    codex_uds::prepare_private_socket_directory(&state_dir)
+    genex_uds::prepare_private_socket_directory(&state_dir)
         .await
         .expect("private state directory");
     let backend = PidBackend::new_update_loop(

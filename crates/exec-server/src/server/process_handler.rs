@@ -1,5 +1,5 @@
 use crate::process_telemetry::ProcessTelemetry;
-use codex_exec_server_protocol::JSONRPCErrorError;
+use genex_exec_server_protocol::JSONRPCErrorError;
 
 use crate::ExecServerRuntimePaths;
 use crate::local_process::LocalProcess;

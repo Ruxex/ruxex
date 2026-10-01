@@ -5,7 +5,7 @@
 # Usage (source-only):
 #   source scripts/test-remote-env.sh
 #   cd /path/to/codex
-#   just test -p codex-core --test all remote_test_env_can_connect_and_use_filesystem
+#   just test -p genex-core --test all remote_test_env_can_connect_and_use_filesystem
 #   codex_remote_env_cleanup
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -44,7 +44,7 @@ setup_remote_env() {
 
   (
     cd "${REPO_ROOT}"
-    cargo build -p codex-cli --bin codex
+    cargo build -p genex-cli --bin codex
   )
 
   if [[ ! -f "${codex_binary_path}" ]]; then

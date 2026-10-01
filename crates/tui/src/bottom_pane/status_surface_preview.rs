@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use codex_protocol::ThreadId;
+use genex_protocol::ThreadId;
 use ratatui::text::Line;
 
 use super::status_line_from_segments;

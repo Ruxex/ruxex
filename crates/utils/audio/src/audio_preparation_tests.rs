@@ -1,5 +1,5 @@
-use codex_protocol::models::FunctionCallOutputBody;
-use codex_protocol::models::FunctionCallOutputPayload;
+use genex_protocol::models::FunctionCallOutputBody;
+use genex_protocol::models::FunctionCallOutputPayload;
 use pretty_assertions::assert_eq;
 
 use super::*;

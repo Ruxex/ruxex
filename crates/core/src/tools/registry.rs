@@ -23,15 +23,15 @@ use crate::tools::lifecycle::notify_tool_start;
 use crate::tools::router::tool_log_payload;
 use crate::tools::tool_dispatch_trace::ToolDispatchTrace;
 use crate::util::error_or_panic;
-use codex_extension_api::AllowedTools;
-use codex_extension_api::ToolCallOutcome;
-use codex_history::CodexHarnessMetadata;
-use codex_history::ResponseItemEnvelope;
-use codex_protocol::models::FunctionCallOutputPayload;
-use codex_protocol::models::ResponseInputItem;
-use codex_protocol::protocol::EventMsg;
-use codex_tools::ToolName;
-use codex_tools::ToolSpec;
+use genex_extension_api::AllowedTools;
+use genex_extension_api::ToolCallOutcome;
+use genex_history::CodexHarnessMetadata;
+use genex_history::ResponseItemEnvelope;
+use genex_protocol::models::FunctionCallOutputPayload;
+use genex_protocol::models::ResponseInputItem;
+use genex_protocol::protocol::EventMsg;
+use genex_tools::ToolName;
+use genex_tools::ToolSpec;
 use futures::future::BoxFuture;
 use indexmap::IndexMap;
 use indexmap::map::Entry;
@@ -39,8 +39,8 @@ use serde_json::Value;
 
 pub(crate) type ToolTelemetryTags = Vec<(&'static str, String)>;
 
-pub use codex_tools::ToolExecutor;
-pub use codex_tools::ToolExposure;
+pub use genex_tools::ToolExecutor;
+pub use genex_tools::ToolExposure;
 
 /// Typed runtime contract for locally executed tools.
 ///
@@ -58,7 +58,7 @@ pub(crate) trait CoreToolRuntime: ToolExecutor<ToolInvocation> {
     }
 
     /// Returns lazily cached Code Mode definitions owned by this runtime.
-    fn cached_code_mode_definitions(&self) -> Option<&[codex_code_mode::ToolDefinition]> {
+    fn cached_code_mode_definitions(&self) -> Option<&[genex_code_mode::ToolDefinition]> {
         None
     }
 

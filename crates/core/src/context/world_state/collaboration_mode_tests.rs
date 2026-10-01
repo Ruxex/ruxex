@@ -2,15 +2,15 @@ use super::super::PreviousSectionState;
 use super::super::test_support::render_section_cases;
 use super::*;
 use crate::context::world_state::WorldState;
-use codex_models_manager::model_info::model_info_from_slug;
-use codex_prompts::ResolvedCollaborationModeMessages;
-use codex_prompts::ResolvedMessage;
-use codex_prompts::ResolvedModelMessages;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::model_types::CollaborationModeMessages;
-use codex_protocol::model_types::ModelMessages;
-use codex_protocol::models::ResponseItem;
+use genex_models_manager::model_info::model_info_from_slug;
+use genex_prompts::ResolvedCollaborationModeMessages;
+use genex_prompts::ResolvedMessage;
+use genex_prompts::ResolvedModelMessages;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::model_types::CollaborationModeMessages;
+use genex_protocol::model_types::ModelMessages;
+use genex_protocol::models::ResponseItem;
 use pretty_assertions::assert_eq;
 
 #[test]

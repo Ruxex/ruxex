@@ -25,7 +25,7 @@ cargo install --locked just
 cargo install --locked cargo-nextest
 
 # Build Codex.
-cargo build -p codex-cli --bin codex
+cargo build -p genex-cli --bin codex
 
 # Launch the TUI with a sample prompt.
 cargo run --bin codex -- "explain this codebase to me"
@@ -35,7 +35,7 @@ just fmt
 just fix -p <crate-you-touched>
 
 # Run the relevant tests (project-specific is fastest), for example:
-just test -p codex-tui
+just test -p genex-tui
 # `just test` runs the test suite via nextest:
 just test
 # Avoid `--all-features` for routine local runs because it increases build

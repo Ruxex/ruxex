@@ -1,7 +1,7 @@
 use super::*;
-use codex_app_server_protocol::ImageGenerationItem;
-use codex_app_server_protocol::PluginAvailability;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_app_server_protocol::ImageGenerationItem;
+use genex_app_server_protocol::PluginAvailability;
+use genex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 
 pub(super) async fn test_config() -> Config {
@@ -18,7 +18,7 @@ pub(super) async fn test_config() -> Config {
     // Keep generic UI snapshots stable when the bundled catalog default changes.
     config.model = Some("gpt-5.6-sol".to_string());
     config.codex_home = codex_home.abs();
-    config.sqlite = codex_state::SqliteConfig::new_for_testing(codex_home.as_path().abs());
+    config.sqlite = genex_state::SqliteConfig::new_for_testing(codex_home.as_path().abs());
     config.log_dir = codex_home.join("log");
     config.cwd = PathBuf::from(test_path_display("/tmp/project")).abs();
     config.config_layer_stack = ConfigLayerStack::default();
@@ -145,7 +145,7 @@ pub(super) fn test_model_catalog(_config: &Config) -> Arc<ModelCatalog> {
     Arc::new(
         ModelCatalog::new(crate::test_support::TEST_MODEL_PRESETS.clone())
             .with_collaboration_modes(
-            codex_models_manager::collaboration_mode_presets::builtin_collaboration_mode_presets(),
+            genex_models_manager::collaboration_mode_presets::builtin_collaboration_mode_presets(),
         ),
     )
 }
@@ -417,8 +417,8 @@ fn thread_id(chat: &ChatWidget) -> String {
     chat.thread_id.map(|id| id.to_string()).unwrap_or_default()
 }
 
-fn token_usage_breakdown(usage: TokenUsage) -> codex_app_server_protocol::TokenUsageBreakdown {
-    codex_app_server_protocol::TokenUsageBreakdown {
+fn token_usage_breakdown(usage: TokenUsage) -> genex_app_server_protocol::TokenUsageBreakdown {
+    genex_app_server_protocol::TokenUsageBreakdown {
         total_tokens: usage.total_tokens,
         input_tokens: usage.input_tokens,
         cached_input_tokens: usage.cached_input_tokens,
@@ -433,14 +433,14 @@ pub(super) fn handle_token_count(chat: &mut ChatWidget, info: Option<TokenUsageI
         Some(info) => {
             chat.handle_server_notification(
                 ServerNotification::ThreadTokenUsageUpdated(
-                    codex_app_server_protocol::ThreadTokenUsageUpdatedNotification {
+                    genex_app_server_protocol::ThreadTokenUsageUpdatedNotification {
                         thread_id: thread_id(chat),
                         turn_id: chat
                             .turn_lifecycle
                             .last_turn_id
                             .clone()
                             .unwrap_or_else(|| "turn-1".to_string()),
-                        token_usage: codex_app_server_protocol::ThreadTokenUsage {
+                        token_usage: genex_app_server_protocol::ThreadTokenUsage {
                             total: token_usage_breakdown(info.total_token_usage),
                             last: token_usage_breakdown(info.last_token_usage),
                             model_context_window: info.model_context_window,
@@ -544,7 +544,7 @@ pub(super) fn handle_model_verification(
 pub(super) fn handle_agent_message_delta(chat: &mut ChatWidget, delta: impl Into<String>) {
     chat.handle_server_notification(
         ServerNotification::AgentMessageDelta(
-            codex_app_server_protocol::AgentMessageDeltaNotification {
+            genex_app_server_protocol::AgentMessageDeltaNotification {
                 thread_id: thread_id(chat),
                 turn_id: chat
                     .turn_lifecycle
@@ -873,7 +873,7 @@ pub(super) fn replay_agent_message_delta(
 ) {
     chat.handle_server_notification(
         ServerNotification::AgentMessageDelta(
-            codex_app_server_protocol::AgentMessageDeltaNotification {
+            genex_app_server_protocol::AgentMessageDeltaNotification {
                 thread_id: thread_id(chat),
                 turn_id: "turn-1".to_string(),
                 item_id: "msg-1".to_string(),
@@ -894,14 +894,14 @@ pub(super) fn begin_exec_with_source(
     // Build the full command vec and parse it using core's parser,
     // then convert to protocol variants for the event payload.
     let command = vec!["bash".to_string(), "-lc".to_string(), raw_cmd.to_string()];
-    let command_actions = codex_shell_command::parse_command::parse_command(&command)
+    let command_actions = genex_shell_command::parse_command::parse_command(&command)
         .into_iter()
         .map(|parsed| AppServerCommandAction::from_core_with_cwd(parsed, &chat.config.cwd))
         .collect();
     let item = AppServerThreadItem::CommandExecution {
         model_context: None,
         id: call_id.to_string(),
-        command: codex_shell_command::parse_command::shlex_join(&command),
+        command: genex_shell_command::parse_command::shlex_join(&command),
         cwd: chat.config.cwd.clone().into(),
         process_id: None,
         plugin_id: None,
@@ -927,7 +927,7 @@ pub(super) fn begin_unified_exec_startup(
     let item = AppServerThreadItem::CommandExecution {
         model_context: None,
         id: call_id.to_string(),
-        command: codex_shell_command::parse_command::shlex_join(&command),
+        command: genex_shell_command::parse_command::shlex_join(&command),
         cwd: chat.config.cwd.clone().into(),
         process_id: Some(process_id.to_string()),
         plugin_id: None,
@@ -967,7 +967,7 @@ pub(super) fn terminal_interaction(
 ) {
     chat.handle_server_notification(
         ServerNotification::TerminalInteraction(
-            codex_app_server_protocol::TerminalInteractionNotification {
+            genex_app_server_protocol::TerminalInteractionNotification {
                 thread_id: thread_id(chat),
                 turn_id: chat
                     .turn_lifecycle
@@ -1058,7 +1058,7 @@ pub(super) fn app_server_turn(
 ) -> AppServerTurn {
     AppServerTurn {
         id: turn_id.to_string(),
-        items_view: codex_app_server_protocol::TurnItemsView::Full,
+        items_view: genex_app_server_protocol::TurnItemsView::Full,
         items: Vec::new(),
         status,
         error,
@@ -1552,7 +1552,7 @@ pub(super) fn plugins_test_detail(
     summary: PluginSummary,
     description: Option<&str>,
     skills: &[&str],
-    hooks: &[(codex_app_server_protocol::HookEventName, usize)],
+    hooks: &[(genex_app_server_protocol::HookEventName, usize)],
     apps: &[&str],
     mcp_servers: &[&str],
 ) -> PluginDetail {
@@ -1580,7 +1580,7 @@ pub(super) fn plugins_test_detail(
             .enumerate()
             .flat_map(|(event_index, (event_name, handler_count))| {
                 (0..*handler_count).map(move |handler_index| {
-                    codex_app_server_protocol::PluginHookSummary {
+                    genex_app_server_protocol::PluginHookSummary {
                         key: format!("plugin:{event_index}:{handler_index}"),
                         event_name: *event_name,
                     }
@@ -1676,37 +1676,37 @@ pub(super) fn handle_hook_completed(chat: &mut ChatWidget, run: AppServerHookRun
 
 pub(super) fn hook_run(
     run_id: &str,
-    event_name: codex_app_server_protocol::HookEventName,
-    status: codex_app_server_protocol::HookRunStatus,
+    event_name: genex_app_server_protocol::HookEventName,
+    status: genex_app_server_protocol::HookRunStatus,
     status_message: &str,
-    entries: Vec<codex_app_server_protocol::HookOutputEntry>,
-) -> codex_app_server_protocol::HookRunSummary {
-    codex_app_server_protocol::HookRunSummary {
+    entries: Vec<genex_app_server_protocol::HookOutputEntry>,
+) -> genex_app_server_protocol::HookRunSummary {
+    genex_app_server_protocol::HookRunSummary {
         id: run_id.to_string(),
         event_name,
-        handler_type: codex_app_server_protocol::HookHandlerType::Command,
-        execution_mode: codex_app_server_protocol::HookExecutionMode::Sync,
-        scope: codex_app_server_protocol::HookScope::Turn,
+        handler_type: genex_app_server_protocol::HookHandlerType::Command,
+        execution_mode: genex_app_server_protocol::HookExecutionMode::Sync,
+        scope: genex_app_server_protocol::HookScope::Turn,
         source_path: PathBuf::from(test_path_display("/tmp/hooks.json")).abs(),
-        source: codex_app_server_protocol::HookSource::User,
+        source: genex_app_server_protocol::HookSource::User,
         display_order: 0,
         status,
         status_message: Some(status_message.to_string()),
         started_at: 1,
         completed_at: matches!(
             status,
-            codex_app_server_protocol::HookRunStatus::Completed
-                | codex_app_server_protocol::HookRunStatus::Failed
-                | codex_app_server_protocol::HookRunStatus::Blocked
-                | codex_app_server_protocol::HookRunStatus::Stopped
+            genex_app_server_protocol::HookRunStatus::Completed
+                | genex_app_server_protocol::HookRunStatus::Failed
+                | genex_app_server_protocol::HookRunStatus::Blocked
+                | genex_app_server_protocol::HookRunStatus::Stopped
         )
         .then_some(11),
         duration_ms: matches!(
             status,
-            codex_app_server_protocol::HookRunStatus::Completed
-                | codex_app_server_protocol::HookRunStatus::Failed
-                | codex_app_server_protocol::HookRunStatus::Blocked
-                | codex_app_server_protocol::HookRunStatus::Stopped
+            genex_app_server_protocol::HookRunStatus::Completed
+                | genex_app_server_protocol::HookRunStatus::Failed
+                | genex_app_server_protocol::HookRunStatus::Blocked
+                | genex_app_server_protocol::HookRunStatus::Stopped
         )
         .then_some(10),
         entries,

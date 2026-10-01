@@ -4,15 +4,15 @@
 #[path = "../src/steering.rs"]
 mod steering;
 
-use codex_core::context::ContextualUserFragment;
-use codex_core::context::InternalContextSource;
-use codex_core::context::InternalModelContextFragment;
-use codex_protocol::ThreadId;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::ThreadGoal;
-use codex_protocol::protocol::ThreadGoalStatus;
-use codex_utils_template::Template;
+use genex_core::context::ContextualUserFragment;
+use genex_core::context::InternalContextSource;
+use genex_core::context::InternalModelContextFragment;
+use genex_protocol::ThreadId;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::ThreadGoal;
+use genex_protocol::protocol::ThreadGoalStatus;
+use genex_utils_template::Template;
 use pretty_assertions::assert_eq;
 
 #[test]

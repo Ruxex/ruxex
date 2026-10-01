@@ -1,18 +1,18 @@
 use std::collections::HashMap;
 use std::io;
 
-use codex_exec_server::CapabilityRootDiscovery;
-use codex_exec_server::ExecutorFileSystem;
-use codex_exec_server::GetMetadataOptions;
-use codex_exec_server::ReadFileOptions;
-use codex_protocol::protocol::Product;
-use codex_skills::EnvironmentSkillMetadata;
-use codex_skills::ParsedSkillFrontmatter;
-use codex_skills::SkillDependencies;
-use codex_skills::SkillPolicy;
-use codex_skills::parse_skill_frontmatter_metadata;
-use codex_utils_path_uri::PathUri;
-use codex_utils_plugins::SkillDiscoveryMode;
+use genex_exec_server::CapabilityRootDiscovery;
+use genex_exec_server::ExecutorFileSystem;
+use genex_exec_server::GetMetadataOptions;
+use genex_exec_server::ReadFileOptions;
+use genex_protocol::protocol::Product;
+use genex_skills::EnvironmentSkillMetadata;
+use genex_skills::ParsedSkillFrontmatter;
+use genex_skills::SkillDependencies;
+use genex_skills::SkillPolicy;
+use genex_skills::parse_skill_frontmatter_metadata;
+use genex_utils_path_uri::PathUri;
+use genex_utils_plugins::SkillDiscoveryMode;
 use futures::StreamExt;
 
 use super::MAX_QUALIFIED_NAME_LEN;

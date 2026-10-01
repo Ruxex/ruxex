@@ -6,7 +6,7 @@ use std::ffi::OsString;
 use std::io;
 use std::path::Path;
 
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::AbsolutePathBuf;
 
 /// Recognize the single configuration override synthesized by the legacy `--search` flag.
 pub(super) fn has_only_search_config_override(cli_kv_overrides: &[(String, toml::Value)]) -> bool {
@@ -40,7 +40,7 @@ pub(super) fn should_delay_startup_composer_for_first_login(
             }
 
             let Ok(daemon_socket) =
-                codex_app_server_client::app_server_control_socket_path(codex_home)
+                genex_app_server_client::app_server_control_socket_path(codex_home)
             else {
                 return false;
             };

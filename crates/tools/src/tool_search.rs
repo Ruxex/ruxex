@@ -6,7 +6,7 @@ use crate::ResponsesApiTool;
 use crate::ToolSearchSourceInfo;
 use crate::ToolSpec;
 use crate::default_namespace_description;
-use codex_protocol::DEFAULT_FUNCTION_NAMESPACE;
+use genex_protocol::DEFAULT_FUNCTION_NAMESPACE;
 use std::sync::Arc;
 
 #[derive(Clone, PartialEq)]

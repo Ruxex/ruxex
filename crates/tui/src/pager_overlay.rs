@@ -1040,7 +1040,7 @@ impl StaticOverlay {
 mod tests {
     use super::*;
     use crate::history_cell::ReviewDecision;
-    use codex_app_server_protocol::CommandExecutionSource as ExecCommandSource;
+    use genex_app_server_protocol::CommandExecutionSource as ExecCommandSource;
     use pretty_assertions::assert_eq;
     use std::collections::HashMap;
     use std::path::PathBuf;
@@ -1054,7 +1054,7 @@ mod tests {
     use crate::history_cell;
     use crate::history_cell::HistoryCell;
     use crate::history_cell::new_patch_event;
-    use codex_protocol::parse_command::ParsedCommand;
+    use genex_protocol::parse_command::ParsedCommand;
     use crossterm::event::KeyModifiers;
     use ratatui::Terminal;
     use ratatui::backend::TestBackend;
@@ -1135,9 +1135,9 @@ mod tests {
 
     #[test]
     fn footer_hints_display_chords_without_internal_dispatch_keys() {
-        use codex_config::types::KeybindingSpec;
-        use codex_config::types::KeybindingsSpec;
-        use codex_config::types::TuiKeymap;
+        use genex_config::types::KeybindingSpec;
+        use genex_config::types::KeybindingsSpec;
+        use genex_config::types::TuiKeymap;
 
         let mut config = TuiKeymap::default();
         config.pager.page_up = Some(KeybindingsSpec::One(KeybindingSpec(

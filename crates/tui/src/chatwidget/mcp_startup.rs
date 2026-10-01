@@ -8,9 +8,9 @@
 
 use std::collections::BTreeSet;
 
-use codex_app_server_protocol::McpServerStartupFailureReason;
-use codex_app_server_protocol::McpServerStartupState;
-use codex_app_server_protocol::McpServerStatusUpdatedNotification;
+use genex_app_server_protocol::McpServerStartupFailureReason;
+use genex_app_server_protocol::McpServerStartupState;
+use genex_app_server_protocol::McpServerStatusUpdatedNotification;
 
 use super::ChatWidget;
 

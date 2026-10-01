@@ -6,39 +6,39 @@ use anyhow::Result;
 use anyhow::anyhow;
 use anyhow::bail;
 use clap::ArgGroup;
-use codex_config::types::AppToolApproval;
-use codex_config::types::McpServerConfig;
-use codex_config::types::McpServerOAuthConfig;
-use codex_config::types::McpServerTransportConfig;
-use codex_core::McpManager;
-use codex_core::config::Config;
-use codex_core::config::ConfigBuilder;
-use codex_core::config::LoaderOverrides;
-use codex_core::config::edit::ConfigEditsBuilder;
-use codex_core::config::find_codex_home;
-use codex_core::config::load_global_mcp_servers;
-use codex_core::plugins_manager_for_config;
-use codex_exec_server::EnvironmentManager;
-use codex_exec_server::HttpClient;
-use codex_exec_server::RouteAwareHttpClient;
-use codex_login::AuthManager;
-use codex_mcp::McpOAuthLoginSupport;
-use codex_mcp::McpRuntimeContext;
-use codex_mcp::apply_http_headers_helper;
-use codex_mcp::compute_auth_statuses;
-use codex_mcp::discover_supported_scopes;
-use codex_mcp::oauth_login_support;
-use codex_mcp::resolve_oauth_callback;
-use codex_mcp::resolve_oauth_scopes;
-use codex_protocol::protocol::McpAuthStatus;
-use codex_rmcp_client::McpOAuthCallbackMode;
-use codex_rmcp_client::McpOAuthClientRegistration;
-use codex_rmcp_client::OAuthDiscoveryTimeout;
-use codex_rmcp_client::StreamableHttpRedirectMode;
-use codex_rmcp_client::delete_oauth_tokens;
-use codex_rmcp_client::resolve_mcp_oauth_callback_url;
-use codex_utils_cli::CliConfigOverrides;
-use codex_utils_cli::format_env_display;
+use genex_config::types::AppToolApproval;
+use genex_config::types::McpServerConfig;
+use genex_config::types::McpServerOAuthConfig;
+use genex_config::types::McpServerTransportConfig;
+use genex_core::McpManager;
+use genex_core::config::Config;
+use genex_core::config::ConfigBuilder;
+use genex_core::config::LoaderOverrides;
+use genex_core::config::edit::ConfigEditsBuilder;
+use genex_core::config::find_codex_home;
+use genex_core::config::load_global_mcp_servers;
+use genex_core::plugins_manager_for_config;
+use genex_exec_server::EnvironmentManager;
+use genex_exec_server::HttpClient;
+use genex_exec_server::RouteAwareHttpClient;
+use genex_login::AuthManager;
+use genex_mcp::McpOAuthLoginSupport;
+use genex_mcp::McpRuntimeContext;
+use genex_mcp::apply_http_headers_helper;
+use genex_mcp::compute_auth_statuses;
+use genex_mcp::discover_supported_scopes;
+use genex_mcp::oauth_login_support;
+use genex_mcp::resolve_oauth_callback;
+use genex_mcp::resolve_oauth_scopes;
+use genex_protocol::protocol::McpAuthStatus;
+use genex_rmcp_client::McpOAuthCallbackMode;
+use genex_rmcp_client::McpOAuthClientRegistration;
+use genex_rmcp_client::OAuthDiscoveryTimeout;
+use genex_rmcp_client::StreamableHttpRedirectMode;
+use genex_rmcp_client::delete_oauth_tokens;
+use genex_rmcp_client::resolve_mcp_oauth_callback_url;
+use genex_utils_cli::CliConfigOverrides;
+use genex_utils_cli::format_env_display;
 
 use crate::cloud_config;
 use crate::mcp_login::McpLoginMode;
@@ -386,7 +386,7 @@ async fn run_add(config_overrides: &CliConfigOverrides, add_args: AddArgs) -> Re
     let new_entry = McpServerConfig {
         auth: Default::default(),
         transport: transport.clone(),
-        environment_id: codex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
+        environment_id: genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
         enabled: true,
         required: false,
         supports_parallel_tool_calls: false,
@@ -524,7 +524,7 @@ async fn run_login(config: &Config, login_args: LoginArgs) -> Result<()> {
         bail!("No MCP server named '{name}' found.");
     };
 
-    if matches!(server.auth, codex_config::types::McpServerAuth::EmaAuth) {
+    if matches!(server.auth, genex_config::types::McpServerAuth::EmaAuth) {
         bail!(
             "Enterprise MCP authorization is managed by Codex account sign-in. Open Codex to sign in."
         );

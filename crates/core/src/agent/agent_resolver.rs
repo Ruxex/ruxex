@@ -1,8 +1,8 @@
 use crate::function_tool::FunctionCallError;
 use crate::session::session::Session;
 use crate::session::turn_context::TurnContext;
-use codex_protocol::ThreadId;
-use codex_protocol::error::CodexErrorDetails;
+use genex_protocol::ThreadId;
+use genex_protocol::error::CodexErrorDetails;
 use std::sync::Arc;
 
 /// Resolves a single tool-facing agent target to a thread id.

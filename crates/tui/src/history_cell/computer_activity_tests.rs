@@ -1,5 +1,5 @@
 use super::*;
-use codex_protocol::mcp::CallToolResult;
+use genex_protocol::mcp::CallToolResult;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 

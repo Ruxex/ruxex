@@ -2,27 +2,27 @@ use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
 use clap::Parser;
-use codex_core::config::Config;
-use codex_core::config::ConfigOverrides;
-use codex_core::config::LoaderOverrides;
-use codex_core::plugins_manager_for_config;
-use codex_core_plugins::PluginMarketplaceUpgradeOutcome;
-use codex_core_plugins::PluginPublishOutcome;
-use codex_core_plugins::PluginPublishRequest;
-use codex_core_plugins::PluginsConfigInput;
-use codex_core_plugins::installed_marketplaces::marketplace_install_root;
-use codex_core_plugins::installed_marketplaces::resolve_configured_marketplace_root;
-use codex_core_plugins::marketplace::marketplace_root_dir;
-use codex_core_plugins::marketplace_add::MarketplaceAddOutcome;
-use codex_core_plugins::marketplace_add::MarketplaceAddRequest;
-use codex_core_plugins::marketplace_add::add_marketplace;
-use codex_core_plugins::marketplace_remove::MarketplaceRemoveOutcome;
-use codex_core_plugins::marketplace_remove::MarketplaceRemoveRequest;
-use codex_core_plugins::marketplace_remove::remove_marketplace;
-use codex_core_plugins::publish_plugin_bundle;
-use codex_http_client::ClientRouteClass;
-use codex_http_client::RouteAwareClientPool;
-use codex_utils_cli::CliConfigOverrides;
+use genex_core::config::Config;
+use genex_core::config::ConfigOverrides;
+use genex_core::config::LoaderOverrides;
+use genex_core::plugins_manager_for_config;
+use genex_core_plugins::PluginMarketplaceUpgradeOutcome;
+use genex_core_plugins::PluginPublishOutcome;
+use genex_core_plugins::PluginPublishRequest;
+use genex_core_plugins::PluginsConfigInput;
+use genex_core_plugins::installed_marketplaces::marketplace_install_root;
+use genex_core_plugins::installed_marketplaces::resolve_configured_marketplace_root;
+use genex_core_plugins::marketplace::marketplace_root_dir;
+use genex_core_plugins::marketplace_add::MarketplaceAddOutcome;
+use genex_core_plugins::marketplace_add::MarketplaceAddRequest;
+use genex_core_plugins::marketplace_add::add_marketplace;
+use genex_core_plugins::marketplace_remove::MarketplaceRemoveOutcome;
+use genex_core_plugins::marketplace_remove::MarketplaceRemoveRequest;
+use genex_core_plugins::marketplace_remove::remove_marketplace;
+use genex_core_plugins::publish_plugin_bundle;
+use genex_http_client::ClientRouteClass;
+use genex_http_client::RouteAwareClientPool;
+use genex_utils_cli::CliConfigOverrides;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -408,7 +408,7 @@ struct JsonMarketplaceListOutput {
 
 impl JsonMarketplaceListOutput {
     fn from_marketplaces(
-        marketplaces: Vec<codex_core_plugins::marketplace::Marketplace>,
+        marketplaces: Vec<genex_core_plugins::marketplace::Marketplace>,
         marketplace_sources: &HashMap<PathBuf, JsonMarketplaceSource>,
     ) -> Self {
         let mut seen_roots = HashSet::new();
@@ -471,7 +471,7 @@ fn configured_marketplace_sources_by_root(
 async fn run_upgrade(
     config: Config,
     args: UpgradeMarketplaceArgs,
-    builder: codex_core::config::ConfigBuilder,
+    builder: genex_core::config::ConfigBuilder,
 ) -> Result<()> {
     let UpgradeMarketplaceArgs {
         marketplace_name,
@@ -480,7 +480,7 @@ async fn run_upgrade(
     let manager = plugins_manager_for_config(&config, load_cli_auth_manager(&config).await?);
     let plugins_input = config.plugins_config_input();
     let runtime = tokio::runtime::Handle::current();
-    let reload_config: codex_core_plugins::ConfigLayerReload = std::sync::Arc::new(move || {
+    let reload_config: genex_core_plugins::ConfigLayerReload = std::sync::Arc::new(move || {
         runtime
             .block_on(builder.clone().build())
             .map(|config| config.config_layer_stack)

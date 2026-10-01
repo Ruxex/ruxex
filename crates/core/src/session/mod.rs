@@ -53,122 +53,122 @@ use async_channel::Receiver;
 use async_channel::Sender;
 use chrono::Local;
 use chrono::Utc;
-use codex_async_utils::OrCancelExt;
-use codex_attachment_store::AttachmentStore;
-use codex_attachment_store::InlineAttachmentStore;
-use codex_context_fragments::RenderedFragment;
-use codex_exec_server::Environment;
-use codex_exec_server::EnvironmentManager;
-use codex_execpolicy::prefix_rule_migration;
-use codex_extension_api::ConversationHistorySnapshot;
-use codex_extension_api::ExtensionDataInit;
-use codex_extension_api::PromptSlot;
-use codex_extension_api::TurnContextContributionInput;
-use codex_features::FEATURES;
-use codex_features::Feature;
-use codex_features::unstable_features_warning_event;
-use codex_history::RolloutItem;
-use codex_hooks::Hooks;
-use codex_hooks::HooksConfig;
-use codex_login::AuthManager;
-use codex_login::CodexAuth;
-use codex_login::auth_env_telemetry::collect_auth_env_telemetry;
-use codex_mcp::McpResourceClient;
-use codex_mcp::McpRuntime;
-use codex_mcp::McpRuntimeContext;
-use codex_mcp::McpRuntimeInput;
-use codex_models_manager::manager::RefreshStrategy;
-use codex_models_manager::manager::SharedModelsManager;
-use codex_network_proxy::NetworkProxy;
-use codex_network_proxy::NetworkProxyAuditMetadata;
-use codex_network_proxy::normalize_host;
-use codex_otel::current_span_trace_id;
-use codex_otel::current_span_w3c_trace_context;
-use codex_otel::set_parent_from_w3c_trace_context;
-use codex_prompts::render_model_instructions;
-use codex_protocol::ResponseUsageMetadata;
-use codex_protocol::ThreadId;
-use codex_protocol::approvals::ElicitationRequest;
-use codex_protocol::approvals::ElicitationRequestEvent;
-use codex_protocol::approvals::ExecPolicyAmendment;
-use codex_protocol::approvals::NetworkPolicyAmendment;
-use codex_protocol::approvals::NetworkPolicyRuleAction;
-use codex_protocol::config_types::AutoCompactTokenLimitScope;
-use codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use codex_protocol::config_types::WebSearchMode;
-use codex_protocol::dynamic_tools::DynamicToolResponse;
-use codex_protocol::dynamic_tools::DynamicToolSpec;
-use codex_protocol::items::EnteredReviewModeItem;
-use codex_protocol::items::ModelInvocationContext;
-use codex_protocol::items::SubAgentActivityItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::items::UserMessageItem;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelPreset;
-use codex_protocol::models::ActivePermissionProfile;
-use codex_protocol::models::AdditionalPermissionProfile;
-use codex_protocol::models::BaseInstructions;
-use codex_protocol::models::BaseInstructionsProvenance;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ContentItemKind;
-use codex_protocol::models::InternalChatMessageMetadataPassthrough;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::SandboxEnforcement;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::FileSystemSandboxPolicyContext;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::FileChange;
-use codex_protocol::protocol::HasLegacyEvent;
-use codex_protocol::protocol::HistoryPosition;
-use codex_protocol::protocol::InterAgentCommunication;
-use codex_protocol::protocol::ItemCompletedEvent;
-use codex_protocol::protocol::ItemStartedEvent;
-use codex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::RawResponseItemEvent;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentActivityKind;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::ThreadSettingsSnapshot;
-use codex_protocol::protocol::ThreadSource;
-use codex_protocol::protocol::TurnAbortReason;
-use codex_protocol::protocol::TurnContextItem;
-use codex_protocol::protocol::TurnContextNetworkItem;
-use codex_protocol::protocol::TurnEnvironmentSelection;
-use codex_protocol::protocol::TurnStartedEvent;
-use codex_protocol::protocol::W3cTraceContext;
-use codex_protocol::protocol::WorldStateItem;
-use codex_protocol::request_permissions::PermissionGrantScope;
-use codex_protocol::request_permissions::RequestPermissionProfile;
-use codex_protocol::request_permissions::RequestPermissionsArgs;
-use codex_protocol::request_permissions::RequestPermissionsEvent;
-use codex_protocol::request_permissions::RequestPermissionsResponse;
-use codex_protocol::request_user_input::RequestUserInputArgs;
-use codex_protocol::request_user_input::RequestUserInputResponse;
-use codex_rmcp_client::ElicitationResponse;
-use codex_rollout::state_db;
-use codex_rollout_trace::AgentResultTracePayload;
-use codex_rollout_trace::ThreadStartedTraceMetadata;
-use codex_rollout_trace::ThreadTraceContext;
-use codex_sandboxing::SandboxType;
-use codex_sandboxing::policy_transforms::intersect_permission_profiles_with_context;
-use codex_shell_command::parse_command::parse_command;
-use codex_terminal_detection::user_agent;
-use codex_thread_store::CreateThreadParams;
-use codex_thread_store::LiveThread;
-use codex_thread_store::LiveThreadInitGuard;
-use codex_thread_store::LocalThreadStore;
-use codex_thread_store::PersistContext;
-use codex_thread_store::ReadThreadParams;
-use codex_thread_store::ResumeThreadParams;
-use codex_thread_store::ThreadPersistenceMetadata;
-use codex_thread_store::ThreadStore;
-use codex_utils_audio::prepare_response_items as prepare_audio_response_items;
-use codex_utils_git_discovery::GitRootDiscovery;
-use codex_utils_output_truncation::with_serialization_allowance;
-use codex_utils_path_uri::PathUri;
+use genex_async_utils::OrCancelExt;
+use genex_attachment_store::AttachmentStore;
+use genex_attachment_store::InlineAttachmentStore;
+use genex_context_fragments::RenderedFragment;
+use genex_exec_server::Environment;
+use genex_exec_server::EnvironmentManager;
+use genex_execpolicy::prefix_rule_migration;
+use genex_extension_api::ConversationHistorySnapshot;
+use genex_extension_api::ExtensionDataInit;
+use genex_extension_api::PromptSlot;
+use genex_extension_api::TurnContextContributionInput;
+use genex_features::FEATURES;
+use genex_features::Feature;
+use genex_features::unstable_features_warning_event;
+use genex_history::RolloutItem;
+use genex_hooks::Hooks;
+use genex_hooks::HooksConfig;
+use genex_login::AuthManager;
+use genex_login::CodexAuth;
+use genex_login::auth_env_telemetry::collect_auth_env_telemetry;
+use genex_mcp::McpResourceClient;
+use genex_mcp::McpRuntime;
+use genex_mcp::McpRuntimeContext;
+use genex_mcp::McpRuntimeInput;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_models_manager::manager::SharedModelsManager;
+use genex_network_proxy::NetworkProxy;
+use genex_network_proxy::NetworkProxyAuditMetadata;
+use genex_network_proxy::normalize_host;
+use genex_otel::current_span_trace_id;
+use genex_otel::current_span_w3c_trace_context;
+use genex_otel::set_parent_from_w3c_trace_context;
+use genex_prompts::render_model_instructions;
+use genex_protocol::ResponseUsageMetadata;
+use genex_protocol::ThreadId;
+use genex_protocol::approvals::ElicitationRequest;
+use genex_protocol::approvals::ElicitationRequestEvent;
+use genex_protocol::approvals::ExecPolicyAmendment;
+use genex_protocol::approvals::NetworkPolicyAmendment;
+use genex_protocol::approvals::NetworkPolicyRuleAction;
+use genex_protocol::config_types::AutoCompactTokenLimitScope;
+use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use genex_protocol::config_types::WebSearchMode;
+use genex_protocol::dynamic_tools::DynamicToolResponse;
+use genex_protocol::dynamic_tools::DynamicToolSpec;
+use genex_protocol::items::EnteredReviewModeItem;
+use genex_protocol::items::ModelInvocationContext;
+use genex_protocol::items::SubAgentActivityItem;
+use genex_protocol::items::TurnItem;
+use genex_protocol::items::UserMessageItem;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelPreset;
+use genex_protocol::models::ActivePermissionProfile;
+use genex_protocol::models::AdditionalPermissionProfile;
+use genex_protocol::models::BaseInstructions;
+use genex_protocol::models::BaseInstructionsProvenance;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::ContentItemKind;
+use genex_protocol::models::InternalChatMessageMetadataPassthrough;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::SandboxEnforcement;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::FileSystemSandboxPolicyContext;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::FileChange;
+use genex_protocol::protocol::HasLegacyEvent;
+use genex_protocol::protocol::HistoryPosition;
+use genex_protocol::protocol::InterAgentCommunication;
+use genex_protocol::protocol::ItemCompletedEvent;
+use genex_protocol::protocol::ItemStartedEvent;
+use genex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::RawResponseItemEvent;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentActivityKind;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::ThreadSettingsSnapshot;
+use genex_protocol::protocol::ThreadSource;
+use genex_protocol::protocol::TurnAbortReason;
+use genex_protocol::protocol::TurnContextItem;
+use genex_protocol::protocol::TurnContextNetworkItem;
+use genex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::protocol::TurnStartedEvent;
+use genex_protocol::protocol::W3cTraceContext;
+use genex_protocol::protocol::WorldStateItem;
+use genex_protocol::request_permissions::PermissionGrantScope;
+use genex_protocol::request_permissions::RequestPermissionProfile;
+use genex_protocol::request_permissions::RequestPermissionsArgs;
+use genex_protocol::request_permissions::RequestPermissionsEvent;
+use genex_protocol::request_permissions::RequestPermissionsResponse;
+use genex_protocol::request_user_input::RequestUserInputArgs;
+use genex_protocol::request_user_input::RequestUserInputResponse;
+use genex_rmcp_client::ElicitationResponse;
+use genex_rollout::state_db;
+use genex_rollout_trace::AgentResultTracePayload;
+use genex_rollout_trace::ThreadStartedTraceMetadata;
+use genex_rollout_trace::ThreadTraceContext;
+use genex_sandboxing::SandboxType;
+use genex_sandboxing::policy_transforms::intersect_permission_profiles_with_context;
+use genex_shell_command::parse_command::parse_command;
+use genex_terminal_detection::user_agent;
+use genex_thread_store::CreateThreadParams;
+use genex_thread_store::LiveThread;
+use genex_thread_store::LiveThreadInitGuard;
+use genex_thread_store::LocalThreadStore;
+use genex_thread_store::PersistContext;
+use genex_thread_store::ReadThreadParams;
+use genex_thread_store::ResumeThreadParams;
+use genex_thread_store::ThreadPersistenceMetadata;
+use genex_thread_store::ThreadStore;
+use genex_utils_audio::prepare_response_items as prepare_audio_response_items;
+use genex_utils_git_discovery::GitRootDiscovery;
+use genex_utils_output_truncation::with_serialization_allowance;
+use genex_utils_path_uri::PathUri;
 use futures::future::BoxFuture;
 use futures::future::Shared;
 use futures::prelude::*;
@@ -203,16 +203,16 @@ use crate::config::resolve_web_search_mode_for_turn;
 use crate::context_manager::ContextManager;
 use crate::context_manager::HistoryReplacement;
 use crate::thread_rollout_truncation::initial_history_has_prior_user_turns;
-use codex_config::CONFIG_TOML_FILE;
-use codex_config::ConfigLayerSource;
-use codex_config::types::McpServerConfig;
-use codex_model_provider::create_model_provider;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::CodexErrorDetails;
-use codex_protocol::error::Result as CodexResult;
+use genex_config::CONFIG_TOML_FILE;
+use genex_config::ConfigLayerSource;
+use genex_config::types::McpServerConfig;
+use genex_model_provider::create_model_provider;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::Result as CodexResult;
 #[cfg(test)]
-use codex_protocol::exec_output::StreamOutput;
+use genex_protocol::exec_output::StreamOutput;
 
 mod code_mode_warning;
 pub(crate) mod context_window;
@@ -308,67 +308,67 @@ use crate::turn_timing::record_turn_ttfm_metric;
 use crate::unified_exec::UnifiedExecProcessManager;
 use crate::windows_sandbox::WindowsSandboxLevelExt;
 use crate::windows_sandbox::managed_proxy_routing_for_windows_sandbox;
-use codex_core_plugins::PluginCommandAttribution;
-use codex_core_plugins::PluginsManager;
-use codex_git_utils::get_git_repo_root;
-use codex_history::CodexHarnessMetadata;
-use codex_history::CompactedItem;
-use codex_history::InitialHistory;
-use codex_history::ResponseItemEnvelope;
-use codex_mcp::McpConfig;
-use codex_mcp::effective_mcp_servers;
-use codex_otel::SessionTelemetry;
-use codex_otel::THREAD_STARTED_METRIC;
-use codex_otel::TelemetryAuthMode;
-use codex_protocol::ResponseItemId;
-use codex_protocol::approvals::ExecApprovalKind;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
-use codex_protocol::config_types::Settings;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
-use codex_protocol::models::LocalImagePreparation;
-use codex_protocol::models::ResponseInputItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::ApplyPatchApprovalRequestEvent;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::CodexErrorInfo;
-use codex_protocol::protocol::DeprecationNoticeEvent;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecApprovalRequestEvent;
-use codex_protocol::protocol::ModelRerouteEvent;
-use codex_protocol::protocol::ModelRerouteReason;
-use codex_protocol::protocol::ModelVerification;
-use codex_protocol::protocol::ModelVerificationEvent;
-use codex_protocol::protocol::NetworkApprovalContext;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::RateLimitSnapshot;
-use codex_protocol::protocol::RawResponseCompletedEvent;
-use codex_protocol::protocol::RequestUserInputEvent;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::SessionConfiguredEvent;
-use codex_protocol::protocol::SessionNetworkProxyRuntime;
-use codex_protocol::protocol::StreamErrorEvent;
-use codex_protocol::protocol::Submission;
-use codex_protocol::protocol::TokenCountEvent;
-use codex_protocol::protocol::TokenUsage;
-use codex_protocol::protocol::TokenUsageInfo;
-use codex_protocol::protocol::TokenUsageRecord;
-use codex_protocol::protocol::WarningEvent;
-use codex_protocol::turn_input::TurnInputMode;
-use codex_protocol::turn_input::TurnInputRequest;
-use codex_protocol::turn_input::TurnInputSubmission;
-use codex_protocol::turn_input::TurnStartOptions;
-use codex_protocol::user_input::UserInput;
-use codex_skills_extension::HostSkillsService;
-use codex_tools::UnifiedExecShellMode;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_core_plugins::PluginCommandAttribution;
+use genex_core_plugins::PluginsManager;
+use genex_git_utils::get_git_repo_root;
+use genex_history::CodexHarnessMetadata;
+use genex_history::CompactedItem;
+use genex_history::InitialHistory;
+use genex_history::ResponseItemEnvelope;
+use genex_mcp::McpConfig;
+use genex_mcp::effective_mcp_servers;
+use genex_otel::SessionTelemetry;
+use genex_otel::THREAD_STARTED_METRIC;
+use genex_otel::TelemetryAuthMode;
+use genex_protocol::ResponseItemId;
+use genex_protocol::approvals::ExecApprovalKind;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
+use genex_protocol::config_types::Settings;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use genex_protocol::models::LocalImagePreparation;
+use genex_protocol::models::ResponseInputItem;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::ApplyPatchApprovalRequestEvent;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::DeprecationNoticeEvent;
+use genex_protocol::protocol::Event;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecApprovalRequestEvent;
+use genex_protocol::protocol::ModelRerouteEvent;
+use genex_protocol::protocol::ModelRerouteReason;
+use genex_protocol::protocol::ModelVerification;
+use genex_protocol::protocol::ModelVerificationEvent;
+use genex_protocol::protocol::NetworkApprovalContext;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::RateLimitSnapshot;
+use genex_protocol::protocol::RawResponseCompletedEvent;
+use genex_protocol::protocol::RequestUserInputEvent;
+use genex_protocol::protocol::ReviewDecision;
+use genex_protocol::protocol::SandboxPolicy;
+use genex_protocol::protocol::SessionConfiguredEvent;
+use genex_protocol::protocol::SessionNetworkProxyRuntime;
+use genex_protocol::protocol::StreamErrorEvent;
+use genex_protocol::protocol::Submission;
+use genex_protocol::protocol::TokenCountEvent;
+use genex_protocol::protocol::TokenUsage;
+use genex_protocol::protocol::TokenUsageInfo;
+use genex_protocol::protocol::TokenUsageRecord;
+use genex_protocol::protocol::WarningEvent;
+use genex_protocol::turn_input::TurnInputMode;
+use genex_protocol::turn_input::TurnInputRequest;
+use genex_protocol::turn_input::TurnInputSubmission;
+use genex_protocol::turn_input::TurnStartOptions;
+use genex_protocol::user_input::UserInput;
+use genex_skills_extension::HostSkillsService;
+use genex_tools::UnifiedExecShellMode;
+use genex_utils_absolute_path::AbsolutePathBuf;
 #[cfg(test)]
-use codex_utils_stream_parser::ProposedPlanSegment;
+use genex_utils_stream_parser::ProposedPlanSegment;
 
 /// Queue and lifecycle endpoints for a running [`Session`].
 ///
@@ -416,8 +416,8 @@ pub(crate) struct SessionSpawnArgs {
     pub(crate) skills_service: Arc<HostSkillsService>,
     pub(crate) plugins_manager: Arc<PluginsManager>,
     pub(crate) mcp_manager: Arc<McpManager>,
-    pub(crate) code_mode_session_provider: Arc<dyn codex_code_mode::CodeModeSessionProvider>,
-    pub(crate) extensions: Arc<codex_extension_api::ExtensionRegistry<crate::config::Config>>,
+    pub(crate) code_mode_session_provider: Arc<dyn genex_code_mode::CodeModeSessionProvider>,
+    pub(crate) extensions: Arc<genex_extension_api::ExtensionRegistry<crate::config::Config>>,
     pub(crate) conversation_history: InitialHistory,
     pub(crate) disabled_plugin_ids: Option<Vec<String>>,
     pub(crate) requested_history_mode: Option<ThreadHistoryMode>,
@@ -450,7 +450,7 @@ pub(crate) struct SessionSpawnArgs {
     pub(crate) inherited_multi_agent_version: Option<MultiAgentVersion>,
     pub(crate) git_enrichment_policy: GitEnrichmentPolicy,
     pub(crate) windows_sandbox_proxy_settings_mode:
-        codex_sandboxing::WindowsSandboxProxySettingsMode,
+        genex_sandboxing::WindowsSandboxProxySettingsMode,
 }
 
 pub(crate) fn resolve_multi_agent_version(
@@ -484,7 +484,7 @@ impl Session {
         Box::pin(async move {
             let parent_trace = match args.parent_trace {
                 Some(trace) => {
-                    if codex_otel::context_from_w3c_trace_context(&trace).is_some() {
+                    if genex_otel::context_from_w3c_trace_context(&trace).is_some() {
                         Some(trace)
                     } else {
                         warn!("ignoring invalid thread spawn trace carrier");
@@ -555,16 +555,16 @@ impl Session {
         let (tx_event, rx_event) = async_channel::unbounded();
 
         let isolation = thread_extension_init
-            .get::<codex_extension_api::SessionIsolation>()
+            .get::<genex_extension_api::SessionIsolation>()
             .map(|policy| *policy)
             .unwrap_or_default();
-        let exec_policy = if isolation == codex_extension_api::SessionIsolation::Isolated {
+        let exec_policy = if isolation == genex_extension_api::SessionIsolation::Isolated {
             let managed_policy = config
                 .config_layer_stack
                 .requirements()
                 .exec_policy
                 .as_deref()
-                .map_or_else(codex_execpolicy::Policy::empty, |policy| {
+                .map_or_else(genex_execpolicy::Policy::empty, |policy| {
                     policy.as_ref().clone()
                 });
             Arc::new(ExecPolicyManager::new(Arc::new(managed_policy)))
@@ -596,14 +596,14 @@ impl Session {
 
         let mut config = Arc::new(config);
         let refresh_strategy = if session_source.is_non_root_agent() {
-            codex_models_manager::manager::RefreshStrategy::Offline
+            genex_models_manager::manager::RefreshStrategy::Offline
         } else {
-            codex_models_manager::manager::RefreshStrategy::OnlineIfUncached
+            genex_models_manager::manager::RefreshStrategy::OnlineIfUncached
         };
         if config.model.is_none()
             || !matches!(
                 refresh_strategy,
-                codex_models_manager::manager::RefreshStrategy::Offline
+                genex_models_manager::manager::RefreshStrategy::Offline
             )
         {
             let _ = models_manager
@@ -691,7 +691,7 @@ impl Session {
             };
             settings_owner
                 .and_then(|thread_id| {
-                    codex_history::latest_disabled_plugin_ids(
+                    genex_history::latest_disabled_plugin_ids(
                         conversation_history.get_rollout_items(),
                         thread_id,
                     )
@@ -1109,11 +1109,11 @@ impl Session {
     #[allow(clippy::too_many_arguments)]
     async fn start_managed_network_proxy(
         spec: &crate::config::NetworkProxySpec,
-        exec_policy: &codex_execpolicy::Policy,
+        exec_policy: &genex_execpolicy::Policy,
         permission_profile: &PermissionProfile,
         windows_sandbox_type: SandboxType,
-        network_policy_decider: Option<Arc<dyn codex_network_proxy::NetworkPolicyDecider>>,
-        blocked_request_observer: Option<Arc<dyn codex_network_proxy::BlockedRequestObserver>>,
+        network_policy_decider: Option<Arc<dyn genex_network_proxy::NetworkPolicyDecider>>,
+        blocked_request_observer: Option<Arc<dyn genex_network_proxy::BlockedRequestObserver>>,
         managed_network_requirements_enabled: bool,
         audit_metadata: NetworkProxyAuditMetadata,
     ) -> anyhow::Result<(StartedNetworkProxy, SessionNetworkProxyRuntime)> {
@@ -1395,7 +1395,7 @@ impl Session {
             )
         {
             BaseInstructions {
-                text: codex_prompts::without_update_plan_instructions(&instructions.text),
+                text: genex_prompts::without_update_plan_instructions(&instructions.text),
                 ..instructions
             }
         } else {
@@ -2246,13 +2246,13 @@ impl Session {
         &self,
         turn_context: &TurnContext,
         parent_thread_id: ThreadId,
-        child_agent_path: &codex_protocol::AgentPath,
+        child_agent_path: &genex_protocol::AgentPath,
         status: AgentStatus,
     ) {
         let Some(parent_agent_path) = child_agent_path
             .as_str()
             .rsplit_once('/')
-            .and_then(|(parent, _)| codex_protocol::AgentPath::try_from(parent).ok())
+            .and_then(|(parent, _)| genex_protocol::AgentPath::try_from(parent).ok())
         else {
             return;
         };
@@ -2363,7 +2363,7 @@ impl Session {
     /// Delivers an event without creating a local rollout for a thread that has not materialized.
     pub(crate) async fn send_event_raw_without_materializing_rollout(&self, event: Event) {
         let persist = match self.current_rollout_path().await {
-            Ok(Some(path)) => codex_rollout::existing_rollout_path(&path).await.is_some(),
+            Ok(Some(path)) => genex_rollout::existing_rollout_path(&path).await.is_some(),
             Ok(None) => true,
             Err(err) => {
                 warn!("failed to check whether thread persistence is materialized: {err}");
@@ -3251,7 +3251,7 @@ impl Session {
     ) {
         // Save the originating history budget for replay.
         // Preserve any existing tool-specific override.
-        let policy: codex_utils_output_truncation::TruncationPolicy =
+        let policy: genex_utils_output_truncation::TruncationPolicy =
             model_info.truncation_policy.into();
         for envelope in &mut items {
             if matches!(
@@ -3445,7 +3445,7 @@ impl Session {
             )
             .or_cancel(cancellation_token)
             .await?;
-        let extension_data = codex_extension_api::ExtensionData::new(turn_context.sub_id.clone());
+        let extension_data = genex_extension_api::ExtensionData::new(turn_context.sub_id.clone());
         extension_data.insert(selected_capability_roots.clone());
         if let Some(discovery) = &executor_capability_discovery {
             extension_data.insert(discovery.as_ref().clone());
@@ -3484,7 +3484,7 @@ impl Session {
         let mut selected_plugins = self
             .services
             .thread_extension_data
-            .get::<codex_extension_api::SelectedPluginSnapshot>()
+            .get::<genex_extension_api::SelectedPluginSnapshot>()
             .map(|snapshot| snapshot.as_ref().clone())
             .unwrap_or_default();
         selected_plugins.plugins.retain(|plugin| {
@@ -3682,7 +3682,7 @@ impl Session {
         self.persist_rollout_items(&rollout_items).await;
         {
             let mut state = self.state.lock().await;
-            state.queue_pending_session_start_source(codex_hooks::SessionStartSource::Compact);
+            state.queue_pending_session_start_source(genex_hooks::SessionStartSource::Compact);
         }
     }
 
@@ -3884,7 +3884,7 @@ impl Session {
                 crate::context::TokenBudgetContext::new(
                     session_source
                         .get_agent_path()
-                        .unwrap_or_else(codex_protocol::AgentPath::root),
+                        .unwrap_or_else(genex_protocol::AgentPath::root),
                     auto_compact_window_ids.first_window_id,
                     auto_compact_window_ids.previous_window_id,
                     auto_compact_window_ids.window_id,
@@ -4477,7 +4477,7 @@ impl Session {
 
     pub(crate) async fn take_pending_session_start_source(
         &self,
-    ) -> Option<codex_hooks::SessionStartSource> {
+    ) -> Option<genex_hooks::SessionStartSource> {
         let mut state = self.state.lock().await;
         state.take_pending_session_start_source()
     }

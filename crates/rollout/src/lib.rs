@@ -2,7 +2,7 @@
 
 use std::sync::LazyLock;
 
-use codex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SessionSource;
 use serde::de::Error as _;
 use serde_json::Value;
 
@@ -26,16 +26,16 @@ mod sqlite_metrics;
 pub mod state_db;
 mod writer_lock;
 
-pub use codex_history::CompactedItem;
-pub use codex_history::InitialHistory;
-pub use codex_history::ResponseItemEnvelope;
-pub use codex_history::ResumedHistory;
-pub use codex_history::RetainedContextEntry;
-pub use codex_history::RetainedContextEvent;
-pub use codex_history::RetainedInputSource;
-pub use codex_history::RolloutItem;
-pub use codex_history::RolloutLine;
-pub(crate) use codex_protocol::protocol;
+pub use genex_history::CompactedItem;
+pub use genex_history::InitialHistory;
+pub use genex_history::ResponseItemEnvelope;
+pub use genex_history::ResumedHistory;
+pub use genex_history::RetainedContextEntry;
+pub use genex_history::RetainedContextEvent;
+pub use genex_history::RetainedInputSource;
+pub use genex_history::RolloutItem;
+pub use genex_history::RolloutLine;
+pub(crate) use genex_protocol::protocol;
 
 /// Decodes a persisted rollout record without Serde's flattened-envelope buffering.
 ///
@@ -86,7 +86,7 @@ pub const ARCHIVED_SESSIONS_SUBDIR: &str = "archived_sessions";
 pub static INTERACTIVE_SESSION_SOURCES: LazyLock<Vec<SessionSource>> =
     LazyLock::new(|| vec![SessionSource::Cli, SessionSource::VSCode]);
 
-pub use codex_protocol::protocol::SessionMeta;
+pub use genex_protocol::protocol::SessionMeta;
 pub use compression::RolloutCompressionTrigger;
 pub use compression::RolloutLineReader;
 pub use compression::existing_rollout_path;

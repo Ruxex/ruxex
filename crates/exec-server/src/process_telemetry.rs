@@ -1,7 +1,7 @@
 //! Emits bounded process lifecycle telemetry using identity captured at launch.
 //! Reconnects and later process operations must not replace that identity.
 
-use codex_sandboxing::SandboxType;
+use genex_sandboxing::SandboxType;
 use opentelemetry::trace::SpanContext;
 
 /// Log fields captured at launch, never refreshed from a resumed session.

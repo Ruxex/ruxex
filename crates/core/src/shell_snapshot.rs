@@ -14,25 +14,25 @@ use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
 use anyhow::bail;
-use codex_exec_server::Environment;
-use codex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY;
-use codex_network_proxy::CredentialBrokerContext;
-use codex_network_proxy::NetworkProxy;
-use codex_network_proxy::brokered_credential_marker_env_keys;
-use codex_network_proxy::brokered_credential_value_env_keys;
-use codex_otel::SessionTelemetry;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::ShellEnvironmentPolicy;
-use codex_protocol::shell_environment::create_env_from_vars;
-use codex_shell_command::shell_snapshot::CapturedSnapshot;
-use codex_shell_command::shell_snapshot::PreparedSnapshot;
-use codex_shell_command::shell_snapshot::SnapshotCaptureOptions;
-use codex_shell_command::shell_snapshot::SnapshotCredentialEnvironment;
-use codex_shell_command::shell_snapshot::SnapshotStartup;
-use codex_shell_command::shell_snapshot::prepare_snapshot_credentials;
-use codex_shell_command::shell_snapshot::snapshot_capture_script;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_exec_server::Environment;
+use genex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY;
+use genex_network_proxy::CredentialBrokerContext;
+use genex_network_proxy::NetworkProxy;
+use genex_network_proxy::brokered_credential_marker_env_keys;
+use genex_network_proxy::brokered_credential_value_env_keys;
+use genex_otel::SessionTelemetry;
+use genex_protocol::ThreadId;
+use genex_protocol::config_types::ShellEnvironmentPolicy;
+use genex_protocol::shell_environment::create_env_from_vars;
+use genex_shell_command::shell_snapshot::CapturedSnapshot;
+use genex_shell_command::shell_snapshot::PreparedSnapshot;
+use genex_shell_command::shell_snapshot::SnapshotCaptureOptions;
+use genex_shell_command::shell_snapshot::SnapshotCredentialEnvironment;
+use genex_shell_command::shell_snapshot::SnapshotStartup;
+use genex_shell_command::shell_snapshot::prepare_snapshot_credentials;
+use genex_shell_command::shell_snapshot::snapshot_capture_script;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use tokio::fs;
 use tokio::process::Command;
 use tokio::sync::watch;
@@ -1057,11 +1057,11 @@ async fn run_script_with_timeout(
         handler.env_clear();
         handler.envs(env);
     }
-    codex_protocol::shell_environment::scrub_non_inheritable_env_vars(handler.as_std_mut());
+    genex_protocol::shell_environment::scrub_non_inheritable_env_vars(handler.as_std_mut());
     #[cfg(unix)]
     unsafe {
         handler.pre_exec(|| {
-            codex_utils_pty::process_group::detach_from_tty()?;
+            genex_utils_pty::process_group::detach_from_tty()?;
             Ok(())
         });
     }

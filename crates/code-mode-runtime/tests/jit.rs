@@ -1,9 +1,9 @@
-use codex_code_mode_protocol::NoopCodeModeSessionDelegate;
-use codex_code_mode_runtime::ExecuteRequest;
-use codex_code_mode_runtime::InProcessCodeModeSession;
-use codex_code_mode_runtime::RuntimeResponse;
-use codex_code_mode_runtime::V8JitMode;
-use codex_code_mode_runtime::initialize_v8;
+use genex_code_mode_protocol::NoopCodeModeSessionDelegate;
+use genex_code_mode_runtime::ExecuteRequest;
+use genex_code_mode_runtime::InProcessCodeModeSession;
+use genex_code_mode_runtime::RuntimeResponse;
+use genex_code_mode_runtime::V8JitMode;
+use genex_code_mode_runtime::initialize_v8;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
 

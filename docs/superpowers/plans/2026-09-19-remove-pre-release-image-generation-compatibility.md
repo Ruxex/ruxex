@@ -69,7 +69,7 @@
 - [ ] Remove `ResponseItem::ImageGenerationCall`, `ImageGenerationBeginEvent`, `ImageGenerationEndEvent`, and conversion/helpers that exist only for those types.
 - [ ] Remove core event mapping, history retention, normalization, timing, and turn-processing branches for the deleted variants.
 - [ ] Remove only image-generation fixtures and assertions; retain input-image, local-media, and `view_image` coverage.
-- [ ] Run `cargo check -p codex-protocol -p codex-core -p codex-extension-items` and fix only compile errors caused by the removed variants.
+- [ ] Run `cargo check -p genex-protocol -p genex-core -p genex-extension-items` and fix only compile errors caused by the removed variants.
 
 ### Task 3: Remove persistence migration and public app-server protocol surface
 
@@ -85,7 +85,7 @@
 - [ ] Remove app-server `ThreadItem::ImageGeneration`, public re-exports, conversion branches, and generated JSON/TypeScript definitions.
 - [ ] Remove image-generation-specific notification redaction and turn/resume handling; retain redaction for generic media and other response items.
 - [ ] Regenerate or update app-server schemas using the repository’s supported generator path, then inspect that only image-generation definitions disappeared.
-- [ ] Run `cargo check -p codex-thread-store -p codex-rollout -p codex-app-server-protocol -p codex-app-server`.
+- [ ] Run `cargo check -p genex-thread-store -p genex-rollout -p genex-app-server-protocol -p genex-app-server`.
 
 ### Task 4: Remove UI, analytics, and trace compatibility branches
 
@@ -101,7 +101,7 @@
 - [ ] Remove image-generation tool aliases from trace dispatch; preserve unrelated tool classification and generic image viewing.
 - [ ] Remove code-mode `generatedImage` handling if it is solely the deleted image-generation output bridge; otherwise document and retain its provider-neutral contract.
 - [ ] Run `rg -n -i 'image.?generation|image_generation_call|image_gen' crates` again and review every remaining match manually.
-- [ ] Run `cargo check -p codex-tui -p codex-analytics -p codex-rollout-trace -p codex-otel -p codex-guardian-context -p codex-utils-audio -p codex-code-mode-protocol -p codex-code-mode-runtime` and confirm no generic image path was removed.
+- [ ] Run `cargo check -p genex-tui -p genex-analytics -p genex-rollout-trace -p genex-otel -p genex-guardian-context -p genex-utils-audio -p genex-code-mode-protocol -p genex-code-mode-runtime` and confirm no generic image path was removed.
 
 ### Task 5: Final verification and dependency/documentation audit
 

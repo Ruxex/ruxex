@@ -2,55 +2,55 @@
 
 use crate::app_event::AppEvent;
 use crate::app_event_sender::AppEventSender;
-use codex_app_server_client::AppServerRequestHandle;
-use codex_app_server_client::TypedRequestError;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::DynamicToolCallOutputContentItem;
-use codex_app_server_protocol::DynamicToolCallParams;
-use codex_app_server_protocol::DynamicToolCallResponse;
-use codex_app_server_protocol::DynamicToolFunctionSpec;
-use codex_app_server_protocol::DynamicToolNamespaceSpec;
-use codex_app_server_protocol::DynamicToolNamespaceTool;
-use codex_app_server_protocol::DynamicToolSpec;
-use codex_app_server_protocol::ImageReference;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SandboxMode;
-use codex_app_server_protocol::SandboxPolicy;
-use codex_app_server_protocol::SortDirection;
-use codex_app_server_protocol::Thread;
-use codex_app_server_protocol::ThreadArchiveParams;
-use codex_app_server_protocol::ThreadArchiveResponse;
-use codex_app_server_protocol::ThreadForkParams;
-use codex_app_server_protocol::ThreadForkResponse;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadItemEntry;
-use codex_app_server_protocol::ThreadItemsListParams;
-use codex_app_server_protocol::ThreadItemsListResponse;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadListResponse;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadReadResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadSetNameParams;
-use codex_app_server_protocol::ThreadSetNameResponse;
-use codex_app_server_protocol::ThreadSortKey;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStatus;
-use codex_app_server_protocol::ThreadStatusChangedNotification;
-use codex_app_server_protocol::ThreadTurnsListParams;
-use codex_app_server_protocol::ThreadTurnsListResponse;
-use codex_app_server_protocol::ThreadUnarchiveParams;
-use codex_app_server_protocol::ThreadUnarchiveResponse;
-use codex_app_server_protocol::Turn;
-use codex_app_server_protocol::TurnItemsView;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnToolOutput;
-use codex_app_server_protocol::UserInput;
-use codex_protocol::ThreadId;
-use codex_protocol::models::FunctionCallOutputBody;
+use genex_app_server_client::AppServerRequestHandle;
+use genex_app_server_client::TypedRequestError;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::DynamicToolCallOutputContentItem;
+use genex_app_server_protocol::DynamicToolCallParams;
+use genex_app_server_protocol::DynamicToolCallResponse;
+use genex_app_server_protocol::DynamicToolFunctionSpec;
+use genex_app_server_protocol::DynamicToolNamespaceSpec;
+use genex_app_server_protocol::DynamicToolNamespaceTool;
+use genex_app_server_protocol::DynamicToolSpec;
+use genex_app_server_protocol::ImageReference;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SandboxMode;
+use genex_app_server_protocol::SandboxPolicy;
+use genex_app_server_protocol::SortDirection;
+use genex_app_server_protocol::Thread;
+use genex_app_server_protocol::ThreadArchiveParams;
+use genex_app_server_protocol::ThreadArchiveResponse;
+use genex_app_server_protocol::ThreadForkParams;
+use genex_app_server_protocol::ThreadForkResponse;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadItemEntry;
+use genex_app_server_protocol::ThreadItemsListParams;
+use genex_app_server_protocol::ThreadItemsListResponse;
+use genex_app_server_protocol::ThreadListParams;
+use genex_app_server_protocol::ThreadListResponse;
+use genex_app_server_protocol::ThreadReadParams;
+use genex_app_server_protocol::ThreadReadResponse;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadSetNameParams;
+use genex_app_server_protocol::ThreadSetNameResponse;
+use genex_app_server_protocol::ThreadSortKey;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStatus;
+use genex_app_server_protocol::ThreadStatusChangedNotification;
+use genex_app_server_protocol::ThreadTurnsListParams;
+use genex_app_server_protocol::ThreadTurnsListResponse;
+use genex_app_server_protocol::ThreadUnarchiveParams;
+use genex_app_server_protocol::ThreadUnarchiveResponse;
+use genex_app_server_protocol::Turn;
+use genex_app_server_protocol::TurnItemsView;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::TurnToolOutput;
+use genex_app_server_protocol::UserInput;
+use genex_protocol::ThreadId;
+use genex_protocol::models::FunctionCallOutputBody;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
@@ -712,7 +712,7 @@ async fn execute_inner(
                 };
                 turns
                     .into_iter()
-                    .find(|turn| turn.status == codex_app_server_protocol::TurnStatus::InProgress)
+                    .find(|turn| turn.status == genex_app_server_protocol::TurnStatus::InProgress)
                     .map(|turn| turn.id)
             } else {
                 None
@@ -981,7 +981,7 @@ async fn execute_inner(
                                     (ThreadStatus::Idle, Some(turn))
                                         if changed
                                             && turn.status
-                                                != codex_app_server_protocol::TurnStatus::InProgress =>
+                                                != genex_app_server_protocol::TurnStatus::InProgress =>
                                     {
                                         Some(json!({
                                             "threadId": thread.id,

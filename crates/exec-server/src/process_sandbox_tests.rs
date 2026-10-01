@@ -3,29 +3,29 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
-use codex_exec_server_protocol::JSONRPCErrorError;
+use genex_exec_server_protocol::JSONRPCErrorError;
 #[cfg(unix)]
-use codex_file_system::WindowsSandboxSelection;
+use genex_file_system::WindowsSandboxSelection;
 #[cfg(target_os = "macos")]
-use codex_network_proxy::ManagedNetworkSandboxContext;
-use codex_network_proxy::NetworkPolicyAuditObserver;
-use codex_network_proxy::NetworkPolicyDecider;
-use codex_network_proxy::NetworkProxyConfig;
+use genex_network_proxy::ManagedNetworkSandboxContext;
+use genex_network_proxy::NetworkPolicyAuditObserver;
+use genex_network_proxy::NetworkPolicyDecider;
+use genex_network_proxy::NetworkProxyConfig;
 #[cfg(target_os = "macos")]
-use codex_network_proxy::NetworkUnixSocketPermission;
+use genex_network_proxy::NetworkUnixSocketPermission;
 #[cfg(target_os = "macos")]
-use codex_network_proxy::NetworkUnixSocketPermissions;
-use codex_network_proxy::PROXY_ATTRIBUTION_TOKEN_ENV_KEY;
-use codex_network_proxy::RemoteNetworkProxyConfig;
-use codex_network_proxy::RemoteNetworkProxyLaunchConfig;
+use genex_network_proxy::NetworkUnixSocketPermissions;
+use genex_network_proxy::PROXY_ATTRIBUTION_TOKEN_ENV_KEY;
+use genex_network_proxy::RemoteNetworkProxyConfig;
+use genex_network_proxy::RemoteNetworkProxyLaunchConfig;
 #[cfg(windows)]
-use codex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::config_types::WindowsSandboxLevel;
 #[cfg(any(unix, windows))]
-use codex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfile;
 #[cfg(target_os = "linux")]
-use codex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 #[cfg(unix)]
 use tempfile::tempdir;
@@ -652,7 +652,7 @@ async fn managed_network_honors_windows_sandbox_level(windows_sandbox_level: Win
         FileSystemSandboxContext::from_permission_profile(permissions.clone(), cwd_uri.clone());
     sandbox.windows_sandbox_selection = windows_sandbox_level.into();
     sandbox.windows_sandbox_proxy_settings_mode =
-        Some(codex_sandboxing::WindowsSandboxProxySettingsMode::Preserve);
+        Some(genex_sandboxing::WindowsSandboxProxySettingsMode::Preserve);
     let proxy_config = RemoteNetworkProxyConfig::from_effective_config(&NetworkProxyConfig {
         enabled: true,
         enable_socks5: false,

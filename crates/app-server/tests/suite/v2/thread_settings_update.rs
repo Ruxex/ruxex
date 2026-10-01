@@ -5,39 +5,39 @@ use app_test_support::TestAppServer;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
 use app_test_support::write_models_cache;
-use codex_app_server_protocol::ApprovalsReviewer;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SandboxMode;
-use codex_app_server_protocol::SandboxPolicy;
-use codex_app_server_protocol::ThreadForkParams;
-use codex_app_server_protocol::ThreadForkResponse;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_app_server_protocol::ThreadListResponse;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadReadResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadSettingsUpdateParams;
-use codex_app_server_protocol::ThreadSettingsUpdateResponse;
-use codex_app_server_protocol::ThreadSettingsUpdatedNotification;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadUnsubscribeParams;
-use codex_app_server_protocol::ThreadUnsubscribeResponse;
-use codex_app_server_protocol::ThreadUnsubscribeStatus;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::UserInput as V2UserInput;
-use codex_core::test_support::all_model_presets;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use codex_protocol::config_types::Settings;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_app_server_protocol::ApprovalsReviewer;
+use genex_app_server_protocol::AskForApproval;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SandboxMode;
+use genex_app_server_protocol::SandboxPolicy;
+use genex_app_server_protocol::ThreadForkParams;
+use genex_app_server_protocol::ThreadForkResponse;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_app_server_protocol::ThreadListResponse;
+use genex_app_server_protocol::ThreadReadParams;
+use genex_app_server_protocol::ThreadReadResponse;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadSettingsUpdateParams;
+use genex_app_server_protocol::ThreadSettingsUpdateResponse;
+use genex_app_server_protocol::ThreadSettingsUpdatedNotification;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::ThreadUnsubscribeParams;
+use genex_app_server_protocol::ThreadUnsubscribeResponse;
+use genex_app_server_protocol::ThreadUnsubscribeStatus;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::UserInput as V2UserInput;
+use genex_core::test_support::all_model_presets;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use genex_protocol::config_types::Settings;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_utils_absolute_path::test_support::PathExt;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -282,13 +282,13 @@ async fn thread_settings_update_emits_notification_and_updates_future_turns() ->
     .await??;
 
     // Loaded metadata must come from live settings, even if stored metadata is stale.
-    let state_db = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+    let state_db = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".to_string(),
     )
     .await?;
     let mut stored = state_db
-        .get_thread(codex_protocol::ThreadId::from_string(&thread.id)?)
+        .get_thread(genex_protocol::ThreadId::from_string(&thread.id)?)
         .await?
         .expect("completed thread should be persisted");
     stored.model = Some("stored-model".to_string());

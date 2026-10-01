@@ -31,8 +31,8 @@ use crate::render::renderable::ColumnRenderable;
 use crate::render::renderable::Renderable;
 use crate::tui::Tui;
 use crate::tui::TuiEvent;
-use codex_app_server_client::AppServerRequestHandle;
-use codex_app_server_protocol::HooksListEntry;
+use genex_app_server_client::AppServerRequestHandle;
+use genex_app_server_protocol::HooksListEntry;
 use std::path::PathBuf;
 
 pub(crate) enum StartupHooksReviewOutcome {
@@ -314,12 +314,12 @@ mod tests {
     use crate::render::renderable::Renderable;
     use crate::test_support::PathBufExt;
     use crate::test_support::test_path_buf;
-    use codex_app_server_protocol::HookEventName;
-    use codex_app_server_protocol::HookHandlerMetadata;
-    use codex_app_server_protocol::HookMetadata;
-    use codex_app_server_protocol::HookSource;
-    use codex_app_server_protocol::HookTrustStatus;
-    use codex_app_server_protocol::HooksListEntry;
+    use genex_app_server_protocol::HookEventName;
+    use genex_app_server_protocol::HookHandlerMetadata;
+    use genex_app_server_protocol::HookMetadata;
+    use genex_app_server_protocol::HookSource;
+    use genex_app_server_protocol::HookTrustStatus;
+    use genex_app_server_protocol::HooksListEntry;
     use crossterm::event::KeyCode;
     use crossterm::event::KeyEvent;
     use crossterm::event::KeyModifiers;

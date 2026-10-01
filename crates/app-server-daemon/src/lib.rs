@@ -23,8 +23,8 @@ use anyhow::Result;
 use anyhow::anyhow;
 pub use backend::BackendKind;
 use backend::BackendPaths;
-use codex_app_server_transport::app_server_control_socket_path;
-use codex_utils_home_dir::find_codex_home;
+use genex_app_server_transport::app_server_control_socket_path;
+use genex_utils_home_dir::find_codex_home;
 use managed_install::managed_codex_bin;
 #[cfg(any(unix, windows))]
 use managed_install::managed_codex_version;
@@ -172,7 +172,7 @@ pub async fn bootstrap(options: BootstrapOptions) -> Result<BootstrapOutput> {
 }
 
 pub async fn run_pid_update_loop(
-    http_client_factory: codex_http_client::HttpClientFactory,
+    http_client_factory: genex_http_client::HttpClientFactory,
     restore_release: Option<String>,
 ) -> Result<()> {
     ensure_supported_platform()?;
@@ -182,7 +182,7 @@ pub async fn run_pid_update_loop(
 }
 
 pub async fn update(
-    http_client_factory: codex_http_client::HttpClientFactory,
+    http_client_factory: genex_http_client::HttpClientFactory,
 ) -> Result<UpdateOutput> {
     ensure_supported_platform()?;
     #[cfg(windows)]
@@ -238,7 +238,7 @@ impl Daemon {
     }
 
     fn recovery_file(&self) -> Result<PathBuf> {
-        Ok(codex_app_server_transport::daemon_recovery_file_path(
+        Ok(genex_app_server_transport::daemon_recovery_file_path(
             self.settings_file
                 .parent()
                 .and_then(Path::parent)
@@ -776,7 +776,7 @@ impl Daemon {
             if let Some(home) = parent.parent() {
                 tokio::fs::create_dir_all(home).await?;
             }
-            codex_uds::prepare_private_socket_directory(parent)
+            genex_uds::prepare_private_socket_directory(parent)
                 .await
                 .with_context(|| {
                     format!(
@@ -974,7 +974,7 @@ mod tests {
     async fn stop_and_fresh_start_discard_pending_thread_restore() {
         let home = TempDir::new().expect("home");
         let state = home.path().join("app-server-daemon");
-        codex_uds::prepare_private_socket_directory(&state)
+        genex_uds::prepare_private_socket_directory(&state)
             .await
             .expect("private state directory");
         let daemon = Daemon {
@@ -985,7 +985,7 @@ mod tests {
             settings_file: state.join("settings.json"),
             managed_codex_bin: home.path().join("codex"),
         };
-        codex_app_server_transport::daemon_recovery::write_candidates(
+        genex_app_server_transport::daemon_recovery::write_candidates(
             &daemon.recovery_file().expect("recovery path"),
             &["thread".to_string()].into_iter().collect(),
         )

@@ -4,9 +4,9 @@ use std::sync::Mutex;
 use std::sync::RwLock;
 
 use arc_swap::ArcSwapOption;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyPolicy;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyPolicy;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
 
 use crate::CapabilityRootsDiscoverParams;
 use crate::CapabilityRootsDiscoverResponse;
@@ -704,9 +704,9 @@ mod tests {
     use crate::client_api::StdioExecServerCommand;
     use crate::environment_provider::EnvironmentDefault;
     use crate::environment_provider::EnvironmentProviderSnapshot;
-    use codex_http_client::HttpClientFactory;
-    use codex_http_client::OutboundProxyPolicy;
-    use codex_utils_path_uri::PathUri;
+    use genex_http_client::HttpClientFactory;
+    use genex_http_client::OutboundProxyPolicy;
+    use genex_utils_path_uri::PathUri;
     use pretty_assertions::assert_eq;
 
     fn legacy_http_client_factory() -> HttpClientFactory {
@@ -950,8 +950,8 @@ mod tests {
 
     #[tokio::test]
     async fn selected_capability_inspection_keeps_stdio_environment_lazy() {
-        use codex_protocol::capabilities::CapabilityRootLocation;
-        use codex_protocol::capabilities::SelectedCapabilityRoot;
+        use genex_protocol::capabilities::CapabilityRootLocation;
+        use genex_protocol::capabilities::SelectedCapabilityRoot;
 
         let transport = ExecServerTransportParams::StdioCommand {
             command: StdioExecServerCommand {
@@ -1055,7 +1055,7 @@ mod tests {
             .to_abs_path()
             .expect_err("sandbox cwd should not be native to this host");
         let sandbox = crate::FileSystemSandboxContext::from_permission_profile(
-            codex_protocol::models::PermissionProfile::workspace_write(),
+            genex_protocol::models::PermissionProfile::workspace_write(),
             sandbox_cwd.clone(),
         );
 
@@ -1096,15 +1096,15 @@ mod tests {
     #[tokio::test]
     async fn test_environment_rejects_sandboxed_filesystem_without_runtime_paths() {
         let environment = Environment::default_for_tests();
-        let path = codex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(
+        let path = genex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(
             std::env::current_exe().expect("current exe").as_path(),
         )
         .expect("absolute current exe");
-        let path = codex_utils_path_uri::PathUri::from_abs_path(&path);
+        let path = genex_utils_path_uri::PathUri::from_abs_path(&path);
         let sandbox = crate::FileSystemSandboxContext::from_permission_profile(
-            codex_protocol::models::PermissionProfile::from_runtime_permissions(
-                &codex_protocol::permissions::FileSystemSandboxPolicy::restricted(Vec::new()),
-                codex_protocol::permissions::NetworkSandboxPolicy::Restricted,
+            genex_protocol::models::PermissionProfile::from_runtime_permissions(
+                &genex_protocol::permissions::FileSystemSandboxPolicy::restricted(Vec::new()),
+                genex_protocol::permissions::NetworkSandboxPolicy::Restricted,
             ),
             PathUri::from_host_native_path(std::env::current_dir().expect("read current dir"))
                 .expect("cwd URI"),

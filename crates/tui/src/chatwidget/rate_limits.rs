@@ -2,7 +2,7 @@
 
 use super::*;
 use crate::model_catalog::LUNA_RESERVE_MODEL;
-use codex_app_server_protocol::CodexErrorInfo as AppServerCodexErrorInfo;
+use genex_app_server_protocol::CodexErrorInfo as AppServerCodexErrorInfo;
 
 pub(super) const NUDGE_MODEL_SLUG: &str = crate::model_catalog::LUNA_MODEL;
 pub(super) const RATE_LIMIT_SWITCH_PROMPT_THRESHOLD: f64 = 90.0;

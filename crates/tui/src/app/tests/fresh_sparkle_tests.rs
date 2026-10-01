@@ -5,7 +5,7 @@ use crate::app::session_lifecycle::ThreadAttachPresentation;
 use crate::chatwidget::AstraModelPickerAction;
 use crate::terminal_palette::with_test_default_colors;
 use crate::terminal_probe::DefaultColors;
-use codex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::model_types::ReasoningEffortPreset;
 use pretty_assertions::assert_eq;
 
 fn started(model: &str) -> AppServerStartedThread {
@@ -529,7 +529,7 @@ async fn early_input_and_real_work_consume_the_sparkle() -> Result<()> {
         if scenario == "turn" {
             app.handle_app_server_event(
                 &server,
-                codex_app_server_client::AppServerEvent::ServerNotification(Box::new(
+                genex_app_server_client::AppServerEvent::ServerNotification(Box::new(
                     turn_started_notification(thread_id, "work"),
                 )),
             )

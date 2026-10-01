@@ -22,28 +22,28 @@ use axum::http::Uri;
 use axum::http::header::AUTHORIZATION;
 use axum::routing::get;
 use axum::routing::post;
-use codex_app_server_protocol::AppInfo;
-use codex_app_server_protocol::AppSummary;
-use codex_app_server_protocol::AppsListParams;
-use codex_app_server_protocol::AppsListResponse;
-use codex_app_server_protocol::ListMcpServerStatusParams;
-use codex_app_server_protocol::ListMcpServerStatusResponse;
-use codex_app_server_protocol::McpServerOauthLoginCompletedNotification;
-use codex_app_server_protocol::McpServerOauthLoginResponse;
-use codex_app_server_protocol::McpServerToolCallParams;
-use codex_app_server_protocol::McpServerToolCallResponse;
-use codex_app_server_protocol::PluginAuthPolicy;
-use codex_app_server_protocol::PluginAvailability;
-use codex_app_server_protocol::PluginInstallParams;
-use codex_app_server_protocol::PluginInstallResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_http_client::HttpClientBuilder;
-use codex_rmcp_client::McpOAuthCallbackMode;
-use codex_rmcp_client::resolve_mcp_oauth_callback_url;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_app_server_protocol::AppInfo;
+use genex_app_server_protocol::AppSummary;
+use genex_app_server_protocol::AppsListParams;
+use genex_app_server_protocol::AppsListResponse;
+use genex_app_server_protocol::ListMcpServerStatusParams;
+use genex_app_server_protocol::ListMcpServerStatusResponse;
+use genex_app_server_protocol::McpServerOauthLoginCompletedNotification;
+use genex_app_server_protocol::McpServerOauthLoginResponse;
+use genex_app_server_protocol::McpServerToolCallParams;
+use genex_app_server_protocol::McpServerToolCallResponse;
+use genex_app_server_protocol::PluginAuthPolicy;
+use genex_app_server_protocol::PluginAvailability;
+use genex_app_server_protocol::PluginInstallParams;
+use genex_app_server_protocol::PluginInstallResponse;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_http_client::HttpClientBuilder;
+use genex_rmcp_client::McpOAuthCallbackMode;
+use genex_rmcp_client::resolve_mcp_oauth_callback_url;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::stdio_server_bin;
 use flate2::Compression;
 use flate2::write::GzEncoder;
@@ -1580,7 +1580,7 @@ async fn plugin_install_skips_mcp_oauth_for_unowned_environment() -> Result<()> 
         "[features]\nplugins = true\n",
     )?;
     let mut executor =
-        tokio::process::Command::new(codex_utils_cargo_bin::cargo_bin("exec-server")?)
+        tokio::process::Command::new(genex_utils_cargo_bin::cargo_bin("exec-server")?)
             .stdin(std::process::Stdio::null())
             .stdout(std::process::Stdio::piped())
             .kill_on_drop(true)

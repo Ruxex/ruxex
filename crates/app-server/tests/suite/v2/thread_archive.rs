@@ -4,36 +4,36 @@ use app_test_support::TestAppServer;
 use app_test_support::create_fake_paginated_rollout;
 use app_test_support::create_fake_rollout;
 use app_test_support::create_mock_responses_server_repeating_assistant;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadArchiveParams;
-use codex_app_server_protocol::ThreadArchiveResponse;
-use codex_app_server_protocol::ThreadArchivedNotification;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_app_server_protocol::ThreadLoadedListParams;
-use codex_app_server_protocol::ThreadLoadedListResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadSource;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadStatus;
-use codex_app_server_protocol::ThreadUnarchiveParams;
-use codex_app_server_protocol::ThreadUnarchiveResponse;
-use codex_app_server_protocol::TurnCompletedNotification;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::UserInput;
-use codex_core::ARCHIVED_SESSIONS_SUBDIR;
-use codex_core::find_archived_thread_path_by_id_str;
-use codex_core::find_thread_path_by_id_str;
-use codex_features::Feature;
-use codex_protocol::ThreadId;
-use codex_state::DirectionalThreadSpawnEdgeStatus;
-use codex_state::StateRuntime;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_app_server_protocol::ClientInfo;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ThreadArchiveParams;
+use genex_app_server_protocol::ThreadArchiveResponse;
+use genex_app_server_protocol::ThreadArchivedNotification;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_app_server_protocol::ThreadLoadedListParams;
+use genex_app_server_protocol::ThreadLoadedListResponse;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadSource;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::ThreadStatus;
+use genex_app_server_protocol::ThreadUnarchiveParams;
+use genex_app_server_protocol::ThreadUnarchiveResponse;
+use genex_app_server_protocol::TurnCompletedNotification;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::UserInput;
+use genex_core::ARCHIVED_SESSIONS_SUBDIR;
+use genex_core::find_archived_thread_path_by_id_str;
+use genex_core::find_thread_path_by_id_str;
+use genex_features::Feature;
+use genex_protocol::ThreadId;
+use genex_state::DirectionalThreadSpawnEdgeStatus;
+use genex_state::StateRuntime;
+use genex_utils_absolute_path::test_support::PathExt;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -79,7 +79,7 @@ async fn thread_archive_rejects_owned_unmaterialized_paginated_descendant() -> R
         .await?;
     let child_thread_id = ThreadId::from_string(&child.id)?;
     let state_db = StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -151,7 +151,7 @@ async fn thread_archive_shuts_down_resumed_archived_descendant() -> Result<()> {
     let parent_thread_id = ThreadId::from_string(&parent_id)?;
     let child_thread_id = ThreadId::from_string(&child_id)?;
     let state_db = StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -488,7 +488,7 @@ async fn thread_archive_archives_spawned_descendants() -> Result<()> {
     let child_thread_id = ThreadId::from_string(&child_id)?;
     let grandchild_thread_id = ThreadId::from_string(&grandchild_id)?;
     let state_db = StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -600,7 +600,7 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
     let child_thread_id = ThreadId::from_string(&child_id)?;
     let grandchild_thread_id = ThreadId::from_string(&grandchild_id)?;
     let state_db = StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -800,7 +800,7 @@ async fn thread_archive_succeeds_when_spawned_descendant_is_missing() -> Result<
     let missing_child_thread_id = ThreadId::from_string("00000000-0000-0000-0000-000000000901")?;
 
     let state_db = StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;

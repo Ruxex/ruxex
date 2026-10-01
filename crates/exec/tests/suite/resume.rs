@@ -1,8 +1,8 @@
 #![allow(clippy::unwrap_used)]
 use anyhow::Context;
-use codex_core::config::ConfigBuilder;
-use codex_core::init_state_db;
-use codex_protocol::ThreadId;
+use genex_core::config::ConfigBuilder;
+use genex_core::init_state_db;
+use genex_protocol::ThreadId;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_codex_exec::test_codex_exec;
@@ -112,7 +112,7 @@ fn last_user_image_count(path: &std::path::Path) -> usize {
 }
 
 fn exec_repo_root() -> anyhow::Result<std::path::PathBuf> {
-    Ok(codex_utils_cargo_bin::repo_root()?)
+    Ok(genex_utils_cargo_bin::repo_root()?)
 }
 
 fn exec_sse_response(index: usize) -> String {
@@ -207,7 +207,7 @@ async fn exec_resume_last_appends_to_existing_file() -> anyhow::Result<()> {
 
     let output = test
         .cmd_with_server(&server)
-        .env("RUST_LOG", "codex_app_server::outgoing_message=trace")
+        .env("RUST_LOG", "genex_app_server::outgoing_message=trace")
         .arg("--skip-git-repo-check")
         .arg("-C")
         .arg(&repo_root)

@@ -16,12 +16,12 @@ use app_test_support::ApiKeyAuthFixture;
 use app_test_support::write_api_key_auth;
 use base64::Engine as _;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use codex_arg0::Arg0DispatchPaths;
-use codex_config::LoaderOverrides;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_core::config::ConfigBuilder;
-use codex_exec_server::EnvironmentManager;
-use codex_protocol::protocol::SessionSource;
+use genex_arg0::Arg0DispatchPaths;
+use genex_config::LoaderOverrides;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_core::config::ConfigBuilder;
+use genex_exec_server::EnvironmentManager;
+use genex_protocol::protocol::SessionSource;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::sync::Mutex;
@@ -141,7 +141,7 @@ impl Harness {
             LoaderOverrides::default(),
             /*strict_config*/ false,
             Arg0DispatchPaths::default(),
-            Arc::new(codex_config::NoopThreadConfigLoader),
+            Arc::new(genex_config::NoopThreadConfigLoader),
         );
         let (sender, messages) = mpsc::channel(/*buffer*/ 16);
         let outgoing = Arc::new(OutgoingMessageSender::new(sender, ()));

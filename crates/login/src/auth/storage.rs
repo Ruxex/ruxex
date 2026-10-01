@@ -19,16 +19,16 @@ use tracing::warn;
 
 use super::BedrockAccessKeysAuth;
 use super::BedrockApiKeyAuth;
-use codex_config::types::AuthCredentialsStoreMode;
-pub use codex_config::types::AuthKeyringBackendKind;
-use codex_keyring_store::DefaultKeyringStore;
-use codex_keyring_store::KeyringStore;
-use codex_protocol::auth::AuthMode;
-use codex_secrets::LocalSecretsNamespace;
-use codex_secrets::SecretName;
-use codex_secrets::SecretScope;
-use codex_secrets::SecretsBackendKind;
-use codex_secrets::SecretsManager;
+use genex_config::types::AuthCredentialsStoreMode;
+pub use genex_config::types::AuthKeyringBackendKind;
+use genex_keyring_store::DefaultKeyringStore;
+use genex_keyring_store::KeyringStore;
+use genex_protocol::auth::AuthMode;
+use genex_secrets::LocalSecretsNamespace;
+use genex_secrets::SecretName;
+use genex_secrets::SecretScope;
+use genex_secrets::SecretsBackendKind;
+use genex_secrets::SecretsManager;
 use once_cell::sync::Lazy;
 
 /// Expected structure for $CODEX_HOME/auth.json.

@@ -291,9 +291,9 @@ fn unix_ms_now() -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_http_client::ClientRouteClass;
-    use codex_http_client::HttpClientFactory;
-    use codex_http_client::OutboundProxyPolicy;
+    use genex_http_client::ClientRouteClass;
+    use genex_http_client::HttpClientFactory;
+    use genex_http_client::OutboundProxyPolicy;
     use pretty_assertions::assert_eq;
     use tokio::net::TcpStream;
     use tokio::time::Duration;

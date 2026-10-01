@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use codex_exec_server_protocol::JSONRPCRequest;
-use codex_exec_server_protocol::RequestId;
+use genex_exec_server_protocol::JSONRPCRequest;
+use genex_exec_server_protocol::RequestId;
 use pretty_assertions::assert_eq;
 use tokio::sync::mpsc;
 use tokio::task::JoinSet;

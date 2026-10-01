@@ -22,9 +22,9 @@ use crate::key_hint;
 use crate::key_hint::KeyBinding;
 use crate::key_hint::KeyBindingListExt;
 use crate::key_hint::ShortcutHint;
-use codex_config::types::KeybindingsSpec;
-use codex_config::types::MAX_FUNCTION_KEY;
-use codex_config::types::TuiKeymap;
+use genex_config::types::KeybindingsSpec;
+use genex_config::types::MAX_FUNCTION_KEY;
+use genex_config::types::TuiKeymap;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
@@ -2536,7 +2536,7 @@ fn parse_keybinding(spec: &str) -> Option<KeyBinding> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_config::types::KeybindingSpec;
+    use genex_config::types::KeybindingSpec;
 
     fn one(spec: &str) -> KeybindingsSpec {
         KeybindingsSpec::One(KeybindingSpec(spec.to_string()))

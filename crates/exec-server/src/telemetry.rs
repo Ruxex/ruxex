@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 use std::time::Instant;
 
-use codex_otel::MetricsClient;
+use genex_otel::MetricsClient;
 use tracing::warn;
 
 const CONNECTIONS_ACTIVE_METRIC: &str = "exec_server_connections_active";
@@ -151,7 +151,7 @@ impl ExecServerTelemetry {
             .inner
             .as_ref()
             .map(|inner| inner.metrics.clone())
-            .or_else(codex_otel::global)
+            .or_else(genex_otel::global)
         else {
             return;
         };
@@ -169,7 +169,7 @@ impl ExecServerTelemetry {
         self.with_inner(|inner| {
             inner.adjust_process_count(/*delta*/ 1);
         });
-        let parent = codex_otel::current_span_w3c_trace_context();
+        let parent = genex_otel::current_span_w3c_trace_context();
         // `parent:` accepts a local tracing span/ID, not a W3C context. A local
         // parent would keep the request span alive until process exit and delay
         // its export. Use `parent: None`, then set the W3C parent below to link
@@ -182,7 +182,7 @@ impl ExecServerTelemetry {
             result = tracing::field::Empty,
         );
         if let Some(parent) = parent {
-            codex_otel::set_parent_from_w3c_trace_context(&span, &parent);
+            genex_otel::set_parent_from_w3c_trace_context(&span, &parent);
         }
         ProcessMetricGuard {
             telemetry: self.clone(),

@@ -7,11 +7,11 @@
 
 #![allow(clippy::unwrap_used)]
 
-use codex_app_server_client::AppServerRequestHandle;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::LoginAccountParams;
-use codex_app_server_protocol::LoginAccountResponse;
-use codex_login::AuthConfig;
+use genex_app_server_client::AppServerRequestHandle;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::LoginAccountParams;
+use genex_app_server_protocol::LoginAccountResponse;
+use genex_login::AuthConfig;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
@@ -33,7 +33,7 @@ use ratatui::widgets::Paragraph;
 use ratatui::widgets::WidgetRef;
 use ratatui::widgets::Wrap;
 
-use codex_protocol::config_types::ForcedLoginMethod;
+use genex_protocol::config_types::ForcedLoginMethod;
 use std::sync::Arc;
 use std::sync::RwLock;
 
@@ -68,8 +68,8 @@ pub(crate) enum SignInOption {
 }
 
 const API_KEY_DISABLED_MESSAGE: &str = "API key login is disabled.";
-pub(super) fn onboarding_request_id() -> codex_app_server_protocol::RequestId {
-    codex_app_server_protocol::RequestId::String(uuid::Uuid::new_v4().to_string())
+pub(super) fn onboarding_request_id() -> genex_app_server_protocol::RequestId {
+    genex_app_server_protocol::RequestId::String(uuid::Uuid::new_v4().to_string())
 }
 
 #[derive(Clone, Default)]

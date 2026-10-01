@@ -4,25 +4,25 @@ use super::thread_processor::ThreadRequestProcessor;
 use crate::error_code::internal_error;
 use crate::error_code::invalid_params;
 use crate::error_code::method_not_found;
-use codex_app_server_protocol::ClientResponsePayload;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::ThreadSection;
-use codex_app_server_protocol::ThreadSectionAppearance;
-use codex_app_server_protocol::ThreadSectionCreateParams;
-use codex_app_server_protocol::ThreadSectionCreateResponse;
-use codex_app_server_protocol::ThreadSectionDeleteParams;
-use codex_app_server_protocol::ThreadSectionDeleteResponse;
-use codex_app_server_protocol::ThreadSectionListParams;
-use codex_app_server_protocol::ThreadSectionListResponse;
-use codex_app_server_protocol::ThreadSectionUpdateParams;
-use codex_app_server_protocol::ThreadSectionUpdateResponse;
-use codex_state::PINNED_THREAD_SECTION_ID;
-use codex_thread_store::CreateThreadSectionParams as StoreCreateThreadSectionParams;
-use codex_thread_store::DeleteThreadSectionParams as StoreDeleteThreadSectionParams;
-use codex_thread_store::ListThreadSectionsParams as StoreListThreadSectionsParams;
-use codex_thread_store::RenameThreadSectionParams as StoreRenameThreadSectionParams;
-use codex_thread_store::StoredThreadSection;
-use codex_thread_store::ThreadStoreError;
+use genex_app_server_protocol::ClientResponsePayload;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::ThreadSection;
+use genex_app_server_protocol::ThreadSectionAppearance;
+use genex_app_server_protocol::ThreadSectionCreateParams;
+use genex_app_server_protocol::ThreadSectionCreateResponse;
+use genex_app_server_protocol::ThreadSectionDeleteParams;
+use genex_app_server_protocol::ThreadSectionDeleteResponse;
+use genex_app_server_protocol::ThreadSectionListParams;
+use genex_app_server_protocol::ThreadSectionListResponse;
+use genex_app_server_protocol::ThreadSectionUpdateParams;
+use genex_app_server_protocol::ThreadSectionUpdateResponse;
+use genex_state::PINNED_THREAD_SECTION_ID;
+use genex_thread_store::CreateThreadSectionParams as StoreCreateThreadSectionParams;
+use genex_thread_store::DeleteThreadSectionParams as StoreDeleteThreadSectionParams;
+use genex_thread_store::ListThreadSectionsParams as StoreListThreadSectionsParams;
+use genex_thread_store::RenameThreadSectionParams as StoreRenameThreadSectionParams;
+use genex_thread_store::StoredThreadSection;
+use genex_thread_store::ThreadStoreError;
 
 const MAX_THREAD_SECTION_APPEARANCE_FIELD_BYTES: usize = 64;
 
@@ -204,8 +204,8 @@ fn api_thread_section(section: StoredThreadSection) -> ThreadSection {
 
 fn state_thread_section_appearance(
     appearance: ThreadSectionAppearance,
-) -> codex_state::ThreadSectionAppearance {
-    codex_state::ThreadSectionAppearance {
+) -> genex_state::ThreadSectionAppearance {
+    genex_state::ThreadSectionAppearance {
         icon: appearance.icon,
         color: appearance.color,
     }

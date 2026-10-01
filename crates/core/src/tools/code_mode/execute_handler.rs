@@ -5,8 +5,8 @@ use crate::tools::context::ToolPayload;
 use crate::tools::context::boxed_tool_output;
 use crate::tools::registry::CoreToolRuntime;
 use crate::tools::registry::ToolExecutor;
-use codex_tools::ToolName;
-use codex_tools::ToolSpec;
+use genex_tools::ToolName;
+use genex_tools::ToolSpec;
 use std::sync::Arc;
 
 use super::ExecContext;
@@ -40,7 +40,7 @@ impl CodeModeExecuteHandler {
         code: String,
     ) -> Result<FunctionToolOutput, FunctionCallError> {
         let args =
-            codex_code_mode::parse_exec_source(&code).map_err(FunctionCallError::RespondToModel)?;
+            genex_code_mode::parse_exec_source(&code).map_err(FunctionCallError::RespondToModel)?;
         let exec = ExecContext {
             session,
             turn: Arc::clone(&step_context.turn),
@@ -56,7 +56,7 @@ impl CodeModeExecuteHandler {
             }
 
             let definitions =
-                codex_tools::collect_code_mode_tool_definitions(std::iter::once(spec.as_ref()));
+                genex_tools::collect_code_mode_tool_definitions(std::iter::once(spec.as_ref()));
             enabled_tools.extend(definitions.into_iter().map(|mut definition| {
                 definition.input_schema = None;
                 definition.output_schema = None;
@@ -71,7 +71,7 @@ impl CodeModeExecuteHandler {
             .services
             .code_mode_service
             .execute(
-                codex_code_mode::ExecuteRequest {
+                genex_code_mode::ExecuteRequest {
                     tool_call_id: call_id.clone(),
                     enabled_tools,
                     source: args.code.clone(),
@@ -123,7 +123,7 @@ impl CodeModeExecuteHandler {
         code_cell_trace.record_initial_response(&response);
         // Yielded cells keep running, so terminal lifecycle is only emitted
         // here when the first response also ended the runtime.
-        if !matches!(response, codex_code_mode::RuntimeResponse::Yielded { .. }) {
+        if !matches!(response, genex_code_mode::RuntimeResponse::Yielded { .. }) {
             code_cell_trace.record_ended(&response);
             exec.session
                 .services
@@ -154,7 +154,7 @@ impl ToolExecutor<ToolInvocation> for CodeModeExecuteHandler {
         self.spec.clone()
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> codex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

@@ -1,17 +1,17 @@
 use anyhow::Result;
-use codex_core::TurnInputRequest;
-use codex_core::config::Config;
-use codex_features::Feature;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::MultiAgentMessages;
-use codex_protocol::model_types::MultiAgentModeMessages;
-use codex_protocol::model_types::MultiAgentRoleMessages;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::model_types::ReasoningEffortPreset;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
+use genex_core::TurnInputRequest;
+use genex_core::config::Config;
+use genex_features::Feature;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::MultiAgentMessages;
+use genex_protocol::model_types::MultiAgentModeMessages;
+use genex_protocol::model_types::MultiAgentRoleMessages;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_once;
@@ -108,7 +108,7 @@ fn count_containing(texts: &[&str], target: &str) -> usize {
 }
 
 async fn submit_turn(
-    codex: &codex_core::CodexThread,
+    codex: &genex_core::CodexThread,
     prompt: &str,
     effort: Option<ReasoningEffort>,
 ) -> Result<()> {

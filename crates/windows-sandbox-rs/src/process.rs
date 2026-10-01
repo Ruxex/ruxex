@@ -7,7 +7,7 @@ use crate::winutil::to_wide;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
-use codex_utils_pty::JobObject;
+use genex_utils_pty::JobObject;
 use std::collections::HashMap;
 use std::ffi::c_void;
 use std::os::windows::io::AsRawHandle;

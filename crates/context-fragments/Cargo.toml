@@ -1,11 +1,11 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-context-fragments"
+name = "genex-context-fragments"
 version.workspace = true
 
 [lib]
-name = "codex_context_fragments"
+name = "genex_context_fragments"
 path = "src/lib.rs"
 doctest = false
 
@@ -13,8 +13,8 @@ doctest = false
 workspace = true
 
 [dependencies]
-codex-protocol = { workspace = true }
-codex-utils-string = { workspace = true }
+genex-protocol = { workspace = true }
+genex-utils-string = { workspace = true }
 
 [dev-dependencies]
 pretty_assertions = { workspace = true }

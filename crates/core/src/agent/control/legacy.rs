@@ -1,6 +1,6 @@
 use super::*;
-use codex_protocol::error::CodexErrorDetails;
-use codex_thread_store::PersistContext;
+use genex_protocol::error::CodexErrorDetails;
+use genex_thread_store::PersistContext;
 
 impl AgentControl {
     /// Submit a shutdown request for a live agent without marking it explicitly closed in
@@ -55,7 +55,7 @@ impl AgentControl {
                     && let Err(err) = agent_graph_store
                         .set_thread_spawn_edge_status(
                             agent_id,
-                            codex_agent_graph_store::ThreadSpawnEdgeStatus::Closed,
+                            genex_agent_graph_store::ThreadSpawnEdgeStatus::Closed,
                         )
                         .await
                 {
@@ -69,7 +69,7 @@ impl AgentControl {
                     && let Err(err) = agent_graph_store
                         .set_thread_spawn_edge_status(
                             agent_id,
-                            codex_agent_graph_store::ThreadSpawnEdgeStatus::Closed,
+                            genex_agent_graph_store::ThreadSpawnEdgeStatus::Closed,
                         )
                         .await
                 {

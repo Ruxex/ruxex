@@ -18,75 +18,75 @@ use std::time::Duration;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
-use codex_config::types::McpServerAuth;
-use codex_config::types::McpServerConfig;
-use codex_config::types::McpServerEnvVar;
-use codex_config::types::McpServerTransportConfig;
-use codex_config::types::OAuthCredentialsStoreMode;
-use codex_core::EnvironmentConfig;
-use codex_core::EnvironmentMcpPolicy;
-use codex_core::TurnInputRequest;
-use codex_core::config::Config;
-use codex_core::windows_sandbox::WindowsSandboxLevelExt;
-use codex_exec_server::CreateDirectoryOptions;
-use codex_exec_server::Environment;
-use codex_exec_server::HttpRedirectPolicy;
-use codex_exec_server::HttpRequestParams;
-use codex_features::Feature;
-use codex_http_client::HttpClientBuilder;
-use codex_login::CodexAuth;
-use codex_mcp::CODEX_APPS_MCP_SERVER_NAME;
-use codex_mcp::MCP_SANDBOX_STATE_META_CAPABILITY;
-use codex_mcp::SandboxState;
-use codex_models_manager::manager::RefreshStrategy;
-use codex_utils_path_uri::LegacyAppPathString;
+use genex_config::types::McpServerAuth;
+use genex_config::types::McpServerConfig;
+use genex_config::types::McpServerEnvVar;
+use genex_config::types::McpServerTransportConfig;
+use genex_config::types::OAuthCredentialsStoreMode;
+use genex_core::EnvironmentConfig;
+use genex_core::EnvironmentMcpPolicy;
+use genex_core::TurnInputRequest;
+use genex_core::config::Config;
+use genex_core::windows_sandbox::WindowsSandboxLevelExt;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_exec_server::Environment;
+use genex_exec_server::HttpRedirectPolicy;
+use genex_exec_server::HttpRequestParams;
+use genex_features::Feature;
+use genex_http_client::HttpClientBuilder;
+use genex_login::CodexAuth;
+use genex_mcp::CODEX_APPS_MCP_SERVER_NAME;
+use genex_mcp::MCP_SANDBOX_STATE_META_CAPABILITY;
+use genex_mcp::SandboxState;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_utils_path_uri::LegacyAppPathString;
 
-use codex_history::RolloutItem;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::Settings;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::mcp_policy::McpServerIdentity;
-use codex_protocol::mcp_policy::McpServerRequirement;
-use codex_protocol::mcp_policy::PluginMcpRequirements;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ImageDetail;
-use codex_protocol::models::ImageReference;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::PermissionProfileSnapshot;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::model_types::ConfigShellToolType;
-use codex_protocol::model_types::ConfirmationPolicies;
-use codex_protocol::model_types::InputModality;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelVisibility;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::model_types::ReasoningEffortPreset;
-use codex_protocol::model_types::TruncationPolicyConfig;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::McpInvocation;
-use codex_protocol::protocol::McpStartupFailureReason;
-use codex_protocol::protocol::McpStartupStatus;
-use codex_protocol::protocol::McpToolCallBeginEvent;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::TurnEnvironmentSelection;
-use codex_protocol::protocol::TurnEnvironmentSelections;
-use codex_protocol::protocol::TurnSettingsUpdate;
-use codex_protocol::protocol::TurnSettingsUpdateOutcome;
-use codex_protocol::turn_input::TurnInput;
-use codex_protocol::user_input::UserInput;
-use codex_utils_cargo_bin::cargo_bin;
-use codex_utils_path_uri::PathUri;
+use genex_history::RolloutItem;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::Settings;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::mcp_policy::McpServerIdentity;
+use genex_protocol::mcp_policy::McpServerRequirement;
+use genex_protocol::mcp_policy::PluginMcpRequirements;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::ImageDetail;
+use genex_protocol::models::ImageReference;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfileSnapshot;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::model_types::ConfigShellToolType;
+use genex_protocol::model_types::ConfirmationPolicies;
+use genex_protocol::model_types::InputModality;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::model_types::TruncationPolicyConfig;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::FileSystemSpecialPath;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::McpInvocation;
+use genex_protocol::protocol::McpStartupFailureReason;
+use genex_protocol::protocol::McpStartupStatus;
+use genex_protocol::protocol::McpToolCallBeginEvent;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::protocol::TurnEnvironmentSelections;
+use genex_protocol::protocol::TurnSettingsUpdate;
+use genex_protocol::protocol::TurnSettingsUpdateOutcome;
+use genex_protocol::turn_input::TurnInput;
+use genex_protocol::user_input::UserInput;
+use genex_utils_cargo_bin::cargo_bin;
+use genex_utils_path_uri::PathUri;
 use core_test_support::apps_test_server::AppsTestServer;
 use core_test_support::assert_regex_match;
 use core_test_support::is_remote_test_environment;
@@ -212,7 +212,7 @@ pub(super) fn remote_aware_environment_id() -> String {
     if is_remote_test_environment() {
         REMOTE_MCP_ENVIRONMENT.to_string()
     } else {
-        codex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string()
+        genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string()
     }
 }
 
@@ -317,7 +317,7 @@ struct TestMcpServerOptions {
 impl Default for TestMcpServerOptions {
     fn default() -> Self {
         Self {
-            environment_id: codex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
+            environment_id: genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
             auth: McpServerAuth::default(),
             supports_parallel_tool_calls: false,
             tool_timeout_sec: None,
@@ -1666,7 +1666,7 @@ async fn stdio_mcp_tool_call_includes_sandbox_state_meta(
     let call_id = "sandbox-meta-call";
     let restricted_call_id = "owner-restricted-call";
     let namespace = format!("mcp__{server_name}");
-    let mut models = codex_models_manager::test_support::test_models_response()?;
+    let mut models = genex_models_manager::test_support::test_models_response()?;
     let model = models
         .models
         .iter_mut()
@@ -1827,7 +1827,7 @@ async fn stdio_mcp_tool_call_includes_sandbox_state_meta(
         .get_models_manager()
         .list_models(
             RefreshStrategy::Online,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
     assert_eq!(models_mock.requests().len(), 1);
@@ -2727,7 +2727,7 @@ async fn stdio_image_responses_are_sanitized_for_text_only_model() -> anyhow::Re
                 description: Some("Test model without image input support".to_string()),
                 default_reasoning_level: None,
                 supported_reasoning_levels: vec![ReasoningEffortPreset {
-                    effort: codex_protocol::model_types::ReasoningEffort::Medium,
+                    effort: genex_protocol::model_types::ReasoningEffort::Medium,
                     description: "Medium".to_string(),
                 }],
                 shell_type: ConfigShellToolType::UnifiedExec,
@@ -2826,7 +2826,7 @@ async fn stdio_image_responses_are_sanitized_for_text_only_model() -> anyhow::Re
         .get_models_manager()
         .list_models(
             RefreshStrategy::Online,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
     assert_eq!(models_mock.requests().len(), 1);
@@ -3782,11 +3782,11 @@ async fn streamable_http_with_oauth_round_trip_impl() -> anyhow::Result<()> {
     .context("the newly discovered OAuth server did not recover after its store was unlocked")??;
 
     assert!(
-        codex_rmcp_client::delete_oauth_tokens(
+        genex_rmcp_client::delete_oauth_tokens(
             discovered_credential_name.as_ref(),
             http_server.url(),
             OAuthCredentialsStoreMode::File,
-            codex_config::types::AuthKeyringBackendKind::default(),
+            genex_config::types::AuthKeyringBackendKind::default(),
         )
         .await?
     );
@@ -4290,11 +4290,11 @@ async fn write_fallback_oauth_tokens(
         "expires_at": expires_at,
     }))?;
 
-    codex_rmcp_client::save_oauth_tokens(
+    genex_rmcp_client::save_oauth_tokens(
         server_name,
         &tokens,
         OAuthCredentialsStoreMode::File,
-        codex_config::types::AuthKeyringBackendKind::default(),
+        genex_config::types::AuthKeyringBackendKind::default(),
     )
     .await
 }

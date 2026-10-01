@@ -1,7 +1,7 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-shell-escalation"
+name = "genex-shell-escalation"
 version.workspace = true
 
 [[bin]]
@@ -14,8 +14,8 @@ workspace = true
 [dependencies]
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
-codex-protocol = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
+genex-protocol = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
 libc = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

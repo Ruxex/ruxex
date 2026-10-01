@@ -30,16 +30,16 @@ use crate::launcher::exec_bwrap;
 use crate::launcher::preferred_bwrap_supports_argv0;
 use crate::proxy_routing::activate_proxy_routes_in_netns;
 use crate::proxy_routing::prepare_host_proxy_route_spec;
-use codex_network_proxy::ManagedNetworkSandboxContext;
-use codex_protocol::error::Result as CodexResult;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::FileSystemAccessMode;
-use codex_protocol::protocol::FileSystemPath;
-use codex_protocol::protocol::FileSystemSandboxEntry;
-use codex_protocol::protocol::FileSystemSandboxPolicy;
-use codex_protocol::protocol::FileSystemSpecialPath;
-use codex_protocol::protocol::NetworkSandboxPolicy;
-use codex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
+use genex_network_proxy::ManagedNetworkSandboxContext;
+use genex_protocol::error::Result as CodexResult;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::FileSystemAccessMode;
+use genex_protocol::protocol::FileSystemPath;
+use genex_protocol::protocol::FileSystemSandboxEntry;
+use genex_protocol::protocol::FileSystemSandboxPolicy;
+use genex_protocol::protocol::FileSystemSpecialPath;
+use genex_protocol::protocol::NetworkSandboxPolicy;
+use genex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
 
 static BWRAP_CHILD_PID: AtomicI32 = AtomicI32::new(0);
 static PENDING_FORWARDED_SIGNAL: AtomicI32 = AtomicI32::new(0);
@@ -481,7 +481,7 @@ fn build_bwrap_argv(
     })
 }
 
-fn exit_with_bwrap_build_error(err: codex_protocol::error::CodexErr) -> ! {
+fn exit_with_bwrap_build_error(err: genex_protocol::error::CodexErr) -> ! {
     eprintln!("error building bubblewrap command: {err}");
     std::process::exit(1);
 }

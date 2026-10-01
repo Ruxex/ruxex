@@ -1,14 +1,14 @@
 //! Exercises managed provider routing and conflict diagnostics through real turns.
 
 use anyhow::Result;
-use codex_config::LoaderOverrides;
-use codex_config::config_toml::ConfigToml;
-use codex_config::test_support::CloudConfigBundleFixture;
-use codex_core::config::Config;
-use codex_core::config::ConfigBuilder;
-use codex_core::config::ConfigOverrides;
-use codex_login::CodexAuth;
-use codex_models_manager::test_support::test_models_response;
+use genex_config::LoaderOverrides;
+use genex_config::config_toml::ConfigToml;
+use genex_config::test_support::CloudConfigBundleFixture;
+use genex_core::config::Config;
+use genex_core::config::ConfigBuilder;
+use genex_core::config::ConfigOverrides;
+use genex_login::CodexAuth;
+use genex_models_manager::test_support::test_models_response;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_models_once;

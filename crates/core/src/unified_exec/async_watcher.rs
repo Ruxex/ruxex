@@ -21,15 +21,15 @@ use crate::tools::events::ToolEventCtx;
 use crate::tools::events::ToolEventFailure;
 use crate::tools::events::ToolEventStage;
 use crate::unified_exec::head_tail_buffer::HeadTailBuffer;
-use codex_core_plugins::PluginCommandAttribution;
-use codex_protocol::exec_output::ExecToolCallOutput;
-use codex_protocol::exec_output::StreamOutput;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecCommandOutputDeltaEvent;
-use codex_protocol::protocol::ExecCommandSource;
-use codex_protocol::protocol::ExecOutputStream;
-use codex_utils_path_uri::PathUri;
+use genex_core_plugins::PluginCommandAttribution;
+use genex_protocol::exec_output::ExecToolCallOutput;
+use genex_protocol::exec_output::StreamOutput;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecCommandOutputDeltaEvent;
+use genex_protocol::protocol::ExecCommandSource;
+use genex_protocol::protocol::ExecOutputStream;
+use genex_utils_path_uri::PathUri;
 
 pub(crate) const TRAILING_OUTPUT_GRACE: Duration = Duration::from_millis(100);
 

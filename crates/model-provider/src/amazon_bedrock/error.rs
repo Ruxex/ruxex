@@ -1,7 +1,7 @@
-use codex_api::ApiError;
-use codex_api::TransportError;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::CodexErrorDetails;
+use genex_api::ApiError;
+use genex_api::TransportError;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::CodexErrorDetails;
 use http::StatusCode;
 
 pub(super) const CREDENTIAL_EXPORT_CONFIG_ERROR_PREFIX: &str =
@@ -19,7 +19,7 @@ pub(super) fn map_api_error(error: ApiError) -> CodexErr {
     {
         return CodexErr::InvalidRequest(message.clone());
     }
-    let error = codex_api::map_api_error(error);
+    let error = genex_api::map_api_error(error);
     if let CodexErrorDetails::UnexpectedStatus(response) = error.details()
         && response.status == StatusCode::UNAUTHORIZED
         && response.body.contains("Signature expired:")

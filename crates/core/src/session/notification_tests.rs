@@ -44,7 +44,7 @@ async fn task_finish_preserves_notification_budget_and_queued_user_input() {
     ));
     let mut current = turn.initial_settings.as_ref().clone();
     Arc::make_mut(&mut current.model_info).truncation_policy =
-        codex_protocol::model_types::TruncationPolicyConfig::tokens(/*limit*/ 400);
+        genex_protocol::model_types::TruncationPolicyConfig::tokens(/*limit*/ 400);
     turn.current_settings.store(Arc::new(current));
 
     session
@@ -52,9 +52,9 @@ async fn task_finish_preserves_notification_budget_and_queued_user_input() {
         .await;
 
     let expected = vec![
-        notification(codex_utils_output_truncation::truncate_text(
+        notification(genex_utils_output_truncation::truncate_text(
             &text,
-            codex_utils_output_truncation::TruncationPolicy::Tokens(120),
+            genex_utils_output_truncation::TruncationPolicy::Tokens(120),
         )),
         session.response_item_from_user_input(user_input),
     ];

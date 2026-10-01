@@ -2,7 +2,7 @@
 
 ## エントリ
 
-`codex login` と `codex logout` は [`LoginCommand` と `LogoutCommand`](../../../../crates/cli/src/main.rs#L452) で解析されます。`login status` と logout は [main.rs#L1392](../../../../crates/cli/src/main.rs#L1392) で `codex-login` のヘルパーにディスパッチされます。
+`codex login` と `codex logout` は [`LoginCommand` と `LogoutCommand`](../../../../crates/cli/src/main.rs#L452) で解析されます。`login status` と logout は [main.rs#L1392](../../../../crates/cli/src/main.rs#L1392) で `genex-login` のヘルパーにディスパッチされます。
 
 ## 動作
 

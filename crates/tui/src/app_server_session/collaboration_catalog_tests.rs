@@ -2,10 +2,10 @@
 
 use super::*;
 use crate::legacy_core::config::ConfigBuilder;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::model_types::ReasoningEffort;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_protocol::config_types::CollaborationModeMask;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::model_types::ReasoningEffort;
 use futures::SinkExt;
 use futures::StreamExt;
 use pretty_assertions::assert_eq;

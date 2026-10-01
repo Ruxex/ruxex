@@ -28,41 +28,41 @@ use std::time::Instant;
 
 use anyhow::Context;
 use clap::Parser;
-use codex_api::ApiError;
-use codex_api::ResponsesWebsocketClient;
-use codex_api::is_azure_responses_provider;
-use codex_arg0::Arg0DispatchPaths;
-use codex_config::types::McpServerConfig;
-use codex_config::types::McpServerTransportConfig;
-use codex_core::config::Config;
-use codex_core::config::ConfigOverrides;
-use codex_core::config::LoaderOverrides;
-use codex_core::config::find_codex_home;
-use codex_features::FEATURES;
-use codex_http_client::ClientRouteClass;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyPolicy;
-use codex_http_client::RouteAwareClientPool;
-use codex_install_context::CodexPackageLayout;
-use codex_install_context::InstallContext;
-use codex_install_context::InstallMethod;
-use codex_install_context::StandalonePlatform;
-use codex_login::AuthDotJson;
-use codex_login::AuthManager;
-use codex_login::CODEX_API_KEY_ENV_VAR;
-use codex_login::CodexAuth;
-use codex_login::default_client::create_client_without_request_logging;
-use codex_login::default_client::default_headers;
-use codex_login::load_auth_dot_json;
-use codex_model_provider::create_model_provider;
-use codex_protocol::auth::AuthMode;
-use codex_protocol::protocol::AskForApproval;
-use codex_terminal_detection::Multiplexer;
-use codex_terminal_detection::TerminalInfo;
-use codex_terminal_detection::TerminalName;
-use codex_terminal_detection::terminal_info;
-use codex_tui::Cli as TuiCli;
-use codex_utils_cli::CliConfigOverrides;
+use genex_api::ApiError;
+use genex_api::ResponsesWebsocketClient;
+use genex_api::is_azure_responses_provider;
+use genex_arg0::Arg0DispatchPaths;
+use genex_config::types::McpServerConfig;
+use genex_config::types::McpServerTransportConfig;
+use genex_core::config::Config;
+use genex_core::config::ConfigOverrides;
+use genex_core::config::LoaderOverrides;
+use genex_core::config::find_codex_home;
+use genex_features::FEATURES;
+use genex_http_client::ClientRouteClass;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyPolicy;
+use genex_http_client::RouteAwareClientPool;
+use genex_install_context::CodexPackageLayout;
+use genex_install_context::InstallContext;
+use genex_install_context::InstallMethod;
+use genex_install_context::StandalonePlatform;
+use genex_login::AuthDotJson;
+use genex_login::AuthManager;
+use genex_login::CODEX_API_KEY_ENV_VAR;
+use genex_login::CodexAuth;
+use genex_login::default_client::create_client_without_request_logging;
+use genex_login::default_client::default_headers;
+use genex_login::load_auth_dot_json;
+use genex_model_provider::create_model_provider;
+use genex_protocol::auth::AuthMode;
+use genex_protocol::protocol::AskForApproval;
+use genex_terminal_detection::Multiplexer;
+use genex_terminal_detection::TerminalInfo;
+use genex_terminal_detection::TerminalName;
+use genex_terminal_detection::terminal_info;
+use genex_tui::Cli as TuiCli;
+use genex_utils_cli::CliConfigOverrides;
 use http::Method;
 use serde::Serialize;
 use supports_color::Stream;
@@ -597,7 +597,7 @@ fn config_overrides_from_interactive(
         interactive.approval_policy.map(Into::into)
     };
     let sandbox_mode = if interactive.dangerously_bypass_approvals_and_sandbox {
-        Some(codex_protocol::config_types::SandboxMode::DangerFullAccess)
+        Some(genex_protocol::config_types::SandboxMode::DangerFullAccess)
     } else {
         interactive.sandbox_mode.map(Into::into)
     };
@@ -1131,7 +1131,7 @@ fn feature_flag_details(config: &Config, details: &mut Vec<String>) {
 }
 
 fn config_toml_details(config: &Config, details: &mut Vec<String>) {
-    let config_path = config.codex_home.join(codex_config::CONFIG_TOML_FILE);
+    let config_path = config.codex_home.join(genex_config::CONFIG_TOML_FILE);
     details.push(format!("config.toml: {}", config_path.display()));
     match std::fs::read_to_string(&config_path) {
         Ok(contents) => match toml::from_str::<toml::Value>(&contents) {
@@ -1299,7 +1299,7 @@ fn provider_specific_auth_check(
     }
 }
 
-fn stored_auth_mode(auth: &codex_login::AuthDotJson) -> &'static str {
+fn stored_auth_mode(auth: &genex_login::AuthDotJson) -> &'static str {
     match stored_auth_mode_value(auth) {
         AuthMode::ApiKey => "api_key",
         AuthMode::Headers => "headers",
@@ -2012,7 +2012,7 @@ async fn state_check(config: &Config) -> DoctorCheck {
 }
 
 async fn sqlite_integrity_detail(
-    sqlite: &codex_state::SqliteConfig,
+    sqlite: &genex_state::SqliteConfig,
     details: &mut Vec<String>,
     label: &str,
     path: &Path,
@@ -2023,10 +2023,10 @@ async fn sqlite_integrity_detail(
         return CheckStatus::Ok;
     }
 
-    let (rows, timed_out) = match codex_state::sqlite_integrity_check(sqlite, path, deadline).await
+    let (rows, timed_out) = match genex_state::sqlite_integrity_check(sqlite, path, deadline).await
     {
-        Ok(codex_state::SqliteIntegrityCheck::Complete(rows)) => (rows, false),
-        Ok(codex_state::SqliteIntegrityCheck::TimedOut(rows)) => (rows, true),
+        Ok(genex_state::SqliteIntegrityCheck::Complete(rows)) => (rows, false),
+        Ok(genex_state::SqliteIntegrityCheck::TimedOut(rows)) => (rows, true),
         Err(err) => {
             details.push(format!("{label} integrity: {err}"));
             return CheckStatus::Fail;

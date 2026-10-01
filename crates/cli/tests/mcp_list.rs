@@ -7,10 +7,10 @@ use std::time::Duration;
 use std::time::Instant;
 
 use anyhow::Result;
-use codex_config::types::McpServerTransportConfig;
-use codex_core::config::edit::ConfigEditsBuilder;
-use codex_core::config::load_global_mcp_servers;
-use codex_login::CODEX_API_KEY_ENV_VAR;
+use genex_config::types::McpServerTransportConfig;
+use genex_core::config::edit::ConfigEditsBuilder;
+use genex_core::config::load_global_mcp_servers;
+use genex_login::CODEX_API_KEY_ENV_VAR;
 use predicates::prelude::PredicateBooleanExt;
 use predicates::str::contains;
 use pretty_assertions::assert_eq;
@@ -29,7 +29,7 @@ use wiremock::matchers::method;
 use wiremock::matchers::path;
 
 fn codex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
-    let mut cmd = assert_cmd::Command::new(codex_utils_cargo_bin::cargo_bin("codex")?);
+    let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("codex")?);
     cmd.env("CODEX_HOME", codex_home);
     Ok(cmd)
 }

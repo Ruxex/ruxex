@@ -2,12 +2,12 @@ use std::io::Write;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use codex_exec_server::HttpClient;
-use codex_exec_server::HttpRedirectPolicy;
-use codex_exec_server::HttpRequestParams;
-use codex_exec_server::RouteAwareHttpClient;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyPolicy;
+use genex_exec_server::HttpClient;
+use genex_exec_server::HttpRedirectPolicy;
+use genex_exec_server::HttpRequestParams;
+use genex_exec_server::RouteAwareHttpClient;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyPolicy;
 use pretty_assertions::assert_eq;
 use tokio::io::AsyncBufReadExt;
 use tokio::io::AsyncWriteExt;

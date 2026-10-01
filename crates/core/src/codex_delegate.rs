@@ -2,16 +2,16 @@ use std::sync::Arc;
 
 use async_channel::Receiver;
 use async_channel::Sender;
-use codex_async_utils::OrCancelExt;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::Submission;
-use codex_protocol::protocol::ThreadSource;
-use codex_protocol::user_input::UserInput;
+use genex_async_utils::OrCancelExt;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::Event;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::Submission;
+use genex_protocol::protocol::ThreadSource;
+use genex_protocol::user_input::UserInput;
 use serde_json::Value;
 use std::time::Duration;
 use tokio::time::timeout;
@@ -27,15 +27,15 @@ use crate::session::SessionIo;
 use crate::session::SessionSpawnArgs;
 use crate::session::session::Session;
 use crate::session::turn_context::TurnContext;
-use codex_history::InitialHistory;
-use codex_login::AuthManager;
-use codex_models_manager::manager::SharedModelsManager;
-use codex_protocol::error::CodexErr;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::turn_input::TurnInputMode;
-use codex_protocol::turn_input::TurnInputRequest;
-use codex_protocol::turn_input::TurnInputSubmission;
-use codex_protocol::turn_input::TurnStartOptions;
+use genex_history::InitialHistory;
+use genex_login::AuthManager;
+use genex_models_manager::manager::SharedModelsManager;
+use genex_protocol::error::CodexErr;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::turn_input::TurnInputMode;
+use genex_protocol::turn_input::TurnInputRequest;
+use genex_protocol::turn_input::TurnInputSubmission;
+use genex_protocol::turn_input::TurnStartOptions;
 
 #[cfg(test)]
 use crate::session::completed_session_loop_termination;
@@ -54,10 +54,10 @@ pub(crate) async fn run_codex_thread_interactive(
     parent_environments: TurnEnvironmentSnapshot,
     cancel_token: CancellationToken,
     subagent_source: SubAgentSource,
-    isolation: codex_extension_api::SessionIsolation,
+    isolation: genex_extension_api::SessionIsolation,
     initial_history: Option<InitialHistory>,
     git_enrichment_policy: GitEnrichmentPolicy,
-    windows_sandbox_proxy_settings_mode: codex_sandboxing::WindowsSandboxProxySettingsMode,
+    windows_sandbox_proxy_settings_mode: genex_sandboxing::WindowsSandboxProxySettingsMode,
 ) -> Result<(Arc<Session>, SessionIo), CodexErr> {
     if config.permissions.approval_policy.value() != AskForApproval::Never {
         return Err(CodexErr::InvalidRequest(
@@ -74,12 +74,12 @@ pub(crate) async fn run_codex_thread_interactive(
     let forked_from_thread_id = conversation_history.forked_from_id();
     let instructions = parent_session.inherited_instructions().await;
     let session_source = SessionSource::SubAgent(subagent_source.clone());
-    let extensions = if isolation == codex_extension_api::SessionIsolation::Isolated {
-        codex_extension_api::empty_extension_registry()
+    let extensions = if isolation == genex_extension_api::SessionIsolation::Isolated {
+        genex_extension_api::empty_extension_registry()
     } else {
         Arc::clone(&parent_session.services.extensions)
     };
-    let mut thread_extension_init = codex_extension_api::ExtensionDataInit::default();
+    let mut thread_extension_init = genex_extension_api::ExtensionDataInit::default();
     thread_extension_init.insert(isolation);
     let (session, io) = Session::spawn(SessionSpawnArgs {
         startup: None,
@@ -114,7 +114,7 @@ pub(crate) async fn run_codex_thread_interactive(
         user_shell_override: None,
         inherited_environments: Some(parent_environments.clone()),
         inherited_exec_policy: Some(Arc::clone(&parent_session.services.exec_policy)),
-        parent_rollout_thread_trace: codex_rollout_trace::ThreadTraceContext::disabled(),
+        parent_rollout_thread_trace: genex_rollout_trace::ThreadTraceContext::disabled(),
         parent_trace: None,
         environment_selections: parent_environments.to_selections(),
         thread_extension_init,
@@ -192,10 +192,10 @@ pub(crate) async fn run_codex_thread_one_shot(
         parent_environments,
         child_cancel.clone(),
         subagent_source,
-        codex_extension_api::SessionIsolation::Inherit,
+        genex_extension_api::SessionIsolation::Inherit,
         initial_history,
         GitEnrichmentPolicy::Fresh,
-        codex_sandboxing::WindowsSandboxProxySettingsMode::Reconcile,
+        genex_sandboxing::WindowsSandboxProxySettingsMode::Reconcile,
     ))
     .await?;
 

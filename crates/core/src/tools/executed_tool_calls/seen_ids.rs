@@ -5,10 +5,10 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::Hash;
 use std::hash::Hasher;
 
-use codex_code_mode::CellId;
-use codex_history::InitialHistory;
-use codex_history::RolloutItem;
-use codex_protocol::models::ResponseItem;
+use genex_code_mode::CellId;
+use genex_history::InitialHistory;
+use genex_history::RolloutItem;
+use genex_protocol::models::ResponseItem;
 
 const ID_FILTER_WORDS: usize = 8 * 1024;
 const MAX_HISTORY_ENTRIES: usize = 100_000;

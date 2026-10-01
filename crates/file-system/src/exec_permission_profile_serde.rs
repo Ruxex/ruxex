@@ -1,7 +1,7 @@
 //! Uses executor file URIs for sandbox permissions instead of the profile's legacy native paths.
 
 use crate::ExecPermissionProfile;
-use codex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfile;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;

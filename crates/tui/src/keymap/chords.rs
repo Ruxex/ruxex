@@ -16,8 +16,8 @@ use super::parse_keybinding;
 use super::runtime_action_bindings;
 use crate::key_hint::KeyBinding;
 use crate::key_hint::ctrl;
-use codex_config::types::KeybindingsSpec;
-use codex_config::types::TuiKeymap;
+use genex_config::types::KeybindingsSpec;
+use genex_config::types::TuiKeymap;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
@@ -25,7 +25,7 @@ use crossterm::event::KeyModifiers;
 use std::time::Duration;
 use tokio::time::Instant;
 
-const FIRST_DISPATCH_FUNCTION_KEY: u8 = codex_config::types::MAX_FUNCTION_KEY + 1;
+const FIRST_DISPATCH_FUNCTION_KEY: u8 = genex_config::types::MAX_FUNCTION_KEY + 1;
 const LAST_DISPATCH_FUNCTION_KEY: u8 = u8::MAX;
 const LIST_RESERVED_BINDINGS: &[(&str, KeyBinding)] = &[
     ("cancel", ctrl(KeyCode::Char('c'))),

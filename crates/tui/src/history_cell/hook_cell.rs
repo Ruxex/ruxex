@@ -12,10 +12,10 @@
 //! 4. Completed runs only persist when they have user-facing output or a non-success status.
 use super::HistoryCell;
 use super::plain_lines;
-use codex_app_server_protocol::HookOutputEntry;
-use codex_app_server_protocol::HookOutputEntryKind;
-use codex_app_server_protocol::HookRunStatus;
-use codex_app_server_protocol::HookRunSummary;
+use genex_app_server_protocol::HookOutputEntry;
+use genex_app_server_protocol::HookOutputEntryKind;
+use genex_app_server_protocol::HookRunStatus;
+use genex_app_server_protocol::HookRunSummary;
 use ratatui::prelude::*;
 use ratatui::style::Stylize;
 use std::time::Duration;

@@ -5,14 +5,14 @@ use crate::collaboration_mode_presets::builtin_collaboration_mode_presets;
 use crate::config::ModelsManagerConfig;
 use crate::model_info;
 use chrono::Utc;
-use codex_http_client::HttpClientFactory;
-use codex_login::AuthManager;
-use codex_protocol::auth::AuthMode;
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::error::Result as CoreResult;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelPreset;
-use codex_protocol::model_types::ModelsResponse;
+use genex_http_client::HttpClientFactory;
+use genex_login::AuthManager;
+use genex_protocol::auth::AuthMode;
+use genex_protocol::config_types::CollaborationModeMask;
+use genex_protocol::error::Result as CoreResult;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelPreset;
+use genex_protocol::model_types::ModelsResponse;
 use std::fmt;
 use std::future::Future;
 use std::path::PathBuf;
@@ -528,7 +528,7 @@ impl RemoteModelsManager {
             return false;
         };
         let _timer =
-            codex_otel::start_global_timer("codex.remote_models.load_cache.duration_ms", &[]);
+            genex_otel::start_global_timer("codex.remote_models.load_cache.duration_ms", &[]);
         let client_version = crate::client_version_to_whole();
         info!(client_version, "models cache: evaluating cache eligibility");
         let Some(identity) = self.endpoint_client.identity() else {

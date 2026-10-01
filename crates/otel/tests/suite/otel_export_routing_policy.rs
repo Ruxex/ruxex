@@ -1,7 +1,7 @@
-use codex_otel::AuthEnvTelemetryMetadata;
-use codex_otel::OtelProvider;
-use codex_otel::SessionTelemetry;
-use codex_otel::TelemetryAuthMode;
+use genex_otel::AuthEnvTelemetryMetadata;
+use genex_otel::OtelProvider;
+use genex_otel::SessionTelemetry;
+use genex_otel::TelemetryAuthMode;
 use opentelemetry::KeyValue;
 use opentelemetry::logs::AnyValue;
 use opentelemetry::trace::TracerProvider as _;
@@ -18,17 +18,17 @@ use tracing_subscriber::Layer;
 use tracing_subscriber::filter::filter_fn;
 use tracing_subscriber::layer::SubscriberExt;
 
-use codex_protocol::AgentPath;
-use codex_protocol::ThreadId;
-use codex_protocol::ToolName;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::ToolResultLogConfig;
-use codex_protocol::models::ImageReference;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::user_input::UserInput;
+use genex_protocol::AgentPath;
+use genex_protocol::ThreadId;
+use genex_protocol::ToolName;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::ToolResultLogConfig;
+use genex_protocol::models::ImageReference;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::SandboxPolicy;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::user_input::UserInput;
 
 fn log_attributes(record: &SdkLogRecord) -> BTreeMap<String, String> {
     record

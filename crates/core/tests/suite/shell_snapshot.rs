@@ -1,41 +1,41 @@
 use anyhow::Result;
-use codex_core::TurnInputRequest;
+use genex_core::TurnInputRequest;
 #[cfg(unix)]
-use codex_core::config::Constrained;
+use genex_core::config::Constrained;
 #[cfg(unix)]
-use codex_core::config::NetworkProxySpec;
+use genex_core::config::NetworkProxySpec;
 #[cfg(unix)]
-use codex_core::shell::get_shell_by_model_provided_path;
+use genex_core::shell::get_shell_by_model_provided_path;
 #[cfg(unix)]
-use codex_core::windows_sandbox::WindowsSandboxLevelExt;
-use codex_features::Feature;
+use genex_core::windows_sandbox::WindowsSandboxLevelExt;
+use genex_features::Feature;
 #[cfg(unix)]
-use codex_network_proxy::NetworkProxyConfig;
+use genex_network_proxy::NetworkProxyConfig;
 #[cfg(unix)]
-use codex_protocol::config_types::ApprovalsReviewer;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
+use genex_protocol::config_types::ApprovalsReviewer;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
 #[cfg(unix)]
-use codex_protocol::config_types::TrustLevel;
+use genex_protocol::config_types::TrustLevel;
 #[cfg(unix)]
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::PermissionProfile;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::PermissionProfile;
 #[cfg(unix)]
-use codex_protocol::models::PermissionProfileSnapshot;
+use genex_protocol::models::PermissionProfileSnapshot;
 #[cfg(unix)]
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::AskForApproval;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
 #[cfg(unix)]
-use codex_protocol::protocol::EnvironmentConfig;
+use genex_protocol::protocol::EnvironmentConfig;
 #[cfg(unix)]
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecCommandBeginEvent;
-use codex_protocol::protocol::ExecCommandEndEvent;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecCommandBeginEvent;
+use genex_protocol::protocol::ExecCommandEndEvent;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 #[cfg(unix)]
 use core_test_support::hooks::trust_discovered_hooks;
 use core_test_support::responses::ev_assistant_message;
@@ -581,7 +581,7 @@ async fn shell_snapshot_v2_prewarm_stops_on_shutdown() -> Result<()> {
 }; "managed network")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn shell_snapshot_v2_prewarm_skips_ineligible_sessions(
-    configure: fn(&mut codex_core::config::Config),
+    configure: fn(&mut genex_core::config::Config),
 ) -> Result<()> {
     skip_if_remote!(Ok(()), "profile fixture uses a host-local HOME directory");
     let profile_home = tempfile::tempdir()?;
@@ -1079,13 +1079,13 @@ async fn macos_unified_exec_resolves_command_from_tied_path_snapshot(
                 .enable(Feature::ShellSnapshot)
                 .expect("test config should allow feature update");
             if disabled_proxy {
-                let mut network = codex_network_proxy::NetworkProxyConfig {
+                let mut network = genex_network_proxy::NetworkProxyConfig {
                     enabled: false,
                     ..Default::default()
                 };
                 network.set_credential_broker_enabled(/*enabled*/ true);
                 config.permissions.network = Some(
-                    codex_core::config::NetworkProxySpec::from_config_and_constraints(
+                    genex_core::config::NetworkProxySpec::from_config_and_constraints(
                         network,
                         Some(Default::default()),
                         config.permissions.permission_profile(),

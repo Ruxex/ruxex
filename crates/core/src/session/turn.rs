@@ -58,52 +58,52 @@ use crate::tools::spec_plan::tool_suggest_enabled;
 use crate::turn_diff_tracker::TurnDiffTracker;
 use crate::turn_timing::record_turn_ttft_metric;
 use crate::util::error_or_panic;
-use codex_async_utils::OrCancelExt;
-use codex_extension_api::ExtensionData;
-use codex_extension_api::TurnInputContext;
-use codex_extension_api::TurnInputEnvironment;
-use codex_features::Feature;
-use codex_file_system::FindUpErrorPolicy;
-use codex_file_system::find_nearest_ancestor_with_markers;
-use codex_login::CodexAuth;
-use codex_model_provider::RemoteCompactionSupport;
-use codex_protocol::ResponseItemId;
-use codex_protocol::config_types::AutoCompactTokenLimitScope;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::CodexErrorDetails;
-use codex_protocol::error::Result as CodexResult;
-use codex_protocol::items::PlanItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::items::build_hook_prompt_message;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::models::BaseInstructions;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::MessagePhase;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::AgentMessageContentDeltaEvent;
-use codex_protocol::protocol::AgentReasoningSectionBreakEvent;
-use codex_protocol::protocol::CodexErrorInfo;
-use codex_protocol::protocol::ErrorEvent;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::PlanDeltaEvent;
-use codex_protocol::protocol::ReasoningContentDeltaEvent;
-use codex_protocol::protocol::ReasoningRawContentDeltaEvent;
-use codex_protocol::protocol::SafetyBufferingEvent;
-use codex_protocol::protocol::TurnDiffEvent;
-use codex_protocol::protocol::WarningEvent;
-use codex_protocol::user_input::UserInput;
-use codex_skills::collect_explicit_skill_mentions;
-use codex_skills_extension::HostSkillPrompts;
-use codex_skills_extension::InjectedHostSkillPrompts;
-use codex_thread_store::PersistContext;
-use codex_tools::ToolName;
-use codex_utils_path_uri::PathUri;
-use codex_utils_stream_parser::AssistantTextChunk;
-use codex_utils_stream_parser::AssistantTextStreamParser;
-use codex_utils_stream_parser::ProposedPlanSegment;
-use codex_utils_stream_parser::extract_proposed_plan_text;
-use codex_utils_stream_parser::strip_citations;
+use genex_async_utils::OrCancelExt;
+use genex_extension_api::ExtensionData;
+use genex_extension_api::TurnInputContext;
+use genex_extension_api::TurnInputEnvironment;
+use genex_features::Feature;
+use genex_file_system::FindUpErrorPolicy;
+use genex_file_system::find_nearest_ancestor_with_markers;
+use genex_login::CodexAuth;
+use genex_model_provider::RemoteCompactionSupport;
+use genex_protocol::ResponseItemId;
+use genex_protocol::config_types::AutoCompactTokenLimitScope;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::Result as CodexResult;
+use genex_protocol::items::PlanItem;
+use genex_protocol::items::TurnItem;
+use genex_protocol::items::build_hook_prompt_message;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::models::BaseInstructions;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::MessagePhase;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::AgentMessageContentDeltaEvent;
+use genex_protocol::protocol::AgentReasoningSectionBreakEvent;
+use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::ErrorEvent;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::PlanDeltaEvent;
+use genex_protocol::protocol::ReasoningContentDeltaEvent;
+use genex_protocol::protocol::ReasoningRawContentDeltaEvent;
+use genex_protocol::protocol::SafetyBufferingEvent;
+use genex_protocol::protocol::TurnDiffEvent;
+use genex_protocol::protocol::WarningEvent;
+use genex_protocol::user_input::UserInput;
+use genex_skills::collect_explicit_skill_mentions;
+use genex_skills_extension::HostSkillPrompts;
+use genex_skills_extension::InjectedHostSkillPrompts;
+use genex_thread_store::PersistContext;
+use genex_tools::ToolName;
+use genex_utils_path_uri::PathUri;
+use genex_utils_stream_parser::AssistantTextChunk;
+use genex_utils_stream_parser::AssistantTextStreamParser;
+use genex_utils_stream_parser::ProposedPlanSegment;
+use genex_utils_stream_parser::extract_proposed_plan_text;
+use genex_utils_stream_parser::strip_citations;
 use futures::prelude::*;
 use futures::stream::FuturesOrdered;
 use tokio_util::sync::CancellationToken;
@@ -116,7 +116,7 @@ use tracing::trace;
 use tracing::trace_span;
 use tracing::warn;
 
-const POST_SAMPLING_TOKEN_ESTIMATE_TARGET: &str = "codex_core::post_sampling_token_estimate";
+const POST_SAMPLING_TOKEN_ESTIMATE_TARGET: &str = "genex_core::post_sampling_token_estimate";
 
 /// Explicit MCP startup requirements retained across restarts within one user turn.
 #[derive(Default)]
@@ -982,7 +982,7 @@ async fn capture_current_model_fallback_step_context(
     let uses_managed_auth = turn_context
         .auth_manager
         .as_deref()
-        .is_some_and(codex_login::AuthManager::current_auth_uses_managed_auth);
+        .is_some_and(genex_login::AuthManager::current_auth_uses_managed_auth);
     if !uses_managed_auth
         || !turn_context.provider.info().is_responses_provider()
         || previous_model == turn_context.model_info().slug
@@ -1186,7 +1186,7 @@ pub(crate) fn build_prompt(
 async fn run_sampling_request(
     sess: Arc<Session>,
     step_context: Arc<StepContext>,
-    turn_store: Arc<codex_extension_api::ExtensionData>,
+    turn_store: Arc<genex_extension_api::ExtensionData>,
     turn_diff_tracker: SharedTurnDiffTracker,
     client_session: &mut ModelClientSession,
     responses_metadata: &CodexResponsesMetadata,
@@ -1305,9 +1305,9 @@ pub(crate) async fn prepare_tool_recommendations(
 pub(crate) async fn built_tools(
     sess: &Session,
     turn_context: &TurnContext,
-    model_info: &codex_protocol::model_types::ModelInfo,
+    model_info: &genex_protocol::model_types::ModelInfo,
     environments: &TurnEnvironmentSnapshot,
-    mcp: &Arc<codex_mcp::McpBinding>,
+    mcp: &Arc<genex_mcp::McpBinding>,
     step_store: &ExtensionData,
     prepared_recommendations: PreparedToolRecommendations,
 ) -> CodexResult<Arc<ToolRouter>> {
@@ -1513,11 +1513,11 @@ async fn maybe_emit_pending_agent_message_start(
 }
 
 /// Agent messages are text-only today; concatenate all text entries.
-pub(super) fn agent_message_text(item: &codex_protocol::items::AgentMessageItem) -> String {
+pub(super) fn agent_message_text(item: &genex_protocol::items::AgentMessageItem) -> String {
     item.content
         .iter()
         .map(|entry| match entry {
-            codex_protocol::items::AgentMessageContent::Text { text } => text.as_str(),
+            genex_protocol::items::AgentMessageContent::Text { text } => text.as_str(),
         })
         .collect()
 }
@@ -1686,7 +1686,7 @@ async fn maybe_complete_plan_item_from_message(
 async fn emit_agent_message_in_plan_mode(
     sess: &Session,
     turn_context: &TurnContext,
-    agent_message: codex_protocol::items::AgentMessageItem,
+    agent_message: genex_protocol::items::AgentMessageItem,
     state: &mut PlanModeStreamState,
 ) {
     let agent_message_id = agent_message.id.clone();
@@ -1707,7 +1707,7 @@ async fn emit_agent_message_in_plan_mode(
             .pending_agent_message_items
             .remove(&agent_message_id)
             .unwrap_or_else(|| {
-                TurnItem::AgentMessage(codex_protocol::items::AgentMessageItem {
+                TurnItem::AgentMessage(genex_protocol::items::AgentMessageItem {
                     id: agent_message_id.clone(),
                     content: Vec::new(),
                     phase: None,
@@ -1751,7 +1751,7 @@ async fn emit_turn_item_in_plan_mode(
 async fn handle_assistant_item_done_in_plan_mode(
     sess: &Session,
     step_context: &StepContext,
-    turn_store: &codex_extension_api::ExtensionData,
+    turn_store: &genex_extension_api::ExtensionData,
     item: &ResponseItem,
     state: &mut PlanModeStreamState,
     previously_active_item: Option<&TurnItem>,
@@ -1853,7 +1853,7 @@ async fn try_run_sampling_request(
     tool_runtime: ToolCallRuntime,
     sess: Arc<Session>,
     step_context: Arc<StepContext>,
-    turn_store: Arc<codex_extension_api::ExtensionData>,
+    turn_store: Arc<genex_extension_api::ExtensionData>,
     client_session: &mut ModelClientSession,
     responses_metadata: &CodexResponsesMetadata,
     turn_diff_tracker: SharedTurnDiffTracker,
@@ -1939,7 +1939,7 @@ async fn try_run_sampling_request(
             .await
         {
             Ok(event) => event,
-            Err(codex_async_utils::CancelErr::Cancelled) => {
+            Err(genex_async_utils::CancelErr::Cancelled) => {
                 break Err(CodexErr::TurnAborted);
             }
         };
@@ -1964,7 +1964,7 @@ async fn try_run_sampling_request(
                 if let Some(response_id) = response_id {
                     turn_context
                         .extension_data
-                        .insert(codex_api::ResponseId(response_id));
+                        .insert(genex_api::ResponseId(response_id));
                 }
             }
             ResponseEvent::OutputItemDone(mut item) => {
@@ -2100,7 +2100,7 @@ async fn try_run_sampling_request(
                             assistant_message_stream_parsers.seed_item_text(&item_id, &raw_text);
                         if let TurnItem::AgentMessage(agent_message) = &mut turn_item {
                             agent_message.content =
-                                vec![codex_protocol::items::AgentMessageContent::Text {
+                                vec![genex_protocol::items::AgentMessageContent::Text {
                                     text: if plan_mode {
                                         String::new()
                                     } else {

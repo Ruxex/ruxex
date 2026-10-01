@@ -3,7 +3,7 @@
 use super::NETWORK_TIMEOUT_MS;
 use super::codex_linux_sandbox_exe;
 use super::should_skip_bwrap_tests;
-use codex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfile;
 use pretty_assertions::assert_eq;
 use std::os::unix::fs::MetadataExt as _;
 use std::time::Duration;

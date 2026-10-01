@@ -7,11 +7,11 @@ pub(super) async fn fork_source(
     args: &mut crate::cli::ForkArgs,
     config: &Config,
     arg0_paths: &Arg0DispatchPaths,
-    cli_overrides: &[(String, codex_config::TomlValue)],
+    cli_overrides: &[(String, genex_config::TomlValue)],
     loader_overrides: &LoaderOverrides,
     strict_config: bool,
 ) -> anyhow::Result<std::path::PathBuf> {
-    let state_db = codex_core::init_state_db(config).await;
+    let state_db = genex_core::init_state_db(config).await;
     let environment_manager = EnvironmentManager::from_codex_home(
         config.codex_home.clone(),
         Some(ExecServerRuntimePaths::from_optional_paths(

@@ -1,7 +1,7 @@
 #![cfg(not(target_os = "windows"))]
 
 use anyhow::Result;
-use codex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfile;
 use core_test_support::assert_regex_match;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_target_windows;

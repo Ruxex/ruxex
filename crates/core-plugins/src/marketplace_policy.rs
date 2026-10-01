@@ -6,17 +6,17 @@ use crate::installed_marketplaces::resolve_configured_marketplace_root;
 use crate::marketplace::marketplace_root_dir;
 use crate::marketplace_add::MarketplaceSource;
 use crate::marketplace_add::parse_marketplace_source;
-use codex_config::ConfigLayerStack;
-use codex_config::ConfigRequirements;
-use codex_config::MarketplaceAllowedSourceKind;
-use codex_config::MarketplaceAllowedSourceToml;
-use codex_config::RequirementSource;
-use codex_config::types::MarketplaceConfig;
-use codex_config::types::MarketplaceSourceType;
-use codex_config::types::PluginConfig;
-use codex_plugin::PluginId;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path::paths_match_after_normalization;
+use genex_config::ConfigLayerStack;
+use genex_config::ConfigRequirements;
+use genex_config::MarketplaceAllowedSourceKind;
+use genex_config::MarketplaceAllowedSourceToml;
+use genex_config::RequirementSource;
+use genex_config::types::MarketplaceConfig;
+use genex_config::types::MarketplaceSourceType;
+use genex_config::types::PluginConfig;
+use genex_plugin::PluginId;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path::paths_match_after_normalization;
 use regex::Regex;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -496,9 +496,9 @@ fn is_expected_managed_path(path: &Path, expected: &Path) -> bool {
     {
         let path = path.to_string_lossy();
         let expected = expected.to_string_lossy();
-        let path = codex_utils_absolute_path::normalize_windows_device_path(&path)
+        let path = genex_utils_absolute_path::normalize_windows_device_path(&path)
             .unwrap_or_else(|| path.into_owned());
-        let expected = codex_utils_absolute_path::normalize_windows_device_path(&expected)
+        let expected = genex_utils_absolute_path::normalize_windows_device_path(&expected)
             .unwrap_or_else(|| expected.into_owned());
         path.replace('/', "\\")
             .eq_ignore_ascii_case(&expected.replace('/', "\\"))

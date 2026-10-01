@@ -3,8 +3,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Result;
-use codex_exec_server::HttpClient;
-use codex_protocol::protocol::McpAuthStatus;
+use genex_exec_server::HttpClient;
+use genex_protocol::protocol::McpAuthStatus;
 use futures::FutureExt;
 use http::HeaderMap;
 use http::header::AUTHORIZATION;
@@ -19,8 +19,8 @@ use crate::oauth_callback::McpOAuthCallbackMode;
 use crate::oauth_callback::callback_mode;
 use crate::oauth_http_client::OAuthHttpClientAdapter;
 use crate::utils::build_default_headers;
-use codex_config::types::AuthKeyringBackendKind;
-use codex_config::types::OAuthCredentialsStoreMode;
+use genex_config::types::AuthKeyringBackendKind;
+use genex_config::types::OAuthCredentialsStoreMode;
 
 const DISCOVERY_TIMEOUT: Duration = Duration::from_secs(5);
 
@@ -309,14 +309,14 @@ mod tests {
     use axum::http::StatusCode;
     use axum::http::header::WWW_AUTHENTICATE;
     use axum::routing::get;
-    use codex_exec_server::ExecServerError;
-    use codex_exec_server::HttpRedirectPolicy;
-    use codex_exec_server::HttpRequestParams;
-    use codex_exec_server::HttpRequestResponse;
-    use codex_exec_server::HttpResponseBodyStream;
-    use codex_exec_server::RouteAwareHttpClient;
-    use codex_http_client::HttpClientFactory;
-    use codex_http_client::OutboundProxyPolicy;
+    use genex_exec_server::ExecServerError;
+    use genex_exec_server::HttpRedirectPolicy;
+    use genex_exec_server::HttpRequestParams;
+    use genex_exec_server::HttpRequestResponse;
+    use genex_exec_server::HttpResponseBodyStream;
+    use genex_exec_server::RouteAwareHttpClient;
+    use genex_http_client::HttpClientFactory;
+    use genex_http_client::OutboundProxyPolicy;
     use futures::future::BoxFuture;
     use pretty_assertions::assert_eq;
     use serial_test::serial;

@@ -5,17 +5,17 @@ use crate::codex_thread::CodexThread;
 use crate::config::Config;
 use crate::config::test_config;
 use crate::thread_manager::ThreadManagerState;
-use codex_features::Feature;
-use codex_login::CodexAuth;
-use codex_protocol::ThreadId;
-use codex_protocol::error::CodexErrorDetails;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::ThreadSource;
-use codex_protocol::protocol::TurnAbortReason;
-use codex_protocol::protocol::TurnAbortedEvent;
-use codex_protocol::protocol::TurnCompleteEvent;
+use genex_features::Feature;
+use genex_login::CodexAuth;
+use genex_protocol::ThreadId;
+use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::ThreadSource;
+use genex_protocol::protocol::TurnAbortReason;
+use genex_protocol::protocol::TurnAbortedEvent;
+use genex_protocol::protocol::TurnCompleteEvent;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
 
@@ -31,7 +31,7 @@ async fn residency_slot_reservation_unloads_oldest_idle_v2_agent() {
         CodexAuth::from_api_key("dummy"),
         config.model_provider.clone(),
         config.codex_home.to_path_buf(),
-        Arc::new(codex_exec_server::EnvironmentManager::default_for_tests()),
+        Arc::new(genex_exec_server::EnvironmentManager::default_for_tests()),
     );
     let root = manager
         .start_thread(StartThreadOptions::new(config.clone()))
@@ -79,7 +79,7 @@ async fn interrupted_v2_agent_is_lost_after_residency_eviction() {
         CodexAuth::from_api_key("dummy"),
         config.model_provider.clone(),
         config.codex_home.to_path_buf(),
-        Arc::new(codex_exec_server::EnvironmentManager::default_for_tests()),
+        Arc::new(genex_exec_server::EnvironmentManager::default_for_tests()),
     );
     let root = manager
         .start_thread(StartThreadOptions::new(config.clone()))

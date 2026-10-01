@@ -1,6 +1,6 @@
 use crate::manifest::PluginManifest;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_utils_path_uri::PathUri;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_utils_path_uri::PathUri;
 use std::error::Error as StdError;
 use std::future::Future;
 use thiserror::Error;

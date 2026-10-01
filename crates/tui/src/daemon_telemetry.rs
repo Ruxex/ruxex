@@ -23,9 +23,9 @@ impl<F: FnOnce(&AppServerTarget, bool)> Drop for Launch<F> {
 
 pub(super) async fn record_start(
     config: &Config,
-    result: &anyhow::Result<codex_app_server_daemon::LifecycleOutput>,
+    result: &anyhow::Result<genex_app_server_daemon::LifecycleOutput>,
 ) {
-    use codex_app_server_daemon::LifecycleStatus;
+    use genex_app_server_daemon::LifecycleStatus;
     let outcome = match result {
         Ok(output) => match output.status {
             LifecycleStatus::Started => "started",
@@ -40,7 +40,7 @@ pub(super) async fn record_start(
     // Failure can happen before normal TUI telemetry is initialized. This short-lived
     // provider uses exactly the same consent and identity construction as TUI startup.
     let Ok(Ok(Some(otel))) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        codex_app_server_client::build_otel_provider(
+        genex_app_server_client::build_otel_provider(
             config,
             env!("CARGO_PKG_VERSION"),
             /*service_name_override*/ None,
@@ -50,7 +50,7 @@ pub(super) async fn record_start(
         return;
     };
     if let Some(metrics) = otel.metrics() {
-        let mut tags = codex_app_server_daemon::telemetry::settings_tags(&config.codex_home)
+        let mut tags = genex_app_server_daemon::telemetry::settings_tags(&config.codex_home)
             .await
             .to_vec();
         tags.extend([

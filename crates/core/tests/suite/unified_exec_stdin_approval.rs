@@ -1,23 +1,23 @@
 //! Exercises retained terminal grants and strict stdin review through the agent API.
 
 use anyhow::Result;
-use codex_core::TurnInputRequest;
-use codex_core::config::Config;
-use codex_core::config::Constrained;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_features::Feature;
-use codex_protocol::approvals::ExecApprovalKind;
-use codex_protocol::models::AdditionalPermissionProfile;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::GranularApprovalConfig;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::request_permissions::PermissionGrantScope;
-use codex_protocol::request_permissions::RequestPermissionsResponse;
-use codex_protocol::user_input::UserInput;
+use genex_core::TurnInputRequest;
+use genex_core::config::Config;
+use genex_core::config::Constrained;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_features::Feature;
+use genex_protocol::approvals::ExecApprovalKind;
+use genex_protocol::models::AdditionalPermissionProfile;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::GranularApprovalConfig;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ReviewDecision;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::request_permissions::PermissionGrantScope;
+use genex_protocol::request_permissions::RequestPermissionsResponse;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_function_call;
@@ -201,11 +201,11 @@ async fn strict_stdin_review_reaches_guardian_with_sandbox_prompts_disabled() ->
     #[derive(Default)]
     struct ReviewedCalls(Mutex<Vec<String>>);
 
-    impl codex_extension_api::ApprovalReviewContributor for ReviewedCalls {
+    impl genex_extension_api::ApprovalReviewContributor for ReviewedCalls {
         fn decide<'a>(
             &'a self,
-            input: &'a codex_extension_api::ApprovalDecisionInput<'_>,
-        ) -> codex_extension_api::ExtensionFuture<'a, Option<codex_extension_api::ApprovalDecision>>
+            input: &'a genex_extension_api::ApprovalDecisionInput<'_>,
+        ) -> genex_extension_api::ExtensionFuture<'a, Option<genex_extension_api::ApprovalDecision>>
         {
             self.0
                 .lock()

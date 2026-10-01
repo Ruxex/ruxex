@@ -1,9 +1,9 @@
 //! Verifies observed Responses API usage is durably recorded in rollout history.
 
 use anyhow::Result;
-use codex_history::RolloutItem;
-use codex_protocol::SessionId;
-use codex_protocol::protocol::TokenUsageRecord;
+use genex_history::RolloutItem;
+use genex_protocol::SessionId;
+use genex_protocol::protocol::TokenUsageRecord;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed_with_tokens;
 use core_test_support::responses::ev_function_call;
@@ -20,7 +20,7 @@ fn token_usage_records(path: &std::path::Path) -> Vec<TokenUsageRecord> {
     std::fs::read_to_string(path)
         .expect("read rollout")
         .lines()
-        .filter_map(|line| codex_rollout::parse_rollout_line(line).ok())
+        .filter_map(|line| genex_rollout::parse_rollout_line(line).ok())
         .filter_map(|line| match line.item {
             RolloutItem::TokenUsageRecord(record) => Some(record),
             _ => None,

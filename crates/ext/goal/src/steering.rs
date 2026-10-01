@@ -1,10 +1,10 @@
-use codex_core::context::ContextualUserFragment;
-use codex_core::context::InternalContextSource;
-use codex_core::context::InternalModelContextFragment;
-use codex_prompts::without_update_plan_instructions;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::ThreadGoal;
-use codex_utils_template::Template;
+use genex_core::context::ContextualUserFragment;
+use genex_core::context::InternalContextSource;
+use genex_core::context::InternalModelContextFragment;
+use genex_prompts::without_update_plan_instructions;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::ThreadGoal;
+use genex_utils_template::Template;
 use std::sync::LazyLock;
 
 static CONTINUATION_PROMPT_TEMPLATE: LazyLock<Template> = LazyLock::new(|| {

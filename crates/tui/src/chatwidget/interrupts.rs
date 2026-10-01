@@ -5,11 +5,11 @@ use std::collections::VecDeque;
 use crate::app::app_server_requests::ResolvedAppServerRequest;
 use crate::approval_events::ApplyPatchApprovalRequestEvent;
 use crate::approval_events::ExecApprovalRequestEvent;
-use codex_app_server_protocol::McpServerElicitationRequestParams;
-use codex_app_server_protocol::RequestId as AppServerRequestId;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ToolRequestUserInputParams;
-use codex_protocol::request_permissions::RequestPermissionsEvent;
+use genex_app_server_protocol::McpServerElicitationRequestParams;
+use genex_app_server_protocol::RequestId as AppServerRequestId;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ToolRequestUserInputParams;
+use genex_protocol::request_permissions::RequestPermissionsEvent;
 
 use super::ChatWidget;
 

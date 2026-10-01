@@ -1,6 +1,6 @@
-# codex-otel
+# genex-otel
 
-`codex-otel` is the OpenTelemetry integration crate for Codex. It provides:
+`genex-otel` is the OpenTelemetry integration crate for Codex. It provides:
 
 - Provider wiring for log/trace/metric exporters (`codex_otel::OtelProvider`
   and `codex_otel::provider`).
@@ -23,7 +23,7 @@ use tracing_subscriber::prelude::*;
 
 let settings = OtelSettings {
     environment: "dev".to_string(),
-    service_name: "codex-cli".to_string(),
+    service_name: "genex-cli".to_string(),
     service_version: env!("CARGO_PKG_VERSION").to_string(),
     codex_home: std::path::PathBuf::from("/tmp"),
     exporter: OtelExporter::OtlpHttp {
@@ -109,7 +109,7 @@ In-memory (tests):
 let exporter = InMemoryMetricExporter::default();
 let metrics = MetricsClient::new(MetricsConfig::in_memory(
     "test",
-    "codex-cli",
+    "genex-cli",
     env!("CARGO_PKG_VERSION"),
     exporter.clone(),
 ))?;

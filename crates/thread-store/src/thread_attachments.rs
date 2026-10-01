@@ -1,6 +1,6 @@
 //! Typed parameters for attachment operations on stored threads.
 
-use codex_protocol::ThreadId;
+use genex_protocol::ThreadId;
 use serde_json::Value;
 
 /// Parameters for attaching a thread-owned attachment.

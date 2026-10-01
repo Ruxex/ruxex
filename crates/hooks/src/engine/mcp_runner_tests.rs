@@ -15,10 +15,10 @@ use crate::engine::ConfiguredHandler;
 use crate::engine::ConfiguredHandlerKind;
 use crate::mcp::HookMcpCall;
 use crate::mcp::HookMcpExecutor;
-use codex_protocol::protocol::HookEventName;
-use codex_protocol::protocol::HookSource;
-use codex_utils_absolute_path::test_support::PathBufExt;
-use codex_utils_absolute_path::test_support::test_path_buf;
+use genex_protocol::protocol::HookEventName;
+use genex_protocol::protocol::HookSource;
+use genex_utils_absolute_path::test_support::PathBufExt;
+use genex_utils_absolute_path::test_support::test_path_buf;
 
 struct RecordingExecutor {
     calls: Arc<Mutex<Vec<HookMcpCall>>>,

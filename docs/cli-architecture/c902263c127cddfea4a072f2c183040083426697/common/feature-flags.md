@@ -2,7 +2,7 @@
 
 ## 解決
 
-ルートパーサーはディスパッチ前に `--enable` と `--disable` を設定の上書きにまとめます。`codex features list` は有効な設定を読み込み、各機能のキー、段階、有効状態を報告します。`enable` と `disable` は永続設定を編集します。機能定義は `codex-features` にあり、Core/CLI のゲートが利用します。
+ルートパーサーはディスパッチ前に `--enable` と `--disable` を設定の上書きにまとめます。`codex features list` は有効な設定を読み込み、各機能のキー、段階、有効状態を報告します。`enable` と `disable` は永続設定を編集します。機能定義は `genex-features` にあり、Core/CLI のゲートが利用します。
 
 ## 範囲
 

@@ -2,11 +2,11 @@ use anyhow::Result;
 use anyhow::ensure;
 use app_test_support::ApiKeyAuthFixture;
 use app_test_support::write_api_key_auth;
-use codex_config::CONFIG_TOML_FILE;
-use codex_config::MarketplaceConfigUpdate;
-use codex_config::record_user_marketplace;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_utils_absolute_path::canonicalize_existing_preserving_symlinks;
+use genex_config::CONFIG_TOML_FILE;
+use genex_config::MarketplaceConfigUpdate;
+use genex_config::record_user_marketplace;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_utils_absolute_path::canonicalize_existing_preserving_symlinks;
 use flate2::Compression;
 use flate2::write::GzEncoder;
 use predicates::prelude::PredicateBooleanExt;
@@ -41,7 +41,7 @@ fn marketplace_list_row(marketplace_name: &str, root: &Path) -> String {
 }
 
 fn codex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
-    let mut cmd = assert_cmd::Command::new(codex_utils_cargo_bin::cargo_bin("codex")?);
+    let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("codex")?);
     cmd.env("CODEX_HOME", codex_home);
     cmd.env("HOME", codex_home);
     Ok(cmd)
@@ -1231,7 +1231,7 @@ impl RemoteMarketplaceFixture {
     }
 
     async fn run(&self, args: &[&str]) -> Result<Output> {
-        Ok(Command::new(codex_utils_cargo_bin::cargo_bin("codex")?)
+        Ok(Command::new(genex_utils_cargo_bin::cargo_bin("codex")?)
             .current_dir(self.home.path())
             .env("CODEX_HOME", self.home.path())
             .env("HOME", self.home.path())

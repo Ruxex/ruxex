@@ -10,15 +10,15 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_channel::Receiver;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::HookCompletedEvent;
-use codex_protocol::protocol::HookEventName;
-use codex_protocol::protocol::HookOutputEntry;
-use codex_protocol::protocol::HookOutputEntryKind;
-use codex_protocol::protocol::HookRunStatus;
-use codex_protocol::protocol::HookSource;
-use codex_protocol::shell_environment::CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::HookCompletedEvent;
+use genex_protocol::protocol::HookEventName;
+use genex_protocol::protocol::HookOutputEntry;
+use genex_protocol::protocol::HookOutputEntryKind;
+use genex_protocol::protocol::HookRunStatus;
+use genex_protocol::protocol::HookSource;
+use genex_protocol::shell_environment::CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tempfile::tempdir;
@@ -48,12 +48,12 @@ async fn hook_shell_startup_does_not_stop_on_controlling_terminal() {
         let executable = std::env::current_exe().expect("current test executable");
         let mut env = std::env::vars().collect::<HashMap<_, _>>();
         env.insert(CHILD_ENV.to_string(), "1".to_string());
-        let codex_utils_pty::SpawnedProcess {
+        let genex_utils_pty::SpawnedProcess {
             session: _session,
             mut stdout_rx,
             exit_rx,
             ..
-        } = codex_utils_pty::spawn_pty_process(
+        } = genex_utils_pty::spawn_pty_process(
             executable.to_str().expect("UTF-8 test executable path"),
             &[
                 TEST_NAME.to_string(),
@@ -63,7 +63,7 @@ async fn hook_shell_startup_does_not_stop_on_controlling_terminal() {
             &std::env::current_dir().expect("current test directory"),
             &env,
             /*arg0*/ &None,
-            codex_utils_pty::TerminalSize::default(),
+            genex_utils_pty::TerminalSize::default(),
             &[],
         )
         .await

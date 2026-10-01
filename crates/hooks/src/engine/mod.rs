@@ -27,19 +27,19 @@ use crate::events::user_prompt_submit::UserPromptSubmitOutcome;
 use crate::events::user_prompt_submit::UserPromptSubmitRequest;
 use crate::mcp::HookMcpExecutor;
 use crate::output_spill::AdditionalContextLimit;
-use codex_config::ConfigLayerStack;
-use codex_config::HookHandlerConfig;
-use codex_plugin::ExecutorPluginHookSource;
-use codex_plugin::PluginHookSource;
-use codex_plugin::PluginId;
-use codex_protocol::protocol::HookEventName;
-use codex_protocol::protocol::HookExecutionMode;
-use codex_protocol::protocol::HookHandlerType;
-use codex_protocol::protocol::HookRunSummary;
-use codex_protocol::protocol::HookSource;
-use codex_protocol::protocol::HookTrustStatus;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_config::ConfigLayerStack;
+use genex_config::HookHandlerConfig;
+use genex_plugin::ExecutorPluginHookSource;
+use genex_plugin::PluginHookSource;
+use genex_plugin::PluginId;
+use genex_protocol::protocol::HookEventName;
+use genex_protocol::protocol::HookExecutionMode;
+use genex_protocol::protocol::HookHandlerType;
+use genex_protocol::protocol::HookRunSummary;
+use genex_protocol::protocol::HookSource;
+use genex_protocol::protocol::HookTrustStatus;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use serde_json::Map;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -59,7 +59,7 @@ pub(crate) struct CommandShell {
 pub(crate) struct ConfiguredHandler {
     /// Internally admitted cleanup hook, enabled independently of per-hook state.
     pub builtin: bool,
-    pub event_name: codex_protocol::protocol::HookEventName,
+    pub event_name: genex_protocol::protocol::HookEventName,
     pub matcher: Option<String>,
     pub timeout_sec: u64,
     pub status_message: Option<String>,
@@ -166,18 +166,18 @@ impl ConfiguredHandler {
 
     fn event_name_label(&self) -> &'static str {
         match self.event_name {
-            codex_protocol::protocol::HookEventName::PreToolUse => "pre-tool-use",
-            codex_protocol::protocol::HookEventName::PermissionRequest => "permission-request",
-            codex_protocol::protocol::HookEventName::PostToolUse => "post-tool-use",
-            codex_protocol::protocol::HookEventName::PreCompact => "pre-compact",
-            codex_protocol::protocol::HookEventName::PostCompact => "post-compact",
-            codex_protocol::protocol::HookEventName::SessionStart => "session-start",
-            codex_protocol::protocol::HookEventName::SessionEnd => "session-end",
-            codex_protocol::protocol::HookEventName::UserPromptSubmit => "user-prompt-submit",
-            codex_protocol::protocol::HookEventName::SubagentStart => "subagent-start",
-            codex_protocol::protocol::HookEventName::SubagentStop => "subagent-stop",
-            codex_protocol::protocol::HookEventName::Stop => "stop",
-            codex_protocol::protocol::HookEventName::Interrupt => "interrupt",
+            genex_protocol::protocol::HookEventName::PreToolUse => "pre-tool-use",
+            genex_protocol::protocol::HookEventName::PermissionRequest => "permission-request",
+            genex_protocol::protocol::HookEventName::PostToolUse => "post-tool-use",
+            genex_protocol::protocol::HookEventName::PreCompact => "pre-compact",
+            genex_protocol::protocol::HookEventName::PostCompact => "post-compact",
+            genex_protocol::protocol::HookEventName::SessionStart => "session-start",
+            genex_protocol::protocol::HookEventName::SessionEnd => "session-end",
+            genex_protocol::protocol::HookEventName::UserPromptSubmit => "user-prompt-submit",
+            genex_protocol::protocol::HookEventName::SubagentStart => "subagent-start",
+            genex_protocol::protocol::HookEventName::SubagentStop => "subagent-stop",
+            genex_protocol::protocol::HookEventName::Stop => "stop",
+            genex_protocol::protocol::HookEventName::Interrupt => "interrupt",
         }
     }
 

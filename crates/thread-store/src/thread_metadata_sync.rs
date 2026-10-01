@@ -4,18 +4,18 @@ use std::time::Instant;
 use chrono::DateTime;
 use chrono::NaiveDateTime;
 use chrono::Utc;
-use codex_git_utils::collect_git_info;
-use codex_git_utils::get_git_repo_root;
-use codex_protocol::ThreadId;
-use codex_protocol::items::TurnItem;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::GitInfo;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::UserMessageEvent;
-use codex_protocol::protocol::strip_user_message_prefix;
-use codex_protocol::protocol::user_message_preview;
-use codex_rollout::RolloutItem;
-use codex_state::ThreadMetadata;
+use genex_git_utils::collect_git_info;
+use genex_git_utils::get_git_repo_root;
+use genex_protocol::ThreadId;
+use genex_protocol::items::TurnItem;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::GitInfo;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::UserMessageEvent;
+use genex_protocol::protocol::strip_user_message_prefix;
+use genex_protocol::protocol::user_message_preview;
+use genex_rollout::RolloutItem;
+use genex_state::ThreadMetadata;
 
 use crate::CreateThreadParams;
 use crate::GitInfoPatch;
@@ -163,7 +163,7 @@ impl ThreadMetadataSync {
         self.defer_resume_update_until_append = false;
         let affects_metadata = items
             .iter()
-            .any(codex_state::rollout_item_affects_thread_metadata);
+            .any(genex_state::rollout_item_affects_thread_metadata);
         let advances_recency = items
             .iter()
             .any(|item| matches!(item, RolloutItem::EventMsg(EventMsg::TurnStarted(_))));
@@ -394,27 +394,27 @@ fn git_info_patch_from_observation(git_info: GitInfo) -> GitInfoPatch {
 mod tests {
     use std::sync::Arc;
 
-    use codex_protocol::config_types::CollaborationMode;
-    use codex_protocol::config_types::ModeKind;
-    use codex_protocol::config_types::ReasoningSummary;
-    use codex_protocol::config_types::Settings;
-    use codex_protocol::items::UserMessageItem;
-    use codex_protocol::model_types::ReasoningEffort;
-    use codex_protocol::models::PermissionProfile;
-    use codex_protocol::protocol::AskForApproval;
-    use codex_protocol::protocol::ItemCompletedEvent;
-    use codex_protocol::protocol::SessionMeta;
-    use codex_protocol::protocol::SessionMetaLine;
-    use codex_protocol::protocol::SessionSource;
-    use codex_protocol::protocol::ThreadGoal;
-    use codex_protocol::protocol::ThreadGoalStatus;
-    use codex_protocol::protocol::ThreadGoalUpdatedEvent;
-    use codex_protocol::protocol::ThreadSettingsAppliedEvent;
-    use codex_protocol::protocol::ThreadSettingsSnapshot;
-    use codex_protocol::protocol::TurnStartedEvent;
-    use codex_protocol::protocol::UserMessageEvent;
-    use codex_protocol::user_input::UserInput;
-    use codex_rollout::CompactedItem;
+    use genex_protocol::config_types::CollaborationMode;
+    use genex_protocol::config_types::ModeKind;
+    use genex_protocol::config_types::ReasoningSummary;
+    use genex_protocol::config_types::Settings;
+    use genex_protocol::items::UserMessageItem;
+    use genex_protocol::model_types::ReasoningEffort;
+    use genex_protocol::models::PermissionProfile;
+    use genex_protocol::protocol::AskForApproval;
+    use genex_protocol::protocol::ItemCompletedEvent;
+    use genex_protocol::protocol::SessionMeta;
+    use genex_protocol::protocol::SessionMetaLine;
+    use genex_protocol::protocol::SessionSource;
+    use genex_protocol::protocol::ThreadGoal;
+    use genex_protocol::protocol::ThreadGoalStatus;
+    use genex_protocol::protocol::ThreadGoalUpdatedEvent;
+    use genex_protocol::protocol::ThreadSettingsAppliedEvent;
+    use genex_protocol::protocol::ThreadSettingsSnapshot;
+    use genex_protocol::protocol::TurnStartedEvent;
+    use genex_protocol::protocol::UserMessageEvent;
+    use genex_protocol::user_input::UserInput;
+    use genex_rollout::CompactedItem;
     use pretty_assertions::assert_eq;
 
     use super::*;
@@ -433,7 +433,7 @@ mod tests {
             source: SessionSource::Exec,
             thread_source: None,
             originator: "test_originator".to_string(),
-            base_instructions: codex_protocol::models::BaseInstructions::default(),
+            base_instructions: genex_protocol::models::BaseInstructions::default(),
             dynamic_tools: Vec::new(),
             selected_capability_roots: Vec::new(),
             multi_agent_version: None,
@@ -741,7 +741,7 @@ mod tests {
     #[test]
     fn resume_preserves_existing_display_metadata_and_initializes_missing_title() {
         let thread_id = ThreadId::new();
-        let mut metadata = codex_state::ThreadMetadataBuilder::new(
+        let mut metadata = genex_state::ThreadMetadataBuilder::new(
             thread_id,
             Default::default(),
             Utc::now(),

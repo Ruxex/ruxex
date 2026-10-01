@@ -2,7 +2,7 @@
 //! explicitly acknowledged; review identity prevents stale UI actions from authorizing a turn.
 
 use super::*;
-use codex_app_server_protocol::MisalignmentErrorDetails;
+use genex_app_server_protocol::MisalignmentErrorDetails;
 
 const PRECAUTION_VIEW: &str = "misalignment_precaution";
 

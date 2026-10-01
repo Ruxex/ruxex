@@ -3,23 +3,23 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_core::TurnInputRequest;
-use codex_core::config::Config;
-use codex_extension_api::ExtensionRegistry;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_features::Feature;
-use codex_login::CodexAuth;
-use codex_login::auth::BedrockApiKeyAuth;
-use codex_mcp::CODEX_APPS_MCP_SERVER_NAME;
-use codex_protocol::config_types::WebSearchMode;
-use codex_protocol::models::ImageDetail;
-use codex_protocol::models::ImageReference;
-use codex_protocol::model_types::InputModality;
-use codex_protocol::model_types::ToolMode;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::user_input::UserInput;
-use codex_web_search_extension::install as install_web_search_extension;
+use genex_core::TurnInputRequest;
+use genex_core::config::Config;
+use genex_extension_api::ExtensionRegistry;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_features::Feature;
+use genex_login::CodexAuth;
+use genex_login::auth::BedrockApiKeyAuth;
+use genex_mcp::CODEX_APPS_MCP_SERVER_NAME;
+use genex_protocol::config_types::WebSearchMode;
+use genex_protocol::models::ImageDetail;
+use genex_protocol::models::ImageReference;
+use genex_protocol::model_types::InputModality;
+use genex_protocol::model_types::ToolMode;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::user_input::UserInput;
+use genex_web_search_extension::install as install_web_search_extension;
 use core_test_support::apps_test_server::AppsTestServer;
 use core_test_support::apps_test_server::SEARCH_CALENDAR_CREATE_TOOL;
 use core_test_support::apps_test_server::SEARCH_CALENDAR_NAMESPACE;
@@ -35,7 +35,7 @@ use serde_json::Value;
 const RESPONSES_LITE_HEADER: &str = "x-provider-internal-codex-responses-lite";
 
 fn responses_extensions(auth: &CodexAuth) -> Arc<ExtensionRegistry<Config>> {
-    let auth_manager = codex_core::test_support::auth_manager_from_auth(auth.clone());
+    let auth_manager = genex_core::test_support::auth_manager_from_auth(auth.clone());
     let mut extension_builder = ExtensionRegistryBuilder::<Config>::new();
     install_web_search_extension(&mut extension_builder, Arc::clone(&auth_manager));
     Arc::new(extension_builder.build())
@@ -51,7 +51,7 @@ fn configure_responses_tools(config: &mut Config) {
     );
 }
 
-fn configure_image_capable_model(model_info: &mut codex_protocol::model_types::ModelInfo) {
+fn configure_image_capable_model(model_info: &mut genex_protocol::model_types::ModelInfo) {
     model_info.input_modalities = vec![InputModality::Text, InputModality::Image];
 }
 

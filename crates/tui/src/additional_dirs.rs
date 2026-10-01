@@ -1,4 +1,4 @@
-use codex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfile;
 use std::path::PathBuf;
 
 /// Returns a warning describing why `--add-dir` entries will be ignored for the
@@ -46,13 +46,13 @@ fn format_warning(additional_dirs: &[PathBuf]) -> String {
 #[cfg(test)]
 mod tests {
     use super::add_dir_warning_message;
-    use codex_protocol::models::ManagedFileSystemPermissions;
-    use codex_protocol::models::PermissionProfile;
-    use codex_protocol::permissions::FileSystemAccessMode;
-    use codex_protocol::permissions::FileSystemPath;
-    use codex_protocol::permissions::FileSystemSandboxEntry;
-    use codex_protocol::permissions::FileSystemSpecialPath;
-    use codex_protocol::permissions::NetworkSandboxPolicy;
+    use genex_protocol::models::ManagedFileSystemPermissions;
+    use genex_protocol::models::PermissionProfile;
+    use genex_protocol::permissions::FileSystemAccessMode;
+    use genex_protocol::permissions::FileSystemPath;
+    use genex_protocol::permissions::FileSystemSandboxEntry;
+    use genex_protocol::permissions::FileSystemSpecialPath;
+    use genex_protocol::permissions::NetworkSandboxPolicy;
     use pretty_assertions::assert_eq;
     use std::path::Path;
     use std::path::PathBuf;
@@ -116,7 +116,7 @@ mod tests {
                     },
                     FileSystemSandboxEntry {
                         path: FileSystemPath::Path {
-                            path: codex_utils_absolute_path::AbsolutePathBuf::try_from(
+                            path: genex_utils_absolute_path::AbsolutePathBuf::try_from(
                                 "/tmp/writable",
                             )
                             .expect("absolute path")

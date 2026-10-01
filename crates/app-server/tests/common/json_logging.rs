@@ -84,7 +84,7 @@ pub fn app_server_json_shutdown_event(
         codex_home.join("config.toml"),
         "[features]\nplugins = false\n",
     )?;
-    let output = Command::new(codex_utils_cargo_bin::cargo_bin(binary)?)
+    let output = Command::new(genex_utils_cargo_bin::cargo_bin(binary)?)
         .stdin(Stdio::null())
         .env("CODEX_HOME", codex_home)
         .env(

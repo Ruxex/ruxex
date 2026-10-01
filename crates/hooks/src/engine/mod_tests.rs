@@ -5,33 +5,33 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
 
-use codex_config::AbsolutePathBuf;
-use codex_config::ConfigLayerEntry;
-use codex_config::ConfigLayerSource;
-use codex_config::ConfigLayerStack;
-use codex_config::ConfigRequirements;
-use codex_config::ConfigRequirementsToml;
-use codex_config::Constrained;
-use codex_config::ConstrainedWithSource;
-use codex_config::HookEventsToml;
-use codex_config::HookHandlerConfig;
-use codex_config::ManagedHooksRequirementsToml;
-use codex_config::MatcherGroup;
-use codex_config::RequirementSource;
-use codex_config::Sourced;
-use codex_config::TomlValue;
-use codex_plugin::ExecutorPluginHookSource;
-use codex_plugin::PluginHookSource;
-use codex_plugin::PluginId;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::HookEventName;
-use codex_protocol::protocol::HookExecutionMode;
-use codex_protocol::protocol::HookHandlerType;
-use codex_protocol::protocol::HookOutputEntry;
-use codex_protocol::protocol::HookOutputEntryKind;
-use codex_protocol::protocol::HookRunStatus;
-use codex_protocol::protocol::HookSource;
-use codex_protocol::protocol::HookTrustStatus;
+use genex_config::AbsolutePathBuf;
+use genex_config::ConfigLayerEntry;
+use genex_config::ConfigLayerSource;
+use genex_config::ConfigLayerStack;
+use genex_config::ConfigRequirements;
+use genex_config::ConfigRequirementsToml;
+use genex_config::Constrained;
+use genex_config::ConstrainedWithSource;
+use genex_config::HookEventsToml;
+use genex_config::HookHandlerConfig;
+use genex_config::ManagedHooksRequirementsToml;
+use genex_config::MatcherGroup;
+use genex_config::RequirementSource;
+use genex_config::Sourced;
+use genex_config::TomlValue;
+use genex_plugin::ExecutorPluginHookSource;
+use genex_plugin::PluginHookSource;
+use genex_plugin::PluginId;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::HookEventName;
+use genex_protocol::protocol::HookExecutionMode;
+use genex_protocol::protocol::HookHandlerType;
+use genex_protocol::protocol::HookOutputEntry;
+use genex_protocol::protocol::HookOutputEntryKind;
+use genex_protocol::protocol::HookRunStatus;
+use genex_protocol::protocol::HookSource;
+use genex_protocol::protocol::HookTrustStatus;
 use futures::FutureExt;
 use futures::future::BoxFuture;
 use pretty_assertions::assert_eq;
@@ -2712,7 +2712,7 @@ async fn mcp_tool_hooks_expand_event_input_and_apply_pre_tool_decisions() {
     );
     assert_eq!(
         outcome.hook_events[0].run.execution_mode,
-        codex_protocol::protocol::HookExecutionMode::Sync
+        genex_protocol::protocol::HookExecutionMode::Sync
     );
     assert_eq!(
         *calls.lock().expect("lock MCP calls"),

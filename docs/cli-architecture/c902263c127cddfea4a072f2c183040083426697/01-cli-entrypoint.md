@@ -36,9 +36,9 @@
 | `app-server` | `codex_app_server::run_main` またはデーモン/プロキシ/スキーマヘルパー |
 | `resume`, `fork` | TUI wrapper state followed by `run_interactive_tui` |
 | `queue`、`archive`、`delete`、`unarchive` | セッション/デーモンのヘルパー経路 |
-| `login`、`logout` | `codex-login` の認証マネージャーヘルパー |
+| `login`、`logout` | `genex-login` の認証マネージャーヘルパー |
 | `doctor` | `doctor::run_doctor` |
-| `sandbox` | ホスト固有の `codex-cli` サンドボックスランナー |
+| `sandbox` | ホスト固有の `genex-cli` サンドボックスランナー |
 | `debug`、`execpolicy`、`stdio-to-uds`、`exec-server`、`features` | ユーティリティ固有のディスパッチアーム |
 
 match は [981 行目](../../../crates/cli/src/main.rs#L981) から始まります。コマンド enum とネストしたコマンドの形が正式な一覧であり、[ソースマップ](reference/source-map.md) にスナップショット時点の行番号アンカーを記録しています。

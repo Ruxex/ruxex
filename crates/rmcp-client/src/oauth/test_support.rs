@@ -11,17 +11,17 @@ use tempfile::tempdir;
 /// Use a separate local endpoint so warmup cannot affect the test server's request assertions;
 /// the same production HTTP capability still applies all proxy and certificate policy.
 pub(crate) async fn warm_http_client(
-    client: &dyn codex_exec_server::HttpClient,
+    client: &dyn genex_exec_server::HttpClient,
 ) -> anyhow::Result<()> {
     let server = wiremock::MockServer::start().await;
     client
-        .http_request(codex_exec_server::HttpRequestParams {
+        .http_request(genex_exec_server::HttpRequestParams {
             method: "GET".to_string(),
             url: server.uri(),
             headers: Vec::new(),
             body: None,
             timeout_ms: None,
-            redirect_policy: codex_exec_server::HttpRedirectPolicy::Stop,
+            redirect_policy: genex_exec_server::HttpRedirectPolicy::Stop,
             request_id: "test-client-warmup".to_string(),
             stream_response: false,
         })

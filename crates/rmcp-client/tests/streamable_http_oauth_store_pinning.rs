@@ -7,23 +7,23 @@ use std::sync::PoisonError;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
-use codex_config::types::AuthKeyringBackendKind;
-use codex_config::types::OAuthCredentialsStoreMode;
-use codex_exec_server::Environment;
-use codex_exec_server::ExecServerError;
-use codex_exec_server::HttpClient;
-use codex_exec_server::HttpRedirectPolicy;
-use codex_exec_server::HttpRequestParams;
-use codex_exec_server::HttpRequestResponse;
-use codex_exec_server::HttpResponseBodyStream;
-use codex_rmcp_client::McpProtocolMode;
-use codex_rmcp_client::RmcpClient;
-use codex_rmcp_client::StoredOAuthTokens;
-use codex_rmcp_client::StreamableHttpBearerToken;
-use codex_rmcp_client::StreamableHttpRedirectMode;
-use codex_rmcp_client::WrappedOAuthTokenResponse;
-use codex_rmcp_client::save_oauth_tokens;
-use codex_rmcp_client::stored_oauth_credential_snapshot;
+use genex_config::types::AuthKeyringBackendKind;
+use genex_config::types::OAuthCredentialsStoreMode;
+use genex_exec_server::Environment;
+use genex_exec_server::ExecServerError;
+use genex_exec_server::HttpClient;
+use genex_exec_server::HttpRedirectPolicy;
+use genex_exec_server::HttpRequestParams;
+use genex_exec_server::HttpRequestResponse;
+use genex_exec_server::HttpResponseBodyStream;
+use genex_rmcp_client::McpProtocolMode;
+use genex_rmcp_client::RmcpClient;
+use genex_rmcp_client::StoredOAuthTokens;
+use genex_rmcp_client::StreamableHttpBearerToken;
+use genex_rmcp_client::StreamableHttpRedirectMode;
+use genex_rmcp_client::WrappedOAuthTokenResponse;
+use genex_rmcp_client::save_oauth_tokens;
+use genex_rmcp_client::stored_oauth_credential_snapshot;
 use futures::future::BoxFuture;
 use keyring::credential::Credential;
 use keyring::credential::CredentialApi;
@@ -203,7 +203,7 @@ async fn transport_provided_bearer_token_avoids_placeholder_headers_and_redirect
         /*auth_provider*/ None,
         McpProtocolMode::Legacy,
         StreamableHttpRedirectMode::AgentPluginV1,
-        codex_rmcp_client::McpOAuthRefreshMode::Legacy,
+        genex_rmcp_client::McpOAuthRefreshMode::Legacy,
     )
     .await?;
 

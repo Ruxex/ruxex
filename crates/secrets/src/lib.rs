@@ -4,9 +4,9 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use anyhow::Result;
-use codex_git_utils::get_git_repo_root;
-use codex_keyring_store::DefaultKeyringStore;
-use codex_keyring_store::KeyringStore;
+use genex_git_utils::get_git_repo_root;
+use genex_keyring_store::DefaultKeyringStore;
+use genex_keyring_store::KeyringStore;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -201,7 +201,7 @@ pub(crate) fn keyring_service() -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_keyring_store::tests::MockKeyringStore;
+    use genex_keyring_store::tests::MockKeyringStore;
     use pretty_assertions::assert_eq;
 
     #[test]

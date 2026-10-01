@@ -11,10 +11,10 @@ use crate::context::ContextualUserFragment;
 use crate::context::InterAgentMessage;
 use crate::context::InterAgentMessageType;
 use crate::session::turn_context::TurnContext;
-use codex_protocol::AgentPath;
-use codex_protocol::ThreadId;
-use codex_protocol::error::CodexErr;
-use codex_protocol::protocol::InterAgentCommunication;
+use genex_protocol::AgentPath;
+use genex_protocol::ThreadId;
+use genex_protocol::error::CodexErr;
+use genex_protocol::protocol::InterAgentCommunication;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum MessageDeliveryMode {

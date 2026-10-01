@@ -4,14 +4,14 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
 
-use codex_config::types::AuthKeyringBackendKind;
-use codex_config::types::OAuthCredentialsStoreMode;
-use codex_exec_server::Environment;
-use codex_rmcp_client::ElicitationAction;
-use codex_rmcp_client::ElicitationResponse;
-use codex_rmcp_client::LocalStdioServerLauncher;
-use codex_rmcp_client::McpProtocolMode;
-use codex_rmcp_client::RmcpClient;
+use genex_config::types::AuthKeyringBackendKind;
+use genex_config::types::OAuthCredentialsStoreMode;
+use genex_exec_server::Environment;
+use genex_rmcp_client::ElicitationAction;
+use genex_rmcp_client::ElicitationResponse;
+use genex_rmcp_client::LocalStdioServerLauncher;
+use genex_rmcp_client::McpProtocolMode;
+use genex_rmcp_client::RmcpClient;
 use futures::FutureExt;
 use pretty_assertions::assert_eq;
 use rmcp::model::ClientCapabilities;
@@ -929,7 +929,7 @@ async fn modern_legacy_fallback_preserves_authentication_required_error() -> any
         .await
         .expect_err("legacy fallback should surface the authentication challenge");
     assert!(
-        codex_rmcp_client::is_authentication_required_error(&error),
+        genex_rmcp_client::is_authentication_required_error(&error),
         "legacy fallback must preserve the authentication-required classification: {error:#}"
     );
     assert_eq!(

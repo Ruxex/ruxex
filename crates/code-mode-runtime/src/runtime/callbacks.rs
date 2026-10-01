@@ -1,4 +1,4 @@
-use codex_code_mode_protocol::FunctionCallOutputContentItem;
+use genex_code_mode_protocol::FunctionCallOutputContentItem;
 
 use super::EXIT_SENTINEL;
 use super::RuntimeEvent;

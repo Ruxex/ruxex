@@ -14,24 +14,24 @@ use crate::exec::execute_exec_request;
 #[cfg(target_os = "macos")]
 use crate::spawn::CODEX_SANDBOX_ENV_VAR;
 use crate::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
-use codex_file_system::FileSystemSandboxContext;
-use codex_network_proxy::ManagedNetworkSandboxContext;
-use codex_network_proxy::NetworkProxy;
-use codex_network_proxy::RemoteNetworkProxyLaunchConfig;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::error::CodexErr;
-use codex_protocol::exec_output::ExecToolCallOutput;
-use codex_protocol::models::PermissionProfile;
-pub use codex_protocol::models::SandboxPermissions;
-use codex_sandboxing::SandboxExecRequest;
-use codex_sandboxing::SandboxType;
-use codex_sandboxing::WindowsSandboxFilesystemOverrides;
-use codex_sandboxing::resolve_windows_elevated_filesystem_overrides;
-use codex_sandboxing::resolve_windows_restricted_token_filesystem_overrides;
-use codex_sandboxing::windows_sandbox_uses_elevated_backend;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
-use codex_utils_string::truncate_middle_with_token_budget;
+use genex_file_system::FileSystemSandboxContext;
+use genex_network_proxy::ManagedNetworkSandboxContext;
+use genex_network_proxy::NetworkProxy;
+use genex_network_proxy::RemoteNetworkProxyLaunchConfig;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::error::CodexErr;
+use genex_protocol::exec_output::ExecToolCallOutput;
+use genex_protocol::models::PermissionProfile;
+pub use genex_protocol::models::SandboxPermissions;
+use genex_sandboxing::SandboxExecRequest;
+use genex_sandboxing::SandboxType;
+use genex_sandboxing::WindowsSandboxFilesystemOverrides;
+use genex_sandboxing::resolve_windows_elevated_filesystem_overrides;
+use genex_sandboxing::resolve_windows_restricted_token_filesystem_overrides;
+use genex_sandboxing::windows_sandbox_uses_elevated_backend;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
+use genex_utils_string::truncate_middle_with_token_budget;
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -42,7 +42,7 @@ pub(crate) struct ExecOptions {
 
 #[derive(Clone, Debug)]
 pub(crate) struct ExecServerEnvConfig {
-    pub(crate) policy: codex_exec_server::ExecEnvPolicy,
+    pub(crate) policy: genex_exec_server::ExecEnvPolicy,
     pub(crate) local_policy_env: HashMap<String, String>,
 }
 
@@ -52,7 +52,7 @@ pub struct ExecRequest {
     pub cwd: PathUri,
     pub env: HashMap<String, String>,
     pub(crate) exec_server_env_config: Option<ExecServerEnvConfig>,
-    pub(crate) exec_server_shell_snapshot: Option<codex_exec_server::ShellSnapshotRequest>,
+    pub(crate) exec_server_shell_snapshot: Option<genex_exec_server::ShellSnapshotRequest>,
     pub network: Option<NetworkProxy>,
     pub network_environment_id: Option<String>,
     pub expiration: ExecExpiration,
@@ -210,7 +210,7 @@ impl ExecRequest {
 pub async fn execute_env(
     exec_request: ExecRequest,
     stdout_stream: Option<StdoutStream>,
-) -> codex_protocol::error::Result<ExecToolCallOutput> {
+) -> genex_protocol::error::Result<ExecToolCallOutput> {
     execute_exec_request(exec_request, stdout_stream, /*after_spawn*/ None).await
 }
 
@@ -218,6 +218,6 @@ pub async fn execute_exec_request_with_after_spawn(
     exec_request: ExecRequest,
     stdout_stream: Option<StdoutStream>,
     after_spawn: Option<Box<dyn FnOnce() + Send>>,
-) -> codex_protocol::error::Result<ExecToolCallOutput> {
+) -> genex_protocol::error::Result<ExecToolCallOutput> {
     execute_exec_request(exec_request, stdout_stream, after_spawn).await
 }

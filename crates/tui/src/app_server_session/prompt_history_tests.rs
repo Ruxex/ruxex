@@ -3,8 +3,8 @@
 use super::*;
 use crate::legacy_core::config::ConfigBuilder;
 use app_test_support::create_fake_rollout;
-use codex_config::types::HistoryPersistence;
-use codex_message_history::HistoryConfig;
+use genex_config::types::HistoryPersistence;
+use genex_message_history::HistoryConfig;
 use pretty_assertions::assert_eq;
 
 #[tokio::test]
@@ -17,8 +17,8 @@ async fn lifecycle_metadata_uses_local_prompt_history() -> Result<()> {
     let local_settings = LocalSettings::from(&local_config);
     let history_config =
         HistoryConfig::new(local_settings.codex_home.clone(), &local_settings.history);
-    codex_message_history::append_entry("local prompt", ThreadId::new(), &history_config).await?;
-    let (log_id, entry_count) = codex_message_history::history_metadata(&history_config).await;
+    genex_message_history::append_entry("local prompt", ThreadId::new(), &history_config).await?;
+    let (log_id, entry_count) = genex_message_history::history_metadata(&history_config).await;
     let expected = Some(MessageHistoryMetadata {
         log_id,
         entry_count,

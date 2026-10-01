@@ -9,8 +9,8 @@
 use std::fmt;
 use std::io::stdout;
 
-use codex_terminal_detection::TerminalName;
-use codex_terminal_detection::terminal_info;
+use genex_terminal_detection::TerminalName;
+use genex_terminal_detection::terminal_info;
 use crossterm::Command;
 use crossterm::event::KeyboardEnhancementFlags;
 use crossterm::event::PopKeyboardEnhancementFlags;
@@ -130,7 +130,7 @@ fn read_windows_vscode_detection() -> VscodeDetection {
     }
     read_windows_vscode_detection_with_timeout(
         || {
-            let executable = codex_utils_path::system_executable("cmd.exe")?;
+            let executable = genex_utils_path::system_executable("cmd.exe")?;
             std::process::Command::new(executable)
                 .args(["/d", "/s", "/c", "set TERM_PROGRAM"])
                 .stdin(std::process::Stdio::null())
@@ -279,8 +279,8 @@ fn tmux_should_enable_modify_other_keys_for(
 }
 
 fn read_tmux_extended_keys_format() -> Option<String> {
-    let executable = codex_utils_path::system_executable("tmux")?;
-    let path = codex_utils_path::system_path().ok()?;
+    let executable = genex_utils_path::system_executable("tmux")?;
+    let path = genex_utils_path::system_path().ok()?;
     for args in [
         ["display-message", "-p", "#{extended-keys-format}"],
         ["show-options", "-gqv", "extended-keys-format"],
@@ -404,7 +404,7 @@ mod tests {
     use super::tmux_session_detected;
     use super::tmux_should_enable_modify_other_keys_for;
     use super::vscode_terminal_detected;
-    use codex_terminal_detection::TerminalName;
+    use genex_terminal_detection::TerminalName;
     use crossterm::Command;
     use crossterm::event::PushKeyboardEnhancementFlags;
     use pretty_assertions::assert_eq;

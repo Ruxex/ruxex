@@ -38,25 +38,25 @@ use crate::keymap::ListKeymap;
 use crate::render::highlight::highlight_bash_to_lines;
 use crate::render::renderable::ColumnRenderable;
 use crate::render::renderable::Renderable;
-use codex_app_server_protocol::AdditionalPermissionProfile;
-use codex_app_server_protocol::CommandExecutionApprovalDecision;
-use codex_app_server_protocol::CommandExecutionApprovalKind;
-use codex_app_server_protocol::FileChangeApprovalDecision;
-use codex_app_server_protocol::FileSystemAccessMode;
-use codex_app_server_protocol::FileSystemPath;
-use codex_app_server_protocol::FileSystemSandboxEntry;
-use codex_app_server_protocol::FileSystemSpecialPath;
-use codex_app_server_protocol::McpServerElicitationAction;
-use codex_app_server_protocol::NetworkApprovalContext;
-use codex_app_server_protocol::NetworkApprovalProtocol;
-use codex_app_server_protocol::NetworkPolicyRuleAction;
-use codex_app_server_protocol::RequestId;
-use codex_features::Features;
-use codex_protocol::ThreadId;
-use codex_protocol::request_permissions::PermissionGrantScope;
-use codex_protocol::request_permissions::RequestPermissionProfile;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::LegacyAppPathString;
+use genex_app_server_protocol::AdditionalPermissionProfile;
+use genex_app_server_protocol::CommandExecutionApprovalDecision;
+use genex_app_server_protocol::CommandExecutionApprovalKind;
+use genex_app_server_protocol::FileChangeApprovalDecision;
+use genex_app_server_protocol::FileSystemAccessMode;
+use genex_app_server_protocol::FileSystemPath;
+use genex_app_server_protocol::FileSystemSandboxEntry;
+use genex_app_server_protocol::FileSystemSpecialPath;
+use genex_app_server_protocol::McpServerElicitationAction;
+use genex_app_server_protocol::NetworkApprovalContext;
+use genex_app_server_protocol::NetworkApprovalProtocol;
+use genex_app_server_protocol::NetworkPolicyRuleAction;
+use genex_app_server_protocol::RequestId;
+use genex_features::Features;
+use genex_protocol::ThreadId;
+use genex_protocol::request_permissions::PermissionGrantScope;
+use genex_protocol::request_permissions::RequestPermissionProfile;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::LegacyAppPathString;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
@@ -439,7 +439,7 @@ impl ApprovalOverlay {
         self.app_event_tx.request_permissions_response(
             thread_id,
             call_id.to_string(),
-            codex_protocol::request_permissions::RequestPermissionsResponse {
+            genex_protocol::request_permissions::RequestPermissionsResponse {
                 permissions: granted_permissions,
                 scope,
             },

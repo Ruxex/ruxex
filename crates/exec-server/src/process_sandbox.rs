@@ -2,36 +2,36 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::process_telemetry::ProcessTelemetry;
-use codex_exec_server_protocol::JSONRPCErrorError;
-use codex_file_system::WindowsSandboxSelection;
-use codex_network_proxy::CUSTOM_CA_ENV_KEYS;
-use codex_network_proxy::ManagedNetworkSandboxContext;
-use codex_network_proxy::ManagedProxyRouting;
-use codex_network_proxy::NetworkPolicyAuditObserver;
-use codex_network_proxy::NetworkPolicyDecider;
-use codex_network_proxy::NetworkProxy;
-use codex_network_proxy::NetworkProxyHandle;
-use codex_network_proxy::NetworkProxyState;
-use codex_network_proxy::RemoteNetworkProxyLaunchConfig;
-use codex_network_proxy::is_managed_mitm_ca_trust_bundle_path;
+use genex_exec_server_protocol::JSONRPCErrorError;
+use genex_file_system::WindowsSandboxSelection;
+use genex_network_proxy::CUSTOM_CA_ENV_KEYS;
+use genex_network_proxy::ManagedNetworkSandboxContext;
+use genex_network_proxy::ManagedProxyRouting;
+use genex_network_proxy::NetworkPolicyAuditObserver;
+use genex_network_proxy::NetworkPolicyDecider;
+use genex_network_proxy::NetworkProxy;
+use genex_network_proxy::NetworkProxyHandle;
+use genex_network_proxy::NetworkProxyState;
+use genex_network_proxy::RemoteNetworkProxyLaunchConfig;
+use genex_network_proxy::is_managed_mitm_ca_trust_bundle_path;
 #[cfg(target_os = "windows")]
-use codex_network_proxy::strip_managed_proxy_env;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::PermissionProfile;
-use codex_sandboxing::SandboxCommand;
-use codex_sandboxing::SandboxDirectSpawnTransformRequest;
-use codex_sandboxing::SandboxManager;
-use codex_sandboxing::SandboxTransformRequest;
-use codex_sandboxing::SandboxType;
-use codex_sandboxing::WindowsSandboxFilesystemOverrides;
-use codex_sandboxing::WindowsSandboxProxySettingsMode;
-use codex_sandboxing::WindowsSandboxSpawnRequest;
-use codex_sandboxing::resolve_windows_elevated_filesystem_overrides;
-use codex_sandboxing::resolve_windows_restricted_token_filesystem_overrides;
-use codex_sandboxing::windows_sandbox_uses_elevated_backend;
-use codex_sandboxing::with_managed_mitm_ca_readable_root;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_network_proxy::strip_managed_proxy_env;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::PermissionProfile;
+use genex_sandboxing::SandboxCommand;
+use genex_sandboxing::SandboxDirectSpawnTransformRequest;
+use genex_sandboxing::SandboxManager;
+use genex_sandboxing::SandboxTransformRequest;
+use genex_sandboxing::SandboxType;
+use genex_sandboxing::WindowsSandboxFilesystemOverrides;
+use genex_sandboxing::WindowsSandboxProxySettingsMode;
+use genex_sandboxing::WindowsSandboxSpawnRequest;
+use genex_sandboxing::resolve_windows_elevated_filesystem_overrides;
+use genex_sandboxing::resolve_windows_restricted_token_filesystem_overrides;
+use genex_sandboxing::windows_sandbox_uses_elevated_backend;
+use genex_sandboxing::with_managed_mitm_ca_readable_root;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 
 #[cfg(unix)]
 use crate::CODEX_ARG0_EXEC_HELPER_ARG1;
@@ -95,7 +95,7 @@ pub(crate) async fn prepare_exec_request_with_telemetry(
                 "MXC custom argv0 and private-desktop launches are not supported".to_owned(),
             ));
         }
-        if !codex_sandboxing::windows_mxc_available() {
+        if !genex_sandboxing::windows_mxc_available() {
             return Err(invalid_params(
                 "native MXC is unavailable on this executor".to_owned(),
             ));
@@ -356,7 +356,7 @@ async fn prepare_managed_network(
     if let Some(launch_context) = &telemetry.launch_context {
         state.set_launch_span_context(launch_context.clone());
     }
-    state.set_process_log_metadata(codex_network_proxy::NetworkProxyProcessLogMetadata {
+    state.set_process_log_metadata(genex_network_proxy::NetworkProxyProcessLogMetadata {
         thread_id: telemetry.thread_id.clone(),
         tool_call_id: telemetry.tool_call_id.clone(),
         executor_identity: None,

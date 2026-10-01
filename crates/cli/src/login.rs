@@ -1,11 +1,11 @@
 //! CLI authentication status and logout commands.
 
-use codex_core::config::Config;
-use codex_core::config::edit::ConfigEdit;
-use codex_core::config::edit::ConfigEditsBuilder;
-use codex_login::logout;
-use codex_protocol::auth::AuthMode;
-use codex_utils_cli::CliConfigOverrides;
+use genex_core::config::Config;
+use genex_core::config::edit::ConfigEdit;
+use genex_core::config::edit::ConfigEditsBuilder;
+use genex_login::logout;
+use genex_protocol::auth::AuthMode;
+use genex_utils_cli::CliConfigOverrides;
 
 pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
     let config = load_config_or_exit(cli_config_overrides).await;

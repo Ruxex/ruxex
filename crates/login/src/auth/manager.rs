@@ -10,9 +10,9 @@ use tokio::sync::Semaphore;
 use tokio::sync::watch;
 use tracing::instrument;
 
-use codex_protocol::auth::AuthMode;
-use codex_protocol::config_types::ForcedLoginMethod;
-use codex_protocol::config_types::ModelProviderAuthInfo;
+use genex_protocol::auth::AuthMode;
+use genex_protocol::config_types::ForcedLoginMethod;
+use genex_protocol::config_types::ModelProviderAuthInfo;
 
 use super::change_state::AuthChangeState;
 use super::change_state::same_owner;
@@ -24,12 +24,12 @@ pub use crate::auth::storage::AuthDotJson;
 pub use crate::auth::storage::AuthKeyringBackendKind;
 use crate::auth::storage::create_auth_storage;
 use crate::outbound_proxy::AuthRouteConfig;
-use codex_config::ManagedAuthPolicy;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyPolicy;
-use codex_protocol::auth::RefreshTokenFailedError;
-use codex_protocol::auth::RefreshTokenFailedReason;
+use genex_config::ManagedAuthPolicy;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyPolicy;
+use genex_protocol::auth::RefreshTokenFailedError;
+use genex_protocol::auth::RefreshTokenFailedReason;
 use thiserror::Error;
 
 /// Authentication mechanism used by the current user.
@@ -975,7 +975,7 @@ pub struct AuthManager {
 ///
 /// Implementations should return the auth-related config values for the
 /// already-resolved runtime configuration. The primary implementation is
-/// `codex_core::config::Config`, but this trait keeps `codex-login` independent
+/// `genex_core::config::Config`, but this trait keeps `codex-login` independent
 /// from `codex-core`.
 pub trait AuthManagerConfig {
     /// Returns the Codex home directory used for auth storage.

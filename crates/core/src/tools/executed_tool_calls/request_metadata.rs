@@ -409,7 +409,7 @@ fn code_mode_input_matches_output(
             ResponseItem::CustomToolCallOutput { .. },
         ) => {
             call_id == origin
-                && crate::tools::code_mode::is_exec_tool_name(&codex_tools::ToolName::new(
+                && crate::tools::code_mode::is_exec_tool_name(&genex_tools::ToolName::new(
                     namespace.clone(),
                     name,
                 ))
@@ -426,7 +426,7 @@ fn code_mode_input_matches_output(
         ) => {
             call_id != origin
                 && name == crate::tools::code_mode::WAIT_TOOL_NAME
-                && codex_tools::ToolName::new(namespace.clone(), name).is_default_namespace()
+                && genex_tools::ToolName::new(namespace.clone(), name).is_default_namespace()
                 && serde_json::from_str::<JsonValue>(arguments).is_ok_and(|arguments| {
                     arguments.get("cell_id").and_then(JsonValue::as_str)
                         == Some(runtime_cell.as_str())

@@ -1,13 +1,13 @@
 use std::path::PathBuf;
 
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::HookCompletedEvent;
-use codex_protocol::protocol::HookEventName;
-use codex_protocol::protocol::HookOutputEntry;
-use codex_protocol::protocol::HookOutputEntryKind;
-use codex_protocol::protocol::HookRunStatus;
-use codex_protocol::protocol::HookRunSummary;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::HookCompletedEvent;
+use genex_protocol::protocol::HookEventName;
+use genex_protocol::protocol::HookOutputEntry;
+use genex_protocol::protocol::HookOutputEntryKind;
+use genex_protocol::protocol::HookRunStatus;
+use genex_protocol::protocol::HookRunSummary;
+use genex_utils_absolute_path::AbsolutePathBuf;
 
 use super::common;
 use crate::engine::ClaudeHooksEngine;
@@ -343,13 +343,13 @@ fn parse_completed(
 
 #[cfg(test)]
 mod tests {
-    use codex_protocol::ThreadId;
-    use codex_protocol::protocol::HookEventName;
-    use codex_protocol::protocol::HookOutputEntry;
-    use codex_protocol::protocol::HookOutputEntryKind;
-    use codex_protocol::protocol::HookRunStatus;
-    use codex_utils_absolute_path::test_support::PathBufExt;
-    use codex_utils_absolute_path::test_support::test_path_buf;
+    use genex_protocol::ThreadId;
+    use genex_protocol::protocol::HookEventName;
+    use genex_protocol::protocol::HookOutputEntry;
+    use genex_protocol::protocol::HookOutputEntryKind;
+    use genex_protocol::protocol::HookRunStatus;
+    use genex_utils_absolute_path::test_support::PathBufExt;
+    use genex_utils_absolute_path::test_support::test_path_buf;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
@@ -530,7 +530,7 @@ mod tests {
             status_message: Some("running compact hook".to_string()),
             additional_context_limit: Default::default(),
             source_path: test_path_buf("/tmp/hooks.json").abs().into(),
-            source: codex_protocol::protocol::HookSource::User,
+            source: genex_protocol::protocol::HookSource::User,
             display_order: 0,
             kind: crate::engine::ConfiguredHandlerKind::Command {
                 command: "python3 compact_hook.py".to_string(),

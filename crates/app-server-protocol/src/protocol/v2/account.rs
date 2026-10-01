@@ -1,14 +1,14 @@
 use crate::JsonSchema;
 use crate::TS;
 use crate::protocol::common::AuthMode;
-use codex_experimental_api_macros::ExperimentalApi;
-use codex_protocol::account::PlanType;
-use codex_protocol::account::ProviderAccount;
-use codex_protocol::protocol::CreditsSnapshot as CoreCreditsSnapshot;
-use codex_protocol::protocol::RateLimitReachedType as CoreRateLimitReachedType;
-use codex_protocol::protocol::RateLimitSnapshot as CoreRateLimitSnapshot;
-use codex_protocol::protocol::RateLimitWindow as CoreRateLimitWindow;
-use codex_protocol::protocol::SpendControlLimitSnapshot as CoreSpendControlLimitSnapshot;
+use genex_experimental_api_macros::ExperimentalApi;
+use genex_protocol::account::PlanType;
+use genex_protocol::account::ProviderAccount;
+use genex_protocol::protocol::CreditsSnapshot as CoreCreditsSnapshot;
+use genex_protocol::protocol::RateLimitReachedType as CoreRateLimitReachedType;
+use genex_protocol::protocol::RateLimitSnapshot as CoreRateLimitSnapshot;
+use genex_protocol::protocol::RateLimitWindow as CoreRateLimitWindow;
+use genex_protocol::protocol::SpendControlLimitSnapshot as CoreSpendControlLimitSnapshot;
 use serde::Deserialize;
 use serde::Serialize;
 

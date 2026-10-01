@@ -2,10 +2,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
-use codex_async_utils::CancelErr;
-use codex_async_utils::OrCancelExt;
-use codex_network_proxy::PROXY_ACTIVE_ENV_KEY;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_async_utils::CancelErr;
+use genex_async_utils::OrCancelExt;
+use genex_network_proxy::PROXY_ACTIVE_ENV_KEY;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use tokio_util::sync::CancellationToken;
 use tracing::error;
 use uuid::Uuid;
@@ -28,22 +28,22 @@ use crate::tools::runtimes::apply_package_path_prepend;
 use crate::tools::runtimes::maybe_wrap_shell_lc_with_snapshot;
 use crate::tools::runtimes::strip_managed_proxy_env;
 use crate::user_shell_command::user_shell_command_record_item;
-use codex_protocol::exec_output::ExecToolCallOutput;
-use codex_protocol::exec_output::StreamOutput;
-use codex_protocol::items::CommandExecutionItem;
-use codex_protocol::items::CommandExecutionStatus;
-use codex_protocol::items::TurnItem;
-use codex_protocol::protocol::ErrorEvent;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecCommandSource;
-use codex_sandboxing::SandboxType;
-use codex_shell_command::parse_command::parse_command;
-use codex_thread_store::PersistContext;
+use genex_protocol::exec_output::ExecToolCallOutput;
+use genex_protocol::exec_output::StreamOutput;
+use genex_protocol::items::CommandExecutionItem;
+use genex_protocol::items::CommandExecutionStatus;
+use genex_protocol::items::TurnItem;
+use genex_protocol::protocol::ErrorEvent;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecCommandSource;
+use genex_sandboxing::SandboxType;
+use genex_shell_command::parse_command::parse_command;
+use genex_thread_store::PersistContext;
 
 use super::SessionTask;
 use super::SessionTaskResult;
 use crate::session::session::Session;
-use codex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfile;
 
 const USER_SHELL_TIMEOUT_MS: u64 = 60 * 60 * 1000; // 1 hour
 

@@ -1,4 +1,4 @@
-use codex_protocol::ThreadId;
+use genex_protocol::ThreadId;
 use serde::Deserialize;
 use serde::Serialize;
 use sqlx::Row;

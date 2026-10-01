@@ -1,5 +1,5 @@
 [package]
-name = "codex-git-utils"
+name = "genex-git-utils"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -11,11 +11,11 @@ workspace = true
 [dependencies]
 anyhow = { workspace = true }
 chrono = { workspace = true }
-codex-file-system = { workspace = true }
-codex-protocol = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-path-uri = { workspace = true }
-codex-utils-pty = { workspace = true }
+genex-file-system = { workspace = true }
+genex-protocol = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
+genex-utils-path-uri = { workspace = true }
+genex-utils-pty = { workspace = true }
 futures = { workspace = true, features = ["alloc"] }
 gix = { workspace = true }
 once_cell = { workspace = true }

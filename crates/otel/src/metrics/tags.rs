@@ -1,7 +1,7 @@
 use crate::metrics::Result;
 use crate::metrics::validation::validate_tag_key;
 use crate::metrics::validation::validate_tag_value;
-use codex_utils_string::sanitize_metric_tag_value;
+use genex_utils_string::sanitize_metric_tag_value;
 
 pub const APP_VERSION_TAG: &str = "app.version";
 pub const AUTH_MODE_TAG: &str = "auth_mode";

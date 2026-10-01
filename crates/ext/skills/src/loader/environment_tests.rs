@@ -1,15 +1,15 @@
 use std::fs;
 
-use codex_exec_server::CapabilityRootDiscoverRequest;
-use codex_exec_server::CapabilityRootsDiscoverParams;
-use codex_exec_server::LOCAL_FS;
-use codex_exec_server::discover_capability_roots;
-use codex_protocol::protocol::Product;
-use codex_skills::EnvironmentSkillMetadata;
-use codex_skills::SkillDependencies;
-use codex_skills::SkillPolicy;
-use codex_skills::SkillToolDependency;
-use codex_utils_path_uri::PathUri;
+use genex_exec_server::CapabilityRootDiscoverRequest;
+use genex_exec_server::CapabilityRootsDiscoverParams;
+use genex_exec_server::LOCAL_FS;
+use genex_exec_server::discover_capability_roots;
+use genex_protocol::protocol::Product;
+use genex_skills::EnvironmentSkillMetadata;
+use genex_skills::SkillDependencies;
+use genex_skills::SkillPolicy;
+use genex_skills::SkillToolDependency;
+use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tempfile::tempdir;
 

@@ -4,7 +4,7 @@
 
 **Goal:** Remove statically unreferenced deprecated public aliases identified by the checked-in Hawk result, while excluding OS-specific, dynamic, generated, protocol, and test-support surfaces.
 
-**Architecture:** Use the existing producer/consumer audit as the first gate, then remove only the three `codex-core` compatibility aliases whose definitions are their only repository references. Compile the workspace and test targets after the change; keep all provider-neutral runtime, platform, protocol, and generated APIs untouched.
+**Architecture:** Use the existing producer/consumer audit as the first gate, then remove only the three `genex-core` compatibility aliases whose definitions are their only repository references. Compile the workspace and test targets after the change; keep all provider-neutral runtime, platform, protocol, and generated APIs untouched.
 
 **Tech Stack:** Rust workspace, Cargo, `just check`, checked-in Hawk JSON, Markdown compatibility inventory.
 
@@ -26,7 +26,7 @@
 - No protocol, generated schema, OS fallback, or test-support symbol may be changed as collateral.
 - Existing user changes in `AGENTS.md`, `docs/provider-specific-crates.md`, and the untracked CLI architecture document must remain untouched.
 
-### Task 1: Remove unused codex-core compatibility aliases
+### Task 1: Remove unused genex-core compatibility aliases
 
 **Files:**
 - Modify: `crates/core/src/lib.rs:122-127`

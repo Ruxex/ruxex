@@ -1,14 +1,14 @@
 use super::*;
 use crate::chatwidget::UserMessage;
-use codex_app_server_protocol::CodexErrorInfo;
-use codex_app_server_protocol::ErrorNotification;
-use codex_app_server_protocol::ThreadGoalStatus;
-use codex_protocol::models::ManagedFileSystemPermissions;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::permissions::NetworkSandboxPolicy;
+use genex_app_server_protocol::CodexErrorInfo;
+use genex_app_server_protocol::ErrorNotification;
+use genex_app_server_protocol::ThreadGoalStatus;
+use genex_protocol::models::ManagedFileSystemPermissions;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSpecialPath;
+use genex_protocol::permissions::NetworkSandboxPolicy;
 use pretty_assertions::assert_eq;
 
 
@@ -87,7 +87,7 @@ async fn misalignment_policy_blocks_queued_turns_and_goal_resumption() -> Result
         AppEvent::CodexOp(crate::app_command::AppCommand::ExecApproval {
             id: "queued-approval".to_string(),
             turn_id: None,
-            decision: codex_app_server_protocol::CommandExecutionApprovalDecision::Accept,
+            decision: genex_app_server_protocol::CommandExecutionApprovalDecision::Accept,
         }),
         AppEvent::SetThreadGoalStatus {
             thread_id,

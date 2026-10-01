@@ -3,10 +3,10 @@ use crate::context::ContextualUserFragment;
 use crate::context::InternalContextSource;
 use crate::context::InternalModelContextFragment;
 use crate::context::SubagentNotification;
-use codex_protocol::items::HookPromptFragment;
-use codex_protocol::items::build_hook_prompt_message;
-use codex_protocol::models::ContentItemKind;
-use codex_protocol::models::ResponseItem;
+use genex_protocol::items::HookPromptFragment;
+use genex_protocol::items::build_hook_prompt_message;
+use genex_protocol::models::ContentItemKind;
+use genex_protocol::models::ResponseItem;
 use pretty_assertions::assert_eq;
 
 #[test]

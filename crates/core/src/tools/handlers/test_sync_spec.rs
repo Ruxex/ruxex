@@ -1,6 +1,6 @@
-use codex_tools::JsonSchema;
-use codex_tools::ResponsesApiTool;
-use codex_tools::ToolSpec;
+use genex_tools::JsonSchema;
+use genex_tools::ResponsesApiTool;
+use genex_tools::ToolSpec;
 use std::collections::BTreeMap;
 
 pub fn create_test_sync_tool() -> ToolSpec {

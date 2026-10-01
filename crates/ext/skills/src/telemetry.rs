@@ -4,15 +4,15 @@ use std::sync::Mutex;
 use std::sync::Weak;
 use std::time::Instant;
 
-use codex_extension_api::ExtensionData;
-use codex_extension_api::ExtensionFuture;
-use codex_extension_api::TurnAbortInput;
-use codex_extension_api::TurnErrorInput;
-use codex_extension_api::TurnLifecycleContributor;
-use codex_extension_api::TurnStartInput;
-use codex_extension_api::TurnStopInput;
-use codex_otel::sanitize_metric_tag_value;
-use codex_protocol::model_types::ModelInfo;
+use genex_extension_api::ExtensionData;
+use genex_extension_api::ExtensionFuture;
+use genex_extension_api::TurnAbortInput;
+use genex_extension_api::TurnErrorInput;
+use genex_extension_api::TurnLifecycleContributor;
+use genex_extension_api::TurnStartInput;
+use genex_extension_api::TurnStopInput;
+use genex_otel::sanitize_metric_tag_value;
+use genex_protocol::model_types::ModelInfo;
 
 use crate::state::SkillsSessionState;
 

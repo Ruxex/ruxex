@@ -1,10 +1,10 @@
 use anyhow::Result;
 use anyhow::anyhow;
 use app_test_support::TestAppServer;
-use codex_app_server_protocol::FuzzyFileSearchSessionCompletedNotification;
-use codex_app_server_protocol::FuzzyFileSearchSessionUpdatedNotification;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
+use genex_app_server_protocol::FuzzyFileSearchSessionCompletedNotification;
+use genex_app_server_protocol::FuzzyFileSearchSessionUpdatedNotification;
+use genex_app_server_protocol::JSONRPCResponse;
+use genex_app_server_protocol::RequestId;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::path::Path;

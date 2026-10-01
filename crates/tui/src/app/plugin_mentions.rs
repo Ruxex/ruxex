@@ -6,10 +6,10 @@
 
 use super::background_requests::request_plugin_list;
 use super::*;
-use codex_app_server_protocol::PluginAvailability;
-use codex_app_server_protocol::PluginListResponse;
-use codex_app_server_protocol::PluginSummary;
-use codex_plugin::PluginCapabilitySummary;
+use genex_app_server_protocol::PluginAvailability;
+use genex_app_server_protocol::PluginListResponse;
+use genex_app_server_protocol::PluginSummary;
+use genex_plugin::PluginCapabilitySummary;
 
 pub(super) async fn fetch_plugin_mentions(
     request_handle: AppServerRequestHandle,

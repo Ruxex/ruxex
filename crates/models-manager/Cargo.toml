@@ -1,12 +1,12 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-models-manager"
+name = "genex-models-manager"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "codex_models_manager"
+name = "genex_models_manager"
 path = "src/lib.rs"
 
 [lints]
@@ -14,12 +14,12 @@ workspace = true
 
 [dependencies]
 chrono = { workspace = true, features = ["serde"] }
-codex-http-client = { workspace = true }
-codex-login = { workspace = true }
-codex-otel = { workspace = true }
-codex-protocol = { workspace = true }
-codex-prompts = { workspace = true }
-codex-utils-output-truncation = { workspace = true }
+genex-http-client = { workspace = true }
+genex-login = { workspace = true }
+genex-otel = { workspace = true }
+genex-protocol = { workspace = true }
+genex-prompts = { workspace = true }
+genex-utils-output-truncation = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["fs", "sync", "time"] }

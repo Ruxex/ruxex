@@ -2,11 +2,11 @@
 build = "build.rs"
 edition.workspace = true
 license.workspace = true
-name = "codex-windows-sandbox"
+name = "genex-windows-sandbox"
 version.workspace = true
 
 [lib]
-name = "codex_windows_sandbox"
+name = "genex_windows_sandbox"
 path = "src/lib.rs"
 doctest = false
 
@@ -32,10 +32,10 @@ chrono = { version = "0.4.42", default-features = false, features = [
     "clock",
     "std",
 ] }
-codex-utils-pty = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-string = { workspace = true }
-codex-otel = { workspace = true }
+genex-utils-pty = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
+genex-utils-string = { workspace = true }
+genex-otel = { workspace = true }
 dunce = "1.0"
 glob = { workspace = true }
 serde = { version = "1.0", features = ["derive"] }
@@ -50,8 +50,8 @@ windows = { version = "0.58", features = [
     "Win32_System_Variant",
 ] }
 
-[dependencies.codex-protocol]
-package = "codex-protocol"
+[dependencies.genex-protocol]
+package = "genex-protocol"
 path = "../protocol"
 
 [dependencies.rand]

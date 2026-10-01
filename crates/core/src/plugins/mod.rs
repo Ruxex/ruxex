@@ -7,12 +7,12 @@ mod render;
 pub(crate) mod test_support;
 
 use crate::config::Config;
-use codex_core_plugins::PluginsManager;
-use codex_login::AuthManager;
-use codex_skills_extension::HostSkillsService;
+use genex_core_plugins::PluginsManager;
+use genex_login::AuthManager;
+use genex_skills_extension::HostSkillsService;
 use std::sync::Arc;
 
-pub(crate) use codex_plugin::PluginCapabilitySummary;
+pub(crate) use genex_plugin::PluginCapabilitySummary;
 
 pub(crate) use discoverable::list_tool_suggest_discoverable_plugins;
 pub(crate) use injection::build_plugin_injections;

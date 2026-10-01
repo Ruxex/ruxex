@@ -1,21 +1,21 @@
 use std::sync::Arc;
 
-use codex_core::ForkSnapshot;
-use codex_core::NewThread;
-use codex_core::TurnInputRequest;
-use codex_core::parse_turn_item;
-use codex_history::InitialHistory;
-use codex_history::ResumedHistory;
-use codex_history::RolloutItem;
-use codex_protocol::ThreadId;
-use codex_protocol::items::TurnItem;
-use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadSettingsAppliedEvent;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::ThreadSettingsSnapshot;
-use codex_protocol::user_input::UserInput;
+use genex_core::ForkSnapshot;
+use genex_core::NewThread;
+use genex_core::TurnInputRequest;
+use genex_core::parse_turn_item;
+use genex_history::InitialHistory;
+use genex_history::ResumedHistory;
+use genex_history::RolloutItem;
+use genex_protocol::ThreadId;
+use genex_protocol::items::TurnItem;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::ThreadSettingsAppliedEvent;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::ThreadSettingsSnapshot;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
@@ -103,7 +103,7 @@ async fn fork_thread_twice_drops_to_first_message() {
     } = thread_manager
         .fork_thread(
             ForkSnapshot::TruncateBeforeNthUserMessage(1),
-            codex_core::StartThreadOptions::new(config_for_fork.clone()),
+            genex_core::StartThreadOptions::new(config_for_fork.clone()),
             base_path.clone(),
         )
         .await
@@ -130,7 +130,7 @@ async fn fork_thread_twice_drops_to_first_message() {
     } = thread_manager
         .fork_thread(
             ForkSnapshot::TruncateBeforeNthUserMessage(0),
-            codex_core::StartThreadOptions::new(config_for_fork.clone()),
+            genex_core::StartThreadOptions::new(config_for_fork.clone()),
             fork1_path.clone(),
         )
         .await
@@ -206,7 +206,7 @@ async fn fork_thread_restores_history_selection_and_preserves_explicit_clear() -
         .thread_manager
         .fork_thread_from_history(
             ForkSnapshot::Interrupted,
-            codex_core::StartThreadOptions::new(test.config.clone()),
+            genex_core::StartThreadOptions::new(test.config.clone()),
             history.clone(),
         )
         .await?;
@@ -223,9 +223,9 @@ async fn fork_thread_restores_history_selection_and_preserves_explicit_clear() -
         .thread_manager
         .fork_thread_from_history(
             ForkSnapshot::Interrupted,
-            codex_core::StartThreadOptions {
+            genex_core::StartThreadOptions {
                 disabled_plugin_ids: Some(Vec::new()),
-                ..codex_core::StartThreadOptions::new(test.config.clone())
+                ..genex_core::StartThreadOptions::new(test.config.clone())
             },
             history,
         )
@@ -287,7 +287,7 @@ async fn assert_copied_fork_persists_inherited_history(history_mode: ThreadHisto
 
     let source_path = codex.rollout_path().expect("source rollout path");
     let source_items = read_rollout_items(&source_path);
-    let source_meta = codex_rollout::read_session_meta_line(source_path.as_path())
+    let source_meta = genex_rollout::read_session_meta_line(source_path.as_path())
         .await
         .expect("read source session metadata");
     let mut supplied_history = vec![RolloutItem::SessionMeta(source_meta)];
@@ -298,7 +298,7 @@ async fn assert_copied_fork_persists_inherited_history(history_mode: ThreadHisto
     } = thread_manager
         .fork_thread_from_history(
             ForkSnapshot::Interrupted,
-            codex_core::StartThreadOptions::new(test.config.clone()),
+            genex_core::StartThreadOptions::new(test.config.clone()),
             InitialHistory::Resumed(ResumedHistory {
                 conversation_id: test.session_configured.thread_id,
                 history: Arc::new(supplied_history),
@@ -328,15 +328,15 @@ async fn assert_copied_fork_persists_inherited_history(history_mode: ThreadHisto
             .shutdown_and_wait()
             .await
             .expect("shutdown copied paginated fork");
-        let resumed_history = codex_rollout::RolloutRecorder::get_rollout_history(&forked_path)
+        let resumed_history = genex_rollout::RolloutRecorder::get_rollout_history(&forked_path)
             .await
             .expect("load copied paginated fork history");
         let resumed = thread_manager
             .resume_thread_with_history(
                 test.config.clone(),
                 resumed_history,
-                codex_core::test_support::auth_manager_from_auth(
-                    codex_login::CodexAuth::from_api_key("dummy"),
+                genex_core::test_support::auth_manager_from_auth(
+                    genex_login::CodexAuth::from_api_key("dummy"),
                 ),
                 /*parent_trace*/ None,
                 ClientMcpExtensions::default(),
@@ -377,7 +377,7 @@ fn read_rollout_items(path: &std::path::Path) -> Vec<RolloutItem> {
         let parse_json_message = format!("failed to parse rollout JSON line `{line}`");
         let v: serde_json::Value = serde_json::from_str(line).expect(&parse_json_message);
         let parse_line_message = format!("failed to parse rollout line `{line}`");
-        let rl = codex_rollout::decode_rollout_line(v).expect(&parse_line_message);
+        let rl = genex_rollout::decode_rollout_line(v).expect(&parse_line_message);
         match rl.item {
             RolloutItem::SessionMeta(_) => {}
             other => items.push(other),

@@ -1,42 +1,42 @@
 use anyhow::Result;
-use codex_core::CodexThread;
-use codex_core::ForkSnapshot;
-use codex_core::TurnInputRequest;
-use codex_core::config::Constrained;
-use codex_features::Feature;
-use codex_history::RolloutItem;
-use codex_login::CodexAuth;
-use codex_models_manager::test_support::test_models_response;
-use codex_models_manager::manager::RefreshStrategy;
-use codex_prompts::render_model_instructions;
-use codex_protocol::config_types::ApprovalsReviewer;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::config_types::Settings;
-use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::models::BaseInstructionsProvenance;
-use codex_protocol::models::ImageReference;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::model_types::ConfigShellToolType;
-use codex_protocol::model_types::InputModality;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelServiceTier;
-use codex_protocol::model_types::ModelVisibility;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::model_types::ReasoningEffortPreset;
-use codex_protocol::model_types::TruncationPolicyConfig;
-use codex_protocol::model_types::default_input_modalities;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::request_user_input::RequestUserInputAnswer;
-use codex_protocol::request_user_input::RequestUserInputResponse;
-use codex_protocol::user_input::UserInput;
+use genex_core::CodexThread;
+use genex_core::ForkSnapshot;
+use genex_core::TurnInputRequest;
+use genex_core::config::Constrained;
+use genex_features::Feature;
+use genex_history::RolloutItem;
+use genex_login::CodexAuth;
+use genex_models_manager::test_support::test_models_response;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_prompts::render_model_instructions;
+use genex_protocol::config_types::ApprovalsReviewer;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use genex_protocol::config_types::ServiceTier;
+use genex_protocol::config_types::Settings;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::models::BaseInstructionsProvenance;
+use genex_protocol::models::ImageReference;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::model_types::ConfigShellToolType;
+use genex_protocol::model_types::InputModality;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelServiceTier;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::model_types::TruncationPolicyConfig;
+use genex_protocol::model_types::default_input_modalities;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::request_user_input::RequestUserInputAnswer;
+use genex_protocol::request_user_input::RequestUserInputResponse;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_completed_with_tokens;
@@ -231,7 +231,7 @@ async fn first_turn_after_empty_prefix_fork_preserves_inherited_base_instruction
     test.codex.flush_rollout().await?;
     let source_rollout_path = test.codex.rollout_path().expect("rollout path");
     let source_history =
-        codex_rollout::RolloutRecorder::get_rollout_history(&source_rollout_path).await?;
+        genex_rollout::RolloutRecorder::get_rollout_history(&source_rollout_path).await?;
     let expected_provenance = match custom_base_instructions {
         Some(_) => BaseInstructionsProvenance::Custom,
         None => BaseInstructionsProvenance::Model {
@@ -252,7 +252,7 @@ async fn first_turn_after_empty_prefix_fork_preserves_inherited_base_instruction
         .thread_manager
         .fork_thread(
             ForkSnapshot::TruncateBeforeNthUserMessage(0),
-            codex_core::StartThreadOptions::new(fork_config),
+            genex_core::StartThreadOptions::new(fork_config),
             source_rollout_path,
         )
         .await?;
@@ -346,7 +346,7 @@ async fn model_change_appends_model_instructions_developer_message() -> Result<(
     let rollout_path = test.codex.rollout_path().expect("rollout path");
     let model_states = std::fs::read_to_string(rollout_path)?
         .lines()
-        .map(codex_rollout::parse_rollout_line)
+        .map(genex_rollout::parse_rollout_line)
         .collect::<serde_json::Result<Vec<_>>>()?
         .into_iter()
         .filter_map(|line| match line.item {
@@ -798,13 +798,13 @@ async fn model_change_projects_media_without_changing_live_or_replayed_history(
     let _ = models_manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
     let mut png = std::io::Cursor::new(Vec::new());
     image::DynamicImage::new_rgba8(/*w*/ 2048, /*h*/ 2048)
         .write_to(&mut png, image::ImageFormat::Png)?;
-    let image_url = codex_utils_image::data_url_from_bytes("image/png", &png.into_inner());
+    let image_url = genex_utils_image::data_url_from_bytes("image/png", &png.into_inner());
 
     test.codex
         .start_or_steer_turn(read_only_user_turn(
@@ -914,7 +914,7 @@ async fn model_change_projects_media_without_changing_live_or_replayed_history(
             test.thread_manager
                 .fork_thread(
                     ForkSnapshot::Interrupted,
-                    codex_core::StartThreadOptions::new(test.config.clone()),
+                    genex_core::StartThreadOptions::new(test.config.clone()),
                     rollout_path,
                 )
                 .await?
@@ -982,7 +982,7 @@ async fn generated_image_is_replayed_for_image_capable_models() -> Result<()> {
     let _ = models_manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
 
@@ -1079,7 +1079,7 @@ async fn model_change_from_generated_image_to_text_preserves_prior_generated_ima
     let _ = models_manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
 
@@ -1240,7 +1240,7 @@ async fn model_switch_to_smaller_model_updates_token_context_window() -> Result<
     let available_models = models_manager
         .list_models(
             RefreshStrategy::Online,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
     assert!(

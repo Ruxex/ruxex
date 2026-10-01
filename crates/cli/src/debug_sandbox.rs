@@ -7,28 +7,28 @@ use std::path::PathBuf;
 use std::process::Stdio;
 
 use anyhow::Context as _;
-use codex_config::LoaderOverrides;
-use codex_core::config::Config;
-use codex_core::config::ConfigBuilder;
-use codex_core::config::ConfigOverrides;
-use codex_core::config::NetworkProxyAuditMetadata;
-use codex_core::exec_env::create_env;
+use genex_config::LoaderOverrides;
+use genex_core::config::Config;
+use genex_core::config::ConfigBuilder;
+use genex_core::config::ConfigOverrides;
+use genex_core::config::NetworkProxyAuditMetadata;
+use genex_core::exec_env::create_env;
 #[cfg(target_os = "macos")]
-use codex_core::spawn::CODEX_SANDBOX_ENV_VAR;
-use codex_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
-use codex_core::windows_sandbox::managed_proxy_routing_for_windows_sandbox;
-use codex_protocol::config_types::SandboxMode;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::SandboxEnforcement;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_sandboxing::landlock::create_linux_sandbox_command_args_for_permission_profile;
+use genex_core::spawn::CODEX_SANDBOX_ENV_VAR;
+use genex_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
+use genex_core::windows_sandbox::managed_proxy_routing_for_windows_sandbox;
+use genex_protocol::config_types::SandboxMode;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::SandboxEnforcement;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_sandboxing::landlock::create_linux_sandbox_command_args_for_permission_profile;
 #[cfg(target_os = "macos")]
-use codex_sandboxing::seatbelt::CreateSeatbeltCommandArgsParams;
+use genex_sandboxing::seatbelt::CreateSeatbeltCommandArgsParams;
 #[cfg(target_os = "macos")]
-use codex_sandboxing::seatbelt::create_seatbelt_command_args;
-use codex_sandboxing::with_managed_mitm_ca_readable_root;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_cli::CliConfigOverrides;
+use genex_sandboxing::seatbelt::create_seatbelt_command_args;
+use genex_sandboxing::with_managed_mitm_ca_readable_root;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_cli::CliConfigOverrides;
 use tokio::process::Child;
 use tokio::process::Command as TokioCommand;
 use toml::Value as TomlValue;
@@ -210,7 +210,7 @@ async fn run_command_under_sandbox(
         .sandbox_state
         .sandbox_state_json
         .as_deref()
-        .map(serde_json::from_str::<codex_mcp::SandboxState>)
+        .map(serde_json::from_str::<genex_mcp::SandboxState>)
         .transpose()
         .map_err(|err| anyhow::anyhow!("invalid --sandbox-state-json value: {err}"))?;
     let sandbox_state_readable_root = config_options
@@ -315,12 +315,12 @@ async fn run_command_under_sandbox(
     if let SandboxType::Windows = sandbox_type {
         #[cfg(target_os = "windows")]
         {
-            if config.permissions.windows_sandbox_type != codex_sandboxing::SandboxType::WindowsMxc
+            if config.permissions.windows_sandbox_type != genex_sandboxing::SandboxType::WindowsMxc
             {
                 let workspace_roots = config
                     .effective_workspace_roots()
                     .iter()
-                    .map(codex_utils_path_uri::PathUri::to_abs_path)
+                    .map(genex_utils_path_uri::PathUri::to_abs_path)
                     .collect::<std::io::Result<Vec<_>>>()
                     .context("invalid Windows sandbox workspace roots")?;
                 run_command_under_windows_session(
@@ -365,7 +365,7 @@ async fn run_command_under_sandbox(
     };
     let network = network_proxy
         .as_ref()
-        .map(codex_core::config::StartedNetworkProxy::proxy);
+        .map(genex_core::config::StartedNetworkProxy::proxy);
     // Proxy containment depends on whether a proxy is active, not whether its
     // policy came from managed requirements.
     #[cfg(any(target_os = "macos", target_os = "windows"))]
@@ -460,10 +460,10 @@ async fn run_command_under_sandbox(
         }
         #[cfg(target_os = "windows")]
         SandboxType::Windows => {
-            use codex_sandboxing::SandboxCommand;
-            use codex_sandboxing::SandboxManager;
-            use codex_sandboxing::SandboxTransformRequest;
-            use codex_utils_path_uri::PathUri;
+            use genex_sandboxing::SandboxCommand;
+            use genex_sandboxing::SandboxManager;
+            use genex_sandboxing::SandboxTransformRequest;
+            use genex_utils_path_uri::PathUri;
 
             let (program, args) = command
                 .split_first()
@@ -480,14 +480,14 @@ async fn run_command_under_sandbox(
                     additional_permissions: None,
                 },
                 permissions: &runtime_permission_profile,
-                sandbox: codex_sandboxing::SandboxType::WindowsMxc,
+                sandbox: genex_sandboxing::SandboxType::WindowsMxc,
                 enforce_managed_network,
                 environment_id: None,
                 network: network.as_ref(),
                 sandbox_policy_cwd: &sandbox_policy_cwd,
                 sandbox_exe: Some(codex_self_exe.as_path()),
                 use_legacy_landlock: false,
-                windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel::Disabled,
+                windows_sandbox_level: genex_protocol::config_types::WindowsSandboxLevel::Disabled,
                 windows_sandbox_private_desktop: false,
             })?;
             let (program, args) = request
@@ -539,12 +539,12 @@ async fn run_command_under_windows_session(
     workspace_roots: Vec<AbsolutePathBuf>,
     env: std::collections::HashMap<String, String>,
 ) -> ! {
-    use codex_core::windows_sandbox::WindowsSandboxLevelExt;
-    use codex_protocol::config_types::WindowsSandboxLevel;
-    use codex_windows_sandbox::WindowsSandboxProxySettingsMode;
-    use codex_windows_sandbox::WindowsSandboxSessionRequest;
-    use codex_windows_sandbox::resolve_windows_deny_read_paths;
-    use codex_windows_sandbox::spawn_windows_sandbox_session_for_level;
+    use genex_core::windows_sandbox::WindowsSandboxLevelExt;
+    use genex_protocol::config_types::WindowsSandboxLevel;
+    use genex_windows_sandbox::WindowsSandboxProxySettingsMode;
+    use genex_windows_sandbox::WindowsSandboxSessionRequest;
+    use genex_windows_sandbox::resolve_windows_deny_read_paths;
+    use genex_windows_sandbox::spawn_windows_sandbox_session_for_level;
 
     // Setup reconciles persistent deny ACLs against this list. An empty list
     // would discard the profile's denies, including on subsequent launches.
@@ -591,7 +591,7 @@ async fn run_command_under_windows_session(
         }
     };
 
-    let exit_code = codex_windows_sandbox::forward_sandbox_session_stdio(spawned).await;
+    let exit_code = genex_windows_sandbox::forward_sandbox_session_stdio(spawned).await;
     std::process::exit(exit_code);
 }
 

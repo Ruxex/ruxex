@@ -2,7 +2,7 @@
 //! Startup is counted once after credential retry; commands are counted on exit or pipe failure.
 
 pub(crate) fn record(phase: &'static str, outcome: &'static str) {
-    if let Some(metrics) = codex_otel::global() {
+    if let Some(metrics) = genex_otel::global() {
         // Fixed labels only: never send command text, paths, or arbitrary error messages.
         let _ = metrics.counter(
             "codex.windows_sandbox.runner_result",

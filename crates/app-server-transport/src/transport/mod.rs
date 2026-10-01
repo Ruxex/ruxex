@@ -4,11 +4,11 @@ use crate::outgoing_message::ConnectionId;
 use crate::outgoing_message::OutgoingError;
 use crate::outgoing_message::OutgoingMessage;
 use crate::outgoing_message::QueuedOutgoingMessage;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::RequestId;
-use codex_core::config::find_codex_home;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::RequestId;
+use genex_core::config::find_codex_home;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use std::net::SocketAddr;
 use std::path::Path;
 use std::path::PathBuf;
@@ -289,15 +289,15 @@ fn response_serialization_error(
 mod tests {
     use super::*;
     use crate::outgoing_message::OutgoingResponse;
-    use codex_app_server_protocol::ClientResponsePayload;
-    use codex_app_server_protocol::ConfigWarningNotification;
-    use codex_app_server_protocol::JSONRPCNotification;
-    use codex_app_server_protocol::JSONRPCRequest;
-    use codex_app_server_protocol::JSONRPCResponse;
-    use codex_app_server_protocol::RequestId;
-    use codex_app_server_protocol::ServerNotification;
-    use codex_app_server_protocol::ServerNotificationEnvelope;
-    use codex_app_server_protocol::ThreadArchiveResponse;
+    use genex_app_server_protocol::ClientResponsePayload;
+    use genex_app_server_protocol::ConfigWarningNotification;
+    use genex_app_server_protocol::JSONRPCNotification;
+    use genex_app_server_protocol::JSONRPCRequest;
+    use genex_app_server_protocol::JSONRPCResponse;
+    use genex_app_server_protocol::RequestId;
+    use genex_app_server_protocol::ServerNotification;
+    use genex_app_server_protocol::ServerNotificationEnvelope;
+    use genex_app_server_protocol::ThreadArchiveResponse;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use tokio::time::Duration;
@@ -368,7 +368,7 @@ mod tests {
         let message = OutgoingMessage::Response(OutgoingResponse {
             id: RequestId::Integer(7),
             result: Box::new(ClientResponsePayload::Initialize(
-                codex_app_server_protocol::InitializeResponse {
+                genex_app_server_protocol::InitializeResponse {
                     user_agent: "codex-test-agent".to_string(),
                     codex_home,
                     platform_family: "unix".to_string(),

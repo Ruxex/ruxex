@@ -18,7 +18,7 @@ use std::time::Duration;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
-use codex_http_client::RouteAwareClientPool;
+use genex_http_client::RouteAwareClientPool;
 use url::Url;
 use uuid::Uuid;
 

@@ -2,8 +2,8 @@ use std::time::Duration;
 
 use anyhow::Result;
 use anyhow::anyhow;
-use codex_features::Feature;
-use codex_login::CodexAuth;
+use genex_features::Feature;
+use genex_login::CodexAuth;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_function_call_with_namespace;
@@ -161,8 +161,8 @@ async fn api_key_subagent_uses_session_id_as_prompt_cache_key() -> Result<()> {
 
 #[tokio::test]
 async fn ephemeral_fork_shares_cache_routing_but_keeps_session_identity() -> Result<()> {
-    use codex_core::ForkSnapshot;
-    use codex_core::StartThreadOptions;
+    use genex_core::ForkSnapshot;
+    use genex_core::StartThreadOptions;
     use core_test_support::responses::mount_sse_sequence;
 
     let server = start_mock_server().await;

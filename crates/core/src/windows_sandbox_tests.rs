@@ -1,9 +1,9 @@
 use super::*;
-use codex_config::types::WindowsToml;
-use codex_features::Features;
-use codex_features::FeaturesToml;
-use codex_network_proxy::NetworkProxyConfig;
-use codex_protocol::models::PermissionProfile;
+use genex_config::types::WindowsToml;
+use genex_features::Features;
+use genex_features::FeaturesToml;
+use genex_network_proxy::NetworkProxyConfig;
+use genex_protocol::models::PermissionProfile;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 
@@ -137,7 +137,7 @@ fn provisioning_settings_omit_the_disabled_socks_proxy() {
 
     assert_eq!(
         provisioning_settings(Some(&spec)).expect("provisioning settings should resolve"),
-        codex_windows_sandbox::WindowsSandboxProvisioningSettings {
+        genex_windows_sandbox::WindowsSandboxProvisioningSettings {
             proxy_ports: vec![43128],
             allow_local_binding: true,
         }
@@ -155,6 +155,6 @@ fn provisioning_settings_are_empty_when_managed_network_is_disabled() {
 
     assert_eq!(
         provisioning_settings(Some(&spec)).expect("provisioning settings should resolve"),
-        codex_windows_sandbox::WindowsSandboxProvisioningSettings::default()
+        genex_windows_sandbox::WindowsSandboxProvisioningSettings::default()
     );
 }

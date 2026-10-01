@@ -14,9 +14,9 @@ use std::time::SystemTime;
 
 use chrono::DateTime;
 use chrono::Utc;
-use codex_aws_auth::AwsAccessKeys;
-use codex_aws_auth::AwsCredentialsProvider;
-use codex_model_provider_info::AwsCredentialExportConfig;
+use genex_aws_auth::AwsAccessKeys;
+use genex_aws_auth::AwsCredentialsProvider;
+use genex_model_provider_info::AwsCredentialExportConfig;
 use serde::Deserialize;
 use tokio::io::AsyncReadExt;
 use tokio::process::Command;

@@ -8,21 +8,21 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use codex_code_mode_protocol::CellId;
-use codex_code_mode_protocol::CodeModeSession;
-use codex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
-use codex_code_mode_protocol::CodeModeSessionDelegate;
-use codex_code_mode_protocol::CodeModeSessionProvider;
-use codex_code_mode_protocol::CodeModeSessionProviderFuture;
-use codex_code_mode_protocol::CodeModeSessionResultFuture;
-use codex_code_mode_protocol::ExecuteRequest;
-use codex_code_mode_protocol::StartedCell;
-use codex_code_mode_protocol::WaitOutcome;
-use codex_code_mode_protocol::WaitRequest;
-use codex_code_mode_protocol::grpc;
-use codex_code_mode_protocol::grpc::code_mode_host_client::CodeModeHostClient;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyPolicy;
+use genex_code_mode_protocol::CellId;
+use genex_code_mode_protocol::CodeModeSession;
+use genex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
+use genex_code_mode_protocol::CodeModeSessionDelegate;
+use genex_code_mode_protocol::CodeModeSessionProvider;
+use genex_code_mode_protocol::CodeModeSessionProviderFuture;
+use genex_code_mode_protocol::CodeModeSessionResultFuture;
+use genex_code_mode_protocol::ExecuteRequest;
+use genex_code_mode_protocol::StartedCell;
+use genex_code_mode_protocol::WaitOutcome;
+use genex_code_mode_protocol::WaitRequest;
+use genex_code_mode_protocol::grpc;
+use genex_code_mode_protocol::grpc::code_mode_host_client::CodeModeHostClient;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyPolicy;
 use tokio::sync::watch;
 use tokio_util::sync::CancellationToken;
 use tokio_util::task::TaskTracker;
@@ -52,7 +52,7 @@ const SHUTDOWN_ERROR: &str = "code mode session is shutting down";
 
 fn inject_span_traceparent<T>(request: &mut tonic::Request<T>, span: &tracing::Span) {
     if let Some(traceparent) =
-        codex_otel::span_w3c_trace_context(span).and_then(|trace| trace.traceparent)
+        genex_otel::span_w3c_trace_context(span).and_then(|trace| trace.traceparent)
         && let Ok(traceparent) = traceparent.parse()
     {
         request.metadata_mut().insert("traceparent", traceparent);

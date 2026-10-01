@@ -4,25 +4,25 @@ use app_test_support::TestAppServer;
 use app_test_support::create_fake_paginated_rollout;
 use app_test_support::create_fake_rollout;
 use app_test_support::create_mock_responses_server_repeating_assistant;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadDeleteParams;
-use codex_app_server_protocol::ThreadDeleteResponse;
-use codex_app_server_protocol::ThreadDeletedNotification;
-use codex_app_server_protocol::ThreadLoadedListParams;
-use codex_app_server_protocol::ThreadLoadedListResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_core::find_thread_path_by_id_str;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::HistoryPosition;
-use codex_state::DirectionalThreadSpawnEdgeStatus;
-use codex_state::SqliteConfig;
-use codex_state::StateRuntime;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ThreadDeleteParams;
+use genex_app_server_protocol::ThreadDeleteResponse;
+use genex_app_server_protocol::ThreadDeletedNotification;
+use genex_app_server_protocol::ThreadLoadedListParams;
+use genex_app_server_protocol::ThreadLoadedListResponse;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_core::find_thread_path_by_id_str;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::HistoryPosition;
+use genex_state::DirectionalThreadSpawnEdgeStatus;
+use genex_state::SqliteConfig;
+use genex_state::StateRuntime;
+use genex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 use std::path::Path;
 use tempfile::TempDir;
@@ -97,7 +97,7 @@ async fn thread_delete_deletes_spawned_descendants() -> Result<()> {
         create_delete_test_rollout(codex_home.path(), /*minute*/ 2, "grandchild")?;
 
     let state_db = StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;

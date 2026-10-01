@@ -1,11 +1,11 @@
 [package]
-name = "codex-app-server-protocol"
+name = "genex-app-server-protocol"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "codex_app_server_protocol"
+name = "genex_app_server_protocol"
 path = "src/lib.rs"
 doctest = false
 
@@ -14,17 +14,17 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-codex-experimental-api-macros = { workspace = true }
-codex-app-server-protocol-noop-macros = { workspace = true }
-codex-extension-items = { workspace = true }
-codex-history = { workspace = true }
-codex-protocol = { workspace = true }
-codex-rollout = { workspace = true }
-codex-secrets = { workspace = true }
-codex-shell-command = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-path-uri = { workspace = true }
-codex-utils-redacted-string = { workspace = true }
+genex-experimental-api-macros = { workspace = true }
+genex-app-server-protocol-noop-macros = { workspace = true }
+genex-extension-items = { workspace = true }
+genex-history = { workspace = true }
+genex-protocol = { workspace = true }
+genex-rollout = { workspace = true }
+genex-secrets = { workspace = true }
+genex-shell-command = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
+genex-utils-path-uri = { workspace = true }
+genex-utils-redacted-string = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 serde_with = { workspace = true }
@@ -42,7 +42,7 @@ zstd = { workspace = true }
 
 [dev-dependencies]
 anyhow = { workspace = true }
-codex-utils-cargo-bin = { workspace = true }
+genex-utils-cargo-bin = { workspace = true }
 pretty_assertions = { workspace = true }
 rmcp = { workspace = true, default-features = false, features = [
     "base64",

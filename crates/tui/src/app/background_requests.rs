@@ -7,18 +7,18 @@
 use super::plugin_mentions::fetch_plugin_mentions;
 use super::*;
 use crate::config_update::format_config_error;
-use codex_app_server_protocol::MarketplaceAddParams;
-use codex_app_server_protocol::MarketplaceAddResponse;
-use codex_app_server_protocol::MarketplaceRemoveParams;
-use codex_app_server_protocol::MarketplaceRemoveResponse;
-use codex_app_server_protocol::MarketplaceUpgradeParams;
-use codex_app_server_protocol::MarketplaceUpgradeResponse;
-use codex_app_server_protocol::RequestId;
+use genex_app_server_protocol::MarketplaceAddParams;
+use genex_app_server_protocol::MarketplaceAddResponse;
+use genex_app_server_protocol::MarketplaceRemoveParams;
+use genex_app_server_protocol::MarketplaceRemoveResponse;
+use genex_app_server_protocol::MarketplaceUpgradeParams;
+use genex_app_server_protocol::MarketplaceUpgradeResponse;
+use genex_app_server_protocol::RequestId;
 
 use crate::hooks_rpc::fetch_hooks_list;
 use crate::hooks_rpc::write_hook_trust;
 use crate::hooks_rpc::write_hook_trusts;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::AbsolutePathBuf;
 
 impl App {
     pub(super) fn fetch_mcp_inventory(
@@ -683,7 +683,7 @@ pub(super) async fn write_hook_enabled(
         .request_typed(ClientRequest::ConfigBatchWrite {
             request_id,
             params: ConfigBatchWriteParams {
-                edits: vec![codex_app_server_protocol::ConfigEdit {
+                edits: vec![genex_app_server_protocol::ConfigEdit {
                     key_path: "hooks.state".to_string(),
                     value: serde_json::json!({
                         key: {
@@ -707,9 +707,9 @@ pub(super) async fn write_hook_enabled(
 /// renders directly from `McpServerStatus` rather than these maps.
 #[cfg(test)]
 pub(super) type McpInventoryMaps = (
-    HashMap<String, codex_protocol::mcp::Tool>,
-    HashMap<String, Vec<codex_protocol::mcp::Resource>>,
-    HashMap<String, Vec<codex_protocol::mcp::ResourceTemplate>>,
+    HashMap<String, genex_protocol::mcp::Tool>,
+    HashMap<String, Vec<genex_protocol::mcp::Resource>>,
+    HashMap<String, Vec<genex_protocol::mcp::ResourceTemplate>>,
     HashMap<String, McpAuthStatus>,
 );
 
@@ -725,11 +725,11 @@ pub(super) fn mcp_inventory_maps_from_statuses(statuses: Vec<McpServerStatus>) -
         auth_statuses.insert(
             server_name.clone(),
             match status.auth_status {
-                codex_app_server_protocol::McpAuthStatus::Unknown => McpAuthStatus::Unknown,
-                codex_app_server_protocol::McpAuthStatus::Unsupported => McpAuthStatus::Unsupported,
-                codex_app_server_protocol::McpAuthStatus::NotLoggedIn => McpAuthStatus::NotLoggedIn,
-                codex_app_server_protocol::McpAuthStatus::BearerToken => McpAuthStatus::BearerToken,
-                codex_app_server_protocol::McpAuthStatus::OAuth => McpAuthStatus::OAuth,
+                genex_app_server_protocol::McpAuthStatus::Unknown => McpAuthStatus::Unknown,
+                genex_app_server_protocol::McpAuthStatus::Unsupported => McpAuthStatus::Unsupported,
+                genex_app_server_protocol::McpAuthStatus::NotLoggedIn => McpAuthStatus::NotLoggedIn,
+                genex_app_server_protocol::McpAuthStatus::BearerToken => McpAuthStatus::BearerToken,
+                genex_app_server_protocol::McpAuthStatus::OAuth => McpAuthStatus::OAuth,
             },
         );
         resources.insert(server_name.clone(), status.resources);

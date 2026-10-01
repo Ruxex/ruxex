@@ -1,6 +1,6 @@
-use codex_features::Feature;
-use codex_features::Features;
-use codex_protocol::config_types::ModeKind;
+use genex_features::Feature;
+use genex_features::Features;
+use genex_protocol::config_types::ModeKind;
 use pretty_assertions::assert_eq;
 
 use super::*;

@@ -1,8 +1,8 @@
-use codex_file_system::ExecutorFileSystem;
-use codex_file_system::FindUpErrorPolicy;
-use codex_file_system::find_nearest_native_ancestor_with_markers;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_file_system::ExecutorFileSystem;
+use genex_file_system::FindUpErrorPolicy;
+use genex_file_system::find_nearest_native_ancestor_with_markers;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 
 const MAX_GIT_METADATA_FILE_BYTES: u64 = 64 * 1024;
 

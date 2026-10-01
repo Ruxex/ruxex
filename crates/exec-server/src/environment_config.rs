@@ -1,22 +1,22 @@
 use std::collections::HashMap;
 
-use codex_config::CONFIG_TOML_FILE;
-use codex_config::McpServerConfig;
-use codex_config::McpServerDisabledReason;
-use codex_config::RequirementSource;
-use codex_config::RequirementsLayerEntry;
-use codex_config::compose_requirements_for_hostname;
-use codex_config::format_config_layer_source;
-use codex_config::host_name;
-use codex_config::loader::LocalTomlLayerStack;
-use codex_config::loader::load_local_config_layers;
-use codex_exec_server_protocol::EnvironmentConfigLayer;
-use codex_exec_server_protocol::EnvironmentConfigLayerStack;
-use codex_exec_server_protocol::EnvironmentConfigReadParams;
-use codex_exec_server_protocol::EnvironmentConfigReadResponse;
-use codex_file_system::ExecutorFileSystem;
-use codex_utils_home_dir::find_codex_home;
-use codex_utils_path_uri::PathUri;
+use genex_config::CONFIG_TOML_FILE;
+use genex_config::McpServerConfig;
+use genex_config::McpServerDisabledReason;
+use genex_config::RequirementSource;
+use genex_config::RequirementsLayerEntry;
+use genex_config::compose_requirements_for_hostname;
+use genex_config::format_config_layer_source;
+use genex_config::host_name;
+use genex_config::loader::LocalTomlLayerStack;
+use genex_config::loader::load_local_config_layers;
+use genex_exec_server_protocol::EnvironmentConfigLayer;
+use genex_exec_server_protocol::EnvironmentConfigLayerStack;
+use genex_exec_server_protocol::EnvironmentConfigReadParams;
+use genex_exec_server_protocol::EnvironmentConfigReadResponse;
+use genex_file_system::ExecutorFileSystem;
+use genex_utils_home_dir::find_codex_home;
+use genex_utils_path_uri::PathUri;
 
 use crate::Environment;
 use crate::ExecServerError;
@@ -104,7 +104,7 @@ impl Environment {
             let config = toml::from_str::<toml::Value>(&layer.toml).map_err(|error| {
                 ExecServerError::Protocol(format!("invalid executor-local MCP config: {error}"))
             })?;
-            codex_config::merge_toml_values(&mut merged, &config);
+            genex_config::merge_toml_values(&mut merged, &config);
         }
         let mut servers = merged
             .get("mcp_servers")

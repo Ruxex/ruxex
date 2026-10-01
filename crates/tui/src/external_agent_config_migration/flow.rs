@@ -2,10 +2,10 @@ use crate::app_server_session::AppServerSession;
 use crate::app_server_session::EXTERNAL_AGENT_CONFIG_IMPORT_IN_PROGRESS_MESSAGE;
 use crate::legacy_core::config::Config;
 use crate::tui;
-use codex_app_server_protocol::ExternalAgentConfigDetectParams;
-use codex_app_server_protocol::ExternalAgentConfigImportCompletedNotification;
-use codex_app_server_protocol::ExternalAgentConfigMigrationItem;
-use codex_app_server_protocol::ExternalAgentConfigMigrationItemType;
+use genex_app_server_protocol::ExternalAgentConfigDetectParams;
+use genex_app_server_protocol::ExternalAgentConfigImportCompletedNotification;
+use genex_app_server_protocol::ExternalAgentConfigMigrationItem;
+use genex_app_server_protocol::ExternalAgentConfigMigrationItemType;
 use ratatui::prelude::Stylize as _;
 use ratatui::text::Line;
 

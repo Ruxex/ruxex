@@ -1,7 +1,7 @@
 use super::shell_approval_command;
 use crate::shell::Shell;
 use crate::shell::ShellType;
-use codex_tools::UnifiedExecShellMode;
+use genex_tools::UnifiedExecShellMode;
 use pretty_assertions::assert_eq;
 use std::path::PathBuf;
 

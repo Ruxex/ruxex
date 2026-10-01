@@ -17,10 +17,10 @@ mod windows_mxc;
 pub use bwrap::find_system_bwrap_in_path;
 #[cfg(target_os = "linux")]
 pub use bwrap::system_bwrap_warning;
-pub use codex_mxc_sandbox::CODEX_WINDOWS_MXC_ARG1;
-pub use codex_mxc_sandbox::is_available as windows_mxc_available;
-pub use codex_mxc_sandbox::run_main as run_windows_mxc_main;
-pub use codex_windows_sandbox::WindowsSandboxProxySettingsMode;
+pub use genex_mxc_sandbox::CODEX_WINDOWS_MXC_ARG1;
+pub use genex_mxc_sandbox::is_available as windows_mxc_available;
+pub use genex_mxc_sandbox::run_main as run_windows_mxc_main;
+pub use genex_windows_sandbox::WindowsSandboxProxySettingsMode;
 pub use denial::is_likely_executor_managed_sandbox_denied;
 pub use denial::is_likely_sandbox_denied;
 pub use manager::SandboxCommand;
@@ -52,11 +52,11 @@ pub use windows::resolve_windows_restricted_token_filesystem_overrides;
 pub use windows::unsupported_windows_restricted_token_sandbox_reason;
 pub use windows::windows_sandbox_uses_elevated_backend;
 
-use codex_protocol::error::CodexErr;
+use genex_protocol::error::CodexErr;
 
 #[cfg(not(target_os = "linux"))]
 pub fn system_bwrap_warning(
-    _permission_profile: &codex_protocol::models::PermissionProfile,
+    _permission_profile: &genex_protocol::models::PermissionProfile,
 ) -> Option<String> {
     None
 }

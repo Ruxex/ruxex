@@ -1,6 +1,6 @@
 use super::AppServerArgs;
 use clap::Parser;
-use codex_app_server::AppServerTransport;
+use genex_app_server::AppServerTransport;
 use pretty_assertions::assert_eq;
 use toml::Value as TomlValue;
 use url::Url;

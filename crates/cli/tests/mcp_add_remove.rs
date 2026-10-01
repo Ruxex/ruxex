@@ -1,8 +1,8 @@
 use std::path::Path;
 
 use anyhow::Result;
-use codex_config::types::McpServerTransportConfig;
-use codex_core::config::load_global_mcp_servers;
+use genex_config::types::McpServerTransportConfig;
+use genex_core::config::load_global_mcp_servers;
 use predicates::str::contains;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
@@ -13,7 +13,7 @@ use wiremock::matchers::method;
 use wiremock::matchers::path;
 
 fn codex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
-    let mut cmd = assert_cmd::Command::new(codex_utils_cargo_bin::cargo_bin("codex")?);
+    let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("codex")?);
     cmd.env("CODEX_HOME", codex_home);
     Ok(cmd)
 }

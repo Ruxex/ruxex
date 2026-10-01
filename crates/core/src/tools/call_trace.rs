@@ -2,9 +2,9 @@
 //! These events contain call identifiers and names, never arguments or output.
 //! Code-mode calls reach the broker before the dispatching turn is known.
 
-use codex_protocol::DEFAULT_FUNCTION_NAMESPACE;
-use codex_protocol::ThreadId;
-use codex_tools::ToolName;
+use genex_protocol::DEFAULT_FUNCTION_NAMESPACE;
+use genex_protocol::ThreadId;
+use genex_tools::ToolName;
 
 #[derive(Clone, Copy)]
 pub(crate) enum Source {

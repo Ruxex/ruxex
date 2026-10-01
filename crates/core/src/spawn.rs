@@ -1,5 +1,5 @@
-use codex_network_proxy::NetworkProxy;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_network_proxy::NetworkProxy;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::Stdio;
@@ -7,8 +7,8 @@ use tokio::process::Child;
 use tokio::process::Command;
 use tracing::trace;
 
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::shell_environment::is_non_inheritable_env_var;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::shell_environment::is_non_inheritable_env_var;
 
 /// Experimental environment variable that will be set to some non-empty value
 /// if both of the following are true:
@@ -78,7 +78,7 @@ pub(crate) async fn spawn_child_async(request: SpawnChildRequest<'_>) -> std::io
     // macOS fd cleanup must keep the shell escalation socket.
     #[cfg(target_os = "macos")]
     let inherited_fd = env
-        .get(codex_shell_escalation::ESCALATE_SOCKET_ENV_VAR)
+        .get(genex_shell_escalation::ESCALATE_SOCKET_ENV_VAR)
         .and_then(|fd| fd.parse().ok());
     cmd.env_clear();
     cmd.envs(env);
@@ -98,7 +98,7 @@ pub(crate) async fn spawn_child_async(request: SpawnChildRequest<'_>) -> std::io
         let parent_pid = libc::getpid();
         cmd.pre_exec(move || {
             if detach_from_tty {
-                codex_utils_pty::process_group::detach_from_tty()?;
+                genex_utils_pty::process_group::detach_from_tty()?;
             }
 
             // This relies on prctl(2), so it only works on Linux.
@@ -106,11 +106,11 @@ pub(crate) async fn spawn_child_async(request: SpawnChildRequest<'_>) -> std::io
             {
                 // This prctl call effectively requests, "deliver SIGTERM when my
                 // current parent dies."
-                codex_utils_pty::process_group::set_parent_death_signal(parent_pid)?;
+                genex_utils_pty::process_group::set_parent_death_signal(parent_pid)?;
             }
             // macOS cannot receive the fd with close-on-exec set atomically.
             #[cfg(target_os = "macos")]
-            codex_utils_pty::pty::close_inherited_fds_except(inherited_fd.as_slice());
+            genex_utils_pty::pty::close_inherited_fds_except(inherited_fd.as_slice());
             Ok(())
         });
     }

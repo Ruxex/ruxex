@@ -1,9 +1,9 @@
 use std::fs;
 use std::path::Path;
 
-use codex_exec_server::LOCAL_FS;
-use codex_utils_path_uri::PathUri;
-use codex_utils_plugins::SkillDiscoveryMode;
+use genex_exec_server::LOCAL_FS;
+use genex_utils_path_uri::PathUri;
+use genex_utils_plugins::SkillDiscoveryMode;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 

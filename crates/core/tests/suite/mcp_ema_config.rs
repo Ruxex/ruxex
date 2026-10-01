@@ -3,14 +3,14 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use codex_config::LoaderOverrides;
-use codex_config::McpServerAuth;
-use codex_config::test_support::CloudConfigBundleFixture;
-use codex_core::config::ConfigBuilder;
-use codex_core::config::set_project_trust_level;
-use codex_login::CodexAuth;
-use codex_protocol::config_types::TrustLevel;
-use codex_protocol::protocol::EventMsg;
+use genex_config::LoaderOverrides;
+use genex_config::McpServerAuth;
+use genex_config::test_support::CloudConfigBundleFixture;
+use genex_core::config::ConfigBuilder;
+use genex_core::config::set_project_trust_level;
+use genex_login::CodexAuth;
+use genex_protocol::config_types::TrustLevel;
+use genex_protocol::protocol::EventMsg;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_codex::test_codex;
@@ -80,7 +80,7 @@ async fn enterprise_activation_respects_managed_config_and_plugin_ownership(
         ActivationScenario::OperatorEnabled => Some(true),
     };
     assert_eq!(
-        codex_mcp::configured_mcp_servers(&runtime_config)
+        genex_mcp::configured_mcp_servers(&runtime_config)
             .get("enterprise")
             .map(|server| server.enabled),
         expected_enabled,

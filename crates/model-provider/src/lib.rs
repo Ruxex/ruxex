@@ -16,7 +16,7 @@ pub struct ResponsesConnectionKey {
 }
 
 impl ResponsesConnectionKey {
-    pub fn new(provider: &codex_api::Provider, auth_revision: Option<u64>) -> Self {
+    pub fn new(provider: &genex_api::Provider, auth_revision: Option<u64>) -> Self {
         Self {
             base_url: provider.base_url.clone(),
             auth_revision,
@@ -32,9 +32,9 @@ pub use auth::auth_provider_from_auth_manager;
 pub use auth::unauthenticated_auth_provider;
 pub use bearer_auth_provider::BearerAuthProvider;
 pub use bearer_auth_provider::BearerAuthProvider as CoreAuthProvider;
-pub use codex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
-pub use codex_model_provider_info::AMAZON_BEDROCK_RUNTIME_PROVIDER_ID;
-pub use codex_protocol::account::ProviderAccount;
+pub use genex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
+pub use genex_model_provider_info::AMAZON_BEDROCK_RUNTIME_PROVIDER_ID;
+pub use genex_protocol::account::ProviderAccount;
 pub use provider::ModelProvider;
 pub use provider::ModelProviderFuture;
 pub use provider::ProviderAccountError;

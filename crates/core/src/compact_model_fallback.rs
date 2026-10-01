@@ -1,8 +1,8 @@
 use crate::responses_metadata::CompactionImplementation;
 use crate::responses_metadata::CompactionReason;
-use codex_otel::SessionTelemetry;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::CodexErrorDetails;
+use genex_otel::SessionTelemetry;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::CodexErrorDetails;
 use tracing::warn;
 
 /// Retries failures that may be model-specific and succeed with a different model.

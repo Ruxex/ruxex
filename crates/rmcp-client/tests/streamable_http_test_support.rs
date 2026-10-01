@@ -18,14 +18,14 @@ use std::time::Duration;
 use std::time::Instant;
 
 use anyhow::Context as _;
-use codex_config::types::AuthKeyringBackendKind;
-use codex_config::types::OAuthCredentialsStoreMode;
-use codex_exec_server::Environment;
-use codex_exec_server::HttpClient;
-use codex_rmcp_client::ElicitationAction;
-use codex_rmcp_client::ElicitationResponse;
-use codex_rmcp_client::RmcpClient;
-use codex_utils_cargo_bin::CargoBinError;
+use genex_config::types::AuthKeyringBackendKind;
+use genex_config::types::OAuthCredentialsStoreMode;
+use genex_exec_server::Environment;
+use genex_exec_server::HttpClient;
+use genex_rmcp_client::ElicitationAction;
+use genex_rmcp_client::ElicitationResponse;
+use genex_rmcp_client::RmcpClient;
+use genex_utils_cargo_bin::CargoBinError;
 use futures::FutureExt as _;
 use pretty_assertions::assert_eq;
 use rmcp::model::CallToolResult;
@@ -47,7 +47,7 @@ const INITIALIZED_NOTIFICATION_POST_FAILURE_CONTROL_PATH: &str =
     "/test/control/initialized-notification-post-failure";
 
 fn streamable_http_server_bin() -> Result<PathBuf, CargoBinError> {
-    codex_utils_cargo_bin::cargo_bin("test_streamable_http_server")
+    genex_utils_cargo_bin::cargo_bin("test_streamable_http_server")
 }
 
 fn init_params() -> InitializeRequestParams {
@@ -139,8 +139,8 @@ pub(crate) async fn call_echo_tool(
         .await
 }
 
-fn control_client() -> anyhow::Result<codex_http_client::HttpClient> {
-    Ok(codex_http_client::HttpClientBuilder::new().build_direct()?)
+fn control_client() -> anyhow::Result<genex_http_client::HttpClient> {
+    Ok(genex_http_client::HttpClientBuilder::new().build_direct()?)
 }
 
 pub(crate) async fn arm_session_post_failure(

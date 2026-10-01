@@ -1,17 +1,17 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use codex_exec_server::ExecParams;
-use codex_exec_server::FileSystemSandboxContext;
-use codex_exec_server::ShellInfo;
-use codex_exec_server::ShellSnapshotRequest;
-use codex_features::Feature;
-use codex_protocol::protocol::AskForApproval;
-use codex_sandboxing::SandboxManager;
-use codex_sandboxing::SandboxablePreference;
-use codex_tools::ToolName;
-use codex_tools::UnifiedExecShellMode;
-use codex_utils_path_uri::PathUri;
+use genex_exec_server::ExecParams;
+use genex_exec_server::FileSystemSandboxContext;
+use genex_exec_server::ShellInfo;
+use genex_exec_server::ShellSnapshotRequest;
+use genex_features::Feature;
+use genex_protocol::protocol::AskForApproval;
+use genex_sandboxing::SandboxManager;
+use genex_sandboxing::SandboxablePreference;
+use genex_tools::ToolName;
+use genex_tools::UnifiedExecShellMode;
+use genex_utils_path_uri::PathUri;
 use tokio_util::task::AbortOnDropHandle;
 use uuid::Uuid;
 

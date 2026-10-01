@@ -1,13 +1,13 @@
 use anyhow::Result;
-use codex_core::TurnInputRequest;
-use codex_core::config::AgentRoleConfig;
-use codex_features::Feature;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
+use genex_core::TurnInputRequest;
+use genex_core::config::AgentRoleConfig;
+use genex_features::Feature;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses::assert_parent_turn;
 use core_test_support::responses::assert_root_turn;
 use core_test_support::responses::ev_assistant_message;
@@ -132,7 +132,7 @@ async fn mount_root_collaboration_call(
 }
 
 fn configure_multi_agent_v2_with_role(
-    config: &mut codex_core::config::Config,
+    config: &mut genex_core::config::Config,
     model_provider_base_url: &str,
 ) {
     config
@@ -277,7 +277,7 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
                 }
                 body["client_metadata"]["thread_id"]
                     .as_str()
-                    .and_then(|thread_id| codex_protocol::ThreadId::from_string(thread_id).ok())
+                    .and_then(|thread_id| genex_protocol::ThreadId::from_string(thread_id).ok())
             })
         {
             break thread_id;
@@ -554,7 +554,7 @@ base_url = "{redirected_base_url}"
             && request.body_contains_text(QUEUED_MESSAGE)
             && !request.body_contains_text(FOLLOWUP_TASK)
     }));
-    let body_for = |text: &str, thread: codex_protocol::ThreadId| {
+    let body_for = |text: &str, thread: genex_protocol::ThreadId| {
         requests
             .iter()
             .find_map(|request| {

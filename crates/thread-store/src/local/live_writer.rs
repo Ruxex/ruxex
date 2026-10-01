@@ -1,12 +1,12 @@
 use std::path::PathBuf;
 
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_rollout::RolloutConfig;
-use codex_rollout::RolloutItem;
-use codex_rollout::RolloutRecorder;
-use codex_rollout::RolloutRecorderParams;
-use codex_rollout::is_persisted_rollout_item;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_rollout::RolloutConfig;
+use genex_rollout::RolloutItem;
+use genex_rollout::RolloutRecorder;
+use genex_rollout::RolloutRecorderParams;
+use genex_rollout::is_persisted_rollout_item;
 use tracing::warn;
 
 use super::LocalThreadStore;
@@ -99,7 +99,7 @@ pub(super) async fn resume_thread(
         model_provider_id: params.metadata.model_provider.clone(),
     };
     let rollout_id =
-        codex_rollout::rollout_id_from_path(rollout_path.as_path()).ok_or_else(|| {
+        genex_rollout::rollout_id_from_path(rollout_path.as_path()).ok_or_else(|| {
             ThreadStoreError::InvalidRequest {
                 message: format!(
                     "rollout path `{}` does not have a canonical rollout filename",
@@ -177,7 +177,7 @@ pub(super) async fn shutdown_thread(
         warn!("failed to project durable rollout during shutdown for {thread_id}: {err}");
     }
     sync_materialized_rollout_path(store, thread_id, rollout_path.as_path()).await?;
-    if let Some(metrics) = codex_otel::global()
+    if let Some(metrics) = genex_otel::global()
         && let Ok(metadata) = tokio::fs::metadata(&rollout_path).await
     {
         let size_bytes = i64::try_from(metadata.len()).unwrap_or(i64::MAX);
@@ -242,7 +242,7 @@ async fn sync_materialized_rollout_path(
     thread_id: ThreadId,
     rollout_path: &std::path::Path,
 ) -> ThreadStoreResult<()> {
-    if codex_rollout::existing_rollout_path(rollout_path)
+    if genex_rollout::existing_rollout_path(rollout_path)
         .await
         .is_none()
     {

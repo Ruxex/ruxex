@@ -1,7 +1,7 @@
 use std::io;
 use std::path::Path;
 
-use codex_core::config::Config;
+use genex_core::config::Config;
 
 use super::CheckStatus;
 use super::DoctorCheck;

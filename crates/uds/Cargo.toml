@@ -1,11 +1,11 @@
 [package]
-name = "codex-uds"
+name = "genex-uds"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "codex_uds"
+name = "genex_uds"
 path = "src/lib.rs"
 doctest = false
 

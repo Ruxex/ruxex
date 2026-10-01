@@ -2,36 +2,36 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use codex_config::McpServerConfig;
-use codex_config::McpServerOAuthConfig;
-use codex_config::McpServerTransportConfig;
-use codex_config::load_global_mcp_servers;
-use codex_login::default_client::is_first_party_originator;
-use codex_login::default_client::originator;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::request_user_input::RequestUserInputArgs;
-use codex_protocol::request_user_input::RequestUserInputQuestion;
-use codex_protocol::request_user_input::RequestUserInputQuestionOption;
-use codex_protocol::request_user_input::RequestUserInputResponse;
-use codex_rmcp_client::McpOAuthClientRegistration;
-use codex_rmcp_client::OAuthDiscoveryTimeout;
-use codex_rmcp_client::StreamableHttpRedirectMode;
-use codex_rmcp_client::perform_oauth_login;
+use genex_config::McpServerConfig;
+use genex_config::McpServerOAuthConfig;
+use genex_config::McpServerTransportConfig;
+use genex_config::load_global_mcp_servers;
+use genex_login::default_client::is_first_party_originator;
+use genex_login::default_client::originator;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::request_user_input::RequestUserInputArgs;
+use genex_protocol::request_user_input::RequestUserInputQuestion;
+use genex_protocol::request_user_input::RequestUserInputQuestionOption;
+use genex_protocol::request_user_input::RequestUserInputResponse;
+use genex_rmcp_client::McpOAuthClientRegistration;
+use genex_rmcp_client::OAuthDiscoveryTimeout;
+use genex_rmcp_client::StreamableHttpRedirectMode;
+use genex_rmcp_client::perform_oauth_login;
 use tokio_util::sync::CancellationToken;
 use tracing::warn;
 
 use crate::config::edit::ConfigEditsBuilder;
 use crate::session::session::Session;
 use crate::session::turn_context::TurnContext;
-use codex_mcp::ElicitationReviewerHandle;
-use codex_mcp::McpOAuthLoginSupport;
-use codex_mcp::McpPermissionPromptAutoApproveContext;
-use codex_mcp::mcp_permission_prompt_is_auto_approved;
-use codex_mcp::oauth_login_support;
-use codex_mcp::resolve_oauth_scopes;
-use codex_mcp::should_retry_without_scopes;
-use codex_skills::SkillMetadata;
-use codex_skills::SkillToolDependency;
+use genex_mcp::ElicitationReviewerHandle;
+use genex_mcp::McpOAuthLoginSupport;
+use genex_mcp::McpPermissionPromptAutoApproveContext;
+use genex_mcp::mcp_permission_prompt_is_auto_approved;
+use genex_mcp::oauth_login_support;
+use genex_mcp::resolve_oauth_scopes;
+use genex_mcp::should_retry_without_scopes;
+use genex_skills::SkillMetadata;
+use genex_skills::SkillToolDependency;
 
 const SKILL_MCP_DEPENDENCY_PROMPT_ID: &str = "skill_mcp_dependency_install";
 const MCP_DEPENDENCY_OPTION_INSTALL: &str = "Install";
@@ -54,7 +54,7 @@ pub(crate) async fn maybe_prompt_and_install_mcp_dependencies(
     if mentioned_skills.is_empty()
         || !config
             .features
-            .enabled(codex_features::Feature::SkillMcpDependencyInstall)
+            .enabled(genex_features::Feature::SkillMcpDependencyInstall)
     {
         return;
     }
@@ -413,7 +413,7 @@ fn mcp_dependency_to_server_config(
                 env_http_headers: None,
                 http_headers_helper: None,
             },
-            environment_id: codex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
+            environment_id: genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
             enabled: true,
             required: false,
             supports_parallel_tool_calls: false,
@@ -452,7 +452,7 @@ fn mcp_dependency_to_server_config(
                 env_vars: Vec::new(),
                 cwd: None,
             },
-            environment_id: codex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
+            environment_id: genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
             enabled: true,
             required: false,
             supports_parallel_tool_calls: false,

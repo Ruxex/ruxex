@@ -183,7 +183,7 @@ impl PidBackend {
                             .and_then(Path::parent)
                             .context("daemon pid path has no Codex home")?;
                         let socket_path =
-                            codex_app_server_transport::app_server_control_socket_path(codex_home)?;
+                            genex_app_server_transport::app_server_control_socket_path(codex_home)?;
                         if let Err(err) =
                             crate::client::request_shutdown(socket_path.as_path(), pid).await
                         {

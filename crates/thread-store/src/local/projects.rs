@@ -26,8 +26,8 @@ pub(super) async fn list_projects(
             params.limit,
             params.sort_key,
             match params.sort_direction {
-                SortDirection::Asc => codex_state::SortDirection::Asc,
-                SortDirection::Desc => codex_state::SortDirection::Desc,
+                SortDirection::Asc => genex_state::SortDirection::Asc,
+                SortDirection::Desc => genex_state::SortDirection::Desc,
             },
         )
         .await
@@ -146,7 +146,7 @@ pub(super) async fn delete_project(
         .map_err(internal)
 }
 
-fn state(store: &LocalThreadStore) -> ThreadStoreResult<&codex_rollout::StateDbHandle> {
+fn state(store: &LocalThreadStore) -> ThreadStoreResult<&genex_rollout::StateDbHandle> {
     store
         .state_db
         .as_ref()
@@ -170,11 +170,11 @@ fn project_idempotency_error(error: impl std::fmt::Display) -> ThreadStoreError 
     }
 }
 
-fn state_root(root: StoredProjectRoot) -> codex_state::ProjectRoot {
-    codex_state::ProjectRoot { path: root.path }
+fn state_root(root: StoredProjectRoot) -> genex_state::ProjectRoot {
+    genex_state::ProjectRoot { path: root.path }
 }
 
-fn stored_project(project: codex_state::Project) -> StoredProject {
+fn stored_project(project: genex_state::Project) -> StoredProject {
     StoredProject {
         id: project.id,
         name: project.name,

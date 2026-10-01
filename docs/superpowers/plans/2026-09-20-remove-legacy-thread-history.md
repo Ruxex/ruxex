@@ -52,7 +52,7 @@
 - [x] Change current store, import, and synthetic metadata defaults to `Paginated`; remove the obsolete enum serde value after old-metadata readers are removed.
 - [x] Remove `reject_paginated_history_mode` and its callers so current stores accept paginated create, resume, and read requests.
 - [x] Change current external-agent import and app-server synthetic metadata paths to create paginated threads.
-- [x] Run `cargo test -p codex-thread-store` and the focused app-server/core tests; run `cargo check -p codex-thread-store -p codex-core -p codex-app-server`.
+- [x] Run `cargo test -p genex-thread-store` and the focused app-server/core tests; run `cargo check -p genex-thread-store -p genex-core -p genex-app-server`.
 
 ### Task 2: Remove legacy-only persistence branches after Task 1 is green
 
@@ -85,7 +85,7 @@
 - [x] Remove migration module exports and startup invocation without adding automatic file deletion.
 - [x] Remove migration-only tests and preserve current rollout listing/resume/fork/delete tests.
 - [x] Refresh the inventory rows for `RolloutMigration*`, legacy replay, and filename fallback to `remove` with exact producer/consumer evidence.
-- [x] Run `cargo check -p codex-thread-store -p codex-rollout -p codex-cli` and focused non-destructive checks.
+- [x] Run `cargo check -p genex-thread-store -p genex-rollout -p genex-cli` and focused non-destructive checks.
 
 ### Task 4: Remove the remaining legacy mode and finish the audit
 

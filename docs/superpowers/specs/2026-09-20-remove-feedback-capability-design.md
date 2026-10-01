@@ -112,7 +112,7 @@ Use the repository cleanup policy's primary verification commands:
 ```bash
 rg -n 'codex-feedback|FeedbackUpload|feedback_enabled|feedback/upload|CodexFeedback|SENTRY_DSN' \
   crates docs --glob '*.rs' --glob '*.md' --glob '*.toml' --glob '*.json'
-cargo check -p codex-core -p codex-app-server -p codex-tui -p codex-protocol
+cargo check -p genex-core -p genex-app-server -p genex-tui -p genex-protocol
 just check
 git diff --check
 ```

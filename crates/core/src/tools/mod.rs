@@ -23,14 +23,14 @@ use std::borrow::Cow;
 
 use crate::session::turn_context::TurnContext;
 pub(crate) use approvals::ApprovalContext;
-use codex_features::Feature;
-use codex_protocol::exec_output::ExecToolCallOutput;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ToolMode;
-use codex_tools::ToolName;
-use codex_utils_output_truncation::TruncationPolicy;
-use codex_utils_output_truncation::formatted_truncate_text;
-use codex_utils_output_truncation::truncate_text;
+use genex_features::Feature;
+use genex_protocol::exec_output::ExecToolCallOutput;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ToolMode;
+use genex_tools::ToolName;
+use genex_utils_output_truncation::TruncationPolicy;
+use genex_utils_output_truncation::formatted_truncate_text;
+use genex_utils_output_truncation::truncate_text;
 pub(crate) use executed_tool_calls::ExecutedToolCalls;
 pub use router::ToolRouter;
 
@@ -55,13 +55,13 @@ pub(crate) fn flat_tool_name(tool_name: &ToolName) -> Cow<'_, str> {
 
 pub(crate) fn tool_user_shell_type(
     user_shell: &crate::shell::Shell,
-) -> codex_tools::ToolUserShellType {
+) -> genex_tools::ToolUserShellType {
     match user_shell.shell_type {
-        crate::shell::ShellType::Zsh => codex_tools::ToolUserShellType::Zsh,
-        crate::shell::ShellType::Bash => codex_tools::ToolUserShellType::Bash,
-        crate::shell::ShellType::PowerShell => codex_tools::ToolUserShellType::PowerShell,
-        crate::shell::ShellType::Sh => codex_tools::ToolUserShellType::Sh,
-        crate::shell::ShellType::Cmd => codex_tools::ToolUserShellType::Cmd,
+        crate::shell::ShellType::Zsh => genex_tools::ToolUserShellType::Zsh,
+        crate::shell::ShellType::Bash => genex_tools::ToolUserShellType::Bash,
+        crate::shell::ShellType::PowerShell => genex_tools::ToolUserShellType::PowerShell,
+        crate::shell::ShellType::Sh => genex_tools::ToolUserShellType::Sh,
+        crate::shell::ShellType::Cmd => genex_tools::ToolUserShellType::Cmd,
     }
 }
 

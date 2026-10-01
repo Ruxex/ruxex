@@ -1,7 +1,7 @@
 use super::*;
-use codex_core::exec_env::inject_apply_patch_env;
-use codex_core::windows_sandbox::managed_proxy_routing_for_windows_sandbox;
-use codex_protocol::shell_environment::is_non_inheritable_env_var;
+use genex_core::exec_env::inject_apply_patch_env;
+use genex_core::windows_sandbox::managed_proxy_routing_for_windows_sandbox;
+use genex_protocol::shell_environment::is_non_inheritable_env_var;
 
 #[derive(Clone)]
 pub(crate) struct CommandExecRequestProcessor {
@@ -290,7 +290,7 @@ impl CommandExecRequestProcessor {
             env,
             network: started_network_proxy
                 .as_ref()
-                .map(codex_core::config::StartedNetworkProxy::proxy),
+                .map(genex_core::config::StartedNetworkProxy::proxy),
             network_environment_id: None,
             sandbox_permissions: SandboxPermissions::UseDefault,
             windows_sandbox_level,
@@ -313,7 +313,7 @@ impl CommandExecRequestProcessor {
             None => None,
         };
 
-        let exec_request = codex_core::exec::build_exec_request(
+        let exec_request = genex_core::exec::build_exec_request(
             exec_params,
             &effective_permission_profile,
             &sandbox_cwd,

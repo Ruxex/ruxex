@@ -5,18 +5,18 @@
 #![cfg(target_os = "linux")]
 #![allow(clippy::unwrap_used)]
 
-use codex_core::exec_env::create_env;
-use codex_network_proxy::PROXY_ATTRIBUTION_TOKEN_ENV_KEY;
-use codex_network_proxy::write_attribution_frame;
-use codex_protocol::config_types::ShellEnvironmentPolicy;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_core::exec_env::create_env;
+use genex_network_proxy::PROXY_ATTRIBUTION_TOKEN_ENV_KEY;
+use genex_network_proxy::write_attribution_frame;
+use genex_protocol::config_types::ShellEnvironmentPolicy;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::FileSystemSpecialPath;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 use std::io::Read;
@@ -322,7 +322,7 @@ async fn unsupported_system_bwrap_falls_back_to_bundled_bwrap() {
         return;
     }
 
-    let Some(system_bwrap) = codex_sandboxing::find_system_bwrap_in_path() else {
+    let Some(system_bwrap) = genex_sandboxing::find_system_bwrap_in_path() else {
         eprintln!("skipping system bwrap fallback test: no system bubblewrap is available");
         return;
     };

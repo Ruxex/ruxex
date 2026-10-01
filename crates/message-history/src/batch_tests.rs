@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::Write;
 
-use codex_config::types::History;
+use genex_config::types::History;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 

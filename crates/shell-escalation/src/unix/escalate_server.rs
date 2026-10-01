@@ -9,8 +9,8 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use anyhow::Context as _;
-use codex_protocol::shell_environment::scrub_non_inheritable_env_vars;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_protocol::shell_environment::scrub_non_inheritable_env_vars;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use socket2::Socket;
 use tokio::process::Command;
 use tokio::task::JoinHandle;
@@ -385,10 +385,10 @@ async fn handle_escalate_session_with_policy(
 mod tests {
     use super::*;
     use crate::unix::escalation_policy::EscalationPolicyFuture;
-    use codex_protocol::approvals::EscalationPermissions;
-    use codex_protocol::models::AdditionalPermissionProfile as PermissionProfile;
-    use codex_protocol::models::NetworkPermissions;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use genex_protocol::approvals::EscalationPermissions;
+    use genex_protocol::models::AdditionalPermissionProfile as PermissionProfile;
+    use genex_protocol::models::NetworkPermissions;
+    use genex_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
     use std::collections::HashMap;
     use std::io::Write;

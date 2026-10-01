@@ -24,40 +24,40 @@ use crate::protocol::v2::UserInput;
 use crate::protocol::v2::WebSearchAction;
 use crate::protocol::v2::WebSearchItem;
 use crate::protocol::v2::web_search_action_from_core;
-use codex_extension_items::image_generation::ImageGenerationItem;
-use codex_protocol::items::parse_hook_prompt_message;
-use codex_protocol::protocol::AgentMessageEvent;
-use codex_protocol::protocol::AgentReasoningEvent;
-use codex_protocol::protocol::AgentReasoningRawContentEvent;
-use codex_protocol::protocol::AgentStatus;
-use codex_protocol::protocol::ApplyPatchApprovalRequestEvent;
-use codex_protocol::protocol::ContextCompactedEvent;
-use codex_protocol::protocol::DynamicToolCallResponseEvent;
-use codex_protocol::protocol::ErrorEvent;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecCommandBeginEvent;
-use codex_protocol::protocol::ExecCommandEndEvent;
-use codex_protocol::protocol::ImageGenerationBeginEvent;
-use codex_protocol::protocol::ImageGenerationEndEvent;
-use codex_protocol::protocol::ItemCompletedEvent;
-use codex_protocol::protocol::ItemStartedEvent;
-use codex_protocol::protocol::McpToolCallBeginEvent;
-use codex_protocol::protocol::McpToolCallEndEvent;
-use codex_protocol::protocol::PatchApplyBeginEvent;
-use codex_protocol::protocol::PatchApplyEndEvent;
-use codex_protocol::protocol::ThreadRolledBackEvent;
-use codex_protocol::protocol::TurnAbortedEvent;
-use codex_protocol::protocol::TurnCompleteEvent;
-use codex_protocol::protocol::TurnStartedEvent;
-use codex_protocol::protocol::UserMessageEvent;
-use codex_protocol::protocol::UserMessageImageKind;
-use codex_protocol::protocol::ViewImageToolCallEvent;
-use codex_protocol::protocol::WebSearchBeginEvent;
-use codex_protocol::protocol::WebSearchEndEvent;
+use genex_extension_items::image_generation::ImageGenerationItem;
+use genex_protocol::items::parse_hook_prompt_message;
+use genex_protocol::protocol::AgentMessageEvent;
+use genex_protocol::protocol::AgentReasoningEvent;
+use genex_protocol::protocol::AgentReasoningRawContentEvent;
+use genex_protocol::protocol::AgentStatus;
+use genex_protocol::protocol::ApplyPatchApprovalRequestEvent;
+use genex_protocol::protocol::ContextCompactedEvent;
+use genex_protocol::protocol::DynamicToolCallResponseEvent;
+use genex_protocol::protocol::ErrorEvent;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecCommandBeginEvent;
+use genex_protocol::protocol::ExecCommandEndEvent;
+use genex_protocol::protocol::ImageGenerationBeginEvent;
+use genex_protocol::protocol::ImageGenerationEndEvent;
+use genex_protocol::protocol::ItemCompletedEvent;
+use genex_protocol::protocol::ItemStartedEvent;
+use genex_protocol::protocol::McpToolCallBeginEvent;
+use genex_protocol::protocol::McpToolCallEndEvent;
+use genex_protocol::protocol::PatchApplyBeginEvent;
+use genex_protocol::protocol::PatchApplyEndEvent;
+use genex_protocol::protocol::ThreadRolledBackEvent;
+use genex_protocol::protocol::TurnAbortedEvent;
+use genex_protocol::protocol::TurnCompleteEvent;
+use genex_protocol::protocol::TurnStartedEvent;
+use genex_protocol::protocol::UserMessageEvent;
+use genex_protocol::protocol::UserMessageImageKind;
+use genex_protocol::protocol::ViewImageToolCallEvent;
+use genex_protocol::protocol::WebSearchBeginEvent;
+use genex_protocol::protocol::WebSearchEndEvent;
 #[cfg(test)]
-use codex_protocol::review_format::REVIEW_FALLBACK_MESSAGE;
-use codex_rollout::CompactedItem;
-use codex_rollout::RolloutItem;
+use genex_protocol::review_format::REVIEW_FALLBACK_MESSAGE;
+use genex_rollout::CompactedItem;
+use genex_rollout::RolloutItem;
 use std::collections::HashMap;
 use tracing::warn;
 use uuid::Uuid;
@@ -71,9 +71,9 @@ use crate::protocol::v2::PatchApplyStatus;
 #[cfg(test)]
 use crate::protocol::v2::PatchChangeKind;
 #[cfg(test)]
-use codex_protocol::protocol::ExecCommandStatus as CoreExecCommandStatus;
+use genex_protocol::protocol::ExecCommandStatus as CoreExecCommandStatus;
 #[cfg(test)]
-use codex_protocol::protocol::PatchApplyStatus as CorePatchApplyStatus;
+use genex_protocol::protocol::PatchApplyStatus as CorePatchApplyStatus;
 
 /// Convert persisted [`RolloutItem`] entries into a sequence of [`Turn`] values.
 ///
@@ -419,8 +419,8 @@ impl ThreadHistoryBuilder {
         self.active_change_set.take().unwrap_or_default()
     }
 
-    fn handle_response_item(&mut self, item: &codex_protocol::models::ResponseItem) {
-        let codex_protocol::models::ResponseItem::Message {
+    fn handle_response_item(&mut self, item: &genex_protocol::models::ResponseItem) {
+        let genex_protocol::models::ResponseItem::Message {
             role, content, id, ..
         } = item
         else {
@@ -570,33 +570,33 @@ impl ThreadHistoryBuilder {
     fn handle_materialized_item_lifecycle(
         &mut self,
         turn_id: &str,
-        item: &codex_protocol::items::TurnItem,
+        item: &genex_protocol::items::TurnItem,
     ) {
         let is_review_mode_item = matches!(
             item,
-            codex_protocol::items::TurnItem::EnteredReviewMode(_)
-                | codex_protocol::items::TurnItem::ExitedReviewMode(_)
+            genex_protocol::items::TurnItem::EnteredReviewMode(_)
+                | genex_protocol::items::TurnItem::ExitedReviewMode(_)
         );
         let should_upsert = match item {
-            codex_protocol::items::TurnItem::Plan(plan) => !plan.text.is_empty(),
-            codex_protocol::items::TurnItem::HookPrompt(_)
-            | codex_protocol::items::TurnItem::FunctionCallOutput(_)
-            | codex_protocol::items::TurnItem::CommandExecution(_)
-            | codex_protocol::items::TurnItem::DynamicToolCall(_)
-            | codex_protocol::items::TurnItem::CollabAgentToolCall(_)
-            | codex_protocol::items::TurnItem::SubAgentActivity(_)
-            | codex_protocol::items::TurnItem::Extension(_)
-            | codex_protocol::items::TurnItem::EnteredReviewMode(_)
-            | codex_protocol::items::TurnItem::ExitedReviewMode(_) => true,
-            codex_protocol::items::TurnItem::UserMessage(_)
-            | codex_protocol::items::TurnItem::AgentMessage(_)
-            | codex_protocol::items::TurnItem::Reasoning(_)
-            | codex_protocol::items::TurnItem::WebSearch(_)
-            | codex_protocol::items::TurnItem::ImageView(_)
-            | codex_protocol::items::TurnItem::ImageGeneration(_)
-            | codex_protocol::items::TurnItem::FileChange(_)
-            | codex_protocol::items::TurnItem::McpToolCall(_)
-            | codex_protocol::items::TurnItem::ContextCompaction(_) => false,
+            genex_protocol::items::TurnItem::Plan(plan) => !plan.text.is_empty(),
+            genex_protocol::items::TurnItem::HookPrompt(_)
+            | genex_protocol::items::TurnItem::FunctionCallOutput(_)
+            | genex_protocol::items::TurnItem::CommandExecution(_)
+            | genex_protocol::items::TurnItem::DynamicToolCall(_)
+            | genex_protocol::items::TurnItem::CollabAgentToolCall(_)
+            | genex_protocol::items::TurnItem::SubAgentActivity(_)
+            | genex_protocol::items::TurnItem::Extension(_)
+            | genex_protocol::items::TurnItem::EnteredReviewMode(_)
+            | genex_protocol::items::TurnItem::ExitedReviewMode(_) => true,
+            genex_protocol::items::TurnItem::UserMessage(_)
+            | genex_protocol::items::TurnItem::AgentMessage(_)
+            | genex_protocol::items::TurnItem::Reasoning(_)
+            | genex_protocol::items::TurnItem::WebSearch(_)
+            | genex_protocol::items::TurnItem::ImageView(_)
+            | genex_protocol::items::TurnItem::ImageGeneration(_)
+            | genex_protocol::items::TurnItem::FileChange(_)
+            | genex_protocol::items::TurnItem::McpToolCall(_)
+            | genex_protocol::items::TurnItem::ContextCompaction(_) => false,
         };
 
         if should_upsert {
@@ -673,7 +673,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_dynamic_tool_call_request(
         &mut self,
-        payload: &codex_protocol::dynamic_tools::DynamicToolCallRequest,
+        payload: &genex_protocol::dynamic_tools::DynamicToolCallRequest,
     ) {
         let item = ThreadItem::DynamicToolCall {
             id: payload.call_id.clone(),
@@ -830,7 +830,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_agent_spawn_begin(
         &mut self,
-        payload: &codex_protocol::protocol::CollabAgentSpawnBeginEvent,
+        payload: &genex_protocol::protocol::CollabAgentSpawnBeginEvent,
     ) {
         let item = ThreadItem::CollabAgentToolCall {
             id: payload.call_id.clone(),
@@ -848,7 +848,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_agent_spawn_end(
         &mut self,
-        payload: &codex_protocol::protocol::CollabAgentSpawnEndEvent,
+        payload: &genex_protocol::protocol::CollabAgentSpawnEndEvent,
     ) {
         let has_receiver = payload.new_thread_id.is_some();
         let status = match &payload.status {
@@ -882,7 +882,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_agent_interaction_begin(
         &mut self,
-        payload: &codex_protocol::protocol::CollabAgentInteractionBeginEvent,
+        payload: &genex_protocol::protocol::CollabAgentInteractionBeginEvent,
     ) {
         let item = ThreadItem::CollabAgentToolCall {
             id: payload.call_id.clone(),
@@ -900,7 +900,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_agent_interaction_end(
         &mut self,
-        payload: &codex_protocol::protocol::CollabAgentInteractionEndEvent,
+        payload: &genex_protocol::protocol::CollabAgentInteractionEndEvent,
     ) {
         let status = match &payload.status {
             AgentStatus::Errored(_) | AgentStatus::NotFound => CollabAgentToolCallStatus::Failed,
@@ -923,7 +923,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_sub_agent_activity(
         &mut self,
-        payload: &codex_protocol::protocol::SubAgentActivityEvent,
+        payload: &genex_protocol::protocol::SubAgentActivityEvent,
     ) {
         self.upsert_item_in_current_turn(ThreadItem::SubAgentActivity {
             id: payload.event_id.clone(),
@@ -935,7 +935,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_waiting_begin(
         &mut self,
-        payload: &codex_protocol::protocol::CollabWaitingBeginEvent,
+        payload: &genex_protocol::protocol::CollabWaitingBeginEvent,
     ) {
         let item = ThreadItem::CollabAgentToolCall {
             id: payload.call_id.clone(),
@@ -957,7 +957,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_waiting_end(
         &mut self,
-        payload: &codex_protocol::protocol::CollabWaitingEndEvent,
+        payload: &genex_protocol::protocol::CollabWaitingEndEvent,
     ) {
         let status = if payload
             .statuses
@@ -991,7 +991,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_close_begin(
         &mut self,
-        payload: &codex_protocol::protocol::CollabCloseBeginEvent,
+        payload: &genex_protocol::protocol::CollabCloseBeginEvent,
     ) {
         let item = ThreadItem::CollabAgentToolCall {
             id: payload.call_id.clone(),
@@ -1007,7 +1007,7 @@ impl ThreadHistoryBuilder {
         self.upsert_item_in_current_turn(item);
     }
 
-    fn handle_collab_close_end(&mut self, payload: &codex_protocol::protocol::CollabCloseEndEvent) {
+    fn handle_collab_close_end(&mut self, payload: &genex_protocol::protocol::CollabCloseEndEvent) {
         let status = match &payload.status {
             AgentStatus::Errored(_) | AgentStatus::NotFound => CollabAgentToolCallStatus::Failed,
             _ => CollabAgentToolCallStatus::Completed,
@@ -1034,7 +1034,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_resume_begin(
         &mut self,
-        payload: &codex_protocol::protocol::CollabResumeBeginEvent,
+        payload: &genex_protocol::protocol::CollabResumeBeginEvent,
     ) {
         let item = ThreadItem::CollabAgentToolCall {
             id: payload.call_id.clone(),
@@ -1052,7 +1052,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_resume_end(
         &mut self,
-        payload: &codex_protocol::protocol::CollabResumeEndEvent,
+        payload: &genex_protocol::protocol::CollabResumeEndEvent,
     ) {
         let status = match &payload.status {
             AgentStatus::Errored(_) | AgentStatus::NotFound => CollabAgentToolCallStatus::Failed,
@@ -1085,7 +1085,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_entered_review_mode(
         &mut self,
-        payload: &codex_protocol::protocol::EnteredReviewModeEvent,
+        payload: &genex_protocol::protocol::EnteredReviewModeEvent,
     ) {
         let review = payload
             .user_facing_hint
@@ -1103,7 +1103,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_exited_review_mode(
         &mut self,
-        payload: &codex_protocol::protocol::ExitedReviewModeEvent,
+        payload: &genex_protocol::protocol::ExitedReviewModeEvent,
     ) {
         let review = review_output_text(payload.review_output.as_ref());
         let id = payload
@@ -1526,19 +1526,19 @@ impl ThreadHistoryBuilder {
 }
 
 fn convert_dynamic_tool_content_items(
-    items: &[codex_protocol::dynamic_tools::DynamicToolCallOutputContentItem],
+    items: &[genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem],
 ) -> Vec<DynamicToolCallOutputContentItem> {
     items
         .iter()
         .cloned()
         .map(|item| match item {
-            codex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputText { text } => {
+            genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputText { text } => {
                 DynamicToolCallOutputContentItem::InputText { text }
             }
-            codex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputImage {
+            genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputImage {
                 image_url,
             } => DynamicToolCallOutputContentItem::InputImage { image_url },
-            codex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputAudio {
+            genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputAudio {
                 audio_url,
             } => DynamicToolCallOutputContentItem::InputAudio { audio_url },
         })
@@ -1663,51 +1663,51 @@ mod tests {
     use crate::protocol::v2::AsyncUserInputQuestion;
     use crate::protocol::v2::CommandExecutionSource;
     use crate::protocol::v2::CommandExecutionStatus;
-    use codex_extension_items::ExtensionItem as CoreExtensionItem;
-    use codex_extension_items::sleep::SleepItem as CoreSleepItem;
-    use codex_protocol::ThreadId;
-    use codex_protocol::dynamic_tools::DynamicToolCallOutputContentItem as CoreDynamicToolCallOutputContentItem;
-    use codex_protocol::items::CommandExecutionItem as CoreCommandExecutionItem;
-    use codex_protocol::items::CommandExecutionStatus as CoreCommandExecutionStatus;
-    use codex_protocol::items::EnteredReviewModeItem as CoreEnteredReviewModeItem;
-    use codex_protocol::items::ExitedReviewModeItem as CoreExitedReviewModeItem;
-    use codex_protocol::items::HookPromptFragment as CoreHookPromptFragment;
-    use codex_protocol::items::SubAgentActivityItem as CoreSubAgentActivityItem;
-    use codex_protocol::items::TurnItem as CoreTurnItem;
-    use codex_protocol::items::UserMessageItem as CoreUserMessageItem;
-    use codex_protocol::items::build_hook_prompt_message;
-    use codex_protocol::mcp::CallToolResult;
-    use codex_protocol::models::ImageDetail;
-    use codex_protocol::models::MessagePhase as CoreMessagePhase;
-    use codex_protocol::models::WebSearchAction as CoreWebSearchAction;
-    use codex_protocol::parse_command::ParsedCommand;
-    use codex_protocol::protocol::AgentReasoningEvent;
-    use codex_protocol::protocol::AgentReasoningRawContentEvent;
-    use codex_protocol::protocol::ApplyPatchApprovalRequestEvent;
-    use codex_protocol::protocol::CodexErrorInfo;
-    use codex_protocol::protocol::DynamicToolCallResponseEvent;
-    use codex_protocol::protocol::EnteredReviewModeEvent;
-    use codex_protocol::protocol::ExecCommandBeginEvent;
-    use codex_protocol::protocol::ExecCommandEndEvent;
-    use codex_protocol::protocol::ExecCommandSource;
-    use codex_protocol::protocol::ExitedReviewModeEvent;
-    use codex_protocol::protocol::ItemStartedEvent;
-    use codex_protocol::protocol::McpInvocation;
-    use codex_protocol::protocol::McpToolCallEndEvent;
-    use codex_protocol::protocol::PatchApplyBeginEvent;
-    use codex_protocol::protocol::ReviewTarget;
-    use codex_protocol::protocol::SubAgentActivityKind as CoreSubAgentActivityKind;
-    use codex_protocol::protocol::ThreadRolledBackEvent;
-    use codex_protocol::protocol::TurnAbortReason;
-    use codex_protocol::protocol::TurnAbortedEvent;
-    use codex_protocol::protocol::TurnCompleteEvent;
-    use codex_protocol::protocol::TurnStartedEvent;
-    use codex_protocol::protocol::UserMessageEvent;
-    use codex_protocol::protocol::WebSearchBeginEvent;
-    use codex_protocol::protocol::WebSearchEndEvent;
-    use codex_rollout::CompactedItem;
-    use codex_utils_absolute_path::test_support::PathBufExt;
-    use codex_utils_absolute_path::test_support::test_path_buf;
+    use genex_extension_items::ExtensionItem as CoreExtensionItem;
+    use genex_extension_items::sleep::SleepItem as CoreSleepItem;
+    use genex_protocol::ThreadId;
+    use genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem as CoreDynamicToolCallOutputContentItem;
+    use genex_protocol::items::CommandExecutionItem as CoreCommandExecutionItem;
+    use genex_protocol::items::CommandExecutionStatus as CoreCommandExecutionStatus;
+    use genex_protocol::items::EnteredReviewModeItem as CoreEnteredReviewModeItem;
+    use genex_protocol::items::ExitedReviewModeItem as CoreExitedReviewModeItem;
+    use genex_protocol::items::HookPromptFragment as CoreHookPromptFragment;
+    use genex_protocol::items::SubAgentActivityItem as CoreSubAgentActivityItem;
+    use genex_protocol::items::TurnItem as CoreTurnItem;
+    use genex_protocol::items::UserMessageItem as CoreUserMessageItem;
+    use genex_protocol::items::build_hook_prompt_message;
+    use genex_protocol::mcp::CallToolResult;
+    use genex_protocol::models::ImageDetail;
+    use genex_protocol::models::MessagePhase as CoreMessagePhase;
+    use genex_protocol::models::WebSearchAction as CoreWebSearchAction;
+    use genex_protocol::parse_command::ParsedCommand;
+    use genex_protocol::protocol::AgentReasoningEvent;
+    use genex_protocol::protocol::AgentReasoningRawContentEvent;
+    use genex_protocol::protocol::ApplyPatchApprovalRequestEvent;
+    use genex_protocol::protocol::CodexErrorInfo;
+    use genex_protocol::protocol::DynamicToolCallResponseEvent;
+    use genex_protocol::protocol::EnteredReviewModeEvent;
+    use genex_protocol::protocol::ExecCommandBeginEvent;
+    use genex_protocol::protocol::ExecCommandEndEvent;
+    use genex_protocol::protocol::ExecCommandSource;
+    use genex_protocol::protocol::ExitedReviewModeEvent;
+    use genex_protocol::protocol::ItemStartedEvent;
+    use genex_protocol::protocol::McpInvocation;
+    use genex_protocol::protocol::McpToolCallEndEvent;
+    use genex_protocol::protocol::PatchApplyBeginEvent;
+    use genex_protocol::protocol::ReviewTarget;
+    use genex_protocol::protocol::SubAgentActivityKind as CoreSubAgentActivityKind;
+    use genex_protocol::protocol::ThreadRolledBackEvent;
+    use genex_protocol::protocol::TurnAbortReason;
+    use genex_protocol::protocol::TurnAbortedEvent;
+    use genex_protocol::protocol::TurnCompleteEvent;
+    use genex_protocol::protocol::TurnStartedEvent;
+    use genex_protocol::protocol::UserMessageEvent;
+    use genex_protocol::protocol::WebSearchBeginEvent;
+    use genex_protocol::protocol::WebSearchEndEvent;
+    use genex_rollout::CompactedItem;
+    use genex_utils_absolute_path::test_support::PathBufExt;
+    use genex_utils_absolute_path::test_support::test_path_buf;
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
     use std::time::Duration;
@@ -2441,7 +2441,7 @@ mod tests {
                 item: CoreTurnItem::UserMessage(CoreUserMessageItem {
                     id: "user-item-id".to_string(),
                     client_id: Some("client-message-1".to_string()),
-                    content: vec![codex_protocol::user_input::UserInput::Text {
+                    content: vec![genex_protocol::user_input::UserInput::Text {
                         text: "hello".into(),
                         text_elements: Vec::new(),
                     }],
@@ -2549,7 +2549,7 @@ mod tests {
                 result: "Zm9v".into(),
                 transparent_background: Some(true),
                 failure: Some(
-                    codex_extension_items::image_generation::ImageGenerationFailure::UsageLimitExceeded {
+                    genex_extension_items::image_generation::ImageGenerationFailure::UsageLimitExceeded {
                         limit_id: "image_gen".into(),
                         resets_at: Some(1_786_150_800),
                     },
@@ -2595,7 +2595,7 @@ mod tests {
                         result: "Zm9v".into(),
                         transparent_background: Some(true),
                         failure: Some(
-                            codex_extension_items::image_generation::ImageGenerationFailure::UsageLimitExceeded {
+                            genex_extension_items::image_generation::ImageGenerationFailure::UsageLimitExceeded {
                                 limit_id: "image_gen".into(),
                                 resets_at: Some(1_786_150_800),
                             },
@@ -3200,7 +3200,7 @@ mod tests {
                 ..Default::default()
             }),
             EventMsg::DynamicToolCallRequest(
-                codex_protocol::dynamic_tools::DynamicToolCallRequest {
+                genex_protocol::dynamic_tools::DynamicToolCallRequest {
                     call_id: "dyn-1".into(),
                     turn_id: "turn-1".into(),
                     started_at_ms: 0,
@@ -3312,7 +3312,7 @@ mod tests {
                 success: false,
                 changes: [(
                     PathBuf::from("README.md"),
-                    codex_protocol::protocol::FileChange::Add {
+                    genex_protocol::protocol::FileChange::Add {
                         content: "hello\n".into(),
                     },
                 )]
@@ -3365,9 +3365,9 @@ mod tests {
 
     #[test]
     fn assigns_late_legacy_mcp_completion_to_original_turn() {
-        use codex_protocol::items::McpToolCallItem;
-        use codex_protocol::items::McpToolCallStatus as CoreMcpToolCallStatus;
-        use codex_protocol::protocol::HasLegacyEvent;
+        use genex_protocol::items::McpToolCallItem;
+        use genex_protocol::items::McpToolCallStatus as CoreMcpToolCallStatus;
+        use genex_protocol::protocol::HasLegacyEvent;
 
         let completion = ItemCompletedEvent {
             thread_id: ThreadId::new(),
@@ -3689,7 +3689,7 @@ mod tests {
                 auto_approved: false,
                 changes: [(
                     PathBuf::from("README.md"),
-                    codex_protocol::protocol::FileChange::Add {
+                    genex_protocol::protocol::FileChange::Add {
                         content: "hello\n".into(),
                     },
                 )]
@@ -3758,7 +3758,7 @@ mod tests {
                 started_at_ms: 0,
                 changes: [(
                     PathBuf::from("README.md"),
-                    codex_protocol::protocol::FileChange::Add {
+                    genex_protocol::protocol::FileChange::Add {
                         content: "hello\n".into(),
                     },
                 )]
@@ -4118,7 +4118,7 @@ mod tests {
                 local_images: Vec::new(),
                 ..Default::default()
             }),
-            EventMsg::CollabResumeEnd(codex_protocol::protocol::CollabResumeEndEvent {
+            EventMsg::CollabResumeEnd(genex_protocol::protocol::CollabResumeEndEvent {
                 call_id: "resume-1".into(),
                 completed_at_ms: 0,
                 sender_thread_id: ThreadId::try_from("00000000-0000-0000-0000-000000000001")
@@ -4177,7 +4177,7 @@ mod tests {
                 local_images: Vec::new(),
                 ..Default::default()
             }),
-            EventMsg::CollabAgentSpawnEnd(codex_protocol::protocol::CollabAgentSpawnEndEvent {
+            EventMsg::CollabAgentSpawnEnd(genex_protocol::protocol::CollabAgentSpawnEndEvent {
                 call_id: "spawn-1".into(),
                 completed_at_ms: 0,
                 sender_thread_id,
@@ -4186,7 +4186,7 @@ mod tests {
                 new_agent_role: Some("explorer".into()),
                 prompt: "inspect the repo".into(),
                 model: "gpt-5.4-mini".into(),
-                reasoning_effort: codex_protocol::model_types::ReasoningEffort::Medium,
+                reasoning_effort: genex_protocol::model_types::ReasoningEffort::Medium,
                 status: AgentStatus::Running,
             }),
         ];
@@ -4208,7 +4208,7 @@ mod tests {
                 receiver_thread_ids: vec!["00000000-0000-0000-0000-000000000002".into()],
                 prompt: Some("inspect the repo".into()),
                 model: Some("gpt-5.4-mini".into()),
-                reasoning_effort: Some(codex_protocol::model_types::ReasoningEffort::Medium),
+                reasoning_effort: Some(genex_protocol::model_types::ReasoningEffort::Medium),
                 agents_states: [(
                     "00000000-0000-0000-0000-000000000002".into(),
                     CollabAgentState {
@@ -4241,7 +4241,7 @@ mod tests {
                 ..Default::default()
             }),
             EventMsg::CollabAgentInteractionBegin(
-                codex_protocol::protocol::CollabAgentInteractionBeginEvent {
+                genex_protocol::protocol::CollabAgentInteractionBeginEvent {
                     call_id: "send-1".into(),
                     started_at_ms: 0,
                     sender_thread_id: sender,
@@ -4250,7 +4250,7 @@ mod tests {
                 },
             ),
             EventMsg::CollabAgentInteractionEnd(
-                codex_protocol::protocol::CollabAgentInteractionEndEvent {
+                genex_protocol::protocol::CollabAgentInteractionEndEvent {
                     call_id: "send-1".into(),
                     completed_at_ms: 0,
                     sender_thread_id: sender,
@@ -4577,7 +4577,7 @@ mod tests {
 
     #[test]
     fn canonical_hook_prompt_completion_updates_turn_history() {
-        let hook_prompt = CoreTurnItem::HookPrompt(codex_protocol::items::HookPromptItem {
+        let hook_prompt = CoreTurnItem::HookPrompt(genex_protocol::items::HookPromptItem {
             id: "hook-prompt-1".into(),
             fragments: vec![CoreHookPromptFragment::from_single_hook(
                 "Retry with tests.",
@@ -4611,7 +4611,7 @@ mod tests {
     #[test]
     fn completed_sub_agent_activity_updates_completed_parent_turn() {
         let child_thread_id = ThreadId::new();
-        let child_path = codex_protocol::AgentPath::root()
+        let child_path = genex_protocol::AgentPath::root()
             .join("worker")
             .expect("worker path");
         let items = vec![
@@ -4672,10 +4672,10 @@ mod tests {
                 collaboration_mode_kind: Default::default(),
             })),
             RolloutItem::ResponseItem(
-                codex_protocol::models::ResponseItem::Message {
-                    id: Some(codex_protocol::ResponseItemId::with_suffix("msg", "1")),
+                genex_protocol::models::ResponseItem::Message {
+                    id: Some(genex_protocol::ResponseItemId::with_suffix("msg", "1")),
                     role: "user".into(),
-                    content: vec![codex_protocol::models::ContentItem::InputText {
+                    content: vec![genex_protocol::models::ContentItem::InputText {
                         text: "plain text".into(),
                     }],
                     phase: None,

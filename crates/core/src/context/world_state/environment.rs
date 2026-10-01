@@ -8,9 +8,9 @@ use crate::environment_selection::TurnEnvironmentSnapshot;
 use crate::environment_selection::TurnEnvironmentState;
 use crate::session::turn_context::TurnContext;
 use crate::shell::ShellType;
-use codex_features::Feature;
-use codex_protocol::models::ContentItemKind;
-use codex_utils_path_uri::PathUri;
+use genex_features::Feature;
+use genex_protocol::models::ContentItemKind;
+use genex_utils_path_uri::PathUri;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -521,8 +521,8 @@ fn is_legacy_single(environments: &BTreeMap<String, EnvironmentState>) -> bool {
 
 fn environment_context_markers() -> (&'static str, &'static str) {
     (
-        codex_protocol::protocol::ENVIRONMENT_CONTEXT_OPEN_TAG,
-        codex_protocol::protocol::ENVIRONMENT_CONTEXT_CLOSE_TAG,
+        genex_protocol::protocol::ENVIRONMENT_CONTEXT_OPEN_TAG,
+        genex_protocol::protocol::ENVIRONMENT_CONTEXT_CLOSE_TAG,
     )
 }
 
@@ -538,12 +538,12 @@ fn network_from_turn_context(turn_context: &TurnContext) -> Option<NetworkContex
         network
             .domains
             .as_ref()
-            .and_then(codex_config::NetworkDomainPermissionsToml::allowed_domains)
+            .and_then(genex_config::NetworkDomainPermissionsToml::allowed_domains)
             .unwrap_or_default(),
         network
             .domains
             .as_ref()
-            .and_then(codex_config::NetworkDomainPermissionsToml::denied_domains)
+            .and_then(genex_config::NetworkDomainPermissionsToml::denied_domains)
             .unwrap_or_default(),
     ))
 }

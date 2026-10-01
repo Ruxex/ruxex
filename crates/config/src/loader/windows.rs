@@ -33,14 +33,14 @@ pub fn probe_windows_system_config_namespace() -> WindowsSystemConfigNamespacePr
     };
     let result = probe_directory(
         provider_dir,
-        codex_windows_sandbox::path_has_standard_user_mutation_allow,
+        genex_windows_sandbox::path_has_standard_user_mutation_allow,
     );
     if !matches!(result, WindowsSystemConfigNamespaceProbe::Expected) {
         return result;
     }
     let result = probe_directory(
         codex_dir.as_path(),
-        codex_windows_sandbox::path_or_child_file_has_standard_user_mutation_allow,
+        genex_windows_sandbox::path_or_child_file_has_standard_user_mutation_allow,
     );
     if !matches!(result, WindowsSystemConfigNamespaceProbe::Expected) {
         return result;
@@ -55,7 +55,7 @@ fn probe_directory(
     if !path.is_dir() {
         return WindowsSystemConfigNamespaceProbe::UnexpectedType;
     }
-    match codex_windows_sandbox::path_has_trusted_system_owner(path) {
+    match genex_windows_sandbox::path_has_trusted_system_owner(path) {
         Ok(true) => {}
         Ok(false) => return WindowsSystemConfigNamespaceProbe::UnexpectedOwner,
         Err(_) => return WindowsSystemConfigNamespaceProbe::CheckError,

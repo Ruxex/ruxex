@@ -105,7 +105,7 @@ async fn preserves_preferences_from_other_layers_and_edits_during_detection() ->
 #[tokio::test]
 async fn temporary_cli_override_does_not_suppress_the_saved_default() -> anyhow::Result<()> {
     use crate::legacy_core::config::ConfigBuilder;
-    use codex_config::LoaderOverrides;
+    use genex_config::LoaderOverrides;
 
     let home = tempfile::tempdir()?;
     let config = ConfigBuilder::default()
@@ -127,7 +127,7 @@ async fn temporary_cli_override_does_not_suppress_the_saved_default() -> anyhow:
 #[tokio::test]
 async fn detected_preference_survives_failed_persistence() -> anyhow::Result<()> {
     use crate::legacy_core::config::ConfigBuilder;
-    use codex_config::LoaderOverrides;
+    use genex_config::LoaderOverrides;
 
     let home = tempfile::tempdir()?;
     let config = ConfigBuilder::default()

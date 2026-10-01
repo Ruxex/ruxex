@@ -153,7 +153,7 @@ async fn completion_replay_waits_for_older_turn_items_to_load() {
     let mut older = completed_turn(Some(125_000), Some(older_completed_at));
     older.id = "older-turn".to_string();
     let mut unloaded = older.clone();
-    unloaded.items_view = codex_app_server_protocol::TurnItemsView::NotLoaded;
+    unloaded.items_view = genex_app_server_protocol::TurnItemsView::NotLoaded;
     unloaded.items.clear();
     let newer = completed_turn(Some(1_000), Some(COMPLETED_AT));
 

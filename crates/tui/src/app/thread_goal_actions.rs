@@ -11,9 +11,9 @@ use crate::goal_display::goal_status_label;
 use crate::goal_display::goal_usage_summary;
 use crate::goal_files;
 use crate::text_formatting::truncate_text;
-use codex_app_server_protocol::ThreadGoal;
-use codex_app_server_protocol::ThreadGoalStatus;
-use codex_protocol::ThreadId;
+use genex_app_server_protocol::ThreadGoal;
+use genex_app_server_protocol::ThreadGoalStatus;
+use genex_protocol::ThreadId;
 
 const EPHEMERAL_THREAD_GOAL_ERROR_MESSAGE: &str = concat!(
     "Goals need a saved session. This session is temporary.\n",

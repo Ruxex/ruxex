@@ -325,10 +325,10 @@ async fn manual_request_retries_after_updater_replacement() {
     let home = TempDir::new().expect("home");
     let (daemon, _) = manual_update_daemon(&home);
     let socket_path = daemon.manual_update_socket_path();
-    codex_uds::prepare_private_socket_directory(socket_path.parent().expect("socket parent"))
+    genex_uds::prepare_private_socket_directory(socket_path.parent().expect("socket parent"))
         .await
         .expect("socket directory");
-    let mut listener = codex_uds::UnixListener::bind(&socket_path)
+    let mut listener = genex_uds::UnixListener::bind(&socket_path)
         .await
         .expect("old updater socket");
     let expected = UpdateOutput {
@@ -348,7 +348,7 @@ async fn manual_request_retries_after_updater_replacement() {
         tokio::fs::remove_file(&socket_path)
             .await
             .expect("remove old socket");
-        let mut successor = codex_uds::UnixListener::bind(&socket_path)
+        let mut successor = genex_uds::UnixListener::bind(&socket_path)
             .await
             .expect("successor socket");
         let mut connection = successor.accept().await.expect("retried connection");
@@ -378,10 +378,10 @@ async fn manual_request_recovers_when_one_shot_updater_exits() {
     let home = TempDir::new().expect("home");
     let (daemon, _) = manual_update_daemon(&home);
     let socket_path = daemon.manual_update_socket_path();
-    codex_uds::prepare_private_socket_directory(socket_path.parent().expect("socket parent"))
+    genex_uds::prepare_private_socket_directory(socket_path.parent().expect("socket parent"))
         .await
         .expect("socket directory");
-    let mut listener = codex_uds::UnixListener::bind(&socket_path)
+    let mut listener = genex_uds::UnixListener::bind(&socket_path)
         .await
         .expect("one-shot updater socket");
     let server = tokio::spawn(async move {
@@ -448,7 +448,7 @@ async fn unsupported_request_preserves_updater_schedule() {
         .join("auto-update-version");
     let previous_marker = std::fs::read(&marker).unwrap();
     std::fs::remove_file(&marker).unwrap();
-    let mut pinned = codex_uds::UnixStream::connect(&socket_path).await.unwrap();
+    let mut pinned = genex_uds::UnixStream::connect(&socket_path).await.unwrap();
     pinned.write_all(b"update\n").await.unwrap();
     let mut response = Vec::new();
     pinned.read_to_end(&mut response).await.unwrap();
@@ -457,7 +457,7 @@ async fn unsupported_request_preserves_updater_schedule() {
     assert!(!marker.exists());
     std::fs::write(&marker, previous_marker).unwrap();
     std::fs::remove_file(&daemon.managed_codex_bin).expect("remove selected binary");
-    let mut malformed = codex_uds::UnixStream::connect(&socket_path)
+    let mut malformed = genex_uds::UnixStream::connect(&socket_path)
         .await
         .expect("connect malformed request");
     malformed
@@ -493,7 +493,7 @@ async fn test_control_server(
     use futures::StreamExt;
     std::fs::create_dir_all(daemon.socket_path.parent().expect("socket parent"))
         .expect("socket directory");
-    let mut listener = codex_uds::UnixListener::bind(&daemon.socket_path)
+    let mut listener = genex_uds::UnixListener::bind(&daemon.socket_path)
         .await
         .expect("control listener");
     let codex_home = home.to_path_buf();
@@ -648,7 +648,7 @@ async fn check_manual_update_restart(package_directory: &str) {
         );
         tokio::time::sleep(Duration::from_millis(20)).await;
     }
-    let mut queued = codex_uds::UnixStream::connect(&daemon.manual_update_socket_path())
+    let mut queued = genex_uds::UnixStream::connect(&daemon.manual_update_socket_path())
         .await
         .expect("queue a second update");
     queued

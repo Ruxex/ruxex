@@ -1,9 +1,9 @@
-use codex_code_mode::CellId;
-use codex_code_mode::CodeModeNestedToolCall;
-use codex_code_mode::CodeModeSessionDelegate;
-use codex_code_mode::NotificationFuture;
-use codex_code_mode::ToolInvocationFuture;
-use codex_protocol::ToolName;
+use genex_code_mode::CellId;
+use genex_code_mode::CodeModeNestedToolCall;
+use genex_code_mode::CodeModeSessionDelegate;
+use genex_code_mode::NotificationFuture;
+use genex_code_mode::ToolInvocationFuture;
+use genex_protocol::ToolName;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tokio::sync::Semaphore;

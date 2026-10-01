@@ -4,9 +4,9 @@ pub(crate) mod login;
 
 use clap::Args;
 use clap::Parser;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_cli::CliConfigOverrides;
-use codex_utils_cli::ProfileV2Name;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_cli::CliConfigOverrides;
+use genex_utils_cli::ProfileV2Name;
 use std::path::PathBuf;
 
 pub use debug_sandbox::run_command_under_landlock;

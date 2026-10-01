@@ -1,6 +1,6 @@
 use anyhow::Context;
-use codex_config::skill_config_rules_from_stack;
-use codex_login::CodexAuth;
+use genex_config::skill_config_rules_from_stack;
+use genex_login::CodexAuth;
 use std::collections::HashSet;
 use tracing::warn;
 

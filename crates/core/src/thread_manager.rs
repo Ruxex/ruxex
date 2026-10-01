@@ -20,72 +20,72 @@ use crate::session::resolve_multi_agent_version;
 use crate::session::session::Session;
 use crate::tasks::InterruptedTurnHistoryMarker;
 use crate::tasks::interrupted_turn_history_marker;
-use codex_agent_graph_store::AgentGraphStore;
-use codex_agent_graph_store::LocalAgentGraphStore;
-use codex_app_server_protocol::ThreadHistoryBuilder;
-use codex_app_server_protocol::TurnStatus;
-use codex_attachment_store::AttachmentStore;
-use codex_attachment_store::InlineAttachmentStore;
-use codex_code_mode::CodeModeSessionProvider;
-use codex_code_mode::DisabledCodeModeSessionProvider;
-use codex_code_mode::ProcessOwnedCodeModeSessionProvider;
-use codex_core_plugins::PluginsManager;
-use codex_exec_server::EnvironmentManager;
-use codex_extension_api::ExtensionDataInit;
-use codex_extension_api::ExtensionRegistry;
-use codex_extension_api::LoadedUserInstructions;
-use codex_extension_api::ThreadInstructionsProvider;
-use codex_extension_api::UserInstructionsProvider;
-use codex_extension_api::empty_extension_registry;
-use codex_features::Feature;
-use codex_history::InitialHistory;
-use codex_history::ResumedHistory;
-use codex_history::RolloutItem;
-use codex_login::AuthManager;
-use codex_login::CodexAuth;
-use codex_login::default_client::CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
-use codex_login::default_client::originator;
-use codex_model_provider::create_model_provider;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_models_manager::manager::RefreshStrategy;
-use codex_models_manager::manager::SharedModelsManager;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::Result as CodexResult;
-use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::model_types::ModelPreset;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SessionConfiguredEvent;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadSource;
-use codex_protocol::protocol::TurnAbortReason;
-use codex_protocol::protocol::TurnAbortedEvent;
-use codex_protocol::protocol::TurnEnvironmentSelection;
-use codex_protocol::protocol::W3cTraceContext;
-use codex_rollout::state_db::StateDbHandle;
-use codex_skills_extension::HostSkillsService;
-use codex_thread_store::InMemoryThreadStore;
-use codex_thread_store::LoadThreadHistoryParams;
-use codex_thread_store::LocalThreadStore;
-use codex_thread_store::LocalThreadStoreConfig;
-use codex_thread_store::MoveThreadToSectionParams;
-use codex_thread_store::PreparedFork;
-use codex_thread_store::ReadThreadByRolloutPathParams;
-use codex_thread_store::ReadThreadParams;
-use codex_thread_store::StoredModelContext;
-use codex_thread_store::StoredThread;
-use codex_thread_store::ThreadMetadataPatch;
-use codex_thread_store::ThreadStore;
-use codex_thread_store::ThreadStoreError;
-use codex_thread_store::UpdateThreadMetadataParams;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_git_discovery::GitRootDiscovery;
+use genex_agent_graph_store::AgentGraphStore;
+use genex_agent_graph_store::LocalAgentGraphStore;
+use genex_app_server_protocol::ThreadHistoryBuilder;
+use genex_app_server_protocol::TurnStatus;
+use genex_attachment_store::AttachmentStore;
+use genex_attachment_store::InlineAttachmentStore;
+use genex_code_mode::CodeModeSessionProvider;
+use genex_code_mode::DisabledCodeModeSessionProvider;
+use genex_code_mode::ProcessOwnedCodeModeSessionProvider;
+use genex_core_plugins::PluginsManager;
+use genex_exec_server::EnvironmentManager;
+use genex_extension_api::ExtensionDataInit;
+use genex_extension_api::ExtensionRegistry;
+use genex_extension_api::LoadedUserInstructions;
+use genex_extension_api::ThreadInstructionsProvider;
+use genex_extension_api::UserInstructionsProvider;
+use genex_extension_api::empty_extension_registry;
+use genex_features::Feature;
+use genex_history::InitialHistory;
+use genex_history::ResumedHistory;
+use genex_history::RolloutItem;
+use genex_login::AuthManager;
+use genex_login::CodexAuth;
+use genex_login::default_client::CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
+use genex_login::default_client::originator;
+use genex_model_provider::create_model_provider;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_models_manager::manager::SharedModelsManager;
+use genex_protocol::ThreadId;
+use genex_protocol::config_types::CollaborationModeMask;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::Result as CodexResult;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::model_types::ModelPreset;
+use genex_protocol::protocol::Event;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::SessionConfiguredEvent;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::ThreadSource;
+use genex_protocol::protocol::TurnAbortReason;
+use genex_protocol::protocol::TurnAbortedEvent;
+use genex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::protocol::W3cTraceContext;
+use genex_rollout::state_db::StateDbHandle;
+use genex_skills_extension::HostSkillsService;
+use genex_thread_store::InMemoryThreadStore;
+use genex_thread_store::LoadThreadHistoryParams;
+use genex_thread_store::LocalThreadStore;
+use genex_thread_store::LocalThreadStoreConfig;
+use genex_thread_store::MoveThreadToSectionParams;
+use genex_thread_store::PreparedFork;
+use genex_thread_store::ReadThreadByRolloutPathParams;
+use genex_thread_store::ReadThreadParams;
+use genex_thread_store::StoredModelContext;
+use genex_thread_store::StoredThread;
+use genex_thread_store::ThreadMetadataPatch;
+use genex_thread_store::ThreadStore;
+use genex_thread_store::ThreadStoreError;
+use genex_thread_store::UpdateThreadMetadataParams;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_git_discovery::GitRootDiscovery;
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
 use std::collections::HashMap;
@@ -261,7 +261,7 @@ pub struct StartThreadOptions {
     pub history_mode: Option<ThreadHistoryMode>,
     pub session_source: Option<SessionSource>,
     pub thread_source: Option<ThreadSource>,
-    pub dynamic_tools: Vec<codex_protocol::dynamic_tools::DynamicToolSpec>,
+    pub dynamic_tools: Vec<genex_protocol::dynamic_tools::DynamicToolSpec>,
     pub metrics_service_name: Option<String>,
     pub parent_trace: Option<W3cTraceContext>,
     pub environments: Option<Vec<TurnEnvironmentSelection>>,
@@ -440,9 +440,9 @@ pub fn thread_store_from_config(
                 state_db,
             ));
             if compression_enabled {
-                codex_rollout::spawn_rollout_compression_worker(
+                genex_rollout::spawn_rollout_compression_worker(
                     config.codex_home.to_path_buf(),
-                    codex_rollout::RolloutCompressionTrigger::Startup,
+                    genex_rollout::RolloutCompressionTrigger::Startup,
                 );
             }
             store
@@ -651,7 +651,7 @@ impl ThreadManager {
         let thread_store: Arc<dyn ThreadStore> = Arc::new(LocalThreadStore::new(
             LocalThreadStoreConfig {
                 codex_home: codex_home.clone(),
-                sqlite: codex_state::SqliteConfig::new_for_testing(absolute_codex_home),
+                sqlite: genex_state::SqliteConfig::new_for_testing(absolute_codex_home),
                 default_model_provider_id: "test".to_string(),
             },
             state_db.clone(),
@@ -819,7 +819,7 @@ impl ThreadManager {
     pub async fn list_models(
         &self,
         refresh_strategy: RefreshStrategy,
-        http_client_factory: codex_http_client::HttpClientFactory,
+        http_client_factory: genex_http_client::HttpClientFactory,
     ) -> Vec<ModelPreset> {
         self.state
             .models_manager
@@ -1965,9 +1965,9 @@ impl ThreadManagerState {
         // Older callers and saved reviewers identify isolation through their source.
         // New internal callers supply an explicit runtime policy before startup.
         let isolation = thread_extension_init
-            .get::<codex_extension_api::SessionIsolation>()
+            .get::<genex_extension_api::SessionIsolation>()
             .map(|policy| *policy)
-            .unwrap_or_else(|| codex_extension_api::SessionIsolation::Inherit);
+            .unwrap_or_else(|| genex_extension_api::SessionIsolation::Inherit);
         thread_extension_init.insert(isolation);
         let environments = environments.unwrap_or_else(|| {
             default_thread_environment_selections(
@@ -2015,7 +2015,7 @@ impl ThreadManagerState {
                 .await;
         }
         let (instructions, inherited_exec_policy, extensions, mcp_manager, multi_agent_version) =
-            if isolation == codex_extension_api::SessionIsolation::Isolated {
+            if isolation == genex_extension_api::SessionIsolation::Isolated {
                 (
                     inherited_instructions.unwrap_or_default(),
                     None,
@@ -2079,7 +2079,7 @@ impl ThreadManagerState {
             starting.push(Arc::downgrade(&source_changed_during_startup));
         }
         let windows_sandbox_proxy_settings_mode =
-            codex_sandboxing::WindowsSandboxProxySettingsMode::Reconcile;
+            genex_sandboxing::WindowsSandboxProxySettingsMode::Reconcile;
         let attachment_source =
             forked_from_thread_id.filter(|_| matches!(&initial_history, InitialHistory::Forked(_)));
         let (session, io) = Session::spawn(SessionSpawnArgs {
@@ -2208,7 +2208,7 @@ impl ThreadManagerState {
         &self,
         session_source: &SessionSource,
         initial_history: &InitialHistory,
-    ) -> codex_rollout_trace::ThreadTraceContext {
+    ) -> genex_rollout_trace::ThreadTraceContext {
         // A fresh v2 child belongs to the same rollout tree as its parent, so
         // session startup derives its child trace from the parent's thread
         // context. Resumed children already have a prior `ThreadStarted` event
@@ -2218,10 +2218,10 @@ impl ThreadManagerState {
             parent_thread_id, ..
         }) = session_source
         else {
-            return codex_rollout_trace::ThreadTraceContext::disabled();
+            return genex_rollout_trace::ThreadTraceContext::disabled();
         };
         if matches!(initial_history, InitialHistory::Resumed(_)) {
-            return codex_rollout_trace::ThreadTraceContext::disabled();
+            return genex_rollout_trace::ThreadTraceContext::disabled();
         }
         // Parent lookup can fail if the parent was closed or released between
         // spawn preparation and session construction. Tracing is diagnostic, so
@@ -2231,7 +2231,7 @@ impl ThreadManagerState {
             .await
             .ok()
             .map(|thread| thread.session.services.rollout_thread_trace.clone())
-            .unwrap_or_else(codex_rollout_trace::ThreadTraceContext::disabled)
+            .unwrap_or_else(genex_rollout_trace::ThreadTraceContext::disabled)
     }
 }
 

@@ -16,7 +16,7 @@ pub(crate) enum RequestOutcome {
 
 impl RequestOutcome {
     pub(crate) fn record(self) {
-        let Some(metrics) = codex_otel::global() else {
+        let Some(metrics) = genex_otel::global() else {
             return;
         };
         let outcome = match self {
@@ -33,13 +33,13 @@ impl RequestOutcome {
 }
 
 pub(crate) fn record_duration(name: &'static str, duration: Duration) {
-    if let Some(metrics) = codex_otel::global() {
+    if let Some(metrics) = genex_otel::global() {
         let _ = metrics.record_duration(name, duration, &[]);
     }
 }
 
 pub(crate) fn record_event(event: &'static str) {
-    if let Some(metrics) = codex_otel::global() {
+    if let Some(metrics) = genex_otel::global() {
         let _ = metrics.counter(
             "codex.plugins.loaded_cache.event",
             /*inc*/ 1,

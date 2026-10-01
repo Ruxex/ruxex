@@ -1,22 +1,22 @@
 use super::shared::v2_enum_from_core;
 use crate::JsonSchema;
 use crate::TS;
-use codex_experimental_api_macros::ExperimentalApi;
-use codex_protocol::approvals::ElicitationRequest as CoreElicitationRequest;
-use codex_protocol::items::McpToolCallError as CoreMcpToolCallError;
-use codex_protocol::mcp::CallToolResult as CoreMcpCallToolResult;
-use codex_protocol::mcp::McpServerInfo;
-use codex_protocol::mcp::Resource as McpResource;
-pub use codex_protocol::mcp::ResourceContent as McpResourceContent;
-use codex_protocol::mcp::ResourceTemplate as McpResourceTemplate;
-use codex_protocol::mcp::Tool as McpTool;
+use genex_experimental_api_macros::ExperimentalApi;
+use genex_protocol::approvals::ElicitationRequest as CoreElicitationRequest;
+use genex_protocol::items::McpToolCallError as CoreMcpToolCallError;
+use genex_protocol::mcp::CallToolResult as CoreMcpCallToolResult;
+use genex_protocol::mcp::McpServerInfo;
+use genex_protocol::mcp::Resource as McpResource;
+pub use genex_protocol::mcp::ResourceContent as McpResourceContent;
+use genex_protocol::mcp::ResourceTemplate as McpResourceTemplate;
+use genex_protocol::mcp::Tool as McpTool;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
 use std::collections::BTreeMap;
 
 v2_enum_from_core!(
-    pub enum McpAuthStatus from codex_protocol::protocol::McpAuthStatus {
+    pub enum McpAuthStatus from genex_protocol::protocol::McpAuthStatus {
         Unknown,
         Unsupported,
         NotLoggedIn,
@@ -26,14 +26,14 @@ v2_enum_from_core!(
 );
 
 v2_enum_from_core!(
-    pub enum McpServerStartupFailureReason from codex_protocol::protocol::McpStartupFailureReason {
+    pub enum McpServerStartupFailureReason from genex_protocol::protocol::McpStartupFailureReason {
         ReauthenticationRequired
     }
 );
 
 v2_enum_from_core!(
     #[ts(rename_all = "camelCase")]
-    pub enum McpServerConnectionStatus from codex_protocol::mcp::McpServerConnectionStatus {
+    pub enum McpServerConnectionStatus from genex_protocol::mcp::McpServerConnectionStatus {
         NotStarted,
         Starting,
         Connected,
@@ -303,11 +303,11 @@ pub enum McpServerElicitationAction {
 }
 
 impl McpServerElicitationAction {
-    pub fn to_core(self) -> codex_protocol::approvals::ElicitationAction {
+    pub fn to_core(self) -> genex_protocol::approvals::ElicitationAction {
         match self {
-            Self::Accept => codex_protocol::approvals::ElicitationAction::Accept,
-            Self::Decline => codex_protocol::approvals::ElicitationAction::Decline,
-            Self::Cancel => codex_protocol::approvals::ElicitationAction::Cancel,
+            Self::Accept => genex_protocol::approvals::ElicitationAction::Accept,
+            Self::Decline => genex_protocol::approvals::ElicitationAction::Decline,
+            Self::Cancel => genex_protocol::approvals::ElicitationAction::Cancel,
         }
     }
 }

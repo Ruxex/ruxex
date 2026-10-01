@@ -10,24 +10,24 @@ mod runtime_catalog;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use codex_api::ApiError;
-use codex_api::Provider;
-use codex_api::SharedAuthProvider;
-use codex_api::TransportError;
-use codex_login::AuthManager;
-use codex_login::CodexAuth;
-use codex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_LUNA_MODEL_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_TERRA_MODEL_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_RUNTIME_GLOBAL_GPT_5_6_LUNA_MODEL_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_RUNTIME_GLOBAL_GPT_5_6_TERRA_MODEL_ID;
-use codex_model_provider_info::ModelProviderAwsAuthInfo;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_models_manager::manager::SharedModelsManager;
-use codex_models_manager::manager::StaticModelsManager;
-use codex_protocol::account::ProviderAccount;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::Result;
-use codex_protocol::model_types::ModelsResponse;
+use genex_api::ApiError;
+use genex_api::Provider;
+use genex_api::SharedAuthProvider;
+use genex_api::TransportError;
+use genex_login::AuthManager;
+use genex_login::CodexAuth;
+use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_LUNA_MODEL_ID;
+use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_TERRA_MODEL_ID;
+use genex_model_provider_info::AMAZON_BEDROCK_RUNTIME_GLOBAL_GPT_5_6_LUNA_MODEL_ID;
+use genex_model_provider_info::AMAZON_BEDROCK_RUNTIME_GLOBAL_GPT_5_6_TERRA_MODEL_ID;
+use genex_model_provider_info::ModelProviderAwsAuthInfo;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_models_manager::manager::SharedModelsManager;
+use genex_models_manager::manager::StaticModelsManager;
+use genex_protocol::account::ProviderAccount;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::Result;
+use genex_protocol::model_types::ModelsResponse;
 
 use crate::auth::auth_manager_for_provider;
 use crate::auth::resolve_provider_auth as resolve_configured_provider_auth;
@@ -373,10 +373,10 @@ mod error_tests;
 mod tests {
     use std::num::NonZeroU64;
 
-    use codex_login::auth::BedrockAccessKeysAuth;
-    use codex_login::auth::BedrockApiKeyAuth;
-    use codex_model_provider_info::AwsAuthRefreshConfig;
-    use codex_protocol::config_types::ModelProviderAuthInfo;
+    use genex_login::auth::BedrockAccessKeysAuth;
+    use genex_login::auth::BedrockApiKeyAuth;
+    use genex_model_provider_info::AwsAuthRefreshConfig;
+    use genex_protocol::config_types::ModelProviderAuthInfo;
     use http::HeaderValue;
     use pretty_assertions::assert_eq;
 

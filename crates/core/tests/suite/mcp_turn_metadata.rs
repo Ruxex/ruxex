@@ -2,42 +2,42 @@
 #![allow(clippy::unwrap_used)]
 
 use anyhow::Result;
-use codex_config::test_support::CloudConfigBundleFixture;
-use codex_config::types::AppToolApproval;
-use codex_core::TurnInputRequest;
-use codex_core::config::Config;
-use codex_features::Feature;
-use codex_history::RolloutItem;
-use codex_models_manager::test_support::test_models_response;
-use codex_protocol::approvals::ElicitationRequest;
-use codex_protocol::config_types::ApprovalsReviewer;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::items::McpAppDisplayMode;
-use codex_protocol::items::McpAppUi;
-use codex_protocol::items::McpToolCallStatus;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::NetworkPermissions;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::ElicitationAction;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ItemCompletedEvent;
-use codex_protocol::protocol::ItemStartedEvent;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::TurnEnvironmentSelections;
-use codex_protocol::protocol::TurnSettingsUpdate;
-use codex_protocol::protocol::TurnSettingsUpdateOutcome;
-use codex_protocol::request_permissions::PermissionGrantScope;
-use codex_protocol::request_permissions::RequestPermissionProfile;
-use codex_protocol::request_permissions::RequestPermissionsResponse;
-use codex_protocol::request_user_input::RequestUserInputAnswer;
-use codex_protocol::request_user_input::RequestUserInputResponse;
-use codex_protocol::user_input::UserInput;
+use genex_config::test_support::CloudConfigBundleFixture;
+use genex_config::types::AppToolApproval;
+use genex_core::TurnInputRequest;
+use genex_core::config::Config;
+use genex_features::Feature;
+use genex_history::RolloutItem;
+use genex_models_manager::test_support::test_models_response;
+use genex_protocol::approvals::ElicitationRequest;
+use genex_protocol::config_types::ApprovalsReviewer;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::items::McpAppDisplayMode;
+use genex_protocol::items::McpAppUi;
+use genex_protocol::items::McpToolCallStatus;
+use genex_protocol::items::TurnItem;
+use genex_protocol::models::NetworkPermissions;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::ElicitationAction;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ItemCompletedEvent;
+use genex_protocol::protocol::ItemStartedEvent;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::TurnEnvironmentSelections;
+use genex_protocol::protocol::TurnSettingsUpdate;
+use genex_protocol::protocol::TurnSettingsUpdateOutcome;
+use genex_protocol::request_permissions::PermissionGrantScope;
+use genex_protocol::request_permissions::RequestPermissionProfile;
+use genex_protocol::request_permissions::RequestPermissionsResponse;
+use genex_protocol::request_user_input::RequestUserInputAnswer;
+use genex_protocol::request_user_input::RequestUserInputResponse;
+use genex_protocol::user_input::UserInput;
 use core_test_support::PathExt;
 use core_test_support::apps_test_server::AppsTestServer;
 use core_test_support::apps_test_server::LINK_ID;
@@ -470,7 +470,7 @@ async fn submit_user_turn(
     Ok(())
 }
 
-fn attribution_models(model_slugs: [&str; 2]) -> Vec<codex_protocol::model_types::ModelInfo> {
+fn attribution_models(model_slugs: [&str; 2]) -> Vec<genex_protocol::model_types::ModelInfo> {
     let base_model = test_models_response()
         .expect("bundled models should parse")
         .models
@@ -1499,7 +1499,7 @@ async fn apps_default_writes_prompts_for_writes_but_not_reads() -> Result<()> {
     let persisted_hints = tokio::fs::read_to_string(rollout_path)
         .await?
         .lines()
-        .map(codex_rollout::parse_rollout_line)
+        .map(genex_rollout::parse_rollout_line)
         .collect::<serde_json::Result<Vec<_>>>()?
         .into_iter()
         .filter_map(|line| match line.item {

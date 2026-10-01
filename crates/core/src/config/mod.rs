@@ -5,126 +5,126 @@ use crate::unified_exec::MIN_EMPTY_YIELD_TIME_MS;
 use crate::windows_sandbox::WindowsSandboxLevelExt;
 use crate::windows_sandbox::resolve_windows_sandbox_mode;
 use crate::windows_sandbox::resolve_windows_sandbox_private_desktop;
-use codex_agent_roles::load_agent_roles;
-use codex_config::ConfigLayerSource;
-use codex_config::ConfigLayerStack;
-use codex_config::ConfigPathContext;
-use codex_config::ConfigRequirements;
-use codex_config::ConfigRequirementsToml;
-use codex_config::ConstrainedWithSource;
-use codex_config::FeatureRequirementsToml;
-use codex_config::ManagedAuthPolicy;
-use codex_config::McpEnterpriseManagedAuthConfig;
-use codex_config::McpServerRequirement;
-use codex_config::PluginRequirementsToml;
-use codex_config::ProfileV2Name;
-use codex_config::ResidencyRequirement;
-use codex_config::SandboxModeRequirement;
-use codex_config::Sourced;
-use codex_config::ThreadConfigLoader;
-use codex_config::config_toml::ConfigToml;
-use codex_config::config_toml::DEFAULT_PROJECT_DOC_MAX_BYTES;
-use codex_config::config_toml::ProjectConfig;
-use codex_config::config_toml::ThreadStoreToml;
-use codex_config::config_toml::validate_model_providers;
-use codex_config::loader::load_config_layers_state;
-use codex_config::loader::project_trust_key;
-use codex_config::permissions_toml::PermissionProfileToml;
-use codex_config::permissions_toml::PermissionsToml;
-use codex_config::sandbox_mode_requirement_for_permission_profile;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_config::types::AuthKeyringBackendKind;
-use codex_config::types::History;
-use codex_config::types::McpServerConfig;
-use codex_config::types::McpServerDisabledReason;
-use codex_config::types::ModelAvailabilityNuxConfig;
-use codex_config::types::Notice;
-use codex_config::types::OAuthCredentialsStoreMode;
-use codex_config::types::ResumeCwdMode;
-use codex_config::types::SessionPickerViewMode;
-use codex_config::types::ToolSuggestConfig;
-use codex_config::types::ToolSuggestDisabledTool;
-use codex_config::types::ToolSuggestDiscoverable;
-use codex_config::types::TuiKeymap;
-use codex_config::types::TuiNotificationSettings;
-use codex_config::types::TuiPetAnchor;
-use codex_config::types::UriBasedFileOpener;
-use codex_config::types::WindowsSandboxModeToml;
-use codex_core_plugins::PluginLoadOutcome;
-use codex_core_plugins::PluginsConfigInput;
-use codex_exec_server::ExecutorFileSystem;
-use codex_exec_server::LOCAL_FS;
-use codex_exec_server::ReadFileOptions;
-use codex_features::CodeModeConfigToml;
-use codex_features::CurrentTimeReminderConfigToml;
-use codex_features::CurrentTimeReminderDeliveryMode;
-use codex_features::CurrentTimeSource;
-use codex_features::Feature;
-use codex_features::FeatureConfigSource;
-use codex_features::FeatureOverrides;
-use codex_features::FeatureToml;
-use codex_features::Features;
-use codex_features::FeaturesToml;
-use codex_features::MultiAgentV2ConfigToml;
-use codex_features::NetworkProxyConfigToml;
-use codex_features::SleepToolMode;
-use codex_features::TokenBudgetConfigToml;
-use codex_git_utils::resolve_root_git_project_for_trust;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyPolicy;
-use codex_install_context::InstallContext;
-use codex_login::AuthManagerConfig;
-use codex_login::AuthRouteConfig;
-use codex_mcp::DEFAULT_OPTIONAL_MCP_STARTUP_GRACE;
-use codex_mcp::McpConfig;
-use codex_mcp::McpPluginAttribution;
-use codex_mcp::McpProtocolMode;
-use codex_mcp::McpServerRegistration;
-use codex_mcp::ResolvedMcpCatalog;
-use codex_model_provider::ProviderCapabilities;
-use codex_model_provider_info::MY_PROVIDER_ID;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_model_provider_info::built_in_model_providers;
-use codex_model_provider_info::merge_configured_model_providers;
-use codex_models_manager::ModelsManagerConfig;
-use codex_prompts::ResolvedModelMessages;
-use codex_protocol::config_types::AltScreenMode;
-use codex_protocol::config_types::AutoCompactTokenLimitScope;
-use codex_protocol::config_types::ForcedLoginMethod;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use codex_protocol::config_types::SandboxMode;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::config_types::ShellEnvironmentPolicy;
-use codex_protocol::config_types::TrustLevel;
-use codex_protocol::config_types::Verbosity;
-use codex_protocol::config_types::WebSearchConfig;
-use codex_protocol::config_types::WebSearchMode;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::models::ActivePermissionProfile;
-use codex_protocol::models::BaseInstructionsProvenance;
-use codex_protocol::models::PermissionProfile;
-pub use codex_protocol::models::PermissionProfileSnapshot;
-use codex_protocol::models::ProfileWorkspaceRoot;
-use codex_protocol::models::SandboxEnforcement;
-use codex_protocol::permissions::DenyReadValidator;
-use codex_protocol::permissions::DenyReadViolation;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::FileSystemSandboxPolicyContext;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_rmcp_client::McpOAuthRefreshMode;
-use codex_sandboxing::SandboxType;
-pub use codex_thread_store::ExtraConfig;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_absolute_path::AbsolutePathBufGuard;
-use codex_utils_path_uri::PathConvention;
-use codex_utils_path_uri::PathUri;
+use genex_agent_roles::load_agent_roles;
+use genex_config::ConfigLayerSource;
+use genex_config::ConfigLayerStack;
+use genex_config::ConfigPathContext;
+use genex_config::ConfigRequirements;
+use genex_config::ConfigRequirementsToml;
+use genex_config::ConstrainedWithSource;
+use genex_config::FeatureRequirementsToml;
+use genex_config::ManagedAuthPolicy;
+use genex_config::McpEnterpriseManagedAuthConfig;
+use genex_config::McpServerRequirement;
+use genex_config::PluginRequirementsToml;
+use genex_config::ProfileV2Name;
+use genex_config::ResidencyRequirement;
+use genex_config::SandboxModeRequirement;
+use genex_config::Sourced;
+use genex_config::ThreadConfigLoader;
+use genex_config::config_toml::ConfigToml;
+use genex_config::config_toml::DEFAULT_PROJECT_DOC_MAX_BYTES;
+use genex_config::config_toml::ProjectConfig;
+use genex_config::config_toml::ThreadStoreToml;
+use genex_config::config_toml::validate_model_providers;
+use genex_config::loader::load_config_layers_state;
+use genex_config::loader::project_trust_key;
+use genex_config::permissions_toml::PermissionProfileToml;
+use genex_config::permissions_toml::PermissionsToml;
+use genex_config::sandbox_mode_requirement_for_permission_profile;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_config::types::AuthKeyringBackendKind;
+use genex_config::types::History;
+use genex_config::types::McpServerConfig;
+use genex_config::types::McpServerDisabledReason;
+use genex_config::types::ModelAvailabilityNuxConfig;
+use genex_config::types::Notice;
+use genex_config::types::OAuthCredentialsStoreMode;
+use genex_config::types::ResumeCwdMode;
+use genex_config::types::SessionPickerViewMode;
+use genex_config::types::ToolSuggestConfig;
+use genex_config::types::ToolSuggestDisabledTool;
+use genex_config::types::ToolSuggestDiscoverable;
+use genex_config::types::TuiKeymap;
+use genex_config::types::TuiNotificationSettings;
+use genex_config::types::TuiPetAnchor;
+use genex_config::types::UriBasedFileOpener;
+use genex_config::types::WindowsSandboxModeToml;
+use genex_core_plugins::PluginLoadOutcome;
+use genex_core_plugins::PluginsConfigInput;
+use genex_exec_server::ExecutorFileSystem;
+use genex_exec_server::LOCAL_FS;
+use genex_exec_server::ReadFileOptions;
+use genex_features::CodeModeConfigToml;
+use genex_features::CurrentTimeReminderConfigToml;
+use genex_features::CurrentTimeReminderDeliveryMode;
+use genex_features::CurrentTimeSource;
+use genex_features::Feature;
+use genex_features::FeatureConfigSource;
+use genex_features::FeatureOverrides;
+use genex_features::FeatureToml;
+use genex_features::Features;
+use genex_features::FeaturesToml;
+use genex_features::MultiAgentV2ConfigToml;
+use genex_features::NetworkProxyConfigToml;
+use genex_features::SleepToolMode;
+use genex_features::TokenBudgetConfigToml;
+use genex_git_utils::resolve_root_git_project_for_trust;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyPolicy;
+use genex_install_context::InstallContext;
+use genex_login::AuthManagerConfig;
+use genex_login::AuthRouteConfig;
+use genex_mcp::DEFAULT_OPTIONAL_MCP_STARTUP_GRACE;
+use genex_mcp::McpConfig;
+use genex_mcp::McpPluginAttribution;
+use genex_mcp::McpProtocolMode;
+use genex_mcp::McpServerRegistration;
+use genex_mcp::ResolvedMcpCatalog;
+use genex_model_provider::ProviderCapabilities;
+use genex_model_provider_info::MY_PROVIDER_ID;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_model_provider_info::built_in_model_providers;
+use genex_model_provider_info::merge_configured_model_providers;
+use genex_models_manager::ModelsManagerConfig;
+use genex_prompts::ResolvedModelMessages;
+use genex_protocol::config_types::AltScreenMode;
+use genex_protocol::config_types::AutoCompactTokenLimitScope;
+use genex_protocol::config_types::ForcedLoginMethod;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use genex_protocol::config_types::SandboxMode;
+use genex_protocol::config_types::ServiceTier;
+use genex_protocol::config_types::ShellEnvironmentPolicy;
+use genex_protocol::config_types::TrustLevel;
+use genex_protocol::config_types::Verbosity;
+use genex_protocol::config_types::WebSearchConfig;
+use genex_protocol::config_types::WebSearchMode;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::models::ActivePermissionProfile;
+use genex_protocol::models::BaseInstructionsProvenance;
+use genex_protocol::models::PermissionProfile;
+pub use genex_protocol::models::PermissionProfileSnapshot;
+use genex_protocol::models::ProfileWorkspaceRoot;
+use genex_protocol::models::SandboxEnforcement;
+use genex_protocol::permissions::DenyReadValidator;
+use genex_protocol::permissions::DenyReadViolation;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::FileSystemSandboxPolicyContext;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::SandboxPolicy;
+use genex_rmcp_client::McpOAuthRefreshMode;
+use genex_sandboxing::SandboxType;
+pub use genex_thread_store::ExtraConfig;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::AbsolutePathBufGuard;
+use genex_utils_path_uri::PathConvention;
+use genex_utils_path_uri::PathUri;
 use rmcp::model::ElicitationCapability;
 use rmcp::model::FormElicitationCapability;
 use rmcp::model::UrlElicitationCapability;
@@ -148,7 +148,7 @@ use crate::config::permissions::get_readable_roots_required_for_codex_runtime;
 use crate::config::permissions::network_proxy_config_for_profile_selection;
 use crate::config::permissions::validate_user_permission_profile_names;
 use crate::responses_metadata::validate_extra_metadata;
-use codex_network_proxy::NetworkProxyConfig;
+use genex_network_proxy::NetworkProxyConfig;
 use toml::Value as TomlValue;
 use toml_edit::DocumentMut;
 
@@ -171,15 +171,15 @@ mod token_budget_startup;
 mod windows_sandbox_config;
 pub use auth_keyring::bootstrap_auth_config;
 pub use auth_keyring::resolve_bootstrap_auth_keyring_backend_kind;
-pub use codex_agent_roles::AgentRoleConfig;
-pub use codex_config::ConfigLoadOptions;
-pub use codex_config::Constrained;
-pub use codex_config::ConstraintError;
-pub use codex_config::ConstraintResult;
-pub use codex_config::LoaderOverrides;
-pub use codex_network_proxy::NetworkProxyAuditMetadata;
-use codex_sandboxing::compatibility_sandbox_policy_for_permission_profile;
-pub use codex_sandboxing::system_bwrap_warning;
+pub use genex_agent_roles::AgentRoleConfig;
+pub use genex_config::ConfigLoadOptions;
+pub use genex_config::Constrained;
+pub use genex_config::ConstraintError;
+pub use genex_config::ConstraintResult;
+pub use genex_config::LoaderOverrides;
+pub use genex_network_proxy::NetworkProxyAuditMetadata;
+use genex_sandboxing::compatibility_sandbox_policy_for_permission_profile;
+pub use genex_sandboxing::system_bwrap_warning;
 pub use managed_features::ManagedFeatures;
 pub(crate) use metrics::emit_session_start_metrics;
 pub use network_config::EnvironmentNetworkConfigError;
@@ -233,7 +233,7 @@ pub const CONFIG_TOML_FILE: &str = "config.toml";
 const CONFIG_PROFILE_V2_SUFFIX: &str = ".config.toml";
 
 fn resolve_sqlite_home_env(resolved_cwd: &Path) -> Option<AbsolutePathBuf> {
-    let raw = std::env::var(codex_state::SQLITE_HOME_ENV).ok()?;
+    let raw = std::env::var(genex_state::SQLITE_HOME_ENV).ok()?;
     let trimmed = raw.trim();
     if trimmed.is_empty() {
         return None;
@@ -551,7 +551,7 @@ fn profile_allows_configured_network_proxy(permission_profile: &PermissionProfil
 
 fn build_network_proxy_spec(
     mut configured_network_proxy_config: NetworkProxyConfig,
-    network_requirements: Option<Sourced<codex_config::NetworkConstraints>>,
+    network_requirements: Option<Sourced<genex_config::NetworkConstraints>>,
     permission_profile: &PermissionProfile,
     environment_overrides: &HashMap<String, String>,
 ) -> std::io::Result<Option<NetworkProxySpec>> {
@@ -858,7 +858,7 @@ pub struct Config {
     pub codex_home: AbsolutePathBuf,
 
     /// Resolved configuration shared by all Codex SQLite databases.
-    pub sqlite: codex_state::SqliteConfig,
+    pub sqlite: genex_state::SqliteConfig,
 
     /// Directory where Codex writes log files (defaults to `$CODEX_HOME/log`).
     pub log_dir: PathBuf,
@@ -886,7 +886,7 @@ pub struct Config {
     pub codex_self_exe: Option<PathBuf>,
 
     /// Path to the `codex-linux-sandbox` executable. This must be set if
-    /// [`codex_sandboxing::SandboxType::LinuxSeccomp`] is used. Note that this
+    /// [`genex_sandboxing::SandboxType::LinuxSeccomp`] is used. Note that this
     /// cannot be set in the config file: it must be set in code via
     /// [`ConfigOverrides`].
     ///
@@ -1012,7 +1012,7 @@ pub struct Config {
     pub tool_suggest: ToolSuggestConfig,
 
     /// OTEL configuration (exporter type, endpoint, headers, etc.).
-    pub otel: codex_config::types::OtelConfig,
+    pub otel: genex_config::types::OtelConfig,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
@@ -1370,7 +1370,7 @@ impl ConfigBuilder {
             },
             thread_config_loader
                 .as_deref()
-                .unwrap_or(&codex_config::NoopThreadConfigLoader),
+                .unwrap_or(&genex_config::NoopThreadConfigLoader),
         )
         .await?;
         let merged_toml = config_layer_stack.effective_config();
@@ -1382,13 +1382,13 @@ impl ConfigBuilder {
         let config_toml: ConfigToml = match merged_toml.try_into() {
             Ok(config_toml) => config_toml,
             Err(err) => {
-                if let Some(config_error) = codex_config::first_layer_config_error::<ConfigToml>(
+                if let Some(config_error) = genex_config::first_layer_config_error::<ConfigToml>(
                     &config_layer_stack,
-                    codex_config::CONFIG_TOML_FILE,
+                    genex_config::CONFIG_TOML_FILE,
                 )
                 .await
                 {
-                    return Err(codex_config::io_error_from_config_error(
+                    return Err(genex_config::io_error_from_config_error(
                         std::io::ErrorKind::InvalidData,
                         config_error,
                         Some(err),
@@ -1414,7 +1414,7 @@ impl ConfigBuilder {
 }
 
 impl Config {
-    pub fn sqlite_config(&self) -> &codex_state::SqliteConfig {
+    pub fn sqlite_config(&self) -> &genex_state::SqliteConfig {
         &self.sqlite
     }
 
@@ -1561,7 +1561,7 @@ impl Config {
 
     pub async fn to_mcp_config(
         &self,
-        plugins_manager: &codex_core_plugins::PluginsManager,
+        plugins_manager: &genex_core_plugins::PluginsManager,
     ) -> McpConfig {
         self.to_mcp_config_with_plugin_registrations(
             plugins_manager,
@@ -1572,7 +1572,7 @@ impl Config {
 
     pub(crate) async fn to_mcp_config_with_plugin_registrations(
         &self,
-        plugins_manager: &codex_core_plugins::PluginsManager,
+        plugins_manager: &genex_core_plugins::PluginsManager,
         additional_plugin_registrations: impl IntoIterator<Item = McpServerRegistration>,
     ) -> McpConfig {
         let plugins_input = self.plugins_config_input();
@@ -1781,8 +1781,8 @@ impl Config {
                 format!("failed to serialize default config: {e}"),
             )
         })?;
-        let cli_layer = codex_config::build_cli_overrides_layer(&cli_overrides);
-        codex_config::merge_toml_values(&mut merged, &cli_layer);
+        let cli_layer = genex_config::build_cli_overrides_layer(&cli_overrides);
+        genex_config::merge_toml_values(&mut merged, &cli_layer);
         let codex_home = AbsolutePathBuf::from_absolute_path_checked(codex_home)?;
         let config_toml = deserialize_config_toml_with_base(merged, &codex_home)?;
         Self::load_config_with_layer_stack(
@@ -1895,7 +1895,7 @@ pub async fn load_config_toml_with_layer_stack(
         cwd.cloned(),
         &cli_overrides,
         options,
-        &codex_config::NoopThreadConfigLoader,
+        &genex_config::NoopThreadConfigLoader,
     )
     .await?;
 
@@ -2095,7 +2095,7 @@ pub async fn load_global_mcp_servers(
         cwd,
         &cli_overrides,
         LoaderOverrides::default(),
-        &codex_config::NoopThreadConfigLoader,
+        &genex_config::NoopThreadConfigLoader,
     )
     .await?;
     let merged_toml = config_layer_stack.effective_config();
@@ -2477,7 +2477,7 @@ fn resolve_update_plan_enabled(config_toml: &ConfigToml) -> bool {
 }
 
 fn resolve_orchestrator_feature_enabled(
-    feature: Option<&codex_config::config_toml::OrchestratorFeatureToml>,
+    feature: Option<&genex_config::config_toml::OrchestratorFeatureToml>,
 ) -> bool {
     feature.and_then(|feature| feature.enabled).unwrap_or(true)
 }
@@ -3592,7 +3592,7 @@ impl Config {
         let forced_managed_workspace_id = cfg
             .forced_managed_workspace_id
             .clone()
-            .map(codex_config::config_toml::ForcedManagedWorkspaceIds::into_vec)
+            .map(genex_config::config_toml::ForcedManagedWorkspaceIds::into_vec)
             .map(|values| {
                 values
                     .into_iter()
@@ -3763,7 +3763,7 @@ impl Config {
             .filter(|Sourced { value, .. }| !value.deny_read.is_empty())
             .map(|Sourced { value, .. }| -> std::io::Result<_> {
                 let mut policy = FileSystemSandboxPolicy::restricted(Vec::new());
-                value.apply_to_policy(&mut policy, codex_utils_path_uri::PathConvention::native())?;
+                value.apply_to_policy(&mut policy, genex_utils_path_uri::PathConvention::native())?;
                 Ok(Arc::new(policy))
             })
             .transpose()?;
@@ -3956,7 +3956,7 @@ impl Config {
                 .transpose()?,
             agent_interrupt_message_enabled,
             codex_home,
-            sqlite: codex_state::SqliteConfig::from_sqlite_home(sqlite_home),
+            sqlite: genex_state::SqliteConfig::from_sqlite_home(sqlite_home),
             log_dir,
             config_layer_stack,
             history,
@@ -4233,7 +4233,7 @@ impl Config {
     }
 
     pub fn bundled_skills_enabled(&self) -> bool {
-        codex_config::bundled_skills_enabled_from_stack(&self.config_layer_stack)
+        genex_config::bundled_skills_enabled_from_stack(&self.config_layer_stack)
     }
 
     /// Returns whether effective requirements allow selecting a concrete profile.
@@ -4436,7 +4436,7 @@ fn is_permission_allowed(
 /// - If `CODEX_HOME` is not set, this function does not verify that the
 ///   directory exists.
 pub fn find_codex_home() -> std::io::Result<AbsolutePathBuf> {
-    codex_utils_home_dir::find_codex_home()
+    genex_utils_home_dir::find_codex_home()
 }
 
 /// Returns the path to the folder where Codex logs are stored. Does not verify

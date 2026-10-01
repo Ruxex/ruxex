@@ -28,7 +28,7 @@ use crate::windows_proxy_ingress::WindowsRouteService;
 use anyhow::Context;
 use anyhow::Result;
 use clap::Parser;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;

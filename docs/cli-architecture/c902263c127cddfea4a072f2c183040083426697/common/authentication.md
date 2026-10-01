@@ -4,9 +4,9 @@
 
 認証には 3 つの異なる層があります。
 
-1. `codex login` / `logout` は `codex-login::AuthManager` を通じて、ローカルの資格情報状態を変更または参照します。
-2. `codex-login` は保存済み認証と更新/復旧の動作を表します。
-3. `codex-api::AuthProvider` は API クライアントにリクエスト時の認証ヘッダーを提供します。
+1. `codex login` / `logout` は `genex-login::AuthManager` を通じて、ローカルの資格情報状態を変更または参照します。
+2. `genex-login` は保存済み認証と更新/復旧の動作を表します。
+3. `genex-api::AuthProvider` は API クライアントにリクエスト時の認証ヘッダーを提供します。
 
 CLI コマンドの境界は [`main.rs`](../../../../crates/cli/src/main.rs#L1392) にあります。保存済み認証の型とマネージャーの動作は [`login/src/auth/manager.rs`](../../../../crates/login/src/auth/manager.rs#L48) にあります。リクエスト側の Trait は [`AuthProvider`](../reference/trait-index.md#authprovider) です。
 

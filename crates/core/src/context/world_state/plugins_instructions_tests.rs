@@ -2,7 +2,7 @@ use super::*;
 use crate::context::ContextualUserFragment;
 use crate::context::world_state::PreviousSectionState;
 use crate::context::world_state::test_support::render_section_cases;
-use codex_protocol::models::ResponseItem;
+use genex_protocol::models::ResponseItem;
 use pretty_assertions::assert_eq;
 
 #[test]

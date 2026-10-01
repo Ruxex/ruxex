@@ -11,16 +11,16 @@
 
 use std::sync::Arc;
 
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ThreadHistoryBuilder;
-use codex_app_server_protocol::ThreadTokenUsage;
-use codex_app_server_protocol::ThreadTokenUsageUpdatedNotification;
-use codex_app_server_protocol::Turn;
-use codex_app_server_protocol::TurnStatus;
-use codex_core::CodexThread;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::EventMsg;
-use codex_rollout::RolloutItem;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ThreadHistoryBuilder;
+use genex_app_server_protocol::ThreadTokenUsage;
+use genex_app_server_protocol::ThreadTokenUsageUpdatedNotification;
+use genex_app_server_protocol::Turn;
+use genex_app_server_protocol::TurnStatus;
+use genex_core::CodexThread;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::EventMsg;
+use genex_rollout::RolloutItem;
 
 use crate::outgoing_message::ConnectionId;
 use crate::outgoing_message::OutgoingMessageSender;
@@ -112,10 +112,10 @@ fn latest_token_usage_turn_id(turns: &[Turn]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_app_server_protocol::build_turns_from_rollout_items;
-    use codex_protocol::protocol::AgentMessageEvent;
-    use codex_protocol::protocol::TokenCountEvent;
-    use codex_protocol::protocol::UserMessageEvent;
+    use genex_app_server_protocol::build_turns_from_rollout_items;
+    use genex_protocol::protocol::AgentMessageEvent;
+    use genex_protocol::protocol::TokenCountEvent;
+    use genex_protocol::protocol::UserMessageEvent;
     use pretty_assertions::assert_eq;
 
     #[test]

@@ -1,8 +1,8 @@
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::request_user_input::RequestUserInputQuestion;
-use codex_tools::JsonSchema;
-use codex_tools::ResponsesApiTool;
-use codex_tools::ToolSpec;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::request_user_input::RequestUserInputQuestion;
+use genex_tools::JsonSchema;
+use genex_tools::ResponsesApiTool;
+use genex_tools::ToolSpec;
 use serde::Deserialize;
 use std::collections::BTreeMap;
 

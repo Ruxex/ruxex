@@ -7,9 +7,9 @@ use std::io;
 use std::path::Path;
 use std::path::PathBuf;
 
-use codex_protocol::RolloutId;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::HistoryPosition;
+use genex_protocol::RolloutId;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::HistoryPosition;
 
 use crate::ARCHIVED_SESSIONS_SUBDIR;
 use crate::SESSIONS_SUBDIR;

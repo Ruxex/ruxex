@@ -12,7 +12,7 @@ use crate::ThreadAttachment;
 use crate::ThreadAttachmentPage;
 use anyhow::Context;
 use chrono::Utc;
-use codex_protocol::ThreadId;
+use genex_protocol::ThreadId;
 use serde_json::Value;
 use sqlx::QueryBuilder;
 use sqlx::Row;

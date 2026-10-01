@@ -39,7 +39,7 @@ pub use auth_status::StreamableHttpOAuthDiscovery;
 pub use auth_status::determine_streamable_http_auth_status;
 pub use auth_status::determine_streamable_http_auth_status_from_credentials;
 pub use auth_status::discover_streamable_http_oauth;
-pub use codex_protocol::protocol::McpAuthStatus;
+pub use genex_protocol::protocol::McpAuthStatus;
 pub use ema_auth_policy::EmaAuthFailure;
 pub use ema_auth_policy::EmaInvalidGrantSource;
 pub use ema_auth_policy::validate_ema_auth_resource;

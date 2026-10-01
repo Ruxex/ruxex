@@ -1,15 +1,15 @@
 use std::collections::HashSet;
 
-use codex_exec_server::LOCAL_ENVIRONMENT_ID;
-use codex_exec_server::MAX_SELECTED_CAPABILITY_ROOTS;
-use codex_exec_server::SelectedCapabilityRootsStatus;
-use codex_execpolicy::Policy;
-use codex_protocol::capabilities::CapabilityRootLocation;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::Result as CodexResult;
-use codex_protocol::protocol::EnvironmentConfig;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::TurnEnvironmentSelection;
+use genex_exec_server::LOCAL_ENVIRONMENT_ID;
+use genex_exec_server::MAX_SELECTED_CAPABILITY_ROOTS;
+use genex_exec_server::SelectedCapabilityRootsStatus;
+use genex_execpolicy::Policy;
+use genex_protocol::capabilities::CapabilityRootLocation;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::Result as CodexResult;
+use genex_protocol::protocol::EnvironmentConfig;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::TurnEnvironmentSelection;
 
 use crate::config::ConstraintError;
 use crate::config::ConstraintResult;
@@ -32,7 +32,7 @@ pub(super) fn validate_environment_selections(
                         field_name: "environments",
                         candidate: "environment configuration".to_string(),
                         allowed: format!("valid environment configuration ({error})"),
-                        requirement_source: codex_config::RequirementSource::Unknown,
+                        requirement_source: genex_config::RequirementSource::Unknown,
                     }
                 })?;
             }
@@ -122,7 +122,7 @@ impl Session {
                 field_name: "environments",
                 candidate: environment.environment_id.clone(),
                 allowed: "owner-provided environment configuration".to_string(),
-                requirement_source: codex_config::RequirementSource::Unknown,
+                requirement_source: genex_config::RequirementSource::Unknown,
             });
         }
 

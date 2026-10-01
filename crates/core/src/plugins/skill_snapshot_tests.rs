@@ -1,12 +1,12 @@
-use codex_core_plugins::PluginsManager;
-use codex_core_plugins::store::PluginStore;
-use codex_login::AuthManager;
-use codex_login::CodexAuth;
-use codex_plugin::PluginId;
-use codex_protocol::protocol::Product;
-use codex_skills_extension::HostSkillsLoadInput;
-use codex_skills_extension::HostSkillsService;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_core_plugins::PluginsManager;
+use genex_core_plugins::store::PluginStore;
+use genex_login::AuthManager;
+use genex_login::CodexAuth;
+use genex_plugin::PluginId;
+use genex_protocol::protocol::Product;
+use genex_skills_extension::HostSkillsLoadInput;
+use genex_skills_extension::HostSkillsService;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
 

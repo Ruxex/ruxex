@@ -4,7 +4,7 @@ use std::process::Stdio;
 use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering;
 
-use codex_model_provider_info::AwsAuthRefreshConfig;
+use genex_model_provider_info::AwsAuthRefreshConfig;
 use tokio::process::Command;
 use tokio::sync::Semaphore;
 

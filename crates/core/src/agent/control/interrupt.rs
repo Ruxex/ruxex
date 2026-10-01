@@ -5,10 +5,10 @@
 
 use super::AgentControl;
 use crate::agent::AgentStatus;
-use codex_protocol::AgentPath;
-use codex_protocol::ThreadId;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::CodexErrorDetails;
+use genex_protocol::AgentPath;
+use genex_protocol::ThreadId;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::CodexErrorDetails;
 
 pub(crate) struct AgentInterruptOutcome {
     pub(crate) agent_path: AgentPath,

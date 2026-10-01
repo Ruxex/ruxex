@@ -1,5 +1,5 @@
-use codex_network_proxy::ManagedNetworkSandboxContext;
-use codex_protocol::models::PermissionProfile;
+use genex_network_proxy::ManagedNetworkSandboxContext;
+use genex_protocol::models::PermissionProfile;
 use std::path::Path;
 
 /// Basename used when the Codex executable self-invokes as the Linux sandbox

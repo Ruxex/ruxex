@@ -2,11 +2,11 @@
 //! Labels never inspect the filesystem and must not be used for authorization.
 
 use crate::responses_metadata::CodexResponsesMetadata;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::PermissionProfile;
-use codex_sandboxing::SandboxType;
-use codex_sandboxing::get_platform_sandbox;
-use codex_sandboxing::policy_transforms::should_require_platform_sandbox;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::PermissionProfile;
+use genex_sandboxing::SandboxType;
+use genex_sandboxing::get_platform_sandbox;
+use genex_sandboxing::policy_transforms::should_require_platform_sandbox;
 use std::path::Path;
 
 /// Diagnostic labels captured with a turn's permission configuration.

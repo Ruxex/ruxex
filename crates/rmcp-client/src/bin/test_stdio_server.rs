@@ -334,7 +334,7 @@ impl TestToolServer {
     /// that aren't the first item (or includes invalid image blocks before a valid image).
     ///
     /// Manual testing approach (Codex TUI):
-    /// - Build this binary: `cargo build -p codex-rmcp-client --bin test_stdio_server`
+    /// - Build this binary: `cargo build -p genex-rmcp-client --bin test_stdio_server`
     /// - Register it:
     ///   - `codex mcp add mcpimg -- /abs/path/to/test_stdio_server`
     /// - Then in Codex TUI, ask it to call:

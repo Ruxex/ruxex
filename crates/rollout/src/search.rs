@@ -5,11 +5,11 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::process::Stdio;
 
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::strip_user_message_prefix;
+use genex_protocol::items::TurnItem;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::strip_user_message_prefix;
 use regex::Regex;
 use regex::RegexBuilder;
 use tokio::process::Command;

@@ -3,7 +3,7 @@ use crate::app::session_lifecycle::ThreadAttachPresentation;
 use crate::app::tests::session_lifecycle_requests::recorded_params;
 use crate::app::tests::session_lifecycle_requests::start_recording_remote_app_server;
 use crate::app_event::RecapTrigger;
-use codex_model_provider_info::ModelProviderInfo;
+use genex_model_provider_info::ModelProviderInfo;
 use core_test_support::responses;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -93,7 +93,7 @@ stream_max_retries = 0
         ),
     )?;
     app.config.codex_home = codex_home.path().to_path_buf().abs();
-    app.config.sqlite = codex_state::SqliteConfig::new_for_testing(codex_home.path().abs());
+    app.config.sqlite = genex_state::SqliteConfig::new_for_testing(codex_home.path().abs());
     app.config.model = Some(MODEL.to_string());
     app.config.model_provider_id = MODEL_PROVIDER_ID.to_string();
     app.config.model_provider = ModelProviderInfo {
@@ -383,7 +383,7 @@ async fn temporary_recap_threads_disable_remote_mcp_servers() -> Result<()> {
         "features.context_management.experimental_mode = true\n[mcp_servers.filesystem]\ncommand = 'true'\n",
     )?;
     app.config.codex_home = codex_home.path().to_path_buf().abs();
-    app.config.sqlite = codex_state::SqliteConfig::new_for_testing(codex_home.path().abs());
+    app.config.sqlite = genex_state::SqliteConfig::new_for_testing(codex_home.path().abs());
     let (app_server, requests, proxy) = start_recording_remote_app_server(&app.config).await?;
 
     let config = app.chat_widget.config_ref();

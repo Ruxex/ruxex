@@ -8,8 +8,8 @@ use super::InvalidDenyReadGlobBehavior;
 use super::ReadDenyMatcher;
 use super::deny_read_validator::DenyReadValidator;
 use super::deny_read_validator::has_context_read_denials;
-use codex_utils_path_uri::PathConvention;
-use codex_utils_path_uri::PathUri;
+use genex_utils_path_uri::PathConvention;
+use genex_utils_path_uri::PathUri;
 
 const INVALID_PATH: &str = "managed filesystem denial cannot be materialized safely";
 const SHADOWED: &str = "managed filesystem denial is shadowed by a selected profile grant";

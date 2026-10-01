@@ -1,7 +1,7 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-tools"
+name = "genex-tools"
 version.workspace = true
 
 [lints]
@@ -9,14 +9,14 @@ workspace = true
 
 [dependencies]
 bitflags = { workspace = true }
-codex-code-mode = { workspace = true }
-codex-features = { workspace = true }
-codex-file-system = { workspace = true }
-codex-extension-items = { workspace = true }
-codex-protocol = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-output-truncation = { workspace = true }
-codex-utils-string = { workspace = true }
+genex-code-mode = { workspace = true }
+genex-features = { workspace = true }
+genex-file-system = { workspace = true }
+genex-extension-items = { workspace = true }
+genex-protocol = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
+genex-utils-output-truncation = { workspace = true }
+genex-utils-string = { workspace = true }
 jsonptr = { workspace = true }
 rmcp = { workspace = true, default-features = false, features = [
     "base64",
@@ -31,7 +31,7 @@ tracing = { workspace = true }
 urlencoding = { workspace = true }
 
 [dev-dependencies]
-codex-utils-cargo-bin = { workspace = true }
+genex-utils-cargo-bin = { workspace = true }
 pretty_assertions = { workspace = true }
 
 [lib]

@@ -1,29 +1,29 @@
 use anyhow::Context;
 use anyhow::Result;
-use codex_config::McpServerConfig;
-use codex_config::test_support::CloudConfigBundleFixture;
-use codex_core::EnvironmentConfig;
-use codex_core::StartThreadOptions;
-use codex_core::TurnInputRequest;
-use codex_core::windows_sandbox::WindowsSandboxLevelExt;
-use codex_exec_server::CreateDirectoryOptions;
-use codex_exec_server::ExecServerRuntimePaths;
-use codex_features::Feature;
-use codex_protocol::capabilities::CapabilityRootLocation;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::PermissionProfileSnapshot;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::ThreadSource;
-use codex_protocol::protocol::TurnEnvironmentSelection;
-use codex_protocol::protocol::TurnEnvironmentSelections;
-use codex_protocol::user_input::UserInput;
-use codex_utils_path_uri::PathUri;
+use genex_config::McpServerConfig;
+use genex_config::test_support::CloudConfigBundleFixture;
+use genex_core::EnvironmentConfig;
+use genex_core::StartThreadOptions;
+use genex_core::TurnInputRequest;
+use genex_core::windows_sandbox::WindowsSandboxLevelExt;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_exec_server::ExecServerRuntimePaths;
+use genex_features::Feature;
+use genex_protocol::capabilities::CapabilityRootLocation;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::PermissionProfileSnapshot;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::ThreadSource;
+use genex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::protocol::TurnEnvironmentSelections;
+use genex_protocol::user_input::UserInput;
+use genex_utils_path_uri::PathUri;
 use core_test_support::apps_test_server::AppsTestServer;
 use core_test_support::apps_test_server::apps_enabled_builder;
 use core_test_support::apps_test_server::recorded_apps_tool_calls;
@@ -311,7 +311,7 @@ async fn executor_stop_hook_rejects_mismatched_environment() -> Result<()> {
             let http_client_factory = fixture.test.config.http_client_factory();
             let executor_url_for_server = executor_url.clone();
             let executor = tokio::spawn(async move {
-                codex_exec_server::run_main(
+                genex_exec_server::run_main(
                     &executor_url_for_server,
                     runtime_paths,
                     http_client_factory,

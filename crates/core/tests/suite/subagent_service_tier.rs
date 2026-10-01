@@ -1,15 +1,15 @@
 //! Verifies that root service-tier changes reach existing child turns and future work.
 
 use anyhow::Result;
-use codex_core::TurnInputRequest;
-use codex_core::config::AgentRoleConfig;
-use codex_core::config::Config;
-use codex_features::Feature;
-use codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
+use genex_core::TurnInputRequest;
+use genex_core::config::AgentRoleConfig;
+use genex_core::config::Config;
+use genex_features::Feature;
+use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses::ResponseMock;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -84,7 +84,7 @@ fn configure_flex_role(config: &mut Config) {
     );
 }
 
-async fn wait_for_turn_complete(thread: &codex_core::CodexThread) {
+async fn wait_for_turn_complete(thread: &genex_core::CodexThread) {
     wait_for_event(thread, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 }
 

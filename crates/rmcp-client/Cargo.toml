@@ -1,5 +1,5 @@
 [package]
-name = "codex-rmcp-client"
+name = "genex-rmcp-client"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -15,17 +15,17 @@ axum = { workspace = true, default-features = false, features = [
     "tokio",
 ] }
 base64 = { workspace = true }
-codex-api = { workspace = true }
-codex-config = { workspace = true }
-codex-exec-server = { workspace = true }
-codex-http-client = { workspace = true }
-codex-keyring-store = { workspace = true }
-codex-network-proxy = { workspace = true }
-codex-protocol = { workspace = true }
-codex-secrets = { workspace = true }
-codex-utils-path-uri = { workspace = true }
-codex-utils-pty = { workspace = true }
-codex-utils-home-dir = { workspace = true }
+genex-api = { workspace = true }
+genex-config = { workspace = true }
+genex-exec-server = { workspace = true }
+genex-http-client = { workspace = true }
+genex-keyring-store = { workspace = true }
+genex-network-proxy = { workspace = true }
+genex-protocol = { workspace = true }
+genex-secrets = { workspace = true }
+genex-utils-path-uri = { workspace = true }
+genex-utils-pty = { workspace = true }
+genex-utils-home-dir = { workspace = true }
 bytes = { workspace = true }
 futures = { workspace = true, default-features = false, features = ["std"] }
 http = { workspace = true }
@@ -67,8 +67,8 @@ webbrowser = { workspace = true }
 which = { workspace = true }
 
 [dev-dependencies]
-codex-http-client = { workspace = true }
-codex-utils-cargo-bin = { workspace = true }
+genex-http-client = { workspace = true }
+genex-utils-cargo-bin = { workspace = true }
 pretty_assertions = { workspace = true }
 serial_test = { workspace = true }
 tempfile = { workspace = true }

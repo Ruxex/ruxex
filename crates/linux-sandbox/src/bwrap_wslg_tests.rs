@@ -1,7 +1,7 @@
 //! Regression coverage for excluding WSLg's duplicate filesystem view.
 
 use super::*;
-use codex_protocol::protocol::FileSystemSandboxEntry;
+use genex_protocol::protocol::FileSystemSandboxEntry;
 use pretty_assertions::assert_eq;
 
 #[test_case::test_case(FileSystemAccessMode::Read; "read_root")]

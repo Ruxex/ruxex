@@ -1,5 +1,5 @@
-use codex_model_provider_info::AMAZON_BEDROCK_RUNTIME_PROVIDER_ID;
-use codex_model_provider_info::ModelProviderAwsAuthInfo;
+use genex_model_provider_info::AMAZON_BEDROCK_RUNTIME_PROVIDER_ID;
+use genex_model_provider_info::ModelProviderAwsAuthInfo;
 use pretty_assertions::assert_eq;
 
 use super::ConfigToml;

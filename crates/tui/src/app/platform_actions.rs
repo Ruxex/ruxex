@@ -7,9 +7,9 @@ use super::*;
 #[cfg(all(test, not(target_os = "windows")))]
 use crate::app_event::WindowsSandboxEnableMode;
 #[cfg(target_os = "windows")]
-use codex_app_server_protocol::WindowsSandboxSetupMode;
+use genex_app_server_protocol::WindowsSandboxSetupMode;
 #[cfg(any(target_os = "windows", test))]
-use codex_utils_approval_presets::ApprovalPreset;
+use genex_utils_approval_presets::ApprovalPreset;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum WindowsSandboxHost {
@@ -47,8 +47,8 @@ pub(super) async fn windows_sandbox_ready(app_server: &mut AppServerSession) -> 
         )
         .await,
         Ok(Ok(
-            codex_app_server_protocol::WindowsSandboxReadinessResponse {
-                status: codex_app_server_protocol::WindowsSandboxReadiness::Ready,
+            genex_app_server_protocol::WindowsSandboxReadinessResponse {
+                status: genex_app_server_protocol::WindowsSandboxReadiness::Ready,
             }
         ))
     )
@@ -194,7 +194,7 @@ impl App {
                 .request_handle()
                 .request_typed(ClientRequest::WindowsSandboxSetupStart {
                     request_id,
-                    params: codex_app_server_protocol::WindowsSandboxSetupStartParams {
+                    params: genex_app_server_protocol::WindowsSandboxSetupStartParams {
                         mode: setup_mode,
                         cwd: Some(self.chat_widget.config_ref().cwd.clone()),
                     },
@@ -209,14 +209,14 @@ impl App {
         &mut self,
         response: std::result::Result<
             std::result::Result<
-                codex_app_server_protocol::WindowsSandboxSetupStartResponse,
+                genex_app_server_protocol::WindowsSandboxSetupStartResponse,
                 TypedRequestError,
             >,
             tokio::time::error::Elapsed,
         >,
     ) {
         match response {
-            Ok(Ok(codex_app_server_protocol::WindowsSandboxSetupStartResponse {
+            Ok(Ok(genex_app_server_protocol::WindowsSandboxSetupStartResponse {
                 started: true,
             })) => {}
             Err(_) => {

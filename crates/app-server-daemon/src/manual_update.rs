@@ -2,7 +2,7 @@
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_uds::UnixStream;
+use genex_uds::UnixStream;
 use tokio::io::AsyncReadExt;
 use tokio::io::AsyncWriteExt;
 use tokio::time::Duration;

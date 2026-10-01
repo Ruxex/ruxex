@@ -3,7 +3,7 @@ use super::invalid_data_error;
 use super::json_u64;
 use super::rewrite_hook_command_for_source;
 use super::write_hook_migration;
-use codex_hooks::HOOK_EVENT_NAMES_WITH_MATCHERS;
+use genex_hooks::HOOK_EVENT_NAMES_WITH_MATCHERS;
 use serde_json::Value as JsonValue;
 use std::fs;
 use std::io;

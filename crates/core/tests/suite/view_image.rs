@@ -3,38 +3,38 @@
 use anyhow::Context;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use codex_core::TurnInputRequest;
-use codex_exec_server::CreateDirectoryOptions;
-use codex_exec_server::LOCAL_ENVIRONMENT_ID;
-use codex_exec_server::REMOTE_ENVIRONMENT_ID;
-use codex_exec_server::RemoveOptions;
-use codex_features::Feature;
-use codex_login::CodexAuth;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::Settings;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::model_types::ConfigShellToolType;
-use codex_protocol::model_types::InputModality;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelVisibility;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::model_types::ReasoningEffortPreset;
-use codex_protocol::model_types::TruncationPolicyConfig;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::TurnEnvironmentSelection;
-use codex_protocol::user_input::UserInput;
-use codex_utils_path_uri::PathUri;
+use genex_core::TurnInputRequest;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_exec_server::LOCAL_ENVIRONMENT_ID;
+use genex_exec_server::REMOTE_ENVIRONMENT_ID;
+use genex_exec_server::RemoveOptions;
+use genex_features::Feature;
+use genex_login::CodexAuth;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::Settings;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::model_types::ConfigShellToolType;
+use genex_protocol::model_types::InputModality;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::model_types::TruncationPolicyConfig;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::user_input::UserInput;
+use genex_utils_path_uri::PathUri;
 use core_test_support::PathExt;
 use core_test_support::is_remote_test_environment;
 use core_test_support::responses;
@@ -479,13 +479,13 @@ async fn view_image_tool_attaches_local_image() -> anyhow::Result<()> {
         codex,
         |event| match event {
             EventMsg::ItemStarted(event) => {
-                if matches!(&event.item, codex_protocol::items::TurnItem::ImageView(_)) {
+                if matches!(&event.item, genex_protocol::items::TurnItem::ImageView(_)) {
                     item_started = Some(event.item.clone());
                 }
                 false
             }
             EventMsg::ItemCompleted(event) => {
-                if matches!(&event.item, codex_protocol::items::TurnItem::ImageView(_)) {
+                if matches!(&event.item, genex_protocol::items::TurnItem::ImageView(_)) {
                     item_completed = Some(event.item.clone());
                 }
                 false
@@ -504,14 +504,14 @@ async fn view_image_tool_attaches_local_image() -> anyhow::Result<()> {
     .await;
 
     match item_started.expect("view image item started event emitted") {
-        codex_protocol::items::TurnItem::ImageView(item) => {
+        genex_protocol::items::TurnItem::ImageView(item) => {
             assert_eq!(item.id, call_id);
             assert_eq!(item.path, path_uri);
         }
         other => panic!("expected ImageView item, got {other:?}"),
     }
     match item_completed.expect("view image item completed event emitted") {
-        codex_protocol::items::TurnItem::ImageView(item) => {
+        genex_protocol::items::TurnItem::ImageView(item) => {
             assert_eq!(item.id, call_id);
             assert_eq!(item.path, path_uri);
         }

@@ -1,13 +1,13 @@
-use codex_protocol::ThreadId;
-use codex_protocol::models::BaseInstructions;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::TurnCompleteEvent;
-use codex_protocol::protocol::TurnStartedEvent;
-use codex_rollout::RolloutItem;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_protocol::ThreadId;
+use genex_protocol::models::BaseInstructions;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::TurnCompleteEvent;
+use genex_protocol::protocol::TurnStartedEvent;
+use genex_rollout::RolloutItem;
+use genex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -28,7 +28,7 @@ use crate::ThreadStore;
 async fn revert_keeps_thread_id_and_hides_suffix_across_repeated_reverts() {
     let home = TempDir::new().expect("temp dir");
     let config = test_config(home.path());
-    let state_db = codex_state::StateRuntime::init(
+    let state_db = genex_state::StateRuntime::init(
         config.sqlite.clone(),
         config.default_model_provider_id.clone(),
     )
@@ -57,7 +57,7 @@ async fn revert_keeps_thread_id_and_hides_suffix_across_repeated_reverts() {
         .shutdown_thread(thread_id)
         .await
         .expect("close source writer");
-    codex_rollout::state_db::reconcile_rollout(
+    genex_rollout::state_db::reconcile_rollout(
         Some(state_db.as_ref()),
         original_path.as_path(),
         "test-provider",
@@ -84,10 +84,10 @@ async fn revert_keeps_thread_id_and_hides_suffix_across_repeated_reverts() {
         .rollout_path;
     assert_ne!(first_replacement_path, original_path);
     assert_ne!(
-        codex_rollout::rollout_id_from_path(first_replacement_path.as_path()),
+        genex_rollout::rollout_id_from_path(first_replacement_path.as_path()),
         Some(thread_id)
     );
-    let replacement_meta = codex_rollout::read_session_meta_line(first_replacement_path.as_path())
+    let replacement_meta = genex_rollout::read_session_meta_line(first_replacement_path.as_path())
         .await
         .expect("read replacement metadata")
         .meta;
@@ -143,7 +143,7 @@ async fn revert_keeps_thread_id_and_hides_suffix_across_repeated_reverts() {
 async fn revert_preserves_resolved_multi_agent_version_in_session_metadata() {
     let home = TempDir::new().expect("temp dir");
     let config = test_config(home.path());
-    let state_db = codex_state::StateRuntime::init(
+    let state_db = genex_state::StateRuntime::init(
         config.sqlite.clone(),
         config.default_model_provider_id.clone(),
     )
@@ -178,7 +178,7 @@ async fn revert_preserves_resolved_multi_agent_version_in_session_metadata() {
             .shutdown_thread(thread_id)
             .await
             .expect("close source writer");
-        codex_rollout::state_db::reconcile_rollout(
+        genex_rollout::state_db::reconcile_rollout(
             Some(state_db.as_ref()),
             path.as_path(),
             "test-provider",
@@ -204,7 +204,7 @@ async fn revert_preserves_resolved_multi_agent_version_in_session_metadata() {
                 .expect("read metadata")
                 .expect("thread metadata")
                 .rollout_path;
-            let meta = codex_rollout::read_session_meta_line(&path)
+            let meta = genex_rollout::read_session_meta_line(&path)
                 .await
                 .expect("read replacement metadata");
             assert_eq!(meta.meta.multi_agent_version, Some(version));
@@ -216,7 +216,7 @@ async fn rollout_paths_for_thread(
     home: &std::path::Path,
     thread_id: ThreadId,
 ) -> Vec<std::path::PathBuf> {
-    codex_rollout::RolloutReferenceIndex::scan(home)
+    genex_rollout::RolloutReferenceIndex::scan(home)
         .await
         .expect("scan rollout references")
         .rollouts_for_thread(thread_id)

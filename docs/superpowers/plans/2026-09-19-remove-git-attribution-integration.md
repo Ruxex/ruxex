@@ -72,7 +72,7 @@ Expected: the generated graph reports one fewer crate and contains no `codex-git
 
 - [x] **Step 1: Format and check affected packages.**
 
-Run: `cargo fmt --check && cargo check -p codex-app-server -p codex-cli`
+Run: `cargo fmt --check && cargo check -p genex-app-server -p genex-cli`
 
 Expected: PASS.
 

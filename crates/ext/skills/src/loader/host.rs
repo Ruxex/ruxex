@@ -1,19 +1,19 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use codex_exec_server::ExecutorFileSystem;
-use codex_exec_server::GetMetadataOptions;
-use codex_exec_server::ReadFileOptions;
-use codex_protocol::protocol::SkillScope;
-use codex_skills::ParsedSkillFrontmatter;
-use codex_skills::SkillError;
-use codex_skills::SkillMetadata;
-use codex_skills::parse_skill_frontmatter_metadata;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
-use codex_utils_plugins::PluginIdentity;
-use codex_utils_plugins::PluginSkillRoot;
-use codex_utils_plugins::SkillDiscoveryMode;
+use genex_exec_server::ExecutorFileSystem;
+use genex_exec_server::GetMetadataOptions;
+use genex_exec_server::ReadFileOptions;
+use genex_protocol::protocol::SkillScope;
+use genex_skills::ParsedSkillFrontmatter;
+use genex_skills::SkillError;
+use genex_skills::SkillMetadata;
+use genex_skills::parse_skill_frontmatter_metadata;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
+use genex_utils_plugins::PluginIdentity;
+use genex_utils_plugins::PluginSkillRoot;
+use genex_utils_plugins::SkillDiscoveryMode;
 use futures::StreamExt;
 use tracing::error;
 

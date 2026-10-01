@@ -22,7 +22,7 @@ CLI で対応するトランスポートの形は `stdio://`、Unix ソケット
 
 - デーモンコマンドは永続的なローカル app-server パッケージを管理し、作業を再起動または中断する場合があります。
 - `proxy` は stdio のバイト列を制御用 Unix ソケットへ転送するだけで、プロトコルの意味自体は処理しません。
-- スキーマ生成は `codex-app-server-protocol` のジェネレーターを呼び出し、TypeScript または JSON Schema の成果物を書き込みます。
+- スキーマ生成は `genex-app-server-protocol` のジェネレーターを呼び出し、TypeScript または JSON Schema の成果物を書き込みます。
 - 内部スキーマ生成はツール向けであり、通常のヘルプには表示されません。
 
 [トランスポート/サーバー](../common/transport-and-server.md)、[プロトコルの担当](../reference/crate-index.md)、[設定](../common/configuration.md)、[テレメトリ](../common/telemetry.md)も参照してください。

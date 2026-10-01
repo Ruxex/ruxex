@@ -3,7 +3,7 @@
 use super::*;
 use crate::terminal_palette::with_test_default_colors;
 use crate::terminal_probe::DefaultColors;
-use codex_app_server_protocol::ImageReference;
+use genex_app_server_protocol::ImageReference;
 use pretty_assertions::assert_eq;
 use pretty_assertions::assert_ne;
 

@@ -3,9 +3,9 @@
 use super::*;
 use crate::RolloutItem;
 use crate::RolloutLine;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SessionMeta;
+use genex_protocol::protocol::SessionMetaLine;
+use genex_protocol::protocol::SessionSource;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 use std::collections::HashSet;

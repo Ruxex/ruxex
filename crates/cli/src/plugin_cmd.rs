@@ -2,27 +2,27 @@ use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
 use clap::Parser;
-use codex_core::config::Config;
-use codex_core::config::find_codex_home;
-use codex_core::plugins_manager_for_config;
-use codex_core_plugins::BUNDLED_MARKETPLACE_NAME;
-use codex_core_plugins::ConfiguredMarketplace;
-use codex_core_plugins::PluginInstallOutcome;
-use codex_core_plugins::PluginInstallRequest;
-use codex_core_plugins::PluginsConfigInput;
-use codex_core_plugins::PluginsManager;
-use codex_core_plugins::allowed_configured_marketplace_names;
-use codex_core_plugins::installed_marketplaces::marketplace_install_root;
-use codex_core_plugins::installed_marketplaces::resolve_configured_marketplace_root;
-use codex_core_plugins::marketplace::MarketplaceListError;
-use codex_core_plugins::marketplace::MarketplacePluginAuthPolicy;
-use codex_core_plugins::marketplace::MarketplacePluginInstallPolicy;
-use codex_core_plugins::marketplace::MarketplacePluginSource;
-use codex_core_plugins::marketplace::find_marketplace_manifest_path;
-use codex_login::AuthManager;
-use codex_plugin::PluginId;
-use codex_plugin::validate_plugin_segment;
-use codex_utils_cli::CliConfigOverrides;
+use genex_core::config::Config;
+use genex_core::config::find_codex_home;
+use genex_core::plugins_manager_for_config;
+use genex_core_plugins::BUNDLED_MARKETPLACE_NAME;
+use genex_core_plugins::ConfiguredMarketplace;
+use genex_core_plugins::PluginInstallOutcome;
+use genex_core_plugins::PluginInstallRequest;
+use genex_core_plugins::PluginsConfigInput;
+use genex_core_plugins::PluginsManager;
+use genex_core_plugins::allowed_configured_marketplace_names;
+use genex_core_plugins::installed_marketplaces::marketplace_install_root;
+use genex_core_plugins::installed_marketplaces::resolve_configured_marketplace_root;
+use genex_core_plugins::marketplace::MarketplaceListError;
+use genex_core_plugins::marketplace::MarketplacePluginAuthPolicy;
+use genex_core_plugins::marketplace::MarketplacePluginInstallPolicy;
+use genex_core_plugins::marketplace::MarketplacePluginSource;
+use genex_core_plugins::marketplace::find_marketplace_manifest_path;
+use genex_login::AuthManager;
+use genex_plugin::PluginId;
+use genex_plugin::validate_plugin_segment;
+use genex_utils_cli::CliConfigOverrides;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::path::Path;
@@ -330,7 +330,7 @@ pub async fn run_plugin_list(
 
 struct PluginListMarketplace {
     name: String,
-    path: codex_utils_absolute_path::AbsolutePathBuf,
+    path: genex_utils_absolute_path::AbsolutePathBuf,
     plugins: Vec<PluginListEntry>,
 }
 
@@ -388,7 +388,7 @@ impl PluginListEntry {
     fn from_configured_plugin(
         marketplace_name: &str,
         marketplace_source: Option<JsonMarketplaceSource>,
-        plugin: codex_core_plugins::ConfiguredMarketplacePlugin,
+        plugin: genex_core_plugins::ConfiguredMarketplacePlugin,
     ) -> Self {
         let display_version = plugin.installed_version;
         let version = display_version.clone().or(plugin.local_version);

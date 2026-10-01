@@ -6,10 +6,10 @@ use super::connection_handling_websocket::spawn_websocket_server;
 use anyhow::Result;
 use app_test_support::DEFAULT_CLIENT_NAME;
 use app_test_support::TestAppServer;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::InitializeCapabilities;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ClientInfo;
+use genex_app_server_protocol::InitializeCapabilities;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::RequestId;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 

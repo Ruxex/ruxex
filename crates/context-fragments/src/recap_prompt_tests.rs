@@ -1,6 +1,6 @@
 use super::RecapPrompt;
 use crate::ContextualUserFragment;
-use codex_utils_string::approx_token_count;
+use genex_utils_string::approx_token_count;
 use pretty_assertions::assert_eq;
 
 #[test]

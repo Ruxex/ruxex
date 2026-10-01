@@ -1,9 +1,9 @@
-use codex_core_plugins::manifest::parse_plugin_manifest_uri;
-use codex_exec_server::CapabilityRootDiscovery;
-use codex_mcp::parse_executor_plugin_mcp_config;
-use codex_plugin::manifest::PluginManifestMcpServers;
-use codex_protocol::capabilities::CapabilityRootLocation;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_core_plugins::manifest::parse_plugin_manifest_uri;
+use genex_exec_server::CapabilityRootDiscovery;
+use genex_mcp::parse_executor_plugin_mcp_config;
+use genex_plugin::manifest::PluginManifestMcpServers;
+use genex_protocol::capabilities::CapabilityRootLocation;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
 
 use super::SelectedPluginMetadata;
 
@@ -90,10 +90,10 @@ pub(super) fn metadata_from_discovery(
 
 fn parse_mcp_servers(
     selected_root: &SelectedCapabilityRoot,
-    plugin_root: &codex_utils_path_uri::PathUri,
+    plugin_root: &genex_utils_path_uri::PathUri,
     contents: &str,
     environment_id: &str,
-) -> Vec<(String, codex_config::McpServerConfig)> {
+) -> Vec<(String, genex_config::McpServerConfig)> {
     let parsed = match parse_executor_plugin_mcp_config(plugin_root, contents, environment_id) {
         Ok(parsed) => parsed,
         Err(error) => {

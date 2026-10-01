@@ -1,7 +1,7 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-utils-audio"
+name = "genex-utils-audio"
 version.workspace = true
 
 [lints]
@@ -9,9 +9,9 @@ workspace = true
 
 [dependencies]
 base64 = { workspace = true }
-codex-protocol = { workspace = true }
-codex-utils-cache = { workspace = true }
-codex-utils-string = { workspace = true }
+genex-protocol = { workspace = true }
+genex-utils-cache = { workspace = true }
+genex-utils-string = { workspace = true }
 symphonia = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }

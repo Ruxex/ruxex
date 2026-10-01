@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use std::sync::OnceLock;
 use std::sync::Weak;
 
-use codex_model_provider_info::ModelProviderAwsAuthInfo;
+use genex_model_provider_info::ModelProviderAwsAuthInfo;
 
 use crate::amazon_bedrock::AwsAuthRecovery;
 use crate::amazon_bedrock::AwsCredentialExport;

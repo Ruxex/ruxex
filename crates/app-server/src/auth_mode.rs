@@ -1,5 +1,5 @@
-use codex_app_server_protocol::AuthMode as ApiAuthMode;
-use codex_protocol::auth::AuthMode;
+use genex_app_server_protocol::AuthMode as ApiAuthMode;
+use genex_protocol::auth::AuthMode;
 
 /// Converts the domain auth mode owned by `codex-protocol` into the app-server wire type owned by
 /// `codex-app-server-protocol`.

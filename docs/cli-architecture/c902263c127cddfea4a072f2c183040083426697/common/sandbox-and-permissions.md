@@ -7,7 +7,7 @@
 3. Execpolicy はコマンドルールを評価し、許可/拒否/確認の判断に寄与します。
 4. プラットフォームのサンドボックスは許可された子プロセスを制限し、ユーザー検証は別のセキュリティゲートを追加できます。
 
-Core は [`core/src/tools/sandboxing.rs`](../../../../crates/core/src/tools/sandboxing.rs#L309) にある [`Approvable`](../reference/trait-index.md#approvable)、[`Sandboxable`](../reference/trait-index.md#sandboxable)、[`ToolRuntime`](../reference/trait-index.md#toolruntime) を通じて、ツールレベルの層を組み合わせます。`codex sandbox` は `codex-sandboxing` のプラットフォームコンストラクターと `codex-cli` のデバッグサンドボックスヘルパーを利用します。
+Core は [`core/src/tools/sandboxing.rs`](../../../../crates/core/src/tools/sandboxing.rs#L309) にある [`Approvable`](../reference/trait-index.md#approvable)、[`Sandboxable`](../reference/trait-index.md#sandboxable)、[`ToolRuntime`](../reference/trait-index.md#toolruntime) を通じて、ツールレベルの層を組み合わせます。`codex sandbox` は `genex-sandboxing` のプラットフォームコンストラクターと `genex-cli` のデバッグサンドボックスヘルパーを利用します。
 
 ## 安全性の不変条件
 

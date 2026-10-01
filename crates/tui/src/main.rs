@@ -1,11 +1,11 @@
 use clap::Parser;
-use codex_arg0::Arg0DispatchPaths;
-use codex_arg0::arg0_dispatch_or_else;
-use codex_config::LoaderOverrides;
-use codex_tui::Cli;
-use codex_tui::ExitReason;
-use codex_tui::run_main;
-use codex_utils_cli::CliConfigOverrides;
+use genex_arg0::Arg0DispatchPaths;
+use genex_arg0::arg0_dispatch_or_else;
+use genex_config::LoaderOverrides;
+use genex_tui::Cli;
+use genex_tui::ExitReason;
+use genex_tui::run_main;
+use genex_utils_cli::CliConfigOverrides;
 use std::io::Write;
 use supports_color::Stream;
 
@@ -19,7 +19,7 @@ struct TopCli {
 }
 
 fn main() -> anyhow::Result<()> {
-    codex_build_info::initialize!();
+    genex_build_info::initialize!();
     arg0_dispatch_or_else(|arg0_paths: Arg0DispatchPaths| async move {
         let top_cli = TopCli::parse();
         let mut inner = top_cli.inner;

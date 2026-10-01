@@ -1,7 +1,7 @@
 use super::*;
 use crate::CodexHarnessMetadata;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::ResponseItem;
 use pretty_assertions::assert_eq;
 
 fn publish_answer() -> RetainedContextEvent {

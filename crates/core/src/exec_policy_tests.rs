@@ -1,30 +1,30 @@
 use super::*;
 use crate::config::Config;
 use crate::config::ConfigBuilder;
-use codex_config::CONFIG_TOML_FILE;
-use codex_config::ConfigLayerEntry;
-use codex_config::ConfigLayerSource;
-use codex_config::ConfigLayerStack;
-use codex_config::ConfigRequirements;
-use codex_config::ConfigRequirementsToml;
-use codex_config::LoaderOverrides;
-use codex_config::RequirementSource;
-use codex_config::RequirementsExecPolicy;
-use codex_config::Sourced;
-use codex_config::config_toml::ConfigToml;
-use codex_config::config_toml::ProjectConfig;
-use codex_protocol::config_types::TrustLevel;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::GranularApprovalConfig;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_config::CONFIG_TOML_FILE;
+use genex_config::ConfigLayerEntry;
+use genex_config::ConfigLayerSource;
+use genex_config::ConfigLayerStack;
+use genex_config::ConfigRequirements;
+use genex_config::ConfigRequirementsToml;
+use genex_config::LoaderOverrides;
+use genex_config::RequirementSource;
+use genex_config::RequirementsExecPolicy;
+use genex_config::Sourced;
+use genex_config::config_toml::ConfigToml;
+use genex_config::config_toml::ProjectConfig;
+use genex_protocol::config_types::TrustLevel;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::FileSystemSpecialPath;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::GranularApprovalConfig;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::fs;
 use std::path::Path;
@@ -83,7 +83,7 @@ async fn write_project_trust_config(
     trusted_projects: &[(&Path, TrustLevel)],
 ) -> std::io::Result<()> {
     tokio::fs::write(
-        codex_home.join(codex_config::CONFIG_TOML_FILE),
+        codex_home.join(genex_config::CONFIG_TOML_FILE),
         toml::to_string(&ConfigToml {
             projects: Some(
                 trusted_projects
@@ -337,15 +337,15 @@ async fn merges_requirements_exec_policy_network_rules() -> anyhow::Result<()> {
     let mut requirements_exec_policy = Policy::empty();
     requirements_exec_policy.add_network_rule(
         "blocked.example.com",
-        codex_execpolicy::NetworkRuleProtocol::Https,
+        genex_execpolicy::NetworkRuleProtocol::Https,
         Decision::Forbidden,
         /*justification*/ None,
     )?;
 
     let requirements = ConfigRequirements {
-        exec_policy: Some(codex_config::Sourced::new(
-            codex_config::RequirementsExecPolicy::new(requirements_exec_policy),
-            codex_config::RequirementSource::Unknown,
+        exec_policy: Some(genex_config::Sourced::new(
+            genex_config::RequirementsExecPolicy::new(requirements_exec_policy),
+            genex_config::RequirementSource::Unknown,
         )),
         ..ConfigRequirements::default()
     };
@@ -420,15 +420,15 @@ host_executable(name = "git", paths = ["{git_path_literal}"])
     let mut requirements_exec_policy = Policy::empty();
     requirements_exec_policy.add_network_rule(
         "blocked.example.com",
-        codex_execpolicy::NetworkRuleProtocol::Https,
+        genex_execpolicy::NetworkRuleProtocol::Https,
         Decision::Forbidden,
         /*justification*/ None,
     )?;
 
     let requirements = ConfigRequirements {
-        exec_policy: Some(codex_config::Sourced::new(
-            codex_config::RequirementsExecPolicy::new(requirements_exec_policy),
-            codex_config::RequirementSource::Unknown,
+        exec_policy: Some(genex_config::Sourced::new(
+            genex_config::RequirementsExecPolicy::new(requirements_exec_policy),
+            genex_config::RequirementSource::Unknown,
         )),
         ..ConfigRequirements::default()
     };
@@ -518,7 +518,7 @@ async fn ignore_user_project_rules_keeps_system_policy_files() {
     )
     .expect("write policy file");
     let config_file =
-        AbsolutePathBuf::from_absolute_path(config_dir.join(codex_config::CONFIG_TOML_FILE))
+        AbsolutePathBuf::from_absolute_path(config_dir.join(genex_config::CONFIG_TOML_FILE))
             .expect("absolute config file");
     let layer = ConfigLayerEntry::new(
         ConfigLayerSource::System { file: config_file },

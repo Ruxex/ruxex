@@ -1,6 +1,6 @@
 use super::*;
 use crate::exec_output::StreamOutput;
-use codex_http_client::HttpResponse;
+use genex_http_client::HttpResponse;
 use http::Response as RawHttpResponse;
 use http::StatusCode;
 use pretty_assertions::assert_eq;

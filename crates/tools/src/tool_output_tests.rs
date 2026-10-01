@@ -1,6 +1,6 @@
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ImageReference;
-use codex_protocol::models::ResponseInputItem;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::ImageReference;
+use genex_protocol::models::ResponseInputItem;
 use pretty_assertions::assert_eq;
 
 use super::response_input_to_code_mode_result;

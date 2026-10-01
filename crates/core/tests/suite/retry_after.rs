@@ -1,16 +1,16 @@
 use anyhow::Result;
-use codex_client::RetryOn;
-use codex_client::RetryPolicy;
-use codex_client::run_with_retry;
-use codex_http_client::Request;
-use codex_http_client::TransportError;
-use codex_login::CodexAuth;
-use codex_models_manager::test_support::test_models_response;
-use codex_protocol::protocol::CodexErrorInfo;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::turn_input::TurnInputRequest;
-use codex_protocol::user_input::UserInput;
+use genex_client::RetryOn;
+use genex_client::RetryPolicy;
+use genex_client::run_with_retry;
+use genex_http_client::Request;
+use genex_http_client::TransportError;
+use genex_login::CodexAuth;
+use genex_models_manager::test_support::test_models_response;
+use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::turn_input::TurnInputRequest;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_codex::TestCodex;
@@ -118,7 +118,7 @@ where
     S: Subscriber,
 {
     fn on_event(&self, event: &Event<'_>, _context: Context<'_, S>) {
-        if event.metadata().target() == "codex_http_client::transport" {
+        if event.metadata().target() == "genex_http_client::transport" {
             self.record_request_after_retry();
             return;
         }

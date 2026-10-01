@@ -4,7 +4,7 @@
 
 **Goal:** Introduce a runtime Chat Completion adapter trait, route built-in `my-provider` through its adapter, and propagate Chat SSE Usage into the existing Core usage path while leaving Responses concrete.
 
-**Architecture:** Keep `WireApi` as serialized provider metadata, but resolve it to a runtime `ProviderApi` descriptor in `ModelProvider`. Define an object-safe `ChatCompletionApi` in `codex-api`; keep transport, authentication, retry, and the Responses implementation unchanged. Reuse the common Chat SSE parser with an injectable Usage decoder so `my-provider` can customize Usage handling without owning HTTP transport.
+**Architecture:** Keep `WireApi` as serialized provider metadata, but resolve it to a runtime `ProviderApi` descriptor in `ModelProvider`. Define an object-safe `ChatCompletionApi` in `genex-api`; keep transport, authentication, retry, and the Responses implementation unchanged. Reuse the common Chat SSE parser with an injectable Usage decoder so `my-provider` can customize Usage handling without owning HTTP transport.
 
 **Tech Stack:** Rust workspace, `Arc<dyn Trait>`, `serde_json::Value`, SSE streams, existing `ResponseEvent`/`TokenUsage` protocol types, repository `just` checks.
 
@@ -31,11 +31,11 @@
 ### Task 1: Define the Chat adapter interface and standard implementation
 
 **Files:**
-- Create: `crates/codex-api/src/chat_completion.rs`
-- Modify: `crates/codex-api/src/lib.rs`
-- Modify: `crates/codex-api/src/requests/chat.rs`
-- Modify: `crates/codex-api/src/endpoint/chat.rs`
-- Test: `crates/codex-api/src/chat_completion.rs` and existing request tests
+- Create: `crates/genex-api/src/chat_completion.rs`
+- Modify: `crates/genex-api/src/lib.rs`
+- Modify: `crates/genex-api/src/requests/chat.rs`
+- Modify: `crates/genex-api/src/endpoint/chat.rs`
+- Test: `crates/genex-api/src/chat_completion.rs` and existing request tests
 
 **Interfaces:**
 - Produce `ChatRequestInput<'a>` containing the model, instructions, input items, tools, provider metadata, conversation ID, and session source needed by the existing builder.
@@ -48,7 +48,7 @@
 
 - [ ] **Step 2: Run the focused test to verify it fails**
 
-  Run: `cargo test -p codex-api chat_completion --lib`
+  Run: `cargo test -p genex-api chat_completion --lib`
 
   Expected: FAIL because `ChatRequestInput`, `ChatCompletionApi`, and `StandardChatCompletionApi` do not exist yet.
 
@@ -58,23 +58,23 @@
 
 - [ ] **Step 4: Run the focused test to verify it passes**
 
-  Run: `cargo test -p codex-api chat_completion --lib`
+  Run: `cargo test -p genex-api chat_completion --lib`
 
   Expected: PASS, with the existing request-builder tests still compiling.
 
 - [ ] **Step 5: Run the package type/test-target checks**
 
-  Run: `cargo check -p codex-api` and `cargo check -p codex-api --tests`
+  Run: `cargo check -p genex-api` and `cargo check -p genex-api --tests`
 
   Expected: PASS.
 
 ### Task 2: Add Usage decoding and terminal-event propagation to Chat SSE
 
 **Files:**
-- Modify: `crates/codex-api/src/chat_completion.rs`
-- Modify: `crates/codex-api/src/sse/chat.rs`
-- Modify: `crates/codex-api/src/lib.rs`
-- Test: `crates/codex-api/src/sse/chat.rs`
+- Modify: `crates/genex-api/src/chat_completion.rs`
+- Modify: `crates/genex-api/src/sse/chat.rs`
+- Modify: `crates/genex-api/src/lib.rs`
+- Test: `crates/genex-api/src/sse/chat.rs`
 
 **Interfaces:**
 - Produce `ChatUsageDecoder: Send + Sync` with a method that maps one top-level Chat `usage` JSON value to `Option<TokenUsage>`.
@@ -92,7 +92,7 @@
 
 - [ ] **Step 2: Run the focused tests to verify they fail**
 
-  Run: `cargo test -p codex-api sse::chat --lib`
+  Run: `cargo test -p genex-api sse::chat --lib`
 
   Expected: FAIL because Usage is currently ignored and terminal events contain `None`.
 
@@ -102,13 +102,13 @@
 
 - [ ] **Step 4: Run the focused tests to verify they pass**
 
-  Run: `cargo test -p codex-api sse::chat --lib`
+  Run: `cargo test -p genex-api sse::chat --lib`
 
   Expected: PASS, including the existing Chat tool/text tests.
 
 - [ ] **Step 5: Run package checks**
 
-  Run: `cargo check -p codex-api` and `cargo check -p codex-api --tests`
+  Run: `cargo check -p genex-api` and `cargo check -p genex-api --tests`
 
   Expected: PASS.
 
@@ -122,7 +122,7 @@
 - Test: `crates/model-provider/src/provider.rs` and `crates/model-provider-info/src/model_provider_info_tests.rs`
 
 **Interfaces:**
-- Produce `ProviderApi::{Responses, Chat(Arc<dyn ChatCompletionApi>)}` in `codex-model-provider`.
+- Produce `ProviderApi::{Responses, Chat(Arc<dyn ChatCompletionApi>)}` in `genex-model-provider`.
 - Produce `ModelProvider::api() -> ProviderApi`, with a default mapping from `ModelProviderInfo.wire_api` to `Responses` or `StandardChatCompletionApi`.
 - Make `MyModelProvider::api()` return `ProviderApi::Chat` with the built-in My Provider adapter.
 - Set `ModelProviderInfo::create_my_provider()` to `wire_api: WireApi::Chat` so the built-in catalog advertises the selected protocol.
@@ -133,7 +133,7 @@
 
 - [ ] **Step 2: Run the focused tests to verify they fail**
 
-  Run: `cargo test -p codex-model-provider-info model_provider_info_tests --lib` and `cargo test -p codex-model-provider --lib`
+  Run: `cargo test -p genex-model-provider-info model_provider_info_tests --lib` and `cargo test -p genex-model-provider --lib`
 
   Expected: FAIL because the built-in metadata remains `Responses` and `ProviderApi`/`ModelProvider::api` do not exist.
 
@@ -143,13 +143,13 @@
 
 - [ ] **Step 4: Run the focused tests to verify they pass**
 
-  Run: `cargo test -p codex-model-provider-info model_provider_info_tests --lib` and `cargo test -p codex-model-provider --lib`
+  Run: `cargo test -p genex-model-provider-info model_provider_info_tests --lib` and `cargo test -p genex-model-provider --lib`
 
   Expected: PASS.
 
 - [ ] **Step 5: Run package checks**
 
-  Run: `cargo check -p codex-model-provider` and `cargo check -p codex-model-provider --tests`
+  Run: `cargo check -p genex-model-provider` and `cargo check -p genex-model-provider --tests`
 
   Expected: PASS.
 
@@ -157,7 +157,7 @@
 
 **Files:**
 - Modify: `crates/core/src/client.rs`
-- Modify: `crates/codex-api/src/endpoint/chat.rs`
+- Modify: `crates/genex-api/src/endpoint/chat.rs`
 - Test: `crates/core/tests/suite/client.rs` or the nearest existing Chat/Core integration test location
 
 **Interfaces:**
@@ -171,7 +171,7 @@
 
 - [ ] **Step 2: Run the focused test to verify it fails**
 
-  Run: `cargo test -p codex-core --test suite client --no-run`
+  Run: `cargo test -p genex-core --test suite client --no-run`
 
   Expected: FAIL to compile because Core still dispatches directly on `WireApi` and does not pass an adapter.
 
@@ -181,7 +181,7 @@
 
 - [ ] **Step 4: Run the focused compile/test-target check**
 
-  Run: `cargo check -p codex-core` and `cargo check -p codex-core --tests`
+  Run: `cargo check -p genex-core` and `cargo check -p genex-core --tests`
 
   Expected: PASS.
 
@@ -220,6 +220,6 @@
 - [ ] **Step 5: Commit the implementation**
 
   ```bash
-  git add crates/codex-api crates/model-provider crates/model-provider-info crates/core
+  git add crates/genex-api crates/model-provider crates/model-provider-info crates/core
   git commit -m "feat: add chat completion provider adapter"
   ```

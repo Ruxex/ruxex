@@ -6,13 +6,13 @@
 
 **Architecture:** SQLite/thread-storeをスレッドの正規メタデータ源とし、現行のJSONL replay、filesystem repair fallback、permission compatibilityは保持する。`session_index.jsonl`だけをproducer/consumer監査後に廃止し、CLIの名前解決と検索を現行のthread-store APIへ寄せる。
 
-**Tech Stack:** Rust, `codex-rollout`, `codex-thread-store`, SQLite, JSONL rollout storage, `rg`, Cargo metadata, `just check`。
+**Tech Stack:** Rust, `genex-rollout`, `genex-thread-store`, SQLite, JSONL rollout storage, `rg`, Cargo metadata, `just check`。
 
 **Spec:** `docs/provider-decoupling-plan.md`, `docs/pre-release-compatibility-inventory.md`
 
 ## Global Constraints
 
-- `codex-rollout`、`codex-thread-store`、`codex-rollout-trace` のクレート全体は削除しない。
+- `genex-rollout`、`genex-thread-store`、`genex-rollout-trace` のクレート全体は削除しない。
 - 現行のJSONL replay、SQLite projection、filesystem repair fallback、legacy sandbox policy parsingは個別根拠なしに削除しない。
 - pre-release forkのため、旧persistedデータを読むためだけの互換readerは削除する。
 - テストコマンドは実行せず、`just check`を使用する。

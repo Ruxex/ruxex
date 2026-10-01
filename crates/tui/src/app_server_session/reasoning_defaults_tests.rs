@@ -2,7 +2,7 @@
 
 use super::*;
 use crate::legacy_core::config::ConfigBuilder;
-use codex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ServerNotification;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -82,7 +82,7 @@ stream_max_retries = 0
                 {
                     assert_eq!(
                         completed.turn.status,
-                        codex_app_server_protocol::TurnStatus::Completed
+                        genex_app_server_protocol::TurnStatus::Completed
                     );
                     return;
                 }

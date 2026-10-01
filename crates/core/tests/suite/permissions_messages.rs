@@ -1,20 +1,20 @@
 use anyhow::Result;
-use codex_config::ConfigLayerStack;
-use codex_core::ForkSnapshot;
-use codex_core::TurnInputRequest;
-use codex_core::config::Constrained;
-use codex_models_manager::model_info::model_info_from_slug;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::model_types::ApprovalMessages;
-use codex_protocol::model_types::ModelMessages;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::model_types::PermissionMessages;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_config::ConfigLayerStack;
+use genex_core::ForkSnapshot;
+use genex_core::TurnInputRequest;
+use genex_core::config::Constrained;
+use genex_models_manager::model_info::model_info_from_slug;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::model_types::ApprovalMessages;
+use genex_protocol::model_types::ModelMessages;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::PermissionMessages;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
@@ -40,7 +40,7 @@ fn model_with_approval_messages(
     slug: &str,
     on_request: &str,
     on_request_auto_review: &str,
-) -> codex_protocol::model_types::ModelInfo {
+) -> genex_protocol::model_types::ModelInfo {
     let mut model = model_info_from_slug(slug);
     model.model_messages = Some(ModelMessages {
         approvals: Some(ApprovalMessages {
@@ -57,7 +57,7 @@ fn model_with_approval_messages(
 fn model_with_permission_messages(
     slug: &str,
     permissions: PermissionMessages,
-) -> codex_protocol::model_types::ModelInfo {
+) -> genex_protocol::model_types::ModelInfo {
     let mut model = model_info_from_slug(slug);
     model.model_messages = Some(ModelMessages {
         permissions: Some(permissions),
@@ -708,7 +708,7 @@ async fn resume_and_fork_append_permissions_messages() -> Result<()> {
         .thread_manager
         .fork_thread(
             ForkSnapshot::Interrupted,
-            codex_core::StartThreadOptions::new(fork_config.clone()),
+            genex_core::StartThreadOptions::new(fork_config.clone()),
             rollout_path,
         )
         .await?;

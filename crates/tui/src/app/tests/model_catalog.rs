@@ -1,8 +1,8 @@
 use super::*;
 use assert_matches::assert_matches;
-use codex_config::types::ModelAvailabilityNuxConfig;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::model_types::ModelAvailabilityNux;
+use genex_config::types::ModelAvailabilityNuxConfig;
+use genex_protocol::config_types::ServiceTier;
+use genex_protocol::model_types::ModelAvailabilityNux;
 use pretty_assertions::assert_eq;
 use tokio::sync::mpsc::unbounded_channel;
 
@@ -72,7 +72,7 @@ async fn model_picker_refresh_updates_app_catalog_from_app_server() -> Result<()
     for model in models.iter_mut() {
         model.is_default = model.model == "gpt-5.5";
         if model.is_default {
-            model.service_tiers = vec![codex_protocol::model_types::ModelServiceTier {
+            model.service_tiers = vec![genex_protocol::model_types::ModelServiceTier {
                 id: ServiceTier::Flex.request_value().to_string(),
                 name: "Flex".to_string(),
                 description: "Flexible processing".to_string(),

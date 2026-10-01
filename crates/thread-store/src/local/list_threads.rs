@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use chrono::DateTime;
 use chrono::Utc;
-use codex_rollout::RolloutConfig;
-use codex_rollout::RolloutRecorder;
-use codex_rollout::parse_cursor;
-use codex_state::ThreadFilterOptions;
+use genex_rollout::RolloutConfig;
+use genex_rollout::RolloutRecorder;
+use genex_rollout::parse_cursor;
+use genex_state::ThreadFilterOptions;
 
 use super::LocalThreadStore;
 use super::helpers::resolve_thread_names;
@@ -38,14 +38,14 @@ pub(super) async fn list_threads(
         })
         .transpose()?;
     let sort_key = match params.sort_key {
-        ThreadSortKey::CreatedAt => codex_rollout::ThreadSortKey::CreatedAt,
-        ThreadSortKey::UpdatedAt => codex_rollout::ThreadSortKey::UpdatedAt,
-        ThreadSortKey::RecencyAt => codex_rollout::ThreadSortKey::RecencyAt,
+        ThreadSortKey::CreatedAt => genex_rollout::ThreadSortKey::CreatedAt,
+        ThreadSortKey::UpdatedAt => genex_rollout::ThreadSortKey::UpdatedAt,
+        ThreadSortKey::RecencyAt => genex_rollout::ThreadSortKey::RecencyAt,
         ThreadSortKey::SectionPosition => unreachable!("section order uses the state database"),
     };
     let sort_direction = match params.sort_direction {
-        SortDirection::Asc => codex_rollout::SortDirection::Asc,
-        SortDirection::Desc => codex_rollout::SortDirection::Desc,
+        SortDirection::Asc => genex_rollout::SortDirection::Asc,
+        SortDirection::Desc => genex_rollout::SortDirection::Desc,
     };
     let state_db = store.state_db().await;
     let rollout_config = RolloutConfig {
@@ -138,7 +138,7 @@ async fn list_section_threads(
     let anchor = params
         .cursor
         .as_deref()
-        .map(|cursor| -> ThreadStoreResult<codex_state::Anchor> {
+        .map(|cursor| -> ThreadStoreResult<genex_state::Anchor> {
             let (position, thread_id) =
                 cursor
                     .split_once('|')
@@ -152,12 +152,12 @@ async fn list_section_threads(
                 .ok_or_else(|| ThreadStoreError::InvalidRequest {
                     message: format!("invalid cursor: {cursor}"),
                 })?;
-            let thread_id = codex_protocol::ThreadId::from_string(thread_id).map_err(|_| {
+            let thread_id = genex_protocol::ThreadId::from_string(thread_id).map_err(|_| {
                 ThreadStoreError::InvalidRequest {
                     message: format!("invalid cursor: {cursor}"),
                 }
             })?;
-            Ok(codex_state::Anchor {
+            Ok(genex_state::Anchor {
                 ts: timestamp,
                 id: Some(thread_id),
             })
@@ -175,7 +175,7 @@ async fn list_section_threads(
     let normalized_cwd_filters = params.cwd_filters.as_ref().map(|filters| {
         filters
             .iter()
-            .map(|cwd| codex_rollout::state_db::normalize_cwd_for_state_db(cwd))
+            .map(|cwd| genex_rollout::state_db::normalize_cwd_for_state_db(cwd))
             .collect::<Vec<_>>()
     });
     let filters = ThreadFilterOptions {
@@ -189,10 +189,10 @@ async fn list_section_threads(
             .as_ref()
             .map(|project_id| project_id.as_deref()),
         anchor: anchor.as_ref(),
-        sort_key: codex_state::SortKey::SectionPosition,
+        sort_key: genex_state::SortKey::SectionPosition,
         sort_direction: match params.sort_direction {
-            SortDirection::Asc => codex_state::SortDirection::Asc,
-            SortDirection::Desc => codex_state::SortDirection::Desc,
+            SortDirection::Asc => genex_state::SortDirection::Asc,
+            SortDirection::Desc => genex_state::SortDirection::Desc,
         },
         search_term: params.search_term.as_deref(),
     };
@@ -201,7 +201,7 @@ async fn list_section_threads(
             state_db
                 .list_threads_by_relation(
                     params.page_size,
-                    codex_state::ThreadRelationFilter::DirectChildrenOf(thread_id),
+                    genex_state::ThreadRelationFilter::DirectChildrenOf(thread_id),
                     filters,
                 )
                 .await
@@ -210,7 +210,7 @@ async fn list_section_threads(
             state_db
                 .list_threads_by_relation(
                     params.page_size,
-                    codex_state::ThreadRelationFilter::DescendantsOf(thread_id),
+                    genex_state::ThreadRelationFilter::DescendantsOf(thread_id),
                     filters,
                 )
                 .await
@@ -221,7 +221,7 @@ async fn list_section_threads(
         message: format!("failed to list section-ordered threads: {err}"),
     })?;
 
-    let codex_state::ThreadsPage {
+    let genex_state::ThreadsPage {
         items: metadata_items,
         parent_thread_ids,
         next_anchor,
@@ -244,26 +244,26 @@ async fn list_section_threads(
 }
 
 pub(super) async fn list_rollout_threads(
-    state_db: Option<codex_rollout::StateDbHandle>,
+    state_db: Option<genex_rollout::StateDbHandle>,
     config: &RolloutConfig,
     default_model_provider_id: &str,
     params: &ListThreadsParams,
-    cursor: Option<&codex_rollout::Cursor>,
-    sort_key: codex_rollout::ThreadSortKey,
-    sort_direction: codex_rollout::SortDirection,
-) -> ThreadStoreResult<codex_rollout::ThreadsPage> {
+    cursor: Option<&genex_rollout::Cursor>,
+    sort_key: genex_rollout::ThreadSortKey,
+    sort_direction: genex_rollout::SortDirection,
+) -> ThreadStoreResult<genex_rollout::ThreadsPage> {
     if params.relation_filter.is_some() || params.section.is_some() || params.project_id.is_some() {
         let relation_filter = params
             .relation_filter
             .map(|relation_filter| match relation_filter {
                 ThreadRelationFilter::DirectChildrenOf(parent_thread_id) => {
-                    codex_state::ThreadRelationFilter::DirectChildrenOf(parent_thread_id)
+                    genex_state::ThreadRelationFilter::DirectChildrenOf(parent_thread_id)
                 }
                 ThreadRelationFilter::DescendantsOf(ancestor_thread_id) => {
-                    codex_state::ThreadRelationFilter::DescendantsOf(ancestor_thread_id)
+                    genex_state::ThreadRelationFilter::DescendantsOf(ancestor_thread_id)
                 }
             });
-        let page = codex_rollout::state_db::list_threads_db(
+        let page = genex_rollout::state_db::list_threads_db(
             state_db.as_deref(),
             &config.sqlite,
             params.page_size,
@@ -355,11 +355,11 @@ pub(super) async fn list_rollout_threads(
 #[cfg(test)]
 mod tests {
     use chrono::Utc;
-    use codex_protocol::ThreadId;
-    use codex_protocol::protocol::SessionSource;
-    use codex_protocol::protocol::ThreadHistoryMode;
-    use codex_state::PINNED_THREAD_SECTION_ID;
-    use codex_utils_absolute_path::test_support::PathExt;
+    use genex_protocol::ThreadId;
+    use genex_protocol::protocol::SessionSource;
+    use genex_protocol::protocol::ThreadHistoryMode;
+    use genex_state::PINNED_THREAD_SECTION_ID;
+    use genex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
     use std::fs;
     use tempfile::TempDir;
@@ -421,8 +421,8 @@ mod tests {
         let rollout_path = home.path().join("rollout-title-search.jsonl");
         fs::write(&rollout_path, "").expect("placeholder rollout file");
 
-        let runtime = codex_state::StateRuntime::init(
-            codex_state::SqliteConfig::new_for_testing(home.path().abs()),
+        let runtime = genex_state::StateRuntime::init(
+            genex_state::SqliteConfig::new_for_testing(home.path().abs()),
             config.default_model_provider_id.clone(),
         )
         .await
@@ -433,7 +433,7 @@ mod tests {
             .await
             .expect("backfill should be complete");
         let created_at = Utc::now();
-        let mut builder = codex_state::ThreadMetadataBuilder::new(
+        let mut builder = genex_state::ThreadMetadataBuilder::new(
             thread_id,
             rollout_path,
             created_at,
@@ -491,7 +491,7 @@ mod tests {
         let rollout_path = home.path().join("rollout-paginated-name-search.jsonl");
         fs::write(&rollout_path, "").expect("placeholder rollout file");
 
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -502,7 +502,7 @@ mod tests {
             .mark_backfill_complete(/*last_watermark*/ None)
             .await
             .expect("backfill should be complete");
-        let mut builder = codex_state::ThreadMetadataBuilder::new(
+        let mut builder = genex_state::ThreadMetadataBuilder::new(
             thread_id,
             rollout_path,
             Utc::now(),
@@ -521,7 +521,7 @@ mod tests {
             .upsert_thread(&metadata)
             .await
             .expect("state db upsert should succeed");
-        codex_rollout::append_thread_name(home.path(), thread_id, "stale index name")
+        genex_rollout::append_thread_name(home.path(), thread_id, "stale index name")
             .await
             .expect("append legacy thread name");
 
@@ -673,7 +673,7 @@ mod tests {
     async fn section_listing_uses_sqlite_metadata_without_reading_rollouts() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let state = codex_state::StateRuntime::init(
+        let state = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -689,7 +689,7 @@ mod tests {
             let timestamp = format!("2025-01-03T16-{index:02}-00");
             let rollout_path =
                 write_session_file(home.path(), &timestamp, uuid).expect("write rollout");
-            codex_rollout::state_db::reconcile_rollout(
+            genex_rollout::state_db::reconcile_rollout(
                 Some(state.as_ref()),
                 rollout_path.as_path(),
                 "test-provider",

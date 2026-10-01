@@ -34,8 +34,8 @@ use std::time::Duration;
 use tokio::fs;
 use tokio::io::AsyncReadExt;
 
-use codex_config::types::History;
-use codex_config::types::HistoryPersistence;
+use genex_config::types::History;
+use genex_config::types::HistoryPersistence;
 
 mod batch;
 pub use batch::HistoryBatch;

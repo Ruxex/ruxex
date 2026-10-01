@@ -1,8 +1,8 @@
-use codex_tools::LIST_AVAILABLE_PLUGINS_TO_INSTALL_TOOL_NAME;
-use codex_tools::ListAvailablePluginsToInstallResult;
-use codex_tools::RequestPluginInstallEntry;
-use codex_tools::ToolName;
-use codex_tools::ToolSpec;
+use genex_tools::LIST_AVAILABLE_PLUGINS_TO_INSTALL_TOOL_NAME;
+use genex_tools::ListAvailablePluginsToInstallResult;
+use genex_tools::RequestPluginInstallEntry;
+use genex_tools::ToolName;
+use genex_tools::ToolSpec;
 
 use crate::function_tool::FunctionCallError;
 use crate::tools::context::FunctionToolOutput;
@@ -66,7 +66,7 @@ impl ToolExecutor<ToolInvocation> for ListAvailablePluginsToInstallHandler {
         false
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> codex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

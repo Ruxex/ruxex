@@ -6,12 +6,12 @@ use std::collections::HashSet;
 use std::path::Path;
 use std::path::PathBuf;
 
-use codex_protocol::protocol::FileSystemPath;
-use codex_protocol::protocol::FileSystemSandboxPolicy;
-use codex_protocol::protocol::FileSystemSpecialPath;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
-use codex_windows_sandbox::resolve_windows_deny_read_paths;
+use genex_protocol::protocol::FileSystemPath;
+use genex_protocol::protocol::FileSystemSandboxPolicy;
+use genex_protocol::protocol::FileSystemSpecialPath;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
+use genex_windows_sandbox::resolve_windows_deny_read_paths;
 use thiserror::Error;
 use wxc_common::cmdline::CommandLineContext;
 use wxc_common::cmdline::CommandLineError;

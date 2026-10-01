@@ -1,10 +1,10 @@
 //! Verifies catalog tool descriptions reach the V2 outbound tool without changing its parameters.
 
 use anyhow::Result;
-use codex_core::config::AgentRoleConfig;
-use codex_features::Feature;
-use codex_protocol::model_types::ToolMessages;
-use codex_protocol::protocol::MultiAgentVersion;
+use genex_core::config::AgentRoleConfig;
+use genex_features::Feature;
+use genex_protocol::model_types::ToolMessages;
+use genex_protocol::protocol::MultiAgentVersion;
 use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::namespace_child_tool;
 use core_test_support::responses::sse_completed;

@@ -9,7 +9,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::ptr;
 
-use codex_git_utils::get_git_repo_root;
+use genex_git_utils::get_git_repo_root;
 use os_info::Version;
 use windows_sys::Win32::Foundation::ERROR_INVALID_PARAMETER;
 use windows_sys::Win32::Storage::FileSystem::FILE_FLAG_BACKUP_SEMANTICS;

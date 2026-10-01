@@ -58,8 +58,8 @@ use crate::tui::event_stream::TuiEventStream;
 use crate::tui::job_control::SuspendContext;
 use crate::tui::screen_size::ScreenSizePolicy;
 use crate::tui::scrollback::ScrollbackStrategy;
-use codex_config::types::NotificationCondition;
-use codex_config::types::NotificationMethod;
+use genex_config::types::NotificationCondition;
+use genex_config::types::NotificationMethod;
 
 mod event_stream;
 mod frame_rate_limiter;
@@ -123,7 +123,7 @@ mod tests {
     use super::should_emit_notification;
     use crate::custom_terminal::Terminal as CustomTerminal;
     use crate::test_backend::VT100Backend;
-    use codex_config::types::NotificationCondition;
+    use genex_config::types::NotificationCondition;
     use ratatui::layout::Position;
     use ratatui::layout::Rect;
     use ratatui::text::Line;
@@ -641,7 +641,7 @@ impl Tui {
         // Cache this to avoid contention with the event reader.
         supports_color::on_cached(supports_color::Stream::Stdout);
         let _ = crate::terminal_palette::default_colors();
-        let terminal_info = codex_terminal_detection::terminal_info();
+        let terminal_info = genex_terminal_detection::terminal_info();
         let scrollback = ScrollbackStrategy::detect(&terminal_info);
         let mut event_broker = EventBroker::new();
         event_broker.size_monitor = size_monitor::SizeMonitor::start(

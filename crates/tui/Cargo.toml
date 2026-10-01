@@ -1,5 +1,5 @@
 [package]
-name = "codex-tui"
+name = "genex-tui"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -14,7 +14,7 @@ name = "md-events"
 path = "src/bin/md-events.rs"
 
 [lib]
-name = "codex_tui"
+name = "genex_tui"
 path = "src/lib.rs"
 doctest = false
 
@@ -22,56 +22,56 @@ doctest = false
 workspace = true
 
 [dependencies]
-codex-build-info = { workspace = true }
+genex-build-info = { workspace = true }
 anyhow = { workspace = true }
 axum = { workspace = true, default-features = false, features = ["http1", "tokio"] }
 base64 = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
 clap = { workspace = true, features = ["derive"] }
-codex-ansi-escape = { workspace = true }
-codex-app-server-client = { workspace = true }
-codex-app-server-daemon = { workspace = true }
-codex-app-server-protocol = { workspace = true }
-codex-arg0 = { workspace = true }
-codex-install-context = { workspace = true }
-codex-config = { workspace = true }
-codex-context-fragments = { workspace = true }
-codex-core-plugins = { workspace = true }
-codex-history = { workspace = true }
-codex-exec-server = { workspace = true }
-codex-features = { workspace = true }
-codex-file-search = { workspace = true }
-codex-git-utils = { workspace = true }
-codex-http-client = { workspace = true }
-codex-login = { workspace = true }
-codex-mermaid = { workspace = true }
-codex-message-history = { workspace = true }
-codex-model-provider = { workspace = true }
-codex-model-provider-info = { workspace = true }
-codex-models-manager = { workspace = true }
-codex-otel = { workspace = true }
-codex-plugin = { workspace = true }
-codex-protocol = { workspace = true }
+genex-ansi-escape = { workspace = true }
+genex-app-server-client = { workspace = true }
+genex-app-server-daemon = { workspace = true }
+genex-app-server-protocol = { workspace = true }
+genex-arg0 = { workspace = true }
+genex-install-context = { workspace = true }
+genex-config = { workspace = true }
+genex-context-fragments = { workspace = true }
+genex-core-plugins = { workspace = true }
+genex-history = { workspace = true }
+genex-exec-server = { workspace = true }
+genex-features = { workspace = true }
+genex-file-search = { workspace = true }
+genex-git-utils = { workspace = true }
+genex-http-client = { workspace = true }
+genex-login = { workspace = true }
+genex-mermaid = { workspace = true }
+genex-message-history = { workspace = true }
+genex-model-provider = { workspace = true }
+genex-model-provider-info = { workspace = true }
+genex-models-manager = { workspace = true }
+genex-otel = { workspace = true }
+genex-plugin = { workspace = true }
+genex-protocol = { workspace = true }
 futures = { workspace = true }
-codex-rollout = { workspace = true }
-codex-sandboxing = { workspace = true }
-codex-shell-command = { workspace = true }
-codex-state = { workspace = true }
-codex-terminal-detection = { workspace = true }
-codex-worktree = { workspace = true }
-codex-utils-approval-presets = { workspace = true }
-codex-uds = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-cli = { workspace = true }
-codex-utils-elapsed = { workspace = true }
-codex-utils-fuzzy-match = { workspace = true }
-codex-utils-home-dir = { workspace = true }
-codex-utils-path = { workspace = true }
-codex-utils-path-uri = { workspace = true }
-codex-utils-plugins = { workspace = true }
-codex-utils-sandbox-summary = { workspace = true }
-codex-utils-sleep-inhibitor = { workspace = true }
-codex-utils-string = { workspace = true }
+genex-rollout = { workspace = true }
+genex-sandboxing = { workspace = true }
+genex-shell-command = { workspace = true }
+genex-state = { workspace = true }
+genex-terminal-detection = { workspace = true }
+genex-worktree = { workspace = true }
+genex-utils-approval-presets = { workspace = true }
+genex-uds = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
+genex-utils-cli = { workspace = true }
+genex-utils-elapsed = { workspace = true }
+genex-utils-fuzzy-match = { workspace = true }
+genex-utils-home-dir = { workspace = true }
+genex-utils-path = { workspace = true }
+genex-utils-path-uri = { workspace = true }
+genex-utils-plugins = { workspace = true }
+genex-utils-sandbox-summary = { workspace = true }
+genex-utils-sleep-inhibitor = { workspace = true }
+genex-utils-string = { workspace = true }
 color-eyre = { workspace = true }
 crossterm = { workspace = true, features = ["bracketed-paste", "event-stream"] }
 derive_more = { workspace = true, features = ["is_variant"] }
@@ -127,7 +127,7 @@ urlencoding = { workspace = true }
 webbrowser = { workspace = true }
 uuid = { workspace = true }
 
-codex-windows-sandbox = { workspace = true }
+genex-windows-sandbox = { workspace = true }
 tokio-util = { workspace = true, features = ["time"] }
 
 [target.'cfg(unix)'.dependencies]
@@ -164,9 +164,9 @@ arboard = { workspace = true }
 
 [dev-dependencies]
 app_test_support = { workspace = true }
-codex-mcp = { workspace = true }
+genex-mcp = { workspace = true }
 core_test_support = { workspace = true }
-codex-utils-cargo-bin = { workspace = true }
+genex-utils-cargo-bin = { workspace = true }
 assert_matches = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
 futures = { workspace = true }

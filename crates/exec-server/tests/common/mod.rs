@@ -6,17 +6,17 @@ use std::process::Command;
 use std::process::Stdio;
 use std::time::Duration;
 
-use codex_exec_server::CODEX_ARG0_EXEC_HELPER_ARG1;
-use codex_exec_server::CODEX_FS_HELPER_ARG1;
-use codex_exec_server::ExecServerRuntimePaths;
-use codex_exec_server::ExecServerTelemetry;
-use codex_exec_server::RequestDispatchMode;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyPolicy;
-use codex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
-use codex_test_binary_support::TestBinaryDispatchGuard;
-use codex_test_binary_support::TestBinaryDispatchMode;
-use codex_test_binary_support::configure_test_binary_dispatch;
+use genex_exec_server::CODEX_ARG0_EXEC_HELPER_ARG1;
+use genex_exec_server::CODEX_FS_HELPER_ARG1;
+use genex_exec_server::ExecServerRuntimePaths;
+use genex_exec_server::ExecServerTelemetry;
+use genex_exec_server::RequestDispatchMode;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyPolicy;
+use genex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
+use genex_test_binary_support::TestBinaryDispatchGuard;
+use genex_test_binary_support::TestBinaryDispatchMode;
+use genex_test_binary_support::configure_test_binary_dispatch;
 use ctor::ctor;
 
 pub(crate) mod exec_server;
@@ -35,7 +35,7 @@ const DELAYED_OUTPUT_AFTER_EXIT_CHILD_ARG: &str = "--codex-test-delayed-output-a
 #[macro_export]
 macro_rules! skip_if_mxc_unavailable {
     ($return_value:expr $(,)?) => {{
-        if !codex_sandboxing::windows_mxc_available() {
+        if !genex_sandboxing::windows_mxc_available() {
             eprintln!("skipping test: native MXC is unavailable on this host");
             return $return_value;
         }
@@ -54,7 +54,7 @@ pub static TEST_BINARY_DISPATCH_GUARD: Option<TestBinaryDispatchGuard> = {
         if argv1 == Some(CODEX_WINDOWS_SANDBOX_ARG1) {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
-        if argv1 == Some(codex_sandboxing::CODEX_WINDOWS_MXC_ARG1) {
+        if argv1 == Some(genex_sandboxing::CODEX_WINDOWS_MXC_ARG1) {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
         if exe_name == CODEX_LINUX_SANDBOX_ARG0 {
@@ -166,7 +166,7 @@ fn maybe_run_exec_server_from_test_binary(guard: Option<&TestBinaryDispatchGuard
         return;
     }
     // Initialize in the executor child, just as the real CLI does at startup.
-    codex_build_info::BuildInfo::initialize(TEST_BUILD_COMMIT);
+    genex_build_info::BuildInfo::initialize(TEST_BUILD_COMMIT);
 
     let Some(flag) = args.next() else {
         eprintln!("expected --listen");
@@ -228,7 +228,7 @@ fn maybe_run_exec_server_from_test_binary(guard: Option<&TestBinaryDispatchGuard
         env::var(SYSTEM_PROXY_URL_ENV),
     ) {
         (Ok(request_url), Ok(proxy_url)) => {
-            codex_http_client::cache_system_proxy_route_for_test(&request_url, proxy_url);
+            genex_http_client::cache_system_proxy_route_for_test(&request_url, proxy_url);
             HttpClientFactory::new(OutboundProxyPolicy::RespectSystemProxy)
         }
         (Err(env::VarError::NotPresent), Err(env::VarError::NotPresent)) => {
@@ -242,21 +242,21 @@ fn maybe_run_exec_server_from_test_binary(guard: Option<&TestBinaryDispatchGuard
     let exit_code = match runtime.block_on(async {
         #[cfg(target_os = "macos")]
         let runtime_paths = {
-            let home = codex_utils_home_dir::find_codex_home()?;
-            let config = codex_config::loader::load_config_layers_state(
-                &codex_exec_server::LocalFileSystem::unsandboxed(),
+            let home = genex_utils_home_dir::find_codex_home()?;
+            let config = genex_config::loader::load_config_layers_state(
+                &genex_exec_server::LocalFileSystem::unsandboxed(),
                 home.as_path(),
                 /*cwd*/ None,
                 &[],
-                codex_config::LoaderOverrides::default(),
-                &codex_config::NoopThreadConfigLoader,
+                genex_config::LoaderOverrides::default(),
+                &genex_config::NoopThreadConfigLoader,
             )
             .await?;
             runtime_paths.with_allowed_symlinked_codex_home(
-                codex_config::allowed_symlinked_codex_home(&config, &home),
+                genex_config::allowed_symlinked_codex_home(&config, &home),
             )
         };
-        codex_exec_server::run_main_with_telemetry(
+        genex_exec_server::run_main_with_telemetry(
             &listen_url,
             runtime_paths,
             ExecServerTelemetry::default(),

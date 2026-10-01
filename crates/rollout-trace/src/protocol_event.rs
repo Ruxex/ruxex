@@ -11,19 +11,19 @@
 //! variants a compile-time prompt to decide whether the trace should capture
 //! them.
 
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecCommandBeginEvent;
-use codex_protocol::protocol::ExecCommandEndEvent;
-use codex_protocol::protocol::ExecCommandSource;
-use codex_protocol::protocol::ExecCommandStatus;
-use codex_protocol::protocol::McpToolCallBeginEvent;
-use codex_protocol::protocol::McpToolCallEndEvent;
-use codex_protocol::protocol::PatchApplyBeginEvent;
-use codex_protocol::protocol::PatchApplyEndEvent;
-use codex_protocol::protocol::PatchApplyStatus;
-use codex_protocol::protocol::SubAgentActivityEvent;
-use codex_protocol::protocol::SubAgentActivityKind;
-use codex_protocol::protocol::TurnAbortReason;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecCommandBeginEvent;
+use genex_protocol::protocol::ExecCommandEndEvent;
+use genex_protocol::protocol::ExecCommandSource;
+use genex_protocol::protocol::ExecCommandStatus;
+use genex_protocol::protocol::McpToolCallBeginEvent;
+use genex_protocol::protocol::McpToolCallEndEvent;
+use genex_protocol::protocol::PatchApplyBeginEvent;
+use genex_protocol::protocol::PatchApplyEndEvent;
+use genex_protocol::protocol::PatchApplyStatus;
+use genex_protocol::protocol::SubAgentActivityEvent;
+use genex_protocol::protocol::SubAgentActivityKind;
+use genex_protocol::protocol::TurnAbortReason;
 use serde::Serialize;
 use std::time::Duration;
 
@@ -105,14 +105,14 @@ pub(crate) enum ToolRuntimePayload<'a> {
     PatchApplyEnd(&'a PatchApplyEndEvent),
     McpToolCallBegin(&'a McpToolCallBeginEvent),
     McpToolCallEnd(&'a McpToolCallEndEvent),
-    CollabAgentSpawnBegin(&'a codex_protocol::protocol::CollabAgentSpawnBeginEvent),
-    CollabAgentSpawnEnd(&'a codex_protocol::protocol::CollabAgentSpawnEndEvent),
-    CollabAgentInteractionBegin(&'a codex_protocol::protocol::CollabAgentInteractionBeginEvent),
-    CollabAgentInteractionEnd(&'a codex_protocol::protocol::CollabAgentInteractionEndEvent),
-    CollabWaitingBegin(&'a codex_protocol::protocol::CollabWaitingBeginEvent),
-    CollabWaitingEnd(&'a codex_protocol::protocol::CollabWaitingEndEvent),
-    CollabCloseBegin(&'a codex_protocol::protocol::CollabCloseBeginEvent),
-    CollabCloseEnd(&'a codex_protocol::protocol::CollabCloseEndEvent),
+    CollabAgentSpawnBegin(&'a genex_protocol::protocol::CollabAgentSpawnBeginEvent),
+    CollabAgentSpawnEnd(&'a genex_protocol::protocol::CollabAgentSpawnEndEvent),
+    CollabAgentInteractionBegin(&'a genex_protocol::protocol::CollabAgentInteractionBeginEvent),
+    CollabAgentInteractionEnd(&'a genex_protocol::protocol::CollabAgentInteractionEndEvent),
+    CollabWaitingBegin(&'a genex_protocol::protocol::CollabWaitingBeginEvent),
+    CollabWaitingEnd(&'a genex_protocol::protocol::CollabWaitingEndEvent),
+    CollabCloseBegin(&'a genex_protocol::protocol::CollabCloseBeginEvent),
+    CollabCloseEnd(&'a genex_protocol::protocol::CollabCloseEndEvent),
     SubAgentActivity(&'a SubAgentActivityEvent),
 }
 
@@ -162,7 +162,7 @@ struct ExecCommandBeginTracePayload<'a> {
     started_at_ms: i64,
     command: &'a [String],
     cwd: String,
-    parsed_cmd: &'a [codex_protocol::parse_command::ParsedCommand],
+    parsed_cmd: &'a [genex_protocol::parse_command::ParsedCommand],
     source: ExecCommandSource,
     #[serde(skip_serializing_if = "Option::is_none")]
     interaction_input: Option<&'a str>,
@@ -216,7 +216,7 @@ struct ExecCommandEndTracePayload<'a> {
     completed_at_ms: i64,
     command: &'a [String],
     cwd: String,
-    parsed_cmd: &'a [codex_protocol::parse_command::ParsedCommand],
+    parsed_cmd: &'a [genex_protocol::parse_command::ParsedCommand],
     source: ExecCommandSource,
     #[serde(skip_serializing_if = "Option::is_none")]
     interaction_input: Option<&'a str>,

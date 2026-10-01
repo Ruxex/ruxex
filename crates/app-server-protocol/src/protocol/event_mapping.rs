@@ -18,8 +18,8 @@ use crate::protocol::v2::ReasoningSummaryTextDeltaNotification;
 use crate::protocol::v2::ReasoningTextDeltaNotification;
 use crate::protocol::v2::TerminalInteractionNotification;
 use crate::protocol::v2::ThreadItem;
-use codex_protocol::dynamic_tools::DynamicToolCallOutputContentItem as CoreDynamicToolCallOutputContentItem;
-use codex_protocol::protocol::EventMsg;
+use genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem as CoreDynamicToolCallOutputContentItem;
+use genex_protocol::protocol::EventMsg;
 use std::collections::HashMap;
 
 /// Build the v2 app-server notification that directly corresponds to a single core event.
@@ -97,8 +97,8 @@ pub fn item_event_to_server_notification(
         EventMsg::CollabAgentSpawnEnd(end_event) => {
             let has_receiver = end_event.new_thread_id.is_some();
             let status = match &end_event.status {
-                codex_protocol::protocol::AgentStatus::Errored(_)
-                | codex_protocol::protocol::AgentStatus::NotFound => {
+                genex_protocol::protocol::AgentStatus::Errored(_)
+                | genex_protocol::protocol::AgentStatus::NotFound => {
                     CollabAgentToolCallStatus::Failed
                 }
                 _ if has_receiver => CollabAgentToolCallStatus::Completed,
@@ -155,8 +155,8 @@ pub fn item_event_to_server_notification(
         }
         EventMsg::CollabAgentInteractionEnd(end_event) => {
             let status = match &end_event.status {
-                codex_protocol::protocol::AgentStatus::Errored(_)
-                | codex_protocol::protocol::AgentStatus::NotFound => {
+                genex_protocol::protocol::AgentStatus::Errored(_)
+                | genex_protocol::protocol::AgentStatus::NotFound => {
                     CollabAgentToolCallStatus::Failed
                 }
                 _ => CollabAgentToolCallStatus::Completed,
@@ -223,8 +223,8 @@ pub fn item_event_to_server_notification(
             let status = if end_event.statuses.values().any(|status| {
                 matches!(
                     status,
-                    codex_protocol::protocol::AgentStatus::Errored(_)
-                        | codex_protocol::protocol::AgentStatus::NotFound
+                    genex_protocol::protocol::AgentStatus::Errored(_)
+                        | genex_protocol::protocol::AgentStatus::NotFound
                 )
             }) {
                 CollabAgentToolCallStatus::Failed
@@ -276,8 +276,8 @@ pub fn item_event_to_server_notification(
         }
         EventMsg::CollabCloseEnd(end_event) => {
             let status = match &end_event.status {
-                codex_protocol::protocol::AgentStatus::Errored(_)
-                | codex_protocol::protocol::AgentStatus::NotFound => {
+                genex_protocol::protocol::AgentStatus::Errored(_)
+                | genex_protocol::protocol::AgentStatus::NotFound => {
                     CollabAgentToolCallStatus::Failed
                 }
                 _ => CollabAgentToolCallStatus::Completed,
@@ -328,8 +328,8 @@ pub fn item_event_to_server_notification(
         }
         EventMsg::CollabResumeEnd(end_event) => {
             let status = match &end_event.status {
-                codex_protocol::protocol::AgentStatus::Errored(_)
-                | codex_protocol::protocol::AgentStatus::NotFound => {
+                genex_protocol::protocol::AgentStatus::Errored(_)
+                | genex_protocol::protocol::AgentStatus::NotFound => {
                     CollabAgentToolCallStatus::Failed
                 }
                 _ => CollabAgentToolCallStatus::Completed,
@@ -360,7 +360,7 @@ pub fn item_event_to_server_notification(
             })
         }
         EventMsg::AgentMessageContentDelta(event) => {
-            let codex_protocol::protocol::AgentMessageContentDeltaEvent { item_id, delta, .. } =
+            let genex_protocol::protocol::AgentMessageContentDeltaEvent { item_id, delta, .. } =
                 event;
             ServerNotification::AgentMessageDelta(AgentMessageDeltaNotification {
                 thread_id,
@@ -469,11 +469,11 @@ pub fn item_event_to_server_notification(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_protocol::ThreadId;
-    use codex_protocol::protocol::CollabResumeBeginEvent;
-    use codex_protocol::protocol::CollabResumeEndEvent;
-    use codex_protocol::protocol::ExecCommandOutputDeltaEvent;
-    use codex_protocol::protocol::ExecOutputStream;
+    use genex_protocol::ThreadId;
+    use genex_protocol::protocol::CollabResumeBeginEvent;
+    use genex_protocol::protocol::CollabResumeEndEvent;
+    use genex_protocol::protocol::ExecCommandOutputDeltaEvent;
+    use genex_protocol::protocol::ExecOutputStream;
     use pretty_assertions::assert_eq;
 
     fn assert_item_started_server_notification(
@@ -554,7 +554,7 @@ mod tests {
             receiver_thread_id: ThreadId::new(),
             receiver_agent_nickname: None,
             receiver_agent_role: None,
-            status: codex_protocol::protocol::AgentStatus::NotFound,
+            status: genex_protocol::protocol::AgentStatus::NotFound,
         };
 
         let receiver_id = event.receiver_thread_id.to_string();
@@ -580,7 +580,7 @@ mod tests {
                     reasoning_effort: None,
                     agents_states: [(
                         receiver_id,
-                        CollabAgentState::from(codex_protocol::protocol::AgentStatus::NotFound),
+                        CollabAgentState::from(genex_protocol::protocol::AgentStatus::NotFound),
                     )]
                     .into_iter()
                     .collect(),

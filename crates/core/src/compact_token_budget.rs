@@ -10,10 +10,10 @@ use crate::responses_metadata::CompactionTrigger;
 use crate::session::session::Session;
 use crate::session::step_context::StepContext;
 use crate::session::turn_context::TurnContext;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::Result as CodexResult;
-use codex_protocol::items::ContextCompactionItem;
-use codex_protocol::items::TurnItem;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::Result as CodexResult;
+use genex_protocol::items::ContextCompactionItem;
+use genex_protocol::items::TurnItem;
 use tokio_util::sync::CancellationToken;
 
 /// Runs token-budget manual compaction as a normal compaction lifecycle.

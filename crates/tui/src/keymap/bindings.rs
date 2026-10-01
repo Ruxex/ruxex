@@ -6,8 +6,8 @@
 
 use super::RuntimeKeymap;
 use crate::key_hint::KeyBinding;
-use codex_config::types::KeybindingsSpec;
-use codex_config::types::TuiKeymap;
+use genex_config::types::KeybindingsSpec;
+use genex_config::types::TuiKeymap;
 use std::sync::Arc;
 
 /// Runtime context in which a keymap action is active.

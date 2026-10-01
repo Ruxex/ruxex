@@ -1,11 +1,11 @@
 use std::time::Duration;
 
-use codex_api::ReqwestTransport;
-use codex_client::HttpTransport;
-use codex_client::RequestBody;
-use codex_login::default_client::create_client;
-use codex_model_provider::SharedModelProvider;
-use codex_utils_output_truncation::TruncationPolicy;
+use genex_api::ReqwestTransport;
+use genex_client::HttpTransport;
+use genex_client::RequestBody;
+use genex_login::default_client::create_client;
+use genex_model_provider::SharedModelProvider;
+use genex_utils_output_truncation::TruncationPolicy;
 use http::HeaderValue;
 use http::Method;
 use serde_json::Value;

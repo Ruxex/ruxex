@@ -5,11 +5,11 @@
 
 use super::App;
 use crate::app_server_session::AppServerSession;
-use codex_app_server_client::AppServerRequestHandle;
-use codex_app_server_protocol::ConfigEdit;
-use codex_app_server_protocol::WriteStatus;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::model_types::ReasoningEffort;
+use genex_app_server_client::AppServerRequestHandle;
+use genex_app_server_protocol::ConfigEdit;
+use genex_app_server_protocol::WriteStatus;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::model_types::ReasoningEffort;
 use color_eyre::eyre::Result;
 
 impl App {

@@ -6,7 +6,7 @@ impl BottomPane {
     pub(crate) fn push_async_questions(
         &mut self,
         message_id: &str,
-        questions: &[codex_protocol::items::AsyncUserInputQuestion],
+        questions: &[genex_protocol::items::AsyncUserInputQuestion],
     ) {
         self.question_editor().append(message_id, questions);
         self.schedule_active_view_frame();

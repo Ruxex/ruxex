@@ -1,4 +1,4 @@
-use codex_state::SqliteConfig;
+use genex_state::SqliteConfig;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;

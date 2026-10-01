@@ -13,8 +13,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use codex_git_utils::get_git_repo_root;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_git_utils::get_git_repo_root;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use futures::FutureExt;
 use futures::future::BoxFuture;
 use futures::future::Shared;

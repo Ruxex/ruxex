@@ -31,7 +31,7 @@ async fn daemon_connection_rejects_unprotected_socket_before_handshake() -> colo
     let parent = home.path().join("control");
     std::fs::create_dir(&parent)?;
     let socket_path = AbsolutePathBuf::from_absolute_path_checked(parent.join("server.sock"))?;
-    let mut listener = codex_uds::UnixListener::bind(socket_path.as_path()).await?;
+    let mut listener = genex_uds::UnixListener::bind(socket_path.as_path()).await?;
     let target = AppServerTarget::LocalDaemon {
         allow_embedded_fallback: true,
         endpoint: RemoteAppServerEndpoint::UnixSocket { socket_path },

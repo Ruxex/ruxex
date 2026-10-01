@@ -2,9 +2,9 @@
 //! Runtime consumers use catalog overrides first, then the selected mode's settings.
 
 use super::ResolvedMessage;
-use codex_collaboration_mode_templates::DEFAULT;
-use codex_collaboration_mode_templates::PLAN;
-use codex_protocol::model_types::CollaborationModeMessages;
+use genex_collaboration_mode_templates::DEFAULT;
+use genex_collaboration_mode_templates::PLAN;
+use genex_protocol::model_types::CollaborationModeMessages;
 
 #[derive(Debug, Clone, Copy)]
 pub struct ResolvedCollaborationModeMessages<'a> {

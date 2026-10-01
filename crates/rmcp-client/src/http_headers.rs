@@ -12,17 +12,17 @@ use std::time::Duration;
 
 use anyhow::Result;
 use anyhow::anyhow;
-use codex_exec_server::ExecServerError;
-use codex_exec_server::HttpClient;
-use codex_exec_server::HttpHeader;
-use codex_exec_server::HttpRedirectPolicy;
-use codex_exec_server::HttpRequestParams;
-use codex_exec_server::HttpRequestResponse;
-use codex_exec_server::HttpResponseBodyStream;
+use genex_exec_server::ExecServerError;
+use genex_exec_server::HttpClient;
+use genex_exec_server::HttpHeader;
+use genex_exec_server::HttpRedirectPolicy;
+use genex_exec_server::HttpRequestParams;
+use genex_exec_server::HttpRequestResponse;
+use genex_exec_server::HttpResponseBodyStream;
 #[cfg(all(unix, not(target_os = "macos")))]
-use codex_utils_pty::process_group::kill_process_group;
+use genex_utils_pty::process_group::kill_process_group;
 #[cfg(target_os = "macos")]
-use codex_utils_pty::process_group::kill_process_group_with_member_fallback as kill_process_group;
+use genex_utils_pty::process_group::kill_process_group_with_member_fallback as kill_process_group;
 use futures::FutureExt;
 use futures::future::BoxFuture;
 use futures::future::Shared;
@@ -76,7 +76,7 @@ struct HelperProcess {
     #[cfg(unix)]
     process_group_id: u32,
     #[cfg(windows)]
-    job: codex_utils_pty::JobObject,
+    job: genex_utils_pty::JobObject,
 }
 
 struct RawHeaderEntries {
@@ -461,7 +461,7 @@ async fn run_helper(command: &str, cwd: &Path) -> Result<HeaderMap> {
 
     #[cfg(windows)]
     let (child, job) = {
-        let job = codex_utils_pty::JobObject::create_without_breakaway()
+        let job = genex_utils_pty::JobObject::create_without_breakaway()
             .map_err(|error| anyhow!("MCP HTTP headers helper containment failed: {error}"))?;
         let child = job
             .spawn_contained(&mut process)

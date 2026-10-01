@@ -1,7 +1,7 @@
 use crate::config_manager::ConfigManager;
-use codex_core::CodexThread;
-use codex_core::ThreadManager;
-use codex_core::config::Config;
+use genex_core::CodexThread;
+use genex_core::ThreadManager;
+use genex_core::config::Config;
 use std::io;
 use std::sync::Arc;
 use tracing::warn;

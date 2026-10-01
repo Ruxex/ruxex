@@ -5,7 +5,7 @@ use crate::legacy_core::config::ConfigBuilder;
 use app_test_support::create_fake_paginated_rollout;
 use app_test_support::create_fake_rollout;
 use app_test_support::rollout_path;
-use codex_protocol::ThreadId;
+use genex_protocol::ThreadId;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -67,7 +67,7 @@ async fn test_server() -> color_eyre::Result<(TempDir, AppServerSession, String,
             "last_agent_message": "Persisted assistant output"
         }),
     ] {
-        serde_json::from_value::<codex_protocol::protocol::EventMsg>(payload.clone())?;
+        serde_json::from_value::<genex_protocol::protocol::EventMsg>(payload.clone())?;
         records.push(json!({
             "timestamp": "2026-01-02T00:00:00Z",
             "ordinal": records.len(),
@@ -647,7 +647,7 @@ async fn task_creation_and_followup_start_background_turns() -> color_eyre::Resu
         .success
     );
 
-    let ephemeral: codex_app_server_protocol::ThreadStartResponse =
+    let ephemeral: genex_app_server_protocol::ThreadStartResponse =
         request(&server.request_handle(), |request_id| {
             ClientRequest::ThreadStart {
                 request_id,

@@ -1,11 +1,11 @@
 [package]
-name = "codex-sandboxing"
+name = "genex-sandboxing"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "codex_sandboxing"
+name = "genex_sandboxing"
 path = "src/lib.rs"
 doctest = false
 
@@ -14,14 +14,14 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-codex-mxc-sandbox = { workspace = true }
-codex-network-proxy = { workspace = true }
-codex-protocol = { workspace = true }
-codex-uds = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-path-uri = { workspace = true }
-codex-utils-pty = { workspace = true }
-codex-windows-sandbox = { workspace = true }
+genex-mxc-sandbox = { workspace = true }
+genex-network-proxy = { workspace = true }
+genex-protocol = { workspace = true }
+genex-uds = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
+genex-utils-path-uri = { workspace = true }
+genex-utils-pty = { workspace = true }
+genex-windows-sandbox = { workspace = true }
 dunce = { workspace = true }
 libc = { workspace = true }
 serde_json = { workspace = true }
@@ -32,8 +32,8 @@ url = { workspace = true }
 which = { workspace = true }
 
 [target.'cfg(windows)'.dependencies]
-codex-otel = { workspace = true }
-codex-utils-home-dir = { workspace = true }
+genex-otel = { workspace = true }
+genex-utils-home-dir = { workspace = true }
 
 [dev-dependencies]
 anyhow = { workspace = true }

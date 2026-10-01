@@ -5,16 +5,16 @@
 
 use crate::context_manager::is_user_turn_boundary;
 use crate::event_mapping;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::build_turns_from_rollout_items;
-use codex_history::InitialHistory;
-use codex_history::RolloutItem;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::Result as CodexResult;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::InterAgentCommunication;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::build_turns_from_rollout_items;
+use genex_history::InitialHistory;
+use genex_history::RolloutItem;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::Result as CodexResult;
+use genex_protocol::items::TurnItem;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::InterAgentCommunication;
 
 pub(crate) fn initial_history_has_prior_user_turns(conversation_history: &InitialHistory) -> bool {
     conversation_history.scan_rollout_items(rollout_item_is_user_turn_boundary)

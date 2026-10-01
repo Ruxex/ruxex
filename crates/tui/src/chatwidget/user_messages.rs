@@ -14,17 +14,17 @@ use std::path::PathBuf;
 use crate::bottom_pane::LocalImageAttachment;
 use crate::bottom_pane::MentionBinding;
 use crate::bottom_pane::QueuedInputAction;
-use codex_app_server_protocol::ImageReference;
-use codex_app_server_protocol::TextElement as AppServerTextElement;
-use codex_app_server_protocol::UserInput;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
-use codex_protocol::models::local_image_label_text;
-use codex_protocol::user_input::ByteRange;
-use codex_protocol::user_input::TextElement;
-use codex_utils_plugins::mention_syntax::PLUGIN_TEXT_MENTION_SIGIL;
-use codex_utils_plugins::mention_syntax::TOOL_MENTION_SIGIL;
+use genex_app_server_protocol::ImageReference;
+use genex_app_server_protocol::TextElement as AppServerTextElement;
+use genex_app_server_protocol::UserInput;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::CollaborationModeMask;
+use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use genex_protocol::models::local_image_label_text;
+use genex_protocol::user_input::ByteRange;
+use genex_protocol::user_input::TextElement;
+use genex_utils_plugins::mention_syntax::PLUGIN_TEXT_MENTION_SIGIL;
+use genex_utils_plugins::mention_syntax::TOOL_MENTION_SIGIL;
 
 use super::ChatWidget;
 

@@ -248,7 +248,7 @@ use crate::key_hint::ShortcutHint;
 use crate::key_hint::has_ctrl_or_alt;
 use crate::line_truncation::truncate_line_with_ellipsis_if_overflow;
 use crate::ui_consts::FOOTER_INDENT_COLS;
-use codex_message_history::HistoryBatchCursor;
+use genex_message_history::HistoryBatchCursor;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
@@ -269,7 +269,7 @@ use ratatui::widgets::StatefulWidgetRef;
 use ratatui::widgets::Widget;
 use ratatui::widgets::WidgetRef;
 
-use codex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffort;
 
 use super::chat_composer_history::ChatComposerHistory;
 use super::chat_composer_history::HistoryEntry;
@@ -331,10 +331,10 @@ use crate::render::RectExt;
 use crate::render::renderable::Renderable;
 use crate::slash_command::SlashCommand;
 use crate::style::user_message_style;
-use codex_protocol::ThreadId;
-use codex_protocol::user_input::ByteRange;
-use codex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
-use codex_protocol::user_input::TextElement;
+use genex_protocol::ThreadId;
+use genex_protocol::user_input::ByteRange;
+use genex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
+use genex_protocol::user_input::TextElement;
 
 mod agents_navigation;
 mod attachment_state;
@@ -376,10 +376,10 @@ use crate::skills_helpers::skill_display_name;
 use crate::tui::FrameRequester;
 use crate::ui_consts::LIVE_PREFIX_COLS;
 #[cfg(test)]
-use codex_app_server_protocol::SkillInterface;
-use codex_app_server_protocol::SkillMetadata;
-use codex_file_search::FileMatch;
-use codex_plugin::PluginCapabilitySummary;
+use genex_app_server_protocol::SkillInterface;
+use genex_app_server_protocol::SkillMetadata;
+use genex_file_search::FileMatch;
+use genex_plugin::PluginCapabilitySummary;
 use std::cell::OnceCell;
 use std::collections::HashMap;
 use std::collections::HashSet;

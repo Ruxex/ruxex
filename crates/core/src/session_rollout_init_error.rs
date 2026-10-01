@@ -2,8 +2,8 @@ use std::io::ErrorKind;
 use std::path::Path;
 
 use crate::rollout::SESSIONS_SUBDIR;
-use codex_protocol::error::CodexErr;
-use codex_thread_store::ThreadStoreError;
+use genex_protocol::error::CodexErr;
+use genex_thread_store::ThreadStoreError;
 
 pub(crate) fn map_session_init_error(err: &anyhow::Error, codex_home: &Path) -> CodexErr {
     if let Some(store_error) = err

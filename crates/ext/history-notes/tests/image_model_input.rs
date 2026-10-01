@@ -2,13 +2,13 @@
 
 use std::sync::Arc;
 
-use codex_core::config::Config;
-use codex_core::config::TokenBudgetConfig;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_history_notes_extension::install;
-use codex_login::AuthHeaders;
-use codex_login::AuthManager;
-use codex_login::CodexAuth;
+use genex_core::config::Config;
+use genex_core::config::TokenBudgetConfig;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_history_notes_extension::install;
+use genex_login::AuthHeaders;
+use genex_login::AuthManager;
+use genex_login::CodexAuth;
 use core_test_support::responses;
 use core_test_support::test_codex::test_codex;
 use http::HeaderMap;

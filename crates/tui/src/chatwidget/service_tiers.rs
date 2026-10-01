@@ -5,7 +5,7 @@ use crate::app_command::AppCommand;
 use crate::app_event::AppEvent;
 use crate::bottom_pane::slash_commands::ServiceTierCommand;
 use crate::service_tier_resolution;
-use codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
 
 impl ChatWidget {
     pub(crate) fn set_service_tier(&mut self, service_tier: Option<String>) {

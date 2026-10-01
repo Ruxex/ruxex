@@ -1,27 +1,27 @@
 #![cfg(not(target_os = "windows"))]
 
 use anyhow::Ok;
-use codex_core::TurnInputRequest;
-use codex_features::Feature;
-use codex_history::RolloutItem;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::items::AgentMessageContent;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::ImageDetail;
-use codex_protocol::models::ImageReference;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::WebSearchAction;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ItemCompletedEvent;
-use codex_protocol::protocol::ItemStartedEvent;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::ByteRange;
-use codex_protocol::user_input::TextElement;
-use codex_protocol::user_input::UserInput;
+use genex_core::TurnInputRequest;
+use genex_features::Feature;
+use genex_history::RolloutItem;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::items::AgentMessageContent;
+use genex_protocol::items::TurnItem;
+use genex_protocol::models::ImageDetail;
+use genex_protocol::models::ImageReference;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::WebSearchAction;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ItemCompletedEvent;
+use genex_protocol::protocol::ItemStartedEvent;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::ByteRange;
+use genex_protocol::user_input::TextElement;
+use genex_protocol::user_input::UserInput;
 use core_test_support::PathBufExt;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -177,7 +177,7 @@ async fn assistant_message_item_is_emitted() -> anyhow::Result<()> {
     .await;
 
     assert_eq!(started.id, completed.id);
-    let Some(codex_protocol::items::AgentMessageContent::Text { text }) = completed.content.first()
+    let Some(genex_protocol::items::AgentMessageContent::Text { text }) = completed.content.first()
     else {
         panic!("expected agent message text content");
     };
@@ -376,7 +376,7 @@ async fn web_search_item_is_emitted() -> anyhow::Result<()> {
     let rollout = std::fs::read_to_string(rollout_path)?;
     let persisted_completion = rollout
         .lines()
-        .map(codex_rollout::parse_rollout_line)
+        .map(genex_rollout::parse_rollout_line)
         .collect::<Result<Vec<_>, _>>()?
         .into_iter()
         .find_map(|line| match line.item {

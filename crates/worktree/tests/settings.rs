@@ -1,6 +1,6 @@
 #![allow(clippy::expect_used)]
 
-use codex_worktree::WorktreeSettings;
+use genex_worktree::WorktreeSettings;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;

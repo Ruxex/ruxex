@@ -7,8 +7,8 @@ use std::sync::atomic::Ordering;
 
 #[derive(Clone)]
 pub(crate) struct ManagedTuiWorktree {
-    manager: codex_worktree::WorktreeManager,
-    checkout: codex_worktree::ManagedWorktree,
+    manager: genex_worktree::WorktreeManager,
+    checkout: genex_worktree::ManagedWorktree,
     recovery: Arc<StartupRecovery>,
 }
 
@@ -94,11 +94,11 @@ impl ManagedTuiWorktree {
 async fn latest_thread_cwd(path: Option<PathBuf>, fallback: PathBuf) -> PathBuf {
     let Some(path) = path else { return fallback };
     tokio::task::spawn_blocking(move || {
-        let reader = codex_rollout::open_rollout_seekable_reader(&path).ok()?;
-        let mut scanner = codex_rollout::ReverseJsonlScanner::new(reader).ok()?;
+        let reader = genex_rollout::open_rollout_seekable_reader(&path).ok()?;
+        let mut scanner = genex_rollout::ReverseJsonlScanner::new(reader).ok()?;
         while let Some(outcome) = scanner.scan_next_rollout_line().ok()? {
-            if let codex_rollout::ScanOutcome::Parsed(codex_rollout::RolloutLine {
-                item: codex_rollout::RolloutItem::TurnContext(item),
+            if let genex_rollout::ScanOutcome::Parsed(genex_rollout::RolloutLine {
+                item: genex_rollout::RolloutItem::TurnContext(item),
                 ..
             }) = outcome
             {
@@ -194,7 +194,7 @@ pub(super) async fn prepare(
             .await;
         }
     }
-    if !source.features.enabled(codex_features::Feature::Worktrees) {
+    if !source.features.enabled(genex_features::Feature::Worktrees) {
         color_eyre::eyre::bail!(
             "`--worktree` requires the worktrees feature; enable it with `--enable worktrees`"
         );
@@ -218,15 +218,15 @@ pub(super) async fn prepare(
         strict_config,
     )
     .await;
-    let manager = codex_worktree::WorktreeManager::new(
-        codex_worktree::WorktreeSettings::for_cli(
+    let manager = genex_worktree::WorktreeManager::new(
+        genex_worktree::WorktreeSettings::for_cli(
             &source.codex_home,
             host.config_toml.desktop.as_ref(),
         )
         .map_err(std::io::Error::other)?,
     );
     let checkout = manager
-        .create(&codex_worktree::CreateWorktree {
+        .create(&genex_worktree::CreateWorktree {
             source_cwd: source.cwd.to_path_buf(),
             base: None,
         })
@@ -245,7 +245,7 @@ pub(super) async fn prepare(
         &source.codex_home,
         Some(&destination),
         cli_overrides.clone(),
-        codex_config::ConfigLoadOptions {
+        genex_config::ConfigLoadOptions {
             loader_overrides: loader_overrides.clone(),
             strict_config,
         },

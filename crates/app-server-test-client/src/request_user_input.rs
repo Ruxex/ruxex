@@ -7,9 +7,9 @@ use std::io::Write;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
-use codex_app_server_protocol::ToolRequestUserInputAnswer;
-use codex_app_server_protocol::ToolRequestUserInputParams;
-use codex_app_server_protocol::ToolRequestUserInputResponse;
+use genex_app_server_protocol::ToolRequestUserInputAnswer;
+use genex_app_server_protocol::ToolRequestUserInputParams;
+use genex_app_server_protocol::ToolRequestUserInputResponse;
 
 pub(super) fn prompt_for_answers(
     params: &ToolRequestUserInputParams,

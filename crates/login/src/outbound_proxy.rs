@@ -1,4 +1,4 @@
-use codex_http_client::HttpClientFactory;
+use genex_http_client::HttpClientFactory;
 
 /// Auth-layer adapter around client-owned proxy policy.
 ///

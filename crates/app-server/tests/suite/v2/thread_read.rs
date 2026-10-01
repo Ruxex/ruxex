@@ -7,81 +7,81 @@ use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::rollout_path;
 use app_test_support::test_absolute_path;
 use app_test_support::to_response;
-use codex_app_server::in_process;
-use codex_app_server::in_process::InProcessStartArgs;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::DeprecationNoticeNotification;
-use codex_app_server_protocol::ImageReference;
-use codex_app_server_protocol::InitializeCapabilities;
-use codex_app_server_protocol::InitializeParams;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SessionSource;
-use codex_app_server_protocol::SortDirection;
-use codex_app_server_protocol::ThreadForkParams;
-use codex_app_server_protocol::ThreadForkResponse;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadItemsListParams;
-use codex_app_server_protocol::ThreadItemsListResponse;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadListResponse;
-use codex_app_server_protocol::ThreadNameUpdatedNotification;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadReadResponse;
-use codex_app_server_protocol::ThreadResumeInitialTurnsPageParams;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadSearchOccurrencesParams;
-use codex_app_server_protocol::ThreadSearchOccurrencesResponse;
-use codex_app_server_protocol::ThreadSetNameParams;
-use codex_app_server_protocol::ThreadSetNameResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadStatus;
-use codex_app_server_protocol::ThreadTurnsListParams;
-use codex_app_server_protocol::ThreadTurnsListResponse;
-use codex_app_server_protocol::Turn;
-use codex_app_server_protocol::TurnItemsView;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput;
-use codex_arg0::Arg0DispatchPaths;
-use codex_config::CloudConfigBundleLoader;
-use codex_config::LoaderOverrides;
-use codex_core::ARCHIVED_SESSIONS_SUBDIR;
-use codex_core::config::ConfigBuilder;
-use codex_exec_server::EnvironmentManager;
-use codex_protocol::items::AgentMessageContent;
-use codex_protocol::items::AgentMessageItem;
-use codex_protocol::items::TurnItem as CoreTurnItem;
-use codex_protocol::items::UserMessageItem;
-use codex_protocol::models::BaseInstructions;
-use codex_protocol::models::MessagePhase;
-use codex_protocol::protocol::AgentMessageEvent;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ItemCompletedEvent;
-use codex_protocol::protocol::SessionSource as ProtocolSessionSource;
-use codex_protocol::protocol::TurnCompleteEvent;
-use codex_protocol::protocol::TurnStartedEvent;
-use codex_protocol::protocol::UserMessageEvent;
-use codex_protocol::user_input::ByteRange;
-use codex_protocol::user_input::TextElement;
-use codex_rollout::RolloutItem;
-use codex_thread_store::AppendThreadItemsParams;
-use codex_thread_store::CreateThreadParams;
-use codex_thread_store::InMemoryThreadStore;
-use codex_thread_store::LocalThreadStore;
-use codex_thread_store::LocalThreadStoreConfig;
-use codex_thread_store::PersistContext;
-use codex_thread_store::ThreadMetadataPatch;
-use codex_thread_store::ThreadPersistenceMetadata;
-use codex_thread_store::ThreadStore;
-use codex_thread_store::UpdateThreadMetadataParams;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_app_server::in_process;
+use genex_app_server::in_process::InProcessStartArgs;
+use genex_app_server_protocol::ClientInfo;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::DeprecationNoticeNotification;
+use genex_app_server_protocol::ImageReference;
+use genex_app_server_protocol::InitializeCapabilities;
+use genex_app_server_protocol::InitializeParams;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::JSONRPCResponse;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SessionSource;
+use genex_app_server_protocol::SortDirection;
+use genex_app_server_protocol::ThreadForkParams;
+use genex_app_server_protocol::ThreadForkResponse;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadItemsListParams;
+use genex_app_server_protocol::ThreadItemsListResponse;
+use genex_app_server_protocol::ThreadListParams;
+use genex_app_server_protocol::ThreadListResponse;
+use genex_app_server_protocol::ThreadNameUpdatedNotification;
+use genex_app_server_protocol::ThreadReadParams;
+use genex_app_server_protocol::ThreadReadResponse;
+use genex_app_server_protocol::ThreadResumeInitialTurnsPageParams;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadSearchOccurrencesParams;
+use genex_app_server_protocol::ThreadSearchOccurrencesResponse;
+use genex_app_server_protocol::ThreadSetNameParams;
+use genex_app_server_protocol::ThreadSetNameResponse;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::ThreadStatus;
+use genex_app_server_protocol::ThreadTurnsListParams;
+use genex_app_server_protocol::ThreadTurnsListResponse;
+use genex_app_server_protocol::Turn;
+use genex_app_server_protocol::TurnItemsView;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::UserInput;
+use genex_arg0::Arg0DispatchPaths;
+use genex_config::CloudConfigBundleLoader;
+use genex_config::LoaderOverrides;
+use genex_core::ARCHIVED_SESSIONS_SUBDIR;
+use genex_core::config::ConfigBuilder;
+use genex_exec_server::EnvironmentManager;
+use genex_protocol::items::AgentMessageContent;
+use genex_protocol::items::AgentMessageItem;
+use genex_protocol::items::TurnItem as CoreTurnItem;
+use genex_protocol::items::UserMessageItem;
+use genex_protocol::models::BaseInstructions;
+use genex_protocol::models::MessagePhase;
+use genex_protocol::protocol::AgentMessageEvent;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ItemCompletedEvent;
+use genex_protocol::protocol::SessionSource as ProtocolSessionSource;
+use genex_protocol::protocol::TurnCompleteEvent;
+use genex_protocol::protocol::TurnStartedEvent;
+use genex_protocol::protocol::UserMessageEvent;
+use genex_protocol::user_input::ByteRange;
+use genex_protocol::user_input::TextElement;
+use genex_rollout::RolloutItem;
+use genex_thread_store::AppendThreadItemsParams;
+use genex_thread_store::CreateThreadParams;
+use genex_thread_store::InMemoryThreadStore;
+use genex_thread_store::LocalThreadStore;
+use genex_thread_store::LocalThreadStoreConfig;
+use genex_thread_store::PersistContext;
+use genex_thread_store::ThreadMetadataPatch;
+use genex_thread_store::ThreadPersistenceMetadata;
+use genex_thread_store::ThreadStore;
+use genex_thread_store::UpdateThreadMetadataParams;
+use genex_utils_absolute_path::test_support::PathExt;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -572,10 +572,10 @@ async fn thread_search_occurrences_reads_paginated_projection() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
     let codex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
-    let thread_id = codex_protocol::ThreadId::default();
-    let sqlite = codex_state::SqliteConfig::new_for_testing(codex_home.path().abs());
+    let thread_id = genex_protocol::ThreadId::default();
+    let sqlite = genex_state::SqliteConfig::new_for_testing(codex_home.path().abs());
     let state_db =
-        codex_state::StateRuntime::init(sqlite.clone(), "mock_provider".to_string()).await?;
+        genex_state::StateRuntime::init(sqlite.clone(), "mock_provider".to_string()).await?;
     let store = LocalThreadStore::new(
         LocalThreadStoreConfig {
             codex_home: codex_home.path().to_path_buf(),
@@ -598,7 +598,7 @@ async fn thread_search_occurrences_reads_paginated_projection() -> Result<()> {
             dynamic_tools: Vec::new(),
             selected_capability_roots: Vec::new(),
             multi_agent_version: None,
-            history_mode: codex_protocol::protocol::ThreadHistoryMode::Paginated,
+            history_mode: genex_protocol::protocol::ThreadHistoryMode::Paginated,
             history_base: None,
             subagent_history_start_ordinal: None,
             initial_window_id: Uuid::now_v7().to_string(),
@@ -624,11 +624,11 @@ async fn thread_search_occurrences_reads_paginated_projection() -> Result<()> {
                         id: "user-1".to_string(),
                         client_id: None,
                         content: vec![
-                            codex_protocol::user_input::UserInput::Text {
+                            genex_protocol::user_input::UserInput::Text {
                                 text: "Nee".to_string(),
                                 text_elements: Vec::new(),
                             },
-                            codex_protocol::user_input::UserInput::Text {
+                            genex_protocol::user_input::UserInput::Text {
                                 text: "dle needle needle needle".to_string(),
                                 text_elements: Vec::new(),
                             },
@@ -641,7 +641,7 @@ async fn thread_search_occurrences_reads_paginated_projection() -> Result<()> {
                     CoreTurnItem::UserMessage(UserMessageItem {
                         id: "steer-1".to_string(),
                         client_id: None,
-                        content: vec![codex_protocol::user_input::UserInput::Text {
+                        content: vec![genex_protocol::user_input::UserInput::Text {
                             text: "steer toward needle".to_string(),
                             text_elements: Vec::new(),
                         }],
@@ -826,7 +826,7 @@ async fn thread_search_occurrences_reads_paginated_projection() -> Result<()> {
 #[tokio::test]
 async fn thread_turns_list_reads_store_history_without_rollout_path() -> Result<()> {
     let codex_home = TempDir::new()?;
-    let thread_id = codex_protocol::ThreadId::from_string("00000000-0000-4000-8000-000000000123")?;
+    let thread_id = genex_protocol::ThreadId::from_string("00000000-0000-4000-8000-000000000123")?;
     let store_id = Uuid::new_v4().to_string();
     MockResponsesConfig::new("http://127.0.0.1:1")
         .with_root_config(&format!(
@@ -851,7 +851,7 @@ async fn thread_turns_list_reads_store_history_without_rollout_path() -> Result<
         loader_overrides,
         strict_config: false,
         cloud_config_bundle: CloudConfigBundleLoader::default(),
-        thread_config_loader: Arc::new(codex_config::NoopThreadConfigLoader),
+        thread_config_loader: Arc::new(genex_config::NoopThreadConfigLoader),
         log_db: None,
         state_db: None,
         environment_manager: Arc::new(EnvironmentManager::default_for_tests()),
@@ -920,7 +920,7 @@ async fn thread_read_loaded_include_turns_reads_store_history_without_rollout_pa
         loader_overrides,
         strict_config: false,
         cloud_config_bundle: CloudConfigBundleLoader::default(),
-        thread_config_loader: Arc::new(codex_config::NoopThreadConfigLoader),
+        thread_config_loader: Arc::new(genex_config::NoopThreadConfigLoader),
         log_db: None,
         state_db: None,
         environment_manager: Arc::new(EnvironmentManager::default_for_tests()),
@@ -955,7 +955,7 @@ async fn thread_read_loaded_include_turns_reads_store_history_without_rollout_pa
     let ThreadStartResponse { thread, .. } = serde_json::from_value(result)?;
     assert_eq!(thread.path, None);
 
-    let thread_id = codex_protocol::ThreadId::from_string(&thread.id)?;
+    let thread_id = genex_protocol::ThreadId::from_string(&thread.id)?;
     store
         .append_items(AppendThreadItemsParams {
             thread_id,
@@ -1002,7 +1002,7 @@ async fn thread_read_loaded_include_turns_reads_store_history_without_rollout_pa
 #[tokio::test]
 async fn thread_list_includes_store_thread_without_rollout_path() -> Result<()> {
     let codex_home = TempDir::new()?;
-    let thread_id = codex_protocol::ThreadId::from_string("00000000-0000-4000-8000-000000000124")?;
+    let thread_id = genex_protocol::ThreadId::from_string("00000000-0000-4000-8000-000000000124")?;
     let store_id = Uuid::new_v4().to_string();
     MockResponsesConfig::new("http://127.0.0.1:1")
         .with_root_config(&format!(
@@ -1027,7 +1027,7 @@ async fn thread_list_includes_store_thread_without_rollout_path() -> Result<()> 
         loader_overrides,
         strict_config: false,
         cloud_config_bundle: CloudConfigBundleLoader::default(),
-        thread_config_loader: Arc::new(codex_config::NoopThreadConfigLoader),
+        thread_config_loader: Arc::new(genex_config::NoopThreadConfigLoader),
         log_db: None,
         state_db: None,
         environment_manager: Arc::new(EnvironmentManager::default_for_tests()),
@@ -1195,7 +1195,7 @@ async fn thread_resume_initial_turns_page_matches_requested_turns_list_page() ->
     assert!(thread.turns.is_empty());
     assert_eq!(
         initial_turns_page,
-        Some(codex_app_server_protocol::TurnsPage::from(expected_page))
+        Some(genex_app_server_protocol::TurnsPage::from(expected_page))
     );
 
     Ok(())
@@ -1626,10 +1626,10 @@ async fn paginated_history_lists_and_legacy_reads_use_projected_turns_and_items(
     let server = create_mock_responses_server_repeating_assistant("Done").await;
     let codex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
-    let thread_id = codex_protocol::ThreadId::default();
-    let sqlite = codex_state::SqliteConfig::new_for_testing(codex_home.path().abs());
+    let thread_id = genex_protocol::ThreadId::default();
+    let sqlite = genex_state::SqliteConfig::new_for_testing(codex_home.path().abs());
     let state_db =
-        codex_state::StateRuntime::init(sqlite.clone(), "mock_provider".to_string()).await?;
+        genex_state::StateRuntime::init(sqlite.clone(), "mock_provider".to_string()).await?;
     let store = LocalThreadStore::new(
         LocalThreadStoreConfig {
             codex_home: codex_home.path().to_path_buf(),
@@ -1652,7 +1652,7 @@ async fn paginated_history_lists_and_legacy_reads_use_projected_turns_and_items(
             dynamic_tools: Vec::new(),
             selected_capability_roots: Vec::new(),
             multi_agent_version: None,
-            history_mode: codex_protocol::protocol::ThreadHistoryMode::Paginated,
+            history_mode: genex_protocol::protocol::ThreadHistoryMode::Paginated,
             history_base: None,
             subagent_history_start_ordinal: None,
             initial_window_id: Uuid::now_v7().to_string(),
@@ -2210,7 +2210,7 @@ async fn read_single_turn_items_view(
     mcp: &mut TestAppServer,
     thread_id: &str,
     items_view: Option<TurnItemsView>,
-) -> anyhow::Result<codex_app_server_protocol::Turn> {
+) -> anyhow::Result<genex_app_server_protocol::Turn> {
     let read_id = mcp
         .send_thread_turns_list_request(ThreadTurnsListParams {
             thread_id: thread_id.to_string(),
@@ -2233,7 +2233,7 @@ async fn read_single_turn_items_view(
 
 async fn read_turns_page(
     mcp: &mut TestAppServer,
-    thread_id: codex_protocol::ThreadId,
+    thread_id: genex_protocol::ThreadId,
     cursor: Option<String>,
     limit: Option<u32>,
     sort_direction: SortDirection,
@@ -2258,7 +2258,7 @@ async fn read_turns_page(
 
 async fn read_items_page(
     mcp: &mut TestAppServer,
-    thread_id: codex_protocol::ThreadId,
+    thread_id: genex_protocol::ThreadId,
     turn_id: Option<&str>,
     cursor: Option<String>,
     limit: Option<u32>,
@@ -2305,7 +2305,7 @@ fn paginated_turn_completed(turn_id: &str) -> RolloutItem {
 }
 
 fn paginated_completed_item(
-    thread_id: codex_protocol::ThreadId,
+    thread_id: genex_protocol::ThreadId,
     turn_id: &str,
     item: CoreTurnItem,
 ) -> RolloutItem {
@@ -2318,7 +2318,7 @@ fn paginated_completed_item(
     }))
 }
 
-fn turn_user_texts(turns: &[codex_app_server_protocol::Turn]) -> Vec<&str> {
+fn turn_user_texts(turns: &[genex_app_server_protocol::Turn]) -> Vec<&str> {
     turns
         .iter()
         .filter_map(|turn| match turn.items.first()? {
@@ -2336,7 +2336,7 @@ fn turn_user_texts(turns: &[codex_app_server_protocol::Turn]) -> Vec<&str> {
         .collect()
 }
 
-fn turn_agent_texts(turns: &[codex_app_server_protocol::Turn]) -> Vec<&str> {
+fn turn_agent_texts(turns: &[genex_app_server_protocol::Turn]) -> Vec<&str> {
     turns
         .iter()
         .flat_map(|turn| &turn.items)
@@ -2359,7 +2359,7 @@ impl Drop for InMemoryThreadStoreId {
 
 async fn seed_pathless_store_thread(
     store: &InMemoryThreadStore,
-    thread_id: codex_protocol::ThreadId,
+    thread_id: genex_protocol::ThreadId,
 ) -> Result<()> {
     store
         .create_thread(CreateThreadParams {

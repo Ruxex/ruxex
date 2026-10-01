@@ -16,23 +16,23 @@ use std::time::Duration;
 
 use anyhow::Context as _;
 use anyhow::Result;
-use codex_exec_server::CreateDirectoryOptions;
-use codex_exec_server::FileSystemSandboxContext;
-use codex_exec_server::GetMetadataOptions;
-use codex_exec_server::ReadFileOptions;
-use codex_exec_server::RemoveOptions;
-use codex_exec_server::WindowsSandboxSelection;
-use codex_exec_server::WriteFileOptions;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_sandboxing::SandboxType;
-use codex_utils_path_uri::PathUri;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_exec_server::FileSystemSandboxContext;
+use genex_exec_server::GetMetadataOptions;
+use genex_exec_server::ReadFileOptions;
+use genex_exec_server::RemoveOptions;
+use genex_exec_server::WindowsSandboxSelection;
+use genex_exec_server::WriteFileOptions;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::FileSystemSpecialPath;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::SandboxPolicy;
+use genex_sandboxing::SandboxType;
+use genex_utils_path_uri::PathUri;
 use futures::TryStreamExt;
 use pretty_assertions::assert_eq;
 use test_case::test_case;
@@ -381,7 +381,7 @@ async fn file_system_elevated_relative_read_denial_uses_policy_cwd(
         return Err(error).context("create Windows sandbox test resources");
     }
     for name in ["codex-windows-sandbox-setup", "codex-command-runner"] {
-        let source = codex_utils_cargo_bin::cargo_bin(name)?;
+        let source = genex_utils_cargo_bin::cargo_bin(name)?;
         let destination = resources.join(Path::new(name).with_extension("exe"));
         if let Err(error) = std::fs::copy(&source, &destination)
             && !(error.kind() == std::io::ErrorKind::PermissionDenied && destination.is_file())

@@ -4,16 +4,16 @@ use std::future::Future;
 use std::path::Path;
 use std::path::PathBuf;
 
-use codex_apply_patch::CODEX_CORE_APPLY_PATCH_ARG1;
-use codex_async_utils::THREAD_STACK_SIZE_BYTES;
+use genex_apply_patch::CODEX_CORE_APPLY_PATCH_ARG1;
+use genex_async_utils::THREAD_STACK_SIZE_BYTES;
 #[cfg(unix)]
-use codex_exec_server::CODEX_ARG0_EXEC_HELPER_ARG1;
-use codex_exec_server::CODEX_FS_HELPER_ARG1;
-use codex_install_context::InstallContext;
-use codex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
-use codex_utils_home_dir::find_codex_home;
+use genex_exec_server::CODEX_ARG0_EXEC_HELPER_ARG1;
+use genex_exec_server::CODEX_FS_HELPER_ARG1;
+use genex_install_context::InstallContext;
+use genex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
+use genex_utils_home_dir::find_codex_home;
 #[cfg(target_os = "windows")]
-use codex_windows_sandbox::CODEX_WINDOWS_SANDBOX_ARG1;
+use genex_windows_sandbox::CODEX_WINDOWS_SANDBOX_ARG1;
 #[cfg(unix)]
 use std::os::unix::fs::symlink;
 use tempfile::TempDir;
@@ -84,7 +84,7 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
             Err(_) => std::process::exit(1),
         };
         let exit_code = runtime.block_on(
-            codex_shell_escalation::run_shell_escalation_execve_wrapper(file, argv),
+            genex_shell_escalation::run_shell_escalation_execve_wrapper(file, argv),
         );
         match exit_code {
             Ok(exit_code) => std::process::exit(exit_code),
@@ -94,25 +94,25 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
 
     if exe_name == CODEX_LINUX_SANDBOX_ARG0 {
         // Safety: [`run_main`] never returns.
-        codex_linux_sandbox::run_main();
+        genex_linux_sandbox::run_main();
     } else if exe_name == APPLY_PATCH_ARG0 || exe_name == MISSPELLED_APPLY_PATCH_ARG0 {
-        codex_apply_patch::main();
+        genex_apply_patch::main();
     }
 
     let argv1 = args.next().unwrap_or_default();
-    if argv1 == codex_sandboxing::CODEX_WINDOWS_MXC_ARG1 {
-        codex_sandboxing::run_windows_mxc_main();
+    if argv1 == genex_sandboxing::CODEX_WINDOWS_MXC_ARG1 {
+        genex_sandboxing::run_windows_mxc_main();
     }
     #[cfg(unix)]
     if argv1 == CODEX_ARG0_EXEC_HELPER_ARG1 {
-        codex_exec_server::run_arg0_exec_helper_main();
+        genex_exec_server::run_arg0_exec_helper_main();
     }
     if argv1 == CODEX_FS_HELPER_ARG1 {
-        codex_exec_server::run_fs_helper_main();
+        genex_exec_server::run_fs_helper_main();
     }
     #[cfg(target_os = "windows")]
     if argv1 == CODEX_WINDOWS_SANDBOX_ARG1 {
-        codex_windows_sandbox::run_windows_sandbox_wrapper_main();
+        genex_windows_sandbox::run_windows_sandbox_wrapper_main();
     }
     if argv1 == CODEX_CORE_APPLY_PATCH_ARG1 {
         let patch_arg = args.next().and_then(|s| s.to_str().map(str::to_owned));
@@ -120,7 +120,7 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
             Some(patch_arg) => {
                 let mut stdout = std::io::stdout();
                 let mut stderr = std::io::stderr();
-                let cwd = match codex_utils_absolute_path::AbsolutePathBuf::current_dir() {
+                let cwd = match genex_utils_absolute_path::AbsolutePathBuf::current_dir() {
                     Ok(cwd) => cwd,
                     Err(_) => std::process::exit(1),
                 };
@@ -132,17 +132,17 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
                     Err(_) => std::process::exit(1),
                 };
                 let cwd = cwd.into();
-                let update_file_mode = codex_apply_patch::apply_patch_file_update_mode_from_env();
-                match runtime.block_on(codex_apply_patch::apply_patch_with_options(
+                let update_file_mode = genex_apply_patch::apply_patch_file_update_mode_from_env();
+                match runtime.block_on(genex_apply_patch::apply_patch_with_options(
                     &patch_arg,
-                    codex_apply_patch::ApplyPatchOptions {
+                    genex_apply_patch::ApplyPatchOptions {
                         update_file_mode,
                         ..Default::default()
                     },
                     &cwd,
                     &mut stdout,
                     &mut stderr,
-                    codex_exec_server::LOCAL_FS.as_ref(),
+                    genex_exec_server::LOCAL_FS.as_ref(),
                     /*sandbox*/ None,
                 )) {
                     Ok(_) => 0,
@@ -203,7 +203,7 @@ fn prepare_path_env_var_with_aliases(
 ///
 /// When the current executable is invoked through the hard-link or alias named
 /// `codex-linux-sandbox` we *directly* execute
-/// [`codex_linux_sandbox::run_main`] (which never returns). Otherwise we:
+/// [`genex_linux_sandbox::run_main`] (which never returns). Otherwise we:
 ///
 /// 1.  Load `.env` values from `~/.codex/.env` before creating any threads.
 /// 2.  Spawn a main runtime thread with a controlled stack size.
@@ -215,7 +215,7 @@ fn prepare_path_env_var_with_aliases(
 /// 5.  Execute the provided async `main_fn` inside that runtime, forwarding any
 ///     error. Note that `main_fn` receives [`Arg0DispatchPaths`], which
 ///     contains the helper executable paths needed to construct
-///     [`codex_core::config::Config`].
+///     [`genex_core::config::Config`].
 ///
 /// This function should be used to wrap any `main()` function in binary crates
 /// in this workspace that depends on these helper CLIs.
@@ -544,10 +544,10 @@ mod tests {
     use super::run_main_with_arg0_guard;
     #[cfg(unix)]
     use anyhow::ensure;
-    use codex_install_context::CodexPackageLayout;
-    use codex_install_context::InstallContext;
-    use codex_install_context::InstallMethod;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use genex_install_context::CodexPackageLayout;
+    use genex_install_context::InstallContext;
+    use genex_install_context::InstallMethod;
+    use genex_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
     use std::fs;
     use std::fs::File;

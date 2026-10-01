@@ -5,11 +5,11 @@ use std::time::Duration;
 
 use anyhow::Context;
 use clap::Parser;
-use codex_otel::OtelExporter;
-use codex_otel::OtelHttpProtocol;
-use codex_otel::OtelProvider;
-use codex_otel::OtelSettings;
-use codex_otel_trace_websocket::TraceWebSocket;
+use genex_otel::OtelExporter;
+use genex_otel::OtelHttpProtocol;
+use genex_otel::OtelProvider;
+use genex_otel::OtelSettings;
+use genex_otel_trace_websocket::TraceWebSocket;
 use tracing_subscriber::Layer;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -22,7 +22,7 @@ struct Cli {
     #[arg(
         long,
         value_name = "URL",
-        default_value = codex_code_mode_host::DEFAULT_LISTEN_URL
+        default_value = genex_code_mode_host::DEFAULT_LISTEN_URL
     )]
     listen: String,
 
@@ -71,7 +71,7 @@ async fn main() -> anyhow::Result<()> {
     )
     .in_scope(|| {});
 
-    let main_transport = codex_code_mode_host::run_main(&cli.listen);
+    let main_transport = genex_code_mode_host::run_main(&cli.listen);
     let result = match trace_transport.as_mut() {
         Some(trace_transport) => tokio::select! {
             result = main_transport => result,

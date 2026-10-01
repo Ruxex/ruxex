@@ -1,20 +1,20 @@
-use codex_core::TurnInputRequest;
+use genex_core::TurnInputRequest;
 use std::process::Stdio;
 use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::TurnEnvironmentSelection;
-use codex_protocol::protocol::TurnEnvironmentSelections;
-use codex_protocol::user_input::UserInput;
-use codex_utils_path_uri::PathUri;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::protocol::TurnEnvironmentSelections;
+use genex_protocol::user_input::UserInput;
+use genex_utils_path_uri::PathUri;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_function_call;
@@ -53,7 +53,7 @@ pub(super) struct ExecServerProcess {
 impl ExecServerProcess {
     pub(super) async fn start() -> Result<Self> {
         let codex_home = TempDir::new()?;
-        let mut child = Command::new(codex_utils_cargo_bin::cargo_bin("codex")?)
+        let mut child = Command::new(genex_utils_cargo_bin::cargo_bin("codex")?)
             .args(["exec-server", "--listen", "ws://127.0.0.1:0"])
             .env("CODEX_HOME", codex_home.path())
             .stdin(Stdio::null())

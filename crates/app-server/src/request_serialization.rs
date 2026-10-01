@@ -5,9 +5,9 @@ use std::path::PathBuf;
 use std::pin::Pin;
 use std::sync::Arc;
 
-use codex_app_server_protocol::ClientRequestSerializationScope;
-use codex_diagnostics::Gauge;
-use codex_diagnostics::GaugeGuard;
+use genex_app_server_protocol::ClientRequestSerializationScope;
+use genex_diagnostics::Gauge;
+use genex_diagnostics::GaugeGuard;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
 use tokio::sync::Mutex;
@@ -310,10 +310,10 @@ impl RequestSerializationQueues {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_app_server_protocol::ClientRequest;
-    use codex_app_server_protocol::ConfigBatchWriteParams;
-    use codex_app_server_protocol::HooksListParams;
-    use codex_app_server_protocol::RequestId;
+    use genex_app_server_protocol::ClientRequest;
+    use genex_app_server_protocol::ConfigBatchWriteParams;
+    use genex_app_server_protocol::HooksListParams;
+    use genex_app_server_protocol::RequestId;
     use pretty_assertions::assert_eq;
     use std::sync::Arc;
     use tokio::sync::broadcast;

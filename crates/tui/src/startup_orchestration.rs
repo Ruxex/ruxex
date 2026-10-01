@@ -4,8 +4,8 @@
 //! configuration and app-server initialization remain responsive to safe local editing.
 
 use super::*;
-use codex_terminal_detection::Multiplexer;
-use codex_terminal_detection::TerminalName;
+use genex_terminal_detection::Multiplexer;
+use genex_terminal_detection::TerminalName;
 
 pub(super) async fn run_main_inner(
     mut cli: Cli,
@@ -51,7 +51,7 @@ pub(super) async fn run_main_inner(
     }
 
     let raw_overrides = cli.config_overrides.raw_overrides.clone();
-    let overrides_cli = codex_utils_cli::CliConfigOverrides { raw_overrides };
+    let overrides_cli = genex_utils_cli::CliConfigOverrides { raw_overrides };
     let cli_kv_overrides = match overrides_cli.parse_overrides() {
         // Parse `-c` overrides from the CLI.
         Ok(v) => v,
@@ -132,8 +132,8 @@ pub(super) async fn run_main_inner(
         && launch_loader_overrides.packaged_defaults_path.is_none()
         && startup_preflight::should_delay_startup_composer_for_first_login(
             &codex_home,
-            codex_config::loader::system_config_toml_file(),
-            || codex_config::loader::has_local_managed_configuration(&codex_home),
+            genex_config::loader::system_config_toml_file(),
+            || genex_config::loader::has_local_managed_configuration(&codex_home),
             |name| std::env::var_os(name),
         )
     {
@@ -290,7 +290,7 @@ pub(super) async fn run_main_inner(
                 // Package installation may print progress; keep ordinary Ctrl+C handling.
                 crossterm::terminal::disable_raw_mode()?;
                 let result =
-                    codex_app_server_daemon::run(codex_app_server_daemon::LifecycleCommand::Start)
+                    genex_app_server_daemon::run(genex_app_server_daemon::LifecycleCommand::Start)
                         .await;
                 daemon_telemetry::record_start(&config, &result).await;
                 result.map_err(|err| {
@@ -336,7 +336,7 @@ pub(super) async fn run_main_inner(
         });
     #[cfg(target_os = "macos")]
     let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_codex_home(
-        codex_config::allowed_symlinked_codex_home(&config.config_layer_stack, &config.codex_home),
+        genex_config::allowed_symlinked_codex_home(&config.config_layer_stack, &config.codex_home),
     );
     let environment_manager = Arc::new(
         prepared_environment_manager
@@ -348,7 +348,7 @@ pub(super) async fn run_main_inner(
 
     let otel_originator = originator().value;
     let otel = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        codex_app_server_client::build_otel_provider(
+        genex_app_server_client::build_otel_provider(
             &config,
             env!("CARGO_PKG_VERSION"),
             /*service_name_override*/ None,
@@ -380,13 +380,13 @@ pub(super) async fn run_main_inner(
     };
     let metrics = otel
         .as_ref()
-        .and_then(codex_otel::OtelProvider::metrics)
+        .and_then(genex_otel::OtelProvider::metrics)
         .cloned();
     if let Some(metrics) = &metrics {
-        let _ = codex_otel::record_process_start_once(metrics, otel_originator.as_str());
+        let _ = genex_otel::record_process_start_once(metrics, otel_originator.as_str());
         let telemetry =
-            codex_rollout::sqlite_telemetry_recorder(metrics.clone(), otel_originator.as_str());
-        let _ = codex_state::install_process_db_telemetry(telemetry);
+            genex_rollout::sqlite_telemetry_recorder(metrics.clone(), otel_originator.as_str());
+        let _ = genex_state::install_process_db_telemetry(telemetry);
     }
     let selection_reason = match (&app_server_target, daemon_exclusion) {
         (AppServerTarget::Remote { .. }, _) => "explicit_remote",
@@ -398,7 +398,7 @@ pub(super) async fn run_main_inner(
         (AppServerTarget::Embedded, None) => "auto_start_disabled",
     };
     let daemon_settings = if metrics.is_some() {
-        codex_app_server_daemon::telemetry::settings_tags(&config.codex_home)
+        genex_app_server_daemon::telemetry::settings_tags(&config.codex_home)
             .await
             .to_vec()
     } else {
@@ -426,7 +426,7 @@ pub(super) async fn run_main_inner(
             (true, AppServerTarget::Remote { .. }) => "remote",
         };
         // Use a fixed category, not the versioned or user-provided terminal identifier.
-        let terminal_info = codex_terminal_detection::terminal_info();
+        let terminal_info = genex_terminal_detection::terminal_info();
         let terminal_name = match terminal_info.name {
             TerminalName::AppleTerminal => "apple_terminal",
             TerminalName::Ghostty => "ghostty",
@@ -603,7 +603,7 @@ pub(super) async fn run_main_inner(
     // The TUI owns this request's consent. The child is silent; installation remains unconfirmed.
     if let Ok(exit) = &app_result
         && let Some(UpdateAction::Daemon(source)) = exit.update_action
-        && let Some(metrics) = otel.as_ref().and_then(codex_otel::OtelProvider::metrics)
+        && let Some(metrics) = otel.as_ref().and_then(genex_otel::OtelProvider::metrics)
     {
         let mut tags = daemon_settings.to_vec();
         tags.extend([

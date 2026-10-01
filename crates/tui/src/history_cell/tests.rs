@@ -10,16 +10,16 @@ use crate::line_truncation::line_width;
 use crate::render::highlight::MAX_HIGHLIGHT_LINE_BYTES;
 use crate::session_state::ThreadSessionState;
 use crate::wrapping::word_wrap_lines;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::McpAuthStatus;
-use codex_config::types::McpServerConfig;
-use codex_otel::RuntimeMetricTotals;
-use codex_otel::RuntimeMetricsSummary;
-use codex_protocol::ThreadId;
-use codex_protocol::account::PlanType;
-use codex_protocol::error::UnexpectedResponseError;
-use codex_protocol::parse_command::ParsedCommand;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_app_server_protocol::AskForApproval;
+use genex_app_server_protocol::McpAuthStatus;
+use genex_config::types::McpServerConfig;
+use genex_otel::RuntimeMetricTotals;
+use genex_otel::RuntimeMetricsSummary;
+use genex_protocol::ThreadId;
+use genex_protocol::account::PlanType;
+use genex_protocol::error::UnexpectedResponseError;
+use genex_protocol::parse_command::ParsedCommand;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use dirs::home_dir;
 use http::StatusCode;
 use pretty_assertions::assert_eq;
@@ -29,9 +29,9 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use codex_app_server_protocol::CommandExecutionSource as ExecCommandSource;
-use codex_protocol::mcp::CallToolResult;
-use codex_protocol::mcp::Tool;
+use genex_app_server_protocol::CommandExecutionSource as ExecCommandSource;
+use genex_protocol::mcp::CallToolResult;
+use genex_protocol::mcp::Tool;
 use rmcp::model::ContentBlock;
 
 const SMALL_PNG_BASE64: &str = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==";
@@ -423,7 +423,7 @@ fn session_configured_event(model: &str) -> ThreadSessionState {
         model_provider_id: "test-provider".to_string(),
         service_tier: None,
         approval_policy: AskForApproval::Never,
-        approvals_reviewer: codex_protocol::config_types::ApprovalsReviewer::User,
+        approvals_reviewer: genex_protocol::config_types::ApprovalsReviewer::User,
         permission_profile: PermissionProfile::read_only(),
         active_permission_profile: None,
         cwd: test_path_buf("/tmp/project").abs(),

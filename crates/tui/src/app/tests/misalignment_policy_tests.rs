@@ -1,8 +1,8 @@
 use super::session_lifecycle_requests::recorded_params;
 use super::session_lifecycle_requests::start_recording_app_server;
 use super::*;
-use codex_app_server_protocol::MisalignmentErrorDetails;
-use codex_app_server_protocol::MisalignmentSteer;
+use genex_app_server_protocol::MisalignmentErrorDetails;
+use genex_app_server_protocol::MisalignmentSteer;
 use pretty_assertions::assert_eq;
 
 fn policy_error() -> AppServerTurnError {
@@ -27,7 +27,7 @@ fn error_notification(
     turn_id: &str,
     error: AppServerTurnError,
 ) -> ServerNotification {
-    ServerNotification::Error(codex_app_server_protocol::ErrorNotification {
+    ServerNotification::Error(genex_app_server_protocol::ErrorNotification {
         thread_id: thread_id.to_string(),
         turn_id: turn_id.into(),
         error,

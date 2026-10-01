@@ -3,13 +3,13 @@
 //!
 //! These tests intentionally run through `custom_ca_probe` and
 //! `build_reqwest_client_for_subprocess_tests` instead of calling the helper in-process. The
-//! detailed explanation of what "hermetic" means here lives in `codex_http_client::custom_ca`; these
+//! detailed explanation of what "hermetic" means here lives in `genex_http_client::custom_ca`; these
 //! tests add the process-level half of that contract by scrubbing inherited CA environment
 //! variables before each subprocess launch. Most assertions here cover CA file selection, PEM
 //! parsing, and user-facing errors. The HTTPS probes go further and perform real POSTs against
 //! locally generated certificates, including through a TLS-intercepting CONNECT proxy.
 
-use codex_utils_cargo_bin::cargo_bin;
+use genex_utils_cargo_bin::cargo_bin;
 use rcgen::BasicConstraints;
 use rcgen::CertificateParams;
 use rcgen::CertifiedIssuer;
@@ -138,7 +138,7 @@ fn run_probe_posting_through_tls_intercepting_proxy(
 }
 
 fn spawn_tls13_test_server() -> Tls13TestServer {
-    codex_utils_rustls_provider::ensure_rustls_crypto_provider();
+    genex_utils_rustls_provider::ensure_rustls_crypto_provider();
     let material = generate_tls13_material();
     let listener = TcpListener::bind(("127.0.0.1", 0)).expect("TLS test server should bind");
     listener
@@ -191,7 +191,7 @@ fn spawn_plain_http_origin() -> PlainHttpOrigin {
 }
 
 fn spawn_tls_intercepting_proxy() -> TlsInterceptingProxy {
-    codex_utils_rustls_provider::ensure_rustls_crypto_provider();
+    genex_utils_rustls_provider::ensure_rustls_crypto_provider();
     let material = generate_tls13_material();
     let listener = TcpListener::bind(("127.0.0.1", 0)).expect("TLS intercepting proxy should bind");
     listener

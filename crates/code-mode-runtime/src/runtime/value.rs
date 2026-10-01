@@ -1,8 +1,8 @@
 use serde_json::Value as JsonValue;
 
-use codex_code_mode_protocol::DEFAULT_IMAGE_DETAIL;
-use codex_code_mode_protocol::FunctionCallOutputContentItem;
-use codex_code_mode_protocol::ImageDetail;
+use genex_code_mode_protocol::DEFAULT_IMAGE_DETAIL;
+use genex_code_mode_protocol::FunctionCallOutputContentItem;
+use genex_code_mode_protocol::ImageDetail;
 
 use super::audio::wav_duration_seconds;
 

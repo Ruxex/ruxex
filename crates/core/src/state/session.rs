@@ -1,10 +1,10 @@
 //! Session-wide mutable state.
 
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::models::AdditionalPermissionProfile;
-use codex_protocol::models::BaseInstructionsProvenance;
-use codex_protocol::models::ResponseItem;
-use codex_sandboxing::policy_transforms::merge_permission_profiles;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::models::AdditionalPermissionProfile;
+use genex_protocol::models::BaseInstructionsProvenance;
+use genex_protocol::models::ResponseItem;
+use genex_sandboxing::policy_transforms::merge_permission_profiles;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -19,15 +19,15 @@ use crate::session::PreviousTurnSettings;
 use crate::session::session::SessionConfiguration;
 use crate::session::time_reminder::CurrentTimeReminderState;
 use crate::session_startup_prewarm::SessionStartupPrewarmHandle;
-use codex_history::ResponseItemEnvelope;
-use codex_protocol::SessionId;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::RateLimitSnapshot;
-use codex_protocol::protocol::TokenUsage;
-use codex_protocol::protocol::TokenUsageInfo;
-use codex_protocol::protocol::TokenUsageRecord;
-use codex_protocol::protocol::TurnContextItem;
-use codex_utils_output_truncation::TruncationPolicy;
+use genex_history::ResponseItemEnvelope;
+use genex_protocol::SessionId;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::RateLimitSnapshot;
+use genex_protocol::protocol::TokenUsage;
+use genex_protocol::protocol::TokenUsageInfo;
+use genex_protocol::protocol::TokenUsageRecord;
+use genex_protocol::protocol::TurnContextItem;
+use genex_utils_output_truncation::TruncationPolicy;
 use tokio_util::sync::CancellationToken;
 use tokio_util::task::AbortOnDropHandle;
 
@@ -96,7 +96,7 @@ pub(crate) struct SessionState {
     /// Retained after completion so later turns do not repeat speculative captures.
     pub(crate) shell_snapshot_prewarm: Option<AbortOnDropHandle<()>>,
     pub(crate) current_time_reminder: CurrentTimeReminderState,
-    pub(crate) pending_session_start_sources: VecDeque<codex_hooks::SessionStartSource>,
+    pub(crate) pending_session_start_sources: VecDeque<genex_hooks::SessionStartSource>,
     granted_permissions_by_environment_id: HashMap<String, AdditionalPermissionProfile>,
     next_turn_is_first: bool,
 }
@@ -383,14 +383,14 @@ impl SessionState {
 
     pub(crate) fn queue_pending_session_start_source(
         &mut self,
-        value: codex_hooks::SessionStartSource,
+        value: genex_hooks::SessionStartSource,
     ) {
         self.pending_session_start_sources.push_back(value);
     }
 
     pub(crate) fn take_pending_session_start_source(
         &mut self,
-    ) -> Option<codex_hooks::SessionStartSource> {
+    ) -> Option<genex_hooks::SessionStartSource> {
         self.pending_session_start_sources.pop_front()
     }
 

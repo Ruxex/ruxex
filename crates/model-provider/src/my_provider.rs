@@ -1,24 +1,24 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use codex_api::ApiError;
-use codex_api::AuthProvider;
-use codex_api::ChatCompletionApi;
-use codex_api::ChatRequest;
-use codex_api::ChatRequestInput;
-use codex_api::ResponseStream;
-use codex_api::SharedAuthProvider;
-use codex_api::SseTelemetry;
-use codex_api::StandardChatCompletionApi;
-use codex_api::StreamResponse;
-use codex_login::AuthManager;
-use codex_login::CodexAuth;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_models_manager::manager::RemoteModelsManager;
-use codex_models_manager::manager::SharedModelsManager;
-use codex_models_manager::manager::StaticModelsManager;
-use codex_protocol::account::ProviderAccount;
-use codex_protocol::model_types::ModelsResponse;
+use genex_api::ApiError;
+use genex_api::AuthProvider;
+use genex_api::ChatCompletionApi;
+use genex_api::ChatRequest;
+use genex_api::ChatRequestInput;
+use genex_api::ResponseStream;
+use genex_api::SharedAuthProvider;
+use genex_api::SseTelemetry;
+use genex_api::StandardChatCompletionApi;
+use genex_api::StreamResponse;
+use genex_login::AuthManager;
+use genex_login::CodexAuth;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_models_manager::manager::RemoteModelsManager;
+use genex_models_manager::manager::SharedModelsManager;
+use genex_models_manager::manager::StaticModelsManager;
+use genex_protocol::account::ProviderAccount;
+use genex_protocol::model_types::ModelsResponse;
 use http::HeaderMap;
 use http::HeaderValue;
 
@@ -116,7 +116,7 @@ impl ModelProvider for MyModelProvider {
 
     fn api_auth(
         &self,
-    ) -> ModelProviderFuture<'_, codex_protocol::error::Result<SharedAuthProvider>> {
+    ) -> ModelProviderFuture<'_, genex_protocol::error::Result<SharedAuthProvider>> {
         Box::pin(async move { Ok(my_provider_auth_provider(self.auth().await.as_ref())) })
     }
 
@@ -172,11 +172,11 @@ impl ModelProvider for MyModelProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_http_client::HttpClientFactory;
-    use codex_http_client::OutboundProxyPolicy;
-    use codex_login::CodexAuth;
-    use codex_models_manager::manager::RefreshStrategy;
-    use codex_protocol::model_types::ModelsResponse;
+    use genex_http_client::HttpClientFactory;
+    use genex_http_client::OutboundProxyPolicy;
+    use genex_login::CodexAuth;
+    use genex_models_manager::manager::RefreshStrategy;
+    use genex_protocol::model_types::ModelsResponse;
     use serde_json::json;
     use wiremock::Mock;
     use wiremock::MockServer;
@@ -188,7 +188,7 @@ mod tests {
     #[tokio::test]
     async fn model_list_is_fetched_dynamically_with_my_provider_auth() {
         let server = MockServer::start().await;
-        let model: codex_protocol::model_types::ModelInfo = serde_json::from_value(json!({
+        let model: genex_protocol::model_types::ModelInfo = serde_json::from_value(json!({
             "slug": "my-dynamic-model",
             "display_name": "My Dynamic Model",
             "description": "model returned by My Provider",

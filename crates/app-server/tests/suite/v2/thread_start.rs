@@ -6,45 +6,45 @@ use app_test_support::TestAppServer;
 use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::to_response;
 use app_test_support::write_api_key_auth;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::ConfigWarningNotification;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::ListMcpServerStatusParams;
-use codex_app_server_protocol::ListMcpServerStatusResponse;
-use codex_app_server_protocol::McpServerStartupState;
-use codex_app_server_protocol::McpServerStatusDetail;
-use codex_app_server_protocol::McpServerStatusUpdatedNotification;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SandboxMode;
+use genex_app_server_protocol::AskForApproval;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::ConfigWarningNotification;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::JSONRPCNotification;
+use genex_app_server_protocol::JSONRPCResponse;
+use genex_app_server_protocol::ListMcpServerStatusParams;
+use genex_app_server_protocol::ListMcpServerStatusResponse;
+use genex_app_server_protocol::McpServerStartupState;
+use genex_app_server_protocol::McpServerStatusDetail;
+use genex_app_server_protocol::McpServerStatusUpdatedNotification;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SandboxMode;
 #[cfg(not(windows))]
-use codex_app_server_protocol::SandboxPolicy;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::TextPosition;
-use codex_app_server_protocol::TextRange;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_app_server_protocol::ThreadSource;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadStartedNotification;
-use codex_app_server_protocol::ThreadStatus;
-use codex_app_server_protocol::ThreadStatusChangedNotification;
-use codex_app_server_protocol::TurnEnvironmentParams;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::UserInput as V2UserInput;
-use codex_config::loader::project_trust_key;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_core::config::set_project_trust_level;
-use codex_exec_server::LOCAL_FS;
-use codex_git_utils::resolve_root_git_project_for_trust;
-use codex_login::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
-use codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use codex_protocol::config_types::TrustLevel;
-use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
-use codex_protocol::model_types::ReasoningEffort;
+use genex_app_server_protocol::SandboxPolicy;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::TextPosition;
+use genex_app_server_protocol::TextRange;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_app_server_protocol::ThreadSource;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::ThreadStartedNotification;
+use genex_app_server_protocol::ThreadStatus;
+use genex_app_server_protocol::ThreadStatusChangedNotification;
+use genex_app_server_protocol::TurnEnvironmentParams;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::UserInput as V2UserInput;
+use genex_config::loader::project_trust_key;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_core::config::set_project_trust_level;
+use genex_exec_server::LOCAL_FS;
+use genex_git_utils::resolve_root_git_project_for_trust;
+use genex_login::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
+use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use genex_protocol::config_types::TrustLevel;
+use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
+use genex_protocol::model_types::ReasoningEffort;
 use core_test_support::stdio_server_bin;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -1535,7 +1535,7 @@ model_reasoning_effort = "high"
     if cfg!(windows) {
         assert_eq!(
             first_response.sandbox,
-            codex_app_server_protocol::SandboxPolicy::ReadOnly {
+            genex_app_server_protocol::SandboxPolicy::ReadOnly {
                 network_access: false,
             }
         );
@@ -1603,7 +1603,7 @@ required = true
 
     assert_eq!(
         sandbox,
-        codex_app_server_protocol::SandboxPolicy::ReadOnly {
+        genex_app_server_protocol::SandboxPolicy::ReadOnly {
             network_access: false,
         }
     );
@@ -1665,7 +1665,7 @@ async fn thread_start_with_nested_git_cwd_respects_effective_permissions_for_pro
     if cfg!(windows) {
         assert_eq!(
             sandbox,
-            codex_app_server_protocol::SandboxPolicy::ReadOnly {
+            genex_app_server_protocol::SandboxPolicy::ReadOnly {
                 network_access: false,
             }
         );

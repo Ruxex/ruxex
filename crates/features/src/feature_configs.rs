@@ -1,5 +1,5 @@
 use crate::FeatureConfig;
-use codex_network_proxy::CredentialProviderConfig;
+use genex_network_proxy::CredentialProviderConfig;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;

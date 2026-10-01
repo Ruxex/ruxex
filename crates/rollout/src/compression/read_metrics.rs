@@ -34,7 +34,7 @@ impl ReadMetrics {
 
 impl Drop for ReadMetrics {
     fn drop(&mut self) {
-        let Some(metrics) = codex_otel::global() else {
+        let Some(metrics) = genex_otel::global() else {
             return;
         };
         let (outcome, stage, error_kind) = match self.failure {

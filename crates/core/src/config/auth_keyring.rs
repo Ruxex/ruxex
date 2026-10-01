@@ -2,12 +2,12 @@ use super::Config;
 use super::ConfigTomlLoadResult;
 use super::ManagedFeatures;
 use super::resolve_bootstrap_auth_route_config;
-use codex_config::types::AuthKeyringBackendKind;
-use codex_features::Feature;
-use codex_features::FeatureConfigSource;
-use codex_features::FeatureOverrides;
-use codex_features::Features;
-use codex_login::AuthConfig;
+use genex_config::types::AuthKeyringBackendKind;
+use genex_features::Feature;
+use genex_features::FeatureConfigSource;
+use genex_features::FeatureOverrides;
+use genex_features::Features;
+use genex_login::AuthConfig;
 use std::path::Path;
 
 impl Config {

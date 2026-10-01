@@ -8,96 +8,96 @@ use crate::thread_state::TurnSummary;
 use crate::thread_state::resolve_server_request_on_thread_listener;
 use crate::thread_status::ThreadWatchActiveGuard;
 use crate::thread_status::ThreadWatchManager;
-use codex_app_server_protocol::AccountRateLimitsUpdatedNotification;
-use codex_app_server_protocol::AdditionalPermissionProfile as V2AdditionalPermissionProfile;
-use codex_app_server_protocol::AuthRecoveryNotification;
-use codex_app_server_protocol::CodexErrorInfo as V2CodexErrorInfo;
-use codex_app_server_protocol::CommandAction as V2ParsedCommand;
-use codex_app_server_protocol::CommandExecutionApprovalDecision;
-use codex_app_server_protocol::CommandExecutionPresentation;
-use codex_app_server_protocol::CommandExecutionRequestApprovalParams;
-use codex_app_server_protocol::CommandExecutionRequestApprovalResponse;
-use codex_app_server_protocol::CommandExecutionSource;
-use codex_app_server_protocol::CommandExecutionStatus;
-use codex_app_server_protocol::DeprecationNoticeNotification;
-use codex_app_server_protocol::DynamicToolCallParams;
-use codex_app_server_protocol::EnvironmentConnectionNotification;
-use codex_app_server_protocol::ErrorNotification;
-use codex_app_server_protocol::ExecPolicyAmendment as V2ExecPolicyAmendment;
-use codex_app_server_protocol::FileChangeApprovalDecision;
-use codex_app_server_protocol::FileChangeRequestApprovalParams;
-use codex_app_server_protocol::FileChangeRequestApprovalResponse;
-use codex_app_server_protocol::GrantedPermissionProfile as V2GrantedPermissionProfile;
-use codex_app_server_protocol::HookCompletedNotification;
-use codex_app_server_protocol::HookStartedNotification;
-use codex_app_server_protocol::ItemCompletedNotification;
-use codex_app_server_protocol::ItemStartedNotification;
-use codex_app_server_protocol::McpServerElicitationAction;
-use codex_app_server_protocol::McpServerElicitationRequestParams;
-use codex_app_server_protocol::McpServerElicitationRequestResponse;
-use codex_app_server_protocol::McpServerStartupState;
-use codex_app_server_protocol::McpServerStatusUpdatedNotification;
-use codex_app_server_protocol::ModelReroutedNotification;
-use codex_app_server_protocol::ModelSafetyBufferingUpdatedNotification;
-use codex_app_server_protocol::ModelVerificationNotification;
-use codex_app_server_protocol::NetworkApprovalContext as V2NetworkApprovalContext;
-use codex_app_server_protocol::NetworkPolicyAmendment as V2NetworkPolicyAmendment;
-use codex_app_server_protocol::NetworkPolicyRuleAction as V2NetworkPolicyRuleAction;
-use codex_app_server_protocol::PermissionsRequestApprovalParams;
-use codex_app_server_protocol::PermissionsRequestApprovalResponse;
-use codex_app_server_protocol::RawResponseCompletedNotification;
-use codex_app_server_protocol::RawResponseItemCompletedNotification;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequestPayload;
-use codex_app_server_protocol::ThreadGoalUpdatedNotification;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadSettingsUpdatedNotification;
-use codex_app_server_protocol::ThreadTokenUsage;
-use codex_app_server_protocol::ThreadTokenUsageUpdatedNotification;
-use codex_app_server_protocol::ToolRequestUserInputOption;
-use codex_app_server_protocol::ToolRequestUserInputParams;
-use codex_app_server_protocol::ToolRequestUserInputQuestion;
-use codex_app_server_protocol::ToolRequestUserInputResponse;
-use codex_app_server_protocol::Turn;
-use codex_app_server_protocol::TurnCompletedNotification;
-use codex_app_server_protocol::TurnDiffUpdatedNotification;
-use codex_app_server_protocol::TurnError;
-use codex_app_server_protocol::TurnInterruptResponse;
-use codex_app_server_protocol::TurnItemsView;
-use codex_app_server_protocol::TurnPlanStep;
-use codex_app_server_protocol::TurnPlanUpdatedNotification;
-use codex_app_server_protocol::TurnStartedNotification;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::WarningNotification;
-use codex_app_server_protocol::item_event_to_server_notification;
-use codex_core::CodexThread;
-use codex_core::ThreadManager;
-use codex_features::Feature;
-use codex_protocol::ThreadId;
-use codex_protocol::items::CollabAgentTool as CoreCollabAgentTool;
-use codex_protocol::items::ModelInvocationContext;
-use codex_protocol::items::TurnItem as CoreTurnItem;
-use codex_protocol::models::AdditionalPermissionProfile as CoreAdditionalPermissionProfile;
-use codex_protocol::plan_tool::UpdatePlanArgs;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecApprovalRequestEvent;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::SubAgentActivityKind;
-use codex_protocol::protocol::TokenCountEvent;
-use codex_protocol::protocol::TurnAbortedEvent;
-use codex_protocol::protocol::TurnCompleteEvent;
-use codex_protocol::protocol::TurnDiffEvent;
-use codex_protocol::request_permissions::PermissionGrantScope as CorePermissionGrantScope;
-use codex_protocol::request_permissions::RequestPermissionProfile as CoreRequestPermissionProfile;
-use codex_protocol::request_permissions::RequestPermissionsResponse as CoreRequestPermissionsResponse;
-use codex_protocol::request_user_input::RequestUserInputAnswer as CoreRequestUserInputAnswer;
-use codex_protocol::request_user_input::RequestUserInputResponse as CoreRequestUserInputResponse;
-use codex_shell_command::parse_command::shlex_join;
-use codex_utils_path_uri::LegacyAppPathString;
-use codex_utils_path_uri::PathUri;
+use genex_app_server_protocol::AccountRateLimitsUpdatedNotification;
+use genex_app_server_protocol::AdditionalPermissionProfile as V2AdditionalPermissionProfile;
+use genex_app_server_protocol::AuthRecoveryNotification;
+use genex_app_server_protocol::CodexErrorInfo as V2CodexErrorInfo;
+use genex_app_server_protocol::CommandAction as V2ParsedCommand;
+use genex_app_server_protocol::CommandExecutionApprovalDecision;
+use genex_app_server_protocol::CommandExecutionPresentation;
+use genex_app_server_protocol::CommandExecutionRequestApprovalParams;
+use genex_app_server_protocol::CommandExecutionRequestApprovalResponse;
+use genex_app_server_protocol::CommandExecutionSource;
+use genex_app_server_protocol::CommandExecutionStatus;
+use genex_app_server_protocol::DeprecationNoticeNotification;
+use genex_app_server_protocol::DynamicToolCallParams;
+use genex_app_server_protocol::EnvironmentConnectionNotification;
+use genex_app_server_protocol::ErrorNotification;
+use genex_app_server_protocol::ExecPolicyAmendment as V2ExecPolicyAmendment;
+use genex_app_server_protocol::FileChangeApprovalDecision;
+use genex_app_server_protocol::FileChangeRequestApprovalParams;
+use genex_app_server_protocol::FileChangeRequestApprovalResponse;
+use genex_app_server_protocol::GrantedPermissionProfile as V2GrantedPermissionProfile;
+use genex_app_server_protocol::HookCompletedNotification;
+use genex_app_server_protocol::HookStartedNotification;
+use genex_app_server_protocol::ItemCompletedNotification;
+use genex_app_server_protocol::ItemStartedNotification;
+use genex_app_server_protocol::McpServerElicitationAction;
+use genex_app_server_protocol::McpServerElicitationRequestParams;
+use genex_app_server_protocol::McpServerElicitationRequestResponse;
+use genex_app_server_protocol::McpServerStartupState;
+use genex_app_server_protocol::McpServerStatusUpdatedNotification;
+use genex_app_server_protocol::ModelReroutedNotification;
+use genex_app_server_protocol::ModelSafetyBufferingUpdatedNotification;
+use genex_app_server_protocol::ModelVerificationNotification;
+use genex_app_server_protocol::NetworkApprovalContext as V2NetworkApprovalContext;
+use genex_app_server_protocol::NetworkPolicyAmendment as V2NetworkPolicyAmendment;
+use genex_app_server_protocol::NetworkPolicyRuleAction as V2NetworkPolicyRuleAction;
+use genex_app_server_protocol::PermissionsRequestApprovalParams;
+use genex_app_server_protocol::PermissionsRequestApprovalResponse;
+use genex_app_server_protocol::RawResponseCompletedNotification;
+use genex_app_server_protocol::RawResponseItemCompletedNotification;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ServerRequestPayload;
+use genex_app_server_protocol::ThreadGoalUpdatedNotification;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadSettingsUpdatedNotification;
+use genex_app_server_protocol::ThreadTokenUsage;
+use genex_app_server_protocol::ThreadTokenUsageUpdatedNotification;
+use genex_app_server_protocol::ToolRequestUserInputOption;
+use genex_app_server_protocol::ToolRequestUserInputParams;
+use genex_app_server_protocol::ToolRequestUserInputQuestion;
+use genex_app_server_protocol::ToolRequestUserInputResponse;
+use genex_app_server_protocol::Turn;
+use genex_app_server_protocol::TurnCompletedNotification;
+use genex_app_server_protocol::TurnDiffUpdatedNotification;
+use genex_app_server_protocol::TurnError;
+use genex_app_server_protocol::TurnInterruptResponse;
+use genex_app_server_protocol::TurnItemsView;
+use genex_app_server_protocol::TurnPlanStep;
+use genex_app_server_protocol::TurnPlanUpdatedNotification;
+use genex_app_server_protocol::TurnStartedNotification;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::WarningNotification;
+use genex_app_server_protocol::item_event_to_server_notification;
+use genex_core::CodexThread;
+use genex_core::ThreadManager;
+use genex_features::Feature;
+use genex_protocol::ThreadId;
+use genex_protocol::items::CollabAgentTool as CoreCollabAgentTool;
+use genex_protocol::items::ModelInvocationContext;
+use genex_protocol::items::TurnItem as CoreTurnItem;
+use genex_protocol::models::AdditionalPermissionProfile as CoreAdditionalPermissionProfile;
+use genex_protocol::plan_tool::UpdatePlanArgs;
+use genex_protocol::protocol::Event;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecApprovalRequestEvent;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ReviewDecision;
+use genex_protocol::protocol::SubAgentActivityKind;
+use genex_protocol::protocol::TokenCountEvent;
+use genex_protocol::protocol::TurnAbortedEvent;
+use genex_protocol::protocol::TurnCompleteEvent;
+use genex_protocol::protocol::TurnDiffEvent;
+use genex_protocol::request_permissions::PermissionGrantScope as CorePermissionGrantScope;
+use genex_protocol::request_permissions::RequestPermissionProfile as CoreRequestPermissionProfile;
+use genex_protocol::request_permissions::RequestPermissionsResponse as CoreRequestPermissionsResponse;
+use genex_protocol::request_user_input::RequestUserInputAnswer as CoreRequestUserInputAnswer;
+use genex_protocol::request_user_input::RequestUserInputResponse as CoreRequestUserInputResponse;
+use genex_shell_command::parse_command::shlex_join;
+use genex_utils_path_uri::LegacyAppPathString;
+use genex_utils_path_uri::PathUri;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
@@ -184,18 +184,18 @@ pub(crate) async fn apply_bespoke_event_handling(
         }
         EventMsg::McpStartupUpdate(update) => {
             let (status, error, failure_reason) = match update.status {
-                codex_protocol::protocol::McpStartupStatus::Starting => {
+                genex_protocol::protocol::McpStartupStatus::Starting => {
                     (McpServerStartupState::Starting, None, None)
                 }
-                codex_protocol::protocol::McpStartupStatus::Ready => {
+                genex_protocol::protocol::McpStartupStatus::Ready => {
                     (McpServerStartupState::Ready, None, None)
                 }
-                codex_protocol::protocol::McpStartupStatus::Failed { error, reason } => (
+                genex_protocol::protocol::McpStartupStatus::Failed { error, reason } => (
                     McpServerStartupState::Failed,
                     Some(error),
                     reason.map(Into::into),
                 ),
-                codex_protocol::protocol::McpStartupStatus::Cancelled => {
+                genex_protocol::protocol::McpStartupStatus::Cancelled => {
                     (McpServerStartupState::Cancelled, None, None)
                 }
             };
@@ -538,7 +538,7 @@ pub(crate) async fn apply_bespoke_event_handling(
         EventMsg::ElicitationRequest(request) => {
             let user_verification = matches!(
                 &request.request,
-                codex_protocol::approvals::ElicitationRequest::UserVerification { .. }
+                genex_protocol::approvals::ElicitationRequest::UserVerification { .. }
             );
             let permission_guard = thread_watch_manager
                 .note_permission_requested(&conversation_id.to_string())
@@ -564,7 +564,7 @@ pub(crate) async fn apply_bespoke_event_handling(
                         .submit(Op::ResolveElicitation {
                             server_name: request.server_name,
                             request_id: request.id,
-                            decision: codex_protocol::approvals::ElicitationAction::Cancel,
+                            decision: genex_protocol::approvals::ElicitationAction::Cancel,
                             content: None,
                             meta: None,
                         })
@@ -1378,7 +1378,7 @@ struct PendingMcpElicitationResponse {
 
 async fn on_mcp_server_elicitation_response(
     server_name: String,
-    request_id: codex_protocol::mcp::RequestId,
+    request_id: genex_protocol::mcp::RequestId,
     pending_request_id: RequestId,
     pending: PendingMcpElicitationResponse,
     conversation: Arc<CodexThread>,
@@ -1540,7 +1540,7 @@ fn request_permissions_response_from_client_result(
             error!("failed to deserialize PermissionsRequestApprovalResponse: {err}");
             PermissionsRequestApprovalResponse {
                 permissions: V2GrantedPermissionProfile::default(),
-                scope: codex_app_server_protocol::PermissionGrantScope::Turn,
+                scope: genex_app_server_protocol::PermissionGrantScope::Turn,
             }
         });
     let granted_permissions: CoreAdditionalPermissionProfile = response.permissions.try_into()?;

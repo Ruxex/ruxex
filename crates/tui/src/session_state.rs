@@ -5,13 +5,13 @@
 
 use std::path::PathBuf;
 
-use codex_app_server_protocol::AskForApproval;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::models::ActivePermissionProfile;
-use codex_protocol::models::PermissionProfile;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_app_server_protocol::AskForApproval;
+use genex_protocol::ThreadId;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::models::ActivePermissionProfile;
+use genex_protocol::models::PermissionProfile;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct SessionNetworkProxyRuntime {
@@ -48,7 +48,7 @@ pub(crate) struct ThreadSessionState {
     pub(crate) cwd: AbsolutePathBuf,
     pub(crate) runtime_workspace_roots: Vec<AbsolutePathBuf>,
     pub(crate) instruction_source_paths: Vec<PathUri>,
-    pub(crate) reasoning_effort: Option<codex_protocol::model_types::ReasoningEffort>,
+    pub(crate) reasoning_effort: Option<genex_protocol::model_types::ReasoningEffort>,
     pub(crate) collaboration_mode: Option<Box<CollaborationMode>>,
     pub(crate) message_history: Option<MessageHistoryMetadata>,
     pub(crate) network_proxy: Option<SessionNetworkProxyRuntime>,

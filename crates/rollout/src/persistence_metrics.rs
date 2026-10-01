@@ -2,11 +2,11 @@ use std::io::Write;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use codex_otel::MetricsClient;
-use codex_protocol::ThreadId;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::EventMsg;
+use genex_otel::MetricsClient;
+use genex_protocol::ThreadId;
+use genex_protocol::items::TurnItem;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::EventMsg;
 
 use crate::ResponseItemEnvelope;
 use crate::RolloutItem;
@@ -300,7 +300,7 @@ pub struct RolloutPersistenceTelemetry {
 
 impl RolloutPersistenceTelemetry {
     pub fn new(thread_id: ThreadId) -> Self {
-        let metrics = codex_otel::global();
+        let metrics = genex_otel::global();
         let sampled = metrics.is_some() && is_thread_sampled(thread_id);
         Self {
             metrics,

@@ -1,24 +1,24 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use codex_code_mode_protocol::CellId;
-use codex_code_mode_protocol::CodeModeNestedToolCall;
-use codex_code_mode_protocol::CodeModeSession;
-use codex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
-use codex_code_mode_protocol::CodeModeSessionDelegate;
-use codex_code_mode_protocol::CodeModeSessionResultFuture;
-use codex_code_mode_protocol::CodeModeToolKind;
-use codex_code_mode_protocol::DEFAULT_EXEC_YIELD_TIME_MS;
-use codex_code_mode_protocol::ExecuteRequest;
-use codex_code_mode_protocol::ExecuteToPendingOutcome;
-use codex_code_mode_protocol::FunctionCallOutputContentItem;
-use codex_code_mode_protocol::ImageDetail;
-use codex_code_mode_protocol::RuntimeResponse;
-use codex_code_mode_protocol::StartedCell;
-use codex_code_mode_protocol::WaitOutcome;
-use codex_code_mode_protocol::WaitRequest;
-use codex_code_mode_protocol::WaitToPendingOutcome;
-use codex_code_mode_protocol::WaitToPendingRequest;
+use genex_code_mode_protocol::CellId;
+use genex_code_mode_protocol::CodeModeNestedToolCall;
+use genex_code_mode_protocol::CodeModeSession;
+use genex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
+use genex_code_mode_protocol::CodeModeSessionDelegate;
+use genex_code_mode_protocol::CodeModeSessionResultFuture;
+use genex_code_mode_protocol::CodeModeToolKind;
+use genex_code_mode_protocol::DEFAULT_EXEC_YIELD_TIME_MS;
+use genex_code_mode_protocol::ExecuteRequest;
+use genex_code_mode_protocol::ExecuteToPendingOutcome;
+use genex_code_mode_protocol::FunctionCallOutputContentItem;
+use genex_code_mode_protocol::ImageDetail;
+use genex_code_mode_protocol::RuntimeResponse;
+use genex_code_mode_protocol::StartedCell;
+use genex_code_mode_protocol::WaitOutcome;
+use genex_code_mode_protocol::WaitRequest;
+use genex_code_mode_protocol::WaitToPendingOutcome;
+use genex_code_mode_protocol::WaitToPendingRequest;
 use serde_json::Value as JsonValue;
 use tokio::sync::oneshot;
 use tokio_util::sync::CancellationToken;
@@ -259,7 +259,7 @@ impl runtime::SessionRuntimeDelegate for ProtocolDelegate {
                 CodeModeNestedToolCall {
                     cell_id: protocol_cell_id(&invocation.cell_id),
                     runtime_tool_call_id: invocation.runtime_tool_call_id,
-                    tool_name: codex_protocol::ToolName {
+                    tool_name: genex_protocol::ToolName {
                         name: invocation.tool_name.name,
                         namespace: invocation.tool_name.namespace,
                     },

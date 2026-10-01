@@ -6,7 +6,7 @@ pub mod model_info;
 pub mod model_presets;
 pub mod test_support;
 
-pub use codex_protocol::auth::AuthMode;
+pub use genex_protocol::auth::AuthMode;
 pub use config::ModelsManagerConfig;
 
 /// Convert the client version string to a whole version string (e.g. "1.2.3-alpha.4" -> "1.2.3").

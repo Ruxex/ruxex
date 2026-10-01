@@ -1,15 +1,15 @@
 mod common;
 
 use anyhow::Context;
-use codex_build_info::BuildInfo;
-use codex_build_info::build_id;
-use codex_exec_server::EnvironmentInfo;
-use codex_exec_server::InitializeParams;
-use codex_exec_server::InitializeResponse;
-use codex_exec_server_protocol::JSONRPCError;
-use codex_exec_server_protocol::JSONRPCErrorError;
-use codex_exec_server_protocol::JSONRPCMessage;
-use codex_exec_server_protocol::JSONRPCResponse;
+use genex_build_info::BuildInfo;
+use genex_build_info::build_id;
+use genex_exec_server::EnvironmentInfo;
+use genex_exec_server::InitializeParams;
+use genex_exec_server::InitializeResponse;
+use genex_exec_server_protocol::JSONRPCError;
+use genex_exec_server_protocol::JSONRPCErrorError;
+use genex_exec_server_protocol::JSONRPCMessage;
+use genex_exec_server_protocol::JSONRPCResponse;
 use common::TEST_BUILD_COMMIT;
 use common::exec_server::ExecServerHarness;
 use common::exec_server::exec_server_with_env;

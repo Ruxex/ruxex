@@ -14,13 +14,13 @@ use std::path::PathBuf;
 use std::time::Duration;
 use std::time::Instant;
 
-use codex_utils_home_dir::find_codex_home;
+use genex_utils_home_dir::find_codex_home;
 
 const OAUTH_LOCK_DIR: &str = "mcp-oauth-locks";
 const STORE_LOCK_ACQUIRE_TIMEOUT: Duration = Duration::from_secs(60);
 const STORE_LOCK_RETRY_SLEEP: Duration = Duration::from_millis(50);
 // Tests listen for this event so they prove a contender reached the real WouldBlock branch.
-const LOCK_CONTENTION_EVENT_TARGET: &str = "codex_rmcp_client::oauth::store_lock::contention";
+const LOCK_CONTENTION_EVENT_TARGET: &str = "genex_rmcp_client::oauth::store_lock::contention";
 
 #[derive(Clone, Copy, Debug)]
 pub(super) enum OAuthStore {

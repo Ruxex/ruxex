@@ -15,7 +15,7 @@ async fn foreground_update_respects_consent_and_reports_unconfirmed() -> anyhow:
         ("analytics.enabled = true\n", false, 1),
         ("analytics.enabled = false\n", true, 0),
     ] {
-        let codex = codex_utils_cargo_bin::cargo_bin("codex")?;
+        let codex = genex_utils_cargo_bin::cargo_bin("codex")?;
         let server = MockServer::start().await;
         Mock::given(wiremock::matchers::path("/metrics"))
             .respond_with(ResponseTemplate::new(200))
@@ -34,7 +34,7 @@ async fn foreground_update_respects_consent_and_reports_unconfirmed() -> anyhow:
         command
             .current_dir(home.path())
             .env("CODEX_HOME", home.path())
-            .env_remove(codex_app_server_daemon::telemetry::HANDOFF_ENV)
+            .env_remove(genex_app_server_daemon::telemetry::HANDOFF_ENV)
             .arg("app-server");
         if metrics_default_enabled {
             command.arg("--metrics-default-enabled");

@@ -6,25 +6,25 @@ use crate::shell::ShellType;
 use crate::tools::sandboxing::SandboxAttempt;
 use crate::tools::sandboxing::managed_network_for_sandbox_permissions;
 #[cfg(target_os = "macos")]
-use codex_network_proxy::CODEX_PROXY_GIT_SSH_COMMAND_MARKER;
-use codex_network_proxy::CUSTOM_CA_ENV_KEYS;
-use codex_network_proxy::ConfigReloader;
-use codex_network_proxy::ConfigReloaderFuture;
-use codex_network_proxy::ConfigState;
-use codex_network_proxy::NetworkProxy;
-use codex_network_proxy::NetworkProxyConfig;
-use codex_network_proxy::NetworkProxyConstraints;
-use codex_network_proxy::NetworkProxyState;
-use codex_network_proxy::PROXY_ACTIVE_ENV_KEY;
-use codex_network_proxy::PROXY_ENV_KEYS;
+use genex_network_proxy::CODEX_PROXY_GIT_SSH_COMMAND_MARKER;
+use genex_network_proxy::CUSTOM_CA_ENV_KEYS;
+use genex_network_proxy::ConfigReloader;
+use genex_network_proxy::ConfigReloaderFuture;
+use genex_network_proxy::ConfigState;
+use genex_network_proxy::NetworkProxy;
+use genex_network_proxy::NetworkProxyConfig;
+use genex_network_proxy::NetworkProxyConstraints;
+use genex_network_proxy::NetworkProxyState;
+use genex_network_proxy::PROXY_ACTIVE_ENV_KEY;
+use genex_network_proxy::PROXY_ENV_KEYS;
 #[cfg(target_os = "macos")]
-use codex_network_proxy::PROXY_GIT_SSH_COMMAND_ENV_KEY;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::PermissionProfile;
-use codex_sandboxing::SandboxManager;
-use codex_sandboxing::SandboxType;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_network_proxy::PROXY_GIT_SSH_COMMAND_ENV_KEY;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::PermissionProfile;
+use genex_sandboxing::SandboxManager;
+use genex_sandboxing::SandboxType;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use core_test_support::PathBufExt;
 use pretty_assertions::assert_eq;
 use std::os::unix::fs::PermissionsExt;
@@ -77,7 +77,7 @@ async fn test_network_proxy_with_config(
     config: NetworkProxyConfig,
 ) -> anyhow::Result<NetworkProxy> {
     let state =
-        codex_network_proxy::build_config_state(config, NetworkProxyConstraints::default())?;
+        genex_network_proxy::build_config_state(config, NetworkProxyConstraints::default())?;
     NetworkProxy::builder()
         .state(Arc::new(NetworkProxyState::with_reloader(
             state,
@@ -99,7 +99,7 @@ async fn explicit_escalation_prepares_exec_without_managed_network() -> anyhow::
     let mut env = HashMap::from([("CUSTOM_ENV".to_string(), "kept".to_string())]);
     proxy.apply_to_env(&mut env);
 
-    let command = codex_sandboxing::SandboxCommand {
+    let command = genex_sandboxing::SandboxCommand {
         program: "/bin/echo".into(),
         args: vec!["ok".to_string()],
         cwd: PathUri::from_abs_path(&command_cwd),

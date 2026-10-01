@@ -1,5 +1,5 @@
 [package]
-name = "codex-mxc-sandbox"
+name = "genex-mxc-sandbox"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -16,11 +16,11 @@ ignored = ["tracelogging"]
 
 [dependencies]
 anyhow = { workspace = true }
-codex-network-proxy = { workspace = true }
-codex-protocol = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-path-uri = { workspace = true }
-codex-windows-sandbox = { workspace = true }
+genex-network-proxy = { workspace = true }
+genex-protocol = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
+genex-utils-path-uri = { workspace = true }
+genex-windows-sandbox = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

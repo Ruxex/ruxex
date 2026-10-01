@@ -2,16 +2,16 @@ use std::path::Path;
 
 use super::export::EXTERNAL_SESSION_IMPORTED_MARKER;
 use super::ledger::checkpoint_existing_session_import;
-use codex_core::ThreadManager;
-use codex_protocol::ThreadId;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::EventMsg;
-use codex_rollout::RolloutItem;
-use codex_thread_store::AppendThreadItemsParams;
-use codex_thread_store::ReadThreadParams;
-use codex_thread_store::ResumeThreadParams;
-use codex_thread_store::ThreadPersistenceMetadata;
-use codex_thread_store::ThreadStore;
+use genex_core::ThreadManager;
+use genex_protocol::ThreadId;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::EventMsg;
+use genex_rollout::RolloutItem;
+use genex_thread_store::AppendThreadItemsParams;
+use genex_thread_store::ReadThreadParams;
+use genex_thread_store::ResumeThreadParams;
+use genex_thread_store::ThreadPersistenceMetadata;
+use genex_thread_store::ThreadStore;
 use tokio::sync::Semaphore;
 
 /// A changed external session and the existing native thread it may extend.

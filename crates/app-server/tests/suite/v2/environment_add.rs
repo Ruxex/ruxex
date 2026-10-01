@@ -3,13 +3,13 @@ use std::time::Duration;
 use anyhow::Result;
 use app_test_support::TestAppServer;
 use app_test_support::to_response;
-use codex_app_server_protocol::EnvironmentAddResponse;
-use codex_app_server_protocol::EnvironmentConnectionNotification;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnEnvironmentParams;
+use genex_app_server_protocol::EnvironmentAddResponse;
+use genex_app_server_protocol::EnvironmentConnectionNotification;
+use genex_app_server_protocol::JSONRPCResponse;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::TurnEnvironmentParams;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -98,7 +98,7 @@ async fn selected_environment_emits_connection_lifecycle_notifications() -> Resu
 
     let environment = TurnEnvironmentParams {
         environment_id: "remote-a".to_string(),
-        cwd: codex_utils_absolute_path::AbsolutePathBuf::try_from(codex_home.path().to_path_buf())?
+        cwd: genex_utils_absolute_path::AbsolutePathBuf::try_from(codex_home.path().to_path_buf())?
             .into(),
         runtime_workspace_roots: None,
     };

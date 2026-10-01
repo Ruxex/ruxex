@@ -1,8 +1,8 @@
 use super::*;
 use crate::legacy_core::config::ConfigBuilder;
 use crate::legacy_core::config::edit::ConfigEditsBuilder;
-use codex_config::LoaderOverrides;
-use codex_config::types::SessionPickerViewMode;
+use genex_config::LoaderOverrides;
+use genex_config::types::SessionPickerViewMode;
 use pretty_assertions::assert_eq;
 
 #[tokio::test]

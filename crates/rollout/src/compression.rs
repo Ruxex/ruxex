@@ -767,7 +767,7 @@ mod worker {
     fn compress_rollout_if_cold_blocking(
         path: &Path,
         writer_locks: &Arc<crate::WriterLockCoordinator>,
-        thread_id: codex_protocol::ThreadId,
+        thread_id: genex_protocol::ThreadId,
         trigger: RolloutCompressionTrigger,
     ) -> io::Result<CompressionMeasurement> {
         let before = match cold_file_state(path)
@@ -1172,21 +1172,21 @@ mod metrics {
     }
 
     pub(super) fn counter(name: &str, tags: &[(&str, &str)]) {
-        let Some(metrics) = codex_otel::global() else {
+        let Some(metrics) = genex_otel::global() else {
             return;
         };
         let _ = metrics.counter(name, /*inc*/ 1, tags);
     }
 
     fn histogram(name: &str, value: i64, tags: &[(&str, &str)]) {
-        let Some(metrics) = codex_otel::global() else {
+        let Some(metrics) = genex_otel::global() else {
             return;
         };
         let _ = metrics.histogram(name, value, tags);
     }
 
     pub(super) fn duration_histogram(name: &str, duration: Duration, tags: &[(&str, &str)]) {
-        let Some(metrics) = codex_otel::global() else {
+        let Some(metrics) = genex_otel::global() else {
             return;
         };
         let _ = metrics.record_duration(name, duration, tags);

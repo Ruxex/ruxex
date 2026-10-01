@@ -5,33 +5,33 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use anyhow::Context;
-use codex_config::Constrained;
-use codex_config::types::McpServerConfig;
-use codex_config::types::McpServerTransportConfig;
-use codex_core::NewThread;
-use codex_core::StartThreadOptions;
-use codex_core::TurnInputRequest;
-use codex_core::config::Config;
-use codex_exec_server::ExecutorFileSystem;
-use codex_exec_server::RemoveOptions;
-use codex_extension_api::ExtensionFuture;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_extension_api::McpServerContribution;
-use codex_extension_api::McpServerContributionContext;
-use codex_extension_api::McpServerContributor;
-use codex_mcp::CODEX_APPS_MCP_SERVER_NAME;
-use codex_protocol::mcp::McpServerConnectionStatus;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::McpInvocation;
-use codex_protocol::protocol::McpStartupStatus;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
-use codex_utils_path_uri::PathUri;
+use genex_config::Constrained;
+use genex_config::types::McpServerConfig;
+use genex_config::types::McpServerTransportConfig;
+use genex_core::NewThread;
+use genex_core::StartThreadOptions;
+use genex_core::TurnInputRequest;
+use genex_core::config::Config;
+use genex_exec_server::ExecutorFileSystem;
+use genex_exec_server::RemoveOptions;
+use genex_extension_api::ExtensionFuture;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_extension_api::McpServerContribution;
+use genex_extension_api::McpServerContributionContext;
+use genex_extension_api::McpServerContributor;
+use genex_mcp::CODEX_APPS_MCP_SERVER_NAME;
+use genex_protocol::mcp::McpServerConnectionStatus;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::McpInvocation;
+use genex_protocol::protocol::McpStartupStatus;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
+use genex_utils_path_uri::PathUri;
 use core_test_support::apps_test_server::AppsTestServer;
 use core_test_support::apps_test_server::SEARCH_CALENDAR_CREATE_TOOL;
 use core_test_support::apps_test_server::SEARCH_CALENDAR_NAMESPACE;
@@ -68,7 +68,7 @@ struct McpBindingCaptureCounter(Arc<AtomicUsize>);
 
 impl<S: Subscriber> Layer<S> for McpBindingCaptureCounter {
     fn on_new_span(&self, attributes: &Attributes<'_>, _id: &Id, _context: LayerContext<'_, S>) {
-        if attributes.metadata().target() == "codex_mcp::connection_manager::tool_catalog"
+        if attributes.metadata().target() == "genex_mcp::connection_manager::tool_catalog"
             && attributes.metadata().name() == "capture_binding_with_metadata"
         {
             self.0.fetch_add(1, Ordering::SeqCst);

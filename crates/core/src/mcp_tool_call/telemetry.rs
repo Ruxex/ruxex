@@ -1,8 +1,8 @@
 use std::time::Duration;
 
-use codex_otel::SessionTelemetry;
-use codex_otel::sanitize_metric_tag_value;
-use codex_protocol::mcp::CallToolResult;
+use genex_otel::SessionTelemetry;
+use genex_otel::sanitize_metric_tag_value;
+use genex_protocol::mcp::CallToolResult;
 use serde_json::Value as JsonValue;
 use tracing::Span;
 

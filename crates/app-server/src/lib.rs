@@ -1,18 +1,18 @@
 #![recursion_limit = "256"]
 #![deny(clippy::print_stdout, clippy::print_stderr)]
 
-use codex_arg0::Arg0DispatchPaths;
-use codex_code_mode::CodeModeSessionProvider;
-use codex_code_mode::GrpcCodeModeSessionProvider;
-use codex_config::LoaderOverrides;
-use codex_config::NoopThreadConfigLoader;
-use codex_core::config::Config;
-use codex_core::config::UnsupportedUntrustedApprovalPolicyError;
-use codex_core::resolve_installation_id;
-use codex_login::AuthManager;
+use genex_arg0::Arg0DispatchPaths;
+use genex_code_mode::CodeModeSessionProvider;
+use genex_code_mode::GrpcCodeModeSessionProvider;
+use genex_config::LoaderOverrides;
+use genex_config::NoopThreadConfigLoader;
+use genex_core::config::Config;
+use genex_core::config::UnsupportedUntrustedApprovalPolicyError;
+use genex_core::resolve_installation_id;
+use genex_login::AuthManager;
 #[cfg(debug_assertions)]
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_cli::CliConfigOverrides;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_cli::CliConfigOverrides;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::io::ErrorKind;
@@ -44,23 +44,23 @@ use crate::transport::route_outgoing_envelope;
 use crate::transport::start_control_socket_acceptor;
 use crate::transport::start_stdio_connection;
 use crate::transport::start_websocket_acceptor;
-use codex_app_server_protocol::ConfigWarningNotification;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::TextPosition as AppTextPosition;
-use codex_app_server_protocol::TextRange as AppTextRange;
-use codex_app_server_transport::daemon_recovery_file_path;
-use codex_config::ConfigLayerSource;
-use codex_config::ConfigLoadError;
-use codex_config::TextRange as CoreTextRange;
-use codex_core::ExecPolicyError;
-use codex_core::check_execpolicy_for_warnings;
-use codex_core::config::find_codex_home;
-use codex_exec_server::EnvironmentManager;
-use codex_exec_server::ExecServerRuntimePaths;
-use codex_features::Feature;
-use codex_protocol::protocol::SessionSource;
-use codex_rollout::state_db as rollout_state_db;
-use codex_state::log_db;
+use genex_app_server_protocol::ConfigWarningNotification;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::TextPosition as AppTextPosition;
+use genex_app_server_protocol::TextRange as AppTextRange;
+use genex_app_server_transport::daemon_recovery_file_path;
+use genex_config::ConfigLayerSource;
+use genex_config::ConfigLoadError;
+use genex_config::TextRange as CoreTextRange;
+use genex_core::ExecPolicyError;
+use genex_core::check_execpolicy_for_warnings;
+use genex_core::config::find_codex_home;
+use genex_exec_server::EnvironmentManager;
+use genex_exec_server::ExecServerRuntimePaths;
+use genex_features::Feature;
+use genex_protocol::protocol::SessionSource;
+use genex_rollout::state_db as rollout_state_db;
+use genex_state::log_db;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
@@ -556,7 +556,7 @@ pub async fn run_main_with_transport_options(
     config.auth_config().validate()?;
     #[cfg(target_os = "macos")]
     let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_codex_home(
-        codex_config::allowed_symlinked_codex_home(&config.config_layer_stack, &config.codex_home),
+        genex_config::allowed_symlinked_codex_home(&config.config_layer_stack, &config.codex_home),
     );
     let code_mode_session_provider: Option<Arc<dyn CodeModeSessionProvider>> =
         match &runtime_options.code_mode_host_transport {
@@ -589,7 +589,7 @@ pub async fn run_main_with_transport_options(
     .map(Arc::new)
     .map_err(std::io::Error::other)?;
 
-    let otel = codex_core::otel_init::build_provider(
+    let otel = genex_core::otel_init::build_provider(
         &config,
         env!("CARGO_PKG_VERSION"),
         Some(OTEL_SERVICE_NAME),
@@ -601,8 +601,8 @@ pub async fn run_main_with_transport_options(
             format!("error loading otel config: {e}"),
         )
     })?;
-    codex_core::otel_init::record_process_start(otel.as_ref(), OTEL_SERVICE_NAME);
-    codex_core::otel_init::install_sqlite_telemetry(otel.as_ref(), OTEL_SERVICE_NAME);
+    genex_core::otel_init::record_process_start(otel.as_ref(), OTEL_SERVICE_NAME);
+    genex_core::otel_init::install_sqlite_telemetry(otel.as_ref(), OTEL_SERVICE_NAME);
     let unix_socket_startup_lock = match &transport {
         AppServerTransport::UnixSocket { .. } => {
             let startup_lock_path = app_server_startup_lock_path(&codex_home)?;
@@ -646,7 +646,7 @@ pub async fn run_main_with_transport_options(
         });
     }
     if let Some(warning) =
-        codex_core::config::system_bwrap_warning(config.permissions.permission_profile())
+        genex_core::config::system_bwrap_warning(config.permissions.permission_profile())
     {
         config_warnings.push(ConfigWarningNotification {
             summary: warning,
@@ -712,7 +712,7 @@ pub async fn run_main_with_transport_options(
                 transport_event_tx.clone(),
                 transport_shutdown_token.clone(),
                 if cfg!(windows)
-                    && std::env::var_os(codex_app_server_transport::DAEMON_SHUTDOWN_SOCKET_ENV)
+                    && std::env::var_os(genex_app_server_transport::DAEMON_SHUTDOWN_SOCKET_ENV)
                         .is_some()
                 {
                     DaemonShutdownAccess::Managed
@@ -752,7 +752,7 @@ pub async fn run_main_with_transport_options(
     let installation_id = resolve_installation_id(&config.codex_home).await?;
 
     // Only the standalone server measures its local home, not embedded/cloud runtimes.
-    if let Some(metrics) = otel.as_ref().and_then(codex_otel::OtelProvider::metrics) {
+    if let Some(metrics) = otel.as_ref().and_then(genex_otel::OtelProvider::metrics) {
         codex_home_metrics::spawn(&config, metrics.clone(), transport_shutdown_token.clone());
     }
 
@@ -1231,9 +1231,9 @@ async fn init_sqlite_state_db_with_fresh_start_on_corruption(
             }
             Err(err) => err,
         };
-        let database_path = codex_state::runtime_db_path_for_corruption_error(&err)
+        let database_path = genex_state::runtime_db_path_for_corruption_error(&err)
             .unwrap_or_else(|| config.sqlite_config().state_db_path());
-        if !codex_state::is_sqlite_corruption_error(&err)
+        if !genex_state::is_sqlite_corruption_error(&err)
             && !sqlite_home_is_blocking_file(database_path.as_path())
         {
             return Err(err);
@@ -1250,7 +1250,7 @@ async fn init_sqlite_state_db_with_fresh_start_on_corruption(
             "Codex local database at {} appears damaged. Moving it into a backup folder so the app server can rebuild it from saved data.",
             database_path.display()
         ));
-        let backups = codex_state::backup_runtime_db_for_fresh_start(database_path.as_path())
+        let backups = genex_state::backup_runtime_db_for_fresh_start(database_path.as_path())
             .await
             .map_err(|backup_err| {
                 anyhow::anyhow!(
@@ -1359,9 +1359,9 @@ mod tests {
     use super::loader_overrides_with_test_user_config_file;
     use super::turn_admission::TurnAdmission;
     #[cfg(debug_assertions)]
-    use codex_config::LoaderOverrides;
+    use genex_config::LoaderOverrides;
     #[cfg(debug_assertions)]
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use genex_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
 
     #[test]

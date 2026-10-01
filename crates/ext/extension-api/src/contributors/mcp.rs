@@ -1,7 +1,7 @@
-use codex_config::McpServerConfig;
-use codex_exec_server_protocol::ExecutorCapabilityDiscoverySnapshot;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_protocol::protocol::SessionSource;
+use genex_config::McpServerConfig;
+use genex_exec_server_protocol::ExecutorCapabilityDiscoverySnapshot;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_protocol::protocol::SessionSource;
 
 use crate::ExtensionData;
 use crate::ExtensionDataInit;

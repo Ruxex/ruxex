@@ -1,4 +1,4 @@
-use codex_network_proxy::normalize_host;
+use genex_network_proxy::normalize_host;
 use toml::Value as TomlValue;
 
 /// The mutually exclusive shell-environment filter representations.

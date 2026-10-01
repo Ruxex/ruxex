@@ -1,8 +1,8 @@
 use anyhow::Result;
-use codex_config::MarketplaceConfigUpdate;
-use codex_config::record_user_marketplace;
-use codex_core_plugins::installed_marketplaces::marketplace_install_root;
-use codex_utils_absolute_path::canonicalize_existing_preserving_symlinks;
+use genex_config::MarketplaceConfigUpdate;
+use genex_config::record_user_marketplace;
+use genex_core_plugins::installed_marketplaces::marketplace_install_root;
+use genex_utils_absolute_path::canonicalize_existing_preserving_symlinks;
 use predicates::str::contains;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -10,7 +10,7 @@ use std::path::Path;
 use tempfile::TempDir;
 
 fn codex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
-    let mut cmd = assert_cmd::Command::new(codex_utils_cargo_bin::cargo_bin("codex")?);
+    let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("codex")?);
     cmd.env("CODEX_HOME", codex_home);
     Ok(cmd)
 }

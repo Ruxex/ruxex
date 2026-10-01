@@ -15,7 +15,7 @@ First install the frozen workspace dependencies and build Codex:
 
 ```bash
 pnpm install --frozen-lockfile
-cargo build --locked --manifest-path Cargo.toml -p codex-cli --bin codex
+cargo build --locked --manifest-path Cargo.toml -p genex-cli --bin codex
 ```
 
 From a published Codex checkout, run:
@@ -25,7 +25,7 @@ python3 scripts/mcp_conformance/run_codex_compliance.py \
   target/debug/codex \
   --conformance-cli node_modules/@modelcontextprotocol/conformance/dist/index.js \
   --baseline-report scripts/mcp_conformance/regression-baseline-v1.json \
-  --report /tmp/codex-mcp-conformance.json
+  --report /tmp/genex-mcp-conformance.json
 ```
 
 The positional executable can also point to an already built Codex binary.
@@ -78,7 +78,7 @@ python3 scripts/mcp_conformance/review_regressions.py \
   /absolute/path/to/codex \
   --mode all \
   --baseline-report scripts/mcp_conformance/review-regression-baseline-v1.json \
-  --report /tmp/codex-mcp-review-regressions.json
+  --report /tmp/genex-mcp-review-regressions.json
 ```
 
 A complete, main-derived baseline records all 186 real check identities and all

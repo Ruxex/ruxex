@@ -11,12 +11,12 @@ use std::panic::catch_unwind;
 use std::sync::mpsc as std_mpsc;
 use std::thread;
 
-use codex_code_mode_protocol::CodeModeToolKind;
-use codex_code_mode_protocol::EnabledToolMetadata;
-use codex_code_mode_protocol::ExecuteRequest;
-use codex_code_mode_protocol::FunctionCallOutputContentItem;
-use codex_code_mode_protocol::enabled_tool_metadata;
-use codex_protocol::ToolName;
+use genex_code_mode_protocol::CodeModeToolKind;
+use genex_code_mode_protocol::EnabledToolMetadata;
+use genex_code_mode_protocol::ExecuteRequest;
+use genex_code_mode_protocol::FunctionCallOutputContentItem;
+use genex_code_mode_protocol::enabled_tool_metadata;
+use genex_protocol::ToolName;
 use serde_json::Value as JsonValue;
 use tokio::sync::mpsc;
 

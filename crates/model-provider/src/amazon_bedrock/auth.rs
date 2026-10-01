@@ -1,21 +1,21 @@
 use std::sync::Arc;
 
-use codex_api::AuthError;
-use codex_api::AuthProvider;
-use codex_api::SharedAuthProvider;
-use codex_aws_auth::AwsAccessKeys;
-use codex_aws_auth::AwsAuthContext;
-use codex_aws_auth::AwsAuthError;
-use codex_aws_auth::AwsRequestToSign;
-use codex_http_client::Request;
-use codex_http_client::RequestBody;
-use codex_http_client::RequestCompression;
-use codex_login::AuthManager;
-use codex_login::CodexAuth;
-use codex_model_provider_info::ModelProviderAwsAuthInfo;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::Result;
+use genex_api::AuthError;
+use genex_api::AuthProvider;
+use genex_api::SharedAuthProvider;
+use genex_aws_auth::AwsAccessKeys;
+use genex_aws_auth::AwsAuthContext;
+use genex_aws_auth::AwsAuthError;
+use genex_aws_auth::AwsRequestToSign;
+use genex_http_client::Request;
+use genex_http_client::RequestBody;
+use genex_http_client::RequestCompression;
+use genex_login::AuthManager;
+use genex_login::CodexAuth;
+use genex_model_provider_info::ModelProviderAwsAuthInfo;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::Result;
 use http::HeaderMap;
 
 use crate::BearerAuthProvider;
@@ -331,7 +331,7 @@ impl BedrockSigV4AuthProvider {
 impl AuthProvider for BedrockSigV4AuthProvider {
     fn add_auth_headers(&self, _headers: &mut HeaderMap) {}
 
-    fn apply_auth(&self, request: Request) -> codex_api::AuthProviderFuture<'_> {
+    fn apply_auth(&self, request: Request) -> genex_api::AuthProviderFuture<'_> {
         Box::pin(BedrockSigV4AuthProvider::apply_auth(self, request))
     }
 }
@@ -340,10 +340,10 @@ impl AuthProvider for BedrockSigV4AuthProvider {
 mod tests {
     use std::num::NonZeroU64;
 
-    use codex_api::AuthProvider;
-    use codex_login::auth::BedrockAccessKeysAuth;
-    use codex_login::auth::BedrockApiKeyAuth;
-    use codex_model_provider_info::AwsCredentialExportConfig;
+    use genex_api::AuthProvider;
+    use genex_login::auth::BedrockAccessKeysAuth;
+    use genex_login::auth::BedrockApiKeyAuth;
+    use genex_model_provider_info::AwsCredentialExportConfig;
     use http::HeaderValue;
     use pretty_assertions::assert_eq;
 

@@ -2,8 +2,8 @@
 
 use super::*;
 use crate::app_server_session::ThreadParamsMode;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCRequest;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::JSONRPCRequest;
 use futures::SinkExt;
 use futures::StreamExt;
 use pretty_assertions::assert_eq;

@@ -1,16 +1,16 @@
-use codex_exec_server::GetMetadataOptions;
-use codex_exec_server::ReadFileOptions;
-use codex_protocol::items::ImageViewItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::model_types::InputModality;
-use codex_protocol::models::DEFAULT_IMAGE_DETAIL;
-use codex_protocol::models::FunctionCallOutputBody;
-use codex_protocol::models::FunctionCallOutputContentItem;
-use codex_protocol::models::FunctionCallOutputPayload;
-use codex_protocol::models::ImageDetail;
-use codex_protocol::models::ImageReference;
-use codex_protocol::models::ResponseInputItem;
-use codex_utils_image::data_url_from_bytes;
+use genex_exec_server::GetMetadataOptions;
+use genex_exec_server::ReadFileOptions;
+use genex_protocol::items::ImageViewItem;
+use genex_protocol::items::TurnItem;
+use genex_protocol::model_types::InputModality;
+use genex_protocol::models::DEFAULT_IMAGE_DETAIL;
+use genex_protocol::models::FunctionCallOutputBody;
+use genex_protocol::models::FunctionCallOutputContentItem;
+use genex_protocol::models::FunctionCallOutputPayload;
+use genex_protocol::models::ImageDetail;
+use genex_protocol::models::ImageReference;
+use genex_protocol::models::ResponseInputItem;
+use genex_utils_image::data_url_from_bytes;
 use serde::Deserialize;
 
 use crate::function_tool::FunctionCallError;
@@ -25,8 +25,8 @@ use crate::tools::handlers::view_image_spec::ViewImageToolOptions;
 use crate::tools::handlers::view_image_spec::create_view_image_tool;
 use crate::tools::registry::CoreToolRuntime;
 use crate::tools::registry::ToolExecutor;
-use codex_tools::ToolName;
-use codex_tools::ToolSpec;
+use genex_tools::ToolName;
+use genex_tools::ToolSpec;
 
 pub struct ViewImageHandler {
     options: ViewImageToolOptions,
@@ -82,7 +82,7 @@ impl ToolExecutor<ToolInvocation> for ViewImageHandler {
         true
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> codex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

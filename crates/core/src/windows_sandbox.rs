@@ -1,16 +1,16 @@
 use crate::config::Config;
 use crate::config::edit::ConfigEditsBuilder;
-use codex_config::config_toml::ConfigToml;
-use codex_config::types::WindowsSandboxModeToml;
-use codex_features::Feature;
-use codex_features::Features;
-use codex_features::FeaturesToml;
-use codex_login::default_client::originator;
-use codex_otel::sanitize_metric_tag_value;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::PermissionProfile;
-use codex_sandboxing::SandboxType;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_config::config_toml::ConfigToml;
+use genex_config::types::WindowsSandboxModeToml;
+use genex_features::Feature;
+use genex_features::Features;
+use genex_features::FeaturesToml;
+use genex_login::default_client::originator;
+use genex_otel::sanitize_metric_tag_value;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::PermissionProfile;
+use genex_sandboxing::SandboxType;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::path::Path;
@@ -19,11 +19,11 @@ use std::time::Instant;
 
 pub fn managed_proxy_routing_for_windows_sandbox(
     sandbox_type: SandboxType,
-) -> codex_network_proxy::ManagedProxyRouting {
+) -> genex_network_proxy::ManagedProxyRouting {
     if cfg!(windows) && sandbox_type == SandboxType::WindowsMxc {
-        codex_network_proxy::ManagedProxyRouting::DedicatedListeners
+        genex_network_proxy::ManagedProxyRouting::DedicatedListeners
     } else {
-        codex_network_proxy::ManagedProxyRouting::SharedIngress
+        genex_network_proxy::ManagedProxyRouting::SharedIngress
     }
 }
 
@@ -101,7 +101,7 @@ pub fn legacy_windows_sandbox_mode_from_entries(
 
 #[cfg(target_os = "windows")]
 pub fn sandbox_setup_is_complete(codex_home: &Path) -> bool {
-    codex_windows_sandbox::sandbox_setup_is_complete(codex_home)
+    genex_windows_sandbox::sandbox_setup_is_complete(codex_home)
 }
 
 #[cfg(not(target_os = "windows"))]
@@ -119,11 +119,11 @@ pub fn prepare_elevated_sandbox(
 ) -> anyhow::Result<()> {
     if !sandbox_setup_is_complete(codex_home) {
         let permissions =
-            codex_windows_sandbox::ResolvedWindowsSandboxPermissions::try_from_permission_profile_for_workspace_roots(
+            genex_windows_sandbox::ResolvedWindowsSandboxPermissions::try_from_permission_profile_for_workspace_roots(
                 permission_profile,
                 workspace_roots,
             )?;
-        codex_windows_sandbox::run_elevated_setup(codex_windows_sandbox::SandboxSetupRequest {
+        genex_windows_sandbox::run_elevated_setup(genex_windows_sandbox::SandboxSetupRequest {
             permissions: &permissions,
             command_cwd,
             env_map,
@@ -131,7 +131,7 @@ pub fn prepare_elevated_sandbox(
             proxy_enforced: false,
         })?;
     }
-    codex_windows_sandbox::run_setup_refresh(
+    genex_windows_sandbox::run_setup_refresh(
         permission_profile,
         workspace_roots,
         command_cwd,
@@ -144,11 +144,11 @@ pub fn prepare_elevated_sandbox(
 #[cfg(any(target_os = "windows", test))]
 fn provisioning_settings(
     network: Option<&crate::config::NetworkProxySpec>,
-) -> std::io::Result<codex_windows_sandbox::WindowsSandboxProvisioningSettings> {
+) -> std::io::Result<genex_windows_sandbox::WindowsSandboxProvisioningSettings> {
     let Some(network) = network.filter(|network| network.enabled()) else {
-        return Ok(codex_windows_sandbox::WindowsSandboxProvisioningSettings::default());
+        return Ok(genex_windows_sandbox::WindowsSandboxProvisioningSettings::default());
     };
-    Ok(codex_windows_sandbox::WindowsSandboxProvisioningSettings {
+    Ok(genex_windows_sandbox::WindowsSandboxProvisioningSettings {
         proxy_ports: network.configured_proxy_ports()?,
         allow_local_binding: network.allow_local_binding(),
     })
@@ -160,7 +160,7 @@ pub fn run_elevated_provisioning_setup(
     real_user: &str,
     network: Option<&crate::config::NetworkProxySpec>,
 ) -> anyhow::Result<()> {
-    codex_windows_sandbox::run_elevated_provisioning_setup(
+    genex_windows_sandbox::run_elevated_provisioning_setup(
         codex_home,
         real_user,
         provisioning_settings(network)?,
@@ -195,7 +195,7 @@ pub fn run_legacy_setup_preflight(
     env_map: &HashMap<String, String>,
     codex_home: &Path,
 ) -> anyhow::Result<()> {
-    codex_windows_sandbox::run_windows_sandbox_legacy_preflight(
+    genex_windows_sandbox::run_windows_sandbox_legacy_preflight(
         permission_profile,
         workspace_roots,
         codex_home,
@@ -213,7 +213,7 @@ pub fn run_setup_refresh_with_extra_read_roots(
     codex_home: &Path,
     extra_read_roots: Vec<PathBuf>,
 ) -> anyhow::Result<()> {
-    codex_windows_sandbox::run_setup_refresh_with_extra_read_roots(
+    genex_windows_sandbox::run_setup_refresh_with_extra_read_roots(
         permission_profile,
         workspace_roots,
         command_cwd,
@@ -337,7 +337,7 @@ fn emit_windows_sandbox_setup_success_metrics(
     originator_tag: &str,
     duration: std::time::Duration,
 ) {
-    let Some(metrics) = codex_otel::global() else {
+    let Some(metrics) = genex_otel::global() else {
         return;
     };
     let mode_tag = windows_sandbox_setup_mode_tag(mode);
@@ -363,7 +363,7 @@ pub fn emit_windows_sandbox_setup_failure_metrics(
     duration: std::time::Duration,
     _err: &anyhow::Error,
 ) {
-    let Some(metrics) = codex_otel::global() else {
+    let Some(metrics) = genex_otel::global() else {
         return;
     };
     let originator_tag = sanitize_metric_tag_value(originator().value.as_str());
@@ -390,9 +390,9 @@ pub fn emit_windows_sandbox_setup_failure_metrics(
             let mut failure_tags: Vec<(&str, &str)> = vec![("originator", originator_tag)];
             let mut code_tag: Option<String> = None;
             let mut message_tag: Option<String> = None;
-            if let Some(failure) = codex_windows_sandbox::extract_setup_failure(_err) {
+            if let Some(failure) = genex_windows_sandbox::extract_setup_failure(_err) {
                 code_tag = Some(failure.code.as_str().to_string());
-                message_tag = Some(codex_windows_sandbox::sanitize_setup_metric_tag_value(
+                message_tag = Some(genex_windows_sandbox::sanitize_setup_metric_tag_value(
                     &failure.message,
                 ));
             }
@@ -403,10 +403,10 @@ pub fn emit_windows_sandbox_setup_failure_metrics(
                 failure_tags.push(("message", message));
             }
             let metric_name =
-                if codex_windows_sandbox::extract_setup_failure(_err).is_some_and(|failure| {
+                if genex_windows_sandbox::extract_setup_failure(_err).is_some_and(|failure| {
                     matches!(
                         failure.code,
-                        codex_windows_sandbox::SetupErrorCode::OrchestratorHelperLaunchCanceled
+                        genex_windows_sandbox::SetupErrorCode::OrchestratorHelperLaunchCanceled
                     )
                 }) {
                     "codex.windows_sandbox.elevated_setup_canceled"

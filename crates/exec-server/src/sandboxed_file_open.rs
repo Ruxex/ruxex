@@ -1,6 +1,6 @@
-use codex_exec_server_protocol::JSONRPCErrorError;
-use codex_sandboxing::SandboxExecRequest;
-use codex_utils_path_uri::PathUri;
+use genex_exec_server_protocol::JSONRPCErrorError;
+use genex_sandboxing::SandboxExecRequest;
+use genex_utils_path_uri::PathUri;
 use tokio::io;
 
 use crate::fs_helper::FsHelperOpenResponse;

@@ -6,8 +6,8 @@
 use crate::AuthManager;
 use crate::AuthRouteConfig;
 use crate::CodexAuth;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyPolicy;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyPolicy;
 use std::sync::Arc;
 
 /// Creates an authentication manager with optional credentials for cross-crate tests.

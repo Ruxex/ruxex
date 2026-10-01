@@ -20,9 +20,9 @@ use std::process::Output;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
-use codex_git_utils::SAFE_BARE_REPOSITORY_CONFIG;
-use codex_git_utils::git_config_override_env;
-use codex_protocol::shell_environment::scrub_non_inheritable_env_vars;
+use genex_git_utils::SAFE_BARE_REPOSITORY_CONFIG;
+use genex_git_utils::git_config_override_env;
+use genex_protocol::shell_environment::scrub_non_inheritable_env_vars;
 
 const DISABLED_HOOKS_PATH: &str = if cfg!(windows) { "NUL" } else { "/dev/null" };
 

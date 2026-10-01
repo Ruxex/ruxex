@@ -28,11 +28,11 @@ use crate::types::HookEvent;
 use crate::types::HookPayload;
 use crate::types::HookResponse;
 use async_channel::Receiver;
-use codex_config::ConfigLayerStack;
-use codex_plugin::ExecutorPluginHookSource;
-use codex_plugin::PluginHookSource;
-use codex_protocol::ThreadId;
-use codex_protocol::shell_environment::scrub_non_inheritable_env_vars;
+use genex_config::ConfigLayerStack;
+use genex_plugin::ExecutorPluginHookSource;
+use genex_plugin::PluginHookSource;
+use genex_protocol::ThreadId;
+use genex_protocol::shell_environment::scrub_non_inheritable_env_vars;
 use std::ffi::OsString;
 use std::sync::Arc;
 use std::time::Duration;
@@ -74,7 +74,7 @@ impl Hooks {
         config: HooksConfig,
         thread_id: ThreadId,
         mcp_executor: Arc<dyn HookMcpExecutor>,
-    ) -> anyhow::Result<(Self, Receiver<codex_protocol::protocol::HookCompletedEvent>)> {
+    ) -> anyhow::Result<(Self, Receiver<genex_protocol::protocol::HookCompletedEvent>)> {
         let (result_sender, result_receiver) = async_channel::unbounded();
         let environment = Arc::new(std::env::vars_os().collect());
         let hooks = Self::from_config(config, mcp_executor, Arc::clone(&environment), |shell| {
@@ -182,21 +182,21 @@ impl Hooks {
     pub fn preview_session_start(
         &self,
         request: &SessionStartRequest,
-    ) -> Vec<codex_protocol::protocol::HookRunSummary> {
+    ) -> Vec<genex_protocol::protocol::HookRunSummary> {
         self.engine.preview_session_start(request)
     }
 
     pub fn preview_pre_tool_use(
         &self,
         request: &PreToolUseRequest,
-    ) -> Vec<codex_protocol::protocol::HookRunSummary> {
+    ) -> Vec<genex_protocol::protocol::HookRunSummary> {
         self.engine.preview_pre_tool_use(request)
     }
 
     pub fn preview_permission_request(
         &self,
         request: &PermissionRequestRequest,
-    ) -> Vec<codex_protocol::protocol::HookRunSummary> {
+    ) -> Vec<genex_protocol::protocol::HookRunSummary> {
         self.engine.preview_permission_request(request)
     }
 
@@ -210,7 +210,7 @@ impl Hooks {
     pub fn preview_post_tool_use(
         &self,
         request: &PostToolUseRequest,
-    ) -> Vec<codex_protocol::protocol::HookRunSummary> {
+    ) -> Vec<genex_protocol::protocol::HookRunSummary> {
         self.engine.preview_post_tool_use(request)
     }
 
@@ -240,7 +240,7 @@ impl Hooks {
     pub fn preview_pre_compact(
         &self,
         request: &PreCompactRequest,
-    ) -> Vec<codex_protocol::protocol::HookRunSummary> {
+    ) -> Vec<genex_protocol::protocol::HookRunSummary> {
         self.engine.preview_pre_compact(request)
     }
 
@@ -251,7 +251,7 @@ impl Hooks {
     pub fn preview_post_compact(
         &self,
         request: &PostCompactRequest,
-    ) -> Vec<codex_protocol::protocol::HookRunSummary> {
+    ) -> Vec<genex_protocol::protocol::HookRunSummary> {
         self.engine.preview_post_compact(request)
     }
 
@@ -262,7 +262,7 @@ impl Hooks {
     pub fn preview_user_prompt_submit(
         &self,
         request: &UserPromptSubmitRequest,
-    ) -> Vec<codex_protocol::protocol::HookRunSummary> {
+    ) -> Vec<genex_protocol::protocol::HookRunSummary> {
         self.engine.preview_user_prompt_submit(request)
     }
 
@@ -276,7 +276,7 @@ impl Hooks {
     pub fn preview_stop(
         &self,
         request: &StopRequest,
-    ) -> Vec<codex_protocol::protocol::HookRunSummary> {
+    ) -> Vec<genex_protocol::protocol::HookRunSummary> {
         self.engine.preview_stop(request)
     }
 
@@ -284,7 +284,7 @@ impl Hooks {
         self.engine.run_stop(request).await
     }
 
-    pub fn preview_session_end(&self) -> Vec<codex_protocol::protocol::HookRunSummary> {
+    pub fn preview_session_end(&self) -> Vec<genex_protocol::protocol::HookRunSummary> {
         self.engine.preview_session_end()
     }
 
@@ -292,7 +292,7 @@ impl Hooks {
         self.engine.run_session_end(request).await
     }
 
-    pub fn preview_interrupt(&self) -> Vec<codex_protocol::protocol::HookRunSummary> {
+    pub fn preview_interrupt(&self) -> Vec<genex_protocol::protocol::HookRunSummary> {
         self.engine.preview_interrupt()
     }
 

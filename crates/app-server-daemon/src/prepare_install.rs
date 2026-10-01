@@ -7,8 +7,8 @@ use std::path::PathBuf;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
-use codex_install_context::CodexPackageManifest;
-use codex_install_context::InstallContext;
+use genex_install_context::CodexPackageManifest;
+use genex_install_context::InstallContext;
 
 use crate::Daemon;
 use crate::install_lock::acquire_install_lock;

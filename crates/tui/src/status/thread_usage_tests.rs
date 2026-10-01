@@ -2,7 +2,7 @@ use super::BreakdownDimension;
 use super::format_credit_micros;
 use super::format_model_display_name;
 use super::grouped_usage;
-use codex_app_server_protocol::ThreadUsageBreakdownGroup;
+use genex_app_server_protocol::ThreadUsageBreakdownGroup;
 use pretty_assertions::assert_eq;
 
 #[test]

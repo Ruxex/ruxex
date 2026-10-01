@@ -1,12 +1,12 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-prompts"
+name = "genex-prompts"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "codex_prompts"
+name = "genex_prompts"
 path = "src/lib.rs"
 
 [lints]
@@ -14,13 +14,13 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-codex-collaboration-mode-templates = { workspace = true }
-codex-context-fragments = { workspace = true }
-codex-execpolicy = { workspace = true }
-codex-git-utils = { workspace = true }
-codex-protocol = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-template = { workspace = true }
+genex-collaboration-mode-templates = { workspace = true }
+genex-context-fragments = { workspace = true }
+genex-execpolicy = { workspace = true }
+genex-git-utils = { workspace = true }
+genex-protocol = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
+genex-utils-template = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]

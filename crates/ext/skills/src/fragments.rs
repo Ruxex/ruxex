@@ -1,7 +1,7 @@
-use codex_extension_api::ContextualUserFragment;
-use codex_protocol::models::ContentItemKind;
-use codex_protocol::protocol::SKILLS_INSTRUCTIONS_CLOSE_TAG;
-use codex_protocol::protocol::SKILLS_INSTRUCTIONS_OPEN_TAG;
+use genex_extension_api::ContextualUserFragment;
+use genex_protocol::models::ContentItemKind;
+use genex_protocol::protocol::SKILLS_INSTRUCTIONS_CLOSE_TAG;
+use genex_protocol::protocol::SKILLS_INSTRUCTIONS_OPEN_TAG;
 
 use crate::catalog_prompt::SkillPromptKind;
 use crate::catalog_prompt::render_available_skills_body;

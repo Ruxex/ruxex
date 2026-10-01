@@ -3,48 +3,48 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::responses_metadata::CompactionTrigger;
-use codex_core_plugins::executor_plugin_hook_sources;
-use codex_hooks::InterruptRequest;
-use codex_hooks::PermissionRequestDecision;
-use codex_hooks::PermissionRequestOutcome;
-use codex_hooks::PermissionRequestRequest;
-use codex_hooks::PostToolUseOutcome;
-use codex_hooks::PostToolUseRequest;
-use codex_hooks::PreToolUseOutcome;
-use codex_hooks::PreToolUseRequest;
-use codex_hooks::SessionStartOutcome;
-use codex_hooks::StartHookTarget;
-use codex_hooks::StopHookTarget;
-use codex_hooks::StopOutcome;
-use codex_hooks::SubagentHookContext;
-use codex_hooks::UserPromptSubmitOutcome;
-use codex_hooks::UserPromptSubmitRequest;
-use codex_hooks::hook_execution_mode_label;
-use codex_hooks::hook_handler_type_label;
-use codex_otel::HOOK_RUN_DURATION_METRIC;
-use codex_otel::HOOK_RUN_METRIC;
-use codex_plugin::ExecutorPluginHookSource;
-use codex_protocol::items::FunctionCallOutputItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::items::UserMessageItem;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::CodexErrorInfo;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::HookCompletedEvent;
-use codex_protocol::protocol::HookEventName;
-use codex_protocol::protocol::HookExecutionMode;
-use codex_protocol::protocol::HookOutputEntryKind;
-use codex_protocol::protocol::HookRunStatus;
-use codex_protocol::protocol::HookRunSummary;
-use codex_protocol::protocol::HookSource;
-use codex_protocol::protocol::HookStartedEvent;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::WarningEvent;
-use codex_thread_store::PersistContext;
-use codex_thread_store::ReadThreadParams;
+use genex_core_plugins::executor_plugin_hook_sources;
+use genex_hooks::InterruptRequest;
+use genex_hooks::PermissionRequestDecision;
+use genex_hooks::PermissionRequestOutcome;
+use genex_hooks::PermissionRequestRequest;
+use genex_hooks::PostToolUseOutcome;
+use genex_hooks::PostToolUseRequest;
+use genex_hooks::PreToolUseOutcome;
+use genex_hooks::PreToolUseRequest;
+use genex_hooks::SessionStartOutcome;
+use genex_hooks::StartHookTarget;
+use genex_hooks::StopHookTarget;
+use genex_hooks::StopOutcome;
+use genex_hooks::SubagentHookContext;
+use genex_hooks::UserPromptSubmitOutcome;
+use genex_hooks::UserPromptSubmitRequest;
+use genex_hooks::hook_execution_mode_label;
+use genex_hooks::hook_handler_type_label;
+use genex_otel::HOOK_RUN_DURATION_METRIC;
+use genex_otel::HOOK_RUN_METRIC;
+use genex_plugin::ExecutorPluginHookSource;
+use genex_protocol::items::FunctionCallOutputItem;
+use genex_protocol::items::TurnItem;
+use genex_protocol::items::UserMessageItem;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::HookCompletedEvent;
+use genex_protocol::protocol::HookEventName;
+use genex_protocol::protocol::HookExecutionMode;
+use genex_protocol::protocol::HookOutputEntryKind;
+use genex_protocol::protocol::HookRunStatus;
+use genex_protocol::protocol::HookRunSummary;
+use genex_protocol::protocol::HookSource;
+use genex_protocol::protocol::HookStartedEvent;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::WarningEvent;
+use genex_thread_store::PersistContext;
+use genex_thread_store::ReadThreadParams;
 use serde_json::Map;
 use serde_json::Value;
 use tokio::sync::Mutex;
@@ -125,8 +125,8 @@ pub(crate) async fn run_pending_session_start_hooks(
             SessionSource::SubAgent(SubAgentSource::ThreadSpawn { agent_role, .. })
                 if matches!(
                     session_start_source,
-                    codex_hooks::SessionStartSource::Startup
-                        | codex_hooks::SessionStartSource::Fork
+                    genex_hooks::SessionStartSource::Startup
+                        | genex_hooks::SessionStartSource::Fork
                 ) =>
             {
                 let context = subagent_hook_context(sess, agent_role);
@@ -141,7 +141,7 @@ pub(crate) async fn run_pending_session_start_hooks(
                 source: session_start_source,
             },
         };
-        let request = codex_hooks::SessionStartRequest {
+        let request = genex_hooks::SessionStartRequest {
             session_id: sess.session_id().into(),
             #[allow(deprecated)]
             cwd: turn_context.cwd.clone(),
@@ -403,7 +403,7 @@ pub(crate) async fn run_turn_stop_hooks(
         _ => (StopHookTarget::Stop, sess.hook_transcript_path().await),
     };
     let request_metadata = build_request_metadata(Some(step_context), turn_context);
-    let request = codex_hooks::StopRequest {
+    let request = genex_hooks::StopRequest {
         session_id: sess.session_id().into(),
         turn_id: turn_context.sub_id.clone(),
         #[allow(deprecated)]
@@ -441,7 +441,7 @@ pub(crate) async fn run_session_end_hooks(sess: &Arc<Session>) {
         return;
     }
 
-    let request = codex_hooks::SessionEndRequest {
+    let request = genex_hooks::SessionEndRequest {
         session_id: sess.session_id().into(),
         turn_id: turn_context.sub_id.clone(),
         #[allow(deprecated)]
@@ -504,7 +504,7 @@ pub(crate) async fn run_pre_compact_hooks(
     turn_context: &Arc<TurnContext>,
     trigger: CompactionTrigger,
 ) -> PreCompactHookOutcome {
-    let request = codex_hooks::PreCompactRequest {
+    let request = genex_hooks::PreCompactRequest {
         session_id: sess.session_id().into(),
         turn_id: turn_context.sub_id.clone(),
         subagent: thread_spawn_subagent_hook_context(sess, turn_context),
@@ -541,7 +541,7 @@ pub(crate) async fn run_post_compact_hooks(
     turn_context: &Arc<TurnContext>,
     trigger: CompactionTrigger,
 ) -> PostCompactHookOutcome {
-    let request = codex_hooks::PostCompactRequest {
+    let request = genex_hooks::PostCompactRequest {
         session_id: sess.session_id().into(),
         turn_id: turn_context.sub_id.clone(),
         subagent: thread_spawn_subagent_hook_context(sess, turn_context),
@@ -580,14 +580,14 @@ pub(crate) async fn run_legacy_after_agent_hook(
         .collect();
     let hooks = sess.hooks();
     for hook_outcome in hooks
-        .dispatch(codex_hooks::HookPayload {
+        .dispatch(genex_hooks::HookPayload {
             session_id: sess.session_id().into(),
             #[allow(deprecated)]
             cwd: turn_context.cwd.clone(),
             client: turn_context.app_server_client_name.clone(),
             triggered_at: chrono::Utc::now(),
-            hook_event: codex_hooks::HookEvent::AfterAgent {
-                event: codex_hooks::HookEventAfterAgent {
+            hook_event: genex_hooks::HookEvent::AfterAgent {
+                event: genex_hooks::HookEventAfterAgent {
                     thread_id: sess.thread_id,
                     turn_id: turn_context.sub_id.clone(),
                     input_messages,
@@ -599,9 +599,9 @@ pub(crate) async fn run_legacy_after_agent_hook(
     {
         let hook_name = hook_outcome.hook_name;
         let (error, should_abort) = match hook_outcome.result {
-            codex_hooks::HookResult::Success => continue,
-            codex_hooks::HookResult::FailedContinue(error) => (error, false),
-            codex_hooks::HookResult::FailedAbort(error) => (error, true),
+            genex_hooks::HookResult::Success => continue,
+            genex_hooks::HookResult::FailedContinue(error) => (error, false),
+            genex_hooks::HookResult::FailedAbort(error) => (error, true),
         };
         let action = if should_abort {
             "aborting operation"
@@ -623,7 +623,7 @@ pub(crate) async fn run_legacy_after_agent_hook(
     let Some(message) = abort_message else {
         return false;
     };
-    let event = EventMsg::Error(codex_protocol::protocol::ErrorEvent {
+    let event = EventMsg::Error(genex_protocol::protocol::ErrorEvent {
         misalignment: None,
         message,
         codex_error_info: Some(CodexErrorInfo::Other),

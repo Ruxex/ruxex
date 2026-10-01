@@ -204,7 +204,7 @@ Run `just write-app-server-schema` to overwrite with your changes.\n\n{diff}",
 }
 
 fn schema_root() -> Result<PathBuf> {
-    let typescript_index = codex_utils_cargo_bin::find_resource!("schema/typescript/index.ts")
+    let typescript_index = genex_utils_cargo_bin::find_resource!("schema/typescript/index.ts")
         .context("resolve TypeScript schema index.ts")?;
     let schema_root = typescript_index
         .parent()
@@ -213,12 +213,12 @@ fn schema_root() -> Result<PathBuf> {
         .to_path_buf();
 
     let json_bundle =
-        codex_utils_cargo_bin::find_resource!("schema/json/codex_app_server_protocol.schemas.json")
+        genex_utils_cargo_bin::find_resource!("schema/json/genex_app_server_protocol.schemas.json")
             .context("resolve JSON schema bundle")?;
     let json_root = json_bundle
         .parent()
         .and_then(|p| p.parent())
-        .context("derive schema root from schema/json/codex_app_server_protocol.schemas.json")?;
+        .context("derive schema root from schema/json/genex_app_server_protocol.schemas.json")?;
     anyhow::ensure!(
         schema_root == json_root,
         "schema roots disagree: typescript={} json={}",

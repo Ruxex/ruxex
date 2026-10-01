@@ -5,7 +5,7 @@
 use super::Config;
 use super::ConstraintResult;
 use super::TokenBudgetConfig;
-use codex_features::Feature;
+use genex_features::Feature;
 
 /// Token-budget preferences before a session applies experimental or model-owned activation.
 #[derive(Debug, Clone, PartialEq)]

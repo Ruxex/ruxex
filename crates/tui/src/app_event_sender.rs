@@ -7,14 +7,14 @@ use std::path::PathBuf;
 
 use crate::app_command::AppCommand;
 use crate::app_command::UserVerificationResponse;
-use codex_app_server_protocol::CommandExecutionApprovalDecision;
-use codex_app_server_protocol::FileChangeApprovalDecision;
-use codex_app_server_protocol::McpServerElicitationAction;
-use codex_app_server_protocol::RequestId as AppServerRequestId;
-use codex_app_server_protocol::ReviewTarget;
-use codex_app_server_protocol::ToolRequestUserInputResponse;
-use codex_protocol::ThreadId;
-use codex_protocol::request_permissions::RequestPermissionsResponse;
+use genex_app_server_protocol::CommandExecutionApprovalDecision;
+use genex_app_server_protocol::FileChangeApprovalDecision;
+use genex_app_server_protocol::McpServerElicitationAction;
+use genex_app_server_protocol::RequestId as AppServerRequestId;
+use genex_app_server_protocol::ReviewTarget;
+use genex_app_server_protocol::ToolRequestUserInputResponse;
+use genex_protocol::ThreadId;
+use genex_protocol::request_permissions::RequestPermissionsResponse;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::app_event::AppEvent;

@@ -15,34 +15,34 @@ use axum::http::StatusCode;
 use axum::http::Uri;
 use axum::http::header::AUTHORIZATION;
 use axum::routing::get;
-use codex_app_server_protocol::ApprovalsReviewer;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::InitializeCapabilities;
-use codex_app_server_protocol::InitializeParams;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::McpElicitationSchema;
-use codex_app_server_protocol::McpServerElicitationAction;
-use codex_app_server_protocol::McpServerElicitationRequest;
-use codex_app_server_protocol::McpServerElicitationRequestParams;
-use codex_app_server_protocol::McpServerElicitationRequestResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SandboxMode;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ServerRequestResolvedNotification;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnCompletedNotification;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput as V2UserInput;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_mcp::MCP_TOOL_CODEX_APPS_META_KEY;
-use codex_protocol::mcp::provider_STANDARD_FORM_INPUT_EXTENSION_ID;
-use codex_protocol::mcp_approval_meta as approval_meta;
+use genex_app_server_protocol::ApprovalsReviewer;
+use genex_app_server_protocol::AskForApproval;
+use genex_app_server_protocol::ClientInfo;
+use genex_app_server_protocol::InitializeCapabilities;
+use genex_app_server_protocol::InitializeParams;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::JSONRPCResponse;
+use genex_app_server_protocol::McpElicitationSchema;
+use genex_app_server_protocol::McpServerElicitationAction;
+use genex_app_server_protocol::McpServerElicitationRequest;
+use genex_app_server_protocol::McpServerElicitationRequestParams;
+use genex_app_server_protocol::McpServerElicitationRequestResponse;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SandboxMode;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::ServerRequestResolvedNotification;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::TurnCompletedNotification;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::UserInput as V2UserInput;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_mcp::MCP_TOOL_CODEX_APPS_META_KEY;
+use genex_protocol::mcp::provider_STANDARD_FORM_INPUT_EXTENSION_ID;
+use genex_protocol::mcp_approval_meta as approval_meta;
 use core_test_support::assert_regex_match;
 use core_test_support::responses;
 use core_test_support::responses::ResponseMock;
@@ -173,7 +173,7 @@ async fn mcp_server_form_elicitation_round_trip_in_full_access() -> Result<()> {
             model: Some("mock-model".to_string()),
             approval_policy: Some(AskForApproval::Never),
             sandbox: Some(SandboxMode::DangerFullAccess),
-            thread_source: Some(codex_app_server_protocol::ThreadSource::User),
+            thread_source: Some(genex_app_server_protocol::ThreadSource::User),
             ..Default::default()
         },
     )

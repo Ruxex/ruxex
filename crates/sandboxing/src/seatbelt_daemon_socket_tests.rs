@@ -1,9 +1,9 @@
 use super::CreateSeatbeltCommandArgsParams;
 use super::MACOS_PATH_TO_SEATBELT_EXECUTABLE;
 use super::create_seatbelt_command_args;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::os::unix::net::UnixListener;
 use std::os::unix::net::UnixStream;
@@ -11,7 +11,7 @@ use std::process::Command;
 
 #[test]
 fn daemon_sockets_are_denied_despite_network_and_tmp_write_grants() {
-    let root = codex_uds::prepare_shared_daemon_socket_directory().unwrap();
+    let root = genex_uds::prepare_shared_daemon_socket_directory().unwrap();
     let private = tempfile::tempdir_in(&root).unwrap();
     let workspace = tempfile::tempdir().unwrap();
     let socket = private.path().join("rpc.sock");

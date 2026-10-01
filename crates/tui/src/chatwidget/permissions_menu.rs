@@ -2,7 +2,7 @@
 
 use super::*;
 use crate::permission_discovery::PermissionDiscovery;
-use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
+use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
 
 impl ChatWidget {
     pub(super) fn permission_mode_disabled_reason(

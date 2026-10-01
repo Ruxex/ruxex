@@ -35,12 +35,12 @@ mod pending_thread_metadata_tests;
 #[cfg(test)]
 mod test_support;
 
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_rollout::RolloutRecorder;
-use codex_rollout::StateDbHandle;
-use codex_rollout::WriterLockCoordinator;
-use codex_state::SqliteConfig;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_rollout::RolloutRecorder;
+use genex_rollout::StateDbHandle;
+use genex_rollout::WriterLockCoordinator;
+use genex_state::SqliteConfig;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::path::PathBuf;
@@ -135,7 +135,7 @@ pub struct LocalThreadStore {
     thread_history_db: Arc<OnceCell<sqlx::SqlitePool>>,
 }
 
-type WriterLockGuard = Arc<codex_rollout::WriterLockGuard>;
+type WriterLockGuard = Arc<genex_rollout::WriterLockGuard>;
 
 struct LiveRecorderEntry {
     recorder: RolloutRecorder,
@@ -218,7 +218,7 @@ pub struct LocalThreadStoreConfig {
 }
 
 impl LocalThreadStoreConfig {
-    pub fn from_config(config: &impl codex_rollout::RolloutConfigView) -> Self {
+    pub fn from_config(config: &impl genex_rollout::RolloutConfigView) -> Self {
         Self {
             codex_home: config.codex_home().to_path_buf(),
             sqlite: config.sqlite_config().clone(),
@@ -264,7 +264,7 @@ impl LocalThreadStore {
         }
         self.thread_history_db
             .get_or_try_init(|| async {
-                codex_state::open_thread_history_db(&self.config.sqlite).await
+                genex_state::open_thread_history_db(&self.config.sqlite).await
             })
             .await
             .map_err(|err| ThreadStoreError::Internal {
@@ -756,27 +756,27 @@ mod tests {
     mod acquisition_tests;
     use std::sync::Arc;
 
-    use codex_protocol::ThreadId;
-    use codex_protocol::config_types::ReasoningSummary;
-    use codex_protocol::items::TurnItem;
-    use codex_protocol::items::UserMessageItem;
-    use codex_protocol::models::BaseInstructions;
-    use codex_protocol::models::FunctionCallOutputPayload;
-    use codex_protocol::models::MessagePhase;
-    use codex_protocol::models::ResponseItem;
-    use codex_protocol::protocol::AgentMessageEvent;
-    use codex_protocol::protocol::AskForApproval;
-    use codex_protocol::protocol::EventMsg;
-    use codex_protocol::protocol::ItemCompletedEvent;
-    use codex_protocol::protocol::SandboxPolicy;
-    use codex_protocol::protocol::SessionSource;
-    use codex_protocol::protocol::ThreadHistoryMode;
-    use codex_protocol::protocol::TurnCompleteEvent;
-    use codex_protocol::protocol::TurnContextItem;
-    use codex_protocol::protocol::TurnStartedEvent;
-    use codex_protocol::protocol::UserMessageEvent;
-    use codex_protocol::user_input::UserInput;
-    use codex_rollout::RolloutItem;
+    use genex_protocol::ThreadId;
+    use genex_protocol::config_types::ReasoningSummary;
+    use genex_protocol::items::TurnItem;
+    use genex_protocol::items::UserMessageItem;
+    use genex_protocol::models::BaseInstructions;
+    use genex_protocol::models::FunctionCallOutputPayload;
+    use genex_protocol::models::MessagePhase;
+    use genex_protocol::models::ResponseItem;
+    use genex_protocol::protocol::AgentMessageEvent;
+    use genex_protocol::protocol::AskForApproval;
+    use genex_protocol::protocol::EventMsg;
+    use genex_protocol::protocol::ItemCompletedEvent;
+    use genex_protocol::protocol::SandboxPolicy;
+    use genex_protocol::protocol::SessionSource;
+    use genex_protocol::protocol::ThreadHistoryMode;
+    use genex_protocol::protocol::TurnCompleteEvent;
+    use genex_protocol::protocol::TurnContextItem;
+    use genex_protocol::protocol::TurnStartedEvent;
+    use genex_protocol::protocol::UserMessageEvent;
+    use genex_protocol::user_input::UserInput;
+    use genex_rollout::RolloutItem;
     use tempfile::TempDir;
 
     use super::*;
@@ -850,7 +850,7 @@ mod tests {
         // metadata updates must use LiveThread or call update_thread_metadata explicitly.
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -885,7 +885,7 @@ mod tests {
     async fn live_thread_observes_appended_items_into_sqlite_metadata() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -920,7 +920,7 @@ mod tests {
     async fn paginated_resume_prefers_explicit_rollout_path_over_stale_sqlite_path() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -940,7 +940,7 @@ mod tests {
         tokio::fs::write(&stale_rollout_path, "malformed session metadata\n")
             .await
             .expect("write stale rollout");
-        let mut builder = codex_state::ThreadMetadataBuilder::new(
+        let mut builder = genex_state::ThreadMetadataBuilder::new(
             thread_id,
             stale_rollout_path,
             chrono::Utc::now(),
@@ -1002,7 +1002,7 @@ mod tests {
     async fn live_thread_does_not_derive_metadata_from_inherited_items() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -1077,7 +1077,7 @@ mod tests {
     async fn live_thread_output_advances_updated_at_but_not_recency_at() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -1141,7 +1141,7 @@ mod tests {
                     .into(),
                 ),
                 RolloutItem::EventMsg(EventMsg::TokenCount(
-                    codex_protocol::protocol::TokenCountEvent {
+                    genex_protocol::protocol::TokenCountEvent {
                         info: None,
                         rate_limits: None,
                     },
@@ -1173,7 +1173,7 @@ mod tests {
     async fn live_thread_shutdown_does_not_materialize_empty_thread_metadata() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -1209,7 +1209,7 @@ mod tests {
     async fn live_thread_shutdown_with_buffered_items_materializes_before_metadata_read() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -1227,7 +1227,7 @@ mod tests {
 
         live_thread
             .append_items(&[RolloutItem::EventMsg(EventMsg::TokenCount(
-                codex_protocol::protocol::TokenCountEvent {
+                genex_protocol::protocol::TokenCountEvent {
                     info: None,
                     rate_limits: None,
                 },
@@ -1253,7 +1253,7 @@ mod tests {
     async fn live_thread_resume_loads_history_before_observing_metadata() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )
@@ -1307,7 +1307,7 @@ mod tests {
         let home = TempDir::new().expect("temp dir");
         let external_home = TempDir::new().expect("external temp dir");
         let config = test_config(home.path());
-        let runtime = codex_state::StateRuntime::init(
+        let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
             config.default_model_provider_id.clone(),
         )

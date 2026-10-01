@@ -1,12 +1,12 @@
 use std::sync::Arc;
 use std::sync::Weak;
 
-use codex_code_mode_protocol::CellId;
-use codex_code_mode_protocol::CodeModeNestedToolCall;
-use codex_code_mode_protocol::CodeModeSessionDelegate;
-use codex_code_mode_protocol::NotificationFuture;
-use codex_code_mode_protocol::ToolInvocationFuture;
-use codex_code_mode_protocol::grpc as proto;
+use genex_code_mode_protocol::CellId;
+use genex_code_mode_protocol::CodeModeNestedToolCall;
+use genex_code_mode_protocol::CodeModeSessionDelegate;
+use genex_code_mode_protocol::NotificationFuture;
+use genex_code_mode_protocol::ToolInvocationFuture;
+use genex_code_mode_protocol::grpc as proto;
 use tokio::sync::oneshot;
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;

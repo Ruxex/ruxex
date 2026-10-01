@@ -10,15 +10,15 @@
 //! editing a non-empty API-key field, while control/alt chords remain available
 //! as explicit exit shortcuts.
 
-use codex_app_server_client::AppServerEvent;
-use codex_app_server_client::AppServerRequestHandle;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::ConfigBatchWriteParams;
-use codex_app_server_protocol::RequestId;
-use codex_exec_server::LOCAL_FS;
-use codex_git_utils::resolve_root_git_project_for_trust;
+use genex_app_server_client::AppServerEvent;
+use genex_app_server_client::AppServerRequestHandle;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::ConfigBatchWriteParams;
+use genex_app_server_protocol::RequestId;
+use genex_exec_server::LOCAL_FS;
+use genex_git_utils::resolve_root_git_project_for_trust;
 #[cfg(target_os = "windows")]
-use codex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::config_types::WindowsSandboxLevel;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;

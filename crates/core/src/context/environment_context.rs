@@ -1,10 +1,10 @@
-use codex_protocol::models::ManagedFileSystemPermissions;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_utils_path_uri::PathUri;
+use genex_protocol::models::ManagedFileSystemPermissions;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSpecialPath;
+use genex_utils_path_uri::PathUri;
 use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

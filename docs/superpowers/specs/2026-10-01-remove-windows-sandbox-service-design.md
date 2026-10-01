@@ -8,15 +8,15 @@
 
 ## 目的
 
-- `codex-windows-sandbox-service`のビルド・配布・実行・IPC経路を削除する。
+- `genex-windows-sandbox-service`のビルド・配布・実行・IPC経路を削除する。
 - Registered CoreのパッケージID検証、登録済みrunner alias、サービス所有のsandboxアカウント／runtime receipt、refresh処理を削除する。
 - app-server、core、CLI、Windows sandbox libraryの分岐を通常sandbox経路へ簡素化する。
 - 通常のWindows sandboxのセキュリティ境界と実行能力を変更しない。
 
 ## 非目的
 
-- `codex-windows-sandbox-rs`そのものを削除すること。
-- `codex-windows-sandbox-setup.exe`や`codex-command-runner.exe`を削除すること。
+- `genex-windows-sandbox-rs`そのものを削除すること。
+- `genex-windows-sandbox-setup.exe`や`codex-command-runner.exe`を削除すること。
 - Windows ACL、Restricted Token、Job Object、Private Desktop、deny-read、通常のネットワーク制御を削除すること。
 - LinuxのbwrapやmacOS sandboxの実装を変更すること。
 
@@ -28,8 +28,8 @@ Registered Coreは通常CLIではなく、WindowsのMSIX/AppX package identity�
 
 ### 1. Workspaceと配布
 
-- workspace member、依存関係、`codex-windows-sandbox-service` crate、service binaryを削除する。
-- Windows CLI packageの必須ファイルは既存どおり`codex-command-runner.exe`と`codex-windows-sandbox-setup.exe`に限定する。
+- workspace member、依存関係、`genex-windows-sandbox-service` crate、service binaryを削除する。
+- Windows CLI packageの必須ファイルは既存どおり`codex-command-runner.exe`と`genex-windows-sandbox-setup.exe`に限定する。
 - installer、manifest、package lifecycle、service登録・アンインストール処理にサービスbinaryを要求する箇所があれば削除する。
 
 ### 2. Windows sandbox library
@@ -66,7 +66,7 @@ Registered Coreは通常CLIではなく、WindowsのMSIX/AppX package identity�
 ## 検証
 
 - `rg -n -i 'windows.?sandbox.?service|registered.?core|CODEX_WINDOWS_REGISTERED_CORE|OpenAI\.CodexSandbox' crates docs Cargo.toml`で、通常sandboxに不要な本番参照が残っていないことを確認する。
-- `rg -n 'codex-windows-sandbox-service|codex-windows-sandbox-setup|codex-command-runner' .`で、setup／runnerの参照だけが残ることを確認する。
+- `rg -n 'genex-windows-sandbox-service|genex-windows-sandbox-setup|codex-command-runner' .`で、setup／runnerの参照だけが残ることを確認する。
 - `just generate`を実行し、生成物の差分を確認する。
 - `just check --tests`を実行する。
 - `just check`を実行する。
@@ -74,7 +74,7 @@ Registered Coreは通常CLIではなく、WindowsのMSIX/AppX package identity�
 
 ## 受け入れ条件
 
-1. `codex-windows-sandbox-service` crateとサービスbinaryがworkspace／配布対象から消えている。
+1. `genex-windows-sandbox-service` crateとサービスbinaryがworkspace／配布対象から消えている。
 2. Registered Coreの要求・検証・refresh・service provisioningがproduction codeから消えている。
 3. 通常CLIのWindows sandbox setupとcommand execution経路が残っている。
 4. サービスなしを理由に通常sandboxが無効化されたり、unsandboxed実行へフォールバックしたりしない。

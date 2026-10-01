@@ -2,7 +2,7 @@
 
 ## エントリ
 
-`codex exec [OPTIONS] [PROMPT]` は [`codex_exec::Cli`](../../../../crates/exec/src/cli.rs#L15) で解析され、`codex-cli` により [main.rs#L1034](../../../../crates/cli/src/main.rs#L1034) でディスパッチされます。ネストしたコマンドがない場合は新しい非対話セッションを実行し、[`Command`](../../../../crates/exec/src/cli.rs#L149) を通じてネストした `resume`、`fork`、`review` 操作にも対応します。
+`codex exec [OPTIONS] [PROMPT]` は [`codex_exec::Cli`](../../../../crates/exec/src/cli.rs#L15) で解析され、`genex-cli` により [main.rs#L1034](../../../../crates/cli/src/main.rs#L1034) でディスパッチされます。ネストしたコマンドがない場合は新しい非対話セッションを実行し、[`Command`](../../../../crates/exec/src/cli.rs#L149) を通じてネストした `resume`、`fork`、`review` 操作にも対応します。
 
 ## 入出力モデル
 
@@ -37,5 +37,5 @@ codex exec
 | --- | --- | --- |
 | `Cli`、`Command` | `codex-exec` | コマンド文法 |
 | `EventProcessor` | `codex-exec` | 内部のイベントから出力への処理 |
-| `ResponseEvent` | `codex-api` | モデル応答ストリームの境界 |
-| `ThreadId`、`ClientRequest` | `codex-protocol` / app-server protocol | リクエスト/セッションの識別情報 |
+| `ResponseEvent` | `genex-api` | モデル応答ストリームの境界 |
+| `ThreadId`、`ClientRequest` | `genex-protocol` / app-server protocol | リクエスト/セッションの識別情報 |

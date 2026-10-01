@@ -10,7 +10,7 @@
 
 **Goal:** Remove the provider Images API image-generation adapter and its live tool registration while preserving provider-neutral image history, protocol, and display compatibility.
 
-**Architecture:** Delete the dedicated `codex-image-generation-extension` and the unused Images endpoint/types from `codex-api`. Remove the feature and provider/app-server capability fields that only advertised this deleted live integration. Retain `ImageGenerationItem`, response-history variants, rollout migration, and UI rendering so existing stored image-generation records remain readable.
+**Architecture:** Delete the dedicated `codex-image-generation-extension` and the unused Images endpoint/types from `genex-api`. Remove the feature and provider/app-server capability fields that only advertised this deleted live integration. Retain `ImageGenerationItem`, response-history variants, rollout migration, and UI rendering so existing stored image-generation records remain readable.
 
 **Tech Stack:** Rust workspace, Cargo manifests/lockfile, generated app-server and config schemas, dependency-graph script.
 
@@ -48,13 +48,13 @@
 
 - [x] Remove the workspace member/dependency and every production registration/import of `codex-image-generation-extension`.
 - [x] Remove tests that exist only to exercise the deleted image extension, and remove only image-generation-specific setup/assertions from the mixed Responses Lite suite; retain the web-search coverage.
-- [x] Leave `codex-extension-items` image records and app-server/TUI history handling untouched.
+- [x] Leave `genex-extension-items` image records and app-server/TUI history handling untouched.
 
 ### Task 2: Remove stale Images API and capability/feature advertisement
 
 **Files:**
-- Delete: `crates/codex-api/src/endpoint/images.rs`, `crates/codex-api/src/images.rs`
-- Modify: `crates/codex-api/src/endpoint/mod.rs`, `crates/codex-api/src/lib.rs`
+- Delete: `crates/genex-api/src/endpoint/images.rs`, `crates/genex-api/src/images.rs`
+- Modify: `crates/genex-api/src/endpoint/mod.rs`, `crates/genex-api/src/lib.rs`
 - Modify: `crates/model-provider/src/provider.rs`, `crates/model-provider/src/amazon_bedrock/mod.rs`
 - Modify: `crates/app-server-protocol/src/protocol/v2/model.rs`
 - Modify: `crates/app-server/src/request_processors/config_processor.rs`

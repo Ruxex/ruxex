@@ -9,7 +9,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
 
-use codex_features::Feature;
+use genex_features::Feature;
 
 use crate::ConfigLayerSource;
 use crate::ConfigLayerStack;

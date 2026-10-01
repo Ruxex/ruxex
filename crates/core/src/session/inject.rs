@@ -1,11 +1,11 @@
 use super::TurnInput as PendingTurnInput;
 use super::session::Session;
 use super::turn_context::TurnContext;
-use codex_features::Feature;
-use codex_history::CodexHarnessMetadata;
-use codex_history::ResponseItemEnvelope;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::models::ResponseItem;
+use genex_features::Feature;
+use genex_history::CodexHarnessMetadata;
+use genex_history::ResponseItemEnvelope;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::models::ResponseItem;
 
 impl Session {
     /// Returns the input if there is no active turn to inject into.

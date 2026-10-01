@@ -1,5 +1,5 @@
-use codex_config::types::AuthKeyringBackendKind;
-use codex_keyring_store::tests::MockKeyringStore;
+use genex_config::types::AuthKeyringBackendKind;
+use genex_keyring_store::tests::MockKeyringStore;
 use serde_json::json;
 
 use super::*;
@@ -44,7 +44,7 @@ fn ordinary_oauth_names_cannot_alias_enterprise_credential_keys() -> Result<()> 
     let _home = TempCodexHome::new();
     let issuer = "https://idp.example";
     let enterprise_name = "ema-idp:synthetic-identity";
-    let ordinary: codex_config::McpServerConfig = serde_json::from_value(json!({
+    let ordinary: genex_config::McpServerConfig = serde_json::from_value(json!({
         "url": issuer,
         "oauth": {"client_id": "idp-client"},
     }))?;

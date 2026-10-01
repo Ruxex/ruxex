@@ -3,7 +3,7 @@
 use super::focus_palette::PtyCodex;
 use super::focus_palette::write_test_config;
 use anyhow::Result;
-use codex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::JSONRPCMessage;
 use futures::SinkExt;
 use futures::StreamExt;
 use pretty_assertions::assert_eq;
@@ -19,7 +19,7 @@ use tokio_tungstenite::tungstenite::Message;
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn connected_trust_cancellation_and_acceptance_control_task_creation() -> Result<()> {
     for trust_level in [None, Some("untrusted")] {
-        let repo_root = codex_utils_cargo_bin::repo_root()?;
+        let repo_root = genex_utils_cargo_bin::repo_root()?;
         let codex_home = tempfile::tempdir_in("/tmp")?;
         // The server's trust decision must win over the client's trusted-folder setting.
         write_test_config(codex_home.path(), &repo_root)?;
@@ -29,7 +29,7 @@ async fn connected_trust_cancellation_and_acceptance_control_task_creation() -> 
             config_path,
             format!("{config}\n[tui]\nresume_cwd = \"current\"\n"),
         )?;
-        let socket = codex_app_server_client::app_server_control_socket_path(codex_home.path())?;
+        let socket = genex_app_server_client::app_server_control_socket_path(codex_home.path())?;
         std::fs::create_dir_all(socket.parent().unwrap())?;
         let listener = UnixListener::bind(socket.as_path())?;
         let cwd = repo_root.clone();

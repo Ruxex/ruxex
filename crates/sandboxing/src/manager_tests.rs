@@ -7,19 +7,19 @@ use super::SandboxType;
 use super::SandboxablePreference;
 use super::get_platform_sandbox;
 use super::with_managed_mitm_ca_readable_root;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::AdditionalPermissionProfile;
-use codex_protocol::models::FileSystemPermissions;
-use codex_protocol::models::NetworkPermissions;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::AdditionalPermissionProfile;
+use genex_protocol::models::FileSystemPermissions;
+use genex_protocol::models::NetworkPermissions;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::FileSystemSpecialPath;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use dunce::canonicalize;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
@@ -491,15 +491,15 @@ fn transform_linux_seccomp_uses_helper_alias_when_launcher_is_not_helper_path() 
 #[cfg(unix)]
 #[tokio::test]
 async fn linux_unix_socket_grant_uses_effective_managed_policy() -> anyhow::Result<()> {
-    use codex_network_proxy::ConfigReloader;
-    use codex_network_proxy::ConfigReloaderFuture;
-    use codex_network_proxy::ConfigState;
-    use codex_network_proxy::ManagedNetworkSandboxContext;
-    use codex_network_proxy::NetworkProxy;
-    use codex_network_proxy::NetworkProxyConfig;
-    use codex_network_proxy::NetworkProxyConstraints;
-    use codex_network_proxy::NetworkProxyState;
-    use codex_network_proxy::build_config_state;
+    use genex_network_proxy::ConfigReloader;
+    use genex_network_proxy::ConfigReloaderFuture;
+    use genex_network_proxy::ConfigState;
+    use genex_network_proxy::ManagedNetworkSandboxContext;
+    use genex_network_proxy::NetworkProxy;
+    use genex_network_proxy::NetworkProxyConfig;
+    use genex_network_proxy::NetworkProxyConstraints;
+    use genex_network_proxy::NetworkProxyState;
+    use genex_network_proxy::build_config_state;
     use std::sync::Arc;
 
     struct TestConfigReloader;
@@ -696,7 +696,7 @@ fn transform_for_direct_spawn_windows_materializes_inner_helper() {
             SandboxDirectSpawnTransformRequest {
                 workspace_roots: workspace_roots.as_slice(),
                 windows_sandbox_proxy_settings_mode:
-                    codex_windows_sandbox::WindowsSandboxProxySettingsMode::Preserve,
+                    genex_windows_sandbox::WindowsSandboxProxySettingsMode::Preserve,
                 transform: SandboxTransformRequest {
                     command: SandboxCommand {
                         program: configured_helper.as_os_str().to_owned(),

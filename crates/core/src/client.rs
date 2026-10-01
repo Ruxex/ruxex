@@ -34,64 +34,64 @@ use std::sync::atomic::Ordering;
 
 use crate::CodexResponsesHeaders;
 use async_channel::Sender;
-use codex_api::AggregateStreamExt;
-use codex_api::ApiError;
-use codex_api::AuthProvider;
-use codex_api::ChatClient as ApiChatClient;
-use codex_api::ChatRequestInput;
-use codex_api::Compression;
-use codex_api::Provider as ApiProvider;
-use codex_api::Reasoning;
-use codex_api::ReasoningContext;
-use codex_api::RequestTelemetry;
-use codex_api::ReqwestTransport;
-use codex_api::ResponseCreateWsRequest;
-use codex_api::ResponsesApiRequest;
-use codex_api::ResponsesClient as ApiResponsesClient;
-use codex_api::ResponsesOptions as ApiResponsesOptions;
-use codex_api::ResponsesWebsocketClient as ApiWebSocketResponsesClient;
-use codex_api::ResponsesWebsocketConnection as ApiWebSocketConnection;
-use codex_api::ResponsesWsRequest;
-use codex_api::SharedAuthProvider;
-use codex_api::SseTelemetry;
-use codex_api::StreamOptions;
-use codex_api::TransportError;
-use codex_api::WebsocketTelemetry;
-use codex_api::auth_header_telemetry;
-use codex_api::build_session_headers;
-use codex_api::create_text_param_for_request;
-use codex_api::response_create_client_metadata;
-use codex_http_client::ClientRouteClass;
-use codex_http_client::HttpClientFactory;
-use codex_login::AuthManager;
-use codex_login::CodexAuth;
-use codex_login::RefreshTokenError;
-use codex_login::UnauthorizedRecovery;
-use codex_login::default_client::ClientRedirectPolicy;
-use codex_login::default_client::add_originator_header;
-use codex_login::default_client::create_client_for_route;
-use codex_otel::SessionTelemetry;
-use codex_otel::WEBSOCKET_CONTINUATION_COUNT_METRIC;
-use codex_otel::current_span_w3c_trace_context;
-use codex_protocol::ResponseItemId;
+use genex_api::AggregateStreamExt;
+use genex_api::ApiError;
+use genex_api::AuthProvider;
+use genex_api::ChatClient as ApiChatClient;
+use genex_api::ChatRequestInput;
+use genex_api::Compression;
+use genex_api::Provider as ApiProvider;
+use genex_api::Reasoning;
+use genex_api::ReasoningContext;
+use genex_api::RequestTelemetry;
+use genex_api::ReqwestTransport;
+use genex_api::ResponseCreateWsRequest;
+use genex_api::ResponsesApiRequest;
+use genex_api::ResponsesClient as ApiResponsesClient;
+use genex_api::ResponsesOptions as ApiResponsesOptions;
+use genex_api::ResponsesWebsocketClient as ApiWebSocketResponsesClient;
+use genex_api::ResponsesWebsocketConnection as ApiWebSocketConnection;
+use genex_api::ResponsesWsRequest;
+use genex_api::SharedAuthProvider;
+use genex_api::SseTelemetry;
+use genex_api::StreamOptions;
+use genex_api::TransportError;
+use genex_api::WebsocketTelemetry;
+use genex_api::auth_header_telemetry;
+use genex_api::build_session_headers;
+use genex_api::create_text_param_for_request;
+use genex_api::response_create_client_metadata;
+use genex_http_client::ClientRouteClass;
+use genex_http_client::HttpClientFactory;
+use genex_login::AuthManager;
+use genex_login::CodexAuth;
+use genex_login::RefreshTokenError;
+use genex_login::UnauthorizedRecovery;
+use genex_login::default_client::ClientRedirectPolicy;
+use genex_login::default_client::add_originator_header;
+use genex_login::default_client::create_client_for_route;
+use genex_otel::SessionTelemetry;
+use genex_otel::WEBSOCKET_CONTINUATION_COUNT_METRIC;
+use genex_otel::current_span_w3c_trace_context;
+use genex_protocol::ResponseItemId;
 
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
-use codex_protocol::config_types::Verbosity as VerbosityConfig;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::AuthRecoveryEvent;
-use codex_protocol::protocol::Event as ProtocolEvent;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::W3cTraceContext;
-use codex_rollout_trace::InferenceTraceAttempt;
-use codex_rollout_trace::InferenceTraceContext;
-use codex_tools::create_tools_json_for_chat_completions_api;
-use codex_tools::create_tools_json_for_responses_api;
-use codex_tools::create_tools_json_for_responses_lite;
-use codex_tools::create_tools_raw_json_for_responses_api;
+use genex_protocol::ThreadId;
+use genex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
+use genex_protocol::config_types::Verbosity as VerbosityConfig;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::AuthRecoveryEvent;
+use genex_protocol::protocol::Event as ProtocolEvent;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::W3cTraceContext;
+use genex_rollout_trace::InferenceTraceAttempt;
+use genex_rollout_trace::InferenceTraceContext;
+use genex_tools::create_tools_json_for_chat_completions_api;
+use genex_tools::create_tools_json_for_responses_api;
+use genex_tools::create_tools_json_for_responses_lite;
+use genex_tools::create_tools_raw_json_for_responses_api;
 use eventsource_stream::Event;
 use eventsource_stream::EventStreamError;
 use futures::StreamExt;
@@ -121,21 +121,21 @@ use crate::context::BaseInstructionsFragment;
 use crate::context::ContextualUserFragment;
 use crate::cyber_access_program;
 use crate::responses_metadata::CodexResponsesMetadata;
-use codex_model_provider::ProviderApi;
-use codex_model_provider::ProviderAuthScope;
-use codex_model_provider::ProviderUnauthorizedRecovery;
-use codex_model_provider::ResponsesConnectionKey;
-use codex_model_provider::SharedModelProvider;
-use codex_model_provider::create_model_provider;
+use genex_model_provider::ProviderApi;
+use genex_model_provider::ProviderAuthScope;
+use genex_model_provider::ProviderUnauthorizedRecovery;
+use genex_model_provider::ResponsesConnectionKey;
+use genex_model_provider::SharedModelProvider;
+use genex_model_provider::create_model_provider;
 #[cfg(test)]
-use codex_model_provider_info::DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::Result;
-use codex_response_debug_context::extract_response_debug_context;
-use codex_response_debug_context::extract_response_debug_context_from_api_error;
-use codex_response_debug_context::telemetry_api_error_message;
-use codex_response_debug_context::telemetry_transport_error_message;
+use genex_model_provider_info::DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::Result;
+use genex_response_debug_context::extract_response_debug_context;
+use genex_response_debug_context::extract_response_debug_context_from_api_error;
+use genex_response_debug_context::telemetry_api_error_message;
+use genex_response_debug_context::telemetry_transport_error_message;
 
 pub const X_CODEX_INSTALLATION_ID_HEADER: &str = "x-codex-installation-id";
 pub const X_CODEX_ROUTING_HINT_HEADER: &str = "x-codex-routing-hint";
@@ -706,7 +706,7 @@ impl ModelClient {
             && is_responses_provider
             && reasoning.summary.is_some())
         .then_some(StreamOptions {
-            reasoning_summary_delivery: codex_api::ReasoningSummaryDelivery::SequentialCutoff,
+            reasoning_summary_delivery: genex_api::ReasoningSummaryDelivery::SequentialCutoff,
         });
         let include = vec!["reasoning.encrypted_content".to_string()];
         let verbosity = if model_info.support_verbosity {
@@ -897,7 +897,7 @@ impl ModelClient {
     async fn connect_websocket(
         &self,
         session_telemetry: &SessionTelemetry,
-        api_provider: codex_api::Provider,
+        api_provider: genex_api::Provider,
         api_auth: SharedAuthProvider,
         responses_metadata: &CodexResponsesMetadata,
         auth_context: AuthRequestTelemetryContext,
@@ -918,7 +918,7 @@ impl ModelClient {
             ApiWebSocketResponsesClient::new(api_provider, api_auth).connect(
                 &self.http_client_factory,
                 headers,
-                codex_login::default_client::default_headers(),
+                genex_login::default_client::default_headers(),
                 /*turn_state*/ None,
                 Some(websocket_telemetry),
             ),
@@ -1251,10 +1251,10 @@ impl ModelClientSession {
         session_telemetry: &SessionTelemetry,
         responses_metadata: &CodexResponsesMetadata,
         inference_trace: &InferenceTraceContext,
-        chat_api: Arc<dyn codex_api::ChatCompletionApi>,
+        chat_api: Arc<dyn genex_api::ChatCompletionApi>,
     ) -> Result<ResponseStream> {
         if prompt.output_schema.is_some() {
-            return Err(codex_protocol::error::CodexErr::UnsupportedOperation(
+            return Err(genex_protocol::error::CodexErr::UnsupportedOperation(
                 "output_schema is not supported for Chat Completions API".to_string(),
             ));
         }
@@ -1971,16 +1971,16 @@ const RESPONSE_STREAM_CHANNEL_CAPACITY: usize = 1600;
 const STREAM_DROPPED_REASON: &str = "response stream dropped before provider terminal event";
 
 fn map_response_stream(
-    api_stream: codex_api::ResponseStream,
+    api_stream: genex_api::ResponseStream,
     session_telemetry: SessionTelemetry,
     inference_trace_attempt: InferenceTraceAttempt,
     provider: SharedModelProvider,
 ) -> (ResponseStream, oneshot::Receiver<LastResponse>) {
-    let codex_api::ResponseStream {
+    let genex_api::ResponseStream {
         rx_event,
         upstream_request_id,
     } = api_stream;
-    let api_stream = codex_api::ResponseStream {
+    let api_stream = genex_api::ResponseStream {
         rx_event,
         upstream_request_id: None,
     };
@@ -2187,7 +2187,7 @@ impl AuthRequestTelemetryContext {
 
 struct WebsocketConnectParams<'a> {
     session_telemetry: &'a SessionTelemetry,
-    api_provider: codex_api::Provider,
+    api_provider: genex_api::Provider,
     auth_revision: Option<u64>,
     api_auth: SharedAuthProvider,
     auth_owner_generation: Option<u64>,

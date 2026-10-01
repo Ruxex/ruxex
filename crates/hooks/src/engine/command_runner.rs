@@ -13,9 +13,9 @@ use std::time::Duration;
 use std::time::Instant;
 
 use async_channel::Sender;
-use codex_protocol::shell_environment::scrub_non_inheritable_env_vars;
+use genex_protocol::shell_environment::scrub_non_inheritable_env_vars;
 #[cfg(windows)]
-use codex_utils_pty::JobObject;
+use genex_utils_pty::JobObject;
 use futures::future::try_join;
 use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
@@ -37,11 +37,11 @@ use super::dispatcher::hook_source_label;
 use super::dispatcher::scope_for_event;
 use crate::output_spill::AdditionalContext;
 use crate::output_spill::HookOutputSpiller;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::HookCompletedEvent;
-use codex_protocol::protocol::HookHandlerType;
-use codex_protocol::protocol::HookOutputEntry;
-use codex_protocol::protocol::HookOutputEntryKind;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::HookCompletedEvent;
+use genex_protocol::protocol::HookHandlerType;
+use genex_protocol::protocol::HookOutputEntry;
+use genex_protocol::protocol::HookOutputEntryKind;
 
 const MAX_CONCURRENT_ASYNC_HOOKS: usize = 8;
 
@@ -227,7 +227,7 @@ pub(crate) async fn run_command(
     // shell startup can otherwise stop the hook on background terminal I/O.
     // SAFETY: detach_from_tty only performs async-signal-safe process setup.
     unsafe {
-        command.pre_exec(codex_utils_pty::process_group::detach_from_tty);
+        command.pre_exec(genex_utils_pty::process_group::detach_from_tty);
     }
 
     #[cfg(windows)]
@@ -350,7 +350,7 @@ impl Drop for ProcessTreeGuard {
 
         #[cfg(unix)]
         {
-            let _ = codex_utils_pty::process_group::kill_process_group(process_id);
+            let _ = genex_utils_pty::process_group::kill_process_group(process_id);
         }
 
         #[cfg(windows)]

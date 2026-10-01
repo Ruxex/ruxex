@@ -15,7 +15,7 @@ use std::cell::RefCell;
 use std::time::Duration;
 use std::time::Instant;
 
-use codex_config::types::Tui;
+use genex_config::types::Tui;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;

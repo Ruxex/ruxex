@@ -6,41 +6,41 @@ use std::sync::Arc;
 
 use chrono::DateTime;
 use chrono::Utc;
-use codex_arg0::Arg0DispatchPaths;
-use codex_core::ThreadManager;
-use codex_core::config::ConfigOverrides;
-use codex_external_agent_migration::ExternalAgentConfigImportItemResult;
-use codex_external_agent_migration::record_import_error;
-use codex_external_agent_migration::sessions::CompletedExternalAgentSessionImport;
-use codex_external_agent_migration::sessions::ExistingSessionAppend;
-use codex_external_agent_migration::sessions::ExternalAgentSessionMigration;
-use codex_external_agent_migration::sessions::ImportedExternalAgentSession;
-use codex_external_agent_migration::sessions::ImportedSessionConnectorAttribution;
-use codex_external_agent_migration::sessions::PendingSessionImport;
-use codex_external_agent_migration::sessions::SessionImportTarget;
-use codex_external_agent_migration::sessions::SessionMetadataMode;
-use codex_external_agent_migration::sessions::append_existing_session;
-use codex_external_agent_migration::sessions::append_imported_session_connector_names;
-use codex_external_agent_migration::sessions::detect_imported_cla_session_connectors_by_source_path;
-use codex_external_agent_migration::sessions::prepare_validated_session_import_with_metadata_mode;
-use codex_external_agent_migration::sessions::record_completed_session_imports;
-use codex_models_manager::manager::RefreshStrategy;
-use codex_prompts::render_model_instructions;
-use codex_protocol::ThreadId;
-use codex_protocol::models::BaseInstructions;
-use codex_protocol::models::BaseInstructionsProvenance;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_rollout::RolloutItem;
-use codex_rollout::is_persisted_rollout_item;
-use codex_thread_store::AppendThreadItemsParams;
-use codex_thread_store::CreateThreadParams;
-use codex_thread_store::PersistContext;
-use codex_thread_store::ThreadMetadataPatch;
-use codex_thread_store::ThreadPersistenceMetadata;
-use codex_thread_store::ThreadStore;
-use codex_thread_store::UpdateThreadMetadataParams;
+use genex_arg0::Arg0DispatchPaths;
+use genex_core::ThreadManager;
+use genex_core::config::ConfigOverrides;
+use genex_external_agent_migration::ExternalAgentConfigImportItemResult;
+use genex_external_agent_migration::record_import_error;
+use genex_external_agent_migration::sessions::CompletedExternalAgentSessionImport;
+use genex_external_agent_migration::sessions::ExistingSessionAppend;
+use genex_external_agent_migration::sessions::ExternalAgentSessionMigration;
+use genex_external_agent_migration::sessions::ImportedExternalAgentSession;
+use genex_external_agent_migration::sessions::ImportedSessionConnectorAttribution;
+use genex_external_agent_migration::sessions::PendingSessionImport;
+use genex_external_agent_migration::sessions::SessionImportTarget;
+use genex_external_agent_migration::sessions::SessionMetadataMode;
+use genex_external_agent_migration::sessions::append_existing_session;
+use genex_external_agent_migration::sessions::append_imported_session_connector_names;
+use genex_external_agent_migration::sessions::detect_imported_cla_session_connectors_by_source_path;
+use genex_external_agent_migration::sessions::prepare_validated_session_import_with_metadata_mode;
+use genex_external_agent_migration::sessions::record_completed_session_imports;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_prompts::render_model_instructions;
+use genex_protocol::ThreadId;
+use genex_protocol::models::BaseInstructions;
+use genex_protocol::models::BaseInstructionsProvenance;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_rollout::RolloutItem;
+use genex_rollout::is_persisted_rollout_item;
+use genex_thread_store::AppendThreadItemsParams;
+use genex_thread_store::CreateThreadParams;
+use genex_thread_store::PersistContext;
+use genex_thread_store::ThreadMetadataPatch;
+use genex_thread_store::ThreadPersistenceMetadata;
+use genex_thread_store::ThreadStore;
+use genex_thread_store::UpdateThreadMetadataParams;
 use futures::StreamExt;
 use tokio::sync::Semaphore;
 
@@ -457,7 +457,7 @@ impl ExternalAgentSessionImporter {
             parent_thread_id: None,
             source: source.clone(),
             thread_source: None,
-            originator: codex_login::default_client::originator().value,
+            originator: genex_login::default_client::originator().value,
             base_instructions: BaseInstructions {
                 text: config
                     .base_instructions
@@ -513,7 +513,7 @@ impl ExternalAgentSessionImporter {
             .unwrap_or((now, now));
         let title = title
             .as_deref()
-            .and_then(codex_core::util::normalize_thread_name);
+            .and_then(genex_core::util::normalize_thread_name);
         let metadata = ThreadMetadataPatch {
             title,
             preview: first_user_message.clone(),

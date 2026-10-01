@@ -7,13 +7,13 @@ use app_test_support::DEFAULT_CLIENT_NAME;
 use app_test_support::TestAppServer;
 use app_test_support::create_fake_rollout;
 use app_test_support::rollout_path;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::InitializeCapabilities;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::RolloutCompressResponse;
+use genex_app_server_protocol::ClientInfo;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::InitializeCapabilities;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::RolloutCompressResponse;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::time::timeout;
@@ -56,7 +56,7 @@ async fn rollout_compress_runs_after_startup_with_compression_disabled() -> Resu
     })
     .await?;
 
-    let mut reader = codex_rollout::open_rollout_line_reader(&path).await?;
+    let mut reader = genex_rollout::open_rollout_line_reader(&path).await?;
     let mut lines = Vec::new();
     while let Some(line) = reader.next_line().await? {
         lines.push(line);

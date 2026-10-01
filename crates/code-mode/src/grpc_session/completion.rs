@@ -1,5 +1,5 @@
-use codex_code_mode_protocol::grpc;
-use codex_code_mode_protocol::host::MAX_FRAME_BYTES;
+use genex_code_mode_protocol::grpc;
+use genex_code_mode_protocol::host::MAX_FRAME_BYTES;
 use prost::Message;
 
 pub(super) fn request(

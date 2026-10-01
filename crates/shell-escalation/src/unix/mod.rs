@@ -77,5 +77,5 @@ pub use self::escalation_policy::EscalationPolicy;
 pub use self::escalation_policy::EscalationPolicyFuture;
 pub use self::execve_wrapper::main_execve_wrapper;
 pub use self::stopwatch::Stopwatch;
-pub use codex_protocol::approvals::EscalationPermissions;
-pub use codex_protocol::approvals::ResolvedPermissionProfile;
+pub use genex_protocol::approvals::EscalationPermissions;
+pub use genex_protocol::approvals::ResolvedPermissionProfile;

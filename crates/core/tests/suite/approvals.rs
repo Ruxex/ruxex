@@ -2,39 +2,39 @@
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_config::types::ApprovalsReviewer;
-use codex_core::CodexThread;
-use codex_core::TurnInputRequest;
-use codex_core::config::Constrained;
-use codex_core::config::ThreadStoreConfig;
-use codex_core::sandboxing::SandboxPermissions;
-use codex_features::Feature;
-use codex_protocol::approvals::NetworkApprovalProtocol;
-use codex_protocol::approvals::NetworkPolicyAmendment;
-use codex_protocol::approvals::NetworkPolicyRuleAction;
-use codex_protocol::config_types::CollaborationMode;
+use genex_config::types::ApprovalsReviewer;
+use genex_core::CodexThread;
+use genex_core::TurnInputRequest;
+use genex_core::config::Constrained;
+use genex_core::config::ThreadStoreConfig;
+use genex_core::sandboxing::SandboxPermissions;
+use genex_features::Feature;
+use genex_protocol::approvals::NetworkApprovalProtocol;
+use genex_protocol::approvals::NetworkPolicyAmendment;
+use genex_protocol::approvals::NetworkPolicyRuleAction;
+use genex_protocol::config_types::CollaborationMode;
 #[cfg(unix)]
-use codex_protocol::config_types::EnvironmentVariablePattern;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::ApplyPatchApprovalRequestEvent;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecApprovalRequestEvent;
-use codex_protocol::protocol::ExecPolicyAmendment;
-use codex_protocol::protocol::GranularApprovalConfig;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
+use genex_protocol::config_types::EnvironmentVariablePattern;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::ApplyPatchApprovalRequestEvent;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecApprovalRequestEvent;
+use genex_protocol::protocol::ExecPolicyAmendment;
+use genex_protocol::protocol::GranularApprovalConfig;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ReviewDecision;
+use genex_protocol::protocol::SandboxPolicy;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use core_test_support::managed_network_requirements_loader;
 use core_test_support::responses::ev_apply_patch_custom_tool_call;
 use core_test_support::responses::ev_assistant_message;
@@ -2775,7 +2775,7 @@ async fn shell_startup_credentials_are_brokered(
         };
         zsh_fork_test_builder(runtime, AskForApproval::Never)
     } else {
-        let Some(zsh) = codex_core::shell::get_shell(codex_core::shell::ShellType::Zsh) else {
+        let Some(zsh) = genex_core::shell::get_shell(genex_core::shell::ShellType::Zsh) else {
             return Ok(());
         };
         test_codex()
@@ -2826,7 +2826,7 @@ async fn shell_startup_credentials_are_brokered(
         "export LOGIN_SHELL_READY=ready\n",
     )?;
     let startup_shell = if global_startup {
-        let Some(zsh) = codex_core::shell::get_shell(codex_core::shell::ShellType::Zsh) else {
+        let Some(zsh) = genex_core::shell::get_shell(genex_core::shell::ShellType::Zsh) else {
             return Ok(());
         };
         let zsh_path = zsh.derive_exec_args("", /*use_login_shell*/ false)[0].clone();
@@ -2868,7 +2868,7 @@ ZDOTDIR = "{}"
         .with_home(home)
         .with_cloud_config_bundle(managed_network_requirements_loader());
     if direct && !allow_login_shell {
-        let Some(bash) = codex_core::shell::get_shell(codex_core::shell::ShellType::Bash) else {
+        let Some(bash) = genex_core::shell::get_shell(genex_core::shell::ShellType::Bash) else {
             return Ok(());
         };
         builder = builder.with_user_shell(bash);
@@ -2937,7 +2937,7 @@ ZDOTDIR = "{}"
     let snapshot_dir_arg = shlex::try_join([snapshot_dir.to_string_lossy().as_ref()])?;
     let command = format!("{command}; /bin/cat {snapshot_dir_arg}/*.sh > captured-snapshot");
     let mut arguments = if direct {
-        let Some(zsh) = codex_core::shell::get_shell(codex_core::shell::ShellType::Zsh) else {
+        let Some(zsh) = genex_core::shell::get_shell(genex_core::shell::ShellType::Zsh) else {
             return Ok(());
         };
         json!({
@@ -3093,7 +3093,7 @@ async fn brokered_shell_snapshot_fallback(mode: &'static str) -> Result<()> {
     const REAL_GITHUB_TOKEN: &str =
         "ghp_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-    let Some(bash) = codex_core::shell::get_shell(codex_core::shell::ShellType::Bash) else {
+    let Some(bash) = genex_core::shell::get_shell(genex_core::shell::ShellType::Bash) else {
         return Ok(());
     };
     let startup_dir = tempfile::tempdir_in(std::env::current_dir()?)?;
@@ -3338,7 +3338,7 @@ GH_TOKEN = "{REAL_GITHUB_TOKEN}"
 async fn brokered_posix_startup_preserves_application_env(credential_startup: bool) -> Result<()> {
     skip_if_no_network!(Ok(()));
     const REAL_TOKEN: &str = "ghp_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let Some(shell) = codex_core::shell::get_shell(codex_core::shell::ShellType::Sh) else {
+    let Some(shell) = genex_core::shell::get_shell(genex_core::shell::ShellType::Sh) else {
         return Ok(());
     };
     let home = Arc::new(TempDir::new()?);

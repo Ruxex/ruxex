@@ -5,31 +5,31 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use codex_code_mode_protocol::CellId;
-use codex_code_mode_protocol::CodeModeNestedToolCall;
-use codex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
-use codex_code_mode_protocol::CodeModeSessionDelegate;
-use codex_code_mode_protocol::ExecuteRequest;
-use codex_code_mode_protocol::NotificationFuture;
-use codex_code_mode_protocol::ToolInvocationFuture;
-use codex_code_mode_protocol::WaitRequest;
-use codex_code_mode_protocol::host::CapabilitySet;
-use codex_code_mode_protocol::host::ClientToHost;
-use codex_code_mode_protocol::host::DelegateRequest;
-use codex_code_mode_protocol::host::DelegateRequestId;
-use codex_code_mode_protocol::host::EncodedFrame;
-use codex_code_mode_protocol::host::HostRequest;
-use codex_code_mode_protocol::host::HostResponse;
-use codex_code_mode_protocol::host::HostToClient;
-use codex_code_mode_protocol::host::MAX_PENDING_DELEGATE_CALLS;
-use codex_code_mode_protocol::host::RequestId;
-use codex_code_mode_protocol::host::SessionId;
-use codex_code_mode_protocol::host::WireNestedToolCall;
-use codex_code_mode_protocol::host::WireResult;
-use codex_code_mode_protocol::host::WireRuntimeResponse;
-use codex_code_mode_protocol::host::WireSessionCellExecutionLimits;
-use codex_code_mode_protocol::host::WireWaitOutcome;
-use codex_protocol::ToolName;
+use genex_code_mode_protocol::CellId;
+use genex_code_mode_protocol::CodeModeNestedToolCall;
+use genex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
+use genex_code_mode_protocol::CodeModeSessionDelegate;
+use genex_code_mode_protocol::ExecuteRequest;
+use genex_code_mode_protocol::NotificationFuture;
+use genex_code_mode_protocol::ToolInvocationFuture;
+use genex_code_mode_protocol::WaitRequest;
+use genex_code_mode_protocol::host::CapabilitySet;
+use genex_code_mode_protocol::host::ClientToHost;
+use genex_code_mode_protocol::host::DelegateRequest;
+use genex_code_mode_protocol::host::DelegateRequestId;
+use genex_code_mode_protocol::host::EncodedFrame;
+use genex_code_mode_protocol::host::HostRequest;
+use genex_code_mode_protocol::host::HostResponse;
+use genex_code_mode_protocol::host::HostToClient;
+use genex_code_mode_protocol::host::MAX_PENDING_DELEGATE_CALLS;
+use genex_code_mode_protocol::host::RequestId;
+use genex_code_mode_protocol::host::SessionId;
+use genex_code_mode_protocol::host::WireNestedToolCall;
+use genex_code_mode_protocol::host::WireResult;
+use genex_code_mode_protocol::host::WireRuntimeResponse;
+use genex_code_mode_protocol::host::WireSessionCellExecutionLimits;
+use genex_code_mode_protocol::host::WireWaitOutcome;
+use genex_protocol::ToolName;
 use pretty_assertions::assert_eq;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
@@ -48,7 +48,7 @@ struct DriverHarness {
     command_tx: mpsc::Sender<DriverCommand>,
     event_tx: mpsc::Sender<DriverEvent>,
     execute_claim_tx: mpsc::UnboundedSender<RequestId>,
-    outgoing_rx: mpsc::Receiver<codex_code_mode_protocol::host::EncodedFrame>,
+    outgoing_rx: mpsc::Receiver<genex_code_mode_protocol::host::EncodedFrame>,
     cancellation: CancellationToken,
     alive: Arc<AtomicBool>,
     failure: Arc<StdMutex<Option<String>>>,
@@ -126,7 +126,7 @@ impl DriverHarness {
         request_id: i64,
         cell_id: &str,
         delegate: Arc<dyn CodeModeSessionDelegate>,
-    ) -> codex_code_mode_protocol::StartedCell {
+    ) -> genex_code_mode_protocol::StartedCell {
         let (response_tx, response_rx) = oneshot::channel();
         self.command_tx
             .send(DriverCommand::Execute {
@@ -176,7 +176,7 @@ impl DriverHarness {
                         cell_id: CellId::new("1".to_string()).into(),
                         runtime_tool_call_id: "tool-1".to_string(),
                         tool_name: ToolName::plain("slow").into(),
-                        tool_kind: codex_code_mode_protocol::CodeModeToolKind::Function.into(),
+                        tool_kind: genex_code_mode_protocol::CodeModeToolKind::Function.into(),
                         input: None,
                     },
                 },
@@ -477,7 +477,7 @@ async fn deferred_delegates_follow_cell_readiness_and_cancellation() {
         ClientToHost::DelegateResponse {
             id: second_delegate_id,
             result: WireResult::Ok {
-                value: codex_code_mode_protocol::host::DelegateResponse::NotificationDelivered,
+                value: genex_code_mode_protocol::host::DelegateResponse::NotificationDelivered,
             },
         }
     );
@@ -515,7 +515,7 @@ async fn deferred_delegates_follow_cell_readiness_and_cancellation() {
         ClientToHost::DelegateResponse {
             id: first_delegate_id,
             result: WireResult::Ok {
-                value: codex_code_mode_protocol::host::DelegateResponse::NotificationDelivered,
+                value: genex_code_mode_protocol::host::DelegateResponse::NotificationDelivered,
             },
         }
     );
@@ -636,7 +636,7 @@ async fn delegate_cancel_is_best_effort_and_sends_no_late_response() {
                     cell_id: CellId::new("1".to_string()).into(),
                     runtime_tool_call_id: "tool-1".to_string(),
                     tool_name: ToolName::plain("slow").into(),
-                    tool_kind: codex_code_mode_protocol::CodeModeToolKind::Function.into(),
+                    tool_kind: genex_code_mode_protocol::CodeModeToolKind::Function.into(),
                     input: None,
                 },
             },
@@ -819,8 +819,8 @@ async fn terminate_closes_cell_without_waiting_for_delegate_cleanup() {
     assert!(closure_events.contains(&HeldDelegateEvent::CellClosed(CellId::new("1".to_string()))));
     assert_eq!(
         response_rx.await.expect("terminate reply"),
-        Ok(codex_code_mode_protocol::WaitOutcome::LiveCell(
-            codex_code_mode_protocol::RuntimeResponse::Terminated {
+        Ok(genex_code_mode_protocol::WaitOutcome::LiveCell(
+            genex_code_mode_protocol::RuntimeResponse::Terminated {
                 code_mode_host_duration: Some(Duration::ZERO),
                 cell_id: CellId::new("1".to_string()),
                 content_items: Vec::new(),
@@ -1007,7 +1007,7 @@ async fn delegate_task_panic_becomes_tool_error_without_killing_connection() {
                     cell_id: CellId::new("1".to_string()).into(),
                     runtime_tool_call_id: "tool-1".to_string(),
                     tool_name: ToolName::plain("panic").into(),
-                    tool_kind: codex_code_mode_protocol::CodeModeToolKind::Function.into(),
+                    tool_kind: genex_code_mode_protocol::CodeModeToolKind::Function.into(),
                     input: None,
                 },
             },
@@ -1056,7 +1056,7 @@ async fn delegate_for_unknown_cell_returns_error_without_invocation() {
                     cell_id: CellId::new("missing".to_string()).into(),
                     runtime_tool_call_id: "tool-1".to_string(),
                     tool_name: ToolName::plain("slow").into(),
-                    tool_kind: codex_code_mode_protocol::CodeModeToolKind::Function.into(),
+                    tool_kind: genex_code_mode_protocol::CodeModeToolKind::Function.into(),
                     input: None,
                 },
             },
@@ -1325,8 +1325,8 @@ async fn remote_wait_accepts_durations_longer_than_five_minutes() {
 
     assert_eq!(
         response_rx.await.expect("wait reply"),
-        Ok(codex_code_mode_protocol::WaitOutcome::LiveCell(
-            codex_code_mode_protocol::RuntimeResponse::Yielded {
+        Ok(genex_code_mode_protocol::WaitOutcome::LiveCell(
+            genex_code_mode_protocol::RuntimeResponse::Yielded {
                 code_mode_host_duration: Some(Duration::ZERO),
                 cell_id: CellId::new("1".to_string()),
                 content_items: Vec::new(),
@@ -1513,8 +1513,8 @@ async fn cancelled_wait_is_retired_before_next_wait_is_sent() {
 
     assert_eq!(
         second_rx.await.expect("second wait reply"),
-        Ok(codex_code_mode_protocol::WaitOutcome::LiveCell(
-            codex_code_mode_protocol::RuntimeResponse::Yielded {
+        Ok(genex_code_mode_protocol::WaitOutcome::LiveCell(
+            genex_code_mode_protocol::RuntimeResponse::Yielded {
                 code_mode_host_duration: Some(Duration::ZERO),
                 cell_id: CellId::new("1".to_string()),
                 content_items: Vec::new(),

@@ -9,21 +9,21 @@ use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_sequence;
 use app_test_support::encode_fixture_token;
 use app_test_support::write_models_cache;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::InitializeCapabilities;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::LoginAccountResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::UserInput;
-use codex_features::Feature;
-use codex_state::SqliteConfig;
-use codex_state::StateRuntime;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_app_server_protocol::ClientInfo;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::InitializeCapabilities;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::LoginAccountResponse;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::UserInput;
+use genex_features::Feature;
+use genex_state::SqliteConfig;
+use genex_state::StateRuntime;
+use genex_utils_absolute_path::test_support::PathExt;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use pretty_assertions::assert_eq;
@@ -73,7 +73,7 @@ fn standalone_app_server_emits_json_info_events() -> Result<()> {
 
 #[tokio::test]
 async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
-    let quiet_period = codex_state::log_db::LogSinkQueueConfig::default().flush_interval
+    let quiet_period = genex_state::log_db::LogSinkQueueConfig::default().flush_interval
         + Duration::from_millis(600);
     let export_timeout = quiet_period * 3;
 
@@ -106,7 +106,7 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
             loop {
                 let requests = collector.received_requests().await.unwrap_or_default();
                 if requests.iter().any(|request| {
-                    String::from_utf8_lossy(&request.body).contains(codex_state::LOG_WRITE_METRIC)
+                    String::from_utf8_lossy(&request.body).contains(genex_state::LOG_WRITE_METRIC)
                 }) {
                     break requests.len();
                 }
@@ -132,11 +132,11 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
         })?;
 
         let expected_metrics = [
-            (codex_state::LOG_WRITE_METRIC, "sum"),
-            (codex_state::LOG_WRITE_DURATION_METRIC, "histogram"),
-            (codex_state::LOG_WRITE_BYTES_METRIC, "histogram"),
-            (codex_state::LOG_WRITE_ENTRIES_METRIC, "histogram"),
-            (codex_state::LOG_WRITE_MAX_ENTRY_BYTES_METRIC, "histogram"),
+            (genex_state::LOG_WRITE_METRIC, "sum"),
+            (genex_state::LOG_WRITE_DURATION_METRIC, "histogram"),
+            (genex_state::LOG_WRITE_BYTES_METRIC, "histogram"),
+            (genex_state::LOG_WRITE_ENTRIES_METRIC, "histogram"),
+            (genex_state::LOG_WRITE_MAX_ENTRY_BYTES_METRIC, "histogram"),
         ];
         let payloads = requests
             .iter()
@@ -197,8 +197,8 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
 
                 if matches!(
                     name,
-                    codex_state::LOG_WRITE_BYTES_METRIC
-                        | codex_state::LOG_WRITE_MAX_ENTRY_BYTES_METRIC
+                    genex_state::LOG_WRITE_BYTES_METRIC
+                        | genex_state::LOG_WRITE_MAX_ENTRY_BYTES_METRIC
                 ) {
                     let bounds = point["explicitBounds"]
                         .as_array()
@@ -209,7 +209,7 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
             }
         }
 
-        let write_count = observed_metrics[codex_state::LOG_WRITE_METRIC].0;
+        let write_count = observed_metrics[genex_state::LOG_WRITE_METRIC].0;
         assert!(write_count > 0, "at least one SQLite batch must be written");
         for (name, _) in expected_metrics {
             assert_eq!(
@@ -218,20 +218,20 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
             );
         }
 
-        let state = codex_state::StateRuntime::init(
-            codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        let state = genex_state::StateRuntime::init(
+            genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
             "test-provider".to_string(),
         )
         .await?;
-        let persisted_logs = state.query_logs(&codex_state::LogQuery::default()).await?;
+        let persisted_logs = state.query_logs(&genex_state::LogQuery::default()).await?;
         assert_eq!(
-            observed_metrics[codex_state::LOG_WRITE_ENTRIES_METRIC].1,
+            observed_metrics[genex_state::LOG_WRITE_ENTRIES_METRIC].1,
             persisted_logs.len() as f64,
             "exported batch sizes must equal the number of persisted SQLite log rows"
         );
         assert!(
-            observed_metrics[codex_state::LOG_WRITE_BYTES_METRIC].1
-                >= observed_metrics[codex_state::LOG_WRITE_MAX_ENTRY_BYTES_METRIC].1,
+            observed_metrics[genex_state::LOG_WRITE_BYTES_METRIC].1
+                >= observed_metrics[genex_state::LOG_WRITE_MAX_ENTRY_BYTES_METRIC].1,
             "each batch's largest entry cannot exceed the total batch size"
         );
     }
@@ -245,7 +245,7 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
 #[test_case("14"; "unavailable")]
 #[tokio::test]
 async fn sqlite_log_metrics_grpc_exports_do_not_create_log_cycles(grpc_status: &str) -> Result<()> {
-    let quiet_period = codex_state::log_db::LogSinkQueueConfig::default().flush_interval
+    let quiet_period = genex_state::log_db::LogSinkQueueConfig::default().flush_interval
         + Duration::from_millis(600);
     let export_timeout = quiet_period * 3;
     let (export_count, mut exports) = watch::channel(/*init*/ 0_usize);
@@ -264,7 +264,7 @@ async fn sqlite_log_metrics_grpc_exports_do_not_create_log_cycles(grpc_status: &
             "/opentelemetry.proto.collector.metrics.v1.MetricsService/Export",
         ))
         .respond_with(move |request: &wiremock::Request| {
-            let metric_name = codex_state::LOG_WRITE_METRIC.as_bytes();
+            let metric_name = genex_state::LOG_WRITE_METRIC.as_bytes();
             if request
                 .body
                 .windows(metric_name.len())
@@ -383,7 +383,7 @@ async fn app_server_emits_structured_tool_call_timing_event() -> Result<()> {
 
     let mut app_server = TestAppServer::builder()
         .with_codex_home(codex_home.path())
-        .with_json_logging("warn,codex_core::tools::parallel=info")
+        .with_json_logging("warn,genex_core::tools::parallel=info")
         .build_initialized()
         .await?;
 
@@ -468,7 +468,7 @@ async fn app_server_emits_structured_tool_call_timing_event() -> Result<()> {
                 "tool_source": "direct",
                 "execution_started": true,
             },
-            "target": "codex_core::tools::parallel",
+            "target": "genex_core::tools::parallel",
         })
     );
 

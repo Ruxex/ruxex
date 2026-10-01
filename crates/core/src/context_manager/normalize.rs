@@ -1,12 +1,12 @@
-use codex_context_fragments::set_annotated_content;
-use codex_context_fragments::to_annotated_content;
-use codex_history::ResponseItemEnvelope;
-use codex_protocol::ResponseItemId;
-use codex_protocol::model_types::InputModality;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::FunctionCallOutputContentItem;
-use codex_protocol::models::FunctionCallOutputPayload;
-use codex_protocol::models::ResponseItem;
+use genex_context_fragments::set_annotated_content;
+use genex_context_fragments::to_annotated_content;
+use genex_history::ResponseItemEnvelope;
+use genex_protocol::ResponseItemId;
+use genex_protocol::model_types::InputModality;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::FunctionCallOutputContentItem;
+use genex_protocol::models::FunctionCallOutputPayload;
+use genex_protocol::models::ResponseItem;
 use std::collections::HashSet;
 use uuid::Uuid;
 

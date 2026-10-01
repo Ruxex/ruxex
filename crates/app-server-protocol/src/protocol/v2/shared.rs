@@ -1,11 +1,11 @@
 use crate::JsonSchema;
 use crate::TS;
-use codex_experimental_api_macros::ExperimentalApi;
-use codex_protocol::config_types::SandboxMode as CoreSandboxMode;
-use codex_protocol::protocol::AskForApproval as CoreAskForApproval;
-use codex_protocol::protocol::CodexErrorInfo as CoreCodexErrorInfo;
-use codex_protocol::protocol::GranularApprovalConfig as CoreGranularApprovalConfig;
-use codex_protocol::protocol::NonSteerableTurnKind as CoreNonSteerableTurnKind;
+use genex_experimental_api_macros::ExperimentalApi;
+use genex_protocol::config_types::SandboxMode as CoreSandboxMode;
+use genex_protocol::protocol::AskForApproval as CoreAskForApproval;
+use genex_protocol::protocol::CodexErrorInfo as CoreCodexErrorInfo;
+use genex_protocol::protocol::GranularApprovalConfig as CoreGranularApprovalConfig;
+use genex_protocol::protocol::NonSteerableTurnKind as CoreNonSteerableTurnKind;
 use serde::Deserialize;
 use serde::Serialize;
 

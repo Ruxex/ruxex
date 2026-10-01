@@ -1,17 +1,17 @@
-use codex_core::config::Config;
-use codex_core::config::ConfigBuilder;
-use codex_exec_server::EnvironmentManager;
-use codex_exec_server::ExecutorCapabilityDiscoveryCache;
-use codex_exec_server::LOCAL_ENVIRONMENT_ID;
-use codex_extension_api::ExtensionData;
-use codex_extension_api::ExtensionDataInit;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_extension_api::McpServerContribution;
-use codex_extension_api::McpServerContributionContext;
-use codex_features::Feature;
-use codex_protocol::capabilities::CapabilityRootLocation;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_utils_path_uri::PathUri;
+use genex_core::config::Config;
+use genex_core::config::ConfigBuilder;
+use genex_exec_server::EnvironmentManager;
+use genex_exec_server::ExecutorCapabilityDiscoveryCache;
+use genex_exec_server::LOCAL_ENVIRONMENT_ID;
+use genex_extension_api::ExtensionData;
+use genex_extension_api::ExtensionDataInit;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_extension_api::McpServerContribution;
+use genex_extension_api::McpServerContributionContext;
+use genex_features::Feature;
+use genex_protocol::capabilities::CapabilityRootLocation;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
 
@@ -75,7 +75,7 @@ async fn raw_selected_plugin_contributions(
 ) -> Result<Vec<McpServerContribution>, Box<dyn std::error::Error>> {
     let mut builder = ExtensionRegistryBuilder::new();
     let environment_manager = Arc::new(EnvironmentManager::default_for_tests());
-    codex_mcp_extension::install_executor_plugins(&mut builder, Arc::clone(&environment_manager));
+    genex_mcp_extension::install_executor_plugins(&mut builder, Arc::clone(&environment_manager));
     let registry = builder.build();
     let thread_init = ExtensionDataInit::new();
     let selected_capability_roots = vec![SelectedCapabilityRoot {

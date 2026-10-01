@@ -17,71 +17,71 @@ use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::rollout_path;
 use app_test_support::write_api_key_auth;
 use axum::Router;
-use codex_app_server::in_process;
-use codex_app_server::in_process::InProcessServerEvent;
-use codex_app_server::in_process::InProcessStartArgs;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::GitInfo;
-use codex_app_server_protocol::InitializeCapabilities;
-use codex_app_server_protocol::InitializeParams;
-use codex_app_server_protocol::McpResourceContent;
-use codex_app_server_protocol::McpResourceReadParams;
-use codex_app_server_protocol::McpResourceReadResponse;
-use codex_app_server_protocol::McpServerToolCallParams;
-use codex_app_server_protocol::McpServerToolCallResponse;
-use codex_app_server_protocol::ProjectCreateParams;
-use codex_app_server_protocol::ProjectCreateResponse;
-use codex_app_server_protocol::ProjectDeleteParams;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ThreadArchiveParams;
-use codex_app_server_protocol::ThreadDeleteParams;
-use codex_app_server_protocol::ThreadLoadedListParams;
-use codex_app_server_protocol::ThreadLoadedListResponse;
-use codex_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
-use codex_app_server_protocol::ThreadMetadataUpdateParams;
-use codex_app_server_protocol::ThreadMetadataUpdateResponse;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadReadResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadSection;
-use codex_app_server_protocol::ThreadSectionMoveParams;
-use codex_app_server_protocol::ThreadSectionMoveResponse;
-use codex_app_server_protocol::ThreadSetNameParams;
-use codex_app_server_protocol::ThreadSetNameResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput;
-use codex_arg0::Arg0DispatchPaths;
-use codex_config::CloudConfigBundleLoader;
-use codex_config::LoaderOverrides;
-use codex_config::ThreadConfigContext;
-use codex_config::ThreadConfigLoader;
-use codex_config::ThreadConfigLoaderFuture;
-use codex_config::ThreadConfigSource;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_core::ARCHIVED_SESSIONS_SUBDIR;
-use codex_core::config::ConfigBuilder;
-use codex_exec_server::EnvironmentManager;
-use codex_features::Feature;
-use codex_protocol::ThreadId;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::ThreadSettingsAppliedEvent;
-use codex_rollout::RolloutItem;
-use codex_rollout::RolloutRecorder;
-use codex_rollout::append_rollout_item_to_path;
-use codex_state::PINNED_THREAD_SECTION_ID;
-use codex_state::PINNED_THREAD_SECTION_NAME;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_app_server::in_process;
+use genex_app_server::in_process::InProcessServerEvent;
+use genex_app_server::in_process::InProcessStartArgs;
+use genex_app_server_protocol::ClientInfo;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::GitInfo;
+use genex_app_server_protocol::InitializeCapabilities;
+use genex_app_server_protocol::InitializeParams;
+use genex_app_server_protocol::McpResourceContent;
+use genex_app_server_protocol::McpResourceReadParams;
+use genex_app_server_protocol::McpResourceReadResponse;
+use genex_app_server_protocol::McpServerToolCallParams;
+use genex_app_server_protocol::McpServerToolCallResponse;
+use genex_app_server_protocol::ProjectCreateParams;
+use genex_app_server_protocol::ProjectCreateResponse;
+use genex_app_server_protocol::ProjectDeleteParams;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ThreadArchiveParams;
+use genex_app_server_protocol::ThreadDeleteParams;
+use genex_app_server_protocol::ThreadLoadedListParams;
+use genex_app_server_protocol::ThreadLoadedListResponse;
+use genex_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
+use genex_app_server_protocol::ThreadMetadataUpdateParams;
+use genex_app_server_protocol::ThreadMetadataUpdateResponse;
+use genex_app_server_protocol::ThreadReadParams;
+use genex_app_server_protocol::ThreadReadResponse;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadSection;
+use genex_app_server_protocol::ThreadSectionMoveParams;
+use genex_app_server_protocol::ThreadSectionMoveResponse;
+use genex_app_server_protocol::ThreadSetNameParams;
+use genex_app_server_protocol::ThreadSetNameResponse;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::UserInput;
+use genex_arg0::Arg0DispatchPaths;
+use genex_config::CloudConfigBundleLoader;
+use genex_config::LoaderOverrides;
+use genex_config::ThreadConfigContext;
+use genex_config::ThreadConfigLoader;
+use genex_config::ThreadConfigLoaderFuture;
+use genex_config::ThreadConfigSource;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_core::ARCHIVED_SESSIONS_SUBDIR;
+use genex_core::config::ConfigBuilder;
+use genex_exec_server::EnvironmentManager;
+use genex_features::Feature;
+use genex_protocol::ThreadId;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::ThreadSettingsAppliedEvent;
+use genex_rollout::RolloutItem;
+use genex_rollout::RolloutRecorder;
+use genex_rollout::append_rollout_item_to_path;
+use genex_state::PINNED_THREAD_SECTION_ID;
+use genex_state::PINNED_THREAD_SECTION_NAME;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::responses;
 use futures::poll;
 use pretty_assertions::assert_eq;
@@ -768,7 +768,7 @@ async fn mcp_resource_read_returns_error_for_unknown_thread() -> Result<()> {
     // in-process avoids child-process teardown timing in nextest leak detection.
     let client = start_resource_in_process_client(
         codex_home.path(),
-        Arc::new(codex_config::NoopThreadConfigLoader),
+        Arc::new(genex_config::NoopThreadConfigLoader),
     )
     .await?;
 
@@ -1023,7 +1023,7 @@ async fn resume_revalidates_persisted_thread_after_config_load(
         "Saved user message",
         Some("mock_provider"),
         matches!(mutation, ResumeMutation::GitMetadata).then(|| {
-            codex_protocol::protocol::GitInfo {
+            genex_protocol::protocol::GitInfo {
                 commit_hash: None,
                 branch: Some("feature/before-resume".to_string()),
                 repository_url: None,
@@ -1214,7 +1214,7 @@ async fn resume_revalidates_persisted_thread_after_config_load(
             // and shuts down; an in-memory response alone can hide stale writes.
             let reader = start_resource_in_process_client(
                 codex_home.path(),
-                Arc::new(codex_config::NoopThreadConfigLoader),
+                Arc::new(genex_config::NoopThreadConfigLoader),
             )
             .await?;
             let read_result = timeout(
@@ -1437,7 +1437,7 @@ async fn start_resource_in_process_client(
         .loader_overrides(loader_overrides.clone())
         .build()
         .await?;
-    let state_db = codex_rollout::state_db::try_init(&config).await?;
+    let state_db = genex_rollout::state_db::try_init(&config).await?;
     // Metadata, persistence, and HTTP MCP do not need local execution or shell startup.
     let environment_manager = Arc::new(EnvironmentManager::without_environments(
         config.http_client_factory(),

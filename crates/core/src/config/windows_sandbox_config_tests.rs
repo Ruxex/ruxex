@@ -1,7 +1,7 @@
 //! Preserve explicit Windows mode priority without persisting feature fallbacks.
 
 use super::*;
-use codex_config::ConfigRequirements;
+use genex_config::ConfigRequirements;
 use pretty_assertions::assert_eq;
 
 #[test]

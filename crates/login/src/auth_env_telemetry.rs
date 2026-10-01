@@ -1,5 +1,5 @@
-use codex_model_provider_info::ModelProviderInfo;
-use codex_otel::AuthEnvTelemetryMetadata;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_otel::AuthEnvTelemetryMetadata;
 
 use crate::CODEX_API_KEY_ENV_VAR;
 
@@ -45,7 +45,7 @@ fn env_var_present(name: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_model_provider_info::WireApi;
+    use genex_model_provider_info::WireApi;
     use pretty_assertions::assert_eq;
 
     #[test]

@@ -8,11 +8,11 @@ use crate::compact_remote_history::trim_function_call_history_to_fit_context_win
 use crate::responses_metadata::CompactionTurnMetadata;
 use crate::session::session::Session;
 use crate::session::step_context::StepContext;
-use codex_history::CodexHarnessMetadata;
-use codex_protocol::error::Result as CodexResult;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::TokenUsage;
-use codex_rollout_trace::CompactionTraceContext;
+use genex_history::CodexHarnessMetadata;
+use genex_protocol::error::Result as CodexResult;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::TokenUsage;
+use genex_rollout_trace::CompactionTraceContext;
 use tracing::info;
 
 pub(super) struct RemoteCompactV2Attempt {

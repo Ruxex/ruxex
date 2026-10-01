@@ -1,5 +1,5 @@
 use super::ContextualUserFragment;
-use codex_protocol::models::ContentItemKind;
+use genex_protocol::models::ContentItemKind;
 
 pub(crate) const APPROVED_COMMAND_PREFIX_SAVED_MESSAGE_PREFIX: &str =
     "Approved command prefix saved:";

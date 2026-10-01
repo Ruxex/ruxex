@@ -1,14 +1,14 @@
-use codex_network_proxy::ManagedNetworkSandboxContext;
-use codex_network_proxy::NetworkProxy;
-use codex_network_proxy::PROXY_URL_ENV_KEYS;
-use codex_network_proxy::has_proxy_url_env_vars;
-use codex_network_proxy::proxy_url_env_value;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::permissions::PROTECTED_METADATA_PATH_NAMES;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::WritableRoot;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_network_proxy::ManagedNetworkSandboxContext;
+use genex_network_proxy::NetworkProxy;
+use genex_network_proxy::PROXY_URL_ENV_KEYS;
+use genex_network_proxy::has_proxy_url_env_vars;
+use genex_network_proxy::proxy_url_env_value;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::permissions::PROTECTED_METADATA_PATH_NAMES;
+use genex_protocol::protocol::SandboxPolicy;
+use genex_protocol::protocol::WritableRoot;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::collections::HashMap;
@@ -1043,7 +1043,7 @@ pub(crate) fn create_seatbelt_command_args_with_profile(
     // Network grants and Unix-socket allowlists must never reopen the
     // privileged app-server RPC transport to filesystem-restricted commands.
     if !file_system_sandbox_policy.has_full_disk_write_access() {
-        let directory = codex_uds::shared_daemon_socket_directory()
+        let directory = genex_uds::shared_daemon_socket_directory()
             .map_err(|error| SeatbeltPreparationError::FileSystem(error.to_string()))?;
         let directory = serde_json::to_string(&directory.to_string_lossy())
             .map_err(|error| SeatbeltPreparationError::FileSystem(error.to_string()))?;

@@ -1,4 +1,4 @@
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_utils_absolute_path::test_support::PathExt;
 use std::fs;
 use std::fs::FileTimes;
 #[cfg(unix)]
@@ -6,13 +6,13 @@ use std::os::unix::fs::PermissionsExt;
 use std::time::Duration;
 use std::time::SystemTime;
 
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::HistoryPosition;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::UserMessageEvent;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::HistoryPosition;
+use genex_protocol::protocol::SessionMeta;
+use genex_protocol::protocol::SessionMetaLine;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::UserMessageEvent;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use uuid::Uuid;
@@ -396,7 +396,7 @@ async fn resume_materializes_compressed_rollout_path() -> anyhow::Result<()> {
     let home = TempDir::new()?;
     let config = RolloutConfig {
         codex_home: home.path().to_path_buf(),
-        sqlite: codex_state::SqliteConfig::new_for_testing(home.path().abs()),
+        sqlite: genex_state::SqliteConfig::new_for_testing(home.path().abs()),
         cwd: home.path().to_path_buf(),
         model_provider_id: "test-provider".to_string(),
     };
@@ -693,7 +693,7 @@ fn write_rollout(path: &std::path::Path, thread_id: ThreadId, message: &str) -> 
             base_instructions: None,
             dynamic_tools: None,
             selected_capability_roots: Vec::new(),
-            history_mode: codex_protocol::protocol::ThreadHistoryMode::Paginated,
+            history_mode: genex_protocol::protocol::ThreadHistoryMode::Paginated,
             history_base: None,
             subagent_history_start_ordinal: None,
             multi_agent_version: None,

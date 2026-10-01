@@ -1,7 +1,7 @@
 use anyhow::Result;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::models::ConfigurationReasoning;
-use codex_protocol::protocol::ThreadSettingsSnapshot;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::models::ConfigurationReasoning;
+use genex_protocol::protocol::ThreadSettingsSnapshot;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
@@ -12,7 +12,7 @@ fn thread_settings_snapshot(disabled_plugin_ids: Vec<String>) -> Result<ThreadSe
         "model": "gpt-5",
         "model_provider_id": "provider",
         "approval_policy": "never",
-        "permission_profile": codex_protocol::models::PermissionProfile::read_only(),
+        "permission_profile": genex_protocol::models::PermissionProfile::read_only(),
         "cwd": std::env::current_dir()?,
         "collaboration_mode": {
             "mode": "default",
@@ -34,7 +34,7 @@ fn latest_disabled_plugin_ids_preserves_owned_updates_and_clears() -> Result<()>
     let cleared = thread_settings_snapshot(Vec::new())?;
     let item = |thread_id, thread_settings| {
         RolloutItem::EventMsg(EventMsg::ThreadSettingsApplied(
-            codex_protocol::protocol::ThreadSettingsAppliedEvent {
+            genex_protocol::protocol::ThreadSettingsAppliedEvent {
                 thread_id,
                 thread_settings,
             },
@@ -90,7 +90,7 @@ fn latest_disabled_plugin_ids_falls_back_only_to_latest_turn_context() -> Result
     );
 
     history.push(RolloutItem::EventMsg(EventMsg::ThreadSettingsApplied(
-        codex_protocol::protocol::ThreadSettingsAppliedEvent {
+        genex_protocol::protocol::ThreadSettingsAppliedEvent {
             thread_id: Some(ThreadId::new()),
             thread_settings: thread_settings_snapshot(Vec::new())?,
         },

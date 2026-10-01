@@ -800,7 +800,7 @@ STATIC = "yes"
         .expect("mcp servers");
     let _supported_mcp_config: std::collections::HashMap<
         String,
-        codex_config::types::McpServerConfig,
+        genex_config::types::McpServerConfig,
     > = mcp_servers
         .try_into()
         .expect("migrated MCP config should be supported");
@@ -809,7 +809,7 @@ STATIC = "yes"
         &fs::read_to_string(repo_root.join(".codex").join("hooks.json")).expect("read hooks"),
     )
     .expect("parse hooks");
-    let _supported_hooks: codex_config::HooksFile =
+    let _supported_hooks: genex_config::HooksFile =
         serde_json::from_value(hooks.clone()).expect("migrated hooks should be supported");
     assert_eq!(
         hooks,

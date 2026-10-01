@@ -1,22 +1,22 @@
 #![allow(clippy::unwrap_used)]
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_utils_absolute_path::test_support::PathExt;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 
 use chrono::Utc;
-use codex_core::RolloutRecorder;
-use codex_core::RolloutRecorderParams;
-use codex_core::config::ConfigBuilder;
-use codex_core::find_archived_thread_path_by_id_str;
-use codex_core::find_thread_path_by_id_str;
-use codex_protocol::ThreadId;
-use codex_protocol::models::BaseInstructions;
-use codex_protocol::protocol::SessionSource;
-use codex_rollout::find_thread_meta_by_name_str;
-use codex_rollout::StateDbHandle;
-use codex_state::StateRuntime;
-use codex_state::ThreadMetadataBuilder;
+use genex_core::RolloutRecorder;
+use genex_core::RolloutRecorderParams;
+use genex_core::config::ConfigBuilder;
+use genex_core::find_archived_thread_path_by_id_str;
+use genex_core::find_thread_path_by_id_str;
+use genex_protocol::ThreadId;
+use genex_protocol::models::BaseInstructions;
+use genex_protocol::protocol::SessionSource;
+use genex_rollout::find_thread_meta_by_name_str;
+use genex_rollout::StateDbHandle;
+use genex_state::StateRuntime;
+use genex_state::ThreadMetadataBuilder;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use uuid::Uuid;
@@ -68,7 +68,7 @@ async fn upsert_thread_metadata(
     rollout_path: PathBuf,
 ) -> StateDbHandle {
     let runtime = StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.abs()),
+        genex_state::SqliteConfig::new_for_testing(codex_home.abs()),
         "test-provider".to_string(),
     )
     .await

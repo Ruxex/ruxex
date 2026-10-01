@@ -8,17 +8,17 @@ use chrono::DateTime;
 use chrono::NaiveDateTime;
 use chrono::Timelike;
 use chrono::Utc;
-use codex_protocol::SanitizedGitUrl;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::GitInfo;
-use codex_protocol::protocol::HistoryPosition;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_state::BackfillStatus;
-use codex_state::ThreadMetadataBuilder;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_protocol::SanitizedGitUrl;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::GitInfo;
+use genex_protocol::protocol::HistoryPosition;
+use genex_protocol::protocol::SessionMeta;
+use genex_protocol::protocol::SessionMetaLine;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_state::BackfillStatus;
+use genex_state::ThreadMetadataBuilder;
+use genex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 use std::fs::File;
 use std::io::Write;
@@ -261,8 +261,8 @@ async fn backfill_sessions_resumes_from_watermark_and_marks_complete() {
         /*git*/ None,
     );
 
-    let runtime = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
+    let runtime = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
         "test-provider".to_string(),
     )
     .await
@@ -323,7 +323,7 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
         "2026-01-27T12:34:56Z",
         thread_uuid,
         Some(GitInfo {
-            commit_hash: Some(codex_git_utils::GitSha::new("rollout-sha")),
+            commit_hash: Some(genex_git_utils::GitSha::new("rollout-sha")),
             branch: Some("rollout-branch".to_string()),
             repository_url: Some(
                 SanitizedGitUrl::try_from("git@example.com:codex/codex.git")
@@ -332,8 +332,8 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
         }),
     );
 
-    let runtime = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
+    let runtime = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
         "test-provider".to_string(),
     )
     .await
@@ -382,8 +382,8 @@ async fn backfill_sessions_normalizes_cwd_before_upsert() {
         ThreadHistoryMode::Paginated,
     );
 
-    let runtime = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
+    let runtime = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
         "test-provider".to_string(),
     )
     .await

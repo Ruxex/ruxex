@@ -2,9 +2,9 @@ use std::sync::Arc;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
-use codex_exec_server::LOCAL_FS;
-use codex_protocol::protocol::SkillScope;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_exec_server::LOCAL_FS;
+use genex_protocol::protocol::SkillScope;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use tokio::sync::Semaphore;
 

@@ -1,14 +1,14 @@
 use anyhow::Context;
 use anyhow::Result;
-use codex_core::EnvironmentConfig;
-use codex_exec_server::CreateDirectoryOptions;
-use codex_exec_server::RemoveOptions;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::PermissionProfileSnapshot;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_core::EnvironmentConfig;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_exec_server::RemoveOptions;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfileSnapshot;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 #[cfg(windows)]
 use core_test_support::PathExt;
 use core_test_support::TestTargetOs;

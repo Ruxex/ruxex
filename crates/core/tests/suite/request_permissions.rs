@@ -2,34 +2,34 @@
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_core::TurnInputRequest;
-use codex_core::config::Constrained;
-use codex_core::sandboxing::SandboxPermissions;
-use codex_features::Feature;
-use codex_protocol::config_types::ApprovalsReviewer;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::models::AdditionalPermissionProfile as PermissionProfile;
-use codex_protocol::models::FileSystemPermissions;
-use codex_protocol::models::PermissionProfile as CorePermissionProfile;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecApprovalRequestEvent;
-use codex_protocol::protocol::GranularApprovalConfig;
-use codex_protocol::protocol::GuardianAssessmentStatus;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::request_permissions::PermissionGrantScope;
-use codex_protocol::request_permissions::RequestPermissionProfile;
-use codex_protocol::request_permissions::RequestPermissionsResponse;
-use codex_protocol::user_input::UserInput;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_core::TurnInputRequest;
+use genex_core::config::Constrained;
+use genex_core::sandboxing::SandboxPermissions;
+use genex_features::Feature;
+use genex_protocol::config_types::ApprovalsReviewer;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::models::AdditionalPermissionProfile as PermissionProfile;
+use genex_protocol::models::FileSystemPermissions;
+use genex_protocol::models::PermissionProfile as CorePermissionProfile;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecApprovalRequestEvent;
+use genex_protocol::protocol::GranularApprovalConfig;
+use genex_protocol::protocol::GuardianAssessmentStatus;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ReviewDecision;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::request_permissions::PermissionGrantScope;
+use genex_protocol::request_permissions::RequestPermissionProfile;
+use genex_protocol::request_permissions::RequestPermissionsResponse;
+use genex_protocol::user_input::UserInput;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use core_test_support::responses::ev_apply_patch_custom_tool_call;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -1706,7 +1706,7 @@ async fn partial_request_permissions_grants_do_not_preapprove_new_permissions() 
     let approval_file_system = approval_permissions
         .file_system
         .expect("expected filesystem permissions");
-    let codex_protocol::models::LegacyReadWriteRoots {
+    let genex_protocol::models::LegacyReadWriteRoots {
         read: approval_reads,
         write: approval_writes,
     } = approval_file_system
@@ -1717,7 +1717,7 @@ async fn partial_request_permissions_grants_do_not_preapprove_new_permissions() 
     let mut approval_writes = approval_writes.unwrap_or_default();
     approval_writes.sort_by_key(|path| path.display().to_string());
 
-    let codex_protocol::models::LegacyReadWriteRoots {
+    let genex_protocol::models::LegacyReadWriteRoots {
         write: expected_writes,
         ..
     } = merged_permissions

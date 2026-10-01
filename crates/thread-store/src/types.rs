@@ -3,26 +3,26 @@ use std::sync::Arc;
 
 use chrono::DateTime;
 use chrono::Utc;
-use codex_app_server_protocol::CodexErrorInfo;
-use codex_app_server_protocol::ThreadTimelineEntry;
-use codex_protocol::SanitizedGitUrl;
-use codex_protocol::SessionId;
-use codex_protocol::ThreadId;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_protocol::dynamic_tools::DynamicToolSpec;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::models::BaseInstructions;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::GitInfo;
-use codex_protocol::protocol::HistoryPosition;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadSource;
-use codex_protocol::protocol::TokenUsage;
-use codex_rollout::RolloutItem;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_app_server_protocol::CodexErrorInfo;
+use genex_app_server_protocol::ThreadTimelineEntry;
+use genex_protocol::SanitizedGitUrl;
+use genex_protocol::SessionId;
+use genex_protocol::ThreadId;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_protocol::dynamic_tools::DynamicToolSpec;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::models::BaseInstructions;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::GitInfo;
+use genex_protocol::protocol::HistoryPosition;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::ThreadSource;
+use genex_protocol::protocol::TokenUsage;
+use genex_rollout::RolloutItem;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
@@ -604,7 +604,7 @@ pub struct StoredThread {
     /// Thread archive timestamp, if archived.
     pub archived_at: Option<DateTime<Utc>>,
     /// The user-selected section for this thread, if any.
-    pub section: Option<codex_state::ThreadSection>,
+    pub section: Option<genex_state::ThreadSection>,
     /// The server-owned ordering position within the thread's section.
     #[serde(default)]
     pub section_position: Option<i64>,
@@ -1084,8 +1084,8 @@ mod tests {
     }
 
     fn session_meta(history_mode: ThreadHistoryMode) -> RolloutItem {
-        RolloutItem::SessionMeta(codex_protocol::protocol::SessionMetaLine {
-            meta: codex_protocol::protocol::SessionMeta {
+        RolloutItem::SessionMeta(genex_protocol::protocol::SessionMetaLine {
+            meta: genex_protocol::protocol::SessionMeta {
                 history_mode,
                 ..Default::default()
             },

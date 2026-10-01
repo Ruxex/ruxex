@@ -6,43 +6,43 @@ use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::create_mock_responses_server_sequence;
 use app_test_support::create_request_user_input_sse_response;
 use app_test_support::write_models_cache_with_models;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::InitializeCapabilities;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SortDirection;
-use codex_app_server_protocol::ThreadForkParams;
-use codex_app_server_protocol::ThreadForkResponse;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_app_server_protocol::ThreadItemsListParams;
-use codex_app_server_protocol::ThreadItemsListResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadRevertParams;
-use codex_app_server_protocol::ThreadRevertResponse;
-use codex_app_server_protocol::ThreadRevertedNotification;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadTurnsListParams;
-use codex_app_server_protocol::ThreadTurnsListResponse;
-use codex_app_server_protocol::TurnCompletedNotification;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput;
-use codex_features::Feature;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_rollout::RolloutItem;
-use codex_rollout::read_session_meta_line;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_app_server_protocol::AskForApproval;
+use genex_app_server_protocol::ClientInfo;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::InitializeCapabilities;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SortDirection;
+use genex_app_server_protocol::ThreadForkParams;
+use genex_app_server_protocol::ThreadForkResponse;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_app_server_protocol::ThreadItemsListParams;
+use genex_app_server_protocol::ThreadItemsListResponse;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadRevertParams;
+use genex_app_server_protocol::ThreadRevertResponse;
+use genex_app_server_protocol::ThreadRevertedNotification;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::ThreadTurnsListParams;
+use genex_app_server_protocol::ThreadTurnsListResponse;
+use genex_app_server_protocol::TurnCompletedNotification;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::UserInput;
+use genex_features::Feature;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_rollout::RolloutItem;
+use genex_rollout::read_session_meta_line;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::load_default_config_for_test;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -61,7 +61,7 @@ async fn thread_revert_preserves_model_selected_multi_agent_version(restart: boo
         .disable_feature(Feature::MultiAgentV2)
         .write(codex_home.path())?;
     let config = load_default_config_for_test(&codex_home).await;
-    let mut model = codex_core::test_support::construct_model_info_offline("mock-model", &config);
+    let mut model = genex_core::test_support::construct_model_info_offline("mock-model", &config);
     model.multi_agent_version = Some(MultiAgentVersion::V2);
     write_models_cache_with_models(codex_home.path(), vec![model]).await?;
     let mut mcp = TestAppServer::builder()
@@ -213,7 +213,7 @@ async fn thread_revert_preserves_fork_cutoff_after_cold_resume() -> Result<()> {
     let inherited_revert_cutoff =
         std::fs::read_to_string(parent.path.as_ref().expect("parent rollout"))?
             .lines()
-            .map(codex_rollout::parse_rollout_line)
+            .map(genex_rollout::parse_rollout_line)
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
             .find_map(|line| match line.item {

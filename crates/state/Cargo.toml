@@ -1,5 +1,5 @@
 [package]
-name = "codex-state"
+name = "genex-state"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -7,9 +7,9 @@ license.workspace = true
 [dependencies]
 anyhow = { workspace = true }
 chrono = { workspace = true }
-codex-history = { workspace = true }
-codex-protocol = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
+genex-history = { workspace = true }
+genex-protocol = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
 libsqlite3-sys = { workspace = true }
 log = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
@@ -22,7 +22,7 @@ tracing-subscriber = { workspace = true }
 uuid = { workspace = true }
 
 [dev-dependencies]
-codex-git-utils = { workspace = true }
+genex-git-utils = { workspace = true }
 pretty_assertions = { workspace = true }
 scopeguard = { workspace = true }
 

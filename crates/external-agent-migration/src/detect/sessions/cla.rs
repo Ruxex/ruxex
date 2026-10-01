@@ -64,7 +64,7 @@ pub(crate) fn detect_recent_cla_sessions_with_limits(
 mod tests {
     use super::*;
     use crate::sessions::ledger::record_imported_session;
-    use codex_protocol::ThreadId;
+    use genex_protocol::ThreadId;
     use serde_json::Value as JsonValue;
     use std::fs::FileTimes;
     use std::fs::OpenOptions;

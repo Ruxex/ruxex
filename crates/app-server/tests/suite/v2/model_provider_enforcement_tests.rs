@@ -3,31 +3,31 @@
 use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
-use codex_app_server::in_process;
-use codex_app_server::in_process::InProcessServerEvent;
-use codex_app_server::in_process::InProcessStartArgs;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::InitializeParams;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ThreadQueueAddParams;
-use codex_app_server_protocol::ThreadQueueAddResponse;
-use codex_app_server_protocol::ThreadQueueListParams;
-use codex_app_server_protocol::ThreadQueueListResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::UserInput;
-use codex_arg0::Arg0DispatchPaths;
-use codex_config::CloudConfigBundleLoader;
-use codex_config::LoaderOverrides;
-use codex_config::NoopThreadConfigLoader;
-use codex_core::config::ConfigBuilder;
-use codex_exec_server::EnvironmentManager;
-use codex_protocol::protocol::SessionSource;
+use genex_app_server::in_process;
+use genex_app_server::in_process::InProcessServerEvent;
+use genex_app_server::in_process::InProcessStartArgs;
+use genex_app_server_protocol::ClientInfo;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::InitializeParams;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ThreadQueueAddParams;
+use genex_app_server_protocol::ThreadQueueAddResponse;
+use genex_app_server_protocol::ThreadQueueListParams;
+use genex_app_server_protocol::ThreadQueueListResponse;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::UserInput;
+use genex_arg0::Arg0DispatchPaths;
+use genex_config::CloudConfigBundleLoader;
+use genex_config::LoaderOverrides;
+use genex_config::NoopThreadConfigLoader;
+use genex_core::config::ConfigBuilder;
+use genex_exec_server::EnvironmentManager;
+use genex_protocol::protocol::SessionSource;
 use core_test_support::responses;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
@@ -63,7 +63,7 @@ async fn provider_requirement_changes_reject_inputs_to_existing_threads(
     let other = MockServer::builder().start().await;
     let home = TempDir::new()?;
     MockResponsesConfig::new(gateway.uri())
-        .enable_feature(codex_features::Feature::Goals)
+        .enable_feature(genex_features::Feature::Goals)
         .write(home.path())?;
     let requirements = format!(
         r#"
@@ -119,7 +119,7 @@ base_url = "{}/v1"
             })),
         )
         .await?;
-    let _: codex_app_server_protocol::ThreadGoalSetResponse = server.read_response(id).await?;
+    let _: genex_app_server_protocol::ThreadGoalSetResponse = server.read_response(id).await?;
 
     let updated = if required_selection == "other" {
         requirements.replace("model_provider = \"gateway\"", "model_provider = \"other\"")
@@ -167,7 +167,7 @@ base_url = "{}/v1"
             Some(json!({"threadId": started.thread.id})),
         )
         .await?;
-    let goal: codex_app_server_protocol::ThreadGoalGetResponse = server.read_response(id).await?;
+    let goal: genex_app_server_protocol::ThreadGoalGetResponse = server.read_response(id).await?;
     assert_eq!(goal.goal.expect("existing goal").objective, "Original goal");
     let id = server
         .send_raw_request(
@@ -175,14 +175,14 @@ base_url = "{}/v1"
             Some(json!({"threadId": started.thread.id, "status": "paused"})),
         )
         .await?;
-    let _: codex_app_server_protocol::ThreadGoalSetResponse = server.read_response(id).await?;
+    let _: genex_app_server_protocol::ThreadGoalSetResponse = server.read_response(id).await?;
     let id = server
         .send_raw_request(
             "thread/goal/clear",
             Some(json!({"threadId": started.thread.id})),
         )
         .await?;
-    let _: codex_app_server_protocol::ThreadGoalClearResponse = server.read_response(id).await?;
+    let _: genex_app_server_protocol::ThreadGoalClearResponse = server.read_response(id).await?;
     let id = server
         .send_raw_request(
             "thread/queue/start",
@@ -221,7 +221,7 @@ base_url = "{}/v1"
             })),
         )
         .await?;
-    let _: codex_app_server_protocol::ThreadQueueDeleteResponse = server.read_response(id).await?;
+    let _: genex_app_server_protocol::ThreadQueueDeleteResponse = server.read_response(id).await?;
     release_response.send(()).expect("release active response");
     timeout(
         wait,

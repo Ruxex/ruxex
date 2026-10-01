@@ -4,9 +4,9 @@
 
 **Goal:** Remove provider-specific response-error headers and identity diagnostics while retaining provider-neutral request-ID, edge-diagnostic, error-redaction, and telemetry behavior.
 
-**Architecture:** Keep `codex-response-debug-context` as a small provider-neutral diagnostic helper used by `codex-core` and `codex-model-provider`. Remove its provider-specific header parsing and the corresponding identity-error fields from the API/protocol error path; preserve ordinary HTTP status, request ID, `cf-ray`, authorization recovery, and bounded telemetry messages.
+**Architecture:** Keep `genex-response-debug-context` as a small provider-neutral diagnostic helper used by `genex-core` and `genex-model-provider`. Remove its provider-specific header parsing and the corresponding identity-error fields from the API/protocol error path; preserve ordinary HTTP status, request ID, `cf-ray`, authorization recovery, and bounded telemetry messages.
 
-**Tech Stack:** Rust workspace, `codex-api`, `codex-protocol`, `codex-core`, `codex-model-provider`, `codex-otel`, `just check`, dependency-graph generation.
+**Tech Stack:** Rust workspace, `genex-api`, `genex-protocol`, `genex-core`, `genex-model-provider`, `genex-otel`, `just check`, dependency-graph generation.
 
 **Spec:** `docs/provider-decoupling-plan.md` and `docs/pre-release-compatibility-inventory.md`
 
@@ -32,7 +32,7 @@
 - Modify: `docs/pre-release-compatibility-inventory.md`
 - Modify: `docs/provider-decoupling-plan.md`
 - Modify: `crates/response-debug-context/src/lib.rs`
-- Inspect: `crates/codex-api/src/api_bridge.rs`, `crates/protocol/src/error.rs`, `crates/core/src/client.rs`, `crates/model-provider/src/models_endpoint.rs`, and `crates/otel/src/events/session_telemetry.rs`
+- Inspect: `crates/genex-api/src/api_bridge.rs`, `crates/protocol/src/error.rs`, `crates/core/src/client.rs`, `crates/model-provider/src/models_endpoint.rs`, and `crates/otel/src/events/session_telemetry.rs`
 
 **Interfaces:**
 - Consumes: current `TransportError::Http` headers and `ApiError` mapping.
@@ -45,8 +45,8 @@ rg -n 'x-provider-authorization-error|x-error-json|x-oai-request-id|identity_aut
 rg -n 'extract_response_debug_context|ResponseDebugContext|telemetry_api_error_message|telemetry_transport_error_message' crates --glob '*.rs'
 ```
 
-- [x] Record the current producers and consumers in the inventory: `codex-api` produces the header-derived error fields; `codex-response-debug-context`, `codex-core`, `codex-model-provider`, `codex-otel`, `codex-protocol`, and fixtures consume them. Record the canonical replacement as request-ID/`cf-ray` diagnostics plus provider-owned recovery policy.
-- [x] Keep `codex-response-debug-context` classified as `migrate-in-place`; classify the provider header constants and identity-error fields as `remove`.
+- [x] Record the current producers and consumers in the inventory: `genex-api` produces the header-derived error fields; `genex-response-debug-context`, `genex-core`, `genex-model-provider`, `genex-otel`, `genex-protocol`, and fixtures consume them. Record the canonical replacement as request-ID/`cf-ray` diagnostics plus provider-owned recovery policy.
+- [x] Keep `genex-response-debug-context` classified as `migrate-in-place`; classify the provider header constants and identity-error fields as `remove`.
 
 ### Task 2: Make response diagnostics provider-neutral
 
@@ -68,8 +68,8 @@ rg -n 'extract_response_debug_context|ResponseDebugContext|telemetry_api_error_m
 ### Task 3: Remove the obsolete protocol/API identity diagnostics
 
 **Files:**
-- Modify: `crates/codex-api/src/api_bridge.rs`
-- Modify: `crates/codex-api/src/api_bridge_tests.rs`
+- Modify: `crates/genex-api/src/api_bridge.rs`
+- Modify: `crates/genex-api/src/api_bridge_tests.rs`
 - Modify: `crates/protocol/src/error.rs`
 - Modify: `crates/protocol/src/error_tests.rs`
 - Modify: `crates/tui/src/history_cell/tests.rs`

@@ -1,7 +1,7 @@
 #![allow(warnings, clippy::all)]
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_utils_absolute_path::test_support::PathExt;
 use std::ffi::OsStr;
 use std::fs;
 use std::fs::File;
@@ -33,18 +33,18 @@ use crate::list::get_threads;
 use crate::list::read_head_for_summary;
 use crate::rollout_date_parts;
 use anyhow::Result;
-use codex_history::CodexHarnessMetadata;
-use codex_protocol::ThreadId;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::ThreadGoal;
-use codex_protocol::protocol::ThreadGoalStatus;
-use codex_protocol::protocol::ThreadGoalUpdatedEvent;
-use codex_protocol::protocol::UserMessageEvent;
+use genex_history::CodexHarnessMetadata;
+use genex_protocol::ThreadId;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::SessionMeta;
+use genex_protocol::protocol::SessionMetaLine;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::ThreadGoal;
+use genex_protocol::protocol::ThreadGoalStatus;
+use genex_protocol::protocol::ThreadGoalUpdatedEvent;
+use genex_protocol::protocol::UserMessageEvent;
 
 const NO_SOURCE_FILTER: &[SessionSource] = &[];
 const TEST_PROVIDER: &str = "test-provider";
@@ -98,8 +98,8 @@ async fn insert_state_db_thread(
     rollout_path: &Path,
     archived: bool,
 ) -> crate::state_db::StateDbHandle {
-    let runtime = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(home.abs()),
+    let runtime = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(home.abs()),
         TEST_PROVIDER.to_string(),
     )
     .await
@@ -112,7 +112,7 @@ async fn insert_state_db_thread(
         .with_ymd_and_hms(2025, 1, 3, 12, 0, 0)
         .single()
         .expect("valid datetime");
-    let mut builder = codex_state::ThreadMetadataBuilder::new(
+    let mut builder = genex_state::ThreadMetadataBuilder::new(
         thread_id,
         rollout_path.to_path_buf(),
         created_at,
@@ -312,8 +312,8 @@ async fn find_thread_path_repairs_missing_db_row_after_filesystem_fallback() {
     let fs_rollout_path = home.join(format!("sessions/2025/01/03/rollout-{ts}-{uuid}.jsonl"));
 
     // Create an empty state DB so lookup takes the DB-first path and then falls back to files.
-    let runtime = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(home.abs()),
+    let runtime = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(home.abs()),
         TEST_PROVIDER.to_string(),
     )
     .await
@@ -368,8 +368,8 @@ async fn assert_state_db_rollout_path(
     thread_id: ThreadId,
     expected_path: Option<&Path>,
 ) {
-    let runtime = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(home.abs()),
+    let runtime = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(home.abs()),
         TEST_PROVIDER.to_string(),
     )
     .await

@@ -3,12 +3,12 @@ use crate::app::app_server_requests::PendingAppServerRequests;
 use crate::app::app_server_requests::ResolvedAppServerRequest;
 use crate::app_command::AppCommand;
 use crate::app_command::UserVerificationResponse;
-use codex_app_server_protocol::McpServerElicitationRequest;
-use codex_app_server_protocol::McpServerElicitationRequestParams;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::UserVerificationProof;
-use codex_protocol::ThreadId;
+use genex_app_server_protocol::McpServerElicitationRequest;
+use genex_app_server_protocol::McpServerElicitationRequestParams;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::UserVerificationProof;
+use genex_protocol::ThreadId;
 use pretty_assertions::assert_eq;
 
 fn verification_request() -> ServerRequest {

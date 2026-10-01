@@ -6,15 +6,15 @@ use crate::tools::context::boxed_tool_output;
 use crate::tools::handlers::parse_arguments;
 use crate::tools::registry::CoreToolRuntime;
 use crate::tools::registry::ToolExecutor;
-use codex_protocol::items::AgentMessageContent;
-use codex_protocol::items::AgentMessageDelivery;
-use codex_protocol::items::AgentMessageItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::MessagePhase;
-use codex_tools::JsonSchema;
-use codex_tools::ResponsesApiTool;
-use codex_tools::ToolName;
-use codex_tools::ToolSpec;
+use genex_protocol::items::AgentMessageContent;
+use genex_protocol::items::AgentMessageDelivery;
+use genex_protocol::items::AgentMessageItem;
+use genex_protocol::items::TurnItem;
+use genex_protocol::models::MessagePhase;
+use genex_tools::JsonSchema;
+use genex_tools::ResponsesApiTool;
+use genex_tools::ToolName;
+use genex_tools::ToolSpec;
 use serde::Deserialize;
 use std::collections::BTreeMap;
 
@@ -56,7 +56,7 @@ impl ToolExecutor<ToolInvocation> for SendMessageToUserAsyncHandler {
         })
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> codex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

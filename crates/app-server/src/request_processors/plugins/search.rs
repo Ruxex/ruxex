@@ -1,8 +1,8 @@
 use super::*;
-use codex_app_server_protocol::PluginSearchParams;
-use codex_app_server_protocol::PluginSearchResponse;
-use codex_app_server_protocol::PluginSearchResult;
-use codex_app_server_protocol::PluginSearchScope;
+use genex_app_server_protocol::PluginSearchParams;
+use genex_app_server_protocol::PluginSearchResponse;
+use genex_app_server_protocol::PluginSearchResult;
+use genex_app_server_protocol::PluginSearchScope;
 
 const DEFAULT_PLUGIN_SEARCH_LIMIT: usize = 16;
 const MAX_PLUGIN_SEARCH_LIMIT: usize = 1_000;

@@ -15,11 +15,11 @@ pub use crate::mcp_types::McpServerToolConfig;
 pub use crate::mcp_types::McpServerTransportConfig;
 pub use crate::mcp_types::RawMcpServerConfig;
 pub use crate::shell_environment_policy::ShellEnvironmentPolicyToml;
-pub use codex_protocol::config_types::AltScreenMode;
-pub use codex_protocol::config_types::ModeKind;
-pub use codex_protocol::config_types::ServiceTier;
-pub use codex_protocol::config_types::WebSearchMode;
-use codex_utils_absolute_path::AbsolutePathBuf;
+pub use genex_protocol::config_types::AltScreenMode;
+pub use genex_protocol::config_types::ModeKind;
+pub use genex_protocol::config_types::ServiceTier;
+pub use genex_protocol::config_types::WebSearchMode;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::fmt;
@@ -310,7 +310,7 @@ pub enum OtelExporterKind {
 pub struct OtelConfigToml {
     /// Byte limit for tool-result log output; independent of model-visible output.
     #[serde(default)]
-    pub tool_result: codex_protocol::config_types::ToolResultLogConfig,
+    pub tool_result: genex_protocol::config_types::ToolResultLogConfig,
     /// Log user prompt in traces
     pub log_user_prompt: Option<bool>,
 
@@ -336,7 +336,7 @@ pub struct OtelConfigToml {
 /// Effective OTEL settings after defaults are applied.
 #[derive(Debug, Clone, PartialEq)]
 pub struct OtelConfig {
-    pub tool_result: codex_protocol::config_types::ToolResultLogConfig,
+    pub tool_result: genex_protocol::config_types::ToolResultLogConfig,
     pub log_user_prompt: bool,
     pub environment: String,
     pub exporter: OtelExporterKind,

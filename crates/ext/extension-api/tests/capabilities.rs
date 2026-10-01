@@ -1,7 +1,7 @@
-use codex_extension_api::NoopResponseItemInjector;
-use codex_extension_api::ResponseItemInjector;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseInputItem;
+use genex_extension_api::NoopResponseItemInjector;
+use genex_extension_api::ResponseItemInjector;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::ResponseInputItem;
 use pretty_assertions::assert_eq;
 
 #[tokio::test]

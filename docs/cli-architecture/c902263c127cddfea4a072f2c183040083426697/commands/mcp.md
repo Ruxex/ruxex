@@ -23,4 +23,4 @@ MCP の管理操作は [`McpCli` と `McpSubcommand`](../../../../crates/cli/src
 
 ## 担当範囲
 
-コマンド文法と設定編集は `codex-cli` にあり、MCP のトランスポート/クライアント動作は RMCP クライアント/Core MCP クレートにあります。CLI 自体は MCP プロトコルを定義しません。
+コマンド文法と設定編集は `genex-cli` にあり、MCP のトランスポート/クライアント動作は RMCP クライアント/Core MCP クレートにあります。CLI 自体は MCP プロトコルを定義しません。

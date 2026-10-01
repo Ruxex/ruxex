@@ -4,10 +4,10 @@ use crate::config::Config;
 use crate::config::TokenBudgetConfig;
 use crate::config::resolve_token_budget_config;
 use crate::context::ContextualUserFragment;
-use codex_features::Feature;
-use codex_login::CodexAuth;
-use codex_protocol::auth::AuthMode;
-use codex_protocol::model_types::ModelInfo;
+use genex_features::Feature;
+use genex_login::CodexAuth;
+use genex_protocol::auth::AuthMode;
+use genex_protocol::model_types::ModelInfo;
 
 fn experimental_context_is_eligible(_auth_mode: AuthMode) -> bool {
     false
@@ -218,7 +218,7 @@ pub(super) async fn maybe_record(
 #[cfg(test)]
 mod tests {
     use super::experimental_context_is_eligible;
-    use codex_protocol::auth::AuthMode;
+    use genex_protocol::auth::AuthMode;
 
     #[test]
     fn experimental_context_is_disabled_without_subscription_auth() {

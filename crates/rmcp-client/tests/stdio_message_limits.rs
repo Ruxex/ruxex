@@ -9,14 +9,14 @@ use std::os::windows::io::OwnedHandle;
 use std::sync::Arc;
 use std::time::Duration;
 
-use codex_exec_server::Environment;
-use codex_rmcp_client::ElicitationAction;
-use codex_rmcp_client::ElicitationResponse;
-use codex_rmcp_client::ExecutorStdioServerLauncher;
-use codex_rmcp_client::LocalStdioServerLauncher;
-use codex_rmcp_client::McpProtocolMode;
-use codex_rmcp_client::RmcpClient;
-use codex_rmcp_client::StdioServerLauncher;
+use genex_exec_server::Environment;
+use genex_rmcp_client::ElicitationAction;
+use genex_rmcp_client::ElicitationResponse;
+use genex_rmcp_client::ExecutorStdioServerLauncher;
+use genex_rmcp_client::LocalStdioServerLauncher;
+use genex_rmcp_client::McpProtocolMode;
+use genex_rmcp_client::RmcpClient;
+use genex_rmcp_client::StdioServerLauncher;
 use futures::FutureExt;
 use rmcp::model::ClientCapabilities;
 use rmcp::model::Implementation;
@@ -66,7 +66,7 @@ fn wait_for_process_exit(process: &OwnedHandle) -> std::io::Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn stdio_message_limits_preserve_legacy_local_compatibility() -> anyhow::Result<()> {
-    let server = codex_utils_cargo_bin::cargo_bin("test_stdio_server")?;
+    let server = genex_utils_cargo_bin::cargo_bin("test_stdio_server")?;
 
     for (executor, protocol_mode, accepts_oversized) in [
         (false, McpProtocolMode::Legacy, true),
@@ -137,7 +137,7 @@ async fn stdio_message_limits_preserve_legacy_local_compatibility() -> anyhow::R
 #[cfg(windows)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn local_stdio_shutdown_terminates_descendants_after_server_exit() -> anyhow::Result<()> {
-    let server = codex_utils_cargo_bin::cargo_bin("test_stdio_server")?;
+    let server = genex_utils_cargo_bin::cargo_bin("test_stdio_server")?;
 
     for protocol_mode in [McpProtocolMode::Legacy, McpProtocolMode::V20260728] {
         let temp_dir = tempfile::tempdir()?;

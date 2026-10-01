@@ -5,7 +5,7 @@ mod viewer;
 use base64::Engine as _;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use chrono::DateTime;
-use codex_protocol::ThreadId;
+use genex_protocol::ThreadId;
 use pulldown_cmark::Event;
 use pulldown_cmark::Options;
 use pulldown_cmark::Parser;

@@ -33,13 +33,13 @@ pub(crate) mod test_support;
 use anyhow::Context;
 use anyhow::Error;
 use anyhow::Result;
-use codex_config::types::AuthKeyringBackendKind;
-use codex_config::types::OAuthCredentialsStoreMode;
-use codex_secrets::LocalSecretsNamespace;
-use codex_secrets::SecretName;
-use codex_secrets::SecretScope;
-use codex_secrets::SecretsBackendKind;
-use codex_secrets::SecretsManager;
+use genex_config::types::AuthKeyringBackendKind;
+use genex_config::types::OAuthCredentialsStoreMode;
+use genex_secrets::LocalSecretsNamespace;
+use genex_secrets::SecretName;
+use genex_secrets::SecretScope;
+use genex_secrets::SecretsBackendKind;
+use genex_secrets::SecretsManager;
 use oauth2::AccessToken;
 use oauth2::RefreshToken;
 use oauth2::Scope;
@@ -68,12 +68,12 @@ use self::store_lock::OAuthStore;
 use self::store_lock::OAuthStoreLock;
 use self::store_lock::OAuthStoreLockFailure;
 
-use codex_keyring_store::DefaultKeyringStore;
-use codex_keyring_store::KeyringStore;
+use genex_keyring_store::DefaultKeyringStore;
+use genex_keyring_store::KeyringStore;
 use rmcp::transport::auth::AuthorizationManager;
 use tokio::sync::Mutex;
 
-use codex_utils_home_dir::find_codex_home;
+use genex_utils_home_dir::find_codex_home;
 
 pub(crate) use self::credential_store::OAuthCredentialStore;
 pub(crate) use self::ema_identity::stored_oidc_identity;
@@ -1147,8 +1147,8 @@ fn sha_256_prefix(value: &Value) -> Result<String> {
 mod tests {
     use super::*;
     use anyhow::Result;
-    use codex_keyring_store::tests::MockKeyringStore;
-    use codex_secrets::compute_keyring_account;
+    use genex_keyring_store::tests::MockKeyringStore;
+    use genex_secrets::compute_keyring_account;
     use keyring::Error as KeyringError;
     use pretty_assertions::assert_eq;
     use std::sync::Arc;

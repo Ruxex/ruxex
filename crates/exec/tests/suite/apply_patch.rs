@@ -2,7 +2,7 @@
 
 use anyhow::Context;
 use assert_cmd::prelude::*;
-use codex_apply_patch::CODEX_CORE_APPLY_PATCH_ARG1;
+use genex_apply_patch::CODEX_CORE_APPLY_PATCH_ARG1;
 use core_test_support::responses::ev_apply_patch_custom_tool_call;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::mount_sse_sequence;
@@ -22,7 +22,7 @@ fn test_standalone_exec_cli_can_use_apply_patch() -> anyhow::Result<()> {
     let absolute_path = tmp.path().join(relative_path);
     fs::write(&absolute_path, "original content\n")?;
 
-    Command::new(codex_utils_cargo_bin::cargo_bin("codex-exec")?)
+    Command::new(genex_utils_cargo_bin::cargo_bin("codex-exec")?)
         .arg(CODEX_CORE_APPLY_PATCH_ARG1)
         .arg(
             r#"*** Begin Patch
@@ -149,10 +149,10 @@ async fn test_apply_patch_freeform_tool() -> anyhow::Result<()> {
 #[cfg(not(target_os = "windows"))]
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
-    use codex_login::AuthDotJson;
-    use codex_login::AuthKeyringBackendKind;
-    use codex_login::save_auth;
-    use codex_protocol::auth::AuthMode;
+    use genex_login::AuthDotJson;
+    use genex_login::AuthKeyringBackendKind;
+    use genex_login::save_auth;
+    use genex_protocol::auth::AuthMode;
     use core_test_support::skip_if_no_network;
     use core_test_support::test_codex_exec::test_codex_exec;
     use std::sync::Arc;
@@ -196,7 +196,7 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
             bedrock_api_key: None,
             bedrock_access_keys: None,
         },
-        codex_login::AuthCredentialsStoreMode::File,
+        genex_login::AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?;
 

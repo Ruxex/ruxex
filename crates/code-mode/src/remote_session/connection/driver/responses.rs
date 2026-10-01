@@ -1,11 +1,11 @@
-use codex_code_mode_protocol::StartedCell;
-use codex_code_mode_protocol::host::ClientToHost;
-use codex_code_mode_protocol::host::EncodedFrame;
-use codex_code_mode_protocol::host::HostRequest;
-use codex_code_mode_protocol::host::HostResponse;
-use codex_code_mode_protocol::host::HostToClient;
-use codex_code_mode_protocol::host::RequestId;
-use codex_code_mode_protocol::host::WireCellId;
+use genex_code_mode_protocol::StartedCell;
+use genex_code_mode_protocol::host::ClientToHost;
+use genex_code_mode_protocol::host::EncodedFrame;
+use genex_code_mode_protocol::host::HostRequest;
+use genex_code_mode_protocol::host::HostResponse;
+use genex_code_mode_protocol::host::HostToClient;
+use genex_code_mode_protocol::host::RequestId;
+use genex_code_mode_protocol::host::WireCellId;
 use tokio::sync::oneshot;
 
 use super::ConnectionDriver;
@@ -58,7 +58,7 @@ impl ConnectionDriver {
     pub(super) fn handle_host_message(&mut self, message: HostToClient) -> bool {
         if self.should_defer_host_message(&message) {
             if self.deferred_host_messages.len()
-                >= codex_code_mode_protocol::host::MAX_PENDING_DELEGATE_CALLS
+                >= genex_code_mode_protocol::host::MAX_PENDING_DELEGATE_CALLS
             {
                 self.fail(
                     "code-mode host exceeded deferred cross-socket message limit".to_string(),
@@ -92,10 +92,10 @@ impl ConnectionDriver {
                 ..
             } => {
                 let cell_id = match request {
-                    codex_code_mode_protocol::host::DelegateRequest::InvokeTool { invocation } => {
+                    genex_code_mode_protocol::host::DelegateRequest::InvokeTool { invocation } => {
                         &invocation.cell_id
                     }
-                    codex_code_mode_protocol::host::DelegateRequest::Notify { cell_id, .. } => {
+                    genex_code_mode_protocol::host::DelegateRequest::Notify { cell_id, .. } => {
                         cell_id
                     }
                 };
@@ -429,7 +429,7 @@ impl ConnectionDriver {
     fn complete_initial_response(
         &mut self,
         id: RequestId,
-        result: Result<codex_code_mode_protocol::host::WireRuntimeResponse, String>,
+        result: Result<genex_code_mode_protocol::host::WireRuntimeResponse, String>,
     ) -> bool {
         let Some(initial) = self.requests.remove_initial_response(id) else {
             self.fail(format!(

@@ -5,32 +5,32 @@ use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
-use codex_app_server_protocol::ConfigBatchWriteParams;
-use codex_app_server_protocol::ConfigEdit;
-use codex_app_server_protocol::HookEventName;
-use codex_app_server_protocol::HookHandlerMetadata;
-use codex_app_server_protocol::HookMetadata;
-use codex_app_server_protocol::HookSource;
-use codex_app_server_protocol::HookTrustStatus;
-use codex_app_server_protocol::HooksListEntry;
-use codex_app_server_protocol::HooksListParams;
-use codex_app_server_protocol::HooksListResponse;
-use codex_app_server_protocol::MergeStrategy;
-use codex_app_server_protocol::PluginInstallParams;
-use codex_app_server_protocol::PluginInstallResponse;
-use codex_app_server_protocol::ThreadArchiveParams;
-use codex_app_server_protocol::ThreadArchiveResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::UserInput as V2UserInput;
-use codex_core::config::set_project_trust_level;
-use codex_core_plugins::store::PluginStore;
-use codex_features::Feature;
-use codex_plugin::PluginId;
-use codex_protocol::config_types::TrustLevel;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_app_server_protocol::ConfigBatchWriteParams;
+use genex_app_server_protocol::ConfigEdit;
+use genex_app_server_protocol::HookEventName;
+use genex_app_server_protocol::HookHandlerMetadata;
+use genex_app_server_protocol::HookMetadata;
+use genex_app_server_protocol::HookSource;
+use genex_app_server_protocol::HookTrustStatus;
+use genex_app_server_protocol::HooksListEntry;
+use genex_app_server_protocol::HooksListParams;
+use genex_app_server_protocol::HooksListResponse;
+use genex_app_server_protocol::MergeStrategy;
+use genex_app_server_protocol::PluginInstallParams;
+use genex_app_server_protocol::PluginInstallResponse;
+use genex_app_server_protocol::ThreadArchiveParams;
+use genex_app_server_protocol::ThreadArchiveResponse;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::UserInput as V2UserInput;
+use genex_core::config::set_project_trust_level;
+use genex_core_plugins::store::PluginStore;
+use genex_features::Feature;
+use genex_plugin::PluginId;
+use genex_protocol::config_types::TrustLevel;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::skip_if_host_windows;
 use core_test_support::skip_if_remote;
 use pretty_assertions::assert_eq;
@@ -44,7 +44,7 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
 struct NormalizedHookIdentity {
     event_name: &'static str,
     #[serde(flatten)]
-    group: codex_config::MatcherGroup,
+    group: genex_config::MatcherGroup,
 }
 
 fn command_hook_hash(
@@ -58,9 +58,9 @@ fn command_hook_hash(
 ) -> String {
     let identity = NormalizedHookIdentity {
         event_name,
-        group: codex_config::MatcherGroup {
+        group: genex_config::MatcherGroup {
             matcher: matcher.map(ToOwned::to_owned),
-            hooks: vec![codex_config::HookHandlerConfig::Command {
+            hooks: vec![genex_config::HookHandlerConfig::Command {
                 command: command.to_string(),
                 command_windows: None,
                 timeout_sec: Some(timeout_sec),
@@ -70,10 +70,10 @@ fn command_hook_hash(
             }],
         },
     };
-    let Ok(value) = codex_config::TomlValue::try_from(identity) else {
+    let Ok(value) = genex_config::TomlValue::try_from(identity) else {
         unreachable!("normalized hook identity should serialize to TOML");
     };
-    codex_config::version_for_toml(&value)
+    genex_config::version_for_toml(&value)
 }
 
 fn write_user_hook_config(codex_home: &std::path::Path) -> Result<()> {
@@ -413,7 +413,7 @@ async fn plugin_upgrade_refreshes_hook_runtime_for_loaded_session() -> Result<()
             reload_user_config: true,
         })
         .await?;
-    let _: codex_app_server_protocol::ConfigWriteResponse =
+    let _: genex_app_server_protocol::ConfigWriteResponse =
         timeout(DEFAULT_TIMEOUT, mcp.read_response(trust_id)).await??;
 
     let thread_start_id = mcp
@@ -459,7 +459,7 @@ async fn plugin_upgrade_refreshes_hook_runtime_for_loaded_session() -> Result<()
             reload_user_config: false,
         })
         .await?;
-    let _: codex_app_server_protocol::ConfigWriteResponse =
+    let _: genex_app_server_protocol::ConfigWriteResponse =
         timeout(DEFAULT_TIMEOUT, mcp.read_response(staged_write_id)).await??;
 
     std::fs::write(
@@ -610,7 +610,7 @@ async fn loaded_session_refreshes_externally_updated_plugin_hooks() -> Result<()
             reload_user_config: true,
         })
         .await?;
-    let _: codex_app_server_protocol::ConfigWriteResponse =
+    let _: genex_app_server_protocol::ConfigWriteResponse =
         timeout(DEFAULT_TIMEOUT, mcp.read_response(trust_id)).await??;
     let start_id = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
@@ -870,9 +870,9 @@ async fn hooks_list_shows_discovered_plugin_mcp_tool_hook() -> Result<()> {
     )?)?;
     let identity = NormalizedHookIdentity {
         event_name: "pre_tool_use",
-        group: codex_config::MatcherGroup {
+        group: genex_config::MatcherGroup {
             matcher: Some("Bash".to_string()),
-            hooks: vec![codex_config::HookHandlerConfig::McpTool {
+            hooks: vec![genex_config::HookHandlerConfig::McpTool {
                 server: "security".to_string(),
                 tool: "inspect".to_string(),
                 input: serde_json::from_value(serde_json::json!({
@@ -883,7 +883,7 @@ async fn hooks_list_shows_discovered_plugin_mcp_tool_hook() -> Result<()> {
             }],
         },
     };
-    let identity = codex_config::TomlValue::try_from(identity)?;
+    let identity = genex_config::TomlValue::try_from(identity)?;
 
     assert_eq!(
         data,
@@ -906,7 +906,7 @@ async fn hooks_list_shows_discovered_plugin_mcp_tool_hook() -> Result<()> {
                 display_order: 0,
                 enabled: true,
                 is_managed: false,
-                current_hash: codex_config::version_for_toml(&identity),
+                current_hash: genex_config::version_for_toml(&identity),
                 trust_status: HookTrustStatus::Untrusted,
             }],
             warnings: Vec::new(),
@@ -1289,7 +1289,7 @@ async fn hooks_list_uses_root_repo_hooks_for_linked_worktrees() -> Result<()> {
             reload_user_config: true,
         })
         .await?;
-    let _: codex_app_server_protocol::ConfigWriteResponse =
+    let _: genex_app_server_protocol::ConfigWriteResponse =
         timeout(DEFAULT_TIMEOUT, mcp.read_response(write_id)).await??;
 
     let list_id = mcp
@@ -1341,7 +1341,7 @@ async fn config_batch_write_toggles_user_hook() -> Result<()> {
             reload_user_config: true,
         })
         .await?;
-    let _: codex_app_server_protocol::ConfigWriteResponse =
+    let _: genex_app_server_protocol::ConfigWriteResponse =
         timeout(DEFAULT_TIMEOUT, mcp.read_response(write_id)).await??;
 
     let request_id = mcp
@@ -1371,7 +1371,7 @@ async fn config_batch_write_toggles_user_hook() -> Result<()> {
             reload_user_config: true,
         })
         .await?;
-    let _: codex_app_server_protocol::ConfigWriteResponse =
+    let _: genex_app_server_protocol::ConfigWriteResponse =
         timeout(DEFAULT_TIMEOUT, mcp.read_response(write_id)).await??;
 
     let request_id = mcp
@@ -1488,7 +1488,7 @@ command = "python3 {}"
             reload_user_config: true,
         })
         .await?;
-    let _: codex_app_server_protocol::ConfigWriteResponse =
+    let _: genex_app_server_protocol::ConfigWriteResponse =
         timeout(DEFAULT_TIMEOUT, mcp.read_response(write_id)).await??;
 
     let hook_list_id = mcp
@@ -1547,7 +1547,7 @@ command = "python3 {}"
             reload_user_config: true,
         })
         .await?;
-    let _: codex_app_server_protocol::ConfigWriteResponse =
+    let _: genex_app_server_protocol::ConfigWriteResponse =
         timeout(DEFAULT_TIMEOUT, mcp.read_response(write_id)).await??;
 
     let hook_list_id = mcp
@@ -1663,7 +1663,7 @@ command = "python3 {}"
             reload_user_config: true,
         })
         .await?;
-    let _: codex_app_server_protocol::ConfigWriteResponse =
+    let _: genex_app_server_protocol::ConfigWriteResponse =
         timeout(DEFAULT_TIMEOUT, mcp.read_response(write_id)).await??;
 
     let thread_start_id = mcp
@@ -1716,7 +1716,7 @@ command = "python3 {}"
             reload_user_config: true,
         })
         .await?;
-    let _: codex_app_server_protocol::ConfigWriteResponse =
+    let _: genex_app_server_protocol::ConfigWriteResponse =
         timeout(DEFAULT_TIMEOUT, mcp.read_response(write_id)).await??;
 
     let second_turn_id = mcp

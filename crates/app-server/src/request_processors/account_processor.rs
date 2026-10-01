@@ -5,11 +5,11 @@ use super::bedrock_auth::ensure_user_model_provider_can_be_bedrock;
 use super::*;
 use crate::auth_mode::auth_mode_to_api;
 use crate::outgoing_message::AccountNotification;
-use codex_app_server_protocol::Account;
-use codex_app_server_protocol::GetAccountResponse;
-use codex_login::login_with_bedrock_access_keys;
-use codex_model_provider::create_model_provider;
-use codex_model_provider::is_supported_amazon_bedrock_region;
+use genex_app_server_protocol::Account;
+use genex_app_server_protocol::GetAccountResponse;
+use genex_login::login_with_bedrock_access_keys;
+use genex_model_provider::create_model_provider;
+use genex_model_provider::is_supported_amazon_bedrock_region;
 
 mod bedrock_setup;
 
@@ -179,7 +179,7 @@ impl AccountRequestProcessor {
                 let refresh_thread_manager = Arc::clone(thread_manager);
                 let refresh_config_manager = config_manager.clone();
                 let on_effective_plugins_changed: Arc<
-                    dyn Fn(codex_core_plugins::EffectivePluginsChange) + Send + Sync,
+                    dyn Fn(genex_core_plugins::EffectivePluginsChange) + Send + Sync,
                 > = Arc::new(move |_change| {
                     Self::spawn_effective_plugins_changed_task(
                         Arc::clone(&refresh_thread_manager),

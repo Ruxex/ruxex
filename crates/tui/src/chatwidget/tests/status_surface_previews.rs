@@ -1,7 +1,7 @@
 use super::*;
 use crate::bottom_pane::preview_line_for_title_items;
 use crate::chatwidget::ThreadUsageOutcome;
-use codex_app_server_protocol::ThreadUsage;
+use genex_app_server_protocol::ThreadUsage;
 use pretty_assertions::assert_eq;
 use ratatui::text::Line;
 
@@ -93,7 +93,7 @@ async fn status_surface_hostname_preview_uses_current_machine_hostname() {
 
     assert_eq!(
         status_preview_line(&mut chat, &[StatusLineItem::Hostname]),
-        codex_config::os_host_name().expect("machine hostname")
+        genex_config::os_host_name().expect("machine hostname")
     );
 }
 

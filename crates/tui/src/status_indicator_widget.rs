@@ -408,14 +408,14 @@ mod tests {
             /*animations_enabled*/ true,
         );
         w.update_details(
-            Some("cargo test -p codex-core and then cargo test -p codex-tui".to_string()),
+            Some("cargo test -p genex-core and then cargo test -p genex-tui".to_string()),
             StatusDetailsCapitalization::Preserve,
             /*max_lines*/ 1,
         );
 
         assert_eq!(
             w.details(),
-            Some("cargo test -p codex-core and then cargo test -p codex-tui")
+            Some("cargo test -p genex-core and then cargo test -p genex-tui")
         );
 
         let lines = w.wrapped_details_lines(/*width*/ 24);

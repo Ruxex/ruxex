@@ -1,5 +1,5 @@
 use super::*;
-use codex_utils_path_uri::PathUri;
+use genex_utils_path_uri::PathUri;
 
 #[derive(Clone)]
 pub(crate) struct WindowsSandboxRequestProcessor {
@@ -93,7 +93,7 @@ impl WindowsSandboxRequestProcessor {
                 codex_home: config.codex_home.to_path_buf(),
             };
             let setup_result =
-                codex_core::windows_sandbox::run_windows_sandbox_setup(setup_request).await;
+                genex_core::windows_sandbox::run_windows_sandbox_setup(setup_request).await;
             let notification = WindowsSandboxSetupCompletedNotification {
                 mode: match setup_mode {
                     CoreWindowsSandboxSetupMode::Elevated => WindowsSandboxSetupMode::Elevated,
@@ -141,17 +141,17 @@ mod setup_config_tests;
 
 /// Resolves the requested API mode after checking that managed requirements allow it.
 fn resolve_allowed_windows_sandbox_setup_mode(
-    requirements: &codex_config::ConfigRequirements,
+    requirements: &genex_config::ConfigRequirements,
     requested_mode: WindowsSandboxSetupMode,
 ) -> Result<CoreWindowsSandboxSetupMode, JSONRPCErrorError> {
     let (setup_mode, config_mode) = match requested_mode {
         WindowsSandboxSetupMode::Elevated => (
             CoreWindowsSandboxSetupMode::Elevated,
-            codex_config::types::WindowsSandboxModeToml::Elevated,
+            genex_config::types::WindowsSandboxModeToml::Elevated,
         ),
         WindowsSandboxSetupMode::Unelevated => (
             CoreWindowsSandboxSetupMode::Unelevated,
-            codex_config::types::WindowsSandboxModeToml::Unelevated,
+            genex_config::types::WindowsSandboxModeToml::Unelevated,
         ),
     };
     requirements
@@ -197,10 +197,10 @@ fn determine_windows_sandbox_readiness_from_state(
 mod tests {
     use super::*;
     use crate::error_code::INVALID_REQUEST_ERROR_CODE;
-    use codex_config::ConfigRequirements;
-    use codex_config::Constrained;
-    use codex_config::ConstrainedWithSource;
-    use codex_config::types::WindowsSandboxModeToml;
+    use genex_config::ConfigRequirements;
+    use genex_config::Constrained;
+    use genex_config::ConstrainedWithSource;
+    use genex_config::types::WindowsSandboxModeToml;
 
     #[test]
     fn resolve_allowed_windows_sandbox_setup_mode_rejects_disallowed_mode() {

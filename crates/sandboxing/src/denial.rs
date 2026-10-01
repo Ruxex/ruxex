@@ -1,4 +1,4 @@
-use codex_protocol::exec_output::ExecToolCallOutput;
+use genex_protocol::exec_output::ExecToolCallOutput;
 
 use crate::SandboxType;
 

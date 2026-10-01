@@ -75,10 +75,10 @@ pub(crate) fn notify_hook(argv: Vec<String>, environment: Arc<Vec<(OsString, OsS
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
-    use codex_protocol::ThreadId;
-    use codex_protocol::shell_environment::CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
-    use codex_utils_absolute_path::test_support::PathBufExt;
-    use codex_utils_absolute_path::test_support::test_path_buf;
+    use genex_protocol::ThreadId;
+    use genex_protocol::shell_environment::CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
+    use genex_utils_absolute_path::test_support::PathBufExt;
+    use genex_utils_absolute_path::test_support::test_path_buf;
     use pretty_assertions::assert_eq;
     use serde_json::Value;
     use serde_json::json;

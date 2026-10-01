@@ -7,51 +7,51 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_exec_server::Environment;
-use codex_exec_server::ExecBackend;
+use genex_exec_server::Environment;
+use genex_exec_server::ExecBackend;
 #[cfg(unix)]
-use codex_exec_server::ExecEnvPolicy;
-use codex_exec_server::ExecOutputStream;
-use codex_exec_server::ExecParams;
-use codex_exec_server::ExecProcess;
-use codex_exec_server::ExecProcessEvent;
+use genex_exec_server::ExecEnvPolicy;
+use genex_exec_server::ExecOutputStream;
+use genex_exec_server::ExecParams;
+use genex_exec_server::ExecProcess;
+use genex_exec_server::ExecProcessEvent;
 #[cfg(any(unix, windows))]
-use codex_exec_server::FileSystemSandboxContext;
-use codex_exec_server::ProcessId;
-use codex_exec_server::ProcessSignal;
-use codex_exec_server::ReadResponse;
+use genex_exec_server::FileSystemSandboxContext;
+use genex_exec_server::ProcessId;
+use genex_exec_server::ProcessSignal;
+use genex_exec_server::ReadResponse;
 #[cfg(unix)]
-use codex_exec_server::ShellInfo;
+use genex_exec_server::ShellInfo;
 #[cfg(unix)]
-use codex_exec_server::ShellSnapshotRequest;
-use codex_exec_server::StartedExecProcess;
+use genex_exec_server::ShellSnapshotRequest;
+use genex_exec_server::StartedExecProcess;
 #[cfg(any(unix, windows))]
-use codex_exec_server::WindowsSandboxSelection;
-use codex_exec_server::WriteStatus;
+use genex_exec_server::WindowsSandboxSelection;
+use genex_exec_server::WriteStatus;
 #[cfg(unix)]
-use codex_network_proxy::NetworkProxyConfig;
+use genex_network_proxy::NetworkProxyConfig;
 #[cfg(unix)]
-use codex_network_proxy::RemoteNetworkProxyConfig;
+use genex_network_proxy::RemoteNetworkProxyConfig;
 #[cfg(unix)]
-use codex_network_proxy::RemoteNetworkProxyLaunchConfig;
+use genex_network_proxy::RemoteNetworkProxyLaunchConfig;
 #[cfg(unix)]
-use codex_protocol::config_types::ShellEnvironmentPolicyInherit;
+use genex_protocol::config_types::ShellEnvironmentPolicyInherit;
 #[cfg(unix)]
-use codex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfile;
 #[cfg(unix)]
-use codex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemAccessMode;
 #[cfg(unix)]
-use codex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemPath;
 #[cfg(unix)]
-use codex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxEntry;
 #[cfg(unix)]
-use codex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
 #[cfg(unix)]
-use codex_protocol::permissions::FileSystemSpecialPath;
+use genex_protocol::permissions::FileSystemSpecialPath;
 #[cfg(unix)]
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_utils_path_uri::PathUri;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::SandboxPolicy;
+use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use test_case::test_case;
@@ -97,7 +97,7 @@ async fn create_process_context(_use_remote: bool) -> Result<ProcessContext> {
 #[cfg(target_os = "macos")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn codex_home_symlink_opt_out_respects_host_config_and_scope() -> Result<()> {
-    use codex_exec_server::WriteFileOptions;
+    use genex_exec_server::WriteFileOptions;
     use common::exec_server::exec_server_with_env;
     use std::os::unix::fs::symlink;
 
@@ -200,7 +200,7 @@ async fn shell_snapshot_v2_filters_profile_exports_and_stays_in_memory(
 ) -> Result<()> {
     if use_sandbox
         && let Some(warning) =
-            codex_sandboxing::system_bwrap_warning(&PermissionProfile::read_only())
+            genex_sandboxing::system_bwrap_warning(&PermissionProfile::read_only())
     {
         eprintln!("skipping sandbox test: {warning}");
         return Ok(());
@@ -462,7 +462,7 @@ async fn shell_snapshot_v2_capture_failure_falls_back_and_retries(
 ) -> Result<()> {
     if use_remote
         && let Some(warning) =
-            codex_sandboxing::system_bwrap_warning(&PermissionProfile::workspace_write())
+            genex_sandboxing::system_bwrap_warning(&PermissionProfile::workspace_write())
     {
         eprintln!("skipping sandbox test: {warning}");
         return Ok(());
@@ -565,7 +565,7 @@ async fn shell_snapshot_v2_capture_failure_falls_back_and_retries(
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_sandboxed_process_preserves_custom_arg0() -> Result<()> {
-    if let Some(warning) = codex_sandboxing::system_bwrap_warning(&PermissionProfile::read_only()) {
+    if let Some(warning) = genex_sandboxing::system_bwrap_warning(&PermissionProfile::read_only()) {
         eprintln!("skipping bwrap test: {warning}");
         return Ok(());
     }
@@ -669,7 +669,7 @@ async fn assert_exec_process_starts_and_exits(use_remote: bool) -> Result<()> {
 #[cfg(target_os = "linux")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_process_keeps_sandbox_helper_visible_with_restricted_reads() -> Result<()> {
-    if let Some(warning) = codex_sandboxing::system_bwrap_warning(&PermissionProfile::read_only()) {
+    if let Some(warning) = genex_sandboxing::system_bwrap_warning(&PermissionProfile::read_only()) {
         eprintln!("skipping bwrap test: {warning}");
         return Ok(());
     }
@@ -731,7 +731,7 @@ async fn remote_process_keeps_sandbox_helper_visible_with_restricted_reads() -> 
 #[cfg(target_os = "linux")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_tty_process_uses_configured_sandbox_helper_with_hostile_path() -> Result<()> {
-    if let Some(warning) = codex_sandboxing::system_bwrap_warning(&PermissionProfile::read_only()) {
+    if let Some(warning) = genex_sandboxing::system_bwrap_warning(&PermissionProfile::read_only()) {
         eprintln!("skipping bwrap test: {warning}");
         return Ok(());
     }
@@ -805,7 +805,7 @@ async fn remote_tty_process_uses_configured_sandbox_helper_with_hostile_path() -
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_process_preserves_empty_workspace_roots() -> Result<()> {
-    if let Some(warning) = codex_sandboxing::system_bwrap_warning(&PermissionProfile::read_only()) {
+    if let Some(warning) = genex_sandboxing::system_bwrap_warning(&PermissionProfile::read_only()) {
         eprintln!("skipping bwrap test: {warning}");
         return Ok(());
     }
@@ -1281,10 +1281,10 @@ async fn assert_exec_process_write_then_read_without_tty(use_remote: bool) -> Re
 }
 
 async fn assert_remote_windows_sandbox_process_write(
-    expected_sandbox_type: codex_sandboxing::SandboxType,
+    expected_sandbox_type: genex_sandboxing::SandboxType,
     tty: bool,
 ) -> Result<()> {
-    if expected_sandbox_type == codex_sandboxing::SandboxType::WindowsMxc {
+    if expected_sandbox_type == genex_sandboxing::SandboxType::WindowsMxc {
         crate::skip_if_mxc_unavailable!(Ok(()));
     }
     let context = create_process_context(/*use_remote*/ true).await?;
@@ -1296,15 +1296,15 @@ async fn assert_remote_windows_sandbox_process_write(
         cwd.clone(),
     )?;
     match expected_sandbox_type {
-        codex_sandboxing::SandboxType::WindowsRestrictedToken => {
+        genex_sandboxing::SandboxType::WindowsRestrictedToken => {
             sandbox.windows_sandbox_selection = WindowsSandboxSelection::RestrictedToken;
         }
-        codex_sandboxing::SandboxType::WindowsMxc => {
+        genex_sandboxing::SandboxType::WindowsMxc => {
             sandbox.windows_sandbox_selection = WindowsSandboxSelection::Mxc;
         }
-        codex_sandboxing::SandboxType::None
-        | codex_sandboxing::SandboxType::MacosSeatbelt
-        | codex_sandboxing::SandboxType::LinuxSeccomp => {
+        genex_sandboxing::SandboxType::None
+        | genex_sandboxing::SandboxType::MacosSeatbelt
+        | genex_sandboxing::SandboxType::LinuxSeccomp => {
             anyhow::bail!("expected a Windows sandbox type")
         }
     }
@@ -1609,17 +1609,17 @@ async fn exec_process_write_then_read_without_tty(use_remote: bool) -> Result<()
 }
 
 #[test_case(
-    codex_sandboxing::SandboxType::WindowsRestrictedToken,
+    genex_sandboxing::SandboxType::WindowsRestrictedToken,
     false;
     "restricted_token"
 )]
 #[test_case(
-    codex_sandboxing::SandboxType::WindowsMxc,
+    genex_sandboxing::SandboxType::WindowsMxc,
     false;
     "mxc_pipe"
 )]
 #[test_case(
-    codex_sandboxing::SandboxType::WindowsMxc,
+    genex_sandboxing::SandboxType::WindowsMxc,
     true;
     "mxc_conpty"
 )]
@@ -1627,7 +1627,7 @@ async fn exec_process_write_then_read_without_tty(use_remote: bool) -> Result<()
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial_test::serial(remote_exec_server)]
 async fn remote_windows_sandbox_process_accepts_process_write(
-    expected_sandbox_type: codex_sandboxing::SandboxType,
+    expected_sandbox_type: genex_sandboxing::SandboxType,
     tty: bool,
 ) -> Result<()> {
     assert_remote_windows_sandbox_process_write(expected_sandbox_type, tty).await

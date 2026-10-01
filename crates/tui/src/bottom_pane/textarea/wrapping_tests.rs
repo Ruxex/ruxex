@@ -5,7 +5,7 @@ use super::wrapped_lines;
 use crate::width::display_width;
 use crate::wrapping::RtOptions;
 use crate::wrapping::adaptive_wrap_lines;
-use codex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
+use genex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
 use pretty_assertions::assert_eq;
 use ratatui::Terminal;
 use ratatui::backend::TestBackend;

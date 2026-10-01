@@ -25,9 +25,9 @@ use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
 use anyhow::bail;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::PermissionProfile;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::PermissionProfile;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use windows_sys::Win32::Foundation::CloseHandle;
 
 pub const CODEX_WINDOWS_SANDBOX_ARG1: &str = "--run-as-windows-sandbox";

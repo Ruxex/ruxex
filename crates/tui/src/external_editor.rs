@@ -5,10 +5,10 @@ use std::path::PathBuf;
 use std::process::Stdio;
 
 #[cfg(windows)]
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
 #[cfg(windows)]
-use codex_protocol::permissions::FileSystemSpecialPath;
+use genex_protocol::permissions::FileSystemSpecialPath;
 use color_eyre::eyre::Report;
 use color_eyre::eyre::Result;
 use tempfile::Builder;

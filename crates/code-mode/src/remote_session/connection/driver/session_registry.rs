@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use codex_code_mode_protocol::CellId;
-use codex_code_mode_protocol::CodeModeSessionDelegate;
-use codex_code_mode_protocol::host::SessionId;
-use codex_code_mode_protocol::host::WireCellId;
+use genex_code_mode_protocol::CellId;
+use genex_code_mode_protocol::CodeModeSessionDelegate;
+use genex_code_mode_protocol::host::SessionId;
+use genex_code_mode_protocol::host::WireCellId;
 
 use super::cell_ids::public_cell_id;
 use super::cleanup::SessionCleanup;

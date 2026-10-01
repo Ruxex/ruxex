@@ -2,12 +2,12 @@ use super::*;
 use crate::daybreak::Notice;
 use app_test_support::ApiKeyAuthFixture;
 use app_test_support::write_api_key_auth;
-use codex_app_server_client::AppServerEvent;
-use codex_app_server_protocol::AccountUpdatedNotification;
-use codex_app_server_protocol::AuthMode;
-use codex_app_server_protocol::CodexErrorInfo;
-use codex_app_server_protocol::ErrorNotification;
-use codex_login::AuthCredentialsStoreMode;
+use genex_app_server_client::AppServerEvent;
+use genex_app_server_protocol::AccountUpdatedNotification;
+use genex_app_server_protocol::AuthMode;
+use genex_app_server_protocol::CodexErrorInfo;
+use genex_app_server_protocol::ErrorNotification;
+use genex_login::AuthCredentialsStoreMode;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 

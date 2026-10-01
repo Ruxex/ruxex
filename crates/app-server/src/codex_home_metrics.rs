@@ -5,11 +5,11 @@
 //! Incomplete scans emit no samples, and shutdown cancels the scan.
 //! The compression tag reflects the effective startup config, not compression completion.
 
-use codex_core::config::Config;
-use codex_features::Feature;
-use codex_otel::MetricsClient;
-use codex_rollout::ARCHIVED_SESSIONS_SUBDIR;
-use codex_rollout::SESSIONS_SUBDIR;
+use genex_core::config::Config;
+use genex_features::Feature;
+use genex_otel::MetricsClient;
+use genex_rollout::ARCHIVED_SESSIONS_SUBDIR;
+use genex_rollout::SESSIONS_SUBDIR;
 use std::io;
 use std::path::Path;
 use tokio::task::JoinHandle;

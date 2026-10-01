@@ -7,10 +7,10 @@ use crate::session::TurnInput;
 use crate::session::session::Session;
 use crate::session::turn_context::TurnContext;
 use crate::state::TaskKind;
-use codex_features::Feature;
-use codex_model_provider::RemoteCompactionSupport;
-use codex_protocol::error::CodexErrorDetails;
-use codex_protocol::user_input::UserInput;
+use genex_features::Feature;
+use genex_model_provider::RemoteCompactionSupport;
+use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::user_input::UserInput;
 use tokio_util::sync::CancellationToken;
 
 #[derive(Clone, Copy, Default)]

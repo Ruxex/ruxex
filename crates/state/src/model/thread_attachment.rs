@@ -1,6 +1,6 @@
 //! Thread attachment records and outcomes; membership changes independently of resource contents.
 
-use codex_protocol::ThreadId;
+use genex_protocol::ThreadId;
 use serde_json::Value;
 
 /// A bounded attachment durably associated with one thread.

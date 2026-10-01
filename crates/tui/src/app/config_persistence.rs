@@ -5,7 +5,7 @@
 //! loop.
 
 use super::*;
-use codex_config::ConfigLayerSource;
+use genex_config::ConfigLayerSource;
 
 async fn build_config_on_runtime_worker(
     builder: ConfigBuilder,
@@ -820,7 +820,7 @@ impl App {
     pub(super) async fn verify_windows_sandbox_mode_after_setup(
         &mut self,
         app_server: &mut AppServerSession,
-        requested_mode: codex_app_server_protocol::WindowsSandboxSetupMode,
+        requested_mode: genex_app_server_protocol::WindowsSandboxSetupMode,
     ) -> bool {
         if !self.refresh_windows_sandbox_config(app_server).await {
             return false;

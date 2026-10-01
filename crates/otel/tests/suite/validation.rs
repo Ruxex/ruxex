@@ -1,7 +1,7 @@
-use codex_otel::MetricsClient;
-use codex_otel::MetricsConfig;
-use codex_otel::MetricsError;
-use codex_otel::Result;
+use genex_otel::MetricsClient;
+use genex_otel::MetricsConfig;
+use genex_otel::MetricsError;
+use genex_otel::Result;
 use opentelemetry_sdk::metrics::InMemoryMetricExporter;
 
 fn build_in_memory_client() -> Result<MetricsClient> {

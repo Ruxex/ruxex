@@ -1,12 +1,12 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-model-provider"
+name = "genex-model-provider"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "codex_model_provider"
+name = "genex_model_provider"
 path = "src/lib.rs"
 
 [lints]
@@ -14,15 +14,15 @@ workspace = true
 
 [dependencies]
 chrono = { workspace = true }
-codex-api = { workspace = true }
-codex-aws-auth = { workspace = true }
-codex-http-client = { workspace = true }
-codex-login = { workspace = true }
-codex-model-provider-info = { workspace = true }
-codex-models-manager = { workspace = true }
-codex-otel = { workspace = true }
-codex-protocol = { workspace = true }
-codex-response-debug-context = { workspace = true }
+genex-api = { workspace = true }
+genex-aws-auth = { workspace = true }
+genex-http-client = { workspace = true }
+genex-login = { workspace = true }
+genex-model-provider-info = { workspace = true }
+genex-models-manager = { workspace = true }
+genex-otel = { workspace = true }
+genex-protocol = { workspace = true }
+genex-response-debug-context = { workspace = true }
 http = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
@@ -33,7 +33,7 @@ url = { workspace = true }
 
 [dev-dependencies]
 base64 = { workspace = true }
-codex-utils-redacted-string = { workspace = true }
+genex-utils-redacted-string = { workspace = true }
 pretty_assertions = { workspace = true }
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt"] }

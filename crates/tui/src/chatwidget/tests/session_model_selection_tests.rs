@@ -115,9 +115,9 @@ async fn session_model_selection_notifies_the_original_task_after_each_final_ast
 #[tokio::test]
 async fn session_model_selection_hides_conflicting_shortcut() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.5")).await;
-    let mut config = codex_config::types::TuiKeymap::default();
-    config.list.accept = Some(codex_config::types::KeybindingsSpec::One(
-        codex_config::types::KeybindingSpec("s".into()),
+    let mut config = genex_config::types::TuiKeymap::default();
+    config.list.accept = Some(genex_config::types::KeybindingsSpec::One(
+        genex_config::types::KeybindingSpec("s".into()),
     ));
     let keymap = RuntimeKeymap::from_config(&config).expect("valid list keymap");
     chat.bottom_pane.set_keymap_bindings(&keymap);

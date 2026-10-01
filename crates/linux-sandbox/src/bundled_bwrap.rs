@@ -11,8 +11,8 @@ use std::sync::OnceLock;
 
 use crate::exec_util::argv_to_cstrings;
 use crate::exec_util::make_files_inheritable;
-use codex_install_context::InstallContext;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_install_context::InstallContext;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use sha2::Digest as _;
 use sha2::Sha256;
 
@@ -187,9 +187,9 @@ fn bytes_to_hex(bytes: &[u8; 32]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_install_context::CodexPackageLayout;
-    use codex_install_context::InstallContext;
-    use codex_install_context::InstallMethod;
+    use genex_install_context::CodexPackageLayout;
+    use genex_install_context::InstallContext;
+    use genex_install_context::InstallMethod;
     use pretty_assertions::assert_eq;
     use std::fs;
     use tempfile::NamedTempFile;

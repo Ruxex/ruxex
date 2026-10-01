@@ -3,7 +3,7 @@ use crate::ToolName;
 use crate::ToolOutput;
 use crate::ToolSearchInfo;
 use crate::ToolSpec;
-use codex_protocol::config_types::ToolExposureSurface;
+use genex_protocol::config_types::ToolExposureSurface;
 use std::future::Future;
 use std::pin::Pin;
 

@@ -1,4 +1,4 @@
-use codex_protocol::approvals::ElicitationRequest;
+use genex_protocol::approvals::ElicitationRequest;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::json;

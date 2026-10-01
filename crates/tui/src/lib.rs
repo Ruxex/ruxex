@@ -26,44 +26,44 @@ pub use app::ExitReason;
 pub use app::ResumableThread;
 use app_server_session::AppServerSession;
 use app_server_session::ThreadParamsMode;
-use codex_app_server_client::AppServerClient;
-use codex_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
-use codex_app_server_client::InProcessAppServerClient;
-use codex_app_server_client::InProcessClientStartArgs;
-use codex_app_server_client::RemoteAppServerClient;
-use codex_app_server_client::RemoteAppServerConnectArgs;
-pub use codex_app_server_client::RemoteAppServerEndpoint;
-use codex_app_server_protocol::Account as AppServerAccount;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::ConfigWarningNotification;
-use codex_app_server_protocol::GetAccountResponse;
-use codex_app_server_protocol::Thread as AppServerThread;
+use genex_app_server_client::AppServerClient;
+use genex_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
+use genex_app_server_client::InProcessAppServerClient;
+use genex_app_server_client::InProcessClientStartArgs;
+use genex_app_server_client::RemoteAppServerClient;
+use genex_app_server_client::RemoteAppServerConnectArgs;
+pub use genex_app_server_client::RemoteAppServerEndpoint;
+use genex_app_server_protocol::Account as AppServerAccount;
+use genex_app_server_protocol::AskForApproval;
+use genex_app_server_protocol::ConfigWarningNotification;
+use genex_app_server_protocol::GetAccountResponse;
+use genex_app_server_protocol::Thread as AppServerThread;
 #[cfg(test)]
-use codex_app_server_protocol::ThreadListCwdFilter;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadSortKey as AppServerThreadSortKey;
-use codex_app_server_protocol::ThreadSourceKind;
-use codex_config::ConfigLoadError;
-use codex_config::LoaderOverrides;
-use codex_config::format_config_error_with_source;
-use codex_config::types::ResumeCwdMode;
-use codex_exec_server::EnvironmentManager;
-use codex_exec_server::ExecServerRuntimePaths;
-use codex_features::Feature;
-use codex_login::default_client::originator;
-use codex_login::default_client::set_default_client_residency_requirement;
-use codex_login::enforce_login_restrictions;
-use codex_protocol::ThreadId;
-use codex_protocol::auth::AuthMode;
-use codex_protocol::config_types::AltScreenMode;
-use codex_protocol::config_types::ForcedLoginMethod;
-use codex_protocol::config_types::SandboxMode;
-use codex_rollout::StateDbHandle;
-use codex_rollout::state_db;
-use codex_state::log_db;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_absolute_path::canonicalize_existing_preserving_symlinks;
-use codex_utils_home_dir::find_codex_home;
+use genex_app_server_protocol::ThreadListCwdFilter;
+use genex_app_server_protocol::ThreadListParams;
+use genex_app_server_protocol::ThreadSortKey as AppServerThreadSortKey;
+use genex_app_server_protocol::ThreadSourceKind;
+use genex_config::ConfigLoadError;
+use genex_config::LoaderOverrides;
+use genex_config::format_config_error_with_source;
+use genex_config::types::ResumeCwdMode;
+use genex_exec_server::EnvironmentManager;
+use genex_exec_server::ExecServerRuntimePaths;
+use genex_features::Feature;
+use genex_login::default_client::originator;
+use genex_login::default_client::set_default_client_residency_requirement;
+use genex_login::enforce_login_restrictions;
+use genex_protocol::ThreadId;
+use genex_protocol::auth::AuthMode;
+use genex_protocol::config_types::AltScreenMode;
+use genex_protocol::config_types::ForcedLoginMethod;
+use genex_protocol::config_types::SandboxMode;
+use genex_rollout::StateDbHandle;
+use genex_rollout::state_db;
+use genex_state::log_db;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::canonicalize_existing_preserving_symlinks;
+use genex_utils_home_dir::find_codex_home;
 use color_eyre::eyre::WrapErr;
 use cwd_prompt::CwdPromptAction;
 pub use session_archive_commands::DeleteConfirmation;
@@ -87,7 +87,7 @@ use tracing_subscriber::prelude::*;
 use url::Url;
 use uuid::Uuid;
 
-pub(crate) use codex_app_server_client::legacy_core;
+pub(crate) use genex_app_server_client::legacy_core;
 
 pub(crate) use worktree_startup::ManagedTuiWorktree;
 
@@ -239,7 +239,7 @@ use crate::startup_hooks_review::load_startup_hooks_review_entry;
 use crate::startup_hooks_review::maybe_run_startup_hooks_review;
 use crate::tui::Tui;
 pub use cli::Cli;
-use codex_arg0::Arg0DispatchPaths;
+use genex_arg0::Arg0DispatchPaths;
 pub use markdown_render::render_markdown_text;
 pub use public_widgets::composer_input::ComposerAction;
 pub use public_widgets::composer_input::ComposerInput;
@@ -308,7 +308,7 @@ async fn init_state_db_for_app_server_target(
 ) -> std::io::Result<Option<StateDbHandle>> {
     match app_server_target {
         AppServerTarget::Embedded => state_db::try_init(config).await.map(Some).map_err(|err| {
-            let database_path = codex_state::runtime_db_path_for_corruption_error(&err)
+            let database_path = genex_state::runtime_db_path_for_corruption_error(&err)
                 .unwrap_or_else(|| config.sqlite_config().state_db_path());
             std::io::Error::other(LocalStateDbStartupError::new(
                 database_path,
@@ -371,7 +371,7 @@ pub fn resolve_remote_addr(addr: &str) -> color_eyre::Result<RemoteAppServerEndp
     if let Some(socket_path) = addr.strip_prefix("unix://") {
         let socket_path = if socket_path.is_empty() {
             let codex_home = find_codex_home().wrap_err("failed to resolve CODEX_HOME")?;
-            codex_app_server_client::app_server_control_socket_path(&codex_home)
+            genex_app_server_client::app_server_control_socket_path(&codex_home)
                 .map_err(color_eyre::Report::new)?
         } else {
             AbsolutePathBuf::relative_to_current_dir(socket_path)
@@ -432,10 +432,10 @@ async fn connect_remote_app_server(
 }
 
 async fn maybe_probe_default_daemon_socket(codex_home: &Path) -> Option<AbsolutePathBuf> {
-    let socket_path = codex_app_server_client::app_server_control_socket_path(codex_home).ok()?;
+    let socket_path = genex_app_server_client::app_server_control_socket_path(codex_home).ok()?;
     #[cfg(windows)]
     let (validated_path, _directory) =
-        codex_uds::validate_private_socket_path(socket_path.as_path()).ok()?;
+        genex_uds::validate_private_socket_path(socket_path.as_path()).ok()?;
     #[cfg(windows)]
     let validated_path = AbsolutePathBuf::from_absolute_path_checked(validated_path).ok()?;
     #[cfg(windows)]
@@ -444,7 +444,7 @@ async fn maybe_probe_default_daemon_socket(codex_home: &Path) -> Option<Absolute
     let probe_path = socket_path.as_path();
     match tokio::time::timeout(
         AUTO_CONNECT_DAEMON_CONNECT_TIMEOUT,
-        codex_uds::UnixStream::connect(probe_path),
+        genex_uds::UnixStream::connect(probe_path),
     )
     .await
     {
@@ -781,7 +781,7 @@ fn latest_session_lookup_params(
             resume_picker::repository_cwd_filter(
                 cwd,
                 uses_remote_filesystem,
-                config.features.enabled(codex_features::Feature::Worktrees),
+                config.features.enabled(genex_features::Feature::Worktrees),
             )
         }),
         use_state_db_only: match lookup_mode {
@@ -1961,7 +1961,7 @@ async fn load_config_with_worktree_source_policy(
 async fn load_bootstrap_config_or_exit(
     codex_home: &Path,
     cwd: Option<&AbsolutePathBuf>,
-    cli_kv_overrides: Vec<(String, codex_config::TomlValue)>,
+    cli_kv_overrides: Vec<(String, genex_config::TomlValue)>,
     loader_overrides: LoaderOverrides,
     strict_config: bool,
 ) -> ConfigTomlLoadResult {
@@ -1969,7 +1969,7 @@ async fn load_bootstrap_config_or_exit(
         codex_home,
         cwd,
         cli_kv_overrides,
-        codex_config::ConfigLoadOptions {
+        genex_config::ConfigLoadOptions {
             loader_overrides,
             strict_config,
         },

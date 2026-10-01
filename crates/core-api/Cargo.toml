@@ -1,12 +1,12 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-core-api"
+name = "genex-core-api"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "codex_core_api"
+name = "genex_core_api"
 path = "src/lib.rs"
 test = false
 
@@ -14,18 +14,18 @@ test = false
 workspace = true
 
 [dependencies]
-codex-app-server-protocol = { workspace = true }
-codex-arg0 = { workspace = true }
-codex-config = { workspace = true }
-codex-core = { workspace = true }
-codex-extension-api = { workspace = true }
-codex-home = { workspace = true }
-codex-history = { workspace = true }
-codex-exec-server = { workspace = true }
-codex-features = { workspace = true }
-codex-login = { workspace = true }
-codex-model-provider-info = { workspace = true }
-codex-models-manager = { workspace = true }
-codex-protocol = { workspace = true }
-codex-state = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
+genex-app-server-protocol = { workspace = true }
+genex-arg0 = { workspace = true }
+genex-config = { workspace = true }
+genex-core = { workspace = true }
+genex-extension-api = { workspace = true }
+genex-home = { workspace = true }
+genex-history = { workspace = true }
+genex-exec-server = { workspace = true }
+genex-features = { workspace = true }
+genex-login = { workspace = true }
+genex-model-provider-info = { workspace = true }
+genex-models-manager = { workspace = true }
+genex-protocol = { workspace = true }
+genex-state = { workspace = true }
+genex-utils-absolute-path = { workspace = true }

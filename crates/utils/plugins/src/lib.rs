@@ -1,11 +1,11 @@
 //! Plugin path resolution and plaintext mention sigils shared across Codex crates.
 
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::AbsolutePathBuf;
 
 pub mod mention_syntax;
 pub mod plugin_namespace;
 
-pub use codex_exec_server_protocol::DISCOVERABLE_PLUGIN_MANIFEST_PATHS;
+pub use genex_exec_server_protocol::DISCOVERABLE_PLUGIN_MANIFEST_PATHS;
 pub use plugin_namespace::AGENT_PLUGIN_MANIFEST_RELATIVE_PATH;
 pub use plugin_namespace::AGENT_PLUGIN_SCHEMA_PREFIX;
 pub use plugin_namespace::AGENT_PLUGIN_SCHEMA_URI;

@@ -1,5 +1,5 @@
-use codex_api::ApiError;
-use codex_api::TransportError;
+use genex_api::ApiError;
+use genex_api::TransportError;
 
 const REQUEST_ID_HEADER: &str = "x-request-id";
 const CF_RAY_HEADER: &str = "cf-ray";
@@ -76,8 +76,8 @@ mod tests {
     use super::extract_response_debug_context;
     use super::telemetry_api_error_message;
     use super::telemetry_transport_error_message;
-    use codex_api::ApiError;
-    use codex_api::TransportError;
+    use genex_api::ApiError;
+    use genex_api::TransportError;
     use http::HeaderMap;
     use http::HeaderValue;
     use http::StatusCode;

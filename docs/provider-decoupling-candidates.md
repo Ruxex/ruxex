@@ -21,13 +21,28 @@
 に記録した。以下では、未更新だった候補の状態と、まだ残る Phase 3
 候補を区別して記録する。
 
+## 0. Genex クレート名前空間移行の監査（2026-10-01）
+
+workspace の `cargo metadata --no-deps` で 123 パッケージを確認し、121 個の
+`codex-*` パッケージを `genex-*` へ移行する。workspace の依存宣言と各 Rust
+crate namespace が producer/consumer であり、`codex` binary、protocol/schema、
+永続化識別子、provider-owned contract は別の移行段階に属するため変更しない。
+`app_test_support` と `core_test_support` は製品 namespace ではないため保持する。
+
+対象ディレクトリは `crates/genex-api`、`crates/genex-client`、
+`crates/genex-experimental-api-macros`、`crates/genex-home`、
+`crates/genex-mcp` であり、これらを `crates/genex-*` へ移動する。
+
+この slice の decision は `migrate-in-place` とし、provider capability の削除や
+protocol/persisted-data の互換判断を混ぜ込まない。
+
 ## 1. 参照元が見つからないクレート・ソース
 
 | 対象 | 現時点の観測 | 現時点の扱い |
 |---|---|---|
 | `codex-utils-readiness` | workspace に登録されていたが、他の workspace member からの依存・参照がなく、実装と自身のテストだけが残っていた。producer/consumer 監査後に workspace 登録、本体、lockfile、checked-in Hawk finding を削除済み | 置換なし。未参照クレートを削除 | `remove (completed)` |
 | `codex-thread-manager-sample` | 他の workspace member から利用されず、製品 runtime や必須 test entrypoint からも利用されない standalone binary。README と entrypoint 文書は配布する場合の説明に留まり、現行の必須 consumer ではない。workspace、lockfile、ソース、entrypoint 文書から削除済み | 置換なし。ThreadManager サンプルを削除 | `remove (completed)` |
-| `LoopbackResponsesServer` と `plugin_analytics_capture_tests.rs` | いずれも削除済みの plugin analytics smoke test の残骸。前者は module 登録だけが残り、後者は module 登録されず削除済みシンボルを参照していた。`codex-cli.json` には前者の古い Hawk finding が2件残っていた | 置換なし。孤立した test helper、孤立 test source、生成済み finding を削除 | `remove (completed)` |
+| `LoopbackResponsesServer` と `plugin_analytics_capture_tests.rs` | いずれも削除済みの plugin analytics smoke test の残骸。前者は module 登録だけが残り、後者は module 登録されず削除済みシンボルを参照していた。`genex-cli.json` には前者の古い Hawk finding が2件残っていた | 置換なし。孤立した test helper、孤立 test source、生成済み finding を削除 | `remove (completed)` |
 | `crates/tui/src/app/backend_banner_fallback.rs`、`BackendBanner`、`ActionableBanner` | production caller がなく、ChatGPT の利用量・課金導線・Reserve 自動復旧に結び付いた TUI 実装と孤立 snapshot だけが残っていた | 汎用 rate-limit/status と通常の model picker は残し、Banner と Reserve 自動復旧を削除 | `remove (completed)` |
 
 確認対象の主なパスは次のとおり。
@@ -124,16 +139,16 @@ BackendBanner の parser/CTA/render、bottom pane の専用 inline banner、Rese
 - `core-plugins` と TUI の test-only curated marketplace 名は `test-curated`/
   `test-api-curated`/`Test Marketplace` へ移行した。
 
-汎用の local/Git/npm plugin loader、hook、tool、trust/security policy は別の保持候補であり、`codex-core-plugins` 全体を削除する根拠にはしない。
+汎用の local/Git/npm plugin loader、hook、tool、trust/security policy は別の保持候補であり、`genex-core-plugins` 全体を削除する根拠にはしない。
 
 ### 3.3 first-party auth と model provider adapter
 
 次のクレートは provider 固有部分と provider-neutral 部分が混在している。
 
-- `codex-login`: ChatGPT JWT、plan/account ID、managed auth、`PROVIDER_API_KEY`
-- `codex-model-provider-info`: `create_responses_provider`、`requires_first_party_auth`
-- `codex-model-provider`: provider models endpoint、ChatGPT account header、provider auth predicate
-- `codex-app-server-protocol`: ChatGPT auth/account や provider 固有 protocol 型
+- `genex-login`: ChatGPT JWT、plan/account ID、managed auth、`PROVIDER_API_KEY`
+- `genex-model-provider-info`: `create_responses_provider`、`requires_first_party_auth`
+- `genex-model-provider`: provider models endpoint、ChatGPT account header、provider auth predicate
+- `genex-app-server-protocol`: ChatGPT auth/account や provider 固有 protocol 型
 
 Bedrock、custom `model_providers`、汎用 credential storage、Responses-compatible provider の consumer があるため、クレート全体の削除ではなく first-party adapter の分割・削除を先に検討する。
 
@@ -141,15 +156,15 @@ Bedrock、custom `model_providers`、汎用 credential storage、Responses-compa
 
 ### 3.4 Apps / host-owned MCP
 
-Apps、`codex_apps`、Apps entitlement、host-owned Apps MCP の現行経路とApps専用の孤立テストは削除済みである。`codex-mcp` 全体は通常のMCP、OAuth/elicitation、provider-neutral metadata/security behaviorのため保持する。
+Apps、`codex_apps`、Apps entitlement、host-owned Apps MCP の現行経路とApps専用の孤立テストは削除済みである。`genex-mcp` 全体は通常のMCP、OAuth/elicitation、provider-neutral metadata/security behaviorのため保持する。
 
 provider account/entitlement、host-owned Apps MCP、Apps 固有 UI/protocol と、通常の MCP、OAuth/elicitation、provider-neutral metadata/security behavior を分けて監査する。
 
 ## 4. 現時点で削除候補としない共有基盤
 
-- `codex-api`、`codex-model-provider-info`、`codex-model-provider` の全体
-- `codex-http-client`、`codex-mcp`、`codex-core-plugins` の全体
-- `codex-otel`、通常の MCP、local/stdio exec-server、sandbox/security behavior
+- `genex-api`、`genex-model-provider-info`、`genex-model-provider` の全体
+- `genex-http-client`、`genex-mcp`、`genex-core-plugins` の全体
+- `genex-otel`、通常の MCP、local/stdio exec-server、sandbox/security behavior
 - `crossterm`、`tokio-tungstenite`、`tungstenite` の provider fork dependency
 
 これらは provider 由来の名前や adapter を含むものの、現行の custom provider、Bedrock、local execution、plugin/MCP、platform fallback から利用されている。provider 固有 capability を外した後に依存元がなくなった場合のみ、クレート単位の削除を再評価する。

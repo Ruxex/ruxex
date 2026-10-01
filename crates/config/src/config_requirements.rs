@@ -1,13 +1,13 @@
 use crate::ApplicationRequirementsToml;
-use codex_model_provider_info::ModelProviderInfo;
-pub use codex_model_provider_info::ResidencyRequirement;
-use codex_protocol::config_types::ForcedLoginMethod;
-use codex_protocol::config_types::SandboxMode;
-use codex_protocol::config_types::WebSearchMode;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_model_provider_info::ModelProviderInfo;
+pub use genex_model_provider_info::ResidencyRequirement;
+use genex_protocol::config_types::ForcedLoginMethod;
+use genex_protocol::config_types::SandboxMode;
+use genex_protocol::config_types::WebSearchMode;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::de::Error as _;
@@ -656,7 +656,7 @@ impl FilesystemDenyReadPattern {
     }
 
     pub fn from_input(input: &str) -> Result<Self, String> {
-        codex_utils_path_uri::PathUri::validate_config_path_text(
+        genex_utils_path_uri::PathUri::validate_config_path_text(
             input,
             crate::path_context::convention(),
         )
@@ -668,7 +668,7 @@ impl FilesystemDenyReadPattern {
         }
 
         let (directory_prefix, suffix) = split_glob_pattern(input);
-        if crate::path_context::convention() == codex_utils_path_uri::PathConvention::Windows
+        if crate::path_context::convention() == genex_utils_path_uri::PathConvention::Windows
             && matches!(input.as_bytes(), [b'/' | b'\\', b'/' | b'\\', ..])
             && !matches!(
                 directory_prefix.as_bytes(),
@@ -694,7 +694,7 @@ impl FilesystemDenyReadPattern {
         } else {
             format!("{normalized_prefix}/{suffix}")
         };
-        codex_utils_path_uri::PathUri::validate_config_path_text(
+        genex_utils_path_uri::PathUri::validate_config_path_text(
             &normalized,
             crate::path_context::convention(),
         )
@@ -721,7 +721,7 @@ impl<'de> Deserialize<'de> for FilesystemDenyReadPattern {
 
 fn validate_literal_denial_path(path: &str) -> Result<(), String> {
     let convention = crate::path_context::convention();
-    codex_utils_path_uri::LegacyAppPathString::from_string(path)
+    genex_utils_path_uri::LegacyAppPathString::from_string(path)
         .to_path_uri(convention)
         .and_then(|path| path.validate_glob_directory(convention))
         .map_err(|error| error.to_string())
@@ -745,7 +745,7 @@ fn split_glob_pattern(input: &str) -> (&str, &str) {
         Some(0) => ("/", &input[1..]),
         Some(index)
             if crate::path_context::convention()
-                == codex_utils_path_uri::PathConvention::Windows
+                == genex_utils_path_uri::PathConvention::Windows
                 && index == 2
                 && input.as_bytes().get(1) == Some(&b':')
                 && input.as_bytes().get(2).is_some() =>
@@ -758,7 +758,7 @@ fn split_glob_pattern(input: &str) -> (&str, &str) {
 }
 
 fn is_path_separator(ch: char) -> bool {
-    if crate::path_context::convention() == codex_utils_path_uri::PathConvention::Windows {
+    if crate::path_context::convention() == genex_utils_path_uri::PathConvention::Windows {
         ch == '/' || ch == '\\'
     } else {
         ch == '/'
@@ -1786,12 +1786,12 @@ mod tests {
     use crate::McpServerIdentity;
     use crate::McpServerValueMatcher;
     use anyhow::Result;
-    use codex_execpolicy::Decision;
-    use codex_execpolicy::Evaluation;
-    use codex_execpolicy::RuleMatch;
-    use codex_protocol::permissions::NetworkSandboxPolicy;
-    use codex_utils_absolute_path::AbsolutePathBuf;
-    use codex_utils_absolute_path::AbsolutePathBufGuard;
+    use genex_execpolicy::Decision;
+    use genex_execpolicy::Evaluation;
+    use genex_execpolicy::RuleMatch;
+    use genex_protocol::permissions::NetworkSandboxPolicy;
+    use genex_utils_absolute_path::AbsolutePathBuf;
+    use genex_utils_absolute_path::AbsolutePathBufGuard;
     use pretty_assertions::assert_eq;
     use toml::from_str;
 

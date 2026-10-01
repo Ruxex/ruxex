@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::AbsolutePathBuf;
 
 /// Validates configured span attributes before they are attached to exported spans.
 pub fn validate_span_attributes(attributes: &BTreeMap<String, String>) -> std::io::Result<()> {

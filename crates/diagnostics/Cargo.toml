@@ -1,11 +1,11 @@
 [package]
-name = "codex-diagnostics"
+name = "genex-diagnostics"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "codex_diagnostics"
+name = "genex_diagnostics"
 path = "src/lib.rs"
 doctest = false
 

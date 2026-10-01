@@ -8,12 +8,12 @@ use crate::environment_selection::TurnEnvironmentSnapshot;
 use crate::session::step_settings::ResolvedStepSettings;
 use crate::session::turn_context::TurnContext;
 use crate::tools::router::ToolRouter;
-use codex_exec_server::ExecutorCapabilityDiscoverySnapshot;
-use codex_exec_server::ResolvedSelectedCapabilityRoot;
-use codex_mcp::McpBinding;
-use codex_otel::SessionTelemetry;
-use codex_protocol::items::ModelInvocationContext;
-use codex_protocol::protocol::TurnContextItem;
+use genex_exec_server::ExecutorCapabilityDiscoverySnapshot;
+use genex_exec_server::ResolvedSelectedCapabilityRoot;
+use genex_mcp::McpBinding;
+use genex_otel::SessionTelemetry;
+use genex_protocol::items::ModelInvocationContext;
+use genex_protocol::protocol::TurnContextItem;
 
 /// Request-scoped state that may change between model sampling requests.
 pub(crate) struct StepContext {

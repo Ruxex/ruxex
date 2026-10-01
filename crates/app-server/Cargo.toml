@@ -1,5 +1,5 @@
 [package]
-name = "codex-app-server"
+name = "genex-app-server"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -17,7 +17,7 @@ name = "exec-server"
 path = "src/bin/exec_server.rs"
 
 [lib]
-name = "codex_app_server"
+name = "genex_app_server"
 path = "src/lib.rs"
 doctest = false
 
@@ -33,56 +33,56 @@ axum = { workspace = true, default-features = false, features = [
     "tokio",
     "ws",
 ] }
-codex-agent-extension = { workspace = true }
-codex-arg0 = { workspace = true }
-codex-aws-auth = { workspace = true }
-codex-code-mode = { workspace = true }
-codex-config = { workspace = true }
-codex-network-proxy = { workspace = true }
-codex-core = { workspace = true }
-codex-core-plugins = { workspace = true }
-codex-diagnostics = { workspace = true }
-codex-home = { workspace = true }
-codex-exec-server = { workspace = true }
-codex-extension-api = { workspace = true }
-codex-external-agent-migration = { workspace = true }
-codex-features = { workspace = true }
-codex-goal-extension = { workspace = true }
-codex-git-utils = { workspace = true }
-codex-file-watcher = { workspace = true }
-codex-hooks = { workspace = true }
-codex-history-notes-extension = { workspace = true }
-codex-http-client = { workspace = true }
-codex-otel = { workspace = true }
-codex-plugin = { workspace = true }
-codex-shell-command = { workspace = true }
-codex-skills = { workspace = true }
-codex-skills-extension = { workspace = true }
-codex-utils-cli = { workspace = true }
-codex-user-verification = { workspace = true }
-codex-utils-pty = { workspace = true }
-codex-file-search = { workspace = true }
-codex-login = { workspace = true }
-codex-web-search-extension = { workspace = true }
-codex-mcp = { workspace = true }
-codex-mcp-extension = { workspace = true }
-codex-model-provider = { workspace = true }
-codex-model-provider-info = { workspace = true }
-codex-models-manager = { workspace = true }
-codex-prompts = { workspace = true }
-codex-protocol = { workspace = true }
-codex-queue-extension = { workspace = true }
-codex-app-server-protocol = { workspace = true }
-codex-app-server-transport = { workspace = true }
-codex-rmcp-client = { workspace = true }
-codex-rollout = { workspace = true }
-codex-sandboxing = { workspace = true }
-codex-state = { workspace = true }
-codex-thread-store = { workspace = true }
-codex-tools = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-json-to-toml = { workspace = true }
-codex-utils-path-uri = { workspace = true }
+genex-agent-extension = { workspace = true }
+genex-arg0 = { workspace = true }
+genex-aws-auth = { workspace = true }
+genex-code-mode = { workspace = true }
+genex-config = { workspace = true }
+genex-network-proxy = { workspace = true }
+genex-core = { workspace = true }
+genex-core-plugins = { workspace = true }
+genex-diagnostics = { workspace = true }
+genex-home = { workspace = true }
+genex-exec-server = { workspace = true }
+genex-extension-api = { workspace = true }
+genex-external-agent-migration = { workspace = true }
+genex-features = { workspace = true }
+genex-goal-extension = { workspace = true }
+genex-git-utils = { workspace = true }
+genex-file-watcher = { workspace = true }
+genex-hooks = { workspace = true }
+genex-history-notes-extension = { workspace = true }
+genex-http-client = { workspace = true }
+genex-otel = { workspace = true }
+genex-plugin = { workspace = true }
+genex-shell-command = { workspace = true }
+genex-skills = { workspace = true }
+genex-skills-extension = { workspace = true }
+genex-utils-cli = { workspace = true }
+genex-user-verification = { workspace = true }
+genex-utils-pty = { workspace = true }
+genex-file-search = { workspace = true }
+genex-login = { workspace = true }
+genex-web-search-extension = { workspace = true }
+genex-mcp = { workspace = true }
+genex-mcp-extension = { workspace = true }
+genex-model-provider = { workspace = true }
+genex-model-provider-info = { workspace = true }
+genex-models-manager = { workspace = true }
+genex-prompts = { workspace = true }
+genex-protocol = { workspace = true }
+genex-queue-extension = { workspace = true }
+genex-app-server-protocol = { workspace = true }
+genex-app-server-transport = { workspace = true }
+genex-rmcp-client = { workspace = true }
+genex-rollout = { workspace = true }
+genex-sandboxing = { workspace = true }
+genex-state = { workspace = true }
+genex-thread-store = { workspace = true }
+genex-tools = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
+genex-utils-json-to-toml = { workspace = true }
+genex-utils-path-uri = { workspace = true }
 chrono = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true }
@@ -111,10 +111,10 @@ uuid = { workspace = true, features = ["serde", "v7"] }
 tikv-jemallocator = { workspace = true }
 
 [target.'cfg(windows)'.dependencies]
-codex-windows-sandbox = { workspace = true }
+genex-windows-sandbox = { workspace = true }
 
 [dev-dependencies]
-codex-uds = { workspace = true }
+genex-uds = { workspace = true }
 app_test_support = { workspace = true }
 axum = { workspace = true, default-features = false, features = [
     "http1",
@@ -122,7 +122,7 @@ axum = { workspace = true, default-features = false, features = [
     "tokio",
 ] }
 base64 = { workspace = true }
-codex-utils-cargo-bin = { workspace = true }
+genex-utils-cargo-bin = { workspace = true }
 core_test_support = { workspace = true }
 flate2 = { workspace = true }
 hmac = { workspace = true }

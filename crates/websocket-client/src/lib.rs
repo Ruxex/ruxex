@@ -9,10 +9,10 @@ use std::sync::Arc;
 use std::task::Context;
 use std::task::Poll;
 
-use codex_http_client::BuildCustomCaTransportError;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyRoute;
-use codex_http_client::build_rustls_client_config_with_custom_ca;
+use genex_http_client::BuildCustomCaTransportError;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyRoute;
+use genex_http_client::build_rustls_client_config_with_custom_ca;
 use futures::FutureExt;
 use futures::Sink;
 use futures::Stream;

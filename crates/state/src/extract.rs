@@ -1,13 +1,13 @@
 use crate::model::ThreadMetadata;
-use codex_history::RolloutItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::TurnContextItem;
-use codex_protocol::protocol::UserMessageEvent;
-use codex_protocol::protocol::strip_user_message_prefix;
-use codex_protocol::protocol::user_message_preview;
+use genex_history::RolloutItem;
+use genex_protocol::items::TurnItem;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::SessionMetaLine;
+use genex_protocol::protocol::TurnContextItem;
+use genex_protocol::protocol::UserMessageEvent;
+use genex_protocol::protocol::strip_user_message_prefix;
+use genex_protocol::protocol::user_message_preview;
 use serde::Serialize;
 use serde_json::Value;
 
@@ -176,35 +176,35 @@ mod tests {
     use crate::model::ThreadMetadata;
     use chrono::DateTime;
     use chrono::Utc;
-    use codex_history::RolloutItem;
-    use codex_protocol::ThreadId;
-    use codex_protocol::config_types::CollaborationMode;
-    use codex_protocol::config_types::ModeKind;
-    use codex_protocol::config_types::ReasoningSummary;
-    use codex_protocol::config_types::Settings;
-    use codex_protocol::items::TurnItem;
-    use codex_protocol::items::UserMessageItem;
-    use codex_protocol::model_types::ReasoningEffort;
-    use codex_protocol::models::ContentItem;
-    use codex_protocol::models::PermissionProfile;
-    use codex_protocol::models::ResponseItem;
-    use codex_protocol::protocol::AskForApproval;
-    use codex_protocol::protocol::EventMsg;
-    use codex_protocol::protocol::ItemCompletedEvent;
-    use codex_protocol::protocol::SandboxPolicy;
-    use codex_protocol::protocol::SessionMeta;
-    use codex_protocol::protocol::SessionMetaLine;
-    use codex_protocol::protocol::SessionSource;
-    use codex_protocol::protocol::ThreadGoal;
-    use codex_protocol::protocol::ThreadGoalStatus;
-    use codex_protocol::protocol::ThreadGoalUpdatedEvent;
-    use codex_protocol::protocol::ThreadHistoryMode;
-    use codex_protocol::protocol::ThreadSettingsAppliedEvent;
-    use codex_protocol::protocol::ThreadSettingsSnapshot;
-    use codex_protocol::protocol::TurnContextItem;
-    use codex_protocol::protocol::USER_MESSAGE_BEGIN;
-    use codex_protocol::protocol::UserMessageEvent;
-    use codex_protocol::user_input::UserInput;
+    use genex_history::RolloutItem;
+    use genex_protocol::ThreadId;
+    use genex_protocol::config_types::CollaborationMode;
+    use genex_protocol::config_types::ModeKind;
+    use genex_protocol::config_types::ReasoningSummary;
+    use genex_protocol::config_types::Settings;
+    use genex_protocol::items::TurnItem;
+    use genex_protocol::items::UserMessageItem;
+    use genex_protocol::model_types::ReasoningEffort;
+    use genex_protocol::models::ContentItem;
+    use genex_protocol::models::PermissionProfile;
+    use genex_protocol::models::ResponseItem;
+    use genex_protocol::protocol::AskForApproval;
+    use genex_protocol::protocol::EventMsg;
+    use genex_protocol::protocol::ItemCompletedEvent;
+    use genex_protocol::protocol::SandboxPolicy;
+    use genex_protocol::protocol::SessionMeta;
+    use genex_protocol::protocol::SessionMetaLine;
+    use genex_protocol::protocol::SessionSource;
+    use genex_protocol::protocol::ThreadGoal;
+    use genex_protocol::protocol::ThreadGoalStatus;
+    use genex_protocol::protocol::ThreadGoalUpdatedEvent;
+    use genex_protocol::protocol::ThreadHistoryMode;
+    use genex_protocol::protocol::ThreadSettingsAppliedEvent;
+    use genex_protocol::protocol::ThreadSettingsSnapshot;
+    use genex_protocol::protocol::TurnContextItem;
+    use genex_protocol::protocol::USER_MESSAGE_BEGIN;
+    use genex_protocol::protocol::UserMessageEvent;
+    use genex_protocol::user_input::UserInput;
 
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
@@ -451,7 +451,7 @@ mod tests {
                 multi_agent_mode: None,
                 cyber_access_program: None,
                 effort: None,
-                summary: codex_protocol::config_types::ReasoningSummary::Auto,
+                summary: genex_protocol::config_types::ReasoningSummary::Auto,
             }),
             "test-provider",
         );
@@ -498,7 +498,7 @@ mod tests {
                 multi_agent_mode: None,
                 cyber_access_program: None,
                 effort: None,
-                summary: codex_protocol::config_types::ReasoningSummary::Auto,
+                summary: genex_protocol::config_types::ReasoningSummary::Auto,
             }),
             "test-provider",
         );
@@ -541,7 +541,7 @@ mod tests {
                 multi_agent_mode: None,
                 cyber_access_program: None,
                 effort: Some(ReasoningEffort::High),
-                summary: codex_protocol::config_types::ReasoningSummary::Auto,
+                summary: genex_protocol::config_types::ReasoningSummary::Auto,
             }),
             "test-provider",
         );
@@ -581,7 +581,7 @@ mod tests {
                 multi_agent_mode: None,
                 cyber_access_program: None,
                 effort: Some(ReasoningEffort::High),
-                summary: codex_protocol::config_types::ReasoningSummary::Auto,
+                summary: genex_protocol::config_types::ReasoningSummary::Auto,
             }),
             "test-provider",
         );

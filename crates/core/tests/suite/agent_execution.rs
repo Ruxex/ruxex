@@ -1,15 +1,15 @@
 use anyhow::Result;
-use codex_core::windows_sandbox::WindowsSandboxLevelExt;
-use codex_exec_server::CreateDirectoryOptions;
-use codex_features::Feature;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::PermissionProfileSnapshot;
-use codex_protocol::protocol::EnvironmentConfig;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::TurnEnvironmentSelections;
+use genex_core::windows_sandbox::WindowsSandboxLevelExt;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_features::Feature;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfileSnapshot;
+use genex_protocol::protocol::EnvironmentConfig;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::TurnEnvironmentSelections;
 use core_test_support::responses::ResponseMock;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -239,7 +239,7 @@ async fn child_turn_start_preserves_root_attribution() -> Result<()> {
         thread.flush_rollout().await?;
         let history = thread.load_history(/*include_archived*/ false).await?;
         for item in history.items {
-            if let codex_history::RolloutItem::EventMsg(EventMsg::TurnStarted(event)) = item {
+            if let genex_history::RolloutItem::EventMsg(EventMsg::TurnStarted(event)) = item {
                 starts.push((thread_id, event));
             }
         }

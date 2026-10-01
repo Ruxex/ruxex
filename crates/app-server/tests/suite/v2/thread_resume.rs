@@ -18,105 +18,105 @@ use app_test_support::test_absolute_path;
 use app_test_support::to_response;
 use app_test_support::write_api_key_auth;
 use chrono::Utc;
-use codex_app_server_protocol::ActivePermissionProfile;
-use codex_app_server_protocol::ApprovalsReviewer;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::CommandExecutionApprovalDecision;
-use codex_app_server_protocol::CommandExecutionRequestApprovalResponse;
-use codex_app_server_protocol::DeprecationNoticeNotification;
-use codex_app_server_protocol::FileChangeApprovalDecision;
-use codex_app_server_protocol::FileChangeRequestApprovalResponse;
-use codex_app_server_protocol::ItemStartedNotification;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::PatchApplyStatus;
-use codex_app_server_protocol::PatchChangeKind;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SandboxMode;
-use codex_app_server_protocol::SandboxPolicy as AppSandboxPolicy;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::SessionSource;
-use codex_app_server_protocol::SortDirection;
-use codex_app_server_protocol::ThreadActiveFlag;
-use codex_app_server_protocol::ThreadForkParams;
-use codex_app_server_protocol::ThreadForkResponse;
-use codex_app_server_protocol::ThreadGoalClearResponse;
-use codex_app_server_protocol::ThreadGoalGetParams;
-use codex_app_server_protocol::ThreadGoalGetResponse;
-use codex_app_server_protocol::ThreadGoalSetResponse;
-use codex_app_server_protocol::ThreadGoalStatus;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadListResponse;
-use codex_app_server_protocol::ThreadLoadedListParams;
-use codex_app_server_protocol::ThreadLoadedListResponse;
-use codex_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
-use codex_app_server_protocol::ThreadMetadataUpdateParams;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadReadResponse;
-use codex_app_server_protocol::ThreadResumeInitialTurnsPageParams;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadSettingsUpdateParams;
-use codex_app_server_protocol::ThreadSettingsUpdateResponse;
-use codex_app_server_protocol::ThreadSource;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadStatus;
-use codex_app_server_protocol::ThreadStatusChangedNotification;
-use codex_app_server_protocol::ThreadTurnsListParams;
-use codex_app_server_protocol::ThreadTurnsListResponse;
-use codex_app_server_protocol::ThreadUnsubscribeParams;
-use codex_app_server_protocol::TurnEnvironmentParams;
-use codex_app_server_protocol::TurnItemsView;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput;
-use codex_config::types::AuthCredentialsStoreMode;
-use codex_core::ARCHIVED_SESSIONS_SUBDIR;
-use codex_exec_server::LOCAL_ENVIRONMENT_ID;
-use codex_features::Feature;
-use codex_login::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
-use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
-use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::protocol::AgentMessageEvent;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource as RolloutSessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::ThreadSettingsAppliedEvent;
-use codex_protocol::protocol::TokenCountEvent;
-use codex_protocol::protocol::TokenUsage;
-use codex_protocol::protocol::TokenUsageInfo;
-use codex_protocol::protocol::TurnAbortReason;
-use codex_protocol::protocol::TurnAbortedEvent;
-use codex_protocol::protocol::TurnStartedEvent;
-use codex_protocol::user_input::ByteRange;
-use codex_protocol::user_input::TextElement;
-use codex_rollout::CompactedItem;
-use codex_rollout::RolloutItem;
-use codex_rollout::RolloutRecorder;
-use codex_rollout::append_rollout_item_to_path;
-use codex_rollout::read_session_meta_line;
-use codex_state::StateRuntime;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_absolute_path::test_support::PathExt;
-use codex_utils_path_uri::LegacyAppPathString;
+use genex_app_server_protocol::ActivePermissionProfile;
+use genex_app_server_protocol::ApprovalsReviewer;
+use genex_app_server_protocol::AskForApproval;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::CommandExecutionApprovalDecision;
+use genex_app_server_protocol::CommandExecutionRequestApprovalResponse;
+use genex_app_server_protocol::DeprecationNoticeNotification;
+use genex_app_server_protocol::FileChangeApprovalDecision;
+use genex_app_server_protocol::FileChangeRequestApprovalResponse;
+use genex_app_server_protocol::ItemStartedNotification;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::JSONRPCResponse;
+use genex_app_server_protocol::PatchApplyStatus;
+use genex_app_server_protocol::PatchChangeKind;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SandboxMode;
+use genex_app_server_protocol::SandboxPolicy as AppSandboxPolicy;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::SessionSource;
+use genex_app_server_protocol::SortDirection;
+use genex_app_server_protocol::ThreadActiveFlag;
+use genex_app_server_protocol::ThreadForkParams;
+use genex_app_server_protocol::ThreadForkResponse;
+use genex_app_server_protocol::ThreadGoalClearResponse;
+use genex_app_server_protocol::ThreadGoalGetParams;
+use genex_app_server_protocol::ThreadGoalGetResponse;
+use genex_app_server_protocol::ThreadGoalSetResponse;
+use genex_app_server_protocol::ThreadGoalStatus;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadListResponse;
+use genex_app_server_protocol::ThreadLoadedListParams;
+use genex_app_server_protocol::ThreadLoadedListResponse;
+use genex_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
+use genex_app_server_protocol::ThreadMetadataUpdateParams;
+use genex_app_server_protocol::ThreadReadParams;
+use genex_app_server_protocol::ThreadReadResponse;
+use genex_app_server_protocol::ThreadResumeInitialTurnsPageParams;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadSettingsUpdateParams;
+use genex_app_server_protocol::ThreadSettingsUpdateResponse;
+use genex_app_server_protocol::ThreadSource;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::ThreadStatus;
+use genex_app_server_protocol::ThreadStatusChangedNotification;
+use genex_app_server_protocol::ThreadTurnsListParams;
+use genex_app_server_protocol::ThreadTurnsListResponse;
+use genex_app_server_protocol::ThreadUnsubscribeParams;
+use genex_app_server_protocol::TurnEnvironmentParams;
+use genex_app_server_protocol::TurnItemsView;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::UserInput;
+use genex_config::types::AuthCredentialsStoreMode;
+use genex_core::ARCHIVED_SESSIONS_SUBDIR;
+use genex_exec_server::LOCAL_ENVIRONMENT_ID;
+use genex_features::Feature;
+use genex_login::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
+use genex_protocol::ThreadId;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
+use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
+use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::protocol::AgentMessageEvent;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::SessionMeta;
+use genex_protocol::protocol::SessionMetaLine;
+use genex_protocol::protocol::SessionSource as RolloutSessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::ThreadSettingsAppliedEvent;
+use genex_protocol::protocol::TokenCountEvent;
+use genex_protocol::protocol::TokenUsage;
+use genex_protocol::protocol::TokenUsageInfo;
+use genex_protocol::protocol::TurnAbortReason;
+use genex_protocol::protocol::TurnAbortedEvent;
+use genex_protocol::protocol::TurnStartedEvent;
+use genex_protocol::user_input::ByteRange;
+use genex_protocol::user_input::TextElement;
+use genex_rollout::CompactedItem;
+use genex_rollout::RolloutItem;
+use genex_rollout::RolloutRecorder;
+use genex_rollout::append_rollout_item_to_path;
+use genex_rollout::read_session_meta_line;
+use genex_state::StateRuntime;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::test_support::PathExt;
+use genex_utils_path_uri::LegacyAppPathString;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_remote;
@@ -279,7 +279,7 @@ async fn thread_resume_paginated_model_context_preserves_original_metadata() -> 
     .await??;
 
     let state_db = StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -2115,7 +2115,7 @@ async fn thread_goal_mutations_preserve_authoritative_sqlite_metadata() -> Resul
         .build_initialized()
         .await?;
     let state_db = StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -2201,7 +2201,7 @@ async fn thread_goal_set_repairs_missing_sqlite_metadata() -> Result<()> {
         .build_initialized()
         .await?;
     let state_db = StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -3113,7 +3113,7 @@ async fn thread_goal_set_edits_objective_without_resetting_usage() -> Result<()>
     .await??;
 
     let state_db = StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -3134,7 +3134,7 @@ async fn thread_goal_set_edits_objective_without_resetting_usage() -> Result<()>
             thread_id,
             /*time_delta_seconds*/ 12,
             /*token_delta*/ 50,
-            codex_state::GoalAccountingMode::ActiveOnly,
+            genex_state::GoalAccountingMode::ActiveOnly,
             Some(persisted_goal.goal_id.as_str()),
         )
         .await?;
@@ -3317,7 +3317,7 @@ async fn thread_goal_keeps_original_root_until_external_objective_edit() -> Resu
     let get_id = mcp
         .send_raw_request("thread/goal/get", Some(json!({ "threadId": thread.id })))
         .await?;
-    let _: codex_app_server_protocol::ThreadGoalGetResponse =
+    let _: genex_app_server_protocol::ThreadGoalGetResponse =
         timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(get_id)).await??;
     release_edited_turn
         .send(())
@@ -3571,7 +3571,7 @@ async fn thread_goal_lifecycle_emits_analytics_and_clear_deletes_goal() -> Resul
             })),
         )
         .await?;
-    let get: codex_app_server_protocol::ThreadGoalGetResponse =
+    let get: genex_app_server_protocol::ThreadGoalGetResponse =
         timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(get_id)).await??;
     assert_eq!(None, get.goal);
 
@@ -4238,7 +4238,7 @@ async fn thread_resume_prefers_persisted_git_metadata_for_local_threads() -> Res
             + "\n",
     )?;
     let state_db = StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -5369,7 +5369,7 @@ async fn thread_resume_replays_pending_file_change_request_approval() -> Result<
     let expected_readme_path = workspace.join("README.md");
     let expected_file_change = ThreadItem::FileChange {
         id: "patch-call".to_string(),
-        changes: vec![codex_app_server_protocol::FileUpdateChange {
+        changes: vec![genex_app_server_protocol::FileUpdateChange {
             path: expected_readme_path.to_string_lossy().into_owned(),
             kind: PatchChangeKind::Add,
             diff: "new line\n".to_string(),

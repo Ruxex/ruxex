@@ -21,7 +21,7 @@ use anyhow::Context;
 use anyhow::Result;
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use codex_keyring_store::KeyringStore;
+use genex_keyring_store::KeyringStore;
 use rand::TryRngCore;
 use rand::rngs::OsRng;
 use serde::Deserialize;
@@ -417,7 +417,7 @@ fn parse_canonical_key(canonical_key: &str) -> Option<SecretListEntry> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_keyring_store::tests::MockKeyringStore;
+    use genex_keyring_store::tests::MockKeyringStore;
     use keyring::Error as KeyringError;
     use pretty_assertions::assert_eq;
 

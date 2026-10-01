@@ -2,8 +2,8 @@
 
 use std::sync::LazyLock;
 
-use codex_build_info::BuildInfo;
-use codex_build_info::build_id;
+use genex_build_info::BuildInfo;
+use genex_build_info::build_id;
 
 use crate::protocol::EnvironmentInfo;
 

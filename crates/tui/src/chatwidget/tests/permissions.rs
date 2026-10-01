@@ -1,14 +1,14 @@
 use super::*;
 use crate::legacy_core::config::PermissionProfileCatalogEntry;
 use crate::permission_discovery::PermissionDiscovery as Discovery;
-use codex_protocol::models::ActivePermissionProfile;
-use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
-use codex_protocol::models::ManagedFileSystemPermissions;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::models::ActivePermissionProfile;
+use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
+use genex_protocol::models::ManagedFileSystemPermissions;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSpecialPath;
+use genex_protocol::permissions::NetworkSandboxPolicy;
 use pretty_assertions::assert_eq;
 
 #[cfg(target_os = "windows")]
@@ -116,12 +116,12 @@ fn app_server_workspace_write_profile(extra_root: AbsolutePathBuf) -> Permission
 }
 
 pub(super) fn requirements_stack(
-    requirements_toml: codex_config::ConfigRequirementsToml,
+    requirements_toml: genex_config::ConfigRequirementsToml,
 ) -> ConfigLayerStack {
-    let mut requirements_with_sources = codex_config::ConfigRequirementsWithSources::default();
+    let mut requirements_with_sources = genex_config::ConfigRequirementsWithSources::default();
     requirements_with_sources
         .merge_unset_fields(RequirementSource::Unknown, requirements_toml.clone());
-    let requirements = codex_config::ConfigRequirements::try_from(requirements_with_sources)
+    let requirements = genex_config::ConfigRequirements::try_from(requirements_with_sources)
         .expect("windows sandbox requirements");
 
     ConfigLayerStack::new(Vec::new(), requirements, requirements_toml)

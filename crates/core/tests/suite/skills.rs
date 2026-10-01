@@ -1,28 +1,28 @@
 #![allow(clippy::unwrap_used)]
 
 use anyhow::Result;
-use codex_core::StartIfIdleSubmission;
-use codex_core::TurnInput;
-use codex_core::TurnInputRequest;
-use codex_core::config::Config;
-use codex_exec_server::CreateDirectoryOptions;
-use codex_exec_server::ExecutorFileSystem;
-use codex_extension_api::ExtensionFuture;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_extension_api::SkillInvocationContributor;
-use codex_extension_api::SkillInvocationInput;
-use codex_extension_api::SkillInvocationKind;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
-use codex_skills_extension::SkillsExtensionConfig;
-use codex_skills_extension::install;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_core::StartIfIdleSubmission;
+use genex_core::TurnInput;
+use genex_core::TurnInputRequest;
+use genex_core::config::Config;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_exec_server::ExecutorFileSystem;
+use genex_extension_api::ExtensionFuture;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_extension_api::SkillInvocationContributor;
+use genex_extension_api::SkillInvocationInput;
+use genex_extension_api::SkillInvocationKind;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
+use genex_skills_extension::SkillsExtensionConfig;
+use genex_skills_extension::install;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use core_test_support::create_directory_symlink;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -160,7 +160,7 @@ async fn user_turn_includes_skill_instructions() -> Result<()> {
         .await?;
 
     core_test_support::wait_for_event(test.codex.as_ref(), |event| {
-        matches!(event, codex_protocol::protocol::EventMsg::TurnComplete(_))
+        matches!(event, genex_protocol::protocol::EventMsg::TurnComplete(_))
     })
     .await;
 
@@ -263,7 +263,7 @@ async fn user_turn_selects_symlinked_skill_by_advertised_discovery_path() -> Res
     assert!(matches!(submission, StartIfIdleSubmission::Started { .. }));
 
     core_test_support::wait_for_event(test.codex.as_ref(), |event| {
-        matches!(event, codex_protocol::protocol::EventMsg::TurnComplete(_))
+        matches!(event, genex_protocol::protocol::EventMsg::TurnComplete(_))
     })
     .await;
 
@@ -350,7 +350,7 @@ async fn idle_user_turn_includes_skill_instructions_in_the_first_request() -> Re
     assert!(matches!(submission, StartIfIdleSubmission::Started { .. }));
 
     core_test_support::wait_for_event(test.codex.as_ref(), |event| {
-        matches!(event, codex_protocol::protocol::EventMsg::TurnComplete(_))
+        matches!(event, genex_protocol::protocol::EventMsg::TurnComplete(_))
     })
     .await;
 

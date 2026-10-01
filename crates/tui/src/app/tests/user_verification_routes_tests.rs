@@ -70,7 +70,7 @@ async fn discarding_side_cancels_verification_and_ignores_late_proof() -> Result
         "deployments".to_string(),
         request.id().clone(),
         attempt.id,
-        Ok(codex_app_server_protocol::UserVerificationProof {
+        Ok(genex_app_server_protocol::UserVerificationProof {
             credential_id: "discarded-credential".to_string(),
             signature: "discarded-signature".to_string(),
         }),

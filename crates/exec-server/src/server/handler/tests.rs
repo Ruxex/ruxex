@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyPolicy;
-use codex_utils_path_uri::PathUri;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyPolicy;
+use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tokio::sync::mpsc;
 use uuid::Uuid;

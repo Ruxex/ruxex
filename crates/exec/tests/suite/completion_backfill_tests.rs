@@ -88,7 +88,7 @@ async fn ignores_unrelated_turn_completion_before_backfilling_primary_turn() -> 
         .cmd()
         .env(
             "RUST_LOG",
-            "codex_app_server::message_processor=trace,codex_app_server::outgoing_message=trace",
+            "genex_app_server::message_processor=trace,genex_app_server::outgoing_message=trace",
         )
         .arg("--skip-git-repo-check")
         .arg("--json")

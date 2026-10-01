@@ -1,20 +1,20 @@
 use std::sync::Arc;
 
-use codex_config::types::ToolSuggestDisabledTool;
-use codex_rmcp_client::ElicitationAction;
-use codex_rmcp_client::ElicitationResponse;
-use codex_tools::DiscoverableTool;
-use codex_tools::DiscoverableToolAction;
-use codex_tools::DiscoverableToolType;
-use codex_tools::LIST_AVAILABLE_PLUGINS_TO_INSTALL_TOOL_NAME;
-use codex_tools::REQUEST_PLUGIN_INSTALL_PERSIST_ALWAYS_VALUE;
-use codex_tools::REQUEST_PLUGIN_INSTALL_PERSIST_KEY;
-use codex_tools::REQUEST_PLUGIN_INSTALL_TOOL_NAME;
-use codex_tools::RequestPluginInstallArgs;
-use codex_tools::RequestPluginInstallResult;
-use codex_tools::ToolName;
-use codex_tools::ToolSpec;
-use codex_tools::build_request_plugin_install_elicitation_request;
+use genex_config::types::ToolSuggestDisabledTool;
+use genex_rmcp_client::ElicitationAction;
+use genex_rmcp_client::ElicitationResponse;
+use genex_tools::DiscoverableTool;
+use genex_tools::DiscoverableToolAction;
+use genex_tools::DiscoverableToolType;
+use genex_tools::LIST_AVAILABLE_PLUGINS_TO_INSTALL_TOOL_NAME;
+use genex_tools::REQUEST_PLUGIN_INSTALL_PERSIST_ALWAYS_VALUE;
+use genex_tools::REQUEST_PLUGIN_INSTALL_PERSIST_KEY;
+use genex_tools::REQUEST_PLUGIN_INSTALL_TOOL_NAME;
+use genex_tools::RequestPluginInstallArgs;
+use genex_tools::RequestPluginInstallResult;
+use genex_tools::ToolName;
+use genex_tools::ToolSpec;
+use genex_tools::build_request_plugin_install_elicitation_request;
 use rmcp::model::RequestId;
 use serde::Deserialize;
 use serde_json::Value;
@@ -70,7 +70,7 @@ impl ToolExecutor<ToolInvocation> for RequestPluginInstallHandler {
         false
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> codex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {
@@ -287,7 +287,7 @@ fn request_plugin_install_response_requests_persistent_disable(
 }
 
 async fn persist_disabled_install_request(
-    codex_home: &codex_utils_absolute_path::AbsolutePathBuf,
+    codex_home: &genex_utils_absolute_path::AbsolutePathBuf,
     tool: &DiscoverableTool,
 ) -> anyhow::Result<()> {
     ConfigEditsBuilder::new(codex_home)
@@ -307,9 +307,9 @@ fn disabled_install_request(tool: &DiscoverableTool) -> ToolSuggestDisabledTool 
 async fn verify_request_plugin_install_completed(
     session: &Arc<crate::session::session::Session>,
     _turn: &crate::session::turn_context::TurnContext,
-    _mcp: &codex_mcp::McpBinding,
+    _mcp: &genex_mcp::McpBinding,
     tool: &DiscoverableTool,
-    _auth: Option<&codex_login::CodexAuth>,
+    _auth: Option<&genex_login::CodexAuth>,
 ) -> bool {
     match tool {
         DiscoverableTool::Plugin(plugin) => {
@@ -328,7 +328,7 @@ async fn verify_request_plugin_install_completed(
 fn verified_plugin_install_completed(
     tool_id: &str,
     config: &crate::config::Config,
-    plugins_manager: &codex_core_plugins::PluginsManager,
+    plugins_manager: &genex_core_plugins::PluginsManager,
 ) -> bool {
     let plugins_input = config.plugins_config_input();
     plugins_manager

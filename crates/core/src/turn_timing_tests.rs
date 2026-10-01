@@ -1,8 +1,8 @@
-use codex_protocol::items::AgentMessageItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::FunctionCallOutputPayload;
-use codex_protocol::models::ResponseItem;
+use genex_protocol::items::AgentMessageItem;
+use genex_protocol::items::TurnItem;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::FunctionCallOutputPayload;
+use genex_protocol::models::ResponseItem;
 use pretty_assertions::assert_eq;
 use std::time::Duration;
 use std::time::Instant;

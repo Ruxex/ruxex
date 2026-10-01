@@ -7,8 +7,8 @@ use super::*;
 use crate::app_event::ManagedWorktreeCreated;
 use crate::app_event::ManagedWorktreeTransition;
 use crate::history_cell::McpInventoryLoadingCell as LoadingCell;
-use codex_app_server_protocol::ThreadBackgroundTerminalsListParams;
-use codex_app_server_protocol::ThreadBackgroundTerminalsListResponse as ListResponse;
+use genex_app_server_protocol::ThreadBackgroundTerminalsListParams;
+use genex_app_server_protocol::ThreadBackgroundTerminalsListResponse as ListResponse;
 
 pub(super) fn background_terminals_blocker(
     result: Result<ListResponse, TypedRequestError>,
@@ -163,14 +163,14 @@ impl App {
                     &self.config.codex_home,
                     /*cwd*/ None,
                     Vec::new(),
-                    codex_config::ConfigLoadOptions::default(),
+                    genex_config::ConfigLoadOptions::default(),
                 )
                 .await?;
-                let settings = codex_worktree::WorktreeSettings::for_cli(
+                let settings = genex_worktree::WorktreeSettings::for_cli(
                     &self.config.codex_home,
                     host.config_toml.desktop.as_ref(),
                 )?;
-                let manager = codex_worktree::WorktreeManager::new(settings);
+                let manager = genex_worktree::WorktreeManager::new(settings);
                 anyhow::Ok(manager)
             }
             .await;
@@ -183,7 +183,7 @@ impl App {
                         let create_cwd = source_cwd.to_path_buf();
                         let result = tokio::task::spawn_blocking(move || {
                             manager
-                                .create(&codex_worktree::CreateWorktree {
+                                .create(&genex_worktree::CreateWorktree {
                                     source_cwd: create_cwd,
                                     base: None,
                                 })
@@ -277,7 +277,7 @@ impl App {
 
     fn retained_worktree_error(
         &mut self,
-        checkout: &codex_worktree::ManagedWorktree,
+        checkout: &genex_worktree::ManagedWorktree,
         reason: impl std::fmt::Display,
     ) {
         self.working_directory_error(format!(

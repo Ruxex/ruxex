@@ -1,4 +1,4 @@
-use codex_utils_path_uri::PathUri;
+use genex_utils_path_uri::PathUri;
 use serde::Deserialize;
 use serde::Serialize;
 

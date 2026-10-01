@@ -1,17 +1,17 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use codex_app_server_client::RemoteAppServerClient;
-use codex_app_server_client::RemoteAppServerConnectArgs;
-use codex_app_server_client::RemoteAppServerEndpoint;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_state::ThreadMetadataBuilder;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_app_server_client::RemoteAppServerClient;
+use genex_app_server_client::RemoteAppServerConnectArgs;
+use genex_app_server_client::RemoteAppServerEndpoint;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::SessionMeta;
+use genex_protocol::protocol::SessionMetaLine;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_state::ThreadMetadataBuilder;
+use genex_utils_absolute_path::test_support::PathExt;
 use futures::SinkExt;
 use futures::StreamExt;
 use pretty_assertions::assert_eq;
@@ -35,9 +35,9 @@ async fn build_config(temp_dir: &TempDir) -> std::io::Result<Config> {
         .await
 }
 
-async fn state_runtime(config: &Config) -> std::io::Result<Arc<codex_state::StateRuntime>> {
-    let runtime = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(config.codex_home.as_path().abs()),
+async fn state_runtime(config: &Config) -> std::io::Result<Arc<genex_state::StateRuntime>> {
+    let runtime = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(config.codex_home.as_path().abs()),
         config.model_provider_id.clone(),
     )
     .await
@@ -55,9 +55,9 @@ async fn lookup_name(
     collections: &[SessionCollection],
     mode: ThreadParamsMode,
     model_provider: Option<&str>,
-) -> color_eyre::Result<Option<codex_app_server_protocol::Thread>> {
+) -> color_eyre::Result<Option<genex_app_server_protocol::Thread>> {
     let mut app_server = AppServerSession::new(
-        codex_app_server_client::AppServerClient::InProcess(
+        genex_app_server_client::AppServerClient::InProcess(
             start_test_embedded_app_server(config.clone()).await?,
         ),
         mode,
@@ -76,8 +76,8 @@ async fn lookup_name(
 }
 
 async fn upsert_thread(
-    runtime: &codex_state::StateRuntime,
-    metadata: codex_state::ThreadMetadata,
+    runtime: &genex_state::StateRuntime,
+    metadata: genex_state::ThreadMetadata,
 ) -> std::io::Result<()> {
     runtime
         .upsert_thread(&metadata)
@@ -90,7 +90,7 @@ fn thread_metadata(
     thread_id: ThreadId,
     rollout_path: PathBuf,
     title: &str,
-) -> codex_state::ThreadMetadata {
+) -> genex_state::ThreadMetadata {
     let created_at = chrono::DateTime::parse_from_rfc3339("2025-02-01T10:00:00Z")
         .expect("timestamp should parse")
         .with_timezone(&chrono::Utc);
@@ -304,7 +304,7 @@ async fn rejects_duplicate_labels_across_server_pages() -> color_eyre::Result<()
     }
 
     let mut app_server = AppServerSession::new(
-        codex_app_server_client::AppServerClient::InProcess(
+        genex_app_server_client::AppServerClient::InProcess(
             start_test_embedded_app_server(config.clone()).await?,
         ),
         ThreadParamsMode::Embedded,
@@ -437,7 +437,7 @@ async fn uses_listed_thread_when_older_server_cannot_read_it() -> color_eyre::Re
     )
     .await?;
     let mut embedded = AppServerSession::new(
-        codex_app_server_client::AppServerClient::InProcess(
+        genex_app_server_client::AppServerClient::InProcess(
             start_test_embedded_app_server(config.clone()).await?,
         ),
         ThreadParamsMode::Embedded,
@@ -498,7 +498,7 @@ async fn uses_listed_thread_when_older_server_cannot_read_it() -> color_eyre::Re
         })
         .await?;
         let mut remote = AppServerSession::new(
-            codex_app_server_client::AppServerClient::Remote(client),
+            genex_app_server_client::AppServerClient::Remote(client),
             mode,
         );
         let found = lookup(

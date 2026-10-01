@@ -6,24 +6,24 @@ use app_test_support::create_mock_responses_server_sequence_unchecked;
 use app_test_support::to_response;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::ConfigWarningNotification;
-use codex_app_server_protocol::InitializeParams;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_app_server_protocol::JSONRPCRequest;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadLoadedListParams;
-use codex_app_server_protocol::ThreadLoadedListResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_core::config::set_project_trust_level;
-use codex_http_client::HttpClient;
-use codex_http_client::HttpClientBuilder;
-use codex_http_client::HttpResponse;
-use codex_protocol::config_types::TrustLevel;
+use genex_app_server_protocol::ClientInfo;
+use genex_app_server_protocol::ConfigWarningNotification;
+use genex_app_server_protocol::InitializeParams;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::JSONRPCNotification;
+use genex_app_server_protocol::JSONRPCRequest;
+use genex_app_server_protocol::JSONRPCResponse;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ThreadLoadedListParams;
+use genex_app_server_protocol::ThreadLoadedListResponse;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_core::config::set_project_trust_level;
+use genex_http_client::HttpClient;
+use genex_http_client::HttpClientBuilder;
+use genex_http_client::HttpResponse;
+use genex_protocol::config_types::TrustLevel;
 use futures::SinkExt;
 use futures::StreamExt;
 use hmac::Hmac;
@@ -495,7 +495,7 @@ pub(super) async fn spawn_websocket_server_with_args(
     listen_url: &str,
     extra_args: &[String],
 ) -> Result<(Child, SocketAddr)> {
-    let program = codex_utils_cargo_bin::cargo_bin("codex-app-server")
+    let program = genex_utils_cargo_bin::cargo_bin("codex-app-server")
         .context("should find app-server binary")?;
     let mut cmd = Command::new(program);
     cmd.arg("--listen")
@@ -632,7 +632,7 @@ async fn run_websocket_server_to_completion_with_args(
     listen_url: &str,
     extra_args: &[String],
 ) -> Result<std::process::Output> {
-    let program = codex_utils_cargo_bin::cargo_bin("codex-app-server")
+    let program = genex_utils_cargo_bin::cargo_bin("codex-app-server")
         .context("should find app-server binary")?;
     let mut cmd = Command::new(program);
     cmd.arg("--listen")

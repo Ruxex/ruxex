@@ -2,8 +2,8 @@
 //! Callers must flush the rollout after capture before persisting the snapshot.
 
 use super::Session;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::TurnEnvironmentSelection;
 
 /// Turn input and turn-start injections have entered the rollout writer.
 pub(super) struct RecordedTurnInput;
@@ -39,7 +39,7 @@ impl Session {
                         .service_tier
                         .clone()
                         .unwrap_or_else(|| {
-                            codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE
+                            genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE
                                 .to_string()
                         }),
                 ),

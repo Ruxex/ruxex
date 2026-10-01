@@ -1,4 +1,4 @@
-use codex_protocol::protocol::HistoryPosition;
+use genex_protocol::protocol::HistoryPosition;
 use std::sync::Arc;
 
 use super::LocalThreadStore;
@@ -86,7 +86,7 @@ pub(super) async fn prepare(
 
 pub(super) async fn history_base_at_boundary(
     store: &LocalThreadStore,
-    thread_id: codex_protocol::ThreadId,
+    thread_id: genex_protocol::ThreadId,
     boundary: ForkBoundary,
     lineage: &super::rollout_lineage::RolloutLineage,
 ) -> ThreadStoreResult<Option<HistoryPosition>> {

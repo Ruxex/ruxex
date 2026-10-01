@@ -1,6 +1,6 @@
 use crate::RolloutItem;
 use crate::protocol::EventMsg;
-use codex_protocol::models::ResponseItem;
+use genex_protocol::models::ResponseItem;
 
 /// Whether a rollout `item` should be persisted in rollout files.
 pub fn is_persisted_rollout_item(item: &RolloutItem) -> bool {

@@ -2,36 +2,36 @@
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_config::types::ToolSuggestDisabledTool;
-use codex_config::types::ToolSuggestDiscoverable;
-use codex_config::types::ToolSuggestDiscoverableType;
-use codex_core::NewThread;
-use codex_core::StartThreadOptions;
-use codex_core::TurnInputRequest;
-use codex_core::config::Config;
-use codex_extension_api::ExtensionFuture;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_extension_api::McpServerContribution;
-use codex_extension_api::McpServerContributionContext;
-use codex_extension_api::McpServerContributor;
-use codex_features::Feature;
-use codex_login::CodexAuth;
-use codex_models_manager::test_support::test_models_response;
-use codex_protocol::approvals::ElicitationAction;
-use codex_protocol::approvals::ElicitationRequest;
-use codex_protocol::approvals::ElicitationRequestEvent;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
-use codex_utils_path_uri::PathUri;
+use genex_config::types::ToolSuggestDisabledTool;
+use genex_config::types::ToolSuggestDiscoverable;
+use genex_config::types::ToolSuggestDiscoverableType;
+use genex_core::NewThread;
+use genex_core::StartThreadOptions;
+use genex_core::TurnInputRequest;
+use genex_core::config::Config;
+use genex_extension_api::ExtensionFuture;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_extension_api::McpServerContribution;
+use genex_extension_api::McpServerContributionContext;
+use genex_extension_api::McpServerContributor;
+use genex_features::Feature;
+use genex_login::CodexAuth;
+use genex_models_manager::test_support::test_models_response;
+use genex_protocol::approvals::ElicitationAction;
+use genex_protocol::approvals::ElicitationRequest;
+use genex_protocol::approvals::ElicitationRequestEvent;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
+use genex_utils_path_uri::PathUri;
 use core_test_support::apps_test_server::AppsTestServer;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -1062,7 +1062,7 @@ async fn run_remote_plugin_install_metadata_case() -> Result<()> {
                 "thread_id": thread_id,
                 "turn_id": turn_id,
                 "model_slug": "gpt-5.5",
-                "product_client_id": codex_login::default_client::originator().value,
+                "product_client_id": genex_login::default_client::originator().value,
             }
         })
     );

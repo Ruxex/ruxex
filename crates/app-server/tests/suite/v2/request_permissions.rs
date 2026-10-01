@@ -3,24 +3,24 @@ use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_request_permissions_sse_response;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::PermissionGrantScope;
-use codex_app_server_protocol::PermissionsRequestApprovalResponse;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ServerRequestResolvedNotification;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::UserInput as V2UserInput;
-use codex_features::Feature;
-use codex_protocol::models::FileSystemPermissions;
-use codex_protocol::request_permissions::PermissionGrantScope as CorePermissionGrantScope;
-use codex_protocol::request_permissions::RequestPermissionProfile;
-use codex_protocol::request_permissions::RequestPermissionsResponse;
-use codex_utils_path_uri::LegacyAppPathString;
-use codex_utils_path_uri::PathUri;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::PermissionGrantScope;
+use genex_app_server_protocol::PermissionsRequestApprovalResponse;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::ServerRequestResolvedNotification;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::UserInput as V2UserInput;
+use genex_features::Feature;
+use genex_protocol::models::FileSystemPermissions;
+use genex_protocol::request_permissions::PermissionGrantScope as CorePermissionGrantScope;
+use genex_protocol::request_permissions::RequestPermissionProfile;
+use genex_protocol::request_permissions::RequestPermissionsResponse;
+use genex_utils_path_uri::LegacyAppPathString;
+use genex_utils_path_uri::PathUri;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -126,26 +126,26 @@ async fn request_permissions_round_trip() -> Result<()> {
     assert_eq!(
         requested_file_system.entries,
         Some(vec![
-            codex_app_server_protocol::FileSystemSandboxEntry {
-                path: codex_app_server_protocol::FileSystemPath::Path {
+            genex_app_server_protocol::FileSystemSandboxEntry {
+                path: genex_app_server_protocol::FileSystemPath::Path {
                     path: requested_writes[0].clone(),
                 },
-                access: codex_app_server_protocol::FileSystemAccessMode::Write,
+                access: genex_app_server_protocol::FileSystemAccessMode::Write,
             },
-            codex_app_server_protocol::FileSystemSandboxEntry {
-                path: codex_app_server_protocol::FileSystemPath::Path {
+            genex_app_server_protocol::FileSystemSandboxEntry {
+                path: genex_app_server_protocol::FileSystemPath::Path {
                     path: requested_writes[1].clone(),
                 },
-                access: codex_app_server_protocol::FileSystemAccessMode::Write,
+                access: genex_app_server_protocol::FileSystemAccessMode::Write,
             },
         ])
     );
     mcp.send_response(
         request_id,
         serde_json::to_value(PermissionsRequestApprovalResponse {
-            permissions: codex_app_server_protocol::GrantedPermissionProfile {
+            permissions: genex_app_server_protocol::GrantedPermissionProfile {
                 network: None,
-                file_system: Some(codex_app_server_protocol::AdditionalFileSystemPermissions {
+                file_system: Some(genex_app_server_protocol::AdditionalFileSystemPermissions {
                     read: None,
                     write: Some(vec![requested_writes[0].clone()]),
                     glob_scan_max_depth: None,

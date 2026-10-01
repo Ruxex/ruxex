@@ -2,16 +2,16 @@
 
 use anyhow::Result;
 use app_test_support::TestAppServer;
-use codex_app_server_protocol::ConfigReadParams;
-use codex_app_server_protocol::ConfigReadResponse;
-use codex_app_server_protocol::ConfigRequirementsReadResponse;
-use codex_app_server_protocol::ConfigValueWriteParams;
-use codex_app_server_protocol::ConfigWriteResponse;
-use codex_app_server_protocol::MergeStrategy;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_config::config_toml::ConfigToml;
+use genex_app_server_protocol::ConfigReadParams;
+use genex_app_server_protocol::ConfigReadResponse;
+use genex_app_server_protocol::ConfigRequirementsReadResponse;
+use genex_app_server_protocol::ConfigValueWriteParams;
+use genex_app_server_protocol::ConfigWriteResponse;
+use genex_app_server_protocol::MergeStrategy;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_config::config_toml::ConfigToml;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::time::Duration;

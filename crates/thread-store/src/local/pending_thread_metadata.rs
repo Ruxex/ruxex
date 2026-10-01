@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::sync::Arc;
 
-use codex_protocol::ThreadId;
+use genex_protocol::ThreadId;
 use tokio::sync::Mutex;
 use tokio::sync::OwnedMutexGuard;
 

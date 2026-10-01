@@ -1,4 +1,4 @@
-use codex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ModelsResponse;
 
 #[derive(Debug, Clone, Default)]
 pub struct ModelsManagerConfig {

@@ -10,7 +10,7 @@ mod rrf_lexical_char;
 mod weighted_lexical;
 pub(crate) use character_ngram::CharacterNgramSkillSelector;
 pub(crate) use character_routing_card::CharacterRoutingCardSkillSelector;
-use codex_skills::SkillDependencies;
+use genex_skills::SkillDependencies;
 pub(crate) use fielded_bm25::FieldedBm25SkillSelector;
 pub(crate) use lru::LruSkillSelector;
 pub(crate) use lru_plus_character_routing::LruPlusCharacterRoutingSkillSelector;

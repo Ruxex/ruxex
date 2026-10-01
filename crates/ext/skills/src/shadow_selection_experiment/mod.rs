@@ -14,9 +14,9 @@ use std::time::Duration;
 use std::time::Instant;
 
 use crate::HostSkillsSnapshot;
-use codex_extension_api::TurnInputContext;
-use codex_otel::MetricsClient;
-use codex_protocol::user_input::UserInput;
+use genex_extension_api::TurnInputContext;
+use genex_otel::MetricsClient;
+use genex_protocol::user_input::UserInput;
 
 use crate::catalog::SkillCatalog;
 use crate::catalog::SkillCatalogEntry;

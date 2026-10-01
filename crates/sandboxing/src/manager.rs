@@ -14,16 +14,16 @@ use crate::resolve_windows_restricted_token_filesystem_overrides;
 use crate::seatbelt::MacosSeatbeltProfile;
 #[cfg(target_os = "windows")]
 use crate::windows_sandbox_uses_elevated_backend;
-use codex_network_proxy::ManagedNetworkSandboxContext;
-use codex_network_proxy::NetworkProxy;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::AdditionalPermissionProfile;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_network_proxy::ManagedNetworkSandboxContext;
+use genex_network_proxy::NetworkProxy;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::AdditionalPermissionProfile;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::SandboxPolicy;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use std::collections::HashMap;
 use std::ffi::OsString;
 use std::io;
@@ -162,7 +162,7 @@ pub struct SandboxTransformRequest<'a> {
 pub struct SandboxDirectSpawnTransformRequest<'a> {
     pub transform: SandboxTransformRequest<'a>,
     pub workspace_roots: &'a [AbsolutePathBuf],
-    pub windows_sandbox_proxy_settings_mode: codex_windows_sandbox::WindowsSandboxProxySettingsMode,
+    pub windows_sandbox_proxy_settings_mode: genex_windows_sandbox::WindowsSandboxProxySettingsMode,
 }
 
 // TODO(anp): Revisit this preparation type once this module's PathUri migration is complete.
@@ -402,7 +402,7 @@ impl SandboxManager {
                         "private desktop isolation is not supported by MXC".to_string(),
                     ));
                 }
-                if !codex_mxc_sandbox::is_available() {
+                if !genex_mxc_sandbox::is_available() {
                     return Err(SandboxTransformError::WindowsMxcPreparation(
                         "native MXC is unavailable on this executor".to_string(),
                     ));
@@ -434,8 +434,8 @@ impl SandboxManager {
                 let mut full_command =
                     vec![os_string_to_command_component(exe.as_os_str().to_owned())];
                 full_command.extend(
-                    codex_mxc_sandbox::create_command_args(
-                        codex_mxc_sandbox::CreateMxcCommandArgsParams {
+                    genex_mxc_sandbox::create_command_args(
+                        genex_mxc_sandbox::CreateMxcCommandArgsParams {
                             command: argv,
                             permission_profile: &pending.effective_permission_profile,
                             sandbox_policy_cwd: pending.native_sandbox_policy_cwd.as_path(),
@@ -545,7 +545,7 @@ impl SandboxManager {
                     ));
                 }
                 let pending = pending_sandboxed_request?;
-                if let Some(metrics) = codex_otel::global() {
+                if let Some(metrics) = genex_otel::global() {
                     let _ = metrics.counter(
                         "codex.windows_sandbox.private_desktop",
                         /*inc*/ 1,
@@ -594,7 +594,7 @@ impl SandboxManager {
     ) -> Result<SandboxExecRequest, SandboxTransformError> {
         #[cfg(target_os = "windows")]
         if request.transform.sandbox == SandboxType::WindowsRestrictedToken {
-            let codex_home = codex_utils_home_dir::find_codex_home()
+            let codex_home = genex_utils_home_dir::find_codex_home()
                 .map_err(|err| SandboxTransformError::WindowsSandboxPreparation(err.to_string()))?;
             return self.transform_for_direct_spawn_with_codex_home(request, codex_home.as_path());
         }
@@ -627,7 +627,7 @@ fn wrap_windows_sandbox_exec_request_for_direct_spawn(
     request: &mut SandboxExecRequest,
     workspace_roots: &[AbsolutePathBuf],
     codex_home: &Path,
-    proxy_settings_mode: codex_windows_sandbox::WindowsSandboxProxySettingsMode,
+    proxy_settings_mode: genex_windows_sandbox::WindowsSandboxProxySettingsMode,
 ) -> Result<(), SandboxTransformError> {
     // TODO(anp): Keep PathUri through the Windows sandbox wrapper boundary.
     let native_cwd =
@@ -650,7 +650,7 @@ fn wrap_windows_sandbox_exec_request_for_direct_spawn(
         ));
     };
     let source = std::path::PathBuf::from(&program);
-    let helper = codex_windows_sandbox::resolve_exe_for_launch(source.as_path(), codex_home);
+    let helper = genex_windows_sandbox::resolve_exe_for_launch(source.as_path(), codex_home);
     *program = helper.to_string_lossy().into_owned();
 
     let inner_command = std::mem::take(&mut request.command);
@@ -702,7 +702,7 @@ fn wrap_windows_sandbox_exec_request_for_direct_spawn(
         overrides.additional_deny_write_paths.as_slice()
     });
     let mut wrapper_args =
-        codex_windows_sandbox::create_windows_sandbox_command_args_for_permission_profile(
+        genex_windows_sandbox::create_windows_sandbox_command_args_for_permission_profile(
             inner_command,
             &native_cwd,
             workspace_roots,

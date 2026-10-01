@@ -1,12 +1,12 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-rollout"
+name = "genex-rollout"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "codex_rollout"
+name = "genex_rollout"
 path = "src/lib.rs"
 
 [lints]
@@ -15,15 +15,15 @@ workspace = true
 [dependencies]
 anyhow = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
-codex-extension-items = { workspace = true }
-codex-file-search = { workspace = true }
-codex-git-utils = { workspace = true }
-codex-history = { workspace = true }
-codex-otel = { workspace = true }
-codex-protocol = { workspace = true }
-codex-state = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-path = { workspace = true }
+genex-extension-items = { workspace = true }
+genex-file-search = { workspace = true }
+genex-git-utils = { workspace = true }
+genex-history = { workspace = true }
+genex-otel = { workspace = true }
+genex-protocol = { workspace = true }
+genex-state = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
+genex-utils-path = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
@@ -48,5 +48,5 @@ uuid = { workspace = true }
 zstd = { workspace = true }
 
 [dev-dependencies]
-codex-utils-absolute-path = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
 pretty_assertions = { workspace = true }

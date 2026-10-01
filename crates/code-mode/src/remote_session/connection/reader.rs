@@ -1,4 +1,4 @@
-use codex_code_mode_protocol::host::FramedReader;
+use genex_code_mode_protocol::host::FramedReader;
 use tokio::process::ChildStdout;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;

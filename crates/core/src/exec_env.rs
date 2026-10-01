@@ -1,17 +1,17 @@
-pub use codex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
-use codex_features::Feature;
-use codex_features::Features;
-use codex_protocol::SessionId;
-use codex_protocol::ThreadId;
+pub use genex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
+use genex_features::Feature;
+use genex_features::Features;
+use genex_protocol::SessionId;
+use genex_protocol::ThreadId;
 #[cfg(test)]
-use codex_protocol::config_types::EnvironmentVariablePattern;
-use codex_protocol::config_types::ShellEnvironmentPolicy;
-use codex_protocol::models::ActivePermissionProfile;
-use codex_protocol::shell_environment;
+use genex_protocol::config_types::EnvironmentVariablePattern;
+use genex_protocol::config_types::ShellEnvironmentPolicy;
+use genex_protocol::models::ActivePermissionProfile;
+use genex_protocol::shell_environment;
 use std::collections::HashMap;
 
-pub use codex_protocol::shell_environment::CODEX_SESSION_ID_ENV_VAR;
-pub use codex_protocol::shell_environment::CODEX_THREAD_ID_ENV_VAR;
+pub use genex_protocol::shell_environment::CODEX_SESSION_ID_ENV_VAR;
+pub use genex_protocol::shell_environment::CODEX_THREAD_ID_ENV_VAR;
 
 pub(crate) const CODEX_VERSION_ENV_VAR: &str = "CODEX_VERSION";
 

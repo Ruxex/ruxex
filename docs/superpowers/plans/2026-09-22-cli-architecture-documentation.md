@@ -22,7 +22,7 @@
 ## Review Focus
 
 - Command coverage: every `Subcommand` variant and its dispatch arm is represented, including hidden/internal commands with an explicit visibility label.
-- Boundary ownership: `codex-cli`, `codex-tui`, `codex-exec`, `codex-core`, app-server crates, protocol crates, and API/client crates are not conflated.
+- Boundary ownership: `genex-cli`, `codex-tui`, `codex-exec`, `genex-core`, app-server crates, protocol crates, and API/client crates are not conflated.
 - Trait provenance: every listed Trait points to its defining declaration rather than only a re-export or implementation.
 - Common-flow normalization: command pages link to common behavior instead of copying conflicting descriptions of config, auth, session, tool, sandbox, persistence, or output handling.
 - Snapshot integrity: all referenced files, line anchors, and links resolve against the repository state represented by the snapshot.
@@ -152,7 +152,7 @@
 
 - [ ] **Step 5: Build the Trait index from definitions**
 
-  Use `rg -n '(^|\s)(pub\s+)?(crate\s+)?trait\s+'` over capability crates, then inspect each declaration with `nl -ba`. Include relevant Traits such as `AuthProvider` (`codex-api`), `SseTelemetry`/`WebsocketTelemetry` (`codex-api`), tool runtime contracts (`codex-core`), session task contracts (`codex-core`), event sources (`codex-tui`), and protocol/client boundary Traits when they are on a documented path. For each entry record exact visibility, defining crate, module/file/line, purpose, implementations/consumers, and classification.
+  Use `rg -n '(^|\s)(pub\s+)?(crate\s+)?trait\s+'` over capability crates, then inspect each declaration with `nl -ba`. Include relevant Traits such as `AuthProvider` (`genex-api`), `SseTelemetry`/`WebsocketTelemetry` (`genex-api`), tool runtime contracts (`genex-core`), session task contracts (`genex-core`), event sources (`codex-tui`), and protocol/client boundary Traits when they are on a documented path. For each entry record exact visibility, defining crate, module/file/line, purpose, implementations/consumers, and classification.
 
 - [ ] **Step 6: Build the crate index**
 

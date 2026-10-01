@@ -1,4 +1,4 @@
-use codex_login::CODEX_API_KEY_ENV_VAR;
+use genex_login::CODEX_API_KEY_ENV_VAR;
 use std::path::Path;
 use tempfile::TempDir;
 use wiremock::MockServer;
@@ -11,7 +11,7 @@ pub struct TestCodexExecBuilder {
 impl TestCodexExecBuilder {
     pub fn cmd(&self) -> assert_cmd::Command {
         let mut cmd = assert_cmd::Command::new(
-            codex_utils_cargo_bin::cargo_bin("codex-exec")
+            genex_utils_cargo_bin::cargo_bin("codex-exec")
                 .expect("should find binary for codex-exec"),
         );
         cmd.current_dir(self.cwd.path())

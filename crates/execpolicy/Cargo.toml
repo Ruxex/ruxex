@@ -1,12 +1,12 @@
 [package]
-name = "codex-execpolicy"
+name = "genex-execpolicy"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 description = "Codex exec policy: prefix-based Starlark rules for command decisions."
 
 [lib]
-name = "codex_execpolicy"
+name = "genex_execpolicy"
 path = "src/lib.rs"
 doctest = false
 
@@ -20,7 +20,7 @@ workspace = true
 [dependencies]
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
-codex-utils-absolute-path = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
 multimap = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

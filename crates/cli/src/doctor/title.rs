@@ -2,9 +2,9 @@ use std::collections::HashSet;
 use std::path::Path;
 use std::path::PathBuf;
 
-use codex_config::ConfigLayerSource;
-use codex_core::config::Config;
-use codex_git_utils::get_git_repo_root;
+use genex_config::ConfigLayerSource;
+use genex_core::config::Config;
+use genex_git_utils::get_git_repo_root;
 use unicode_segmentation::UnicodeSegmentation;
 
 use super::CheckStatus;

@@ -1,6 +1,6 @@
 use std::fs;
 
-use codex_install_context::InstallContext;
+use genex_install_context::InstallContext;
 use pretty_assertions::assert_eq;
 use semver::Version;
 use tempfile::tempdir;

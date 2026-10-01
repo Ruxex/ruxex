@@ -1,10 +1,10 @@
 #![allow(clippy::expect_used)]
 
-use codex_worktree::CreateWorktree;
-use codex_worktree::ManagedWorktree;
-use codex_worktree::WorktreeManager;
-use codex_worktree::WorktreeSettings;
-use codex_worktree::default_worktree_base;
+use genex_worktree::CreateWorktree;
+use genex_worktree::ManagedWorktree;
+use genex_worktree::WorktreeManager;
+use genex_worktree::WorktreeSettings;
+use genex_worktree::default_worktree_base;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;

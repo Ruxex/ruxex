@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_plugins::PluginIdentity;
-use codex_utils_plugins::PluginSkillRoot;
-use codex_utils_plugins::SkillDiscoveryMode;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_plugins::PluginIdentity;
+use genex_utils_plugins::PluginSkillRoot;
+use genex_utils_plugins::SkillDiscoveryMode;
 
 use crate::PluginCapabilitySummary;
 use crate::PluginHookSource;

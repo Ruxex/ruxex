@@ -4,7 +4,7 @@
 
 **Goal:** Remove the Windows sandbox service and Registered Core mode while preserving the ordinary Windows CLI sandbox.
 
-**Architecture:** Delete the service crate and its package/IPC lifecycle, then simplify `codex-windows-sandbox` and app-server to use the existing local/elevated helper path. Keep command-runner process isolation, ACLs, Restricted Tokens, Job Objects, Private Desktop, deny-read handling, and normal network controls intact.
+**Architecture:** Delete the service crate and its package/IPC lifecycle, then simplify `genex-windows-sandbox` and app-server to use the existing local/elevated helper path. Keep command-runner process isolation, ACLs, Restricted Tokens, Job Objects, Private Desktop, deny-read handling, and normal network controls intact.
 
 **Tech Stack:** Rust workspace, Cargo features and generated config schema, Windows APIs, app-server protocol/config, `just generate`, `just check --tests`, `just check`.
 
@@ -21,7 +21,7 @@
 
 ## Review Focus
 
-- Ordinary CLI setup still requires and validates `codex-windows-sandbox-setup.exe` and `codex-command-runner.exe`; test package validation and helper materialization after service removal.
+- Ordinary CLI setup still requires and validates `genex-windows-sandbox-setup.exe` and `codex-command-runner.exe`; test package validation and helper materialization after service removal.
 - Elevated setup no longer branches on service availability or Registered Core; test that setup failures remain explicit rather than falling back to unsandboxed execution.
 - ACL/deny-read, Restricted Token, Job Object, Private Desktop, and proxy/firewall setup remain reachable; compile the affected Windows sandbox targets and inspect removed exports.
 - App-server readiness/setup no longer performs registration refresh or service provisioning; compile app-server/core/sandboxing test targets and inspect config schema generation.
@@ -57,7 +57,7 @@
 
 - [ ] **Step 4: Verify workspace removal**
 
-  Run `cargo metadata --no-deps` and `rg -n 'codex-windows-sandbox-service|windows_sandbox_service' Cargo.toml Cargo.lock crates --glob '*.{rs,toml,json}'`. Expected: no active workspace, crate, feature, or generated-config references remain.
+  Run `cargo metadata --no-deps` and `rg -n 'genex-windows-sandbox-service|windows_sandbox_service' Cargo.toml Cargo.lock crates --glob '*.{rs,toml,json}'`. Expected: no active workspace, crate, feature, or generated-config references remain.
 
 - [ ] **Step 5: Commit the service/config removal**
 
@@ -99,7 +99,7 @@
 
 - [ ] **Step 5: Compile the Windows sandbox crate targets**
 
-  Run `cargo check --tests -p codex-windows-sandbox`. Expected: the library and its test targets compile with no service/Registered Core API references, while ordinary Windows sandbox modules remain present.
+  Run `cargo check --tests -p genex-windows-sandbox`. Expected: the library and its test targets compile with no service/Registered Core API references, while ordinary Windows sandbox modules remain present.
 
 - [ ] **Step 6: Commit the library cleanup**
 
@@ -136,7 +136,7 @@
 
 - [ ] **Step 4: Compile affected callers**
 
-  Run `cargo check --tests -p codex-app-server -p codex-core -p codex-sandboxing`. Expected: callers compile without service APIs and ordinary sandbox setup/session code remains available.
+  Run `cargo check --tests -p genex-app-server -p genex-core -p genex-sandboxing`. Expected: callers compile without service APIs and ordinary sandbox setup/session code remains available.
 
 - [ ] **Step 5: Commit caller simplification**
 
@@ -201,7 +201,7 @@
 
   ```bash
   rg -n -i 'windows.?sandbox.?service|registered.?core|CODEX_WINDOWS_REGISTERED_CORE|OpenAI\.CodexSandbox' crates Cargo.toml Cargo.lock --glob '*.{rs,toml,json}'
-  rg -n 'codex-windows-sandbox-service|codex-windows-sandbox-setup|codex-command-runner' . --glob '!target/**'
+  rg -n 'genex-windows-sandbox-service|genex-windows-sandbox-setup|codex-command-runner' . --glob '!target/**'
   cargo metadata --no-deps
   git diff --check
   ```

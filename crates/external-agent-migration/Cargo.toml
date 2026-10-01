@@ -1,12 +1,12 @@
 [package]
-name = "codex-external-agent-migration"
+name = "genex-external-agent-migration"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
 doctest = false
-name = "codex_external_agent_migration"
+name = "genex_external_agent_migration"
 path = "src/lib.rs"
 
 [lints]
@@ -14,17 +14,17 @@ workspace = true
 
 [dependencies]
 chrono = { workspace = true }
-codex-config = { workspace = true }
-codex-core = { workspace = true }
-codex-core-plugins = { workspace = true }
-codex-hooks = { workspace = true }
-codex-login = { workspace = true }
-codex-otel = { workspace = true }
-codex-plugin = { workspace = true }
-codex-protocol = { workspace = true }
-codex-rollout = { workspace = true }
-codex-thread-store = { workspace = true }
-codex-utils-output-truncation = { workspace = true }
+genex-config = { workspace = true }
+genex-core = { workspace = true }
+genex-core-plugins = { workspace = true }
+genex-hooks = { workspace = true }
+genex-login = { workspace = true }
+genex-otel = { workspace = true }
+genex-plugin = { workspace = true }
+genex-protocol = { workspace = true }
+genex-rollout = { workspace = true }
+genex-thread-store = { workspace = true }
+genex-utils-output-truncation = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 serde_yaml = { workspace = true }
@@ -34,7 +34,7 @@ tokio = { workspace = true, features = ["rt", "sync"] }
 tracing = { workspace = true }
 
 [dev-dependencies]
-codex-app-server-protocol = { workspace = true }
+genex-app-server-protocol = { workspace = true }
 pretty_assertions = { workspace = true }
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

@@ -1,8 +1,8 @@
 //! Exercises global-instruction refreshes through real turns and provider reads.
 
 use super::*;
-use codex_protocol::request_user_input::RequestUserInputAnswer;
-use codex_protocol::request_user_input::RequestUserInputResponse;
+use genex_protocol::request_user_input::RequestUserInputAnswer;
+use genex_protocol::request_user_input::RequestUserInputResponse;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 use tokio::sync::Notify;

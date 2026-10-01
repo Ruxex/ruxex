@@ -1,5 +1,5 @@
 [package]
-name = "codex-config"
+name = "genex-config"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -10,16 +10,16 @@ workspace = true
 [dependencies]
 anyhow = { workspace = true }
 base64 = { workspace = true }
-codex-execpolicy = { workspace = true }
-codex-features = { workspace = true }
-codex-file-system = { workspace = true }
-codex-git-utils = { workspace = true }
-codex-model-provider-info = { workspace = true }
-codex-network-proxy = { workspace = true }
-codex-protocol = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-path = { workspace = true }
-codex-utils-path-uri = { workspace = true }
+genex-execpolicy = { workspace = true }
+genex-features = { workspace = true }
+genex-file-system = { workspace = true }
+genex-git-utils = { workspace = true }
+genex-model-provider-info = { workspace = true }
+genex-network-proxy = { workspace = true }
+genex-protocol = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
+genex-utils-path = { workspace = true }
+genex-utils-path-uri = { workspace = true }
 dunce = { workspace = true }
 futures = { workspace = true, features = ["alloc", "std"] }
 gethostname = { workspace = true }
@@ -47,7 +47,7 @@ libc = { workspace = true }
 core-foundation = "0.9"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-codex-windows-sandbox = { workspace = true }
+genex-windows-sandbox = { workspace = true }
 winapi-util = { workspace = true }
 windows-sys = { version = "0.52", features = [
     "Win32_Foundation",

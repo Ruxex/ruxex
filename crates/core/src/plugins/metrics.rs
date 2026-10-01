@@ -1,8 +1,8 @@
 use crate::tools::sandboxing::ToolCtx;
-use codex_core_plugins::PluginMetricsSidecar;
-use codex_exec_server::Environment;
-use codex_protocol::items::ModelInvocationContext;
-use codex_utils_path_uri::PathUri;
+use genex_core_plugins::PluginMetricsSidecar;
+use genex_exec_server::Environment;
+use genex_protocol::items::ModelInvocationContext;
+use genex_utils_path_uri::PathUri;
 
 /// Creates a metrics sidecar for one plugin command.
 pub(crate) async fn sidecar_for_command(

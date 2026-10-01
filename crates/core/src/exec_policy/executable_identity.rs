@@ -5,10 +5,10 @@ use super::ExecPolicyManager;
 use super::commands_for_exec_policy_for_platform;
 use crate::shell::Shell;
 use crate::tools::sandboxing::ExecApprovalRequirement;
-use codex_shell_command::is_dangerous_command::DangerousCommandPlatform;
-use codex_shell_command::powershell::extract_powershell_command;
-use codex_shell_command::powershell::parse_powershell_script_into_plain_commands;
-use codex_tools::UnifiedExecShellMode;
+use genex_shell_command::is_dangerous_command::DangerousCommandPlatform;
+use genex_shell_command::powershell::extract_powershell_command;
+use genex_shell_command::powershell::parse_powershell_script_into_plain_commands;
+use genex_tools::UnifiedExecShellMode;
 use std::path::Path;
 
 impl ExecPolicyManager {

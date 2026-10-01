@@ -3,19 +3,19 @@ use std::fs;
 #[cfg(target_os = "windows")]
 use std::io;
 
-use codex_arg0::Arg0DispatchPaths;
-use codex_config::RequirementSource;
-use codex_core::config::Config;
+use genex_arg0::Arg0DispatchPaths;
+use genex_config::RequirementSource;
+use genex_core::config::Config;
 #[cfg(target_os = "windows")]
-use codex_core::windows_sandbox::WindowsSandboxLevelExt;
+use genex_core::windows_sandbox::WindowsSandboxLevelExt;
 #[cfg(target_os = "windows")]
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
 #[cfg(target_os = "windows")]
-use codex_sandboxing::windows_sandbox_uses_elevated_backend;
+use genex_sandboxing::windows_sandbox_uses_elevated_backend;
 #[cfg(target_os = "windows")]
-use codex_windows_sandbox::SetupErrorCode;
+use genex_windows_sandbox::SetupErrorCode;
 #[cfg(target_os = "windows")]
 use windows_sys::Win32::Foundation::ERROR_ACCESS_DENIED;
 #[cfg(target_os = "windows")]
@@ -151,11 +151,11 @@ pub(super) fn sandbox_check(config: &Config, arg0_paths: &Arg0DispatchPaths) -> 
 
         if elevated {
             let home = config.codex_home.as_path();
-            let path = codex_windows_sandbox::setup_error_path(home);
+            let path = genex_windows_sandbox::setup_error_path(home);
             let report = match fs::metadata(&path) {
                 Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(None),
                 Ok(metadata) if metadata.is_file() && metadata.len() <= 64 * 1024 => {
-                    codex_windows_sandbox::read_setup_error_report(home)
+                    genex_windows_sandbox::read_setup_error_report(home)
                         .map_err(|error| error.to_string())
                 }
                 Ok(metadata) if !metadata.is_file() => Err("not a regular file".to_string()),
@@ -182,14 +182,14 @@ pub(super) fn sandbox_check(config: &Config, arg0_paths: &Arg0DispatchPaths) -> 
                 }
             };
 
-            if report.is_none() && codex_windows_sandbox::sandbox_setup_is_complete(home) {
+            if report.is_none() && genex_windows_sandbox::sandbox_setup_is_complete(home) {
                 check
                     .details
                     .push("sandbox provisioning: complete".to_string());
 
                 for username in [
-                    codex_windows_sandbox::OFFLINE_USERNAME,
-                    codex_windows_sandbox::ONLINE_USERNAME,
+                    genex_windows_sandbox::OFFLINE_USERNAME,
+                    genex_windows_sandbox::ONLINE_USERNAME,
                 ] {
                     let username_wide = username.encode_utf16().chain(Some(0)).collect::<Vec<_>>();
                     let mut buffer = std::ptr::null_mut();

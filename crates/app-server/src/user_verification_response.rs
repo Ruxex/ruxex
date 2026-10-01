@@ -1,8 +1,8 @@
 //! Device proofs travel only in elicitation content, never in diagnostic metadata.
 
-use codex_app_server_protocol::McpServerElicitationAction;
-use codex_app_server_protocol::McpServerElicitationRequestResponse;
-use codex_app_server_protocol::UserVerificationProof;
+use genex_app_server_protocol::McpServerElicitationAction;
+use genex_app_server_protocol::McpServerElicitationRequestResponse;
+use genex_app_server_protocol::UserVerificationProof;
 use serde::Deserialize;
 use tokio::sync::oneshot;
 

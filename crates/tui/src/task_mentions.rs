@@ -6,21 +6,21 @@ use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use codex_app_server_client::AppServerRequestHandle;
-use codex_app_server_protocol::ByteRange;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SortDirection;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadListResponse;
-use codex_app_server_protocol::ThreadSearchParams;
-use codex_app_server_protocol::ThreadSearchResponse;
-use codex_app_server_protocol::ThreadSearchResult;
-use codex_app_server_protocol::ThreadSearchSortKey;
-use codex_app_server_protocol::ThreadSortKey;
-use codex_app_server_protocol::ThreadSource;
-use codex_app_server_protocol::UserInput;
-use codex_protocol::ThreadId;
+use genex_app_server_client::AppServerRequestHandle;
+use genex_app_server_protocol::ByteRange;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SortDirection;
+use genex_app_server_protocol::ThreadListParams;
+use genex_app_server_protocol::ThreadListResponse;
+use genex_app_server_protocol::ThreadSearchParams;
+use genex_app_server_protocol::ThreadSearchResponse;
+use genex_app_server_protocol::ThreadSearchResult;
+use genex_app_server_protocol::ThreadSearchSortKey;
+use genex_app_server_protocol::ThreadSortKey;
+use genex_app_server_protocol::ThreadSource;
+use genex_app_server_protocol::UserInput;
+use genex_protocol::ThreadId;
 use serde_json::json;
 
 use crate::app_event::AppEvent;
@@ -323,8 +323,8 @@ pub(crate) fn apply_task_references(
 
 pub(crate) fn decode_task_links(
     text: &str,
-    elements: Vec<codex_protocol::user_input::TextElement>,
-) -> (String, Vec<codex_protocol::user_input::TextElement>) {
+    elements: Vec<genex_protocol::user_input::TextElement>,
+) -> (String, Vec<genex_protocol::user_input::TextElement>) {
     if !text.contains("thread://") {
         return (text.to_string(), elements);
     }

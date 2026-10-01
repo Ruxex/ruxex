@@ -1,5 +1,5 @@
-use codex_features::FEATURES;
-use codex_features::Feature;
+use genex_features::FEATURES;
+use genex_features::Feature;
 use std::collections::BTreeMap;
 use std::path::Path;
 

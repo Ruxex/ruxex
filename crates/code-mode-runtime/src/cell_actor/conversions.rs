@@ -1,9 +1,9 @@
-use codex_code_mode_protocol::CodeModeToolKind;
-use codex_code_mode_protocol::ExecuteRequest;
-use codex_code_mode_protocol::FunctionCallOutputContentItem;
-use codex_code_mode_protocol::ImageDetail;
-use codex_code_mode_protocol::ToolDefinition;
-use codex_protocol::ToolName;
+use genex_code_mode_protocol::CodeModeToolKind;
+use genex_code_mode_protocol::ExecuteRequest;
+use genex_code_mode_protocol::FunctionCallOutputContentItem;
+use genex_code_mode_protocol::ImageDetail;
+use genex_code_mode_protocol::ToolDefinition;
+use genex_protocol::ToolName;
 
 use crate::session_runtime::CreateCellRequest as CellRequest;
 use crate::session_runtime::ImageDetail as CellImageDetail;

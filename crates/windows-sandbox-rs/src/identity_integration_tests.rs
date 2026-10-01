@@ -18,7 +18,7 @@ use crate::setup::setup_marker_path;
 use anyhow::Result;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64;
-use codex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfile;
 use pretty_assertions::assert_eq;
 use std::cell::Cell;
 use std::collections::HashMap;

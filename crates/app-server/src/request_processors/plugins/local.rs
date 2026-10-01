@@ -1,8 +1,8 @@
 use super::*;
-use codex_core::config::ConfigOverrides;
-use codex_core_plugins::PluginMarketplaceContext;
-use codex_core_plugins::PluginMarketplaceScope;
-use codex_core_plugins::marketplace::MarketplaceListError;
+use genex_core::config::ConfigOverrides;
+use genex_core_plugins::PluginMarketplaceContext;
+use genex_core_plugins::PluginMarketplaceScope;
+use genex_core_plugins::marketplace::MarketplaceListError;
 use futures::StreamExt;
 
 const CONFIG_LOAD_CONCURRENCY: usize = 5;

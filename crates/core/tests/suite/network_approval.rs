@@ -1,53 +1,53 @@
 use anyhow::Context;
 use anyhow::Result;
-use codex_config::types::ApprovalsReviewer;
-use codex_core::EnvironmentConfig;
-use codex_core::EnvironmentNetworkPolicy;
-use codex_core::StartThreadOptions;
-use codex_core::TurnInputRequest;
-use codex_core::config::Constrained;
-use codex_core::config::NetworkProxySpec;
-use codex_core::shell::ShellType;
-use codex_core::shell::get_shell;
-use codex_core::windows_sandbox::WindowsSandboxLevelExt;
-use codex_exec_server::CreateDirectoryOptions;
-use codex_exec_server::LOCAL_ENVIRONMENT_ID;
-use codex_exec_server::REMOTE_ENVIRONMENT_ID;
-use codex_exec_server::RemoveOptions;
-use codex_features::Feature;
-use codex_history::RolloutItem;
-use codex_network_proxy::NetworkProxyConfig;
-use codex_protocol::approvals::NetworkApprovalContext;
-use codex_protocol::approvals::NetworkApprovalProtocol;
-use codex_protocol::approvals::NetworkPolicyAmendment;
-use codex_protocol::approvals::NetworkPolicyRuleAction;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::NetworkPermissions;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::PermissionProfileSnapshot;
-use codex_protocol::model_types::AutoReviewMessages;
-use codex_protocol::model_types::ModelVisibility;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecApprovalRequestEvent;
-use codex_protocol::protocol::GuardianAssessmentStatus;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::TurnEnvironmentSelection;
-use codex_protocol::protocol::TurnEnvironmentSelections;
-use codex_protocol::request_permissions::PermissionGrantScope;
-use codex_protocol::request_permissions::RequestPermissionProfile;
-use codex_protocol::request_permissions::RequestPermissionsResponse;
-use codex_protocol::user_input::UserInput;
-use codex_thread_store::LoadThreadHistoryParams;
-use codex_utils_path_uri::PathUri;
+use genex_config::types::ApprovalsReviewer;
+use genex_core::EnvironmentConfig;
+use genex_core::EnvironmentNetworkPolicy;
+use genex_core::StartThreadOptions;
+use genex_core::TurnInputRequest;
+use genex_core::config::Constrained;
+use genex_core::config::NetworkProxySpec;
+use genex_core::shell::ShellType;
+use genex_core::shell::get_shell;
+use genex_core::windows_sandbox::WindowsSandboxLevelExt;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_exec_server::LOCAL_ENVIRONMENT_ID;
+use genex_exec_server::REMOTE_ENVIRONMENT_ID;
+use genex_exec_server::RemoveOptions;
+use genex_features::Feature;
+use genex_history::RolloutItem;
+use genex_network_proxy::NetworkProxyConfig;
+use genex_protocol::approvals::NetworkApprovalContext;
+use genex_protocol::approvals::NetworkApprovalProtocol;
+use genex_protocol::approvals::NetworkPolicyAmendment;
+use genex_protocol::approvals::NetworkPolicyRuleAction;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::NetworkPermissions;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfileSnapshot;
+use genex_protocol::model_types::AutoReviewMessages;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecApprovalRequestEvent;
+use genex_protocol::protocol::GuardianAssessmentStatus;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ReviewDecision;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::protocol::TurnEnvironmentSelections;
+use genex_protocol::request_permissions::PermissionGrantScope;
+use genex_protocol::request_permissions::RequestPermissionProfile;
+use genex_protocol::request_permissions::RequestPermissionsResponse;
+use genex_protocol::user_input::UserInput;
+use genex_thread_store::LoadThreadHistoryParams;
+use genex_utils_path_uri::PathUri;
 use core_test_support::PathBufExt;
 use core_test_support::PathExt;
 use core_test_support::managed_network_requirements_loader;
@@ -820,7 +820,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
                         settings: Settings {
                             model: "guardian-parent-b".to_string(),
                             reasoning_effort: Some(
-                                codex_protocol::model_types::ReasoningEffort::Medium,
+                                genex_protocol::model_types::ReasoningEffort::Medium,
                             ),
                             developer_instructions: None,
                         },
@@ -852,9 +852,9 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
         test.codex
             .submit(Op::TurnSettings {
                 turn_id: active_turn_id.clone(),
-                update: codex_protocol::protocol::TurnSettingsUpdate {
+                update: genex_protocol::protocol::TurnSettingsUpdate {
                     model: Some("guardian-parent-b".to_string()),
-                    effort: Some(Some(codex_protocol::model_types::ReasoningEffort::Medium)),
+                    effort: Some(Some(genex_protocol::model_types::ReasoningEffort::Medium)),
                     ..Default::default()
                 },
                 reply,
@@ -862,7 +862,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
             .await?;
         assert_eq!(
             tokio::time::timeout(Duration::from_secs(10), outcome).await??,
-            codex_protocol::protocol::TurnSettingsUpdateOutcome::Applied,
+            genex_protocol::protocol::TurnSettingsUpdateOutcome::Applied,
         );
     }
     test.codex
@@ -1656,7 +1656,7 @@ async fn unattributed_network_request_uses_active_turn_environment_fallback(
         let thread_id = request["client_metadata"]["thread_id"]
             .as_str()
             .context("Guardian thread id")?;
-        let thread_id = codex_protocol::ThreadId::from_string(thread_id)?;
+        let thread_id = genex_protocol::ThreadId::from_string(thread_id)?;
         // Internal reviewers are hidden from get_thread. Their persisted terminal event
         // confirms the reviewer's own retries finished before testing Guardian's retry wait.
         tokio::time::timeout(Duration::from_secs(5), async {
@@ -1820,7 +1820,7 @@ async fn thread_turnover_closes_managed_proxy_tunnels() -> Result<()> {
     let mut config = test.config.clone();
     let mut network = NetworkProxyConfig {
         enabled: true,
-        mode: codex_network_proxy::NetworkMode::Full,
+        mode: genex_network_proxy::NetworkMode::Full,
         allow_local_binding: true,
         allow_upstream_proxy: false,
         ..NetworkProxyConfig::default()
@@ -2652,7 +2652,7 @@ async fn approved_network_host_for_one_environment_still_prompts_in_another() ->
 }
 
 pub(super) fn guardian_parent_catalog() -> ModelsResponse {
-    let template = codex_models_manager::test_support::test_models_response()
+    let template = genex_models_manager::test_support::test_models_response()
         .expect("bundled model catalog")
         .models
         .into_iter()
@@ -2668,7 +2668,7 @@ pub(super) fn guardian_parent_catalog() -> ModelsResponse {
                 model.visibility = ModelVisibility::List;
                 model.auto_review_model_override = None;
                 model.supported_reasoning_levels.retain(|level| {
-                    level.effort != codex_protocol::model_types::ReasoningEffort::Low
+                    level.effort != genex_protocol::model_types::ReasoningEffort::Low
                 });
                 model
                     .model_messages

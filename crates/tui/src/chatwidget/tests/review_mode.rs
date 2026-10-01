@@ -1,5 +1,5 @@
 use super::*;
-use codex_app_server_protocol::ImageReference;
+use genex_app_server_protocol::ImageReference;
 use pretty_assertions::assert_eq;
 use std::collections::VecDeque;
 

@@ -5,28 +5,28 @@ use std::sync::Arc;
 
 use arc_swap::ArcSwap;
 
-use codex_config::ConfigLayerSource;
-use codex_config::ConfigLayerStack;
-use codex_execpolicy::AmendError;
-use codex_execpolicy::Decision;
-use codex_execpolicy::Error as ExecPolicyRuleError;
-use codex_execpolicy::Evaluation;
-use codex_execpolicy::MatchOptions;
-use codex_execpolicy::NetworkRuleProtocol;
-use codex_execpolicy::Policy;
-use codex_execpolicy::PolicyParser;
-use codex_execpolicy::RequirementsExecPolicy;
-use codex_execpolicy::RuleMatch;
-use codex_execpolicy::blocking_append_allow_prefix_rule;
-use codex_execpolicy::blocking_append_network_rule;
-use codex_protocol::approvals::ExecPolicyAmendment;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::FileSystemSandboxKind;
-use codex_protocol::protocol::AskForApproval;
-use codex_shell_command::is_dangerous_command::DangerousCommandMatch;
-use codex_shell_command::is_dangerous_command::DangerousCommandPlatform;
-use codex_shell_command::is_dangerous_command::dangerous_command_match_for_platform;
+use genex_config::ConfigLayerSource;
+use genex_config::ConfigLayerStack;
+use genex_execpolicy::AmendError;
+use genex_execpolicy::Decision;
+use genex_execpolicy::Error as ExecPolicyRuleError;
+use genex_execpolicy::Evaluation;
+use genex_execpolicy::MatchOptions;
+use genex_execpolicy::NetworkRuleProtocol;
+use genex_execpolicy::Policy;
+use genex_execpolicy::PolicyParser;
+use genex_execpolicy::RequirementsExecPolicy;
+use genex_execpolicy::RuleMatch;
+use genex_execpolicy::blocking_append_allow_prefix_rule;
+use genex_execpolicy::blocking_append_network_rule;
+use genex_protocol::approvals::ExecPolicyAmendment;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::FileSystemSandboxKind;
+use genex_protocol::protocol::AskForApproval;
+use genex_shell_command::is_dangerous_command::DangerousCommandMatch;
+use genex_shell_command::is_dangerous_command::DangerousCommandPlatform;
+use genex_shell_command::is_dangerous_command::dangerous_command_match_for_platform;
 use thiserror::Error;
 use tokio::fs;
 use tokio::sync::Semaphore;
@@ -36,8 +36,8 @@ use tracing::instrument;
 use crate::config::Config;
 use crate::sandboxing::SandboxPermissions;
 use crate::tools::sandboxing::ExecApprovalRequirement;
-use codex_shell_command::bash::parse_shell_lc_plain_commands;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_shell_command::bash::parse_shell_lc_plain_commands;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use shlex::try_join as shlex_try_join;
 
 mod executable_identity;
@@ -185,7 +185,7 @@ pub(crate) fn child_uses_parent_exec_policy(parent_config: &Config, child_config
         config
             .config_layer_stack
             .layers_low_to_high()
-            .filter_map(codex_config::ConfigLayerEntry::config_folder)
+            .filter_map(genex_config::ConfigLayerEntry::config_folder)
             .collect()
     }
 
@@ -254,7 +254,7 @@ pub enum ExecPolicyError {
     #[error("failed to parse rules file {path}: {source}")]
     ParsePolicy {
         path: String,
-        source: codex_execpolicy::Error,
+        source: genex_execpolicy::Error,
     },
 }
 
@@ -571,7 +571,7 @@ pub async fn check_execpolicy_for_warnings(
     Ok(warning)
 }
 
-fn exec_policy_message_for_display(source: &codex_execpolicy::Error) -> String {
+fn exec_policy_message_for_display(source: &genex_execpolicy::Error) -> String {
     let message = source.to_string();
     if let Some(line) = message
         .lines()
@@ -725,7 +725,7 @@ fn dangerous_command_match_for_origin(
             dangerous_command_match_for_platform(command, command_platform)
         }
         ExecPolicyCommandOrigin::PowerShell => {
-            codex_shell_command::is_dangerous_command::dangerous_powershell_words_match(
+            genex_shell_command::is_dangerous_command::dangerous_powershell_words_match(
                 command,
                 command_platform,
             )
@@ -888,7 +888,7 @@ fn commands_for_exec_policy_for_platform(
 
     if command_platform == DangerousCommandPlatform::Windows
         && let Some(commands) =
-            codex_shell_command::powershell::parse_powershell_command_into_plain_commands(command)
+            genex_shell_command::powershell::parse_powershell_command_into_plain_commands(command)
         && !commands.is_empty()
     {
         return ExecPolicyCommands {

@@ -1,11 +1,11 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-extension-api"
+name = "genex-extension-api"
 version.workspace = true
 
 [lib]
-name = "codex_extension_api"
+name = "genex_extension_api"
 path = "src/lib.rs"
 test = false
 doctest = false
@@ -14,15 +14,15 @@ doctest = false
 workspace = true
 
 [dependencies]
-codex-history = { workspace = true }
-codex-config = { workspace = true }
-codex-context-fragments = { workspace = true }
-codex-exec-server-protocol = { workspace = true }
-codex-mcp = { workspace = true }
-codex-protocol = { workspace = true }
-codex-tools = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-path-uri = { workspace = true }
+genex-history = { workspace = true }
+genex-config = { workspace = true }
+genex-context-fragments = { workspace = true }
+genex-exec-server-protocol = { workspace = true }
+genex-mcp = { workspace = true }
+genex-protocol = { workspace = true }
+genex-tools = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
+genex-utils-path-uri = { workspace = true }
 serde_json = { workspace = true }
 
 [dev-dependencies]

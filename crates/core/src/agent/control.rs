@@ -25,37 +25,37 @@ use crate::thread_manager::default_thread_id_generator;
 use crate::thread_rollout_truncation::truncate_rollout_to_last_n_fork_turns;
 use crate::turn_timing::now_unix_timestamp_ms;
 use arc_swap::ArcSwapOption;
-use codex_history::InitialHistory;
-use codex_history::ResumedHistory;
-use codex_history::RolloutItem;
-use codex_protocol::AgentPath;
-use codex_protocol::SessionId;
-use codex_protocol::ThreadId;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::CodexErrorDetails;
-use codex_protocol::error::Result as CodexResult;
-use codex_protocol::items::SubAgentActivityItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::MessagePhase;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::HasLegacyEvent;
-use codex_protocol::protocol::InterAgentCommunication;
-use codex_protocol::protocol::ItemCompletedEvent;
-use codex_protocol::protocol::ItemStartedEvent;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadSource;
-use codex_protocol::protocol::TurnEnvironmentSelection;
-use codex_protocol::turn_input::CyberAccessProgram;
-use codex_protocol::user_input::UserInput;
-use codex_thread_store::LoadThreadHistoryParams;
-use codex_thread_store::ReadThreadParams;
+use genex_history::InitialHistory;
+use genex_history::ResumedHistory;
+use genex_history::RolloutItem;
+use genex_protocol::AgentPath;
+use genex_protocol::SessionId;
+use genex_protocol::ThreadId;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::Result as CodexResult;
+use genex_protocol::items::SubAgentActivityItem;
+use genex_protocol::items::TurnItem;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::MessagePhase;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::Event;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::HasLegacyEvent;
+use genex_protocol::protocol::InterAgentCommunication;
+use genex_protocol::protocol::ItemCompletedEvent;
+use genex_protocol::protocol::ItemStartedEvent;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::ThreadSource;
+use genex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::turn_input::CyberAccessProgram;
+use genex_protocol::user_input::UserInput;
+use genex_thread_store::LoadThreadHistoryParams;
+use genex_thread_store::ReadThreadParams;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -895,7 +895,7 @@ impl AgentControl {
             .upsert_thread_spawn_edge(
                 parent_thread_id,
                 child_thread_id,
-                codex_agent_graph_store::ThreadSpawnEdgeStatus::Open,
+                genex_agent_graph_store::ThreadSpawnEdgeStatus::Open,
             )
             .await
         {

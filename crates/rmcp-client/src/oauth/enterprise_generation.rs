@@ -9,7 +9,7 @@ use std::io::Write;
 
 use anyhow::Result;
 use anyhow::ensure;
-use codex_utils_home_dir::find_codex_home;
+use genex_utils_home_dir::find_codex_home;
 use oauth2::CsrfToken;
 use sha2::Digest;
 use sha2::Sha256;

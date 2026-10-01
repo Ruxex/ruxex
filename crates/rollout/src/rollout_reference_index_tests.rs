@@ -2,8 +2,8 @@ use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
 
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::HistoryPosition;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::HistoryPosition;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use uuid::Uuid;

@@ -2,11 +2,11 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
-use codex_context_fragments::ContextualUserFragment;
-use codex_protocol::items::TurnItem;
-use codex_protocol::protocol::TokenUsageInfo;
-use codex_tools::ToolCall;
-use codex_tools::ToolExecutor;
+use genex_context_fragments::ContextualUserFragment;
+use genex_protocol::items::TurnItem;
+use genex_protocol::protocol::TokenUsageInfo;
+use genex_tools::ToolCall;
+use genex_tools::ToolExecutor;
 
 use crate::ExtensionData;
 use crate::ExtensionMetrics;

@@ -45,7 +45,7 @@ surface.
 | Cyber and trusted-access behavior | `crates/core/src/session/mod.rs`, `crates/protocol/src/turn_input.rs`, `crates/tui/src/chatwidget.rs` | Audit separately; remove only hosted authorization branches without weakening security checks |
 | Usage and billing presentation | `crates/protocol/src/error.rs`, `crates/tui/src/history_cell/notices.rs` | Remove Plus/Pro/credits copy and fixed URLs; retain generic rate-limit/error rendering |
 | Session and history compatibility | `crates/protocol/src/protocol.rs`, `crates/rollout`, `crates/app-server/src/request_processors/thread_resume_redaction.rs` | Audit persisted readers and client-name filters before deciding remove/retain |
-| ChatGPT-specific response metadata | `crates/codex-api/src/sse/responses.rs` | Remove if no active consumer remains; retain generic response diagnostics |
+| ChatGPT-specific response metadata | `crates/genex-api/src/sse/responses.rs` | Remove if no active consumer remains; retain generic response diagnostics |
 | Test fixtures and helpers | `crates/**/tests`, `*_tests.rs` | Remove obsolete hosted fixtures; retain tests covering generic auth, MCP, security, and provider behavior |
 | Comments, examples, and documentation strings | scattered comments and user-facing text | Clean up after runtime decisions; do not classify as runtime dependency by name alone |
 

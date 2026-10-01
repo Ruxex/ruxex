@@ -10,7 +10,7 @@ use crate::ReadThreadParams;
 use crate::StoredThread;
 use crate::ThreadStoreError;
 use crate::ThreadStoreResult;
-use codex_rollout::rollout_date_parts;
+use genex_rollout::rollout_date_parts;
 
 use super::thread_rollout_resolver;
 use super::thread_rollout_resolver::RolloutLocation;
@@ -48,7 +48,7 @@ pub(super) async fn unarchive_thread(
             store
                 .config
                 .codex_home
-                .join(codex_rollout::ARCHIVED_SESSIONS_SUBDIR),
+                .join(genex_rollout::ARCHIVED_SESSIONS_SUBDIR),
             rollout_path.as_path(),
             "archived",
         )?;
@@ -65,7 +65,7 @@ pub(super) async fn unarchive_thread(
         let dest_dir = store
             .config
             .codex_home
-            .join(codex_rollout::SESSIONS_SUBDIR)
+            .join(genex_rollout::SESSIONS_SUBDIR)
             .join(year)
             .join(month)
             .join(day);
@@ -145,9 +145,9 @@ pub(super) async fn unarchive_thread(
 #[cfg(test)]
 mod tests {
     use chrono::Utc;
-    use codex_protocol::ThreadId;
-    use codex_protocol::protocol::SessionSource;
-    use codex_utils_absolute_path::test_support::PathExt;
+    use genex_protocol::ThreadId;
+    use genex_protocol::protocol::SessionSource;
+    use genex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
     use uuid::Uuid;
@@ -231,8 +231,8 @@ mod tests {
         let selected_archived_path = alternate_directory
             .join("..")
             .join(archived_path.file_name().expect("file name"));
-        let runtime = codex_state::StateRuntime::init(
-            codex_state::SqliteConfig::new_for_testing(home.path().abs()),
+        let runtime = genex_state::StateRuntime::init(
+            genex_state::SqliteConfig::new_for_testing(home.path().abs()),
             config.default_model_provider_id.clone(),
         )
         .await
@@ -242,7 +242,7 @@ mod tests {
             .mark_backfill_complete(/*last_watermark*/ None)
             .await
             .expect("backfill should be complete");
-        let mut builder = codex_state::ThreadMetadataBuilder::new(
+        let mut builder = genex_state::ThreadMetadataBuilder::new(
             thread_id,
             selected_archived_path,
             Utc::now(),
@@ -253,9 +253,9 @@ mod tests {
         builder.cli_version = Some("test_version".to_string());
         let mut metadata = builder.build(config.default_model_provider_id.as_str());
         metadata.archived_at = Some(metadata.updated_at);
-        metadata.section = Some(codex_state::ThreadSection {
-            id: codex_state::PINNED_THREAD_SECTION_ID.to_string(),
-            name: codex_state::PINNED_THREAD_SECTION_NAME.to_string(),
+        metadata.section = Some(genex_state::ThreadSection {
+            id: genex_state::PINNED_THREAD_SECTION_ID.to_string(),
+            name: genex_state::PINNED_THREAD_SECTION_NAME.to_string(),
             appearance: None,
         });
         runtime

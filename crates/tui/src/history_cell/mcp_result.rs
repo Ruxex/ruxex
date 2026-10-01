@@ -6,7 +6,7 @@
 use crate::exec_cell::TOOL_CALL_MAX_LINES;
 use crate::text_formatting::format_and_truncate_tool_result;
 use base64::Engine;
-use codex_protocol::mcp::CallToolResult;
+use genex_protocol::mcp::CallToolResult;
 use image::DynamicImage;
 use image::ImageReader;
 use rmcp::model::ContentBlock;

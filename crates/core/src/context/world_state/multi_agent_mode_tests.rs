@@ -2,8 +2,8 @@ use super::super::test_support::render_section_cases;
 use super::*;
 use crate::context::MultiAgentRoleInstructions;
 use crate::context::world_state::WorldState;
-use codex_protocol::models::ResponseItem;
-use codex_utils_output_truncation::approx_token_count;
+use genex_protocol::models::ResponseItem;
+use genex_utils_output_truncation::approx_token_count;
 use pretty_assertions::assert_eq;
 
 fn state(mode: Option<MultiAgentMode>) -> MultiAgentModeState {

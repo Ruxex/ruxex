@@ -1,5 +1,5 @@
-use codex_arg0::Arg0DispatchPaths;
-use codex_core::config::ConfigBuilder;
+use genex_arg0::Arg0DispatchPaths;
+use genex_core::config::ConfigBuilder;
 use pretty_assertions::assert_eq;
 
 use super::CheckStatus;
@@ -28,14 +28,14 @@ async fn reports_missing_linux_sandbox_helper() {
 #[tokio::test]
 async fn reports_refresh_failure_after_setup_completed() {
     let home = tempfile::tempdir().expect("create Codex home");
-    let version = codex_windows_sandbox::SETUP_VERSION;
+    let version = genex_windows_sandbox::SETUP_VERSION;
     for (path, contents) in [
         (
             ".sandbox/setup_marker.json",
             serde_json::json!({
                 "version": version,
-                "offline_username": codex_windows_sandbox::OFFLINE_USERNAME,
-                "online_username": codex_windows_sandbox::ONLINE_USERNAME,
+                "offline_username": genex_windows_sandbox::OFFLINE_USERNAME,
+                "online_username": genex_windows_sandbox::ONLINE_USERNAME,
             }),
         ),
         (
@@ -43,11 +43,11 @@ async fn reports_refresh_failure_after_setup_completed() {
             serde_json::json!({
                 "version": version,
                 "offline": {
-                    "username": codex_windows_sandbox::OFFLINE_USERNAME,
+                    "username": genex_windows_sandbox::OFFLINE_USERNAME,
                     "password": "",
                 },
                 "online": {
-                    "username": codex_windows_sandbox::ONLINE_USERNAME,
+                    "username": genex_windows_sandbox::ONLINE_USERNAME,
                     "password": "",
                 },
             }),
@@ -58,13 +58,13 @@ async fn reports_refresh_failure_after_setup_completed() {
             .expect("create fixture directory");
         std::fs::write(path, contents.to_string()).expect("write sandbox fixture");
     }
-    assert!(codex_windows_sandbox::sandbox_setup_is_complete(
+    assert!(genex_windows_sandbox::sandbox_setup_is_complete(
         home.path()
     ));
-    codex_windows_sandbox::write_setup_error_report(
+    genex_windows_sandbox::write_setup_error_report(
         home.path(),
-        &codex_windows_sandbox::SetupErrorReport {
-            code: codex_windows_sandbox::SetupErrorCode::HelperFirewallPolicyIneffective,
+        &genex_windows_sandbox::SetupErrorReport {
+            code: genex_windows_sandbox::SetupErrorCode::HelperFirewallPolicyIneffective,
             message: "firewall policy rejected the refresh".to_string(),
         },
     )
@@ -93,10 +93,10 @@ async fn reports_refresh_failure_after_setup_completed() {
 #[tokio::test]
 async fn rejects_oversized_setup_failure_reports() {
     let home = tempfile::tempdir().expect("create Codex home");
-    codex_windows_sandbox::write_setup_error_report(
+    genex_windows_sandbox::write_setup_error_report(
         home.path(),
-        &codex_windows_sandbox::SetupErrorReport {
-            code: codex_windows_sandbox::SetupErrorCode::HelperFirewallPolicyIneffective,
+        &genex_windows_sandbox::SetupErrorReport {
+            code: genex_windows_sandbox::SetupErrorCode::HelperFirewallPolicyIneffective,
             message: "x".repeat(64 * 1024),
         },
     )
@@ -134,7 +134,7 @@ async fn rejects_oversized_setup_failure_reports() {
 #[tokio::test]
 async fn reports_malformed_setup_failure_reports() {
     let home = tempfile::tempdir().expect("create Codex home");
-    let path = codex_windows_sandbox::setup_error_path(home.path());
+    let path = genex_windows_sandbox::setup_error_path(home.path());
     std::fs::create_dir_all(path.parent().expect("setup failure report parent"))
         .expect("create sandbox directory");
     std::fs::write(path, "{").expect("write malformed setup failure report");

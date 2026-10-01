@@ -1,5 +1,5 @@
-use codex_protocol::ThreadId;
-use codex_state::StateRuntime;
+use genex_protocol::ThreadId;
+use genex_state::StateRuntime;
 use std::sync::Arc;
 
 use crate::AgentGraphStore;
@@ -109,10 +109,10 @@ impl AgentGraphStore for LocalAgentGraphStore {
     }
 }
 
-fn to_state_status(status: ThreadSpawnEdgeStatus) -> codex_state::DirectionalThreadSpawnEdgeStatus {
+fn to_state_status(status: ThreadSpawnEdgeStatus) -> genex_state::DirectionalThreadSpawnEdgeStatus {
     match status {
-        ThreadSpawnEdgeStatus::Open => codex_state::DirectionalThreadSpawnEdgeStatus::Open,
-        ThreadSpawnEdgeStatus::Closed => codex_state::DirectionalThreadSpawnEdgeStatus::Closed,
+        ThreadSpawnEdgeStatus::Open => genex_state::DirectionalThreadSpawnEdgeStatus::Open,
+        ThreadSpawnEdgeStatus::Closed => genex_state::DirectionalThreadSpawnEdgeStatus::Closed,
     }
 }
 
@@ -125,8 +125,8 @@ fn internal_error(err: impl std::fmt::Display) -> AgentGraphStoreError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_state::DirectionalThreadSpawnEdgeStatus;
-    use codex_utils_absolute_path::test_support::PathExt;
+    use genex_state::DirectionalThreadSpawnEdgeStatus;
+    use genex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
 
@@ -143,7 +143,7 @@ mod tests {
     async fn state_runtime() -> TestRuntime {
         let codex_home = TempDir::new().expect("tempdir should be created");
         let state_db = StateRuntime::init(
-            codex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+            genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
             "test-provider".to_string(),
         )
         .await

@@ -38,12 +38,12 @@ use crate::utils::invalid_data_error;
 use crate::utils::is_missing_or_empty_text_file;
 pub(super) use crate::utils::read_json_file as read_external_settings;
 use crate::utils::rewrite_external_agent_terms;
-use codex_core::config::Config;
-use codex_core_plugins::PluginsManager;
-use codex_core_plugins::marketplace::MarketplacePluginInstallPolicy;
-use codex_login::AuthManager;
-use codex_protocol::protocol::Product;
-use codex_rollout::StateDbHandle;
+use genex_core::config::Config;
+use genex_core_plugins::PluginsManager;
+use genex_core_plugins::marketplace::MarketplacePluginInstallPolicy;
+use genex_login::AuthManager;
+use genex_protocol::protocol::Product;
+use genex_rollout::StateDbHandle;
 use serde_json::Value as JsonValue;
 use std::collections::BTreeMap;
 use std::collections::HashSet;
@@ -145,7 +145,7 @@ impl ExternalAgentConfigService {
             codex_home,
             connector_metadata_roots,
             external_agent_home,
-            auth_manager: codex_login::test_support::auth_manager_from_optional_auth(
+            auth_manager: genex_login::test_support::auth_manager_from_optional_auth(
                 /*auth*/ None,
             ),
             source,

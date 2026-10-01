@@ -10,22 +10,22 @@ use super::compact::FIRST_REPLY;
 use super::compact::SUMMARY_TEXT;
 use anyhow::Context;
 use anyhow::Result;
-use codex_core::CodexThread;
-use codex_core::ThreadManager;
-use codex_core::TurnInputRequest;
-use codex_core::compact::SUMMARIZATION_PROMPT;
-use codex_core::config::Config;
-use codex_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_history::CodexHarnessMetadata;
-use codex_history::RolloutItem;
-use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::WarningEvent;
-use codex_protocol::user_input::UserInput;
+use genex_core::CodexThread;
+use genex_core::ThreadManager;
+use genex_core::TurnInputRequest;
+use genex_core::compact::SUMMARIZATION_PROMPT;
+use genex_core::config::Config;
+use genex_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_history::CodexHarnessMetadata;
+use genex_history::RolloutItem;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::WarningEvent;
+use genex_protocol::user_input::UserInput;
 use core_test_support::ThreadIdle;
 use core_test_support::responses::ResponseMock;
 use core_test_support::responses::ResponsesRequest;
@@ -85,7 +85,7 @@ fn seed_first_checkpoint_harness_metadata(path: &Path, retained_text: &str) -> R
     let mut lines = std::fs::read_to_string(path)?
         .lines()
         .filter(|line| !line.trim().is_empty())
-        .map(codex_rollout::parse_rollout_line)
+        .map(genex_rollout::parse_rollout_line)
         .collect::<Result<Vec<_>, _>>()?;
     let replacement_history = lines
         .iter_mut()
@@ -118,7 +118,7 @@ fn assert_latest_checkpoint_retains_harness_metadata(
     let replacement_history = std::fs::read_to_string(path)?
         .lines()
         .filter(|line| !line.trim().is_empty())
-        .map(codex_rollout::parse_rollout_line)
+        .map(genex_rollout::parse_rollout_line)
         .collect::<Result<Vec<_>, _>>()?
         .into_iter()
         .rev()
@@ -684,8 +684,8 @@ async fn resume_conversation(
     config: &Config,
     path: std::path::PathBuf,
 ) -> Arc<CodexThread> {
-    let auth_manager = codex_core::test_support::auth_manager_from_auth(
-        codex_login::CodexAuth::from_api_key("dummy"),
+    let auth_manager = genex_core::test_support::auth_manager_from_auth(
+        genex_login::CodexAuth::from_api_key("dummy"),
     );
     Box::pin(manager.resume_thread_from_rollout(
         config.clone(),
@@ -708,7 +708,7 @@ async fn fork_thread(
 ) -> Arc<CodexThread> {
     Box::pin(manager.fork_thread(
         nth_user_message,
-        codex_core::StartThreadOptions::new(config.clone()),
+        genex_core::StartThreadOptions::new(config.clone()),
         path,
     ))
     .await

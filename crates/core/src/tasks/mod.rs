@@ -8,8 +8,8 @@ use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
 
-use codex_diagnostics::Gauge;
-use codex_extension_api::ThreadIdleCause;
+use genex_diagnostics::Gauge;
+use genex_extension_api::ThreadIdleCause;
 use futures::future::BoxFuture;
 use tokio::select;
 use tokio::sync::Mutex;
@@ -37,25 +37,25 @@ use crate::state::ActiveTurn;
 use crate::state::RunningTask;
 use crate::state::TaskKind;
 use crate::state::TurnState;
-use codex_context_fragments::RenderedFragment;
-use codex_otel::SessionTelemetry;
-use codex_otel::TURN_E2E_DURATION_METRIC;
-use codex_otel::TURN_NETWORK_PROXY_METRIC;
-use codex_otel::TURN_TOOL_CALL_METRIC;
-use codex_otel::TURN_UNIFIED_EXEC_RUNNING_PROCESSES_METRIC;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::TokenUsage;
-use codex_protocol::protocol::TurnAbortReason;
-use codex_protocol::protocol::TurnAbortedEvent;
-use codex_protocol::protocol::TurnCompleteEvent;
-use codex_protocol::protocol::WarningEvent;
-use codex_thread_store::PersistContext;
+use genex_context_fragments::RenderedFragment;
+use genex_otel::SessionTelemetry;
+use genex_otel::TURN_E2E_DURATION_METRIC;
+use genex_otel::TURN_NETWORK_PROXY_METRIC;
+use genex_otel::TURN_TOOL_CALL_METRIC;
+use genex_otel::TURN_UNIFIED_EXEC_RUNNING_PROCESSES_METRIC;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::TokenUsage;
+use genex_protocol::protocol::TurnAbortReason;
+use genex_protocol::protocol::TurnAbortedEvent;
+use genex_protocol::protocol::TurnCompleteEvent;
+use genex_protocol::protocol::WarningEvent;
+use genex_thread_store::PersistContext;
 
-use codex_features::Feature;
-use codex_protocol::error::CodexErrorDetails;
-use codex_protocol::error::Result as CodexResult;
+use genex_features::Feature;
+use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::Result as CodexResult;
 pub(crate) use compact::CompactTask;
 pub(crate) use regular::RegularTask;
 pub(crate) use review::ReviewTask;
@@ -388,7 +388,7 @@ impl Session {
     pub(crate) fn has_outstanding_durable_sleep(&self) -> bool {
         self.services
             .thread_extension_data
-            .get::<codex_extension_items::sleep::SleepItem>()
+            .get::<genex_extension_items::sleep::SleepItem>()
             .is_some()
     }
 

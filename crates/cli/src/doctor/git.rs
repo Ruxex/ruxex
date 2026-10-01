@@ -4,7 +4,7 @@ use std::collections::BTreeSet;
 use std::path::Path;
 use std::path::PathBuf;
 
-use codex_git_utils::get_git_repo_root;
+use genex_git_utils::get_git_repo_root;
 
 use super::CheckStatus;
 use super::DoctorCheck;

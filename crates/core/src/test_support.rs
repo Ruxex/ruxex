@@ -7,25 +7,25 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use codex_extension_api::LoadInstructionsFuture;
-use codex_extension_api::LoadedUserInstructions;
-use codex_extension_api::UserInstructionsProvider;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyPolicy;
-use codex_login::AuthManager;
-use codex_login::CodexAuth;
-use codex_model_provider::create_model_provider;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_models_manager::collaboration_mode_presets;
-use codex_models_manager::manager::SharedModelsManager;
-use codex_models_manager::test_support::construct_model_info_offline_for_tests;
-use codex_models_manager::test_support::test_models_response;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelPreset;
-use codex_protocol::protocol::SessionSource;
+use genex_extension_api::LoadInstructionsFuture;
+use genex_extension_api::LoadedUserInstructions;
+use genex_extension_api::UserInstructionsProvider;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyPolicy;
+use genex_login::AuthManager;
+use genex_login::CodexAuth;
+use genex_model_provider::create_model_provider;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_models_manager::collaboration_mode_presets;
+use genex_models_manager::manager::SharedModelsManager;
+use genex_models_manager::test_support::construct_model_info_offline_for_tests;
+use genex_models_manager::test_support::test_models_response;
+use genex_protocol::ThreadId;
+use genex_protocol::config_types::CollaborationModeMask;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelPreset;
+use genex_protocol::protocol::SessionSource;
 use once_cell::sync::Lazy;
 
 use crate::ThreadManager;
@@ -91,7 +91,7 @@ pub async fn start_thread_with_user_shell_override(
     config: Config,
     user_shell_override: crate::shell::Shell,
     _supports_provider_form_elicitation: bool,
-) -> codex_protocol::error::Result<crate::NewThread> {
+) -> genex_protocol::error::Result<crate::NewThread> {
     thread_manager
         .start_thread_with_user_shell_override_for_tests(
             config,
@@ -108,7 +108,7 @@ pub async fn resume_thread_from_rollout_with_user_shell_override(
     auth_manager: Arc<AuthManager>,
     user_shell_override: crate::shell::Shell,
     _supports_provider_form_elicitation: bool,
-) -> codex_protocol::error::Result<crate::NewThread> {
+) -> genex_protocol::error::Result<crate::NewThread> {
     thread_manager
         .resume_thread_from_rollout_with_user_shell_override_for_tests(
             config,

@@ -1,12 +1,12 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-core-plugins"
+name = "genex-core-plugins"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "codex_core_plugins"
+name = "genex_core_plugins"
 path = "src/lib.rs"
 
 [lints]
@@ -14,25 +14,25 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-codex-app-server-protocol = { workspace = true }
-codex-config = { workspace = true }
-codex-exec-server = { workspace = true }
-codex-git-utils = { workspace = true }
-codex-hooks = { workspace = true }
-codex-http-client = { workspace = true }
-codex-login = { workspace = true }
-codex-mcp = { workspace = true }
-codex-model-provider = { workspace = true }
-codex-otel = { workspace = true }
-codex-plugin = { workspace = true }
-codex-protocol = { workspace = true }
-codex-skills = { workspace = true }
-codex-shell-command = { workspace = true }
-codex-tools = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-path = { workspace = true }
-codex-utils-path-uri = { workspace = true }
-codex-utils-plugins = { workspace = true }
+genex-app-server-protocol = { workspace = true }
+genex-config = { workspace = true }
+genex-exec-server = { workspace = true }
+genex-git-utils = { workspace = true }
+genex-hooks = { workspace = true }
+genex-http-client = { workspace = true }
+genex-login = { workspace = true }
+genex-mcp = { workspace = true }
+genex-model-provider = { workspace = true }
+genex-otel = { workspace = true }
+genex-plugin = { workspace = true }
+genex-protocol = { workspace = true }
+genex-skills = { workspace = true }
+genex-shell-command = { workspace = true }
+genex-tools = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
+genex-utils-path = { workspace = true }
+genex-utils-path-uri = { workspace = true }
+genex-utils-plugins = { workspace = true }
 chrono = { workspace = true }
 dirs = { workspace = true }
 flate2 = { workspace = true }
@@ -56,7 +56,7 @@ uuid = { workspace = true, features = ["v4"] }
 zip = { workspace = true }
 
 [dev-dependencies]
-codex-exec-server-test-support = { workspace = true }
+genex-exec-server-test-support = { workspace = true }
 libc = { workspace = true }
 pretty_assertions = { workspace = true }
 tempfile = { workspace = true }

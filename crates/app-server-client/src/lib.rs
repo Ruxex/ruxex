@@ -1,6 +1,6 @@
 //! Shared in-process app-server client facade for CLI surfaces.
 //!
-//! This crate wraps [`codex_app_server::in_process`] behind a single async API
+//! This crate wraps [`genex_app_server::in_process`] behind a single async API
 //! used by surfaces like TUI and exec. It centralizes:
 //!
 //! - Runtime startup and initialize-capabilities handshake.
@@ -11,7 +11,7 @@
 //! - Bounded graceful shutdown with abort fallback.
 //!
 //! The facade interposes a worker task between the caller and the underlying
-//! [`InProcessClientHandle`](codex_app_server::in_process::InProcessClientHandle),
+//! [`InProcessClientHandle`](genex_app_server::in_process::InProcessClientHandle),
 //! bridging async `mpsc` channels on both sides. Commands and the underlying
 //! runtime remain bounded; the local consumer event queue is unbounded so
 //! unread notifications cannot prevent request responses from being delivered.
@@ -27,32 +27,32 @@ use std::io::Result as IoResult;
 use std::sync::Arc;
 use std::time::Duration;
 
-pub use codex_app_server::app_server_control_socket_path;
-pub use codex_app_server::in_process::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
-pub use codex_app_server::in_process::InProcessServerEvent;
-use codex_app_server::in_process::InProcessStartArgs;
-use codex_app_server::in_process::LogDbLayer;
-pub use codex_app_server::in_process::StateDbHandle;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::ClientNotification;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::ConfigWarningNotification;
-use codex_app_server_protocol::InitializeCapabilities;
-use codex_app_server_protocol::InitializeParams;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::Result as JsonRpcResult;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_arg0::Arg0DispatchPaths;
-use codex_config::LoaderOverrides;
-use codex_config::NoopThreadConfigLoader;
-use codex_core::config::Config;
-pub use codex_core::otel_init::build_provider as build_otel_provider;
-pub use codex_exec_server::EnvironmentManager;
-pub use codex_exec_server::ExecServerRuntimePaths;
-use codex_protocol::protocol::SessionSource;
-use codex_utils_absolute_path::AbsolutePathBuf;
+pub use genex_app_server::app_server_control_socket_path;
+pub use genex_app_server::in_process::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
+pub use genex_app_server::in_process::InProcessServerEvent;
+use genex_app_server::in_process::InProcessStartArgs;
+use genex_app_server::in_process::LogDbLayer;
+pub use genex_app_server::in_process::StateDbHandle;
+use genex_app_server_protocol::ClientInfo;
+use genex_app_server_protocol::ClientNotification;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::ConfigWarningNotification;
+use genex_app_server_protocol::InitializeCapabilities;
+use genex_app_server_protocol::InitializeParams;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::Result as JsonRpcResult;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ServerRequest;
+use genex_arg0::Arg0DispatchPaths;
+use genex_config::LoaderOverrides;
+use genex_config::NoopThreadConfigLoader;
+use genex_core::config::Config;
+pub use genex_core::otel_init::build_provider as build_otel_provider;
+pub use genex_exec_server::EnvironmentManager;
+pub use genex_exec_server::ExecServerRuntimePaths;
+use genex_protocol::protocol::SessionSource;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use serde::de::DeserializeOwned;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
@@ -71,10 +71,10 @@ pub use crate::remote::RemoteAppServerEndpoint;
 /// while legacy startup/config paths are migrated to RPCs.
 pub mod legacy_core {
     pub mod config {
-        pub use codex_core::config::*;
+        pub use genex_core::config::*;
 
         pub mod edit {
-            pub use codex_core::config::edit::*;
+            pub use genex_core::config::edit::*;
         }
     }
 }
@@ -278,7 +278,7 @@ enum ClientCommand {
 ///
 /// This type owns a worker task that bridges between:
 /// - caller-facing async `mpsc` channels used by TUI/exec
-/// - [`codex_app_server::in_process::InProcessClientHandle`], which speaks to
+/// - [`genex_app_server::in_process::InProcessClientHandle`], which speaks to
 ///   the embedded `MessageProcessor`
 ///
 /// The facade intentionally preserves the server's request/notification/event
@@ -315,7 +315,7 @@ impl InProcessAppServerClient {
     pub async fn start(args: InProcessClientStartArgs) -> IoResult<Self> {
         let channel_capacity = args.channel_capacity.max(1);
         let mut handle =
-            codex_app_server::in_process::start(args.into_runtime_start_args()).await?;
+            genex_app_server::in_process::start(args.into_runtime_start_args()).await?;
         let request_sender = handle.sender();
         let (command_tx, mut command_rx) = mpsc::channel::<ClientCommand>(channel_capacity);
         // e9996ec62a preserved transcript events by awaiting a bounded queue, but that can
@@ -733,24 +733,24 @@ impl AppServerClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_app_server_protocol::AccountUpdatedNotification;
-    use codex_app_server_protocol::ConfigRequirementsReadResponse;
-    use codex_app_server_protocol::GetAccountResponse;
-    use codex_app_server_protocol::JSONRPCMessage;
-    use codex_app_server_protocol::JSONRPCRequest;
-    use codex_app_server_protocol::JSONRPCResponse;
-    use codex_app_server_protocol::ServerNotification;
-    use codex_app_server_protocol::SessionSource as ApiSessionSource;
-    use codex_app_server_protocol::ThreadSettingsUpdateParams;
-    use codex_app_server_protocol::ThreadSettingsUpdateResponse;
-    use codex_app_server_protocol::ThreadStartParams;
-    use codex_app_server_protocol::ThreadStartResponse;
-    use codex_app_server_protocol::ToolRequestUserInputParams;
-    use codex_app_server_protocol::ToolRequestUserInputQuestion;
-    use codex_core::config::ConfigBuilder;
-    use codex_core::init_state_db;
-    use codex_uds::UnixListener;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use genex_app_server_protocol::AccountUpdatedNotification;
+    use genex_app_server_protocol::ConfigRequirementsReadResponse;
+    use genex_app_server_protocol::GetAccountResponse;
+    use genex_app_server_protocol::JSONRPCMessage;
+    use genex_app_server_protocol::JSONRPCRequest;
+    use genex_app_server_protocol::JSONRPCResponse;
+    use genex_app_server_protocol::ServerNotification;
+    use genex_app_server_protocol::SessionSource as ApiSessionSource;
+    use genex_app_server_protocol::ThreadSettingsUpdateParams;
+    use genex_app_server_protocol::ThreadSettingsUpdateResponse;
+    use genex_app_server_protocol::ThreadStartParams;
+    use genex_app_server_protocol::ThreadStartResponse;
+    use genex_app_server_protocol::ToolRequestUserInputParams;
+    use genex_app_server_protocol::ToolRequestUserInputQuestion;
+    use genex_core::config::ConfigBuilder;
+    use genex_core::init_state_db;
+    use genex_uds::UnixListener;
+    use genex_utils_absolute_path::AbsolutePathBuf;
     use futures::SinkExt;
     use futures::StreamExt;
     use pretty_assertions::assert_eq;
@@ -982,7 +982,7 @@ mod tests {
 
     fn command_execution_output_delta_notification(delta: &str) -> ServerNotification {
         ServerNotification::CommandExecutionOutputDelta(
-            codex_app_server_protocol::CommandExecutionOutputDeltaNotification {
+            genex_app_server_protocol::CommandExecutionOutputDeltaNotification {
                 thread_id: "thread".to_string(),
                 turn_id: "turn".to_string(),
                 item_id: "item".to_string(),
@@ -993,7 +993,7 @@ mod tests {
 
     fn agent_message_delta_notification(delta: &str) -> ServerNotification {
         ServerNotification::AgentMessageDelta(
-            codex_app_server_protocol::AgentMessageDeltaNotification {
+            genex_app_server_protocol::AgentMessageDeltaNotification {
                 thread_id: "thread".to_string(),
                 turn_id: "turn".to_string(),
                 item_id: "item".to_string(),
@@ -1003,11 +1003,11 @@ mod tests {
     }
 
     fn item_completed_notification(text: &str) -> ServerNotification {
-        ServerNotification::ItemCompleted(codex_app_server_protocol::ItemCompletedNotification {
+        ServerNotification::ItemCompleted(genex_app_server_protocol::ItemCompletedNotification {
             thread_id: "thread".to_string(),
             turn_id: "turn".to_string(),
             completed_at_ms: 0,
-            item: codex_app_server_protocol::ThreadItem::AgentMessage {
+            item: genex_app_server_protocol::ThreadItem::AgentMessage {
                 id: "item".to_string(),
                 text: text.to_string(),
                 phase: None,
@@ -1018,13 +1018,13 @@ mod tests {
     }
 
     fn turn_completed_notification() -> ServerNotification {
-        ServerNotification::TurnCompleted(codex_app_server_protocol::TurnCompletedNotification {
+        ServerNotification::TurnCompleted(genex_app_server_protocol::TurnCompletedNotification {
             thread_id: "thread".to_string(),
-            turn: codex_app_server_protocol::Turn {
+            turn: genex_app_server_protocol::Turn {
                 id: "turn".to_string(),
-                items_view: codex_app_server_protocol::TurnItemsView::Full,
+                items_view: genex_app_server_protocol::TurnItemsView::Full,
                 items: Vec::new(),
-                status: codex_app_server_protocol::TurnStatus::Completed,
+                status: genex_app_server_protocol::TurnStatus::Completed,
                 error: None,
                 started_at: None,
                 completed_at: Some(0),
@@ -1074,7 +1074,7 @@ mod tests {
         let err = client
             .request_typed::<ConfigRequirementsReadResponse>(ClientRequest::ThreadRead {
                 request_id: RequestId::Integer(99),
-                params: codex_app_server_protocol::ThreadReadParams {
+                params: genex_app_server_protocol::ThreadReadParams {
                     thread_id: "missing-thread".to_string(),
                     include_turns: false,
                 },
@@ -1125,10 +1125,10 @@ mod tests {
             .await
             .expect("thread/start should succeed");
         let read = client
-            .request_typed::<codex_app_server_protocol::ThreadReadResponse>(
+            .request_typed::<genex_app_server_protocol::ThreadReadResponse>(
                 ClientRequest::ThreadRead {
                     request_id: RequestId::Integer(4),
-                    params: codex_app_server_protocol::ThreadReadParams {
+                    params: genex_app_server_protocol::ThreadReadParams {
                         thread_id: response.thread.id.clone(),
                         include_turns: false,
                     },
@@ -1223,7 +1223,7 @@ mod tests {
         let response: GetAccountResponse = client
             .request_typed(ClientRequest::GetAccount {
                 request_id: RequestId::Integer(1),
-                params: codex_app_server_protocol::GetAccountParams {
+                params: genex_app_server_protocol::GetAccountParams {
                     refresh_token: false,
                 },
             })
@@ -1281,7 +1281,7 @@ mod tests {
         let response: GetAccountResponse = client
             .request_typed(ClientRequest::GetAccount {
                 request_id: RequestId::Integer(1),
-                params: codex_app_server_protocol::GetAccountParams {
+                params: genex_app_server_protocol::GetAccountParams {
                     refresh_token: false,
                 },
             })
@@ -1324,7 +1324,7 @@ mod tests {
         let response: GetAccountResponse = client
             .request_typed(ClientRequest::GetAccount {
                 request_id: RequestId::Integer(1),
-                params: codex_app_server_protocol::GetAccountParams {
+                params: genex_app_server_protocol::GetAccountParams {
                     refresh_token: false,
                 },
             })
@@ -1454,7 +1454,7 @@ mod tests {
             first_request_handle
                 .request_typed::<GetAccountResponse>(ClientRequest::GetAccount {
                     request_id: RequestId::Integer(1),
-                    params: codex_app_server_protocol::GetAccountParams {
+                    params: genex_app_server_protocol::GetAccountParams {
                         refresh_token: false,
                     },
                 })
@@ -1469,7 +1469,7 @@ mod tests {
         let second_err = second_request_handle
             .request_typed::<GetAccountResponse>(ClientRequest::GetAccount {
                 request_id: RequestId::Integer(1),
-                params: codex_app_server_protocol::GetAccountParams {
+                params: genex_app_server_protocol::GetAccountParams {
                     refresh_token: false,
                 },
             })
@@ -1604,7 +1604,7 @@ mod tests {
                     ServerNotification::ItemCompleted(notification)
                         if matches!(
                             &notification.item,
-                            codex_app_server_protocol::ThreadItem::AgentMessage { text, .. }
+                            genex_app_server_protocol::ThreadItem::AgentMessage { text, .. }
                                 if text == "hello"
                         ) =>
                     {
@@ -1612,7 +1612,7 @@ mod tests {
                     }
                     ServerNotification::TurnCompleted(notification)
                         if notification.turn.status
-                            == codex_app_server_protocol::TurnStatus::Completed =>
+                            == genex_app_server_protocol::TurnStatus::Completed =>
                     {
                         transcript_event_names.push("turn_completed");
                     }

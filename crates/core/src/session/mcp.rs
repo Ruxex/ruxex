@@ -2,19 +2,19 @@ use super::mcp_refresh::McpRefreshInvalidationGuard;
 use super::*;
 use crate::environment_selection::combine_selected_capability_roots;
 use anyhow::Context;
-use codex_exec_server::ExecutorCapabilityDiscoveryCache;
-use codex_exec_server::ExecutorCapabilityDiscoverySnapshot;
-use codex_exec_server::MAX_SELECTED_CAPABILITY_ROOTS;
-use codex_exec_server::ResolvedSelectedCapabilityRoot;
-use codex_mcp::ElicitationReviewRequest;
-use codex_mcp::ElicitationReviewer;
-use codex_mcp::ElicitationReviewerHandle;
-use codex_protocol::capabilities::CapabilityRootLocation;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_protocol::mcp_approval_meta::APPROVAL_KIND_KEY as MCP_ELICITATION_APPROVAL_KIND_KEY;
-use codex_protocol::mcp_approval_meta::APPROVAL_KIND_TOOL_SUGGESTION as MCP_ELICITATION_APPROVAL_KIND_TOOL_SUGGESTION;
-use codex_protocol::mcp_approval_meta::TOOL_NAME_KEY as MCP_ELICITATION_TOOL_NAME_KEY;
-use codex_rmcp_client::Elicitation;
+use genex_exec_server::ExecutorCapabilityDiscoveryCache;
+use genex_exec_server::ExecutorCapabilityDiscoverySnapshot;
+use genex_exec_server::MAX_SELECTED_CAPABILITY_ROOTS;
+use genex_exec_server::ResolvedSelectedCapabilityRoot;
+use genex_mcp::ElicitationReviewRequest;
+use genex_mcp::ElicitationReviewer;
+use genex_mcp::ElicitationReviewerHandle;
+use genex_protocol::capabilities::CapabilityRootLocation;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_protocol::mcp_approval_meta::APPROVAL_KIND_KEY as MCP_ELICITATION_APPROVAL_KIND_KEY;
+use genex_protocol::mcp_approval_meta::APPROVAL_KIND_TOOL_SUGGESTION as MCP_ELICITATION_APPROVAL_KIND_TOOL_SUGGESTION;
+use genex_protocol::mcp_approval_meta::TOOL_NAME_KEY as MCP_ELICITATION_TOOL_NAME_KEY;
+use genex_rmcp_client::Elicitation;
 use rmcp::model::RequestId;
 use serde_json::Map;
 use serde_json::Value;
@@ -141,7 +141,7 @@ impl Session {
         &self,
         config: &Config,
     ) -> HashMap<String, McpServerConfig> {
-        codex_mcp::configured_mcp_servers(&self.runtime_mcp_config(config).await)
+        genex_mcp::configured_mcp_servers(&self.runtime_mcp_config(config).await)
     }
 
     /// Publishes changed MCP state, waiting for any refresh already in progress.
@@ -239,7 +239,7 @@ impl Session {
         selected_capability_roots: &[ResolvedSelectedCapabilityRoot],
         required_servers: &[String],
         required_plugins: &HashSet<String>,
-    ) -> Arc<codex_mcp::McpBinding> {
+    ) -> Arc<genex_mcp::McpBinding> {
         let ready_selected_capability_roots =
             Self::ready_selected_capability_roots(selected_capability_roots);
         if self
@@ -281,7 +281,7 @@ impl Session {
             return binding;
         }
         let config = Arc::new(self.runtime_mcp_config(&turn_context.config).await);
-        Arc::new(codex_mcp::McpBinding::empty(config))
+        Arc::new(genex_mcp::McpBinding::empty(config))
     }
 
     #[tracing::instrument(
@@ -432,11 +432,11 @@ impl Session {
         )
     }
 
-    pub(crate) fn mcp_elicitation_lifecycle(&self) -> codex_mcp::ElicitationLifecycle {
+    pub(crate) fn mcp_elicitation_lifecycle(&self) -> genex_mcp::ElicitationLifecycle {
         self.mcp_elicitation_lifecycle_handle
             .get_or_init(|| {
                 let elicitations = self.services.elicitations.clone();
-                codex_mcp::ElicitationLifecycle::new(move || elicitations.register())
+                genex_mcp::ElicitationLifecycle::new(move || elicitations.register())
             })
             .clone()
     }
@@ -454,12 +454,12 @@ impl Session {
     ) -> anyhow::Result<McpServerElicitationOutcome> {
         anyhow::ensure!(
             !turn_context.session_source.is_non_root_agent(),
-            codex_mcp::MCP_ELICITATION_HANDOFF_MESSAGE
+            genex_mcp::MCP_ELICITATION_HANDOFF_MESSAGE
         );
         if self.services.mcp_runtime.elicitations_auto_deny() {
             return Ok(McpServerElicitationOutcome {
                 response: Some(ElicitationResponse {
-                    action: codex_rmcp_client::ElicitationAction::Accept,
+                    action: genex_rmcp_client::ElicitationAction::Accept,
                     content: Some(serde_json::json!({})),
                     meta: None,
                 }),
@@ -490,10 +490,10 @@ impl Session {
         }
         let id = match request_id {
             rmcp::model::NumberOrString::String(value) => {
-                codex_protocol::mcp::RequestId::String(value.to_string())
+                genex_protocol::mcp::RequestId::String(value.to_string())
             }
             rmcp::model::NumberOrString::Number(value) => {
-                codex_protocol::mcp::RequestId::Integer(value)
+                genex_protocol::mcp::RequestId::Integer(value)
             }
         };
         let event = EventMsg::ElicitationRequest(ElicitationRequestEvent {
@@ -699,7 +699,7 @@ fn plugin_install_elicitation_telemetry_metadata(
     let EventMsg::ElicitationRequest(ElicitationRequestEvent { request, .. }) = event else {
         return None;
     };
-    let codex_protocol::approvals::ElicitationRequest::Form {
+    let genex_protocol::approvals::ElicitationRequest::Form {
         meta: Some(Value::Object(meta)),
         ..
     } = request

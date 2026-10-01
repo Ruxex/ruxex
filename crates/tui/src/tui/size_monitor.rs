@@ -11,8 +11,8 @@ use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
 
-use codex_terminal_detection::Multiplexer;
-use codex_terminal_detection::TerminalInfo;
+use genex_terminal_detection::Multiplexer;
+use genex_terminal_detection::TerminalInfo;
 use ratatui::layout::Size;
 use tokio::sync::broadcast;
 

@@ -5,9 +5,9 @@
 //! also handles the helper argv modes because exec-server re-execs
 //! `codex_self_exe` for sandboxed filesystem and process requests.
 
-use codex_exec_server::ExecServerRuntimePaths;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyPolicy;
+use genex_exec_server::ExecServerRuntimePaths;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyPolicy;
 use std::ffi::OsStr;
 
 const CODEX_LINUX_SANDBOX_EXE_ENV_VAR: &str = "CODEX_TEST_LINUX_SANDBOX_EXE";
@@ -17,11 +17,11 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let _ = args.next();
     let argv1 = args.next();
     #[cfg(unix)]
-    if argv1.as_deref() == Some(OsStr::new(codex_exec_server::CODEX_ARG0_EXEC_HELPER_ARG1)) {
-        codex_exec_server::run_arg0_exec_helper_main();
+    if argv1.as_deref() == Some(OsStr::new(genex_exec_server::CODEX_ARG0_EXEC_HELPER_ARG1)) {
+        genex_exec_server::run_arg0_exec_helper_main();
     }
-    if argv1.as_deref() == Some(OsStr::new(codex_exec_server::CODEX_FS_HELPER_ARG1)) {
-        codex_exec_server::run_fs_helper_main();
+    if argv1.as_deref() == Some(OsStr::new(genex_exec_server::CODEX_FS_HELPER_ARG1)) {
+        genex_exec_server::run_fs_helper_main();
     }
 
     let current_exe = std::env::current_exe()?;
@@ -31,7 +31,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()?
-        .block_on(codex_exec_server::run_main(
+        .block_on(genex_exec_server::run_main(
             "stdio",
             runtime_paths,
             // This test-only fixture has no application configuration to resolve HTTP policy.

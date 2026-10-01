@@ -1,8 +1,8 @@
 use crate::agent::AgentControl;
-use codex_protocol::error::CodexErrorDetails;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
+use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
 use pretty_assertions::assert_eq;
 
 fn control_with_limit(max_threads: usize) -> AgentControl {

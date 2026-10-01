@@ -2,10 +2,10 @@ use std::io;
 use std::io::Read;
 use std::path::Path;
 
-use codex_utils_image::MAX_PROMPT_IMAGE_INPUT_BYTES;
-use codex_utils_image::PromptImageMode;
-use codex_utils_image::data_url_from_bytes;
-use codex_utils_image::load_for_prompt_bytes;
+use genex_utils_image::MAX_PROMPT_IMAGE_INPUT_BYTES;
+use genex_utils_image::PromptImageMode;
+use genex_utils_image::data_url_from_bytes;
+use genex_utils_image::load_for_prompt_bytes;
 
 use crate::models::ImageDetail;
 use crate::models::ImageReference;

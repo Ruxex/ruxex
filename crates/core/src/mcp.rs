@@ -3,31 +3,31 @@ use std::sync::Arc;
 
 use crate::config::Config;
 use crate::environment_selection::ThreadEnvironments;
-use codex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID;
-use codex_config::McpServerConfig;
-use codex_core_plugins::PluginsManager;
-use codex_exec_server::ExecutorCapabilityDiscoverySnapshot;
-use codex_extension_api::ExtensionData;
-use codex_extension_api::ExtensionDataInit;
-use codex_extension_api::ExtensionRegistry;
-use codex_extension_api::McpServerContribution;
-use codex_extension_api::McpServerContributionContext;
-use codex_extension_api::SelectedPluginIdentity;
-use codex_extension_api::SelectedPluginSnapshot;
-use codex_features::Feature;
-use codex_login::CodexAuth;
-use codex_mcp::EffectiveMcpServer;
-use codex_mcp::McpConfig;
-use codex_mcp::McpEnvironmentAuthority;
-use codex_mcp::McpPluginAttribution;
-use codex_mcp::McpServerRegistration;
-use codex_mcp::McpToolCatalogCache;
-use codex_mcp::configured_mcp_servers;
-use codex_mcp::effective_mcp_servers;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::TurnEnvironmentSelection;
+use genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID;
+use genex_config::McpServerConfig;
+use genex_core_plugins::PluginsManager;
+use genex_exec_server::ExecutorCapabilityDiscoverySnapshot;
+use genex_extension_api::ExtensionData;
+use genex_extension_api::ExtensionDataInit;
+use genex_extension_api::ExtensionRegistry;
+use genex_extension_api::McpServerContribution;
+use genex_extension_api::McpServerContributionContext;
+use genex_extension_api::SelectedPluginIdentity;
+use genex_extension_api::SelectedPluginSnapshot;
+use genex_features::Feature;
+use genex_login::CodexAuth;
+use genex_mcp::EffectiveMcpServer;
+use genex_mcp::McpConfig;
+use genex_mcp::McpEnvironmentAuthority;
+use genex_mcp::McpPluginAttribution;
+use genex_mcp::McpServerRegistration;
+use genex_mcp::McpToolCatalogCache;
+use genex_mcp::configured_mcp_servers;
+use genex_mcp::effective_mcp_servers;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::TurnEnvironmentSelection;
 
 /// MCP configuration and capability availability derived from the same inputs.
 #[derive(Clone)]
@@ -73,7 +73,7 @@ impl McpManager {
     pub fn new(plugins_manager: Arc<PluginsManager>) -> Self {
         Self::new_with_extensions(
             plugins_manager,
-            codex_extension_api::empty_extension_registry(),
+            genex_extension_api::empty_extension_registry(),
         )
     }
 

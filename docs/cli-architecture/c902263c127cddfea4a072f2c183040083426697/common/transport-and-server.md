@@ -10,7 +10,7 @@ CLI は次の経路でランタイム動作に到達できます。
 - app-server の stdio、Unix ソケット、または WebSocket トランスポート。
 - exec-server または内部 stdio-to-UDS 配管。
 
-`codex-cli` はコマンドとエンドポイントを決めます。`codex-app-server` はリクエスト処理を、`codex-app-server-transport` は接続/トランスポートの仕組みを、`codex-app-server-protocol` はシリアライズ可能なプロトコル型を管理します。[app-server コマンド](../commands/app-server.md)も参照してください。
+`genex-cli` はコマンドとエンドポイントを決めます。`codex-app-server` はリクエスト処理を、`genex-app-server-transport` は接続/トランスポートの仕組みを、`genex-app-server-protocol` はシリアライズ可能なプロトコル型を管理します。[app-server コマンド](../commands/app-server.md)も参照してください。
 
 ## プロトコル境界
 

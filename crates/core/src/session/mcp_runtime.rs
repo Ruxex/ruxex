@@ -1,22 +1,22 @@
 //! Thread MCP runtime projection and publication.
 //!
 //! This module owns the small correctness boundary between immutable session
-//! inputs and the mutable [`codex_mcp::McpRuntime`]. Background scheduling
+//! inputs and the mutable [`genex_mcp::McpRuntime`]. Background scheduling
 //! belongs elsewhere.
 
 use super::session::SessionConfiguration;
 use super::*;
 use crate::mcp::McpRuntimeProjection;
-use codex_config::McpServerDisabledReason;
-use codex_config::McpServerTransportConfig;
-use codex_mcp::ElicitationReviewerHandle;
-use codex_mcp::McpEnvironmentAuthority;
-use codex_mcp::McpServerRegistration;
-use codex_mcp::McpServerSource;
-use codex_mcp::McpStartupPolicy;
-use codex_mcp::PreparedMcpCall;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_protocol::protocol::EnvironmentConfigState;
+use genex_config::McpServerDisabledReason;
+use genex_config::McpServerTransportConfig;
+use genex_mcp::ElicitationReviewerHandle;
+use genex_mcp::McpEnvironmentAuthority;
+use genex_mcp::McpServerRegistration;
+use genex_mcp::McpServerSource;
+use genex_mcp::McpStartupPolicy;
+use genex_mcp::PreparedMcpCall;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_protocol::protocol::EnvironmentConfigState;
 use std::collections::HashSet;
 
 pub(super) struct McpDesiredState {
@@ -152,7 +152,7 @@ impl Session {
         mut projection: McpRuntimeProjection,
     ) -> BoxFuture<'a, McpRuntimeProjection> {
         Box::pin(async move {
-            if self.isolation == codex_extension_api::SessionIsolation::Isolated {
+            if self.isolation == genex_extension_api::SessionIsolation::Isolated {
                 return projection;
             }
 
@@ -271,7 +271,7 @@ impl Session {
                             .find(|selection| selection.environment_id == environment_id)
                         else {
                             return if environment_id
-                                == codex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID
+                                == genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID
                             {
                                 McpEnvironmentAuthority::Unrestricted
                             } else {
@@ -351,7 +351,7 @@ impl Session {
             .collect();
         config
             .environment_cwds
-            .entry(codex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string())
+            .entry(genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string())
             .or_insert_with(|| PathUri::from_abs_path(&desired.config.cwd));
         let mcp_servers = effective_mcp_servers(&config, auth.as_ref());
         config.set_server_permission_profiles(

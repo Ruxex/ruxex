@@ -1,7 +1,7 @@
-use codex_exec_server::ExecutorFileSystem;
-use codex_exec_server::FileSystemSandboxContext;
-use codex_exec_server::ReadFileOptions;
-use codex_utils_path_uri::PathUri;
+use genex_exec_server::ExecutorFileSystem;
+use genex_exec_server::FileSystemSandboxContext;
+use genex_exec_server::ReadFileOptions;
+use genex_utils_path_uri::PathUri;
 use similar::TextDiff;
 
 use crate::ApplyPatchError;

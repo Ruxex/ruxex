@@ -1,5 +1,5 @@
 [package]
-name = "codex-utils-approval-presets"
+name = "genex-utils-approval-presets"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,7 +8,7 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-codex-protocol = { workspace = true }
+genex-protocol = { workspace = true }
 
 [lib]
 test = false

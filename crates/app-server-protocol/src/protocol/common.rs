@@ -14,7 +14,7 @@ use crate::export::write_json_schema;
 use crate::protocol::v1;
 use crate::protocol::v2;
 use crate::protocol::v2::McpServerRefreshParams;
-use codex_experimental_api_macros::ExperimentalApi;
+use genex_experimental_api_macros::ExperimentalApi;
 use serde::Deserialize;
 use serde::Serialize;
 use strum_macros::Display;
@@ -1548,7 +1548,7 @@ pub struct FuzzyFileSearchParams {
     pub cancellation_token: Option<String>,
 }
 
-/// Superset of [`codex_file_search::FileMatch`]
+/// Superset of [`genex_file_search::FileMatch`]
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
 pub struct FuzzyFileSearchResult {
     pub root: String,
@@ -1738,14 +1738,14 @@ client_notification_definitions! {
 mod tests {
     use super::*;
     use anyhow::Result;
-    use codex_protocol::ThreadId;
-    use codex_protocol::account::PlanType;
-    use codex_protocol::config_types::MultiAgentMode;
-    use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
-    use codex_protocol::parse_command::ParsedCommand;
-    use codex_utils_absolute_path::AbsolutePathBuf;
-    use codex_utils_absolute_path::test_support::PathBufExt;
-    use codex_utils_absolute_path::test_support::test_path_buf;
+    use genex_protocol::ThreadId;
+    use genex_protocol::account::PlanType;
+    use genex_protocol::config_types::MultiAgentMode;
+    use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
+    use genex_protocol::parse_command::ParsedCommand;
+    use genex_utils_absolute_path::AbsolutePathBuf;
+    use genex_utils_absolute_path::test_support::PathBufExt;
+    use genex_utils_absolute_path::test_support::test_path_buf;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use std::path::PathBuf;
@@ -1780,7 +1780,7 @@ mod tests {
                 id: RequestId::Integer(1),
                 method: "thread/archive".to_string(),
                 params: Some(json!({"threadId": "thread-1"})),
-                trace: Some(codex_protocol::protocol::W3cTraceContext {
+                trace: Some(genex_protocol::protocol::W3cTraceContext {
                     traceparent: Some("traceparent".to_string()),
                     tracestate: Some("tracestate".to_string()),
                 }),
@@ -2681,7 +2681,7 @@ mod tests {
                 cwd,
                 runtime_workspace_roots: Vec::new(),
                 instruction_sources: vec![
-                    codex_utils_path_uri::LegacyAppPathString::from_abs_path(&absolute_path(
+                    genex_utils_path_uri::LegacyAppPathString::from_abs_path(&absolute_path(
                         "/tmp/AGENTS.md",
                     )),
                 ],

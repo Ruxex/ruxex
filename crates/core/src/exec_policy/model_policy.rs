@@ -1,8 +1,8 @@
 use super::ExecPolicyManager;
-use codex_execpolicy::Decision;
-use codex_execpolicy::Policy;
-use codex_execpolicy::PrefixRule;
-use codex_execpolicy::RequirementsExecPolicy;
+use genex_execpolicy::Decision;
+use genex_execpolicy::Policy;
+use genex_execpolicy::PrefixRule;
+use genex_execpolicy::RequirementsExecPolicy;
 use std::sync::Arc;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

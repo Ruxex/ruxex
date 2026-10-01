@@ -7,12 +7,12 @@
 
 use std::time::Duration;
 
-use codex_exec_server_protocol::JSONRPCErrorError;
-use codex_http_client::ClientRouteClass;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::RouteAwareClientPool;
-use codex_http_client::RouteAwareRequestError;
-use codex_protocol::shell_environment::CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
+use genex_exec_server_protocol::JSONRPCErrorError;
+use genex_http_client::ClientRouteClass;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::RouteAwareClientPool;
+use genex_http_client::RouteAwareRequestError;
+use genex_protocol::shell_environment::CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
 use futures::FutureExt;
 use futures::StreamExt;
 use futures::future::BoxFuture;
@@ -62,7 +62,7 @@ pub struct RouteAwareHttpClient {
 /// downstream body-delta forwarding.
 pub(crate) struct PendingRouteAwareHttpBodyStream {
     pub(crate) request_id: String,
-    pub(crate) response: codex_http_client::HttpResponse,
+    pub(crate) response: genex_http_client::HttpResponse,
 }
 
 /// Validates `http/request` parameters and runs the actual HTTP call used
@@ -181,7 +181,7 @@ impl RouteAwareHttpRequestRunner {
             error.type = tracing::field::Empty,
         );
         let mut headers = Self::build_headers(params.headers)?;
-        codex_otel::inject_span_w3c_trace_headers(&request_span, &mut headers);
+        genex_otel::inject_span_w3c_trace_headers(&request_span, &mut headers);
         let mut request = self.client.request(method.clone(), url).headers(headers);
         if let Some(body) = params.body {
             request = request.body(body.into_inner());

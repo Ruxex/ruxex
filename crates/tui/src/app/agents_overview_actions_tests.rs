@@ -1,11 +1,11 @@
 use super::*;
 use crate::app_event::AgentsOverviewAction;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadLoadedListParams;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_model_provider_info::ModelProviderInfo;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ThreadLoadedListParams;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_model_provider_info::ModelProviderInfo;
 use core_test_support::responses;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
@@ -151,7 +151,7 @@ async fn hidden_task_stays_hidden_through_activity_and_seed_until_explicit_resum
         },
     ));
     app.track_agents_overview_notification(&ServerNotification::ThreadStatusChanged(
-        codex_app_server_protocol::ThreadStatusChangedNotification {
+        genex_app_server_protocol::ThreadStatusChangedNotification {
             thread_id: id.to_string(),
             status: ThreadStatus::Active {
                 active_flags: Vec::new(),

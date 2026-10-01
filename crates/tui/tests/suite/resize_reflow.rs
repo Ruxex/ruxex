@@ -25,7 +25,7 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
         return Ok(());
     }
 
-    let repo_root = codex_utils_cargo_bin::repo_root()?;
+    let repo_root = genex_utils_cargo_bin::repo_root()?;
     let codex = codex_binary(&repo_root)?;
     let codex_home = tempdir()?;
     let server = MockServer::start().await;
@@ -193,7 +193,7 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
         return Ok(());
     }
 
-    let repo_root = codex_utils_cargo_bin::repo_root()?;
+    let repo_root = genex_utils_cargo_bin::repo_root()?;
     let codex = codex_binary(&repo_root)?;
     let codex_home = tempdir()?;
     let server = MockServer::start().await;
@@ -325,7 +325,7 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
         return Ok(());
     }
 
-    let repo_root = codex_utils_cargo_bin::repo_root()?;
+    let repo_root = genex_utils_cargo_bin::repo_root()?;
     let codex = codex_binary(&repo_root)?;
     let codex_home = tempdir()?;
     let server = MockServer::start().await;
@@ -452,7 +452,7 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
 }
 
 async fn run_repeated_resize_smoke() -> Result<()> {
-    let repo_root = codex_utils_cargo_bin::repo_root()?;
+    let repo_root = genex_utils_cargo_bin::repo_root()?;
     let codex = codex_binary(&repo_root)?;
     let codex_home = tempdir()?;
     let server = MockServer::start().await;
@@ -590,14 +590,14 @@ impl Drop for TmuxSession {
 }
 
 fn codex_binary(repo_root: &Path) -> Result<PathBuf> {
-    if let Ok(path) = codex_utils_cargo_bin::cargo_bin("codex") {
+    if let Ok(path) = genex_utils_cargo_bin::cargo_bin("codex") {
         return Ok(path);
     }
 
     let fallback = repo_root.join("codex-rs/target/debug/codex");
     anyhow::ensure!(
         fallback.is_file(),
-        "codex binary is unavailable; run `cargo build -p codex-cli` first"
+        "codex binary is unavailable; run `cargo build -p genex-cli` first"
     );
     Ok(fallback)
 }

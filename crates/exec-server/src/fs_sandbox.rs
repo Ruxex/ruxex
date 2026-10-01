@@ -2,29 +2,29 @@ use std::collections::HashMap;
 #[cfg(any(windows, test))]
 use std::time::Duration;
 
-use codex_exec_server_protocol::JSONRPCErrorError;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_sandboxing::SandboxCommand;
-use codex_sandboxing::SandboxDirectSpawnTransformRequest;
-use codex_sandboxing::SandboxExecRequest;
-use codex_sandboxing::SandboxManager;
-use codex_sandboxing::SandboxTransformRequest;
-use codex_sandboxing::SandboxType;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_exec_server_protocol::JSONRPCErrorError;
+use genex_protocol::config_types::WindowsSandboxLevel;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::FileSystemSpecialPath;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_sandboxing::SandboxCommand;
+use genex_sandboxing::SandboxDirectSpawnTransformRequest;
+use genex_sandboxing::SandboxExecRequest;
+use genex_sandboxing::SandboxManager;
+use genex_sandboxing::SandboxTransformRequest;
+use genex_sandboxing::SandboxType;
+use genex_utils_absolute_path::AbsolutePathBuf;
 #[cfg(not(target_os = "linux"))]
-use codex_utils_absolute_path::canonicalize_preserving_symlinks;
+use genex_utils_absolute_path::canonicalize_preserving_symlinks;
 #[cfg(any(windows, test))]
-use codex_utils_path_uri::LegacyAppPathString;
+use genex_utils_path_uri::LegacyAppPathString;
 #[cfg(any(windows, test))]
-use codex_utils_path_uri::PathConvention;
-use codex_utils_path_uri::PathUri;
+use genex_utils_path_uri::PathConvention;
+use genex_utils_path_uri::PathUri;
 #[cfg(any(windows, test))]
 use tokio::io::AsyncBufReadExt;
 #[cfg(any(windows, test))]
@@ -171,7 +171,7 @@ impl FileSystemSandboxRunner {
             .transform_for_direct_spawn(SandboxDirectSpawnTransformRequest {
                 workspace_roots,
                 windows_sandbox_proxy_settings_mode:
-                    codex_sandboxing::WindowsSandboxProxySettingsMode::Preserve,
+                    genex_sandboxing::WindowsSandboxProxySettingsMode::Preserve,
                 transform: SandboxTransformRequest {
                     command,
                     permissions: permission_profile,
@@ -496,7 +496,7 @@ pub(crate) fn spawn_command(
     // TODO(anp): Keep PathUri through the filesystem helper launch boundary.
     let cwd = cwd.to_abs_path().map_err(io_error)?;
     command.current_dir(cwd.as_path());
-    env.retain(|name, _| !codex_protocol::shell_environment::is_non_inheritable_env_var(name));
+    env.retain(|name, _| !genex_protocol::shell_environment::is_non_inheritable_env_var(name));
     command.env_clear();
     command.envs(env);
     command.stdin(stdin);
@@ -508,7 +508,7 @@ pub(crate) fn spawn_command(
     // SAFETY: Descriptor cleanup only uses fork-safe system calls.
     unsafe {
         command.pre_exec(|| {
-            codex_utils_pty::pty::close_inherited_fds_except(&[]);
+            genex_utils_pty::pty::close_inherited_fds_except(&[]);
             Ok(())
         });
     }
@@ -534,15 +534,15 @@ mod tests {
     use std::collections::HashMap;
     use std::ffi::OsString;
 
-    use codex_protocol::models::PermissionProfile;
-    use codex_protocol::permissions::FileSystemAccessMode;
-    use codex_protocol::permissions::FileSystemPath;
-    use codex_protocol::permissions::FileSystemSandboxEntry;
-    use codex_protocol::permissions::FileSystemSandboxPolicy;
-    use codex_protocol::permissions::FileSystemSpecialPath;
-    use codex_protocol::permissions::NetworkSandboxPolicy;
-    use codex_utils_absolute_path::AbsolutePathBuf;
-    use codex_utils_path_uri::PathUri;
+    use genex_protocol::models::PermissionProfile;
+    use genex_protocol::permissions::FileSystemAccessMode;
+    use genex_protocol::permissions::FileSystemPath;
+    use genex_protocol::permissions::FileSystemSandboxEntry;
+    use genex_protocol::permissions::FileSystemSandboxPolicy;
+    use genex_protocol::permissions::FileSystemSpecialPath;
+    use genex_protocol::permissions::NetworkSandboxPolicy;
+    use genex_utils_absolute_path::AbsolutePathBuf;
+    use genex_utils_path_uri::PathUri;
     use pretty_assertions::assert_eq;
 
     use crate::ExecServerRuntimePaths;
@@ -732,7 +732,7 @@ mod tests {
             );
             crate::FileSystemSandboxContext {
                 windows_sandbox_selection:
-                    codex_file_system::WindowsSandboxSelection::RestrictedToken,
+                    genex_file_system::WindowsSandboxSelection::RestrictedToken,
                 ..sandbox_context
             }
         };
@@ -768,7 +768,7 @@ mod tests {
             sandbox_context_with_cwd(&policy, PathUri::from_abs_path(&selected_cwd));
         #[cfg(windows)]
         let sandbox_context = crate::FileSystemSandboxContext {
-            windows_sandbox_selection: codex_file_system::WindowsSandboxSelection::RestrictedToken,
+            windows_sandbox_selection: genex_file_system::WindowsSandboxSelection::RestrictedToken,
             ..sandbox_context
         };
         selected.close().expect("remove selected directory");
@@ -865,7 +865,7 @@ mod tests {
             ),
         ]);
         let sandbox_context = crate::FileSystemSandboxContext {
-            windows_sandbox_selection: codex_file_system::WindowsSandboxSelection::Elevated,
+            windows_sandbox_selection: genex_file_system::WindowsSandboxSelection::Elevated,
             ..sandbox_context_with_cwd(&policy, cwd_uri)
         };
         selected.close().expect("remove selected directory");
@@ -1004,7 +1004,7 @@ mod tests {
         policy: &FileSystemSandboxPolicy,
         cwd: PathUri,
     ) -> crate::FileSystemSandboxContext {
-        codex_file_system::FileSystemSandboxContext::from_permission_profile(
+        genex_file_system::FileSystemSandboxContext::from_permission_profile(
             PermissionProfile::from_runtime_permissions(policy, NetworkSandboxPolicy::Restricted),
             cwd,
         )

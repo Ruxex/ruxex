@@ -40,7 +40,7 @@ there.
 
 ```mermaid
 flowchart TD
-    subgraph Runtime["codex-core runtime"]
+    subgraph Runtime["genex-core runtime"]
         Protocol["protocol lifecycle\nthread start/end, turn start/end"]
         Inference["inference + compaction\nrequests, responses, checkpoints"]
         Tools["tool dispatch\ndirect model tools + code-mode nested tools"]

@@ -66,29 +66,29 @@ use crate::plugin_config_reload::PluginStartupConfig;
 use crate::transport::CHANNEL_CAPACITY;
 use crate::transport::OutboundConnectionState;
 use crate::transport::route_outgoing_envelope;
-use codex_app_server_protocol::AgentMessageDelivery;
-use codex_app_server_protocol::ClientNotification;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::ConfigWarningNotification;
-use codex_app_server_protocol::InitializeParams;
-use codex_app_server_protocol::ItemCompletedNotification;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::Result;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ThreadItem;
-use codex_arg0::Arg0DispatchPaths;
-use codex_config::LoaderOverrides;
-use codex_config::ThreadConfigLoader;
-use codex_core::check_execpolicy_for_warnings;
-use codex_core::config::Config;
-use codex_core::resolve_installation_id;
-use codex_exec_server::EnvironmentManager;
-use codex_login::AuthManager;
-use codex_protocol::protocol::SessionSource;
-pub use codex_rollout::StateDbHandle;
-pub use codex_state::log_db::LogDbLayer;
+use genex_app_server_protocol::AgentMessageDelivery;
+use genex_app_server_protocol::ClientNotification;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::ConfigWarningNotification;
+use genex_app_server_protocol::InitializeParams;
+use genex_app_server_protocol::ItemCompletedNotification;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::Result;
+use genex_app_server_protocol::ServerNotification;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::ThreadItem;
+use genex_arg0::Arg0DispatchPaths;
+use genex_config::LoaderOverrides;
+use genex_config::ThreadConfigLoader;
+use genex_core::check_execpolicy_for_warnings;
+use genex_core::config::Config;
+use genex_core::resolve_installation_id;
+use genex_exec_server::EnvironmentManager;
+use genex_login::AuthManager;
+use genex_protocol::protocol::SessionSource;
+pub use genex_rollout::StateDbHandle;
+pub use genex_state::log_db::LogDbLayer;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use tokio::time::timeout;
@@ -779,20 +779,20 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_app_server_protocol::ClientInfo;
-    use codex_app_server_protocol::ConfigRequirementsReadResponse;
-    use codex_app_server_protocol::ExternalAgentConfigImportCompletedNotification;
-    use codex_app_server_protocol::SessionSource as ApiSessionSource;
-    use codex_app_server_protocol::ThreadAttachmentOperation;
-    use codex_app_server_protocol::ThreadAttachmentUpdatedNotification;
-    use codex_app_server_protocol::ThreadQueueChangedNotification;
-    use codex_app_server_protocol::ThreadStartParams;
-    use codex_app_server_protocol::ThreadStartResponse;
-    use codex_app_server_protocol::Turn;
-    use codex_app_server_protocol::TurnCompletedNotification;
-    use codex_app_server_protocol::TurnItemsView;
-    use codex_app_server_protocol::TurnStatus;
-    use codex_core::config::ConfigBuilder;
+    use genex_app_server_protocol::ClientInfo;
+    use genex_app_server_protocol::ConfigRequirementsReadResponse;
+    use genex_app_server_protocol::ExternalAgentConfigImportCompletedNotification;
+    use genex_app_server_protocol::SessionSource as ApiSessionSource;
+    use genex_app_server_protocol::ThreadAttachmentOperation;
+    use genex_app_server_protocol::ThreadAttachmentUpdatedNotification;
+    use genex_app_server_protocol::ThreadQueueChangedNotification;
+    use genex_app_server_protocol::ThreadStartParams;
+    use genex_app_server_protocol::ThreadStartResponse;
+    use genex_app_server_protocol::Turn;
+    use genex_app_server_protocol::TurnCompletedNotification;
+    use genex_app_server_protocol::TurnItemsView;
+    use genex_app_server_protocol::TurnStatus;
+    use genex_core::config::ConfigBuilder;
     use pretty_assertions::assert_eq;
     use std::path::Path;
     use tempfile::TempDir;
@@ -819,7 +819,7 @@ mod tests {
     ) -> InProcessClientHandle {
         let codex_home = TempDir::new().expect("temp dir");
         let config = Arc::new(build_test_config(codex_home.path()).await);
-        let state_db = codex_rollout::state_db::try_init(config.as_ref())
+        let state_db = genex_rollout::state_db::try_init(config.as_ref())
             .await
             .expect("state db should initialize for in-process test");
         let args = InProcessStartArgs {
@@ -828,7 +828,7 @@ mod tests {
             cli_overrides: Vec::new(),
             loader_overrides: LoaderOverrides::default(),
             strict_config: false,
-            thread_config_loader: Arc::new(codex_config::NoopThreadConfigLoader),
+            thread_config_loader: Arc::new(genex_config::NoopThreadConfigLoader),
             log_db: None,
             state_db: Some(state_db),
             environment_manager: Arc::new(EnvironmentManager::default_for_tests()),

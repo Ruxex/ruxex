@@ -2,10 +2,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use codex_skills::LoadedSkillRoot;
-use codex_skills::SkillRootSnapshotCache;
-use codex_skills::SkillRootSnapshots;
-use codex_utils_plugins::PluginSkillRoot;
+use genex_skills::LoadedSkillRoot;
+use genex_skills::SkillRootSnapshotCache;
+use genex_skills::SkillRootSnapshots;
+use genex_utils_plugins::PluginSkillRoot;
 
 #[derive(Default)]
 struct PluginSkillSnapshotCache {

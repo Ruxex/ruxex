@@ -2,9 +2,9 @@
 //! Only threads successfully persisted through the existing thread store become candidates.
 
 use super::ThreadRequestProcessor;
-use codex_app_server_transport::daemon_recovery::InterruptedTurn;
-use codex_app_server_transport::daemon_recovery::RecoverySnapshot;
-use codex_thread_store::PersistContext;
+use genex_app_server_transport::daemon_recovery::InterruptedTurn;
+use genex_app_server_transport::daemon_recovery::RecoverySnapshot;
+use genex_thread_store::PersistContext;
 use tracing::warn;
 
 impl ThreadRequestProcessor {

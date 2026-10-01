@@ -11,31 +11,31 @@ use crate::shell_snapshot::ShellSnapshotFile;
 use crate::shell_snapshot::ShellSnapshotSandbox;
 use crate::tools::sandboxing::executor_windows_sandbox_selection;
 use arc_swap::ArcSwap;
-use codex_core_plugins::PluginCommandAttribution;
-use codex_core_plugins::ResolvedPluginMetricsOperation;
-use codex_core_plugins::TrustedPluginRoots;
-use codex_exec_server::ExecutorFileSystem;
-use codex_file_system::FileSystemSandboxContext;
-use codex_model_provider::SharedModelProvider;
-use codex_protocol::SessionId;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::ShellEnvironmentPolicy;
-use codex_protocol::model_types::MODEL_SPECIALTY_CYBER;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::models::AdditionalPermissionProfile;
-use codex_protocol::permissions::RawFileSystemSandboxPolicy;
-use codex_protocol::protocol::EnvironmentConfig;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::ErrorEvent;
-use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::TurnEnvironmentSelection;
-use codex_protocol::turn_input::CyberAccessProgram;
-use codex_sandboxing::policy_transforms::effective_permission_profile;
-use codex_skills_extension::HostSkillsSnapshot;
-use codex_skills_extension::SkillLoadOutcome;
-use codex_utils_path_uri::PathUri;
+use genex_core_plugins::PluginCommandAttribution;
+use genex_core_plugins::ResolvedPluginMetricsOperation;
+use genex_core_plugins::TrustedPluginRoots;
+use genex_exec_server::ExecutorFileSystem;
+use genex_file_system::FileSystemSandboxContext;
+use genex_model_provider::SharedModelProvider;
+use genex_protocol::SessionId;
+use genex_protocol::ThreadId;
+use genex_protocol::config_types::ShellEnvironmentPolicy;
+use genex_protocol::model_types::MODEL_SPECIALTY_CYBER;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::models::AdditionalPermissionProfile;
+use genex_protocol::permissions::RawFileSystemSandboxPolicy;
+use genex_protocol::protocol::EnvironmentConfig;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::ErrorEvent;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::turn_input::CyberAccessProgram;
+use genex_sandboxing::policy_transforms::effective_permission_profile;
+use genex_skills_extension::HostSkillsSnapshot;
+use genex_skills_extension::SkillLoadOutcome;
+use genex_utils_path_uri::PathUri;
 use futures::FutureExt;
 use futures::future::BoxFuture;
 use futures::future::Shared;
@@ -325,7 +325,7 @@ pub struct TurnContext {
     pub(crate) final_output_json_schema: Option<Value>,
     pub(crate) dynamic_tools: Vec<DynamicToolSpec>,
     pub(crate) turn_metadata_state: Arc<TurnMetadataState>,
-    pub(crate) extension_data: Arc<codex_extension_api::ExtensionData>,
+    pub(crate) extension_data: Arc<genex_extension_api::ExtensionData>,
     pub(crate) turn_timing_state: Arc<TurnTimingState>,
     pub(crate) terminal_error: Arc<Mutex<Option<ErrorEvent>>>,
     pub(crate) server_model_warning_emitted: AtomicBool,
@@ -456,7 +456,7 @@ impl TurnContext {
 
     pub(crate) fn sandbox_policy(&self) -> SandboxPolicy {
         #[allow(deprecated)]
-        codex_sandboxing::compatibility_sandbox_policy_for_permission_profile(
+        genex_sandboxing::compatibility_sandbox_policy_for_permission_profile(
             &self.permission_profile(),
             &self.cwd,
         )
@@ -685,12 +685,12 @@ impl TurnContext {
             allowed_domains: network
                 .domains
                 .as_ref()
-                .and_then(codex_config::NetworkDomainPermissionsToml::allowed_domains)
+                .and_then(genex_config::NetworkDomainPermissionsToml::allowed_domains)
                 .unwrap_or_default(),
             denied_domains: network
                 .domains
                 .as_ref()
-                .and_then(codex_config::NetworkDomainPermissionsToml::denied_domains)
+                .and_then(genex_config::NetworkDomainPermissionsToml::denied_domains)
                 .unwrap_or_default(),
         })
     }
@@ -839,7 +839,7 @@ impl Session {
         turn_metadata_state
             .set_responses_api_metadata(per_turn_config.responses_api_metadata.clone());
         let (current_date, timezone) = local_time_context();
-        let extension_data = Arc::new(codex_extension_api::ExtensionData::new(sub_id.clone()));
+        let extension_data = Arc::new(genex_extension_api::ExtensionData::new(sub_id.clone()));
         extension_data.insert(skills_snapshot);
         TurnContext {
             sub_id,
@@ -1117,8 +1117,8 @@ impl Session {
         if !tc.code_mode_available
             && matches!(
                 crate::tools::requested_tool_mode(tc, tc.model_info()),
-                codex_protocol::model_types::ToolMode::CodeMode
-                    | codex_protocol::model_types::ToolMode::CodeModeOnly
+                genex_protocol::model_types::ToolMode::CodeMode
+                    | genex_protocol::model_types::ToolMode::CodeModeOnly
             )
             && let Some(message) = self
                 .services

@@ -10,7 +10,7 @@ use std::io::Read;
 use std::num::NonZeroU32;
 use std::path::Path;
 
-use codex_core::config::Config;
+use genex_core::config::Config;
 use serde::Deserialize;
 
 use super::CheckStatus;
@@ -67,7 +67,7 @@ pub(super) async fn background_server_check(config: &Config) -> DoctorCheck {
     );
     push_configured_updater(&mut details, &state_dir.join(SETTINGS_FILE_NAME));
 
-    let socket_path = match codex_app_server::app_server_control_socket_path(&config.codex_home) {
+    let socket_path = match genex_app_server::app_server_control_socket_path(&config.codex_home) {
         Ok(socket_path) => socket_path,
         Err(err) => {
             return DoctorCheck::new(
@@ -201,7 +201,7 @@ async fn socket_status(socket_path: &Path) -> SocketStatus {
         return SocketStatus::NotRunning;
     }
 
-    match codex_app_server_daemon::probe_app_server_version(socket_path).await {
+    match genex_app_server_daemon::probe_app_server_version(socket_path).await {
         Ok(app_server_version) => SocketStatus::Running(app_server_version),
         Err(err) => SocketStatus::StaleOrUnreachable(concise_probe_error(&err, socket_path)),
     }
@@ -234,7 +234,7 @@ fn concise_probe_error(err: &anyhow::Error, socket_path: &Path) -> String {
 mod tests {
     use std::path::PathBuf;
 
-    use codex_core::config::ConfigBuilder;
+    use genex_core::config::ConfigBuilder;
     use pretty_assertions::assert_eq;
 
     use super::*;
@@ -248,7 +248,7 @@ mod tests {
     }
 
     fn create_socket_placeholder(config: &Config) {
-        let socket_path = codex_app_server::app_server_control_socket_path(&config.codex_home)
+        let socket_path = genex_app_server::app_server_control_socket_path(&config.codex_home)
             .expect("socket path");
         std::fs::create_dir_all(socket_path.parent().expect("socket parent"))
             .expect("create socket dir");

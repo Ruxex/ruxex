@@ -1,7 +1,7 @@
-use codex_protocol::protocol::Product;
-use codex_protocol::protocol::SkillScope;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_protocol::protocol::Product;
+use genex_protocol::protocol::SkillScope;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 
 /// Metadata for one skill materialized on the host filesystem.
 #[derive(Debug, Clone, PartialEq)]

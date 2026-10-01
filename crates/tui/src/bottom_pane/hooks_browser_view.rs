@@ -1,9 +1,9 @@
-use codex_app_server_protocol::HookEventName;
-use codex_app_server_protocol::HookHandlerMetadata;
-use codex_app_server_protocol::HookMetadata;
-use codex_app_server_protocol::HookSource;
-use codex_app_server_protocol::HookTrustStatus;
-use codex_app_server_protocol::HooksListEntry;
+use genex_app_server_protocol::HookEventName;
+use genex_app_server_protocol::HookHandlerMetadata;
+use genex_app_server_protocol::HookMetadata;
+use genex_app_server_protocol::HookSource;
+use genex_app_server_protocol::HookTrustStatus;
+use genex_app_server_protocol::HooksListEntry;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
@@ -62,7 +62,7 @@ impl HooksBrowserView {
     pub(crate) fn new(
         hooks: Vec<HookMetadata>,
         warnings: Vec<String>,
-        errors: Vec<codex_app_server_protocol::HookErrorInfo>,
+        errors: Vec<genex_app_server_protocol::HookErrorInfo>,
         app_event_tx: AppEventSender,
     ) -> Self {
         Self::from_entry(
@@ -103,7 +103,7 @@ impl HooksBrowserView {
     }
 
     fn event_rows(&self) -> Vec<EventRow> {
-        codex_protocol::protocol::HookEventName::iter()
+        genex_protocol::protocol::HookEventName::iter()
             .map(|event_name| {
                 let event_name: HookEventName = event_name.into();
                 let installed = self
@@ -144,7 +144,7 @@ impl HooksBrowserView {
     fn selected_event(&self) -> Option<HookEventName> {
         self.state
             .selected_idx
-            .and_then(|idx| codex_protocol::protocol::HookEventName::iter().nth(idx))
+            .and_then(|idx| genex_protocol::protocol::HookEventName::iter().nth(idx))
             .map(Into::into)
     }
 
@@ -198,7 +198,7 @@ impl HooksBrowserView {
 
     fn page_len(&self) -> usize {
         match self.page {
-            HooksBrowserPage::Events => codex_protocol::protocol::HookEventName::iter().count(),
+            HooksBrowserPage::Events => genex_protocol::protocol::HookEventName::iter().count(),
             HooksBrowserPage::Handlers(event_name) => self.handlers_for_event(event_name).count(),
         }
     }
@@ -288,7 +288,7 @@ impl HooksBrowserView {
         self.state = ScrollState::new();
         self.state.selected_idx = selected_event_name
             .and_then(|event_name| {
-                codex_protocol::protocol::HookEventName::iter()
+                genex_protocol::protocol::HookEventName::iter()
                     .position(|candidate| HookEventName::from(candidate) == event_name)
             })
             .or_else(|| (self.page_len() > 0).then_some(0));

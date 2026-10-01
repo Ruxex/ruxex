@@ -2,7 +2,7 @@ use super::*;
 use crate::mention_codec::LinkedMention;
 use crate::mention_codec::decode_history_mentions_with_at_mentions;
 use crate::mention_codec::encode_history_mentions_at_elements;
-use codex_protocol::user_input::TextElement;
+use genex_protocol::user_input::TextElement;
 use pretty_assertions::assert_eq;
 
 #[test]
@@ -89,7 +89,7 @@ fn task_reference_context_deduplicates_and_merges_with_ide_context() {
         text_elements: [plugin_start, selected_start]
             .into_iter()
             .map(|start| {
-                codex_app_server_protocol::TextElement::new(
+                genex_app_server_protocol::TextElement::new(
                     ByteRange {
                         start,
                         end: start + title.len() + 1,
@@ -153,7 +153,7 @@ fn task_reference_heading_inside_selected_title_is_not_a_context_boundary() {
     let title = format!("Review {REQUEST_HEADING} carefully");
     let mut items = vec![UserInput::Text {
         text: format!("@{title}"),
-        text_elements: vec![codex_app_server_protocol::TextElement::new(
+        text_elements: vec![genex_app_server_protocol::TextElement::new(
             ByteRange {
                 start: 0,
                 end: title.len() + 1,

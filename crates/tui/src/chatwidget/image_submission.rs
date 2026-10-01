@@ -3,10 +3,10 @@
 //! Preparation is serialized so canceled decodes cannot pile up across retries or thread switches.
 
 use super::*;
-use codex_protocol::models::ImageDetail;
-use codex_protocol::models::ImageReference;
-use codex_protocol::models::snapshot_local_user_input;
-use codex_protocol::user_input::UserInput as CoreUserInput;
+use genex_protocol::models::ImageDetail;
+use genex_protocol::models::ImageReference;
+use genex_protocol::models::snapshot_local_user_input;
+use genex_protocol::user_input::UserInput as CoreUserInput;
 use tokio::sync::oneshot;
 
 static IMAGE_PREPARATION: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());

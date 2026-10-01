@@ -4,7 +4,7 @@
 
 **Goal:** Remove ChatGPT Apps, connector directory, and host-owned Apps MCP paths while retaining provider-neutral MCP and plugin capabilities.
 
-**Architecture:** Delete the dedicated connector crates and remove their protocol, configuration, core, app-server, and TUI consumers. In `codex-mcp`, remove only Apps/provider-specific adapters and preserve standard MCP runtime, generic OAuth/elicitation, and tool metadata.
+**Architecture:** Delete the dedicated connector crates and remove their protocol, configuration, core, app-server, and TUI consumers. In `genex-mcp`, remove only Apps/provider-specific adapters and preserve standard MCP runtime, generic OAuth/elicitation, and tool metadata.
 
 **Tech Stack:** Rust workspace, Cargo manifests, app-server Rust protocol and generated JSON/TypeScript schemas, CLI/TUI/core MCP integration.
 

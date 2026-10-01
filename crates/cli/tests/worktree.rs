@@ -78,13 +78,13 @@ async fn rejected_start(
     env: &HashMap<String, String>,
     expected: &str,
 ) -> anyhow::Result<String> {
-    let spawned = codex_utils_pty::spawn_pty_process(
+    let spawned = genex_utils_pty::spawn_pty_process(
         &program.to_string_lossy(),
         args,
         cwd,
         env,
         /*arg0*/ &None,
-        codex_utils_pty::TerminalSize {
+        genex_utils_pty::TerminalSize {
             rows: 40,
             cols: 120,
         },
@@ -134,7 +134,7 @@ async fn rejected_start(
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn interactive_worktree_start_and_fork_bind_owner_before_turn() -> anyhow::Result<()> {
     let root = TempDir::new()?;
-    let root = codex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(root.path())?
+    let root = genex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(root.path())?
         .canonicalize()?
         .into_path_buf();
     let home = root.join("home");
@@ -205,9 +205,9 @@ trust_level = "trusted"
             .workspace_id("workspace-123")
             .user_id("user-123")
             .plan_type("enterprise"),
-        codex_config::types::AuthCredentialsStoreMode::File,
+        genex_config::types::AuthCredentialsStoreMode::File,
     )?;
-    let program = codex_utils_cargo_bin::cargo_bin("codex")?;
+    let program = genex_utils_cargo_bin::cargo_bin("codex")?;
     let mut env: HashMap<String, String> = std::env::vars().collect();
     env.insert("CODEX_HOME".into(), home.display().to_string());
     env.insert("CODEX_SQLITE_HOME".into(), home.display().to_string());
@@ -348,13 +348,13 @@ trust_level = "trusted"
             .await?;
             assert!(!home.join("worktrees").exists());
         }
-        let spawned = codex_utils_pty::spawn_pty_process(
+        let spawned = genex_utils_pty::spawn_pty_process(
             &program.to_string_lossy(),
             &args,
             &launcher,
             &env,
             /*arg0*/ &None,
-            codex_utils_pty::TerminalSize {
+            genex_utils_pty::TerminalSize {
                 rows: 40,
                 cols: 120,
             },
@@ -403,11 +403,11 @@ trust_level = "trusted"
                     .send(b"/rename managed-source\r".to_vec())
                     .await?;
                 let (_, _, metadata) = observed.as_ref().unwrap().as_ref().unwrap();
-                let thread_id = codex_protocol::ThreadId::from_string(
+                let thread_id = genex_protocol::ThreadId::from_string(
                     metadata["ownerThreadId"].as_str().context("owner id")?,
                 )?;
                 loop {
-                    if codex_rollout::find_thread_name_by_id(&home, &thread_id)
+                    if genex_rollout::find_thread_name_by_id(&home, &thread_id)
                         .await?
                         .as_deref()
                         == Some("managed-source")
@@ -601,8 +601,8 @@ trust_level = "trusted"
         assert!(context.contains("managed cloud instructions"), "{context}");
         if previous.is_empty() {
             // A legacy summary still says launcher A, but persisted turns use checkout B.
-            let sqlite = codex_state::SqliteConfig::from_sqlite_home(
-                codex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(&home)?,
+            let sqlite = genex_state::SqliteConfig::from_sqlite_home(
+                genex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(&home)?,
             );
             let db = sqlite.open_read_write_pool(&sqlite.state_db_path()).await?;
             sqlx::query("UPDATE threads SET cwd = ? WHERE id = ?")
@@ -629,7 +629,7 @@ trust_level = "trusted"
             Mock::given(wiremock::matchers::path("/source/backend-api/wham/config/bundle"))
                 .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
                     "config_toml": {"enterprise_managed": [{"id":"distrust", "name":"distrust",
-                        "contents": format!("[projects.{}]\ntrust_level = \"untrusted\"\n", serde_json::to_string(&codex_config::loader::project_trust_key(Path::new(&checkout)))?)}]}
+                        "contents": format!("[projects.{}]\ntrust_level = \"untrusted\"\n", serde_json::to_string(&genex_config::loader::project_trust_key(Path::new(&checkout)))?)}]}
                 }))).with_priority(/*priority*/ 1).mount(&server).await;
             let before = git(&source, &["worktree", "list", "--porcelain"])?;
             rejected_start(
@@ -663,7 +663,7 @@ trust_level = "trusted"
             Mock::given(wiremock::matchers::path("/source/backend-api/wham/config/bundle"))
                 .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
                     "config_toml": {"enterprise_managed": [{"id":"distrust-source", "name":"distrust-source",
-                        "contents": format!("[projects.{}]\ntrust_level = \"untrusted\"\n", serde_json::to_string(&codex_config::loader::project_trust_key(&source.join(".codex")))?)}]}
+                        "contents": format!("[projects.{}]\ntrust_level = \"untrusted\"\n", serde_json::to_string(&genex_config::loader::project_trust_key(&source.join(".codex")))?)}]}
                 }))).mount(&server).await;
             let output = rejected_start(
                 &program,

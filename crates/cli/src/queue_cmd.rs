@@ -1,8 +1,8 @@
 use clap::Parser;
 use clap::builder::NonEmptyStringValueParser;
-use codex_arg0::Arg0DispatchPaths;
-use codex_tui::Cli as TuiCli;
-use codex_utils_cli::CliConfigOverrides;
+use genex_arg0::Arg0DispatchPaths;
+use genex_tui::Cli as TuiCli;
+use genex_utils_cli::CliConfigOverrides;
 
 use crate::InteractiveRemoteOptions;
 use crate::SessionArchiveConfigOverrides;
@@ -49,10 +49,10 @@ pub(crate) async fn run_queue_command(
         remote.remote.or(root_remote),
         remote.remote_auth_token_env.or(root_remote_auth_token_env),
     )?;
-    codex_tui::run_session_queue_command(
+    genex_tui::run_session_queue_command(
         thread,
         message,
-        codex_tui::SessionArchiveCommandOptions {
+        genex_tui::SessionArchiveCommandOptions {
             cli,
             arg0_paths,
             explicit_remote_endpoint,

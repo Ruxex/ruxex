@@ -2,17 +2,17 @@ use super::config_processor::map_error as map_config_error;
 use crate::config_manager::ConfigManager;
 use crate::error_code::internal_error;
 use crate::error_code::invalid_request;
-use codex_app_server_protocol::ConfigBatchWriteParams;
-use codex_app_server_protocol::ConfigEdit;
-use codex_app_server_protocol::ConfigWriteErrorCode;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::MergeStrategy;
-use codex_config::CONFIG_TOML_FILE;
-use codex_config::ConfigLayerSource;
-use codex_config::format_config_layer_source;
-use codex_core::config::Config;
-use codex_core::config::edit::ConfigEditsBuilder;
-use codex_model_provider::AMAZON_BEDROCK_PROVIDER_ID;
+use genex_app_server_protocol::ConfigBatchWriteParams;
+use genex_app_server_protocol::ConfigEdit;
+use genex_app_server_protocol::ConfigWriteErrorCode;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::MergeStrategy;
+use genex_config::CONFIG_TOML_FILE;
+use genex_config::ConfigLayerSource;
+use genex_config::format_config_layer_source;
+use genex_core::config::Config;
+use genex_core::config::edit::ConfigEditsBuilder;
+use genex_model_provider::AMAZON_BEDROCK_PROVIDER_ID;
 
 pub(super) struct BedrockProviderConfig<'a> {
     pub(super) region: Option<&'a str>,

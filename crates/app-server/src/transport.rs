@@ -1,7 +1,7 @@
 use crate::message_processor::ConnectionSessionState;
 use crate::outgoing_message::OutgoingEnvelope;
-use codex_app_server_protocol::ExperimentalApi;
-use codex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::ExperimentalApi;
+use genex_app_server_protocol::ServerRequest;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -12,21 +12,21 @@ use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 use tracing::warn;
 
-pub use codex_app_server_transport::AppServerTransport;
-pub(crate) use codex_app_server_transport::CHANNEL_CAPACITY;
-pub(crate) use codex_app_server_transport::ConnectionId;
-pub(crate) use codex_app_server_transport::ConnectionOrigin;
-pub(crate) use codex_app_server_transport::DaemonShutdownAccess;
-pub(crate) use codex_app_server_transport::OutgoingMessage;
-pub(crate) use codex_app_server_transport::QueuedOutgoingMessage;
-pub(crate) use codex_app_server_transport::TransportEvent;
-pub(crate) use codex_app_server_transport::acquire_app_server_startup_lock;
-pub use codex_app_server_transport::app_server_control_socket_path;
-pub(crate) use codex_app_server_transport::app_server_startup_lock_path;
-pub use codex_app_server_transport::auth;
-pub(crate) use codex_app_server_transport::start_control_socket_acceptor;
-pub(crate) use codex_app_server_transport::start_stdio_connection;
-pub(crate) use codex_app_server_transport::start_websocket_acceptor;
+pub use genex_app_server_transport::AppServerTransport;
+pub(crate) use genex_app_server_transport::CHANNEL_CAPACITY;
+pub(crate) use genex_app_server_transport::ConnectionId;
+pub(crate) use genex_app_server_transport::ConnectionOrigin;
+pub(crate) use genex_app_server_transport::DaemonShutdownAccess;
+pub(crate) use genex_app_server_transport::OutgoingMessage;
+pub(crate) use genex_app_server_transport::QueuedOutgoingMessage;
+pub(crate) use genex_app_server_transport::TransportEvent;
+pub(crate) use genex_app_server_transport::acquire_app_server_startup_lock;
+pub use genex_app_server_transport::app_server_control_socket_path;
+pub(crate) use genex_app_server_transport::app_server_startup_lock_path;
+pub use genex_app_server_transport::auth;
+pub(crate) use genex_app_server_transport::start_control_socket_acceptor;
+pub(crate) use genex_app_server_transport::start_stdio_connection;
+pub(crate) use genex_app_server_transport::start_websocket_acceptor;
 
 pub(crate) struct ConnectionState {
     pub(crate) origin: ConnectionOrigin,
@@ -39,7 +39,7 @@ pub(crate) struct ConnectionState {
 impl ConnectionState {
     pub(crate) fn new(
         origin: ConnectionOrigin,
-        auth: Option<codex_app_server_transport::ConnectionAuth>,
+        auth: Option<genex_app_server_transport::ConnectionAuth>,
         outbound_initialized: Arc<AtomicBool>,
         outbound_experimental_api_enabled: Arc<AtomicBool>,
         outbound_opted_out_notification_methods: Arc<RwLock<HashSet<String>>>,

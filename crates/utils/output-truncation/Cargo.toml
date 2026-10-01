@@ -1,15 +1,15 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-utils-output-truncation"
+name = "genex-utils-output-truncation"
 version.workspace = true
 
 [lints]
 workspace = true
 
 [dependencies]
-codex-protocol = { workspace = true }
-codex-utils-string = { workspace = true }
+genex-protocol = { workspace = true }
+genex-utils-string = { workspace = true }
 
 [dev-dependencies]
 pretty_assertions = { workspace = true }

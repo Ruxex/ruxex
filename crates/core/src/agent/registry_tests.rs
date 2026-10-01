@@ -1,6 +1,6 @@
 use super::*;
-use codex_protocol::AgentPath;
-use codex_protocol::error::CodexErrorDetails;
+use genex_protocol::AgentPath;
+use genex_protocol::error::CodexErrorDetails;
 use pretty_assertions::assert_eq;
 use std::collections::HashSet;
 

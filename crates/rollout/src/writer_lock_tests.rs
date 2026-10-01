@@ -1,7 +1,7 @@
 use std::fs;
 use std::sync::Arc;
 
-use codex_protocol::ThreadId;
+use genex_protocol::ThreadId;
 use tempfile::TempDir;
 
 use super::COORDINATION_LOCK_FILE;

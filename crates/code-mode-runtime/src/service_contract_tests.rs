@@ -1,12 +1,12 @@
-use codex_code_mode_protocol::NoopCodeModeSessionDelegate;
+use genex_code_mode_protocol::NoopCodeModeSessionDelegate;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use codex_code_mode_protocol::NotificationFuture;
-use codex_code_mode_protocol::ToolInvocationFuture;
-use codex_protocol::ToolName;
+use genex_code_mode_protocol::NotificationFuture;
+use genex_code_mode_protocol::ToolInvocationFuture;
+use genex_protocol::ToolName;
 use pretty_assertions::assert_eq;
 use tokio::sync::Notify;
 use tokio::sync::mpsc;

@@ -6,13 +6,13 @@
 
 **Architecture:** `codex-lmstudio`、`codex-ollama`、`codex-utils-oss`を削除し、model-provider-infoの組み込みOSS登録、CLI/TUIの選択・ready check、`oss_provider`設定を除去する。任意の`model_providers`設定とResponses APIの汎用provider構成は変更しない。
 
-**Tech Stack:** Rust, Cargo workspace, `codex-model-provider-info`, CLI/TUI config, generated JSON schema, `just check`, `just generate`。
+**Tech Stack:** Rust, Cargo workspace, `genex-model-provider-info`, CLI/TUI config, generated JSON schema, `just check`, `just generate`。
 
 **Spec:** `docs/provider-decoupling-plan.md`, `docs/pre-release-compatibility-inventory.md`
 
 ## Global Constraints
 
-- `codex-model-provider-info`の汎用custom provider構成は保持する。
+- `genex-model-provider-info`の汎用custom provider構成は保持する。
 - `oss_provider`、`--local-provider`、LM Studio/Ollama自動検出とready checkは削除する。
 - pre-release forkのため、`ollama-chat`からの移行・拒否だけを目的とする互換層も削除する。
 - テストコマンドは実行せず、`just check`と必要時の`just generate`を使う。

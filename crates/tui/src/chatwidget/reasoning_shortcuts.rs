@@ -13,9 +13,9 @@
 //! advertised order. Raising never silently crosses into Max or Ultra; those
 //! efforts require the explicit advanced-reasoning picker.
 
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::model_types::ModelPreset;
-use codex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::model_types::ModelPreset;
+use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
 use crossterm::event::KeyEvent;
 
 use super::ChatWidget;

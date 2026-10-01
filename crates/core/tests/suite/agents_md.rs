@@ -1,46 +1,46 @@
 use anyhow::Result;
 use anyhow::anyhow;
-use codex_core::ForkSnapshot;
-use codex_core::StartThreadOptions;
-use codex_core::TurnInputRequest;
-use codex_exec_server::CreateDirectoryOptions;
-use codex_exec_server::LOCAL_ENVIRONMENT_ID;
-use codex_extension_api::Instructions;
-use codex_extension_api::LoadInstructionsFuture;
-use codex_extension_api::LoadedUserInstructions;
-use codex_extension_api::ThreadInstructionsProvider;
-use codex_extension_api::UserInstructionsProvider;
-use codex_features::Feature;
-use codex_history::InitialHistory;
-use codex_history::ResumedHistory;
-use codex_history::RolloutItem;
-use codex_home::CodexHomeUserInstructionsProvider;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::TrustLevel;
-use codex_protocol::error::CodexErrorDetails;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::EnvironmentConfigState;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::TurnEnvironmentSelection;
-use codex_protocol::protocol::TurnEnvironmentSelections;
-use codex_protocol::request_user_input::RequestUserInputAnswer;
-use codex_protocol::request_user_input::RequestUserInputResponse;
-use codex_protocol::user_input::UserInput;
-use codex_thread_store::ForkBoundary;
-use codex_thread_store::LoadThreadHistoryParams;
-use codex_thread_store::PrepareForkParams;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_core::ForkSnapshot;
+use genex_core::StartThreadOptions;
+use genex_core::TurnInputRequest;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_exec_server::LOCAL_ENVIRONMENT_ID;
+use genex_extension_api::Instructions;
+use genex_extension_api::LoadInstructionsFuture;
+use genex_extension_api::LoadedUserInstructions;
+use genex_extension_api::ThreadInstructionsProvider;
+use genex_extension_api::UserInstructionsProvider;
+use genex_features::Feature;
+use genex_history::InitialHistory;
+use genex_history::ResumedHistory;
+use genex_history::RolloutItem;
+use genex_home::CodexHomeUserInstructionsProvider;
+use genex_protocol::ThreadId;
+use genex_protocol::config_types::TrustLevel;
+use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::protocol::TurnEnvironmentSelections;
+use genex_protocol::request_user_input::RequestUserInputAnswer;
+use genex_protocol::request_user_input::RequestUserInputResponse;
+use genex_protocol::user_input::UserInput;
+use genex_thread_store::ForkBoundary;
+use genex_thread_store::LoadThreadHistoryParams;
+use genex_thread_store::PrepareForkParams;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 
 const REMOTE_ENVIRONMENT_ID: &str = "remote";
-use codex_utils_string::approx_bytes_for_tokens;
+use genex_utils_string::approx_bytes_for_tokens;
 use core_test_support::PathBufExt;
 use core_test_support::create_directory_symlink;
 use core_test_support::load_default_config_for_test;
@@ -198,7 +198,7 @@ fn remove_agents_md_world_state_section(rollout_path: &Path) -> Result<()> {
     let mut removed_section = false;
     let retained = rollout
         .lines()
-        .map(codex_rollout::parse_rollout_line)
+        .map(genex_rollout::parse_rollout_line)
         .collect::<std::result::Result<Vec<_>, _>>()?
         .into_iter()
         .map(|mut line| {
@@ -240,7 +240,7 @@ fn assert_single_instruction_fragment(request: &responses::ResponsesRequest, exp
     assert_eq!(instruction_fragments(request), vec![expected.to_string()]);
 }
 
-async fn submit_thread_turn(thread: &Arc<codex_core::CodexThread>, prompt: &str) -> Result<()> {
+async fn submit_thread_turn(thread: &Arc<genex_core::CodexThread>, prompt: &str) -> Result<()> {
     thread
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: prompt.to_string(),
@@ -252,7 +252,7 @@ async fn submit_thread_turn(thread: &Arc<codex_core::CodexThread>, prompt: &str)
 }
 
 async fn persisted_resume_history(
-    thread: &Arc<codex_core::CodexThread>,
+    thread: &Arc<genex_core::CodexThread>,
 ) -> Result<(ThreadId, InitialHistory)> {
     thread.ensure_rollout_materialized().await;
     thread.flush_rollout().await?;
@@ -1075,7 +1075,7 @@ async fn loads_user_instructions_without_a_primary_environment() -> Result<()> {
 
 struct ThreadInstructionsFixture {
     test: TestCodex,
-    thread: Arc<codex_core::CodexThread>,
+    thread: Arc<genex_core::CodexThread>,
     provider: Arc<RecordingThreadInstructionsProvider>,
 }
 
@@ -2237,7 +2237,7 @@ async fn fork_injects_changed_agents_md_once() -> Result<()> {
         .thread_manager
         .fork_thread(
             ForkSnapshot::Interrupted,
-            codex_core::StartThreadOptions::new(fork_config),
+            genex_core::StartThreadOptions::new(fork_config),
             rollout_path,
         )
         .await?;

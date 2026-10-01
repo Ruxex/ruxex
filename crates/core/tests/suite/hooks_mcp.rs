@@ -5,15 +5,15 @@ use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_config::types::AppToolApproval;
-use codex_config::types::ApprovalsReviewer;
-use codex_config::types::McpServerConfig;
-use codex_config::types::McpServerTransportConfig;
-use codex_core::config::Config;
-use codex_features::Feature;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_utils_path_uri::LegacyAppPathString;
+use genex_config::types::AppToolApproval;
+use genex_config::types::ApprovalsReviewer;
+use genex_config::types::McpServerConfig;
+use genex_config::types::McpServerTransportConfig;
+use genex_core::config::Config;
+use genex_features::Feature;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_utils_path_uri::LegacyAppPathString;
 use core_test_support::hooks::trust_discovered_hooks;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -323,7 +323,7 @@ fn enable_hooks_and_rmcp_server(
         config,
         rmcp_test_server_bin,
         approval_mode,
-        codex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
+        genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
     );
 }
 

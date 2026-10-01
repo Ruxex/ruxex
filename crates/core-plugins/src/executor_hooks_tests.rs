@@ -1,17 +1,17 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use codex_config::HookEventsToml;
-use codex_config::HookHandlerConfig;
-use codex_config::MatcherGroup;
-use codex_exec_server::CapabilityRootDiscovery;
-use codex_exec_server::CapabilityTextFile;
-use codex_exec_server::DiscoveredPluginFiles;
-use codex_exec_server::ExecutorCapabilityDiscoverySnapshot;
-use codex_plugin::ExecutorPluginHookSource;
-use codex_protocol::capabilities::CapabilityRootLocation;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_utils_path_uri::PathUri;
+use genex_config::HookEventsToml;
+use genex_config::HookHandlerConfig;
+use genex_config::MatcherGroup;
+use genex_exec_server::CapabilityRootDiscovery;
+use genex_exec_server::CapabilityTextFile;
+use genex_exec_server::DiscoveredPluginFiles;
+use genex_exec_server::ExecutorCapabilityDiscoverySnapshot;
+use genex_plugin::ExecutorPluginHookSource;
+use genex_protocol::capabilities::CapabilityRootLocation;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 

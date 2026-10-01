@@ -3,10 +3,10 @@ use std::fs;
 use std::sync::Arc;
 use std::time::Duration;
 
-use codex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID;
-use codex_config::types::McpServerConfig;
-use codex_config::types::McpServerTransportConfig;
-use codex_protocol::protocol::Op;
+use genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID;
+use genex_config::types::McpServerConfig;
+use genex_config::types::McpServerTransportConfig;
+use genex_protocol::protocol::Op;
 use core_test_support::process::process_is_alive;
 use core_test_support::process::wait_for_pid_file;
 use core_test_support::process::wait_for_process_exit;

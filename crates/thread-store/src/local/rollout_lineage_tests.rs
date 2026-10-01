@@ -1,13 +1,13 @@
 use std::fs;
 use std::path::Path;
 
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::HistoryPosition;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_rollout::RolloutItem;
-use codex_rollout::RolloutLine;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::HistoryPosition;
+use genex_protocol::protocol::SessionMeta;
+use genex_protocol::protocol::SessionMetaLine;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_rollout::RolloutItem;
+use genex_rollout::RolloutLine;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -294,7 +294,7 @@ fn write_rollout_under(
             .expect("fixture ordinal");
         lines.push(rollout_line(
             ordinal,
-            RolloutItem::EventMsg(codex_protocol::protocol::EventMsg::ShutdownComplete),
+            RolloutItem::EventMsg(genex_protocol::protocol::EventMsg::ShutdownComplete),
         ));
     }
     fs::write(path.as_path(), format!("{}\n", lines.join("\n"))).expect("write rollout");
@@ -327,7 +327,7 @@ fn rollout_end_byte_offset(path: &Path, end_ordinal_exclusive: u64) -> u64 {
     let end_byte_offset = bytes
         .split_inclusive(|byte| *byte == b'\n')
         .take_while(|line| {
-            codex_rollout::parse_rollout_line_bytes(line)
+            genex_rollout::parse_rollout_line_bytes(line)
                 .expect("parse rollout fixture")
                 .ordinal
                 .expect("paginated rollout ordinal")

@@ -1,19 +1,19 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-response-debug-context"
+name = "genex-response-debug-context"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "codex_response_debug_context"
+name = "genex_response_debug_context"
 path = "src/lib.rs"
 
 [lints]
 workspace = true
 
 [dependencies]
-codex-api = { workspace = true }
+genex-api = { workspace = true }
 http = { workspace = true }
 
 [dev-dependencies]

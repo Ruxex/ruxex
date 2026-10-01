@@ -1,17 +1,17 @@
 use anyhow::Result;
-use codex_core::TurnInputRequest;
-use codex_core::config::Constrained;
-use codex_login::CodexAuth;
-use codex_models_manager::manager::RefreshStrategy;
-use codex_models_manager::model_info::model_info_from_slug;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::model_types::ModelMessages;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::model_types::PermissionMessages;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
+use genex_core::TurnInputRequest;
+use genex_core::config::Constrained;
+use genex_login::CodexAuth;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_models_manager::model_info::model_info_from_slug;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::model_types::ModelMessages;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::PermissionMessages;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_models_once;
@@ -72,7 +72,7 @@ async fn catalog_permission_message_loaded_from_remote_models_is_sent() -> Resul
         .get_models_manager()
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
 

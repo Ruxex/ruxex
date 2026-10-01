@@ -1,39 +1,39 @@
 use anyhow::Result;
 use anyhow::anyhow;
-use codex_core::TurnInputRequest;
-use codex_core::compact::SUMMARIZATION_PROMPT;
-use codex_core::compact::SUMMARY_PREFIX;
-use codex_core::config::Config;
-use codex_features::Feature;
-use codex_history::RolloutItem;
-use codex_login::CodexAuth;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_model_provider_info::built_in_model_providers;
-use codex_models_manager::test_support::test_models_response;
-use codex_protocol::config_types::AutoCompactTokenLimitScope;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::config_types::Settings;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::ImageReference;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelServiceTier;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::HookEventName;
-use codex_protocol::protocol::HookRunStatus;
-use codex_protocol::protocol::ItemCompletedEvent;
-use codex_protocol::protocol::ItemStartedEvent;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::protocol::WarningEvent;
-use codex_protocol::user_input::UserInput;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_core::TurnInputRequest;
+use genex_core::compact::SUMMARIZATION_PROMPT;
+use genex_core::compact::SUMMARY_PREFIX;
+use genex_core::config::Config;
+use genex_features::Feature;
+use genex_history::RolloutItem;
+use genex_login::CodexAuth;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_model_provider_info::built_in_model_providers;
+use genex_models_manager::test_support::test_models_response;
+use genex_protocol::config_types::AutoCompactTokenLimitScope;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::ServiceTier;
+use genex_protocol::config_types::Settings;
+use genex_protocol::items::TurnItem;
+use genex_protocol::models::ImageReference;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelServiceTier;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::HookEventName;
+use genex_protocol::protocol::HookRunStatus;
+use genex_protocol::protocol::ItemCompletedEvent;
+use genex_protocol::protocol::ItemStartedEvent;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::WarningEvent;
+use genex_protocol::user_input::UserInput;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use core_test_support::PathBufExt;
 use core_test_support::context_snapshot;
 use core_test_support::context_snapshot::ContextSnapshotOptions;
@@ -364,7 +364,7 @@ fn replacement_history_from_rollout(path: &Path) -> Result<Vec<Value>> {
         .map(str::trim)
         .filter(|line| !line.is_empty())
     {
-        let entry = codex_rollout::parse_rollout_line(line)?;
+        let entry = genex_rollout::parse_rollout_line(line)?;
         if let RolloutItem::Compacted(compacted) = entry.item
             && let Some(items) = compacted.replacement_history
         {
@@ -447,7 +447,7 @@ fn assert_pre_sampling_switch_compaction_requests(
     );
 }
 
-async fn assert_compaction_uses_turn_lifecycle_id(codex: &std::sync::Arc<codex_core::CodexThread>) {
+async fn assert_compaction_uses_turn_lifecycle_id(codex: &std::sync::Arc<genex_core::CodexThread>) {
     let mut turn_started_id = None;
     let mut turn_completed_id = None;
     let mut compact_started_id = None;
@@ -732,7 +732,7 @@ async fn summarize_context_three_requests_and_instructions(
         if trimmed.is_empty() {
             continue;
         }
-        let Ok(entry) = codex_rollout::parse_rollout_line(trimmed) else {
+        let Ok(entry) = genex_rollout::parse_rollout_line(trimmed) else {
             continue;
         };
         match entry.item {
@@ -1003,7 +1003,7 @@ async fn manual_compact_uses_custom_prompt() {
 async fn reasoning_effort_override_remote_v2_compaction_resets_pinned_effort(
     fail_compaction: bool,
 ) -> Result<()> {
-    use codex_protocol::model_types::ReasoningEffort;
+    use genex_protocol::model_types::ReasoningEffort;
 
     skip_if_no_network!(Ok(()));
 
@@ -1201,7 +1201,7 @@ async fn manual_compact_records_durable_and_local_token_usage() {
     let rollout_items = fs::read_to_string(rollout_path)
         .expect("read rollout")
         .lines()
-        .filter_map(|line| codex_rollout::parse_rollout_line(line).ok())
+        .filter_map(|line| genex_rollout::parse_rollout_line(line).ok())
         .map(|line| line.item)
         .collect::<Vec<_>>();
     let records = rollout_items
@@ -3454,7 +3454,7 @@ async fn pre_sampling_compact_recovers_comp_hash_after_resume() {
     let rollout = fs::read_to_string(&rollout_path).expect("read rollout");
     let persisted_comp_hash = rollout
         .lines()
-        .filter_map(|line| codex_rollout::parse_rollout_line(line).ok())
+        .filter_map(|line| genex_rollout::parse_rollout_line(line).ok())
         .find_map(|line| match line.item {
             RolloutItem::TurnContext(context) => context.comp_hash,
             _ => None,
@@ -3737,7 +3737,7 @@ async fn auto_compact_persists_rollout_entries() {
         if trimmed.is_empty() {
             continue;
         }
-        let Ok(entry) = codex_rollout::parse_rollout_line(trimmed) else {
+        let Ok(entry) = genex_rollout::parse_rollout_line(trimmed) else {
             continue;
         };
         match entry.item {

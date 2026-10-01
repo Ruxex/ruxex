@@ -3,12 +3,12 @@ use std::sync::Arc;
 
 use chrono::DateTime;
 use chrono::Utc;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
-use codex_state::ThreadMetadataBuilder;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::SessionMeta;
+use genex_protocol::protocol::SessionMetaLine;
+use genex_protocol::protocol::SessionSource;
+use genex_state::ThreadMetadataBuilder;
+use genex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -29,9 +29,9 @@ async fn build_config(temp_dir: &TempDir) -> std::io::Result<Config> {
         .await
 }
 
-async fn state_runtime(config: &Config) -> std::io::Result<Arc<codex_state::StateRuntime>> {
-    let runtime = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(config.codex_home.as_path().abs()),
+async fn state_runtime(config: &Config) -> std::io::Result<Arc<genex_state::StateRuntime>> {
+    let runtime = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(config.codex_home.as_path().abs()),
         config.model_provider_id.clone(),
     )
     .await
@@ -45,7 +45,7 @@ async fn state_runtime(config: &Config) -> std::io::Result<Arc<codex_state::Stat
 
 async fn start_app_server(config: Config) -> color_eyre::Result<AppServerSession> {
     Ok(AppServerSession::new(
-        codex_app_server_client::AppServerClient::InProcess(
+        genex_app_server_client::AppServerClient::InProcess(
             start_test_embedded_app_server(config).await?,
         ),
         ThreadParamsMode::Embedded,
@@ -127,7 +127,7 @@ fn thread_metadata(
     rollout_path: PathBuf,
     name: &str,
     archived: bool,
-) -> codex_state::ThreadMetadata {
+) -> genex_state::ThreadMetadata {
     let created_at = DateTime::parse_from_rfc3339("2025-02-01T10:00:00Z")
         .expect("timestamp should parse")
         .with_timezone(&Utc);
@@ -392,7 +392,7 @@ async fn trusts_sqlite_name_over_legacy_index_for_delete() -> color_eyre::Result
         ))
         .await
         .map_err(std::io::Error::other)?;
-    codex_rollout::append_thread_name(config.codex_home.as_path(), thread_id, "old-session")
+    genex_rollout::append_thread_name(config.codex_home.as_path(), thread_id, "old-session")
         .await?;
 
     let mut app_server = start_app_server(config.clone()).await?;

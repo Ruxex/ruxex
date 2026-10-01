@@ -8,9 +8,9 @@ use std::process::Command;
 use std::time::Duration;
 
 use anyhow::Context as _;
-use codex_utils_pty::SpawnedProcess;
-use codex_utils_pty::TerminalSize;
-use codex_utils_pty::spawn_pty_process;
+use genex_utils_pty::SpawnedProcess;
+use genex_utils_pty::TerminalSize;
+use genex_utils_pty::spawn_pty_process;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -71,7 +71,7 @@ async fn sandbox_blocks_terminal_input_injection() -> anyhow::Result<()> {
     )
     .await?;
 
-    let codex = codex_utils_cargo_bin::cargo_bin("codex")?;
+    let codex = genex_utils_cargo_bin::cargo_bin("codex")?;
     run_probe(
         &codex.to_string_lossy(),
         vec![

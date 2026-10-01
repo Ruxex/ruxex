@@ -1,10 +1,10 @@
-# codex-core
+# genex-core
 
 This crate implements the business logic for Codex. It is designed to be used by the various Codex UIs written in Rust.
 
 ## Dependencies
 
-Note that `codex-core` makes some assumptions about certain helper utilities being available in the environment. Currently, this support matrix is:
+Note that `genex-core` makes some assumptions about certain helper utilities being available in the environment. Currently, this support matrix is:
 
 ### macOS
 
@@ -22,7 +22,7 @@ Seatbelt also keeps the legacy default preferences read access
 
 ### Linux
 
-Expects the binary containing `codex-core` to run the equivalent of `codex sandbox` when `arg0` is `codex-linux-sandbox`. See the `codex-arg0` crate for details.
+Expects the binary containing `genex-core` to run the equivalent of `codex sandbox` when `arg0` is `codex-linux-sandbox`. See the `genex-arg0` crate for details.
 
 Legacy `SandboxPolicy` / `sandbox_mode` configs are still supported on Linux.
 They can continue to use the legacy Landlock path when the split filesystem
@@ -79,6 +79,6 @@ instead of running with weaker enforcement.
 
 ### All Platforms
 
-Expects the binary containing `codex-core` to simulate the virtual
+Expects the binary containing `genex-core` to simulate the virtual
 `apply_patch` CLI when `arg1` is `--codex-run-as-apply-patch`. See the
-`codex-arg0` crate for details.
+`genex-arg0` crate for details.

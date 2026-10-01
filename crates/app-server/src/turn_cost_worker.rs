@@ -1,10 +1,10 @@
 //! Turn-cost collection is hosted-provider specific and intentionally disabled.
 
-use codex_core::config::Config;
-use codex_login::AuthManager;
-use codex_otel::SessionTelemetry;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::Event;
+use genex_core::config::Config;
+use genex_login::AuthManager;
+use genex_otel::SessionTelemetry;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::Event;
 use std::sync::Arc;
 
 pub(crate) struct TurnCostWorker;

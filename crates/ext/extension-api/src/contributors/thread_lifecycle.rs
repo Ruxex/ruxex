@@ -2,9 +2,9 @@ use std::sync::Arc;
 
 use crate::ExtensionData;
 use crate::ExtensionMetrics;
-use codex_mcp::McpResourceClient;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::TurnEnvironmentSelection;
+use genex_mcp::McpResourceClient;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::TurnEnvironmentSelection;
 
 /// Trusted, host-resolved billing attribution for a thread.
 ///

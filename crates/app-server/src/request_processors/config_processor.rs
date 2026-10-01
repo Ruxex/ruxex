@@ -5,49 +5,49 @@ use crate::config_manager_service::ConfigManagerError;
 use crate::error_code::internal_error;
 use crate::error_code::invalid_request;
 use crate::outgoing_message::OutgoingMessageSender;
-use codex_app_server_protocol::AllowDenyRequirement;
-use codex_app_server_protocol::BrowserUseAccessApprovalLifetime;
-use codex_app_server_protocol::BrowserUseOriginPolicy;
-use codex_app_server_protocol::BrowserUseRequirements;
-use codex_app_server_protocol::CliAuthCredentialsStoreMode;
-use codex_app_server_protocol::ClientResponsePayload;
-use codex_app_server_protocol::ComputerUseMacosRequirements;
-use codex_app_server_protocol::ComputerUseRequirements;
-use codex_app_server_protocol::ComputerUseWindowsExeRequirement;
-use codex_app_server_protocol::ComputerUseWindowsRequirements;
-use codex_app_server_protocol::ConfigBatchWriteParams;
-use codex_app_server_protocol::ConfigReadParams;
-use codex_app_server_protocol::ConfigReadResponse;
-use codex_app_server_protocol::ConfigRequirements;
-use codex_app_server_protocol::ConfigRequirementsReadResponse;
-use codex_app_server_protocol::ConfigValueWriteParams;
-use codex_app_server_protocol::ConfigWriteErrorCode;
-use codex_app_server_protocol::ConfigWriteResponse;
-use codex_app_server_protocol::ConfiguredHookHandler;
-use codex_app_server_protocol::ConfiguredHookMatcherGroup;
-use codex_app_server_protocol::InAppBrowserRequirements;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::ManagedHooksRequirements;
-use codex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
-use codex_app_server_protocol::ModelsRequirements;
-use codex_app_server_protocol::NetworkDomainPermission;
-use codex_app_server_protocol::NetworkRequirements;
-use codex_app_server_protocol::NetworkUnixSocketPermission;
-use codex_app_server_protocol::NewThreadModelDefaults;
-use codex_app_server_protocol::SandboxMode;
-use codex_app_server_protocol::WindowsSandboxImplementation;
-use codex_config::ConfigRequirementsToml;
-use codex_config::HookEventsToml;
-use codex_config::HookHandlerConfig as CoreHookHandlerConfig;
-use codex_config::ManagedHooksRequirementsToml;
-use codex_config::MatcherGroup as CoreMatcherGroup;
-use codex_config::ResidencyRequirement as CoreResidencyRequirement;
-use codex_config::SandboxModeRequirement as CoreSandboxModeRequirement;
-use codex_core::ThreadManager;
-use codex_features::feature_for_key;
-use codex_model_provider::create_model_provider;
-use codex_protocol::config_types::ForcedLoginMethod;
-use codex_protocol::config_types::WebSearchMode;
+use genex_app_server_protocol::AllowDenyRequirement;
+use genex_app_server_protocol::BrowserUseAccessApprovalLifetime;
+use genex_app_server_protocol::BrowserUseOriginPolicy;
+use genex_app_server_protocol::BrowserUseRequirements;
+use genex_app_server_protocol::CliAuthCredentialsStoreMode;
+use genex_app_server_protocol::ClientResponsePayload;
+use genex_app_server_protocol::ComputerUseMacosRequirements;
+use genex_app_server_protocol::ComputerUseRequirements;
+use genex_app_server_protocol::ComputerUseWindowsExeRequirement;
+use genex_app_server_protocol::ComputerUseWindowsRequirements;
+use genex_app_server_protocol::ConfigBatchWriteParams;
+use genex_app_server_protocol::ConfigReadParams;
+use genex_app_server_protocol::ConfigReadResponse;
+use genex_app_server_protocol::ConfigRequirements;
+use genex_app_server_protocol::ConfigRequirementsReadResponse;
+use genex_app_server_protocol::ConfigValueWriteParams;
+use genex_app_server_protocol::ConfigWriteErrorCode;
+use genex_app_server_protocol::ConfigWriteResponse;
+use genex_app_server_protocol::ConfiguredHookHandler;
+use genex_app_server_protocol::ConfiguredHookMatcherGroup;
+use genex_app_server_protocol::InAppBrowserRequirements;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::ManagedHooksRequirements;
+use genex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
+use genex_app_server_protocol::ModelsRequirements;
+use genex_app_server_protocol::NetworkDomainPermission;
+use genex_app_server_protocol::NetworkRequirements;
+use genex_app_server_protocol::NetworkUnixSocketPermission;
+use genex_app_server_protocol::NewThreadModelDefaults;
+use genex_app_server_protocol::SandboxMode;
+use genex_app_server_protocol::WindowsSandboxImplementation;
+use genex_config::ConfigRequirementsToml;
+use genex_config::HookEventsToml;
+use genex_config::HookHandlerConfig as CoreHookHandlerConfig;
+use genex_config::ManagedHooksRequirementsToml;
+use genex_config::MatcherGroup as CoreMatcherGroup;
+use genex_config::ResidencyRequirement as CoreResidencyRequirement;
+use genex_config::SandboxModeRequirement as CoreSandboxModeRequirement;
+use genex_core::ThreadManager;
+use genex_features::feature_for_key;
+use genex_model_provider::create_model_provider;
+use genex_protocol::config_types::ForcedLoginMethod;
+use genex_protocol::config_types::WebSearchMode;
 use serde_json::json;
 use std::path::PathBuf;
 
@@ -187,7 +187,7 @@ impl ConfigRequestProcessor {
     async fn load_latest_config(
         &self,
         fallback_cwd: Option<PathBuf>,
-    ) -> Result<codex_core::config::Config, JSONRPCErrorError> {
+    ) -> Result<genex_core::config::Config, JSONRPCErrorError> {
         self.config_manager
             .load_latest_config(fallback_cwd)
             .await
@@ -202,7 +202,7 @@ impl ConfigRequestProcessor {
         &self,
         params: ConfigValueWriteParams,
     ) -> Result<ConfigWriteResponse, JSONRPCErrorError> {
-        let _pending_changes = codex_core_plugins::toggles::collect_plugin_enabled_candidates(
+        let _pending_changes = genex_core_plugins::toggles::collect_plugin_enabled_candidates(
             [(&params.key_path, &params.value)].into_iter(),
         );
         let response = self
@@ -217,7 +217,7 @@ impl ConfigRequestProcessor {
         &self,
         params: ConfigBatchWriteParams,
     ) -> Result<ConfigWriteResponse, JSONRPCErrorError> {
-        let _pending_changes = codex_core_plugins::toggles::collect_plugin_enabled_candidates(
+        let _pending_changes = genex_core_plugins::toggles::collect_plugin_enabled_candidates(
             params
                 .edits
                 .iter()
@@ -293,9 +293,9 @@ fn map_requirements_to_api(
         }),
         allowed_login_methods: Some(allowed_login_methods),
         application: requirements.application.map(|application| {
-            codex_app_server_protocol::ApplicationRequirements {
+            genex_app_server_protocol::ApplicationRequirements {
                 network: application.network.map(|network| {
-                    codex_app_server_protocol::ApplicationNetworkRequirements {
+                    genex_app_server_protocol::ApplicationNetworkRequirements {
                         enabled: network.enabled,
                         domains: network
                             .domains
@@ -310,16 +310,16 @@ fn map_requirements_to_api(
         }),
         cli_auth_credentials_store: requirements.cli_auth_credentials_store.map(
             |mode| match mode {
-                codex_config::types::AuthCredentialsStoreMode::File => {
+                genex_config::types::AuthCredentialsStoreMode::File => {
                     CliAuthCredentialsStoreMode::File
                 }
-                codex_config::types::AuthCredentialsStoreMode::Keyring => {
+                genex_config::types::AuthCredentialsStoreMode::Keyring => {
                     CliAuthCredentialsStoreMode::Keyring
                 }
-                codex_config::types::AuthCredentialsStoreMode::Auto => {
+                genex_config::types::AuthCredentialsStoreMode::Auto => {
                     CliAuthCredentialsStoreMode::Auto
                 }
-                codex_config::types::AuthCredentialsStoreMode::Ephemeral => {
+                genex_config::types::AuthCredentialsStoreMode::Ephemeral => {
                     CliAuthCredentialsStoreMode::Ephemeral
                 }
             },
@@ -329,7 +329,7 @@ fn map_requirements_to_api(
         allowed_approval_policies: requirements.allowed_approval_policies.map(|policies| {
             policies
                 .into_iter()
-                .map(codex_app_server_protocol::AskForApproval::from)
+                .map(genex_app_server_protocol::AskForApproval::from)
                 .collect()
         }),
         allowed_sandbox_modes: requirements.allowed_sandbox_modes.map(|modes| {
@@ -345,10 +345,10 @@ fn map_requirements_to_api(
                     implementations
                         .into_iter()
                         .map(|implementation| match implementation {
-                            codex_config::types::WindowsSandboxModeToml::Elevated => {
+                            genex_config::types::WindowsSandboxModeToml::Elevated => {
                                 WindowsSandboxImplementation::Elevated
                             }
-                            codex_config::types::WindowsSandboxModeToml::Unelevated => {
+                            genex_config::types::WindowsSandboxModeToml::Unelevated => {
                                 WindowsSandboxImplementation::Unelevated
                             }
                         })
@@ -407,7 +407,7 @@ fn map_requirements_to_api(
 }
 
 fn map_computer_use_requirements_to_api(
-    computer_use: codex_config::ComputerUseRequirementsToml,
+    computer_use: genex_config::ComputerUseRequirementsToml,
 ) -> ComputerUseRequirements {
     ComputerUseRequirements {
         allow_locked_computer_use: computer_use.allow_locked_computer_use,
@@ -453,7 +453,7 @@ fn map_computer_use_requirements_to_api(
 }
 
 fn map_browser_use_requirements_to_api(
-    browser_use: codex_config::BrowserUseRequirementsToml,
+    browser_use: genex_config::BrowserUseRequirementsToml,
 ) -> BrowserUseRequirements {
     BrowserUseRequirements {
         allow_webmcp: browser_use.allow_webmcp,
@@ -473,7 +473,7 @@ fn map_browser_use_requirements_to_api(
 }
 
 fn map_browser_use_origin_policy_to_api(
-    policy: codex_config::BrowserUseOriginPolicyToml,
+    policy: genex_config::BrowserUseOriginPolicyToml,
 ) -> BrowserUseOriginPolicy {
     BrowserUseOriginPolicy {
         access: policy.access.map(map_allow_deny_requirement_to_api),
@@ -491,22 +491,22 @@ fn map_browser_use_origin_policy_to_api(
 }
 
 fn map_allow_deny_requirement_to_api(
-    requirement: codex_config::AllowDenyRequirementToml,
+    requirement: genex_config::AllowDenyRequirementToml,
 ) -> AllowDenyRequirement {
     match requirement {
-        codex_config::AllowDenyRequirementToml::Allow => AllowDenyRequirement::Allow,
-        codex_config::AllowDenyRequirementToml::Deny => AllowDenyRequirement::Deny,
+        genex_config::AllowDenyRequirementToml::Allow => AllowDenyRequirement::Allow,
+        genex_config::AllowDenyRequirementToml::Deny => AllowDenyRequirement::Deny,
     }
 }
 
 fn map_browser_use_access_approval_lifetime_to_api(
-    lifetime: codex_config::BrowserUseAccessApprovalLifetimeToml,
+    lifetime: genex_config::BrowserUseAccessApprovalLifetimeToml,
 ) -> BrowserUseAccessApprovalLifetime {
     match lifetime {
-        codex_config::BrowserUseAccessApprovalLifetimeToml::Turn => {
+        genex_config::BrowserUseAccessApprovalLifetimeToml::Turn => {
             BrowserUseAccessApprovalLifetime::Turn
         }
-        codex_config::BrowserUseAccessApprovalLifetimeToml::Thread => {
+        genex_config::BrowserUseAccessApprovalLifetimeToml::Thread => {
             BrowserUseAccessApprovalLifetime::Thread
         }
     }
@@ -617,27 +617,27 @@ fn map_sandbox_mode_requirement_to_api(mode: CoreSandboxModeRequirement) -> Opti
 
 fn map_residency_requirement_to_api(
     residency: CoreResidencyRequirement,
-) -> codex_app_server_protocol::ResidencyRequirement {
+) -> genex_app_server_protocol::ResidencyRequirement {
     match residency {
-        CoreResidencyRequirement::Us => codex_app_server_protocol::ResidencyRequirement::Us,
+        CoreResidencyRequirement::Us => genex_app_server_protocol::ResidencyRequirement::Us,
     }
 }
 
 fn map_network_requirements_to_api(
-    network: codex_config::NetworkRequirementsToml,
+    network: genex_config::NetworkRequirementsToml,
 ) -> NetworkRequirements {
     let allowed_domains = network
         .domains
         .as_ref()
-        .and_then(codex_config::NetworkDomainPermissionsToml::allowed_domains);
+        .and_then(genex_config::NetworkDomainPermissionsToml::allowed_domains);
     let denied_domains = network
         .domains
         .as_ref()
-        .and_then(codex_config::NetworkDomainPermissionsToml::denied_domains);
+        .and_then(genex_config::NetworkDomainPermissionsToml::denied_domains);
     let allow_unix_sockets = network
         .unix_sockets
         .as_ref()
-        .map(codex_config::NetworkUnixSocketPermissionsToml::allow_unix_sockets)
+        .map(genex_config::NetworkUnixSocketPermissionsToml::allow_unix_sockets)
         .filter(|entries| !entries.is_empty());
 
     NetworkRequirements {
@@ -674,20 +674,20 @@ fn map_network_requirements_to_api(
 }
 
 fn map_network_domain_permission_to_api(
-    permission: codex_config::NetworkDomainPermissionToml,
+    permission: genex_config::NetworkDomainPermissionToml,
 ) -> NetworkDomainPermission {
     match permission {
-        codex_config::NetworkDomainPermissionToml::Allow => NetworkDomainPermission::Allow,
-        codex_config::NetworkDomainPermissionToml::Deny => NetworkDomainPermission::Deny,
+        genex_config::NetworkDomainPermissionToml::Allow => NetworkDomainPermission::Allow,
+        genex_config::NetworkDomainPermissionToml::Deny => NetworkDomainPermission::Deny,
     }
 }
 
 fn map_network_unix_socket_permission_to_api(
-    permission: codex_config::NetworkUnixSocketPermissionToml,
+    permission: genex_config::NetworkUnixSocketPermissionToml,
 ) -> NetworkUnixSocketPermission {
     match permission {
-        codex_config::NetworkUnixSocketPermissionToml::Allow => NetworkUnixSocketPermission::Allow,
-        codex_config::NetworkUnixSocketPermissionToml::Deny => NetworkUnixSocketPermission::Deny,
+        genex_config::NetworkUnixSocketPermissionToml::Allow => NetworkUnixSocketPermission::Allow,
+        genex_config::NetworkUnixSocketPermissionToml::Deny => NetworkUnixSocketPermission::Deny,
     }
 }
 

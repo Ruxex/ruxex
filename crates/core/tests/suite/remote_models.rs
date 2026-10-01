@@ -1,32 +1,32 @@
 #![cfg(not(target_os = "windows"))]
 use anyhow::Result;
-use codex_core::TurnInputRequest;
-use codex_features::Feature;
-use codex_login::CodexAuth;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_model_provider_info::built_in_model_providers;
-use codex_models_manager::test_support::test_models_response;
-use codex_models_manager::manager::RefreshStrategy;
-use codex_models_manager::manager::SharedModelsManager;
-use codex_models_manager::model_info::BASE_INSTRUCTIONS;
-use codex_prompts::render_model_instructions;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::model_types::ConfigShellToolType;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelMessages;
-use codex_protocol::model_types::ModelPreset;
-use codex_protocol::model_types::ModelVisibility;
-use codex_protocol::model_types::ModelsResponse;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::model_types::ReasoningEffortPreset;
-use codex_protocol::model_types::TruncationPolicyConfig;
-use codex_protocol::model_types::default_input_modalities;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecCommandSource;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::user_input::UserInput;
+use genex_core::TurnInputRequest;
+use genex_features::Feature;
+use genex_login::CodexAuth;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_model_provider_info::built_in_model_providers;
+use genex_models_manager::test_support::test_models_response;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_models_manager::manager::SharedModelsManager;
+use genex_models_manager::model_info::BASE_INSTRUCTIONS;
+use genex_prompts::render_model_instructions;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::model_types::ConfigShellToolType;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelMessages;
+use genex_protocol::model_types::ModelPreset;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::model_types::TruncationPolicyConfig;
+use genex_protocol::model_types::default_input_modalities;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecCommandSource;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use core_test_support::TempDirExt;
 use core_test_support::load_default_config_for_test;
 use core_test_support::responses::ev_assistant_message;
@@ -184,16 +184,16 @@ async fn remote_models_get_model_info_uses_longest_matching_prefix() -> Result<(
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = codex_core::test_support::models_manager_with_provider(
+    let manager = genex_core::test_support::models_manager_with_provider(
         codex_home.path().to_path_buf(),
-        codex_core::test_support::auth_manager_from_auth(auth),
+        genex_core::test_support::auth_manager_from_auth(auth),
         provider,
     );
 
     manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
 
@@ -1038,16 +1038,16 @@ async fn remote_models_do_not_append_removed_builtin_presets() -> Result<()> {
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = codex_core::test_support::models_manager_with_provider(
+    let manager = genex_core::test_support::models_manager_with_provider(
         codex_home.path().to_path_buf(),
-        codex_core::test_support::auth_manager_from_auth(auth),
+        genex_core::test_support::auth_manager_from_auth(auth),
         provider,
     );
 
     let available = manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
     let remote = available
@@ -1104,16 +1104,16 @@ async fn remote_models_merge_adds_new_high_priority_first() -> Result<()> {
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = codex_core::test_support::models_manager_with_provider(
+    let manager = genex_core::test_support::models_manager_with_provider(
         codex_home.path().to_path_buf(),
-        codex_core::test_support::auth_manager_from_auth(auth),
+        genex_core::test_support::auth_manager_from_auth(auth),
         provider,
     );
 
     let available = manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
     assert_eq!(
@@ -1156,16 +1156,16 @@ async fn remote_models_merge_replaces_overlapping_model() -> Result<()> {
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = codex_core::test_support::models_manager_with_provider(
+    let manager = genex_core::test_support::models_manager_with_provider(
         codex_home.path().to_path_buf(),
-        codex_core::test_support::auth_manager_from_auth(auth),
+        genex_core::test_support::auth_manager_from_auth(auth),
         provider,
     );
 
     let available = manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
     let overridden = available
@@ -1205,16 +1205,16 @@ async fn remote_models_merge_preserves_bundled_models_on_empty_response() -> Res
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = codex_core::test_support::models_manager_with_provider(
+    let manager = genex_core::test_support::models_manager_with_provider(
         codex_home.path().to_path_buf(),
-        codex_core::test_support::auth_manager_from_auth(auth),
+        genex_core::test_support::auth_manager_from_auth(auth),
         provider,
     );
 
     let available = manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
     let bundled_slug = bundled_model_slug();
@@ -1252,9 +1252,9 @@ async fn remote_models_request_times_out_after_5s() -> Result<()> {
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = codex_core::test_support::models_manager_with_provider(
+    let manager = genex_core::test_support::models_manager_with_provider(
         codex_home.path().to_path_buf(),
-        codex_core::test_support::auth_manager_from_auth(auth),
+        genex_core::test_support::auth_manager_from_auth(auth),
         provider,
     );
 
@@ -1265,7 +1265,7 @@ async fn remote_models_request_times_out_after_5s() -> Result<()> {
             &None,
             /*allow_provider_model_fallback*/ false,
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         ),
     )
     .await;
@@ -1327,9 +1327,9 @@ async fn remote_models_hide_picker_only_models() -> Result<()> {
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = codex_core::test_support::models_manager_with_provider(
+    let manager = genex_core::test_support::models_manager_with_provider(
         codex_home.path().to_path_buf(),
-        codex_core::test_support::auth_manager_from_auth(auth),
+        genex_core::test_support::auth_manager_from_auth(auth),
         provider,
     );
 
@@ -1338,7 +1338,7 @@ async fn remote_models_hide_picker_only_models() -> Result<()> {
             &None,
             /*allow_provider_model_fallback*/ false,
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
     assert_eq!(selected, bundled_default_model_slug());
@@ -1346,7 +1346,7 @@ async fn remote_models_hide_picker_only_models() -> Result<()> {
     let available = manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            codex_core::test_support::default_http_client_factory(),
+            genex_core::test_support::default_http_client_factory(),
         )
         .await;
     let hidden = available
@@ -1372,7 +1372,7 @@ async fn wait_for_model_available(manager: &SharedModelsManager, slug: &str) -> 
             let guard = manager
                 .list_models(
                     RefreshStrategy::OnlineIfUncached,
-                    codex_core::test_support::default_http_client_factory(),
+                    genex_core::test_support::default_http_client_factory(),
                 )
                 .await;
             guard.iter().find(|model| model.model == slug).cloned()
@@ -1397,7 +1397,7 @@ fn bundled_model_slug() -> String {
 }
 
 fn bundled_default_model_slug() -> String {
-    codex_core::test_support::all_model_presets()
+    genex_core::test_support::all_model_presets()
         .iter()
         .find(|preset| preset.is_default)
         .expect("bundled models should include a default")

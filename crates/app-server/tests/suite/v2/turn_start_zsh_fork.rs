@@ -14,22 +14,22 @@ use app_test_support::create_escalated_command_execution_sse_response;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_sequence;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
-use codex_app_server_protocol::CommandAction;
-use codex_app_server_protocol::CommandExecutionApprovalDecision;
-use codex_app_server_protocol::CommandExecutionRequestApprovalResponse;
-use codex_app_server_protocol::CommandExecutionStatus;
-use codex_app_server_protocol::ItemCompletedNotification;
-use codex_app_server_protocol::ItemStartedNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnCompletedNotification;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput as V2UserInput;
-use codex_features::Feature;
+use genex_app_server_protocol::CommandAction;
+use genex_app_server_protocol::CommandExecutionApprovalDecision;
+use genex_app_server_protocol::CommandExecutionRequestApprovalResponse;
+use genex_app_server_protocol::CommandExecutionStatus;
+use genex_app_server_protocol::ItemCompletedNotification;
+use genex_app_server_protocol::ItemStartedNotification;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::TurnCompletedNotification;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::UserInput as V2UserInput;
+use genex_features::Feature;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_remote;
@@ -121,11 +121,11 @@ async fn turn_start_shell_zsh_fork_executes_command_v2() -> Result<()> {
                 text_elements: Vec::new(),
             }],
             cwd: Some(workspace.clone()),
-            approval_policy: Some(codex_app_server_protocol::AskForApproval::Never),
-            sandbox_policy: Some(codex_app_server_protocol::SandboxPolicy::DangerFullAccess),
+            approval_policy: Some(genex_app_server_protocol::AskForApproval::Never),
+            sandbox_policy: Some(genex_app_server_protocol::SandboxPolicy::DangerFullAccess),
             model: Some("mock-model".to_string()),
-            effort: Some(codex_protocol::model_types::ReasoningEffort::Medium),
-            summary: Some(codex_protocol::config_types::ReasoningSummary::Auto),
+            effort: Some(genex_protocol::model_types::ReasoningEffort::Medium),
+            summary: Some(genex_protocol::config_types::ReasoningSummary::Auto),
             ..Default::default()
         })
         .await?;
@@ -517,15 +517,15 @@ async fn turn_start_shell_zsh_fork_subcommand_decline_marks_parent_declined_v2()
                 text_elements: Vec::new(),
             }],
             cwd: Some(workspace.clone()),
-            approval_policy: Some(codex_app_server_protocol::AskForApproval::UnlessTrusted),
+            approval_policy: Some(genex_app_server_protocol::AskForApproval::UnlessTrusted),
             // This test is about execve-intercept approval propagation, not
             // workspace sandboxing. Using full access avoids macOS sandbox
             // setup failures that can terminate the parent shell before the
             // second subcommand approval is observed.
-            sandbox_policy: Some(codex_app_server_protocol::SandboxPolicy::DangerFullAccess),
+            sandbox_policy: Some(genex_app_server_protocol::SandboxPolicy::DangerFullAccess),
             model: Some("mock-model".to_string()),
-            effort: Some(codex_protocol::model_types::ReasoningEffort::Medium),
-            summary: Some(codex_protocol::config_types::ReasoningSummary::Auto),
+            effort: Some(genex_protocol::model_types::ReasoningEffort::Medium),
+            summary: Some(genex_protocol::config_types::ReasoningSummary::Auto),
             ..Default::default()
         })
         .await?;
@@ -746,7 +746,7 @@ fn create_test_package_app_server(codex_home: &Path, zsh_path: &Path) -> Result<
 
     let app_server = bin_dir.join("codex-app-server");
     copy_with_permissions(
-        &codex_utils_cargo_bin::cargo_bin("codex-app-server")?,
+        &genex_utils_cargo_bin::cargo_bin("codex-app-server")?,
         &app_server,
     )?;
     copy_with_permissions(zsh_path, &package_zsh_path)?;
@@ -786,7 +786,7 @@ fn create_config_toml(
 }
 
 fn find_test_zsh_path() -> Result<Option<std::path::PathBuf>> {
-    let repo_root = codex_utils_cargo_bin::repo_root()?;
+    let repo_root = genex_utils_cargo_bin::repo_root()?;
     let dotslash_zsh = repo_root.join("codex-rs/app-server/tests/suite/zsh");
     if !dotslash_zsh.is_file() {
         eprintln!(

@@ -4,7 +4,7 @@
 
 **Goal:** Remove ChatGPT-hosted cloud configuration and policy loading while retaining local configuration and managed requirements.
 
-**Architecture:** Delete the cloud-bundle input from `codex-config`, so configuration loading is entirely local. Remove the resulting unused entrypoint plumbing and then remove `codex-cloud-config` and its workspace declarations.
+**Architecture:** Delete the cloud-bundle input from `genex-config`, so configuration loading is entirely local. Remove the resulting unused entrypoint plumbing and then remove `codex-cloud-config` and its workspace declarations.
 
 **Tech Stack:** Rust workspace, Cargo, Just, TOML configuration loader.
 
@@ -27,7 +27,7 @@
 - Strict config errors continue to refer to local configuration fields and sources.
 - No workspace manifest, lockfile, or source import leaves a `codex-cloud-config` dependency behind.
 
-### Task 1: Remove hosted-bundle support from `codex-config`
+### Task 1: Remove hosted-bundle support from `genex-config`
 
 **Files:**
 - Delete: `crates/config/src/cloud_config_bundle.rs`
@@ -67,7 +67,7 @@
 
 - [ ] **Step 5: Verify the configuration crate.**
 
-  Run: `cargo check -p codex-config`
+  Run: `cargo check -p genex-config`
 
   Expected: exit status 0 with no unresolved `CloudConfig*` symbols.
 
@@ -112,7 +112,7 @@
 
 - [ ] **Step 4: Verify shared consumers compile.**
 
-  Run: `cargo check -p codex-core -p codex-app-server-client -p codex-app-server`
+  Run: `cargo check -p genex-core -p genex-app-server-client -p genex-app-server`
 
   Expected: exit status 0 with no cloud-bundle construction or error handling remaining.
 
@@ -152,7 +152,7 @@
 
   Remove `crates/cloud-config` from workspace members and workspace dependencies in root `Cargo.toml`; remove it from each former direct consumer's `Cargo.toml`; then delete `crates/cloud-config/`. Run Cargo metadata resolution to regenerate `Cargo.lock` rather than editing it manually.
 
-  Run: `cargo check -p codex-cli -p codex-tui -p codex-exec -p codex-windows-sandbox-service`
+  Run: `cargo check -p genex-cli -p genex-tui -p genex-exec -p genex-windows-sandbox-service`
 
   Expected: exit status 0 and `rg -n 'codex_cloud_config|codex-cloud-config|CloudConfigBundle' Cargo.toml crates --glob 'Cargo.toml' --glob '*.rs'` returns no results.
 

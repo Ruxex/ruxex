@@ -5,9 +5,9 @@ use crate::text_formatting;
 use crate::width::display_width;
 use chrono::DateTime;
 use chrono::Local;
-use codex_protocol::account::PlanType;
-use codex_utils_path_uri::PathConvention;
-use codex_utils_path_uri::PathUri;
+use genex_protocol::account::PlanType;
+use genex_utils_path_uri::PathConvention;
+use genex_utils_path_uri::PathUri;
 use std::path::Path;
 
 fn normalize_agents_display_path(path: &Path) -> String {

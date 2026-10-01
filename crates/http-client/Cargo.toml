@@ -1,12 +1,12 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-http-client"
+name = "genex-http-client"
 version.workspace = true
 
 [dependencies]
 bytes = { workspace = true }
-codex-utils-rustls-provider = { workspace = true }
+genex-utils-rustls-provider = { workspace = true }
 futures = { workspace = true }
 http = { workspace = true }
 native-tls = "0.2"
@@ -38,7 +38,7 @@ windows-sys = { version = "0.52", features = [
 workspace = true
 
 [dev-dependencies]
-codex-utils-cargo-bin = { workspace = true }
+genex-utils-cargo-bin = { workspace = true }
 opentelemetry_sdk = { workspace = true }
 pretty_assertions = { workspace = true }
 rcgen = { workspace = true }

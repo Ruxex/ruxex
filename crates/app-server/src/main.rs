@@ -1,17 +1,17 @@
 #![recursion_limit = "256"]
 
 use clap::Parser;
-use codex_app_server::AppServerCodeModeHostArgs;
-use codex_app_server::AppServerRuntimeOptions;
-use codex_app_server::AppServerTransport;
-use codex_app_server::AppServerWebsocketAuthArgs;
-use codex_app_server::PluginStartupTasks;
-use codex_app_server::run_main_with_transport_options;
-use codex_arg0::Arg0DispatchPaths;
-use codex_arg0::arg0_dispatch_or_else;
-use codex_config::LoaderOverrides;
-use codex_protocol::protocol::SessionSource;
-use codex_utils_cli::CliConfigOverrides;
+use genex_app_server::AppServerCodeModeHostArgs;
+use genex_app_server::AppServerRuntimeOptions;
+use genex_app_server::AppServerTransport;
+use genex_app_server::AppServerWebsocketAuthArgs;
+use genex_app_server::PluginStartupTasks;
+use genex_app_server::run_main_with_transport_options;
+use genex_arg0::Arg0DispatchPaths;
+use genex_arg0::arg0_dispatch_or_else;
+use genex_config::LoaderOverrides;
+use genex_protocol::protocol::SessionSource;
+use genex_utils_cli::CliConfigOverrides;
 
 #[cfg(all(
     target_os = "linux",
@@ -111,7 +111,7 @@ fn main() -> anyhow::Result<()> {
             runtime_options,
         )
         .await?;
-        if exit == codex_app_server::AppServerExit::Forced {
+        if exit == genex_app_server::AppServerExit::Forced {
             // Runtime teardown can wait forever for blocked rollout I/O.
             std::process::exit(0);
         }

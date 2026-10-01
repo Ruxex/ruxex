@@ -3,7 +3,7 @@
 use std::io::IsTerminal;
 
 use anyhow::Result;
-use codex_app_server_daemon::InstallRequest;
+use genex_app_server_daemon::InstallRequest;
 
 pub(crate) fn confirm_install(request: &InstallRequest, yes: bool) -> Result<bool> {
     eprintln!("{}", describe_install(request));

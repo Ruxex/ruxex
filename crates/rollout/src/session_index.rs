@@ -11,9 +11,9 @@ use std::time::SystemTime;
 
 use crate::reverse_jsonl_scanner::ReverseJsonlScanner;
 use crate::reverse_jsonl_scanner::ScanOutcome;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
+use genex_protocol::ThreadId;
+use genex_protocol::protocol::SessionMetaLine;
+use genex_protocol::protocol::SessionSource;
 use serde::Deserialize;
 use serde::Serialize;
 use tokio::io::AsyncBufReadExt;
@@ -156,7 +156,7 @@ pub async fn find_thread_names_by_ids(
 pub async fn find_thread_meta_by_name_str(
     codex_home: &Path,
     name: &str,
-    state_db_ctx: Option<&codex_state::StateRuntime>,
+    state_db_ctx: Option<&genex_state::StateRuntime>,
 ) -> std::io::Result<Option<(PathBuf, SessionMetaLine)>> {
     Ok(find_thread_meta_candidates_by_name_str(
         codex_home,
@@ -178,7 +178,7 @@ pub async fn find_thread_meta_by_name_str(
 pub async fn find_thread_meta_candidates_by_name_str(
     codex_home: &Path,
     name: &str,
-    state_db_ctx: Option<&codex_state::StateRuntime>,
+    state_db_ctx: Option<&genex_state::StateRuntime>,
     allowed_sources: &[SessionSource],
     allowed_model_providers: &[String],
 ) -> std::io::Result<Vec<(PathBuf, SessionMetaLine)>> {

@@ -51,37 +51,37 @@ use crate::thread_state::ConnectionCapabilities;
 use crate::thread_state::ThreadStateManager;
 use crate::transport::AppServerTransport;
 use crate::turn_cost_worker::TurnCostWorker;
-use codex_app_server_protocol::ClientNotification;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::ClientResponsePayload;
-use codex_app_server_protocol::ConfigWarningNotification;
-use codex_app_server_protocol::ExperimentalApi;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_app_server_protocol::JSONRPCRequest;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::UserVerificationCancelResponse;
-use codex_app_server_protocol::experimental_required_message;
-use codex_arg0::Arg0DispatchPaths;
-use codex_code_mode::CodeModeSessionProvider;
-use codex_core::ThreadManager;
-use codex_core::config::Config;
-use codex_core::config::ThreadStoreConfig;
-use codex_exec_server::EnvironmentManager;
-use codex_extension_api::TurnStartAdmission;
-use codex_goal_extension::GoalService;
-use codex_home::CodexHomeUserInstructionsProvider;
-use codex_login::AuthManager;
-use codex_protocol::ThreadId;
-use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::W3cTraceContext;
-use codex_queue_extension::QueuedItemService;
-use codex_rollout::StateDbHandle;
-use codex_state::log_db::LogDbLayer;
-use codex_thread_store::LocalQueueStore;
-use codex_thread_store::QueueStore;
+use genex_app_server_protocol::ClientNotification;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::ClientResponsePayload;
+use genex_app_server_protocol::ConfigWarningNotification;
+use genex_app_server_protocol::ExperimentalApi;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::JSONRPCNotification;
+use genex_app_server_protocol::JSONRPCRequest;
+use genex_app_server_protocol::JSONRPCResponse;
+use genex_app_server_protocol::UserVerificationCancelResponse;
+use genex_app_server_protocol::experimental_required_message;
+use genex_arg0::Arg0DispatchPaths;
+use genex_code_mode::CodeModeSessionProvider;
+use genex_core::ThreadManager;
+use genex_core::config::Config;
+use genex_core::config::ThreadStoreConfig;
+use genex_exec_server::EnvironmentManager;
+use genex_extension_api::TurnStartAdmission;
+use genex_goal_extension::GoalService;
+use genex_home::CodexHomeUserInstructionsProvider;
+use genex_login::AuthManager;
+use genex_protocol::ThreadId;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::W3cTraceContext;
+use genex_queue_extension::QueuedItemService;
+use genex_rollout::StateDbHandle;
+use genex_state::log_db::LogDbLayer;
+use genex_thread_store::LocalQueueStore;
+use genex_thread_store::QueueStore;
 use tokio::sync::Mutex;
 use tokio::sync::Semaphore;
 use tokio::sync::broadcast;
@@ -271,7 +271,7 @@ impl MessageProcessor {
         // The thread store is intentionally process-scoped. Config reloads can
         // affect per-thread behavior, but they must not move newly started,
         // resumed, or forked threads to a different persistence backend/root.
-        let thread_store = codex_core::thread_store_from_config(config.as_ref(), state_db.clone());
+        let thread_store = genex_core::thread_store_from_config(config.as_ref(), state_db.clone());
         // Queue persistence requires SQLite, so in-memory thread stores and
         // app servers without a state database do not have a queue backend.
         let queue_store: Option<Arc<dyn QueueStore>> = match &config.experimental_thread_store {
@@ -283,8 +283,8 @@ impl MessageProcessor {
         let environment_manager_for_requests = Arc::clone(&environment_manager);
         let environment_manager_for_extensions = Arc::clone(&environment_manager);
         let restriction_product = session_source.restriction_product();
-        let executor_skill_provider: Arc<dyn codex_skills_extension::SkillProvider> = Arc::new(
-            codex_skills_extension::ExecutorSkillProvider::new_with_restriction_product(
+        let executor_skill_provider: Arc<dyn genex_skills_extension::SkillProvider> = Arc::new(
+            genex_skills_extension::ExecutorSkillProvider::new_with_restriction_product(
                 Arc::clone(&environment_manager_for_extensions),
                 restriction_product,
             ),
@@ -306,7 +306,7 @@ impl MessageProcessor {
             let manager = ThreadManager::new(
                 config.as_ref(),
                 auth_manager.clone(),
-                codex_core::build_models_manager(config.as_ref(), auth_manager.clone()),
+                genex_core::build_models_manager(config.as_ref(), auth_manager.clone()),
                 session_source,
                 environment_manager,
                 thread_extensions(ThreadExtensionDependencies {
@@ -323,9 +323,9 @@ impl MessageProcessor {
                 Arc::new(CodexHomeUserInstructionsProvider::new(
                     config.codex_home.clone(),
                 )),
-                codex_core::passthrough_image_store(),
+                genex_core::passthrough_image_store(),
                 Arc::clone(&thread_store),
-                codex_core::local_agent_graph_store_from_state_db(state_db.as_ref()),
+                genex_core::local_agent_graph_store_from_state_db(state_db.as_ref()),
                 installation_id,
                 Some(app_server_attestation_provider(
                     outgoing.clone(),
@@ -699,13 +699,13 @@ impl MessageProcessor {
 
     pub(crate) async fn daemon_recovery_snapshot(
         &self,
-    ) -> codex_app_server_transport::daemon_recovery::RecoverySnapshot {
+    ) -> genex_app_server_transport::daemon_recovery::RecoverySnapshot {
         self.thread_processor.daemon_recovery_snapshot().await
     }
 
     pub(crate) async fn restore_daemon_threads(
         &self,
-        mut snapshot: codex_app_server_transport::daemon_recovery::RecoverySnapshot,
+        mut snapshot: genex_app_server_transport::daemon_recovery::RecoverySnapshot,
     ) {
         for thread_id in snapshot.loaded {
             let Ok(_permit) = self.turn_admission.admit() else {
@@ -715,7 +715,7 @@ impl MessageProcessor {
                 .thread_processor
                 .thread_resume(
                     ThreadResumeTarget::DaemonRecovery(snapshot.interrupted.remove(&thread_id)),
-                    codex_app_server_protocol::ThreadResumeParams {
+                    genex_app_server_protocol::ThreadResumeParams {
                         thread_id: thread_id.clone(),
                         exclude_turns: true,
                         ..Default::default()

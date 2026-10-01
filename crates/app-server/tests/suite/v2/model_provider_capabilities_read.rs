@@ -2,8 +2,8 @@ use std::time::Duration;
 
 use anyhow::Result;
 use app_test_support::TestAppServer;
-use codex_app_server_protocol::ModelProviderCapabilitiesReadParams;
-use codex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
+use genex_app_server_protocol::ModelProviderCapabilitiesReadParams;
+use genex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::time::timeout;

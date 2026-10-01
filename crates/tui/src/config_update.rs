@@ -4,33 +4,33 @@
 //! when a config mutation must be owned by the app server rather than written
 //! to the local `config.toml` directly.
 
-use codex_app_server_client::AppServerRequestHandle;
-use codex_app_server_client::TypedRequestError;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::ConfigBatchWriteParams;
-use codex_app_server_protocol::ConfigEdit;
-use codex_app_server_protocol::ConfigReadParams;
-use codex_app_server_protocol::ConfigReadResponse;
-use codex_app_server_protocol::ConfigWriteResponse;
-use codex_app_server_protocol::EnvironmentInfoParams;
-use codex_app_server_protocol::EnvironmentInfoResponse;
-use codex_app_server_protocol::MergeStrategy;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SkillsConfigWriteParams;
-use codex_app_server_protocol::SkillsConfigWriteResponse;
-use codex_config::default_project_root_markers;
-use codex_config::loader::find_project_root;
-use codex_config::loader::normalized_project_trust_keys;
-use codex_config::loader::project_trust_key;
-use codex_exec_server::LOCAL_ENVIRONMENT_ID;
-use codex_exec_server::LOCAL_FS;
-use codex_features::FEATURES;
-use codex_git_utils::resolve_root_git_project_for_trust;
-use codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use codex_protocol::config_types::TrustLevel;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::LegacyAppPathString;
-use codex_utils_path_uri::PathConvention;
+use genex_app_server_client::AppServerRequestHandle;
+use genex_app_server_client::TypedRequestError;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::ConfigBatchWriteParams;
+use genex_app_server_protocol::ConfigEdit;
+use genex_app_server_protocol::ConfigReadParams;
+use genex_app_server_protocol::ConfigReadResponse;
+use genex_app_server_protocol::ConfigWriteResponse;
+use genex_app_server_protocol::EnvironmentInfoParams;
+use genex_app_server_protocol::EnvironmentInfoResponse;
+use genex_app_server_protocol::MergeStrategy;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SkillsConfigWriteParams;
+use genex_app_server_protocol::SkillsConfigWriteResponse;
+use genex_config::default_project_root_markers;
+use genex_config::loader::find_project_root;
+use genex_config::loader::normalized_project_trust_keys;
+use genex_config::loader::project_trust_key;
+use genex_exec_server::LOCAL_ENVIRONMENT_ID;
+use genex_exec_server::LOCAL_FS;
+use genex_features::FEATURES;
+use genex_git_utils::resolve_root_git_project_for_trust;
+use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use genex_protocol::config_types::TrustLevel;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::LegacyAppPathString;
+use genex_utils_path_uri::PathConvention;
 use color_eyre::eyre::Result;
 use color_eyre::eyre::WrapErr;
 use serde_json::Value as JsonValue;
@@ -104,8 +104,8 @@ pub(crate) fn build_service_tier_selection_edits(service_tier: Option<&str>) -> 
             let config_value = if service_tier == SERVICE_TIER_DEFAULT_REQUEST_VALUE {
                 SERVICE_TIER_DEFAULT_REQUEST_VALUE
             } else {
-                match codex_protocol::config_types::ServiceTier::from_request_value(service_tier) {
-                    Some(codex_protocol::config_types::ServiceTier::Flex) => "flex",
+                match genex_protocol::config_types::ServiceTier::from_request_value(service_tier) {
+                    Some(genex_protocol::config_types::ServiceTier::Flex) => "flex",
                     None => service_tier,
                 }
             };
@@ -382,7 +382,7 @@ pub(crate) async fn write_skill_enabled(
 pub(crate) async fn read_effective_config_if_supported(
     request_handle: AppServerRequestHandle,
     cwd: &Path,
-) -> Result<Option<codex_app_server_protocol::Config>> {
+) -> Result<Option<genex_app_server_protocol::Config>> {
     match read_effective_config(request_handle, cwd.display().to_string()).await {
         Ok(response) => Ok(Some(response.config)),
         Err(err)

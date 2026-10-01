@@ -6,11 +6,11 @@
 //! submission.
 
 use crate::diff_model::FileChange;
-use codex_app_server_protocol::AdditionalNetworkPermissions;
-use codex_app_server_protocol::FileUpdateChange;
-use codex_app_server_protocol::GrantedPermissionProfile;
-use codex_app_server_protocol::PatchChangeKind;
-use codex_protocol::request_permissions::RequestPermissionProfile as CoreRequestPermissionProfile;
+use genex_app_server_protocol::AdditionalNetworkPermissions;
+use genex_app_server_protocol::FileUpdateChange;
+use genex_app_server_protocol::GrantedPermissionProfile;
+use genex_app_server_protocol::PatchChangeKind;
+use genex_protocol::request_permissions::RequestPermissionProfile as CoreRequestPermissionProfile;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -54,18 +54,18 @@ mod tests {
     use super::file_update_changes_to_display;
     use super::granted_permission_profile_from_request;
     use crate::diff_model::FileChange;
-    use codex_app_server_protocol::AdditionalFileSystemPermissions;
-    use codex_app_server_protocol::AdditionalNetworkPermissions;
-    use codex_app_server_protocol::FileSystemAccessMode;
-    use codex_app_server_protocol::FileSystemPath;
-    use codex_app_server_protocol::FileSystemSandboxEntry;
-    use codex_app_server_protocol::FileSystemSpecialPath;
-    use codex_app_server_protocol::FileUpdateChange;
-    use codex_app_server_protocol::GrantedPermissionProfile;
-    use codex_app_server_protocol::PatchChangeKind;
-    use codex_app_server_protocol::RequestPermissionProfile;
-    use codex_protocol::request_permissions::RequestPermissionProfile as CoreRequestPermissionProfile;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use genex_app_server_protocol::AdditionalFileSystemPermissions;
+    use genex_app_server_protocol::AdditionalNetworkPermissions;
+    use genex_app_server_protocol::FileSystemAccessMode;
+    use genex_app_server_protocol::FileSystemPath;
+    use genex_app_server_protocol::FileSystemSandboxEntry;
+    use genex_app_server_protocol::FileSystemSpecialPath;
+    use genex_app_server_protocol::FileUpdateChange;
+    use genex_app_server_protocol::GrantedPermissionProfile;
+    use genex_app_server_protocol::PatchChangeKind;
+    use genex_app_server_protocol::RequestPermissionProfile;
+    use genex_protocol::request_permissions::RequestPermissionProfile as CoreRequestPermissionProfile;
+    use genex_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
     use std::collections::HashMap;
     use std::path::PathBuf;

@@ -2,17 +2,17 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use codex_file_system::FileSystemSandboxContext;
-pub use codex_file_system::WalkOptions;
-pub use codex_file_system::WalkOutcome;
-use codex_file_system::WireFileSystemSandboxContext;
-use codex_network_proxy::ManagedNetworkSandboxContext;
-use codex_network_proxy::RemoteNetworkProxyLaunchConfig;
-use codex_protocol::ThreadId;
-use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_protocol::config_types::ShellEnvironmentPolicyInherit;
-use codex_shell_command::shell_detect::DetectedShell;
-use codex_utils_path_uri::PathUri;
+use genex_file_system::FileSystemSandboxContext;
+pub use genex_file_system::WalkOptions;
+pub use genex_file_system::WalkOutcome;
+use genex_file_system::WireFileSystemSandboxContext;
+use genex_network_proxy::ManagedNetworkSandboxContext;
+use genex_network_proxy::RemoteNetworkProxyLaunchConfig;
+use genex_protocol::ThreadId;
+use genex_protocol::capabilities::SelectedCapabilityRoot;
+use genex_protocol::config_types::ShellEnvironmentPolicyInherit;
+use genex_shell_command::shell_detect::DetectedShell;
+use genex_utils_path_uri::PathUri;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -220,7 +220,7 @@ impl EnvironmentInfo {
     /// Returns information about the current local exec-server process.
     pub fn local() -> Self {
         #[cfg(windows)]
-        let windows_mxc = codex_mxc_sandbox::is_available();
+        let windows_mxc = genex_mxc_sandbox::is_available();
         #[cfg(not(windows))]
         let windows_mxc = false;
         let cwd = std::env::current_dir().ok();
@@ -237,7 +237,7 @@ impl EnvironmentInfo {
         let temp_dir = normalize_temp_path(std::env::temp_dir().into_os_string());
 
         Self {
-            shell: codex_shell_command::shell_detect::default_user_shell().into(),
+            shell: genex_shell_command::shell_detect::default_user_shell().into(),
             executor_version: unknown_executor_version(),
             provider_id: None,
             cwd: cwd.and_then(|cwd| PathUri::from_host_native_path(cwd).ok()),
@@ -1169,23 +1169,23 @@ mod tests {
     use super::ShellInfo;
     use super::WireFsOpenParams;
     use super::WireFsReadFileParams;
-    use codex_file_system::FileSystemSandboxContext;
-    use codex_file_system::WindowsSandboxSelection;
-    use codex_network_proxy::ManagedNetworkSandboxContext;
-    use codex_network_proxy::NetworkProxyAuditMetadata;
-    use codex_network_proxy::NetworkProxyConfig;
-    use codex_network_proxy::RemoteNetworkProxyConfig;
-    use codex_network_proxy::RemoteNetworkProxyLaunchConfig;
-    use codex_protocol::config_types::WindowsSandboxProxySettingsMode;
-    use codex_protocol::models::ManagedFileSystemPermissions;
-    use codex_protocol::models::PermissionProfile;
-    use codex_protocol::permissions::FileSystemAccessMode;
-    use codex_protocol::permissions::FileSystemPath;
-    use codex_protocol::permissions::FileSystemSandboxEntry;
-    use codex_protocol::permissions::FileSystemSandboxPolicy;
-    use codex_protocol::permissions::FileSystemSpecialPath;
-    use codex_protocol::permissions::NetworkSandboxPolicy;
-    use codex_utils_path_uri::PathUri;
+    use genex_file_system::FileSystemSandboxContext;
+    use genex_file_system::WindowsSandboxSelection;
+    use genex_network_proxy::ManagedNetworkSandboxContext;
+    use genex_network_proxy::NetworkProxyAuditMetadata;
+    use genex_network_proxy::NetworkProxyConfig;
+    use genex_network_proxy::RemoteNetworkProxyConfig;
+    use genex_network_proxy::RemoteNetworkProxyLaunchConfig;
+    use genex_protocol::config_types::WindowsSandboxProxySettingsMode;
+    use genex_protocol::models::ManagedFileSystemPermissions;
+    use genex_protocol::models::PermissionProfile;
+    use genex_protocol::permissions::FileSystemAccessMode;
+    use genex_protocol::permissions::FileSystemPath;
+    use genex_protocol::permissions::FileSystemSandboxEntry;
+    use genex_protocol::permissions::FileSystemSandboxPolicy;
+    use genex_protocol::permissions::FileSystemSpecialPath;
+    use genex_protocol::permissions::NetworkSandboxPolicy;
+    use genex_utils_path_uri::PathUri;
     use pretty_assertions::assert_eq;
     use std::collections::HashMap;
 
@@ -1197,7 +1197,7 @@ mod tests {
         let params = ExecParams {
             process_id: ProcessId::from("managed-network"),
             metadata: Some(ExecMetadata {
-                thread_id: Some(codex_protocol::ThreadId::new()),
+                thread_id: Some(genex_protocol::ThreadId::new()),
                 tool_call_id: Some("call-1".to_string()),
             }),
             argv: vec!["true".to_string()],

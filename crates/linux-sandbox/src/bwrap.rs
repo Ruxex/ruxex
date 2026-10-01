@@ -29,15 +29,15 @@ use std::path::PathBuf;
 use std::process::Command;
 
 use crate::linux_run_main::synthetic_mount_registry_root;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::Result;
-use codex_protocol::permissions::is_protected_metadata_name;
-use codex_protocol::protocol::FileSystemAccessMode;
-use codex_protocol::protocol::FileSystemPath;
-use codex_protocol::protocol::FileSystemSandboxPolicy;
-use codex_protocol::protocol::FileSystemSpecialPath;
-use codex_protocol::protocol::WritableRoot;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::Result;
+use genex_protocol::permissions::is_protected_metadata_name;
+use genex_protocol::protocol::FileSystemAccessMode;
+use genex_protocol::protocol::FileSystemPath;
+use genex_protocol::protocol::FileSystemSandboxPolicy;
+use genex_protocol::protocol::FileSystemSpecialPath;
+use genex_protocol::protocol::WritableRoot;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use globset::GlobBuilder;
 use globset::GlobSet;
 use globset::GlobSetBuilder;
@@ -422,7 +422,7 @@ fn create_filesystem_args(
     cwd: &Path,
     options: BwrapOptions,
 ) -> Result<BwrapArgs> {
-    let daemon_directory = codex_uds::prepare_shared_daemon_socket_directory()?;
+    let daemon_directory = genex_uds::prepare_shared_daemon_socket_directory()?;
     crate::daemon_mounts::reject_daemon_mount_aliases(
         &daemon_directory,
         options
@@ -1178,7 +1178,7 @@ fn append_read_only_subpath_args(
         append_daemon_socket_mask(
             &mut bwrap_args.args,
             subpath,
-            &codex_uds::shared_daemon_socket_directory()?,
+            &genex_uds::shared_daemon_socket_directory()?,
         )?;
     }
     Ok(())
@@ -1445,12 +1445,12 @@ mod wslg_tests;
 mod tests {
     use super::*;
 
-    use codex_protocol::protocol::FileSystemAccessMode;
-    use codex_protocol::protocol::FileSystemPath;
-    use codex_protocol::protocol::FileSystemSandboxEntry;
-    use codex_protocol::protocol::FileSystemSandboxPolicy;
-    use codex_protocol::protocol::FileSystemSpecialPath;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use genex_protocol::protocol::FileSystemAccessMode;
+    use genex_protocol::protocol::FileSystemPath;
+    use genex_protocol::protocol::FileSystemSandboxEntry;
+    use genex_protocol::protocol::FileSystemSandboxPolicy;
+    use genex_protocol::protocol::FileSystemSpecialPath;
+    use genex_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
 
@@ -2131,7 +2131,7 @@ mod tests {
             ]
         );
         let daemon_directory =
-            path_to_string(&codex_uds::shared_daemon_socket_directory().unwrap());
+            path_to_string(&genex_uds::shared_daemon_socket_directory().unwrap());
         assert_eq!(
             args.args,
             vec![
@@ -2235,7 +2235,7 @@ mod tests {
             .position(|window| window == ["--ro-bind", "/tmp", "/tmp"])
             .expect("read-only tmp bind");
         let daemon_directory =
-            path_to_string(&codex_uds::shared_daemon_socket_directory().unwrap());
+            path_to_string(&genex_uds::shared_daemon_socket_directory().unwrap());
         assert_eq!(
             &args.args[tmp_bind + 3..tmp_bind + 9],
             [

@@ -144,7 +144,7 @@ configuration schema generation, TUI, guardian reviewer, Cargo, `just check`.
 
 - [ ] **Step 4: Check the app-server boundary**
 
-  Run `cargo check -p codex-app-server -p codex-app-server-protocol -p codex-app-server-client`.
+  Run `cargo check -p genex-app-server -p genex-app-server-protocol -p genex-app-server-client`.
   Confirm no app-server production reference remains for `feedback/upload` or
   `FeedbackUpload`.
 
@@ -191,7 +191,7 @@ configuration schema generation, TUI, guardian reviewer, Cargo, `just check`.
 
 - [ ] **Step 4: Check the TUI boundary**
 
-  Run `cargo check -p codex-tui`. Confirm the TUI no longer contains a
+  Run `cargo check -p genex-tui`. Confirm the TUI no longer contains a
   `/feedback` command or `CodexFeedback` production reference.
 
 ### Task 4: Remove feedback-only telemetry and dependencies
@@ -241,7 +241,7 @@ configuration schema generation, TUI, guardian reviewer, Cargo, `just check`.
 
 - [ ] **Step 4: Check dependency removal**
 
-  Run `cargo check -p codex-core -p codex-model-provider -p codex-exec` and
+  Run `cargo check -p genex-core -p genex-model-provider -p genex-exec` and
   inspect `cargo metadata --no-deps` or the manifest diff to confirm no
   workspace crate depends on `codex-feedback`.
 
@@ -279,7 +279,7 @@ configuration schema generation, TUI, guardian reviewer, Cargo, `just check`.
 
 - [ ] **Step 3: Check guardian behavior**
 
-  Run `cargo check -p codex-core -p codex-guardian-reviewer` and verify the
+  Run `cargo check -p genex-core -p genex-guardian-reviewer` and verify the
   remaining guardian call graph has no feedback storage or report attachment
   path.
 

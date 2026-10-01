@@ -9,9 +9,9 @@ use crate::tools::handlers::get_context_remaining_spec::GET_CONTEXT_REMAINING_TO
 use crate::tools::handlers::get_context_remaining_spec::create_get_context_remaining_tool;
 use crate::tools::registry::CoreToolRuntime;
 use crate::tools::registry::ToolExecutor;
-use codex_protocol::models::ResponseInputItem;
-use codex_tools::ToolName;
-use codex_tools::ToolSpec;
+use genex_protocol::models::ResponseInputItem;
+use genex_tools::ToolName;
+use genex_tools::ToolSpec;
 use serde_json::Value as JsonValue;
 use serde_json::json;
 
@@ -67,7 +67,7 @@ impl ToolExecutor<ToolInvocation> for GetContextRemainingHandler {
         create_get_context_remaining_tool()
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> codex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

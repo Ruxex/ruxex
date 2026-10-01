@@ -3,7 +3,7 @@
 
 use std::future::Future;
 
-use codex_app_server_transport::ConnectionAuth;
+use genex_app_server_transport::ConnectionAuth;
 
 use tokio::sync::Mutex;
 use tokio_util::task::TaskTracker;

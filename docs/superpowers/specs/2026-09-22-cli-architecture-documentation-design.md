@@ -126,9 +126,9 @@ argv
 
 The normalized model must distinguish three boundaries that are easy to conflate:
 
-- CLI command parsing in `codex-cli` versus runtime orchestration in `codex-core`/`codex-tui`.
-- App-server protocol types in `codex-app-server-protocol` versus internal application-server request processing in `codex-app-server`.
-- Provider/API transport abstractions in `codex-api`/`codex-client` versus provider-neutral agent behavior in core crates.
+- CLI command parsing in `genex-cli` versus runtime orchestration in `genex-core`/`codex-tui`.
+- App-server protocol types in `genex-app-server-protocol` versus internal application-server request processing in `codex-app-server`.
+- Provider/API transport abstractions in `genex-api`/`genex-client` versus provider-neutral agent behavior in core crates.
 
 ## Trait documentation policy
 

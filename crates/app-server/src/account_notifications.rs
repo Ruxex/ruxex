@@ -2,9 +2,9 @@
 //! Superseded login attempts still receive a terminal completion notification.
 
 use super::*;
-use codex_app_server_protocol::AccountLoginCompletedNotification;
-use codex_app_server_protocol::AccountUpdatedNotification;
-use codex_login::AuthChangeState;
+use genex_app_server_protocol::AccountLoginCompletedNotification;
+use genex_app_server_protocol::AccountUpdatedNotification;
+use genex_login::AuthChangeState;
 use tokio::sync::watch;
 
 pub(crate) enum AccountNotification {

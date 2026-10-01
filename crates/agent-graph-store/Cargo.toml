@@ -1,11 +1,11 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-agent-graph-store"
+name = "genex-agent-graph-store"
 version.workspace = true
 
 [lib]
-name = "codex_agent_graph_store"
+name = "genex_agent_graph_store"
 path = "src/lib.rs"
 doctest = false
 
@@ -13,13 +13,13 @@ doctest = false
 workspace = true
 
 [dependencies]
-codex-protocol = { workspace = true }
-codex-state = { workspace = true }
+genex-protocol = { workspace = true }
+genex-state = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 thiserror = { workspace = true }
 
 [dev-dependencies]
-codex-utils-absolute-path = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
 pretty_assertions = { workspace = true }
 serde_json = { workspace = true }
 tempfile = { workspace = true }

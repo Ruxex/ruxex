@@ -1,11 +1,11 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-skills-extension"
+name = "genex-skills-extension"
 version.workspace = true
 
 [lib]
-name = "codex_skills_extension"
+name = "genex_skills_extension"
 path = "src/lib.rs"
 doctest = false
 
@@ -13,18 +13,18 @@ doctest = false
 workspace = true
 
 [dependencies]
-codex-config = { workspace = true }
-codex-exec-server = { workspace = true }
-codex-extension-api = { workspace = true }
-codex-mcp = { workspace = true }
-codex-otel = { workspace = true }
-codex-protocol = { workspace = true }
-codex-skills = { workspace = true }
-codex-tools = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-path-uri = { workspace = true }
-codex-utils-plugins = { workspace = true }
-codex-utils-string = { workspace = true }
+genex-config = { workspace = true }
+genex-exec-server = { workspace = true }
+genex-extension-api = { workspace = true }
+genex-mcp = { workspace = true }
+genex-otel = { workspace = true }
+genex-protocol = { workspace = true }
+genex-skills = { workspace = true }
+genex-tools = { workspace = true }
+genex-utils-absolute-path = { workspace = true }
+genex-utils-path-uri = { workspace = true }
+genex-utils-plugins = { workspace = true }
+genex-utils-string = { workspace = true }
 dirs = { workspace = true }
 futures = { workspace = true }
 schemars = { workspace = true }
@@ -38,8 +38,8 @@ url = { workspace = true }
 
 [dev-dependencies]
 assert_matches = { workspace = true }
-codex-models-manager = { workspace = true }
-codex-utils-cargo-bin = { workspace = true }
+genex-models-manager = { workspace = true }
+genex-utils-cargo-bin = { workspace = true }
 dunce = { workspace = true }
 insta = { workspace = true }
 opentelemetry_sdk = { workspace = true }

@@ -346,10 +346,10 @@ impl ChatWidget {
         let event_command = split_command_string(&command);
         let event_parsed = command_actions
             .into_iter()
-            .map(codex_app_server_protocol::CommandAction::into_core)
+            .map(genex_app_server_protocol::CommandAction::into_core)
             .collect();
         let duration = Duration::from_millis(duration_ms.unwrap_or_default().max(0) as u64);
-        let exit_code = if status == codex_app_server_protocol::CommandExecutionStatus::Completed {
+        let exit_code = if status == genex_app_server_protocol::CommandExecutionStatus::Completed {
             exit_code.unwrap_or_default()
         } else {
             exit_code.filter(|code| *code != 0).unwrap_or(1)

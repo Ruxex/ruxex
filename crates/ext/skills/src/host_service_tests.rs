@@ -1,20 +1,20 @@
 use super::*;
-use codex_config::CONFIG_TOML_FILE;
-use codex_config::ConfigLayerEntry;
-use codex_config::ConfigLayerSource;
-use codex_config::ConfigLayerStack;
-use codex_config::ConfigRequirementsToml;
-use codex_exec_server::LOCAL_FS;
-use codex_skills::ImplicitSkillLookup;
-use codex_skills::LoadedSkillRoot;
-use codex_skills::SkillRootSnapshotCache;
-use codex_skills::SkillRootSnapshots;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_absolute_path::test_support::PathBufExt;
-use codex_utils_absolute_path::test_support::PathExt;
-use codex_utils_plugins::PluginIdentity;
-use codex_utils_plugins::PluginSkillRoot;
-use codex_utils_plugins::SkillDiscoveryMode;
+use genex_config::CONFIG_TOML_FILE;
+use genex_config::ConfigLayerEntry;
+use genex_config::ConfigLayerSource;
+use genex_config::ConfigLayerStack;
+use genex_config::ConfigRequirementsToml;
+use genex_exec_server::LOCAL_FS;
+use genex_skills::ImplicitSkillLookup;
+use genex_skills::LoadedSkillRoot;
+use genex_skills::SkillRootSnapshotCache;
+use genex_skills::SkillRootSnapshots;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_absolute_path::test_support::PathBufExt;
+use genex_utils_absolute_path::test_support::PathExt;
+use genex_utils_plugins::PluginIdentity;
+use genex_utils_plugins::PluginSkillRoot;
+use genex_utils_plugins::SkillDiscoveryMode;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -402,7 +402,7 @@ async fn snapshot_for_config_preserves_host_precedence_for_symlinked_plugin_root
 
     assert_eq!(
         outcome.skills,
-        vec![codex_skills::SkillMetadata {
+        vec![genex_skills::SkillMetadata {
             name: "sample:search".to_string(),
             description: "shared skill".to_string(),
             short_description: None,
@@ -797,8 +797,8 @@ async fn skills_for_cwd_loads_repo_and_user_roots_with_local_fs() {
         .collect::<HashSet<_>>();
     assert!(loaded_names.contains("user-skill"));
     assert!(loaded_names.contains("repo-skill"));
-    let other_file_system: Arc<dyn codex_exec_server::ExecutorFileSystem> =
-        Arc::new(codex_exec_server::LocalFileSystem::unsandboxed());
+    let other_file_system: Arc<dyn genex_exec_server::ExecutorFileSystem> =
+        Arc::new(genex_exec_server::LocalFileSystem::unsandboxed());
     let other_snapshot = skills_service
         .snapshot_for_config(&skills_input, Some(other_file_system))
         .await;

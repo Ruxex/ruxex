@@ -15,7 +15,7 @@ use crate::key_hint::KeyBindingListExt;
 use crate::keymap::KeymapContext;
 use crate::keymap::ListAction;
 use crate::keymap::RuntimeKeymap;
-use codex_protocol::items::AsyncUserInputQuestion;
+use genex_protocol::items::AsyncUserInputQuestion;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;

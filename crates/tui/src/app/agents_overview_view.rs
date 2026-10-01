@@ -29,10 +29,10 @@ use crate::keymap::ListAction;
 use crate::keymap::ListKeymap;
 use crate::keymap::RuntimeKeymap;
 use crate::render::renderable::Renderable;
-use codex_app_server_protocol::Thread;
-use codex_app_server_protocol::ThreadActiveFlag;
-use codex_app_server_protocol::ThreadStatus;
-use codex_protocol::ThreadId;
+use genex_app_server_protocol::Thread;
+use genex_app_server_protocol::ThreadActiveFlag;
+use genex_app_server_protocol::ThreadStatus;
+use genex_protocol::ThreadId;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use ratatui::buffer::Buffer;
@@ -112,7 +112,7 @@ struct AgentsOverviewProjectGroup {
 impl AgentsOverviewProjectGroup {
     fn for_thread(thread: &Thread, worktrees_enabled: bool) -> Self {
         if worktrees_enabled
-            && let Some(identity) = codex_git_utils::repository_identity(thread.cwd.as_path())
+            && let Some(identity) = genex_git_utils::repository_identity(thread.cwd.as_path())
         {
             Self {
                 key: (

@@ -1,10 +1,10 @@
 //! Resolve plugin namespace from skill file paths by walking ancestors for `plugin.json`.
 
-use codex_exec_server::ExecutorFileSystem;
-use codex_exec_server::GetMetadataOptions;
-use codex_exec_server::ReadFileOptions;
-use codex_exec_server_protocol::DISCOVERABLE_PLUGIN_MANIFEST_PATHS;
-use codex_utils_path_uri::PathUri;
+use genex_exec_server::ExecutorFileSystem;
+use genex_exec_server::GetMetadataOptions;
+use genex_exec_server::ReadFileOptions;
+use genex_exec_server_protocol::DISCOVERABLE_PLUGIN_MANIFEST_PATHS;
+use genex_utils_path_uri::PathUri;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -131,9 +131,9 @@ mod tests {
     use super::AGENT_PLUGIN_SCHEMA_URI;
     use super::find_plugin_manifest_path;
     use super::plugin_namespace_for_root_uri;
-    use codex_exec_server::LOCAL_FS;
-    use codex_utils_absolute_path::test_support::PathBufExt;
-    use codex_utils_path_uri::PathUri;
+    use genex_exec_server::LOCAL_FS;
+    use genex_utils_absolute_path::test_support::PathBufExt;
+    use genex_utils_path_uri::PathUri;
     use std::fs;
     use tempfile::tempdir;
 

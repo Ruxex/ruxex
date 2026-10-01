@@ -1,6 +1,6 @@
 use crate::ModelsManagerConfig;
 use crate::manager::ModelsManager;
-use codex_protocol::model_types::TruncationPolicyConfig;
+use genex_protocol::model_types::TruncationPolicyConfig;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 

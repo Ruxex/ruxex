@@ -8,14 +8,14 @@
 //! API provider construction applies the process-wide managed residency policy also
 //! used by default HTTP headers.
 
-use codex_api::Provider as ApiProvider;
-use codex_api::RetryConfig as ApiRetryConfig;
-use codex_protocol::auth::AuthMode;
-use codex_protocol::config_types::ModelProviderAuthInfo;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::EnvVarError;
-use codex_protocol::error::Result as CodexResult;
-use codex_utils_redacted_string::RedactedString;
+use genex_api::Provider as ApiProvider;
+use genex_api::RetryConfig as ApiRetryConfig;
+use genex_protocol::auth::AuthMode;
+use genex_protocol::config_types::ModelProviderAuthInfo;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::EnvVarError;
+use genex_protocol::error::Result as CodexResult;
+use genex_utils_redacted_string::RedactedString;
 use http::HeaderMap;
 use http::header::HeaderName;
 use http::header::HeaderValue;

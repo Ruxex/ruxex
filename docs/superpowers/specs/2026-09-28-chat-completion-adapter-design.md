@@ -62,7 +62,7 @@ wire_api = chat     -> ProviderApi::Chat(StandardChatCompletionApi)
 Trait は HTTP transport、認証、リトライを所有しない。これらは既存の
 `EndpointSession` と `ChatClient<T>` に残す。
 
-Trait は `codex-api` に置き、object-safe にする。`HttpTransport` が generic/RPITIT
+Trait は `genex-api` に置き、object-safe にする。`HttpTransport` が generic/RPITIT
 ベースであるため、Trait のメソッドに transport の型パラメータや async return を
 露出させない。
 
@@ -94,7 +94,7 @@ pub trait ChatCompletionApi: Send + Sync {
 Usage を処理できる構造にする。
 
 低レベルの SSE/`StreamResponse` を扱う `MyProviderChatCompletionApi` の実装は
-`codex-api` に置く。`codex-api` が response stream と parser の所有者であり、
+`genex-api` に置く。`genex-api` が response stream と parser の所有者であり、
 `model-provider` に HTTP/SSE parser の依存を広げないためである。`model-provider` の
 `MyModelProvider` はこの adapter を選択・注入するだけにする。
 
@@ -181,7 +181,7 @@ Chat SSE usage
 
 ## 実装対象ファイル
 
-### `crates/codex-api`
+### `crates/genex-api`
 
 - `src/chat_completion.rs`（新規）
   - `ChatCompletionApi`

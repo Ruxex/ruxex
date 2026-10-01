@@ -1,8 +1,8 @@
 use crate::config::RolloutBudgetConfig;
-use codex_protocol::ThreadId;
-use codex_protocol::error::CodexErr;
-use codex_protocol::error::Result as CodexResult;
-use codex_protocol::protocol::TokenUsage;
+use genex_protocol::ThreadId;
+use genex_protocol::error::CodexErr;
+use genex_protocol::error::Result as CodexResult;
+use genex_protocol::protocol::TokenUsage;
 use std::collections::HashMap;
 use std::sync::Mutex;
 use std::sync::MutexGuard;

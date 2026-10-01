@@ -7,7 +7,7 @@ while preserving generic local, Git, npm, and bundled plugin loading.
 
 ## Scope
 
-- Remove the `codex-core-plugins` startup sync module and its tests.
+- Remove the `genex-core-plugins` startup sync module and its tests.
 - Remove the manager's automatic curated-repository sync entry points.
 - Remove the startup-sync telemetry constants and imports.
 - Keep ordinary configured marketplace upgrades and plugin cache refreshes.
@@ -16,6 +16,6 @@ while preserving generic local, Git, npm, and bundled plugin loading.
 
 ## Verification
 
-- `cargo check -p codex-core-plugins`
+- `cargo check -p genex-core-plugins`
 - `git diff --check`
 - `just check`

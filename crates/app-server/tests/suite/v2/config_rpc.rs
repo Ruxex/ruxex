@@ -2,53 +2,53 @@ use anyhow::Result;
 use app_test_support::TestAppServer;
 use app_test_support::test_path_buf_with_windows;
 use app_test_support::test_tmp_path_buf;
-use codex_app_server_protocol::AllowDenyRequirement;
-use codex_app_server_protocol::AppConfig;
-use codex_app_server_protocol::AppLinkConfig;
-use codex_app_server_protocol::AppLinksConfig;
-use codex_app_server_protocol::AppToolApproval;
-use codex_app_server_protocol::ApprovalsReviewer;
-use codex_app_server_protocol::AppsConfig;
-use codex_app_server_protocol::AppsDefaultConfig;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::BrowserUseAccessApprovalLifetime;
-use codex_app_server_protocol::BrowserUseConfig;
-use codex_app_server_protocol::BrowserUseOriginPolicy;
-use codex_app_server_protocol::BrowserUseOriginPolicyConfig;
-use codex_app_server_protocol::BrowserUseRequirements;
-use codex_app_server_protocol::CliAuthCredentialsStoreMode;
-use codex_app_server_protocol::ComputerUseConfig;
-use codex_app_server_protocol::ComputerUseMacosConfig;
-use codex_app_server_protocol::ComputerUseMacosRequirements;
-use codex_app_server_protocol::ComputerUseRequirements;
-use codex_app_server_protocol::ComputerUseWindowsConfig;
-use codex_app_server_protocol::ComputerUseWindowsExeConfig;
-use codex_app_server_protocol::ComputerUseWindowsExeRequirement;
-use codex_app_server_protocol::ComputerUseWindowsRequirements;
-use codex_app_server_protocol::ConfigBatchWriteParams;
-use codex_app_server_protocol::ConfigEdit;
-use codex_app_server_protocol::ConfigLayerSource;
-use codex_app_server_protocol::ConfigReadParams;
-use codex_app_server_protocol::ConfigReadResponse;
-use codex_app_server_protocol::ConfigRequirementsReadResponse;
-use codex_app_server_protocol::ConfigValueWriteParams;
-use codex_app_server_protocol::ConfigWriteResponse;
-use codex_app_server_protocol::ConfiguredHookHandler;
-use codex_app_server_protocol::ForcedManagedWorkspaceIds;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::MergeStrategy;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SandboxMode;
-use codex_app_server_protocol::ToolsV2;
-use codex_app_server_protocol::WriteStatus;
-use codex_core::config::set_project_trust_level;
-use codex_protocol::config_types::ToolExposureSurface;
-use codex_protocol::config_types::TrustLevel;
-use codex_protocol::config_types::WebSearchContextSize;
-use codex_protocol::config_types::WebSearchLocation;
-use codex_protocol::config_types::WebSearchToolConfig;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_app_server_protocol::AllowDenyRequirement;
+use genex_app_server_protocol::AppConfig;
+use genex_app_server_protocol::AppLinkConfig;
+use genex_app_server_protocol::AppLinksConfig;
+use genex_app_server_protocol::AppToolApproval;
+use genex_app_server_protocol::ApprovalsReviewer;
+use genex_app_server_protocol::AppsConfig;
+use genex_app_server_protocol::AppsDefaultConfig;
+use genex_app_server_protocol::AskForApproval;
+use genex_app_server_protocol::BrowserUseAccessApprovalLifetime;
+use genex_app_server_protocol::BrowserUseConfig;
+use genex_app_server_protocol::BrowserUseOriginPolicy;
+use genex_app_server_protocol::BrowserUseOriginPolicyConfig;
+use genex_app_server_protocol::BrowserUseRequirements;
+use genex_app_server_protocol::CliAuthCredentialsStoreMode;
+use genex_app_server_protocol::ComputerUseConfig;
+use genex_app_server_protocol::ComputerUseMacosConfig;
+use genex_app_server_protocol::ComputerUseMacosRequirements;
+use genex_app_server_protocol::ComputerUseRequirements;
+use genex_app_server_protocol::ComputerUseWindowsConfig;
+use genex_app_server_protocol::ComputerUseWindowsExeConfig;
+use genex_app_server_protocol::ComputerUseWindowsExeRequirement;
+use genex_app_server_protocol::ComputerUseWindowsRequirements;
+use genex_app_server_protocol::ConfigBatchWriteParams;
+use genex_app_server_protocol::ConfigEdit;
+use genex_app_server_protocol::ConfigLayerSource;
+use genex_app_server_protocol::ConfigReadParams;
+use genex_app_server_protocol::ConfigReadResponse;
+use genex_app_server_protocol::ConfigRequirementsReadResponse;
+use genex_app_server_protocol::ConfigValueWriteParams;
+use genex_app_server_protocol::ConfigWriteResponse;
+use genex_app_server_protocol::ConfiguredHookHandler;
+use genex_app_server_protocol::ForcedManagedWorkspaceIds;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::MergeStrategy;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SandboxMode;
+use genex_app_server_protocol::ToolsV2;
+use genex_app_server_protocol::WriteStatus;
+use genex_core::config::set_project_trust_level;
+use genex_protocol::config_types::ToolExposureSurface;
+use genex_protocol::config_types::TrustLevel;
+use genex_protocol::config_types::WebSearchContextSize;
+use genex_protocol::config_types::WebSearchLocation;
+use genex_protocol::config_types::WebSearchToolConfig;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::collections::BTreeMap;
@@ -2511,7 +2511,7 @@ async fn config_batch_write_updates_multiple_desktop_settings() -> Result<()> {
 }
 
 fn assert_layers_user_then_optional_system(
-    layers: &[codex_app_server_protocol::ConfigLayer],
+    layers: &[genex_app_server_protocol::ConfigLayer],
     user_file: AbsolutePathBuf,
 ) -> Result<()> {
     let mut first_index = 0;
@@ -2537,7 +2537,7 @@ fn assert_layers_user_then_optional_system(
 }
 
 fn assert_layers_managed_user_then_optional_system(
-    layers: &[codex_app_server_protocol::ConfigLayer],
+    layers: &[genex_app_server_protocol::ConfigLayer],
     managed_file: AbsolutePathBuf,
     user_file: AbsolutePathBuf,
 ) -> Result<()> {

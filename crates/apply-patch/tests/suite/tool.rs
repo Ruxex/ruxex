@@ -1,5 +1,5 @@
 use assert_cmd::Command;
-use codex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
+use genex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
 use pretty_assertions::assert_eq;
 use std::fs;
 use std::path::Path;
@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use tempfile::tempdir;
 
 fn run_apply_patch_in_dir(dir: &Path, patch: &str) -> anyhow::Result<assert_cmd::assert::Assert> {
-    let mut cmd = Command::new(codex_utils_cargo_bin::cargo_bin("apply_patch")?);
+    let mut cmd = Command::new(genex_utils_cargo_bin::cargo_bin("apply_patch")?);
     cmd.env(CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR, "1");
     cmd.current_dir(dir);
     Ok(cmd.arg(patch).assert())
@@ -34,7 +34,7 @@ fn assert_apply_patch_updates_file(
 }
 
 fn apply_patch_command(dir: &Path) -> anyhow::Result<Command> {
-    let mut cmd = Command::new(codex_utils_cargo_bin::cargo_bin("apply_patch")?);
+    let mut cmd = Command::new(genex_utils_cargo_bin::cargo_bin("apply_patch")?);
     cmd.env(CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR, "1");
     cmd.current_dir(dir);
     Ok(cmd)
@@ -115,7 +115,7 @@ fn test_apply_patch_cli_allows_overlapping_eof_chunks_in_legacy_mode() -> anyhow
 
     let patch = "*** Begin Patch\n*** Update File: overlapping.txt\n@@\n-one\n+first\n@@\n-one\n+second\n*** End of File\n*** End Patch";
 
-    Command::new(codex_utils_cargo_bin::cargo_bin("apply_patch")?)
+    Command::new(genex_utils_cargo_bin::cargo_bin("apply_patch")?)
         .env_remove(CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR)
         .arg(patch)
         .current_dir(tmp.path())
@@ -158,7 +158,7 @@ fn test_apply_patch_cli_uses_legacy_line_handling_without_rollout_env() -> anyho
     fs::write(&target_path, b"one\r\n")?;
     let patch = "*** Begin Patch\n*** Update File: crlf.txt\n@@\n-one\n+uno\n*** End Patch";
 
-    Command::new(codex_utils_cargo_bin::cargo_bin("apply_patch")?)
+    Command::new(genex_utils_cargo_bin::cargo_bin("apply_patch")?)
         .env_remove(CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR)
         .arg(patch)
         .current_dir(tmp.path())

@@ -3,7 +3,7 @@
 
 use std::sync::Arc;
 
-use codex_context_fragments::RecapPrompt;
+use genex_context_fragments::RecapPrompt;
 
 use crate::history_cell::AgentMarkdownCell;
 use crate::history_cell::AgentMessageCell;

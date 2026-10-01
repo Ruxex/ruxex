@@ -1,6 +1,6 @@
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ContentItemKind;
-use codex_protocol::models::ResponseItem;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::ContentItemKind;
+use genex_protocol::models::ResponseItem;
 
 /// Model-visible content paired with its harness-owned classification.
 #[derive(Clone, Debug, PartialEq)]

@@ -1,19 +1,19 @@
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::ensure;
-use codex_core::StartThreadOptions;
-use codex_core::TurnInputRequest;
+use genex_core::StartThreadOptions;
+use genex_core::TurnInputRequest;
 #[cfg(not(target_os = "windows"))]
-use codex_core::config::Constrained;
+use genex_core::config::Constrained;
 #[cfg(not(target_os = "windows"))]
-use codex_core::sandboxing::SandboxPermissions;
+use genex_core::sandboxing::SandboxPermissions;
 #[cfg(not(target_os = "windows"))]
-use codex_protocol::config_types::ApprovalsReviewer;
+use genex_protocol::config_types::ApprovalsReviewer;
 #[cfg(not(target_os = "windows"))]
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ThreadSource;
-use codex_protocol::user_input::UserInput;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSource;
+use genex_protocol::user_input::UserInput;
 use core_test_support::PathBufExt;
 use core_test_support::responses::assert_root_turn;
 use core_test_support::responses::ev_assistant_message;
@@ -408,7 +408,7 @@ async fn ephemeral_system_thread_prewarm_skips_and_turn_observes_fresh_state(
         .and_then(|connection| connection.get(2))
         .context("system turn follow-up request")?
         .body_json();
-    let codex_core::TurnInputSubmission::Started { turn_id } = submission else {
+    let genex_core::TurnInputSubmission::Started { turn_id } = submission else {
         panic!("background input should start a turn");
     };
     assert_root_turn(&turn, Some(&turn_id))?;

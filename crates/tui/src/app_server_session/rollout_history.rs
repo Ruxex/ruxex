@@ -11,17 +11,17 @@ use super::started_thread_from_resume_response;
 use super::thread_resume_params_from_config;
 use super::thread_session_state_from_thread_response;
 use crate::legacy_core::config::Config;
-use codex_app_server_client::TypedRequestError;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::SortDirection;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadTurnsListParams;
-use codex_app_server_protocol::ThreadTurnsListResponse;
-use codex_app_server_protocol::TurnItemsView;
-use codex_protocol::ThreadId;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_app_server_client::TypedRequestError;
+use genex_app_server_protocol::AskForApproval;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::SortDirection;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::ThreadTurnsListParams;
+use genex_app_server_protocol::ThreadTurnsListResponse;
+use genex_app_server_protocol::TurnItemsView;
+use genex_protocol::ThreadId;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use color_eyre::eyre::Result;
 
 // Bound recovery to recent messages when item paging is unavailable.

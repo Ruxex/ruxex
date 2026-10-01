@@ -2,15 +2,15 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
-use codex_config::McpServerConfig;
-use codex_mcp::McpServerSource;
-use codex_mcp::PreparedMcpCall;
-use codex_mcp::ResolvedMcpServer;
-use codex_protocol::mcp::CallToolResult;
-use codex_tools::ToolCallSource;
-use codex_tools::ToolName;
-use codex_tools::ToolPayload;
-use codex_utils_path_uri::PathUri;
+use genex_config::McpServerConfig;
+use genex_mcp::McpServerSource;
+use genex_mcp::PreparedMcpCall;
+use genex_mcp::ResolvedMcpServer;
+use genex_protocol::mcp::CallToolResult;
+use genex_tools::ToolCallSource;
+use genex_tools::ToolName;
+use genex_tools::ToolPayload;
+use genex_utils_path_uri::PathUri;
 
 use crate::ConversationHistorySnapshot;
 use crate::ExtensionData;
@@ -125,7 +125,7 @@ pub struct ToolStartInput<'a> {
     pub call_id: &'a str,
     /// Responses item that issued this call or started its code-mode cell.
     /// Hosts preserve the original wrapper identity across yields and waits.
-    pub originating_item_id: Option<&'a codex_protocol::ResponseItemId>,
+    pub originating_item_id: Option<&'a genex_protocol::ResponseItemId>,
     /// Tool name as routed by the host.
     pub tool_name: &'a ToolName,
     /// Read-only metadata and provenance from the exact MCP call that will execute.

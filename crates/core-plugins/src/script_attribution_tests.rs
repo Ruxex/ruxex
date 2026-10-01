@@ -10,9 +10,9 @@ use crate::test_support::curated_plugins_repo_path;
 use crate::test_support::write_curated_plugin_sha_with;
 use crate::test_support::write_test_api_curated_marketplace;
 use crate::test_support::write_test_curated_marketplace;
-use codex_plugin::PluginLoadOutcome;
-use codex_utils_path_uri::PathUri;
-use codex_utils_plugins::SkillDiscoveryMode;
+use genex_plugin::PluginLoadOutcome;
+use genex_utils_path_uri::PathUri;
+use genex_utils_plugins::SkillDiscoveryMode;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
@@ -175,7 +175,7 @@ async fn resolves_relocated_script_through_executor_filesystem() {
     fs::copy(script.as_path(), &executor_script).expect("copy script to executor");
     let cwd = PathUri::from_host_native_path(&executor_root).expect("executor root URI");
     let environment =
-        codex_exec_server::Environment::create_for_tests(/*exec_server_url*/ None)
+        genex_exec_server::Environment::create_for_tests(/*exec_server_url*/ None)
             .expect("local executor environment");
 
     assert_eq!(

@@ -7,24 +7,24 @@ use axum::body::Bytes;
 use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::routing::post;
-use codex_app_server_protocol::CapabilityRootLocation;
-use codex_app_server_protocol::ListMcpServerStatusParams;
-use codex_app_server_protocol::ListMcpServerStatusResponse;
-use codex_app_server_protocol::McpServerOauthLoginCompletedNotification;
-use codex_app_server_protocol::McpServerOauthLoginResponse;
-use codex_app_server_protocol::McpServerStatus;
-use codex_app_server_protocol::McpServerToolCallParams;
-use codex_app_server_protocol::McpServerToolCallResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SelectedCapabilityRoot;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::UserInput;
-use codex_features::Feature;
-use codex_http_client::HttpClientBuilder;
-use codex_utils_path_uri::PathUri;
+use genex_app_server_protocol::CapabilityRootLocation;
+use genex_app_server_protocol::ListMcpServerStatusParams;
+use genex_app_server_protocol::ListMcpServerStatusResponse;
+use genex_app_server_protocol::McpServerOauthLoginCompletedNotification;
+use genex_app_server_protocol::McpServerOauthLoginResponse;
+use genex_app_server_protocol::McpServerStatus;
+use genex_app_server_protocol::McpServerToolCallParams;
+use genex_app_server_protocol::McpServerToolCallResponse;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::SelectedCapabilityRoot;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::UserInput;
+use genex_features::Feature;
+use genex_http_client::HttpClientBuilder;
+use genex_utils_path_uri::PathUri;
 use core_test_support::responses;
 use core_test_support::stdio_server_bin;
 use futures::SinkExt;
@@ -142,7 +142,7 @@ async fn selected_executor_discovers_browser_mcp_with_executor_only_bearer_token
     )?;
     // Browser auth tokens are not inherited by spawned executors, so use the production
     // WebSocket connection and put the token directly in the executor's environment.
-    let mut executor = Command::new(codex_utils_cargo_bin::cargo_bin("codex")?)
+    let mut executor = Command::new(genex_utils_cargo_bin::cargo_bin("codex")?)
         .args(["exec-server", "--listen", "ws://127.0.0.1:0"])
         .stdout(Stdio::piped())
         .kill_on_drop(true)
@@ -285,7 +285,7 @@ async fn legacy_executor_skips_required_browser_and_keeps_host_owned_mcp() -> Re
         ),
     )?;
 
-    let mut executor = Command::new(codex_utils_cargo_bin::cargo_bin("codex")?)
+    let mut executor = Command::new(genex_utils_cargo_bin::cargo_bin("codex")?)
         .args(["exec-server", "--listen", "ws://127.0.0.1:0"])
         .stdout(Stdio::piped())
         .kill_on_drop(true)
@@ -428,7 +428,7 @@ async fn guardian_review_does_not_discover_executor_mcp() -> Result<()> {
         .write(codex_home.path())?;
     std::fs::write(executor_home.path().join("config.toml"), "")?;
     let codex_bin = toml::Value::String(
-        codex_utils_cargo_bin::cargo_bin("codex")?
+        genex_utils_cargo_bin::cargo_bin("codex")?
             .to_string_lossy()
             .into_owned(),
     );
@@ -650,7 +650,7 @@ async fn selected_executor_plugin_exposes_its_mcps_only_to_that_thread() -> Resu
         .with_root_config(&root_config)
         .with_provider_config("supports_websockets = false")
         .write(codex_home.path())?;
-    let executor_config: codex_config::types::McpServerConfig = serde_json::from_value(json!({
+    let executor_config: genex_config::types::McpServerConfig = serde_json::from_value(json!({
         "url": EXECUTOR_OAUTH_MCP_URL,
         "environment_id": EXECUTOR_ID,
     }))?;
@@ -668,7 +668,7 @@ async fn selected_executor_plugin_exposes_its_mcps_only_to_that_thread() -> Resu
         &oauth_credentials_path,
         serde_json::to_vec(&json!({"host": host_oauth_credential.clone()}))?,
     )?;
-    let mut executor = Command::new(codex_utils_cargo_bin::cargo_bin("codex")?)
+    let mut executor = Command::new(genex_utils_cargo_bin::cargo_bin("codex")?)
         .args(["exec-server", "--listen", "ws://127.0.0.1:0"])
         .stdout(Stdio::piped())
         .kill_on_drop(true)

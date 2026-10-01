@@ -1,19 +1,19 @@
 use super::*;
 use crate::ConfigRequirementsToml;
-use codex_file_system::CopyOptions;
-use codex_file_system::CreateDirectoryOptions;
-use codex_file_system::ExecutorFileSystemFuture;
-use codex_file_system::FileMetadata;
-use codex_file_system::FileSystemReadStream;
-use codex_file_system::FileSystemSandboxContext;
-use codex_file_system::GetMetadataOptions;
-use codex_file_system::ReadDirectoryEntry;
-use codex_file_system::ReadFileOptions;
-use codex_file_system::RemoveOptions;
-use codex_file_system::WalkOptions;
-use codex_file_system::WalkOutcome;
-use codex_file_system::WriteFileOptions;
-use codex_utils_path_uri::PathUri;
+use genex_file_system::CopyOptions;
+use genex_file_system::CreateDirectoryOptions;
+use genex_file_system::ExecutorFileSystemFuture;
+use genex_file_system::FileMetadata;
+use genex_file_system::FileSystemReadStream;
+use genex_file_system::FileSystemSandboxContext;
+use genex_file_system::GetMetadataOptions;
+use genex_file_system::ReadDirectoryEntry;
+use genex_file_system::ReadFileOptions;
+use genex_file_system::RemoveOptions;
+use genex_file_system::WalkOptions;
+use genex_file_system::WalkOutcome;
+use genex_file_system::WriteFileOptions;
+use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 use tempfile::tempdir;
@@ -243,7 +243,7 @@ fn project_environment_filters_keep_excluded_hosts_out_of_children() {
             .clone()
             .try_into()
             .expect("valid shell environment policy");
-        let actual = codex_protocol::shell_environment::populate_env(
+        let actual = genex_protocol::shell_environment::populate_env(
             [
                 ("GH_HOST", host),
                 ("AWS_SECRET_ACCESS_KEY", "unrelated_secret"),

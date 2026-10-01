@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use codex_extension_api::ContextualUserFragment;
-use codex_extension_api::ExtensionEventSink;
-use codex_extension_api::ExtensionWarning;
-use codex_extension_api::SelectedPluginSnapshot;
-use codex_extension_api::WorldStateContributionInput;
-use codex_extension_api::WorldStateSectionContribution;
+use genex_extension_api::ContextualUserFragment;
+use genex_extension_api::ExtensionEventSink;
+use genex_extension_api::ExtensionWarning;
+use genex_extension_api::SelectedPluginSnapshot;
+use genex_extension_api::WorldStateContributionInput;
+use genex_extension_api::WorldStateSectionContribution;
 
 use crate::HostSkillsSnapshot;
 use crate::SkillsExtensionConfig;

@@ -1,12 +1,12 @@
 //! Configured MCP servers cannot activate verification or hold a turn waiting for proof.
 
 use anyhow::Result;
-use codex_core::StartThreadOptions;
-use codex_core::TurnInputRequest;
-use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::mcp::provider_ELICITATION_EXTENSION_ID;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::user_input::UserInput;
+use genex_core::StartThreadOptions;
+use genex_core::TurnInputRequest;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::mcp::provider_ELICITATION_EXTENSION_ID;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
@@ -78,7 +78,7 @@ async fn mcp_user_verification_rejects_configured_servers(source: CapabilitySour
         json!({"userVerification": {}}),
     )]);
     let client_mcp_extensions = match source {
-        CapabilitySource::HostProjection => codex_mcp::client_mcp_extensions(
+        CapabilitySource::HostProjection => genex_mcp::client_mcp_extensions(
             Some(&declarations),
             /*legacy_provider_form_elicitation*/ false,
         ),

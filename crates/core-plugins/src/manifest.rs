@@ -1,9 +1,9 @@
-use codex_config::HooksFile;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathConvention;
-use codex_utils_path_uri::PathUri;
-use codex_utils_plugins::AGENT_PLUGIN_MANIFEST_RELATIVE_PATH;
-use codex_utils_plugins::find_plugin_manifest_path;
+use genex_config::HooksFile;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathConvention;
+use genex_utils_path_uri::PathUri;
+use genex_utils_plugins::AGENT_PLUGIN_MANIFEST_RELATIVE_PATH;
+use genex_utils_plugins::find_plugin_manifest_path;
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
 use std::fs;
@@ -22,14 +22,14 @@ mod agent_plugin_manifest_tests;
 
 use agent_plugin_manifest::parse_agent_plugin_manifest_uri;
 
-pub type PluginManifest = codex_plugin::manifest::PluginManifest<AbsolutePathBuf>;
-pub type PluginManifestHooks = codex_plugin::manifest::PluginManifestHooks<AbsolutePathBuf>;
-pub type PluginManifestInterface = codex_plugin::manifest::PluginManifestInterface<AbsolutePathBuf>;
+pub type PluginManifest = genex_plugin::manifest::PluginManifest<AbsolutePathBuf>;
+pub type PluginManifestHooks = genex_plugin::manifest::PluginManifestHooks<AbsolutePathBuf>;
+pub type PluginManifestInterface = genex_plugin::manifest::PluginManifestInterface<AbsolutePathBuf>;
 pub type PluginManifestMcpServers =
-    codex_plugin::manifest::PluginManifestMcpServers<AbsolutePathBuf>;
-pub type PluginManifestPaths = codex_plugin::manifest::PluginManifestPaths<AbsolutePathBuf>;
+    genex_plugin::manifest::PluginManifestMcpServers<AbsolutePathBuf>;
+pub type PluginManifestPaths = genex_plugin::manifest::PluginManifestPaths<AbsolutePathBuf>;
 
-pub type UriPluginManifest = codex_plugin::manifest::PluginManifest<PathUri>;
+pub type UriPluginManifest = genex_plugin::manifest::PluginManifest<PathUri>;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum PluginManifestFormat {
@@ -323,7 +323,7 @@ fn resolve_raw_plugin_manifest(
             screenshots,
         } = interface;
 
-        let interface = codex_plugin::manifest::PluginManifestInterface {
+        let interface = genex_plugin::manifest::PluginManifestInterface {
             display_name,
             short_description,
             long_description,
@@ -379,12 +379,12 @@ fn resolve_raw_plugin_manifest(
 
         has_fields.then_some(interface)
     });
-    Ok(codex_plugin::manifest::PluginManifest {
+    Ok(genex_plugin::manifest::PluginManifest {
         name,
         version,
         description,
         keywords,
-        paths: codex_plugin::manifest::PluginManifestPaths {
+        paths: genex_plugin::manifest::PluginManifestPaths {
             skills: resolve_manifest_paths(plugin_root, "skills", skills.as_ref()),
             mcp_servers: resolve_manifest_mcp_servers(plugin_root, mcp_servers),
             hooks: resolve_manifest_hooks(plugin_root, hooks),
@@ -404,26 +404,26 @@ fn path_uri_json_error(error: impl std::fmt::Display) -> serde_json::Error {
 fn resolve_manifest_hooks(
     plugin_root: &PathUri,
     hooks: Option<RawPluginManifestHooks>,
-) -> Option<codex_plugin::manifest::PluginManifestHooks<PathUri>> {
+) -> Option<genex_plugin::manifest::PluginManifestHooks<PathUri>> {
     match hooks? {
         RawPluginManifestHooks::Path(path) => {
             resolve_manifest_path(plugin_root, "hooks", Some(&path))
-                .map(|path| codex_plugin::manifest::PluginManifestHooks::Paths(vec![path]))
+                .map(|path| genex_plugin::manifest::PluginManifestHooks::Paths(vec![path]))
         }
         RawPluginManifestHooks::Paths(paths) => {
             let hooks = paths
                 .iter()
                 .filter_map(|path| resolve_manifest_path(plugin_root, "hooks", Some(path)))
                 .collect::<Vec<_>>();
-            (!hooks.is_empty()).then_some(codex_plugin::manifest::PluginManifestHooks::Paths(hooks))
+            (!hooks.is_empty()).then_some(genex_plugin::manifest::PluginManifestHooks::Paths(hooks))
         }
         RawPluginManifestHooks::Inline(hooks) => {
-            Some(codex_plugin::manifest::PluginManifestHooks::Inline(vec![
+            Some(genex_plugin::manifest::PluginManifestHooks::Inline(vec![
                 *hooks,
             ]))
         }
         RawPluginManifestHooks::InlineList(hooks) => (!hooks.is_empty())
-            .then_some(codex_plugin::manifest::PluginManifestHooks::Inline(hooks)),
+            .then_some(genex_plugin::manifest::PluginManifestHooks::Inline(hooks)),
         RawPluginManifestHooks::Invalid(value) => {
             tracing::warn!(
                 "ignoring hooks: expected a string, string array, object, or object array; found {}",
@@ -437,14 +437,14 @@ fn resolve_manifest_hooks(
 fn resolve_manifest_mcp_servers(
     plugin_root: &PathUri,
     mcp_servers: Option<RawPluginManifestMcpServers>,
-) -> Option<codex_plugin::manifest::PluginManifestMcpServers<PathUri>> {
+) -> Option<genex_plugin::manifest::PluginManifestMcpServers<PathUri>> {
     match mcp_servers? {
         RawPluginManifestMcpServers::Path(path) => {
             resolve_manifest_path(plugin_root, "mcpServers", Some(&path))
-                .map(codex_plugin::manifest::PluginManifestMcpServers::Path)
+                .map(genex_plugin::manifest::PluginManifestMcpServers::Path)
         }
         RawPluginManifestMcpServers::Object(servers) => match serde_json::to_string(&servers) {
-            Ok(servers) => Some(codex_plugin::manifest::PluginManifestMcpServers::Object(
+            Ok(servers) => Some(genex_plugin::manifest::PluginManifestMcpServers::Object(
                 servers,
             )),
             Err(err) => {
@@ -644,19 +644,19 @@ mod tests {
     use super::MAX_DEFAULT_PROMPT_LEN;
     use super::PluginManifest;
     use super::load_plugin_manifest;
-    use codex_exec_server::EnvironmentManager;
-    use codex_exec_server::LOCAL_ENVIRONMENT_ID;
-    use codex_plugin::PluginProvider;
-    use codex_plugin::ResolvedPlugin;
-    use codex_plugin::manifest::PluginManifest as GenericPluginManifest;
-    use codex_plugin::manifest::PluginManifestHooks;
-    use codex_plugin::manifest::PluginManifestInterface;
-    use codex_plugin::manifest::PluginManifestMcpServers;
-    use codex_plugin::manifest::PluginManifestPaths;
-    use codex_protocol::capabilities::CapabilityRootLocation;
-    use codex_protocol::capabilities::SelectedCapabilityRoot;
-    use codex_utils_absolute_path::AbsolutePathBuf;
-    use codex_utils_path_uri::PathUri;
+    use genex_exec_server::EnvironmentManager;
+    use genex_exec_server::LOCAL_ENVIRONMENT_ID;
+    use genex_plugin::PluginProvider;
+    use genex_plugin::ResolvedPlugin;
+    use genex_plugin::manifest::PluginManifest as GenericPluginManifest;
+    use genex_plugin::manifest::PluginManifestHooks;
+    use genex_plugin::manifest::PluginManifestInterface;
+    use genex_plugin::manifest::PluginManifestMcpServers;
+    use genex_plugin::manifest::PluginManifestPaths;
+    use genex_protocol::capabilities::CapabilityRootLocation;
+    use genex_protocol::capabilities::SelectedCapabilityRoot;
+    use genex_utils_absolute_path::AbsolutePathBuf;
+    use genex_utils_path_uri::PathUri;
     use pretty_assertions::assert_eq;
     use std::fs;
     use std::path::Path;

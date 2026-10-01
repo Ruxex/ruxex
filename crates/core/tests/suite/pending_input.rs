@@ -1,35 +1,35 @@
 use core_test_support::test_codex::local_selections;
 use std::sync::Arc;
 
-use codex_core::CodexThread;
-use codex_core::StartIfIdleSubmission;
-use codex_core::TurnInput;
-use codex_core::TurnInputRequest;
-use codex_core::TurnInputSubmission;
-use codex_core::TurnStartOptions;
-use codex_core::config::CurrentTimeReminderConfig;
-use codex_extension_items::ExtensionItem;
-use codex_extension_items::sleep::SleepItem;
-use codex_features::Feature;
-use codex_history::RolloutItem;
-use codex_login::CodexAuth;
-use codex_protocol::AgentPath;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::AgentMessageInputContent;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::CodexErrorInfo;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::InterAgentCommunication;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ThreadSettingsOverrides;
-use codex_protocol::turn_input::CyberAccessProgram;
-use codex_protocol::user_input::UserInput;
+use genex_core::CodexThread;
+use genex_core::StartIfIdleSubmission;
+use genex_core::TurnInput;
+use genex_core::TurnInputRequest;
+use genex_core::TurnInputSubmission;
+use genex_core::TurnStartOptions;
+use genex_core::config::CurrentTimeReminderConfig;
+use genex_extension_items::ExtensionItem;
+use genex_extension_items::sleep::SleepItem;
+use genex_features::Feature;
+use genex_history::RolloutItem;
+use genex_login::CodexAuth;
+use genex_protocol::AgentPath;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::items::TurnItem;
+use genex_protocol::models::AgentMessageInputContent;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::InterAgentCommunication;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::turn_input::CyberAccessProgram;
+use genex_protocol::user_input::UserInput;
 use core_test_support::context_snapshot;
 use core_test_support::context_snapshot::ContextSnapshotOptions;
 use core_test_support::context_snapshot::SnapshotEntry;
@@ -484,13 +484,13 @@ async fn wait_for_sleep_item_completed(codex: &CodexThread, call_id: &str, durat
 
 struct SleepingRootExtension;
 
-impl codex_extension_api::ThreadLifecycleContributor<codex_core::config::Config>
+impl genex_extension_api::ThreadLifecycleContributor<genex_core::config::Config>
     for SleepingRootExtension
 {
     fn on_thread_start<'a>(
         &'a self,
-        input: codex_extension_api::ThreadStartInput<'a, codex_core::config::Config>,
-    ) -> codex_extension_api::ExtensionFuture<'a, ()> {
+        input: genex_extension_api::ThreadStartInput<'a, genex_core::config::Config>,
+    ) -> genex_extension_api::ExtensionFuture<'a, ()> {
         Box::pin(async move {
             input.thread_store.insert(SleepItem {
                 id: "clock-wait-1".to_string(),
@@ -514,7 +514,7 @@ async fn queue_only_agent_mail_wakes_sleeping_root_with_previous_turn_context() 
     )
     .await;
     let mut extensions =
-        codex_extension_api::ExtensionRegistryBuilder::<codex_core::config::Config>::new();
+        genex_extension_api::ExtensionRegistryBuilder::<genex_core::config::Config>::new();
     extensions.thread_lifecycle_contributor(Arc::new(SleepingRootExtension));
     let codex = test_codex()
         .with_model("gpt-5.4")
@@ -560,10 +560,10 @@ async fn queue_only_agent_mail_wakes_sleeping_root_with_previous_turn_context() 
             RolloutItem::ResponseItem(envelope)
                 if matches!(
                     &envelope.item,
-                    codex_protocol::models::ResponseItem::AgentMessage { content, .. }
+                    genex_protocol::models::ResponseItem::AgentMessage { content, .. }
                         if content.iter().any(|content| matches!(
                             content,
-                            codex_protocol::models::AgentMessageInputContent::InputText { text }
+                            genex_protocol::models::AgentMessageInputContent::InputText { text }
                                 if text == CHILD_MESSAGE
                         ))
                 )
@@ -723,7 +723,7 @@ async fn any_new_input_interrupts_sleep() {
         .expect("read rollout");
     let persisted_sleep_items = rollout
         .lines()
-        .filter_map(|line| codex_rollout::parse_rollout_line(line).ok())
+        .filter_map(|line| genex_rollout::parse_rollout_line(line).ok())
         .filter_map(|line| match line.item {
             RolloutItem::EventMsg(EventMsg::ItemCompleted(event)) => match event.item {
                 TurnItem::Extension(ExtensionItem::Sleep(item)) => Some(item),

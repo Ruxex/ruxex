@@ -1,4 +1,4 @@
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_utils_absolute_path::test_support::PathExt;
 use std::time::Duration;
 
 use anyhow::Result;
@@ -9,44 +9,44 @@ use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::start_analytics_events_server;
 use app_test_support::write_api_key_auth;
 #[cfg(unix)]
-use codex_app_server_protocol::ConfigReadParams;
+use genex_app_server_protocol::ConfigReadParams;
 #[cfg(unix)]
-use codex_app_server_protocol::ConfigReadResponse;
+use genex_app_server_protocol::ConfigReadResponse;
 #[cfg(unix)]
-use codex_app_server_protocol::ConfigRequirementsReadResponse;
+use genex_app_server_protocol::ConfigRequirementsReadResponse;
 #[cfg(unix)]
-use codex_app_server_protocol::ConfigValueWriteParams;
+use genex_app_server_protocol::ConfigValueWriteParams;
 #[cfg(unix)]
-use codex_app_server_protocol::ConfigWriteResponse;
-use codex_app_server_protocol::ExternalAgentConfigDetectResponse;
-use codex_app_server_protocol::ExternalAgentConfigImportCompletedNotification;
-use codex_app_server_protocol::ExternalAgentConfigImportHistoriesReadResponse;
-use codex_app_server_protocol::ExternalAgentConfigImportHistoryRecordResponse;
-use codex_app_server_protocol::ExternalAgentConfigImportProgressNotification;
-use codex_app_server_protocol::ExternalAgentConfigImportResponse;
+use genex_app_server_protocol::ConfigWriteResponse;
+use genex_app_server_protocol::ExternalAgentConfigDetectResponse;
+use genex_app_server_protocol::ExternalAgentConfigImportCompletedNotification;
+use genex_app_server_protocol::ExternalAgentConfigImportHistoriesReadResponse;
+use genex_app_server_protocol::ExternalAgentConfigImportHistoryRecordResponse;
+use genex_app_server_protocol::ExternalAgentConfigImportProgressNotification;
+use genex_app_server_protocol::ExternalAgentConfigImportResponse;
 #[cfg(unix)]
-use codex_app_server_protocol::ExternalAgentConfigImportTypeResult;
-use codex_app_server_protocol::ExternalAgentConfigMigrationItemType;
-use codex_app_server_protocol::ExternalAgentImportedConnectorCandidate;
-use codex_app_server_protocol::ExternalAgentImportedConnectorSource;
+use genex_app_server_protocol::ExternalAgentConfigImportTypeResult;
+use genex_app_server_protocol::ExternalAgentConfigMigrationItemType;
+use genex_app_server_protocol::ExternalAgentImportedConnectorCandidate;
+use genex_app_server_protocol::ExternalAgentImportedConnectorSource;
 #[cfg(unix)]
-use codex_app_server_protocol::MergeStrategy;
-use codex_app_server_protocol::PluginListParams;
-use codex_app_server_protocol::PluginListResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadListResponse;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadReadResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::UserInput;
+use genex_app_server_protocol::MergeStrategy;
+use genex_app_server_protocol::PluginListParams;
+use genex_app_server_protocol::PluginListResponse;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadListParams;
+use genex_app_server_protocol::ThreadListResponse;
+use genex_app_server_protocol::ThreadReadParams;
+use genex_app_server_protocol::ThreadReadResponse;
+use genex_app_server_protocol::ThreadResumeParams;
+use genex_app_server_protocol::ThreadResumeResponse;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::UserInput;
 #[cfg(unix)]
-use codex_app_server_protocol::WriteStatus;
-use codex_config::types::AuthCredentialsStoreMode;
+use genex_app_server_protocol::WriteStatus;
+use genex_config::types::AuthCredentialsStoreMode;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use std::path::Path;
@@ -674,7 +674,7 @@ source = {:?}
         marketplace
             .path
             .as_ref()
-            .map(codex_config::AbsolutePathBuf::as_path),
+            .map(genex_config::AbsolutePathBuf::as_path),
         Some(configured_marketplace_manifest.as_path())
     );
     let plugin = marketplace
@@ -740,8 +740,8 @@ async fn external_agent_config_import_sends_completion_notification_for_sync_onl
     )
     .await??;
     assert_eq!(completed.import_id, import_id);
-    let state_db = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(sqlite_home.path().abs()),
+    let state_db = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(sqlite_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -1349,7 +1349,7 @@ async fn external_agent_config_import_reinstalls_plugins_from_known_marketplaces
             .details
             .as_ref()
             .map(|details| details.plugins.clone()),
-        Some(vec![codex_app_server_protocol::PluginsMigration {
+        Some(vec![genex_app_server_protocol::PluginsMigration {
             marketplace_name: "debug".to_string(),
             plugin_names: vec!["missing".to_string(), "sample".to_string()],
         }])

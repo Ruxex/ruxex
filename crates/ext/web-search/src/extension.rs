@@ -1,27 +1,27 @@
 use std::sync::Arc;
 
-use codex_api::AllowedCaller;
-use codex_api::ApproximateLocation;
-use codex_api::ExternalWebAccess;
-use codex_api::ExternalWebAccessMode;
-use codex_api::LocationType;
-use codex_api::SearchContextSize;
-use codex_api::SearchFilters;
-use codex_api::SearchSettings;
-use codex_core::config::Config;
-use codex_extension_api::ConfigContributor;
-use codex_extension_api::ExtensionData;
-use codex_extension_api::ExtensionFuture;
-use codex_extension_api::ExtensionRegistryBuilder;
-use codex_extension_api::ThreadLifecycleContributor;
-use codex_extension_api::ThreadOriginator;
-use codex_extension_api::ThreadStartInput;
-use codex_extension_api::ToolContributor;
-use codex_login::AuthManager;
-use codex_model_provider::create_model_provider;
-use codex_model_provider_info::ModelProviderInfo;
-use codex_protocol::config_types::WebSearchContextSize;
-use codex_protocol::config_types::WebSearchMode;
+use genex_api::AllowedCaller;
+use genex_api::ApproximateLocation;
+use genex_api::ExternalWebAccess;
+use genex_api::ExternalWebAccessMode;
+use genex_api::LocationType;
+use genex_api::SearchContextSize;
+use genex_api::SearchFilters;
+use genex_api::SearchSettings;
+use genex_core::config::Config;
+use genex_extension_api::ConfigContributor;
+use genex_extension_api::ExtensionData;
+use genex_extension_api::ExtensionFuture;
+use genex_extension_api::ExtensionRegistryBuilder;
+use genex_extension_api::ThreadLifecycleContributor;
+use genex_extension_api::ThreadOriginator;
+use genex_extension_api::ThreadStartInput;
+use genex_extension_api::ToolContributor;
+use genex_login::AuthManager;
+use genex_model_provider::create_model_provider;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_protocol::config_types::WebSearchContextSize;
+use genex_protocol::config_types::WebSearchMode;
 
 use crate::tool::WebSearchTool;
 
@@ -126,7 +126,7 @@ impl ToolContributor for WebSearchExtension {
         session_store: &ExtensionData,
         thread_store: &ExtensionData,
     ) -> Vec<
-        Arc<dyn for<'call> codex_extension_api::ToolExecutor<codex_extension_api::ToolCall<'call>>>,
+        Arc<dyn for<'call> genex_extension_api::ToolExecutor<genex_extension_api::ToolCall<'call>>>,
     > {
         let Some(config) = thread_store.get::<WebSearchExtensionConfig>() else {
             return Vec::new();
@@ -158,11 +158,11 @@ pub fn install(registry: &mut ExtensionRegistryBuilder<Config>, auth_manager: Ar
 
 #[cfg(test)]
 mod tests {
-    use codex_extension_api::ExtensionData;
-    use codex_extension_api::ExtensionRegistryBuilder;
-    use codex_extension_api::ToolName;
-    use codex_login::CodexAuth;
-    use codex_model_provider_info::ModelProviderInfo;
+    use genex_extension_api::ExtensionData;
+    use genex_extension_api::ExtensionRegistryBuilder;
+    use genex_extension_api::ToolName;
+    use genex_login::CodexAuth;
+    use genex_model_provider_info::ModelProviderInfo;
     use pretty_assertions::assert_eq;
 
     use super::AuthManager;
@@ -173,9 +173,9 @@ mod tests {
     use super::standalone_web_search_available;
     use crate::tool::RUN_TOOL_NAME;
     use crate::tool::WEB_NAMESPACE;
-    use codex_api::ExternalWebAccess;
-    use codex_api::ExternalWebAccessMode;
-    use codex_protocol::config_types::WebSearchMode;
+    use genex_api::ExternalWebAccess;
+    use genex_api::ExternalWebAccessMode;
+    use genex_protocol::config_types::WebSearchMode;
 
     #[test]
     fn external_web_access_preserves_legacy_values_until_indexed() {

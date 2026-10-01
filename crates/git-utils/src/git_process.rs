@@ -2,11 +2,11 @@ use std::process::Output;
 use std::process::Stdio;
 use std::time::Duration;
 
-use codex_protocol::shell_environment::scrub_non_inheritable_env_vars;
+use genex_protocol::shell_environment::scrub_non_inheritable_env_vars;
 #[cfg(windows)]
-use codex_utils_pty::JobObject;
+use genex_utils_pty::JobObject;
 #[cfg(unix)]
-use codex_utils_pty::process_group::kill_process_group;
+use genex_utils_pty::process_group::kill_process_group;
 use tokio::process::Child;
 use tokio::process::Command;
 use tokio::time::timeout;

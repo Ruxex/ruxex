@@ -1,6 +1,6 @@
-# codex-network-proxy
+# genex-network-proxy
 
-`codex-network-proxy` is Codex's local network policy enforcement proxy. It runs:
+`genex-network-proxy` is Codex's local network policy enforcement proxy. It runs:
 
 - an HTTP proxy (default `127.0.0.1:3128`)
 - a SOCKS5 proxy (default `127.0.0.1:8081`, enabled by default)
@@ -15,7 +15,7 @@ It enforces an allow/deny policy and a "limited" mode intended for read-only net
 
 ### 1) Configure
 
-`codex-network-proxy` reads from Codex's merged `config.toml` (via `codex-core` config loading).
+`genex-network-proxy` reads from Codex's merged `config.toml` (via `genex-core` config loading).
 
 Network settings live under the selected permissions profile. Example config:
 
@@ -83,7 +83,7 @@ strip_request_headers = ["authorization"]
 ### 2) Run the proxy
 
 ```bash
-cargo run -p codex-network-proxy --
+cargo run -p genex-network-proxy --
 ```
 
 ### 3) Point a client at it
@@ -122,7 +122,7 @@ through the same host allowlist/denylist checks.
 
 ## Library API
 
-`codex-network-proxy` can be embedded as a library with a thin API:
+`genex-network-proxy` can be embedded as a library with a thin API:
 
 ```rust
 use codex_network_proxy::{NetworkProxy, NetworkDecision, NetworkPolicyRequest};
@@ -163,7 +163,7 @@ the decider can auto-allow network requests originating from that command.
 
 ## OTEL Audit Events (embedded/managed)
 
-When `codex-network-proxy` is embedded in managed Codex runtime, policy decisions emit structured
+When `genex-network-proxy` is embedded in managed Codex runtime, policy decisions emit structured
 OTEL-compatible events with `target=codex_otel.network_proxy`.
 
 Event name:
@@ -209,7 +209,7 @@ Audit events intentionally avoid logging full URL/path/query data.
 
 ## Security notes (important)
 
-This section documents the protections implemented by `codex-network-proxy`, and the boundaries of
+This section documents the protections implemented by `genex-network-proxy`, and the boundaries of
 what it can reasonably guarantee.
 
 - Allowlist-first policy: if `domains` has no `allow` entries, requests are blocked until an allowlist is configured.

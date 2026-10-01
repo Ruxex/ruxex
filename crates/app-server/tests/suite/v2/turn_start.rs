@@ -17,80 +17,80 @@ use app_test_support::write_api_key_auth;
 use app_test_support::write_mock_responses_config_toml_with_managed_auth_base_url;
 use app_test_support::write_models_cache;
 use app_test_support::write_models_cache_with_models;
-use codex_app_server::INPUT_TOO_LARGE_ERROR_CODE;
-use codex_app_server::INVALID_PARAMS_ERROR_CODE;
-use codex_app_server_protocol::AdditionalContextEntry;
-use codex_app_server_protocol::AdditionalContextKind;
-use codex_app_server_protocol::ByteRange;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::CollabAgentStatus;
-use codex_app_server_protocol::CollabAgentTool;
-use codex_app_server_protocol::CollabAgentToolCallStatus;
-use codex_app_server_protocol::CommandExecutionApprovalDecision;
-use codex_app_server_protocol::CommandExecutionRequestApprovalResponse;
-use codex_app_server_protocol::CommandExecutionStatus;
-use codex_app_server_protocol::CyberAccessProgram;
-use codex_app_server_protocol::FileChangeApprovalDecision;
-use codex_app_server_protocol::FileChangePatchUpdatedNotification;
-use codex_app_server_protocol::FileChangeRequestApprovalResponse;
-use codex_app_server_protocol::ImageReference as V2ImageReference;
-use codex_app_server_protocol::ItemCompletedNotification;
-use codex_app_server_protocol::ItemStartedNotification;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::PatchApplyStatus;
-use codex_app_server_protocol::PatchChangeKind;
-use codex_app_server_protocol::RawResponseCompletedNotification;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ServerRequestResolvedNotification;
-use codex_app_server_protocol::SubAgentActivityKind;
-use codex_app_server_protocol::TextElement;
-use codex_app_server_protocol::ThreadDeleteParams;
-use codex_app_server_protocol::ThreadDeleteResponse;
-use codex_app_server_protocol::ThreadDeletedNotification;
-use codex_app_server_protocol::ThreadHistoryMode;
-use codex_app_server_protocol::ThreadInjectItemsParams;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadLoadedListParams;
-use codex_app_server_protocol::ThreadLoadedListResponse;
-use codex_app_server_protocol::ThreadMetadataUpdateParams;
-use codex_app_server_protocol::ThreadMetadataUpdateResponse;
-use codex_app_server_protocol::ThreadSettingsUpdateParams;
-use codex_app_server_protocol::ThreadSettingsUpdatedNotification;
-use codex_app_server_protocol::ThreadShellCommandParams;
-use codex_app_server_protocol::ThreadSource;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TokenUsageBreakdown;
-use codex_app_server_protocol::TurnCompletedNotification;
-use codex_app_server_protocol::TurnEnvironmentParams;
-use codex_app_server_protocol::TurnItemsView;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStartedNotification;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::TurnSteerParams;
-use codex_app_server_protocol::UserInput as V2UserInput;
-use codex_app_server_protocol::WarningNotification;
-use codex_core::test_support::all_model_presets;
-use codex_exec_server::LOCAL_ENVIRONMENT_ID;
-use codex_features::Feature;
-use codex_login::AuthCredentialsStoreMode;
-use codex_models_manager::model_info::BASE_INSTRUCTIONS;
-use codex_models_manager::model_info::model_info_from_slug;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::MultiAgentMode;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::Settings;
-use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
-use codex_protocol::models::ImageDetail;
-use codex_protocol::model_types::ReasoningEffort;
-use codex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
-use codex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_app_server::INPUT_TOO_LARGE_ERROR_CODE;
+use genex_app_server::INVALID_PARAMS_ERROR_CODE;
+use genex_app_server_protocol::AdditionalContextEntry;
+use genex_app_server_protocol::AdditionalContextKind;
+use genex_app_server_protocol::ByteRange;
+use genex_app_server_protocol::ClientInfo;
+use genex_app_server_protocol::ClientRequest;
+use genex_app_server_protocol::CollabAgentStatus;
+use genex_app_server_protocol::CollabAgentTool;
+use genex_app_server_protocol::CollabAgentToolCallStatus;
+use genex_app_server_protocol::CommandExecutionApprovalDecision;
+use genex_app_server_protocol::CommandExecutionRequestApprovalResponse;
+use genex_app_server_protocol::CommandExecutionStatus;
+use genex_app_server_protocol::CyberAccessProgram;
+use genex_app_server_protocol::FileChangeApprovalDecision;
+use genex_app_server_protocol::FileChangePatchUpdatedNotification;
+use genex_app_server_protocol::FileChangeRequestApprovalResponse;
+use genex_app_server_protocol::ImageReference as V2ImageReference;
+use genex_app_server_protocol::ItemCompletedNotification;
+use genex_app_server_protocol::ItemStartedNotification;
+use genex_app_server_protocol::JSONRPCError;
+use genex_app_server_protocol::JSONRPCMessage;
+use genex_app_server_protocol::PatchApplyStatus;
+use genex_app_server_protocol::PatchChangeKind;
+use genex_app_server_protocol::RawResponseCompletedNotification;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::ServerRequest;
+use genex_app_server_protocol::ServerRequestResolvedNotification;
+use genex_app_server_protocol::SubAgentActivityKind;
+use genex_app_server_protocol::TextElement;
+use genex_app_server_protocol::ThreadDeleteParams;
+use genex_app_server_protocol::ThreadDeleteResponse;
+use genex_app_server_protocol::ThreadDeletedNotification;
+use genex_app_server_protocol::ThreadHistoryMode;
+use genex_app_server_protocol::ThreadInjectItemsParams;
+use genex_app_server_protocol::ThreadItem;
+use genex_app_server_protocol::ThreadLoadedListParams;
+use genex_app_server_protocol::ThreadLoadedListResponse;
+use genex_app_server_protocol::ThreadMetadataUpdateParams;
+use genex_app_server_protocol::ThreadMetadataUpdateResponse;
+use genex_app_server_protocol::ThreadSettingsUpdateParams;
+use genex_app_server_protocol::ThreadSettingsUpdatedNotification;
+use genex_app_server_protocol::ThreadShellCommandParams;
+use genex_app_server_protocol::ThreadSource;
+use genex_app_server_protocol::ThreadStartParams;
+use genex_app_server_protocol::ThreadStartResponse;
+use genex_app_server_protocol::TokenUsageBreakdown;
+use genex_app_server_protocol::TurnCompletedNotification;
+use genex_app_server_protocol::TurnEnvironmentParams;
+use genex_app_server_protocol::TurnItemsView;
+use genex_app_server_protocol::TurnStartParams;
+use genex_app_server_protocol::TurnStartResponse;
+use genex_app_server_protocol::TurnStartedNotification;
+use genex_app_server_protocol::TurnStatus;
+use genex_app_server_protocol::TurnSteerParams;
+use genex_app_server_protocol::UserInput as V2UserInput;
+use genex_app_server_protocol::WarningNotification;
+use genex_core::test_support::all_model_presets;
+use genex_exec_server::LOCAL_ENVIRONMENT_ID;
+use genex_features::Feature;
+use genex_login::AuthCredentialsStoreMode;
+use genex_models_manager::model_info::BASE_INSTRUCTIONS;
+use genex_models_manager::model_info::model_info_from_slug;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::MultiAgentMode;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::Settings;
+use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
+use genex_protocol::models::ImageDetail;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
+use genex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
+use genex_utils_absolute_path::test_support::PathExt;
 use core_test_support::apps_test_server::AppsTestServer;
 use core_test_support::apps_test_server::SEARCH_CALENDAR_LIST_TOOL;
 use core_test_support::apps_test_server::SEARCH_CALENDAR_NAMESPACE;
@@ -1254,8 +1254,8 @@ async fn turn_start_emits_raw_response_completed_with_upstream_usage(
             .and_then(|params| params.get("usageMetadata")),
         Some(&expected_metadata),
     );
-    let notification: codex_app_server_protocol::ServerNotification = notification.try_into()?;
-    let codex_app_server_protocol::ServerNotification::RawResponseCompleted(notification) =
+    let notification: genex_app_server_protocol::ServerNotification = notification.try_into()?;
+    let genex_app_server_protocol::ServerNotification::RawResponseCompleted(notification) =
         notification
     else {
         anyhow::bail!("expected rawResponse/completed notification");
@@ -2355,7 +2355,7 @@ async fn turn_start_rejects_unknown_environment_before_starting_turn() -> Result
             }],
             environments: Some(vec![TurnEnvironmentParams {
                 environment_id: "missing".to_string(),
-                cwd: codex_utils_absolute_path::AbsolutePathBuf::try_from(
+                cwd: genex_utils_absolute_path::AbsolutePathBuf::try_from(
                     codex_home.path().to_path_buf(),
                 )?
                 .into(),
@@ -2436,7 +2436,7 @@ async fn turn_start_emits_notifications_and_accepts_model_override() -> Result<(
     assert_eq!(started.thread_id, thread.id);
     assert_eq!(
         started.turn.status,
-        codex_app_server_protocol::TurnStatus::InProgress
+        genex_app_server_protocol::TurnStatus::InProgress
     );
     assert_eq!(started.turn.id, turn.id);
     assert_eq!(started.turn.items_view, TurnItemsView::NotLoaded);
@@ -3014,8 +3014,8 @@ async fn turn_start_exec_approval_toggle_v2() -> Result<()> {
                     text: "run python again".to_string(),
                     text_elements: Vec::new(),
                 }],
-                approval_policy: Some(codex_app_server_protocol::AskForApproval::Never),
-                sandbox_policy: Some(codex_app_server_protocol::SandboxPolicy::DangerFullAccess),
+                approval_policy: Some(genex_app_server_protocol::AskForApproval::Never),
+                sandbox_policy: Some(genex_app_server_protocol::SandboxPolicy::DangerFullAccess),
                 model: Some("mock-model".to_string()),
                 effort: Some(ReasoningEffort::Medium),
                 summary: Some(ReasoningSummary::Auto),
@@ -3279,7 +3279,7 @@ async fn turn_start_explicit_local_environment_updates_legacy_cwd_between_turns(
 
     // first turn with workspace-write sandbox and first_cwd
     let first_writable_root =
-        codex_utils_absolute_path::AbsolutePathBuf::try_from(first_cwd.clone())?;
+        genex_utils_absolute_path::AbsolutePathBuf::try_from(first_cwd.clone())?;
     let _: TurnStartResponse = mcp
         .request(|request_id| ClientRequest::TurnStart {
             request_id,
@@ -3298,9 +3298,9 @@ async fn turn_start_explicit_local_environment_updates_legacy_cwd_between_turns(
                 additional_context: None,
                 cwd: Some(first_cwd.clone()),
                 runtime_workspace_roots: None,
-                approval_policy: Some(codex_app_server_protocol::AskForApproval::Never),
+                approval_policy: Some(genex_app_server_protocol::AskForApproval::Never),
                 approvals_reviewer: None,
-                sandbox_policy: Some(codex_app_server_protocol::SandboxPolicy::WorkspaceWrite {
+                sandbox_policy: Some(genex_app_server_protocol::SandboxPolicy::WorkspaceWrite {
                     writable_roots: vec![first_writable_root],
                     network_access: false,
                     exclude_tmpdir_env_var: true,
@@ -3350,7 +3350,7 @@ async fn turn_start_explicit_local_environment_updates_legacy_cwd_between_turns(
                 additional_context: None,
                 cwd: None,
                 runtime_workspace_roots: None,
-                approval_policy: Some(codex_app_server_protocol::AskForApproval::Never),
+                approval_policy: Some(genex_app_server_protocol::AskForApproval::Never),
                 approvals_reviewer: None,
                 sandbox_policy: None,
                 permissions: None,
@@ -3421,8 +3421,8 @@ async fn turn_start_permission_profile_rebinds_runtime_workspace_roots_between_t
     std::fs::create_dir(&new_root)?;
     let old_root_text = old_root.to_string_lossy().into_owned();
     let new_root_text = new_root.to_string_lossy().into_owned();
-    let old_root = codex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(old_root)?;
-    let new_root = codex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(new_root)?;
+    let old_root = genex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(old_root)?;
+    let new_root = genex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(new_root)?;
 
     let server = responses::start_mock_server().await;
     let response_mock = responses::mount_sse_sequence(
@@ -3785,7 +3785,7 @@ async fn turn_start_file_change_approval_v2() -> Result<()> {
     let expected_readme_path = expected_readme_path.to_string_lossy().into_owned();
     pretty_assertions::assert_eq!(
         started_changes,
-        vec![codex_app_server_protocol::FileUpdateChange {
+        vec![genex_app_server_protocol::FileUpdateChange {
             path: expected_readme_path.clone(),
             kind: PatchChangeKind::Add,
             diff: "new line\n".to_string(),
@@ -4476,10 +4476,10 @@ async fn direct_input_to_multi_agent_v2_subagent_is_rejected(
     })
     .await??;
 
-    let listed: codex_app_server_protocol::ThreadListResponse = mcp
+    let listed: genex_app_server_protocol::ThreadListResponse = mcp
         .request(|request_id| ClientRequest::ThreadList {
             request_id,
-            params: codex_app_server_protocol::ThreadListParams {
+            params: genex_app_server_protocol::ThreadListParams {
                 originators: None,
                 cursor: None,
                 limit: Some(10),
@@ -4487,7 +4487,7 @@ async fn direct_input_to_multi_agent_v2_subagent_is_rejected(
                 sort_direction: None,
                 model_providers: None,
                 source_kinds: Some(vec![
-                    codex_app_server_protocol::ThreadSourceKind::SubAgentThreadSpawn,
+                    genex_app_server_protocol::ThreadSourceKind::SubAgentThreadSpawn,
                 ]),
                 archived: None,
                 section_id: None,
@@ -4507,8 +4507,8 @@ async fn direct_input_to_multi_agent_v2_subagent_is_rejected(
         .context("spawned child is missing from thread/list")?;
     assert!(matches!(
         &listed_child.source,
-        codex_app_server_protocol::SessionSource::SubAgent(
-            codex_protocol::protocol::SubAgentSource::ThreadSpawn {
+        genex_app_server_protocol::SessionSource::SubAgent(
+            genex_protocol::protocol::SubAgentSource::ThreadSpawn {
                 agent_path: Some(_),
                 ..
             }
@@ -4673,7 +4673,7 @@ async fn direct_input_to_multi_agent_v2_subagent_is_rejected(
         .await??;
         assert_eq!(
             error.error,
-            codex_app_server_protocol::JSONRPCErrorError {
+            genex_app_server_protocol::JSONRPCErrorError {
                 code: INVALID_REQUEST_ERROR_CODE,
                 message: ERROR_MESSAGE.to_string(),
                 data: None,
@@ -5248,7 +5248,7 @@ async fn run_turn_start_file_change_approval_rejection_v2(
     let expected_readme_path_str = expected_readme_path.to_string_lossy().into_owned();
     pretty_assertions::assert_eq!(
         started_changes,
-        vec![codex_app_server_protocol::FileUpdateChange {
+        vec![genex_app_server_protocol::FileUpdateChange {
             path: expected_readme_path_str.clone(),
             kind: PatchChangeKind::Add,
             diff: "new line\n".to_string(),
@@ -5341,7 +5341,7 @@ async fn command_execution_notifications_include_process_id() -> Result<()> {
                     text: "run a command".to_string(),
                     text_elements: Vec::new(),
                 }],
-                sandbox_policy: Some(codex_app_server_protocol::SandboxPolicy::DangerFullAccess),
+                sandbox_policy: Some(genex_app_server_protocol::SandboxPolicy::DangerFullAccess),
                 ..Default::default()
             },
         })
@@ -5444,7 +5444,7 @@ async fn turn_start_with_elevated_override_does_not_persist_project_trust() -> R
             params: TurnStartParams {
                 thread_id: thread.id,
                 cwd: Some(workspace.path().to_path_buf()),
-                sandbox_policy: Some(codex_app_server_protocol::SandboxPolicy::DangerFullAccess),
+                sandbox_policy: Some(genex_app_server_protocol::SandboxPolicy::DangerFullAccess),
                 input: vec![V2UserInput::Text {
                     text: "Hello".to_string(),
                     text_elements: Vec::new(),

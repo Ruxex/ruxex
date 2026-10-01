@@ -1,6 +1,6 @@
 use super::CapabilityRootLocation;
 use super::SelectedCapabilityRoot;
-use codex_utils_path_uri::PathUri;
+use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 
 #[test]

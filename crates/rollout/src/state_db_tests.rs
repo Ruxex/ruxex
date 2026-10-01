@@ -7,12 +7,12 @@ use chrono::DateTime;
 use chrono::NaiveDateTime;
 use chrono::Timelike;
 use chrono::Utc;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::ThreadHistoryMode;
-use codex_protocol::protocol::UserMessageEvent;
-use codex_utils_absolute_path::test_support::PathExt;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::SessionMeta;
+use genex_protocol::protocol::SessionMetaLine;
+use genex_protocol::protocol::ThreadHistoryMode;
+use genex_protocol::protocol::UserMessageEvent;
+use genex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 use std::path::Path;
 use tempfile::TempDir;
@@ -53,14 +53,14 @@ fn cursor_to_anchor_preserves_recency_tie_breaker() {
 #[tokio::test]
 async fn list_threads_db_rejects_mismatched_sqlite_config_without_cleanup() -> anyhow::Result<()> {
     let root = TempDir::new().expect("temp dir");
-    let runtime_sqlite = codex_state::SqliteConfig::new_for_testing(
+    let runtime_sqlite = genex_state::SqliteConfig::new_for_testing(
         root.path().join("runtime-sqlite").as_path().abs(),
     );
-    let requested_sqlite = codex_state::SqliteConfig::new_for_testing(
+    let requested_sqlite = genex_state::SqliteConfig::new_for_testing(
         root.path().join("requested-sqlite").as_path().abs(),
     );
     let runtime =
-        codex_state::StateRuntime::init(runtime_sqlite, "test-provider".to_string()).await?;
+        genex_state::StateRuntime::init(runtime_sqlite, "test-provider".to_string()).await?;
     let thread_id = ThreadId::new();
     let metadata = ThreadMetadataBuilder::new(
         thread_id,
@@ -97,8 +97,8 @@ async fn list_threads_db_rejects_mismatched_sqlite_config_without_cleanup() -> a
 #[tokio::test]
 async fn try_init_waits_for_concurrent_startup_backfill() -> anyhow::Result<()> {
     let home = TempDir::new().expect("temp dir");
-    let runtime = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(home.path().abs()),
+    let runtime = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(home.path().abs()),
         "test-provider".to_string(),
     )
     .await?;
@@ -114,7 +114,7 @@ async fn try_init_waits_for_concurrent_startup_backfill() -> anyhow::Result<()> 
 
     let initialized = try_init_with_roots_and_backfill_lease(
         home.path().to_path_buf(),
-        codex_state::SqliteConfig::new_for_testing(home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(home.path().abs()),
         "test-provider".to_string(),
         /*backfill_lease_seconds*/ 60,
     )
@@ -122,7 +122,7 @@ async fn try_init_waits_for_concurrent_startup_backfill() -> anyhow::Result<()> 
     complete_backfill.await??;
     assert_eq!(
         initialized.get_backfill_state().await?.status,
-        codex_state::BackfillStatus::Complete
+        genex_state::BackfillStatus::Complete
     );
 
     Ok(())
@@ -131,8 +131,8 @@ async fn try_init_waits_for_concurrent_startup_backfill() -> anyhow::Result<()> 
 #[tokio::test]
 async fn try_init_times_out_waiting_for_stuck_startup_backfill() -> anyhow::Result<()> {
     let home = TempDir::new().expect("temp dir");
-    let runtime = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(home.path().abs()),
+    let runtime = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(home.path().abs()),
         "test-provider".to_string(),
     )
     .await?;
@@ -141,7 +141,7 @@ async fn try_init_times_out_waiting_for_stuck_startup_backfill() -> anyhow::Resu
 
     let result = try_init_with_roots_and_backfill_lease(
         home.path().to_path_buf(),
-        codex_state::SqliteConfig::new_for_testing(home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(home.path().abs()),
         "test-provider".to_string(),
         /*backfill_lease_seconds*/ 60,
     )
@@ -169,8 +169,8 @@ async fn reconcile_rollout_preserves_existing_explicit_title() -> anyhow::Result
         "Hey",
         ThreadHistoryMode::Paginated,
     )?;
-    let runtime = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(home.path().abs()),
+    let runtime = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(home.path().abs()),
         "test-provider".to_string(),
     )
     .await?;
@@ -222,8 +222,8 @@ async fn filesystem_repair_preserves_existing_rollout_path() -> anyhow::Result<(
         "Current",
         ThreadHistoryMode::Paginated,
     )?;
-    let runtime = codex_state::StateRuntime::init(
-        codex_state::SqliteConfig::new_for_testing(home.path().abs()),
+    let runtime = genex_state::StateRuntime::init(
+        genex_state::SqliteConfig::new_for_testing(home.path().abs()),
         "test-provider".to_string(),
     )
     .await?;

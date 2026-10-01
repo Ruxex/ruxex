@@ -3,8 +3,8 @@ pub mod auth_env_telemetry;
 mod outbound_proxy;
 pub mod test_support;
 
-pub use codex_config::types::AuthCredentialsStoreMode;
-pub use codex_http_client::BuildCustomCaTransportError as BuildLoginHttpClientError;
+pub use genex_config::types::AuthCredentialsStoreMode;
+pub use genex_http_client::BuildCustomCaTransportError as BuildLoginHttpClientError;
 
 pub use auth::AuthChangeState;
 pub use auth::AuthConfig;

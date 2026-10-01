@@ -4,12 +4,12 @@ use std::path::Path;
 #[cfg(unix)]
 use std::sync::Arc;
 
-use codex_exec_server::LOCAL_FS;
+use genex_exec_server::LOCAL_FS;
 #[cfg(unix)]
-use codex_protocol::protocol::SkillScope;
+use genex_protocol::protocol::SkillScope;
 #[cfg(unix)]
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathUri;
+use genex_utils_absolute_path::AbsolutePathBuf;
+use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 

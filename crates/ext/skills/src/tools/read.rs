@@ -1,12 +1,12 @@
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use codex_extension_api::FunctionCallError;
-use codex_extension_api::ToolCall;
-use codex_extension_api::ToolExecutor;
-use codex_extension_api::ToolExecutorFuture;
-use codex_extension_api::ToolName;
-use codex_extension_api::ToolSpec;
+use genex_extension_api::FunctionCallError;
+use genex_extension_api::ToolCall;
+use genex_extension_api::ToolExecutor;
+use genex_extension_api::ToolExecutorFuture;
+use genex_extension_api::ToolName;
+use genex_extension_api::ToolSpec;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;

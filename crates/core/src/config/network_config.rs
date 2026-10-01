@@ -7,17 +7,17 @@
 //! Environment policy conversion drops listener addresses, and final validation
 //! uses the same policy resolver as command execution.
 
-use codex_config::NetworkConstraints;
-use codex_config::Sourced;
-use codex_config::permissions_toml::NetworkToml;
-use codex_execpolicy::Policy;
-use codex_features::FeatureToml;
-use codex_features::FeaturesToml;
-use codex_network_proxy::EnvironmentNetworkPolicy;
-use codex_network_proxy::NetworkProxyConfig;
-use codex_network_proxy::NetworkProxyConstraints;
-use codex_network_proxy::build_config_state;
-use codex_protocol::models::PermissionProfile;
+use genex_config::NetworkConstraints;
+use genex_config::Sourced;
+use genex_config::permissions_toml::NetworkToml;
+use genex_execpolicy::Policy;
+use genex_features::FeatureToml;
+use genex_features::FeaturesToml;
+use genex_network_proxy::EnvironmentNetworkPolicy;
+use genex_network_proxy::NetworkProxyConfig;
+use genex_network_proxy::NetworkProxyConstraints;
+use genex_network_proxy::build_config_state;
+use genex_protocol::models::PermissionProfile;
 
 use super::NetworkProxySpec;
 use super::permissions::apply_network_proxy_feature_config;

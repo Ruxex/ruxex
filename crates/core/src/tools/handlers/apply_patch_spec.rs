@@ -1,6 +1,6 @@
-use codex_tools::FreeformTool;
-use codex_tools::FreeformToolFormat;
-use codex_tools::ToolSpec;
+use genex_tools::FreeformTool;
+use genex_tools::FreeformToolFormat;
+use genex_tools::ToolSpec;
 
 const APPLY_PATCH_LARK_GRAMMAR: &str = include_str!("../../../assets/tools/apply_patch.lark");
 
