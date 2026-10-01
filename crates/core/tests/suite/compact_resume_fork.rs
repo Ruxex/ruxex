@@ -10,7 +10,7 @@ use super::compact::FIRST_REPLY;
 use super::compact::SUMMARY_TEXT;
 use anyhow::Context;
 use anyhow::Result;
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 use genex_core::ThreadManager;
 use genex_core::TurnInputRequest;
 use genex_core::compact::SUMMARIZATION_PROMPT;
@@ -614,7 +614,7 @@ async fn mount_second_compact_sequence(server: &MockServer) -> ResponseMock {
 async fn start_test_conversation(
     server: &MockServer,
     model: Option<&str>,
-) -> (Arc<TempDir>, Config, Arc<ThreadManager>, Arc<CodexThread>) {
+) -> (Arc<TempDir>, Config, Arc<ThreadManager>, Arc<GenexThread>) {
     let base_url = format!("{}/v1", server.uri());
     let model = model.map(str::to_string);
     let mut extensions = ExtensionRegistryBuilder::new();
@@ -636,7 +636,7 @@ async fn start_test_conversation(
     (test.home, test.config, test.thread_manager, test.codex)
 }
 
-async fn user_turn(conversation: &Arc<CodexThread>, text: &str) {
+async fn user_turn(conversation: &Arc<GenexThread>, text: &str) {
     conversation
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: text.into(),
@@ -648,7 +648,7 @@ async fn user_turn(conversation: &Arc<CodexThread>, text: &str) {
     ThreadIdle::wait(conversation).await;
 }
 
-async fn compact_conversation(conversation: &Arc<CodexThread>) {
+async fn compact_conversation(conversation: &Arc<GenexThread>) {
     conversation
         .submit(Op::Compact)
         .await
@@ -668,11 +668,11 @@ async fn compact_conversation(conversation: &Arc<CodexThread>) {
     ThreadIdle::wait(conversation).await;
 }
 
-fn fetch_conversation_path(conversation: &Arc<CodexThread>) -> std::path::PathBuf {
+fn fetch_conversation_path(conversation: &Arc<GenexThread>) -> std::path::PathBuf {
     conversation.rollout_path().expect("rollout path")
 }
 
-async fn shutdown_conversation(conversation: &Arc<CodexThread>) {
+async fn shutdown_conversation(conversation: &Arc<GenexThread>) {
     conversation
         .shutdown_and_wait()
         .await
@@ -683,7 +683,7 @@ async fn resume_conversation(
     manager: &ThreadManager,
     config: &Config,
     path: std::path::PathBuf,
-) -> Arc<CodexThread> {
+) -> Arc<GenexThread> {
     let auth_manager = genex_core::test_support::auth_manager_from_auth(
         genex_login::CodexAuth::from_api_key("dummy"),
     );
@@ -705,7 +705,7 @@ async fn fork_thread(
     config: &Config,
     path: std::path::PathBuf,
     nth_user_message: usize,
-) -> Arc<CodexThread> {
+) -> Arc<GenexThread> {
     Box::pin(manager.fork_thread(
         nth_user_message,
         genex_core::StartThreadOptions::new(config.clone()),

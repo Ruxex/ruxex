@@ -365,7 +365,7 @@ fn user_message_request(text: &str) -> TurnInputRequest {
 }
 
 async fn submit_user_message(
-    codex: &genex_core::CodexThread,
+    codex: &genex_core::GenexThread,
     text: &str,
 ) -> genex_protocol::error::Result<TurnInputSubmission> {
     codex.start_or_steer_turn(user_message_request(text)).await

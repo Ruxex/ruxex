@@ -1,5 +1,5 @@
 use crate::config_manager::ConfigManager;
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 use genex_core::ThreadManager;
 use genex_core::config::Config;
 use std::io;
@@ -70,7 +70,7 @@ pub(crate) async fn reload_mcp_config_best_effort(
 }
 
 async fn load_refresh_config(
-    thread: &CodexThread,
+    thread: &GenexThread,
     config_manager: &ConfigManager,
 ) -> io::Result<Config> {
     let thread_config = thread.config().await;

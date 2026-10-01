@@ -108,7 +108,7 @@ fn count_containing(texts: &[&str], target: &str) -> usize {
 }
 
 async fn submit_turn(
-    codex: &genex_core::CodexThread,
+    codex: &genex_core::GenexThread,
     prompt: &str,
     effort: Option<ReasoningEffort>,
 ) -> Result<()> {

@@ -8,7 +8,7 @@ use std::time::SystemTime;
 
 use anyhow::Context;
 use anyhow::Result;
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 use genex_core::TurnInputRequest;
 use genex_features::Feature;
 use genex_history::InitialHistory;
@@ -217,7 +217,7 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
 
 async fn turn(
     server: &MockServer,
-    thread: &Arc<CodexThread>,
+    thread: &Arc<GenexThread>,
     prompt: &str,
     reply: &str,
 ) -> Result<ResponseMock> {

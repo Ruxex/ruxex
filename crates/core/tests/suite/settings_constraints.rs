@@ -1,6 +1,6 @@
 use anyhow::Result;
 use genex_config::test_support::CloudConfigBundleFixture;
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 use genex_core::TurnInputRequest;
 use genex_core::TurnInputSubmission;
 use genex_core::config::Constrained;
@@ -41,7 +41,7 @@ enum SettingsOperation {
 impl SettingsOperation {
     async fn submit(
         self,
-        codex: &CodexThread,
+        codex: &GenexThread,
         thread_settings: ThreadSettingsOverrides,
     ) -> Result<ThreadSettingsSnapshot> {
         let id = match self {

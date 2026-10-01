@@ -1,7 +1,7 @@
 use core_test_support::test_genex::local_selections;
 use std::sync::Arc;
 
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 use genex_core::StartIfIdleSubmission;
 use genex_core::TurnInput;
 use genex_core::TurnInputRequest;
@@ -316,7 +316,7 @@ fn response_completed_chunks(response_id: &str) -> Vec<StreamingSseChunk> {
     ]
 }
 
-async fn build_codex(server: &StreamingSseServer) -> Arc<CodexThread> {
+async fn build_codex(server: &StreamingSseServer) -> Arc<GenexThread> {
     test_codex()
         .with_config(|config| config.update_plan_enabled = true)
         .with_model("gpt-5.4")
@@ -326,7 +326,7 @@ async fn build_codex(server: &StreamingSseServer) -> Arc<CodexThread> {
         .codex
 }
 
-async fn submit_user_input(codex: &CodexThread, text: &str) {
+async fn submit_user_input(codex: &GenexThread, text: &str) {
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: text.to_string(),
@@ -365,7 +365,7 @@ async fn submit_danger_full_access_user_turn(test: &TestCodex, text: &str) {
         .expect("submit user turn");
 }
 
-async fn steer_user_input(codex: &CodexThread, text: &str) {
+async fn steer_user_input(codex: &GenexThread, text: &str) {
     let submission = codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: text.to_string(),
@@ -376,7 +376,7 @@ async fn steer_user_input(codex: &CodexThread, text: &str) {
     assert!(matches!(submission, TurnInputSubmission::Steered { .. }));
 }
 
-async fn enqueue_queue_only_agent_mail(codex: &CodexThread, text: &str) {
+async fn enqueue_queue_only_agent_mail(codex: &GenexThread, text: &str) {
     codex
         .submit(Op::InterAgentCommunication {
             communication: InterAgentCommunication::new(
@@ -392,7 +392,7 @@ async fn enqueue_queue_only_agent_mail(codex: &CodexThread, text: &str) {
         .expect("submit queue-only agent mail");
 }
 
-async fn submit_queue_only_agent_mail(codex: &CodexThread, text: &str) {
+async fn submit_queue_only_agent_mail(codex: &GenexThread, text: &str) {
     enqueue_queue_only_agent_mail(codex, text).await;
     codex
         .submit(Op::RealtimeConversationListVoices)
@@ -404,7 +404,7 @@ async fn submit_queue_only_agent_mail(codex: &CodexThread, text: &str) {
     .await;
 }
 
-async fn wait_for_reasoning_item_started(codex: &CodexThread) {
+async fn wait_for_reasoning_item_started(codex: &GenexThread) {
     wait_for_event(codex, |event| {
         matches!(
             event,
@@ -415,7 +415,7 @@ async fn wait_for_reasoning_item_started(codex: &CodexThread) {
     .await;
 }
 
-async fn wait_for_agent_message(codex: &CodexThread, text: &str) {
+async fn wait_for_agent_message(codex: &GenexThread, text: &str) {
     let final_message = wait_for_event(
         codex,
         |event| matches!(event, EventMsg::AgentMessage(message) if message.message == text),
@@ -424,11 +424,11 @@ async fn wait_for_agent_message(codex: &CodexThread, text: &str) {
     assert!(matches!(final_message, EventMsg::AgentMessage(_)));
 }
 
-async fn wait_for_turn_complete(codex: &CodexThread) {
+async fn wait_for_turn_complete(codex: &GenexThread) {
     wait_for_event(codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 }
 
-async fn wait_for_sleep_item_started(codex: &CodexThread, call_id: &str, duration_ms: u64) {
+async fn wait_for_sleep_item_started(codex: &GenexThread, call_id: &str, duration_ms: u64) {
     let event = wait_for_event(codex, |event| {
         matches!(
             event,
@@ -455,7 +455,7 @@ async fn wait_for_sleep_item_started(codex: &CodexThread, call_id: &str, duratio
     );
 }
 
-async fn wait_for_sleep_item_completed(codex: &CodexThread, call_id: &str, duration_ms: u64) {
+async fn wait_for_sleep_item_completed(codex: &GenexThread, call_id: &str, duration_ms: u64) {
     let event = wait_for_event(codex, |event| {
         matches!(
             event,

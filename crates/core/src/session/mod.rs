@@ -190,7 +190,7 @@ use tracing::warn;
 use uuid::Uuid;
 
 use crate::client::ModelClient;
-use crate::genex_thread::CodexThreadSettingsOverrides;
+use crate::genex_thread::GenexThreadSettingsOverrides;
 use crate::genex_thread::ThreadConfigSnapshot;
 #[cfg(test)]
 use crate::compact::collect_user_messages;
@@ -1821,7 +1821,7 @@ impl Session {
             .thread_settings_snapshot(&self.services.turn_environments.selections())
     }
 
-    pub(crate) async fn restorable_thread_settings(&self) -> CodexThreadSettingsOverrides {
+    pub(crate) async fn restorable_thread_settings(&self) -> GenexThreadSettingsOverrides {
         let state = self.state.lock().await;
         state
             .session_configuration

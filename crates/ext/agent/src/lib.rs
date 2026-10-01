@@ -1,4 +1,4 @@
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 use genex_core::NewThread;
 use genex_core::StartIfIdleSubmission;
 use genex_core::StartThreadOptions;
@@ -27,7 +27,7 @@ pub struct AgentInvocation {
 pub struct AgentRun {
     pub thread_id: ThreadId,
     pub turn_id: String,
-    pub thread: Arc<CodexThread>,
+    pub thread: Arc<GenexThread>,
 }
 
 /// Runs resolved agents in threads forked by the owning [`ThreadManager`].

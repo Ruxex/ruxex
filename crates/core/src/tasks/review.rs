@@ -20,7 +20,7 @@ use genex_protocol::review_format::format_review_findings_block;
 use genex_protocol::review_format::render_review_output_text;
 use tokio_util::sync::CancellationToken;
 
-use crate::genex_delegate::run_codex_thread_one_shot;
+use crate::genex_delegate::run_genex_thread_one_shot;
 use crate::config::Constrained;
 use crate::session::TurnInput;
 use crate::session::session::Session;
@@ -121,7 +121,7 @@ async fn start_review_conversation(
     sub_agent_config.permissions.approval_policy = Constrained::allow_only(AskForApproval::Never);
 
     sub_agent_config.model = Some(ctx.model_info().slug.clone());
-    (run_codex_thread_one_shot(
+    (run_genex_thread_one_shot(
         sub_agent_config,
         Arc::clone(&session.services.auth_manager),
         Arc::clone(&session.services.models_manager),

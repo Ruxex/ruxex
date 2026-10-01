@@ -94,7 +94,7 @@ async fn start_remote_realtime_server() -> responses::WebSocketTestServer {
     .await
 }
 
-async fn start_realtime_conversation(codex: &genex_core::CodexThread) -> Result<()> {
+async fn start_realtime_conversation(codex: &genex_core::GenexThread) -> Result<()> {
     codex
         .submit(Op::RealtimeConversationStart(ConversationStartParams {
             client_managed_handoffs: false,
@@ -142,7 +142,7 @@ async fn start_realtime_conversation(codex: &genex_core::CodexThread) -> Result<
     Ok(())
 }
 
-async fn close_realtime_conversation(codex: &genex_core::CodexThread) -> Result<()> {
+async fn close_realtime_conversation(codex: &genex_core::GenexThread) -> Result<()> {
     codex.submit(Op::RealtimeConversationClose).await?;
     wait_for_event_match(codex, |msg| match msg {
         EventMsg::RealtimeConversationClosed(closed) => Some(closed.clone()),
@@ -171,7 +171,7 @@ fn assert_request_contains_custom_realtime_start(
     );
 }
 
-async fn wait_for_turn_complete(codex: &genex_core::CodexThread) {
+async fn wait_for_turn_complete(codex: &genex_core::GenexThread) {
     wait_for_event_with_timeout(
         codex,
         |ev| matches!(ev, EventMsg::TurnComplete(_)),

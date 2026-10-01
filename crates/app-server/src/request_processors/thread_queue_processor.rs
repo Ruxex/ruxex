@@ -23,7 +23,7 @@ use genex_app_server_protocol::Turn;
 use genex_app_server_protocol::TurnItemsView;
 use genex_app_server_protocol::TurnStatus;
 use genex_app_server_protocol::UserInput;
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 use genex_core::NotSubmittedReason;
 use genex_core::StartIfIdleSubmission;
 use genex_core::ThreadManager;
@@ -249,7 +249,7 @@ impl ThreadQueueRequestProcessor {
     async fn require_thread(
         &self,
         raw_thread_id: &str,
-    ) -> Result<(ThreadId, Option<Arc<CodexThread>>, SessionSource), JSONRPCErrorError> {
+    ) -> Result<(ThreadId, Option<Arc<GenexThread>>, SessionSource), JSONRPCErrorError> {
         let thread_id = ThreadId::from_string(raw_thread_id)
             .map_err(|error| invalid_request(format!("invalid thread id: {error}")))?;
         let (loaded_thread, source) = if let Ok(thread) =
@@ -290,7 +290,7 @@ impl ThreadQueueRequestProcessor {
 }
 
 fn ensure_direct_input_allowed(
-    loaded_thread: Option<&CodexThread>,
+    loaded_thread: Option<&GenexThread>,
     source: &SessionSource,
 ) -> Result<(), JSONRPCErrorError> {
     match loaded_thread {

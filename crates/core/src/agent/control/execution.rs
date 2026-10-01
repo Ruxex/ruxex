@@ -1,5 +1,5 @@
 use super::AgentControl;
-use crate::genex_thread::CodexThread;
+use crate::genex_thread::GenexThread;
 use genex_protocol::error::CodexErr;
 use genex_protocol::error::CodexErrorDetails;
 use genex_protocol::error::Result as CodexResult;
@@ -29,7 +29,7 @@ impl Drop for AgentExecutionGuard {
 impl AgentControl {
     pub(crate) async fn ensure_execution_capacity_for_turn_start(
         &self,
-        thread: &CodexThread,
+        thread: &GenexThread,
     ) -> CodexResult<()> {
         if thread.session.active_turn.lock().await.is_some() {
             return Ok(());

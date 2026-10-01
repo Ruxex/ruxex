@@ -9,7 +9,7 @@ use std::sync::OnceLock;
 use tempfile::TempDir;
 
 use genex_config::LoaderOverrides;
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 use genex_core::config::Config;
 use genex_core::config::ConfigBuilder;
 use genex_core::config::ConfigOverrides;
@@ -234,7 +234,7 @@ pub fn find_codex_linux_sandbox_exe() -> Result<PathBuf, CargoBinError> {
 }
 
 pub async fn wait_for_event<F>(
-    codex: &CodexThread,
+    codex: &GenexThread,
     predicate: F,
 ) -> genex_protocol::protocol::EventMsg
 where
@@ -245,7 +245,7 @@ where
 }
 
 /// Waits for a configured MCP server to finish startup and requires it to be ready.
-pub async fn wait_for_mcp_server(codex: &CodexThread, server_name: &str) -> anyhow::Result<()> {
+pub async fn wait_for_mcp_server(codex: &GenexThread, server_name: &str) -> anyhow::Result<()> {
     use genex_protocol::protocol::EventMsg;
 
     // Wait for the startup summary regardless of outcome, then interpret the
@@ -278,7 +278,7 @@ pub async fn wait_for_mcp_server(codex: &CodexThread, server_name: &str) -> anyh
 }
 
 pub async fn submit_thread_settings(
-    codex: &CodexThread,
+    codex: &GenexThread,
     thread_settings: genex_protocol::protocol::ThreadSettingsOverrides,
 ) -> anyhow::Result<()> {
     use genex_protocol::protocol::EventMsg;
@@ -325,7 +325,7 @@ impl genex_extension_api::ThreadLifecycleContributor<Config> for ThreadIdle {
 }
 
 impl ThreadIdle {
-    pub async fn wait(thread: &CodexThread) {
+    pub async fn wait(thread: &GenexThread) {
         // TurnComplete is sent before active-turn cleanup. Rollback requires the later idle signal.
         let idle = thread
             .thread_extension_data()
@@ -336,7 +336,7 @@ impl ThreadIdle {
     }
 }
 
-pub async fn wait_for_event_match<T, F>(codex: &CodexThread, matcher: F) -> T
+pub async fn wait_for_event_match<T, F>(codex: &GenexThread, matcher: F) -> T
 where
     F: Fn(&genex_protocol::protocol::EventMsg) -> Option<T>,
 {
@@ -345,7 +345,7 @@ where
 }
 
 pub async fn wait_for_event_with_timeout<F>(
-    codex: &CodexThread,
+    codex: &GenexThread,
     mut predicate: F,
     wait_time: tokio::time::Duration,
 ) -> genex_protocol::protocol::EventMsg

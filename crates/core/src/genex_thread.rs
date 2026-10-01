@@ -132,7 +132,7 @@ impl ThreadConfigSnapshot {
 
 /// Thread settings overrides that app-server validates before starting a turn.
 #[derive(Clone, Default)]
-pub struct CodexThreadSettingsOverrides {
+pub struct GenexThreadSettingsOverrides {
     pub environments: Option<TurnEnvironmentSelections>,
     pub runtime_workspace_roots: Option<Vec<AbsolutePathBuf>>,
     pub profile_workspace_roots: Option<Vec<ProfileWorkspaceRoot>>,
@@ -149,7 +149,7 @@ pub struct CodexThreadSettingsOverrides {
     pub disabled_plugin_ids: Option<Vec<String>>,
 }
 
-pub struct CodexThread {
+pub struct GenexThread {
     pub(crate) session: Arc<Session>,
     pub(crate) io: SessionIo,
     // Registration source controls live access and lifecycle hooks.
@@ -176,7 +176,7 @@ pub struct BackgroundTerminalInfo {
 
 /// Conduit for the bidirectional stream of messages that compose a thread
 /// (formerly called a conversation) in Codex.
-impl CodexThread {
+impl GenexThread {
     pub(crate) fn new(
         session: Arc<Session>,
         io: SessionIo,
@@ -478,7 +478,7 @@ impl CodexThread {
     /// Injects model-visible items into the currently active turn.
     ///
     /// This is the thread-level bridge to `Session::inject_if_running` for
-    /// callers that only hold a `CodexThread`.
+    /// callers that only hold a `GenexThread`.
     /// It returns the unchanged items when this thread has no active turn.
     pub async fn inject_if_running(
         &self,
@@ -522,7 +522,7 @@ impl CodexThread {
     /// Preview persistent thread settings overrides without committing them.
     pub async fn preview_thread_settings_overrides(
         &self,
-        overrides: CodexThreadSettingsOverrides,
+        overrides: GenexThreadSettingsOverrides,
     ) -> ConstraintResult<ThreadConfigSnapshot> {
         let updates = Self::thread_settings_update(overrides);
         self.session.preview_settings(&updates).await
@@ -534,7 +534,7 @@ impl CodexThread {
     /// rather than reverting to the original layer-backed config.
     pub async fn restore_thread_settings(
         &self,
-        settings: CodexThreadSettingsOverrides,
+        settings: GenexThreadSettingsOverrides,
     ) -> ConstraintResult<()> {
         let updates = Self::thread_settings_update(settings);
         self.session.update_settings(updates).await.map(|_| ())
@@ -547,8 +547,8 @@ impl CodexThread {
         self.session.checkpoint_thread_settings().await
     }
 
-    fn thread_settings_update(overrides: CodexThreadSettingsOverrides) -> SessionSettingsUpdate {
-        let CodexThreadSettingsOverrides {
+    fn thread_settings_update(overrides: GenexThreadSettingsOverrides) -> SessionSettingsUpdate {
+        let GenexThreadSettingsOverrides {
             environments,
             runtime_workspace_roots,
             profile_workspace_roots,
@@ -751,7 +751,7 @@ impl CodexThread {
     }
 
     /// Captures thread-owned settings and environment selections for runtime restoration.
-    pub async fn restorable_thread_settings(&self) -> CodexThreadSettingsOverrides {
+    pub async fn restorable_thread_settings(&self) -> GenexThreadSettingsOverrides {
         self.session.restorable_thread_settings().await
     }
 

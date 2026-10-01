@@ -17,7 +17,7 @@ use genex_app_server_protocol::ThreadTokenUsage;
 use genex_app_server_protocol::ThreadTokenUsageUpdatedNotification;
 use genex_app_server_protocol::Turn;
 use genex_app_server_protocol::TurnStatus;
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 use genex_protocol::ThreadId;
 use genex_protocol::protocol::EventMsg;
 use genex_rollout::RolloutItem;
@@ -36,7 +36,7 @@ pub(super) async fn send_thread_token_usage_update_to_connection(
     outgoing: &Arc<OutgoingMessageSender>,
     connection_id: ConnectionId,
     thread_id: ThreadId,
-    conversation: &CodexThread,
+    conversation: &GenexThread,
     token_usage_turn_id: String,
 ) {
     let Some(info) = conversation.token_usage_info().await else {

@@ -318,8 +318,8 @@ impl SessionConfiguration {
     pub(super) fn restorable_thread_settings(
         &self,
         environment_selections: Vec<TurnEnvironmentSelection>,
-    ) -> CodexThreadSettingsOverrides {
-        CodexThreadSettingsOverrides {
+    ) -> GenexThreadSettingsOverrides {
+        GenexThreadSettingsOverrides {
             environments: Some(TurnEnvironmentSelections::new(
                 self.legacy_fallback_cwd.clone(),
                 environment_selections,

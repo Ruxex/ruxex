@@ -7,7 +7,7 @@ use genex_app_server_protocol::ThreadItem;
 use genex_app_server_protocol::ThreadSettings;
 use genex_app_server_protocol::Turn;
 use genex_app_server_protocol::TurnError;
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 use genex_core::ThreadConfigSnapshot;
 use genex_file_watcher::WatchRegistration;
 use genex_protocol::ThreadId;
@@ -113,12 +113,12 @@ pub(crate) struct ThreadState {
     last_thread_settings: Option<ThreadSettings>,
     listener_command_tx: Option<mpsc::UnboundedSender<ThreadListenerCommand>>,
     current_turn_history: ThreadHistoryBuilder,
-    listener_thread: Option<Weak<CodexThread>>,
+    listener_thread: Option<Weak<GenexThread>>,
     watch_registration: WatchRegistration,
 }
 
 impl ThreadState {
-    pub(crate) fn listener_matches(&self, conversation: &Arc<CodexThread>) -> bool {
+    pub(crate) fn listener_matches(&self, conversation: &Arc<GenexThread>) -> bool {
         self.listener_thread
             .as_ref()
             .and_then(Weak::upgrade)
@@ -128,7 +128,7 @@ impl ThreadState {
     pub(crate) fn set_listener(
         &mut self,
         cancel_tx: oneshot::Sender<()>,
-        conversation: &Arc<CodexThread>,
+        conversation: &Arc<GenexThread>,
         watch_registration: WatchRegistration,
         thread_settings_baseline: ThreadSettings,
     ) -> (mpsc::UnboundedReceiver<ThreadListenerCommand>, u64) {

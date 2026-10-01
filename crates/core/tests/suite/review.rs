@@ -1,4 +1,4 @@
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 use genex_core::REVIEW_PROMPT;
 use genex_core::TurnInputRequest;
 use genex_core::config::Config;
@@ -1412,7 +1412,7 @@ async fn new_conversation_for_server<F>(
     server: &MockServer,
     codex_home: Arc<TempDir>,
     mutator: F,
-) -> Arc<CodexThread>
+) -> Arc<GenexThread>
 where
     F: FnOnce(&mut Config) + Send + 'static,
 {
@@ -1436,7 +1436,7 @@ async fn resume_conversation_for_server<F>(
     codex_home: Arc<TempDir>,
     resume_path: std::path::PathBuf,
     mutator: F,
-) -> Arc<CodexThread>
+) -> Arc<GenexThread>
 where
     F: FnOnce(&mut Config) + Send + 'static,
 {

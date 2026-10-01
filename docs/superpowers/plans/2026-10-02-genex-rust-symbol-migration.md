@@ -200,19 +200,19 @@ Task 0 の coverage matrix は workspace member ごとに次のいずれかを�
 - Consumes: Task 3 の crate-local model decisions と Task 0 の complete consumer map。
 - Produces: `GenexThread`、`GenexThreadSettingsOverrides` など、workspace 内で完全に列挙された Genex public API。外部 wire/persisted name は保持する。
 
-- [ ] **Step 1: public re-export と dynamic/test consumer を列挙する**
+- [x] **Step 1: public re-export と dynamic/test consumer を列挙する**
 
   `genex-core`、`genex-core-api`、app-server、TUI、extension、integration test の import/re-export を一覧化する。Hawk の source-location は生成監査資料として別扱いにする。
 
-- [ ] **Step 2: `CodexThread` family を一単位で migrate する**
+- [x] **Step 2: `CodexThread` family を一単位で migrate する**
 
   `CodexThread`、`CodexThreadSettingsOverrides`、対象の `run_codex_thread_*` private/public functions を、consumer map に沿って変更する。thread id、rollout path、session history、SQLite field は変更しない。
 
-- [ ] **Step 3: compile and generated verification**
+- [x] **Step 3: compile and generated verification**
 
   Run: `just check --tests`, `just check`, `just generate`。generated schema、Hawk source path、snapshot の変更は内容を確認し、symbol rename に必須でない差分は戻す。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
   `git commit -m "Rename core thread APIs to Genex"`
 

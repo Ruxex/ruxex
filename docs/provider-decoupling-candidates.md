@@ -110,6 +110,16 @@ producer/consumer boundary:
 `genex-utils-redacted-string`, `genex-utils-sandbox-summary`, `genex-utils-stream-parser`,
 `genex-utils-string`.
 
+## 0.5 Genex Rust symbol waves (2026-10-02)
+
+| Symbol family | Producer/consumer audit | Decision |
+|---|---|---|
+| `genex-app-server-test-client::CodexClient`, leaf private helpers, CLI test command helpers, and TUI resize test helper | Definitions and consumers are private to test/client crates; no wire, persisted, or external binary name is changed. | `migrate-in-place` to Genex names (completed in Task 1) |
+| `genex-install-context::{CodexPackageLayout,CodexPackageManifest}` | Consumers are `genex-arg0`, `genex-linux-sandbox`, `genex-cli`, and `genex-app-server-daemon`; manifest field names, install paths, and binary names remain unchanged. | `migrate-in-place` to `GenexPackage*` (completed in Task 2) |
+| `genex-core::{CodexResponsesMetadata,CodexResponsesRequestKind,CodexTurnMetadataPayload}` and `genex-exec::CodexStatus` | All workspace consumers were enumerated. Rust type names are not wire keys or JSONL status values; `x-codex-*` metadata keys and event values remain unchanged. | `migrate-in-place` to `Genex*` (completed in Task 3) |
+| `genex-core::{CodexThread,CodexThreadSettingsOverrides}` and private `run_codex_thread_*` runners | Consumers include core-api re-exports, app-server, TUI, extensions, CLI, and integration tests. Thread IDs, rollout/session paths, persisted fields, and protocol names are separate boundaries and remain unchanged. | `migrate-in-place` to `Genex*` (completed in Task 4) |
+| `genex-rollout-trace::{CodexTurn,CodexTurnId,CodexTurnTraceEvent,codex_turn_trace_event}` and `codex_turn_id` serialized fields | Trace model producers/reducers and raw event payloads use these names in serialized/persisted structures. | `defer` to protocol/persisted-data audit; retain serialized names until that decision |
+
 ## 1. 参照元が見つからないクレート・ソース
 
 | 対象 | 現時点の観測 | 現時点の扱い |

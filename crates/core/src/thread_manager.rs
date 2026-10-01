@@ -3,7 +3,7 @@ mod managed;
 use crate::agent::AgentControl;
 use crate::agents_md_manager::SessionInstructions;
 use crate::attestation::AttestationProvider;
-use crate::genex_thread::CodexThread;
+use crate::genex_thread::GenexThread;
 use crate::config::Config;
 use crate::config::ThreadStoreConfig;
 use crate::current_time::TimeProvider;
@@ -158,7 +158,7 @@ impl Drop for TempCodexHomeGuard {
 /// (which is [`EventMsg::SessionConfigured`]).
 pub struct NewThread {
     pub thread_id: ThreadId,
-    pub thread: Arc<CodexThread>,
+    pub thread: Arc<GenexThread>,
     pub session_configured: SessionConfiguredEvent,
 }
 
@@ -386,7 +386,7 @@ pub(crate) struct ResumeThreadWithHistoryOptions {
 /// `Arc` reference that can be downgraded to by `AgentControl` while preventing every single
 /// function to require an `Arc<&Self>`.
 pub(crate) struct ThreadManagerState {
-    threads: Arc<RwLock<HashMap<ThreadId, Arc<CodexThread>>>>,
+    threads: Arc<RwLock<HashMap<ThreadId, Arc<GenexThread>>>>,
     thread_created_tx: broadcast::Sender<ThreadId>,
     thread_id_generator: ThreadIdGenerator,
     auth_manager: Arc<AuthManager>,
@@ -839,13 +839,13 @@ impl ThreadManager {
         self.state.thread_created_tx.subscribe()
     }
 
-    pub async fn get_thread(&self, thread_id: ThreadId) -> CodexResult<Arc<CodexThread>> {
+    pub async fn get_thread(&self, thread_id: ThreadId) -> CodexResult<Arc<GenexThread>> {
         self.state.get_thread(thread_id).await
     }
 
     /// Updates metadata for loaded and cold threads through one entrypoint.
     ///
-    /// Loaded threads route through `CodexThread`/`LiveThread`, so metadata changes stay ordered
+    /// Loaded threads route through `GenexThread`/`LiveThread`, so metadata changes stay ordered
     /// with live rollout writes. Cold threads go directly to the store, which owns unloaded JSONL
     /// compatibility and SQLite metadata updates. This API always returns a materialized thread;
     /// if the store reports a successful no-op without one, it performs a fallback read.
@@ -1241,9 +1241,9 @@ impl ThreadManager {
     }
 
     /// Removes the thread from the manager's internal map, though the thread is stored
-    /// as `Arc<CodexThread>`, it is possible that other references to it exist elsewhere.
+    /// as `Arc<GenexThread>`, it is possible that other references to it exist elsewhere.
     /// Returns the thread if the thread was found and removed.
-    pub async fn remove_thread(&self, thread_id: &ThreadId) -> Option<Arc<CodexThread>> {
+    pub async fn remove_thread(&self, thread_id: &ThreadId) -> Option<Arc<GenexThread>> {
         self.state.threads.write().await.remove(thread_id)
     }
 
@@ -1252,7 +1252,7 @@ impl ThreadManager {
     pub async fn remove_thread_for_client(
         &self,
         thread_id: &ThreadId,
-    ) -> CodexResult<Option<Arc<CodexThread>>> {
+    ) -> CodexResult<Option<Arc<GenexThread>>> {
         let mut threads = self.state.threads.write().await;
         if threads
             .get(thread_id)
@@ -1272,8 +1272,8 @@ impl ThreadManager {
     pub async fn remove_thread_if_matches(
         &self,
         thread_id: &ThreadId,
-        expected: &Arc<CodexThread>,
-    ) -> Option<Arc<CodexThread>> {
+        expected: &Arc<GenexThread>,
+    ) -> Option<Arc<GenexThread>> {
         let mut threads = self.state.threads.write().await;
         if threads
             .get(thread_id)
@@ -1551,7 +1551,7 @@ impl ThreadManagerState {
     }
 
     /// Fetch a thread by ID or return ThreadNotFound.
-    pub(crate) async fn get_thread(&self, thread_id: ThreadId) -> CodexResult<Arc<CodexThread>> {
+    pub(crate) async fn get_thread(&self, thread_id: ThreadId) -> CodexResult<Arc<GenexThread>> {
         let threads = self.threads.read().await;
         match threads.get(&thread_id) {
             Some(thread) if !thread.session_source.is_internal() => Ok(thread.clone()),
@@ -1624,7 +1624,7 @@ impl ThreadManagerState {
     }
 
     /// Remove a thread from the manager by ID, returning it when present.
-    pub(crate) async fn remove_thread(&self, thread_id: &ThreadId) -> Option<Arc<CodexThread>> {
+    pub(crate) async fn remove_thread(&self, thread_id: &ThreadId) -> Option<Arc<GenexThread>> {
         self.threads.write().await.remove(thread_id)
     }
 
@@ -2176,7 +2176,7 @@ impl ThreadManagerState {
         {
             let mut threads = self.threads.write().await;
             if let std::collections::hash_map::Entry::Vacant(e) = threads.entry(thread_id) {
-                let thread = Arc::new(CodexThread::new(
+                let thread = Arc::new(GenexThread::new(
                     session,
                     io,
                     session_configured.clone(),

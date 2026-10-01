@@ -240,7 +240,7 @@ fn assert_single_instruction_fragment(request: &responses::ResponsesRequest, exp
     assert_eq!(instruction_fragments(request), vec![expected.to_string()]);
 }
 
-async fn submit_thread_turn(thread: &Arc<genex_core::CodexThread>, prompt: &str) -> Result<()> {
+async fn submit_thread_turn(thread: &Arc<genex_core::GenexThread>, prompt: &str) -> Result<()> {
     thread
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: prompt.to_string(),
@@ -252,7 +252,7 @@ async fn submit_thread_turn(thread: &Arc<genex_core::CodexThread>, prompt: &str)
 }
 
 async fn persisted_resume_history(
-    thread: &Arc<genex_core::CodexThread>,
+    thread: &Arc<genex_core::GenexThread>,
 ) -> Result<(ThreadId, InitialHistory)> {
     thread.ensure_rollout_materialized().await;
     thread.flush_rollout().await?;
@@ -1075,7 +1075,7 @@ async fn loads_user_instructions_without_a_primary_environment() -> Result<()> {
 
 struct ThreadInstructionsFixture {
     test: TestCodex,
-    thread: Arc<genex_core::CodexThread>,
+    thread: Arc<genex_core::GenexThread>,
     provider: Arc<RecordingThreadInstructionsProvider>,
 }
 

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 use genex_core::ForkSnapshot;
 use genex_core::TurnInputRequest;
 use genex_core::config::Constrained;
@@ -84,7 +84,7 @@ fn read_only_user_turn(test: &TestCodex, items: Vec<UserInput>, model: String) -
 }
 
 async fn submit_model_turn(
-    thread: &CodexThread,
+    thread: &GenexThread,
     model: &str,
     mut thread_settings: ThreadSettingsOverrides,
 ) -> Result<()> {

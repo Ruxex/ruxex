@@ -5,7 +5,7 @@ use std::sync::Mutex as StdMutex;
 use std::sync::Weak;
 use std::time::Duration;
 
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 use genex_core::StartIfIdleSubmission;
 use genex_core::ThreadManager;
 use genex_core::TurnInput;
@@ -367,7 +367,7 @@ impl QueuedItemService {
     /// Starts the selected queued message only when its thread is idle.
     pub async fn start(
         &self,
-        thread: &CodexThread,
+        thread: &GenexThread,
         queued_item_id: Option<String>,
         trace: Option<W3cTraceContext>,
     ) -> Result<StartIfIdleSubmission, QueueServiceError> {

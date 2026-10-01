@@ -2,7 +2,7 @@ use anyhow::Result;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
 use genex_config::McpServerConfig;
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 use genex_core::ForkSnapshot;
 use genex_core::StartThreadOptions;
 use genex_core::TurnInputRequest;
@@ -202,7 +202,7 @@ fn pause_call(call_id: &str) -> Value {
     )
 }
 
-async fn start_paused_turn(thread: &CodexThread) -> Result<RequestUserInputEvent> {
+async fn start_paused_turn(thread: &GenexThread) -> Result<RequestUserInputEvent> {
     thread
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "pause before continuing".into(),
@@ -216,7 +216,7 @@ async fn start_paused_turn(thread: &CodexThread) -> Result<RequestUserInputEvent
     .await)
 }
 
-async fn answer_paused_turn(thread: &CodexThread, turn_id: &str) -> Result<()> {
+async fn answer_paused_turn(thread: &GenexThread, turn_id: &str) -> Result<()> {
     thread
         .submit(Op::UserInputAnswer {
             id: turn_id.to_string(),
@@ -234,7 +234,7 @@ async fn answer_paused_turn(thread: &CodexThread, turn_id: &str) -> Result<()> {
 }
 
 async fn submit_turn_settings(
-    thread: &CodexThread,
+    thread: &GenexThread,
     turn_id: &str,
     update: TurnSettingsUpdate,
 ) -> Result<TurnSettingsUpdateOutcome> {
@@ -250,7 +250,7 @@ async fn submit_turn_settings(
 }
 
 async fn apply_turn_settings(
-    thread: &CodexThread,
+    thread: &GenexThread,
     turn_id: &str,
     update: TurnSettingsUpdate,
 ) -> Result<()> {

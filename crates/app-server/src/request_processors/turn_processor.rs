@@ -287,7 +287,7 @@ impl TurnRequestProcessor {
     async fn load_thread(
         &self,
         thread_id: &str,
-    ) -> Result<(ThreadId, Arc<CodexThread>), JSONRPCErrorError> {
+    ) -> Result<(ThreadId, Arc<GenexThread>), JSONRPCErrorError> {
         // Resolve the core conversation handle from a v2 thread id string.
         let thread_id = ThreadId::from_string(thread_id)
             .map_err(|err| invalid_request(format!("invalid thread id: {err}")))?;
@@ -304,7 +304,7 @@ impl TurnRequestProcessor {
     async fn ensure_direct_input_allowed(
         &self,
         _request_id: &ConnectionRequestId,
-        thread: &CodexThread,
+        thread: &GenexThread,
     ) -> Result<(), JSONRPCErrorError> {
         ensure_direct_input_allowed(thread).await
     }
@@ -400,7 +400,7 @@ impl TurnRequestProcessor {
     async fn submit_core_op(
         &self,
         request_id: &ConnectionRequestId,
-        thread: &CodexThread,
+        thread: &GenexThread,
         op: Op,
     ) -> CodexResult<String> {
         thread
@@ -590,7 +590,7 @@ impl TurnRequestProcessor {
 
     async fn build_environment_override(
         &self,
-        thread: &CodexThread,
+        thread: &GenexThread,
         cwd: Option<AbsolutePathBuf>,
         workspace_roots: Option<Vec<AbsolutePathBuf>>,
         environment_selections: Option<Vec<TurnEnvironmentSelection>>,
@@ -648,7 +648,7 @@ impl TurnRequestProcessor {
 
     async fn build_thread_settings_overrides(
         &self,
-        thread: &CodexThread,
+        thread: &GenexThread,
         params: ThreadSettingsBuildParams,
     ) -> Result<genex_protocol::protocol::ThreadSettingsOverrides, JSONRPCErrorError> {
         let ThreadSettingsBuildParams {
@@ -740,7 +740,7 @@ impl TurnRequestProcessor {
 
         if has_any_overrides {
             thread
-                .preview_thread_settings_overrides(CodexThreadSettingsOverrides {
+                .preview_thread_settings_overrides(GenexThreadSettingsOverrides {
                     disabled_plugin_ids: disabled_plugin_ids.clone(),
                     environments: environments.clone(),
                     runtime_workspace_roots: runtime_workspace_roots.clone(),
@@ -861,7 +861,7 @@ impl TurnRequestProcessor {
     }
 
     async fn set_app_server_client_info(
-        thread: &CodexThread,
+        thread: &GenexThread,
         app_server_client_name: Option<String>,
         app_server_client_version: Option<String>,
     ) -> Result<(), JSONRPCErrorError> {
@@ -1028,7 +1028,7 @@ impl TurnRequestProcessor {
     async fn start_inline_review(
         &self,
         request_id: &ConnectionRequestId,
-        parent_thread: Arc<CodexThread>,
+        parent_thread: Arc<GenexThread>,
         review_request: ReviewRequest,
         display_text: &str,
         parent_thread_id: String,
@@ -1050,7 +1050,7 @@ impl TurnRequestProcessor {
     async fn start_detached_review(
         &self,
         request_id: &ConnectionRequestId,
-        parent_thread: Arc<CodexThread>,
+        parent_thread: Arc<GenexThread>,
         prompt: &str,
     ) -> std::result::Result<(), JSONRPCErrorError> {
         // AgentRunner::start still delegates to spawn_subagent, which forks from the parent's

@@ -447,7 +447,7 @@ fn assert_pre_sampling_switch_compaction_requests(
     );
 }
 
-async fn assert_compaction_uses_turn_lifecycle_id(codex: &std::sync::Arc<genex_core::CodexThread>) {
+async fn assert_compaction_uses_turn_lifecycle_id(codex: &std::sync::Arc<genex_core::GenexThread>) {
     let mut turn_started_id = None;
     let mut turn_completed_id = None;
     let mut compact_started_id = None;

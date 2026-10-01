@@ -45,7 +45,7 @@ use crate::session::completed_session_loop_termination;
 /// Delegates never request approvals, and the returned IO yields their public events.
 /// Its submission channel accepts additional `Op`s for the sub-agent.
 #[allow(clippy::too_many_arguments)]
-pub(crate) async fn run_codex_thread_interactive(
+pub(crate) async fn run_genex_thread_interactive(
     mut config: Config,
     auth_manager: Arc<AuthManager>,
     models_manager: SharedModelsManager,
@@ -165,7 +165,7 @@ pub(crate) fn forward_session_io(io: Arc<SessionIo>, cancel_token: CancellationT
 ///
 /// Internally calls the interactive variant, then immediately submits the provided input.
 #[allow(clippy::too_many_arguments)]
-pub(crate) async fn run_codex_thread_one_shot(
+pub(crate) async fn run_genex_thread_one_shot(
     config: Config,
     auth_manager: Arc<AuthManager>,
     models_manager: SharedModelsManager,
@@ -183,7 +183,7 @@ pub(crate) async fn run_codex_thread_one_shot(
     let parent_turn_id = parent_ctx.sub_id.clone();
     let parent_environments = parent_ctx.environments.clone();
     let root_turn_id = parent_ctx.turn_metadata_state.root_turn_id();
-    let (session, io) = Box::pin(run_codex_thread_interactive(
+    let (session, io) = Box::pin(run_genex_thread_interactive(
         config,
         auth_manager,
         models_manager,

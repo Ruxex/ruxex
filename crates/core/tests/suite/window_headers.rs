@@ -1,6 +1,6 @@
 use super::compact::COMPACT_WARNING_MESSAGE;
 use anyhow::Result;
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 use genex_core::TurnInputRequest;
 use genex_core::compact::SUMMARIZATION_PROMPT;
 use genex_protocol::protocol::EventMsg;
@@ -138,7 +138,7 @@ async fn window_id_advances_after_compact_persists_on_resume_and_resets_on_fork(
     Ok(())
 }
 
-async fn submit_user_turn(codex: &Arc<CodexThread>, text: &str) -> Result<()> {
+async fn submit_user_turn(codex: &Arc<GenexThread>, text: &str) -> Result<()> {
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: text.to_string(),
@@ -149,7 +149,7 @@ async fn submit_user_turn(codex: &Arc<CodexThread>, text: &str) -> Result<()> {
     Ok(())
 }
 
-async fn submit_compact_turn(codex: &Arc<CodexThread>) -> Result<()> {
+async fn submit_compact_turn(codex: &Arc<GenexThread>) -> Result<()> {
     codex.submit(Op::Compact).await?;
     let warning_event = wait_for_event(codex, |event| matches!(event, EventMsg::Warning(_))).await;
     let EventMsg::Warning(WarningEvent { message }) = warning_event else {
@@ -160,7 +160,7 @@ async fn submit_compact_turn(codex: &Arc<CodexThread>) -> Result<()> {
     Ok(())
 }
 
-async fn shutdown_thread(codex: &Arc<CodexThread>) -> Result<()> {
+async fn shutdown_thread(codex: &Arc<GenexThread>) -> Result<()> {
     codex.submit(Op::Shutdown).await?;
     wait_for_event(codex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
     Ok(())

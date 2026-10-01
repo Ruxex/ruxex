@@ -3,7 +3,7 @@
 use anyhow::Context;
 use anyhow::Result;
 use genex_config::types::ApprovalsReviewer;
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 use genex_core::TurnInputRequest;
 use genex_core::config::Constrained;
 use genex_core::config::ThreadStoreConfig;
@@ -882,7 +882,7 @@ fn body_contains(req: &Request, text: &str) -> bool {
         .is_some_and(|body| body.contains(text))
 }
 
-async fn wait_for_spawned_thread(test: &TestCodex) -> Result<Arc<CodexThread>> {
+async fn wait_for_spawned_thread(test: &TestCodex) -> Result<Arc<GenexThread>> {
     let deadline = tokio::time::Instant::now() + Duration::from_secs(2);
     loop {
         let ids = test.thread_manager.list_thread_ids().await;

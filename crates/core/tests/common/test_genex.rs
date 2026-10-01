@@ -14,7 +14,7 @@ use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
 use genex_attachment_store::AttachmentStore;
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 pub use genex_core::StartThreadOptions;
 use genex_core::ThreadManager;
 use genex_core::TimeProvider;
@@ -845,7 +845,7 @@ fn ensure_test_model_catalog(config: &mut Config) -> Result<()> {
 pub struct TestCodex {
     pub home: Arc<TempDir>,
     pub cwd: Arc<TempDir>,
-    pub codex: Arc<CodexThread>,
+    pub codex: Arc<GenexThread>,
     pub session_configured: SessionConfiguredEvent,
     pub config: Config,
     pub thread_manager: Arc<ThreadManager>,

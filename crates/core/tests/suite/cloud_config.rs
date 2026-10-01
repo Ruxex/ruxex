@@ -2,7 +2,7 @@ use anyhow::Context;
 use anyhow::Result;
 use genex_config::CloudConfigBundleLoader;
 use genex_config::test_support::CloudConfigBundleFixture;
-use genex_core::CodexThreadSettingsOverrides;
+use genex_core::GenexThreadSettingsOverrides;
 use genex_features::Feature;
 use genex_protocol::models::PermissionProfile;
 use genex_protocol::permissions::NetworkSandboxPolicy;
@@ -133,7 +133,7 @@ async fn managed_deny_read_requirements_follow_thread_permission_updates() -> Re
     );
     let error = test
         .codex
-        .preview_thread_settings_overrides(CodexThreadSettingsOverrides {
+        .preview_thread_settings_overrides(GenexThreadSettingsOverrides {
             permission_profile: Some(conflicting_profile),
             ..Default::default()
         })

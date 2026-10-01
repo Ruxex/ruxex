@@ -84,7 +84,7 @@ fn configure_flex_role(config: &mut Config) {
     );
 }
 
-async fn wait_for_turn_complete(thread: &genex_core::CodexThread) {
+async fn wait_for_turn_complete(thread: &genex_core::GenexThread) {
     wait_for_event(thread, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 }
 

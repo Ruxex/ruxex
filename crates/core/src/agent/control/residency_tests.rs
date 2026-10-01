@@ -1,7 +1,7 @@
 use crate::StartThreadOptions;
 use crate::ThreadManager;
 use crate::agent::AgentControl;
-use crate::genex_thread::CodexThread;
+use crate::genex_thread::GenexThread;
 use crate::config::Config;
 use crate::config::test_config;
 use crate::thread_manager::ThreadManagerState;
@@ -158,7 +158,7 @@ async fn spawn_v2_subagent(
         .expect("spawn v2 subagent")
 }
 
-async fn mark_thread_completed(thread: &CodexThread) {
+async fn mark_thread_completed(thread: &GenexThread) {
     let turn = thread.session.new_default_turn().await;
     thread
         .session
@@ -178,7 +178,7 @@ async fn mark_thread_completed(thread: &CodexThread) {
     clear_active_turn(thread).await;
 }
 
-async fn mark_thread_interrupted(thread: &CodexThread) {
+async fn mark_thread_interrupted(thread: &GenexThread) {
     let turn = thread.session.new_default_turn().await;
     thread
         .session
@@ -196,7 +196,7 @@ async fn mark_thread_interrupted(thread: &CodexThread) {
     clear_active_turn(thread).await;
 }
 
-async fn clear_active_turn(thread: &CodexThread) {
+async fn clear_active_turn(thread: &GenexThread) {
     // The fixture has no task runner to clear the turn after the terminal event.
     *thread.session.active_turn.lock().await = None;
 }

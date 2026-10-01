@@ -1,6 +1,6 @@
 use super::invalid_request;
 use genex_app_server_protocol::JSONRPCErrorError;
-use genex_core::CodexThread;
+use genex_core::GenexThread;
 use genex_protocol::protocol::MultiAgentVersion;
 use genex_protocol::protocol::SessionSource;
 use genex_protocol::protocol::SubAgentSource;
@@ -21,7 +21,7 @@ pub(super) fn can_accept_direct_input(
 }
 
 pub(super) async fn ensure_direct_input_allowed(
-    thread: &CodexThread,
+    thread: &GenexThread,
 ) -> Result<(), JSONRPCErrorError> {
     let config_snapshot = thread.config_snapshot().await;
     if !can_accept_direct_input(

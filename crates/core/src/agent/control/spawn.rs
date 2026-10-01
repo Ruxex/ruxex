@@ -2,7 +2,7 @@ use super::residency::is_v2_resident_session_source;
 use super::*;
 use crate::agent::child_config::build_agent_resume_config;
 use crate::agent::role::apply_role_to_config;
-use crate::genex_thread::CodexThread;
+use crate::genex_thread::GenexThread;
 use crate::config::PermissionProfileSnapshot;
 use crate::context::ContextualUserFragment;
 use crate::context::CurrentTimeReminder;
@@ -272,7 +272,7 @@ impl AgentControl {
 
     fn validate_loaded_v2_child(
         &self,
-        thread: &CodexThread,
+        thread: &GenexThread,
         parent_thread_id: ThreadId,
     ) -> CodexResult<()> {
         if thread.is_running()
@@ -293,7 +293,7 @@ impl AgentControl {
         &self,
         mut config: Config,
         thread_id: ThreadId,
-        parent: Option<Arc<CodexThread>>,
+        parent: Option<Arc<GenexThread>>,
     ) -> CodexResult<()> {
         let state = self.upgrade()?;
         let parent = if let Some(parent) = parent {
