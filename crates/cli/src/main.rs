@@ -216,7 +216,6 @@ enum DebugSubcommand {
     /// Replay a rollout trace bundle and write reduced state JSON.
     #[clap(hide = true)]
     TraceReduce(DebugTraceReduceCommand),
-
 }
 
 #[derive(Debug, Parser)]
@@ -1243,10 +1242,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                         experimental_api: gen_cli.experimental,
                         ..Default::default()
                     };
-                    codex_app_server_protocol::generate_ts_with_options(
-                        &gen_cli.out_dir,
-                        options,
-                    )?;
+                    codex_app_server_protocol::generate_ts_with_options(&gen_cli.out_dir, options)?;
                 }
                 Some(AppServerSubcommand::GenerateJsonSchema(gen_cli)) => {
                     codex_app_server_protocol::generate_json_with_experimental(

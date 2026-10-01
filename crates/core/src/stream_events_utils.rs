@@ -160,28 +160,27 @@ pub(crate) async fn finalize_non_tool_response_item(
 ) -> Option<FinalizedTurnItem> {
     let turn_item =
         handle_non_tool_response_item(sess, contributor_policy, item, plan_mode).await?;
-    let (last_agent_message, defers_mailbox_delivery_to_next_turn) =
-        match &turn_item {
-            TurnItem::AgentMessage(agent_message) => {
-                let combined = agent_message
-                    .content
-                    .iter()
-                    .map(|entry| match entry {
-                        codex_protocol::items::AgentMessageContent::Text { text } => text.as_str(),
-                    })
-                    .collect::<String>();
-                let last_agent_message = if combined.trim().is_empty() {
-                    None
-                } else {
-                    Some(combined)
-                };
-                let defers_mailbox_delivery_to_next_turn =
-                    !matches!(agent_message.phase, Some(MessagePhase::Commentary))
-                        && last_agent_message.is_some();
-                (last_agent_message, defers_mailbox_delivery_to_next_turn)
-            }
-            _ => (None, false),
-        };
+    let (last_agent_message, defers_mailbox_delivery_to_next_turn) = match &turn_item {
+        TurnItem::AgentMessage(agent_message) => {
+            let combined = agent_message
+                .content
+                .iter()
+                .map(|entry| match entry {
+                    codex_protocol::items::AgentMessageContent::Text { text } => text.as_str(),
+                })
+                .collect::<String>();
+            let last_agent_message = if combined.trim().is_empty() {
+                None
+            } else {
+                Some(combined)
+            };
+            let defers_mailbox_delivery_to_next_turn =
+                !matches!(agent_message.phase, Some(MessagePhase::Commentary))
+                    && last_agent_message.is_some();
+            (last_agent_message, defers_mailbox_delivery_to_next_turn)
+        }
+        _ => (None, false),
+    };
     Some(FinalizedTurnItem {
         turn_item,
         facts: FinalizedTurnItemFacts {

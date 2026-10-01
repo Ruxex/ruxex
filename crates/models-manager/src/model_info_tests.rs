@@ -102,7 +102,10 @@ fn catalog_instruction_is_preserved_without_personality_processing() {
         .instructions_template = Some(instructions.to_string());
 
     assert_eq!(
-        render_model_instructions(&with_config_overrides(model, &ModelsManagerConfig::default())),
+        render_model_instructions(&with_config_overrides(
+            model,
+            &ModelsManagerConfig::default()
+        )),
         instructions
     );
 }

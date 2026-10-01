@@ -1,7 +1,7 @@
+use codex_protocol::model_types::ModelInfo;
 use codex_protocol::models::DEFAULT_IMAGE_DETAIL;
 use codex_protocol::models::FunctionCallOutputContentItem;
 use codex_protocol::models::ImageDetail;
-use codex_protocol::model_types::ModelInfo;
 
 pub fn can_request_original_image_detail(model_info: &ModelInfo) -> bool {
     model_info.supports_image_detail_original

@@ -100,7 +100,10 @@ fn strict_config_rejects_removed_provider_base_url() {
     )
     .expect("removed provider base URL should be unknown");
 
-    assert_eq!(error.message, "unknown configuration field `provider_base_url`");
+    assert_eq!(
+        error.message,
+        "unknown configuration field `provider_base_url`"
+    );
 }
 
 #[test]

@@ -332,9 +332,7 @@ fn serialized_len(value: &impl Serialize) -> Result<usize, FunctionCallError> {
         .map_err(|err| FunctionCallError::Fatal(err.to_string()))
 }
 
-fn skill_json_output<T: Serialize>(
-    value: &T,
-) -> Result<Box<dyn ToolOutput>, FunctionCallError> {
+fn skill_json_output<T: Serialize>(value: &T) -> Result<Box<dyn ToolOutput>, FunctionCallError> {
     let value = serde_json::to_value(value).map_err(|err| {
         FunctionCallError::Fatal(format!("failed to serialize tool output: {err}"))
     })?;

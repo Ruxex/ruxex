@@ -509,7 +509,10 @@ mod tests {
         let Some(ResponseEvent::Completed { token_usage, .. }) = events.last() else {
             panic!("expected a completed event, got {events:?}");
         };
-        assert_eq!(token_usage.as_ref().map(|usage| usage.total_tokens), Some(15));
+        assert_eq!(
+            token_usage.as_ref().map(|usage| usage.total_tokens),
+            Some(15)
+        );
     }
 
     #[tokio::test]

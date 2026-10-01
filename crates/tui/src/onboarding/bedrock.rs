@@ -440,7 +440,10 @@ impl BedrockState {
                     "  Configure AWS credentials in your environment, then restart Codex.".into(),
                 );
                 lines.push("".into());
-                lines.push("  Configure the provider's Bedrock integration according to its setup guide.".into());
+                lines.push(
+                    "  Configure the provider's Bedrock integration according to its setup guide."
+                        .into(),
+                );
                 lines.push("".into());
                 self.render_methods(&mut lines);
             }

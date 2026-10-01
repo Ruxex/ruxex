@@ -164,12 +164,7 @@ impl StateRuntime {
             Ok(db) => Arc::new(db),
             Err(err) => {
                 warn!("failed to open queue db at {}: {err}", queue_path.display());
-                close_sqlite_pools(&[
-                    pool.as_ref(),
-                    logs_pool.as_ref(),
-                    goals_pool.as_ref(),
-                ])
-                .await;
+                close_sqlite_pools(&[pool.as_ref(), logs_pool.as_ref(), goals_pool.as_ref()]).await;
                 return Err(err);
             }
         };
@@ -263,7 +258,6 @@ impl StateRuntime {
         self.logs_pool.close().await;
         self.pool.close().await;
     }
-
 }
 
 async fn close_sqlite_pools(pools: &[&SqlitePool]) {

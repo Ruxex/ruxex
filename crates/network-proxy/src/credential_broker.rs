@@ -779,8 +779,7 @@ impl CredentialBroker {
         for provider in providers::credential_providers() {
             let brokered_provider = BrokeredCredentialProvider::Builtin(provider);
             let Some((source, host_binding)) = provider.sources().iter().rev().find_map(|source| {
-                (source.host_binding)(&binding_env)
-                    .map(|binding| (source, binding))
+                (source.host_binding)(&binding_env).map(|binding| (source, binding))
             }) else {
                 continue;
             };
@@ -858,8 +857,7 @@ impl CredentialBroker {
                                     .env_vars
                                     .iter()
                                     .any(|key| env_value(env, key) == Some(credential))
-                                    && (candidate.host_binding)(&binding_env)
-                                    .is_none()
+                                    && (candidate.host_binding)(&binding_env).is_none()
                             })
                         {
                             continue;

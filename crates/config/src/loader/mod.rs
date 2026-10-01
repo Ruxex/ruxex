@@ -1705,7 +1705,11 @@ foo = "xyzzy"
             windows_system_requirements_toml_file()
                 .expect("requirements.toml path")
                 .as_path()
-                .ends_with(Path::new("provider").join("Codex").join("requirements.toml"))
+                .ends_with(
+                    Path::new("provider")
+                        .join("Codex")
+                        .join("requirements.toml")
+                )
         );
     }
 

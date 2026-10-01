@@ -98,7 +98,6 @@ fn default_enabled_features_are_stable() {
     }
 }
 
-
 #[test]
 fn code_mode_only_requires_code_mode() {
     let mut features = Features::with_defaults();

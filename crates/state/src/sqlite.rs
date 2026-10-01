@@ -87,13 +87,7 @@ const THREAD_HISTORY_DB: RuntimeDbSpec = RuntimeDbSpec {
     migrate_phase: "migrate_thread_history",
 };
 
-const RUNTIME_DBS: [RuntimeDbSpec; 5] = [
-    STATE_DB,
-    LOGS_DB,
-    GOALS_DB,
-    QUEUE_DB,
-    THREAD_HISTORY_DB,
-];
+const RUNTIME_DBS: [RuntimeDbSpec; 5] = [STATE_DB, LOGS_DB, GOALS_DB, QUEUE_DB, THREAD_HISTORY_DB];
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RuntimeDbPath {

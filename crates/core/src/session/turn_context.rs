@@ -20,10 +20,10 @@ use codex_model_provider::SharedModelProvider;
 use codex_protocol::SessionId;
 use codex_protocol::ThreadId;
 use codex_protocol::config_types::ShellEnvironmentPolicy;
-use codex_protocol::models::AdditionalPermissionProfile;
 use codex_protocol::model_types::MODEL_SPECIALTY_CYBER;
 use codex_protocol::model_types::ModelInfo;
 use codex_protocol::model_types::ReasoningEffort;
+use codex_protocol::models::AdditionalPermissionProfile;
 use codex_protocol::permissions::RawFileSystemSandboxPolicy;
 use codex_protocol::protocol::EnvironmentConfig;
 use codex_protocol::protocol::EnvironmentConfigState;
@@ -550,10 +550,7 @@ impl TurnContext {
             Some(reasoning_effort),
             /*developer_instructions*/ None,
         );
-        let step_settings = Arc::new(ResolvedStepSettings::new(
-            Arc::new(selected),
-            model_info,
-        ));
+        let step_settings = Arc::new(ResolvedStepSettings::new(Arc::new(selected), model_info));
         config.service_tier = step_settings.service_tier.clone();
         let session_telemetry = step_settings.telemetry(&self.session_telemetry);
 

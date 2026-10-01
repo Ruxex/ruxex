@@ -56,10 +56,7 @@ pub fn generate_ts(out_dir: &Path) -> Result<()> {
     generate_ts_with_options(out_dir, GenerateTsOptions::default())
 }
 
-pub fn generate_ts_with_options(
-    out_dir: &Path,
-    options: GenerateTsOptions,
-) -> Result<()> {
+pub fn generate_ts_with_options(out_dir: &Path, options: GenerateTsOptions) -> Result<()> {
     let export_set = if options.experimental_api {
         ExportSet::Experimental
     } else {

@@ -109,7 +109,8 @@ fn virtualize_child_env_replaces_supported_credentials() {
             |_| true,
         ));
     }
-    let mut embedded_tokens = format!("v1{unknown_github_token}\n/opt/ta{unknown_provider_key}/bin");
+    let mut embedded_tokens =
+        format!("v1{unknown_github_token}\n/opt/ta{unknown_provider_key}/bin");
     assert!(!broker.virtualize_text(&mut embedded_tokens, &env));
     assert_eq!(embedded_tokens, "v1\n/opt/ta/bin");
     let qualified_legacy = format!(
@@ -331,7 +332,11 @@ fn virtualize_child_env_replaces_supported_credentials() {
     );
     for (key, placeholder, credential) in [
         ("GH_TOKEN", "ghp_", unknown_github_token),
-        ("PROVIDER_API_KEY", "sk-", unknown_legacy_provider_key.as_str()),
+        (
+            "PROVIDER_API_KEY",
+            "sk-",
+            unknown_legacy_provider_key.as_str(),
+        ),
     ] {
         let broker = CredentialBroker::new(/*enabled*/ true);
         let mut env = env_map([(key, placeholder)]);
@@ -346,7 +351,10 @@ fn virtualize_child_env_replaces_supported_credentials() {
     ];
     let github_dummy = github_dummy.clone();
     let provider_dummy = provider_dummy.clone();
-    env.insert("PROVIDER_API_KEY".to_string(), "sk-user-override".to_string());
+    env.insert(
+        "PROVIDER_API_KEY".to_string(),
+        "sk-user-override".to_string(),
+    );
     env.insert(
         "GIT_CONFIG_VALUE_0".to_string(),
         format!("Authorization: Bearer {github_dummy}"),
@@ -579,7 +587,9 @@ fn virtualize_child_env_replaces_aliases_of_filtered_parent_credentials() {
     ]);
     broker.virtualize_child_env(&mut mixed_env);
     let mut mixed_alias = mixed_env["AUTH_BUNDLE"].clone();
-    let excluded_dummy = mixed_env.remove("PROVIDER_API_KEY").expect("provider dummy");
+    let excluded_dummy = mixed_env
+        .remove("PROVIDER_API_KEY")
+        .expect("provider dummy");
     assert!(!broker.virtualize_text(&mut mixed_alias, &mixed_env));
     assert!(!mixed_alias.contains(&excluded_dummy));
 }
@@ -810,7 +820,10 @@ fn brokered_credential_value_env_keys_include_dummy_aliases() {
                 "@alias:PROVIDER_API_KEY".to_string(),
                 env["PROVIDER_API_KEY"].clone()
             ),
-            ("PROVIDER_API_KEY".to_string(), env["PROVIDER_API_KEY"].clone()),
+            (
+                "PROVIDER_API_KEY".to_string(),
+                env["PROVIDER_API_KEY"].clone()
+            ),
         ]
     );
 
@@ -848,7 +861,10 @@ fn virtualize_child_env_uses_fresh_dummy_capabilities() {
     CredentialBroker::new(/*enabled*/ true).virtualize_child_env(&mut first_env);
     CredentialBroker::new(/*enabled*/ true).virtualize_child_env(&mut second_env);
 
-    assert_ne!(first_env["PROVIDER_API_KEY"], second_env["PROVIDER_API_KEY"]);
+    assert_ne!(
+        first_env["PROVIDER_API_KEY"],
+        second_env["PROVIDER_API_KEY"]
+    );
 }
 
 #[test]
@@ -1144,14 +1160,12 @@ fn builtin_credentials_use_private_destination_context() {
         "github.enterprise.example",
     )]));
     broker.configure(&config);
-    for (key, context_key, token, host) in [
-        (
-            "GH_ENTERPRISE_TOKEN",
-            "GH_HOST",
-            "ghp-real",
-            "github.enterprise.example",
-        ),
-    ] {
+    for (key, context_key, token, host) in [(
+        "GH_ENTERPRISE_TOKEN",
+        "GH_HOST",
+        "ghp-real",
+        "github.enterprise.example",
+    )] {
         let mut env = env_map([(key, token)]);
         broker.virtualize_child_env(&mut env);
         assert_ne!(env[key], token);

@@ -581,7 +581,10 @@ fn foreign_absolute_syntax_deserializes_without_host_interpretation() {
 #[test]
 fn from_path_preserves_foreign_absolute_path_for_uri_conversion() {
     #[cfg(not(windows))]
-    let (foreign_path, expected_uri) = (r"C:\Users\provider\share", "file:///C:/Users/provider/share");
+    let (foreign_path, expected_uri) = (
+        r"C:\Users\provider\share",
+        "file:///C:/Users/provider/share",
+    );
     #[cfg(windows)]
     let (foreign_path, expected_uri) = ("/home/provider/share", "file:///home/provider/share");
 

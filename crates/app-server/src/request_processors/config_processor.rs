@@ -230,7 +230,6 @@ impl ConfigRequestProcessor {
             .map_err(map_error)?;
         Ok(response)
     }
-
 }
 
 pub(super) async fn reload_user_config(

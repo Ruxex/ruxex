@@ -1,6 +1,6 @@
 use anyhow::Result;
-use codex_protocol::models::ConfigurationReasoning;
 use codex_protocol::model_types::ReasoningEffort;
+use codex_protocol::models::ConfigurationReasoning;
 use codex_protocol::protocol::ThreadSettingsSnapshot;
 use pretty_assertions::assert_eq;
 use serde_json::json;

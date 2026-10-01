@@ -250,9 +250,7 @@ impl CodexAuth {
     pub fn api_key(&self) -> Option<&str> {
         match self {
             Self::ApiKey(auth) => Some(auth.api_key.as_str()),
-            Self::Headers(_)
-            | Self::BedrockApiKey(_)
-            | Self::BedrockAccessKeys(_) => None,
+            Self::Headers(_) | Self::BedrockApiKey(_) | Self::BedrockAccessKeys(_) => None,
         }
     }
 

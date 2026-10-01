@@ -59,7 +59,9 @@ fn insert_request_header(headers: &mut HeaderMap, value: HeaderValue) {
 }
 
 fn host_binding(_env: &HashMap<String, String>) -> Option<CredentialHostBinding> {
-    Some(CredentialHostBinding::ExactHost(PROVIDER_API_HOST.to_string()))
+    Some(CredentialHostBinding::ExactHost(
+        PROVIDER_API_HOST.to_string(),
+    ))
 }
 
 fn api_key_prefix(value: &str) -> &str {

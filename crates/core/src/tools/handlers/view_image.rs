@@ -2,6 +2,7 @@ use codex_exec_server::GetMetadataOptions;
 use codex_exec_server::ReadFileOptions;
 use codex_protocol::items::ImageViewItem;
 use codex_protocol::items::TurnItem;
+use codex_protocol::model_types::InputModality;
 use codex_protocol::models::DEFAULT_IMAGE_DETAIL;
 use codex_protocol::models::FunctionCallOutputBody;
 use codex_protocol::models::FunctionCallOutputContentItem;
@@ -9,7 +10,6 @@ use codex_protocol::models::FunctionCallOutputPayload;
 use codex_protocol::models::ImageDetail;
 use codex_protocol::models::ImageReference;
 use codex_protocol::models::ResponseInputItem;
-use codex_protocol::model_types::InputModality;
 use codex_utils_image::data_url_from_bytes;
 use serde::Deserialize;
 

@@ -1094,11 +1094,8 @@ async fn run_ratatui_app(
     let requires_auth = startup_account
         .as_ref()
         .is_some_and(|account| account.requires_auth);
-    let should_show_onboarding = should_show_onboarding(
-        login_status,
-        requires_auth,
-        should_show_trust_screen_flag,
-    );
+    let should_show_onboarding =
+        should_show_onboarding(login_status, requires_auth, should_show_trust_screen_flag);
 
     let config = if should_show_onboarding {
         if let Err(err) = startup_draft.flush_pending_events(&mut tui).await {

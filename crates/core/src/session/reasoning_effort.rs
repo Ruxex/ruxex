@@ -11,9 +11,9 @@ use crate::state::ReasoningEffortPin;
 use codex_features::Feature;
 use codex_history::CodexHarnessMetadata;
 use codex_history::ResponseItemEnvelope;
+use codex_protocol::model_types::ReasoningEffort;
 use codex_protocol::models::ConfigurationReasoning;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::model_types::ReasoningEffort;
 
 /// Sampling can establish a pin; compaction must not change live state before it succeeds.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

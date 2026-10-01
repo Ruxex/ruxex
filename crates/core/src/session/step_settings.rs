@@ -46,17 +46,11 @@ pub(crate) struct ResolvedStepSettings {
 
 impl ResolvedStepSettings {
     /// Derives request values from selected settings and pinned metadata.
-    pub(super) fn new(
-        selected: Arc<StepSettings>,
-        model_info: Arc<ModelInfo>,
-    ) -> Self {
+    pub(super) fn new(selected: Arc<StepSettings>, model_info: Arc<ModelInfo>) -> Self {
         let reasoning_summary = selected
             .reasoning_summary
             .unwrap_or(model_info.default_reasoning_summary);
-        let service_tier = super::get_service_tier(
-            selected.service_tier.clone(),
-            &model_info,
-        );
+        let service_tier = super::get_service_tier(selected.service_tier.clone(), &model_info);
         Self {
             selected,
             model_info,
@@ -112,13 +106,12 @@ impl ResolvedStepSettings {
         overrides: &ModelInfoOverrides,
     ) -> ConstraintResult<Self> {
         let selected = self.selected.apply(update, constraints)?;
-        let model_info = if selected.collaboration_mode.model()
-            == self.selected.collaboration_mode.model()
-        {
-            Arc::clone(&self.model_info)
-        } else {
-            Arc::new(selected.resolve_model_info(models_manager, overrides).await)
-        };
+        let model_info =
+            if selected.collaboration_mode.model() == self.selected.collaboration_mode.model() {
+                Arc::clone(&self.model_info)
+            } else {
+                Arc::new(selected.resolve_model_info(models_manager, overrides).await)
+            };
         let next = Self::new(Arc::new(selected), model_info);
         Ok(next)
     }

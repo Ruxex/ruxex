@@ -2774,7 +2774,10 @@ fn network_requirements_serializes_canonical_and_legacy_fields() {
         dangerously_allow_non_loopback_proxy: Some(false),
         dangerously_allow_all_unix_sockets: Some(true),
         domains: Some(BTreeMap::from([
-            ("api.example.com".to_string(), NetworkDomainPermission::Allow),
+            (
+                "api.example.com".to_string(),
+                NetworkDomainPermission::Allow,
+            ),
             (
                 "blocked.example.com".to_string(),
                 NetworkDomainPermission::Deny,

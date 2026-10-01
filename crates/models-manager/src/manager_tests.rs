@@ -971,10 +971,9 @@ fn bundled_models_json_roundtrips() {
     let response = crate::test_support::test_models_response()
         .unwrap_or_else(|err| panic!("test model catalog should parse: {err}"));
 
-    let serialized =
-        serde_json::to_string(&response).expect("test model catalog should serialize");
-    let roundtripped: ModelsResponse =
-        serde_json::from_str(&serialized).expect("serialized test model catalog should deserialize");
+    let serialized = serde_json::to_string(&response).expect("test model catalog should serialize");
+    let roundtripped: ModelsResponse = serde_json::from_str(&serialized)
+        .expect("serialized test model catalog should deserialize");
 
     assert_eq!(
         response, roundtripped,

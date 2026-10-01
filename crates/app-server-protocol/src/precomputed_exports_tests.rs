@@ -17,10 +17,7 @@ fn precomputed_exports_are_written_to_disk() -> Result<()> {
     let json_dir = output_dir.path().join("json");
     let internal_json_dir = output_dir.path().join("internal-json");
 
-    generate_ts_with_options(
-        &typescript_dir,
-        GenerateTsOptions::default(),
-    )?;
+    generate_ts_with_options(&typescript_dir, GenerateTsOptions::default())?;
     generate_json_with_experimental(&json_dir, /*experimental_api*/ false)?;
     generate_internal_json_schema(&internal_json_dir)?;
 

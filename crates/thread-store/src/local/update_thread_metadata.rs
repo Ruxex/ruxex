@@ -566,15 +566,14 @@ fn resolve_git_info_patch(
     (sha, branch, origin_url)
 }
 
-
 fn rollout_path_is_archived(store: &LocalThreadStore, path: &Path) -> bool {
     super::helpers::rollout_path_is_archived(store.config.codex_home.as_path(), path)
 }
 
 #[cfg(test)]
 mod tests {
-    use codex_protocol::models::PermissionProfile;
     use codex_protocol::model_types::ReasoningEffort;
+    use codex_protocol::models::PermissionProfile;
     use codex_protocol::protocol::ThreadHistoryMode;
     use codex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;

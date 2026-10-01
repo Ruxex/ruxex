@@ -14,5 +14,4 @@ impl ChatWidget {
         );
         self.bottom_pane.show_selection_view(params);
     }
-
 }

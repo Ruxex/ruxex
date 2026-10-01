@@ -493,9 +493,7 @@ mod tests {
             },
         )
         .expect("configured region should resolve");
-        let provider = BearerAuthProvider {
-            token: Some(token),
-        };
+        let provider = BearerAuthProvider { token: Some(token) };
         let mut headers = http::HeaderMap::new();
 
         provider.add_auth_headers(&mut headers);

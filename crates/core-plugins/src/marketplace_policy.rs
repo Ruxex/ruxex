@@ -467,10 +467,7 @@ fn managed_marketplace_config_name(
 }
 
 fn managed_local_marketplace_name(codex_home: &Path, root: &Path) -> Option<&'static str> {
-    for marketplace_name in [
-        BUNDLED_MARKETPLACE_NAME,
-        BUNDLED_ALPHA_MARKETPLACE_NAME,
-    ] {
+    for marketplace_name in [BUNDLED_MARKETPLACE_NAME, BUNDLED_ALPHA_MARKETPLACE_NAME] {
         let expected_root = codex_home
             .join(".tmp/bundled-marketplaces")
             .join(marketplace_name);

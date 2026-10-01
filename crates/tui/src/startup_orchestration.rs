@@ -117,11 +117,8 @@ pub(super) async fn run_main_inner(
         .await;
     }
 
-    let mut daemon_exclusion = daemon_startup::exclusion(
-        &cli,
-        &cli_kv_overrides,
-        &launch_loader_overrides,
-    );
+    let mut daemon_exclusion =
+        daemon_startup::exclusion(&cli, &cli_kv_overrides, &launch_loader_overrides);
     let reuse_implicit_local_daemon = daemon_exclusion.is_none();
     let search_only_config_override = cli.web_search
         && startup_preflight::has_only_search_config_override(&cli_kv_overrides)

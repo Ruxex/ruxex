@@ -109,10 +109,7 @@ fn write_schema_fixtures_from_env() -> Result<()> {
         }
     };
 
-    write_schema_fixtures_with_options(
-        &schema_root,
-        SchemaFixtureOptions { experimental_api },
-    )
+    write_schema_fixtures_with_options(&schema_root, SchemaFixtureOptions { experimental_api })
 }
 
 fn assert_schema_fixtures_match_generated(

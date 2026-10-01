@@ -1,5 +1,5 @@
-mod github;
 mod generic;
+mod github;
 
 use super::destination::CredentialDestination;
 use rama_http::HeaderMap;
@@ -111,9 +111,7 @@ impl CredentialHostBinding {
             Self::ConfiguredHosts(destinations) => destinations
                 .iter()
                 .any(|destination| destination.requires_mitm(host, port)),
-            Self::ExactHost(_) | Self::HostPattern { .. } => {
-                self.matches_host(host, port)
-            }
+            Self::ExactHost(_) | Self::HostPattern { .. } => self.matches_host(host, port),
         }
     }
 

@@ -2934,10 +2934,7 @@ fn configured_provider_limits_injection_to_url_prefixes() {
         ("https://api.example.test/v1/models?limit=1", true),
         ("https://api.example.test/v10/models", false),
         ("https://api.example.test/private", false),
-        (
-            "https://api.example.test/public/%2e%2e/v1/models",
-            false,
-        ),
+        ("https://api.example.test/public/%2e%2e/v1/models", false),
         ("https://api.example.test/v1%2f../private", false),
         ("http://api.example.test/v1", false),
         ("https://enterprise.example/v2/models", true),

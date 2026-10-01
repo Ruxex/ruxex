@@ -78,9 +78,9 @@ use codex_protocol::ResponseItemId;
 use codex_protocol::ThreadId;
 use codex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
 use codex_protocol::config_types::Verbosity as VerbosityConfig;
-use codex_protocol::models::ResponseItem;
 use codex_protocol::model_types::ModelInfo;
 use codex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use codex_protocol::models::ResponseItem;
 use codex_protocol::protocol::AuthRecoveryEvent;
 use codex_protocol::protocol::Event as ProtocolEvent;
 use codex_protocol::protocol::EventMsg;
@@ -571,7 +571,7 @@ impl ModelClient {
         &self,
         responses_metadata: &CodexResponsesMetadata,
     ) -> ApiHeaderMap {
-        let mut extra_headers = responses_metadata.compatibility_headers();
+        let extra_headers = responses_metadata.compatibility_headers();
         extra_headers
     }
 
@@ -1436,10 +1436,8 @@ impl ModelClientSession {
                     .extra_headers
                     .insert(X_CODEX_ROUTING_HINT_HEADER, header_value);
             }
-            request.access_programs = cyber_access_program::for_auth(
-                client_setup.auth.as_ref(),
-                prompt.cyber_access_program,
-            );
+            request.access_programs =
+                cyber_access_program::for_program(prompt.cyber_access_program);
             self.client
                 .prepare_response_items_for_request(&mut request.input);
             let request_session_telemetry =
@@ -1565,10 +1563,8 @@ impl ModelClientSession {
                 &mut request.input,
                 &client_setup.api_provider,
             );
-            request.access_programs = cyber_access_program::for_auth(
-                client_setup.auth.as_ref(),
-                prompt.cyber_access_program,
-            );
+            request.access_programs =
+                cyber_access_program::for_program(prompt.cyber_access_program);
             let mut websocket_metadata = responses_metadata.clone();
             websocket_metadata.routing_hint = self.client.build_routing_hint_header(
                 client_setup.auth.as_ref(),

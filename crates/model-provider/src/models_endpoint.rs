@@ -286,8 +286,8 @@ mod tests {
     use codex_login::default_client::create_client;
     use codex_login::default_client::set_default_client_residency_requirement;
     use codex_models_manager::manager::ModelsManager;
-    use codex_models_manager::manager::RemoteModelsManager;
     use codex_models_manager::manager::RefreshStrategy;
+    use codex_models_manager::manager::RemoteModelsManager;
     use codex_protocol::auth::AuthMode;
     use codex_protocol::config_types::ModelProviderAuthInfo;
     use codex_protocol::model_types::ModelsResponse;
@@ -541,8 +541,8 @@ mod tests {
     #[tokio::test]
     async fn command_auth_refresh_fetches_a_catalog_for_the_current_credentials() {
         use codex_models_manager::manager::ModelsManager;
-        use codex_models_manager::manager::RemoteModelsManager;
         use codex_models_manager::manager::RefreshStrategy;
+        use codex_models_manager::manager::RemoteModelsManager;
 
         let server = MockServer::start().await;
         let auth = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("initial"));

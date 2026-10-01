@@ -71,7 +71,8 @@ impl App {
         if matches!(self.app_server_target, AppServerTarget::Embedded) {
             self.chat_widget.show_selection_view(SelectionViewParams {
                 title: Some("Shared agents unavailable".to_string()),
-                subtitle: Some(if cfg!(any(unix, windows)) {
+                subtitle: Some(
+                    if cfg!(any(unix, windows)) {
                         "This session isn’t connected to a shared background server."
                     } else {
                         "Connect to a remote background server to use the agents dashboard."

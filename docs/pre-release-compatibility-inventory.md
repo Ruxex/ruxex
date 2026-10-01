@@ -49,6 +49,18 @@ earlier one being free of obsolete persisted data:
 
 ## Candidates and decisions
 
+### `just check` warning audit (2026-10-01)
+
+| Exact symbol/path | Current producer/consumer audit | Canonical replacement | Decision | Verification |
+|---|---|---|---|---|
+| `config_error_from_ignored_toml_value_fields_for_source_name` in `crates/config/src/strict_config.rs` | Linux reports the helper as unused, but the macOS-only config loader imports and calls it; strict-config tests also exercise it when test targets are compiled | Current macOS managed-preferences loader and strict config validation | `retain`; suppress only the non-macOS diagnostic | `just check --tests`; `just check`; macOS target/native check when available |
+| Unused imports and unnecessary mutability in `core/tools/registry.rs`, `core/turn_metadata.rs`, `core/client.rs`, and `core/config/mod.rs` | Exact-name audit found no consumer for the imports and no mutation after initialization; no target-specific producer exists | Existing active implementations without redundant bindings | `remove` | `just check --tests`; `just check` |
+| Unused `record_initial_history` result binding in `core/session/mod.rs` | The match arms perform initialization, reconstruction, persistence, and flush side effects; the returned `Option<TurnContext>` has no consumer | Existing side effects with no discarded binding | `remove` | `just check --tests`; `just check` |
+| `cyber_access_program::for_auth` auth parameter and `CodexAuth` import | Two active core client callers pass auth, but the adapter intentionally ignores it and only maps the optional program; no auth-dependent producer remains | Provider-neutral optional `CyberAccessProgram` mapping | `remove` for the unused parameter | `just check --tests`; `just check` |
+| `tui::status::format_reset_timestamp` crate re-export | The active consumer imports the helper from `status::helpers`; no consumer uses the `status` module re-export | Direct helper module import | `remove` | `just check --tests`; `just check` |
+| `HttpClientSelector`, HTTP status subtype helper, plugin installation `plugin_id`, approval/sandbox/network fields, daemon/app-server transport helpers, and test-only remote/platform helpers | Existing documentation or producer/consumer audit identifies future provider-neutral integration, active security/platform behavior, or test-target consumers; Linux `dead_code` is not sufficient evidence for removal | Current provider-neutral, security, platform, or test contracts | `retain` / defer | Target-aware audit; `just check --tests`; native/CI target checks |
+| `vendor/bubblewrap` C initializer diagnostics and `proc-macro-error2` future-incompatibility report | Diagnostics originate outside the Rust warning cleanup sources and are target/dependency-specific | Vendor/dependency maintenance work | `retain` / out of scope for this slice | Keep separate from Rust warning count |
+
 ### Image-generation history and protocol slice
 
 | Exact symbol/path | Current producer/consumer | Canonical replacement | Decision | Verification |

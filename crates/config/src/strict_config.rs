@@ -47,6 +47,10 @@ pub(crate) fn config_error_from_ignored_toml_value_fields<T: DeserializeOwned>(
     )
 }
 
+#[cfg_attr(
+    not(target_os = "macos"),
+    allow(dead_code, reason = "called by the macOS managed-preferences loader")
+)]
 pub(crate) fn config_error_from_ignored_toml_value_fields_for_source_name<T: DeserializeOwned>(
     source_name: &str,
     contents: &str,

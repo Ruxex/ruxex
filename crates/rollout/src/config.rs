@@ -47,7 +47,6 @@ impl RolloutConfigView for RolloutConfig {
     fn model_provider_id(&self) -> &str {
         self.model_provider_id.as_str()
     }
-
 }
 
 impl<T: RolloutConfigView + ?Sized> RolloutConfigView for &T {
@@ -66,7 +65,6 @@ impl<T: RolloutConfigView + ?Sized> RolloutConfigView for &T {
     fn model_provider_id(&self) -> &str {
         (*self).model_provider_id()
     }
-
 }
 
 impl<T: RolloutConfigView + ?Sized> RolloutConfigView for Arc<T> {
@@ -85,5 +83,4 @@ impl<T: RolloutConfigView + ?Sized> RolloutConfigView for Arc<T> {
     fn model_provider_id(&self) -> &str {
         self.as_ref().model_provider_id()
     }
-
 }

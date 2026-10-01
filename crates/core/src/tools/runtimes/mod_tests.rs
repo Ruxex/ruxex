@@ -961,7 +961,10 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
             Ok(String::from_utf8(output.stdout)?)
         };
     let posix_startup = dir.path().join("posix-startup.sh");
-    std::fs::write(&posix_startup, "export PROVIDER_API_KEY='sk-posix-secret'\n")?;
+    std::fs::write(
+        &posix_startup,
+        "export PROVIDER_API_KEY='sk-posix-secret'\n",
+    )?;
     let posix_snapshot = dir.path().join("posix-startup-snapshot.sh").abs();
     std::fs::write(
         &posix_snapshot,
@@ -1822,12 +1825,10 @@ fn maybe_wrap_shell_lc_with_snapshot_does_not_embed_override_values_in_argv() {
         "-lc".to_string(),
         "printf '%s' \"$PROVIDER_API_KEY\"".to_string(),
     ];
-    let explicit_env_overrides = HashMap::from([
-        (
-            "PROVIDER_API_KEY".to_string(),
-            "super-secret-value".to_string(),
-        ),
-    ]);
+    let explicit_env_overrides = HashMap::from([(
+        "PROVIDER_API_KEY".to_string(),
+        "super-secret-value".to_string(),
+    )]);
     let rewritten = maybe_wrap_shell_lc_with_snapshot(
         &command,
         &session_shell,
@@ -1993,7 +1994,9 @@ fn brokered_credential_exports_stop_when_startup_makes_credential_readonly() {
     let output = Command::new("/bin/bash")
         .args([
             "-c",
-            &format!("readonly PROVIDER_API_KEY=real-provider-key\n{restore}\nprintf should-not-run"),
+            &format!(
+                "readonly PROVIDER_API_KEY=real-provider-key\n{restore}\nprintf should-not-run"
+            ),
         ])
         .env(copy_key, "dummy-provider-key")
         .output()

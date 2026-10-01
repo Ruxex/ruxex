@@ -10,9 +10,7 @@ pub struct BearerAuthProvider {
 
 impl BearerAuthProvider {
     pub fn new(token: String) -> Self {
-        Self {
-            token: Some(token),
-        }
+        Self { token: Some(token) }
     }
 
     pub fn for_test(token: Option<&str>) -> Self {

@@ -46,15 +46,6 @@ impl SandboxTags {
     }
 }
 
-/// Records policy metadata for detached requests without selecting a sandbox backend.
-pub(crate) fn record_policy_metadata(
-    profile: &PermissionProfile,
-    cwd: &Path,
-    metadata: &mut CodexResponsesMetadata,
-) {
-    metadata.sandbox_mode = Some(permission_profile_policy_tag(profile, cwd).to_string());
-}
-
 fn permission_profile_sandbox_tag(
     profile: &PermissionProfile,
     windows_sandbox_level: WindowsSandboxLevel,

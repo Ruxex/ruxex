@@ -1,8 +1,8 @@
 use super::*;
 use crate::LoadedPlugin;
+use crate::PluginMeasurementDefinition;
 use crate::TEST_API_CURATED_MARKETPLACE_NAME;
 use crate::TEST_CURATED_MARKETPLACE_NAME;
-use crate::PluginMeasurementDefinition;
 use crate::store::PluginStore;
 use crate::test_support::TEST_CURATED_PLUGIN_CACHE_VERSION;
 use crate::test_support::TEST_CURATED_PLUGIN_SHA;
@@ -253,14 +253,8 @@ fn trusted_roots_require_verified_curated_cache() {
     let temp = TempDir::new().expect("temp dir");
     write_curated_plugin_sha_with(temp.path(), TEST_CURATED_PLUGIN_SHA);
     let root = synced_plugin_root(temp.path(), TEST_CURATED_MARKETPLACE_NAME, "sample");
-    let api_root = synced_plugin_root(
-        temp.path(),
-        TEST_API_CURATED_MARKETPLACE_NAME,
-        "api-sample",
-    );
-    let local_root = temp
-        .path()
-        .join("plugins/cache/test-curated/sample/local");
+    let api_root = synced_plugin_root(temp.path(), TEST_API_CURATED_MARKETPLACE_NAME, "api-sample");
+    let local_root = temp.path().join("plugins/cache/test-curated/sample/local");
     let spoofed_root = temp.path().join("spoofed/test-curated/sample");
     fs::create_dir_all(&local_root).expect("create local root");
     fs::create_dir_all(&spoofed_root).expect("create spoofed root");
@@ -301,18 +295,10 @@ fn trusted_roots_require_verified_curated_cache() {
         TEST_CURATED_PLUGIN_CACHE_VERSION,
     );
     fs::create_dir_all(unlisted_root.as_path()).expect("create unlisted root");
-    assert_untrusted(
-        temp.path(),
-        "missing@test-curated",
-        unlisted_root.as_path(),
-    );
+    assert_untrusted(temp.path(), "missing@test-curated", unlisted_root.as_path());
     let no_sha = TempDir::new().expect("temp dir");
     let no_sha_root = synced_plugin_root(no_sha.path(), TEST_CURATED_MARKETPLACE_NAME, "sample");
-    assert_untrusted(
-        no_sha.path(),
-        "sample@test-curated",
-        no_sha_root.as_path(),
-    );
+    assert_untrusted(no_sha.path(), "sample@test-curated", no_sha_root.as_path());
 }
 
 #[test]

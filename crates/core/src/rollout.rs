@@ -36,7 +36,6 @@ impl codex_rollout::RolloutConfigView for Config {
     fn model_provider_id(&self) -> &str {
         self.model_provider_id.as_str()
     }
-
 }
 
 pub(crate) mod list {

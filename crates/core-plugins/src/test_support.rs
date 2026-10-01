@@ -5,10 +5,10 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use crate::TEST_API_CURATED_MARKETPLACE_NAME;
-use crate::TEST_CURATED_MARKETPLACE_NAME;
 use crate::PluginsConfigInput;
 use crate::PluginsManager;
+use crate::TEST_API_CURATED_MARKETPLACE_NAME;
+use crate::TEST_CURATED_MARKETPLACE_NAME;
 use codex_config::LoaderOverrides;
 use codex_config::NoopThreadConfigLoader;
 use codex_config::loader::load_config_layers_state;

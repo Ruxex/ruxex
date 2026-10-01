@@ -913,10 +913,9 @@ mod tests {
     }
     #[test]
     fn model_messages_deserialize_without_optional_sections() {
-        let messages: ModelMessages = from_str(
-            r#"{"instructions_template":null,"persistent_instructions":null}"#,
-        )
-        .expect("model messages should deserialize");
+        let messages: ModelMessages =
+            from_str(r#"{"instructions_template":null,"persistent_instructions":null}"#)
+                .expect("model messages should deserialize");
 
         assert_eq!(messages, ModelMessages::default());
     }
@@ -1225,7 +1224,6 @@ mod tests {
              `model_messages.instructions_template`"
         );
     }
-
 
     #[test]
     fn models_response_prefers_template_and_preserves_message_siblings() {

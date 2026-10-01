@@ -18,10 +18,7 @@ fn only_matching_enforced_apple_security_events_are_failures() {
         ),
         ("malware detected Other.app", Evidence::Clear),
         ("audit token blocked Other.app", Evidence::Clear),
-        (
-            "audit token XP_MALWARE_DETECTED Other.app",
-            Evidence::Clear,
-        ),
+        ("audit token XP_MALWARE_DETECTED Other.app", Evidence::Clear),
         ("XP_MALWARE_REMEDIATED Other.app", Evidence::Clear),
         ("denied .plugin-appserver", Evidence::Blocked),
         ("audit would block Other.app", Evidence::Clear),

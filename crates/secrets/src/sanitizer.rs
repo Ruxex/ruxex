@@ -1,7 +1,8 @@
 use regex::Regex;
 use std::sync::LazyLock;
 
-static PROVIDER_KEY_REGEX: LazyLock<Regex> = LazyLock::new(|| compile_regex(r"sk-[A-Za-z0-9]{20,}"));
+static PROVIDER_KEY_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| compile_regex(r"sk-[A-Za-z0-9]{20,}"));
 static AWS_ACCESS_KEY_ID_REGEX: LazyLock<Regex> =
     LazyLock::new(|| compile_regex(r"\bAKIA[0-9A-Z]{16}\b"));
 static BEARER_TOKEN_REGEX: LazyLock<Regex> =

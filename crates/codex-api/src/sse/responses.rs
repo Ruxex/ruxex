@@ -264,7 +264,8 @@ impl ResponsesStreamEvent {
 fn header_provider_model_value_from_json(value: &Value) -> Option<String> {
     let headers = value.as_object()?;
     headers.iter().find_map(|(name, value)| {
-        if name.eq_ignore_ascii_case("provider-model") || name.eq_ignore_ascii_case("x-provider-model")
+        if name.eq_ignore_ascii_case("provider-model")
+            || name.eq_ignore_ascii_case("x-provider-model")
         {
             json_value_as_string(value)
         } else {

@@ -92,5 +92,4 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(7);
         assert_eq!(expected, pick_tooltip(&mut rng));
     }
-
 }

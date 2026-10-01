@@ -252,8 +252,7 @@ fn agent_plugin_data_root_is_stable_and_unambiguous() {
 fn install_with_version_uses_requested_cache_version() {
     let tmp = tempdir().unwrap();
     write_plugin(tmp.path(), "sample-plugin", "sample-plugin");
-    let plugin_id =
-        PluginId::new("sample-plugin".to_string(), "test-curated".to_string()).unwrap();
+    let plugin_id = PluginId::new("sample-plugin".to_string(), "test-curated".to_string()).unwrap();
     let plugin_version = "0123456789abcdef".to_string();
 
     let result = PluginStore::new(tmp.path().to_path_buf())

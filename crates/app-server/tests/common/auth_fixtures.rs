@@ -17,16 +17,32 @@ pub struct ApiKeyAuthFixture {
 
 impl ApiKeyAuthFixture {
     pub fn new(api_key: impl Into<String>) -> Self {
-        Self { api_key: api_key.into() }
+        Self {
+            api_key: api_key.into(),
+        }
     }
 
-    pub fn account_id(self, _account_id: impl Into<String>) -> Self { self }
-    pub fn workspace_id(self, _workspace_id: impl Into<String>) -> Self { self }
-    pub fn user_id(self, _user_id: impl Into<String>) -> Self { self }
-    pub fn email(self, _email: impl Into<String>) -> Self { self }
-    pub fn plan_type(self, _plan_type: impl Into<String>) -> Self { self }
-    pub fn last_refresh(self, _last_refresh: Option<chrono::DateTime<chrono::Utc>>) -> Self { self }
-    pub fn claims(self, _claims: AuthFixtureClaims) -> Self { self }
+    pub fn account_id(self, _account_id: impl Into<String>) -> Self {
+        self
+    }
+    pub fn workspace_id(self, _workspace_id: impl Into<String>) -> Self {
+        self
+    }
+    pub fn user_id(self, _user_id: impl Into<String>) -> Self {
+        self
+    }
+    pub fn email(self, _email: impl Into<String>) -> Self {
+        self
+    }
+    pub fn plan_type(self, _plan_type: impl Into<String>) -> Self {
+        self
+    }
+    pub fn last_refresh(self, _last_refresh: Option<chrono::DateTime<chrono::Utc>>) -> Self {
+        self
+    }
+    pub fn claims(self, _claims: AuthFixtureClaims) -> Self {
+        self
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -39,11 +55,25 @@ pub struct AuthFixtureClaims {
 }
 
 impl AuthFixtureClaims {
-    pub fn new() -> Self { Self::default() }
-    pub fn email(mut self, email: impl Into<String>) -> Self { self.email = Some(email.into()); self }
-    pub fn plan_type(mut self, plan_type: impl Into<String>) -> Self { self.plan_type = Some(plan_type.into()); self }
-    pub fn user_id(mut self, user_id: impl Into<String>) -> Self { self.user_id = Some(user_id.into()); self }
-    pub fn workspace_id(mut self, workspace_id: impl Into<String>) -> Self { self.workspace_id = Some(workspace_id.into()); self }
+    pub fn new() -> Self {
+        Self::default()
+    }
+    pub fn email(mut self, email: impl Into<String>) -> Self {
+        self.email = Some(email.into());
+        self
+    }
+    pub fn plan_type(mut self, plan_type: impl Into<String>) -> Self {
+        self.plan_type = Some(plan_type.into());
+        self
+    }
+    pub fn user_id(mut self, user_id: impl Into<String>) -> Self {
+        self.user_id = Some(user_id.into());
+        self
+    }
+    pub fn workspace_id(mut self, workspace_id: impl Into<String>) -> Self {
+        self.workspace_id = Some(workspace_id.into());
+        self
+    }
 }
 
 /// Keeps callers that need an opaque test token independent of provider claims.

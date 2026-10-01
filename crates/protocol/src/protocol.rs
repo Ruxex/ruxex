@@ -35,6 +35,7 @@ use crate::items::AsyncUserInputQuestion;
 use crate::items::TurnItem;
 use crate::mcp::CallToolResult;
 use crate::mcp::RequestId;
+use crate::model_types::ReasoningEffort as ReasoningEffortConfig;
 use crate::models::ActivePermissionProfile;
 use crate::models::AgentMessageInputContent;
 use crate::models::BaseInstructions;
@@ -49,7 +50,6 @@ use crate::models::ResponseItem;
 use crate::models::SandboxEnforcement;
 use crate::models::WebSearchAction;
 use crate::num_format::format_with_separators;
-use crate::model_types::ReasoningEffort as ReasoningEffortConfig;
 use crate::parse_command::ParsedCommand;
 use crate::plan_tool::UpdatePlanArgs;
 use crate::request_permissions::RequestPermissionsEvent;
@@ -2396,8 +2396,7 @@ impl FromStr for ThreadSource {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, TS)]
 #[serde(rename_all = "snake_case")]
 #[ts(rename_all = "snake_case")]
-pub enum InternalSessionSource {
-}
+pub enum InternalSessionSource {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, TS)]
 #[serde(rename_all = "snake_case")]
@@ -2554,9 +2553,7 @@ impl SubAgentSource {
             SubAgentSource::ThreadSpawn {
                 parent_thread_id, ..
             } => Some(*parent_thread_id),
-            SubAgentSource::Review
-            | SubAgentSource::Compact
-            | SubAgentSource::Other(_) => None,
+            SubAgentSource::Review | SubAgentSource::Compact | SubAgentSource::Other(_) => None,
         }
     }
 }
@@ -5602,7 +5599,11 @@ mod tests {
         assert_eq!(item.network, None);
         assert_eq!(item.file_system_sandbox_policy, None);
         assert_eq!(item.comp_hash, None);
-        assert!(!serde_json::to_value(&item)?.to_string().contains("personality"));
+        assert!(
+            !serde_json::to_value(&item)?
+                .to_string()
+                .contains("personality")
+        );
         Ok(())
     }
 

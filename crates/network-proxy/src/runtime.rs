@@ -1614,7 +1614,10 @@ mod tests {
             HostBlockDecision::Allowed
         );
         assert_eq!(
-            state.host_blocked("provider.com", /*port*/ 80).await.unwrap(),
+            state
+                .host_blocked("provider.com", /*port*/ 80)
+                .await
+                .unwrap(),
             HostBlockDecision::Blocked(HostBlockReason::NotAllowed)
         );
     }

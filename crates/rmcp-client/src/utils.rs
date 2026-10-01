@@ -223,9 +223,7 @@ mod tests {
         let value = "custom".to_string();
         let expected = OsString::from(&value);
         let env = create_env_for_mcp_server(
-            Some(HashMap::from([
-                (OsString::from("TZ"), expected.clone()),
-            ])),
+            Some(HashMap::from([(OsString::from("TZ"), expected.clone())])),
             &[],
         )
         .expect("local MCP env should build");
@@ -253,10 +251,8 @@ mod tests {
         let _default_guard = EnvVarGuard::set(default_var, "from-default");
         let _custom_guard = EnvVarGuard::set(custom_var, &custom_value);
 
-        let env = create_env_overlay_for_remote_mcp_server(
-            /*extra_env*/ None,
-            &[custom_var.into()],
-        );
+        let env =
+            create_env_overlay_for_remote_mcp_server(/*extra_env*/ None, &[custom_var.into()]);
 
         assert_eq!(
             env,

@@ -115,10 +115,7 @@ impl Default for GenerateTsOptions {
     }
 }
 
-pub fn generate_ts_with_options(
-    out_dir: &Path,
-    options: GenerateTsOptions,
-) -> Result<()> {
+pub fn generate_ts_with_options(out_dir: &Path, options: GenerateTsOptions) -> Result<()> {
     let v2_out_dir = out_dir.join("v2");
     ensure_dir(out_dir)?;
     ensure_dir(&v2_out_dir)?;

@@ -50,7 +50,9 @@ fn policy_product_restrictions_reject_unknown_only_and_allow_codex_mixed() {
     };
 
     assert!(!skill(vec![Product::Unknown]).matches_product_restriction(Some(Product::Codex)));
-    assert!(skill(vec![Product::Codex, Product::Unknown])
-        .matches_product_restriction(Some(Product::Codex)));
+    assert!(
+        skill(vec![Product::Codex, Product::Unknown])
+            .matches_product_restriction(Some(Product::Codex))
+    );
     assert!(skill(Vec::new()).matches_product_restriction(Some(Product::Codex)));
 }

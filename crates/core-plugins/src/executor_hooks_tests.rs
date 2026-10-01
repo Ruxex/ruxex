@@ -280,18 +280,10 @@ fn ignores_unallowlisted_executor_plugin_hooks() {
             cleanup_hook_manifest(),
         ),
         ("wrong event", "computer-use@codex-bundled", wrong_event),
-        (
-            "wrong handler",
-            "computer-use@codex-bundled",
-            wrong_handler,
-        ),
+        ("wrong handler", "computer-use@codex-bundled", wrong_handler),
         ("wrong server", "computer-use@codex-bundled", wrong_server),
         ("wrong tool", "computer-use@codex-bundled", wrong_tool),
-        (
-            "wrong matcher",
-            "computer-use@codex-bundled",
-            wrong_matcher,
-        ),
+        ("wrong matcher", "computer-use@codex-bundled", wrong_matcher),
     ] {
         let snapshot = snapshot_for_manifest(
             plugin_id,

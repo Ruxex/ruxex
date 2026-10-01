@@ -184,10 +184,10 @@ mod tests {
     use codex_protocol::config_types::Settings;
     use codex_protocol::items::TurnItem;
     use codex_protocol::items::UserMessageItem;
+    use codex_protocol::model_types::ReasoningEffort;
     use codex_protocol::models::ContentItem;
     use codex_protocol::models::PermissionProfile;
     use codex_protocol::models::ResponseItem;
-    use codex_protocol::model_types::ReasoningEffort;
     use codex_protocol::protocol::AskForApproval;
     use codex_protocol::protocol::EventMsg;
     use codex_protocol::protocol::ItemCompletedEvent;

@@ -14,8 +14,8 @@ use codex_api::StreamResponse;
 use codex_login::AuthManager;
 use codex_login::CodexAuth;
 use codex_model_provider_info::ModelProviderInfo;
-use codex_models_manager::manager::SharedModelsManager;
 use codex_models_manager::manager::RemoteModelsManager;
+use codex_models_manager::manager::SharedModelsManager;
 use codex_models_manager::manager::StaticModelsManager;
 use codex_protocol::account::ProviderAccount;
 use codex_protocol::model_types::ModelsResponse;
@@ -23,8 +23,8 @@ use http::HeaderMap;
 use http::HeaderValue;
 
 use super::auth::unauthenticated_auth_provider;
-use super::models_endpoint::ModelsEndpointAuthMode;
 use super::models_endpoint::ModelsEndpoint;
+use super::models_endpoint::ModelsEndpointAuthMode;
 use super::provider::ModelProvider;
 use super::provider::ModelProviderFuture;
 use super::provider::ProviderAccountResult;
@@ -222,9 +222,8 @@ mod tests {
 
         let mut provider_info = ModelProviderInfo::create_my_provider();
         provider_info.base_url = Some(server.uri());
-        let auth_manager = AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
-            "test-api-key",
-        ));
+        let auth_manager =
+            AuthManager::from_auth_for_testing(CodexAuth::from_api_key("test-api-key"));
         let provider = MyModelProvider::new(provider_info, Some(auth_manager));
         let manager = provider.models_manager_without_cache(None);
         manager.set_api_key_model_discovery_enabled(true);

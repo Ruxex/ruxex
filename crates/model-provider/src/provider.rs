@@ -387,9 +387,7 @@ impl ModelProvider for ConfiguredModelProvider {
                     CodexAuth::BedrockApiKey(_) | CodexAuth::BedrockAccessKeys(_) => {
                         Err(ProviderAccountError::UnsupportedBedrockApiKeyAuth)
                     }
-                    CodexAuth::Headers(_) => {
-                        Ok(ProviderAccount::ApiKey)
-                    }
+                    CodexAuth::Headers(_) => Ok(ProviderAccount::ApiKey),
                 })
                 .transpose()?
         } else {

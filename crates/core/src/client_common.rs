@@ -1,12 +1,12 @@
 pub use codex_api::ResponseEvent;
 use codex_protocol::error::Result;
+use codex_protocol::model_types::ModelInfo;
 use codex_protocol::models::BaseInstructions;
 use codex_protocol::models::ContentItem;
 use codex_protocol::models::DEFAULT_IMAGE_DETAIL;
 use codex_protocol::models::FunctionCallOutputContentItem;
 use codex_protocol::models::ImageDetail;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::model_types::ModelInfo;
 use codex_tools::ToolSpec;
 use futures::Stream;
 use serde_json::Value;

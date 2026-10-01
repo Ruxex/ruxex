@@ -97,9 +97,7 @@ fn resolve_bin_from_env(key: &str, value: std::ffi::OsString) -> Result<PathBuf,
 /// standalone binary with no packaged resources.
 #[macro_export]
 macro_rules! find_resource {
-    ($resource:expr) => {{
-        $crate::resolve_cargo_runfile(std::path::Path::new(&$resource))
-    }};
+    ($resource:expr) => {{ $crate::resolve_cargo_runfile(std::path::Path::new(&$resource)) }};
 }
 
 pub fn resolve_cargo_runfile(resource: &Path) -> std::io::Result<PathBuf> {

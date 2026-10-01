@@ -15,11 +15,11 @@ use crate::tools::registry::ToolArgumentDiffConsumer;
 use crate::tools::registry::ToolRegistry;
 #[cfg(test)]
 use crate::tools::spec_plan::finalize_tool_router;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::models::SearchToolCallParams;
 #[cfg(test)]
 use codex_protocol::model_types::ModelInfo;
 use codex_protocol::model_types::ToolMode;
+use codex_protocol::models::ResponseItem;
+use codex_protocol::models::SearchToolCallParams;
 use codex_tools::DiscoverableTool;
 use codex_tools::ResponsesApiNamespaceTool;
 use codex_tools::ToolName;

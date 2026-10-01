@@ -178,11 +178,6 @@ fn sandbox_denied_reports_exit_code_when_no_output_available() {
     );
 }
 
-
-
-
-
-
 #[test]
 fn unexpected_status_non_html_is_unchanged() {
     let err = UnexpectedResponseError {

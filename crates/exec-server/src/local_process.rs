@@ -1530,9 +1530,7 @@ mod tests {
             inherit: ShellEnvironmentPolicyInherit::None,
             ignore_default_excludes: true,
             exclude: Vec::new(),
-            r#set: HashMap::from([
-                ("POLICY_SET".to_string(), "policy".to_string()),
-            ]),
+            r#set: HashMap::from([("POLICY_SET".to_string(), "policy".to_string())]),
             include_only: Vec::new(),
         });
 

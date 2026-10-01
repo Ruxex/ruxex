@@ -615,9 +615,8 @@ impl ChatWidget {
             ),
         });
 
-        let mut additional_marketplaces: Vec<&PluginMarketplaceEntry> = marketplaces
-            .iter()
-            .collect();
+        let mut additional_marketplaces: Vec<&PluginMarketplaceEntry> =
+            marketplaces.iter().collect();
         additional_marketplaces.sort_by_cached_key(|marketplace| {
             let display_name = marketplace_display_name(marketplace);
             (

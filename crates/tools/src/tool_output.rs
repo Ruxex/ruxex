@@ -113,12 +113,8 @@ impl JsonToolOutput {
     }
 
     pub fn with_success(value: JsonValue, success: Option<bool>) -> Self {
-        Self {
-            value,
-            success,
-        }
+        Self { value, success }
     }
-
 }
 
 impl ToolOutput for JsonToolOutput {

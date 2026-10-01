@@ -590,9 +590,8 @@ impl App {
             let feature_key = feature.key();
             let mut feature_config = next_config.clone();
             let Ok(()) = feature_config.features.set_enabled(feature, enabled) else {
-                self.chat_widget.add_error_message(format!(
-                    "Failed to update feature {feature_key}"
-                ));
+                self.chat_widget
+                    .add_error_message(format!("Failed to update feature {feature_key}"));
                 continue;
             };
             let effective_enabled = feature_config.features.enabled(feature);
@@ -618,10 +617,7 @@ impl App {
         };
         if write_response.status == WriteStatus::OkOverridden {
             if let Some(effective_config) = self
-                .read_effective_config_after_overridden_write(
-                    app_server,
-                    "Feature changes",
-                )
+                .read_effective_config_after_overridden_write(app_server, "Feature changes")
                 .await
             {
                 self.sync_feature_state_from_effective_config(

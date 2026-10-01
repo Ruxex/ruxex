@@ -26,9 +26,7 @@ pub(super) fn apply_experimental_context(
         || provider.experimental_bearer_token.is_some()
         || provider.auth.is_some()
         || provider.aws.is_some()
-        || !auth.is_some_and(|auth| {
-            experimental_context_is_eligible(auth.auth_mode())
-        })
+        || !auth.is_some_and(|auth| experimental_context_is_eligible(auth.auth_mode()))
         || config.features.enable(Feature::TokenBudget).is_err()
         || !config.features.enabled(Feature::TokenBudget)
     {
@@ -225,10 +223,7 @@ mod tests {
     #[test]
     fn experimental_context_is_disabled_without_subscription_auth() {
         for (auth_mode, expected) in [(AuthMode::Headers, false), (AuthMode::ApiKey, false)] {
-            assert_eq!(
-                experimental_context_is_eligible(auth_mode),
-                expected
-            );
+            assert_eq!(experimental_context_is_eligible(auth_mode), expected);
         }
     }
 }

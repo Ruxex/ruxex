@@ -83,12 +83,8 @@ pub fn parse_rollout_line_bytes(bytes: &[u8]) -> serde_json::Result<RolloutLine>
 
 pub const SESSIONS_SUBDIR: &str = "sessions";
 pub const ARCHIVED_SESSIONS_SUBDIR: &str = "archived_sessions";
-pub static INTERACTIVE_SESSION_SOURCES: LazyLock<Vec<SessionSource>> = LazyLock::new(|| {
-    vec![
-        SessionSource::Cli,
-        SessionSource::VSCode,
-    ]
-});
+pub static INTERACTIVE_SESSION_SOURCES: LazyLock<Vec<SessionSource>> =
+    LazyLock::new(|| vec![SessionSource::Cli, SessionSource::VSCode]);
 
 pub use codex_protocol::protocol::SessionMeta;
 pub use compression::RolloutCompressionTrigger;

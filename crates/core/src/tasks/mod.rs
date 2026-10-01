@@ -607,10 +607,7 @@ impl Session {
             .input_queue
             .take_pending_input_for_turn_state(turn_state.as_ref())
             .await;
-        let (turn_tool_calls,
-            token_usage_at_turn_start,
-            token_usage_by_model,
-        ) = {
+        let (turn_tool_calls, token_usage_at_turn_start, token_usage_by_model) = {
             let mut ts = turn_state.lock().await;
             (
                 ts.tool_calls,

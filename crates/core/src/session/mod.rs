@@ -103,6 +103,8 @@ use codex_protocol::items::ModelInvocationContext;
 use codex_protocol::items::SubAgentActivityItem;
 use codex_protocol::items::TurnItem;
 use codex_protocol::items::UserMessageItem;
+use codex_protocol::model_types::ModelInfo;
+use codex_protocol::model_types::ModelPreset;
 use codex_protocol::models::ActivePermissionProfile;
 use codex_protocol::models::AdditionalPermissionProfile;
 use codex_protocol::models::BaseInstructions;
@@ -112,8 +114,6 @@ use codex_protocol::models::ContentItemKind;
 use codex_protocol::models::InternalChatMessageMetadataPassthrough;
 use codex_protocol::models::PermissionProfile;
 use codex_protocol::models::SandboxEnforcement;
-use codex_protocol::model_types::ModelInfo;
-use codex_protocol::model_types::ModelPreset;
 use codex_protocol::permissions::FileSystemSandboxPolicy;
 use codex_protocol::permissions::FileSystemSandboxPolicyContext;
 use codex_protocol::permissions::NetworkSandboxPolicy;
@@ -328,10 +328,10 @@ use codex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
 use codex_protocol::config_types::Settings;
 use codex_protocol::config_types::WindowsSandboxLevel;
 use codex_protocol::mcp::ClientMcpExtensions;
+use codex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
 use codex_protocol::models::LocalImagePreparation;
 use codex_protocol::models::ResponseInputItem;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
 use codex_protocol::protocol::ApplyPatchApprovalRequestEvent;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::CodexErrorInfo;
@@ -744,10 +744,8 @@ impl Session {
                 /*developer_instructions*/ None,
             )
         });
-        let initial_service_tier_warning = unsupported_service_tier_warning(
-            config.service_tier.as_deref(),
-            &model_info,
-        );
+        let initial_service_tier_warning =
+            unsupported_service_tier_warning(config.service_tier.as_deref(), &model_info);
         let service_tier = get_service_tier(config.service_tier.clone(), &model_info);
         let session_configuration = SessionConfiguration {
             provider: create_model_provider(
@@ -1425,7 +1423,7 @@ impl Session {
             let mut state = self.state.lock().await;
             state.set_next_turn_is_first(!has_prior_user_turns);
         }
-        let turn_context = match conversation_history {
+        match conversation_history {
             InitialHistory::New | InitialHistory::Cleared => {
                 // Defer initial context insertion until the first real turn starts so
                 // turn/start overrides can be merged before we write model-visible context.
@@ -3413,10 +3411,8 @@ impl Session {
             if settings.selected().service_tier != root_service_tier {
                 let mut selected = settings.selected().clone();
                 selected.service_tier = root_service_tier;
-                let inherited_settings = ResolvedStepSettings::new(
-                    Arc::new(selected),
-                    Arc::clone(&settings.model_info),
-                );
+                let inherited_settings =
+                    ResolvedStepSettings::new(Arc::new(selected), Arc::clone(&settings.model_info));
                 settings = Arc::new(inherited_settings);
             }
         }

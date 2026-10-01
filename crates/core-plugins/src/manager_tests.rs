@@ -1,8 +1,8 @@
 use super::*;
 use crate::LoadedPlugin;
+use crate::PluginLoadOutcome;
 use crate::TEST_API_CURATED_MARKETPLACE_NAME;
 use crate::TEST_CURATED_MARKETPLACE_NAME;
-use crate::PluginLoadOutcome;
 use crate::ToolSuggestDiscoverablePlugin;
 use crate::ToolSuggestPluginDiscoveryInput;
 use crate::installed_marketplaces::marketplace_install_root;
