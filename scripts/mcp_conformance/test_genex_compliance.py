@@ -451,7 +451,7 @@ def test_official_case_preserves_adapter_check_identity_on_failure_and_success(
 
     case = _run_official_case(
         Path("/opt/codex"),
-        Path("/src/codex_conformance_adapter.py"),
+        Path("/src/genex_conformance_adapter.py"),
         conformance_command=["conformance"],
         mode=mode,
         scenarios=[scenario],
@@ -495,7 +495,7 @@ def test_official_case_preserves_independent_runner_failure_with_successful_adap
 
     case = _run_official_case(
         Path("/opt/codex"),
-        Path("/src/codex_conformance_adapter.py"),
+        Path("/src/genex_conformance_adapter.py"),
         conformance_command=["conformance"],
         mode=mode,
         scenarios=[scenario],
@@ -556,7 +556,7 @@ def test_official_case_keeps_cimd_registration_checks_in_regression_gated_http_c
 
     case = _run_official_case(
         Path("/opt/codex"),
-        Path("/src/codex_conformance_adapter.py"),
+        Path("/src/genex_conformance_adapter.py"),
         conformance_command=["conformance"],
         mode=MODERN_VERSION,
         scenarios=["auth/offline-access-scope"],

@@ -16,9 +16,9 @@ use genex_protocol::user_input::UserInput;
 use core_test_support::responses::mount_function_call_agent_response;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_codex::TestCodex;
-use core_test_support::test_codex::local_selections;
-use core_test_support::test_codex::turn_permission_fields;
+use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::local_selections;
+use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use core_test_support::zsh_fork::build_zsh_fork_test;
@@ -31,7 +31,7 @@ use std::path::PathBuf;
 fn write_skill_metadata(home: &Path, name: &str, contents: &str) -> Result<()> {
     let metadata_dir = home.join("skills").join(name).join("agents");
     fs::create_dir_all(&metadata_dir)?;
-    fs::write(metadata_dir.join("codex.yaml"), contents)?;
+    fs::write(metadata_dir.join("genex.yaml"), contents)?;
     Ok(())
 }
 

@@ -20,7 +20,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::sse_response;
 use core_test_support::responses::start_mock_server;
-use core_test_support::test_codex::test_codex;
+use core_test_support::test_genex::test_codex;
 use core_test_support::wait_for_event;
 use regex_lite::Regex;
 use serde_json::json;

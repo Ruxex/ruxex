@@ -46,7 +46,7 @@ Shared prompt guidance for both modes lives in `references/prompting.md` and `re
 Fallback-only docs/resources for CLI mode:
 - `references/cli.md`
 - `references/image-api.md`
-- `references/codex-network.md`
+- `references/genex-network.md`
 - `scripts/image_gen.py`
 
 ## When to use
@@ -304,12 +304,12 @@ If installation is not possible in this environment, tell the user which depende
 ### Script-mode notes
 - CLI commands + examples: `references/cli.md`
 - API parameter quick reference: `references/image-api.md`
-- Network approvals / sandbox settings for CLI mode: `references/codex-network.md`
+- Network approvals / sandbox settings for CLI mode: `references/genex-network.md`
 
 ## Reference map
 - `references/prompting.md`: shared prompting principles for both modes.
 - `references/sample-prompts.md`: shared copy/paste prompt recipes for both modes.
 - `references/cli.md`: fallback-only CLI usage via `scripts/image_gen.py`.
 - `references/image-api.md`: fallback-only API/CLI parameter reference.
-- `references/codex-network.md`: fallback-only network/sandbox troubleshooting for CLI mode.
+- `references/genex-network.md`: fallback-only network/sandbox troubleshooting for CLI mode.
 - `scripts/image_gen.py`: fallback-only CLI implementation. Use only when the user explicitly chooses or confirms CLI mode.

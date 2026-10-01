@@ -37,7 +37,7 @@ skill-name/
 |   |-- YAML frontmatter     Required name and description
 |   `-- Markdown body        Instructions loaded when the skill is used
 |-- agents/                  Optional UI metadata and invocation policy
-|   `-- codex.yaml
+|   `-- genex.yaml
 |-- scripts/                 Optional executable helpers
 |-- references/              Optional documentation loaded as needed
 `-- assets/                  Optional files used in generated output
@@ -89,7 +89,7 @@ Use `assets/` for files that belong in generated output rather than in the model
 
 ### UI Metadata and Invocation Policy
 
-`agents/codex.yaml` can provide UI-facing metadata such as `display_name`, `short_description`, and `default_prompt`, along with invocation policy. When creating or updating those settings, read [references/codex_yaml.md](references/codex_yaml.md) and keep the values consistent with the skill.
+`agents/genex.yaml` can provide UI-facing metadata such as `display_name`, `short_description`, and `default_prompt`, along with invocation policy. When creating or updating those settings, read [references/genex_yaml.md](references/genex_yaml.md) and keep the values consistent with the skill.
 
 Automatic skill selection is allowed by default. Change that default only when the user explicitly requests an explicit-only skill:
 
@@ -98,12 +98,12 @@ policy:
   allow_implicit_invocation: false
 ```
 
-This keeps the skill available when explicitly invoked as `$skill-name` without adding it to the model context automatically. Preserve unrelated existing UI, policy, and dependency fields when updating `agents/codex.yaml`.
+This keeps the skill available when explicitly invoked as `$skill-name` without adding it to the model context automatically. Preserve unrelated existing UI, policy, and dependency fields when updating `agents/genex.yaml`.
 
 The initializer creates this file automatically. For new or interface-only metadata, generate it with:
 
 ```bash
-scripts/generate_codex_yaml.py <path/to/skill-folder> --interface key=value
+scripts/generate_genex_yaml.py <path/to/skill-folder> --interface key=value
 ```
 
 The generator replaces the entire file. If an existing file contains `policy` or `dependencies`, update only the intended fields in place instead of regenerating it.
@@ -184,7 +184,7 @@ scripts/init_skill.py my-skill --path "${CODEX_HOME:-$HOME/.codex}/skills" --res
 
 Request only the resource directories the skill needs. Use `--examples` only when concrete placeholders would help, and replace or remove them before finishing. Do not initialize an existing skill again.
 
-The initializer creates the skill directory, a concise `SKILL.md` starter, and `agents/codex.yaml`. It creates resource directories and example files only when requested. Pass generated UI values as `--interface key=value` when needed.
+The initializer creates the skill directory, a concise `SKILL.md` starter, and `agents/genex.yaml`. It creates resource directories and example files only when requested. Pass generated UI values as `--interface key=value` when needed.
 
 ### Write the Instructions
 

@@ -18,7 +18,7 @@ import re
 import sys
 from pathlib import Path
 
-from generate_codex_yaml import write_codex_yaml
+from generate_genex_yaml import write_codex_yaml
 
 MAX_SKILL_NAME_LENGTH = 64
 ALLOWED_RESOURCES = {"scripts", "references", "assets"}
@@ -198,13 +198,13 @@ def init_skill(skill_name, path, resources, include_examples, interface_override
         print(f"[ERROR] Error creating SKILL.md: {e}")
         return None
 
-    # Create agents/codex.yaml
+    # Create agents/genex.yaml
     try:
         result = write_codex_yaml(skill_dir, skill_name, interface_overrides)
         if not result:
             return None
     except Exception as e:
-        print(f"[ERROR] Error creating agents/codex.yaml: {e}")
+        print(f"[ERROR] Error creating agents/genex.yaml: {e}")
         return None
 
     # Create resource directories if requested
@@ -232,7 +232,7 @@ def init_skill(skill_name, path, resources, include_examples, interface_override
         print(
             "2. Create resource directories only if needed (scripts/, references/, assets/)"
         )
-    print("3. Update agents/codex.yaml if the UI metadata should differ")
+    print("3. Update agents/genex.yaml if the UI metadata should differ")
     print("4. Run the validator when ready to check the skill structure")
     print(
         "5. Consider independent forward-testing only when complexity or risk warrants it"

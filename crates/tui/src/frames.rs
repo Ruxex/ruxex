@@ -45,7 +45,7 @@ macro_rules! frames_for {
 }
 
 pub(crate) const FRAMES_DEFAULT: [&str; 36] = frames_for!("default");
-pub(crate) const FRAMES_CODEX: [&str; 36] = frames_for!("codex");
+pub(crate) const FRAMES_CODEX: [&str; 36] = frames_for!("genex");
 pub(crate) const FRAMES_PROVIDER: [&str; 36] = frames_for!("provider");
 pub(crate) const FRAMES_BLOCKS: [&str; 36] = frames_for!("blocks");
 pub(crate) const FRAMES_DOTS: [&str; 36] = frames_for!("dots");

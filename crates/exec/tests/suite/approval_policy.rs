@@ -2,7 +2,7 @@
 #![allow(clippy::unwrap_used)]
 
 use core_test_support::responses;
-use core_test_support::test_codex_exec::test_codex_exec;
+use core_test_support::test_genex_exec::test_codex_exec;
 
 async fn run_exec_with_config(config_toml: &str, extra_args: &[&str]) -> anyhow::Result<String> {
     let test = test_codex_exec();

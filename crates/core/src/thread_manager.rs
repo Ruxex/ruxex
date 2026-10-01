@@ -3,7 +3,7 @@ mod managed;
 use crate::agent::AgentControl;
 use crate::agents_md_manager::SessionInstructions;
 use crate::attestation::AttestationProvider;
-use crate::codex_thread::CodexThread;
+use crate::genex_thread::CodexThread;
 use crate::config::Config;
 use crate::config::ThreadStoreConfig;
 use crate::current_time::TimeProvider;

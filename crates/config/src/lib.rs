@@ -3,7 +3,7 @@ mod auth_policy;
 mod browser_computer_use_requirements;
 mod browser_use;
 #[cfg(target_os = "macos")]
-mod codex_home_symlink;
+mod genex_home_symlink;
 mod computer_use;
 mod config_layer_source;
 mod config_requirements;
@@ -57,7 +57,7 @@ pub use browser_use::BrowserUseConfigToml;
 pub use browser_use::BrowserUseOriginPolicyConfigToml;
 pub use genex_execpolicy::RequirementsExecPolicy;
 #[cfg(target_os = "macos")]
-pub use codex_home_symlink::allowed_symlinked_codex_home;
+pub use genex_home_symlink::allowed_symlinked_codex_home;
 pub use genex_protocol::config_types::ProfileV2Name;
 pub use genex_protocol::config_types::ProfileV2NameParseError;
 pub use genex_protocol::config_types::ToolExposureSurface;

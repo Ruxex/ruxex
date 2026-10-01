@@ -4,11 +4,11 @@ import sys
 import urllib.parse
 from pathlib import Path
 
-import codex_conformance_adapter
+import genex_conformance_adapter
 import official_conformance
 import pytest
 import run_codex_compliance
-from codex_conformance_adapter import (
+from genex_conformance_adapter import (
     CIMD_CLIENT_METADATA_URL,
     CLIENT_REGISTRATION_OVERRIDE_ENV_VAR,
     AdapterFailure,
@@ -229,21 +229,21 @@ def test_strict_auth_does_not_inject_a_second_login(
     manual_reauthorizations: list[object] = []
 
     monkeypatch.setattr(
-        codex_conformance_adapter,
+        genex_conformance_adapter,
         "_oauth_login",
         lambda _client, **_kwargs: (True, None),
     )
-    monkeypatch.setattr(codex_conformance_adapter, "_reload_mcp", lambda _client: None)
+    monkeypatch.setattr(genex_conformance_adapter, "_reload_mcp", lambda _client: None)
     monkeypatch.setattr(
-        codex_conformance_adapter, "_auth_inventory", lambda _client: {}
+        genex_conformance_adapter, "_auth_inventory", lambda _client: {}
     )
 
     def fail_tool_call(_client: object, _workspace: Path) -> None:
         raise AdapterFailure("reauthorization is required")
 
-    monkeypatch.setattr(codex_conformance_adapter, "_auth_tool_call", fail_tool_call)
+    monkeypatch.setattr(genex_conformance_adapter, "_auth_tool_call", fail_tool_call)
     monkeypatch.setattr(
-        codex_conformance_adapter,
+        genex_conformance_adapter,
         "_login_reload_and_call",
         lambda *args, **kwargs: manual_reauthorizations.append((args, kwargs)),
     )
@@ -273,21 +273,21 @@ def test_strict_auth_accepts_product_owned_reauthentication(
     manual_reauthorizations: list[object] = []
 
     monkeypatch.setattr(
-        codex_conformance_adapter,
+        genex_conformance_adapter,
         "_oauth_login",
         lambda _client, **_kwargs: (True, None),
     )
-    monkeypatch.setattr(codex_conformance_adapter, "_reload_mcp", lambda _client: None)
+    monkeypatch.setattr(genex_conformance_adapter, "_reload_mcp", lambda _client: None)
     monkeypatch.setattr(
-        codex_conformance_adapter, "_auth_inventory", lambda _client: {}
+        genex_conformance_adapter, "_auth_inventory", lambda _client: {}
     )
     monkeypatch.setattr(
-        codex_conformance_adapter,
+        genex_conformance_adapter,
         "_auth_tool_call",
         lambda _client, workspace: tool_calls.append(workspace),
     )
     monkeypatch.setattr(
-        codex_conformance_adapter,
+        genex_conformance_adapter,
         "_login_reload_and_call",
         lambda *args, **kwargs: manual_reauthorizations.append((args, kwargs)),
     )

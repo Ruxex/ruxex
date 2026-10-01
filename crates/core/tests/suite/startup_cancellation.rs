@@ -19,7 +19,7 @@ use genex_rollout::RolloutRecorder;
 use genex_thread_store::LocalThreadStore;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_codex::test_codex;
+use core_test_support::test_genex::test_codex;
 use pretty_assertions::assert_eq;
 use tokio::sync::Notify;
 use tokio::time::timeout;

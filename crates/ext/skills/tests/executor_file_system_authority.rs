@@ -526,13 +526,13 @@ async fn executor_discovery_routes_produce_equivalent_catalog_metadata() {
     ));
     let plugin_manifest = test_root.join(".codex-plugin/plugin.json");
     let deploy_skill = test_root.join("skills/deploy/SKILL.md");
-    let deploy_metadata = test_root.join("skills/deploy/agents/codex.yaml");
+    let deploy_metadata = test_root.join("skills/deploy/agents/genex.yaml");
     let excluded_skill = test_root.join("skills/excluded/SKILL.md");
-    let excluded_metadata = test_root.join("skills/excluded/agents/codex.yaml");
+    let excluded_metadata = test_root.join("skills/excluded/agents/genex.yaml");
     let repaired_skill = test_root.join("skills/repaired/SKILL.md");
     let invalid_skill = test_root.join("skills/invalid/SKILL.md");
     let invalid_metadata_skill = test_root.join("skills/invalid-metadata/SKILL.md");
-    let invalid_metadata = test_root.join("skills/invalid-metadata/agents/codex.yaml");
+    let invalid_metadata = test_root.join("skills/invalid-metadata/agents/genex.yaml");
     for path in [
         &plugin_manifest,
         &deploy_skill,
@@ -725,7 +725,7 @@ async fn pre_discovered_executor_catalog_snapshot() {
     )
     .expect("write plugin manifest");
     std::fs::write(
-        metadata_dir.join("codex.yaml"),
+        metadata_dir.join("genex.yaml"),
         "dependencies:\n  tools:\n    - type: mcp\n      value: deployer\n      description: Deployment server.\npolicy:\n  allow_implicit_invocation: false\n",
     )
     .expect("write skill metadata");
@@ -817,7 +817,7 @@ async fn direct_executor_discovery_preserves_hidden_nested_and_probed_metadata()
     ));
     let outer_manifest = test_root.join(".codex-plugin/plugin.json");
     let hidden_skill = test_root.join(".hidden/deploy/SKILL.md");
-    let hidden_metadata = test_root.join(".hidden/deploy/agents/codex.yaml");
+    let hidden_metadata = test_root.join(".hidden/deploy/agents/genex.yaml");
     let inner_manifest = test_root.join("nested/.codex-plugin/plugin.json");
     let inner_skill = test_root.join("nested/skills/audit/SKILL.md");
     for (path, contents) in [
@@ -843,7 +843,7 @@ async fn direct_executor_discovery_preserves_hidden_nested_and_probed_metadata()
     {
         use std::os::unix::fs::symlink;
 
-        let metadata_target = test_root.join("linked-codex.yaml");
+        let metadata_target = test_root.join("linked-genex.yaml");
         std::fs::write(&metadata_target, metadata_contents).expect("write metadata target");
         symlink(metadata_target, &hidden_metadata).expect("link metadata");
     }

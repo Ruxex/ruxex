@@ -1,4 +1,4 @@
-use core_test_support::test_codex::local_selections;
+use core_test_support::test_genex::local_selections;
 use std::sync::Arc;
 
 use genex_core::CodexThread;
@@ -46,9 +46,9 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::StreamingSseServer;
 use core_test_support::streaming_sse::start_streaming_sse_server;
-use core_test_support::test_codex::TestCodex;
-use core_test_support::test_codex::test_codex;
-use core_test_support::test_codex::turn_permission_fields;
+use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;

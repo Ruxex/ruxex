@@ -55,6 +55,24 @@ consumer は re-export 自身だけで、HTTP実装、originator、環境変数�
 `GenexRequestBuilder` へ `migrate-in-place` し、`just check --tests` と
 `just check` で確認する。
 
+## 0.3 Genex file and directory name audit (2026-10-01)
+
+The remaining 73 tracked path entries containing `codex` were audited by
+producer/consumer boundary:
+
+| Path group | Producer/consumer audit | Decision |
+|---|---|---|
+| `crates/skills/**/agents/genex.yaml`, `references/genex_yaml.md`, and `generate_genex_yaml.py` | Skills loader, capability discovery, plugin/skill tests, sample assets, and skill-creator documentation are all repository-local consumers. The metadata filename has no required persisted-data compatibility in this pre-release fork. | `migrate-in-place` to `genex.yaml`, `genex_yaml.md`, and `generate_genex_yaml.py` |
+| `crates/tui/frames/codex/` | `crates/tui/src/frames.rs` is the sole compile-time producer/consumer of the fixture directory; no external file contract is involved. | `migrate-in-place` to `frames/genex/`; keep the Rust constant rename separate if it changes symbol scope |
+| `crates/app-server/src/codex_home_metrics.rs` and `crates/config/src/codex_home_symlink.rs` | Each file is consumed only by its owning crate's module declaration and local call sites. The metrics behavior and sandbox symlink security behavior remain unchanged. | `migrate-in-place` filenames/module paths; preserve public security function names until their API slice |
+| `crates/core/src/codex_thread.rs` and `crates/core/src/codex_delegate.rs` | Both are private core modules. Their local `crate::codex_*` imports and module declarations are the only Rust path consumers; the re-exported `CodexThread` types and `run_codex_thread_*` functions remain unchanged in this filename/module-path slice. | `migrate-in-place` to `genex_thread.rs` / `genex_delegate.rs` and `crate::genex_*` module paths |
+| `crates/core/tests/common/test_genex.rs`, `test_genex_exec.rs`, and `crates/core/tests/suite/genex_delegate.rs` | Test-support module declarations and workspace integration tests are the consumers. Hawk source-location records are generated audit artifacts and must be refreshed or explicitly recorded after the path move. | `migrate-in-place` filenames and module paths; preserve test helper function/type names unless separately audited |
+| `scripts/mcp_conformance/run_genex_compliance.py`, `genex_conformance_adapter.py`, and `test_genex_compliance.py` | Conformance README, Python imports, subprocess path construction, and tests are repository-local consumers. The `codex features enable` command inside the scripts is a binary surface and is not renamed here. | `migrate-in-place` script filenames/imports to Genex names; preserve CLI command names |
+| `crates/skills/src/assets/samples/imagegen/references/genex-network.md` | The sample imagegen skill and its local CLI reference docs are the only consumers; this is repository-local documentation bundled as a sample asset, not a network or security protocol contract. | `migrate-in-place` to `references/genex-network.md` |
+| `codex-cli.json`, CLI `codex__*.snap`, `crates/core/src/session/snapshots/genex_core__codex_tests__*.snap`, and `hawk.json`/Hawk source-location records | These are generated findings or snapshots keyed to the current `codex` binary, test target, or source symbols. Renaming them now would mix the later binary/observability/generated-audit boundary into the file-name slice. | `retain` until binary/observability and generated-artifact stages; record source-path refresh separately |
+| `crates/code-mode-protocol/src/grpc/codex.code_mode.v1.proto`, `crates/execpolicy/examples/example.codexpolicy`, `crates/windows-sandbox-rs/codex-windows-sandbox-setup.manifest` | Protocol filename, security policy extension, and Windows setup manifest/binary contract are consumed by wire/build/security paths. | `retain` external/protocol/security contract |
+| `crates/core/*codex*prompt*`, model-instruction templates, `docs/hawk-codex-cli-result-analysis.md`, `docs/superpowers/plans/*codex-only*`, and `scripts/debug-codex.sh` | Model identifiers, historical audit/plan filenames, and a user-configured VS Code script path are external or historical documentation/tooling names, not internal Genex namespace boundaries. | `retain`; re-audit in user-facing/docs or model-contract stages |
+
 ## 1. 参照元が見つからないクレート・ソース
 
 | 対象 | 現時点の観測 | 現時点の扱い |

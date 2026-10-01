@@ -49,11 +49,11 @@ use core_test_support::responses::sse;
 #[cfg(unix)]
 use core_test_support::skip_if_remote;
 #[cfg(unix)]
-use core_test_support::test_codex::TestCodexBuilder;
-use core_test_support::test_codex::TestCodexHarness;
-use core_test_support::test_codex::local_selections;
-use core_test_support::test_codex::test_codex;
-use core_test_support::test_codex::turn_permission_fields;
+use core_test_support::test_genex::TestCodexBuilder;
+use core_test_support::test_genex::TestCodexHarness;
+use core_test_support::test_genex::local_selections;
+use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;

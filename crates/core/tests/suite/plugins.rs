@@ -52,10 +52,10 @@ use core_test_support::skip_if_remote;
 use core_test_support::skip_if_target_windows;
 use core_test_support::stdio_server_bin;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_codex::TestCodex;
-use core_test_support::test_codex::local_selections;
-use core_test_support::test_codex::test_codex;
-use core_test_support::test_codex::turn_permission_fields;
+use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::local_selections;
+use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use core_test_support::wait_for_mcp_server;
@@ -724,7 +724,7 @@ async fn plugin_skill_product_policy_and_migrated_command_precedence_reach_agent
         "---\nname: source-command-review\ndescription: native review skill\n---\n",
     )?;
     std::fs::write(
-        native_skill_dir.join("agents/codex.yaml"),
+        native_skill_dir.join("agents/genex.yaml"),
         format!("policy:\n  products: [{native_skill_product}]\n"),
     )?;
     if include_migrated_command {

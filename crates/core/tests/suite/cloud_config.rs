@@ -12,7 +12,7 @@ use genex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_target_windows;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_codex::test_codex;
+use core_test_support::test_genex::test_codex;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
 use std::sync::RwLock;

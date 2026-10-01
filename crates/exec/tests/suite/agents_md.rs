@@ -1,7 +1,7 @@
 #![allow(clippy::unwrap_used)]
 
 use core_test_support::responses;
-use core_test_support::test_codex_exec::test_codex_exec;
+use core_test_support::test_genex_exec::test_codex_exec;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn exec_includes_workspace_agents_md_in_request() -> anyhow::Result<()> {

@@ -14,7 +14,7 @@ use uuid::Uuid;
 
 use super::oneshot::Completion;
 
-use crate::codex_thread::BackgroundTerminalInfo;
+use crate::genex_thread::BackgroundTerminalInfo;
 use crate::exec_env::CODEX_PERMISSION_PROFILE_ENV_VAR;
 use crate::exec_env::CODEX_THREAD_ID_ENV_VAR;
 use crate::exec_env::CODEX_VERSION_ENV_VAR;

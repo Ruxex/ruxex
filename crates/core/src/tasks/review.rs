@@ -20,7 +20,7 @@ use genex_protocol::review_format::format_review_findings_block;
 use genex_protocol::review_format::render_review_output_text;
 use tokio_util::sync::CancellationToken;
 
-use crate::codex_delegate::run_codex_thread_one_shot;
+use crate::genex_delegate::run_codex_thread_one_shot;
 use crate::config::Constrained;
 use crate::session::TurnInput;
 use crate::session::session::Session;

@@ -1500,7 +1500,7 @@ description: Visible only for another product
     )?;
     std::fs::create_dir_all(plugin_root.join("skills/thread-summarizer/agents"))?;
     std::fs::write(
-        plugin_root.join("skills/thread-summarizer/agents/codex.yaml"),
+        plugin_root.join("skills/thread-summarizer/agents/genex.yaml"),
         r#"policy:
   products:
     - CODEX
@@ -1508,7 +1508,7 @@ description: Visible only for another product
     )?;
     std::fs::create_dir_all(plugin_root.join("skills/restricted-skill/agents"))?;
     std::fs::write(
-        plugin_root.join("skills/restricted-skill/agents/codex.yaml"),
+        plugin_root.join("skills/restricted-skill/agents/genex.yaml"),
         r#"policy:
   products:
     - UNKNOWN

@@ -1,5 +1,5 @@
 use super::AgentControl;
-use crate::codex_thread::CodexThread;
+use crate::genex_thread::CodexThread;
 use genex_protocol::error::CodexErr;
 use genex_protocol::error::CodexErrorDetails;
 use genex_protocol::error::Result as CodexResult;

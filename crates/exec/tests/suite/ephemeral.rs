@@ -3,7 +3,7 @@
 
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_codex_exec::test_codex_exec;
+use core_test_support::test_genex_exec::test_codex_exec;
 use walkdir::WalkDir;
 use wiremock::MockServer;
 

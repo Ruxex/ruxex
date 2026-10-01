@@ -21,7 +21,7 @@ cargo build --locked --manifest-path Cargo.toml -p genex-cli --bin codex
 From a published Codex checkout, run:
 
 ```bash
-python3 scripts/mcp_conformance/run_codex_compliance.py \
+python3 scripts/mcp_conformance/run_genex_compliance.py \
   target/debug/codex \
   --conformance-cli node_modules/@modelcontextprotocol/conformance/dist/index.js \
   --baseline-report scripts/mcp_conformance/regression-baseline-v1.json \
@@ -55,7 +55,7 @@ Create a compact baseline from a reviewed complete report without contacting
 the upstream suite again:
 
 ```bash
-python3 scripts/mcp_conformance/run_codex_compliance.py \
+python3 scripts/mcp_conformance/run_genex_compliance.py \
   /absolute/path/to/codex \
   --baseline-report /absolute/path/to/full-conformance-report.json \
   --extract-baseline /tmp/mcp-conformance-regression-baseline-v1.json

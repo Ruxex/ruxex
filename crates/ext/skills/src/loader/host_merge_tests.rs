@@ -176,7 +176,7 @@ async fn product_filtered_native_skill_does_not_hide_migrated_command() {
     let metadata_dir = fixture.native_root.join("review/agents");
     fs::create_dir_all(&metadata_dir).expect("create metadata directory");
     fs::write(
-        metadata_dir.join("codex.yaml"),
+        metadata_dir.join("genex.yaml"),
         "policy:\n  products: [unknown]\n",
     )
     .expect("write product policy");

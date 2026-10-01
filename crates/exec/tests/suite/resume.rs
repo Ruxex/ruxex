@@ -5,7 +5,7 @@ use genex_core::init_state_db;
 use genex_protocol::ThreadId;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_codex_exec::test_codex_exec;
+use core_test_support::test_genex_exec::test_codex_exec;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use std::process::Stdio;

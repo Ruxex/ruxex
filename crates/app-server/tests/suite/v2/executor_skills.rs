@@ -180,7 +180,7 @@ stream_max_retries = 0
     }
     let manifest_path = manifest_dir.join("plugin.json")?;
     let skill_path = skill_dir.join("SKILL.md")?;
-    let codex_yaml_path = agents_dir.join("codex.yaml")?;
+    let codex_yaml_path = agents_dir.join("genex.yaml")?;
     let reference_path = reference_dir.join("details.md")?;
     let reference_size = match scenario {
         ExecutorSkillScenario::VisibleWithBudgetWarning => 600 * 1024,

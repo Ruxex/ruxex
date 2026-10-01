@@ -1,7 +1,7 @@
 #![cfg(not(target_os = "windows"))]
 
 use genex_core::TurnInputRequest;
-use core_test_support::test_codex::local_selections;
+use core_test_support::test_genex::local_selections;
 use std::fs;
 
 use assert_matches::assert_matches;
@@ -27,9 +27,9 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_codex::TestCodex;
-use core_test_support::test_codex::test_codex;
-use core_test_support::test_codex::turn_permission_fields;
+use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use serde_json::Value;
 use serde_json::json;

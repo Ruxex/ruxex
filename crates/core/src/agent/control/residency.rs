@@ -1,6 +1,6 @@
 use super::AgentControl;
 use crate::agent::AgentStatus;
-use crate::codex_thread::CodexThread;
+use crate::genex_thread::CodexThread;
 use crate::config::Config;
 use crate::thread_manager::ThreadManagerState;
 use genex_protocol::ThreadId;

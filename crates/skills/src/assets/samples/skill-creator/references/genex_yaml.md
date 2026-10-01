@@ -1,6 +1,6 @@
-# codex.yaml fields (full example + descriptions)
+# genex.yaml fields (full example + descriptions)
 
-`agents/codex.yaml` is an extended, product-specific config intended for the machine/harness to read, not the agent. Other product-specific config can also live in the `agents/` folder.
+`agents/genex.yaml` is an extended, product-specific config intended for the machine/harness to read, not the agent. Other product-specific config can also live in the `agents/` folder.
 
 ## Full example
 

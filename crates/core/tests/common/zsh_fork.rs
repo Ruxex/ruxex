@@ -9,9 +9,9 @@ use genex_protocol::models::PermissionProfile;
 use genex_protocol::permissions::NetworkSandboxPolicy;
 use genex_protocol::protocol::AskForApproval;
 
-use crate::test_codex::TestCodex;
-use crate::test_codex::TestCodexBuilder;
-use crate::test_codex::test_codex;
+use crate::test_genex::TestCodex;
+use crate::test_genex::TestCodexBuilder;
+use crate::test_genex::test_codex;
 
 #[derive(Clone)]
 pub struct ZshForkRuntime {

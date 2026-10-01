@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-provider YAML Generator - Creates agents/codex.yaml for a skill folder.
+provider YAML Generator - Creates agents/genex.yaml for a skill folder.
 
 Usage:
-    generate_codex_yaml.py <skill_dir> [--name <skill_name>] [--interface key=value]
+    generate_genex_yaml.py <skill_dir> [--name <skill_name>] [--interface key=value]
 """
 
 import argparse
@@ -186,15 +186,15 @@ def write_codex_yaml(skill_dir, skill_name, raw_overrides):
 
     agents_dir = Path(skill_dir) / "agents"
     agents_dir.mkdir(parents=True, exist_ok=True)
-    output_path = agents_dir / "codex.yaml"
+    output_path = agents_dir / "genex.yaml"
     output_path.write_text("\n".join(interface_lines) + "\n")
-    print(f"[OK] Created agents/codex.yaml")
+    print(f"[OK] Created agents/genex.yaml")
     return output_path
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Create agents/codex.yaml for a skill directory.",
+        description="Create agents/genex.yaml for a skill directory.",
     )
     parser.add_argument("skill_dir", help="Path to the skill directory")
     parser.add_argument(

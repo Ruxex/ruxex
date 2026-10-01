@@ -31,7 +31,7 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
-use core_test_support::test_codex::test_codex;
+use core_test_support::test_genex::test_codex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 
@@ -294,7 +294,7 @@ async fn codex_delegate_rejects_skill_mcp_dependency_installation_without_prompt
             )
             .await?;
             fs.write_file(
-                &PathUri::from_host_native_path(agents_dir.join("codex.yaml"))?,
+                &PathUri::from_host_native_path(agents_dir.join("genex.yaml"))?,
                 b"dependencies:\n  tools:\n    - type: mcp\n      value: missing-review-server\n      transport: streamable_http\n      url: http://127.0.0.1:1/mcp\n"
                     .to_vec(),
                 Default::default(), /*sandbox*/ None,

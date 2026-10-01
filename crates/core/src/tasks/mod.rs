@@ -24,7 +24,7 @@ use tracing::trace;
 use tracing::trace_span;
 use tracing::warn;
 
-use crate::codex_thread::BackgroundTerminalInfo;
+use crate::genex_thread::BackgroundTerminalInfo;
 use crate::config::Config;
 use crate::context::ContextualUserFragment;
 use crate::hook_runtime::run_turn_interrupt_hooks;

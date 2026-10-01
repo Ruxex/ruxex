@@ -18,7 +18,7 @@ use tempfile::TempDir;
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn codex_home_symlink_opt_out_uses_loaded_user_config() -> anyhow::Result<()> {
     use core_test_support::responses;
-    use core_test_support::test_codex_exec::test_codex_exec;
+    use core_test_support::test_genex_exec::test_codex_exec;
     use serde_json::json;
 
     core_test_support::skip_if_sandbox!(Ok(()));

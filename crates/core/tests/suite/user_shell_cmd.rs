@@ -29,10 +29,10 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_codex::local;
-use core_test_support::test_codex::local_selections;
-use core_test_support::test_codex::test_codex;
-use core_test_support::test_codex::turn_permission_fields;
+use core_test_support::test_genex::local;
+use core_test_support::test_genex::local_selections;
+use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use core_test_support::wait_for_event_with_timeout;
@@ -397,7 +397,7 @@ async fn user_shell_command_does_not_replace_active_turn() -> anyhow::Result<()>
 async fn user_shell_command_history_is_persisted_and_shared_with_model() -> anyhow::Result<()> {
     let server = responses::start_mock_server().await;
     // Disable it to ease command matching.
-    let mut builder = core_test_support::test_codex::test_codex().with_config(move |config| {
+    let mut builder = core_test_support::test_genex::test_codex().with_config(move |config| {
         config
             .features
             .disable(Feature::ShellSnapshot)
@@ -480,7 +480,7 @@ async fn user_shell_command_history_is_persisted_and_shared_with_model() -> anyh
 #[tokio::test]
 async fn user_shell_command_does_not_set_network_sandbox_env_var() -> anyhow::Result<()> {
     let server = responses::start_mock_server().await;
-    let mut builder = core_test_support::test_codex::test_codex().with_config(|config| {
+    let mut builder = core_test_support::test_genex::test_codex().with_config(|config| {
         let file_system_sandbox_policy = config.permissions.file_system_sandbox_policy();
         config
             .permissions
@@ -529,7 +529,7 @@ async fn user_shell_command_does_not_set_network_sandbox_env_var() -> anyhow::Re
 #[cfg(not(target_os = "windows"))] // TODO: unignore on windows
 async fn user_shell_command_output_is_truncated_in_history() -> anyhow::Result<()> {
     let server = responses::start_mock_server().await;
-    let builder = core_test_support::test_codex::test_codex();
+    let builder = core_test_support::test_genex::test_codex();
     let test = builder
         .with_config(|config| {
             config.tool_output_token_limit = Some(100);

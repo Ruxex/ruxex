@@ -1,7 +1,7 @@
 #![cfg(not(target_os = "windows"))]
 
 use genex_core::TurnInputRequest;
-use core_test_support::test_codex::local_selections;
+use core_test_support::test_genex::local_selections;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -26,8 +26,8 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
 use core_test_support::responses::sse_response;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_codex::test_codex;
-use core_test_support::test_codex::turn_permission_fields;
+use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event_with_timeout;
 use pretty_assertions::assert_eq;
 use wiremock::MockServer;

@@ -1984,7 +1984,7 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     parser.add_argument(
         "--adapter-script",
         type=Path,
-        default=Path(__file__).resolve().with_name("codex_conformance_adapter.py"),
+        default=Path(__file__).resolve().with_name("genex_conformance_adapter.py"),
         help="Path to the Codex adapter used by the official client suite.",
     )
     parser.add_argument(

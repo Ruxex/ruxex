@@ -74,7 +74,7 @@ async fn discovers_a_complete_capability_bundle_in_one_request() -> anyhow::Resu
         "---\nname: deploy\ndescription: Deploy the service.\n---\n\nDeploy instructions.\n",
     )?;
     write_file(
-        &root.path().join("skills/deploy/agents/codex.yaml"),
+        &root.path().join("skills/deploy/agents/genex.yaml"),
         "policy:\n  allow_implicit_invocation: false\n",
     )?;
     write_file(
@@ -142,7 +142,7 @@ async fn discovers_a_complete_capability_bundle_in_one_request() -> anyhow::Resu
             (root_uri.join("nested/skills/audit/SKILL.md")?, None,),
             (
                 root_uri.join("skills/deploy/SKILL.md")?,
-                Some(root_uri.join("skills/deploy/agents/codex.yaml")?),
+                Some(root_uri.join("skills/deploy/agents/genex.yaml")?),
             ),
         ]
     );

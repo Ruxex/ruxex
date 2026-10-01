@@ -14,7 +14,7 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_models_once;
 use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
-use core_test_support::test_codex::test_codex;
+use core_test_support::test_genex::test_codex;
 use pretty_assertions::assert_eq;
 use tempfile::tempdir;
 use test_case::test_case;

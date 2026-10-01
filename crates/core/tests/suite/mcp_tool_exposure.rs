@@ -279,7 +279,7 @@ async fn root_and_spawned_subagent_receive_distinct_mcp_session_sources() -> Res
     extensions.mcp_server_contributor(Arc::new(SessionSourceMcpContributor {
         observed_sources: observed_sources.clone(),
     }));
-    let test = core_test_support::test_codex::test_codex()
+    let test = core_test_support::test_genex::test_codex()
         .with_extensions(Arc::new(extensions.build()))
         .build(&server)
         .await?;
@@ -322,7 +322,7 @@ async fn rapid_mcp_refreshes_coalesce_to_the_latest_config() -> Result<()> {
     let contributor = Arc::new(CoalescingMcpContributor::new());
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     extensions.mcp_server_contributor(contributor.clone());
-    let test = core_test_support::test_codex::test_codex()
+    let test = core_test_support::test_genex::test_codex()
         .with_extensions(Arc::new(extensions.build()))
         .build(&server)
         .await?;
