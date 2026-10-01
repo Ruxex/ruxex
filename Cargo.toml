@@ -83,7 +83,6 @@ members = [
     "crates/user-verification",
     "crates/tools",
     "crates/websocket-client",
-    "crates/windows-sandbox-service",
     "crates/worktree",
     "crates/utils/absolute-path",
     "crates/utils/audio",

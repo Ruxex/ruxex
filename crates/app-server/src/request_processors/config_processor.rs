@@ -57,7 +57,6 @@ const FEATURE_CONFIG_KEYS_EXPOSED_IN_CONFIG_READ: &[&str] = &[
     "mcp_2026_07_28",
     "mentions_v2",
     "tool_suggest",
-    "windows_sandbox_service",
 ];
 
 #[derive(Clone)]
