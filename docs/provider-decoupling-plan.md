@@ -220,6 +220,42 @@ Hawk の結果だけで自動的に削除を決めず、feature 構成、複数�
 - 削除可能、要分割、互換性維持、保留の判断が記録されている。
 - 次の削除作業を、小さく独立した変更単位へ分解できている。
 
+## 次期計画: Codex から Genex への命名移行
+
+provider 固有の機能分離とHawk監査の次段階として、残存する製品名・namespace名を
+汎用エージェント基盤の名称へ移行する。正式名称は **Genex**、説明名は
+**Generalized Agent Execution Foundation**、workspace/crateのprefixは `genex-`
+とする。これは一括文字列置換ではなく、参照範囲と互換性の強さに応じて段階的に実施する。
+
+### 命名移行の実施順
+
+1. **棚卸しと正規語彙の確定**: `codex` の出現を、ファイル/ディレクトリ、crate/package、
+   module/type/function/constant、CLI/config/env、protocol/schema、永続化データ、
+   外部契約、UI/docs、生成物に分類する。CLI名、protocol名、永続化識別子はこの段階で
+   個別に `remove`、`migrate-in-place`、`retain` を決める。
+2. **低依存のファイル・crate/package境界**: leaf crateから、ディレクトリ名、
+   `Cargo.toml` のpackage名、workspace member、依存宣言、lockfile、生成物を一単位で
+   移行する。`codex-core` のような高 fan-out の基盤crateを最初に変更しない。
+3. **内部moduleとRustシンボル**: module、struct、enum、trait、type alias、function、
+   constantをcrate単位で移行する。Rustのprivate symbolから始め、public APIはconsumerを
+   列挙してから変更する。
+4. **ユーザー向け・統合境界**: binary名、CLI help/command、config key、environment
+   variable、UI文言、docs、fixture、snapshotを、protocol・永続化の判断と整合させて移行する。
+5. **protocol・schema・永続化・外部契約**: wire name、serialized field、rollout/session
+   source、SQLite/JSONの識別子、外部URLやprovider-owned contractは、既存データと外部
+   consumerを監査した後にのみ変更する。必要なら旧名のreader/aliasを保持する。
+6. **生成物と最終監査**: `just generate` の差分を確認し、意図しない旧名、旧crate参照、
+   docsだけに残すべき履歴表現を分類する。
+
+### 命名移行の制約と完了条件
+
+- repository全体への機械的な `codex` 全置換は行わない。
+- provider名、外部wire契約、既存persisted data、security boundaryを、名前だけを理由に変更しない。
+- 各sliceでproducer/consumerとdecisionを記録し、依存元が多い境界は小さく分割する。
+- 各Rust変更では `just check --tests` と `just check`、生成物に影響がある場合は `just generate` を実行する。
+- 内部名称に未分類の `codex` 残存がなく、意図的に保持した旧名には理由と互換性範囲が記録されている。
+- Genexのworkspace/package/module/API名称、生成schema、CLI/docsが相互に一致している。
+
 ## 実施順序と判断ゲート
 
 1. Level 0 の依存関係 JSON と HTML を生成する。
