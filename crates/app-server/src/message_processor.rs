@@ -71,7 +71,7 @@ use genex_core::config::ThreadStoreConfig;
 use genex_exec_server::EnvironmentManager;
 use genex_extension_api::TurnStartAdmission;
 use genex_goal_extension::GoalService;
-use genex_home::CodexHomeUserInstructionsProvider;
+use genex_home::GenexHomeUserInstructionsProvider;
 use genex_login::AuthManager;
 use genex_protocol::ThreadId;
 use genex_protocol::mcp::ClientMcpExtensions;
@@ -320,7 +320,7 @@ impl MessageProcessor {
                     queue_service: queue_service.clone(),
                     turn_start_admission: Some(Arc::clone(&turn_start_admission)),
                 }),
-                Arc::new(CodexHomeUserInstructionsProvider::new(
+                Arc::new(GenexHomeUserInstructionsProvider::new(
                     config.codex_home.clone(),
                 )),
                 genex_core::passthrough_image_store(),

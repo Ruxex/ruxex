@@ -77,7 +77,7 @@ pub use genex_extension_api::empty_extension_registry;
 pub use genex_features::Feature;
 pub use genex_features::Features;
 pub use genex_history::InitialHistory;
-pub use genex_home::CodexHomeUserInstructionsProvider;
+pub use genex_home::GenexHomeUserInstructionsProvider;
 pub use genex_login::AuthHeaders;
 pub use genex_login::AuthManager;
 pub use genex_login::CodexAuth;

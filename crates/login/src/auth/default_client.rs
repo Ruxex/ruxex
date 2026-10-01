@@ -10,7 +10,7 @@ use genex_http_client::HttpClient;
 use genex_http_client::HttpClientBuilder;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
-pub use genex_http_client::RequestBuilder as CodexRequestBuilder;
+pub use genex_http_client::RequestBuilder as GenexRequestBuilder;
 use genex_terminal_detection::user_agent;
 use http::HeaderMap;
 use http::HeaderValue;

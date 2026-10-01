@@ -5,7 +5,7 @@ use genex_core::build_prompt_input;
 use genex_core::config::ConfigBuilder;
 use genex_core::config::ConfigOverrides;
 use genex_extension_api::ExtensionRegistryBuilder;
-use genex_home::CodexHomeUserInstructionsProvider;
+use genex_home::GenexHomeUserInstructionsProvider;
 use genex_protocol::models::ContentItem;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::user_input::UserInput;
@@ -30,7 +30,7 @@ async fn build_prompt_input_includes_context_and_user_message() -> Result<()> {
         })
         .build()
         .await?;
-    let user_instructions_provider = Arc::new(CodexHomeUserInstructionsProvider::new(
+    let user_instructions_provider = Arc::new(GenexHomeUserInstructionsProvider::new(
         config.codex_home.clone(),
     ));
     let input = build_prompt_input(

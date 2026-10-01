@@ -12,10 +12,10 @@ use genex_utils_absolute_path::AbsolutePathBuf;
 const DEFAULT_AGENTS_MD_FILENAME: &str = "AGENTS.md";
 const LOCAL_AGENTS_MD_FILENAME: &str = "AGENTS.override.md";
 
-/// Loads user instructions from a Codex home directory.
+/// Loads user instructions from a Genex home directory.
 #[derive(Clone, Debug)]
-pub struct CodexHomeUserInstructionsProvider {
-    codex_home: AbsolutePathBuf,
+pub struct GenexHomeUserInstructionsProvider {
+    genex_home: AbsolutePathBuf,
     // Cached instructions and warning history are shared across provider clones.
     state: Arc<Mutex<InstructionsState>>,
 }
@@ -28,20 +28,20 @@ struct InstructionsState {
     active_warnings: HashSet<String>,
 }
 
-impl CodexHomeUserInstructionsProvider {
-    /// Creates a provider rooted at the supplied absolute Codex home directory.
-    pub fn new(codex_home: AbsolutePathBuf) -> Self {
+impl GenexHomeUserInstructionsProvider {
+    /// Creates a provider rooted at the supplied absolute Genex home directory.
+    pub fn new(genex_home: AbsolutePathBuf) -> Self {
         Self {
-            codex_home,
+            genex_home,
             state: Arc::new(Mutex::new(InstructionsState::default())),
         }
     }
 
     #[tracing::instrument(name = "instructions.load", skip_all, fields(provider = "global"))]
-    async fn load_from_codex_home(&self) -> LoadedUserInstructions {
+    async fn load_from_genex_home(&self) -> LoadedUserInstructions {
         let mut warnings = Vec::new();
         for candidate in [LOCAL_AGENTS_MD_FILENAME, DEFAULT_AGENTS_MD_FILENAME] {
-            let path = self.codex_home.join(candidate);
+            let path = self.genex_home.join(candidate);
             match tokio::fs::metadata(path.as_path()).await {
                 Ok(metadata) if !metadata.is_file() => continue,
                 Ok(_) => {}
@@ -84,10 +84,10 @@ impl CodexHomeUserInstructionsProvider {
     }
 }
 
-impl UserInstructionsProvider for CodexHomeUserInstructionsProvider {
+impl UserInstructionsProvider for GenexHomeUserInstructionsProvider {
     fn load_user_instructions(&self) -> LoadInstructionsFuture<'_> {
         Box::pin(async move {
-            let mut loaded = self.load_from_codex_home().await;
+            let mut loaded = self.load_from_genex_home().await;
             let mut state = self
                 .state
                 .lock()

@@ -75,7 +75,7 @@ use genex_core::config::resolve_profile_v2_config_path;
 use genex_features::FEATURES;
 use genex_features::Stage;
 use genex_features::is_known_feature_key;
-use genex_home::CodexHomeUserInstructionsProvider;
+use genex_home::GenexHomeUserInstructionsProvider;
 use genex_login::AuthManager;
 use genex_models_manager::manager::RefreshStrategy;
 use genex_protocol::protocol::AskForApproval;
@@ -1826,7 +1826,7 @@ async fn run_debug_prompt_input_command(
         });
     }
 
-    let user_instructions_provider = Arc::new(CodexHomeUserInstructionsProvider::new(
+    let user_instructions_provider = Arc::new(GenexHomeUserInstructionsProvider::new(
         config.codex_home.clone(),
     ));
     let mut extensions = genex_extension_api::ExtensionRegistryBuilder::new();

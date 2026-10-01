@@ -202,7 +202,7 @@ async fn global_instructions_refresh_after_a_tool_in_the_same_turn() -> Result<(
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn interrupting_a_provider_read_allows_the_next_turn_to_refresh() -> Result<()> {
     struct GatedProvider {
-        inner: CodexHomeUserInstructionsProvider,
+        inner: GenexHomeUserInstructionsProvider,
         block_next: AtomicBool,
         started: Notify,
     }
@@ -222,7 +222,7 @@ async fn interrupting_a_provider_read_allows_the_next_turn_to_refresh() -> Resul
     let home = Arc::new(TempDir::new()?);
     write_global_file(&home, GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
     let provider = Arc::new(GatedProvider {
-        inner: CodexHomeUserInstructionsProvider::new(home.path().to_path_buf().abs()),
+        inner: GenexHomeUserInstructionsProvider::new(home.path().to_path_buf().abs()),
         block_next: AtomicBool::new(/*v*/ false),
         started: Notify::new(),
     });

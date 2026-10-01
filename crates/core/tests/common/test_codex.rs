@@ -32,7 +32,7 @@ use genex_extension_api::LoadInstructionsFuture;
 use genex_extension_api::UserInstructionsProvider;
 use genex_extension_api::empty_extension_registry;
 use genex_features::Feature;
-use genex_home::CodexHomeUserInstructionsProvider;
+use genex_home::GenexHomeUserInstructionsProvider;
 use genex_login::CodexAuth;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::manager::SharedModelsManager;
@@ -633,7 +633,7 @@ impl TestCodexBuilder {
         let installation_id = resolve_installation_id(&config.codex_home).await?;
         let user_instructions_provider =
             self.user_instructions_provider.clone().unwrap_or_else(|| {
-                Arc::new(CodexHomeUserInstructionsProvider::new(
+                Arc::new(GenexHomeUserInstructionsProvider::new(
                     config.codex_home.clone(),
                 ))
             });

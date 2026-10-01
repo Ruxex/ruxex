@@ -14,7 +14,7 @@ use genex_features::Feature;
 use genex_history::InitialHistory;
 use genex_history::ResumedHistory;
 use genex_history::RolloutItem;
-use genex_home::CodexHomeUserInstructionsProvider;
+use genex_home::GenexHomeUserInstructionsProvider;
 use genex_protocol::ThreadId;
 use genex_protocol::config_types::TrustLevel;
 use genex_protocol::error::CodexErrorDetails;
@@ -94,7 +94,7 @@ const SPAWN_SEED_PROMPT: &str = "seed parent history";
 const PROVIDER_WARNING: &str = "global instruction source unavailable; using fallback";
 
 struct WarningInstructionsProvider {
-    inner: CodexHomeUserInstructionsProvider,
+    inner: GenexHomeUserInstructionsProvider,
     warning_active: AtomicBool,
 }
 
@@ -919,7 +919,7 @@ async fn tightening_environment_read_permissions_invalidates_cached_project_inst
     let home = Arc::new(TempDir::new()?);
     let global_source = write_global_file(&home, GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
     let provider = Arc::new(WarningInstructionsProvider {
-        inner: CodexHomeUserInstructionsProvider::new(home.path().to_path_buf().abs()),
+    inner: GenexHomeUserInstructionsProvider::new(home.path().to_path_buf().abs()),
         warning_active: AtomicBool::new(/*v*/ false),
     });
     let mut builder = test_codex()
@@ -1018,7 +1018,7 @@ async fn loads_user_instructions_without_a_primary_environment() -> Result<()> {
     let global_source =
         write_global_file(home.as_ref(), GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
     let provider = Arc::new(RecordingUserInstructionsProvider::new(Arc::new(
-        CodexHomeUserInstructionsProvider::new(AbsolutePathBuf::try_from(
+        GenexHomeUserInstructionsProvider::new(AbsolutePathBuf::try_from(
             home.path().to_path_buf(),
         )?),
     )));
@@ -1084,7 +1084,7 @@ impl ThreadInstructionsFixture {
         let home = Arc::new(TempDir::new()?);
         write_global_file(home.as_ref(), GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
         let global_provider = Arc::new(RecordingUserInstructionsProvider::new(Arc::new(
-            CodexHomeUserInstructionsProvider::new(AbsolutePathBuf::try_from(
+            GenexHomeUserInstructionsProvider::new(AbsolutePathBuf::try_from(
                 home.path().to_path_buf(),
             )?),
         )));
@@ -1845,7 +1845,7 @@ async fn multi_environment_thread_refreshes_global_and_keeps_repository_snapshot
     let global_source =
         write_global_file(home.as_ref(), GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
     let provider = Arc::new(RecordingUserInstructionsProvider::new(Arc::new(
-        CodexHomeUserInstructionsProvider::new(AbsolutePathBuf::try_from(
+        GenexHomeUserInstructionsProvider::new(AbsolutePathBuf::try_from(
             home.path().to_path_buf(),
         )?),
     )));

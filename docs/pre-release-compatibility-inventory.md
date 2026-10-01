@@ -55,6 +55,18 @@ earlier one being free of obsolete persisted data:
 |---|---|---|---|---|
 | 121 workspace packages whose names start with `codex-`, their workspace dependency keys, Rust library/proc-macro crate namespaces, and the five crate directories under `crates/codex-*` | The workspace manifest and each package manifest produce the package/dependency graph; package manifests and Rust source consume the dependency keys and crate namespaces. `cargo metadata --no-deps` found 121 package producers and 117 internal dependency-key consumers. `codex` binary names, protocol/schema identifiers, persisted-data names, provider-owned contracts, and product/UI strings are separate later-stage consumers and are not changed here. | `genex-*` package/dependency names, `genex_*` Rust crate namespaces, and `crates/genex-*` directories where the directory itself carried the old namespace | `migrate-in-place` | Pre-change invariant fails with 121 `codex-*` packages; post-change `cargo metadata`, `just generate`, `just check --tests`, and `just check` must pass. |
 
+### Genex home instruction provider symbol migration (2026-10-01)
+
+| Exact symbol/path | Current producer/consumer audit | Canonical replacement | Decision | Verification |
+|---|---|---|---|---|
+| `genex_home::CodexHomeUserInstructionsProvider`, its private `codex_home` field, and `load_from_codex_home` helper | `genex-home` produces the provider; `core-api` re-exports it; `app-server`, `cli`, and core test support/suites consume it. The provider is workspace-owned and has no external wire or persisted representation. `CODEX_HOME` and `find_codex_home` are separate environment/config compatibility boundaries and remain unchanged. | `genex_home::GenexHomeUserInstructionsProvider`, private `genex_home`, and `load_from_genex_home` | `migrate-in-place` | Pre-change invariant: 24 old-type references and 0 new-type references; post-change `just check --tests` and `just check`. |
+
+### Genex client Rust alias migration (2026-10-01)
+
+| Exact symbol/path | Current producer/consumer audit | Canonical replacement | Decision | Verification |
+|---|---|---|---|---|
+| `genex_client::{CodexHttpClient,CodexRequestBuilder}` and `genex_login::CodexRequestBuilder` re-exports | `genex-client` and `genex-login` produce public aliases to the generic `genex-http-client` types; repository search found no downstream workspace consumer of either alias. The HTTP implementation, originator strings, environment variables, and wire headers are separate compatibility/observability surfaces. | `genex_client::{GenexHttpClient,GenexRequestBuilder}` and `genex_login::GenexRequestBuilder` | `migrate-in-place` | Pre-change invariant: 3 old alias references and 0 new alias references; post-change `just check --tests` and `just check`. |
+
 ### `just check` warning audit (2026-10-01)
 
 | Exact symbol/path | Current producer/consumer audit | Canonical replacement | Decision | Verification |

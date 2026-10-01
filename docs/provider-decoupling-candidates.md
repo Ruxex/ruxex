@@ -36,6 +36,25 @@ crate namespace が producer/consumer であり、`codex` binary、protocol/sche
 この slice の decision は `migrate-in-place` とし、provider capability の削除や
 protocol/persisted-data の互換判断を混ぜ込まない。
 
+### 0.1 Genex home instruction provider symbol migration (2026-10-01)
+
+`genex-home` の `CodexHomeUserInstructionsProvider` は workspace 内の public
+Rust API であり、`core-api` の re-export、`app-server`、`cli`、core の test
+support/suite が consumer であることを確認した。private field と loader helper
+も同じ crate 内だけで消費されるため、producer/consumer を同一 slice で移行する。
+一方、`CODEX_HOME` 環境変数と `find_codex_home` は外部設定互換境界なので、今回の
+Rust symbol 移行には含めない。decision は `migrate-in-place` とし、
+`just check --tests` と `just check` で確認する。
+
+### 0.2 Genex client Rust alias migration (2026-10-01)
+
+`genex-client` と `genex-login` の `CodexHttpClient` / `CodexRequestBuilder` は、
+汎用 `genex-http-client` 型への workspace-owned public re-export である。検索上の
+consumer は re-export 自身だけで、HTTP実装、originator、環境変数、wire header は
+別の境界として保持する。型エイリアスのみ `GenexHttpClient` /
+`GenexRequestBuilder` へ `migrate-in-place` し、`just check --tests` と
+`just check` で確認する。
+
 ## 1. 参照元が見つからないクレート・ソース
 
 | 対象 | 現時点の観測 | 現時点の扱い |
