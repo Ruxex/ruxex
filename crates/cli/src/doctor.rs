@@ -43,7 +43,7 @@ use genex_http_client::ClientRouteClass;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
 use genex_http_client::RouteAwareClientPool;
-use genex_install_context::CodexPackageLayout;
+use genex_install_context::GenexPackageLayout;
 use genex_install_context::InstallContext;
 use genex_install_context::InstallMethod;
 use genex_install_context::StandalonePlatform;
@@ -1002,7 +1002,7 @@ fn describe_install_context(context: &InstallContext) -> String {
 
 fn describe_method_with_package_layout(
     method: &str,
-    package_layout: Option<&CodexPackageLayout>,
+    package_layout: Option<&GenexPackageLayout>,
 ) -> String {
     match package_layout {
         Some(package_layout) => {

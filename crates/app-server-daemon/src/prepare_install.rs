@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
-use genex_install_context::CodexPackageManifest;
+use genex_install_context::GenexPackageManifest;
 use genex_install_context::InstallContext;
 
 use crate::Daemon;
@@ -151,7 +151,7 @@ async fn prepare_from_package(
         "CODEX_HOME must be outside the source CLI package"
     );
     let manifest_bytes = std::fs::read(source.join("codex-package.json"))?;
-    let manifest: CodexPackageManifest = serde_json::from_slice(&manifest_bytes)?;
+    let manifest: GenexPackageManifest = serde_json::from_slice(&manifest_bytes)?;
     let version = manifest.version.to_string();
     let target = platform_target()?;
     let metadata: serde_json::Value = serde_json::from_slice(&manifest_bytes)?;

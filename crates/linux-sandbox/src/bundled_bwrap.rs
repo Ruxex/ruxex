@@ -187,7 +187,7 @@ fn bytes_to_hex(bytes: &[u8; 32]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_install_context::CodexPackageLayout;
+    use genex_install_context::GenexPackageLayout;
     use genex_install_context::InstallContext;
     use genex_install_context::InstallMethod;
     use pretty_assertions::assert_eq;
@@ -207,7 +207,7 @@ mod tests {
 
         let context = InstallContext {
             method: InstallMethod::Other,
-            package_layout: Some(CodexPackageLayout {
+            package_layout: Some(GenexPackageLayout {
                 package_dir: AbsolutePathBuf::from_absolute_path(package_dir).expect("absolute"),
                 bin_dir: AbsolutePathBuf::from_absolute_path(&bin_dir).expect("absolute"),
                 resources_dir: Some(

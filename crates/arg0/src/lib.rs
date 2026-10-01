@@ -544,7 +544,7 @@ mod tests {
     use super::run_main_with_arg0_guard;
     #[cfg(unix)]
     use anyhow::ensure;
-    use genex_install_context::CodexPackageLayout;
+    use genex_install_context::GenexPackageLayout;
     use genex_install_context::InstallContext;
     use genex_install_context::InstallMethod;
     use genex_utils_absolute_path::AbsolutePathBuf;
@@ -589,7 +589,7 @@ mod tests {
         let path_dir = AbsolutePathBuf::from_absolute_path(path_dir.canonicalize()?)?;
         let install_context = InstallContext {
             method: InstallMethod::Other,
-            package_layout: Some(CodexPackageLayout {
+            package_layout: Some(GenexPackageLayout {
                 package_dir: AbsolutePathBuf::from_absolute_path(package_dir.canonicalize()?)?,
                 bin_dir: AbsolutePathBuf::from_absolute_path(bin_dir.canonicalize()?)?,
                 resources_dir: None,

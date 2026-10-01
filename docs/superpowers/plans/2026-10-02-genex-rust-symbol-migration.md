@@ -97,25 +97,25 @@ Task 0 の coverage matrix は workspace member ごとに次のいずれかを�
 - Consumes: Task 0 の consumer 一覧と old/new invariant。
 - Produces: crate-private / test-only の `Genex*` / `genex_*` symbol。公開型、CLI command、環境変数、protocol 名は変更しない。
 
-- [ ] **Step 1: private/test-only 候補を crate 単位で分割する**
+- [x] **Step 1: private/test-only 候補を crate 単位で分割する**
 
   `CodexClient`、`codex_signature`、`codex_proxy_git_ssh_command`、`codex_linux_sandbox_exe`、`codex_command` など、external consumer がない候補だけを選ぶ。crate をまたぐ helper は Task 2 に送る。
 
-- [ ] **Step 2: old/new invariant を確認する**
+- [x] **Step 2: old/new invariant を確認する**
 
   対象 crate ごとに旧 symbol の参照数と新 symbol の参照数を記録し、旧定義が private/test-only であることを確認する。
 
-- [ ] **Step 3: symbol と同一 crate の consumers を rename する**
+- [x] **Step 3: symbol と同一 crate の consumers を rename する**
 
   function、private struct、module-local constant、test helper の定義・呼び出し・import を変更する。`CODEX_HOME`、CLI binary 名、snapshot の expected user text は変更しない。
 
-- [ ] **Step 4: compile verification**
+- [x] **Step 4: compile verification**
 
   Run: `just check --tests` and `just check`
 
   Expected: 0 errors. 対象が generated fixture を参照する場合は `just generate` も実行し、意図しない差分がないことを確認する。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   `git commit -m "Rename leaf Rust symbols to Genex"`
 
@@ -125,30 +125,30 @@ Task 0 の coverage matrix は workspace member ごとに次のいずれかを�
 
 **Files:**
 - Modify: `crates/install-context/src/lib.rs`
-- Modify: `crates/history/src/lib.rs`、`crates/history/src/{rollout_payload.rs,retained_context.rs}` と tests
+- Audit only: `crates/history/src/lib.rs`、`crates/history/src/{rollout_payload.rs,retained_context.rs}` と tests; `CodexHarnessMetadata` rename is deferred to schema/persisted audit
 - Modify: `crates/cli/src/doctor.rs`
 - Modify: `crates/app-server-daemon/src/prepare_install.rs`
 - Modify: `crates/rollout/src/` と core test support の `CodexHarnessMetadata` consumers（Task 0 で確定）
 
 **Interfaces:**
 - Consumes: Task 1 完了後の clean workspace と Task 0 の public consumer map。
-- Produces: `GenexPackageLayout`、`GenexPackageManifest`、`GenexHarnessMetadata` など、workspace-owned で低 fan-out の公開 Rust API。
+- Produces: `GenexPackageLayout`、`GenexPackageManifest`; `CodexHarnessMetadata` remains explicitly deferred because its schema definition name is a compatibility boundary。
 
-- [ ] **Step 1: public consumer と external boundary を確認する**
+- [x] **Step 1: public consumer と external boundary を確認する**
 
-  `CodexPackageLayout`、`CodexPackageManifest`、`CodexHarnessMetadata` が wire/schema/persisted identifier ではなく workspace-owned API であることを確認する。別 binary、extension、生成 code の参照を列挙する。
+  `CodexPackageLayout`、`CodexPackageManifest`、`CodexHarnessMetadata` が wire/schema/persisted identifier ではなく workspace-owned API であることを確認する。別 binary、extension、生成 code の参照を列挙する。`CodexHarnessMetadata` は history JSON schema の definition 名に現れるため、schema/persisted audit が完了するまで Task 3/7 へ defer してよい。
 
-- [ ] **Step 2: API 名と全 consumer を migrate-in-place する**
+- [x] **Step 2: API 名と全 consumer を migrate-in-place する**
 
   型名、import、re-export、doc comment、test helper を `Genex*` へ変更する。package filename、install layout、rollout filename、JSON field 名は変更しない。
 
-- [ ] **Step 3: generated/compile verification**
+- [x] **Step 3: generated/compile verification**
 
   Run: `just check --tests`, `just check`。
 
   app-server protocol/schema に到達する場合のみ `just generate` を実行し、schema の意図しない wire name 変更を reject する。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
   `git commit -m "Rename low-fanout Rust helper types to Genex"`
 

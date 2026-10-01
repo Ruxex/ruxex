@@ -28,7 +28,7 @@ pub enum StandalonePlatform {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct CodexPackageLayout {
+pub struct GenexPackageLayout {
     /// The package root that contains the metadata file and layout directories.
     pub package_dir: AbsolutePathBuf,
     /// Directory containing the Codex entrypoint executable.
@@ -41,14 +41,14 @@ pub struct CodexPackageLayout {
 
 /// Version metadata recorded in a bundled Codex runtime package.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-pub struct CodexPackageManifest {
+pub struct GenexPackageManifest {
     pub version: Version,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct InstallContext {
     pub method: InstallMethod,
-    pub package_layout: Option<CodexPackageLayout>,
+    pub package_layout: Option<GenexPackageLayout>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -103,7 +103,7 @@ impl InstallContext {
         method_override: Option<InstallMethod>,
         codex_home: Option<&Path>,
     ) -> Self {
-        let package_layout = current_exe.and_then(CodexPackageLayout::from_exe);
+        let package_layout = current_exe.and_then(GenexPackageLayout::from_exe);
         let method = if let Some(method) = method_override {
             method
         } else if let Some(exe_path) = current_exe {
@@ -141,7 +141,7 @@ impl InstallContext {
     }
 
     /// Read the manifest for the package that contains the current executable.
-    pub fn package_manifest(&self) -> Option<CodexPackageManifest> {
+    pub fn package_manifest(&self) -> Option<GenexPackageManifest> {
         let package_layout = self.package_layout.as_ref()?;
         let manifest =
             std::fs::read_to_string(package_layout.package_dir.join(PACKAGE_METADATA_FILENAME))
@@ -242,7 +242,7 @@ impl InstallContext {
     }
 }
 
-impl CodexPackageLayout {
+impl GenexPackageLayout {
     fn from_exe(exe_path: &Path) -> Option<Self> {
         let canonical_exe = canonical_absolute_path(exe_path)?;
         let exe_dir = canonical_exe.parent()?;
@@ -304,7 +304,7 @@ impl CodexPackageLayout {
 fn install_method_from_exe(
     exe_path: &Path,
     codex_home: Option<&Path>,
-    package_layout: Option<&CodexPackageLayout>,
+    package_layout: Option<&GenexPackageLayout>,
     is_macos: bool,
 ) -> InstallMethod {
     if let Some(standalone_method) = standalone_install_method(exe_path, codex_home, package_layout)
@@ -322,7 +322,7 @@ fn install_method_from_exe(
 fn standalone_install_method(
     exe_path: &Path,
     codex_home: Option<&Path>,
-    package_layout: Option<&CodexPackageLayout>,
+    package_layout: Option<&GenexPackageLayout>,
 ) -> Option<InstallMethod> {
     let canonical_codex_home = canonical_absolute_path(codex_home?)?;
     let release_dir = if let Some(package_layout) = package_layout {
@@ -583,7 +583,7 @@ mod tests {
         let canonical_resources_dir =
             AbsolutePathBuf::from_absolute_path(resources_dir.canonicalize()?)?;
         let canonical_path_dir = AbsolutePathBuf::from_absolute_path(path_dir.canonicalize()?)?;
-        let package_layout = CodexPackageLayout {
+        let package_layout = GenexPackageLayout {
             package_dir: canonical_package_dir,
             bin_dir: canonical_bin_dir.clone(),
             resources_dir: Some(canonical_resources_dir.clone()),
@@ -605,7 +605,7 @@ mod tests {
         );
         assert_eq!(
             context.package_manifest(),
-            Some(CodexPackageManifest {
+            Some(GenexPackageManifest {
                 version: Version::new(1, 2, 3),
             })
         );
@@ -715,7 +715,7 @@ mod tests {
                     resources_dir: Some(canonical_resources_dir.clone()),
                     platform: standalone_platform(),
                 },
-                package_layout: Some(CodexPackageLayout {
+                package_layout: Some(GenexPackageLayout {
                     package_dir: canonical_package_dir,
                     bin_dir: canonical_bin_dir,
                     resources_dir: Some(canonical_resources_dir.clone()),
