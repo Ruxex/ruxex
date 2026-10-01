@@ -1,6 +1,4 @@
 use super::*;
-#[cfg(target_os = "windows")]
-use anyhow::Context as _;
 use codex_utils_path_uri::PathUri;
 
 #[derive(Clone)]
@@ -8,8 +6,6 @@ pub(crate) struct WindowsSandboxRequestProcessor {
     outgoing: Arc<OutgoingMessageSender>,
     config: Arc<Config>,
     config_manager: ConfigManager,
-    #[cfg(target_os = "windows")]
-    registration_refresh: Arc<tokio::sync::OnceCell<()>>,
 }
 
 impl WindowsSandboxRequestProcessor {
@@ -22,8 +18,6 @@ impl WindowsSandboxRequestProcessor {
             outgoing,
             config,
             config_manager,
-            #[cfg(target_os = "windows")]
-            registration_refresh: Arc::default(),
         }
     }
 
@@ -31,53 +25,6 @@ impl WindowsSandboxRequestProcessor {
         &self,
         request_id: &ConnectionRequestId,
     ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
-        #[cfg(target_os = "windows")]
-        if codex_windows_sandbox::registered_core_requested()
-            && matches!(
-                WindowsSandboxLevel::from_config(&self.config),
-                WindowsSandboxLevel::Elevated
-            )
-        {
-            let processor = self.clone();
-            let request_id = request_id.clone();
-            // Deployment must not hold up unrelated RPCs in the serial dispatcher.
-            tokio::spawn(async move {
-                // Coalesce readiness requests. A failed refresh leaves manual setup available.
-                processor.registration_refresh.get_or_init(|| async {
-                    let config = Arc::clone(&processor.config);
-                    let result = tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
-                        if !codex_windows_sandbox::registered_core_needs_refresh(&config.codex_home)? {
-                            return Ok(());
-                        }
-                        let env_map = std::env::vars().collect();
-                        let policy = config.permissions.effective_permission_profile();
-                        let (settings, listeners) = match config.permissions.network.as_ref() {
-                            Some(network) => network.windows_sandbox_proxy_listeners()?,
-                            None => (
-                                codex_windows_sandbox::WindowsSandboxProvisioningSettings::from_environment(&policy, &env_map),
-                                codex_windows_sandbox::WindowsSandboxProxyListeners::from_environment(&policy, &env_map),
-                            ),
-                        };
-                        codex_windows_sandbox::refresh_registered_core_via_service(
-                            &config.codex_home, settings, listeners,
-                        )?;
-                        Ok(())
-                    }).await.map_err(anyhow::Error::from).and_then(std::convert::identity);
-                    if let Err(error) = result {
-                        warn!("Registered Core startup refresh requires manual setup: {error:#}");
-                    }
-                }).await;
-                processor
-                    .outgoing
-                    .send_response(
-                        request_id,
-                        determine_windows_sandbox_readiness(&processor.config),
-                    )
-                    .await;
-            });
-            return Ok(None);
-        }
-        #[cfg(not(target_os = "windows"))]
         let _ = request_id;
         Ok(Some(
             determine_windows_sandbox_readiness(&self.config).into(),
@@ -145,88 +92,8 @@ impl WindowsSandboxRequestProcessor {
                 env_map: std::env::vars().collect(),
                 codex_home: config.codex_home.to_path_buf(),
             };
-            let setup_result = async {
-                #[cfg(target_os = "windows")]
-                if setup_mode == CoreWindowsSandboxSetupMode::Elevated
-                    && (codex_windows_sandbox::registered_core_requested()
-                        || config.features.enabled(Feature::WindowsSandboxService))
-                {
-                    let provisioning = match config
-                        .permissions
-                        .network
-                        .as_ref()
-                        .map_or_else(
-                            || {
-                                Ok((
-                                    codex_windows_sandbox::WindowsSandboxProvisioningSettings::from_environment(
-                                        &setup_request.permission_profile,
-                                        &setup_request.env_map,
-                                    ),
-                                    codex_windows_sandbox::WindowsSandboxProxyListeners::from_environment(
-                                        &setup_request.permission_profile,
-                                        &setup_request.env_map,
-                                    ),
-                                ))
-                            },
-                            codex_core::config::NetworkProxySpec::windows_sandbox_proxy_listeners,
-                        )
-                    {
-                        Ok(provisioning) => Some(provisioning),
-                        Err(error) => {
-                            if codex_windows_sandbox::registered_core_requested() {
-                                return Err(error).context("registered Core requires service-compatible proxy settings");
-                            }
-                            warn!(
-                                "Windows sandbox service does not support the configured proxy listeners; falling back to elevated setup: {error}"
-                            );
-                            None
-                        }
-                    };
-                    if let Some((settings, listeners)) = provisioning {
-                        let service_setup_request = setup_request.clone();
-                        let service_setup_start = Instant::now();
-                        tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
-                            let Ok(permissions) = codex_windows_sandbox::ResolvedWindowsSandboxPermissions::try_from_permission_profile_for_workspace_roots(
-                                &service_setup_request.permission_profile,
-                                &service_setup_request.workspace_roots,
-                            ) else {
-                                anyhow::ensure!(!codex_windows_sandbox::registered_core_requested(),
-                                    "registered Core requires a service-compatible sandbox policy");
-                                // The existing setup path can still succeed for completed
-                                // provisioning without resolving the current profile.
-                                return Ok(());
-                            };
-                            permissions.validate_elevated_filesystem_policy(
-                                &service_setup_request.command_cwd,
-                            )?;
-                            // The shared setup path below handles helper fallback and
-                            // refreshes workspace ACLs after provisioning.
-                            codex_windows_sandbox::provision_windows_sandbox_via_service(
-                                &service_setup_request.codex_home,
-                                settings,
-                                listeners,
-                            )?;
-                            Ok(())
-                        })
-                        .await
-                        .map_err(|error| {
-                            anyhow::anyhow!(
-                                "Windows sandbox service provisioning task failed: {error}"
-                            )
-                        })
-                        .and_then(std::convert::identity)
-                        .inspect_err(|error| {
-                            codex_core::windows_sandbox::emit_windows_sandbox_setup_failure_metrics(
-                                setup_mode,
-                                service_setup_start.elapsed(),
-                                error,
-                            );
-                        })?;
-                    }
-                }
-                codex_core::windows_sandbox::run_windows_sandbox_setup(setup_request).await
-            }
-            .await;
+            let setup_result =
+                codex_core::windows_sandbox::run_windows_sandbox_setup(setup_request).await;
             let notification = WindowsSandboxSetupCompletedNotification {
                 mode: match setup_mode {
                     CoreWindowsSandboxSetupMode::Elevated => WindowsSandboxSetupMode::Elevated,

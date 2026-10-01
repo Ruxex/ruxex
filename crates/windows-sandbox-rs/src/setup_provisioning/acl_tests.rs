@@ -7,7 +7,6 @@ use super::GRANT_ACCESS;
 use super::Payload;
 use super::SETUP_VERSION;
 use super::SetupMode;
-use super::SetupRuntime;
 use super::WRITE_DAC;
 use super::convert_string_sid_to_sid;
 use super::lock_sandbox_bin_dir;
@@ -91,7 +90,6 @@ fn lock_sandbox_dir_blocks_inherited_write_for_runner_files() {
             otel: None,
             real_user,
             mode: setup_mode,
-            runtime: SetupRuntime::Legacy,
             refresh_only: false,
         };
         lock_sandbox_bin_dir(&payload, &sandbox_group_sid).expect("lock sandbox bin");

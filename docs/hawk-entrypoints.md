@@ -42,7 +42,6 @@ Level 3 の削除判断では通常実行の16件を主起点としつつ、対�
 | `codex-windows-sandbox` | `codex-windows-sandbox-setup` | Windows sandbox のセットアップを行う。 | Windows |
 | `codex-windows-sandbox` | `codex-command-runner` | Windows sandbox 内のコマンド実行を担う。 | Windows |
 | `codex-windows-sandbox` | `codex-windows-managed-deny-probe` | managed 環境の ACL deny 設定を検査する。 | Windows |
-| `codex-windows-sandbox-service` | `codex-windows-sandbox-service` | Windows sandbox service をサービスまたは前景プロセスとして起動する。 | Windows |
 
 ## 開発・補助
 

@@ -1,5 +1,3 @@
-use crate::app_package::registered_core_requested;
-use crate::app_package::verify_registered_core_runner;
 use crate::desktop::DesktopPolicy;
 use crate::desktop::shared_private_desktop_for_user;
 use crate::identity::SandboxCreds;
@@ -45,7 +43,6 @@ use windows_sys::Win32::System::IO::CancelSynchronousIo;
 use windows_sys::Win32::System::Threading::CreateProcessWithLogonW;
 use windows_sys::Win32::System::Threading::GetCurrentProcess;
 use windows_sys::Win32::System::Threading::GetCurrentThread;
-use windows_sys::Win32::System::Threading::LOGON_WITH_PROFILE;
 use windows_sys::Win32::System::Threading::PROCESS_INFORMATION;
 use windows_sys::Win32::System::Threading::STARTF_FORCEOFFFEEDBACK;
 use windows_sys::Win32::System::Threading::STARTUPINFOW;
@@ -330,14 +327,6 @@ pub(crate) fn spawn_runner_transport(
     desktop_policy: Option<&DesktopPolicy>,
 ) -> Result<RunnerTransport> {
     let runner_exe = find_runner_exe(codex_home, log_dir)?;
-    let registered_alias = if registered_core_requested() {
-        Some(crate::app_package::registered_runner_alias(
-            codex_home,
-            &sandbox_creds.username,
-        )?)
-    } else {
-        None
-    };
     if let Some(policy) = desktop_policy {
         spawn_request.private_desktop_name = Some(shared_private_desktop_for_user(
             &sandbox_creds.username,
@@ -363,9 +352,7 @@ pub(crate) fn spawn_runner_transport(
     let h_pipe_in = pipe_write.as_raw_handle() as HANDLE;
     let h_pipe_out = pipe_read.as_raw_handle() as HANDLE;
 
-    let runner_cmdline = registered_alias
-        .as_deref()
-        .unwrap_or(&runner_exe)
+    let runner_cmdline = runner_exe
         .to_str()
         .map(str::to_owned)
         .unwrap_or_else(|| "codex-command-runner.exe".to_string());
@@ -387,18 +374,12 @@ pub(crate) fn spawn_runner_transport(
     let mut pi: PROCESS_INFORMATION = unsafe { std::mem::zeroed() };
 
     let previous_error_mode = unsafe { SetErrorMode(RUNNER_ERROR_MODE_FLAGS) };
-    // Execution aliases require the registered account's profile.
-    // Other launches retain their existing profile-free behavior.
     let spawn_res = unsafe {
         CreateProcessWithLogonW(
             user_w.as_ptr(),
             domain_w.as_ptr(),
             password_w.as_ptr(),
-            if registered_alias.is_some() {
-                LOGON_WITH_PROFILE
-            } else {
-                0
-            },
+            0,
             exe_w.as_ptr(),
             cmdline_vec.as_mut_ptr(),
             windows_sys::Win32::System::Threading::CREATE_NO_WINDOW
@@ -426,11 +407,6 @@ pub(crate) fn spawn_runner_transport(
         pipe_read,
     };
     let startup_result = (|| -> Result<()> {
-        // An update can retarget the alias after setup. Check the selected image
-        // and authenticate its pipes before sending it the command.
-        if registered_alias.is_some() {
-            verify_registered_core_runner(pi.hProcess, &runner_exe)?;
-        }
         connect_pipe_with_timeout(h_pipe_in, expected_runner_pid, "pipe-in")?;
         connect_pipe_with_timeout(h_pipe_out, expected_runner_pid, "pipe-out")?;
         transport.send_spawn_request(spawn_request)?;
@@ -442,15 +418,6 @@ pub(crate) fn spawn_runner_transport(
             let _ = TerminateProcess(pi.hProcess, 1);
         }
         return Err(err);
-    }
-
-    if registered_alias.is_some() {
-        crate::logging::debug_log(
-            &format!(
-                "registered_core_runner_ready pid={expected_runner_pid} package_verified=true pipes_authenticated=true"
-            ),
-            log_dir,
-        );
     }
 
     Ok(transport)

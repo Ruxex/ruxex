@@ -165,7 +165,7 @@ Feedback の削除で確認したように、provider 固有性はクレート�
 - **根拠:** ChatGPT backend から配布される remote config bundle と組織要件を取得・検証する。
 - **機能:** bundle の取得、署名・有効期限検証、storage、設定レイヤーへの組み込み。
 - **内部依存先:** `codex-agent-identity`、`codex-backend-client`、`codex-config`、`codex-core`、`codex-http-client`、`codex-login`、`codex-otel`、`codex-protocol`。
-- **依存元:** 直接は app-server、CLI、exec、TUI、Windows sandbox service。推移は 7 クレート。
+- **依存元:** 直接は app-server、CLI、exec、TUI。推移は 7 クレート。
 - **到達経路:** 各エントリーポイントの起動時 config load と app-server の config manager。
 - **影響:** `managed_auth_base_url`、managed requirements、remote config storage、再ログイン判定、起動テスト。専用 README と Cargo feature flag はない。
 - **推奨:** **隔離**。ローカル設定の読み込みと混ぜず、optional な hosted policy source として切り離した後に削除する。

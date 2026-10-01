@@ -1,18 +1,13 @@
-//! Compare registered and legacy runner outcomes at the actual local execution boundary.
+//! Record runner outcomes at the actual local execution boundary.
 //! Startup is counted once after credential retry; commands are counted on exit or pipe failure.
 
 pub(crate) fn record(phase: &'static str, outcome: &'static str) {
-    let runtime = if crate::app_package::registered_core_requested() {
-        "registered"
-    } else {
-        "legacy"
-    };
     if let Some(metrics) = codex_otel::global() {
         // Fixed labels only: never send command text, paths, or arbitrary error messages.
         let _ = metrics.counter(
             "codex.windows_sandbox.runner_result",
             /*inc*/ 1,
-            &[("runtime", runtime), ("phase", phase), ("outcome", outcome)],
+            &[("phase", phase), ("outcome", outcome)],
         );
     }
 }

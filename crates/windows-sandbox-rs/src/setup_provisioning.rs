@@ -1,10 +1,7 @@
-//! Privileged sandbox setup shared by the setup helper and the service's ProvisionOnly path.
+//! Privileged sandbox setup shared by the setup helper.
 //! Full and read-ACL setup remain helper entrypoints; only they may launch a read-ACL child.
-//! Command-line account provisioning cannot enter the service's admitted Core path.
 
 mod firewall;
-mod service;
-pub use service::provision_sandbox_in_process;
 mod read_acl_mutex;
 
 use crate::DirectoryOpenDisposition;
@@ -12,7 +9,6 @@ use crate::SETUP_VERSION;
 use crate::SetupErrorCode;
 use crate::SetupErrorReport;
 use crate::SetupFailure;
-use crate::SetupRuntime;
 use crate::acquire_sandbox_setup_lock;
 use crate::add_deny_write_ace;
 use crate::convert_string_sid_to_sid;
@@ -102,7 +98,6 @@ use sandbox_users::provision_sandbox_users;
 use sandbox_users::resolve_sandbox_users_group_sid;
 use sandbox_users::sid_bytes_to_psid;
 
-// Legacy omits runtime; readers default its absence to Legacy.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 struct Payload {
     version: u32,
@@ -122,8 +117,6 @@ struct Payload {
     real_user: String,
     #[serde(default)]
     mode: SetupMode,
-    #[serde(default, skip_serializing_if = "SetupRuntime::is_legacy")]
-    runtime: SetupRuntime,
     #[serde(default)]
     refresh_only: bool,
 }
@@ -535,18 +528,8 @@ fn real_main(setup_mode: &mut Option<SetupMode>) -> Result<()> {
     }
     // Only this entry parses command-line JSON. Keep admission locked through
     // the entire account-provisioning operation, including initial Full setup.
-    // The in-process adapter enters separately after authenticated service admission.
     let _setup_guard = if payload.mode.provisions_accounts(payload.refresh_only) {
         let guard = acquire_sandbox_setup_lock(INFINITE)?;
-        anyhow::ensure!(
-            payload.runtime == SetupRuntime::Legacy && !crate::registered_core_requested(),
-            "registered Core requires service-owned provisioning"
-        );
-        anyhow::ensure!(
-            crate::runtime_ownership::load_installation()?
-                .is_none_or(|record| record.runtime.is_none()),
-            "registered Core owns these sandbox accounts; helper provisioning is not permitted"
-        );
         Some(guard)
     } else {
         None
@@ -844,9 +827,6 @@ fn lock_persistent_sandbox_dirs(payload: &Payload, sandbox_group_sid: &[u8]) -> 
 }
 
 fn lock_sandbox_bin_dir(payload: &Payload, sandbox_group_sid: &[u8]) -> Result<()> {
-    if payload.runtime == SetupRuntime::Registered {
-        return Ok(());
-    }
     // The owner's unelevated refresh must be able to reapply this protected DACL.
     lock_sandbox_dir(
         &sandbox_bin_dir(&payload.codex_home),
@@ -960,7 +940,7 @@ fn run_setup_full(payload: &Payload, log: &mut dyn Write, sbx_dir: &Path) -> Res
     }
 
     if refresh_only {
-        setup_runtime_bin::ensure_codex_app_runtime_paths_readable(
+        setup_runtime_bin::ensure_managed_runtime_paths_readable(
             sandbox_group_psid,
             &mut refresh_errors,
             log,
@@ -1157,10 +1137,6 @@ fn run_setup_full(payload: &Payload, log: &mut dyn Write, sbx_dir: &Path) -> Res
 #[cfg(test)]
 #[path = "setup_provisioning/acl_tests.rs"]
 mod acl_tests;
-
-#[cfg(test)]
-#[path = "setup_provisioning/registered_tests.rs"]
-mod registered_tests;
 
 #[cfg(test)]
 mod tests {

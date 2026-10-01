@@ -1,6 +1,4 @@
-//! Resolve sandbox helpers and materialize legacy executables with inherited sandbox ACLs.
-//! An explicit registered-runtime request never falls through to copying or PATH lookup;
-//! the service and startup handshake independently verify the installed image.
+//! Resolve sandbox helpers and materialize executables with inherited sandbox ACLs.
 
 mod copy;
 use copy::CopyOutcome;
@@ -15,10 +13,8 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::time::UNIX_EPOCH;
 
-use crate::app_package::registered_core_requested;
 use crate::logging::log_note;
 use crate::sandbox_bin_dir;
-use crate::setup::SetupRuntime;
 
 const DEV_BUILD_VERSION_SENTINEL: &str = "0.0.0";
 const COMMAND_RUNNER_EXE: &str = "codex-command-runner.exe";
@@ -39,19 +35,6 @@ fn legacy_lookup() -> PathBuf {
 }
 
 pub(crate) fn resolve_command_runner(codex_home: &Path, log_dir: Option<&Path>) -> Result<PathBuf> {
-    if registered_core_requested() {
-        let exe = std::env::current_exe().context("resolve registered Core helper source")?;
-        let direct_path = exe.with_file_name(COMMAND_RUNNER_EXE);
-        log_note(
-            &format!(
-                "helper launch resolution: using app-contained command-runner path {}",
-                direct_path.display()
-            ),
-            log_dir,
-        );
-        // Missing packaged helpers must fail rather than search PATH or create a copy.
-        return Ok(direct_path);
-    }
     Ok(match copy_runner_if_needed(codex_home, log_dir) {
         Ok(path) => {
             log_note(
@@ -67,7 +50,7 @@ pub(crate) fn resolve_command_runner(codex_home: &Path, log_dir: Option<&Path>) 
             let fallback = legacy_lookup();
             log_note(
                 &format!(
-                    "helper copy failed for command-runner: {err:#}; falling back to legacy path {}",
+                    "helper copy failed for command-runner: {err:#}; falling back to source path {}",
                     fallback.display()
                 ),
                 log_dir,
@@ -78,23 +61,11 @@ pub(crate) fn resolve_command_runner(codex_home: &Path, log_dir: Option<&Path>) 
 }
 
 pub fn resolve_exe_for_launch(source: &Path, codex_home: &Path) -> PathBuf {
-    let runtime = crate::setup::current_setup_runtime();
-    resolve_exe_for_runtime(source, codex_home, runtime)
+    resolve_exe_for_runtime(source, codex_home)
 }
 
-fn resolve_exe_for_runtime(source: &Path, codex_home: &Path, runtime: SetupRuntime) -> PathBuf {
+fn resolve_exe_for_runtime(source: &Path, codex_home: &Path) -> PathBuf {
     let sandbox_log_dir = crate::sandbox_dir(codex_home);
-    if runtime == SetupRuntime::Registered {
-        log_note(
-            &format!(
-                "helper executable resolution: route=direct source={} selected={}",
-                source.display(),
-                source.display()
-            ),
-            Some(&sandbox_log_dir),
-        );
-        return source.to_path_buf();
-    }
     let Some(file_name) = source.file_name() else {
         return source.to_path_buf();
     };
@@ -226,7 +197,6 @@ mod tests {
     use super::helper_version_suffix;
     use super::materialized_file_name;
     use super::resolve_exe_for_runtime;
-    use crate::setup::SetupRuntime;
     use pretty_assertions::assert_eq;
     use std::fs;
     use std::path::Path;
@@ -244,33 +214,13 @@ mod tests {
     }
 
     #[test]
-    fn registered_request_does_not_materialize_or_replace_a_missing_source() {
-        let tmp = TempDir::new().expect("tempdir");
-        let executable = tmp.path().join("codex.exe");
-        let home = tmp.path().join("home");
-        for content in [None, Some(b"fixture".as_slice())] {
-            if let Some(content) = content {
-                fs::write(&executable, content).expect("write source");
-            }
-            assert_eq!(
-                resolve_exe_for_runtime(&executable, &home, SetupRuntime::Registered),
-                executable
-            );
-            assert!(!helper_bin_dir(&home).exists());
-        }
-    }
-
-    #[test]
-    fn legacy_request_materializes_the_same_source() {
+    fn request_materializes_the_same_source() {
         let tmp = TempDir::new().expect("tempdir");
         let executable = tmp.path().join("codex.exe");
         let home = tmp.path().join("home");
         fs::write(&executable, b"fixture").expect("write source");
         let destination = helper_bin_dir(&home).join("codex.exe");
-        assert_eq!(
-            resolve_exe_for_runtime(&executable, &home, SetupRuntime::Legacy),
-            destination
-        );
+        assert_eq!(resolve_exe_for_runtime(&executable, &home), destination);
         assert_eq!(fs::read(destination).expect("read copy"), b"fixture");
     }
 

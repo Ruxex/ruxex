@@ -55,14 +55,6 @@ mod acl;
 #[cfg(target_os = "windows")]
 mod allow;
 #[cfg(target_os = "windows")]
-mod app_package;
-#[cfg(target_os = "windows")]
-#[doc(hidden)]
-pub use app_package::registered_core_needs_refresh;
-#[cfg(target_os = "windows")]
-#[doc(hidden)]
-pub use app_package::registered_core_requested;
-#[cfg(target_os = "windows")]
 mod audit;
 #[cfg(target_os = "windows")]
 mod cap;
@@ -87,49 +79,13 @@ mod hide_users;
 #[cfg(target_os = "windows")]
 mod identity;
 #[cfg(target_os = "windows")]
-mod installation_record;
-#[cfg(target_os = "windows")]
 mod logging;
 #[cfg(target_os = "windows")]
 mod no_reparse_dir;
 #[cfg(target_os = "windows")]
-mod package_identity;
-#[cfg(target_os = "windows")]
 mod path_normalization;
 #[cfg(target_os = "windows")]
 mod process;
-#[cfg(target_os = "windows")]
-mod provisioning_client;
-#[cfg(target_os = "windows")]
-mod provisioning_protocol;
-#[cfg(target_os = "windows")]
-mod runtime_ownership;
-#[cfg(target_os = "windows")]
-mod service_identity;
-#[cfg(target_os = "windows")]
-#[doc(hidden)]
-pub use runtime_ownership::CORE_INSTALLATION_KEY;
-#[cfg(target_os = "windows")]
-#[doc(hidden)]
-pub use runtime_ownership::INSTALLATION_KEY;
-#[cfg(target_os = "windows")]
-#[doc(hidden)]
-pub use runtime_ownership::INSTALLATION_VALUE;
-#[cfg(target_os = "windows")]
-#[doc(hidden)]
-pub use runtime_ownership::RuntimeAccountRegistration;
-#[cfg(target_os = "windows")]
-#[doc(hidden)]
-pub use runtime_ownership::RuntimeRegistration;
-#[cfg(target_os = "windows")]
-#[doc(hidden)]
-pub use runtime_ownership::load_installation;
-#[cfg(target_os = "windows")]
-#[doc(hidden)]
-pub use runtime_ownership::remove_installation;
-#[cfg(target_os = "windows")]
-#[doc(hidden)]
-pub use runtime_ownership::save_installation;
 #[cfg(target_os = "windows")]
 mod resolved_permissions;
 #[cfg(target_os = "windows")]
@@ -183,9 +139,6 @@ mod setup_provisioning;
 #[doc(hidden)]
 pub use setup_provisioning::main as setup_helper_main;
 #[cfg(target_os = "windows")]
-pub use setup_provisioning::provision_sandbox_in_process;
-
-#[cfg(target_os = "windows")]
 mod spawn_prep;
 
 #[cfg(target_os = "windows")]
@@ -204,11 +157,6 @@ pub(crate) use elevated::runner_client;
 
 #[cfg(target_os = "windows")]
 pub(crate) use elevated::runner_pipe;
-
-#[cfg(target_os = "windows")]
-pub use installation_record::DesktopInstallation;
-#[cfg(target_os = "windows")]
-pub use installation_record::InstallationRecord;
 
 #[cfg(target_os = "windows")]
 pub use acl::add_deny_read_ace;
@@ -337,8 +285,6 @@ pub use no_reparse_dir::open_directory_no_reparse;
 #[cfg(target_os = "windows")]
 pub use no_reparse_dir::validate_local_directory_path;
 #[cfg(target_os = "windows")]
-pub use package_identity::process_package_family;
-#[cfg(target_os = "windows")]
 pub use path_normalization::canonicalize_path;
 #[cfg(target_os = "windows")]
 pub use process::ConsoleMode;
@@ -355,49 +301,11 @@ pub use process::read_handle_loop;
 #[cfg(target_os = "windows")]
 pub use process::spawn_process_with_pipes;
 #[cfg(target_os = "windows")]
-pub use provisioning_client::WindowsSandboxProvisioningOutcome;
-#[cfg(target_os = "windows")]
-pub use provisioning_client::provision_windows_sandbox_via_service;
-#[cfg(target_os = "windows")]
-#[doc(hidden)]
-pub use provisioning_client::refresh_registered_core_via_service;
-#[cfg(target_os = "windows")]
-pub use provisioning_client::register_desktop_installation;
-#[cfg(target_os = "windows")]
-pub use provisioning_protocol::FramedProvisioningMessage;
-#[cfg(target_os = "windows")]
-pub use provisioning_protocol::PROVISIONING_PROTOCOL_VERSION;
-#[cfg(target_os = "windows")]
-pub use provisioning_protocol::ProvisioningMessage;
-#[cfg(target_os = "windows")]
-pub use provisioning_protocol::SANDBOX_GROUP_CHANGED;
-#[cfg(target_os = "windows")]
-pub use provisioning_protocol::SANDBOX_PROVISIONING_PIPE_NAME;
-#[cfg(target_os = "windows")]
-pub use provisioning_protocol::SandboxProvisioningRequest;
-#[cfg(target_os = "windows")]
-pub use provisioning_protocol::SandboxProvisioningResponse;
-#[cfg(target_os = "windows")]
-pub use provisioning_protocol::WindowsSandboxProxyListeners;
-#[cfg(target_os = "windows")]
-pub use provisioning_protocol::read_provisioning_frame;
-#[cfg(target_os = "windows")]
-pub use provisioning_protocol::write_provisioning_frame;
-#[cfg(target_os = "windows")]
 pub use resolved_permissions::ResolvedWindowsSandboxPermissions;
 #[cfg(target_os = "windows")]
 pub use resolved_permissions::WindowsSandboxTokenMode;
 #[cfg(target_os = "windows")]
 pub use resolved_permissions::token_mode_for_permission_profile;
-#[cfg(target_os = "windows")]
-pub use runtime_ownership::APP_CORE_RUNNER_ALIAS;
-#[cfg(target_os = "windows")]
-pub use runtime_ownership::SandboxRuntimeAccount;
-
-#[cfg(target_os = "windows")]
-pub use service_identity::windows_sandbox_service_name;
-#[cfg(target_os = "windows")]
-pub use service_identity::windows_sandbox_service_pipe_name;
 #[cfg(target_os = "windows")]
 pub use setup::OFFLINE_USERNAME;
 #[cfg(target_os = "windows")]
@@ -408,8 +316,6 @@ pub use setup::SETUP_VERSION;
 pub use setup::SandboxSetupRequest;
 #[cfg(target_os = "windows")]
 pub use setup::SetupRootOverrides;
-#[cfg(target_os = "windows")]
-pub use setup::SetupRuntime;
 #[cfg(target_os = "windows")]
 pub use setup::run_elevated_provisioning_setup;
 #[cfg(target_os = "windows")]

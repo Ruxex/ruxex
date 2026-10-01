@@ -16,16 +16,13 @@ use windows_sys::Win32::Storage::FileSystem::FILE_GENERIC_READ;
 #[path = "setup_runtime_bin_tests.rs"]
 mod tests;
 
-pub(super) fn ensure_codex_app_runtime_paths_readable(
+pub(super) fn ensure_managed_runtime_paths_readable(
     sandbox_group_psid: *mut c_void,
     refresh_errors: &mut Vec<String>,
     log: &mut dyn Write,
 ) -> Result<()> {
     let read_execute_mask = FILE_GENERIC_READ | FILE_GENERIC_EXECUTE;
-    let runtime_paths = runtime_paths(
-        local_app_data_root(),
-        std::env::var_os("USERPROFILE").map(PathBuf::from),
-    );
+    let runtime_paths = runtime_paths(std::env::var_os("USERPROFILE").map(PathBuf::from));
 
     for runtime_path in runtime_paths {
         if !std::fs::symlink_metadata(&runtime_path).is_ok_and(|metadata| {
@@ -92,26 +89,9 @@ pub(super) fn ensure_codex_app_runtime_paths_readable(
     Ok(())
 }
 
-fn runtime_paths(local_app_data: Option<PathBuf>, user_profile: Option<PathBuf>) -> Vec<PathBuf> {
-    let mut runtime_paths = Vec::new();
-    if let Some(local_app_data) = local_app_data {
-        let codex_root = local_app_data.join("OpenAI").join("Codex");
-        runtime_paths.push(codex_root);
-    }
-    // The managed primary runtime is installed outside the LocalAppData runtime roots.
-    if let Some(user_profile) = user_profile {
-        runtime_paths.push(user_profile.join(".cache").join("codex-runtimes"));
-    }
-
-    runtime_paths
-}
-
-fn local_app_data_root() -> Option<PathBuf> {
-    std::env::var_os("LOCALAPPDATA")
-        .map(PathBuf::from)
-        .or_else(|| {
-            std::env::var_os("USERPROFILE")
-                .map(PathBuf::from)
-                .map(|profile| profile.join("AppData").join("Local"))
-        })
+fn runtime_paths(user_profile: Option<PathBuf>) -> Vec<PathBuf> {
+    user_profile
+        .into_iter()
+        .map(|profile| profile.join(".cache").join("codex-runtimes"))
+        .collect()
 }
