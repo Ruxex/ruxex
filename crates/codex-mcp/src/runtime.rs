@@ -182,12 +182,6 @@ impl McpRuntime {
         }
     }
 
-    pub async fn new(input: McpRuntimeInput) -> Self {
-        let runtime = Self::empty(input.config.prefix_mcp_tool_names);
-        runtime.replace(input).await;
-        runtime
-    }
-
     /// Reconciles configured servers and publishes their immutable runtime snapshot.
     pub async fn replace(&self, input: McpRuntimeInput) {
         let current = self.current.load_full();
@@ -201,12 +195,6 @@ impl McpRuntime {
         )
         .await;
         reconnect.claimed = false;
-    }
-
-    /// Starts fresh connections and returns the latest MCP catalog.
-    pub async fn replace_fresh(&self, input: McpRuntimeInput) -> anyhow::Result<Vec<ToolInfo>> {
-        self.publish(input, /*previous*/ None).await;
-        Ok(self.latest_connections().list_all_tools().await)
     }
 
     async fn publish(&self, input: McpRuntimeInput, previous: Option<&McpConnectionSet>) {
@@ -257,11 +245,6 @@ impl McpRuntime {
     }
 
     /// Captures the latest published configuration and live client handles.
-    pub async fn current_binding(&self) -> Option<Arc<McpBinding>> {
-        self.current_binding_with_requirements(&[], &HashSet::new())
-            .await
-    }
-
     /// Captures one runtime, waiting for explicitly required servers and selected plugins.
     /// Plugin IDs are resolved by the captured connection set, even if a refresh publishes later.
     pub async fn current_binding_with_requirements(
@@ -398,11 +381,6 @@ impl McpRuntime {
         .await
     }
 
-    /// Returns the latest published configuration without waiting for clients.
-    pub fn current_config(&self) -> Option<Arc<McpConfig>> {
-        self.current.load().config.clone()
-    }
-
     pub fn current_ready_selected_capability_roots(&self) -> Vec<SelectedCapabilityRoot> {
         self.current.load().ready_selected_capability_roots.clone()
     }
@@ -440,14 +418,6 @@ impl McpRuntime {
         self.elicitation_router
             .resolve(server_name, id, response)
             .await
-    }
-
-    /// Lists the latest known tools for non-model discovery surfaces.
-    ///
-    /// Unlike [`Self::current_binding`], this may return cached tools while their
-    /// client reconnects because callers only inspect tool metadata.
-    pub async fn latest_list_all_tools(&self) -> Vec<ToolInfo> {
-        self.latest_connections().list_all_tools().await
     }
 
     /// Re-fetches and publishes the current catalog for one configured MCP server.
@@ -491,12 +461,6 @@ impl McpRuntime {
     ) -> anyhow::Result<ReadResourceResult> {
         self.latest_connections()
             .read_resource(server, params)
-            .await
-    }
-
-    pub async fn latest_wait_for_server_ready(&self, server: &str, timeout: Duration) -> bool {
-        self.latest_connections()
-            .wait_for_server_ready(server, timeout)
             .await
     }
 

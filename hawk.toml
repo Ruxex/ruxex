@@ -2,3 +2,8 @@
 package = "codex-cli"
 bin = "codex"
 reason = "codex CLI binary"
+
+[[production]]
+package = "codex-app-server"
+bin = "codex-app-server"
+reason = "app-server binary"

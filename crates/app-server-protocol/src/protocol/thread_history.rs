@@ -274,19 +274,6 @@ impl ThreadHistoryBuilder {
             .or_else(|| self.turns.last().map(|turn| turn.id.as_str()))
     }
 
-    pub fn turn_snapshot(&self, turn_id: &str) -> Option<Turn> {
-        self.current_turn
-            .as_ref()
-            .filter(|turn| turn.id == turn_id)
-            .map(Turn::from)
-            .or_else(|| {
-                self.turns
-                    .iter()
-                    .find(|turn| turn.id == turn_id)
-                    .map(Turn::from)
-            })
-    }
-
     /// Returns the index of the active turn snapshot within the finished turn list.
     ///
     /// When a turn is still open, this is the index it will occupy after
@@ -400,12 +387,6 @@ impl ThreadHistoryBuilder {
             | RolloutItem::SecurityRiskScore(_)
             | RolloutItem::SessionMeta(_) => {}
         }
-    }
-
-    /// Handles one event and returns the materialized items or turn metadata
-    /// changed by that event.
-    pub fn handle_event_with_changes(&mut self, event: &EventMsg) -> ThreadHistoryChangeSet {
-        self.collect_changes(|builder| builder.handle_event(event))
     }
 
     /// Handles a rollout item and returns the materialized items or turn metadata

@@ -9,7 +9,6 @@ use tonic::body::Body;
 use tonic::codegen::http::Request;
 use tonic::codegen::http::Response;
 use tonic::codegen::http::Uri;
-use tonic::transport::Channel;
 use tonic::transport::Endpoint;
 use tower::ServiceExt;
 use tower::service_fn;
@@ -29,7 +28,6 @@ enum TransportEndpoint {
         endpoint: String,
         http_client_factory: HttpClientFactory,
     },
-    Connected(Channel),
 }
 
 impl SharedTransport {
@@ -39,13 +37,6 @@ impl SharedTransport {
                 endpoint,
                 http_client_factory,
             },
-            client: tokio::sync::OnceCell::new(),
-        }
-    }
-
-    pub(super) fn with_channel(channel: Channel) -> Self {
-        Self {
-            endpoint: TransportEndpoint::Connected(channel),
             client: tokio::sync::OnceCell::new(),
         }
     }
@@ -121,10 +112,6 @@ impl SharedTransport {
                             }
                         });
                         CodeModeHostClient::with_origin(BoxCloneSyncService::new(transport), origin)
-                    }
-                    TransportEndpoint::Connected(channel) => {
-                        let transport = channel.clone().map_err(io::Error::other);
-                        CodeModeHostClient::new(BoxCloneSyncService::new(transport))
                     }
                 };
                 Ok(client

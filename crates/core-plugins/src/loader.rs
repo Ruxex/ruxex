@@ -156,31 +156,6 @@ async fn load_plugins_from_layer_stack_with_scope(
     plugins
 }
 
-/// Load hooks from enabled plugins without loading their skills, MCP servers, or apps.
-pub async fn load_plugin_hooks_from_layer_stack(
-    config_layer_stack: &ConfigLayerStack,
-    store: &PluginStore,
-) -> PluginHookLoadOutcome {
-    let plugins = load_plugins_from_layer_stack_with_scope(
-        config_layer_stack,
-        store,
-        PluginLoadScope::HooksOnly,
-    )
-    .await;
-    PluginHookLoadOutcome {
-        hook_sources: plugins
-            .iter()
-            .filter(|plugin| plugin.is_active())
-            .flat_map(|plugin| plugin.hook_sources.iter().cloned())
-            .collect(),
-        hook_load_warnings: plugins
-            .iter()
-            .filter(|plugin| plugin.is_active())
-            .flat_map(|plugin| plugin.hook_load_warnings.iter().cloned())
-            .collect(),
-    }
-}
-
 #[cfg(test)]
 pub(crate) fn refresh_non_curated_plugin_cache(
     codex_home: &Path,
@@ -888,23 +863,6 @@ pub async fn load_plugin_mcp_servers(
     auth_mode: Option<AuthMode>,
 ) -> HashMap<String, McpServerConfig> {
     load_plugin_mcp_servers_with_policy(plugin_root, auth_mode, /*plugin_policy*/ None).await
-}
-
-/// Loads plugin MCP servers with the effective configuration policy for an installed plugin.
-pub async fn load_configured_plugin_mcp_servers(
-    plugin_root: &Path,
-    auth_mode: Option<AuthMode>,
-    plugin_id: &PluginId,
-    config_layer_stack: &ConfigLayerStack,
-    codex_home: &Path,
-) -> HashMap<String, McpServerConfig> {
-    let configured_plugins = configured_plugins_from_stack(config_layer_stack, codex_home);
-    let plugin_id = plugin_id.as_key();
-    let plugin_policy = configured_plugins
-        .get(&plugin_id)
-        .map(|plugin| &plugin.mcp_servers);
-
-    load_plugin_mcp_servers_with_policy(plugin_root, auth_mode, plugin_policy).await
 }
 
 /// Resolves effective per-plugin MCP policies without validating opaque selected-root IDs.

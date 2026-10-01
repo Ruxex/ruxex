@@ -808,17 +808,6 @@ impl McpConnectionSet {
             .is_selected_plugin_mcp_server(server_name)
     }
 
-    pub async fn wait_for_server_ready(&self, server_name: &str, timeout: Duration) -> bool {
-        let Some(view) = self.servers.get(server_name) else {
-            return false;
-        };
-
-        match tokio::time::timeout(timeout, view.connection.client()).await {
-            Ok(Ok(_)) => true,
-            Ok(Err(_)) | Err(_) => false,
-        }
-    }
-
     /// Invoke the tool indicated by the (server, tool) pair.
     #[allow(clippy::too_many_arguments)]
     pub async fn call_tool(

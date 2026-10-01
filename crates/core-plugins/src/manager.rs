@@ -9,9 +9,7 @@ use crate::PluginGitMode;
 use crate::installed_marketplaces::installed_marketplace_roots_from_layer_stack;
 use crate::loaded_cache_metrics;
 use crate::loaded_cache_metrics::RequestOutcome;
-use crate::loader::PluginHookLoadOutcome;
 use crate::loader::load_plugin_hooks;
-use crate::loader::load_plugin_hooks_from_layer_stack;
 use crate::loader::load_plugin_mcp_servers_from_manifest_with_format;
 use crate::loader::load_plugin_skill_inventory;
 use crate::loader::load_plugins_from_layer_stack;
@@ -59,7 +57,6 @@ use codex_config::skill_config_rules_from_stack;
 use codex_config::types::PluginConfig;
 use codex_hooks::plugin_hook_declarations;
 use codex_login::AuthManager;
-use codex_login::CodexAuth;
 use codex_plugin::PluginCapabilitySummary;
 use codex_plugin::PluginId;
 use codex_plugin::PluginIdError;
@@ -115,11 +112,6 @@ impl PluginsConfigInput {
 /// Effective-plugin changes that downstream composition layers may act on.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct EffectivePluginsChange {}
-
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct PluginListBackgroundTaskOptions {
-    pub local_marketplaces: Vec<ConfiguredMarketplace>,
-}
 
 #[derive(Clone, PartialEq, Eq)]
 struct NonCuratedCacheRefreshRequest {
@@ -270,7 +262,6 @@ pub struct PluginsManager {
     codex_home: PathBuf,
     store: PluginStore,
     configured_marketplace_upgrade_state: RwLock<ConfiguredMarketplaceUpgradeState>,
-    non_curated_cache_refresh_lock: Semaphore,
     non_curated_cache_refresh_state: RwLock<NonCuratedCacheRefreshState>,
     non_curated_cache_refresh_completion: watch::Sender<NonCuratedCacheRefreshCompletion>,
     // Loaded capabilities vary by effective configuration.
@@ -373,7 +364,6 @@ impl PluginsManager {
             configured_marketplace_upgrade_state: RwLock::new(
                 ConfiguredMarketplaceUpgradeState::default(),
             ),
-            non_curated_cache_refresh_lock: Semaphore::new(/*permits*/ 1),
             non_curated_cache_refresh_state: RwLock::new(NonCuratedCacheRefreshState::default()),
             non_curated_cache_refresh_completion: watch::channel(
                 NonCuratedCacheRefreshCompletion::default(),
@@ -515,18 +505,6 @@ impl PluginsManager {
         }
     }
 
-    /// Resolve plugin hooks for a config layer stack without loading other plugin capabilities.
-    pub async fn plugin_hooks_for_layer_stack(
-        &self,
-        config_layer_stack: &ConfigLayerStack,
-        config: &PluginsConfigInput,
-    ) -> PluginHookLoadOutcome {
-        if !config.plugins_enabled {
-            return PluginHookLoadOutcome::default();
-        }
-        load_plugin_hooks_from_layer_stack(config_layer_stack, &self.store).await
-    }
-
     fn cached_loaded_plugins(&self, key: &PluginLoadCacheKey) -> Option<Vec<LoadedPlugin>> {
         self.loaded_plugins_cache
             .lock()
@@ -568,16 +546,6 @@ impl PluginsManager {
         if evicted {
             loaded_cache_metrics::record_event("capacity_eviction");
         }
-    }
-
-    pub fn maybe_start_plugin_list_background_tasks(
-        self: &Arc<Self>,
-        context: &PluginMarketplaceContext,
-        _auth: Option<CodexAuth>,
-        options: PluginListBackgroundTaskOptions,
-        _on_effective_plugins_changed: Option<EffectivePluginsChangedCallback>,
-    ) {
-        self.maybe_start_non_curated_plugin_cache_refresh(context, &options.local_marketplaces);
     }
 
     pub async fn install_plugin(
@@ -1269,46 +1237,6 @@ impl PluginsManager {
         }
     }
 
-    /// Runs an explicitly requested refresh using the caller's normal Git configuration.
-    pub async fn refresh_non_curated_plugin_cache_for_context(
-        self: &Arc<Self>,
-        context: &PluginMarketplaceContext,
-    ) -> bool {
-        let Ok(_refresh_permit) = self.non_curated_cache_refresh_lock.acquire().await else {
-            return false;
-        };
-        let mut completion = self.non_curated_cache_refresh_completion.subscribe();
-        let changed_sequence = completion.borrow_and_update().changed_sequence;
-        let marketplaces = match self.list_marketplaces_for_context(context) {
-            Ok(outcome) => outcome.marketplaces,
-            Err(err) => {
-                warn!("failed to prepare non-curated plugin cache refresh: {err}");
-                Vec::new()
-            }
-        };
-        if let Some(request) = context.non_curated_cache_refresh_request(
-            self,
-            &marketplaces,
-            NonCuratedCacheRefreshMode::IfVersionChanged,
-            PluginGitMode::Manual,
-        ) {
-            self.schedule_non_curated_plugin_cache_refresh(request);
-        }
-
-        loop {
-            let in_flight = match self.non_curated_cache_refresh_state.read() {
-                Ok(state) => state.in_flight,
-                Err(err) => err.into_inner().in_flight,
-            };
-            if !in_flight {
-                return completion.borrow().changed_sequence != changed_sequence;
-            }
-            if completion.changed().await.is_err() {
-                return false;
-            }
-        }
-    }
-
     fn schedule_non_curated_plugin_cache_refresh(
         self: &Arc<Self>,
         mut request: NonCuratedCacheRefreshRequest,
@@ -1561,19 +1489,6 @@ impl PluginInstallError {
         Self::Join(source)
     }
 
-    pub fn is_invalid_request(&self) -> bool {
-        matches!(
-            self,
-            Self::Marketplace(
-                MarketplaceError::MarketplaceNotFound { .. }
-                    | MarketplaceError::InvalidMarketplaceFile { .. }
-                    | MarketplaceError::PluginNotFound { .. }
-                    | MarketplaceError::PluginNotAvailable { .. }
-                    | MarketplaceError::InvalidPlugin(_)
-            ) | Self::Store(PluginStoreError::Invalid(_))
-        )
-    }
-
     pub fn sub_error_type(&self) -> Option<String> {
         match self {
             Self::Marketplace(err) => marketplace_error_sub_error_type(err),
@@ -1642,10 +1557,6 @@ pub enum PluginUninstallError {
 impl PluginUninstallError {
     fn join(source: tokio::task::JoinError) -> Self {
         Self::Join(source)
-    }
-
-    pub fn is_invalid_request(&self) -> bool {
-        matches!(self, Self::InvalidPluginId(_))
     }
 }
 

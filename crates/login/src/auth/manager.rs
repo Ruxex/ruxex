@@ -234,10 +234,6 @@ impl CodexAuth {
         self.auth_mode() == AuthMode::ApiKey
     }
 
-    pub fn is_managed_auth(&self) -> bool {
-        matches!(self, Self::Headers(_))
-    }
-
     pub fn uses_managed_auth(&self) -> bool {
         matches!(self, Self::Headers(_))
     }

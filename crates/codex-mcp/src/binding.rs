@@ -275,16 +275,6 @@ impl PreparedMcpCall {
         Ok(self.client.server_supports_sandbox_state_meta_capability)
     }
 
-    pub async fn call(
-        &self,
-        arguments: Option<JsonValue>,
-        meta: Option<JsonValue>,
-        timeout: Option<Duration>,
-    ) -> Result<CallToolResult> {
-        self.call_with_preparation(timeout, || async move { Ok((arguments, meta)) })
-            .await
-    }
-
     /// Runs irreversible call preparation and execution under the authority of
     /// this call's captured catalog and the extensions owned by the Codex session.
     /// A caller-supplied timeout can further restrict the server's configured timeout.

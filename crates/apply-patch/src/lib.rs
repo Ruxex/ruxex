@@ -33,7 +33,6 @@ use file_update::AppliedPatch;
 pub use file_update::ApplyPatchFileUpdate;
 use file_update::derive_new_contents_from_chunks;
 pub use file_update::unified_diff_from_chunks;
-pub use file_update::unified_diff_from_chunks_with_context;
 pub(crate) use file_update::unified_diff_from_chunks_with_mode;
 pub use invocation::MaybeApplyPatch;
 pub use invocation::maybe_parse_apply_patch;
@@ -395,27 +394,6 @@ pub async fn apply_patch_with_options(
     };
 
     apply_hunks_with_options(&hunks, options, cwd, stdout, stderr, fs, sandbox).await
-}
-
-/// Applies hunks and continues to update stdout/stderr
-pub async fn apply_hunks(
-    hunks: &[Hunk],
-    cwd: &PathUri,
-    stdout: &mut impl std::io::Write,
-    stderr: &mut impl std::io::Write,
-    fs: &dyn ExecutorFileSystem,
-    sandbox: Option<&FileSystemSandboxContext>,
-) -> Result<AppliedPatchDelta, ApplyPatchFailure> {
-    apply_hunks_with_options(
-        hunks,
-        ApplyPatchOptions::default(),
-        cwd,
-        stdout,
-        stderr,
-        fs,
-        sandbox,
-    )
-    .await
 }
 
 /// Applies hunks using the selected file-update mode and continues to update

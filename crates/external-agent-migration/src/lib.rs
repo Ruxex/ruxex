@@ -23,7 +23,6 @@ mod utils;
 use std::io;
 
 pub use hooks_cla::hook_migration_event_names_cla;
-pub use hooks_cla::hooks_migration_description_cla;
 pub use hooks_cla::import_hooks_cla;
 #[cfg(test)]
 use hooks_common::EXTERNAL_AGENT_HOOKS_SUBDIR;

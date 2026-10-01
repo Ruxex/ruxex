@@ -67,10 +67,6 @@ impl ThreadConfigLoadError {
             status_code,
         }
     }
-
-    pub fn code(&self) -> ThreadConfigLoadErrorCode {
-        self.code
-    }
 }
 
 /// Loads typed config sources for a new thread.

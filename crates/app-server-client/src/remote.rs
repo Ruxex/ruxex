@@ -127,10 +127,6 @@ enum RemoteClientCommand {
         request: Box<JSONRPCRequest>,
         response_tx: oneshot::Sender<IoResult<RequestResult>>,
     },
-    Notify {
-        notification: ClientNotification,
-        response_tx: oneshot::Sender<IoResult<()>>,
-    },
     ResolveServerRequest {
         request_id: RequestId,
         result: JsonRpcResult,
@@ -297,17 +293,6 @@ impl RemoteAppServerClient {
                                     worker_exit_error = Some((ErrorKind::BrokenPipe, message));
                                     break;
                                 }
-                            }
-                            RemoteClientCommand::Notify { notification, response_tx } => {
-                                let result = write_jsonrpc_message(
-                                    &mut stream,
-                                    JSONRPCMessage::Notification(
-                                        jsonrpc_notification_from_client_notification(notification),
-                                    ),
-                                    &endpoint,
-                                )
-                                .await;
-                                let _ = response_tx.send(result);
                             }
                             RemoteClientCommand::ResolveServerRequest {
                                 request_id,
@@ -553,28 +538,6 @@ impl RemoteAppServerClient {
             method: method.to_string(),
             source,
         })
-    }
-
-    pub async fn notify(&self, notification: ClientNotification) -> IoResult<()> {
-        let (response_tx, response_rx) = oneshot::channel();
-        self.command_tx
-            .send(RemoteClientCommand::Notify {
-                notification,
-                response_tx,
-            })
-            .await
-            .map_err(|_| {
-                IoError::new(
-                    ErrorKind::BrokenPipe,
-                    "remote app-server worker channel is closed",
-                )
-            })?;
-        response_rx.await.map_err(|_| {
-            IoError::new(
-                ErrorKind::BrokenPipe,
-                "remote app-server notify channel is closed",
-            )
-        })?
     }
 
     pub async fn resolve_server_request(

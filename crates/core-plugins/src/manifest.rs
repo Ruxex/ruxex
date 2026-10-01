@@ -155,11 +155,6 @@ pub fn load_plugin_manifest(plugin_root: &Path) -> Option<PluginManifest> {
     load_plugin_manifest_with_format(plugin_root).map(|loaded| loaded.manifest)
 }
 
-pub fn is_agent_plugin_manifest(plugin_root: &Path) -> bool {
-    load_plugin_manifest_with_format(plugin_root)
-        .is_some_and(|loaded| loaded.format == PluginManifestFormat::AgentPlugin)
-}
-
 pub(crate) fn load_plugin_manifest_with_format(plugin_root: &Path) -> Option<LoadedPluginManifest> {
     let manifest_path = find_plugin_manifest_path(plugin_root)?;
     let contents = fs::read_to_string(&manifest_path).ok()?;

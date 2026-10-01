@@ -186,11 +186,6 @@ impl McpConnectionSet {
         ))
     }
 
-    /// Returns all tools with model-visible names normalized.
-    pub async fn list_all_tools(&self) -> Vec<ToolInfo> {
-        self.list_tools_with_errors().await.0
-    }
-
     #[instrument(level = "trace", skip_all, fields(mcp_server_count = self.servers.len()))]
     pub(crate) async fn list_tools_with_errors(&self) -> (Vec<ToolInfo>, HashMap<String, String>) {
         let mut tools = Vec::new();

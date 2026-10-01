@@ -64,7 +64,6 @@ pub use manager::PluginDetail;
 pub use manager::PluginInstallError;
 pub use manager::PluginInstallOutcome;
 pub use manager::PluginInstallRequest;
-pub use manager::PluginListBackgroundTaskOptions;
 pub use manager::PluginMarketplaceContext;
 pub use manager::PluginMarketplaceScope;
 pub use manager::PluginReadOutcome;

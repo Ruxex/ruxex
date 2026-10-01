@@ -55,13 +55,6 @@ pub enum Stage {
 }
 
 impl Stage {
-    pub fn experimental_menu_name(self) -> Option<&'static str> {
-        match self {
-            Stage::Experimental { name, .. } => Some(name),
-            Stage::UnderDevelopment | Stage::Stable | Stage::Deprecated | Stage::Removed => None,
-        }
-    }
-
     pub fn experimental_menu_description(self) -> Option<&'static str> {
         match self {
             Stage::Experimental {

@@ -26,7 +26,6 @@ use codex_http_client::OutboundProxyPolicy;
 use tokio::sync::watch;
 use tokio_util::sync::CancellationToken;
 use tokio_util::task::TaskTracker;
-use tonic::transport::Channel;
 use tracing::Instrument;
 
 use self::operations::WaitSlot;
@@ -81,11 +80,6 @@ impl GrpcCodeModeSessionProvider {
         http_client_factory: HttpClientFactory,
     ) -> Self {
         Self::from_transport(SharedTransport::new(endpoint.into(), http_client_factory))
-    }
-
-    /// Uses an existing channel, including channels backed by custom transports.
-    pub fn with_channel(channel: Channel) -> Self {
-        Self::from_transport(SharedTransport::with_channel(channel))
     }
 
     fn from_transport(transport: SharedTransport) -> Self {

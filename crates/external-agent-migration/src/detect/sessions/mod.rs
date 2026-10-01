@@ -13,7 +13,6 @@ pub(crate) use cla::detect_recent_cla_sessions_with_limits;
 pub use connectors_cla::ImportedSessionConnectorAttribution;
 pub(crate) use connectors_cla::detect_cla_session_connectors;
 pub(crate) use connectors_cla::detect_cla_session_connectors_by_source_path;
-pub use connectors_cla::detect_imported_cla_session_connectors;
 pub use connectors_cla::detect_imported_cla_session_connectors_by_source_path;
 pub(crate) use connectors_cur::detect_cur_session_connectors;
 pub(crate) use connectors_cur::detect_cur_session_connectors_by_source_path;

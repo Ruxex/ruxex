@@ -42,18 +42,6 @@ pub enum AuthMode {
     BedrockAccessKeys,
 }
 
-impl AuthMode {
-    /// Returns whether this mode represents an authenticated account.
-    pub fn has_managed_account(self) -> bool {
-        false
-    }
-
-    /// Returns whether this mode uses host-managed authentication rather than a direct model API.
-    pub fn uses_managed_auth(self) -> bool {
-        matches!(self, Self::Headers)
-    }
-}
-
 macro_rules! experimental_reason_expr {
     // If a request variant is explicitly marked experimental, that reason wins.
     (variant $variant:ident, #[experimental($reason:expr)] $params:ident $(, $inspect_params:tt)?) => {

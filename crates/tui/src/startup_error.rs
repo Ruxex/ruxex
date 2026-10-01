@@ -23,10 +23,6 @@ impl LocalStateDbStartupError {
         self.database_path.as_path()
     }
 
-    pub fn state_db_path(&self) -> &Path {
-        self.database_path()
-    }
-
     pub fn detail(&self) -> &str {
         self.detail.as_str()
     }

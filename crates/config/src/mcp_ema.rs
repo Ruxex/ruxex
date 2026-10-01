@@ -53,22 +53,6 @@ impl McpEmaRegistration {
     pub fn server_url(&self) -> &str {
         &self.server_url
     }
-
-    pub fn resource(&self) -> Option<&str> {
-        self.resource.as_deref()
-    }
-
-    pub fn client_id(&self) -> Option<&str> {
-        self.client_id.as_deref()
-    }
-
-    pub fn authorization_server_issuer(&self) -> Option<&str> {
-        self.authorization_server_issuer.as_deref()
-    }
-
-    pub fn scopes(&self) -> &[String] {
-        &self.scopes
-    }
 }
 
 impl McpEnterpriseManagedAuthConfig {

@@ -74,13 +74,6 @@ pub(crate) struct ImportedSourceState {
     pub imported_at: i64,
 }
 
-pub fn has_current_session_been_imported(
-    codex_home: &Path,
-    source_path: &Path,
-) -> io::Result<bool> {
-    load_import_ledger(codex_home)?.contains_current_source(source_path)
-}
-
 #[cfg(test)]
 pub(crate) fn record_imported_session(
     codex_home: &Path,

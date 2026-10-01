@@ -7,7 +7,6 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use codex_exec_server::EnvironmentManager;
 use codex_extension_api::LoadInstructionsFuture;
 use codex_extension_api::LoadedUserInstructions;
 use codex_extension_api::UserInstructionsProvider;
@@ -20,7 +19,6 @@ use codex_model_provider_info::ModelProviderInfo;
 use codex_models_manager::collaboration_mode_presets;
 use codex_models_manager::manager::SharedModelsManager;
 use codex_models_manager::test_support::construct_model_info_offline_for_tests;
-use codex_models_manager::test_support::get_model_offline_for_tests;
 use codex_models_manager::test_support::test_models_response;
 use codex_protocol::ThreadId;
 use codex_protocol::config_types::CollaborationModeMask;
@@ -46,21 +44,6 @@ static TEST_MODEL_PRESETS: Lazy<Vec<ModelPreset>> = Lazy::new(|| {
     ModelPreset::mark_default_by_picker_visibility(&mut presets);
     presets
 });
-
-/// Reattaches request-only observations to a completed turn's history for capture assertions.
-/// Tests inspect this separately from the destination-filtered HTTP/WS request.
-pub async fn history_with_tool_call_metadata(
-    thread: &crate::CodexThread,
-) -> Vec<codex_protocol::models::ResponseItem> {
-    let history = thread.conversation_history_snapshot().await;
-    let mut items = history.items().cloned().collect::<Vec<_>>();
-    thread
-        .session
-        .services
-        .executed_tool_calls
-        .attach_to_prompt(&mut items, &mut Default::default());
-    items
-}
 
 /// Test-only provider that supplies no user instructions.
 #[derive(Debug, Default)]
@@ -101,20 +84,6 @@ pub fn thread_manager_with_models_provider(
     provider: ModelProviderInfo,
 ) -> ThreadManager {
     ThreadManager::with_models_provider_for_tests(auth, provider)
-}
-
-pub fn thread_manager_with_models_provider_and_home(
-    auth: CodexAuth,
-    provider: ModelProviderInfo,
-    codex_home: PathBuf,
-    environment_manager: Arc<EnvironmentManager>,
-) -> ThreadManager {
-    ThreadManager::with_models_provider_and_home_for_tests(
-        auth,
-        provider,
-        codex_home,
-        environment_manager,
-    )
 }
 
 pub async fn start_thread_with_user_shell_override(
@@ -162,10 +131,6 @@ pub fn models_manager_with_provider(
 
 pub fn default_http_client_factory() -> HttpClientFactory {
     HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault)
-}
-
-pub fn get_model_offline(model: Option<&str>) -> String {
-    get_model_offline_for_tests(model)
 }
 
 pub fn construct_model_info_offline(model: &str, config: &Config) -> ModelInfo {

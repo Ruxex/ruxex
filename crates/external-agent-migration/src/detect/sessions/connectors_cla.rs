@@ -88,18 +88,6 @@ pub fn detect_imported_cla_session_connectors_by_source_path(
     )
 }
 
-pub fn detect_imported_cla_session_connectors(
-    session_attributions: &[ImportedSessionConnectorAttribution],
-    connector_metadata_roots: &[PathBuf],
-) -> BTreeMap<String, Vec<String>> {
-    detect_connector_names_by_key(
-        session_attributions
-            .iter()
-            .map(|attribution| (attribution.session_id.clone(), attribution)),
-        connector_metadata_roots,
-    )
-}
-
 fn detect_connector_names_by_key<'a, Key>(
     keyed_attributions: impl IntoIterator<Item = (Key, &'a ImportedSessionConnectorAttribution)>,
     connector_metadata_roots: &[PathBuf],

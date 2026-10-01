@@ -79,17 +79,6 @@ impl BuildInfo {
         &self.version
     }
 
-    /// Format the version for a user-facing Codex header.
-    pub fn display_version(&self) -> String {
-        if self.build_commit == "dev" {
-            "dev".to_string()
-        } else if self.is_source_build() {
-            format!("v{}", self.build_commit)
-        } else {
-            format!("v{}", self.version)
-        }
-    }
-
     /// Identify source builds without parsing their displayed Git commit.
     pub fn is_source_build(&self) -> bool {
         self.version.major == 0 && self.version.minor == 0 && self.version.patch == 0

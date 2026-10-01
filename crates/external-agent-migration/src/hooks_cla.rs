@@ -12,24 +12,6 @@ use std::io;
 use std::path::Path;
 use std::path::PathBuf;
 
-pub fn hooks_migration_description_cla(
-    source_external_agent_dir: &Path,
-    target_hooks: &Path,
-    rewrite_profile: RewriteProfile,
-) -> io::Result<Option<String>> {
-    if hook_migration_event_names_cla(source_external_agent_dir, target_hooks, rewrite_profile)?
-        .is_empty()
-    {
-        return Ok(None);
-    }
-
-    Ok(Some(format!(
-        "Migrate hooks from {} to {}",
-        source_external_agent_dir.display(),
-        target_hooks.display()
-    )))
-}
-
 pub fn hook_migration_event_names_cla(
     source_external_agent_dir: &Path,
     target_hooks: &Path,

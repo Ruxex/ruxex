@@ -158,15 +158,6 @@ pub enum ForcedManagedWorkspaceIds {
     Multiple(Vec<String>),
 }
 
-impl ForcedManagedWorkspaceIds {
-    pub fn into_vec(self) -> Vec<String> {
-        match self {
-            Self::Single(value) => vec![value],
-            Self::Multiple(values) => values,
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS, ExperimentalApi)]
 #[serde(rename_all = "snake_case")]
 #[ts(export_to = "v2/")]

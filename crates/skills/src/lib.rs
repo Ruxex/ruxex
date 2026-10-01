@@ -24,7 +24,6 @@ pub use loading::SkillRootSnapshotCache;
 pub use loading::SkillRootSnapshots;
 pub use mentions::ToolMentionKind;
 pub use mentions::ToolMentions;
-pub use mentions::app_id_from_path;
 pub use mentions::extract_tool_mentions;
 pub use mentions::extract_tool_mentions_with_sigil;
 pub use mentions::normalize_skill_path;

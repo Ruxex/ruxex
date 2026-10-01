@@ -287,24 +287,6 @@ pub(crate) async fn unified_diff_from_chunks_with_mode(
     .await
 }
 
-pub async fn unified_diff_from_chunks_with_context(
-    path: &PathUri,
-    chunks: &[UpdateFileChunk],
-    context: usize,
-    fs: &dyn ExecutorFileSystem,
-    sandbox: Option<&FileSystemSandboxContext>,
-) -> std::result::Result<ApplyPatchFileUpdate, ApplyPatchError> {
-    unified_diff_from_chunks_with_context_and_mode(
-        path,
-        chunks,
-        context,
-        ApplyPatchFileUpdateMode::default(),
-        fs,
-        sandbox,
-    )
-    .await
-}
-
 async fn unified_diff_from_chunks_with_context_and_mode(
     path: &PathUri,
     chunks: &[UpdateFileChunk],

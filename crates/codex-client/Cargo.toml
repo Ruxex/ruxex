@@ -6,7 +6,6 @@ version.workspace = true
 
 [dependencies]
 codex-http-client = { workspace = true }
-eventsource-stream = { workspace = true }
 futures = { workspace = true }
 http = { workspace = true }
 rand = { workspace = true }

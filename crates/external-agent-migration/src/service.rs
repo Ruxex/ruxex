@@ -122,17 +122,6 @@ impl ExternalAgentConfigService {
         &self.connector_metadata_roots
     }
 
-    pub fn detect_session_connectors(
-        &self,
-        sessions: &[ExternalAgentSessionMigration],
-    ) -> Vec<DetectedConnectorCandidate> {
-        self.source.detect_session_connectors(
-            sessions,
-            &self.connector_metadata_roots,
-            &self.external_agent_home,
-        )
-    }
-
     pub fn detect_session_connectors_by_source_path(
         &self,
         sessions: &[ExternalAgentSessionMigration],

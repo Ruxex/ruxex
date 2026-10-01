@@ -24,11 +24,6 @@ pub enum AuthMode {
 }
 
 impl AuthMode {
-    /// Returns whether this mode represents an authenticated account.
-    pub fn has_managed_account(self) -> bool {
-        false
-    }
-
     /// Returns whether this mode uses host-managed authentication rather than a direct model API.
     pub fn uses_managed_auth(self) -> bool {
         matches!(self, Self::Headers)
@@ -98,27 +93,6 @@ pub enum KnownPlan {
 }
 
 impl KnownPlan {
-    pub fn display_name(self) -> &'static str {
-        match self {
-            Self::Free => "Free",
-            Self::Go => "Go",
-            Self::Plus => "Plus",
-            Self::Pro => "Pro",
-            Self::ProLite => "Pro Lite",
-            Self::Team => "Team",
-            Self::SelfServeBusinessProLite => "Self Serve Business ProLite",
-            Self::SelfServeBusinessUsageBased => "Self Serve Business Usage Based",
-            Self::Business => "Business",
-            Self::Ent26 => "Enterprise",
-            Self::EnterpriseCbpAutomation => "Enterprise (Automation)",
-            Self::EnterpriseCbpUsageBased => "Enterprise CBP Usage Based",
-            Self::Enterprise => "Enterprise",
-            Self::Edu => "Edu",
-            Self::EduPlus => "Edu Plus",
-            Self::EduPro => "Edu Pro",
-        }
-    }
-
     pub fn raw_value(self) -> &'static str {
         match self {
             Self::Free => "free",
@@ -138,23 +112,6 @@ impl KnownPlan {
             Self::EduPlus => "edu_plus",
             Self::EduPro => "edu_pro",
         }
-    }
-
-    pub fn is_workspace_account(self) -> bool {
-        matches!(
-            self,
-            Self::Team
-                | Self::SelfServeBusinessProLite
-                | Self::SelfServeBusinessUsageBased
-                | Self::Business
-                | Self::Ent26
-                | Self::EnterpriseCbpAutomation
-                | Self::EnterpriseCbpUsageBased
-                | Self::Enterprise
-                | Self::Edu
-                | Self::EduPlus
-                | Self::EduPro
-        )
     }
 }
 

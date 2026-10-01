@@ -47,15 +47,6 @@ enum ExportSet {
     Experimental,
 }
 
-pub fn generate_types(out_dir: &Path) -> Result<()> {
-    generate_ts(out_dir)?;
-    generate_json(out_dir)
-}
-
-pub fn generate_ts(out_dir: &Path) -> Result<()> {
-    generate_ts_with_options(out_dir, GenerateTsOptions::default())
-}
-
 pub fn generate_ts_with_options(out_dir: &Path, options: GenerateTsOptions) -> Result<()> {
     let export_set = if options.experimental_api {
         ExportSet::Experimental
@@ -66,10 +57,6 @@ pub fn generate_ts_with_options(out_dir: &Path, options: GenerateTsOptions) -> R
     let ts_files = write_typescript_exports(out_dir, &exports.typescript, options)?;
 
     trim_trailing_whitespace_in_ts_files(&ts_files)
-}
-
-pub fn generate_json(out_dir: &Path) -> Result<()> {
-    generate_json_with_experimental(out_dir, /*experimental_api*/ false)
 }
 
 pub fn generate_json_with_experimental(out_dir: &Path, experimental_api: bool) -> Result<()> {

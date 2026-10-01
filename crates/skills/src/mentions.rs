@@ -59,11 +59,6 @@ fn is_skill_filename(path: &str) -> bool {
     file_name.eq_ignore_ascii_case(SKILL_FILENAME)
 }
 
-pub fn app_id_from_path(path: &str) -> Option<&str> {
-    path.strip_prefix(APP_PATH_PREFIX)
-        .filter(|value| !value.is_empty())
-}
-
 /// Desktop app/browser mentions append `?app=...` or `?browserFamily=...`.
 /// Ignore these targeting parameters when matching the plugin ID.
 pub fn plugin_config_name_from_path(path: &str) -> Option<&str> {

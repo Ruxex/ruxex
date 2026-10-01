@@ -292,12 +292,6 @@ pub fn find_installable_marketplace_plugin(
     Ok(resolved)
 }
 
-pub fn list_marketplaces(
-    additional_roots: &[AbsolutePathBuf],
-) -> Result<MarketplaceListOutcome, MarketplaceError> {
-    list_marketplaces_with_home(additional_roots, home_dir().as_deref())
-}
-
 pub(crate) fn home_dir() -> Option<PathBuf> {
     ["HOME", "USERPROFILE"]
         .into_iter()

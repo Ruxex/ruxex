@@ -21,6 +21,10 @@ codex *args:
 exec *args:
     cargo run --bin codex -- exec {args}
 
+# Analyze the configured production binaries with Hawk and save the JSON report.
+hawk:
+    {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- cargo hawk check --output-format json > {{ justfile_directory() }}/hawk.json
+
 # Start `codex exec-server` and run codex-tui.
 [no-cd]
 [positional-arguments]
