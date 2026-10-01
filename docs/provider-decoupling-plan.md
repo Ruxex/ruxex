@@ -223,9 +223,9 @@ Hawk の結果だけで自動的に削除を決めず、feature 構成、複数�
 ## 次期計画: Codex から Genex への命名移行
 
 provider 固有の機能分離とHawk監査の次段階として、残存する製品名・namespace名を
-汎用エージェント基盤の名称へ移行する。正式名称は **Genex**、説明名は
-**Generalized Agent Execution Foundation**、workspace/crateのprefixは `genex-`
-とする。これは一括文字列置換ではなく、参照範囲と互換性の強さに応じて段階的に実施する。
+汎用エージェント基盤の名称へ移行する。移行先名称は **Genex**、workspace/crateの
+prefixは `genex-` とする。これは一括文字列置換ではなく、参照範囲と互換性の強さに
+応じて段階的に実施する。
 
 ### 命名移行の実施順
 
@@ -252,6 +252,7 @@ provider 固有の機能分離とHawk監査の次段階として、残存する�
 - repository全体への機械的な `codex` 全置換は行わない。
 - provider名、外部wire契約、既存persisted data、security boundaryを、名前だけを理由に変更しない。
 - 各sliceでproducer/consumerとdecisionを記録し、依存元が多い境界は小さく分割する。
+- リネーム中にOpenAI依存の機能、endpoint、認証、telemetry、hosted assumption、provider-specific behaviorを発見した場合は、命名変更へ黙って混ぜ込まない。正確なpathとproducer/consumer根拠を [`provider-decoupling-candidates.md`](provider-decoupling-candidates.md) に記録し、[`pre-release-compatibility-inventory.md`](pre-release-compatibility-inventory.md) で `remove`、`retain`、`migrate-in-place` を決め、後日独立した除去タスクとして追跡する。
 - 各Rust変更では `just check --tests` と `just check`、生成物に影響がある場合は `just generate` を実行する。
 - 内部名称に未分類の `codex` 残存がなく、意図的に保持した旧名には理由と互換性範囲が記録されている。
 - Genexのworkspace/package/module/API名称、生成schema、CLI/docsが相互に一致している。
