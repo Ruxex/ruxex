@@ -136,6 +136,17 @@ producer/consumer boundary:
 | `codex_otel`, `codex_plugin_*`, `codex_apps`, and `codex_app_server_daemon` strings | These occur in telemetry/analytics event names, MCP connector tool/server names, client identity fixtures, and app-server integration tests. They are external observability, MCP, or integration contracts rather than internal namespace names. | `retain` or `defer` per telemetry/MCP/integration producer; do not rename in the user-boundary preparation slice |
 | `codex` content and filenames in docs, fixtures, snapshots, generated schemas, wire fields, rollout/session records, and SQLite/JSON identifiers | These names are consumed by documentation/tooling, generated artifacts, protocol clients, persisted readers, and replay/state stores. | `defer` to Task 7/8 audits; inventory both content and path names before any migration |
 
+## 0.7 Protocol, schema, persisted-data, and external-contract audit (2026-10-02)
+
+| Contract family | Producer/reader/writer audit | Decision |
+|---|---|---|
+| `crates/code-mode-protocol/src/grpc/codex.code_mode.v1.proto`, `package codex.code_mode.v1`, and `tonic::include_proto!` | The proto package and generated gRPC bindings are wire/build inputs; code-mode session types also describe a durable Codex thread/session boundary. | `retain` current package, file, and generated binding names; any migration requires a versioned protocol task |
+| app-server generated schema titles `CodexAppServerProtocol` / `CodexAppServerProtocolV2`, checked-in JSON/TypeScript schema, `codexHome`, and schema-generator environment keys | Rust producers generate the checked-in schema, app-server clients consume it, and schema fixture tests compare the generated output. `just generate` produced no diff in this audit. | `retain` generated and wire names; defer any product-title or field rename to a generated-schema migration with consumer coordination |
+| `codexErrorInfo`, core/app-server `CodexErrorInfo`, `codex_turn_id`, `CodexHarnessMetadata`, and `ThreadRollbackFailed` | Core produces error/turn events; app-server converts them to v2 responses and thread-history items; rollout/history/thread-store readers and writers replay persisted data and schema fixtures cover legacy values. | `retain` serialized fields/variants; defer Rust-name changes to an explicit protocol and persisted-data migration |
+| `codex_home` across rollout/session index, thread-store, state SQLite, auth storage, and app-server | CLI/config produces the home root; rollout and state write/read files and databases below it; thread-store and app-server resolve the same root. | `retain` path/config contract; no local-variable bulk rename in the protocol task |
+| persisted origin/observability values such as `codex_cli_rs`, `codex_state`, and existing `codex_*` metadata keys | State extraction, log filters, telemetry, and replay fixtures produce or inspect these values. They are data/observability identifiers, not unused Rust aliases. | `retain` current values; defer any cleanup to the persisted/observability compatibility inventory |
+| `.codex` project folders, code-mode/API URLs, marketplace/plugin identifiers, and `codex_apps` fixture names | Config discovery, app-server fixtures, MCP/plugin consumers, and external URLs use these strings. Some represent third-party or historical fixtures rather than an internal Genex namespace. | `retain` or defer per producer/consumer; do not rename as part of the Rust symbol migration |
+
 ## 1. 参照元が見つからないクレート・ソース
 
 | 対象 | 現時点の観測 | 現時点の扱い |

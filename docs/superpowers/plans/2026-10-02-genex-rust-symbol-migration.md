@@ -290,10 +290,10 @@ Task 0 の coverage matrix は workspace member ごとに次のいずれかを�
 - Consumes: Task 6 の user/integration classification。
 - Produces: per-contract migration/alias/retain decision and, only where necessary, a separately reviewed compatibility migration.
 
-- [ ] **Step 1: enumerate producers, readers, writers, and existing data**
-- [ ] **Step 2: decide whether old reader/alias is required**
-- [ ] **Step 3: implement only approved contract changes in separate plans**
-- [ ] **Step 4: run `just generate`, `just check --tests`, and `just check`; inspect schema/persisted diff**
+- [x] **Step 1: enumerate producers, readers, writers, and existing data**
+- [x] **Step 2: decide whether old reader/alias is required**
+- [x] **Step 3: implement only approved contract changes in separate plans**
+- [x] **Step 4: run `just generate`, `just check --tests`, and `just check`; inspect schema/persisted diff**
 
 ---
 
