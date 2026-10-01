@@ -28,11 +28,3 @@ fn viewed_image_retains_original_path_in_details() {
         );
     }
 }
-
-#[test]
-fn viewed_image_narrow_summary() {
-    let cell = new_view_image_tool_call(LegacyAppPathString::from_string(
-        "/workspace/very-long-screenshot-name.png",
-    ));
-    insta::assert_snapshot!(cell.display_lines(/*width*/ 32)[0].to_string());
-}

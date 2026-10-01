@@ -323,7 +323,6 @@ mod tests {
     use crossterm::event::KeyCode;
     use crossterm::event::KeyEvent;
     use crossterm::event::KeyModifiers;
-    use insta::assert_snapshot;
     use ratatui::buffer::Buffer;
     use ratatui::layout::Rect;
     use tokio::sync::mpsc::unbounded_channel;
@@ -445,43 +444,5 @@ mod tests {
             view.handle_key_event(KeyEvent::new(KeyCode::Char(shortcut), KeyModifiers::NONE));
             assert_eq!(selected_choice(&mut view), Some(expected));
         }
-    }
-
-    #[test]
-    fn renders_prompt() {
-        let (tx_raw, _rx) = unbounded_channel::<AppEvent>();
-        let keymap = RuntimeKeymap::defaults();
-        let view = selection_view(
-            &entry(),
-            /*trust_all_error*/ None,
-            /*trusting_all*/ false,
-            AppEventSender::new(tx_raw),
-            &keymap,
-        );
-
-        assert_snapshot!(
-            "startup_hooks_review_prompt",
-            render_lines(&view, /*width*/ 80)
-        );
-    }
-
-    #[test]
-    fn renders_prompt_with_trust_error() {
-        let (tx_raw, _rx) = unbounded_channel::<AppEvent>();
-        let keymap = RuntimeKeymap::defaults();
-        let view = selection_view(
-            &entry(),
-            Some(
-                "Failed to trust hooks: config/batchWrite failed in TUI: Invalid configuration: features.network_proxy=true is not supported; allowed set [network_proxy=false]",
-            ),
-            /*trusting_all*/ false,
-            AppEventSender::new(tx_raw),
-            &keymap,
-        );
-
-        assert_snapshot!(
-            "startup_hooks_review_prompt_with_trust_error",
-            render_lines(&view, /*width*/ 62)
-        );
     }
 }

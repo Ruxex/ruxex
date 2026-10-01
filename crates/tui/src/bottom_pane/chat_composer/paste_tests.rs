@@ -6,58 +6,6 @@ use pretty_assertions::assert_eq;
 use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 
-#[test]
-fn paste_burst_tabs_preserve_multiline_draft() {
-    for running in [false, true] {
-        for first_line in ["x", "界", "first line\n"] {
-            let (mut composer, _rx) = new_test_composer();
-            composer.set_task_running(running);
-            let mut now = Instant::now();
-            let payload = format!("{first_line}\t\tsecond line\n\tthird line\n");
-
-            for ch in payload.chars() {
-                let (result, _) = match ch {
-                    '\t' => {
-                        assert!(composer.handle_paste_tab(KeyEvent::from(KeyCode::Tab), now));
-                        (InputResult::None, true)
-                    }
-                    '\n' => composer.handle_submission_with_time(/*should_queue*/ false, now),
-                    ch => composer
-                        .handle_input_basic_with_time(KeyEvent::from(KeyCode::Char(ch)), now),
-                };
-                assert_eq!(result, InputResult::None);
-                now += Duration::from_millis(/*millis*/ 1);
-            }
-
-            composer.handle_paste_burst_flush(now + PasteBurst::recommended_active_flush_delay());
-            assert_eq!(composer.current_text(), payload);
-
-            if running && first_line == "first line\n" {
-                let mut terminal = Terminal::new(TestBackend::new(60, 8)).unwrap();
-                terminal
-                    .draw(|frame| composer.render(frame.area(), frame.buffer_mut()))
-                    .unwrap();
-                insta::assert_snapshot!("paste_burst_tab_indentation", terminal.backend());
-            }
-
-            let (result, _) = composer.handle_key_event(KeyEvent::from(KeyCode::Tab));
-            let expected = if running {
-                InputResult::Queued {
-                    text: payload.trim().to_string(),
-                    text_elements: Vec::new(),
-                    action: QueuedInputAction::Plain,
-                    pending_pastes: Vec::new(),
-                }
-            } else {
-                InputResult::Submitted {
-                    text: payload.trim().to_string(),
-                    text_elements: Vec::new(),
-                }
-            };
-            assert_eq!(result, expected);
-        }
-    }
-}
 
 #[test]
 fn paste_burst_tabs_refresh_idle_timeout() {

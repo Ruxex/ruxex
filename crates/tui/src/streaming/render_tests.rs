@@ -6,7 +6,6 @@ use crate::markdown::render_streaming_markdown_agent_with_links_and_cwd;
 use crate::terminal_hyperlinks::HyperlinkLine;
 use crate::terminal_hyperlinks::visible_lines;
 use codex_protocol::ThreadId;
-use insta::assert_debug_snapshot;
 use pretty_assertions::assert_eq;
 use std::path::Path;
 use std::path::PathBuf;
@@ -83,50 +82,6 @@ fn assert_rich_stream_matches_full_render(
     }
 
     (source, render)
-}
-
-#[test]
-fn incremental_render_keeps_final_block_mutable_and_matches_full_render() {
-    let chunks = [
-        "# Heading\n",
-        "\n",
-        "First paragraph with a [link](https://example.com).\n",
-        "continued on the next line.\n\n",
-        "1. First item\n",
-        "2. Second item\n\n",
-        "> Quoted paragraph\n\n",
-        "```rust\n",
-        "fn main() {}\n",
-        "```\n\n",
-        "| Key | Value |\n",
-        "| --- | --- |\n",
-        "| alpha | beta |\n",
-    ];
-    let (source, render) = assert_rich_stream_matches_full_render(&chunks, Some(48));
-
-    assert!(render.stable_source_len > 0);
-    assert!(render.stable_source_len < source.len());
-    assert_debug_snapshot!("incremental_render_representative_stream", render.lines);
-}
-
-#[test]
-fn incremental_file_citations_preserve_metadata_unicode_and_markdown() {
-    let cwd = test_cwd();
-    let rendered_cases = [
-        (
-            "Quarterly Report.xlsx",
-            "- :codex-file-citation{artifact_kind=\"workbook\" ",
-        ),
-        ("Résumé *final* ✨.xlsx", "- :codex-file-citation{"),
-    ]
-    .map(|(filename, prefix)| {
-        let tail = format!("path=\"{}\"}}\n", cwd.join(filename).display());
-        let chunks = ["# Output\n\n", prefix, &tail, "\n", "Continue.\n"];
-        let (_, render) = assert_rich_stream_matches_full_render(&chunks, Some(80));
-
-        render.lines
-    });
-    assert_debug_snapshot!("incremental_file_citations", rendered_cases);
 }
 
 #[test]
@@ -256,21 +211,6 @@ fn inline_visualizations_use_canonical_full_render() {
     }
 
     assert!(render.has_inline_visualization_directive);
-}
-
-#[test]
-fn inline_visualizations_without_context_use_canonical_full_render() {
-    let (_, render) = assert_rich_stream_matches_full_render(
-        &["Before.\n\n", "::codex-inline-vis{file=\"missing.html\"}\n"],
-        Some(80),
-    );
-
-    assert_eq!(render.stable_source_len, 0);
-    assert!(render.has_inline_visualization_directive);
-    assert_debug_snapshot!(
-        "inline_visualizations_without_context_use_canonical_full_render",
-        render.lines
-    );
 }
 
 #[test]

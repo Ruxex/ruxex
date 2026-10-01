@@ -74,6 +74,7 @@ mod tests {
 
     #[test]
     fn base_url_uses_region_endpoint() {
+        // Keep this exact path: `openai/v1` is Amazon Bedrock's external wire contract.
         assert_eq!(
             base_url("ap-northeast-1").expect("supported region"),
             "https://bedrock-mantle.ap-northeast-1.api.aws/openai/v1"

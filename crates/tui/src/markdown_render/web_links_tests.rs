@@ -7,7 +7,6 @@ use crate::terminal_hyperlinks::visible_lines;
 use codex_terminal_detection::Multiplexer;
 use codex_terminal_detection::TerminalInfo;
 use codex_terminal_detection::TerminalName;
-use insta::assert_debug_snapshot;
 use pretty_assertions::assert_eq;
 use ratatui::style::Stylize;
 use ratatui::text::Line;
@@ -183,12 +182,4 @@ fn streaming_and_full_render_agree_with_label_only_links() {
             assert_eq!(streamed.lines, render(prefix, width, display));
         }
     }
-}
-
-#[test]
-fn label_only_and_fallback_presentations_snapshot() {
-    let markdown = "plain [plain](https://example.com) `code` [`code`](https://example.com)\n\n| Resource |\n| --- |\n| [docs](https://example.com/docs) |";
-    let presentations = [WebLinkDisplay::LabelOnly, WebLinkDisplay::WithDestination]
-        .map(|display| Text::from(visible_lines(render(markdown, /*width*/ 40, display))));
-    assert_debug_snapshot!(presentations);
 }

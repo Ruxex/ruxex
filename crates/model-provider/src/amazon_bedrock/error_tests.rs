@@ -18,6 +18,8 @@ use super::error::is_refreshable_auth_error;
 use super::error::map_api_error;
 use crate::ModelProvider;
 
+// Amazon Bedrock exposes its Responses-compatible API under this exact path.
+// The `openai/v1` segment is an external AWS wire contract and must remain unchanged.
 const BEDROCK_RESPONSES_URL: &str = "https://bedrock-mantle.us-east-2.api.aws/openai/v1/responses";
 
 fn http_error(status: StatusCode, body: &str) -> ApiError {

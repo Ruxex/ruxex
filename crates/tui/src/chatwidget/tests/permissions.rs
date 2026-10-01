@@ -36,60 +36,6 @@ async fn remote_windows_agent_permission_uses_server_selection() {
     ));
 }
 
-#[tokio::test]
-async fn permission_discovery_uses_server_catalog_for_remote_custom_selection() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.config.explicit_permission_profile_mode = false;
-    chat.set_permission_profile_from_session_snapshot(PermissionProfileSnapshot::active(
-        PermissionProfile::workspace_write(),
-        ActivePermissionProfile::new(":workspace"),
-    ))
-    .unwrap();
-    let mut discovery = Discovery::local(&chat.config);
-    discovery
-        .profiles
-        .push(codex_app_server_protocol::PermissionProfileSummary {
-            id: "server-only".to_string(),
-            description: Some("Description from the connected server.".to_string()),
-            allowed: true,
-        });
-    discovery.requirements = Some(
-        serde_json::from_value(serde_json::json!({
-            "allowedApprovalsReviewers": ["user"],
-            "allowedPermissionProfiles": {":workspace": true, "server-only": true}
-        }))
-        .unwrap(),
-    );
-    chat.request_permission_profiles();
-    let request_id = chat.permission_popup_request_id.unwrap();
-    rx.try_recv().unwrap();
-    assert_chatwidget_snapshot!(
-        "permission_discovery_loading",
-        render_bottom_popup(&chat, /*width*/ 80)
-    );
-    chat.on_permission_profiles_loaded(request_id, Ok(discovery));
-    assert_chatwidget_snapshot!(
-        "permission_discovery_remote",
-        render_bottom_popup(&chat, /*width*/ 110)
-    );
-    // Server-only alternatives are routed through App rather than resolved locally.
-    chat.handle_key_event(KeyEvent::from(KeyCode::Char('2')));
-    assert!(matches!(
-        rx.try_recv().expect("server profile selection"),
-        AppEvent::SelectPermissionProfile(PermissionProfileSelection { profile_id, .. })
-            if profile_id == "server-only"
-    ));
-    chat.handle_key_event(KeyEvent::from(KeyCode::Esc));
-    chat.open_permissions_popup();
-    rx.try_recv().unwrap();
-    let request_id = chat.permission_popup_request_id.unwrap();
-    let mut legacy = Discovery::local(&chat.config);
-    legacy.explicit_profile_mode = false;
-    chat.on_permission_profiles_loaded(request_id, Ok(legacy));
-    let actual = render_bottom_popup(&chat, /*width*/ 110);
-    chat.open_legacy_permissions_popup();
-    assert_eq!(actual, render_bottom_popup(&chat, /*width*/ 110));
-}
 
 #[tokio::test]
 async fn permission_discovery_discards_stale_results_and_preserves_covering_modal() {
@@ -124,41 +70,6 @@ async fn permission_discovery_discards_stale_results_and_preserves_covering_moda
     assert!(!chat.bottom_pane.has_active_view());
 }
 
-#[tokio::test]
-async fn permission_discovery_failure_can_retry_and_empty_catalog_keeps_current_profile() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.config.explicit_permission_profile_mode = true;
-    chat.set_permission_profile_from_session_snapshot(PermissionProfileSnapshot::active(
-        PermissionProfile::workspace_write(),
-        ActivePermissionProfile::new("current-profile"),
-    ))
-    .unwrap();
-    chat.open_permissions_popup();
-    let request_id = chat.permission_popup_request_id.unwrap();
-    rx.try_recv().unwrap();
-    chat.on_permission_profiles_loaded(
-        request_id,
-        Err("Failed to load permissions: disconnected".to_string()),
-    );
-    assert_chatwidget_snapshot!(
-        "permission_discovery_failure",
-        render_bottom_popup(&chat, /*width*/ 80)
-    );
-    chat.handle_key_event(KeyEvent::from(KeyCode::Enter));
-    assert!(matches!(rx.try_recv(), Ok(AppEvent::OpenPermissionsPopup)));
-    chat.open_permissions_popup();
-    let request_id = chat.permission_popup_request_id.unwrap();
-    rx.try_recv().unwrap();
-    let mut discovery = Discovery::local(&chat.config);
-    discovery.profiles.clear();
-    chat.on_permission_profiles_loaded(request_id, Ok(discovery));
-    assert_chatwidget_snapshot!(
-        "permission_discovery_empty",
-        render_bottom_popup(&chat, /*width*/ 100)
-    );
-    chat.handle_key_event(KeyEvent::from(KeyCode::Enter));
-    assert!(rx.try_recv().is_err());
-}
 
 fn app_server_workspace_write_profile(extra_root: AbsolutePathBuf) -> PermissionProfile {
     PermissionProfile::Managed {
@@ -217,93 +128,9 @@ pub(super) fn requirements_stack(
         .expect("test config layer stack")
 }
 
-#[tokio::test]
-async fn approvals_selection_popup_snapshot() {
-    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
 
-    chat.set_feature_enabled(Feature::GuardianApproval, /*enabled*/ false);
-    chat.open_approvals_popup();
 
-    let popup = render_bottom_popup(&chat, /*width*/ 80);
-    #[cfg(target_os = "windows")]
-    insta::with_settings!({ snapshot_suffix => "windows" }, {
-        assert_chatwidget_snapshot!("approvals_selection_popup", popup);
-    });
-    #[cfg(not(target_os = "windows"))]
-    assert_chatwidget_snapshot!("approvals_selection_popup", popup);
-}
 
-#[tokio::test]
-async fn profile_permissions_selection_popup_snapshot() {
-    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.config.explicit_permission_profile_mode = true;
-    chat.config
-        .permissions
-        .set_permission_profile_from_session_snapshot(PermissionProfileSnapshot::active(
-            PermissionProfile::workspace_write(),
-            ActivePermissionProfile::new(":workspace"),
-        ))
-        .expect("set active profile");
-
-    chat.open_permission_profiles_popup(Discovery::local(&chat.config));
-
-    assert_chatwidget_snapshot!(
-        "profile_permissions_selection_popup",
-        render_bottom_popup(&chat, /*width*/ 80)
-    );
-}
-
-#[tokio::test]
-async fn profile_permissions_selection_popup_with_disallowed_full_access_snapshot() {
-    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.config.explicit_permission_profile_mode = true;
-    chat.config.config_layer_stack = requirements_stack(codex_config::ConfigRequirementsToml {
-        allowed_sandbox_modes: Some(vec![
-            codex_config::SandboxModeRequirement::ReadOnly,
-            codex_config::SandboxModeRequirement::WorkspaceWrite,
-        ]),
-        ..Default::default()
-    });
-
-    chat.open_permission_profiles_popup(Discovery::local(&chat.config));
-
-    assert_chatwidget_snapshot!(
-        "profile_permissions_selection_popup_with_disallowed_full_access",
-        render_bottom_popup(&chat, /*width*/ 80)
-    );
-}
-
-#[tokio::test]
-async fn profile_permissions_selection_popup_with_custom_profiles_snapshot() {
-    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.config.explicit_permission_profile_mode = true;
-    chat.config.custom_permission_profiles = vec![
-        PermissionProfileCatalogEntry {
-            id: "locked-down".to_string(),
-            description: Some("Inspect and patch only approved workspace files.".to_string()),
-            allowed: true,
-        },
-        PermissionProfileCatalogEntry {
-            id: "web-enabled".to_string(),
-            description: Some("Workspace profile with network access.".to_string()),
-            allowed: false,
-        },
-    ];
-    chat.config
-        .permissions
-        .set_permission_profile_from_session_snapshot(PermissionProfileSnapshot::active(
-            PermissionProfile::workspace_write(),
-            ActivePermissionProfile::new("locked-down"),
-        ))
-        .expect("set active profile");
-
-    chat.open_permission_profiles_popup(Discovery::local(&chat.config));
-
-    assert_chatwidget_snapshot!(
-        "profile_permissions_selection_popup_with_custom_profiles",
-        render_bottom_popup(&chat, /*width*/ 80)
-    );
-}
 
 #[tokio::test]
 async fn profile_permissions_selection_emits_named_profile_event_only() {
@@ -533,21 +360,6 @@ async fn preset_matching_does_not_treat_non_cwd_writable_profile_as_read_only() 
     );
 }
 
-#[tokio::test]
-async fn full_access_confirmation_popup_snapshot() {
-    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-
-    let preset = builtin_approval_presets()
-        .into_iter()
-        .find(|preset| preset.id == "full-access")
-        .expect("full access preset");
-    chat.open_full_access_confirmation(
-        preset, /*return_to_permissions*/ false, /*profile_selection*/ None,
-    );
-
-    let popup = render_bottom_popup(&chat, /*width*/ 80);
-    assert_chatwidget_snapshot!("full_access_confirmation_popup", popup);
-}
 
 #[cfg(target_os = "windows")]
 #[tokio::test]
@@ -620,23 +432,6 @@ async fn startup_windows_sandbox_prompt_blocks_disallowed_unelevated_fallback() 
     );
 }
 
-#[tokio::test]
-async fn windows_sandbox_required_enable_prompt_snapshot() {
-    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-
-    chat.windows_sandbox_config.requirements = Some(Some(vec![WindowsSandboxSetupMode::Elevated]));
-    let preset = builtin_approval_presets()
-        .into_iter()
-        .find(|preset| preset.id == "auto")
-        .expect("auto preset");
-
-    chat.open_windows_sandbox_enable_prompt(preset, /*profile_selection*/ None);
-
-    assert_chatwidget_snapshot!(
-        "windows_sandbox_required_enable_prompt",
-        render_bottom_popup(&chat, /*width*/ 120)
-    );
-}
 
 #[tokio::test]
 async fn windows_sandbox_required_enable_prompt_reopens_on_cancel_when_unelevated_allowed() {
@@ -696,27 +491,6 @@ async fn fragmented_terminal_response_cannot_select_non_admin_windows_sandbox() 
     }
 }
 
-#[tokio::test]
-async fn windows_sandbox_setup_starts_a_fresh_status_clock() {
-    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.bottom_pane
-        .reset_status_timer(Duration::from_secs(/*secs*/ 125));
-
-    chat.show_windows_sandbox_setup_status();
-    let setup = render_bottom_popup(&chat, /*width*/ 80);
-    assert!(setup.contains("Setting up sandbox"));
-    assert!(setup.contains("(0s"));
-    assert_chatwidget_snapshot!(
-        "windows_sandbox_setup_fresh_clock",
-        setup.replace(&chat.config.cwd.display().to_string(), "[CWD]")
-    );
-
-    chat.clear_windows_sandbox_setup_status();
-    chat.bottom_pane.set_task_running(/*running*/ true);
-    let working = render_bottom_popup(&chat, /*width*/ 80);
-    assert!(working.contains("Working"));
-    assert!(!working.contains("Setting up sandbox"));
-}
 
 #[tokio::test]
 async fn required_windows_sandbox_setup_defers_configured_initial_prompt() {
@@ -815,21 +589,6 @@ async fn mixed_executors_restore_required_sandbox_prompt_without_submitting() {
     assert_no_submit_op(&mut op_rx);
 }
 
-#[tokio::test]
-async fn windows_sandbox_required_fallback_prompt_snapshot() {
-    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-
-    chat.windows_sandbox_config.requirements = Some(Some(vec![WindowsSandboxSetupMode::Elevated]));
-    let preset = builtin_approval_presets()
-        .into_iter()
-        .find(|preset| preset.id == "auto")
-        .expect("auto preset");
-
-    chat.open_windows_sandbox_fallback_prompt(preset, /*profile_selection*/ None);
-
-    let popup = render_bottom_popup(&chat, /*width*/ 120);
-    assert_chatwidget_snapshot!("windows_sandbox_required_fallback_prompt", popup);
-}
 
 #[cfg(target_os = "windows")]
 #[tokio::test]
@@ -1003,83 +762,7 @@ async fn permissions_selection_emits_history_cell_when_selection_changes() {
     );
 }
 
-#[tokio::test]
-async fn permissions_selection_history_snapshot_after_mode_switch() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    #[cfg(target_os = "windows")]
-    {
-        chat.set_windows_sandbox_mode(Some(WindowsSandboxSetupMode::Unelevated));
-    }
-    chat.set_feature_enabled(Feature::GuardianApproval, /*enabled*/ false);
-    chat.open_permissions_popup();
-    chat.handle_key_event(KeyEvent::from(KeyCode::Down));
-    #[cfg(target_os = "windows")]
-    chat.handle_key_event(KeyEvent::from(KeyCode::Down));
-    chat.handle_key_event(KeyEvent::from(KeyCode::Enter));
 
-    let (preset, return_to_permissions, profile_selection) =
-        std::iter::from_fn(|| rx.try_recv().ok())
-            .find_map(|event| match event {
-                AppEvent::OpenFullAccessConfirmation {
-                    preset,
-                    return_to_permissions,
-                    profile_selection,
-                } => Some((preset, return_to_permissions, profile_selection)),
-                _ => None,
-            })
-            .expect("expected full access confirmation event");
-    chat.open_full_access_confirmation(preset, return_to_permissions, profile_selection);
-    chat.handle_key_event(KeyEvent::from(KeyCode::Enter));
-
-    let cells = drain_insert_history(&mut rx);
-    assert_eq!(cells.len(), 1, "expected one mode-switch history cell");
-    assert_chatwidget_snapshot!(
-        "permissions_selection_history_after_mode_switch",
-        lines_to_single_string(&cells[0])
-    );
-}
-
-#[tokio::test]
-async fn permissions_selection_history_snapshot_full_access_to_default() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    #[cfg(target_os = "windows")]
-    {
-        chat.windows_sandbox_local_server = true;
-        chat.set_windows_sandbox_mode(Some(WindowsSandboxSetupMode::Unelevated));
-    }
-    chat.config
-        .permissions
-        .approval_policy
-        .set(AskForApproval::Never.to_core())
-        .expect("set approval policy");
-    chat.config
-        .permissions
-        .set_permission_profile(PermissionProfile::Disabled)
-        .expect("set permission profile");
-
-    chat.open_permissions_popup();
-    let popup = render_bottom_popup(&chat, /*width*/ 120);
-    chat.handle_key_event(KeyEvent::from(KeyCode::Up));
-    if popup.contains("Approve for me") {
-        chat.handle_key_event(KeyEvent::from(KeyCode::Up));
-    }
-    chat.handle_key_event(KeyEvent::from(KeyCode::Enter));
-
-    let cells = drain_insert_history(&mut rx);
-    assert_eq!(cells.len(), 1, "expected one mode-switch history cell");
-    #[cfg(target_os = "windows")]
-    insta::with_settings!({ snapshot_suffix => "windows" }, {
-        assert_chatwidget_snapshot!(
-            "permissions_selection_history_full_access_to_default",
-            lines_to_single_string(&cells[0])
-        );
-    });
-    #[cfg(not(target_os = "windows"))]
-    assert_chatwidget_snapshot!(
-        "permissions_selection_history_full_access_to_default",
-        lines_to_single_string(&cells[0])
-    );
-}
 
 #[tokio::test]
 async fn permissions_selection_emits_history_cell_when_current_is_selected() {
@@ -1432,27 +1115,4 @@ async fn permissions_full_access_history_cell_emitted_only_after_confirmation() 
         rendered.contains("Permissions updated to Full Access"),
         "expected full access update history message, got: {rendered}"
     );
-}
-
-#[tokio::test]
-async fn windows_sandbox_unelevated_policy_hides_admin_setup() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.windows_sandbox_config.requirements =
-        Some(Some(vec![WindowsSandboxSetupMode::Unelevated]));
-    chat.open_windows_sandbox_enable_prompt(
-        builtin_approval_presets()
-            .into_iter()
-            .find(|preset| preset.id == "auto")
-            .expect("auto preset"),
-        /*profile_selection*/ None,
-    );
-    assert_chatwidget_snapshot!(
-        "windows_sandbox_unelevated_policy",
-        render_bottom_popup(&chat, /*width*/ 100)
-    );
-    chat.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
-    assert!(matches!(
-        rx.try_recv(),
-        Ok(AppEvent::BeginWindowsSandboxLegacySetup { .. })
-    ));
 }

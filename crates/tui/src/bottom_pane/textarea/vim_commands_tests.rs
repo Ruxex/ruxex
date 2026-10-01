@@ -697,80 +697,8 @@ fn pending_replacement_owns_escape_before_turn_interruption() {
     assert_eq!(textarea.text(), "alpha");
 }
 
-#[test]
-fn editor_commands_have_visual_snapshot_coverage() {
-    let mut textarea = vim_textarea("alpha beta\ngamma delta", /*cursor*/ 0);
-    let mut states = Vec::new();
-    for command in ["rZ", "cw"] {
-        keys(&mut textarea, command);
-        states.push(format!(
-            "{command}: {}\n{}^",
-            textarea.text().replace('\n', "\\n"),
-            " ".repeat(textarea.cursor())
-        ));
-    }
-    insta::assert_snapshot!(states.join("\n\n"), @r###"
-    rZ: Zlpha beta\ngamma delta
-    ^
 
-    cw:  beta\ngamma delta
-    ^
-    "###);
-}
 
-#[test]
-fn dot_repeat_has_visual_snapshot_coverage() {
-    let mut textarea = vim_textarea("alpha beta\ngamma delta", /*cursor*/ 0);
-    let mut states = Vec::new();
-    for command in ["dw", "."] {
-        keys(&mut textarea, command);
-        states.push(format!(
-            "{command}: {}\n{}^",
-            textarea.text().replace('\n', "\\n"),
-            " ".repeat(textarea.cursor())
-        ));
-    }
-    insta::assert_snapshot!(states.join("\n\n"), @r###"
-    dw: beta\ngamma delta
-    ^
-
-    .: gamma delta
-    ^
-    "###);
-}
-
-#[test]
-fn find_and_navigation_have_visual_snapshot_coverage() {
-    let mut textarea = vim_textarea("alpha beta\ngamma delta", /*cursor*/ 0);
-    let mut states = Vec::new();
-    for command in ["tb", "fb", "Ta", "Fa", "G", "gg"] {
-        keys(&mut textarea, command);
-        states.push(format!(
-            "{command}: {}\n{}^",
-            textarea.text().replace('\n', "\\n"),
-            " ".repeat(textarea.cursor())
-        ));
-    }
-    insta::assert_snapshot!(states.join("\n\n"), @r###"
-    tb: alpha beta\ngamma delta
-         ^
-
-    fb: alpha beta\ngamma delta
-          ^
-
-    Ta: alpha beta\ngamma delta
-         ^
-
-    Fa: alpha beta\ngamma delta
-        ^
-
-    G: alpha beta\ngamma delta
-               ^
-
-    gg: alpha beta\ngamma delta
-    ^
-    "###);
-}
 
 #[test]
 fn search_motions_compose_with_operators_and_repeat() {

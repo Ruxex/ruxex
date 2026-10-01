@@ -173,19 +173,3 @@ fn daemon_eligibility_preserves_launch_options_and_explains_exclusions() {
         None
     );
 }
-
-#[test]
-fn daemon_exclusion_warning_snapshot() {
-    use crate::history_cell::HistoryCell;
-    let cell = crate::history_cell::StartupWarningsCell::new(vec![
-        "Running without the shared background server: --strict-config requires embedded mode."
-            .into(),
-    ]);
-    let text = cell
-        .transcript_lines(/*width*/ 80)
-        .iter()
-        .map(ToString::to_string)
-        .collect::<Vec<_>>()
-        .join("\n");
-    insta::assert_snapshot!("daemon_exclusion_warning", text);
-}

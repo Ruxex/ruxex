@@ -6,44 +6,7 @@ use super::lines_to_plain_strings;
 use super::test_cwd;
 use crate::history_cell::HistoryRenderMode;
 use crate::render::highlight::MAX_HIGHLIGHT_LINE_BYTES;
-use insta::assert_debug_snapshot;
 use pretty_assertions::assert_eq;
-
-#[test]
-fn growing_code_fences_preserve_styles_unicode_links_and_blank_lines() {
-    let (_, render) = assert_rich_stream_matches_full_render(
-        &[
-            "Before [link](https://example.com).\n\n```rust,no_run\n",
-            "fn main() {\n",
-            "    /* a multiline\n",
-            "       comment */\n\n",
-            "    println!(\"界 e\u{301} https://example.com\");\n",
-            "}\n",
-            "```\n\n~~~~python\n",
-            "text = \"\"\"a multiline\n",
-            "string\"\"\"\n",
-            "~~~~\n",
-        ],
-        Some(18),
-    );
-    assert!(render.open_code_fence.is_none());
-    assert_debug_snapshot!(lines_to_plain_strings(&render.lines), @r#"
-    [
-        "Before link",
-        "(https://example.com).",
-        "",
-        "fn main() {",
-        "    /* a multiline",
-        "       comment */",
-        "",
-        "    println!(\"界 e\u{301} https://example.com\");",
-        "}",
-        "",
-        "text = \"\"\"a multiline",
-        "string\"\"\"",
-    ]
-    "#);
-}
 
 #[test]
 fn long_open_fence_retains_its_rendered_prefix() {

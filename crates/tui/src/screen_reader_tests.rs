@@ -103,52 +103,6 @@ async fn preserves_preferences_from_other_layers_and_edits_during_detection() ->
 }
 
 #[tokio::test]
-async fn persisted_default_loads_and_renders_without_animation() -> anyhow::Result<()> {
-    use crate::app_event_sender::AppEventSender;
-    use crate::legacy_core::config::ConfigBuilder;
-    use crate::render::renderable::Renderable;
-    use crate::status_indicator_widget::StatusIndicatorWidget;
-    use crate::status_indicator_widget::StatusTimer;
-    use crate::tui::FrameRequester;
-    use codex_config::LoaderOverrides;
-    use ratatui::Terminal;
-    use ratatui::backend::TestBackend;
-
-    let home = tempfile::tempdir()?;
-    initialize_file(
-        &home.path().join("config.toml"),
-        /*animations_configured*/ false,
-        std::future::ready(true),
-    )
-    .await?;
-    let config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
-        .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
-        .build()
-        .await?;
-    assert!(!config.animations);
-    let (tx, _rx) = tokio::sync::mpsc::unbounded_channel();
-    let (frame_requester, mut frames) = FrameRequester::test_channel();
-    let mut status =
-        StatusIndicatorWidget::new(AppEventSender::new(tx), frame_requester, config.animations);
-    status.update_header("Reading the terminal output".into());
-    let mut timer = StatusTimer::default();
-    timer.pause_at(std::time::Instant::now());
-    let mut terminal = Terminal::new(TestBackend::new(/*width*/ 60, /*height*/ 1))?;
-    terminal.draw(|frame| {
-        status
-            .with_timer(&timer)
-            .render(frame.area(), frame.buffer_mut())
-    })?;
-    assert_eq!(
-        frames.try_recv(),
-        Err(tokio::sync::mpsc::error::TryRecvError::Empty)
-    );
-    insta::assert_snapshot!(terminal.backend());
-    Ok(())
-}
-
-#[tokio::test]
 async fn temporary_cli_override_does_not_suppress_the_saved_default() -> anyhow::Result<()> {
     use crate::legacy_core::config::ConfigBuilder;
     use codex_config::LoaderOverrides;

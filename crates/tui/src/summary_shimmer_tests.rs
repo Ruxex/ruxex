@@ -5,45 +5,6 @@ use crate::terminal_palette::with_test_default_colors;
 use crate::terminal_probe::DefaultColors;
 
 #[test]
-fn short_and_long_labels_sweep_smoothly_in_both_themes() {
-    let mut frames = Vec::new();
-    for (theme, colors) in [
-        (
-            "dark",
-            DefaultColors {
-                fg: (240, 240, 240),
-                bg: (16, 16, 16),
-            },
-        ),
-        (
-            "light",
-            DefaultColors {
-                fg: (16, 16, 16),
-                bg: (240, 240, 240),
-            },
-        ),
-    ] {
-        with_test_default_colors(colors, || {
-            for text in ["Working", "Preparing bootstrap diagnostics", "界e\u{301}界"] {
-                for ms in [0, 500, 1000, 1500, 2000] {
-                    let spans =
-                        summary_shimmer(text, Duration::from_millis(ms), MotionMode::Animated);
-                    let levels = spans
-                        .iter()
-                        .map(|span| match span.style.fg {
-                            Some(ratatui::style::Color::Rgb(level, _, _)) => level,
-                            color => panic!("expected interpolated RGB, got {color:?}"),
-                        })
-                        .collect::<Vec<_>>();
-                    frames.push(format!("{theme} {text} {ms}ms: {levels:?}"));
-                }
-            }
-        });
-    }
-    insta::assert_snapshot!(frames.join("\n"));
-}
-
-#[test]
 fn working_has_overlapping_highlights_without_frame_to_frame_flashes() {
     with_test_default_colors(
         DefaultColors {

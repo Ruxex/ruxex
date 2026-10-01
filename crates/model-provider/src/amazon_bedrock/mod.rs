@@ -410,6 +410,7 @@ mod tests {
 
         assert_eq!(
             api_provider.base_url,
+            // `openai/v1` is an external Amazon Bedrock wire-contract path.
             "https://bedrock-mantle.eu-central-1.api.aws/openai/v1"
         );
     }
@@ -467,6 +468,7 @@ mod tests {
                 .runtime_base_url()
                 .await
                 .expect("configured AWS region should resolve for command auth"),
+            // `openai/v1` is an external Amazon Bedrock wire-contract path.
             Some("https://bedrock-mantle.us-west-2.api.aws/openai/v1".to_string())
         );
     }
@@ -518,6 +520,7 @@ mod tests {
                 .runtime_base_url()
                 .await
                 .expect("managed Bedrock region should resolve"),
+            // `openai/v1` is an external Amazon Bedrock wire-contract path.
             Some("https://bedrock-mantle.us-east-1.api.aws/openai/v1".to_string())
         );
         assert_eq!(
@@ -564,6 +567,7 @@ mod tests {
                     .runtime_base_url()
                     .await
                     .expect("configured AWS profile region should resolve"),
+                // `openai/v1` is an external Amazon Bedrock wire-contract path.
                 Some("https://bedrock-mantle.us-west-2.api.aws/openai/v1".to_string())
             );
             assert!(
@@ -655,6 +659,7 @@ mod tests {
                 .runtime_base_url()
                 .await
                 .expect("managed Bedrock Runtime region should resolve"),
+            // `openai/v1` is an external Amazon Bedrock wire-contract path.
             Some("https://bedrock-runtime.eu-west-1.amazonaws.com/openai/v1".to_string())
         );
     }

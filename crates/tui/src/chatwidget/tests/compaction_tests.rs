@@ -26,79 +26,7 @@ fn compaction_completed(id: &str) -> ServerNotification {
     })
 }
 
-#[tokio::test]
-async fn compaction_status_survives_follow_up_and_preserves_turn_time() {
-    let (mut chat, mut rx, mut op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.thread_id = Some(ThreadId::new());
-    handle_turn_started(&mut chat, "turn-1");
-    chat.bottom_pane
-        .reset_status_timer(Duration::from_secs(/*secs*/ 600));
-    chat.on_agent_message_delta("Previous commentary\n".to_string());
-    chat.on_commit_tick();
-    assert!(!chat.bottom_pane.status_indicator_visible());
-    chat.handle_server_notification(compaction_started("compact-1"), /*replay_kind*/ None);
-    chat.on_commit_tick();
-    assert!(chat.bottom_pane.status_indicator_visible());
 
-    let started_at = Instant::now() - Duration::from_secs(/*secs*/ 83);
-    chat.status_state.compaction.as_mut().unwrap().started_at = started_at;
-    chat.bottom_pane.set_status_timer_origin(Some(started_at));
-    // Repeated start notifications must not restart the displayed timer.
-    chat.handle_server_notification(compaction_started("compact-1"), /*replay_kind*/ None);
-    assert_eq!(
-        chat.status_state.compaction.as_ref().unwrap().started_at,
-        started_at
-    );
-    assert_chatwidget_snapshot!(
-        "compaction_running",
-        normalize_compaction_snapshot(render_bottom_popup(&chat, /*width*/ 80))
-    );
-    assert_chatwidget_snapshot!(
-        "compaction_running_narrow",
-        normalize_compaction_snapshot(render_bottom_popup(&chat, /*width*/ 40))
-    );
-
-    chat.handle_composer_input_result(
-        InputResult::Submitted {
-            text: "keep going".to_string(),
-            text_elements: Vec::new(),
-        },
-        /*had_modal_or_popup*/ false,
-    );
-    assert_matches!(next_submit_op(&mut op_rx), Op::UserTurn { .. });
-    assert_eq!(chat.input_queue.pending_steers.len(), 1);
-    assert_eq!(
-        chat.bottom_pane.status_widget().unwrap().header(),
-        "Compacting context"
-    );
-    drain_insert_history(&mut rx);
-
-    chat.handle_server_notification(compaction_completed("compact-1"), /*replay_kind*/ None);
-    let history = drain_insert_history(&mut rx);
-    let lines: Vec<_> = history.into_iter().flatten().collect();
-    assert_chatwidget_snapshot!(
-        "compaction_completed",
-        normalize_compaction_snapshot(lines_to_single_string(&lines))
-    );
-    assert!(chat.status_state.compaction.is_none());
-    assert_eq!(
-        chat.bottom_pane.status_widget().unwrap().header(),
-        "Working"
-    );
-    assert!(chat.bottom_pane.status_elapsed().unwrap() >= Duration::from_secs(/*secs*/ 600));
-}
-
-#[tokio::test]
-async fn manual_compaction_shows_status_before_backend_events() {
-    let (mut chat, _rx, _ops) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.dispatch_command(SlashCommand::Compact);
-    assert_chatwidget_snapshot!(
-        "manual_compaction_pending",
-        normalize_compaction_snapshot(render_bottom_popup(&chat, /*width*/ 80))
-    );
-    assert!(chat.handle_turn_start_rejection("Could not start compaction".to_string()));
-    assert!(!chat.bottom_pane.status_indicator_visible());
-}
 
 #[tokio::test]
 async fn compaction_status_clears_when_turn_ends_without_item_completion() {

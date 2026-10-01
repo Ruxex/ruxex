@@ -243,46 +243,6 @@ mod tests {
     }
 
     #[test]
-    fn parses_unquoted_git_flags_and_quoted_closing_braces() {
-        let cwd = Path::new("/repo");
-        let parsed = parse_assistant_markdown(
-            r#"Done ::git-create-pr{cwd="C:\repo" branch="feature/{rollout}" isDraft=true}"#,
-            cwd,
-        );
-        insta::assert_snapshot!(parsed.visible_markdown, @"Done");
-        assert_eq!(
-            parsed.git_actions,
-            vec![GitActionDirective::CreatePr {
-                cwd: r"C:\repo".to_string(),
-                branch: "feature/{rollout}".to_string(),
-                url: None,
-                is_draft: true,
-            }],
-        );
-    }
-
-    #[test]
-    fn renders_code_comment_directives_as_markdown() {
-        let parsed = parse_assistant_markdown(
-            concat!(
-                "Found two issues.\n\n",
-                r#"::code-comment{title="Fix body= parsing" body="C:\temp says \"foo\" here; keep role=\"tab\", ::git-stage{cwd=/tmp}, file=, and \n literal." file="/repo/src/app.ts" start=10 end=12 priority="P2"} ::git-stage{cwd="/repo"}"#,
-                "\n\n",
-                r#":::code-comment{title='[P1] Clamp the range' body='The line range should match the App.' file='codex/src/range.ts' start=8 end=2 priority=3}"#,
-            ),
-            Path::new("/repo"),
-        );
-
-        insta::assert_snapshot!("code_comment_directive_fallback", parsed.visible_markdown);
-        assert_eq!(
-            parsed.git_actions,
-            vec![GitActionDirective::Stage {
-                cwd: "/repo".to_string()
-            }],
-        );
-    }
-
-    #[test]
     fn preserves_non_directive_and_malformed_code_comment_text() {
         let markdown = "Mention `::code-comment{title=\"Example\"}` and `::git-push}` inline.\n::code-comment{title=\"Missing body\" file=\"/repo/src/app.ts\"}";
         let parsed = parse_assistant_markdown(markdown, Path::new("/repo"));

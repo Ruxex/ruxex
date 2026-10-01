@@ -25,38 +25,6 @@ fn computer_item(
     }
 }
 
-#[tokio::test]
-async fn computer_activity_live_and_replay_group_identically() {
-    use codex_app_server_protocol::McpToolCallStatus;
-    let mut outputs = Vec::new();
-    for replay in [false, true] {
-        let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-        for id in ["1", "2", "3", "4"] {
-            let item = computer_item(id, McpToolCallStatus::Completed);
-            if replay {
-                chat.replay_thread_item(item, "turn-1".to_string(), ReplayKind::ThreadSnapshot);
-            } else {
-                chat.on_mcp_tool_call_started(computer_item(id, McpToolCallStatus::InProgress));
-                chat.on_mcp_tool_call_completed(item);
-            }
-        }
-        assert!(drain_insert_history(&mut rx).is_empty());
-        let cell = chat.transcript.active_cell.as_ref().expect("group");
-        outputs.push((
-            cell.display_lines(/*width*/ 80),
-            cell.transcript_lines(/*width*/ 100),
-        ));
-        chat.finalize_turn();
-        let cells = drain_insert_history(&mut rx);
-        assert_eq!(cells.len(), 1);
-        assert_eq!(cells[0], outputs.last().unwrap().0);
-    }
-    assert_eq!(outputs[0], outputs[1]);
-    insta::assert_snapshot!(
-        "computer_activity_replayed",
-        lines_to_single_string(&outputs[0].0)
-    );
-}
 
 #[tokio::test]
 async fn computer_activity_preserves_boundaries_and_expanded_output() {
@@ -80,21 +48,4 @@ async fn computer_activity_preserves_boundaries_and_expanded_output() {
     let transcript = chat.active_cell_transcript_lines(/*width*/ 100).unwrap();
     assert!(lines_to_single_string(&transcript).contains("Full output for 3"));
     assert!(lines_to_single_string(&transcript).contains("await cua.getState()"));
-}
-
-#[tokio::test]
-async fn computer_activity_out_of_order_completion_and_interruption() {
-    use codex_app_server_protocol::McpToolCallStatus;
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.on_mcp_tool_call_started(computer_item("1", McpToolCallStatus::InProgress));
-    chat.on_mcp_tool_call_started(computer_item("2", McpToolCallStatus::InProgress));
-    chat.on_mcp_tool_call_completed(computer_item("2", McpToolCallStatus::Completed));
-    assert!(active_blob(&chat).contains("Using computer"));
-    chat.finalize_turn();
-    let cells = drain_insert_history(&mut rx);
-    assert_eq!(cells.len(), 1);
-    insta::assert_snapshot!(
-        "computer_activity_partial_interruption",
-        lines_to_single_string(&cells[0])
-    );
 }

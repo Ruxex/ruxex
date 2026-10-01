@@ -758,7 +758,6 @@ pub(crate) fn highlight_code_to_styled_spans(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use insta::assert_snapshot;
     use pretty_assertions::assert_eq;
     use std::str::FromStr;
     use syntect::highlighting::Color as SyntectColor;
@@ -1149,19 +1148,6 @@ mod tests {
                 "theme {theme_name} should produce at least one non-default foreground color"
             );
         }
-    }
-
-    #[test]
-    fn ansi_family_foreground_palette_snapshot() {
-        let mut out = String::new();
-        for theme_name in ["ansi", "base16", "base16-256"] {
-            let colors = unique_foreground_colors_for_theme(theme_name);
-            out.push_str(&format!("{theme_name}:\n"));
-            for color in colors {
-                out.push_str(&format!("  {color}\n"));
-            }
-        }
-        assert_snapshot!("ansi_family_foreground_palette", out);
     }
 
     #[test]

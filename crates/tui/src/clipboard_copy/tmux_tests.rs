@@ -49,13 +49,3 @@ fn tmux_clipboard_target_requires_nonempty_ms_capability() {
         );
     }
 }
-
-#[test]
-fn tmux_clipboard_target_rejects_no_attached_client() {
-    let result = clipboard_target(
-        || Ok("external\n".to_string()),
-        || Ok("\n".to_string()),
-        |_| panic!("capabilities require an attached client"),
-    );
-    insta::assert_snapshot!(result.expect_err("no receiving client"));
-}

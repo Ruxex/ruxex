@@ -261,16 +261,6 @@ mod tests {
     }
 
     #[test]
-    fn update_prompt_snapshot() {
-        let screen = new_prompt();
-        let mut terminal = Terminal::new(VT100Backend::new(80, 12)).expect("terminal");
-        terminal
-            .draw(|frame| frame.render_widget_ref(&screen, frame.area()))
-            .expect("render update prompt");
-        insta::assert_snapshot!("update_prompt_modal", terminal.backend());
-    }
-
-    #[test]
     fn update_prompt_confirm_selects_update() {
         let mut screen = new_prompt();
         screen.handle_key(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));

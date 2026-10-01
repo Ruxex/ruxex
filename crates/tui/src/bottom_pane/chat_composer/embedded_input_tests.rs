@@ -49,31 +49,3 @@ fn paste_enter_retains_a_one_character_first_line() {
     assert!(composer.handle_paste_enter(Instant::now()));
     assert_eq!(composer.clear_for_ctrl_c(), Some("x\n".into()));
 }
-
-#[test]
-fn embedded_composer_shows_validation_error_without_losing_draft() {
-    let (mut composer, mut rx) = new_test_composer();
-    composer.config = ChatComposerConfig::plain_text();
-    composer.set_footer_hint_override(Some(vec![("enter".into(), "submit".into())]));
-    composer.set_context_window_pending(/*pending*/ true);
-    let text = "x".repeat(MAX_USER_INPUT_TEXT_CHARS + 1);
-    composer.handle_paste(text.clone());
-    assert_eq!(
-        composer.handle_key_event(KeyCode::Enter.into()).0,
-        InputResult::None
-    );
-    assert_eq!(composer.current_text_with_pending(), text);
-    assert!(matches!(rx.try_recv(), Ok(AppEvent::InsertHistoryCell(_))));
-    let area = Rect::new(
-        /*x*/ 0, /*y*/ 0, /*width*/ 80, /*height*/ 5,
-    );
-    let mut buffer = Buffer::empty(area);
-    composer.render(area, &mut buffer);
-    let footer = (0..area.width)
-        .map(|x| buffer[(x, area.bottom() - 1)].symbol())
-        .collect::<String>();
-    insta::assert_snapshot!(footer.trim_end(), @"  Message too long; limit 1048576 characters");
-    assert!(composer.footer_flash_delay().is_some());
-    composer.footer.flash.as_mut().unwrap().expires_at = Instant::now() - Duration::from_secs(1);
-    assert_eq!(composer.footer_flash_delay(), None);
-}

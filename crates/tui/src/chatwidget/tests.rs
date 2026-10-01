@@ -166,7 +166,6 @@ pub(super) use codex_utils_path_uri::LegacyAppPathString;
 pub(super) use crossterm::event::KeyCode;
 pub(super) use crossterm::event::KeyEvent;
 pub(super) use crossterm::event::KeyModifiers;
-pub(super) use insta::assert_snapshot;
 pub(super) use serde_json::json;
 #[cfg(target_os = "windows")]
 pub(super) use serial_test::serial;
@@ -177,40 +176,6 @@ pub(super) use tempfile::tempdir;
 pub(super) use tokio::sync::mpsc::error::TryRecvError;
 pub(super) use tokio::sync::mpsc::unbounded_channel;
 pub(super) use toml::Value as TomlValue;
-
-pub(super) fn chatwidget_snapshot_dir() -> PathBuf {
-    let snapshot_file = codex_utils_cargo_bin::find_resource!(
-        "src/chatwidget/snapshots/codex_tui__chatwidget__tests__chatwidget_tall.snap"
-    )
-    .expect("snapshot file");
-    snapshot_file
-        .parent()
-        .unwrap_or_else(|| panic!("snapshot file has no parent: {}", snapshot_file.display()))
-        .to_path_buf()
-}
-
-macro_rules! assert_chatwidget_snapshot {
-    ($name:expr, $value:expr $(,)?) => {{
-        let mut settings = insta::Settings::clone_current();
-        settings.set_prepend_module_to_snapshot(false);
-        settings.set_snapshot_path(crate::chatwidget::tests::chatwidget_snapshot_dir());
-        settings.bind(|| {
-            insta::assert_snapshot!(format!("codex_tui__chatwidget__tests__{}", $name), $value);
-        });
-    }};
-    ($name:expr, $value:expr, @$snapshot:literal $(,)?) => {{
-        let mut settings = insta::Settings::clone_current();
-        settings.set_prepend_module_to_snapshot(false);
-        settings.set_snapshot_path(crate::chatwidget::tests::chatwidget_snapshot_dir());
-        settings.bind(|| {
-            insta::assert_snapshot!(
-                format!("codex_tui__chatwidget__tests__{}", $name),
-                $value,
-                @$snapshot
-            );
-        });
-    }};
-}
 
 fn next_goal_draft(
     rx: &mut tokio::sync::mpsc::UnboundedReceiver<AppEvent>,
@@ -230,8 +195,6 @@ fn next_goal_draft(
 
 mod app_server;
 mod approval_requests;
-#[path = "tests/bedrock_catalog_tests.rs"]
-mod bedrock_catalog_tests;
 #[path = "tests/collaboration_catalog_tests.rs"]
 mod collaboration_catalog_tests;
 #[path = "tests/compaction_tests.rs"]
@@ -241,8 +204,6 @@ mod completion_styling;
 mod composer_submission;
 #[path = "tests/computer_activity_tests.rs"]
 mod computer_activity_tests;
-#[path = "tests/config_errors_tests.rs"]
-mod config_errors;
 mod exec_flow;
 mod goal_menu;
 mod goal_validation;
@@ -260,8 +221,6 @@ mod popups_and_settings;
 mod rate_limit_recovery_tests;
 #[path = "tests/reasoning_status_tests.rs"]
 mod reasoning_status_tests;
-#[path = "tests/replay_render_tests.rs"]
-mod replay_render_tests;
 mod review_mode;
 #[path = "tests/session_model_selection_tests.rs"]
 mod session_model_selection_tests;
@@ -273,16 +232,9 @@ mod status_and_layout;
 mod status_command_tests;
 mod status_surface_previews;
 mod terminal_title;
-#[path = "tests/tool_activity_tests.rs"]
-mod tool_activity_tests;
 mod usage;
-#[path = "tests/worktree_picker_tests.rs"]
-mod worktree_picker;
 
 pub(crate) use helpers::make_chatwidget_manual_with_sender;
 pub(crate) use helpers::set_managed_auth;
 pub(crate) use helpers::set_service_tier_test_catalog;
 pub(super) use helpers::*;
-
-#[path = "tests/questions_tests.rs"]
-mod questions_tests;

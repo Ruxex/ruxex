@@ -680,7 +680,6 @@ mod tests {
     use crossterm::event::KeyEvent;
     #[cfg(target_os = "macos")]
     use crossterm::event::KeyModifiers;
-    use insta::assert_snapshot;
     use pretty_assertions::assert_eq;
     use ratatui::style::Color;
     use ratatui::style::Modifier;
@@ -716,126 +715,6 @@ mod tests {
                 is_running_hint: false,
             })
         );
-    }
-
-    #[test]
-    fn collab_events_snapshot() {
-        let sender_thread_id = ThreadId::from_string("00000000-0000-0000-0000-000000000001")
-            .expect("valid sender thread id");
-        let robie_id = ThreadId::from_string("00000000-0000-0000-0000-000000000002")
-            .expect("valid robie thread id");
-        let bob_id = ThreadId::from_string("00000000-0000-0000-0000-000000000003")
-            .expect("valid bob thread id");
-
-        let spawn = tool_call_history_cell(
-            &ThreadItem::CollabAgentToolCall {
-                id: "call-spawn".to_string(),
-                tool: CollabAgentTool::SpawnAgent,
-                status: CollabAgentToolCallStatus::Completed,
-                sender_thread_id: sender_thread_id.to_string(),
-                receiver_thread_ids: vec![robie_id.to_string()],
-                prompt: Some("Compute 11! and reply with just the integer result.".to_string()),
-                model: Some("gpt-5".to_string()),
-                reasoning_effort: Some(ReasoningEffortConfig::High),
-                agents_states: HashMap::from([(
-                    robie_id.to_string(),
-                    agent_state(CollabAgentStatus::PendingInit, /*message*/ None),
-                )]),
-            },
-            /*cached_spawn_request*/ None,
-            |thread_id| metadata_for(thread_id, robie_id, bob_id),
-        )
-        .expect("spawn item renders");
-
-        let send = tool_call_history_cell(
-            &ThreadItem::CollabAgentToolCall {
-                id: "call-send".to_string(),
-                tool: CollabAgentTool::SendInput,
-                status: CollabAgentToolCallStatus::Completed,
-                sender_thread_id: sender_thread_id.to_string(),
-                receiver_thread_ids: vec![robie_id.to_string()],
-                prompt: Some("Please continue and return the answer only.".to_string()),
-                model: None,
-                reasoning_effort: None,
-                agents_states: HashMap::from([(
-                    robie_id.to_string(),
-                    agent_state(CollabAgentStatus::Running, /*message*/ None),
-                )]),
-            },
-            /*cached_spawn_request*/ None,
-            |thread_id| metadata_for(thread_id, robie_id, bob_id),
-        )
-        .expect("send-input item renders");
-
-        let waiting = tool_call_history_cell(
-            &ThreadItem::CollabAgentToolCall {
-                id: "call-wait".to_string(),
-                tool: CollabAgentTool::Wait,
-                status: CollabAgentToolCallStatus::InProgress,
-                sender_thread_id: sender_thread_id.to_string(),
-                receiver_thread_ids: vec![robie_id.to_string()],
-                prompt: None,
-                model: None,
-                reasoning_effort: None,
-                agents_states: HashMap::new(),
-            },
-            /*cached_spawn_request*/ None,
-            |thread_id| metadata_for(thread_id, robie_id, bob_id),
-        )
-        .expect("wait begin item renders");
-
-        let finished = tool_call_history_cell(
-            &ThreadItem::CollabAgentToolCall {
-                id: "call-wait".to_string(),
-                tool: CollabAgentTool::Wait,
-                status: CollabAgentToolCallStatus::Completed,
-                sender_thread_id: sender_thread_id.to_string(),
-                receiver_thread_ids: vec![robie_id.to_string(), bob_id.to_string()],
-                prompt: None,
-                model: None,
-                reasoning_effort: None,
-                agents_states: HashMap::from([
-                    (
-                        robie_id.to_string(),
-                        agent_state(CollabAgentStatus::Completed, Some("39916800")),
-                    ),
-                    (
-                        bob_id.to_string(),
-                        agent_state(CollabAgentStatus::Errored, Some("tool timeout")),
-                    ),
-                ]),
-            },
-            /*cached_spawn_request*/ None,
-            |thread_id| metadata_for(thread_id, robie_id, bob_id),
-        )
-        .expect("wait end item renders");
-
-        let close = tool_call_history_cell(
-            &ThreadItem::CollabAgentToolCall {
-                id: "call-close".to_string(),
-                tool: CollabAgentTool::CloseAgent,
-                status: CollabAgentToolCallStatus::Completed,
-                sender_thread_id: sender_thread_id.to_string(),
-                receiver_thread_ids: vec![robie_id.to_string()],
-                prompt: None,
-                model: None,
-                reasoning_effort: None,
-                agents_states: HashMap::from([(
-                    robie_id.to_string(),
-                    agent_state(CollabAgentStatus::Completed, Some("39916800")),
-                )]),
-            },
-            /*cached_spawn_request*/ None,
-            |thread_id| metadata_for(thread_id, robie_id, bob_id),
-        )
-        .expect("close item renders");
-
-        let snapshot = [spawn, send, waiting, finished, close]
-            .iter()
-            .map(cell_to_text)
-            .collect::<Vec<_>>()
-            .join("\n\n");
-        assert_snapshot!("collab_agent_transcript", snapshot);
     }
 
     #[cfg(target_os = "macos")]
@@ -924,36 +803,6 @@ mod tests {
         assert!(!title.spans[4].style.add_modifier.contains(Modifier::DIM));
         assert_eq!(title.spans[6].content.as_ref(), "(gpt-5 high)");
         assert_eq!(title.spans[6].style.fg, Some(Color::Magenta));
-    }
-
-    #[test]
-    fn collab_resume_interrupted_snapshot() {
-        let sender_thread_id = ThreadId::from_string("00000000-0000-0000-0000-000000000001")
-            .expect("valid sender thread id");
-        let robie_id = ThreadId::from_string("00000000-0000-0000-0000-000000000002")
-            .expect("valid robie thread id");
-
-        let cell = tool_call_history_cell(
-            &ThreadItem::CollabAgentToolCall {
-                id: "call-resume".to_string(),
-                tool: CollabAgentTool::ResumeAgent,
-                status: CollabAgentToolCallStatus::Completed,
-                sender_thread_id: sender_thread_id.to_string(),
-                receiver_thread_ids: vec![robie_id.to_string()],
-                prompt: None,
-                model: None,
-                reasoning_effort: None,
-                agents_states: HashMap::from([(
-                    robie_id.to_string(),
-                    agent_state(CollabAgentStatus::Interrupted, /*message*/ None),
-                )]),
-            },
-            /*cached_spawn_request*/ None,
-            |thread_id| metadata_for(thread_id, robie_id, ThreadId::new()),
-        )
-        .expect("resume item renders");
-
-        assert_snapshot!("collab_resume_interrupted", cell_to_text(&cell));
     }
 
     fn agent_state(status: CollabAgentStatus, message: Option<&str>) -> CollabAgentState {

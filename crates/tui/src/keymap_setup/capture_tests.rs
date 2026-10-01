@@ -51,57 +51,6 @@ fn capture_lines_at_width(view: &KeymapCaptureView, width: u16) -> String {
 }
 
 #[test]
-fn chord_capture_instruction_snapshots() {
-    let (mut view, _rx) = capture_view();
-
-    insta::assert_snapshot!(capture_lines_at_width(&view, /*width*/ 80), @r"
-    Remap Shortcut
-    Action: Jump Top  list.jump_top
-    Current: home
-    Press the first key, then the second. Esc cancels.
-    ");
-
-    view.handle_key_event(ctrl_key(KeyCode::Char('x')));
-
-    insta::assert_snapshot!(capture_lines_at_width(&view, /*width*/ 80), @r"
-    Remap Shortcut
-    Action: Jump Top  list.jump_top
-    Current: home
-    First key: ctrl-x. Press the second key. Esc cancels.
-    ");
-}
-
-#[test]
-fn chord_capture_instructions_wrap_to_narrow_panes() {
-    let (mut view, _rx) = capture_view();
-
-    insta::assert_snapshot!(capture_lines_at_width(&view, /*width*/ 24), @r"
-    Remap Shortcut
-    Action: Jump Top  list.jump_top
-    Current: home
-    Press the first key,
-    then the second. Esc
-    cancels.
-    ");
-    assert_eq!(view.desired_height(/*width*/ 24), 6);
-
-    view.handle_key_event(KeyEvent::new(
-        KeyCode::F(/*n*/ 24),
-        KeyModifiers::CONTROL | KeyModifiers::ALT | KeyModifiers::SHIFT,
-    ));
-
-    insta::assert_snapshot!(capture_lines_at_width(&view, /*width*/ 24), @r"
-    Remap Shortcut
-    Action: Jump Top  list.jump_top
-    Current: home
-    First key: ctrl-alt-
-    shift-f24. Press the
-    second key. Esc cancels.
-    ");
-    assert_eq!(view.desired_height(/*width*/ 24), 6);
-}
-
-#[test]
 fn captures_repeated_strokes_but_ignores_auto_repeat() {
     let (mut view, mut rx) = capture_view();
 

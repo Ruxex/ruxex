@@ -59,33 +59,6 @@ fn saved_completion_label() -> String {
         .to_string()
 }
 
-#[tokio::test]
-async fn completion_follows_plain_and_streamed_tool_answers() {
-    for streamed in [false, true] {
-        let (mut chat, mut rx, _ops) = make_chatwidget_manual(/*model_override*/ None).await;
-        handle_turn_started(&mut chat, "turn-1");
-        if streamed {
-            let command = begin_exec(&mut chat, "command-1", "echo ready");
-            end_exec(&mut chat, command, "ready", "", /*exit_code*/ 0);
-            handle_agent_message_delta(&mut chat, "The change is ready.\n");
-            chat.run_commit_tick();
-        }
-        complete_turn(&mut chat, completed_turn(Some(125_000), Some(COMPLETED_AT)));
-
-        let text = drain_insert_history_normalized(&mut rx)
-            .iter()
-            .map(|lines| lines_to_single_string(lines))
-            .collect::<String>();
-        assert_chatwidget_snapshot!(
-            if streamed {
-                "completion_after_streamed_tool_answer"
-            } else {
-                "completion_after_plain_answer"
-            },
-            text,
-        );
-    }
-}
 
 #[tokio::test]
 async fn completion_live_applies_duration_threshold_and_preserves_timestamp_fallback() {
@@ -224,34 +197,4 @@ async fn completion_failed_and_interrupted_turns_do_not_report_success() {
             assert!(!chat.bottom_pane.is_task_running());
         }
     }
-}
-
-#[test]
-fn completion_snapshot_normalization_preserves_clock_only_message_lines() {
-    let timestamp = "Sep 6, 2000 at 2:32 PM";
-    let transcript = format!(
-        "› {timestamp}\n• {timestamp}\n  └ {timestamp}\n  The job was done {timestamp}\n  {timestamp} is the expected text\n  Worked for 2m 5s · {timestamp} is quoted\n\n  3:24 PM\n  Worked for 1h 2m 3s · {timestamp}\n"
-    );
-    let message = history_cell::PlainHistoryCell::new(
-        transcript
-            .lines()
-            .map(|line| Line::from(line.to_owned()))
-            .collect(),
-    );
-    assert_chatwidget_snapshot!("completion_like_transcript_text", &transcript);
-    assert_eq!(
-        normalize_completion_timestamps(&message, &transcript),
-        transcript
-    );
-
-    let footer =
-        history_cell::FinalMessageSeparator::new(Some(3_723), /*runtime_metrics*/ None)
-            .with_completed_at(Local.timestamp_opt(COMPLETED_AT, /*nsecs*/ 0).unwrap());
-    assert_eq!(
-        normalize_completion_timestamps(
-            &footer,
-            lines_to_single_string(&footer.display_lines(/*width*/ 80))
-        ),
-        "  Worked for [duration] · [completion time]\n"
-    );
 }

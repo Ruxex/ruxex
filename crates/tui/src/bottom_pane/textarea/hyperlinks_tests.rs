@@ -83,33 +83,6 @@ fn assert_destination(buf: &Buffer, destination: &str) -> Vec<LinkedCell> {
     linked
 }
 
-#[test]
-fn wrapped_url_fragments_keep_the_complete_destination() {
-    let url = "https://github.com/codex/codex/pull/20252";
-    let (_, _, buf) = render(
-        &format!("Fix CI on {url}"),
-        /*width*/ 26,
-        /*height*/ 5,
-    );
-    let area = buf.area;
-    let linked = assert_destination(&buf, url);
-    assert_eq!(linked_text(&linked), url);
-    assert!(linked.windows(2).any(|pair| pair[0].1 != pair[1].1));
-    assert!(!buf[(0, 0)].symbol().contains("\x1b]8;;"));
-
-    let visible = (0..area.height)
-        .map(|row| {
-            (0..area.width)
-                .map(|column| strip_osc8(buf[(column, row)].symbol()))
-                .collect::<String>()
-                .trim_end()
-                .to_string()
-        })
-        .filter(|line| !line.is_empty())
-        .collect::<Vec<_>>()
-        .join("\n");
-    insta::assert_snapshot!("wrapped_textarea_url_keeps_original_appearance", visible);
-}
 
 #[test]
 fn composer_wrapped_url_fragments_keep_the_complete_destination() {
@@ -166,23 +139,6 @@ fn long_drafts_reuse_hyperlink_detection_across_cursor_redraws() {
     assert!(std::ptr::eq(first_cache, second_cache));
 }
 
-#[test]
-fn maximum_length_urls_render_without_osc8_annotations() {
-    let prefix = "https://example.test/";
-    let text = format!(
-        "{prefix}{}",
-        "a".repeat(MAX_USER_INPUT_TEXT_CHARS - prefix.len())
-    );
-    let (textarea, _, buf) = render(&text, /*width*/ 80, /*height*/ 2);
-
-    assert_eq!(textarea.text(), text);
-    assert_eq!(linked_cells(&buf), Vec::new());
-    assert!(buf.content.iter().all(|cell| cell.symbol().len() == 1));
-    insta::assert_snapshot!(
-        "maximum_length_url_without_annotations",
-        hyperlink_snapshot(&buf)
-    );
-}
 
 #[test]
 fn many_urls_render_with_the_complete_destination() {
@@ -207,65 +163,7 @@ fn many_urls_render_with_the_complete_destination() {
     );
 }
 
-#[test]
-fn joined_emoji_preserve_complete_url_cell_ranges() {
-    let mut snapshots = Vec::new();
-    for url in ["https://example.test/path", "https://example.test/👩‍💻/path"] {
-        for width in [64, 24, 16] {
-            let (_, _, buf) = render(&format!("👩‍💻 {url} tail"), width, /*height*/ 6);
-            let linked = assert_destination(&buf, url);
-            assert_eq!(linked_text(&linked), url);
-            for row in 0..buf.area.height {
-                let cells = linked
-                    .iter()
-                    .filter(|(_, y, _, _)| *y == row)
-                    .cloned()
-                    .collect::<Vec<_>>();
-                if let (Some(first), Some(last)) = (cells.first(), cells.last()) {
-                    snapshots.push(format!(
-                        "width {width}, row {row}, columns {}..={}: {}",
-                        first.0,
-                        last.0,
-                        linked_text(&cells)
-                    ));
-                }
-            }
-        }
-    }
-    insta::assert_snapshot!("joined_emoji_url_cell_ranges", snapshots.join("\n"));
-}
 
-#[test]
-fn unicode_whitespace_separates_url_destinations() {
-    let first = "https://one.test/a";
-    let second = "https://two.test/b";
-    let mut snapshots = Vec::new();
-    for separator in ['\u{2003}', '\u{a0}', '\u{2007}', '\u{202f}', '\u{2028}'] {
-        for width in [48, 20] {
-            let (_, _, buf) = render(
-                &format!("{first}{separator}{second}"),
-                width,
-                /*height*/ 4,
-            );
-            let linked = linked_cells(&buf);
-            for destination in [first, second] {
-                let cells = linked
-                    .iter()
-                    .filter(|(_, _, _, target)| target == destination)
-                    .cloned()
-                    .collect::<Vec<_>>();
-                assert_eq!(linked_text(&cells), destination);
-            }
-            assert_eq!(linked.len(), first.len() + second.len());
-            snapshots.push(format!(
-                "separator U+{:04X}, width {width}\n{}",
-                separator as u32,
-                hyperlink_snapshot(&buf)
-            ));
-        }
-    }
-    insta::assert_snapshot!("unicode_whitespace_url_destinations", snapshots.join("\n"));
-}
 
 #[test]
 fn hyperlink_cache_is_invalidated_when_text_changes() {

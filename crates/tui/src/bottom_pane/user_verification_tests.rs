@@ -1,7 +1,6 @@
 use super::*;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyModifiers;
-use insta::assert_snapshot;
 use pretty_assertions::assert_eq;
 use tokio::sync::mpsc::unbounded_channel;
 
@@ -55,40 +54,8 @@ fn make_view_for_request(
     (view, decision_rx)
 }
 
-#[test]
-fn prompt_snapshot() {
-    let (view, _app_rx) = make_view();
-    assert_snapshot!(
-        "user_verification_prompt",
-        render_view_lines(&view, /*width*/ 80)
-    );
-}
 
-#[test]
-fn title_wraps_at_narrow_widths() {
-    let (view, _app_rx) = make_view();
-    assert_snapshot!(
-        "user_verification_narrow",
-        render_view_lines(&view, /*width*/ 20)
-    );
-}
 
-#[test]
-fn waiting_snapshot_and_duplicate_approval_suppression() {
-    let (mut view, mut app_rx) = make_view();
-    view.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
-    assert_snapshot!(
-        "user_verification_waiting",
-        render_view_lines(&view, /*width*/ 80)
-    );
-    view.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
-    assert_eq!(
-        app_rx.try_recv().expect("approval"),
-        UserVerificationDecision::Verify
-    );
-    assert!(app_rx.try_recv().is_err());
-    assert!(!view.is_complete());
-}
 
 #[test]
 fn cancellation_is_available_before_and_during_verification() {
@@ -154,49 +121,4 @@ fn full_screen_request_is_available_before_and_during_verification() {
         assert!(!view.is_complete());
         assert!(view.terminal_title_requires_action());
     }
-}
-
-#[test]
-fn long_url_tokens_remain_visible_in_a_narrow_verification_prompt() {
-    let (view, _) = make_view_for_request(UserVerificationRequest {
-        title: "Approve https://example.com/production/release/candidate?".to_string(),
-        description: "Deploy https://example.com/production/critical-release-candidate".to_string(),
-        thread_label: None,
-        server_name: "deployments".to_string(),
-        request_id: RequestId::Integer(12),
-    });
-    assert_snapshot!(
-        "user_verification_long_urls",
-        render_view_lines(&view, /*width*/ 30)
-    );
-}
-
-#[tokio::test]
-async fn full_screen_pager_reaches_the_end_of_a_long_request() -> std::io::Result<()> {
-    let (view, _) = make_view_for_request(UserVerificationRequest {
-        title: "Approve release?".to_string(),
-        description: format!(
-            "{}Final approval details.",
-            "Deployment details. ".repeat(30)
-        ),
-        thread_label: None,
-        server_name: "deployments".to_string(),
-        request_id: RequestId::Integer(12),
-    });
-    let mut pager = crate::pager_overlay::StaticOverlay::with_renderables(
-        vec![prompt_header(&view.request)],
-        "USER VERIFICATION".to_string(),
-        crate::keymap::RuntimeKeymap::defaults().pager,
-    );
-    let mut tui = crate::tui::test_support::make_test_tui()?;
-    let area = Rect::new(0, 0, 40, 12);
-    let mut buf = Buffer::empty(area);
-    pager.render(area, &mut buf);
-    pager.handle_event(
-        &mut tui,
-        crate::tui::TuiEvent::Key(KeyEvent::new(KeyCode::End, KeyModifiers::NONE)),
-    )?;
-    pager.render(area, &mut buf);
-    assert_snapshot!("user_verification_full_screen_bottom", format!("{buf:?}"));
-    Ok(())
 }

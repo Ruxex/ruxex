@@ -7,6 +7,7 @@ use super::base_url;
 
 #[test]
 fn base_url_uses_regional_runtime_endpoint() {
+    // Keep this exact path: `openai/v1` is Amazon Bedrock's external wire contract.
     assert_eq!(
         base_url("us-west-2"),
         "https://bedrock-runtime.us-west-2.amazonaws.com/openai/v1"

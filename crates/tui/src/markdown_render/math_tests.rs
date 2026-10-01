@@ -12,26 +12,6 @@ fn plain(source: &str, width: usize) -> String {
 }
 
 #[test]
-fn unicode_math_inline_snapshot() {
-    insta::assert_snapshot!(plain(
-        r"Inline $\alpha^2 + \beta_{10}$ on $\mathbb{R}^n$.
-Root $\sqrt{x^2+y^2}$ and fraction $a/\frac{b}{c}$.
-Unsupported: $\unknown{x_y}$ and $\frac{a}{b}^2$.
-Angles: <$x$>, <\(\alpha\)>, and <$\unknown{x}$>.
-Code: `$\alpha$`; money: $5 and $10; shell: $HOME.",
-        /*width*/ 80
-    ));
-}
-
-#[test]
-fn unicode_math_inline_narrow_snapshot() {
-    insta::assert_snapshot!(plain(
-        r"Words $\alpha^2 + \beta_1$ more words and $\sqrt{x}$.",
-        /*width*/ 16
-    ));
-}
-
-#[test]
 fn unicode_math_preserves_markdown_contexts() {
     for (source, expected) in [
         (

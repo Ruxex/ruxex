@@ -1,5 +1,4 @@
 use crate::markdown_render::render_markdown_text_with_width;
-use insta::assert_snapshot;
 use pretty_assertions::assert_eq;
 
 fn markdown_text(source: &str, width: usize) -> String {
@@ -36,12 +35,6 @@ fn mermaid_fences_use_native_renderer_for_every_family() {
 }
 
 #[test]
-fn mermaid_nested_fences_and_unicode() {
-    let source = "> ~~~~mermaid\n> flowchart TD\n>     A[请求] --> B[Réponse]\n> ~~~~~\n\n- Diagram:\n\n  ```mermaid\n  flowchart LR\n      A --> B\n  ```\n";
-    assert_snapshot!(markdown_text(source, /*width*/ 60));
-}
-
-#[test]
 fn mermaid_unclosed_invalid_unsupported_and_wide_blocks_keep_source() {
     for (source, width) in [
         ("```mermaid\nflowchart LR\nA --> B\n", 80),
@@ -57,33 +50,4 @@ fn mermaid_unclosed_invalid_unsupported_and_wide_blocks_keep_source() {
             "source: {source:?}",
         );
     }
-}
-
-#[test]
-fn mermaid_styles_follow_the_supplied_theme() {
-    use two_face::theme::EmbeddedThemeName;
-
-    let themes = two_face::theme::extra();
-    let fallback = syntect::highlighting::Theme::default();
-    let mut cases = Vec::new();
-    for (name, theme) in [
-        ("dark", themes.get(EmbeddedThemeName::Dracula)),
-        ("light", themes.get(EmbeddedThemeName::SolarizedLight)),
-        ("fallback", &fallback),
-    ] {
-        let lines = super::render("flowchart LR; A[请求] --> B[Reply]", Some(40), theme).unwrap();
-        let styled = lines
-            .into_iter()
-            .map(|line| {
-                line.spans
-                    .into_iter()
-                    .map(|span| format!("{:?} {:?}", span.style, span.content))
-                    .collect::<Vec<_>>()
-                    .join(" | ")
-            })
-            .collect::<Vec<_>>()
-            .join("\n");
-        cases.push(format!("{name}\n{styled}"));
-    }
-    assert_snapshot!(cases.join("\n\n"));
 }

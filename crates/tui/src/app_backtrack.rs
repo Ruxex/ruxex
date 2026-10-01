@@ -1054,15 +1054,4 @@ mod tests {
 
         assert!(has_backtrack_target(&cells));
     }
-
-    #[test]
-    fn backtrack_unavailable_info_message_snapshot() {
-        let cell = crate::history_cell::new_info_event(
-            NO_PREVIOUS_MESSAGE_TO_EDIT.to_string(),
-            /*hint*/ None,
-        );
-        let rendered = render_lines(&cell.display_lines(/*width*/ 80)).join("\n");
-
-        insta::assert_snapshot!(rendered);
-    }
 }

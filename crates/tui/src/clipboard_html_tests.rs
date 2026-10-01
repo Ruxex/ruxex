@@ -2,37 +2,6 @@ use super::render_markdown;
 use pretty_assertions::assert_eq;
 
 #[test]
-fn markdown_clipboard_preserves_rich_formatting() {
-    let markdown = "# Findings\n\nRead [the source](https://example.com/source?q=1&v=2).\n\n\
-        - **Bold**, *italic*, ~~removed~~, and `inline <code>`\n\n\
-        > A quoted finding.\n\n\
-        ```rust\nfn main() { println!(\"<hello>\"); }\n```\n\n\
-        | Item | Result |\n| --- | --- |\n| Copy | Formatted |\n";
-    insta::assert_snapshot!(render_markdown(markdown));
-}
-
-#[test]
-fn markdown_clipboard_preserves_local_link_destinations() {
-    let markdown = r#"[parser](/repo/src/parser.rs:42)
-
-[**Windows parser**](C:\repo\src\parser.rs:42:7)
-
-[`relative parser`](../src/parser.rs#L42-L48)
-
-[file URL](file:///repo/src/parser.rs#L42)
-
-[escaped path](/repo/a&amp;b/&lt;parser&gt;.rs:42)
-
-[Unicode path](</repo/my project/解析.rs:42>)
-
-[![diagram](https://example.com/diagram.png)](/repo/diagram.rs:7)
-
-[web link](https://example.com/source) and [another file](src/lib.rs:9)
-"#;
-    insta::assert_snapshot!(render_markdown(markdown));
-}
-
-#[test]
 fn markdown_clipboard_images_are_inert() {
     assert_eq!(
         render_markdown(

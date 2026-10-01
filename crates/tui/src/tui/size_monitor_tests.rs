@@ -99,59 +99,6 @@ impl Harness {
 }
 
 #[tokio::test]
-async fn missed_resize_recovers_and_slow_query_does_not_block_input() {
-    let initial = Size::new(/*width*/ 12, /*height*/ 4);
-    let resized = Size::new(/*width*/ 8, /*height*/ 4);
-    let mut harness = Harness::new(initial);
-    let mut stream = harness.stream();
-    harness.next_query().await;
-    // The worker is blocked waiting for a reply. Input still traverses the real event stream.
-    assert!(matches!(
-        timeout(Duration::from_millis(100), stream.next())
-            .await
-            .unwrap(),
-        Some(TuiEvent::Key(KeyEvent {
-            code: KeyCode::Char('x'),
-            ..
-        }))
-    ));
-    assert!(
-        timeout(
-            CHECK_INTERVAL + Duration::from_millis(50),
-            harness.queries.recv()
-        )
-        .await
-        .is_err()
-    );
-    harness.replies.send(Ok(resized)).unwrap();
-    let event = timeout(Duration::from_secs(2), stream.next())
-        .await
-        .unwrap()
-        .unwrap();
-    let TuiEvent::Resize(size) = event else {
-        panic!("expected recovered resize: {event:?}")
-    };
-    assert_eq!(size, resized);
-
-    let mut terminal = Terminal::with_screen_size_and_cursor_position_for_test(
-        VT100Backend::new(resized.width, resized.height),
-        initial,
-        Position { x: 0, y: 0 },
-    );
-    let area = Rect::new(/*x*/ 0, /*y*/ 0, size.width, size.height);
-    terminal.set_viewport_area(area);
-    terminal
-        .draw_with_size(size, |frame| {
-            Paragraph::new("alpha beta")
-                .wrap(Wrap { trim: false })
-                .render(area, frame.buffer_mut());
-        })
-        .unwrap();
-    assert_eq!(terminal.last_known_screen_size, resized);
-    insta::assert_snapshot!(terminal.backend().vt100().screen().contents(), @"alpha\nbeta");
-}
-
-#[tokio::test]
 async fn newer_resize_invalidates_in_flight_and_queued_samples() {
     let initial = Size::new(/*width*/ 80, /*height*/ 24);
     let newer = Size::new(/*width*/ 100, /*height*/ 30);

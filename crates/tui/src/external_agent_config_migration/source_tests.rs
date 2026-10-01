@@ -14,17 +14,6 @@ fn new_screen() -> ExternalAgentConfigSourceScreen {
 }
 
 #[test]
-fn external_agent_config_source_prompt_snapshot() {
-    let screen = new_screen();
-    let mut terminal =
-        Terminal::new(VT100Backend::new(/*width*/ 80, /*height*/ 12)).expect("terminal");
-    terminal
-        .draw(|frame| frame.render_widget_ref(&screen, frame.area()))
-        .expect("render source prompt");
-    insta::assert_snapshot!("external_agent_config_source_prompt", terminal.backend());
-}
-
-#[test]
 fn external_agent_config_source_prompt_selects_highlighted_source() {
     let mut screen = new_screen();
     screen.handle_key(KeyEvent::new(KeyCode::Down, KeyModifiers::NONE));

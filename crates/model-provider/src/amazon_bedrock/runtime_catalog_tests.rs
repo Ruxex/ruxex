@@ -17,6 +17,7 @@ fn runtime_catalog_includes_supported_cross_region_models_in_priority_order() {
                 model.priority,
             ))
             .collect::<Vec<_>>(),
+        // These slugs are AWS Bedrock model IDs and must remain exact external identifiers.
         vec![
             ("global.openai.gpt-5.6-sol", "GPT-5.6 Sol (Global)", 0),
             ("global.openai.gpt-6-astra", "GPT-6-Astra (Global)", 1),
@@ -52,6 +53,7 @@ fn runtime_catalog_disables_web_search_without_overriding_review_models() {
                 model.multi_agent_version,
             ))
             .collect::<Vec<_>>(),
+        // These slugs are AWS Bedrock model IDs and must remain exact external identifiers.
         vec![
             (
                 "global.openai.gpt-5.6-sol",

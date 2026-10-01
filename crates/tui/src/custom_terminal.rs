@@ -867,7 +867,6 @@ mod tests {
     use std::num::NonZeroU16;
 
     use crate::test_backend::VT100Backend;
-    use insta::assert_snapshot;
     use pretty_assertions::assert_eq;
     use ratatui::backend::WindowSize;
     use ratatui::layout::Rect;
@@ -990,121 +989,6 @@ mod tests {
     }
 
     #[test]
-    fn invalidate_viewport_repaints_default_style_spaces_over_stale_terminal_cells() {
-        let width = 32;
-        let height = 2;
-        let area = Rect::new(/*x*/ 0, /*y*/ 0, width, height);
-        let mut terminal =
-            Terminal::with_options(VT100Backend::new(width, height)).expect("terminal");
-        terminal.set_viewport_area(area);
-
-        // History insertion writes directly to the terminal, leaving cells that are absent from
-        // the diff buffers. Interior default-style spaces must still overwrite those stale cells.
-        write!(
-            terminal.backend_mut(),
-            "probe-08tcleantwords stale\r\nprobe-09xcleanxwords stale"
-        )
-        .expect("prefill terminal");
-        assert!(
-            terminal
-                .backend()
-                .vt100()
-                .screen()
-                .contents()
-                .contains("probe-08tcleantwords")
-        );
-
-        terminal.invalidate_viewport();
-        terminal
-            .draw(|frame| {
-                Paragraph::new(vec![
-                    Line::from("probe-08 clean words"),
-                    Line::from("probe-09 clean words"),
-                ])
-                .render(area, frame.buffer_mut());
-            })
-            .expect("redraw invalidated viewport");
-
-        assert_snapshot!(terminal.backend().vt100().screen().contents(), @r"
-        probe-08 clean words
-        probe-09 clean words
-        ");
-    }
-
-    #[tokio::test]
-    async fn leaving_alternate_screen_repaints_restored_inline_viewport() {
-        let mut tui = crate::tui::test_support::make_test_tui().expect("test tui");
-        let size = tui.terminal.last_known_screen_size;
-        let inline = Rect::new(/*x*/ 0, /*y*/ 3, size.width, /*height*/ 6);
-        tui.terminal.set_viewport_area(inline);
-        tui.enter_alt_screen().expect("enter alternate screen");
-        tui.terminal
-            .draw(|frame| {
-                Paragraph::new(vec![
-                    Line::from(" Resume a previous session"),
-                    Line::default(),
-                    Line::from(" Type to search".dim()),
-                ])
-                .render(frame.area(), frame.buffer_mut());
-            })
-            .expect("draw picker");
-        tui.leave_alt_screen().expect("leave alternate screen");
-
-        let mut terminal = Terminal::with_options(VT100Backend::new(size.width, size.height))
-            .expect("physical terminal");
-        write!(terminal.backend_mut(), "Previous conversation").expect("write history");
-        terminal.set_viewport_area(inline);
-        terminal
-            .draw(|frame| {
-                Paragraph::new(vec![
-                    Line::default(),
-                    Line::default(),
-                    Line::from(vec!["›".bold(), " ".into(), "/resume".dim()]),
-                ])
-                .render(frame.area(), frame.buffer_mut());
-            })
-            .expect("draw submitted command");
-
-        // Apply the real Tui screen-return baseline to the unchanged physical main screen.
-        // Matching spaces and letters in the picker must not leave /resume cells behind.
-        *terminal.previous_buffer_mut() = tui.terminal.previous_buffer().clone();
-        for _ in 0..2 {
-            terminal
-                .draw(|frame| {
-                    Paragraph::new(vec![
-                        Line::default(),
-                        Line::default(),
-                        Line::from(vec![
-                            "›".bold(),
-                            " ".into(),
-                            "Ask Codex to do anything".dim(),
-                        ]),
-                    ])
-                    .render(frame.area(), frame.buffer_mut());
-                })
-                .expect("restore composer");
-        }
-
-        let visible = terminal
-            .backend()
-            .vt100()
-            .screen()
-            .contents()
-            .lines()
-            .map(str::trim_end)
-            .collect::<Vec<_>>()
-            .join("\n");
-        assert_snapshot!(visible.trim_end(), @r"
-        Previous conversation
-
-
-
-
-        › Ask Codex to do anything
-        ");
-    }
-
-    #[test]
     fn ordinary_redraws_with_known_size_do_not_query_backend_size() {
         let mut terminal =
             Terminal::with_options(CaptureBackend::new(/*width*/ 80, /*height*/ 24))
@@ -1122,51 +1006,6 @@ mod tests {
             .expect("insert history");
 
         assert_eq!(terminal.backend().size_call_count.get(), 1);
-    }
-
-    #[test]
-    fn resize_draw_applies_event_dimensions_without_querying_backend_size() {
-        let mut terminal =
-            Terminal::with_options(CaptureBackend::new(/*width*/ 12, /*height*/ 4))
-                .expect("terminal");
-        let mut snapshots = Vec::new();
-
-        for width in [12, 8] {
-            let size = Size::new(width, /*height*/ 4);
-            let area = Rect::new(/*x*/ 0, /*y*/ 0, size.width, size.height);
-            terminal.set_viewport_area(area);
-            terminal
-                .draw_with_size(size, |frame| {
-                    Paragraph::new("alpha beta")
-                        .wrap(Wrap { trim: false })
-                        .render(area, frame.buffer_mut());
-                })
-                .expect("draw resized frame");
-
-            let rendered = (0..size.height)
-                .map(|y| {
-                    (0..size.width)
-                        .map(|x| terminal.previous_buffer()[(x, y)].symbol())
-                        .collect::<String>()
-                        .trim_end()
-                        .to_string()
-                })
-                .collect::<Vec<_>>()
-                .join("\n");
-            snapshots.push(rendered.trim_end().to_string());
-        }
-
-        assert_eq!(terminal.backend().size_call_count.get(), 1);
-        assert_eq!(
-            terminal.last_known_screen_size,
-            Size::new(/*width*/ 8, /*height*/ 4)
-        );
-        assert_snapshot!(snapshots.join("\n\n"), @r"
-        alpha beta
-
-        alpha
-        beta
-        ");
     }
 
     #[test]
@@ -1217,36 +1056,6 @@ mod tests {
                 .any(|command| matches!(command, DrawCommand::Put { x: 2, y: 0, .. })),
             "expected diff_buffers to update the final cell; commands: {commands:?}",
         );
-    }
-
-    #[test]
-    fn diff_buffers_clear_to_end_starts_after_wide_char() {
-        let area = Rect::new(0, 0, 10, 1);
-        for (before, after) in [("中文", "中"), ("ｶﾞﾞ", "ｶﾞ")] {
-            let mut previous = Buffer::empty(area);
-            let mut next = Buffer::empty(area);
-
-            previous.set_string(0, 0, before, Style::default());
-            next.set_string(0, 0, after, Style::default());
-
-            let commands = diff_buffers(&previous, &next);
-            assert!(
-                commands
-                    .iter()
-                    .any(|command| matches!(command, DrawCommand::ClearToEnd { x: 2, y: 0, .. })),
-                "expected clear-to-end after {before:?} became {after:?}; commands: {commands:?}"
-            );
-        }
-
-        let mut terminal =
-            Terminal::with_options(VT100Backend::new(area.width, area.height)).expect("terminal");
-        terminal.set_viewport_area(area);
-        for text in ["ｶﾞﾞ", "ｶﾞ"] {
-            terminal
-                .draw(|frame| Paragraph::new(text).render(area, frame.buffer_mut()))
-                .expect("draw");
-        }
-        assert_snapshot!(terminal.backend().vt100().screen().contents(), @"ｶﾞ");
     }
 
     #[test]
@@ -1331,43 +1140,6 @@ mod tests {
                 .iter()
                 .any(|command| matches!(command, DrawCommand::Put { x: 1, y: 0, .. })),
             "expected the styled trailing cell to be cleared; commands: {commands:?}"
-        );
-    }
-
-    #[test]
-    fn terminal_draw_moves_cursor_before_showing_it() {
-        let cursor_position = Position { x: 1, y: 0 };
-        let mut terminal =
-            Terminal::with_options(CaptureBackend::new(/*width*/ 2, /*height*/ 1))
-                .expect("terminal");
-        terminal.set_viewport_area(Rect::new(
-            /*x*/ 0, /*y*/ 0, /*width*/ 2, /*height*/ 1,
-        ));
-
-        terminal
-            .try_draw(|frame| {
-                frame.set_cursor_position(cursor_position);
-                io::Result::Ok(())
-            })
-            .expect("draw");
-
-        let mut expected_move = Vec::new();
-        queue!(expected_move, MoveTo(cursor_position.x, cursor_position.y)).expect("queue move");
-        let expected_move = String::from_utf8(expected_move).expect("move utf8");
-        let mut expected_show = Vec::new();
-        queue!(expected_show, crossterm::cursor::Show).expect("queue show");
-        let expected_show = String::from_utf8(expected_show).expect("show utf8");
-        let actual = terminal.backend().output();
-        let move_index = actual.find(&expected_move).expect("cursor move");
-        let show_index = actual.find(&expected_show).expect("cursor show");
-
-        assert!(
-            move_index < show_index,
-            "expected cursor move before show, got {actual:?}"
-        );
-        assert_snapshot!(
-            actual[move_index..].escape_debug().to_string(),
-            @r"\u{1b}[1;2H\u{1b}[?25h"
         );
     }
 

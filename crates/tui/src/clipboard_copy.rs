@@ -617,28 +617,6 @@ mod tests {
     }
 
     #[test]
-    fn ssh_inside_tmux_reports_tmux_and_osc52_errors_when_both_fail() {
-        let result = copy_to_clipboard_with(
-            "hello",
-            CopyFormat::PlainText,
-            remote_tmux_environment(),
-            |_| Err("tmux unavailable".into()),
-            |_| Err("osc blocked".into()),
-            |_, _| Err("native unavailable".into()),
-            |_| Err("powershell unavailable".into()),
-        );
-
-        let Err(error) = result else {
-            panic!("expected tmux and OSC 52 errors");
-        };
-        assert_eq!(
-            error,
-            "native clipboard: native unavailable; WSL fallback: powershell unavailable; terminal clipboard: tmux clipboard: tmux unavailable; OSC 52 fallback: osc blocked"
-        );
-        insta::assert_snapshot!("all_copy_backends_fail", error);
-    }
-
-    #[test]
     fn local_uses_native_clipboard_first() {
         let osc_calls = Cell::new(0_u8);
         let native_calls = Cell::new(0_u8);

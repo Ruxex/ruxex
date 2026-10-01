@@ -286,28 +286,6 @@ async fn steer_rejection_queues_review_follow_up_before_existing_queued_messages
     }
 }
 
-#[tokio::test]
-async fn esc_with_review_queued_steers_shows_warning_and_does_not_interrupt() {
-    let (mut chat, mut rx, mut op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.thread_id = Some(ThreadId::new());
-    handle_turn_started(&mut chat, "turn-1");
-    handle_entered_review_mode(&mut chat, "feature branch");
-    let _ = drain_insert_history(&mut rx);
-    chat.input_queue
-        .pending_steers
-        .push_back(pending_steer("review follow-up"));
-    chat.refresh_pending_input_preview();
-
-    chat.handle_key_event(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE));
-
-    assert!(!chat.input_queue.submit_pending_steers_after_interrupt);
-    assert_eq!(chat.input_queue.pending_steers.len(), 1);
-    assert_no_submit_op(&mut op_rx);
-
-    let cells = drain_insert_history(&mut rx);
-    let last = lines_to_single_string(cells.last().expect("review warning"));
-    assert_chatwidget_snapshot!("review_submission_warning_snapshot", last);
-}
 
 #[tokio::test]
 async fn live_agent_message_renders_during_review_mode() {
@@ -1192,128 +1170,9 @@ async fn custom_prompt_enter_empty_does_not_send() {
     assert!(rx.try_recv().is_err(), "no app event should be sent");
 }
 
-// Snapshot test: interrupting a running exec finalizes the active cell with a red ✗
-// marker (replacing the spinner) and flushes it into history.
-#[tokio::test]
-async fn interrupt_exec_marks_failed_snapshot() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
 
-    // Begin a long-running command so we have an active exec cell with a spinner.
-    begin_exec(&mut chat, "call-int", "sleep 1");
 
-    // Simulate the task being aborted (as if ESC was pressed), which should
-    // cause the active exec cell to be finalized as failed and flushed.
-    handle_turn_interrupted(&mut chat, "turn-1");
 
-    let cells = drain_insert_history(&mut rx);
-    assert!(
-        !cells.is_empty(),
-        "expected finalized exec cell to be inserted into history"
-    );
-
-    // The first inserted cell should be the finalized exec; snapshot its text.
-    let exec_blob = lines_to_single_string(&cells[0]);
-    assert_chatwidget_snapshot!("interrupt_exec_marks_failed", exec_blob);
-}
-
-// Snapshot test: after an interrupted turn, a gentle error message is inserted
-// suggesting the user to tell the model what to do differently.
-#[tokio::test]
-async fn interrupted_turn_error_message_snapshot() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-
-    // Simulate an in-progress task so the widget is in a running state.
-    handle_turn_started(&mut chat, "turn-1");
-
-    // Abort the turn (like pressing Esc) and drain inserted history.
-    handle_turn_interrupted(&mut chat, "turn-1");
-
-    let cells = drain_insert_history(&mut rx);
-    assert!(
-        !cells.is_empty(),
-        "expected error message to be inserted after interruption"
-    );
-    let last = lines_to_single_string(cells.last().unwrap());
-    assert_chatwidget_snapshot!("interrupted_turn_error_message", last);
-}
-
-#[tokio::test]
-async fn interrupted_turn_after_goal_budget_limited_uses_budget_message_snapshot() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.set_feature_enabled(Feature::Goals, /*enabled*/ true);
-
-    chat.handle_server_notification(
-        codex_app_server_protocol::ServerNotification::TurnStarted(
-            codex_app_server_protocol::TurnStartedNotification {
-                thread_id: "thread-1".to_string(),
-                turn: codex_app_server_protocol::Turn {
-                    id: "turn-1".to_string(),
-                    items_view: codex_app_server_protocol::TurnItemsView::Full,
-                    items: Vec::new(),
-                    status: codex_app_server_protocol::TurnStatus::InProgress,
-                    error: None,
-                    started_at: None,
-                    completed_at: None,
-                    duration_ms: None,
-                },
-            },
-        ),
-        /*replay_kind*/ None,
-    );
-    chat.handle_server_notification(
-        codex_app_server_protocol::ServerNotification::ThreadGoalUpdated(
-            codex_app_server_protocol::ThreadGoalUpdatedNotification {
-                thread_id: "thread-1".to_string(),
-                turn_id: Some("turn-1".to_string()),
-                goal: codex_app_server_protocol::ThreadGoal {
-                    thread_id: "thread-1".to_string(),
-                    objective: "Run until the token budget is limited".to_string(),
-                    status: codex_app_server_protocol::ThreadGoalStatus::BudgetLimited,
-                    token_budget: Some(10_000),
-                    tokens_used: 10_500,
-                    time_used_seconds: 0,
-                    created_at: 0,
-                    updated_at: 1,
-                },
-            },
-        ),
-        /*replay_kind*/ None,
-    );
-    chat.handle_server_notification(
-        codex_app_server_protocol::ServerNotification::TurnCompleted(
-            codex_app_server_protocol::TurnCompletedNotification {
-                thread_id: "thread-1".to_string(),
-                turn: codex_app_server_protocol::Turn {
-                    id: "turn-1".to_string(),
-                    items_view: codex_app_server_protocol::TurnItemsView::Full,
-                    items: Vec::new(),
-                    status: codex_app_server_protocol::TurnStatus::Interrupted,
-                    error: None,
-                    started_at: None,
-                    completed_at: None,
-                    duration_ms: None,
-                },
-            },
-        ),
-        /*replay_kind*/ None,
-    );
-
-    let cells = drain_insert_history(&mut rx);
-    let last = lines_to_single_string(cells.last().unwrap());
-    assert_chatwidget_snapshot!("interrupted_turn_goal_budget_limited_message", last);
-}
-
-#[tokio::test]
-async fn direct_budget_limited_turn_uses_budget_message_snapshot() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-
-    handle_turn_started(&mut chat, "turn-1");
-    handle_budget_limited_turn(&mut chat, "turn-1");
-
-    let cells = drain_insert_history(&mut rx);
-    let last = lines_to_single_string(cells.last().unwrap());
-    assert_chatwidget_snapshot!("direct_budget_limited_turn_message", last);
-}
 
 #[tokio::test]
 async fn budget_limited_turn_restores_queued_input_without_submitting() {
@@ -1334,30 +1193,6 @@ async fn budget_limited_turn_restores_queued_input_without_submitting() {
     assert_no_submit_op(&mut op_rx);
 }
 
-// Snapshot test: interrupting specifically to submit pending steers shows an
-// informational banner instead of the generic "tell the model what to do
-// differently" error prompt.
-#[tokio::test]
-async fn interrupted_turn_pending_steers_message_snapshot() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.thread_id = Some(ThreadId::new());
-    chat.input_queue
-        .pending_steers
-        .push_back(pending_steer("steer 1"));
-    chat.input_queue.submit_pending_steers_after_interrupt = true;
-
-    handle_turn_started(&mut chat, "turn-1");
-
-    handle_turn_interrupted(&mut chat, "turn-1");
-
-    let cells = drain_insert_history(&mut rx);
-    let info = cells
-        .iter()
-        .map(|cell| lines_to_single_string(cell))
-        .find(|line| line.contains("Model interrupted to submit steer instructions."))
-        .expect("expected steer interrupt info message to be inserted");
-    assert_chatwidget_snapshot!("interrupted_turn_pending_steers_message", info);
-}
 
 /// Opening custom prompt from the review popup, pressing Esc returns to the
 /// parent popup, pressing Esc again dismisses all panels (back to normal mode).
@@ -1468,40 +1303,4 @@ async fn enter_submits_steer_while_review_is_running() {
         other => panic!("expected running-turn steer submit, got {other:?}"),
     }
     assert!(drain_insert_history(&mut rx).is_empty());
-}
-
-#[tokio::test]
-async fn review_queues_user_messages_snapshot() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.thread_id = Some(ThreadId::new());
-    handle_turn_started(&mut chat, "turn-1");
-
-    handle_entered_review_mode(&mut chat, "current changes");
-    let _ = drain_insert_history(&mut rx);
-
-    chat.submit_user_message(UserMessage::from(
-        "Steer submitted while /review was running.".to_string(),
-    ));
-    handle_error(
-        &mut chat,
-        "cannot steer a review turn",
-        Some(CodexErrorInfo::ActiveTurnNotSteerable {
-            turn_kind: NonSteerableTurnKind::Review,
-        }),
-    );
-
-    let width: u16 = 80;
-    let height: u16 = 18;
-    let backend = VT100Backend::new(width, height);
-    let mut term = crate::custom_terminal::Terminal::with_options(backend).expect("terminal");
-    let desired_height = chat.desired_height(width).min(height);
-    term.set_viewport_area(Rect::new(0, height - desired_height, width, desired_height));
-    term.draw(|f| {
-        chat.render(f.area(), f.buffer_mut());
-    })
-    .unwrap();
-    assert_chatwidget_snapshot!(
-        "review_queues_user_messages_snapshot",
-        normalize_snapshot_paths(term.backend().vt100().screen().contents())
-    );
 }

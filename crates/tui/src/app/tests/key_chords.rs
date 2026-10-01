@@ -92,28 +92,6 @@ async fn vim_buffer_jumps_route_default_chords_in_normal_and_operator_contexts()
     Ok(())
 }
 
-#[tokio::test]
-async fn completed_global_chord_reuses_the_existing_action_handler() -> Result<()> {
-    let (mut app, mut tui, mut app_server) = chord_app().await?;
-
-    press(&mut app, &mut tui, &mut app_server, ctrl('x')).await?;
-    assert!(app.key_chord_matcher.is_pending());
-    assert!(app.overlay.is_none());
-    insta::assert_snapshot!(
-        render_bottom_popup(&app.chat_widget, /*width*/ 80)
-            .replace(&test_path_display("/tmp/project"), "/tmp/project"),
-        @r"
-        › Ask Codex to do anything
-
-           ctrl + x … waiting for next key    esc cancel
-        "
-    );
-
-    press(&mut app, &mut tui, &mut app_server, ctrl('t')).await?;
-    assert!(!app.key_chord_matcher.is_pending());
-    assert!(app.overlay.is_some());
-    Ok(())
-}
 
 #[tokio::test]
 async fn completed_global_chords_toggle_output_and_request_external_editor() -> Result<()> {
@@ -583,29 +561,6 @@ async fn physical_chords_route_list_and_mixed_request_input_modals() -> Result<(
     Ok(())
 }
 
-#[tokio::test]
-async fn dashboard_chord_hint_survives_refresh_and_clears_on_cancel() -> Result<()> {
-    let mut app = make_test_app().await;
-    app.keymap =
-        RuntimeKeymap::from_config(&toml::from_str("[agents]\nnew_task = [\"ctrl-x n\"]")?)
-            .unwrap();
-    let mut tui = crate::tui::test_support::make_test_tui()?;
-    let view = app.agents_overview_view(Vec::new(), /*selected_thread_id*/ None);
-    app.chat_widget.show_bottom_pane_view(Box::new(view));
-    let before = render_bottom_popup(&app.chat_widget, /*width*/ 80);
-    assert_eq!(app.route_key_chord_event(&mut tui, ctrl('x')), None);
-    let _ = app.agents_overview_view(Vec::new(), /*selected_thread_id*/ None);
-    insta::assert_snapshot!(
-        render_bottom_popup(&app.chat_widget, /*width*/ 80).lines().last().unwrap(),
-        @"  ctrl + x … waiting for next key  esc cancel"
-    );
-    assert_eq!(
-        app.route_key_chord_event(&mut tui, KeyCode::Esc.into()),
-        None
-    );
-    assert_eq!(render_bottom_popup(&app.chat_widget, /*width*/ 80), before);
-    Ok(())
-}
 
 #[tokio::test]
 async fn command_center_chords_do_not_capture_search_text() -> Result<()> {

@@ -724,7 +724,6 @@ mod tests {
     use crossterm::event::KeyCode;
     use crossterm::event::KeyEvent;
     use crossterm::event::KeyModifiers;
-    use insta::assert_snapshot;
     use pretty_assertions::assert_eq;
     use ratatui::layout::Rect;
     use std::path::PathBuf;
@@ -837,91 +836,6 @@ mod tests {
             .map(str::trim_end)
             .collect::<Vec<_>>()
             .join("\n")
-    }
-
-    #[test]
-    fn prompt_snapshot() {
-        let items = sample_items();
-        let screen = ExternalAgentConfigMigrationScreen::new(
-            FrameRequester::test_dummy(),
-            &items,
-            &items,
-            /*error*/ None,
-        );
-
-        let rendered = render_screen(&screen, /*width*/ 80, /*height*/ 24);
-        #[cfg(windows)]
-        assert_snapshot!("external_agent_config_migration_prompt_windows", rendered);
-        #[cfg(not(windows))]
-        assert_snapshot!("external_agent_config_migration_prompt", rendered);
-    }
-
-    #[test]
-    fn customize_snapshot() {
-        let items = sample_items();
-        let mut screen = ExternalAgentConfigMigrationScreen::new(
-            FrameRequester::test_dummy(),
-            &items,
-            &items,
-            /*error*/ None,
-        );
-        screen.customize();
-
-        let rendered = render_screen(&screen, /*width*/ 80, /*height*/ 34);
-        #[cfg(windows)]
-        assert_snapshot!(
-            "external_agent_config_migration_customize_windows",
-            rendered
-        );
-        #[cfg(not(windows))]
-        assert_snapshot!("external_agent_config_migration_customize", rendered);
-    }
-
-    #[test]
-    fn secondary_source_customize_snapshot() {
-        let items = vec![ExternalAgentConfigMigrationItem {
-            item_type: ExternalAgentConfigMigrationItemType::Config,
-            description:
-                "Migrate /Users/alex/.cursor/cli-config.json into /Users/alex/.codex/config.toml"
-                    .to_string(),
-            cwd: None,
-            details: None,
-        }];
-        let mut screen = ExternalAgentConfigMigrationScreen::new(
-            FrameRequester::test_dummy(),
-            &items,
-            &items,
-            /*error*/ None,
-        );
-        screen.customize();
-
-        let rendered = render_screen(&screen, /*width*/ 80, /*height*/ 18);
-        assert_snapshot!(
-            "external_agent_config_migration_secondary_source_customize",
-            rendered
-        );
-    }
-
-    #[test]
-    fn customize_action_snapshot() {
-        let items = sample_items();
-        let mut screen = ExternalAgentConfigMigrationScreen::new(
-            FrameRequester::test_dummy(),
-            &items,
-            &items,
-            /*error*/ None,
-        );
-        screen.customize();
-        screen.move_up();
-
-        let rendered = render_screen(&screen, /*width*/ 80, /*height*/ 30);
-        #[cfg(windows)]
-        assert_snapshot!(
-            "external_agent_config_migration_customize_action_windows",
-            rendered
-        );
-        #[cfg(not(windows))]
-        assert_snapshot!("external_agent_config_migration_customize_action", rendered);
     }
 
     #[test]

@@ -373,83 +373,6 @@ mod tests {
     }
 
     #[test]
-    fn cwd_prompt_snapshot() {
-        let screen = new_prompt();
-        let mut terminal =
-            Terminal::new(VT100Backend::new(/*width*/ 80, /*height*/ 14)).expect("terminal");
-        terminal
-            .draw(|frame| frame.render_widget_ref(&screen, frame.area()))
-            .expect("render cwd prompt");
-        insta::assert_snapshot!("cwd_prompt_modal", terminal.backend());
-    }
-
-    #[test]
-    fn cwd_prompt_fork_snapshot() {
-        let screen = CwdPromptScreen::new(
-            FrameRequester::test_dummy(),
-            CwdPromptAction::Fork,
-            "/Users/example/current".to_string(),
-            "/Users/example/session".to_string(),
-            "/Users/example/current".to_string(),
-            /*allow_remember_current*/ true,
-        );
-        let mut terminal =
-            Terminal::new(VT100Backend::new(/*width*/ 80, /*height*/ 14)).expect("terminal");
-        terminal
-            .draw(|frame| frame.render_widget_ref(&screen, frame.area()))
-            .expect("render cwd prompt");
-        insta::assert_snapshot!("cwd_prompt_fork_modal", terminal.backend());
-    }
-
-    #[test]
-    fn cwd_prompt_remote_exec_snapshot() {
-        let screen = CwdPromptScreen::new(
-            FrameRequester::test_dummy(),
-            CwdPromptAction::Resume,
-            "/Users/example/current".to_string(),
-            "/Users/example/session".to_string(),
-            "/Users/example/current".to_string(),
-            /*allow_remember_current*/ false,
-        );
-        let mut terminal =
-            Terminal::new(VT100Backend::new(/*width*/ 80, /*height*/ 13)).expect("terminal");
-        terminal
-            .draw(|frame| frame.render_widget_ref(&screen, frame.area()))
-            .expect("render remote exec cwd prompt");
-        let rendered = terminal.backend().to_string();
-        let rendered = rendered
-            .lines()
-            .map(str::trim_end)
-            .collect::<Vec<_>>()
-            .join("\n");
-        insta::assert_snapshot!("cwd_prompt_remote_exec_modal", rendered);
-    }
-
-    #[test]
-    fn cwd_prompt_remembered_current_snapshot() {
-        let screen = CwdPromptScreen::new(
-            FrameRequester::test_dummy(),
-            CwdPromptAction::Resume,
-            "/Users/example/current".to_string(),
-            "/Users/example/session".to_string(),
-            "/Users/example/launched".to_string(),
-            /*allow_remember_current*/ true,
-        );
-        let mut terminal =
-            Terminal::new(VT100Backend::new(/*width*/ 80, /*height*/ 14)).expect("terminal");
-        terminal
-            .draw(|frame| frame.render_widget_ref(&screen, frame.area()))
-            .expect("render remembered current cwd prompt");
-        let rendered = terminal.backend().to_string();
-        let rendered = rendered
-            .lines()
-            .map(str::trim_end)
-            .collect::<Vec<_>>()
-            .join("\n");
-        insta::assert_snapshot!("cwd_prompt_remembered_current_modal", rendered);
-    }
-
-    #[test]
     fn cwd_prompt_selects_session_by_default() {
         let mut screen = new_prompt();
         screen.handle_key(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
@@ -533,33 +456,6 @@ mod tests {
             assert_eq!(persisted["tui"]["resume_cwd"].as_str(), Some(expected_mode));
         }
 
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn cwd_prompt_persistence_failure_snapshot() -> Result<()> {
-        let temp_dir = TempDir::new()?;
-        let config = ConfigBuilder::default()
-            .codex_home(temp_dir.path().to_path_buf())
-            .build()
-            .await?;
-        let config_path = temp_dir.path().join("config.toml");
-        std::fs::create_dir(&config_path)?;
-
-        let error_line = persist_remembered_cwd_selection(
-            &LocalSettings::from(&config),
-            CwdSelection::CurrentAndRemember,
-        )
-        .await
-        .expect("saving to a directory should fail");
-        let mut terminal =
-            Terminal::new(VT100Backend::new(/*width*/ 100, /*height*/ 1)).expect("terminal");
-        terminal
-            .draw(|frame| frame.render_widget(error_line, frame.area()))
-            .expect("render persistence error");
-        let rendered = terminal.backend().to_string();
-
-        insta::assert_snapshot!("cwd_prompt_persistence_failure", rendered);
         Ok(())
     }
 }

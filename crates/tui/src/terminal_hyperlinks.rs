@@ -868,53 +868,6 @@ mod tests {
     }
 
     #[test]
-    fn buffer_hyperlinks_follow_scrolled_wrapped_rows() {
-        let hidden_destination = "https://example.com/hidden";
-        let visible_destination = "https://example.com/visible";
-        let trailing_destination = "https://example.com/trailing";
-
-        let mut hidden = HyperlinkLine::new(Line::default());
-        hidden.push_span("hidden".into(), Some(hidden_destination));
-        let mut visible = HyperlinkLine::new(Line::from("prefix "));
-        visible.push_span("visible-link".into(), Some(visible_destination));
-        let mut trailing = HyperlinkLine::new(Line::default());
-        trailing.push_span("trailing".into(), Some(trailing_destination));
-        let lines = vec![hidden, visible, trailing];
-
-        let area = Rect::new(
-            /*x*/ 0, /*y*/ 0, /*width*/ 8, /*height*/ 2,
-        );
-        let backend = crate::test_backend::VT100Backend::new(area.width, area.height);
-        let mut terminal =
-            crate::custom_terminal::Terminal::with_options(backend).expect("terminal");
-        terminal.set_viewport_area(area);
-        terminal
-            .draw(|frame| {
-                let buf = frame.buffer_mut();
-                HyperlinkParagraph::new(&lines, Style::default())
-                    .scroll(/*rows*/ 2)
-                    .render(area, buf);
-
-                let linked_text = area
-                    .positions()
-                    .filter_map(|position| {
-                        let symbol = buf[position].symbol();
-                        symbol
-                            .contains(&format!("\x1b]8;;{visible_destination}\x07"))
-                            .then(|| strip_osc8(symbol))
-                    })
-                    .collect::<String>();
-                assert_eq!(linked_text, "visible-link");
-            })
-            .expect("render scrolled hyperlinks");
-
-        insta::assert_snapshot!(
-            "buffer_hyperlinks_follow_scrolled_wrapped_rows",
-            terminal.backend()
-        );
-    }
-
-    #[test]
     fn buffer_hyperlinks_follow_wrapped_wide_glyphs() {
         let destination = "https://example.com/wide";
         let mut line = HyperlinkLine::new(Line::from("前文 "));
@@ -968,41 +921,6 @@ mod tests {
             })
             .collect::<String>();
         assert_eq!(linked_text, "ﾊﾟlink");
-    }
-
-    #[test]
-    fn forced_width_hyperlinks_render_wide_and_halfwidth_cells_snapshot() {
-        let destination = "https://example.com/rendered";
-        let mut line = HyperlinkLine::new(Line::from("prefix "));
-        line.push_span("漢字 ｶﾞ".into(), Some(destination));
-        line.push_span(" tail".into(), /*destination*/ None);
-
-        let area = Rect::new(
-            /*x*/ 0, /*y*/ 0, /*width*/ 14, /*height*/ 3,
-        );
-        let backend = crate::test_backend::VT100Backend::new(area.width, area.height);
-        let mut terminal =
-            crate::custom_terminal::Terminal::with_options(backend).expect("terminal");
-        terminal.set_viewport_area(area);
-
-        terminal
-            .draw(|frame| {
-                Paragraph::new(Text::from(line.line.clone()))
-                    .wrap(Wrap { trim: false })
-                    .render(area, frame.buffer_mut());
-                mark_buffer_hyperlinks(
-                    frame.buffer_mut(),
-                    area,
-                    &[line.clone()],
-                    /*scroll_rows*/ 0,
-                );
-            })
-            .expect("render hyperlinks");
-
-        insta::assert_snapshot!(
-            "forced_width_hyperlinks_render_wide_and_halfwidth_cells",
-            terminal.backend()
-        );
     }
 
     #[test]

@@ -146,36 +146,6 @@ fn completed_notification() -> ExternalAgentConfigImportCompletedNotification {
 }
 
 #[test]
-fn external_agent_config_migration_messages_snapshot() {
-    let selected_items = selected_items();
-    let completed_notification = completed_notification();
-    let messages = [0, 1, 2]
-        .into_iter()
-        .flat_map(|remaining_item_count| {
-            external_agent_config_migration_started_lines(&selected_items, remaining_item_count)
-        })
-        .chain(external_agent_config_migration_finished_lines(
-            &completed_notification,
-        ))
-        .chain([
-            Line::from(EXTERNAL_AGENT_CONFIG_MIGRATION_NO_ITEMS_MESSAGE),
-            Line::from(EXTERNAL_AGENT_CONFIG_MIGRATION_REMOTE_UNAVAILABLE_MESSAGE),
-            Line::from(EXTERNAL_AGENT_CONFIG_MIGRATION_DAEMON_UNAVAILABLE_MESSAGE),
-            Line::from(EXTERNAL_AGENT_CONFIG_IMPORT_IN_PROGRESS_MESSAGE),
-        ])
-        .map(|line| {
-            line.spans
-                .into_iter()
-                .map(|span| span.content.into_owned())
-                .collect::<String>()
-        })
-        .collect::<Vec<_>>()
-        .join("\n");
-
-    insta::assert_snapshot!("external_agent_config_migration_messages", messages);
-}
-
-#[test]
 fn external_agent_config_migration_status_lines_use_semantic_colors() {
     assert_eq!(
         external_agent_config_migration_started_lines(

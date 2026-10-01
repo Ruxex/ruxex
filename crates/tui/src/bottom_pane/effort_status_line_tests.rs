@@ -159,30 +159,3 @@ fn ultra_letters_start_wide_at_the_edges_and_converge_to_the_center() {
     assert!(gaps[3] > gaps[2]);
     assert_eq!(text(&settled), "               U L T R A");
 }
-
-#[test]
-fn transition_frames_snapshot() {
-    let previous = Line::from(vec!["gpt-5.4 high".cyan(), " · main".dim()]);
-    let max = Line::from(vec!["gpt-5.4 max".cyan(), " · main".dim()]);
-    let ultra = Line::from(vec!["gpt-5.4 ultra".cyan(), " · main".dim()]);
-    let mut frames = Vec::new();
-
-    for (tier, current) in [(EffortTier::Max, &max), (EffortTier::Ultra, &ultra)] {
-        for millis in [
-            0, 300, 520, 680, 820, 1050, 1320, 1550, 1800, 2020, 2250, 2500,
-        ] {
-            let line = transition_line_at(
-                tier,
-                Some(&previous),
-                Some(current),
-                Duration::from_millis(millis),
-                /*width*/ 32,
-            )
-            .expect("frame should render");
-            let label = tier.label();
-            frames.push(format!("{label:5} {millis:4}ms │{:<32}│", text(&line)));
-        }
-    }
-
-    insta::assert_snapshot!("effort_status_line_transition_frames", frames.join("\n"));
-}

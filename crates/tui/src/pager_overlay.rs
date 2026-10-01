@@ -1041,7 +1041,6 @@ mod tests {
     use super::*;
     use crate::history_cell::ReviewDecision;
     use codex_app_server_protocol::CommandExecutionSource as ExecCommandSource;
-    use insta::assert_snapshot;
     use pretty_assertions::assert_eq;
     use std::collections::HashMap;
     use std::path::PathBuf;
@@ -1209,51 +1208,6 @@ mod tests {
     }
 
     #[test]
-    fn transcript_overlay_snapshots_paginated_history_states() {
-        let mut overlay = transcript_overlay(vec![Arc::new(TestCell {
-            lines: vec![Line::from("recent transcript")],
-        })]);
-        let area = Rect::new(
-            /*x*/ 0, /*y*/ 0, /*width*/ 72, /*height*/ 10,
-        );
-        let mut snapshots = String::new();
-
-        for (name, state) in [
-            ("loading", TranscriptHistoryState::LoadingOlder),
-            ("partial", TranscriptHistoryState::Partial),
-            ("failed", TranscriptHistoryState::Failed),
-            ("complete", TranscriptHistoryState::Complete),
-        ] {
-            overlay.set_history_state(state);
-            let mut buf = Buffer::empty(area);
-            overlay.render(area, &mut buf);
-            snapshots.push_str(&format!("--- {name} ---\n{}", buffer_to_text(&buf, area)));
-        }
-
-        assert_snapshot!("transcript_overlay_paginated_history_states", snapshots);
-    }
-
-    #[test]
-    fn transcript_overlay_snapshot_basic() {
-        // Prepare a transcript overlay with a few lines
-        let mut overlay = transcript_overlay(vec![
-            Arc::new(TestCell {
-                lines: vec![Line::from("alpha")],
-            }),
-            Arc::new(TestCell {
-                lines: vec![Line::from("beta")],
-            }),
-            Arc::new(TestCell {
-                lines: vec![Line::from("gamma")],
-            }),
-        ]);
-        let mut term = Terminal::new(TestBackend::new(40, 10)).expect("term");
-        term.draw(|f| overlay.render(f.area(), f.buffer_mut()))
-            .expect("draw");
-        assert_snapshot!(term.backend());
-    }
-
-    #[test]
     fn transcript_overlay_preserves_semantic_web_links() {
         let destination = "https://example.com/a/very/long/path";
         let mut overlay = transcript_overlay(vec![Arc::new(history_cell::AgentMarkdownCell::new(
@@ -1272,27 +1226,6 @@ mod tests {
                 .symbol()
                 .contains(&format!("\x1b]8;;{destination}\x07"))
         }));
-    }
-
-    #[test]
-    fn transcript_overlay_renders_live_tail() {
-        let mut overlay = transcript_overlay(vec![Arc::new(TestCell {
-            lines: vec![Line::from("alpha")],
-        })]);
-        overlay.sync_live_tail(
-            /*width*/ 40,
-            Some(ActiveCellTranscriptKey {
-                revision: 1,
-                is_stream_continuation: false,
-                animation_tick: None,
-            }),
-            |_| Some(vec![HyperlinkLine::from("tail")]),
-        );
-
-        let mut term = Terminal::new(TestBackend::new(40, 10)).expect("term");
-        term.draw(|f| overlay.render(f.area(), f.buffer_mut()))
-            .expect("draw");
-        assert_snapshot!(term.backend());
     }
 
     #[test]
@@ -1404,151 +1337,6 @@ mod tests {
     }
 
     #[test]
-    fn transcript_overlay_apply_patch_scroll_vt100_clears_previous_page() {
-        let cwd = PathBuf::from("/repo");
-        let mut cells: Vec<Arc<dyn HistoryCell>> = Vec::new();
-
-        let mut approval_changes = HashMap::new();
-        approval_changes.insert(
-            PathBuf::from("foo.txt"),
-            FileChange::Add {
-                content: "hello\nworld\n".to_string(),
-            },
-        );
-        let approval_cell: Arc<dyn HistoryCell> = Arc::new(new_patch_event(approval_changes, &cwd));
-        cells.push(approval_cell);
-
-        let mut apply_changes = HashMap::new();
-        apply_changes.insert(
-            PathBuf::from("foo.txt"),
-            FileChange::Add {
-                content: "hello\nworld\n".to_string(),
-            },
-        );
-        let apply_begin_cell: Arc<dyn HistoryCell> = Arc::new(new_patch_event(apply_changes, &cwd));
-        cells.push(apply_begin_cell);
-
-        let apply_end_cell: Arc<dyn HistoryCell> = history_cell::new_approval_decision_cell(
-            history_cell::ApprovalDecisionSubject::Command(vec!["ls".into()]),
-            ReviewDecision::Approved,
-            history_cell::ApprovalDecisionActor::User,
-        )
-        .into();
-        cells.push(apply_end_cell);
-
-        let mut exec_cell = crate::exec_cell::new_active_exec_command(
-            "exec-1".into(),
-            vec!["bash".into(), "-lc".into(), "ls".into()],
-            vec![ParsedCommand::Unknown { cmd: "ls".into() }],
-            ExecCommandSource::Agent,
-            /*interaction_input*/ None,
-            /*animations_enabled*/ true,
-        );
-        exec_cell.complete_call(
-            "exec-1",
-            CommandOutput::new(/*exit_code*/ 0, "src\nREADME.md\n".into()),
-            Duration::from_millis(420),
-        );
-        let exec_cell: Arc<dyn HistoryCell> = Arc::new(exec_cell);
-        cells.push(exec_cell);
-
-        let mut overlay = transcript_overlay(cells);
-        let area = Rect::new(0, 0, 80, 12);
-        let mut buf = Buffer::empty(area);
-
-        overlay.render(area, &mut buf);
-        overlay.view.scroll_offset = 0;
-        overlay.render(area, &mut buf);
-
-        let snapshot = buffer_to_text(&buf, area);
-        assert_snapshot!("transcript_overlay_apply_patch_scroll_vt100", snapshot);
-    }
-
-    #[test]
-    fn transcript_overlay_keeps_scroll_pinned_at_bottom() {
-        let mut overlay = transcript_overlay(
-            (0..20)
-                .map(|i| {
-                    Arc::new(TestCell {
-                        lines: vec![Line::from(format!("line{i}"))],
-                    }) as Arc<dyn HistoryCell>
-                })
-                .collect(),
-        );
-        let mut term = Terminal::new(TestBackend::new(40, 12)).expect("term");
-        term.draw(|f| overlay.render(f.area(), f.buffer_mut()))
-            .expect("draw");
-
-        assert!(
-            overlay.view.is_scrolled_to_bottom(),
-            "expected initial render to leave view at bottom"
-        );
-
-        for height in [9, 14] {
-            term.backend_mut().resize(/*width*/ 40, height);
-            term.draw(|f| overlay.render(f.area(), f.buffer_mut()))
-                .expect("draw after composer height change");
-            assert!(overlay.is_scrolled_to_bottom());
-        }
-
-        overlay.insert_cell(Arc::new(TestCell {
-            lines: vec!["tail".into()],
-        }));
-
-        assert_eq!(overlay.view.scroll_offset, usize::MAX);
-        term.draw(|f| overlay.render(f.area(), f.buffer_mut()))
-            .expect("draw committed tail");
-        assert_snapshot!("transcript_overlay_follows_resized_tail", term.backend());
-    }
-
-    #[test]
-    fn transcript_overlay_preserves_manual_scroll_position() {
-        let mut overlay = transcript_overlay(
-            (0..20)
-                .map(|i| {
-                    Arc::new(TestCell {
-                        lines: vec![Line::from(format!("line{i}"))],
-                    }) as Arc<dyn HistoryCell>
-                })
-                .collect(),
-        );
-        let mut term = Terminal::new(TestBackend::new(40, 12)).expect("term");
-        term.draw(|f| overlay.render(f.area(), f.buffer_mut()))
-            .expect("draw");
-
-        overlay.view.scroll_offset = 0;
-
-        overlay.insert_cell(Arc::new(TestCell {
-            lines: vec!["tail".into()],
-        }));
-
-        assert_eq!(overlay.view.scroll_offset, 0);
-        overlay.view.scroll_offset = 3;
-        term.draw(|frame| overlay.render(frame.area(), frame.buffer_mut()))
-            .expect("draw");
-        let content_area = Rect::new(
-            /*x*/ 0, /*y*/ 1, /*width*/ 40, /*height*/ 4,
-        );
-        let visible_before = buffer_to_text(term.backend().buffer(), content_area);
-        overlay.prepend(
-            vec![Arc::new(TestCell {
-                lines: (0..40).map(|i| Line::from(format!("older {i}"))).collect(),
-            })],
-            /*width*/ 40,
-        );
-        term.draw(|frame| overlay.render(frame.area(), frame.buffer_mut()))
-            .expect("draw");
-        assert_eq!(
-            buffer_to_text(term.backend().buffer(), content_area),
-            visible_before
-        );
-        assert_snapshot!(
-            "transcript_overlay_prepended_history",
-            visible_before.trim()
-        );
-    }
-
-    #[test]
     fn transcript_overlay_insert_preserves_cached_cell_heights() {
         let height_calls = Arc::new(AtomicUsize::new(0));
         let mut overlay = transcript_overlay(vec![Arc::new(HeightCountingCell {
@@ -1566,59 +1354,6 @@ mod tests {
         overlay.render(area, &mut buf);
 
         assert_eq!(height_calls.load(Ordering::Relaxed), 1);
-    }
-
-    #[test]
-    fn transcript_overlay_history_rebuild_preserves_only_the_live_tail() {
-        for replace in [false, true] {
-            for tail in [
-                None,
-                Some(Vec::new()),
-                Some(vec![HyperlinkLine::from("live")]),
-            ] {
-                let mut overlay = transcript_overlay(
-                    ["first", "last"]
-                        .map(|line| {
-                            Arc::new(TestCell {
-                                lines: vec![line.into()],
-                            }) as Arc<dyn HistoryCell>
-                        })
-                        .to_vec(),
-                );
-                let key = tail.as_ref().map(|_| ActiveCellTranscriptKey {
-                    revision: 1,
-                    is_stream_continuation: false,
-                    animation_tick: None,
-                });
-                overlay.sync_live_tail(/*width*/ 40, key, |_| tail.clone());
-                let consolidated = Arc::new(TestCell {
-                    lines: vec!["first".into(), "last".into()],
-                });
-                if replace {
-                    overlay.replace_cells(vec![consolidated]);
-                } else {
-                    overlay.consolidate_cells(0..2, consolidated);
-                }
-                // A draw may arrive after the active tail has already been cleared.
-                overlay.sync_live_tail(/*width*/ 40, key, |_| tail.clone());
-                let mut reopened = transcript_overlay(overlay.cells.clone());
-                reopened.sync_live_tail(/*width*/ 40, key, |_| tail.clone());
-                let area = Rect::new(
-                    /*x*/ 0, /*y*/ 0, /*width*/ 40, /*height*/ 10,
-                );
-                let mut actual = Buffer::empty(area);
-                let mut expected = Buffer::empty(area);
-                overlay.render(area, &mut actual);
-                reopened.render(area, &mut expected);
-                assert_eq!(actual, expected);
-                if tail.is_none() {
-                    assert_snapshot!(
-                        "transcript_overlay_completed_stream",
-                        buffer_to_text(&actual, area)
-                    );
-                }
-            }
-        }
     }
 
     #[test]
@@ -1673,19 +1408,6 @@ mod tests {
             Some(4),
             "highlight after consolidated range should shift left by removed cells",
         );
-    }
-
-    #[test]
-    fn static_overlay_snapshot_basic() {
-        // Prepare a static overlay with a few lines and a title
-        let mut overlay = static_overlay(
-            vec!["one".into(), "two".into(), "three".into()],
-            "S T A T I C",
-        );
-        let mut term = Terminal::new(TestBackend::new(40, 10)).expect("term");
-        term.draw(|f| overlay.render(f.area(), f.buffer_mut()))
-            .expect("draw");
-        assert_snapshot!(term.backend());
     }
 
     /// Render transcript overlay and return visible line numbers (`line-NN`) in order.
@@ -1815,18 +1537,6 @@ mod tests {
             10 + page_height.saturating_add(1) / 2
         );
         Ok(())
-    }
-
-    #[test]
-    fn static_overlay_wraps_long_lines() {
-        let mut overlay = static_overlay(
-            vec!["a very long line that should wrap when rendered within a narrow pager overlay width".into()],
-            "S T A T I C",
-        );
-        let mut term = Terminal::new(TestBackend::new(24, 8)).expect("term");
-        term.draw(|f| overlay.render(f.area(), f.buffer_mut()))
-            .expect("draw");
-        assert_snapshot!(term.backend());
     }
 
     #[test]

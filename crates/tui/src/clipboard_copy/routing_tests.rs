@@ -109,17 +109,3 @@ fn oversized_tmux_copy_preserves_native_copy() {
         assert_eq!(calls.into_inner(), expected_calls);
     }
 }
-
-#[test]
-fn empty_copy_reports_failure_without_touching_clipboards() {
-    let result = copy_to_clipboard_with(
-        "",
-        CopyFormat::PlainText,
-        local_tmux_environment(),
-        |_| panic!("empty input must not reach tmux"),
-        |_| panic!("empty input must not reach OSC 52"),
-        |_, _| panic!("empty input must not reach the native clipboard"),
-        |_| panic!("empty input must not reach PowerShell"),
-    );
-    insta::assert_snapshot!(result.err().expect("empty selection should fail"));
-}

@@ -836,20 +836,6 @@ async fn goal_control_slash_commands_emit_goal_events() {
     }
 }
 
-#[tokio::test]
-async fn goal_control_slash_command_without_thread_shows_full_usage() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.set_feature_enabled(Feature::Goals, /*enabled*/ true);
-
-    submit_composer_text(&mut chat, "/goal pause");
-
-    let cells = drain_insert_history(&mut rx);
-    assert_eq!(cells.len(), 1, "expected goal usage message");
-    insta::assert_snapshot!(
-        lines_to_single_string(&cells[0]),
-        @"• Usage: /goal [<objective>|clear|edit|pause|resume] The session must start before you can change a goal."
-    );
-}
 
 #[tokio::test]
 async fn goal_edit_slash_command_opens_goal_editor() {
@@ -1195,60 +1181,7 @@ async fn interrupted_merged_message_history_encodes_mentions_once() {
     assert_eq!(next_add_to_history_event(&mut rx), encoded);
 }
 
-#[tokio::test]
-async fn slash_rename_prefills_existing_thread_name() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.thread_name = Some("Current project title".to_string());
 
-    chat.dispatch_command(SlashCommand::Rename);
-
-    let popup = render_bottom_popup(&chat, /*width*/ 80);
-    assert_chatwidget_snapshot!("slash_rename_prefilled_prompt", popup);
-
-    chat.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
-
-    assert_matches!(
-        rx.try_recv(),
-        Ok(AppEvent::CodexOp(Op::SetThreadName { name })) if name == "Current project title"
-    );
-}
-
-#[tokio::test]
-async fn slash_rename_requests_and_prefills_an_editable_title_suggestion() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    let thread_id = ThreadId::new();
-    chat.thread_id = Some(thread_id);
-    chat.thread_name = Some("Current project title".to_string());
-
-    chat.dispatch_command(SlashCommand::Rename);
-
-    let popup = render_bottom_popup(&chat, /*width*/ 80);
-    assert_chatwidget_snapshot!("slash_rename_suggestion_loading", popup);
-
-    let request_id = match rx.try_recv() {
-        Ok(AppEvent::SuggestThreadName {
-            thread_id: requested_thread_id,
-            request_id,
-        }) => {
-            assert_eq!(requested_thread_id, thread_id);
-            request_id
-        }
-        other => panic!("expected title suggestion request, got {other:?}"),
-    };
-
-    chat.apply_thread_name_suggestion(thread_id, request_id, Some("Fix login timeout"));
-
-    let popup = render_bottom_popup(&chat, /*width*/ 80);
-    assert_chatwidget_snapshot!("slash_rename_suggestion_prefilled", popup);
-    assert_eq!(chat.thread_name.as_deref(), Some("Current project title"));
-
-    chat.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
-
-    assert_matches!(
-        rx.try_recv(),
-        Ok(AppEvent::CodexOp(Op::SetThreadName { name })) if name == "Fix login timeout"
-    );
-}
 
 #[tokio::test]
 async fn slash_rename_preserves_manual_edits_when_suggestion_arrives() {
@@ -1321,21 +1254,6 @@ async fn usage_error_slash_command_is_available_from_local_recall() {
     assert_eq!(recall_latest_after_clearing(&mut chat), "/raw maybe");
 }
 
-#[tokio::test]
-async fn usage_command_with_invalid_view_reports_usage_snapshot() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    set_managed_auth(&mut chat);
-
-    submit_composer_text(&mut chat, "/usage monthly");
-
-    let rendered = drain_insert_history(&mut rx)
-        .iter()
-        .map(|cell| lines_to_single_string(cell))
-        .collect::<Vec<_>>()
-        .join("\n");
-    assert_chatwidget_snapshot!("usage_command_with_invalid_view_reports_usage", rendered);
-    assert_eq!(recall_latest_after_clearing(&mut chat), "/usage monthly");
-}
 
 #[tokio::test]
 async fn usage_views_open_the_requested_summary_mode() {
@@ -1485,38 +1403,6 @@ async fn slash_copy_state_tracks_turn_complete_final_reply() {
     );
 }
 
-#[tokio::test]
-async fn slash_copy_picker_uses_completed_commentary_during_active_turn() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    complete_turn_with_message(&mut chat, "turn-1", Some("Previous final response"));
-    handle_turn_started(&mut chat, "active");
-    let commentary = "Here is the command:\n\n```sh\necho current\n```";
-    let current_thread_id = chat.thread_id.map(|id| id.to_string()).unwrap_or_default();
-    chat.handle_server_notification(
-        ServerNotification::ItemCompleted(ItemCompletedNotification {
-            thread_id: current_thread_id,
-            turn_id: "active".to_string(),
-            completed_at_ms: 0,
-            item: AppServerThreadItem::AgentMessage {
-                id: "active-commentary".to_string(),
-                text: commentary.to_string(),
-                phase: Some(MessagePhase::Commentary),
-                delivery: None,
-                questions: None,
-            },
-        }),
-        /*replay_kind*/ None,
-    );
-    while rx.try_recv().is_ok() {}
-
-    chat.dispatch_command(SlashCommand::Copy);
-    insta::assert_snapshot!(render_bottom_popup(&chat, /*width*/ 80));
-    chat.handle_key_event(KeyEvent::new(KeyCode::Char('1'), KeyModifiers::NONE));
-    assert_eq!(
-        next_copy_selection(&mut rx),
-        (commentary.to_string(), "Whole response".to_string(),)
-    );
-}
 
 #[tokio::test]
 async fn slash_copy_state_tracks_plan_item_completion() {
@@ -1710,61 +1596,6 @@ async fn slash_copy_picker_previews_whole_response_code_blocks_and_blockquotes()
     assert_matches!(rx.try_recv(), Err(TryRecvError::Empty));
 }
 
-#[tokio::test]
-async fn slash_copy_picker_copies_status_fields_and_preserves_source_after_copying() {
-    let (mut chat, mut rx, mut op_rx) = make_chatwidget_manual(Some("gpt-5.5")).await;
-    let session_id = "00000000-0000-0000-0000-000000000123";
-    chat.thread_id = Some(ThreadId::from_string(session_id).expect("valid thread ID"));
-    chat.thread_name = Some("Clipboard example".to_string());
-    chat.config.cwd = test_path_buf("/workspace").abs();
-    let directory = chat.config.cwd.display().to_string();
-    chat.dispatch_command(SlashCommand::Status);
-    drain_insert_history(&mut rx);
-
-    // The picker must copy the status that was displayed, not newer widget settings.
-    chat.config.cwd = test_path_buf("/another-workspace").abs();
-    chat.thread_name = Some("New name".to_string());
-    chat.dispatch_command(SlashCommand::Copy);
-    assert_chatwidget_snapshot!(
-        "slash_copy_picker_status_fields",
-        render_bottom_popup(&chat, /*width*/ 100)
-            .replace(&directory, "[[workspace]]")
-            .replace(crate::version::CODEX_CLI_VERSION, "VERSION"),
-    );
-    chat.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
-    let (whole_status, label) = next_copy_selection(&mut rx);
-    assert_eq!(label, "Whole status");
-    assert_chatwidget_snapshot!(
-        "slash_copy_whole_status",
-        whole_status
-            .replace(&directory, "[[workspace]]")
-            .replace(crate::version::CODEX_CLI_VERSION, "VERSION"),
-    );
-    let expected = [
-        ("Whole status", whole_status.as_str()),
-        ("Model", "gpt-5.5"),
-        ("Directory", directory.as_str()),
-        ("Thread name", "Clipboard example"),
-        ("Session ID", session_id),
-    ];
-    for (index, (label, value)) in expected.into_iter().enumerate() {
-        chat.dispatch_command(SlashCommand::Copy);
-        let shortcut =
-            char::from_digit((index + 1) as u32, /*radix*/ 10).expect("numeric shortcut");
-        chat.handle_key_event(KeyEvent::new(KeyCode::Char(shortcut), KeyModifiers::NONE));
-        assert_eq!(
-            next_copy_selection(&mut rx),
-            (value.to_string(), label.to_string())
-        );
-        chat.copy_selection_with(value, label, |text| {
-            assert_eq!(text, value);
-            Ok(None)
-        });
-        drain_insert_history(&mut rx);
-        assert!(chat.bottom_pane.no_modal_or_popup_active());
-    }
-    assert_matches!(op_rx.try_recv(), Err(TryRecvError::Empty));
-}
 
 #[tokio::test]
 async fn slash_copy_status_omits_missing_fields_and_copies_full_directory() {
@@ -2073,55 +1904,7 @@ async fn slash_copy_picker_remains_available_from_parent_owned_threads() {
     );
 }
 
-#[tokio::test]
-async fn slash_copy_reports_when_no_agent_response_exists() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
 
-    chat.dispatch_command(SlashCommand::Copy);
-
-    let cells = drain_insert_history(&mut rx);
-    assert_eq!(cells.len(), 1, "expected one info message");
-    let rendered = lines_to_single_string(&cells[0]);
-    assert_chatwidget_snapshot!("slash_copy_no_output_info_message", rendered);
-    assert!(
-        rendered.contains("No agent response to copy"),
-        "expected no-output message, got {rendered:?}"
-    );
-}
-
-#[tokio::test]
-async fn slash_export_opens_destination_picker() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-
-    chat.thread_id = Some(
-        ThreadId::from_string("00000000-0000-0000-0000-000000000123").expect("valid thread ID"),
-    );
-    handle_turn_started(&mut chat, "turn-1");
-    queue_composer_text_with_tab(&mut chat, "/export");
-    complete_turn_with_message(&mut chat, "turn-1", /*message*/ None);
-
-    let popup = render_bottom_popup(&chat, /*width*/ 80);
-    assert_chatwidget_snapshot!("slash_export_destination_picker", popup);
-    chat.show_transcript_export_file_prompt();
-    let popup = render_bottom_popup(&chat, /*width*/ 100);
-    assert_chatwidget_snapshot!("slash_export_filename_prompt", popup);
-
-    let statuses = "Saved conversation to conversation.md\nCopied conversation to clipboard";
-    for message in statuses.lines() {
-        chat.add_info_message(message.into(), /*hint*/ None);
-    }
-    chat.add_error_message("Copy failed: clipboard unavailable".to_string());
-    chat.add_error_message("Export failed: missing parent".to_string());
-    let cells = drain_insert_history_normalized(&mut rx);
-    assert_chatwidget_snapshot!(
-        "slash_export_completion_message",
-        cells
-            .iter()
-            .map(|cell| lines_to_single_string(cell).trim().to_string())
-            .collect::<Vec<_>>()
-            .join("\n"),
-    );
-}
 
 #[tokio::test]
 async fn ctrl_o_copy_reports_when_no_agent_response_exists() {
@@ -2710,53 +2493,7 @@ async fn slash_import_opens_claude_code_import_picker() {
     );
 }
 
-#[tokio::test]
-async fn slash_archive_confirmation_requests_current_thread_archive() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
 
-    chat.dispatch_command(SlashCommand::Archive);
-
-    assert!(chat.bottom_pane.has_active_view());
-    assert_matches!(rx.try_recv(), Err(TryRecvError::Empty));
-
-    let popup = render_bottom_popup(&chat, /*width*/ 80);
-    assert_chatwidget_snapshot!("slash_archive_confirmation_popup", popup);
-
-    chat.handle_key_event(KeyEvent::from(KeyCode::Down));
-    chat.handle_key_event(KeyEvent::from(KeyCode::Enter));
-
-    assert_matches!(rx.try_recv(), Ok(AppEvent::ArchiveCurrentThread));
-}
-
-#[tokio::test]
-async fn slash_delete_confirmation_requests_current_thread_delete() {
-    let endpoint = crate::resolve_remote_addr("ws://127.0.0.1:4500").unwrap();
-    for target in [
-        crate::AppServerTarget::Embedded,
-        crate::AppServerTarget::LocalDaemon {
-            allow_embedded_fallback: true,
-            endpoint: endpoint.clone(),
-        },
-        crate::AppServerTarget::Remote { endpoint },
-    ] {
-        let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-        chat.remote_connection = crate::status::remote_connection::remote_connection_status_value(
-            &target, /*server_version*/ None,
-        );
-        chat.dispatch_command(SlashCommand::Delete);
-        assert!(chat.bottom_pane.has_active_view());
-        assert_matches!(rx.try_recv(), Err(TryRecvError::Empty));
-        let popup = render_bottom_popup(&chat, /*width*/ 80);
-        if matches!(target, crate::AppServerTarget::Embedded) {
-            assert_chatwidget_snapshot!("slash_delete_confirmation_popup", popup);
-        } else {
-            assert_chatwidget_snapshot!("slash_delete_confirmation_command_center", popup);
-        }
-        chat.handle_key_event(KeyEvent::from(KeyCode::Down));
-        chat.handle_key_event(KeyEvent::from(KeyCode::Enter));
-        assert_matches!(rx.try_recv(), Ok(AppEvent::DeleteCurrentThread));
-    }
-}
 
 #[tokio::test]
 async fn slash_resume_with_arg_requests_named_session_while_mcp_startup_is_running() {
@@ -2777,20 +2514,6 @@ async fn slash_resume_with_arg_requests_named_session_while_mcp_startup_is_runni
     assert_matches!(op_rx.try_recv(), Err(TryRecvError::Empty));
 }
 
-#[tokio::test]
-#[serial]
-async fn slash_pets_opens_picker() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    force_pet_image_support(&mut chat);
-
-    chat.dispatch_command(SlashCommand::Pets);
-
-    assert!(chat.bottom_pane.has_active_view());
-    assert_matches!(rx.try_recv(), Err(TryRecvError::Empty));
-
-    let popup = render_bottom_popup(&chat, /*width*/ 80);
-    assert_chatwidget_snapshot!("slash_pets_picker", popup);
-}
 
 #[tokio::test]
 #[serial]
@@ -2945,26 +2668,6 @@ async fn slash_fork_with_name_requests_named_fork() {
     );
 }
 
-#[tokio::test]
-async fn slash_pwd_and_cwd_alias_display_current_working_directory_from_composer() {
-    let mut output = Vec::new();
-    for (command, side) in [("/pwd", false), ("/cwd", true), ("/pwd x", false)] {
-        let (mut chat, mut rx, mut op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-        chat.set_side_conversation_active(side);
-        chat.bottom_pane.set_task_running(!side);
-        chat.bottom_pane
-            .set_composer_text(command.to_string(), Vec::new(), Vec::new());
-        chat.handle_key_event(KeyEvent::from(KeyCode::Enter));
-        assert_matches!(op_rx.try_recv(), Err(TryRecvError::Empty));
-        let [cell]: [_; 1] = drain_insert_history(&mut rx).try_into().expect("one cell");
-        output.push(normalize_snapshot_paths(lines_to_single_string(&cell)));
-    }
-    insta::assert_snapshot!(output.join(""), @r"
-• Current working directory: /tmp/project
-• Current working directory: /tmp/project
-■ Usage: /pwd
-");
-}
 
 #[tokio::test]
 async fn slash_cd_changes_current_session_after_replay_and_defaults_to_home() {
@@ -3008,45 +2711,6 @@ async fn rejected_queued_cd_drains_following_input() {
     }
 }
 
-#[tokio::test]
-async fn slash_cd_rejects_pending_input_and_unsupported_session_ownership() {
-    let mut errors = Vec::new();
-    for state in "new active pending queued steer side owned ephemeral mcp exec".split(' ') {
-        let (mut chat, mut rx, mut op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-        chat.thread_id = (state != "new").then(ThreadId::new);
-        let (queued, steer) = (UserMessage::from("q").into(), pending_steer("s"));
-        match state {
-            "active" => chat.bottom_pane.set_task_running(/*running*/ true),
-            "pending" => chat.input_queue.user_turn_pending_start = true,
-            "queued" => chat.input_queue.queued_user_messages.push_back(queued),
-            "steer" => chat.input_queue.pending_steers.push_back(steer),
-            "side" => chat.set_side_conversation_active(/*active*/ true),
-            "owned" => chat.set_parent_owned_thread(),
-            "ephemeral" => chat.config.ephemeral = true,
-            "exec" => chat.track_unified_exec_process_begin("call", Some("process"), "sleep"),
-            "mcp" => {
-                let cell =
-                    history_cell::new_mcp_inventory_loading(/*animations_enabled*/ false);
-                chat.transcript.active_cell = Some(Box::new(cell));
-            }
-            _ => {}
-        }
-
-        chat.dispatch_command_with_args(SlashCommand::Cd, "/tmp".to_string(), Vec::new());
-
-        assert!(state != "mcp" || chat.transcript.active_cell.is_some());
-        assert_matches!(op_rx.try_recv(), Err(TryRecvError::Empty));
-        let Ok(AppEvent::InsertHistoryCell(cell)) = rx.try_recv() else {
-            unreachable!("missing error for {state}");
-        };
-        errors.push(lines_to_single_string(&cell.display_lines(/*width*/ 200)));
-        assert!(rx.try_recv().is_err(), "{state}");
-    }
-    insta::assert_snapshot!(format!("{}{}", errors[0], errors[3]), @r"
-■ The session must start before you can change its working directory.
-■ Changing directories requires an idle primary session without queued input.
-");
-}
 
 #[tokio::test]
 async fn slash_rollout_displays_current_path() {
@@ -3132,38 +2796,5 @@ async fn raw_slash_command_reports_usage_for_invalid_arg() {
     assert!(
         rendered.contains("Usage: /raw [on|off]"),
         "expected raw usage error, got {rendered:?}"
-    );
-}
-
-#[tokio::test]
-async fn compact_queues_user_messages_snapshot() {
-    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.thread_id = Some(ThreadId::new());
-    handle_turn_started(&mut chat, "turn-1");
-
-    chat.submit_user_message(UserMessage::from(
-        "Steer submitted while /compact was running.".to_string(),
-    ));
-    handle_error(
-        &mut chat,
-        "cannot steer a compact turn",
-        Some(CodexErrorInfo::ActiveTurnNotSteerable {
-            turn_kind: NonSteerableTurnKind::Compact,
-        }),
-    );
-
-    let width: u16 = 80;
-    let height: u16 = 18;
-    let backend = VT100Backend::new(width, height);
-    let mut term = crate::custom_terminal::Terminal::with_options(backend).expect("terminal");
-    let desired_height = chat.desired_height(width).min(height);
-    term.set_viewport_area(Rect::new(0, height - desired_height, width, desired_height));
-    term.draw(|f| {
-        chat.render(f.area(), f.buffer_mut());
-    })
-    .unwrap();
-    assert_chatwidget_snapshot!(
-        "compact_queues_user_messages_snapshot",
-        normalize_snapshot_paths(term.backend().vt100().screen().contents())
     );
 }

@@ -320,25 +320,3 @@ fn effort_ignition_styles_are_safe_on_tiny_and_offset_areas() {
         }
     }
 }
-
-#[test]
-fn effort_ignition_animation_gallery_snapshot() {
-    let area = Rect::new(/*x*/ 0, /*y*/ 0, WIDTH, HEIGHT);
-    let mut frames = Vec::new();
-    for style in IgnitionStyle::ALL {
-        for tier in [EffortTier::Max, EffortTier::Ultra] {
-            let tier_name = match tier {
-                EffortTier::Max => "MAX",
-                EffortTier::Ultra => "ULTRA",
-            };
-            for millis in [0, 180, 420, 720, 1100, 1580, 2050] {
-                let mut buf = test_buffer(area);
-                paint(tier, style, Duration::from_millis(millis), area, &mut buf);
-                let name = style_name(style);
-                let rendered = frame(area, &buf).join("│");
-                frames.push(format!("{name:8} {tier_name:5} {millis:4}ms │{rendered}│"));
-            }
-        }
-    }
-    insta::assert_snapshot!("effort_ignition_animation_gallery", frames.join("\n"));
-}

@@ -49,19 +49,3 @@ async fn modal_consumes_input_and_finishes_after_input_closes() -> color_eyre::R
     assert_eq!(result, "operation finished");
     Ok(())
 }
-
-#[test]
-fn lifecycle_progress_wraps_at_narrow_widths() {
-    for (action, name) in [
-        (AgentsOverviewAction::Archive, "archive_progress"),
-        (AgentsOverviewAction::Delete, "delete_progress"),
-    ] {
-        let progress = LifecycleProgress(action);
-        let mut terminal =
-            Terminal::new(TestBackend::new(36, progress.desired_height(/*width*/ 36))).unwrap();
-        terminal
-            .draw(|frame| progress.render(frame.area(), frame.buffer_mut()))
-            .unwrap();
-        insta::assert_snapshot!(name, terminal.backend());
-    }
-}

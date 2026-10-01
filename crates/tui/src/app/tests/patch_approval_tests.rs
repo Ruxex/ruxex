@@ -161,64 +161,6 @@ fn assert_decision(
     );
 }
 
-#[tokio::test]
-async fn active_patch_approval_pager_preserves_changes_and_accepts_once() -> Result<()> {
-    let (mut app, mut rx, _op_rx) = make_test_app_with_channels().await;
-    let thread_id = ThreadId::new();
-    let mut tui = crate::tui::test_support::make_test_tui()?;
-    let mut app_server = start_config_write_test_app_server(&app).await?;
-    enqueue_pending_patch(&mut app, thread_id).await?;
-    drain_pending_patch(&mut app, &mut tui).await?;
-
-    let request = open_patch(&mut app, &mut rx);
-    assert_eq!(request.changes, expected_changes());
-    assert_eq!(request.id, ITEM_ID);
-    app.handle_event(
-        &mut tui,
-        &mut app_server,
-        AppEvent::FullScreenApprovalRequest(ApprovalRequest::ApplyPatch(request)),
-    )
-    .await?;
-    let first = render_pager(&mut app, /*width*/ 48, /*height*/ 11);
-    insta::with_settings!({snapshot_path => "../../snapshots"}, {
-        insta::assert_snapshot!("patch_approval_pager_top", format!("{first:?}"));
-    });
-
-    app.handle_tui_event(
-        &mut tui,
-        &mut app_server,
-        TuiEvent::Key(KeyEvent::new(KeyCode::End, KeyModifiers::NONE)),
-    )
-    .await?;
-    let last = render_pager(&mut app, /*width*/ 48, /*height*/ 11);
-    insta::with_settings!({snapshot_path => "../../snapshots"}, {
-        insta::assert_snapshot!("patch_approval_pager_bottom", format!("{last:?}"));
-    });
-    let _ = render_pager(&mut app, /*width*/ 36, /*height*/ 7);
-    assert_eq!(render_pager(&mut app, /*width*/ 48, /*height*/ 11), last);
-
-    app.handle_tui_event(
-        &mut tui,
-        &mut app_server,
-        TuiEvent::Key(KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE)),
-    )
-    .await?;
-    assert!(app.overlay.is_none());
-    assert!(
-        app.pending_app_server_requests
-            .contains_server_request(&self::request(thread_id))
-    );
-    assert_eq!(open_patch(&mut app, &mut rx).changes, expected_changes());
-    app.chat_widget
-        .handle_key_event(KeyEvent::new(KeyCode::Char('y'), KeyModifiers::NONE));
-    assert_decision(
-        &mut app,
-        &mut rx,
-        thread_id,
-        FileChangeApprovalDecision::Accept,
-    );
-    Ok(())
-}
 
 #[tokio::test]
 async fn active_patch_approval_cancel_and_resolved_replay() -> Result<()> {

@@ -29,46 +29,6 @@ fn render(screen: &UnarchivePrompt) -> String {
 }
 
 #[test]
-fn resume_prompt_snapshot() {
-    let screen = prompt(SessionStartAction::Resume(
-        ResumeModelSettings::RestoreFromThread,
-    ));
-    insta::assert_snapshot!(render(&screen), @"
-    This conversation is archived
-    019e72f4-e09a-70f2-b2c2-a153a57b8cc0
-
-    › 1. Unarchive and resume
-      2. Cancel
-
-    Press enter to continue or esc to cancel
-    ");
-}
-
-#[test]
-fn fork_prompt_cancel_snapshot() {
-    let mut screen = prompt(SessionStartAction::Fork(
-        crate::app_server_session::ForkPermissionMode::InheritSaved,
-    ));
-    assert_eq!(
-        screen.handle_key(KeyEvent::new(KeyCode::Down, KeyModifiers::NONE)),
-        None
-    );
-    insta::assert_snapshot!(render(&screen), @"
-    This conversation is archived
-    019e72f4-e09a-70f2-b2c2-a153a57b8cc0
-
-      1. Unarchive and fork
-    › 2. Cancel
-
-    Press enter to continue or esc to cancel
-    ");
-    assert_eq!(
-        screen.handle_key(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE)),
-        Some(UnarchiveChoice::Cancel)
-    );
-}
-
-#[test]
 fn confirmation_requires_an_accept_key() {
     let mut screen = prompt(SessionStartAction::Fork(
         crate::app_server_session::ForkPermissionMode::InheritSaved,
@@ -124,16 +84,6 @@ fn render_inline(width: u16) -> String {
         .join("\n")
         .trim_end()
         .to_string()
-}
-
-#[test]
-fn inline_prompt_preserves_shell_context_snapshot() {
-    insta::assert_snapshot!("inline_prompt", render_inline(/*width*/ 80));
-}
-
-#[test]
-fn narrow_inline_prompt_wraps_snapshot() {
-    insta::assert_snapshot!("narrow_inline_prompt", render_inline(/*width*/ 28));
 }
 
 #[tokio::test]

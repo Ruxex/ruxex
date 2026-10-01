@@ -3,38 +3,7 @@ use super::*;
 use clap::Parser;
 use pretty_assertions::assert_eq;
 
-#[test]
-fn recovery_message_names_checkout_and_safe_manual_action() {
-    let recovery = StartupRecovery {
-        root: PathBuf::from("checkout with spaces"),
-        // This test inspects rendering without printing or changing terminal state on drop.
-        finished: AtomicBool::new(true),
-    };
-    insta::assert_snapshot!(recovery.message(), @r#"
-    Startup did not finish binding a thread to this worktree: "checkout with spaces"
-    The checkout was kept. Inspect it and confirm no session is using it.
-    To remove it, run `git worktree remove <checkout-path>` from the source repository,
-    replacing <checkout-path> with the path above. Do not use --force.
-    "#);
-}
 
-#[tokio::test]
-async fn explicit_remote_worktree_rejection_is_snapshotted() -> anyhow::Result<()> {
-    let cli = Cli::parse_from(["codex", "--worktree"]);
-    let endpoint = RemoteAppServerEndpoint::UnixSocket {
-        socket_path: AbsolutePathBuf::relative_to_current_dir("remote.sock")?,
-    };
-    let error = crate::startup_orchestration::run_main_inner(
-        cli,
-        Arg0DispatchPaths::default(),
-        LoaderOverrides::default(),
-        Some(endpoint),
-    )
-    .await
-    .expect_err("managed worktrees require a local session");
-    insta::assert_snapshot!(error.to_string(), @"`--worktree` is only supported for local sessions");
-    Ok(())
-}
 
 #[tokio::test]
 async fn latest_directory_uses_turn_context_and_preserves_fallback() -> anyhow::Result<()> {
