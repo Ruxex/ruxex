@@ -1895,7 +1895,7 @@ fn list_marketplaces_resolves_plugin_interface_paths_to_absolute() {
       "policy": {
         "installation": "AVAILABLE",
         "authentication": "ON_INSTALL",
-        "products": ["CODEX", "UNKNOWN", "ATLAS"]
+        "products": ["CODEX", "UNKNOWN", "FUTURE_PRODUCT"]
       },
       "category": "Design"
     }

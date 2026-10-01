@@ -13,7 +13,7 @@ needs_review_file="${output_file%.tsv}-needs-review.tsv"
 tmp_details="$(mktemp)"
 trap 'rm -f -- "$tmp_details"' EXIT
 
-# `rg -l` finds files containing either term. The per-file awk pass classifies
+# `rg -l` finds Rust files containing any target term. The per-file awk pass classifies
 # each matching line as documented by a retention rationale or needing review.
 {
   rg -i -l -0 \
@@ -22,7 +22,8 @@ trap 'rm -f -- "$tmp_details"' EXIT
     --glob '!target/**' \
     --glob '!scripts/.venv/**' \
     --glob '!scripts/count-provider-chatgpt.sh' \
-    'chatgpt|openai' . || {
+    --glob '*.rs' \
+    'chatgpt|openai|atlas' . || {
       status=$?
       [[ "$status" -eq 1 ]]
     }
@@ -68,7 +69,7 @@ trap 'rm -f -- "$tmp_details"' EXIT
             rationale_active = 0
           }
 
-          if (tolower(line) ~ /chatgpt|openai/) {
+          if (tolower(line) ~ /chatgpt|openai|atlas/) {
             context = previous_comments
             if (is_comment_only(line)) {
               context = context "\n" line

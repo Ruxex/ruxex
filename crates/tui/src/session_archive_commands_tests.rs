@@ -486,7 +486,7 @@ async fn queues_non_interactive_and_custom_sessions_by_server_label() -> color_e
     );
 
     let custom_thread_id = ThreadId::new();
-    let custom_source = SessionSource::Custom("atlas".to_string());
+    let custom_source = SessionSource::Custom("external".to_string());
     let custom_rollout_path = write_rollout(
         &config,
         custom_thread_id,
@@ -499,7 +499,7 @@ async fn queues_non_interactive_and_custom_sessions_by_server_label() -> color_e
         &config,
         custom_thread_id,
         custom_rollout_path,
-        "atlas-session",
+        "external-session",
         /*archived*/ false,
     );
     custom_metadata.source = serde_json::to_string(&custom_source)?;
@@ -512,7 +512,7 @@ async fn queues_non_interactive_and_custom_sessions_by_server_label() -> color_e
     let (resolved_custom_thread_id, _) = run_session_queue_action_with_app_server(
         &mut app_server,
         config.codex_home.as_path(),
-        "atlas-session",
+        "external-session",
         "do the thing",
         "custom-client-message-id",
     )

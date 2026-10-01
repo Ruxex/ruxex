@@ -4262,13 +4262,25 @@ mod tests {
     #[test]
     fn session_source_from_startup_arg_normalizes_custom_values() {
         assert_eq!(
-            SessionSource::from_startup_arg("atlas").unwrap(),
-            SessionSource::Custom("atlas".to_string())
+            SessionSource::from_startup_arg("external").unwrap(),
+            SessionSource::Custom("external".to_string())
         );
         assert_eq!(
-            SessionSource::from_startup_arg(" Atlas ").unwrap(),
-            SessionSource::Custom("atlas".to_string())
+            SessionSource::from_startup_arg(" External ").unwrap(),
+            SessionSource::Custom("external".to_string())
         );
+    }
+
+    // Retain this legacy value so persisted Atlas session sources remain readable;
+    // generic custom sources must not be promoted to a supported product.
+    #[test]
+    fn legacy_atlas_session_source_remains_readable_as_custom_source() {
+        let source = SessionSource::Custom("atlas".to_string());
+        let persisted = serde_json::to_string(&source).unwrap();
+        let restored = serde_json::from_str::<SessionSource>(&persisted).unwrap();
+
+        assert_eq!(restored, source);
+        assert_eq!(restored.restriction_product(), None);
     }
 
     #[test]
@@ -4310,7 +4322,7 @@ mod tests {
             None
         );
         assert_eq!(
-            SessionSource::Custom("ATLAS".to_string()).restriction_product(),
+            SessionSource::Custom("FUTURE_PRODUCT".to_string()).restriction_product(),
             None
         );
         assert_eq!(
@@ -4318,7 +4330,7 @@ mod tests {
             Some(Product::Codex)
         );
         assert_eq!(
-            SessionSource::Custom("atlas-dev".to_string()).restriction_product(),
+            SessionSource::Custom("future-product-dev".to_string()).restriction_product(),
             None
         );
     }
@@ -4334,7 +4346,7 @@ mod tests {
             Product::Unknown
         );
         assert_eq!(
-            serde_json::from_str::<Product>(r#""atlas""#).unwrap(),
+            serde_json::from_str::<Product>(r#""future-product""#).unwrap(),
             Product::Unknown
         );
         assert_eq!(
@@ -4346,7 +4358,7 @@ mod tests {
             None
         );
         assert_eq!(
-            SessionSource::Custom("atlas".to_string()).restriction_product(),
+            SessionSource::Custom("future-product".to_string()).restriction_product(),
             None
         );
         assert!(!Product::Unknown.matches_product_restriction(&[Product::Unknown]));
@@ -4360,10 +4372,13 @@ mod tests {
         );
         assert!(SessionSource::VSCode.matches_product_restriction(&[Product::Codex]));
         assert!(
-            !SessionSource::Custom("atlas-dev".to_string())
+            !SessionSource::Custom("future-product-dev".to_string())
                 .matches_product_restriction(&[Product::Codex])
         );
-        assert!(SessionSource::Custom("atlas-dev".to_string()).matches_product_restriction(&[]));
+        assert!(
+            SessionSource::Custom("future-product-dev".to_string())
+                .matches_product_restriction(&[])
+        );
     }
 
     fn sandbox_policy_probe_paths(policy: &SandboxPolicy, cwd: &Path) -> Vec<PathBuf> {

@@ -957,7 +957,7 @@ async fn plugin_install_returns_invalid_request_for_disallowed_product_plugin() 
 
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
-        .with_args(&["--session-source", "atlas"])
+        .with_args(&["--session-source", "external"])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 

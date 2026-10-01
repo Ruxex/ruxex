@@ -260,7 +260,7 @@ fn serialize_environment_context_with_subagents() {
         Some("2026-02-26".to_string()),
         Some("America/Los_Angeles".to_string()),
         /*network*/ None,
-        Some("- agent-1: atlas\n- agent-2".to_string()),
+        Some("- agent-1: agent-a\n- agent-2".to_string()),
     );
 
     let expected = format!(
@@ -270,7 +270,7 @@ fn serialize_environment_context_with_subagents() {
   <current_date>2026-02-26</current_date>
   <timezone>America/Los_Angeles</timezone>
   <subagents>
-    - agent-1: atlas
+    - agent-1: agent-a
     - agent-2
   </subagents>
 </environment_context>"#,

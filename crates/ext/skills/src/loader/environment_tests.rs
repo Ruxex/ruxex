@@ -44,7 +44,7 @@ dependencies:
       command: deploy-mcp
 policy:
   allow_implicit_invocation: false
-  products: [codex, atlas]
+  products: [codex, future-product]
 "#,
     )
     .expect("metadata");

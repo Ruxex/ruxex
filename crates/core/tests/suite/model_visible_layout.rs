@@ -705,7 +705,7 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
 async fn snapshot_model_visible_layout_environment_context_includes_one_subagent() -> Result<()> {
     insta::assert_snapshot!(
         "model_visible_layout_environment_context_includes_one_subagent",
-        format_environment_context_subagents_snapshot(&["- agent-1: Atlas"])
+        format_environment_context_subagents_snapshot(&["- agent-1: Agent Alpha"])
     );
 
     Ok(())
@@ -715,7 +715,10 @@ async fn snapshot_model_visible_layout_environment_context_includes_one_subagent
 async fn snapshot_model_visible_layout_environment_context_includes_two_subagents() -> Result<()> {
     insta::assert_snapshot!(
         "model_visible_layout_environment_context_includes_two_subagents",
-        format_environment_context_subagents_snapshot(&["- agent-1: Atlas", "- agent-2: Juniper"])
+        format_environment_context_subagents_snapshot(&[
+            "- agent-1: Agent Alpha",
+            "- agent-2: Juniper",
+        ])
     );
 
     Ok(())

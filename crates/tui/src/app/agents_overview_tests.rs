@@ -273,7 +273,7 @@ async fn shared_overview_seeds_once_and_retains_locally_resumed_history() -> Res
     let mut ids = Vec::new();
     for day in 1..=22 {
         let source = match day {
-            3 => codex_protocol::protocol::SessionSource::Custom("atlas".to_string()),
+            3 => codex_protocol::protocol::SessionSource::Custom("custom".to_string()),
             4 => codex_protocol::protocol::SessionSource::Custom("external".to_string()),
             5 => codex_protocol::protocol::SessionSource::Exec,
             6 => codex_protocol::protocol::SessionSource::Mcp,
