@@ -232,19 +232,19 @@ Task 0 の coverage matrix は workspace member ごとに次のいずれかを�
 - Consumes: Tasks 1–4 の migrated internal APIs。
 - Produces: Rename / retain / defer decision。実装変更は decision が `migrate-in-place` の family だけに限定する。
 
-- [ ] **Step 1: protocol/schema/auth boundary を監査する**
+- [x] **Step 1: protocol/schema/auth boundary を監査する**
 
   serde name、JSON error shape、app-server notification/request、auth storage、external extension API、provider-specific behavior を producer/consumer 単位で確認する。
 
-- [ ] **Step 2: internal-only subset と external subset を分ける**
+- [x] **Step 2: internal-only subset と external subset を分ける**
 
   `CodexResult` のような type alias でも、protocol crate の public export や外部 extension consumer があれば high-risk として defer する。`CodexAuth` は認証契約と provider capability を含むため、命名変更に capability removal を混ぜない。
 
-- [ ] **Step 3: decision を inventory に記録する**
+- [x] **Step 3: decision を inventory に記録する**
 
   `retain` または `defer` の理由、consumer、次の protocol/auth task を記録する。ここで実装変更を行わない場合も audit completion を commit する。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
   `git commit -m "Audit shared Rust symbol compatibility boundaries"`
 
