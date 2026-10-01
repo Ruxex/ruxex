@@ -21,7 +21,7 @@ provider 固有機能の除去後に残ったコードを調査し、汎用プ�
 | G-4 | リトライ終了後の再開情報 | 対象外 | - | consumer 不在の未使用 producer は削除し、必要になった時点で再設計する |
 | G-5 | 画像 detail の `low` / `auto` | 部分実装 | 中 | provider capability と変換方針を定義する |
 | G-6 | Prefix compaction | 実装済み | 低 | コンテキスト超過時に自動適用。ユーザー選択設定は追加しない |
-| G-7 | 非 Responses wire API の完全なサポート | 部分実装 | 高 | Chat Completions の既存経路を復活。独自 streaming protocol は別途設計する |
+| G-7 | 非 Responses wire API の完全なサポート | 現行スコープでは実装済み | - | `wire_api = "chat"` の既存ChatCompletionAPIで、テキスト、SSE、画像入力、function tools、tool call/outputを利用できる。Responses APIとの機能差は、Chat backendが提供しない機能をadapterで補う課題ではないため、現時点の不足機能とは扱わない |
 
 ## G-1: MCP ツールカタログの動的 refresh
 
@@ -119,7 +119,7 @@ Responses API の `input_image.detail` で定義される `auto`、`low`、`high
 
 これは利用者が圧縮方式を選ぶ設定ではなく、コンテキスト超過時だけ自動適用されるリトライ経路である。ローカル compaction と Responses API 形状の metadata は引き続き provider-neutral な共通処理から利用し、provider-specific な履歴保持契約は追加しない。
 
-## G-7: 非 Responses wire API の完全なサポート
+## G-7: 非 Responses wire API の現行スコープとbackend依存機能
 
 現在の provider abstraction には `ModelProvider`、provider capability、任意の `model_providers` 設定、Amazon Bedrock 実装がある。一方、core の model client と request metadata は主に次を前提にしている。
 
@@ -128,17 +128,18 @@ Responses API の `input_image.detail` で定義される `auto`、`low`、`high
 - `codex_protocol::model_types::ModelInfo`
 - Responses 用の compaction、retry、metadata
 
-現在は `wire_api = "chat"` を指定した provider に対して、Chat Completions の `/chat/completions`、function tool payload、SSE 応答を専用 adapter 経由で利用できる。対応範囲と request/SSE の変換は [ChatCompletionAPI のアーキテクチャ](cli-architecture/chat-completions.md) に整理している。`output_schema` は Chat Completions 経路では未対応であり、独自 streaming protocol や非 provider 形式の tool call は引き続き同じ抽象で扱えない。
+現在は `wire_api = "chat"` を指定した provider に対して、Chat Completions の `/chat/completions`、function tool payload、SSE 応答を専用 adapter 経由で利用できる。テキスト、画像入力、function tool、tool call/output、複数ターン履歴、共通の認証復旧も現行スコープに含まれる。対応範囲と request/SSE の変換は [ChatCompletionAPI のアーキテクチャ](cli-architecture/chat-completions.md) に整理している。
 
-完全な provider-neutral 化には、少なくとも次の境界が必要になる。
+Responses APIとの完全な機能一致を、Chat adapterだけで実現することは目標にしない。次の機能は、対象Chat backendが同等のwire契約を提供する場合に限り、形式変換またはcapability宣言の対象になる。
 
-- provider-independent な turn request/response/event model
-- tool call、structured output、reasoning、画像、streaming の capability negotiation
-- provider-independent な model metadata と token usage
-- transport と wire protocol adapter の分離
-- provider-specific auth、retry、error mapping の隔離
+- structured output / `output_schema`
+- token usage、response ID、reasoning metadata
+- service tier、verbosity、provider固有のretry/resume
+- WebSocketなどSSE以外のtransport
+- function以外のprovider-native tool
+- provider固有の画像detail・画像出力
 
-これは小さな warning cleanup ではなく、別のアーキテクチャ作業として扱う。
+Chat backendがこれらを提供しない場合、adapterは値を推測したり、SSEからWebSocket相当の再開契約を作ったりできない。したがって、現時点ではChatCompletionAPIの未完了項目ではなく、将来backend契約が追加された場合のcapability negotiation候補として記録する。
 
 ## 既に実装済みで、不足機能と扱わないもの
 
@@ -157,7 +158,7 @@ Responses API の `input_image.detail` で定義される `auto`、`low`、`high
 2. **Provider capability 拡張**: image detail、tool/structured output、streaming、compaction を capability として整理する。
 3. **Extension context**: extension interruption の producer/consumer を接続する。
 4. **Retry / compaction metadata**: Responses 固有の型を provider-neutral な state と adapter に分離する。
-5. **非 Responses wire API**: 最後に transport と request/event model を再設計する。
+5. **非 Responses wire API**: backend側に新しいwire契約が追加された場合に限り、必要なcapability negotiationとrequest/event変換を設計する。現時点では実装対象にしない。
 
 ## 判断保留
 
