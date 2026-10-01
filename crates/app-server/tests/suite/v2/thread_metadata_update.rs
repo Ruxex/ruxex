@@ -33,7 +33,7 @@ use codex_features::Feature;
 use codex_git_utils::GitSha;
 use codex_protocol::SanitizedGitUrl;
 use codex_protocol::ThreadId;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use codex_protocol::protocol::GitInfo as RolloutGitInfo;
 use codex_rollout::state_db::reconcile_rollout;
 use codex_state::PINNED_THREAD_SECTION_ID;
@@ -1106,7 +1106,7 @@ async fn thread_metadata_update_can_clear_stored_git_fields() -> Result<()> {
             commit_hash: Some(GitSha::new("abc123")),
             branch: Some("feature/sidebar-pr".to_string()),
             repository_url: Some(
-                SanitizedGitUrl::try_from("git@example.com:openai/codex.git")
+                SanitizedGitUrl::try_from("git@example.com:codex/codex.git")
                     .expect("repository URL should be valid"),
             ),
         }),

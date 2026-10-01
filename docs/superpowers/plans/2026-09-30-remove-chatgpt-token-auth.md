@@ -8,7 +8,7 @@
 
 **Tech Stack:** Rust workspace、Cargo、app-server protocol、TUI、TOML/JSON schema、`just check`、`just check --tests`、`just generate`
 
-**Spec:** `docs/openai-decoupling-candidates.md` の first-party auth/model-provider adapter候補、および `docs/pre-release-compatibility-inventory.md` の ChatGPT authentication / Agent Identity capability監査結果。ユーザー要求により、現行 `AuthMode::WorkloadIdentity` のretain判断をremoveへ更新する。
+**Spec:** `docs/provider-decoupling-candidates.md` の first-party auth/model-provider adapter候補、および `docs/pre-release-compatibility-inventory.md` の ChatGPT authentication / Agent Identity capability監査結果。ユーザー要求により、現行 `AuthMode::WorkloadIdentity` のretain判断をremoveへ更新する。
 
 ## Global Constraints
 
@@ -33,7 +33,7 @@
 **Files:**
 
 - Modify: `docs/pre-release-compatibility-inventory.md`
-- Modify: `docs/openai-decoupling-candidates.md`
+- Modify: `docs/provider-decoupling-candidates.md`
 - Inspect: `crates/login/src/auth/manager.rs`
 - Inspect: `crates/login/src/auth/workload_identity.rs`
 - Inspect: `crates/model-provider/src/auth.rs`
@@ -219,7 +219,7 @@ Expected: lockfile、schema、TypeScript出力から削除済み型・依存が�
 **Files:**
 
 - Modify: `docs/pre-release-compatibility-inventory.md`
-- Modify: `docs/openai-decoupling-candidates.md`
+- Modify: `docs/provider-decoupling-candidates.md`
 
 - [x] **Step 1: repository-wide残存参照を確認する**
 
@@ -244,7 +244,7 @@ Expected: 意図した削除・移行だけが残り、秘密情報や不要な�
 ## 進捗追記（2026-09-30）
 
 - Workload Identity 削除後に残っていた未登録テストソース `crates/core/tests/suite/client.rs` と `code_mode.rs` を削除した。
-- `OPENAI_WORKLOAD_IDENTITY_CONTEXT` の環境変数スクラブ、obsolete な認証 claim、ChatGPT 専用テストヘルパーを削除した。
-- `docs/pre-release-compatibility-inventory.md` と `docs/openai-decoupling-candidates.md` に producer/consumer 監査結果と判断を反映した。
+- Workload Identity の環境変数スクラブ、obsolete な認証 claim、ChatGPT 専用テストヘルパーを削除した。
+- `docs/pre-release-compatibility-inventory.md` と `docs/provider-decoupling-candidates.md` に producer/consumer 監査結果と判断を反映した。
 - `codex-cli.json` は Hawk 更新を行わず、残存する古い finding は明示的に保留した。
 - 検証済み: `just check --tests`、`just check`、`git diff --check`。

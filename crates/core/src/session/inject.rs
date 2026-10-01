@@ -5,7 +5,7 @@ use codex_features::Feature;
 use codex_history::CodexHarnessMetadata;
 use codex_history::ResponseItemEnvelope;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::ModelInfo;
+use codex_protocol::model_types::ModelInfo;
 
 impl Session {
     /// Returns the input if there is no active turn to inject into.

@@ -9,7 +9,7 @@ use codex_protocol::approvals::NetworkPolicyAmendment;
 use codex_protocol::approvals::NetworkPolicyRuleAction;
 use codex_protocol::config_types::ServiceTier;
 use codex_protocol::models::PermissionProfile;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::EventMsg;
 use codex_protocol::protocol::Op;

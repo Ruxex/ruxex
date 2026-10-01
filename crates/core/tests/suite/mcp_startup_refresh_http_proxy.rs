@@ -328,7 +328,7 @@ async fn skill_mcp_dependency_oauth_uses_configured_http_client() -> Result<()> 
                 "dependencies:\n  tools:\n    - type: mcp\n      value: {SERVER_NAME}\n      transport: streamable_http\n      url: {SERVER_URL}\n      oauth:\n        callbackPort: {skill_callback_port}\n    - type: mcp\n      value: {DENIED_SERVER_NAME}\n      transport: streamable_http\n      url: {DENIED_SERVER_URL}\n"
             );
             fs.write_file(
-                &PathUri::from_host_native_path(agents_dir.join("openai.yaml"))?,
+                &PathUri::from_host_native_path(agents_dir.join("codex.yaml"))?,
                 metadata.into_bytes(),
                 Default::default(), /*sandbox*/ None,
             )

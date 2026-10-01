@@ -79,8 +79,8 @@ use codex_protocol::ThreadId;
 use codex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
 use codex_protocol::config_types::Verbosity as VerbosityConfig;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
+use codex_protocol::model_types::ModelInfo;
+use codex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
 use codex_protocol::protocol::AuthRecoveryEvent;
 use codex_protocol::protocol::Event as ProtocolEvent;
 use codex_protocol::protocol::EventMsg;
@@ -148,9 +148,9 @@ pub const X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER: &str =
 const X_CODEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY: &str =
     "x-codex-ws-stream-request-start-ms";
 const WS_REQUEST_HEADER_RESPONSES_LITE_CLIENT_METADATA_KEY: &str =
-    "ws_request_header_x_openai_internal_codex_responses_lite";
-const X_OPENAI_INTERNAL_CODEX_RESPONSES_LITE_HEADER: &str =
-    "x-openai-internal-codex-responses-lite";
+    "ws_request_header_x_provider_internal_codex_responses_lite";
+const X_PROVIDER_INTERNAL_CODEX_RESPONSES_LITE_HEADER: &str =
+    "x-provider-internal-codex-responses-lite";
 #[cfg(test)]
 pub(crate) const WEBSOCKET_CONNECT_TIMEOUT: Duration =
     Duration::from_millis(DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS);
@@ -650,7 +650,7 @@ impl ModelClient {
         responses_metadata: &CodexResponsesMetadata,
     ) -> Result<ResponsesApiRequest> {
         let mut input = prompt.get_formatted_input_for_request(model_info);
-        let is_openai = self.state.provider.info().is_openai();
+        let is_responses_provider = self.state.provider.info().is_responses_provider();
         let (instructions, tools) = if model_info.use_responses_lite {
             // These prompt-only items are rebuilt on every request. Hash their visible payloads
             // within the thread so retries and resumed sessions preserve their identity.
@@ -689,7 +689,7 @@ impl ModelClient {
                 Some(create_tools_raw_json_for_responses_api(&prompt.tools)?.into()),
             )
         };
-        if !is_openai {
+        if !is_responses_provider {
             for item in &mut input {
                 item.clear_internal_chat_message_metadata_passthrough();
                 if let ResponseItem::FunctionCall {
@@ -703,7 +703,7 @@ impl ModelClient {
         }
         let reasoning = self.build_reasoning(model_info, effort, summary);
         let stream_options = (self.state.concurrent_reasoning_summaries_enabled
-            && is_openai
+            && is_responses_provider
             && reasoning.summary.is_some())
         .then_some(StreamOptions {
             reasoning_summary_delivery: codex_api::ReasoningSummaryDelivery::SequentialCutoff,
@@ -748,16 +748,12 @@ impl ModelClient {
         Ok(request)
     }
 
-    fn filter_tool_result_metadata(input: &mut [ResponseItem], api_provider: &ApiProvider) {
+    fn filter_tool_result_metadata(input: &mut [ResponseItem], _api_provider: &ApiProvider) {
         // Check the resolved destination only when sending, not for local budget estimates.
         // HTTP and WS (including v2 compaction) share this raw-metadata-only filter.
-        let result_metadata_allowed =
-            url::Url::parse(&api_provider.base_url)
-                .ok()
-                .is_some_and(|url| {
-                    url.scheme() == "https"
-                        && url.host_str().is_some_and(|host| host == "api.openai.com")
-                });
+        // Internal tool-result metadata is only accepted by a trusted first-party endpoint.
+        // This provider-neutral fork has no such endpoint, so always strip it before dispatch.
+        let result_metadata_allowed = false;
         if !result_metadata_allowed {
             for item in input {
                 item.clear_tool_result_metadata();
@@ -848,7 +844,7 @@ impl ModelClient {
     fn uses_managed_auth(&self, auth: Option<&CodexAuth>) -> bool {
         let provider = self.state.provider.info();
         auth.is_some_and(CodexAuth::uses_managed_auth)
-            && provider.is_openai()
+            && provider.is_responses_provider()
             && provider.requires_auth
             && provider.env_key.is_none()
             && provider.experimental_bearer_token.is_none()
@@ -1235,7 +1231,7 @@ impl ModelClientSession {
     fn responses_request_compression(&self, auth: Option<&CodexAuth>) -> Compression {
         if self.client.state.enable_request_compression
             && auth.is_some_and(CodexAuth::uses_managed_auth)
-            && self.client.state.provider.info().is_openai()
+            && self.client.state.provider.info().is_responses_provider()
         {
             Compression::Zstd
         } else {
@@ -1358,7 +1354,7 @@ impl ModelClientSession {
         }
     }
 
-    /// Streams a turn via the OpenAI Responses API.
+    /// Streams a turn via the provider Responses API.
     ///
     /// Handles reasoning summaries, verbosity, and the `text` controls used for output schemas.
     #[allow(clippy::too_many_arguments)]
@@ -1969,7 +1965,7 @@ fn build_responses_headers(
 fn add_responses_lite_header(headers: &mut ApiHeaderMap, use_responses_lite: bool) {
     if use_responses_lite {
         headers.insert(
-            X_OPENAI_INTERNAL_CODEX_RESPONSES_LITE_HEADER,
+            X_PROVIDER_INTERNAL_CODEX_RESPONSES_LITE_HEADER,
             HeaderValue::from_static("true"),
         );
     }

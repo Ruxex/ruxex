@@ -35,7 +35,7 @@
 - **Protocol/app-server:** `crates/app-server-protocol/src/protocol/v2/`、`crates/app-server/src/request_processors/` と generated schema、history conversion。
 - **CLI/config/import:** `crates/features/src/lib.rs`、`crates/core/src/config/`、`crates/cli/src/`、`crates/external-agent-migration/src/`、関連 protocol/config schema。
 - **UI/runtime/telemetry:** `crates/core/src/context/`、`crates/core/src/session/`、`crates/core/src/stream_events_utils.rs`、`crates/tui/src/`、metrics/doctor/telemetry の関連箇所。
-- **Build/docs:** `Cargo.toml`、`Cargo.lock`、README/template/fixture、`docs/pre-release-compatibility-inventory.md`、`docs/openai-decoupling-plan.md`、`docs/openai-specific-crates.md`。
+- **Build/docs:** `Cargo.toml`、`Cargo.lock`、README/template/fixture、`docs/pre-release-compatibility-inventory.md`、`docs/provider-decoupling-plan.md`、`docs/provider-specific-crates.md`。
 
 ### Task 1: Persisted rollout/thread-history と state の memory 経路を除去
 
@@ -114,7 +114,7 @@
 
 **Files:**
 - Modify: `docs/pre-release-compatibility-inventory.md`
-- Modify: `docs/openai-decoupling-plan.md`、`docs/openai-specific-crates.md`（削除状況と次の integration の handoff のみ）
+- Modify: `docs/provider-decoupling-plan.md`、`docs/provider-specific-crates.md`（削除状況と次の integration の handoff のみ）
 
 - [x] `rg -n -i 'memories|memory_mode|memory_citation|MemoryStore|MemoryTool|ExternalAgentMemoryImport' crates Cargo.toml Cargo.lock` を実行し、production code に機能参照が残っていないことを確認する。
 - [x] `cargo metadata` と dependency graph を確認し、memory 専用 crate/dependency がないことを確認する。

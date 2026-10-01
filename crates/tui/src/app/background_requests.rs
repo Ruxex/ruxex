@@ -490,7 +490,7 @@ pub(super) async fn fetch_plugins_list(
     Ok(response)
 }
 
-const CLI_HIDDEN_PLUGIN_MARKETPLACES: &[&str] = &["openai-bundled"];
+const CLI_HIDDEN_PLUGIN_MARKETPLACES: &[&str] = &["codex-bundled"];
 
 pub(super) fn hide_cli_only_plugin_marketplaces(response: &mut PluginListResponse) {
     response

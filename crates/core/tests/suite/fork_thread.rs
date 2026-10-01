@@ -176,7 +176,7 @@ async fn fork_thread_restores_history_selection_and_preserves_explicit_clear() -
     let server = MockServer::start().await;
     let mut builder = test_codex();
     let test = builder.build_with_auto_env(&server).await?;
-    let selected = vec!["slack@openai".to_string()];
+    let selected = vec!["slack@provider".to_string()];
     submit_thread_settings(
         &test.codex,
         ThreadSettingsOverrides {

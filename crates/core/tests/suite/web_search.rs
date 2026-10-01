@@ -10,7 +10,7 @@ use codex_model_provider_info::AMAZON_BEDROCK_RUNTIME_PROVIDER_ID;
 use codex_model_provider_info::ModelProviderInfo;
 use codex_protocol::config_types::WebSearchMode;
 use codex_protocol::models::PermissionProfile;
-use codex_protocol::openai_models::WebSearchToolType;
+use codex_protocol::model_types::WebSearchToolType;
 use core_test_support::responses;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
@@ -152,7 +152,7 @@ async fn amazon_bedrock_web_search_uses_text_only_hosted_tools() {
 async fn amazon_bedrock_runtime_preserves_cross_region_models_without_web_search() {
     skip_if_no_network!();
 
-    for model in ["us.openai.gpt-5.6-sol", "global.openai.gpt-5.6-sol"] {
+    for model in ["us.provider.gpt-5.6-sol", "global.provider.gpt-5.6-sol"] {
         let server = start_mock_server().await;
         let response = responses::mount_sse_once(
             &server,

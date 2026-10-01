@@ -10,7 +10,7 @@ use std::path::PathBuf;
 
 #[test]
 fn ignored_toml_field_errors_accept_non_file_source_names() {
-    let source_name = "com.openai.codex:config_toml_base64";
+    let source_name = "com.codex.codex:config_toml_base64";
     let contents = r#"
 model = "gpt-5"
 unknown_key = true"#;
@@ -92,15 +92,15 @@ foo = true"#;
 }
 
 #[test]
-fn strict_config_rejects_removed_openai_base_url() {
+fn strict_config_rejects_removed_provider_base_url() {
     let path = Path::new("/tmp/config.toml");
     let error = config_error_from_ignored_toml_fields::<ConfigToml>(
         path,
-        "openai_base_url = \"https://gateway.example/v1\"\n",
+        "provider_base_url = \"https://gateway.example/v1\"\n",
     )
-    .expect("removed OpenAI base URL should be unknown");
+    .expect("removed provider base URL should be unknown");
 
-    assert_eq!(error.message, "unknown configuration field `openai_base_url`");
+    assert_eq!(error.message, "unknown configuration field `provider_base_url`");
 }
 
 #[test]

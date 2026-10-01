@@ -57,7 +57,7 @@ deleted normally. Ordinary client-controlled threads keep their existing behavio
 
 ## User verification (experimental)
 
-Codex app-server advertises `openai/elicitation.userVerification` to the
+Codex app-server advertises `provider/elicitation.userVerification` to the
 host-owned plugin service for bundled, in-process TUI sessions (`codex-tui`) and
 local stdio desktop sessions (`Codex Desktop`) on devices with supported biometric
 hardware and the `experimentalApi` opt-in. This is an app-server decision,
@@ -168,16 +168,16 @@ Attachments record the resources currently associated with a thread, independent
 { "method": "thread/attachment/add", "id": 20, "params": {
     "threadId": "thr_123",
     "attachmentType": "pull_request",
-    "identityKey": "[\"github.com\",\"openai\",\"codex\",123]",
-    "payload": { "url": "https://github.com/openai/codex/pull/123" }
+    "identityKey": "[\"github.com\",\"provider\",\"codex\",123]",
+    "payload": { "url": "https://github.com/codex/codex/pull/123" }
 } }
 { "id": 20, "result": {
     "outcome": "created",
     "attachment": {
         "id": "01984de2-8f74-7c91-a3b2-5c5e937cf318",
         "attachmentType": "pull_request",
-        "identityKey": "[\"github.com\",\"openai\",\"codex\",123]",
-        "payload": { "url": "https://github.com/openai/codex/pull/123" },
+        "identityKey": "[\"github.com\",\"provider\",\"codex\",123]",
+        "payload": { "url": "https://github.com/codex/codex/pull/123" },
         "createdAt": 1750000000
     }
 } }
@@ -190,8 +190,8 @@ Attachments record the resources currently associated with a thread, independent
     "data": [{
         "id": "01984de2-8f74-7c91-a3b2-5c5e937cf318",
         "attachmentType": "pull_request",
-        "identityKey": "[\"github.com\",\"openai\",\"codex\",123]",
-        "payload": { "url": "https://github.com/openai/codex/pull/123" },
+        "identityKey": "[\"github.com\",\"provider\",\"codex\",123]",
+        "payload": { "url": "https://github.com/codex/codex/pull/123" },
         "createdAt": 1750000000
     }],
     "nextCursor": null
@@ -200,14 +200,14 @@ Attachments record the resources currently associated with a thread, independent
 { "method": "thread/attachment/remove", "id": 22, "params": {
     "threadId": "thr_123",
     "attachmentType": "pull_request",
-    "identityKey": "[\"github.com\",\"openai\",\"codex\",123]"
+    "identityKey": "[\"github.com\",\"provider\",\"codex\",123]"
 } }
 { "id": 22, "result": {} }
 
 { "method": "thread/attachment/updated", "params": {
     "threadId": "thr_123",
     "attachmentType": "pull_request",
-    "identityKey": "[\"github.com\",\"openai\",\"codex\",123]",
+    "identityKey": "[\"github.com\",\"provider\",\"codex\",123]",
     "attachmentId": "01984de2-8f74-7c91-a3b2-5c5e937cf318",
     "operation": "deleted"
 } }

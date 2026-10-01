@@ -9,9 +9,9 @@ use tokio::time::timeout;
 
 fn native_request() -> Value {
     json!({
-        "method": "openai/elicitation/create",
+        "method": "provider/elicitation/create",
         "params": {
-            "mode": "openai/userVerification", "title": "Verify action",
+            "mode": "provider/userVerification", "title": "Verify action",
             "description": "Verify the requested operation", "challenge": "AQID"
         }
     })
@@ -28,7 +28,7 @@ fn capabilities() -> ClientCapabilities {
     let mut capabilities = ClientCapabilities::default();
     capabilities.extensions = Some(
         [(
-            "openai/elicitation".into(),
+            "provider/elicitation".into(),
             serde_json::Map::from_iter([("userVerification".into(), json!({}))]),
         )]
         .into_iter()
@@ -304,7 +304,7 @@ async fn mrtr_rejects_unsupported_elicitation_modes_without_prompting() -> anyho
         assert_eq!(
             codex_rmcp_client::mcp_error(&error),
             Some(&rmcp::ErrorData::invalid_request(
-                "unsupported OpenAI elicitation mode",
+                "unsupported provider elicitation mode",
                 /*data*/ None
             ))
         );

@@ -73,9 +73,9 @@ async fn thread_plugin_selection_disables_executor_hooks_without_disabling_their
     .await?;
     fixture.attach().await?;
     for (disabled_plugin_ids, expected_calls) in [
-        (vec!["computer-use@openai-bundled".to_string()], 0),
+        (vec!["computer-use@codex-bundled".to_string()], 0),
         (Vec::new(), 1),
-        (vec!["computer-use@openai-bundled".to_string()], 1),
+        (vec!["computer-use@codex-bundled".to_string()], 1),
     ] {
         let enabled = disabled_plugin_ids.is_empty();
         submit_thread_settings(
@@ -419,15 +419,15 @@ async fn executor_stop_hook_rejects_mismatched_environment() -> Result<()> {
 #[test_case("SubagentStop", "", "", 1; "subagent_enabled")]
 #[test_case(
     "Stop",
-    "[apps.connector_openai_browser]\nenabled = false\n",
+    "[apps.connector_provider_browser]\nenabled = false\n",
     "",
     0;
     "user_disabled"
 )]
 #[test_case(
     "Stop",
-    "[apps.connector_openai_browser]\nenabled = true\n",
-    "[apps.connector_openai_browser]\nenabled = false\n",
+    "[apps.connector_provider_browser]\nenabled = true\n",
+    "[apps.connector_provider_browser]\nenabled = false\n",
     0;
     "managed_disabled"
 )]
@@ -443,7 +443,7 @@ async fn executor_browser_and_computer_use_cleanup_hooks_use_separate_mcp_routes
     let apps_server = start_mock_server().await;
     let apps = AppsTestServer::mount(&apps_server).await?;
     let routing = json!({
-        "resource_uri": "/connector_openai_browser/browser-link/turn_ended",
+        "resource_uri": "/connector_provider_browser/browser-link/turn_ended",
         "contains_mcp_source": true,
     });
     let listed_routing = routing.clone();
@@ -459,7 +459,7 @@ async fn executor_browser_and_computer_use_cleanup_hooks_use_separate_mcp_routes
                     "name": "browser.turn_ended",
                     "inputSchema": { "type": "object" },
                     "_meta": {
-                        "connector_id": "connector_openai_browser",
+                        "connector_id": "connector_provider_browser",
                         "connector_name": "Browser",
                         "ui": { "visibility": ["app"] },
                         "_codex_apps": listed_routing,
@@ -473,7 +473,7 @@ async fn executor_browser_and_computer_use_cleanup_hooks_use_separate_mcp_routes
 
     let plugins = [
         (
-            "browser@openai-curated-remote",
+            "browser@test-remote",
             json!({
                 "name": "browser",
                 "hooks": { "hooks": {
@@ -498,7 +498,7 @@ async fn executor_browser_and_computer_use_cleanup_hooks_use_separate_mcp_routes
                 } },
             }),
         ),
-        ("computer-use@openai-bundled", computer_use_hook_manifest()),
+        ("computer-use@codex-bundled", computer_use_hook_manifest()),
     ];
     let mut fixture = executor_plugin_hook_fixture(
         apps_enabled_builder(apps.managed_auth_base_url)
@@ -656,7 +656,7 @@ async fn executor_stop_hook_fixture() -> Result<ExecutorHookFixture> {
 async fn executor_hook_fixture(responses: Vec<ResponseTemplate>) -> Result<ExecutorHookFixture> {
     executor_plugin_hook_fixture(
         test_codex(),
-        &[("computer-use@openai-bundled", computer_use_hook_manifest())],
+        &[("computer-use@codex-bundled", computer_use_hook_manifest())],
         responses,
     )
     .await

@@ -231,7 +231,7 @@ mod tests {
     #[test]
     fn standalone_web_search_requires_provider_opt_in() {
         assert!(!standalone_web_search_available(
-            &ModelProviderInfo::create_openai_provider(/*base_url*/ None),
+            &ModelProviderInfo::create_responses_provider(/*base_url*/ None),
             WebSearchMode::Live,
         ));
         assert!(standalone_web_search_available(

@@ -33,7 +33,7 @@ pub use crate::chat_completion::ChatUsageDecoder;
 pub use crate::chat_completion::StandardChatCompletionApi;
 pub use crate::chat_completion::StandardChatUsageDecoder;
 pub use crate::common::AccessPrograms;
-pub use crate::common::OpenAiVerbosity;
+pub use crate::common::ProviderVerbosity;
 pub use crate::common::Reasoning;
 pub use crate::common::ReasoningContext;
 pub use crate::common::ReasoningSummaryDelivery;

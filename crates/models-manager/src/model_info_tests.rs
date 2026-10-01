@@ -1,17 +1,17 @@
 use super::*;
 use crate::ModelsManagerConfig;
 use codex_prompts::render_model_instructions;
-use codex_protocol::openai_models::ApprovalMessages;
-use codex_protocol::openai_models::CollaborationModeMessages;
-use codex_protocol::openai_models::ConfirmationPolicies;
-use codex_protocol::openai_models::ModelTokenBudgetConfig;
-use codex_protocol::openai_models::MultiAgentMessages;
-use codex_protocol::openai_models::MultiAgentModeMessages;
-use codex_protocol::openai_models::MultiAgentRoleMessages;
-use codex_protocol::openai_models::MultiAgentToolMessages;
-use codex_protocol::openai_models::PermissionMessages;
-use codex_protocol::openai_models::ToolMessage;
-use codex_protocol::openai_models::ToolMessages;
+use codex_protocol::model_types::ApprovalMessages;
+use codex_protocol::model_types::CollaborationModeMessages;
+use codex_protocol::model_types::ConfirmationPolicies;
+use codex_protocol::model_types::ModelTokenBudgetConfig;
+use codex_protocol::model_types::MultiAgentMessages;
+use codex_protocol::model_types::MultiAgentModeMessages;
+use codex_protocol::model_types::MultiAgentRoleMessages;
+use codex_protocol::model_types::MultiAgentToolMessages;
+use codex_protocol::model_types::PermissionMessages;
+use codex_protocol::model_types::ToolMessage;
+use codex_protocol::model_types::ToolMessages;
 use pretty_assertions::assert_eq;
 
 #[test]

@@ -1,8 +1,8 @@
 use super::*;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::ModelServiceTier;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::openai_models::ReasoningEffortPreset;
+use codex_protocol::model_types::ModelPreset;
+use codex_protocol::model_types::ModelServiceTier;
+use codex_protocol::model_types::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffortPreset;
 use codex_tools::JsonSchemaPrimitiveType;
 use codex_tools::JsonSchemaType;
 use pretty_assertions::assert_eq;

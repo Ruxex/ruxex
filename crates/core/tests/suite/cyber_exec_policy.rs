@@ -4,7 +4,7 @@ use codex_core::config::Config;
 use codex_core::config::Constrained;
 use codex_core::sandboxing::SandboxPermissions;
 use codex_protocol::config_types::ApprovalsReviewer;
-use codex_protocol::openai_models::MODEL_SPECIALTY_CYBER;
+use codex_protocol::model_types::MODEL_SPECIALTY_CYBER;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::EventMsg;
 use codex_protocol::protocol::Op;

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Rust workspace, Serde/TOML/JSON, app-server protocol schemas, model instruction templates, Just verification targets.
 
-**Spec:** [`docs/pre-release-compatibility-inventory.md`](../../pre-release-compatibility-inventory.md), [`docs/openai-decoupling-candidates.md`](../../openai-decoupling-candidates.md)
+**Spec:** [`docs/pre-release-compatibility-inventory.md`](../../pre-release-compatibility-inventory.md), [`docs/provider-decoupling-candidates.md`](../../provider-decoupling-candidates.md)
 
 ## Global Constraints
 
@@ -216,7 +216,7 @@
 ### Task 6: Remove model-catalog and compatibility metadata
 
 **Files:**
-- Modify: `crates/protocol/src/openai_models.rs`
+- Modify: `crates/protocol/src/model_types.rs`
 - Modify: `crates/app-server-protocol/src/protocol/v2/model.rs`
 - Modify: `crates/app-server/src/models.rs`
 - Modify: `crates/tui/src/app_server_session.rs`

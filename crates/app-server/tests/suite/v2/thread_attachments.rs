@@ -82,8 +82,8 @@ async fn thread_attachments_support_unloaded_listing_and_idempotent_attachment()
     let first_params = ThreadAttachmentAddParams {
         thread_id: first_thread.clone(),
         attachment_type: "pull_request".to_string(),
-        identity_key: r#"["github.com","openai","codex",123]"#.to_string(),
-        payload: json!({ "url": "https://github.com/openai/codex/pull/123" }),
+        identity_key: r#"["github.com","provider","codex",123]"#.to_string(),
+        payload: json!({ "url": "https://github.com/codex/codex/pull/123" }),
     };
     let first: ThreadAttachmentAddResponse = server
         .request(|request_id| ClientRequest::ThreadAttachmentAdd {
@@ -129,8 +129,8 @@ async fn thread_attachments_support_unloaded_listing_and_idempotent_attachment()
             params: ThreadAttachmentAddParams {
                 thread_id: first_thread.clone(),
                 attachment_type: "pull_request".to_string(),
-                identity_key: r#"["github.com","openai","codex",456]"#.to_string(),
-                payload: json!({ "url": "https://github.com/openai/codex/pull/456" }),
+                identity_key: r#"["github.com","provider","codex",456]"#.to_string(),
+                payload: json!({ "url": "https://github.com/codex/codex/pull/456" }),
             },
         })
         .await?;
@@ -142,8 +142,8 @@ async fn thread_attachments_support_unloaded_listing_and_idempotent_attachment()
             params: ThreadAttachmentAddParams {
                 thread_id: unrelated_thread,
                 attachment_type: "pull_request".to_string(),
-                identity_key: r#"["github.com","openai","codex",789]"#.to_string(),
-                payload: json!({ "url": "https://github.com/openai/codex/pull/789" }),
+                identity_key: r#"["github.com","provider","codex",789]"#.to_string(),
+                payload: json!({ "url": "https://github.com/codex/codex/pull/789" }),
             },
         })
         .await?;
@@ -219,8 +219,8 @@ async fn attachment_removal_is_idempotent_and_allows_reattachment() -> Result<()
     let create_params = ThreadAttachmentAddParams {
         thread_id: thread_id.clone(),
         attachment_type: "pull_request".to_string(),
-        identity_key: r#"["github.com","openai","codex",123]"#.to_string(),
-        payload: json!({ "url": "https://github.com/openai/codex/pull/123" }),
+        identity_key: r#"["github.com","provider","codex",123]"#.to_string(),
+        payload: json!({ "url": "https://github.com/codex/codex/pull/123" }),
     };
     let created: ThreadAttachmentAddResponse = server
         .request(|request_id| ClientRequest::ThreadAttachmentAdd {
@@ -320,7 +320,7 @@ async fn thread_attachment_requests_reject_invalid_identities_and_cursors() -> R
             json!({
                 "threadId": "not-a-thread-id",
                 "attachmentType": "pull_request",
-                "identityKey": r#"["github.com","openai","codex",123]"#,
+                "identityKey": r#"["github.com","provider","codex",123]"#,
                 "payload": {}
             }),
         ),
@@ -329,7 +329,7 @@ async fn thread_attachment_requests_reject_invalid_identities_and_cursors() -> R
             json!({
                 "threadId": uuid::Uuid::now_v7().to_string(),
                 "attachmentType": " ",
-                "identityKey": r#"["github.com","openai","codex",123]"#,
+                "identityKey": r#"["github.com","provider","codex",123]"#,
                 "payload": {}
             }),
         ),
@@ -412,8 +412,8 @@ async fn thread_attachment_mutations_respond_before_broadcasting_updates_to_mult
             Some(json!({
                 "threadId": thread_id.to_uppercase(),
                 "attachmentType": "pull_request",
-                "identityKey": r#"["github.com","openai","codex",123]"#,
-                "payload": { "url": "https://github.com/openai/codex/pull/123" }
+                "identityKey": r#"["github.com","provider","codex",123]"#,
+                "payload": { "url": "https://github.com/codex/codex/pull/123" }
             })),
         )
         .await?;
@@ -444,7 +444,7 @@ async fn thread_attachment_mutations_respond_before_broadcasting_updates_to_mult
             ThreadAttachmentUpdatedNotification {
                 thread_id: thread_id.clone(),
                 attachment_type: "pull_request".to_string(),
-                identity_key: r#"["github.com","openai","codex",123]"#.to_string(),
+                identity_key: r#"["github.com","provider","codex",123]"#.to_string(),
                 attachment_id: attachment.id.clone(),
                 operation: ThreadAttachmentOperation::Created,
             }
@@ -458,7 +458,7 @@ async fn thread_attachment_mutations_respond_before_broadcasting_updates_to_mult
             Some(json!({
                 "threadId": format!("{{{thread_id}}}"),
                 "attachmentType": "pull_request",
-                "identityKey": r#"["github.com","openai","codex",123]"#
+                "identityKey": r#"["github.com","provider","codex",123]"#
             })),
         )
         .await?;
@@ -488,7 +488,7 @@ async fn thread_attachment_mutations_respond_before_broadcasting_updates_to_mult
             ThreadAttachmentUpdatedNotification {
                 thread_id,
                 attachment_type: "pull_request".to_string(),
-                identity_key: r#"["github.com","openai","codex",123]"#.to_string(),
+                identity_key: r#"["github.com","provider","codex",123]"#.to_string(),
                 attachment_id: attachment.id,
                 operation: ThreadAttachmentOperation::Deleted,
             }

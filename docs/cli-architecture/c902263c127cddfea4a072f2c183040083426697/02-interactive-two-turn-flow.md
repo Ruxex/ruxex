@@ -134,7 +134,7 @@ TUI の初期表示では `account/read` が送られます。続いて `model/l
 
 したがって、「起動時に認証処理が1回だけ走って、その結果を全ターンで固定利用する」という理解ではありません。起動時には状態確認、各モデルリクエスト時には送信可能な資格情報の解決が行われます。期限切れ時の更新や再試行が入る場合もあります。
 
-なお、OpenAI API の認証と MCP サーバー自身の OAuth 認証は別系統です。MCP OAuth の資格情報は、設定により `CODEX_HOME/.credentials.json` や keyring に保存されます。
+なお、provider API の認証と MCP サーバー自身の OAuth 認証は別系統です。MCP OAuth の資格情報は、設定により `CODEX_HOME/.credentials.json` や keyring に保存されます。
 
 ## 3. Thread と Session を作る
 

@@ -615,7 +615,7 @@ async fn exec_resume_accepts_global_flags_after_subcommand() -> anyhow::Result<(
     // Resume while passing global flags after the subcommand to ensure clap accepts them.
     let base = format!("{}/v1", server.uri());
     let base_config = format!(
-        "model_providers.openai.base_url={}",
+        "model_providers.provider.base_url={}",
         serde_json::to_string(&base)?
     );
     test.cmd()

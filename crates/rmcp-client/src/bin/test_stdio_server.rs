@@ -42,7 +42,7 @@ struct TestToolServer {
     tools: Arc<Vec<Tool>>,
     resources: Arc<Vec<Resource>>,
     resource_templates: Arc<Vec<ResourceTemplate>>,
-    supports_openai_form_elicitation: Arc<AtomicBool>,
+    supports_provider_form_elicitation: Arc<AtomicBool>,
 }
 
 const MEMO_URI: &str = "memo://codex/example-note";
@@ -156,7 +156,7 @@ impl TestToolServer {
             tools: Arc::new(tools),
             resources: Arc::new(resources),
             resource_templates: Arc::new(resource_templates),
-            supports_openai_form_elicitation: Arc::new(AtomicBool::new(false)),
+            supports_provider_form_elicitation: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -491,12 +491,12 @@ impl ServerHandler for TestToolServer {
                 sleep(Duration::from_millis(10)).await;
             }
         }
-        self.supports_openai_form_elicitation.store(
+        self.supports_provider_form_elicitation.store(
             request
                 .capabilities
                 .extensions
                 .as_ref()
-                .is_some_and(|extensions| extensions.contains_key("openai/form")),
+                .is_some_and(|extensions| extensions.contains_key("provider/form")),
             Ordering::Relaxed,
         );
         context.peer.set_peer_info(request);
@@ -657,8 +657,8 @@ impl ServerHandler for TestToolServer {
                 }
             }
             "client_capabilities" => Ok(Self::structured_result(json!({
-                "supportsOpenaiFormElicitation": self
-                    .supports_openai_form_elicitation
+                "supportsproviderFormElicitation": self
+                    .supports_provider_form_elicitation
                     .load(Ordering::Relaxed),
             }))),
             "sandbox_meta" => Ok(Self::structured_result(serde_json::Value::Object(

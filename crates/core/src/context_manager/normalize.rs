@@ -6,7 +6,7 @@ use codex_protocol::models::ContentItem;
 use codex_protocol::models::FunctionCallOutputContentItem;
 use codex_protocol::models::FunctionCallOutputPayload;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::InputModality;
+use codex_protocol::model_types::InputModality;
 use std::collections::HashSet;
 use uuid::Uuid;
 

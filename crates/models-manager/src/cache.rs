@@ -1,6 +1,6 @@
 use chrono::DateTime;
 use chrono::Utc;
-use codex_protocol::openai_models::ModelInfo;
+use codex_protocol::model_types::ModelInfo;
 use serde::Deserialize;
 use serde::Serialize;
 use std::fmt;
@@ -78,7 +78,7 @@ pub struct ModelsCacheEntry {
     pub identity: Option<String>,
     /// Models returned by the catalog endpoint.
     #[serde(
-        deserialize_with = "codex_protocol::openai_models::deserialize_model_infos_with_legacy_base"
+        deserialize_with = "codex_protocol::model_types::deserialize_model_infos_with_legacy_base"
     )]
     pub models: Vec<ModelInfo>,
 }

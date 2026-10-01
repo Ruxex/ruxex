@@ -5,7 +5,7 @@ use codex_core::config::RolloutBudgetConfig;
 use codex_core::config::TokenBudgetConfig;
 use codex_features::Feature;
 use codex_protocol::models::ImageReference;
-use codex_protocol::openai_models::InputModality;
+use codex_protocol::model_types::InputModality;
 use codex_protocol::protocol::AdditionalContextEntry;
 use codex_protocol::protocol::AdditionalContextKind;
 use codex_protocol::protocol::EventMsg;

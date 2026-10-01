@@ -10,7 +10,7 @@ use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::models::FunctionCallOutputBody;
 use codex_protocol::models::ImageDetail;
 use codex_protocol::models::ImageReference as CoreImageReference;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use codex_protocol::plan_tool::PlanItemArg as CorePlanItemArg;
 use codex_protocol::plan_tool::StepStatus as CorePlanStepStatus;
 use codex_protocol::turn_input::CyberAccessProgram as CoreCyberAccessProgram;

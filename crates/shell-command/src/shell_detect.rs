@@ -392,10 +392,10 @@ mod tests {
 
         for path in [
             r"C:\Program Files\PowerShell\7\pwsh.exe",
-            r"C:\Program Files\WindowsApps\OpenAI.CodexPrimaryRuntime.v26-813-10124-0_26.813.10124.0_x64__3k8sg7r9htsxt\dependencies\native\powershell\pwsh.exe",
-            r"C:\Program Files\WindowsApps\OpenAI.CodexPrimaryRuntime.v26-813-10124-0_26.813.10124.0_arm64__3k8sg7r9htsxt\dependencies\native\powershell\pwsh.exe",
-            r"C:\PROGRAM FILES\WINDOWSAPPS\OPENAI.CODEXPRIMARYRUNTIME.V26-813-10124-0\DEPENDENCIES\NATIVE\POWERSHELL\PWSH.EXE",
-            r"\\?\C:\Program Files\WindowsApps\OpenAI.CodexPrimaryRuntime.v26-813-10124-0\dependencies\native\powershell\pwsh.exe",
+            r"C:\Program Files\WindowsApps\provider.CodexPrimaryRuntime.v26-813-10124-0_26.813.10124.0_x64__3k8sg7r9htsxt\dependencies\native\powershell\pwsh.exe",
+            r"C:\Program Files\WindowsApps\provider.CodexPrimaryRuntime.v26-813-10124-0_26.813.10124.0_arm64__3k8sg7r9htsxt\dependencies\native\powershell\pwsh.exe",
+            r"C:\PROGRAM FILES\WINDOWSAPPS\provider.CODEXPRIMARYRUNTIME.V26-813-10124-0\DEPENDENCIES\NATIVE\POWERSHELL\PWSH.EXE",
+            r"\\?\C:\Program Files\WindowsApps\provider.CodexPrimaryRuntime.v26-813-10124-0\dependencies\native\powershell\pwsh.exe",
             r"C:\Users\user\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.exe",
             r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
             r"C:\portable\NotWindowsApps\pwsh.EXE",

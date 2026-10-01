@@ -8,7 +8,7 @@
 
 **Tech Stack:** Rust, `codex-rollout`, `codex-thread-store`, SQLite, JSONL rollout storage, `rg`, Cargo metadata, `just check`。
 
-**Spec:** `docs/openai-decoupling-plan.md`, `docs/pre-release-compatibility-inventory.md`
+**Spec:** `docs/provider-decoupling-plan.md`, `docs/pre-release-compatibility-inventory.md`
 
 ## Global Constraints
 
@@ -95,7 +95,7 @@
 
 **Files:**
 - Modify: `docs/pre-release-compatibility-inventory.md`
-- Modify: `docs/openai-decoupling-plan.md`
+- Modify: `docs/provider-decoupling-plan.md`
 - Modify: affected checked-in schemas or snapshots discovered by `rg`
 
 - [ ] **Step 1: compatibility sliceの完了記録を更新する**

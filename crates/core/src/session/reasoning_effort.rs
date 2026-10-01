@@ -13,7 +13,7 @@ use codex_history::CodexHarnessMetadata;
 use codex_history::ResponseItemEnvelope;
 use codex_protocol::models::ConfigurationReasoning;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 
 /// Sampling can establish a pin; compaction must not change live state before it succeeds.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -132,7 +132,7 @@ impl Session {
     ) -> Option<ReasoningEffort> {
         if !self.enabled(Feature::ReasoningEffortOverride)
             || !settings.model_info.use_responses_lite
-            || !self.provider().await.is_openai()
+            || !self.provider().await.is_responses_provider()
         {
             return None;
         }

@@ -17,7 +17,7 @@
 - Do not introduce a replacement remote-policy trait or provider interface.
 - Do not change authentication, provider registry, or unrelated backend integration.
 - This is crate-removal work: use `cargo check` and `just check` as primary verification; do not add deletion-specific tests first.
-- Update `docs/openai-decoupling-plan.md` only after this implementation unit passes all verification.
+- Update `docs/provider-decoupling-plan.md` only after this implementation unit passes all verification.
 
 ## Review Focus
 
@@ -134,7 +134,7 @@
 - Modify: `crates/exec/{Cargo.toml,src/lib.rs,src/worktree.rs,tests/suite/worktree.rs}`
 - Modify: `crates/windows-sandbox-service/{Cargo.toml,src/machine_policy.rs}`
 - Modify: `crates/cli/tests/{cloud_config,features,sandbox_cloud_config,worktree}.rs`
-- Modify: `docs/openai-decoupling-plan.md`
+- Modify: `docs/provider-decoupling-plan.md`
 
 **Interfaces:**
 - Consumes: consumer APIs without hosted loaders from Task 2.
@@ -162,7 +162,7 @@
 
   Expected: generated graph has no `codex-cloud-config` node or incoming edge.
 
-  Update `docs/openai-decoupling-plan.md` to mark this first Phase 3 unit complete and state that hosted policy loading was removed while later backend integration work remains.
+  Update `docs/provider-decoupling-plan.md` to mark this first Phase 3 unit complete and state that hosted policy loading was removed while later backend integration work remains.
 
 - [ ] **Step 5: Run repository verification.**
 
@@ -173,6 +173,6 @@
 - [ ] **Step 6: Commit the removal.**
 
   ```bash
-  git add Cargo.toml Cargo.lock crates/cli crates/tui crates/exec crates/windows-sandbox-service crates/cloud-config docs/openai-decoupling-plan.md
+  git add Cargo.toml Cargo.lock crates/cli crates/tui crates/exec crates/windows-sandbox-service crates/cloud-config docs/provider-decoupling-plan.md
   git commit -m "chore: remove cloud config integration"
   ```

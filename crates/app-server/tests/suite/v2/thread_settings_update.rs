@@ -36,7 +36,7 @@ use codex_protocol::config_types::CollaborationMode;
 use codex_protocol::config_types::ModeKind;
 use codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
 use codex_protocol::config_types::Settings;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use codex_utils_absolute_path::test_support::PathExt;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
@@ -63,17 +63,17 @@ async fn disabled_plugin_ids_replace_preserve_and_clear_without_inference() -> R
 
     for (mut params, expected) in [
         (
-            json!({"disabledPluginIds": ["slack@openai", "notion@openai"]}),
-            vec!["slack@openai", "notion@openai"],
+            json!({"disabledPluginIds": ["slack@provider", "notion@provider"]}),
+            vec!["slack@provider", "notion@provider"],
         ),
         (
-            json!({"disabledPluginIds": ["slack@openai"]}),
-            vec!["slack@openai"],
+            json!({"disabledPluginIds": ["slack@provider"]}),
+            vec!["slack@provider"],
         ),
-        (json!({"model": "mock-model-2"}), vec!["slack@openai"]),
+        (json!({"model": "mock-model-2"}), vec!["slack@provider"]),
         (
             json!({"disabledPluginIds": null, "model": "mock-model-3"}),
-            vec!["slack@openai"],
+            vec!["slack@provider"],
         ),
         (json!({"disabledPluginIds": []}), vec![]),
     ] {
@@ -117,7 +117,7 @@ async fn disabled_plugin_ids_restore_from_fork_boundary(
         })
         .await?;
     let thread_id = started.thread.id;
-    let initial_selection = vec!["slack@openai".to_string()];
+    let initial_selection = vec!["slack@provider".to_string()];
     let first_turn = mcp
         .start_turn_and_wait_for_completion(TurnStartParams {
             thread_id: thread_id.clone(),
@@ -603,7 +603,7 @@ async fn turn_start_settings_override_emits_thread_settings_updated() -> Result<
                 text_elements: Vec::new(),
             }],
             model: Some("mock-model-3".to_string()),
-            disabled_plugin_ids: Some(vec!["slack@openai".to_string()]),
+            disabled_plugin_ids: Some(vec!["slack@provider".to_string()]),
             ..Default::default()
         })
         .await?;
@@ -616,7 +616,7 @@ async fn turn_start_settings_override_emits_thread_settings_updated() -> Result<
     assert_eq!(updated.thread_settings.model, "mock-model-3");
     assert_eq!(
         updated.thread_settings.disabled_plugin_ids,
-        vec!["slack@openai"]
+        vec!["slack@provider"]
     );
 
     timeout(

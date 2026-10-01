@@ -69,7 +69,7 @@ async fn attestation_generate_round_trip_adds_header_to_responses_websocket_hand
 
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
-        .with_env_overrides(&[("OPENAI_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build()
         .await?;
     let initialized = timeout(
@@ -84,7 +84,7 @@ async fn attestation_generate_round_trip_adds_header_to_responses_websocket_hand
                 experimental_api: true,
                 request_attestation: true,
                 opt_out_notification_methods: None,
-                mcp_server_openai_form_elicitation: false,
+                mcp_server_provider_form_elicitation: false,
                 extensions: None,
             }),
         ),

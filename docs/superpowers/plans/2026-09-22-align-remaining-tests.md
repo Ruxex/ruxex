@@ -23,7 +23,7 @@
 
 - Current stdio exec-server and local-environment tests remain after remote transport cleanup.
 - Current plugin manifest/MCP/hooks/skills tests remain after removing Apps and hosted marketplace integrations.
-- Current MCP elicitation tests retain native/provider-neutral flows without OpenAI-specific forms.
+- Current MCP elicitation tests retain native/provider-neutral flows without provider-specific forms.
 - Removed ChatGPT and Agent Identity auth modes are absent from test fixtures and assertions.
 - Test helper signatures match the current production constructors and loader APIs.
 
@@ -52,13 +52,13 @@
 - [ ] Retain current marketplace source-policy, local/bundled plugin loading, MCP server, hooks, skills, script attribution, and store lifecycle tests.
 - [ ] Run `just check --tests`; expected result is no errors from `core-plugins`.
 
-### Task 3: Remove remaining OpenAI-specific MCP test cases
+### Task 3: Remove remaining provider-specific MCP test cases
 
 **Files:**
 - Review: `crates/rmcp-client/tests/mcp_2026_mrtr/native_verification_tests.rs` and `crates/rmcp-client/src/` elicitation types.
-- Review any remaining `crates/rmcp-client` tests importing `OPENAI_ELICITATION_EXTENSION_ID` or matching `OpenAiElicitationForm`.
+- Review any remaining `crates/rmcp-client` tests importing `provider_ELICITATION_EXTENSION_ID` or matching `providerElicitationForm`.
 
-- [ ] Remove assertions and fixtures for deleted OpenAI elicitation extension IDs/forms while retaining native MRTR validation, malformed-request rejection, continuation expiry, and cancellation behavior.
+- [ ] Remove assertions and fixtures for deleted provider elicitation extension IDs/forms while retaining native MRTR validation, malformed-request rejection, continuation expiry, and cancellation behavior.
 - [ ] Confirm no remaining test imports removed protocol constants or enum variants.
 - [ ] Run `just check --tests` and inspect the complete error summary.
 
@@ -68,7 +68,7 @@
 - Modify only test files and test-only dependencies identified by Tasks 1–3.
 - Review: `Cargo.toml` files and `Cargo.lock` only if stale test-only dependencies are removed.
 
-- [ ] Run `rg` for removed symbols: `RemoteExecServerConnectArgs`, `connect_websocket`, `REMOTE_ENVIRONMENT_ID`, `crate::remote`, `AppConnectorId`, `OpenAiElicitationForm`, `AuthMode::Chatgpt`, and `create_dummy_chatgpt_auth_for_testing`.
+- [ ] Run `rg` for removed symbols: `RemoteExecServerConnectArgs`, `connect_websocket`, `REMOTE_ENVIRONMENT_ID`, `crate::remote`, `AppConnectorId`, `providerElicitationForm`, `AuthMode::Chatgpt`, and `create_dummy_chatgpt_auth_for_testing`.
 - [ ] Run `just check` and `just check --tests`.
 - [ ] Run `git diff --check` and inspect the diff for accidental production changes or deletion of retained provider-neutral tests.
 - [ ] Report any remaining failures by root cause rather than masking them with compatibility shims.

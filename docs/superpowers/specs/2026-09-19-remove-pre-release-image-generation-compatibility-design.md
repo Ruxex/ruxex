@@ -14,7 +14,7 @@ area to the shared agent foundation.
 ## Decision
 
 Remove the remaining image-generation compatibility layer before continuing
-the broader OpenAI-specific integration removal. The clean break covers the
+the broader provider-specific integration removal. The clean break covers the
 old Responses `image_generation_call` item, extension-owned
 `image_gen.generation` item, legacy begin/end events, rollout migration,
 app-server schema variants, replay/display code, and image-generation-specific
@@ -30,7 +30,7 @@ must not delete those files automatically; it only removes the code required
 to read or migrate them.
 
 If image generation is reintroduced later, it must be designed as a new
-provider-neutral capability rather than restoring the removed OpenAI-shaped
+provider-neutral capability rather than restoring the removed provider-shaped
 history and protocol types.
 
 ## Goals

@@ -1637,7 +1637,7 @@ impl ServerHandler for ResourceAppsMcpServer {
                         "connector_name": connector_id,
                         "link_id": format!("link_{connector_id}"),
                         "ui": ui,
-                        "openai/outputTemplate": TEST_WIDGET_RESOURCE_URI,
+                        "provider/outputTemplate": TEST_WIDGET_RESOURCE_URI,
                         "_codex_apps": {
                             "resource_uri": format!(
                                 "/{connector_id}/link_{connector_id}/{connector_id}_product_search"

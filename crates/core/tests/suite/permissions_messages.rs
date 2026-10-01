@@ -5,10 +5,10 @@ use codex_core::TurnInputRequest;
 use codex_core::config::Constrained;
 use codex_models_manager::model_info::model_info_from_slug;
 use codex_protocol::models::PermissionProfile;
-use codex_protocol::openai_models::ApprovalMessages;
-use codex_protocol::openai_models::ModelMessages;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::openai_models::PermissionMessages;
+use codex_protocol::model_types::ApprovalMessages;
+use codex_protocol::model_types::ModelMessages;
+use codex_protocol::model_types::ModelsResponse;
+use codex_protocol::model_types::PermissionMessages;
 use codex_protocol::permissions::NetworkSandboxPolicy;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::EventMsg;
@@ -40,7 +40,7 @@ fn model_with_approval_messages(
     slug: &str,
     on_request: &str,
     on_request_auto_review: &str,
-) -> codex_protocol::openai_models::ModelInfo {
+) -> codex_protocol::model_types::ModelInfo {
     let mut model = model_info_from_slug(slug);
     model.model_messages = Some(ModelMessages {
         approvals: Some(ApprovalMessages {
@@ -57,7 +57,7 @@ fn model_with_approval_messages(
 fn model_with_permission_messages(
     slug: &str,
     permissions: PermissionMessages,
-) -> codex_protocol::openai_models::ModelInfo {
+) -> codex_protocol::model_types::ModelInfo {
     let mut model = model_info_from_slug(slug);
     model.model_messages = Some(ModelMessages {
         permissions: Some(permissions),

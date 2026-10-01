@@ -16,12 +16,12 @@ use codex_login::CodexAuth;
 use codex_model_provider_info::ModelProviderInfo;
 use codex_model_provider_info::WireApi;
 use codex_models_manager::cache::ModelsCache;
-use codex_models_manager::manager::OpenAiModelsManager;
+use codex_models_manager::manager::RemoteModelsManager;
 use codex_models_manager::manager::SharedModelsManager;
 use codex_models_manager::manager::StaticModelsManager;
 use codex_protocol::account::ProviderAccount;
 use codex_protocol::error::CodexErr;
-use codex_protocol::openai_models::ModelsResponse;
+use codex_protocol::model_types::ModelsResponse;
 
 use crate::amazon_bedrock::AmazonBedrockModelProvider;
 use crate::auth::ProviderAuthScope;
@@ -29,7 +29,7 @@ use crate::auth::ResolvedProviderAuth;
 use crate::auth::auth_manager_for_provider;
 use crate::auth::resolve_provider_auth;
 use crate::auth::resolve_provider_auth_for_scope;
-use crate::models_endpoint::OpenAiModelsEndpoint;
+use crate::models_endpoint::ModelsEndpoint;
 use crate::my_provider::MyModelProvider;
 
 /// Remote context-compaction protocols supported by a model provider.
@@ -132,7 +132,7 @@ pub const DEFAULT_MEMORY_CONSOLIDATION_PREFERRED_MODEL: &str = "gpt-5.6-terra";
 ///
 /// Implementations own provider-specific behavior for a model backend. The
 /// `ModelProviderInfo` returned by `info` is the serialized/configured provider
-/// metadata used by the default OpenAI-compatible implementation.
+/// metadata used by the default provider-compatible implementation.
 pub trait ModelProvider: fmt::Debug + Send + Sync {
     /// Returns the configured provider metadata.
     fn info(&self) -> &ModelProviderInfo;
@@ -337,7 +337,7 @@ impl ModelProvider for ConfiguredModelProvider {
     }
 
     fn capabilities(&self) -> ProviderCapabilities {
-        let remote_compaction = if self.info.is_openai()
+        let remote_compaction = if self.info.is_responses_provider()
             || is_azure_responses_provider(&self.info.name, self.info.base_url.as_deref())
         {
             RemoteCompactionSupport::V2
@@ -413,11 +413,11 @@ impl ModelProvider for ConfiguredModelProvider {
                 model_catalog,
             )),
             None => {
-                let endpoint = Arc::new(OpenAiModelsEndpoint::new(
+                let endpoint = Arc::new(ModelsEndpoint::new(
                     self.info.clone(),
                     self.auth_manager.clone(),
                 ));
-                Arc::new(OpenAiModelsManager::new(
+                Arc::new(RemoteModelsManager::new(
                     codex_home,
                     endpoint,
                     self.auth_manager.clone(),
@@ -436,11 +436,11 @@ impl ModelProvider for ConfiguredModelProvider {
                 model_catalog,
             )),
             None => {
-                let endpoint = Arc::new(OpenAiModelsEndpoint::new(
+                let endpoint = Arc::new(ModelsEndpoint::new(
                     self.info.clone(),
                     self.auth_manager.clone(),
                 ));
-                Arc::new(OpenAiModelsManager::new_without_cache(
+                Arc::new(RemoteModelsManager::new_without_cache(
                     endpoint,
                     self.auth_manager.clone(),
                 ))
@@ -459,11 +459,11 @@ impl ModelProvider for ConfiguredModelProvider {
                 model_catalog,
             )),
             None => {
-                let endpoint = Arc::new(OpenAiModelsEndpoint::new(
+                let endpoint = Arc::new(ModelsEndpoint::new(
                     self.info.clone(),
                     self.auth_manager.clone(),
                 ));
-                Arc::new(OpenAiModelsManager::new_with_cache(
+                Arc::new(RemoteModelsManager::new_with_cache(
                     cache,
                     endpoint,
                     self.auth_manager.clone(),
@@ -491,8 +491,8 @@ mod tests {
     use codex_models_manager::ModelsManagerConfig;
     use codex_models_manager::manager::RefreshStrategy;
     use codex_protocol::config_types::ModelProviderAuthInfo;
-    use codex_protocol::openai_models::ModelInfo;
-    use codex_protocol::openai_models::ModelsResponse;
+    use codex_protocol::model_types::ModelInfo;
+    use codex_protocol::model_types::ModelsResponse;
     use codex_utils_redacted_string::RedactedString;
     use pretty_assertions::assert_eq;
     use serde_json::json;
@@ -519,7 +519,7 @@ mod tests {
     #[test]
     fn responses_provider_keeps_concrete_runtime_api() {
         let provider = create_model_provider(
-            ModelProviderInfo::create_openai_provider(None),
+            ModelProviderInfo::create_responses_provider(None),
             /*auth_manager*/ None,
         );
 
@@ -539,7 +539,7 @@ mod tests {
                     .expect("current dir should be absolute"),
             }),
             requires_auth: false,
-            ..ModelProviderInfo::create_openai_provider(/*base_url*/ None)
+            ..ModelProviderInfo::create_responses_provider(/*base_url*/ None)
         }
     }
 
@@ -602,7 +602,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn scoped_auth_ignores_scope_for_non_openai_provider() {
+    async fn scoped_auth_ignores_scope_for_non_responses_provider() {
         let provider = create_model_provider(
             create_responses_provider_with_base_url(
                 "http://localhost:11434/v1",
@@ -643,9 +643,9 @@ mod tests {
     }
 
     #[test]
-    fn openai_provider_enables_remote_compaction() {
+    fn responses_provider_enables_remote_compaction() {
         let provider = create_model_provider(
-            ModelProviderInfo::create_openai_provider(/*base_url*/ None),
+            ModelProviderInfo::create_responses_provider(/*base_url*/ None),
             /*auth_manager*/ None,
         );
 
@@ -662,13 +662,13 @@ mod tests {
     fn configured_provider_remote_compaction_matches_provider_support() {
         let cases = [
             (
-                ModelProviderInfo::create_openai_provider(/*base_url*/ None),
+                ModelProviderInfo::create_responses_provider(/*base_url*/ None),
                 RemoteCompactionSupport::V2,
             ),
             (
                 ModelProviderInfo {
                     name: "Azure".to_string(),
-                    base_url: Some("https://example.com/openai".to_string()),
+                    base_url: Some("https://example.com/provider".to_string()),
                     ..ModelProviderInfo::default()
                 },
                 RemoteCompactionSupport::V2,
@@ -676,7 +676,7 @@ mod tests {
             (
                 ModelProviderInfo {
                     name: "Custom".to_string(),
-                    base_url: Some("https://example.openai.azure.com/openai/v1".to_string()),
+                    base_url: Some("https://example.provider.azure.com/provider/v1".to_string()),
                     ..ModelProviderInfo::default()
                 },
                 RemoteCompactionSupport::V2,
@@ -724,7 +724,7 @@ mod tests {
     }
 
     #[test]
-    fn create_model_provider_does_not_use_openai_auth_manager_for_amazon_bedrock_provider() {
+    fn create_model_provider_does_not_use_provider_auth_manager_for_amazon_bedrock_provider() {
         let provider = create_model_provider(
             ModelProviderInfo::create_amazon_bedrock_provider(Some(ModelProviderAwsAuthInfo {
                 profile: Some("codex-bedrock".to_string()),
@@ -733,7 +733,7 @@ mod tests {
                 auth_refresh: None,
             })),
             Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
-                "openai-api-key",
+                "provider-api-key",
             ))),
         );
 
@@ -809,7 +809,7 @@ mod tests {
         let first = create_model_provider(
             provider_info.clone(),
             Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
-                "openai-api-key",
+                "provider-api-key",
             ))),
         );
         let second = create_model_provider(provider_info.clone(), /*auth_manager*/ None);
@@ -984,9 +984,9 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
     }
 
     #[test]
-    fn openai_provider_returns_unauthenticated_openai_account_state() {
+    fn responses_provider_returns_unauthenticated_provider_account_state() {
         let provider = create_model_provider(
-            ModelProviderInfo::create_openai_provider(/*base_url*/ None),
+            ModelProviderInfo::create_responses_provider(/*base_url*/ None),
             /*auth_manager*/ None,
         );
 
@@ -1000,11 +1000,11 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
     }
 
     #[test]
-    fn openai_provider_returns_api_key_account_state() {
+    fn responses_provider_returns_api_key_account_state() {
         let provider = create_model_provider(
-            ModelProviderInfo::create_openai_provider(/*base_url*/ None),
+            ModelProviderInfo::create_responses_provider(/*base_url*/ None),
             Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
-                "openai-api-key",
+                "provider-api-key",
             ))),
         );
 
@@ -1018,9 +1018,9 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
     }
 
     #[test]
-    fn openai_provider_rejects_bedrock_api_key_account_state() {
+    fn responses_provider_rejects_bedrock_api_key_account_state() {
         let provider = create_model_provider(
-            ModelProviderInfo::create_openai_provider(/*base_url*/ None),
+            ModelProviderInfo::create_responses_provider(/*base_url*/ None),
             Some(AuthManager::from_auth_for_testing(bedrock_api_key_auth())),
         );
 
@@ -1031,7 +1031,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
     }
 
     #[test]
-    fn custom_non_openai_provider_returns_no_account_state() {
+    fn custom_non_responses_provider_returns_no_account_state() {
         let provider = create_model_provider(
             ModelProviderInfo {
                 name: "Custom".to_string(),
@@ -1094,7 +1094,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
             )
             .await;
         assert_eq!(uncached_catalog, catalog);
-        for slug in ["openai.gpt-5.6-sol", "openai.gpt-6-astra"] {
+        for slug in ["provider.gpt-5.6-sol", "provider.gpt-6-astra"] {
             let model_info = manager
                 .get_model_info(
                     slug,
@@ -1120,12 +1120,12 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
         assert_eq!(
             models,
             vec![
-                ("openai.gpt-5.6-sol", "GPT-5.6 Sol"),
-                ("openai.gpt-6-astra", "GPT-6-Astra"),
-                ("openai.gpt-5.6-terra", "GPT-5.6 Terra"),
-                ("openai.gpt-5.6-luna", "GPT-5.6 Luna"),
-                ("openai.gpt-5.5", "GPT-5.5"),
-                ("openai.gpt-5.4", "GPT-5.4"),
+                ("provider.gpt-5.6-sol", "GPT-5.6 Sol"),
+                ("provider.gpt-6-astra", "GPT-6-Astra"),
+                ("provider.gpt-5.6-terra", "GPT-5.6 Terra"),
+                ("provider.gpt-5.6-luna", "GPT-5.6 Luna"),
+                ("provider.gpt-5.5", "GPT-5.5"),
+                ("provider.gpt-5.4", "GPT-5.4"),
             ]
         );
 
@@ -1141,12 +1141,12 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
                 .map(|preset| preset.model.as_str())
                 .collect::<Vec<_>>(),
             vec![
-                "openai.gpt-5.6-sol",
-                "openai.gpt-6-astra",
-                "openai.gpt-5.6-terra",
-                "openai.gpt-5.6-luna",
-                "openai.gpt-5.5",
-                "openai.gpt-5.4",
+                "provider.gpt-5.6-sol",
+                "provider.gpt-6-astra",
+                "provider.gpt-5.6-terra",
+                "provider.gpt-5.6-luna",
+                "provider.gpt-5.5",
+                "provider.gpt-5.4",
             ]
         );
 
@@ -1155,7 +1155,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
             .find(|preset| preset.is_default)
             .expect("Bedrock catalog should have a default model");
 
-        assert_eq!(default_model.model, "openai.gpt-5.6-sol");
+        assert_eq!(default_model.model, "provider.gpt-5.6-sol");
     }
 
     #[tokio::test]

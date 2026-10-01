@@ -71,7 +71,7 @@ use wiremock::matchers::method;
 use wiremock::matchers::path;
 
 const SAMPLE_PLUGIN_CONFIG_NAME: &str = "sample@test";
-const SAMPLE_REMOTE_PLUGIN_CONFIG_NAME: &str = "sample@openai-curated-remote";
+const SAMPLE_REMOTE_PLUGIN_CONFIG_NAME: &str = "sample@test-remote";
 const SAMPLE_PLUGIN_DISPLAY_NAME: &str = "sample";
 const SAMPLE_PLUGIN_DESCRIPTION: &str = "inspect sample data";
 const SAMPLE_REMOTE_PLUGIN_ID: &str = "plugins~Plugin_sample";
@@ -79,7 +79,7 @@ const SAMPLE_PLUGIN_APP_NAMESPACE: &str = "mcp__codex_apps__google_calendar";
 const SAMPLE_PLUGIN_MCP_NAMESPACE: &str = "mcp__sample";
 const PLUGIN_APP_SEARCH_CALL_ID: &str = "plugin-app-search";
 const PLUGIN_MCP_SEARCH_CALL_ID: &str = "plugin-mcp-search";
-const REMOTE_PLUGIN_CONFIG_NAME: &str = "sample@openai-curated-remote";
+const REMOTE_PLUGIN_CONFIG_NAME: &str = "sample@test-remote";
 
 fn skills_extensions() -> Arc<ExtensionRegistry<Config>> {
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
@@ -163,7 +163,7 @@ fn write_plugin_skill_plugin(home: &TempDir) -> std::path::PathBuf {
 fn write_remote_plugin_skill_plugin(home: &TempDir) -> std::path::PathBuf {
     let plugin_root = home
         .path()
-        .join("plugins/cache/openai-curated-remote/sample/local");
+        .join("plugins/cache/test-remote/sample/local");
     write_sample_plugin_skill(write_sample_plugin_manifest_and_config_at_root(
         home,
         plugin_root,
@@ -190,7 +190,7 @@ fn write_agent_plugin_skill_plugin(home: &TempDir) -> std::path::PathBuf {
     std::fs::create_dir_all(&nested_skill).expect("create nested skill");
     std::fs::write(
         plugin_root.join("plugin.json"),
-        r#"{"$schema":"https://agent-plugins.org/schemas/1.0.0/plugin.schema.json","name":"acme.tools","extensions":{"com.openai":{"interface":{"displayName":"Acme Developer Tools"}}}}"#,
+        r#"{"$schema":"https://agent-plugins.org/schemas/1.0.0/plugin.schema.json","name":"acme.tools","extensions":{"com.codex":{"interface":{"displayName":"Acme Developer Tools"}}}}"#,
     )
     .expect("write Agent Plugin manifest");
     std::fs::write(
@@ -724,7 +724,7 @@ async fn plugin_skill_product_policy_and_migrated_command_precedence_reach_agent
         "---\nname: source-command-review\ndescription: native review skill\n---\n",
     )?;
     std::fs::write(
-        native_skill_dir.join("agents/openai.yaml"),
+        native_skill_dir.join("agents/codex.yaml"),
         format!("policy:\n  products: [{native_skill_product}]\n"),
     )?;
     if include_migrated_command {
@@ -883,15 +883,15 @@ async fn sites_compatibility_guard_in_agent_turn(
 plugins = true
 remote_plugin = true
 
-[plugins."sites@openai-bundled"]
+[plugins."sites@codex-bundled"]
 enabled = true
 "#,
     )?;
     for (marketplace, skill) in [
-        ("openai-bundled", "bundled-sites"),
-        ("openai-curated-remote", "remote-sites"),
+        ("codex-bundled", "bundled-sites"),
+        ("test-remote", "remote-sites"),
     ] {
-        if marketplace == "openai-curated-remote" && !cache_remote_sites {
+        if marketplace == "test-remote" && !cache_remote_sites {
             continue;
         }
         let root = codex_home
@@ -1126,7 +1126,7 @@ async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
         Fixture {
             name: "API key",
             target_auth: TargetAuth::ApiKey,
-            target_model_provider_id: "openai",
+            target_model_provider_id: "provider",
             expected_target_loaded_plugin_skills: &[API_CURATED_PLUGIN_SKILL],
             expected_target_skill_description: "api description before",
         },
@@ -1145,9 +1145,9 @@ async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
             expected_target_skill_description: "api description before",
         },
         Fixture {
-            name: "unauthenticated OpenAI",
+            name: "unauthenticated provider",
             target_auth: TargetAuth::NoCodexAuth,
-            target_model_provider_id: "openai",
+            target_model_provider_id: "provider",
             expected_target_loaded_plugin_skills: &[API_CURATED_PLUGIN_SKILL],
             expected_target_skill_description: "api description before",
         },
@@ -1220,22 +1220,22 @@ async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
 plugins = true
 remote_plugin = false
 
-[plugins."managed-plugin@openai-curated"]
+[plugins."managed-plugin@test-curated"]
 enabled = true
 
-[plugins."api-plugin@openai-api-curated"]
+[plugins."api-plugin@provider-api-curated"]
 enabled = true
 "#,
         )?;
         for (marketplace_name, plugin_name, skill_name, description) in [
             (
-                "openai-curated",
+                "test-curated",
                 "managed-plugin",
                 "managed-skill",
                 "managed description",
             ),
             (
-                "openai-api-curated",
+                "provider-api-curated",
                 "api-plugin",
                 "api-skill",
                 "api description before",
@@ -1276,7 +1276,7 @@ enabled = true
 
         std::fs::write(
             codex_home.path().join(
-                "plugins/cache/openai-api-curated/api-plugin/local/skills/api-skill/SKILL.md",
+                "plugins/cache/provider-api-curated/api-plugin/local/skills/api-skill/SKILL.md",
             ),
             "---\ndescription: api description after\n---\n\n# body\n",
         )?;

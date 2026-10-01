@@ -254,7 +254,7 @@ impl<'a> ChatRequestBuilder<'a> {
         });
         let mut headers = build_conversation_headers(self.conversation_id);
         if let Some(subagent) = subagent_header(&self.session_source) {
-            insert_header(&mut headers, "x-openai-subagent", &subagent);
+            insert_header(&mut headers, "x-provider-subagent", &subagent);
         }
         Ok(ChatRequest {
             body: payload,
@@ -376,7 +376,7 @@ mod tests {
             Some(&HeaderValue::from_static("conv-1"))
         );
         assert_eq!(
-            request.headers.get("x-openai-subagent"),
+            request.headers.get("x-provider-subagent"),
             Some(&HeaderValue::from_static("review"))
         );
     }

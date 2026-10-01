@@ -253,7 +253,7 @@ fn append_mdm_config_layer(
     if let Some(config) = loaded.managed_config_from_mdm {
         output.push(LocalTomlLayer {
             source: ConfigLayerSource::Mdm {
-                domain: "com.openai.codex".to_string(),
+                domain: "com.codex.codex".to_string(),
                 key: "config_toml_base64".to_string(),
             },
             base_dir: codex_home.clone(),

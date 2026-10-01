@@ -9,7 +9,7 @@ use codex_protocol::models::FunctionCallOutputPayload;
 use codex_protocol::models::ImageDetail;
 use codex_protocol::models::ImageReference;
 use codex_protocol::models::ResponseInputItem;
-use codex_protocol::openai_models::InputModality;
+use codex_protocol::model_types::InputModality;
 use codex_utils_image::data_url_from_bytes;
 use serde::Deserialize;
 

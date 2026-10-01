@@ -11,7 +11,7 @@ expression: "render_lines(&view, 112)"
                                                                                                                 
   Event     PreToolUse                                                                                          
   Matcher   Bash                                                                                                
-  Source    Plugin - superpowers@openai-curated                                                                 
+  Source    Plugin - superpowers@test-curated                                                                 
   Command   ${CODEX_PLUGIN_ROOT}/hooks/pre-tool-use-check.sh                                                    
   Mode      Sync                                                                                                
   Timeout   30s                                                                                                 

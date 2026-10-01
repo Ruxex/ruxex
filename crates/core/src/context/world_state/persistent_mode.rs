@@ -6,7 +6,7 @@ use super::WorldStateHash;
 use super::WorldStateSection;
 use crate::context::ContextualUserFragment;
 use codex_protocol::models::ContentItemKind;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use serde::Deserialize;
 use serde::Serialize;
 

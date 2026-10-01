@@ -68,13 +68,13 @@ fn api_key_auth_exposes_api_curated_plugin_mcp_servers() -> Result<()> {
 plugins = true
 remote_plugin = false
 
-[plugins."api-docs@openai-api-curated"]
+[plugins."api-docs@provider-api-curated"]
 enabled = true
 "#,
     )?;
     let plugin_root = codex_home
         .path()
-        .join("plugins/cache/openai-api-curated/api-docs/local");
+        .join("plugins/cache/provider-api-curated/api-docs/local");
     std::fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
     std::fs::write(
         plugin_root.join(".codex-plugin/plugin.json"),

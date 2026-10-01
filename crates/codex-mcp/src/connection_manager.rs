@@ -71,7 +71,7 @@ use tokio::task::JoinSet;
 use tracing::warn;
 
 static LIVE_CONNECTIONS: Gauge = Gauge::new("mcp.connections.live");
-pub(crate) const HOST_OWNED_ENTITLEMENT_CONTEXT_KEY: &str = "openai/entitlementContext";
+pub(crate) const HOST_OWNED_ENTITLEMENT_CONTEXT_KEY: &str = "provider/entitlementContext";
 
 pub(crate) struct McpServerConnection {
     identity: Option<McpServerConnectionIdentity>,

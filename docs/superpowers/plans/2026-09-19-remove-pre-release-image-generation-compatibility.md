@@ -7,7 +7,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans (recommended) to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove the image-generation compatibility layer from this pre-release fork before continuing OpenAI-specific integration removal, while preserving generic image input and viewing.
+**Goal:** Remove the image-generation compatibility layer from this pre-release fork before continuing provider-specific integration removal, while preserving generic image input and viewing.
 
 **Architecture:** Delete the old Responses image-generation item, extension item, legacy events, rollout migration, app-server protocol variants, and UI/observability branches as one clean-break surface. Keep generic image media types and tools intact; future image generation, if needed, will be a new provider-neutral capability.
 
@@ -36,7 +36,7 @@
 
 ## File Map
 
-- **Policy and project guidance:** `AGENTS.md`, `docs/openai-decoupling-plan.md`, `docs/openai-specific-crates.md`, and the completed adapter-removal plan.
+- **Policy and project guidance:** `AGENTS.md`, `docs/provider-decoupling-plan.md`, `docs/provider-specific-crates.md`, and the completed adapter-removal plan.
 - **Canonical data and lifecycle types:** `crates/ext/items/src/image_generation.rs`, `crates/ext/items/src/lib.rs`, `crates/ext/items/src/tests.rs`, `crates/protocol/src/{items.rs,models.rs,protocol.rs,legacy_events.rs}`.
 - **Core mapping and history:** `crates/core/src/agent/control/spawn.rs`, `client_common.rs`, `config/mod.rs`, `context_manager/history.rs`, `context_manager/history_tests.rs`, `context_manager/normalize.rs`, `event_mapping.rs`, `image_preparation.rs`, `realtime_history/presentation.rs`, `realtime_history_tests.rs`, `session/turn.rs`, `stream_events_utils.rs`, `tools/handlers/extension_tools.rs`, `turn_timing.rs`, `tests/common/responses.rs`, and `tests/suite/model_switching.rs`.
 - **Persistence and app-server:** `crates/thread-store/src/local/{rollout_migration/legacy_event.rs,rollout_migration_tests.rs,thread_history.rs,thread_history/search.rs}`, `crates/rollout/src/{policy.rs,persistence_metrics.rs}`, `crates/app-server-protocol/src/protocol/{v2/item.rs,thread_history.rs}`, generated app-server schemas, and the app-server notification/request processors and resume tests.
@@ -46,13 +46,13 @@
 
 **Files:**
 - Modify: `AGENTS.md`
-- Modify: `docs/openai-decoupling-plan.md`
-- Modify: `docs/openai-specific-crates.md`
+- Modify: `docs/provider-decoupling-plan.md`
+- Modify: `docs/provider-specific-crates.md`
 - Modify: `docs/superpowers/plans/2026-09-19-remove-image-generation-adapter.md`
 
-- [x] Update `AGENTS.md` to require removal of pre-release compatibility layers before resuming the remaining OpenAI-specific integrations.
+- [x] Update `AGENTS.md` to require removal of pre-release compatibility layers before resuming the remaining provider-specific integrations.
 - [x] Change the decoupling plan to state that image-generation history/protocol/migration/display compatibility is intentionally not preserved in this zero-user fork.
-- [x] Update the OpenAI-specific crate inventory to distinguish the already-removed adapter from the compatibility cleanup covered by this plan.
+- [x] Update the provider-specific crate inventory to distinguish the already-removed adapter from the compatibility cleanup covered by this plan.
 - [x] Add a superseding note to the completed adapter-removal plan so it no longer describes retained compatibility as the final project policy.
 - [x] Run `git diff --check` and inspect the documentation diff for contradictory compatibility requirements.
 

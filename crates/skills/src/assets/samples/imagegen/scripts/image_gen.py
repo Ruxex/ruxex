@@ -67,13 +67,13 @@ def _dependency_hint(package: str, *, upgrade: bool = False) -> str:
 
 
 def _ensure_api_key(dry_run: bool) -> None:
-    if os.getenv("OPENAI_API_KEY"):
-        print("OPENAI_API_KEY is set.", file=sys.stderr)
+    if os.getenv("PROVIDER_API_KEY"):
+        print("PROVIDER_API_KEY is set.", file=sys.stderr)
         return
     if dry_run:
-        _warn("OPENAI_API_KEY is not set; dry-run only.")
+        _warn("PROVIDER_API_KEY is not set; dry-run only.")
         return
-    _die("OPENAI_API_KEY is not set. Export it before running.")
+    _die("PROVIDER_API_KEY is not set. Export it before running.")
 
 
 def _read_prompt(prompt: Optional[str], prompt_file: Optional[str]) -> str:
@@ -410,29 +410,29 @@ def _decode_write_and_downscale(
 
 def _create_client():
     try:
-        from openai import OpenAI
+        from provider import provider
     except ImportError:
         _die(
-            f"openai SDK not installed in the active environment. {_dependency_hint('openai')}"
+            f"provider SDK not installed in the active environment. {_dependency_hint('provider')}"
         )
-    return OpenAI()
+    return provider()
 
 
 def _create_async_client():
     try:
-        from openai import AsyncOpenAI
+        from provider import Asyncprovider
     except ImportError:
         try:
-            import openai as _openai  # noqa: F401
+            import provider as _provider  # noqa: F401
         except ImportError:
             _die(
-                f"openai SDK not installed in the active environment. {_dependency_hint('openai')}"
+                f"provider SDK not installed in the active environment. {_dependency_hint('provider')}"
             )
         _die(
-            "AsyncOpenAI not available in this openai SDK version. "
-            f"{_dependency_hint('openai', upgrade=True)}"
+            "Asyncprovider not available in this provider SDK version. "
+            f"{_dependency_hint('provider', upgrade=True)}"
         )
-    return AsyncOpenAI()
+    return Asyncprovider()
 
 
 def _slugify(value: str) -> str:
@@ -520,7 +520,7 @@ def _job_output_paths(
 
 
 def _extract_retry_after_seconds(exc: Exception) -> Optional[float]:
-    # Best-effort: openai SDK errors vary by version. Prefer a conservative fallback.
+    # Best-effort: provider SDK errors vary by version. Prefer a conservative fallback.
     for attr in ("retry_after", "retry_after_seconds"):
         val = getattr(exc, attr, None)
         if isinstance(val, (int, float)) and val >= 0:

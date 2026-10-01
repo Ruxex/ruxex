@@ -574,7 +574,7 @@ fn rollout_path_is_archived(store: &LocalThreadStore, path: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     use codex_protocol::models::PermissionProfile;
-    use codex_protocol::openai_models::ReasoningEffort;
+    use codex_protocol::model_types::ReasoningEffort;
     use codex_protocol::protocol::ThreadHistoryMode;
     use codex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
@@ -946,7 +946,7 @@ mod tests {
                         sha: Some(Some("abc123".to_string())),
                         branch: Some(Some("main".to_string())),
                         origin_url: Some(Some(
-                            SanitizedGitUrl::try_from("https://github.com/openai/codex")
+                            SanitizedGitUrl::try_from("https://github.com/codex/codex")
                                 .expect("valid git remote URL"),
                         )),
                     }),
@@ -966,7 +966,7 @@ mod tests {
         assert_eq!(git_info.branch.as_deref(), Some("main"));
         assert_eq!(
             git_info.repository_url.as_deref(),
-            Some("https://github.com/openai/codex")
+            Some("https://github.com/codex/codex")
         );
     }
 
@@ -1050,7 +1050,7 @@ mod tests {
                         sha: Some(Some("abc123".to_string())),
                         branch: Some(Some("main".to_string())),
                         origin_url: Some(Some(
-                            SanitizedGitUrl::try_from("https://github.com/openai/codex")
+                            SanitizedGitUrl::try_from("https://github.com/codex/codex")
                                 .expect("valid git remote URL"),
                         )),
                     }),
@@ -1085,7 +1085,7 @@ mod tests {
         assert_eq!(git_info.branch.as_deref(), Some("feature"));
         assert_eq!(
             git_info.repository_url.as_deref(),
-            Some("https://github.com/openai/codex")
+            Some("https://github.com/codex/codex")
         );
     }
 
@@ -1113,7 +1113,7 @@ mod tests {
                         sha: Some(Some("abc123".to_string())),
                         branch: Some(Some("main".to_string())),
                         origin_url: Some(Some(
-                            SanitizedGitUrl::try_from("https://github.com/openai/codex")
+                            SanitizedGitUrl::try_from("https://github.com/codex/codex")
                                 .expect("valid git remote URL"),
                         )),
                     }),

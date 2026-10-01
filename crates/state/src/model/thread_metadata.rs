@@ -3,7 +3,7 @@ use chrono::DateTime;
 use chrono::Utc;
 use codex_protocol::SanitizedGitUrl;
 use codex_protocol::ThreadId;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::SandboxPolicy;
 use codex_protocol::protocol::SessionSource;
@@ -703,7 +703,7 @@ mod tests {
     use chrono::Utc;
     use codex_protocol::SanitizedGitUrl;
     use codex_protocol::ThreadId;
-    use codex_protocol::openai_models::ReasoningEffort;
+    use codex_protocol::model_types::ReasoningEffort;
     use codex_protocol::protocol::ThreadHistoryMode;
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
@@ -722,7 +722,7 @@ mod tests {
             agent_nickname: None,
             agent_role: None,
             agent_path: None,
-            model_provider: "openai".to_string(),
+            model_provider: "provider".to_string(),
             model: Some("gpt-5".to_string()),
             reasoning_effort: reasoning_effort.map(str::to_string),
             cwd: "/tmp/workspace".to_string(),
@@ -763,7 +763,7 @@ mod tests {
             agent_nickname: None,
             agent_role: None,
             agent_path: None,
-            model_provider: "openai".to_string(),
+            model_provider: "provider".to_string(),
             model: Some("gpt-5".to_string()),
             reasoning_effort,
             cwd: PathBuf::from("/tmp/workspace"),

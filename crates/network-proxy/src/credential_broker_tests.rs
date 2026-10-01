@@ -50,47 +50,47 @@ fn assert_credential_shape(real_value: &str, dummy_value: &str, prefix: &str) {
 fn virtualize_child_env_replaces_supported_credentials() {
     let broker = CredentialBroker::new(/*enabled*/ true);
     let github_token = "github_pat_11AA0bbCC_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGH";
-    let openai_api_key = "sk-proj-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
+    let api_key = "sk-proj-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
     let authorization = format!("Bearer {github_token}");
     let mut env = env_map([
         ("GH_TOKEN", github_token),
         ("HOMEBREW_GITHUB_API_TOKEN", github_token),
         ("AUTH_HEADER", authorization.as_str()),
-        ("OPENAI_API_KEY", openai_api_key),
+        ("PROVIDER_API_KEY", api_key),
         ("GH_ENTERPRISE_TOKEN", github_token),
     ]);
 
     broker.virtualize_child_env(&mut env);
 
     let github_dummy = env.get("GH_TOKEN").expect("dummy GitHub token");
-    let openai_dummy = env.get("OPENAI_API_KEY").expect("dummy OpenAI API key");
+    let provider_dummy = env.get("PROVIDER_API_KEY").expect("dummy provider API key");
     assert_credential_shape(github_token, github_dummy, "github_pat_");
-    assert_credential_shape(openai_api_key, openai_dummy, "sk-proj-");
+    assert_credential_shape(api_key, provider_dummy, "sk-proj-");
     assert_eq!(env.get("HOMEBREW_GITHUB_API_TOKEN"), Some(github_dummy));
     assert_eq!(env.get("GH_ENTERPRISE_TOKEN"), Some(github_dummy));
     assert_eq!(
         env.get("AUTH_HEADER"),
         Some(&format!("Bearer {github_dummy}"))
     );
-    let mut persisted_credentials = format!("{github_token}\n{openai_api_key}");
+    let mut persisted_credentials = format!("{github_token}\n{api_key}");
     assert!(broker.virtualize_text(&mut persisted_credentials, &env));
     assert_eq!(
         persisted_credentials,
-        format!("{github_dummy}\n{openai_dummy}")
+        format!("{github_dummy}\n{provider_dummy}")
     );
     let mut filtered_env = env.clone();
-    filtered_env.remove("OPENAI_API_KEY");
-    let mut excluded_credentials = format!("{github_token}\n{openai_api_key}");
+    filtered_env.remove("PROVIDER_API_KEY");
+    let mut excluded_credentials = format!("{github_token}\n{api_key}");
     assert!(!broker.virtualize_text(&mut excluded_credentials, &filtered_env));
     assert_eq!(excluded_credentials, format!("{github_dummy}\n"));
-    let mut excluded_dummies = format!("{github_dummy}\n{openai_dummy}");
+    let mut excluded_dummies = format!("{github_dummy}\n{provider_dummy}");
     assert!(!broker.virtualize_text(&mut excluded_dummies, &filtered_env));
     assert_eq!(excluded_dummies, format!("{github_dummy}\n"));
     let unknown_github_token = "ghp_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh";
-    let unknown_openai_key = "sk-proj-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh";
-    let unknown_legacy_openai_key = format!("sk-{}", "a".repeat(48));
+    let unknown_provider_key = "sk-proj-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh";
+    let unknown_legacy_provider_key = format!("sk-{}", "a".repeat(48));
     let mut unregistered = format!(
-        "{unknown_github_token}\n{unknown_openai_key}\n{unknown_legacy_openai_key}\nghp_x sk-proj-x"
+        "{unknown_github_token}\n{unknown_provider_key}\n{unknown_legacy_provider_key}\nghp_x sk-proj-x"
     );
     assert!(!broker.virtualize_text(&mut unregistered, &env));
     assert_eq!(unregistered, "\n\n\nghp_x sk-proj-x");
@@ -109,7 +109,7 @@ fn virtualize_child_env_replaces_supported_credentials() {
             |_| true,
         ));
     }
-    let mut embedded_tokens = format!("v1{unknown_github_token}\n/opt/ta{unknown_openai_key}/bin");
+    let mut embedded_tokens = format!("v1{unknown_github_token}\n/opt/ta{unknown_provider_key}/bin");
     assert!(!broker.virtualize_text(&mut embedded_tokens, &env));
     assert_eq!(embedded_tokens, "v1\n/opt/ta/bin");
     let qualified_legacy = format!(
@@ -119,9 +119,9 @@ fn virtualize_child_env_replaces_supported_credentials() {
         "c".repeat(20)
     );
     let legacy_broker = CredentialBroker::new(/*enabled*/ true);
-    let mut legacy_env = env_map([("OPENAI_API_KEY", qualified_legacy.as_str())]);
+    let mut legacy_env = env_map([("PROVIDER_API_KEY", qualified_legacy.as_str())]);
     legacy_broker.virtualize_child_env(&mut legacy_env);
-    assert_credential_shape(&qualified_legacy, &legacy_env["OPENAI_API_KEY"], "sk-");
+    assert_credential_shape(&qualified_legacy, &legacy_env["PROVIDER_API_KEY"], "sk-");
     let unmarked_legacy = format!("sk-{}-{}", "a".repeat(15), "b".repeat(35));
     let mut unmarked_legacy_alias = format!("Bearer {unmarked_legacy}");
     assert!(!broker.virtualize_text(&mut unmarked_legacy_alias, &env));
@@ -151,17 +151,17 @@ fn virtualize_child_env_replaces_supported_credentials() {
     let unrelated = "sk-ant-api03-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno";
     let mut known_provider_env = env.clone();
     known_provider_env.insert("ANTHROPIC_API_KEY".to_string(), unrelated.to_string());
-    for separator in ["_", "__", "--", "-_", "_-", "", "_openai_", "_Bearer_"] {
-        let mut known_adjacent = format!("{unrelated}{separator}{unknown_legacy_openai_key}");
+    for separator in ["_", "__", "--", "-_", "_-", "", "_provider_", "_Bearer_"] {
+        let mut known_adjacent = format!("{unrelated}{separator}{unknown_legacy_provider_key}");
         assert!(!broker.virtualize_text(&mut known_adjacent, &known_provider_env));
         assert_eq!(known_adjacent, format!("{unrelated}{separator}"));
     }
-    let first_bundle = format!("{unrelated}_{unknown_legacy_openai_key}");
+    let first_bundle = format!("{unrelated}_{unknown_legacy_provider_key}");
     known_provider_env.insert("FIRST_BUNDLE".to_string(), first_bundle.clone());
     let openrouter = "sk-or-v1-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno";
     for ignored in [unrelated, openrouter] {
-        for separator in ["_", "-", "__", "--", "", "_openai_", "_Bearer_"] {
-            let mut unknown_adjacent = format!("{ignored}{separator}{unknown_legacy_openai_key}");
+        for separator in ["_", "-", "__", "--", "", "_provider_", "_Bearer_"] {
+            let mut unknown_adjacent = format!("{ignored}{separator}{unknown_legacy_provider_key}");
             assert!(!broker.virtualize_text(&mut unknown_adjacent, &env));
             assert_eq!(unknown_adjacent, format!("{ignored}{separator}"));
         }
@@ -176,17 +176,17 @@ fn virtualize_child_env_replaces_supported_credentials() {
         &mixed_providers,
         &virtualized_providers,
         &HashMap::new(),
-        |source| source != "OPENAI_API_KEY",
+        |source| source != "PROVIDER_API_KEY",
     ));
     let mixed_credentials =
-        format!("{unknown_github_token}_{unknown_legacy_openai_key}_{unrelated}");
+        format!("{unknown_github_token}_{unknown_legacy_provider_key}_{unrelated}");
     let mut virtualized_credentials = mixed_credentials.clone();
     assert!(!broker.virtualize_text(&mut virtualized_credentials, &env));
     assert!(!credential_broker_provider_sources_allowed(
         &mixed_credentials,
         &virtualized_credentials,
         &HashMap::new(),
-        |source| source != "OPENAI_API_KEY",
+        |source| source != "PROVIDER_API_KEY",
     ));
     let equivalent_sources = env_map([
         ("GH_TOKEN", unknown_github_token),
@@ -220,7 +220,7 @@ fn virtualize_child_env_replaces_supported_credentials() {
                     format!("{unrelated}{separator}"),
                 ),
                 (
-                    format!("{unknown_legacy_openai_key}{separator}{unrelated}"),
+                    format!("{unknown_legacy_provider_key}{separator}{unrelated}"),
                     format!("{separator}{unrelated}"),
                 ),
             ] {
@@ -230,12 +230,12 @@ fn virtualize_child_env_replaces_supported_credentials() {
         }
     }
     let hash = "a".repeat(64);
-    let copied_openai_key = format!("sk-proj-{hash}");
-    let mut copied_credential = format!("ta{copied_openai_key}");
+    let copied_provider_key = format!("sk-proj-{hash}");
+    let mut copied_credential = format!("ta{copied_provider_key}");
     assert!(!broker.virtualize_text(&mut copied_credential, &env));
     assert_eq!(copied_credential, "ta");
     let mut path_embedded_credentials =
-        format!("/prefix/{unknown_legacy_openai_key}:/next\n/prefix/sk-proj-{hash}");
+        format!("/prefix/{unknown_legacy_provider_key}:/next\n/prefix/sk-proj-{hash}");
     assert!(!broker.virtualize_text(&mut path_embedded_credentials, &env));
     assert_eq!(path_embedded_credentials, "/prefix/:/next\n/prefix/");
     for separator in ['-', '_'] {
@@ -320,9 +320,9 @@ fn virtualize_child_env_replaces_supported_credentials() {
     }
     let registered_hex_credential = format!("sk-{hash}");
     let registered_broker = CredentialBroker::new(/*enabled*/ true);
-    let mut registered_env = env_map([("OPENAI_API_KEY", registered_hex_credential.as_str())]);
+    let mut registered_env = env_map([("PROVIDER_API_KEY", registered_hex_credential.as_str())]);
     registered_broker.virtualize_child_env(&mut registered_env);
-    let registered_dummy = &registered_env["OPENAI_API_KEY"];
+    let registered_dummy = &registered_env["PROVIDER_API_KEY"];
     let mut credential_path = format!("/workspace/multita{registered_hex_credential}/bin");
     assert!(registered_broker.virtualize_text(&mut credential_path, &registered_env));
     assert_eq!(
@@ -331,7 +331,7 @@ fn virtualize_child_env_replaces_supported_credentials() {
     );
     for (key, placeholder, credential) in [
         ("GH_TOKEN", "ghp_", unknown_github_token),
-        ("OPENAI_API_KEY", "sk-", unknown_legacy_openai_key.as_str()),
+        ("PROVIDER_API_KEY", "sk-", unknown_legacy_provider_key.as_str()),
     ] {
         let broker = CredentialBroker::new(/*enabled*/ true);
         let mut env = env_map([(key, placeholder)]);
@@ -342,11 +342,11 @@ fn virtualize_child_env_replaces_supported_credentials() {
     }
     let mut command = vec![
         format!("Authorization: Bearer {github_dummy}"),
-        format!("Authorization: Bearer {openai_dummy}"),
+        format!("Authorization: Bearer {provider_dummy}"),
     ];
     let github_dummy = github_dummy.clone();
-    let openai_dummy = openai_dummy.clone();
-    env.insert("OPENAI_API_KEY".to_string(), "sk-user-override".to_string());
+    let provider_dummy = provider_dummy.clone();
+    env.insert("PROVIDER_API_KEY".to_string(), "sk-user-override".to_string());
     env.insert(
         "GIT_CONFIG_VALUE_0".to_string(),
         format!("Authorization: Bearer {github_dummy}"),
@@ -368,7 +368,7 @@ fn virtualize_child_env_replaces_supported_credentials() {
     );
     assert_eq!(env.get("AUTH_HEADER"), Some(&authorization));
     assert_eq!(
-        env.get("OPENAI_API_KEY").map(String::as_str),
+        env.get("PROVIDER_API_KEY").map(String::as_str),
         Some("sk-user-override")
     );
     assert_eq!(
@@ -379,15 +379,15 @@ fn virtualize_child_env_replaces_supported_credentials() {
         command,
         vec![
             format!("Authorization: Bearer {github_dummy}"),
-            format!("Authorization: Bearer {openai_dummy}"),
+            format!("Authorization: Bearer {provider_dummy}"),
         ]
     );
 
-    env.insert("GH_TOKEN".to_string(), openai_dummy.clone());
-    env.insert("OPENAI_API_KEY".to_string(), github_dummy.clone());
+    env.insert("GH_TOKEN".to_string(), provider_dummy.clone());
+    env.insert("PROVIDER_API_KEY".to_string(), github_dummy.clone());
     broker.restore_child_env(&mut env, &mut []);
-    assert_eq!(env.get("GH_TOKEN"), Some(&openai_dummy));
-    assert_eq!(env.get("OPENAI_API_KEY"), Some(&github_dummy));
+    assert_eq!(env.get("GH_TOKEN"), Some(&provider_dummy));
+    assert_eq!(env.get("PROVIDER_API_KEY"), Some(&github_dummy));
 }
 
 #[test]
@@ -570,16 +570,16 @@ fn virtualize_child_env_replaces_aliases_of_filtered_parent_credentials() {
     assert_eq!(child_env["AUTH_HEADER"], authorization_header);
     assert!(!child_env.contains_key("GH_TOKEN"));
 
-    let openai_token = "sk-proj-abcdefghijklmnopqrstuvwxyz1234567890";
-    let mixed_bundle = format!("GitHub {github_token}\nOpenAI {openai_token}");
+    let provider_token = "sk-proj-abcdefghijklmnopqrstuvwxyz1234567890";
+    let mixed_bundle = format!("GitHub {github_token}\nprovider {provider_token}");
     let mut mixed_env = env_map([
         ("GH_TOKEN", github_token),
-        ("OPENAI_API_KEY", openai_token),
+        ("PROVIDER_API_KEY", provider_token),
         ("AUTH_BUNDLE", mixed_bundle.as_str()),
     ]);
     broker.virtualize_child_env(&mut mixed_env);
     let mut mixed_alias = mixed_env["AUTH_BUNDLE"].clone();
-    let excluded_dummy = mixed_env.remove("OPENAI_API_KEY").expect("OpenAI dummy");
+    let excluded_dummy = mixed_env.remove("PROVIDER_API_KEY").expect("provider dummy");
     assert!(!broker.virtualize_text(&mut mixed_alias, &mixed_env));
     assert!(!mixed_alias.contains(&excluded_dummy));
 }
@@ -608,7 +608,7 @@ fn virtualize_child_env_preserves_paths_unless_the_credential_is_known() {
     let dummy = copied_env["COPIED"].strip_prefix("ta").unwrap();
     assert_credential_shape(&real, dummy, "sk-proj-");
     let mut headers = headers_with_bearer(dummy);
-    broker.inject_request_headers("api.openai.com", &mut headers);
+    broker.inject_request_headers("api.example.test", &mut headers);
     assert_eq!(
         authorization(&headers),
         Some(format!("Bearer {real}").as_str())
@@ -628,8 +628,8 @@ fn virtualize_child_env_discovers_credentials_without_canonical_variables() {
         ),
         (
             "sk-proj-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-            "OPENAI_API_KEY",
-            "api.openai.com",
+            "PROVIDER_API_KEY",
+            "api.example.test",
         ),
     ] {
         let broker = CredentialBroker::new(/*enabled*/ true);
@@ -689,17 +689,17 @@ fn virtualize_child_env_preserves_operational_paths_during_credential_discovery(
 fn virtualize_child_env_keeps_adjacent_provider_credentials_separate() {
     let broker = CredentialBroker::new(/*enabled*/ true);
     let github_token = "ghp_abcdefghijklmnopqrstuvwxyz1234567890ABCD";
-    let openai_token = "sk-proj-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let real_bundle = format!("{github_token}_{openai_token}");
+    let provider_token = "sk-proj-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let real_bundle = format!("{github_token}_{provider_token}");
     let mut env = env_map([("AUTH_BUNDLE", real_bundle.as_str())]);
 
     broker.virtualize_child_env(&mut env);
 
     let dummy_bundle = env["AUTH_BUNDLE"].clone();
     assert!(!dummy_bundle.contains(github_token));
-    assert!(!dummy_bundle.contains(openai_token));
+    assert!(!dummy_bundle.contains(provider_token));
     let github_dummy = &dummy_bundle[..github_token.len()];
-    let openai_dummy = &dummy_bundle[github_token.len() + 1..];
+    let provider_dummy = &dummy_bundle[github_token.len() + 1..];
 
     let mut github_headers = headers_with_bearer(github_dummy);
     broker.inject_request_headers("api.github.com", &mut github_headers);
@@ -708,11 +708,11 @@ fn virtualize_child_env_keeps_adjacent_provider_credentials_separate() {
         Some(format!("Bearer {github_token}").as_str())
     );
 
-    let mut openai_headers = headers_with_bearer(openai_dummy);
-    broker.inject_request_headers("api.openai.com", &mut openai_headers);
+    let mut provider_headers = headers_with_bearer(provider_dummy);
+    broker.inject_request_headers("api.example.test", &mut provider_headers);
     assert_eq!(
-        authorization(&openai_headers),
-        Some(format!("Bearer {openai_token}").as_str())
+        authorization(&provider_headers),
+        Some(format!("Bearer {provider_token}").as_str())
     );
 
     let mut bundled_headers = headers_with_bearer(&dummy_bundle);
@@ -771,7 +771,7 @@ fn virtualize_child_env_binds_filtered_enterprise_credentials_to_child_host() {
 fn brokered_credential_env_keys_only_include_registered_credentials() {
     let broker = CredentialBroker::new(/*enabled*/ true);
     let mut env = env_map([
-        ("OPENAI_API_KEY", "sk-real"),
+        ("PROVIDER_API_KEY", "sk-real"),
         ("GH_TOKEN", ""),
         ("GH_HOST", "github.example.com"),
     ]);
@@ -784,7 +784,7 @@ fn brokered_credential_env_keys_only_include_registered_credentials() {
 
     assert_eq!(
         brokered_credential_env_keys(&env).collect::<Vec<_>>(),
-        vec!["OPENAI_API_KEY"]
+        vec!["PROVIDER_API_KEY"]
     );
 }
 
@@ -793,7 +793,7 @@ fn brokered_credential_value_env_keys_include_dummy_aliases() {
     let broker = CredentialBroker::new(/*enabled*/ true);
     let real = "sk-proj-abcdefghijklmnopqrstuvwxyz";
     let alias = format!("Bearer {real}");
-    let mut env = env_map([("OPENAI_API_KEY", real), ("AUTH_HEADER", alias.as_str())]);
+    let mut env = env_map([("PROVIDER_API_KEY", real), ("AUTH_HEADER", alias.as_str())]);
 
     broker.virtualize_child_env(&mut env);
 
@@ -804,19 +804,19 @@ fn brokered_credential_value_env_keys_include_dummy_aliases() {
         vec![
             (
                 "@alias:AUTH_HEADER".to_string(),
-                env["OPENAI_API_KEY"].clone()
+                env["PROVIDER_API_KEY"].clone()
             ),
             (
-                "@alias:OPENAI_API_KEY".to_string(),
-                env["OPENAI_API_KEY"].clone()
+                "@alias:PROVIDER_API_KEY".to_string(),
+                env["PROVIDER_API_KEY"].clone()
             ),
-            ("OPENAI_API_KEY".to_string(), env["OPENAI_API_KEY"].clone()),
+            ("PROVIDER_API_KEY".to_string(), env["PROVIDER_API_KEY"].clone()),
         ]
     );
 
     assert_eq!(
         brokered_credential_value_env_keys(&env),
-        vec!["AUTH_HEADER".to_string(), "OPENAI_API_KEY".to_string()]
+        vec!["AUTH_HEADER".to_string(), "PROVIDER_API_KEY".to_string()]
     );
 
     let mut absent_alias_env = env.clone();
@@ -824,15 +824,15 @@ fn brokered_credential_value_env_keys_include_dummy_aliases() {
     broker.virtualize_child_env(&mut absent_alias_env);
     assert_eq!(
         brokered_credential_marker_env_keys(&absent_alias_env),
-        vec!["AUTH_HEADER".to_string(), "OPENAI_API_KEY".to_string()]
+        vec!["AUTH_HEADER".to_string(), "PROVIDER_API_KEY".to_string()]
     );
 
-    env.remove("OPENAI_API_KEY");
+    env.remove("PROVIDER_API_KEY");
     broker.virtualize_child_env(&mut env);
     assert!(brokered_credential_dummy_env_keys(&env).is_empty());
     assert_eq!(
         brokered_credential_marker_env_keys(&env),
-        vec!["AUTH_HEADER".to_string(), "OPENAI_API_KEY".to_string()]
+        vec!["AUTH_HEADER".to_string(), "PROVIDER_API_KEY".to_string()]
     );
     assert_eq!(
         brokered_credential_value_env_keys(&env),
@@ -842,26 +842,26 @@ fn brokered_credential_value_env_keys_include_dummy_aliases() {
 
 #[test]
 fn virtualize_child_env_uses_fresh_dummy_capabilities() {
-    let mut first_env = env_map([("OPENAI_API_KEY", "sk-proj-abcdefghijklmnopqrstuvwxyz")]);
+    let mut first_env = env_map([("PROVIDER_API_KEY", "sk-proj-abcdefghijklmnopqrstuvwxyz")]);
     let mut second_env = first_env.clone();
 
     CredentialBroker::new(/*enabled*/ true).virtualize_child_env(&mut first_env);
     CredentialBroker::new(/*enabled*/ true).virtualize_child_env(&mut second_env);
 
-    assert_ne!(first_env["OPENAI_API_KEY"], second_env["OPENAI_API_KEY"]);
+    assert_ne!(first_env["PROVIDER_API_KEY"], second_env["PROVIDER_API_KEY"]);
 }
 
 #[test]
 fn child_without_dummy_cannot_use_previous_child_credential() {
     let broker = CredentialBroker::new(/*enabled*/ true);
-    let mut first_env = env_map([("OPENAI_API_KEY", "sk-real")]);
+    let mut first_env = env_map([("PROVIDER_API_KEY", "sk-real")]);
     let mut second_env = HashMap::new();
 
     broker.virtualize_child_env(&mut first_env);
     broker.virtualize_child_env(&mut second_env);
     let mut headers = HeaderMap::new();
 
-    broker.inject_request_headers("api.openai.com", &mut headers);
+    broker.inject_request_headers("api.example.test", &mut headers);
 
     assert_eq!(authorization(&headers), None);
 }
@@ -1008,20 +1008,20 @@ fn request_translation_preserves_provider_scheme_and_host_binding() {
 #[test]
 fn inject_request_headers_requires_dummy_and_preserves_explicit_authorization() {
     let broker = CredentialBroker::new(/*enabled*/ true);
-    let mut env = env_map([("OPENAI_API_KEY", "sk-real")]);
+    let mut env = env_map([("PROVIDER_API_KEY", "sk-real")]);
     broker.virtualize_child_env(&mut env);
-    let openai_api_key = env.get("OPENAI_API_KEY").expect("dummy OpenAI API key");
+    let api_key = env.get("PROVIDER_API_KEY").expect("dummy provider API key");
     let mut headers = HeaderMap::new();
 
-    broker.inject_request_headers("api.openai.com", &mut headers);
+    broker.inject_request_headers("api.example.test", &mut headers);
     assert_eq!(authorization(&headers), None);
 
-    headers = headers_with_bearer(openai_api_key);
-    broker.inject_request_headers("api.openai.com", &mut headers);
+    headers = headers_with_bearer(api_key);
+    broker.inject_request_headers("api.example.test", &mut headers);
     assert_eq!(authorization(&headers), Some("Bearer sk-real"));
 
     let mut explicit_headers = headers_with_bearer("sk-explicit");
-    broker.inject_request_headers("api.openai.com", &mut explicit_headers);
+    broker.inject_request_headers("api.example.test", &mut explicit_headers);
 
     assert_eq!(authorization(&explicit_headers), Some("Bearer sk-explicit"));
 }
@@ -1205,22 +1205,22 @@ fn builtin_credentials_use_private_destination_context() {
 }
 
 #[test]
-fn builtin_openai_credentials_ignore_base_url_environment_override() {
+fn builtin_provider_credentials_ignore_base_url_environment_override() {
     let broker = CredentialBroker::new(/*enabled*/ true);
     let mut config = NetworkProxyConfig::default();
     config.set_credential_broker_enabled(/*enabled*/ true);
     config.configure_credential_broker_environment(&env_map([(
-        "OPENAI_BASE_URL",
+        "PROVIDER_BASE_URL",
         "https://gateway.example/v1",
     )]));
     broker.configure(&config);
 
-    let mut env = env_map([("OPENAI_API_KEY", "sk-real")]);
+    let mut env = env_map([("PROVIDER_API_KEY", "sk-real")]);
     broker.virtualize_child_env(&mut env);
-    let dummy = env["OPENAI_API_KEY"].clone();
+    let dummy = env["PROVIDER_API_KEY"].clone();
 
     let mut default_headers = headers_with_bearer(&dummy);
-    broker.inject_request_headers("api.openai.com", &mut default_headers);
+    broker.inject_request_headers("api.example.test", &mut default_headers);
     assert_eq!(authorization(&default_headers), Some("Bearer sk-real"));
 
     let mut gateway_headers = headers_with_bearer(&dummy);

@@ -286,7 +286,7 @@ async fn logout_account_removes_auth_and_notifies() -> Result<()> {
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[("OPENAI_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
@@ -338,7 +338,7 @@ async fn logout_account_succeeds_when_config_reload_fails() -> Result<()> {
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[("OPENAI_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
@@ -508,7 +508,7 @@ async fn login_amazon_bedrock_replaces_primary_auth_and_persists_provider(
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[("OPENAI_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
     let mut expected_config = read_config_toml(codex_home.path())?;
@@ -561,7 +561,7 @@ async fn login_amazon_bedrock_replaces_primary_auth_and_persists_provider(
             } else {
                 DomainAuthMode::BedrockApiKey
             }),
-            openai_api_key: None,
+            api_key: None,
             tokens: None,
             last_refresh: None,
             agent_identity: None,
@@ -661,7 +661,7 @@ async fn login_amazon_bedrock_rejects_non_bedrock_provider_override_without_chan
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[("OPENAI_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .with_args(&["-c", "model_provider=\"mock_provider\""])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -723,7 +723,7 @@ async fn login_amazon_bedrock_access_keys_rejects_overridden_aws_configuration()
         let mut mcp = TestAppServer::builder()
             .with_codex_home(codex_home.path())
             .without_auto_env()
-            .with_env_overrides(&[("OPENAI_API_KEY", None)])
+            .with_env_overrides(&[("PROVIDER_API_KEY", None)])
             .with_args(&["-c", config_override])
             .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
             .await?;
@@ -768,7 +768,7 @@ async fn login_amazon_bedrock_allows_bedrock_provider_override() -> Result<()> {
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[("OPENAI_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .with_args(&["-c", "model_provider=\"amazon-bedrock\""])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -789,7 +789,7 @@ async fn login_amazon_bedrock_allows_bedrock_provider_override() -> Result<()> {
         load_file_auth(codex_home.path())?,
         Some(AuthDotJson {
             auth_mode: Some(DomainAuthMode::BedrockApiKey),
-            openai_api_key: None,
+            api_key: None,
             tokens: None,
             last_refresh: None,
             agent_identity: None,
@@ -813,7 +813,7 @@ async fn login_amazon_bedrock_allows_bedrock_provider_override() -> Result<()> {
 }
 
 #[test_case("amazon-bedrock", "mock-model"; "mantle_clears_generic_model")]
-#[test_case("amazon-bedrock-runtime", "global.openai.gpt-5.6-terra"; "runtime_clears_bedrock_model")]
+#[test_case("amazon-bedrock-runtime", "global.provider.gpt-5.6-terra"; "runtime_clears_bedrock_model")]
 #[tokio::test]
 async fn logout_managed_bedrock_restores_default_account(
     model_provider_id: &str,
@@ -825,7 +825,7 @@ async fn logout_managed_bedrock_restores_default_account(
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[("OPENAI_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
     let request_id = mcp
@@ -915,7 +915,7 @@ async fn logout_aws_managed_bedrock_clears_provider_and_restores_default_account
         let config = std::fs::read_to_string(&config_path)?
             .replace(
                 "model = \"mock-model\"",
-                "model = \"openai.gpt-5.6-sol\"\nmodel_reasoning_effort = \"high\"",
+                "model = \"provider.gpt-5.6-sol\"\nmodel_reasoning_effort = \"high\"",
             )
             .replace(
                 "[model_providers.amazon-bedrock.aws]",
@@ -950,7 +950,7 @@ async fn logout_aws_managed_bedrock_clears_provider_and_restores_default_account
             .with_codex_home(codex_home.path())
             .without_auto_env()
             .with_env_overrides(&[
-                ("OPENAI_API_KEY", None),
+                ("PROVIDER_API_KEY", None),
                 ("AWS_ACCESS_KEY_ID", Some("environment-id")),
                 ("AWS_SECRET_ACCESS_KEY", Some("environment-secret")),
                 (
@@ -1124,7 +1124,7 @@ async fn login_managed_bedrock_updates_active_bedrock_account() -> Result<()> {
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[("OPENAI_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
     let request_id = mcp
@@ -1167,7 +1167,7 @@ async fn login_account_amazon_bedrock_rejects_invalid_credentials_without_change
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[("OPENAI_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
     let expected_config = read_config_toml(codex_home.path())?;
@@ -1264,7 +1264,7 @@ async fn get_account_no_auth() -> Result<()> {
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[("OPENAI_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 

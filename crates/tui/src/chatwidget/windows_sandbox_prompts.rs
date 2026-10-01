@@ -33,12 +33,12 @@ impl ChatWidget {
         header.push(*Box::new(
             Paragraph::new(if allow_unelevated {
                 vec![
-                    line!["Set up the Codex agent sandbox to protect your files and control network access. Learn more <https://developers.openai.com/codex/windows>"],
+                    line!["Set up the Codex agent sandbox to protect your files and control network access. Learn more <https://developers.provider.com/codex/windows>"],
                 ]
             } else {
                 vec![
                     line!["Your organization requires the default Codex agent sandbox to continue. Set it up to protect your files and control network access."],
-                    line!["Learn more <https://developers.openai.com/codex/windows>"],
+                    line!["Learn more <https://developers.provider.com/codex/windows>"],
                 ]
             })
             .wrap(Wrap { trim: false }),
@@ -164,7 +164,7 @@ impl ChatWidget {
             ]);
         }
         lines.push(line![
-            "Learn more <https://developers.openai.com/codex/windows>"
+            "Learn more <https://developers.provider.com/codex/windows>"
         ]);
 
         let mut header = ColumnRenderable::new();

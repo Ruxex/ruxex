@@ -232,8 +232,8 @@ impl ExecApprovalRequestEvent {
 #[serde(tag = "mode", rename_all = "snake_case")]
 #[ts(tag = "mode")]
 pub enum ElicitationRequest {
-    #[serde(rename = "openai/userVerification")]
-    #[ts(rename = "openai/userVerification")]
+    #[serde(rename = "provider/userVerification")]
+    #[ts(rename = "provider/userVerification")]
     UserVerification {
         title: String,
         description: String,

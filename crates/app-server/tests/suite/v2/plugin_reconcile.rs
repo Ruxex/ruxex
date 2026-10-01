@@ -34,7 +34,7 @@ use wiremock::matchers::query_param;
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[test_case("WORKSPACE", "workspace-directory"; "workspace")]
-#[test_case("GLOBAL", "openai-curated-remote"; "global")]
+#[test_case("GLOBAL", "test-remote"; "global")]
 #[tokio::test]
 async fn plugin_reconcile_syncs_bundles_and_reports_changes(
     scope: &str,

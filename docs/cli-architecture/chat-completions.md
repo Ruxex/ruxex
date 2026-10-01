@@ -67,7 +67,7 @@ tool をネイティブに提供することを意味しません。
 ```
 
 会話 ID がある場合は `session_id` ヘッダーを付与し、sub-agent セッションでは
-`x-openai-subagent` ヘッダーも付与します。実際の認証ヘッダーや provider 固有の
+`x-provider-subagent` ヘッダーも付与します。実際の認証ヘッダーや provider 固有の
 ヘッダーは `EndpointSession` と共通の API client が追加します。
 
 履歴の主な変換は次のとおりです。

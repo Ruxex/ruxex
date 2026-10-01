@@ -61,21 +61,21 @@ rustc_session::declare_lint! {
     /// ### Example
     ///
     /// ```rust
-    /// fn create_openai_url(base_url: Option<String>) -> String {
+    /// fn create_provider_url(base_url: Option<String>) -> String {
     ///     String::new()
     /// }
     ///
-    /// create_openai_url(/*api_base*/ None);
+    /// create_provider_url(/*api_base*/ None);
     /// ```
     ///
     /// Use instead:
     ///
     /// ```rust
-    /// fn create_openai_url(base_url: Option<String>) -> String {
+    /// fn create_provider_url(base_url: Option<String>) -> String {
     ///     String::new()
     /// }
     ///
-    /// create_openai_url(/*base_url*/ None);
+    /// create_provider_url(/*base_url*/ None);
     /// ```
     pub ARGUMENT_COMMENT_MISMATCH,
     Warn,
@@ -102,21 +102,21 @@ rustc_session::declare_lint! {
     /// ### Example
     ///
     /// ```rust
-    /// fn create_openai_url(base_url: Option<String>) -> String {
+    /// fn create_provider_url(base_url: Option<String>) -> String {
     ///     String::new()
     /// }
     ///
-    /// create_openai_url(None);
+    /// create_provider_url(None);
     /// ```
     ///
     /// Use instead:
     ///
     /// ```rust
-    /// fn create_openai_url(base_url: Option<String>) -> String {
+    /// fn create_provider_url(base_url: Option<String>) -> String {
     ///     String::new()
     /// }
     ///
-    /// create_openai_url(/*base_url*/ None);
+    /// create_provider_url(/*base_url*/ None);
     /// ```
     pub UNCOMMENTED_ANONYMOUS_LITERAL_ARGUMENT,
     Allow,

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Rust, Cargo workspace, `codex-model-provider-info`, CLI/TUI config, generated JSON schema, `just check`, `just generate`。
 
-**Spec:** `docs/openai-decoupling-plan.md`, `docs/pre-release-compatibility-inventory.md`
+**Spec:** `docs/provider-decoupling-plan.md`, `docs/pre-release-compatibility-inventory.md`
 
 ## Global Constraints
 
@@ -19,7 +19,7 @@
 
 ## Review Focus
 
-- 組み込みprovider一覧からLM Studio/Ollamaだけが消え、OpenAI、Bedrock、custom providerが残ること。
+- 組み込みprovider一覧からLM Studio/Ollamaだけが消え、provider、Bedrock、custom providerが残ること。
 - TUI起動時にOSS provider選択や自動ポート検出が残らないこと。
 - `model_providers`の任意URL・任意auth設定を壊さないこと。
 - archive/session操作に残るOSS専用分岐がないこと。
@@ -76,7 +76,7 @@
 
   - [x] **Step 1: built-in provider entriesを削除する**
 
-  `lmstudio`、`ollama`、専用port、OSS-only factoryを組み込みprovider mapから削除する。OpenAI、Bedrock、custom provider登録は残す。
+  `lmstudio`、`ollama`、専用port、OSS-only factoryを組み込みprovider mapから削除する。provider、Bedrock、custom provider登録は残す。
 
   - [x] **Step 2: config fieldsとlegacy rejectionを削除する**
 
@@ -92,7 +92,7 @@
 - Modify/Delete: OSS-related tests and fixtures under `crates/core`, `crates/tui`, `crates/exec`, `crates/config`
 - Modify: relevant docs and snapshots
 - Modify: `docs/pre-release-compatibility-inventory.md`
-- Modify: `docs/openai-decoupling-plan.md`
+- Modify: `docs/provider-decoupling-plan.md`
 
   - [x] **Step 1: productionとfixtureの残存参照を削除する**
 

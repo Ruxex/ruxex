@@ -38,7 +38,7 @@ async fn mock_experimental_method_requires_experimental_api_capability() -> Resu
                 experimental_api: false,
                 request_attestation: false,
                 opt_out_notification_methods: None,
-                mcp_server_openai_form_elicitation: false,
+                mcp_server_provider_form_elicitation: false,
                 extensions: None,
             }),
         )
@@ -77,7 +77,7 @@ async fn settings_update_requires_experimental_api_capability(method: &str) -> R
                 experimental_api: false,
                 request_attestation: false,
                 opt_out_notification_methods: None,
-                mcp_server_openai_form_elicitation: false,
+                mcp_server_provider_form_elicitation: false,
                 extensions: None,
             }),
         )
@@ -117,7 +117,7 @@ async fn thread_start_mock_field_requires_experimental_api_capability() -> Resul
                 experimental_api: false,
                 request_attestation: false,
                 opt_out_notification_methods: None,
-                mcp_server_openai_form_elicitation: false,
+                mcp_server_provider_form_elicitation: false,
                 extensions: None,
             }),
         )
@@ -160,7 +160,7 @@ async fn thread_start_without_dynamic_tools_allows_without_experimental_api_capa
                 experimental_api: false,
                 request_attestation: false,
                 opt_out_notification_methods: None,
-                mcp_server_openai_form_elicitation: false,
+                mcp_server_provider_form_elicitation: false,
                 extensions: None,
             }),
         )
@@ -202,7 +202,7 @@ async fn thread_start_granular_approval_policy_requires_experimental_api_capabil
                 experimental_api: false,
                 request_attestation: false,
                 opt_out_notification_methods: None,
-                mcp_server_openai_form_elicitation: false,
+                mcp_server_provider_form_elicitation: false,
                 extensions: None,
             }),
         )

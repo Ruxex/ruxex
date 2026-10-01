@@ -23,7 +23,7 @@ use codex_protocol::items::CollabAgentToolCallItem;
 use codex_protocol::items::CollabAgentToolCallStatus;
 use codex_protocol::items::TurnItem;
 use codex_protocol::models::ResponseInputItem;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use codex_protocol::protocol::CollabAgentRef;
 use codex_protocol::user_input::UserInput;
 use codex_tools::ToolName;

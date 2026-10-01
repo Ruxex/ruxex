@@ -391,7 +391,7 @@ async fn task_management_tools_use_existing_app_server_operations() -> color_eyr
         "2026-01-03T00-00-00",
         "2026-01-03T00:00:00Z",
         "Legacy test task",
-        Some("openai"),
+        Some("provider"),
         /*git_info*/ None,
     )
     .map_err(|error| color_eyre::eyre::eyre!("failed to create legacy rollout: {error}"))?;
@@ -464,7 +464,7 @@ async fn task_management_tools_use_existing_app_server_operations() -> color_eyr
             &format!("2026-01-{day:02}T00-00-00"),
             &format!("2026-01-{day:02}T00:00:00Z"),
             "Archived task with a deliberately descriptive pagination title",
-            Some("openai"),
+            Some("provider"),
             /*git_info*/ None,
         )
         .map_err(|error| color_eyre::eyre::eyre!("failed to create archived rollout: {error}"))?;

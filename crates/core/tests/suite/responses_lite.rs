@@ -14,8 +14,8 @@ use codex_mcp::CODEX_APPS_MCP_SERVER_NAME;
 use codex_protocol::config_types::WebSearchMode;
 use codex_protocol::models::ImageDetail;
 use codex_protocol::models::ImageReference;
-use codex_protocol::openai_models::InputModality;
-use codex_protocol::openai_models::ToolMode;
+use codex_protocol::model_types::InputModality;
+use codex_protocol::model_types::ToolMode;
 use codex_protocol::protocol::EventMsg;
 use codex_protocol::protocol::Op;
 use codex_protocol::user_input::UserInput;
@@ -32,7 +32,7 @@ use core_test_support::wait_for_mcp_server;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 
-const RESPONSES_LITE_HEADER: &str = "x-openai-internal-codex-responses-lite";
+const RESPONSES_LITE_HEADER: &str = "x-provider-internal-codex-responses-lite";
 
 fn responses_extensions(auth: &CodexAuth) -> Arc<ExtensionRegistry<Config>> {
     let auth_manager = codex_core::test_support::auth_manager_from_auth(auth.clone());
@@ -51,7 +51,7 @@ fn configure_responses_tools(config: &mut Config) {
     );
 }
 
-fn configure_image_capable_model(model_info: &mut codex_protocol::openai_models::ModelInfo) {
+fn configure_image_capable_model(model_info: &mut codex_protocol::model_types::ModelInfo) {
     model_info.input_modalities = vec![InputModality::Text, InputModality::Image];
 }
 
@@ -347,7 +347,7 @@ async fn responses_lite_exposes_standalone_tools_for_actor_authorized_provider()
             config.model_provider.name = "local".to_string();
             config.model_provider.requires_auth = false;
             config.model_provider.http_headers = Some(HashMap::from([(
-                "x-openai-actor-authorization".to_string(),
+                "x-provider-actor-authorization".to_string(),
                 "test-actor-authorization".into(),
             )]));
         });

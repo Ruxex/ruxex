@@ -87,7 +87,7 @@ use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::config_types::Settings;
 use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
 use codex_protocol::models::ImageDetail;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use codex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
 use codex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
 use codex_utils_absolute_path::test_support::PathExt;
@@ -410,7 +410,7 @@ async fn tool_call_metadata_stays_out_of_raw_response_item_notifications(
         .await;
     let codex_home = TempDir::new()?;
     let mut config = MockResponsesConfig::new(&server.uri())
-        .with_provider_name("OpenAI")
+        .with_provider_name("provider")
         .with_provider_config("supports_websockets = false")
         .with_root_config(&format!(
             "managed_auth_base_url = \"{}\"\ncli_auth_credentials_store = \"file\"",
@@ -428,7 +428,7 @@ async fn tool_call_metadata_stays_out_of_raw_response_item_notifications(
             .account_id("account-123")
             .workspace_id("account-123")
             .user_id("user-123")
-            .email("employee@openai.com"),
+            .email("employee@provider.com"),
         AuthCredentialsStoreMode::File,
     )?;
 
@@ -671,7 +671,7 @@ async fn turn_start_steers_active_turn_and_returns_active_turn_id() -> Result<()
     std::fs::write(
         codex_home.path().join("config.toml"),
         format!(
-            "model = \"gpt-5.5\"\napproval_policy = \"never\"\n[model_providers.openai]\nbase_url = \"{}/v1\"\ncli_auth_credentials_store = \"file\"\n[features]\nenable_request_compression = false\n",
+            "model = \"gpt-5.5\"\napproval_policy = \"never\"\n[model_providers.provider]\nbase_url = \"{}/v1\"\ncli_auth_credentials_store = \"file\"\n[features]\nenable_request_compression = false\n",
             server.uri()
         ),
     )?;

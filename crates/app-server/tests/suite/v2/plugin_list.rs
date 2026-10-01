@@ -160,7 +160,7 @@ async fn plugin_list_skips_invalid_marketplace_file_and_reports_error() -> Resul
 }
 
 #[tokio::test]
-async fn plugin_rpcs_reject_repository_spoofing_openai_curated() -> Result<()> {
+async fn plugin_rpcs_reject_repository_spoofing_provider_curated() -> Result<()> {
     let codex_home = TempDir::new()?;
     let repository = TempDir::new()?;
     std::fs::create_dir_all(repository.path().join(".git"))?;
@@ -174,7 +174,7 @@ async fn plugin_rpcs_reject_repository_spoofing_openai_curated() -> Result<()> {
         AbsolutePathBuf::try_from(repository.path().join(".agents/plugins/marketplace.json"))?;
     std::fs::write(
         marketplace_path.as_path(),
-        r#"{"name":"openai-curated","plugins":[{"name":"attacker","source":{"source":"local","path":"./attacker"}}]}"#,
+        r#"{"name":"test-curated","plugins":[{"name":"attacker","source":{"source":"local","path":"./attacker"}}]}"#,
     )?;
     write_plugins_enabled_config(codex_home.path())?;
     let original_config = std::fs::read(codex_home.path().join("config.toml"))?;
@@ -224,13 +224,13 @@ async fn plugin_rpcs_reject_repository_spoofing_openai_curated() -> Result<()> {
 #[tokio::test]
 async fn plugin_installed_ignores_local_cache_without_catalog() -> Result<()> {
     let codex_home = TempDir::new()?;
-    write_installed_plugin(&codex_home, "openai-curated", "linear")?;
+    write_installed_plugin(&codex_home, "test-curated", "linear")?;
     std::fs::write(
         codex_home.path().join("config.toml"),
         r#"[features]
 plugins = true
 
-[plugins."linear@openai-curated"]
+[plugins."linear@test-curated"]
 enabled = true
 "#,
     )?;
@@ -1339,12 +1339,12 @@ async fn plugin_list_returns_plugin_interface_with_absolute_asset_paths() -> Res
     "displayName": "Plugin Display Name",
     "shortDescription": "Short description for subtitle",
     "longDescription": "Long description for details page",
-    "developerName": "OpenAI",
+    "developerName": "provider",
     "category": "Productivity",
     "capabilities": ["Interactive", "Write"],
-    "websiteURL": "https://openai.com/",
-    "privacyPolicyURL": "https://openai.com/policies/row-privacy-policy/",
-    "termsOfServiceURL": "https://openai.com/policies/row-terms-of-use/",
+    "websiteURL": "https://provider.com/",
+    "privacyPolicyURL": "https://provider.com/policies/row-privacy-policy/",
+    "termsOfServiceURL": "https://provider.com/policies/row-terms-of-use/",
     "defaultPrompt": [
       "Starter prompt for trying a plugin",
       "Find my next action"
@@ -1396,15 +1396,15 @@ async fn plugin_list_returns_plugin_interface_with_absolute_asset_paths() -> Res
     assert_eq!(interface.category.as_deref(), Some("Design"));
     assert_eq!(
         interface.website_url.as_deref(),
-        Some("https://openai.com/")
+        Some("https://provider.com/")
     );
     assert_eq!(
         interface.privacy_policy_url.as_deref(),
-        Some("https://openai.com/policies/row-privacy-policy/")
+        Some("https://provider.com/policies/row-privacy-policy/")
     );
     assert_eq!(
         interface.terms_of_service_url.as_deref(),
-        Some("https://openai.com/policies/row-terms-of-use/")
+        Some("https://provider.com/policies/row-terms-of-use/")
     );
     assert_eq!(
         interface.default_prompt,
@@ -1682,7 +1682,7 @@ async fn app_server_startup_sync_downloads_remote_installed_plugin_bundles() -> 
 
     let installed_path = codex_home
         .path()
-        .join("plugins/cache/openai-curated-remote/linear/1.2.3");
+        .join("plugins/cache/test-remote/linear/1.2.3");
     let _mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
         .with_plugin_startup_tasks()
@@ -1703,7 +1703,7 @@ async fn app_server_startup_sync_downloads_remote_installed_plugin_bundles() -> 
     assert_eq!(installed_app_manifest, remote_app_manifest);
     assert!(installed_path.join("skills/plan-work/SKILL.md").is_file());
     let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
-    assert!(!config.contains("linear@openai-curated-remote"));
+    assert!(!config.contains("linear@test-remote"));
     Ok(())
 }
 
@@ -1723,8 +1723,8 @@ async fn plugin_list_sync_upgrades_and_removes_remote_installed_plugin_bundles()
             .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
-    write_installed_plugin_with_version(&codex_home, "openai-curated-remote", "linear", "1.0.0")?;
-    write_installed_plugin_with_version(&codex_home, "openai-curated-remote", "stale", "1.0.0")?;
+    write_installed_plugin_with_version(&codex_home, "test-remote", "linear", "1.0.0")?;
+    write_installed_plugin_with_version(&codex_home, "test-remote", "stale", "1.0.0")?;
 
     let bundle_url = mount_remote_plugin_bundle(
         &server,
@@ -1754,13 +1754,13 @@ async fn plugin_list_sync_upgrades_and_removes_remote_installed_plugin_bundles()
 
     let old_path = codex_home
         .path()
-        .join("plugins/cache/openai-curated-remote/linear/1.0.0");
+        .join("plugins/cache/test-remote/linear/1.0.0");
     let new_path = codex_home
         .path()
-        .join("plugins/cache/openai-curated-remote/linear/1.2.3");
+        .join("plugins/cache/test-remote/linear/1.2.3");
     let stale_path = codex_home
         .path()
-        .join("plugins/cache/openai-curated-remote/stale");
+        .join("plugins/cache/test-remote/stale");
 
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
@@ -1780,15 +1780,15 @@ async fn plugin_list_sync_upgrades_and_removes_remote_installed_plugin_bundles()
     let remote_marketplace = response
         .marketplaces
         .into_iter()
-        .find(|marketplace| marketplace.name == "openai-curated-remote")
-        .expect("expected openai-curated-remote marketplace entry");
+        .find(|marketplace| marketplace.name == "test-remote")
+        .expect("expected test-remote marketplace entry");
     assert_eq!(
         remote_marketplace
             .plugins
             .into_iter()
             .map(|plugin| (plugin.id, plugin.installed, plugin.enabled))
             .collect::<Vec<_>>(),
-        vec![("linear@openai-curated-remote".to_string(), true, true)]
+        vec![("linear@test-remote".to_string(), true, true)]
     );
 
     wait_for_path_exists(&new_path.join(".codex-plugin/plugin.json")).await?;
@@ -1805,7 +1805,7 @@ async fn plugin_list_sync_upgrades_and_removes_remote_installed_plugin_bundles()
     wait_for_path_missing(&old_path).await?;
     wait_for_path_missing(&stale_path).await?;
     let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
-    assert!(!config.contains("linear@openai-curated-remote"));
+    assert!(!config.contains("linear@test-remote"));
     Ok(())
 }
 
@@ -1837,7 +1837,7 @@ async fn plugin_list_includes_remote_marketplaces_when_remote_plugin_enabled(
             .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
-    write_installed_plugin_with_version(&codex_home, "openai-curated-remote", "linear", "1.2.3")?;
+    write_installed_plugin_with_version(&codex_home, "test-remote", "linear", "1.2.3")?;
 
     let repo = TempDir::new()?;
     let cwds = if project_configuration != ProjectPluginConfiguration::None {
@@ -1974,7 +1974,7 @@ async fn plugin_list_includes_remote_marketplaces_when_remote_plugin_enabled(
         .and(path("/backend-api/plugins/featured"))
         .and(query_param("platform", "codex"))
         .respond_with(
-            ResponseTemplate::new(200).set_body_string(r#"["linear@openai-curated-remote"]"#),
+            ResponseTemplate::new(200).set_body_string(r#"["linear@test-remote"]"#),
         )
         .mount(&server)
         .await;
@@ -2013,20 +2013,20 @@ async fn plugin_list_includes_remote_marketplaces_when_remote_plugin_enabled(
     let remote_marketplace = response
         .marketplaces
         .into_iter()
-        .find(|marketplace| marketplace.name == "openai-curated-remote")
-        .expect("expected openai-curated remote marketplace");
+        .find(|marketplace| marketplace.name == "test-remote")
+        .expect("expected test-curated remote marketplace");
     assert_eq!(remote_marketplace.path, None);
     assert_eq!(
         remote_marketplace
             .interface
             .as_ref()
             .and_then(|interface| interface.display_name.as_deref()),
-        Some("OpenAI Curated Remote")
+        Some("provider Curated Remote")
     );
     assert_eq!(remote_marketplace.plugins.len(), 1);
     assert_eq!(
         remote_marketplace.plugins[0].id,
-        "linear@openai-curated-remote"
+        "linear@test-remote"
     );
     assert_eq!(
         remote_marketplace.plugins[0].remote_plugin_id.as_deref(),
@@ -2116,7 +2116,7 @@ async fn plugin_list_includes_remote_marketplaces_when_remote_plugin_enabled(
     );
     assert_eq!(
         response.featured_plugin_ids,
-        vec!["linear@openai-curated-remote".to_string()]
+        vec!["linear@test-remote".to_string()]
     );
     assert!(
         !server
@@ -2182,11 +2182,11 @@ async fn plugin_list_honors_global_remote_catalog_cache_ttl() -> Result<()> {
     let remote_marketplace = response
         .marketplaces
         .iter()
-        .find(|marketplace| marketplace.name == "openai-curated-remote")
+        .find(|marketplace| marketplace.name == "test-remote")
         .expect("expected warmed remote marketplace");
     assert_eq!(
         remote_marketplace.plugins[0].id,
-        "linear@openai-curated-remote"
+        "linear@test-remote"
     );
     assert_eq!(
         remote_marketplace.plugins[0].must_show_installation_interstitial,
@@ -2215,11 +2215,11 @@ async fn plugin_list_honors_global_remote_catalog_cache_ttl() -> Result<()> {
     let remote_marketplace = response
         .marketplaces
         .iter()
-        .find(|marketplace| marketplace.name == "openai-curated-remote")
+        .find(|marketplace| marketplace.name == "test-remote")
         .expect("expected cached remote marketplace");
     assert_eq!(
         remote_marketplace.plugins[0].id,
-        "linear@openai-curated-remote"
+        "linear@test-remote"
     );
     sleep(Duration::from_millis(100)).await;
     wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 0).await?;
@@ -2254,11 +2254,11 @@ async fn plugin_list_honors_global_remote_catalog_cache_ttl() -> Result<()> {
     let remote_marketplace = response
         .marketplaces
         .iter()
-        .find(|marketplace| marketplace.name == "openai-curated-remote")
+        .find(|marketplace| marketplace.name == "test-remote")
         .expect("expected stale cached remote marketplace");
     assert_eq!(
         remote_marketplace.plugins[0].id,
-        "linear@openai-curated-remote"
+        "linear@test-remote"
     );
 
     let request_id = mcp
@@ -2278,11 +2278,11 @@ async fn plugin_list_honors_global_remote_catalog_cache_ttl() -> Result<()> {
     let remote_marketplace = response
         .marketplaces
         .iter()
-        .find(|marketplace| marketplace.name == "openai-curated-remote")
+        .find(|marketplace| marketplace.name == "test-remote")
         .expect("expected stale cached remote marketplace");
     assert_eq!(
         remote_marketplace.plugins[0].id,
-        "linear@openai-curated-remote"
+        "linear@test-remote"
     );
 
     wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 1).await?;
@@ -2397,11 +2397,11 @@ async fn app_server_startup_refreshes_cached_remote_catalog_without_blocking_plu
     let remote_marketplace = response
         .marketplaces
         .iter()
-        .find(|marketplace| marketplace.name == "openai-curated-remote")
+        .find(|marketplace| marketplace.name == "test-remote")
         .expect("expected cached remote marketplace");
     assert_eq!(
         remote_marketplace.plugins[0].id,
-        "linear@openai-curated-remote"
+        "linear@test-remote"
     );
 
     wait_for_cached_remote_catalog_plugin_ids(codex_home.path(), &[refreshed_remote_plugin_id])
@@ -2423,11 +2423,11 @@ async fn app_server_startup_refreshes_cached_remote_catalog_without_blocking_plu
     let remote_marketplace = response
         .marketplaces
         .iter()
-        .find(|marketplace| marketplace.name == "openai-curated-remote")
+        .find(|marketplace| marketplace.name == "test-remote")
         .expect("expected refreshed remote marketplace");
     assert_eq!(
         remote_marketplace.plugins[0].id,
-        "notion@openai-curated-remote"
+        "notion@test-remote"
     );
     sleep(Duration::from_millis(100)).await;
     wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 1).await?;
@@ -2639,11 +2639,11 @@ async fn plugin_list_force_refetch_bypasses_fresh_global_remote_catalog_cache() 
     let remote_marketplace = response
         .marketplaces
         .iter()
-        .find(|marketplace| marketplace.name == "openai-curated-remote")
+        .find(|marketplace| marketplace.name == "test-remote")
         .expect("expected refreshed remote marketplace");
     assert_eq!(
         remote_marketplace.plugins[0].id,
-        "notion@openai-curated-remote"
+        "notion@test-remote"
     );
     wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 1).await?;
     wait_for_cached_remote_catalog_plugin_ids(codex_home.path(), &[refreshed_remote_plugin_id])
@@ -2672,11 +2672,11 @@ async fn plugin_list_force_refetch_bypasses_fresh_global_remote_catalog_cache() 
     let remote_marketplace = response
         .marketplaces
         .iter()
-        .find(|marketplace| marketplace.name == "openai-curated-remote")
+        .find(|marketplace| marketplace.name == "test-remote")
         .expect("expected cached refreshed remote marketplace");
     assert_eq!(
         remote_marketplace.plugins[0].id,
-        "notion@openai-curated-remote"
+        "notion@test-remote"
     );
     wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 0).await?;
 
@@ -2684,7 +2684,7 @@ async fn plugin_list_force_refetch_bypasses_fresh_global_remote_catalog_cache() 
 }
 
 #[tokio::test]
-async fn plugin_list_includes_openai_curated_remote_collection_when_remote_plugin_disabled_and_requested()
+async fn plugin_list_includes_provider_curated_remote_collection_when_remote_plugin_disabled_and_requested()
 -> Result<()> {
     let codex_home = TempDir::new()?;
     let server = MockServer::start().await;
@@ -2728,7 +2728,7 @@ async fn plugin_list_includes_openai_curated_remote_collection_when_remote_plugi
     "next_page_token": null
   }
 }"#;
-    mount_openai_curated_remote_collection_plugin_list(&server, collection_body).await;
+    mount_provider_curated_remote_collection_plugin_list(&server, collection_body).await;
     mount_remote_installed_plugins(&server, "GLOBAL", empty_remote_installed_plugins_body()).await;
     mount_remote_installed_plugins(&server, "WORKSPACE", empty_remote_installed_plugins_body())
         .await;
@@ -2752,19 +2752,19 @@ async fn plugin_list_includes_openai_curated_remote_collection_when_remote_plugi
     let remote_marketplace = response
         .marketplaces
         .into_iter()
-        .find(|marketplace| marketplace.name == "openai-curated-remote")
-        .expect("expected openai-curated remote marketplace");
+        .find(|marketplace| marketplace.name == "test-remote")
+        .expect("expected test-curated remote marketplace");
     assert_eq!(remote_marketplace.path, None);
     assert_eq!(
         remote_marketplace
             .interface
             .as_ref()
             .and_then(|interface| interface.display_name.as_deref()),
-        Some("OpenAI Curated Remote")
+        Some("provider Curated Remote")
     );
     assert_eq!(remote_marketplace.plugins.len(), 1);
     let plugin = &remote_marketplace.plugins[0];
-    assert_eq!(plugin.id, "linear@openai-curated-remote");
+    assert_eq!(plugin.id, "linear@test-remote");
     assert_eq!(
         plugin.remote_plugin_id.as_deref(),
         Some("plugins~Plugin_00000000000000000000000000000000")
@@ -2791,7 +2791,7 @@ async fn plugin_list_includes_openai_curated_remote_collection_when_remote_plugi
 }
 
 #[tokio::test]
-async fn plugin_list_propagates_openai_curated_remote_collection_errors_when_remote_plugin_disabled()
+async fn plugin_list_propagates_provider_curated_remote_collection_errors_when_remote_plugin_disabled()
 -> Result<()> {
     let codex_home = TempDir::new()?;
     let server = MockServer::start().await;
@@ -2844,13 +2844,13 @@ async fn plugin_list_propagates_openai_curated_remote_collection_errors_when_rem
     assert!(
         err.error
             .message
-            .contains("list OpenAI Curated remote plugin catalog")
+            .contains("list provider Curated remote plugin catalog")
     );
     Ok(())
 }
 
 #[tokio::test]
-async fn plugin_list_skips_openai_curated_remote_collection_for_api_auth_when_remote_plugin_disabled()
+async fn plugin_list_skips_provider_curated_remote_collection_for_api_auth_when_remote_plugin_disabled()
 -> Result<()> {
     let codex_home = TempDir::new()?;
     let server = MockServer::start().await;
@@ -2887,7 +2887,7 @@ async fn plugin_list_skips_openai_curated_remote_collection_for_api_auth_when_re
 }
 
 #[tokio::test]
-async fn plugin_list_does_not_query_openai_curated_remote_collection_by_default() -> Result<()> {
+async fn plugin_list_does_not_query_provider_curated_remote_collection_by_default() -> Result<()> {
     let codex_home = TempDir::new()?;
     let server = MockServer::start().await;
     write_plugins_enabled_config_with_base_url(
@@ -2922,7 +2922,7 @@ async fn plugin_list_does_not_query_openai_curated_remote_collection_by_default(
         response
             .marketplaces
             .iter()
-            .all(|marketplace| marketplace.name != "openai-curated-remote")
+            .all(|marketplace| marketplace.name != "test-remote")
     );
     assert!(
         server
@@ -2974,7 +2974,7 @@ async fn plugin_list_vertical_kind_noops_when_remote_plugin_enabled() -> Result<
         response
             .marketplaces
             .iter()
-            .all(|marketplace| marketplace.name != "openai-curated-remote")
+            .all(|marketplace| marketplace.name != "test-remote")
     );
     assert!(
         server
@@ -3028,7 +3028,7 @@ async fn plugin_list_does_not_append_global_remote_when_marketplace_kinds_are_ex
         response
             .marketplaces
             .iter()
-            .all(|marketplace| marketplace.name != "openai-curated-remote")
+            .all(|marketplace| marketplace.name != "test-remote")
     );
     wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 0).await?;
     Ok(())
@@ -4269,7 +4269,7 @@ async fn assert_disabled_remote_plugin_metadata(
     let remote_marketplace = response
         .marketplaces
         .into_iter()
-        .find(|marketplace| marketplace.name == "openai-curated-remote")
+        .find(|marketplace| marketplace.name == "test-remote")
         .expect("expected managed remote marketplace");
     let plugin = remote_marketplace
         .plugins

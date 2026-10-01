@@ -8,7 +8,7 @@ use codex_http_client::OutboundProxyPolicy;
 use codex_models_manager::manager::ModelsEndpointClient;
 use codex_models_manager::manager::ModelsEndpointFuture;
 use codex_models_manager::manager::ModelsEndpointResponse;
-use codex_models_manager::manager::OpenAiModelsManager;
+use codex_models_manager::manager::RemoteModelsManager;
 use codex_models_manager::manager::SharedModelsManager;
 use codex_protocol::error::CodexErr;
 use codex_protocol::error::Result as CoreResult;
@@ -85,7 +85,7 @@ impl ModelsEndpointClient for TestModelsEndpoint {
 async fn refreshes_immediately_periodically_and_stops_when_dropped() {
     let codex_home = tempdir().expect("temp dir");
     let endpoint = TestModelsEndpoint::new();
-    let models_manager: SharedModelsManager = Arc::new(OpenAiModelsManager::new(
+    let models_manager: SharedModelsManager = Arc::new(RemoteModelsManager::new(
         codex_home.path().to_path_buf(),
         endpoint.clone(),
         /*auth_manager*/ None,

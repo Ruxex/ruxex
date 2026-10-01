@@ -10,8 +10,8 @@ use codex_http_client::HttpClientFactory;
 use codex_http_client::OutboundProxyPolicy;
 use codex_login::AuthManager;
 use codex_login::CodexAuth;
-use codex_protocol::openai_models::ModelAccessPrograms;
-use codex_protocol::openai_models::ModelsResponse;
+use codex_protocol::model_types::ModelAccessPrograms;
+use codex_protocol::model_types::ModelsResponse;
 use codex_protocol::turn_input::CyberAccessProgram;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -268,11 +268,11 @@ impl ModelsEndpointClient for TestModelsEndpoint {
     }
 }
 
-fn openai_manager_for_tests(
+fn provider_manager_for_tests(
     codex_home: std::path::PathBuf,
     endpoint_client: Arc<dyn ModelsEndpointClient>,
-) -> OpenAiModelsManager {
-    openai_manager_for_tests_with_auth(
+) -> RemoteModelsManager {
+    provider_manager_for_tests_with_auth(
         codex_home,
         endpoint_client,
         Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
@@ -281,12 +281,12 @@ fn openai_manager_for_tests(
     )
 }
 
-fn openai_manager_for_tests_with_auth(
+fn provider_manager_for_tests_with_auth(
     codex_home: std::path::PathBuf,
     endpoint_client: Arc<dyn ModelsEndpointClient>,
     auth_manager: Option<Arc<AuthManager>>,
-) -> OpenAiModelsManager {
-    OpenAiModelsManager::new(codex_home, endpoint_client, auth_manager)
+) -> RemoteModelsManager {
+    RemoteModelsManager::new(codex_home, endpoint_client, auth_manager)
 }
 
 async fn mutate_file_cache_for_test<F>(codex_home: &std::path::Path, f: F)
@@ -396,7 +396,7 @@ async fn static_manager_uses_empty_default_when_fallback_is_allowed_and_catalog_
 async fn dynamic_manager_preserves_requested_model_when_fallback_is_allowed() {
     let codex_home = tempdir().expect("temp dir");
     let endpoint = TestModelsEndpoint::new(Vec::new());
-    let manager = openai_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
     let requested_model = Some("unsupported".to_string());
 
     let model = manager
@@ -416,7 +416,7 @@ async fn dynamic_manager_preserves_requested_model_when_fallback_is_allowed() {
 async fn get_model_info_tracks_fallback_usage() {
     let codex_home = tempdir().expect("temp dir");
     let config = ModelsManagerConfig::default();
-    let manager = openai_manager_for_tests(
+    let manager = provider_manager_for_tests(
         codex_home.path().to_path_buf(),
         TestModelsEndpoint::new(Vec::new()),
     );
@@ -442,7 +442,7 @@ async fn get_model_info_tracks_fallback_usage() {
 #[tokio::test]
 async fn get_model_info_applies_long_context_override_to_bundled_gpt_5_6_models() {
     let codex_home = tempdir().expect("temp dir");
-    let manager = openai_manager_for_tests(
+    let manager = provider_manager_for_tests(
         codex_home.path().to_path_buf(),
         TestModelsEndpoint::new(Vec::new()),
     );
@@ -507,7 +507,7 @@ async fn get_model_info_matches_hyphenated_provider_namespace_suffix() {
     let manager = static_manager_for_tests(ModelsResponse {
         models: vec![remote],
     });
-    let namespaced_model = "openai-codex/gpt-image".to_string();
+    let namespaced_model = "provider-codex/gpt-image".to_string();
 
     let model_info = manager.get_model_info(&namespaced_model, &config).await;
 
@@ -519,7 +519,7 @@ async fn get_model_info_matches_hyphenated_provider_namespace_suffix() {
 async fn get_model_info_rejects_multi_segment_namespace_suffix_matching() {
     let codex_home = tempdir().expect("temp dir");
     let config = ModelsManagerConfig::default();
-    let manager = openai_manager_for_tests(
+    let manager = provider_manager_for_tests(
         codex_home.path().to_path_buf(),
         TestModelsEndpoint::new(Vec::new()),
     );
@@ -546,7 +546,7 @@ async fn refresh_available_models_sorts_by_priority() {
     ];
     let codex_home = tempdir().expect("temp dir");
     let endpoint = TestModelsEndpoint::new(vec![remote_models.clone()]);
-    let manager = openai_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
 
     let available = manager
         .list_models(
@@ -590,7 +590,7 @@ async fn refresh_available_models_uses_only_dynamic_models_for_custom_api_auth()
         fetch_count: AtomicUsize::new(0),
         observed_proxy_policy: Mutex::new(None),
     });
-    let manager = openai_manager_for_tests_with_auth(
+    let manager = provider_manager_for_tests_with_auth(
         codex_home.path().to_path_buf(),
         endpoint.clone(),
         Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
@@ -614,7 +614,7 @@ async fn refresh_available_models_uses_cache_when_fresh() {
     let remote_models = vec![remote_model("cached", "Cached", /*priority*/ 5)];
     let codex_home = tempdir().expect("temp dir");
     let endpoint = TestModelsEndpoint::new(vec![remote_models.clone()]);
-    let manager = openai_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
 
     manager
         .refresh_available_models(
@@ -666,7 +666,7 @@ async fn online_refresh_updates_access_programs_with_unchanged_etag() {
         fetch_count: AtomicUsize::new(0),
         observed_proxy_policy: Mutex::new(None),
     });
-    let manager = openai_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
 
     // Caller-specific access can change without changing the catalog ETag.
     for model in [granted_model, revoked_model] {
@@ -687,7 +687,7 @@ async fn online_refresh_updates_access_programs_with_unchanged_etag() {
         // A new manager must read the latest access metadata from the disk cache.
         let cache_endpoint = TestModelsEndpoint::new(Vec::new());
         let cache_manager =
-            openai_manager_for_tests(codex_home.path().to_path_buf(), cache_endpoint.clone());
+            provider_manager_for_tests(codex_home.path().to_path_buf(), cache_endpoint.clone());
         assert_eq!(
             cache_manager
                 .list_models(
@@ -712,7 +712,7 @@ async fn refresh_available_models_refetches_when_cache_stale() {
     let codex_home = tempdir().expect("temp dir");
     let updated_models = vec![remote_model("fresh", "Fresh", /*priority*/ 9)];
     let endpoint = TestModelsEndpoint::new(vec![initial_models.clone(), updated_models.clone()]);
-    let manager = openai_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
 
     manager
         .refresh_available_models(
@@ -749,7 +749,7 @@ async fn refresh_available_models_refetches_when_version_mismatch() {
     let codex_home = tempdir().expect("temp dir");
     let updated_models = vec![remote_model("new", "New", /*priority*/ 2)];
     let endpoint = TestModelsEndpoint::new(vec![initial_models.clone(), updated_models.clone()]);
-    let manager = openai_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
 
     manager
         .refresh_available_models(
@@ -794,7 +794,7 @@ async fn refresh_available_models_drops_removed_remote_models() {
         /*priority*/ 1,
     )];
     let endpoint = TestModelsEndpoint::new(vec![initial_models, refreshed_models]);
-    let manager = OpenAiModelsManager::new_with_cache(
+    let manager = RemoteModelsManager::new_with_cache(
         Arc::new(FileModelsCache::new(
             codex_home.path().join(MODEL_CACHE_FILE),
             Duration::ZERO,
@@ -848,7 +848,7 @@ async fn refresh_available_models_skips_network_without_auth() {
         "No Auth",
         /*priority*/ 1,
     )]]);
-    let manager = openai_manager_for_tests_with_auth(
+    let manager = provider_manager_for_tests_with_auth(
         codex_home.path().to_path_buf(),
         endpoint.clone(),
         /*auth_manager*/ None,

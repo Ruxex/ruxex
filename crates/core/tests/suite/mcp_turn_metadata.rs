@@ -20,8 +20,8 @@ use codex_protocol::items::McpToolCallStatus;
 use codex_protocol::items::TurnItem;
 use codex_protocol::models::NetworkPermissions;
 use codex_protocol::models::PermissionProfile;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ModelsResponse;
+use codex_protocol::model_types::ReasoningEffort;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::ElicitationAction;
 use codex_protocol::protocol::EventMsg;
@@ -76,10 +76,10 @@ use wiremock::matchers::method;
 use wiremock::matchers::path_regex;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[test_case(json!({"ui": {"resourceUri": "ui://calendar/widget"}, "openai/ui": {"preferredModelDisplayMode": "fullscreen"}}), Some(McpAppDisplayMode::Fullscreen); "fullscreen")]
+#[test_case(json!({"ui": {"resourceUri": "ui://calendar/widget"}, "provider/ui": {"preferredModelDisplayMode": "fullscreen"}}), Some(McpAppDisplayMode::Fullscreen); "fullscreen")]
 #[test_case(json!({"ui": {"resourceUri": "ui://calendar/widget"}}), Some(McpAppDisplayMode::Inline); "missing preference")]
-#[test_case(json!({"ui": {"resourceUri": "ui://calendar/widget"}, "openai/ui": {"preferredModelDisplayMode": "unsupported"}}), Some(McpAppDisplayMode::Inline); "unsupported preference")]
-#[test_case(json!({"openai/outputTemplate": "ui://calendar/widget"}), Some(McpAppDisplayMode::Inline); "legacy uri")]
+#[test_case(json!({"ui": {"resourceUri": "ui://calendar/widget"}, "provider/ui": {"preferredModelDisplayMode": "unsupported"}}), Some(McpAppDisplayMode::Inline); "unsupported preference")]
+#[test_case(json!({"provider/outputTemplate": "ui://calendar/widget"}), Some(McpAppDisplayMode::Inline); "legacy uri")]
 #[test_case(json!({}), None; "result only ui")]
 async fn mcp_app_ui_survives_tool_events_and_resume(
     mut metadata: Value,
@@ -121,7 +121,7 @@ async fn mcp_app_ui_survives_tool_events_and_resume(
                 "id": body["id"],
                 "result": {
                     "content": [{"type": "text", "text": "Calendar opened."}],
-                    "_meta": {"openai/outputTemplate": "ui://calendar/result-widget"},
+                    "_meta": {"provider/outputTemplate": "ui://calendar/result-widget"},
                     "isError": false
                 }
             }))
@@ -470,7 +470,7 @@ async fn submit_user_turn(
     Ok(())
 }
 
-fn attribution_models(model_slugs: [&str; 2]) -> Vec<codex_protocol::openai_models::ModelInfo> {
+fn attribution_models(model_slugs: [&str; 2]) -> Vec<codex_protocol::model_types::ModelInfo> {
     let base_model = test_models_response()
         .expect("bundled models should parse")
         .models

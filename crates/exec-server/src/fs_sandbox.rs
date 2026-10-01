@@ -631,7 +631,7 @@ mod tests {
                 ("TMP", "/tmp"),
                 ("TEMP", "/tmp"),
                 ("HOME", "/home/user"),
-                ("OPENAI_API_KEY", "secret"),
+                ("PROVIDER_API_KEY", "secret"),
                 ("HTTPS_PROXY", "http://proxy.example"),
             ]
             .map(|(key, value)| (OsString::from(key), OsString::from(value))),
@@ -675,7 +675,7 @@ mod tests {
             [
                 ("Path", r"C:\Windows\System32"),
                 ("PATH_INJECTION", "bad"),
-                ("OPENAI_API_KEY", "secret"),
+                ("PROVIDER_API_KEY", "secret"),
             ]
             .map(|(key, value)| (OsString::from(key), OsString::from(value))),
         );

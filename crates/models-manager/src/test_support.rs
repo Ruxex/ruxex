@@ -4,9 +4,9 @@
 
 use crate::ModelsManagerConfig;
 use crate::manager::construct_model_info_from_candidates;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::ModelsResponse;
+use codex_protocol::model_types::ModelInfo;
+use codex_protocol::model_types::ModelPreset;
+use codex_protocol::model_types::ModelsResponse;
 
 /// Load the static catalog used by tests without making it a production fallback.
 pub fn test_models_response() -> Result<ModelsResponse, serde_json::Error> {

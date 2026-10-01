@@ -4,7 +4,7 @@
 use super::ResolvedMessage;
 use codex_collaboration_mode_templates::DEFAULT;
 use codex_collaboration_mode_templates::PLAN;
-use codex_protocol::openai_models::CollaborationModeMessages;
+use codex_protocol::model_types::CollaborationModeMessages;
 
 #[derive(Debug, Clone, Copy)]
 pub struct ResolvedCollaborationModeMessages<'a> {

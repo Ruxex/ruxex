@@ -261,7 +261,7 @@ fn overview_thread(
         section: None,
         section_entered_at: None,
         history_mode: Default::default(),
-        model_provider: "openai".to_string(),
+        model_provider: "provider".to_string(),
         model: None,
         reasoning_effort: None,
         created_at: *OVERVIEW_TIMESTAMP,

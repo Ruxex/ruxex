@@ -76,7 +76,7 @@ fn script_fixture() -> (TempDir, AbsolutePathBuf, AbsolutePathBuf) {
 #[test]
 fn resolves_primary_runtime_scripts_from_the_installed_plugin_cache() {
     let temp = TempDir::new().expect("temp dir");
-    let marketplace_root = temp.path().join("openai-primary-runtime");
+    let marketplace_root = temp.path().join("codex-primary-runtime");
     let source_root = marketplace_root.join("plugins/presentations");
     fs::create_dir_all(source_root.join(".codex-plugin")).expect("create manifest directory");
     fs::write(
@@ -94,7 +94,7 @@ fn resolves_primary_runtime_scripts_from_the_installed_plugin_cache() {
     fs::write(
         marketplace_root.join(".agents/plugins/marketplace.json"),
         r#"{
-  "name": "openai-primary-runtime",
+  "name": "codex-primary-runtime",
   "plugins": [
     {
       "name": "presentations",
@@ -107,7 +107,7 @@ fn resolves_primary_runtime_scripts_from_the_installed_plugin_cache() {
 }"#,
     )
     .expect("write marketplace manifest");
-    let plugin_id = PluginId::parse("presentations@openai-primary-runtime").expect("plugin id");
+    let plugin_id = PluginId::parse("presentations@codex-primary-runtime").expect("plugin id");
     let plugin_root = PluginStore::new(temp.path().to_path_buf())
         .install(path(&source_root), plugin_id.clone())
         .expect("install plugin")
@@ -208,12 +208,12 @@ async fn resolves_relocated_script_through_executor_filesystem() {
 #[test]
 fn recognizes_windows_executor_plugin_cache_root() {
     let attribution = PluginCommandAttribution {
-        plugin_id: PluginId::parse("presentations@openai-primary-runtime").expect("plugin id"),
+        plugin_id: PluginId::parse("presentations@codex-primary-runtime").expect("plugin id"),
         normalized_relative_path:
             "skills/presentations/container_tools/mark_artifact_operation_started.mjs".to_string(),
     };
     let script = PathUri::parse(
-        "file:///C:/Users/user/.codex/plugins/cache/openai-primary-runtime/presentations/0.1.29/skills/presentations/container_tools/mark_artifact_operation_started.mjs",
+        "file:///C:/Users/user/.codex/plugins/cache/codex-primary-runtime/presentations/0.1.29/skills/presentations/container_tools/mark_artifact_operation_started.mjs",
     )
     .expect("Windows script URI");
 

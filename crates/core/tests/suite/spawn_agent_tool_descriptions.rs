@@ -3,7 +3,7 @@
 use anyhow::Result;
 use codex_core::config::AgentRoleConfig;
 use codex_features::Feature;
-use codex_protocol::openai_models::ToolMessages;
+use codex_protocol::model_types::ToolMessages;
 use codex_protocol::protocol::MultiAgentVersion;
 use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::namespace_child_tool;

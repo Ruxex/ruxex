@@ -178,7 +178,7 @@ fn parse_input(value: Value) -> Result<ServerRequest, ServiceError> {
     let request: ServerRequest =
         serde_json::from_value(value).map_err(|_| invalid("invalid MCP tool input request"))?;
     if let ServerRequest::CustomRequest(request) = &request
-        && request.method == "openai/elicitation/create"
+        && request.method == "provider/elicitation/create"
     {
         match request
             .params
@@ -190,7 +190,7 @@ fn parse_input(value: Value) -> Result<ServerRequest, ServiceError> {
                 crate::user_verification::parse_request(request.clone())
                     .map_err(ServiceError::McpError)?;
             }
-            _ => return Err(invalid("unsupported OpenAI elicitation mode")),
+            _ => return Err(invalid("unsupported provider elicitation mode")),
         }
         return Ok(ServerRequest::CustomRequest(request.clone()));
     }

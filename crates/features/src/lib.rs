@@ -87,7 +87,7 @@ impl Stage {
 pub enum Feature {
     /// Preview consumer five-hour and weekly allowance history.
     AnalyticsPlanHistory,
-    /// Discover model catalogs for OpenAI API-key authentication.
+    /// Discover model catalogs for provider API-key authentication.
     ApiKeyModelDiscovery,
     // Stable.
     /// Enable the default shell tool.
@@ -600,7 +600,7 @@ fn legacy_usage_notice(alias: &str, feature: Feature) -> (String, Option<String>
                 None
             } else {
                 Some(format!(
-                    "Enable it with `--enable {canonical}` or `[features].{canonical}` in config.toml. See https://developers.openai.com/codex/config-basic#feature-flags for details."
+                    "Enable it with `--enable {canonical}` or `[features].{canonical}` in config.toml. See https://developers.provider.com/codex/config-basic#feature-flags for details."
                 ))
             };
             (summary, details)

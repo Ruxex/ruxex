@@ -28,9 +28,9 @@ use codex_protocol::config_types::WindowsSandboxLevel;
 use codex_protocol::models::NetworkPermissions;
 use codex_protocol::models::PermissionProfile;
 use codex_protocol::models::PermissionProfileSnapshot;
-use codex_protocol::openai_models::AutoReviewMessages;
-use codex_protocol::openai_models::ModelVisibility;
-use codex_protocol::openai_models::ModelsResponse;
+use codex_protocol::model_types::AutoReviewMessages;
+use codex_protocol::model_types::ModelVisibility;
+use codex_protocol::model_types::ModelsResponse;
 use codex_protocol::permissions::NetworkSandboxPolicy;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::EnvironmentConfigState;
@@ -820,7 +820,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
                         settings: Settings {
                             model: "guardian-parent-b".to_string(),
                             reasoning_effort: Some(
-                                codex_protocol::openai_models::ReasoningEffort::Medium,
+                                codex_protocol::model_types::ReasoningEffort::Medium,
                             ),
                             developer_instructions: None,
                         },
@@ -854,7 +854,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
                 turn_id: active_turn_id.clone(),
                 update: codex_protocol::protocol::TurnSettingsUpdate {
                     model: Some("guardian-parent-b".to_string()),
-                    effort: Some(Some(codex_protocol::openai_models::ReasoningEffort::Medium)),
+                    effort: Some(Some(codex_protocol::model_types::ReasoningEffort::Medium)),
                     ..Default::default()
                 },
                 reply,
@@ -2668,7 +2668,7 @@ pub(super) fn guardian_parent_catalog() -> ModelsResponse {
                 model.visibility = ModelVisibility::List;
                 model.auto_review_model_override = None;
                 model.supported_reasoning_levels.retain(|level| {
-                    level.effort != codex_protocol::openai_models::ReasoningEffort::Low
+                    level.effort != codex_protocol::model_types::ReasoningEffort::Low
                 });
                 model
                     .model_messages

@@ -163,7 +163,7 @@ async fn recover_turn_restores_cyber_access_program_without_making_it_sticky() -
 async fn cyber_access_program_omits_api_key_and_spoofed_custom_provider() -> Result<()> {
     core_test_support::skip_if_no_network!(Ok(()));
     for (auth, provider_id) in [
-        (CodexAuth::from_api_key("test-key"), "openai"),
+        (CodexAuth::from_api_key("test-key"), "provider"),
         (CodexAuth::from_api_key("test-api-key"), "custom"),
     ] {
         let server = responses::start_mock_server().await;
@@ -175,7 +175,7 @@ async fn cyber_access_program_omits_api_key_and_spoofed_custom_provider() -> Res
         let test = test_codex()
             .with_auth(auth)
             .with_config(move |config| {
-                // Keep the display name "OpenAI": provider identity must not use it.
+                // Keep the display name "provider": provider identity must not use it.
                 config.model_provider_id = provider_id.to_owned();
             })
             .build_with_auto_env(&server)

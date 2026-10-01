@@ -22,7 +22,7 @@ use codex_protocol::models::ResponseItem;
 use codex_protocol::models::bound_executed_tool_calls_for_prompt;
 use codex_protocol::models::bound_executed_tool_calls_for_prompt_prioritizing_recent;
 use codex_protocol::models::executed_tool_call_metadata_bytes;
-use codex_protocol::openai_models::ToolMode;
+use codex_protocol::model_types::ToolMode;
 use indexmap::IndexMap;
 use serde_json::Value as JsonValue;
 

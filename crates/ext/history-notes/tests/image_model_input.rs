@@ -69,7 +69,7 @@ async fn history_images_reach_the_next_model_request() -> Result<(), Box<dyn std
         })
         .with_extensions(Arc::new(extensions.build()))
         .with_config(|config| {
-            config.model_provider.name = "OpenAI".to_string();
+            config.model_provider.name = "provider".to_string();
             config.token_budget = Some(TokenBudgetConfig {
                 use_history_notes_extension: true,
                 ..TokenBudgetConfig::default()

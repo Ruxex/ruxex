@@ -31,7 +31,7 @@ use std::sync::PoisonError;
 use std::sync::RwLock;
 use std::time::Duration;
 
-pub const RESIDENCY_HEADER_NAME: &str = "x-openai-internal-codex-residency";
+pub const RESIDENCY_HEADER_NAME: &str = "x-codex-residency";
 
 #[derive(Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
@@ -71,6 +71,8 @@ const AMAZON_BEDROCK_PROVIDER_NAME: &str = "Amazon Bedrock";
 pub const AMAZON_BEDROCK_PROVIDER_ID: &str = "amazon-bedrock";
 const AMAZON_BEDROCK_RUNTIME_PROVIDER_NAME: &str = "Amazon Bedrock Runtime";
 pub const AMAZON_BEDROCK_RUNTIME_PROVIDER_ID: &str = "amazon-bedrock-runtime";
+// These model IDs are Amazon Bedrock's external inference-profile contracts.
+// Keep them unchanged while generalizing Codex's provider-facing identifiers.
 pub const AMAZON_BEDROCK_GPT_5_5_MODEL_ID: &str = "openai.gpt-5.5";
 pub const AMAZON_BEDROCK_GPT_5_4_MODEL_ID: &str = "openai.gpt-5.4";
 pub const AMAZON_BEDROCK_GPT_5_6_SOL_MODEL_ID: &str = "openai.gpt-5.6-sol";
@@ -91,9 +93,9 @@ const AMAZON_BEDROCK_MANTLE_CLIENT_AGENT_VALUE: &str = "codex";
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum WireApi {
-    /// The Chat Completions API exposed by OpenAI at `/v1/chat/completions`.
+    /// The Chat Completions API exposed by provider at `/v1/chat/completions`.
     Chat,
-    /// The Responses API exposed by OpenAI at `/v1/responses`.
+    /// The Responses API exposed by provider at `/v1/responses`.
     #[default]
     Responses,
 }
@@ -132,7 +134,7 @@ pub struct ModelProviderInfo {
     /// Friendly display name.
     #[serde(default)]
     pub name: String,
-    /// Base URL for the provider's OpenAI-compatible API.
+    /// Base URL for the provider's provider-compatible API.
     pub base_url: Option<String>,
     /// Environment variable that stores the user's API key for this provider.
     pub env_key: Option<String>,
@@ -401,7 +403,7 @@ other non-default provider fields are not supported"
 
     /// Builds an API provider with managed residency taking precedence over configured headers.
     pub fn to_api_provider(&self, _auth_mode: Option<AuthMode>) -> CodexResult<ApiProvider> {
-        let default_base_url = "https://api.openai.com/v1";
+        let default_base_url = "https://example.com/v1";
         let base_url = self
             .base_url
             .clone()
@@ -486,14 +488,14 @@ other non-default provider fields are not supported"
             .unwrap_or(Duration::from_millis(DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS))
     }
 
-    /// Constructs an explicitly configured OpenAI-compatible provider.
+    /// Constructs an explicitly configured Responses provider.
     ///
     /// This helper does not register the provider in the built-in catalog.
     /// Applications that need it must opt in through their provider
     /// configuration instead.
-    pub fn create_openai_provider(base_url: Option<String>) -> ModelProviderInfo {
+    pub fn create_responses_provider(base_url: Option<String>) -> ModelProviderInfo {
         ModelProviderInfo {
-            name: "OpenAI".into(),
+            name: "Responses provider".into(),
             base_url,
             wire_api: WireApi::Responses,
             http_headers: Some(
@@ -501,17 +503,7 @@ other non-default provider fields are not supported"
                     .into_iter()
                     .collect(),
             ),
-            env_http_headers: Some(
-                [
-                    (
-                        "OpenAI-Organization".to_string(),
-                        "OPENAI_ORGANIZATION".to_string(),
-                    ),
-                    ("OpenAI-Project".to_string(), "OPENAI_PROJECT".to_string()),
-                ]
-                .into_iter()
-                .collect(),
-            ),
+            env_http_headers: None,
             requires_auth: true,
             supports_websockets: true,
             ..ModelProviderInfo::default()
@@ -572,14 +564,9 @@ other non-default provider fields are not supported"
         }
     }
 
-    /// Returns whether this explicitly configured provider uses the
-    /// OpenAI-compatible provider name.
-    ///
-    /// The provider is no longer bundled by default; this check is retained
-    /// for callers that still need to distinguish an explicitly configured
-    /// provider entry.
-    pub fn is_openai(&self) -> bool {
-        self.name == "OpenAI"
+    /// Returns whether this provider uses the Responses wire protocol.
+    pub fn is_responses_provider(&self) -> bool {
+        self.wire_api == WireApi::Responses
     }
 
     pub fn is_amazon_bedrock(&self) -> bool {

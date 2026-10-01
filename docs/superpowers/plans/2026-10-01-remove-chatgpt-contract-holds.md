@@ -4,7 +4,7 @@
 
 **Goal:** Remove the remaining ChatGPT-specific auth, moderation, and remote-client compatibility paths while preserving generic coding-agent, provider, security, and Marketplace behavior.
 
-**Architecture:** Replace the ChatGPT account header with an explicit optional identity on externally managed auth headers, so account continuity remains provider-neutral and no wire header is invented. Remove the OpenAI moderation metadata event path and the deleted Remote Control redaction branch, then update generated protocol artifacts and fixtures.
+**Architecture:** Replace the ChatGPT account header with an explicit optional identity on externally managed auth headers, so account continuity remains provider-neutral and no wire header is invented. Remove the provider moderation metadata event path and the deleted Remote Control redaction branch, then update generated protocol artifacts and fixtures.
 
 **Tech Stack:** Rust workspace, `rg`, `apply_patch`, checked-in app-server schemas, `just check --tests`, `just check`, and `just generate`.
 
@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Work directly on `main`; do not create a Git worktree.
-- Do not add a replacement OpenAI or ChatGPT wire field.
+- Do not add a replacement provider or ChatGPT wire field.
 - Preserve generic external-auth header forwarding and optional account identity support.
 - Preserve safety buffering, model verification, Marketplace, MCP, plugin, and other provider-neutral coding-agent behavior.
 - Update the compatibility inventory before changing the affected production paths.
@@ -58,7 +58,7 @@
 - [x] Remove `ChatGPT-Account-ID`, the FedRAMP-only bearer fields, and their tests; preserve arbitrary header forwarding and cache identity hashing.
 - [x] Run `just check --tests`, `just check`, and `git diff --check`; commit the auth slice.
 
-### Task 3: Remove the OpenAI moderation metadata path
+### Task 3: Remove the provider moderation metadata path
 
 **Files:**
 - Modify: `crates/codex-api/src/sse/responses.rs`
@@ -98,7 +98,7 @@
 
 **Files:**
 - Modify/delete: residual fixture files under `crates/app-server/tests/suite/v2`, `crates/cli/tests`, `crates/core/tests`, and `crates/tui/src/app/tests`
-- Modify: `docs/openai-decoupling-candidates.md` if needed
+- Modify: `docs/provider-decoupling-candidates.md` if needed
 - Modify: `docs/pre-release-compatibility-inventory.md`
 - Regenerate: only artifacts changed by `just generate`
 

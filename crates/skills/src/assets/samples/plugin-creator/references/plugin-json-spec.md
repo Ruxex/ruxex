@@ -22,12 +22,12 @@
     "displayName": "Plugin Display Name",
     "shortDescription": "Short description for subtitle",
     "longDescription": "Long description for details page",
-    "developerName": "OpenAI",
+    "developerName": "provider",
     "category": "Productivity",
     "capabilities": ["Interactive", "Write"],
-    "websiteURL": "https://openai.com/",
-    "privacyPolicyURL": "https://openai.com/policies/row-privacy-policy/",
-    "termsOfServiceURL": "https://openai.com/policies/row-terms-of-use/",
+    "websiteURL": "https://provider.com/",
+    "privacyPolicyURL": "https://provider.com/policies/row-privacy-policy/",
+    "termsOfServiceURL": "https://provider.com/policies/row-terms-of-use/",
     "defaultPrompt": [
       "Summarize my inbox and draft replies for me.",
       "Find open bugs and turn them into Linear tickets.",
@@ -128,7 +128,7 @@ personal marketplace unless the caller explicitly requests a repo-local destinat
 
 ```json
 {
-  "name": "openai-curated",
+  "name": "test-curated",
   "interface": {
     "displayName": "ChatGPT Official"
   },

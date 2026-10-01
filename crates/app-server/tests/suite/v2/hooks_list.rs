@@ -926,10 +926,10 @@ async fn hooks_list_hides_builtin_cleanup_and_preserves_other_plugin_hooks(
 ) -> Result<()> {
     let codex_home = TempDir::new()?;
     let cwd = TempDir::new()?;
-    let plugin_id = format!("{plugin_name}@openai-bundled");
+    let plugin_id = format!("{plugin_name}@codex-bundled");
     let plugin_root = codex_home
         .path()
-        .join(format!("plugins/cache/openai-bundled/{plugin_name}/local"));
+        .join(format!("plugins/cache/codex-bundled/{plugin_name}/local"));
     std::fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
     std::fs::create_dir_all(plugin_root.join("hooks"))?;
     std::fs::write(

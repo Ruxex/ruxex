@@ -92,7 +92,7 @@ INSERT INTO threads (
         .bind(1_700_000_000_000_i64)
         .bind(1_700_000_000_000_i64)
         .bind("cli")
-        .bind("openai")
+        .bind("provider")
         .bind("/tmp")
         .bind("")
         .bind("read-only")
@@ -215,7 +215,7 @@ async fn thread_attachment_migration_preserves_existing_data() {
 
     let thread_id = "00000000-0000-0000-0000-000000000051";
     sqlx::query(
-        "INSERT INTO threads (id, rollout_path, created_at, updated_at, source, model_provider, cwd, title, sandbox_policy, approval_mode) VALUES (?, 'rollout.jsonl', 1, 1, 'cli', 'openai', '/tmp', '', 'read-only', 'on-request')",
+        "INSERT INTO threads (id, rollout_path, created_at, updated_at, source, model_provider, cwd, title, sandbox_policy, approval_mode) VALUES (?, 'rollout.jsonl', 1, 1, 'cli', 'provider', '/tmp', '', 'read-only', 'on-request')",
     )
     .bind(thread_id)
     .execute(&pool)
@@ -329,7 +329,7 @@ INSERT INTO threads (
         .bind(recency_at_ms)
         .bind(recency_at_ms)
         .bind("cli")
-        .bind("openai")
+        .bind("provider")
         .bind("/tmp")
         .bind("")
         .bind("preview")
@@ -703,7 +703,7 @@ INSERT INTO threads (
     .bind(1_700_000_000_123_i64)
     .bind(1_700_000_100_456_i64)
     .bind("cli")
-    .bind("openai")
+    .bind("provider")
     .bind("/tmp")
     .bind("")
     .bind("read-only")
@@ -752,7 +752,7 @@ INSERT INTO threads (
     .bind(1_700_000_200_123_i64)
     .bind(1_700_000_300_456_i64)
     .bind("cli")
-    .bind("openai")
+    .bind("provider")
     .bind("/tmp")
     .bind("")
     .bind("read-only")

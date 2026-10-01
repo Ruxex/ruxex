@@ -55,7 +55,7 @@ async fn picker_side_worktree_fork_and_cd_run_on_the_production_stack() -> Resul
     let server = responses::start_mock_server().await;
     let config_path = codex_home.path().join("config.toml");
     let config = fs::read_to_string(&config_path)?
-        .replace("model_provider = \"openai\"", "model_provider = \"test\"");
+        .replace("model_provider = \"provider\"", "model_provider = \"test\"");
     fs::write(
         &config_path,
         format!(

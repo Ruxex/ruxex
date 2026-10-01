@@ -101,7 +101,7 @@ impl InitializeRequestProcessor {
                 .map(|(id, value)| (id.to_string(), value.clone()))
                 .collect::<std::collections::HashMap<_, _>>();
             let settings = extensions
-                .entry("openai/elicitation".to_string())
+                .entry("provider/elicitation".to_string())
                 .or_insert_with(|| serde_json::json!({}));
             if !settings.is_object() {
                 *settings = serde_json::json!({});

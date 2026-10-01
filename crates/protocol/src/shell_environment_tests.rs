@@ -15,10 +15,6 @@ fn non_inheritable_environment_is_removed_after_policy_overrides() {
         ("SAFE".to_string(), "inherited".to_string()),
         ("node_repl_auth_token".into(), "inherited-token".into()),
         (
-            "openai_federation_rule_id".to_string(),
-            "inherited-rule".to_string(),
-        ),
-        (
             "codex_exec_server_noise_auth_token".to_string(),
             "inherited-noise-token".to_string(),
         ),
@@ -29,10 +25,6 @@ fn non_inheritable_environment_is_removed_after_policy_overrides() {
         r#set: HashMap::from([
             ("SAFE".to_string(), "override".to_string()),
             ("Node_Repl_Auth_Token".into(), "configured-token".into()),
-            (
-                "OpenAI_Identity_Token_File".to_string(),
-                "/run/identity-token".to_string(),
-            ),
             (
                 "Codex_Exec_Server_Noise_Auth_Token".to_string(),
                 "configured-noise-token".to_string(),
@@ -54,7 +46,6 @@ fn command_scrubber_removes_names_from_real_child_environment() {
             .args([TEST_NAME, "--exact", "--nocapture"])
             .env(CHILD_MODE_ENV_VAR, "1")
             .env("Node_Repl_Auth_Token", "inherited-token")
-            .env("OpenAI_Federation_Rule_Id", "inherited-rule")
             .env(
                 "Codex_Exec_Server_Noise_Auth_Token",
                 "inherited-noise-token",
@@ -73,7 +64,6 @@ fn command_scrubber_removes_names_from_real_child_environment() {
     let mut command = environment_command();
     command
         .env("NODE_REPL_AUTH_TOKEN", "configured-token")
-        .env("openai_identity_token_file", "/run/identity-token")
         .env(
             CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR,
             "configured-noise-token",

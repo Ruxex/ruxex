@@ -30,7 +30,7 @@ explicit argument comment is still checked for a mismatch.
 Given:
 
 ```rust
-fn create_openai_url(base_url: Option<String>, retry_count: usize) -> String {
+fn create_provider_url(base_url: Option<String>, retry_count: usize) -> String {
     let _ = (base_url, retry_count);
     String::new()
 }
@@ -39,19 +39,19 @@ fn create_openai_url(base_url: Option<String>, retry_count: usize) -> String {
 This is accepted:
 
 ```rust
-create_openai_url(/*base_url*/ None, /*retry_count*/ 3);
+create_provider_url(/*base_url*/ None, /*retry_count*/ 3);
 ```
 
 This is warned on by `argument_comment_mismatch`:
 
 ```rust
-create_openai_url(/*api_base*/ None, 3);
+create_provider_url(/*api_base*/ None, 3);
 ```
 
 This is only warned on when `uncommented_anonymous_literal_argument` is enabled:
 
 ```rust
-create_openai_url(None, 3);
+create_provider_url(None, 3);
 ```
 
 ## Development

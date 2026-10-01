@@ -42,7 +42,7 @@ pub fn login_with_bedrock_access_keys(
 ) -> std::io::Result<()> {
     let auth_dot_json = AuthDotJson {
         auth_mode: Some(AuthMode::BedrockAccessKeys),
-        openai_api_key: None,
+        api_key: None,
         bedrock_api_key: None,
         bedrock_access_keys: Some(BedrockAccessKeysAuth {
             access_key_id: access_key_id.to_string(),

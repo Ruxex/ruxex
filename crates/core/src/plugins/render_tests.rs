@@ -47,7 +47,7 @@ fn explicit_plugin_instructions_use_manifest_namespace_for_skills() {
 fn explicit_plugin_instructions_search_available_apps_before_fallback() {
     let rendered = render_explicit_plugin_instructions(
         &PluginCapabilitySummary {
-            config_name: "app-adobe@openai-curated-remote".to_string(),
+            config_name: "app-adobe@test-remote".to_string(),
             display_name: "Adobe".to_string(),
             ..PluginCapabilitySummary::default()
         },

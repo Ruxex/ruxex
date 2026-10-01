@@ -132,7 +132,7 @@ async fn extract_metadata_from_rollout_uses_session_meta() {
         agent_path: None,
         agent_nickname: None,
         agent_role: None,
-        model_provider: Some("openai".to_string()),
+        model_provider: Some("provider".to_string()),
         base_instructions: None,
         dynamic_tools: None,
         selected_capability_roots: Vec::new(),
@@ -155,13 +155,13 @@ async fn extract_metadata_from_rollout_uses_session_meta() {
     let mut file = File::create(&path).expect("create rollout");
     writeln!(file, "{json}").expect("write rollout");
 
-    let outcome = extract_metadata_from_rollout(&path, "openai")
+    let outcome = extract_metadata_from_rollout(&path, "provider")
         .await
         .expect("extract");
 
     let builder = builder_from_session_meta(&session_meta_line, path.as_path()).expect("builder");
-    let mut expected = builder.build("openai");
-    apply_rollout_item(&mut expected, &rollout_line.item, "openai");
+    let mut expected = builder.build("provider");
+    apply_rollout_item(&mut expected, &rollout_line.item, "provider");
     expected.updated_at = file_modified_time_utc(&path).await.expect("mtime");
     expected.recency_at = expected.updated_at;
 
@@ -199,7 +199,7 @@ async fn extract_metadata_from_rollout_rejects_unknown_history_mode() {
     writeln!(file, "{rollout_line}").expect("write rollout");
 
     assert!(
-        extract_metadata_from_rollout(&path, "openai")
+        extract_metadata_from_rollout(&path, "provider")
             .await
             .is_err()
     );
@@ -326,7 +326,7 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
             commit_hash: Some(codex_git_utils::GitSha::new("rollout-sha")),
             branch: Some("rollout-branch".to_string()),
             repository_url: Some(
-                SanitizedGitUrl::try_from("git@example.com:openai/codex.git")
+                SanitizedGitUrl::try_from("git@example.com:codex/codex.git")
                     .expect("valid git remote URL"),
             ),
         }),
@@ -362,7 +362,7 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
     assert_eq!(persisted.git_branch.as_deref(), Some("sqlite-branch"));
     assert_eq!(
         persisted.git_origin_url.as_deref(),
-        Some("git@example.com:openai/codex.git")
+        Some("git@example.com:codex/codex.git")
     );
 }
 

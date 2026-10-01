@@ -36,9 +36,9 @@ use codex_protocol::models::ResponseItem;
 use codex_protocol::models::ToolResultMetadata;
 use codex_protocol::models::ToolResultSource;
 use codex_protocol::models::ToolResultSources;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelServiceTier;
-use codex_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
+use codex_protocol::model_types::ModelInfo;
+use codex_protocol::model_types::ModelServiceTier;
+use codex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
 use codex_protocol::protocol::EventMsg;
 use codex_protocol::protocol::SessionSource;
 use codex_protocol::protocol::W3cTraceContext;
@@ -76,7 +76,7 @@ const MODEL: &str = "gpt-5.4";
 const USER_AGENT_HEADER: &str = "user-agent";
 const X_CLIENT_REQUEST_ID_HEADER: &str = "x-client-request-id";
 const WS_REQUEST_HEADER_RESPONSES_LITE_CLIENT_METADATA_KEY: &str =
-    "ws_request_header_x_openai_internal_codex_responses_lite";
+    "ws_request_header_x_provider_internal_codex_responses_lite";
 const TEST_INSTALLATION_ID: &str = "11111111-1111-4111-8111-111111111111";
 const TEST_WINDOW_ID: &str = "test-thread:0";
 const X_CODEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY: &str =
@@ -207,7 +207,7 @@ async fn responses_websocket_preserves_credit_usage_metadata() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn responses_websocket_omits_raw_tool_metadata_for_openai_named_custom_endpoint() {
+async fn responses_websocket_omits_raw_tool_metadata_for_provider_named_custom_endpoint() {
     skip_if_no_network!();
 
     let server = start_websocket_server(vec![vec![vec![
@@ -327,7 +327,7 @@ async fn responses_websocket_omits_routing_hint_for_provider_with_own_credential
     .await;
 
     let mut provider = websocket_provider(&server);
-    provider.name = ModelProviderInfo::create_openai_provider(/*base_url*/ None).name;
+    provider.name = ModelProviderInfo::create_responses_provider(/*base_url*/ None).name;
     provider.experimental_bearer_token = Some("provider-specific-token".into());
     let harness = websocket_harness_with_provider_options_and_auth(
         provider,
@@ -624,7 +624,7 @@ async fn responses_websocket_request_prewarm_reuses_connection() {
     .await;
 
     let mut provider = websocket_provider(&server);
-    provider.name = ModelProviderInfo::create_openai_provider(/*base_url*/ None).name;
+    provider.name = ModelProviderInfo::create_responses_provider(/*base_url*/ None).name;
     let harness = websocket_harness_with_provider_options(
         provider,
         /*runtime_metrics_enabled*/ true,
@@ -1395,9 +1395,9 @@ async fn responses_websocket_v2_incremental_requests_are_reused_across_turns() {
     ]])
     .await;
 
-    // use OpenAI provider to check metadata logic
+    // use provider to check metadata logic
     let mut provider = websocket_provider(&server);
-    provider.name = ModelProviderInfo::create_openai_provider(/*base_url*/ None).name;
+    provider.name = ModelProviderInfo::create_responses_provider(/*base_url*/ None).name;
     let harness = websocket_harness_with_provider_options(
         provider,
         /*runtime_metrics_enabled*/ false,
@@ -2579,7 +2579,7 @@ async fn responses_websocket_v2_surfaces_terminal_error_without_close_handshake(
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn responses_websocket_v2_sets_openai_beta_header() {
+async fn responses_websocket_v2_sets_provider_beta_header() {
     skip_if_no_network!();
 
     let server = start_websocket_server(vec![vec![vec![
@@ -2668,7 +2668,7 @@ async fn websocket_harness(server: &WebSocketTestServer) -> WebsocketTestHarness
 }
 
 async fn websocket_harness_for_codex_backend(server: &WebSocketTestServer) -> WebsocketTestHarness {
-    let provider = ModelProviderInfo::create_openai_provider(Some(format!("{}/v1", server.uri())));
+    let provider = ModelProviderInfo::create_responses_provider(Some(format!("{}/v1", server.uri())));
     websocket_harness_with_provider_options_and_auth(
         provider,
         /*runtime_metrics_enabled*/ false,

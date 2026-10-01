@@ -2,14 +2,14 @@
 
 ## 目的
 
-OpenAI 固有機能の除去後に残ったコードを調査し、汎用プロバイダから利用する場合に不足している機能、実装済みだが接続されていない機能、既に別経路で実装済みの機能を整理する。
+provider 固有機能の除去後に残ったコードを調査し、汎用プロバイダから利用する場合に不足している機能、実装済みだが接続されていない機能、既に別経路で実装済みの機能を整理する。
 
 この文書では、次の状態を区別する。
 
 - **未実装:** 汎用経路に必要な処理が存在しない。
 - **未接続:** 基盤コードはあるが、現行の汎用経路から呼び出されていない。
 - **部分実装:** 一部の値・経路だけが実装されている。
-- **実装済み:** OpenAI 固有経路を削除しても、汎用経路が残っている。
+- **実装済み:** provider 固有経路を削除しても、汎用経路が残っている。
 
 ## 結論
 
@@ -29,7 +29,7 @@ OpenAI 固有機能の除去後に残ったコードを調査し、汎用プロ�
 
 [`ClientToolCatalog::refresh`](../crates/codex-mcp/src/client_tool_catalog.rs) は、fetch・publication・revision 管理・実行中 call との整合性を実装している。現在は `McpConnectionSet` の server 単位 API からこの処理を呼び出せる。
 
-以前の呼び出し側は ChatGPT Apps/Connectors の専用カタログ更新処理だった。これは OpenAI のモデルプロバイダ機能ではなく、Apps の削除時に呼び出し側が削除されたものだが、通常の MCP server に対しても次のような更新要求は汎用機能になり得る。
+以前の呼び出し側は ChatGPT Apps/Connectors の専用カタログ更新処理だった。これは provider のモデルプロバイダ機能ではなく、Apps の削除時に呼び出し側が削除されたものだが、通常の MCP server に対しても次のような更新要求は汎用機能になり得る。
 
 - MCP server の tools/list が変更された場合の再取得
 - plugin の有効化・無効化や MCP 設定変更後の再構築
@@ -38,7 +38,7 @@ OpenAI 固有機能の除去後に残ったコードを調査し、汎用プロ�
 
 ### 対応済み
 
-`McpConnectionSet`、MCP runtime、core session、app-server の `mcpServer/reload` を接続し、`serverName` を指定した場合に live な `tools/list` を再取得・公開する。initialize 時の server instruction も再利用するため、旧 OpenAI Apps 経路と同じくツール準備・cache ticket・revision 更新を通る。
+`McpConnectionSet`、MCP runtime、core session、app-server の `mcpServer/reload` を接続し、`serverName` を指定した場合に live な `tools/list` を再取得・公開する。initialize 時の server instruction も再利用するため、旧 provider Apps 経路と同じくツール準備・cache ticket・revision 更新を通る。
 
 refresh 前に作られた binding は既存 snapshot を保持し、refresh 後に作られた binding は新しい revision を参照する。refresh 中の call と stale snapshot は既存の `ClientToolCatalog` 契約で処理する。`serverName` を省略した既存の `mcpServer/reload` は従来どおり設定 reload として動作する。
 
@@ -106,7 +106,7 @@ Responses API の `input_image.detail` で定義される `auto`、`low`、`high
 `auto` は指定値を wire request に保持し、ローカル前処理では安全側の `high` 相当を使う。
 `low` は 512px 四方相当へ縮小してから送信し、未対応値として画像を省略しない。
 
-これは OpenAI Responses 互換経路の実装であり、provider capability の差異を表現する仕組みは別途必要である。provider によって `low`、`auto`、`original` の意味や上限が異なるため、次の capability が必要になる可能性がある。
+これは provider Responses 互換経路の実装であり、provider capability の差異を表現する仕組みは別途必要である。provider によって `low`、`auto`、`original` の意味や上限が異なるため、次の capability が必要になる可能性がある。
 
 - 対応する detail 値
 - provider ごとの最大画像サイズ・変換規則
@@ -115,7 +115,7 @@ Responses API の `input_image.detail` で定義される `auto`、`low`、`high
 
 ## G-6: Prefix compaction
 
-通常の compaction は `Memento` として要約を生成して履歴を置換する。要約リクエスト自体がコンテキスト上限を超えた場合は、元の OpenAI 版にあるフォールバックに合わせ、履歴の先頭から項目を削って直近の履歴を残したまま再試行する。この再試行以降の request metadata には `strategy: "prefix_compaction"` を記録する。
+通常の compaction は `Memento` として要約を生成して履歴を置換する。要約リクエスト自体がコンテキスト上限を超えた場合は、元の provider 版にあるフォールバックに合わせ、履歴の先頭から項目を削って直近の履歴を残したまま再試行する。この再試行以降の request metadata には `strategy: "prefix_compaction"` を記録する。
 
 これは利用者が圧縮方式を選ぶ設定ではなく、コンテキスト超過時だけ自動適用されるリトライ経路である。ローカル compaction と Responses API 形状の metadata は引き続き provider-neutral な共通処理から利用し、provider-specific な履歴保持契約は追加しない。
 
@@ -125,10 +125,10 @@ Responses API の `input_image.detail` で定義される `auto`、`low`、`high
 
 - Responses API の request/item/event 形式
 - Responses HTTP と Responses WebSocket
-- `codex_protocol::openai_models::ModelInfo`
+- `codex_protocol::model_types::ModelInfo`
 - Responses 用の compaction、retry、metadata
 
-現在は `wire_api = "chat"` を指定した provider に対して、Chat Completions の `/chat/completions`、function tool payload、SSE 応答を専用 adapter 経由で利用できる。対応範囲と request/SSE の変換は [ChatCompletionAPI のアーキテクチャ](cli-architecture/chat-completions.md) に整理している。`output_schema` は Chat Completions 経路では未対応であり、独自 streaming protocol や非 OpenAI 形式の tool call は引き続き同じ抽象で扱えない。
+現在は `wire_api = "chat"` を指定した provider に対して、Chat Completions の `/chat/completions`、function tool payload、SSE 応答を専用 adapter 経由で利用できる。対応範囲と request/SSE の変換は [ChatCompletionAPI のアーキテクチャ](cli-architecture/chat-completions.md) に整理している。`output_schema` は Chat Completions 経路では未対応であり、独自 streaming protocol や非 provider 形式の tool call は引き続き同じ抽象で扱えない。
 
 完全な provider-neutral 化には、少なくとも次の境界が必要になる。
 

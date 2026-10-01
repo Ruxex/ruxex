@@ -706,8 +706,8 @@ pub struct McpElicitationConstOption {
 pub enum McpServerElicitationRequest {
     /// A device-authenticated approval; accepted responses contain the proof in `content`.
     #[experimental("mcpServer/elicitation/request.userVerification")]
-    #[serde(rename = "openai/userVerification", rename_all = "camelCase")]
-    #[ts(rename = "openai/userVerification", rename_all = "camelCase")]
+    #[serde(rename = "provider/userVerification", rename_all = "camelCase")]
+    #[ts(rename = "provider/userVerification", rename_all = "camelCase")]
     UserVerification {
         title: String,
         description: String,

@@ -47,6 +47,8 @@ pub fn is_supported_amazon_bedrock_region(region: &str) -> bool {
 
 pub(super) fn base_url(region: &str) -> Result<String> {
     if is_supported_amazon_bedrock_region(region) {
+        // Amazon Bedrock Mantle exposes its Responses-compatible API under this exact path.
+        // The `openai/v1` segment is an external AWS wire contract, not a Codex naming choice.
         Ok(format!("https://bedrock-mantle.{region}.api.aws/openai/v1"))
     } else {
         Err(CodexErr::Fatal(format!(

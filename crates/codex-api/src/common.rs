@@ -3,7 +3,7 @@ use codex_protocol::ResponseUsageMetadata;
 use codex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
 use codex_protocol::config_types::Verbosity as VerbosityConfig;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
+use codex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
 use codex_protocol::protocol::ModelVerification;
 use codex_protocol::protocol::RateLimitSnapshot;
 use codex_protocol::protocol::TokenUsage;
@@ -55,7 +55,7 @@ pub enum ResponseEvent {
     SafetyBuffering(SafetyBuffering),
     OutputItemDone(ResponseItem),
     OutputItemAdded(ResponseItem),
-    /// Emitted when the server includes `OpenAI-Model` on the stream response.
+    /// Emitted when the server includes `provider-Model` on the stream response.
     /// This can differ from the requested model when backend safety routing applies.
     ServerModel(String),
     /// Emitted when the server recommends additional account verification.
@@ -151,7 +151,7 @@ pub enum TextFormatType {
 
 #[derive(Debug, Serialize, Default, Clone, PartialEq)]
 pub struct TextFormat {
-    /// Format type used by the OpenAI text controls.
+    /// Format type used by the provider text controls.
     pub r#type: TextFormatType,
     /// When true, the server is expected to strictly validate responses.
     pub strict: bool,
@@ -166,26 +166,26 @@ pub struct TextFormat {
 #[derive(Debug, Serialize, Default, Clone, PartialEq)]
 pub struct TextControls {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub verbosity: Option<OpenAiVerbosity>,
+    pub verbosity: Option<ProviderVerbosity>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub format: Option<TextFormat>,
 }
 
 #[derive(Debug, Serialize, Default, Clone, PartialEq)]
 #[serde(rename_all = "lowercase")]
-pub enum OpenAiVerbosity {
+pub enum ProviderVerbosity {
     Low,
     #[default]
     Medium,
     High,
 }
 
-impl From<VerbosityConfig> for OpenAiVerbosity {
+impl From<VerbosityConfig> for ProviderVerbosity {
     fn from(v: VerbosityConfig) -> Self {
         match v {
-            VerbosityConfig::Low => OpenAiVerbosity::Low,
-            VerbosityConfig::Medium => OpenAiVerbosity::Medium,
-            VerbosityConfig::High => OpenAiVerbosity::High,
+            VerbosityConfig::Low => ProviderVerbosity::Low,
+            VerbosityConfig::Medium => ProviderVerbosity::Medium,
+            VerbosityConfig::High => ProviderVerbosity::High,
         }
     }
 }

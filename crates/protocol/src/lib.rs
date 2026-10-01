@@ -34,7 +34,7 @@ pub mod mcp_policy;
 pub mod models;
 pub mod network_policy;
 pub mod num_format;
-pub mod openai_models;
+pub mod model_types;
 pub mod parse_command;
 mod permission_profile_intersection;
 mod permission_profile_snapshot;

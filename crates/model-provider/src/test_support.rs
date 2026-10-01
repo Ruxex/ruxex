@@ -3,7 +3,7 @@
 use codex_login::CodexAuth;
 use codex_model_provider_info::ModelProviderInfo;
 use codex_models_manager::cache::ModelsCacheEntry;
-use codex_protocol::openai_models::ModelInfo;
+use codex_protocol::model_types::ModelInfo;
 
 /// Constructs a cache fixture matching the supplied test provider and authentication.
 pub fn models_cache_entry(

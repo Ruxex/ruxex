@@ -1,4 +1,4 @@
-use codex_api::OpenAiVerbosity;
+use codex_api::ProviderVerbosity;
 use codex_api::ResponsesApiRequest;
 use codex_api::TextControls;
 use codex_api::create_text_param_for_request;
@@ -125,7 +125,7 @@ fn serializes_text_verbosity_when_set() {
         prompt_cache_key: None,
         service_tier: None,
         text: Some(TextControls {
-            verbosity: Some(OpenAiVerbosity::Low),
+            verbosity: Some(ProviderVerbosity::Low),
             format: None,
         }),
         client_metadata: None,

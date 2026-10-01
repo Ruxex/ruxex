@@ -41,7 +41,7 @@ use codex_app_server_protocol::TurnStatus;
 use codex_app_server_protocol::UserInput as V2UserInput;
 use codex_config::types::AuthCredentialsStoreMode;
 use codex_mcp::MCP_TOOL_CODEX_APPS_META_KEY;
-use codex_protocol::mcp::OPENAI_STANDARD_FORM_INPUT_EXTENSION_ID;
+use codex_protocol::mcp::provider_STANDARD_FORM_INPUT_EXTENSION_ID;
 use codex_protocol::mcp_approval_meta as approval_meta;
 use core_test_support::assert_regex_match;
 use core_test_support::responses;
@@ -103,7 +103,7 @@ const NEXT_TURN_TOOL_CALL_ID: &str = "call-calendar-next-turn";
 const ELICITATION_MESSAGE: &str = "Allow this request?";
 const STRICT_DECLINE_MESSAGE: &str = "Automated review of this operation failed. Do not proceed without asking the user for explicit approval.";
 const GUARDIAN_DENIAL_RATIONALE: &str = "The calendar action exceeds the user's authorization.";
-const OPENAI_FORM_MESSAGE: &str = "Select a template";
+const provider_FORM_MESSAGE: &str = "Select a template";
 const IMAGE_DATA_URL: &str =
     "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4=";
 
@@ -111,8 +111,8 @@ const IMAGE_DATA_URL: &str =
 enum ElicitationScenario {
     StandardForm,
     LegacySep1034Defaults,
-    OpenAiForm,
-    OpenAiElicitationForm,
+    providerForm,
+    providerElicitationForm,
     Strict(StrictReviewScenario),
 }
 
@@ -237,8 +237,8 @@ async fn mcp_server_legacy_sep1034_elicitation_defaults_round_trip() -> Result<(
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-async fn mcp_server_openai_form_elicitation_round_trip() -> Result<()> {
-    let mut fixture = ElicitationRoundTripFixture::start(ElicitationScenario::OpenAiForm).await?;
+async fn mcp_server_provider_form_elicitation_round_trip() -> Result<()> {
+    let mut fixture = ElicitationRoundTripFixture::start(ElicitationScenario::providerForm).await?;
     let (request_id, params) = fixture.read_elicitation().await?;
     assert_eq!(
         params,
@@ -246,14 +246,14 @@ async fn mcp_server_openai_form_elicitation_round_trip() -> Result<()> {
             thread_id: fixture.thread_id.clone(),
             turn_id: Some(fixture.turn_id.clone()),
             server_name: "codex_apps".to_string(),
-            request: McpServerElicitationRequest::OpenAiForm {
+            request: McpServerElicitationRequest::providerForm {
                 meta: None,
-                message: OPENAI_FORM_MESSAGE.to_string(),
+                message: provider_FORM_MESSAGE.to_string(),
                 requested_schema: json!({
                     "type": "object",
                     "properties": {
                         "template": {
-                            "type": "openai/imagePicker",
+                            "type": "provider/imagePicker",
                             "title": "Template",
                             "items": [{
                                 "id": "monthly-review",
@@ -275,9 +275,9 @@ async fn mcp_server_openai_form_elicitation_round_trip() -> Result<()> {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-async fn mcp_server_openai_elicitation_form_round_trip() -> Result<()> {
+async fn mcp_server_provider_elicitation_form_round_trip() -> Result<()> {
     let mut fixture =
-        ElicitationRoundTripFixture::start(ElicitationScenario::OpenAiElicitationForm).await?;
+        ElicitationRoundTripFixture::start(ElicitationScenario::providerElicitationForm).await?;
     let (request_id, params) = fixture.read_elicitation().await?;
     assert_eq!(
         params,
@@ -285,10 +285,10 @@ async fn mcp_server_openai_elicitation_form_round_trip() -> Result<()> {
             thread_id: fixture.thread_id.clone(),
             turn_id: Some(fixture.turn_id.clone()),
             server_name: "codex_apps".to_string(),
-            request: McpServerElicitationRequest::OpenAiElicitationForm {
+            request: McpServerElicitationRequest::providerElicitationForm {
                 meta: Some(json!({ "example/request": "template-picker" })),
-                message: OPENAI_FORM_MESSAGE.to_string(),
-                requested_schema: openai_elicitation_form_schema(),
+                message: provider_FORM_MESSAGE.to_string(),
+                requested_schema: provider_elicitation_form_schema(),
             },
         }
     );
@@ -342,9 +342,9 @@ async fn mcp_server_strict_auto_review(scenario: Review) -> Result<()> {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-async fn openai_form_capability_follows_the_turn_starting_connection() -> Result<()> {
+async fn provider_form_capability_follows_the_turn_starting_connection() -> Result<()> {
     let (responses_server, response_mock, apps_server_url, apps_server_handle) =
-        start_elicitation_services(ElicitationScenario::OpenAiForm).await?;
+        start_elicitation_services(ElicitationScenario::providerForm).await?;
     let codex_home = TempDir::new()?;
     write_config_toml(codex_home.path(), &responses_server.uri(), &apps_server_url)?;
     write_api_key_auth(
@@ -362,7 +362,7 @@ async fn openai_form_capability_follows_the_turn_starting_connection() -> Result
         &mut supported_client,
         /*id*/ 1,
         "supported-client",
-        /*supports_openai_form_elicitation*/ true,
+        /*supports_provider_form_elicitation*/ true,
     )
     .await?;
 
@@ -408,7 +408,7 @@ async fn openai_form_capability_follows_the_turn_starting_connection() -> Result
         &mut unsupported_client,
         /*id*/ 4,
         "unsupported-client",
-        /*supports_openai_form_elicitation*/ false,
+        /*supports_provider_form_elicitation*/ false,
     )
     .await?;
     send_request(
@@ -454,14 +454,14 @@ async fn openai_form_capability_follows_the_turn_starting_connection() -> Result
     };
     assert_eq!(
         params.request,
-        McpServerElicitationRequest::OpenAiForm {
+        McpServerElicitationRequest::providerForm {
             meta: None,
-            message: OPENAI_FORM_MESSAGE.to_string(),
+            message: provider_FORM_MESSAGE.to_string(),
             requested_schema: json!({
                 "type": "object",
                 "properties": {
                     "template": {
-                        "type": "openai/imagePicker",
+                        "type": "provider/imagePicker",
                         "title": "Template",
                         "items": [{
                             "id": "monthly-review",
@@ -508,7 +508,7 @@ async fn initialize_websocket_client(
     client: &mut WsClient,
     id: i64,
     name: &str,
-    supports_openai_form_elicitation: bool,
+    supports_provider_form_elicitation: bool,
 ) -> Result<()> {
     send_request(
         client,
@@ -522,8 +522,8 @@ async fn initialize_websocket_client(
             },
             capabilities: Some(InitializeCapabilities {
                 experimental_api: true,
-                extensions: supports_openai_form_elicitation
-                    .then(|| HashMap::from([("openai/form".to_string(), serde_json::json!({}))])),
+                extensions: supports_provider_form_elicitation
+                    .then(|| HashMap::from([("provider/form".to_string(), serde_json::json!({}))])),
                 ..Default::default()
             }),
         })?),
@@ -703,11 +703,11 @@ impl ElicitationRoundTripFixture {
             .build()
             .await?;
         let mut extensions = HashMap::from([(
-            OPENAI_STANDARD_FORM_INPUT_EXTENSION_ID.to_string(),
+            provider_STANDARD_FORM_INPUT_EXTENSION_ID.to_string(),
             json!({}),
         )]);
-        if matches!(scenario, ElicitationScenario::OpenAiElicitationForm) {
-            extensions.insert("openai/elicitation".to_string(), json!({ "form": {} }));
+        if matches!(scenario, ElicitationScenario::providerElicitationForm) {
+            extensions.insert("provider/elicitation".to_string(), json!({ "form": {} }));
         }
         timeout(
             DEFAULT_READ_TIMEOUT,
@@ -719,9 +719,9 @@ impl ElicitationRoundTripFixture {
                 },
                 Some(InitializeCapabilities {
                     experimental_api: true,
-                    mcp_server_openai_form_elicitation: !matches!(
+                    mcp_server_provider_form_elicitation: !matches!(
                         scenario,
-                        ElicitationScenario::OpenAiElicitationForm
+                        ElicitationScenario::providerElicitationForm
                     ),
                     extensions: Some(extensions),
                     ..Default::default()
@@ -1019,13 +1019,13 @@ impl ServerHandler for ElicitationAppsMcpServer {
         request: InitializeRequestParams,
         context: RequestContext<RoleServer>,
     ) -> Result<InitializeResult, rmcp::ErrorData> {
-        if matches!(self.scenario, ElicitationScenario::OpenAiForm) {
+        if matches!(self.scenario, ElicitationScenario::providerForm) {
             assert_eq!(
                 request
                     .capabilities
                     .extensions
                     .as_ref()
-                    .and_then(|extensions| extensions.get("openai/form"))
+                    .and_then(|extensions| extensions.get("provider/form"))
                     .cloned()
                     .map(Value::Object),
                 Some(json!({}))
@@ -1034,14 +1034,14 @@ impl ServerHandler for ElicitationAppsMcpServer {
         let extensions = request.capabilities.extensions.as_ref();
         assert_eq!(
             extensions
-                .and_then(|extensions| extensions.get("openai/elicitation"))
+                .and_then(|extensions| extensions.get("provider/elicitation"))
                 .cloned()
                 .map(Value::Object),
-            matches!(self.scenario, ElicitationScenario::OpenAiElicitationForm)
+            matches!(self.scenario, ElicitationScenario::providerElicitationForm)
                 .then(|| json!({ "form": {} })),
         );
-        if matches!(self.scenario, ElicitationScenario::OpenAiElicitationForm) {
-            assert!(extensions.is_some_and(|extensions| !extensions.contains_key("openai/form")));
+        if matches!(self.scenario, ElicitationScenario::providerElicitationForm) {
+            assert!(extensions.is_some_and(|extensions| !extensions.contains_key("provider/form")));
         }
         context.peer.set_peer_info(request);
         Ok(self.get_info())
@@ -1272,16 +1272,16 @@ impl ServerHandler for ElicitationAppsMcpServer {
                         .into(),
                 )
             }
-            ElicitationScenario::OpenAiElicitationForm => {
+            ElicitationScenario::providerElicitationForm => {
                 let result = context
                     .peer
                     .send_request(McpServerRequest::CustomRequest(CustomRequest::new(
-                        "openai/elicitation/create",
+                        "provider/elicitation/create",
                         Some(json!({
                             "mode": "form",
                             "_meta": { "example/request": "template-picker" },
-                            "message": OPENAI_FORM_MESSAGE,
-                            "requestedSchema": openai_elicitation_form_schema(),
+                            "message": provider_FORM_MESSAGE,
+                            "requestedSchema": provider_elicitation_form_schema(),
                         })),
                     )))
                     .await
@@ -1300,18 +1300,18 @@ impl ServerHandler for ElicitationAppsMcpServer {
                         .into(),
                 )
             }
-            ElicitationScenario::OpenAiForm => {
+            ElicitationScenario::providerForm => {
                 let result = context
                     .peer
                     .send_request(McpServerRequest::CustomRequest(CustomRequest::new(
-                        "openai/form",
+                        "provider/form",
                         Some(json!({
-                            "message": OPENAI_FORM_MESSAGE,
+                            "message": provider_FORM_MESSAGE,
                             "requestedSchema": {
                                 "type": "object",
                                 "properties": {
                                     "template": {
-                                        "type": "openai/imagePicker",
+                                        "type": "provider/imagePicker",
                                         "title": "Template",
                                         "items": [{
                                             "id": "monthly-review",
@@ -1332,7 +1332,7 @@ impl ServerHandler for ElicitationAppsMcpServer {
                         .map_err(|err| rmcp::ErrorData::internal_error(err.to_string(), None))?,
                     result => {
                         return Err(rmcp::ErrorData::internal_error(
-                            format!("unexpected OpenAI form response: {result:?}"),
+                            format!("unexpected provider form response: {result:?}"),
                             None,
                         ));
                     }
@@ -1355,7 +1355,7 @@ impl ServerHandler for ElicitationAppsMcpServer {
     }
 }
 
-fn openai_elicitation_form_schema() -> Value {
+fn provider_elicitation_form_schema() -> Value {
     json!({
         "type": "object",
         "properties": {
@@ -1365,7 +1365,7 @@ fn openai_elicitation_form_schema() -> Value {
                 "oneOf": [{
                     "const": "monthly-review",
                     "title": "Monthly review",
-                    "x-openai-preview": { "src": IMAGE_DATA_URL },
+                    "x-provider-preview": { "src": IMAGE_DATA_URL },
                 }],
             },
         },

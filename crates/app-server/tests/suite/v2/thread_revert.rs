@@ -37,7 +37,7 @@ use codex_features::Feature;
 use codex_protocol::config_types::CollaborationMode;
 use codex_protocol::config_types::ModeKind;
 use codex_protocol::config_types::Settings;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use codex_protocol::protocol::EventMsg;
 use codex_protocol::protocol::MultiAgentVersion;
 use codex_rollout::RolloutItem;
@@ -658,7 +658,7 @@ async fn initialize_experimental(mcp: &mut TestAppServer) -> Result<()> {
                 experimental_api: true,
                 request_attestation: false,
                 opt_out_notification_methods: None,
-                mcp_server_openai_form_elicitation: false,
+                mcp_server_provider_form_elicitation: false,
                 extensions: None,
             }),
         ),

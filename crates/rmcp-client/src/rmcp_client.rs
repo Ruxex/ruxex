@@ -106,7 +106,7 @@ use self::streamable_http_retry::HandshakeError;
 use self::streamable_http_retry::STREAMABLE_HTTP_RETRY_DELAYS_MS;
 use self::streamable_http_retry::sleep_with_retry_deadline;
 
-const READ_ONLY_TOOLS_META_KEY: &str = "openai/readOnly";
+const READ_ONLY_TOOLS_META_KEY: &str = "provider/readOnly";
 
 enum PendingTransport {
     InProcess {

@@ -9,10 +9,10 @@ use tempfile::tempdir;
 fn test_api_provider_applies_current_managed_residency() {
     let info = ModelProviderInfo {
         http_headers: Some(maplit::hashmap! {
-            "X-OpenAI-Internal-Codex-Residency".to_string() => "eu".into(),
+            "X-Codex-Residency".to_string() => "eu".into(),
             "x-provider-header".to_string() => "preserved".into(),
         }),
-        ..ModelProviderInfo::create_openai_provider(/*base_url*/ None)
+        ..ModelProviderInfo::create_responses_provider(/*base_url*/ None)
     };
     let original_info = info.clone();
     let previous_requirement = read_managed_residency_requirement();
@@ -88,14 +88,14 @@ base_url = "http://localhost:11434/v1"
 fn test_deserialize_azure_model_provider_toml() {
     let azure_provider_toml = r#"
 name = "Azure"
-base_url = "https://xxxxx.openai.azure.com/openai"
-env_key = "AZURE_OPENAI_API_KEY"
+base_url = "https://xxxxx.provider.azure.com/provider"
+env_key = "AZURE_PROVIDER_API_KEY"
 query_params = { api-version = "2025-04-01-preview" }
         "#;
     let expected_provider = ModelProviderInfo {
         name: "Azure".into(),
-        base_url: Some("https://xxxxx.openai.azure.com/openai".into()),
-        env_key: Some("AZURE_OPENAI_API_KEY".into()),
+        base_url: Some("https://xxxxx.provider.azure.com/provider".into()),
+        env_key: Some("AZURE_PROVIDER_API_KEY".into()),
         env_key_instructions: None,
         experimental_bearer_token: None,
         auth: None,
@@ -161,9 +161,9 @@ supports_standalone_web_search = true
 #[test]
 fn test_deserialize_chat_wire_api() {
     let provider_toml = r#"
-name = "OpenAI using Chat Completions"
-base_url = "https://api.openai.com/v1"
-env_key = "OPENAI_API_KEY"
+name = "Example provider using Chat Completions"
+base_url = "https://api.example.test/v1"
+env_key = "PROVIDER_API_KEY"
 wire_api = "chat"
         "#;
 
@@ -174,8 +174,8 @@ wire_api = "chat"
 #[test]
 fn test_deserialize_websocket_connect_timeout() {
     let provider_toml = r#"
-name = "OpenAI"
-base_url = "https://api.openai.com/v1"
+name = "Example provider"
+base_url = "https://api.example.test/v1"
 websocket_connect_timeout_ms = 15000
 supports_websockets = true
         "#;
@@ -481,7 +481,7 @@ fn test_merge_configured_model_providers_applies_runtime_overrides_independently
     let configured_model_providers = std::collections::HashMap::from([(
         AMAZON_BEDROCK_RUNTIME_PROVIDER_ID.to_string(),
         ModelProviderInfo {
-            base_url: Some("https://runtime.example.com/openai/v1".to_string()),
+            base_url: Some("https://runtime.example.com/provider/v1".to_string()),
             aws: Some(runtime_aws.clone()),
             ..ModelProviderInfo::default()
         },
@@ -490,7 +490,7 @@ fn test_merge_configured_model_providers_applies_runtime_overrides_independently
     let expected_runtime = expected
         .get_mut(AMAZON_BEDROCK_RUNTIME_PROVIDER_ID)
         .expect("Amazon Bedrock Runtime provider should be built in");
-    expected_runtime.base_url = Some("https://runtime.example.com/openai/v1".to_string());
+    expected_runtime.base_url = Some("https://runtime.example.com/provider/v1".to_string());
     expected_runtime.aws = Some(runtime_aws);
 
     assert_eq!(
@@ -604,7 +604,7 @@ fn test_validate_provider_aws_rejects_conflicting_auth() {
         }),
         env_key: Some("AWS_BEARER_TOKEN_BEDROCK".to_string()),
         supports_websockets: false,
-        ..ModelProviderInfo::create_openai_provider(/*base_url*/ None)
+        ..ModelProviderInfo::create_responses_provider(/*base_url*/ None)
     };
 
     assert_eq!(
@@ -624,7 +624,7 @@ fn test_validate_provider_aws_rejects_websockets() {
         }),
         requires_auth: false,
         supports_websockets: true,
-        ..ModelProviderInfo::create_openai_provider(/*base_url*/ None)
+        ..ModelProviderInfo::create_responses_provider(/*base_url*/ None)
     };
 
     assert_eq!(

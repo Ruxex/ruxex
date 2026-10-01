@@ -462,13 +462,13 @@ fn maybe_wrap_shell_lc_with_snapshot_reuses_brokered_session_zsh() {
     std::fs::write(&snapshot_path, "# Snapshot file\n").expect("write snapshot");
     let (session_shell, shell_snapshot) =
         shell_with_snapshot(ShellType::Zsh, "/bin/zsh", snapshot_path.abs());
-    let copy_key = format!("{SNAPSHOT_BROKERED_VALUE_ENV_PREFIX}OPENAI_API_KEY");
+    let copy_key = format!("{SNAPSHOT_BROKERED_VALUE_ENV_PREFIX}PROVIDER_API_KEY");
     let env = HashMap::from([
         (
             CREDENTIAL_BROKER_ACTIVE_ENV_KEY.to_string(),
             "1".to_string(),
         ),
-        (copy_key.clone(), "dummy-openai-key".to_string()),
+        (copy_key.clone(), "dummy-provider-key".to_string()),
     ]);
     for (flag, expected_flag) in [("-c", "-fc"), ("-lc", "-lfc")] {
         let command = vec![
@@ -854,14 +854,14 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
     let proxy = test_credential_broker_network_proxy().await?;
     let dir = tempdir()?;
     let startup = dir.path().join("startup.sh");
-    std::fs::write(&startup, "export OPENAI_API_KEY='sk-startup-secret'\n")?;
+    std::fs::write(&startup, "export PROVIDER_API_KEY='sk-startup-secret'\n")?;
     let snapshot_dir = dir.path().join("snapshots");
     std::fs::create_dir(&snapshot_dir)?;
     let snapshot = snapshot_dir.join("snapshot.sh");
     std::fs::write(
         &snapshot,
         format!(
-            "# Snapshot file\ncorp_auth() {{ printf '%s\\n%s\\n%s' \"$OPENAI_API_KEY\" \"${{GITHUB_TOKEN-unset}}\" \"$1\"; }}\nexport OPENAI_API_KEY='stale'\nexport GITHUB_TOKEN='ghp_snapshot_only'\nexport GH_HOST='github.example.com'\nexport BASH_ENV='{}'\nexport ENV='{}'\nexport ZDOTDIR='{}'\n",
+            "# Snapshot file\ncorp_auth() {{ printf '%s\\n%s\\n%s' \"$PROVIDER_API_KEY\" \"${{GITHUB_TOKEN-unset}}\" \"$1\"; }}\nexport PROVIDER_API_KEY='stale'\nexport GITHUB_TOKEN='ghp_snapshot_only'\nexport GH_HOST='github.example.com'\nexport BASH_ENV='{}'\nexport ENV='{}'\nexport ZDOTDIR='{}'\n",
             startup.display(),
             startup.display(),
             dir.path().display()
@@ -870,7 +870,7 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
     let (shell, snapshot) = shell_with_snapshot(ShellType::Bash, "/bin/bash", snapshot.abs());
     let mut env = HashMap::from([
         (
-            "OPENAI_API_KEY".to_string(),
+            "PROVIDER_API_KEY".to_string(),
             "sk-proj-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_".to_string(),
         ),
         (
@@ -883,12 +883,12 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
         ("ENV".to_string(), startup.display().to_string()),
     ]);
     proxy.apply_to_env(&mut env);
-    let dummy = env["OPENAI_API_KEY"].clone();
+    let dummy = env["PROVIDER_API_KEY"].clone();
     let dummy_alias = env["AUTH_HEADER"].clone();
     let mut alias_only_env = env.clone();
-    alias_only_env.remove("OPENAI_API_KEY");
+    alias_only_env.remove("PROVIDER_API_KEY");
     let mut empty_canonical_env = env.clone();
-    empty_canonical_env.insert("OPENAI_API_KEY".to_string(), String::new());
+    empty_canonical_env.insert("PROVIDER_API_KEY".to_string(), String::new());
     let mut absent_alias_env = env.clone();
     absent_alias_env.remove("AUTH_HEADER");
     prepare_brokered_shell_snapshot_env(&mut env, Some(&snapshot), &shell);
@@ -936,7 +936,7 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
                     "-c"
                 }
                 .to_string(),
-                "/bin/sh -ic 'printf \"%s|%s\" \"$OPENAI_API_KEY\" \"${ENV-unset}\"'".to_string(),
+                "/bin/sh -ic 'printf \"%s|%s\" \"$PROVIDER_API_KEY\" \"${ENV-unset}\"'".to_string(),
             ],
             shell,
             Some(snapshot),
@@ -961,7 +961,7 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
             Ok(String::from_utf8(output.stdout)?)
         };
     let posix_startup = dir.path().join("posix-startup.sh");
-    std::fs::write(&posix_startup, "export OPENAI_API_KEY='sk-posix-secret'\n")?;
+    std::fs::write(&posix_startup, "export PROVIDER_API_KEY='sk-posix-secret'\n")?;
     let posix_snapshot = dir.path().join("posix-startup-snapshot.sh").abs();
     std::fs::write(
         &posix_snapshot,
@@ -1146,7 +1146,7 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
         bash_posix_path.clone(),
         "-c".to_string(),
         format!(
-            "'{bash_posix_path}' -ic 'printf \"%s|%s\" \"$OPENAI_API_KEY\" \"${{ENV-unset}}\"'"
+            "'{bash_posix_path}' -ic 'printf \"%s|%s\" \"$PROVIDER_API_KEY\" \"${{ENV-unset}}\"'"
         ),
     ];
     let mut tilde_env = env.clone();
@@ -1259,7 +1259,7 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
     if std::path::Path::new("/bin/zsh").exists() {
         std::fs::write(
             dir.path().join(".zshenv"),
-            "export OPENAI_API_KEY='sk-startup-secret'\n",
+            "export PROVIDER_API_KEY='sk-startup-secret'\n",
         )?;
         let renamed_zsh = dir.path().join("zsh.exe");
         std::os::unix::fs::symlink("/bin/zsh", &renamed_zsh)?;
@@ -1269,7 +1269,7 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
         let command = vec![
             renamed_zsh.display().to_string(),
             "-lc".to_string(),
-            "printf '%s\\n%s' \"$OPENAI_API_KEY\" \"$ZDOTDIR\"".to_string(),
+            "printf '%s\\n%s' \"$PROVIDER_API_KEY\" \"$ZDOTDIR\"".to_string(),
         ];
         let rewritten = maybe_wrap_shell_lc_with_snapshot(
             &command,
@@ -1298,7 +1298,7 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
         let system_startup_zsh = system_startup_dir.join("zsh");
         std::fs::write(
             &system_startup_zsh,
-            "#!/bin/sh\nexport OPENAI_API_KEY='sk-system-startup-secret'\nexport AUTH_HEADER='Bearer sk-system-startup-secret'\nexec /bin/zsh -ax \"$@\"\n",
+            "#!/bin/sh\nexport PROVIDER_API_KEY='sk-system-startup-secret'\nexport AUTH_HEADER='Bearer sk-system-startup-secret'\nexec /bin/zsh -ax \"$@\"\n",
         )?;
         let mut permissions = std::fs::metadata(&system_startup_zsh)?.permissions();
         permissions.set_mode(0o700);
@@ -1318,7 +1318,7 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
                 system_startup_zsh.display().to_string(),
                 "-c".to_string(),
                 format!(
-                    "set +x\nprintf '%s\\n%s\\n%s\\n%s\\n%s\\n' \"${{OPENAI_API_KEY-unset}}\" \"${{AUTH_HEADER-unset}}\" \"${{{SNAPSHOT_BROKERED_VALUE_ENV_PREFIX}AUTH_HEADER-unset}}\" \"${{{SNAPSHOT_BROKERED_VALUE_ENV_PREFIX}OPENAI_API_KEY-unset}}\" \"${{{SNAPSHOT_BROKERED_UNSET_ENV_PREFIX}OPENAI_API_KEY-unset}}\"\nenv -0"
+                    "set +x\nprintf '%s\\n%s\\n%s\\n%s\\n%s\\n' \"${{PROVIDER_API_KEY-unset}}\" \"${{AUTH_HEADER-unset}}\" \"${{{SNAPSHOT_BROKERED_VALUE_ENV_PREFIX}AUTH_HEADER-unset}}\" \"${{{SNAPSHOT_BROKERED_VALUE_ENV_PREFIX}PROVIDER_API_KEY-unset}}\" \"${{{SNAPSHOT_BROKERED_UNSET_ENV_PREFIX}PROVIDER_API_KEY-unset}}\"\nenv -0"
                 ),
             ];
             let system_rewritten = maybe_wrap_shell_lc_with_snapshot(
@@ -1812,7 +1812,7 @@ fn maybe_wrap_shell_lc_with_snapshot_does_not_embed_override_values_in_argv() {
     let snapshot_path = dir.path().join("snapshot.sh");
     std::fs::write(
         &snapshot_path,
-        "# Snapshot file\nexport OPENAI_API_KEY='snapshot-value'\n",
+        "# Snapshot file\nexport PROVIDER_API_KEY='snapshot-value'\n",
     )
     .expect("write snapshot");
     let (session_shell, shell_snapshot) =
@@ -1820,16 +1820,12 @@ fn maybe_wrap_shell_lc_with_snapshot_does_not_embed_override_values_in_argv() {
     let command = vec![
         "/bin/bash".to_string(),
         "-lc".to_string(),
-        "printf '%s' \"$OPENAI_API_KEY\"".to_string(),
+        "printf '%s' \"$PROVIDER_API_KEY\"".to_string(),
     ];
     let explicit_env_overrides = HashMap::from([
         (
-            "OPENAI_API_KEY".to_string(),
+            "PROVIDER_API_KEY".to_string(),
             "super-secret-value".to_string(),
-        ),
-        (
-            "openai_identity_token_file".to_string(),
-            "/run/identity-token".to_string(),
         ),
     ]);
     let rewritten = maybe_wrap_shell_lc_with_snapshot(
@@ -1838,17 +1834,16 @@ fn maybe_wrap_shell_lc_with_snapshot_does_not_embed_override_values_in_argv() {
         Some(&shell_snapshot),
         &explicit_env_overrides,
         &HashMap::from([(
-            "OPENAI_API_KEY".to_string(),
+            "PROVIDER_API_KEY".to_string(),
             "super-secret-value".to_string(),
         )]),
         &RuntimePathPrepends::default(),
     );
 
     assert!(!rewritten[2].contains("super-secret-value"));
-    assert!(!rewritten[2].contains("openai_identity_token_file"));
     let output = Command::new(&rewritten[0])
         .args(&rewritten[1..])
-        .env("OPENAI_API_KEY", "super-secret-value")
+        .env("PROVIDER_API_KEY", "super-secret-value")
         .output()
         .expect("run rewritten command");
     assert!(output.status.success(), "command failed: {output:?}");
@@ -1898,18 +1893,18 @@ fn maybe_wrap_shell_lc_with_snapshot_preserves_unset_override_variables() {
 
 #[test]
 fn brokered_credential_exports_stop_when_startup_makes_credential_readonly() {
-    let copy_key = format!("{SNAPSHOT_BROKERED_VALUE_ENV_PREFIX}OPENAI_API_KEY");
-    let env = HashMap::from([(copy_key.clone(), "dummy-openai-key".to_string())]);
+    let copy_key = format!("{SNAPSHOT_BROKERED_VALUE_ENV_PREFIX}PROVIDER_API_KEY");
+    let env = HashMap::from([(copy_key.clone(), "dummy-provider-key".to_string())]);
     let restore = build_brokered_credential_exports(&env, /*remove_copies*/ true);
 
     let unset_output = Command::new("/bin/bash")
         .args([
             "-c",
             &format!(
-                "unset OPENAI_API_KEY\n{restore}\nprintf '%s|%s' \"${{OPENAI_API_KEY-unset}}\" \"${{{copy_key}-unset}}\""
+                "unset PROVIDER_API_KEY\n{restore}\nprintf '%s|%s' \"${{PROVIDER_API_KEY-unset}}\" \"${{{copy_key}-unset}}\""
             ),
         ])
-        .env(&copy_key, "dummy-openai-key")
+        .env(&copy_key, "dummy-provider-key")
         .output()
         .expect("run unset credential probe");
     assert!(
@@ -1922,10 +1917,10 @@ fn brokered_credential_exports_stop_when_startup_makes_credential_readonly() {
         .args([
             "-c",
             &format!(
-                "OPENAI_API_KEY=\n{restore}\nprintf '%s|%s' \"$OPENAI_API_KEY\" \"${{{copy_key}-unset}}\""
+                "PROVIDER_API_KEY=\n{restore}\nprintf '%s|%s' \"$PROVIDER_API_KEY\" \"${{{copy_key}-unset}}\""
             ),
         ])
-        .env(&copy_key, "dummy-openai-key")
+        .env(&copy_key, "dummy-provider-key")
         .output()
         .expect("run empty credential probe");
     assert!(
@@ -1938,10 +1933,10 @@ fn brokered_credential_exports_stop_when_startup_makes_credential_readonly() {
         .args([
             "-c",
             &format!(
-                "readonly OPENAI_API_KEY=dummy-openai-key\n{restore}\nprintf '%s|%s' \"$OPENAI_API_KEY\" \"${{{copy_key}-unset}}\""
+                "readonly PROVIDER_API_KEY=dummy-provider-key\n{restore}\nprintf '%s|%s' \"$PROVIDER_API_KEY\" \"${{{copy_key}-unset}}\""
             ),
         ])
-        .env(&copy_key, "dummy-openai-key")
+        .env(&copy_key, "dummy-provider-key")
         .output()
         .expect("run unchanged readonly credential probe");
     assert!(
@@ -1950,17 +1945,17 @@ fn brokered_credential_exports_stop_when_startup_makes_credential_readonly() {
     );
     assert_eq!(
         String::from_utf8_lossy(&unchanged_output.stdout),
-        "dummy-openai-key|unset"
+        "dummy-provider-key|unset"
     );
 
     let xtrace_output = Command::new("/bin/bash")
         .args([
             "-c",
             &format!(
-                "OPENAI_API_KEY=real-openai-key\nset -x\n{restore}\nset +x\nprintf '%s|%s' \"$OPENAI_API_KEY\" \"${{{copy_key}-unset}}\""
+                "PROVIDER_API_KEY=real-provider-key\nset -x\n{restore}\nset +x\nprintf '%s|%s' \"$PROVIDER_API_KEY\" \"${{{copy_key}-unset}}\""
             ),
         ])
-        .env(&copy_key, "dummy-openai-key")
+        .env(&copy_key, "dummy-provider-key")
         .output()
         .expect("run xtrace credential probe");
     assert!(
@@ -1969,18 +1964,18 @@ fn brokered_credential_exports_stop_when_startup_makes_credential_readonly() {
     );
     assert_eq!(
         String::from_utf8_lossy(&xtrace_output.stdout),
-        "dummy-openai-key|unset"
+        "dummy-provider-key|unset"
     );
-    assert!(!String::from_utf8_lossy(&xtrace_output.stderr).contains("real-openai-key"));
+    assert!(!String::from_utf8_lossy(&xtrace_output.stderr).contains("real-provider-key"));
 
-    let unset_marker_key = format!("{SNAPSHOT_BROKERED_UNSET_ENV_PREFIX}OPENAI_API_KEY");
+    let unset_marker_key = format!("{SNAPSHOT_BROKERED_UNSET_ENV_PREFIX}PROVIDER_API_KEY");
     let unset_env = HashMap::from([(unset_marker_key.clone(), "1".to_string())]);
     let unset_restore = build_brokered_credential_exports(&unset_env, /*remove_copies*/ true);
     let readonly_empty_output = Command::new("/bin/bash")
         .args([
             "-c",
             &format!(
-                "readonly OPENAI_API_KEY=\n{unset_restore}\nprintf '%s|%s' \"$OPENAI_API_KEY\" \"${{{unset_marker_key}-unset}}\""
+                "readonly PROVIDER_API_KEY=\n{unset_restore}\nprintf '%s|%s' \"$PROVIDER_API_KEY\" \"${{{unset_marker_key}-unset}}\""
             ),
         ])
         .env(&unset_marker_key, "1")
@@ -1998,9 +1993,9 @@ fn brokered_credential_exports_stop_when_startup_makes_credential_readonly() {
     let output = Command::new("/bin/bash")
         .args([
             "-c",
-            &format!("readonly OPENAI_API_KEY=real-openai-key\n{restore}\nprintf should-not-run"),
+            &format!("readonly PROVIDER_API_KEY=real-provider-key\n{restore}\nprintf should-not-run"),
         ])
-        .env(copy_key, "dummy-openai-key")
+        .env(copy_key, "dummy-provider-key")
         .output()
         .expect("run readonly credential probe");
 

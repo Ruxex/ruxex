@@ -118,7 +118,7 @@
 ### Task 5: docs、生成物、checkを更新する
 
 **Files:**
-- Modify: `docs/openai-decoupling-plan.md`
+- Modify: `docs/provider-decoupling-plan.md`
 - Modify: `docs/pre-release-compatibility-inventory.md`
 - Modify: `crates/exec-server/README.md`
 - Modify: generated artifacts discovered by `rg`

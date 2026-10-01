@@ -783,7 +783,7 @@ async fn auto_declined_mcp_elicitations_do_not_leave_startup_quarantine_armed() 
                 url: "http://payments.example/checkout/123".to_string(),
                 elicitation_id: "payment-123".to_string(),
             },
-            McpServerElicitationRequest::OpenAiForm {
+            McpServerElicitationRequest::providerForm {
                 meta: None,
                 message: "Choose a report.".to_string(),
                 requested_schema: serde_json::json!({}),

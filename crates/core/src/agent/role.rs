@@ -19,7 +19,7 @@ use codex_features::feature_for_key;
 use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::config_types::ServiceTier;
 use codex_protocol::config_types::Verbosity;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;

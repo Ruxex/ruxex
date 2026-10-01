@@ -51,7 +51,6 @@ use codex_login::AuthDotJson;
 use codex_login::AuthManager;
 use codex_login::CODEX_API_KEY_ENV_VAR;
 use codex_login::CodexAuth;
-use codex_login::OPENAI_API_KEY_ENV_VAR;
 use codex_login::default_client::create_client_without_request_logging;
 use codex_login::default_client::default_headers;
 use codex_login::load_auth_dot_json;
@@ -1155,7 +1154,7 @@ fn auth_check(config: &Config) -> DoctorCheck {
     ));
     details.push(format!("auth file: {}", auth_path.display()));
 
-    let env_auth_vars = [OPENAI_API_KEY_ENV_VAR, CODEX_API_KEY_ENV_VAR]
+    let env_auth_vars = [CODEX_API_KEY_ENV_VAR]
         .into_iter()
         .filter(|name| env_var_present(name))
         .collect::<Vec<_>>();
@@ -1182,7 +1181,7 @@ fn auth_check(config: &Config) -> DoctorCheck {
     ) {
         Ok(Some(auth)) => {
             details.push(format!("stored auth mode: {}", stored_auth_mode(&auth)));
-            details.push(format!("stored API key: {}", auth.openai_api_key.is_some()));
+            details.push(format!("stored API key: {}", auth.api_key.is_some()));
             let auth_issues = stored_auth_issues(&auth, env_var_present);
             details.extend(
                 auth_issues
@@ -1317,7 +1316,7 @@ fn stored_auth_mode_value(auth: &AuthDotJson) -> AuthMode {
         AuthMode::BedrockApiKey
     } else if auth.bedrock_access_keys.is_some() {
         AuthMode::BedrockAccessKeys
-    } else if auth.openai_api_key.is_some() {
+    } else if auth.api_key.is_some() {
         AuthMode::ApiKey
     } else {
         AuthMode::ApiKey
@@ -1332,11 +1331,10 @@ fn stored_auth_issues(
     match stored_auth_mode_value(auth) {
         AuthMode::ApiKey => {
             let stored_key_present = auth
-                .openai_api_key
+                .api_key
                 .as_deref()
                 .is_some_and(|key| !key.trim().is_empty());
-            let env_key_present =
-                env_var_present(OPENAI_API_KEY_ENV_VAR) || env_var_present(CODEX_API_KEY_ENV_VAR);
+            let env_key_present = env_var_present(CODEX_API_KEY_ENV_VAR);
             if !stored_key_present && !env_key_present {
                 issues.push("API key auth is missing an API key");
             }
@@ -2416,8 +2414,8 @@ fn provider_reachability_plan(config: &Config) -> ReachabilityPlan {
 fn default_reachability_plan() -> ReachabilityPlan {
     provider_reachability_plan_from_parts(
         ProviderAuthReachabilityMode::ApiKey,
-        "openai",
-        "OpenAI",
+        "provider",
+        "provider",
         /*provider_base_url*/ None,
         /*provider_query_params*/ None,
         /*is_amazon_bedrock*/ false,
@@ -2459,7 +2457,7 @@ fn provider_reachability_plan_from_parts(
 ) -> ReachabilityPlan {
     let provider_route_probe_url = provider_base_url
         .or_else(|| {
-            (mode == ProviderAuthReachabilityMode::ApiKey).then_some("https://api.openai.com/v1")
+            (mode == ProviderAuthReachabilityMode::ApiKey).then_some("https://api.example.com/v1")
         })
         .and_then(|url| {
             should_probe_models_route(provider_name, url, is_amazon_bedrock)
@@ -2469,7 +2467,7 @@ fn provider_reachability_plan_from_parts(
         (ProviderAuthReachabilityMode::ApiKey, _) | (_, Some(_)) => vec![ReachabilityEndpoint {
             label: format!("{provider_id} API"),
             url: provider_url_for_path(
-                provider_base_url.unwrap_or("https://api.openai.com/v1"),
+                provider_base_url.unwrap_or("https://api.example.com/v1"),
                 "responses",
                 provider_query_params,
             ),
@@ -2597,7 +2595,7 @@ async fn provider_reachability_check(plan: ReachabilityPlan) -> DoctorCheck {
                     )
                     .measured(format!("{route_probe_url} returned {status}"))
                     .expected("GET /models returns 2xx, 401, or 403")
-                    .remedy("Set base_url to the provider API root, for example https://api.openai.com/v1")
+                    .remedy("Set base_url to the provider API root, for example https://api.example.com/v1")
                     .field("route probe"),
                 );
             }

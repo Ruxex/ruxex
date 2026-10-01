@@ -1,10 +1,10 @@
 # Configuration
 
-For basic configuration instructions, see [this documentation](https://developers.openai.com/codex/config-basic).
+For basic configuration instructions, see [this documentation](https://developers.provider.com/codex/config-basic).
 
-For advanced configuration instructions, see [this documentation](https://developers.openai.com/codex/config-advanced).
+For advanced configuration instructions, see [this documentation](https://developers.provider.com/codex/config-advanced).
 
-For a full configuration reference, see [this documentation](https://developers.openai.com/codex/config-reference).
+For a full configuration reference, see [this documentation](https://developers.provider.com/codex/config-reference).
 
 ## Lifecycle hooks
 

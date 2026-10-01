@@ -282,7 +282,7 @@ data: {"id":"resp-1","output":[{"type":"message","role":"assistant","content":[{
 async fn responses_client_uses_responses_path() -> Result<()> {
     let state = RecordingState::default();
     let transport = RecordingTransport::new(state.clone());
-    let client = ResponsesClient::new(transport, provider("openai"), Arc::new(NoAuth));
+    let client = ResponsesClient::new(transport, provider("provider"), Arc::new(NoAuth));
 
     let body = serde_json::json!({ "echo": true });
     let _stream = client
@@ -303,7 +303,7 @@ async fn responses_client_uses_responses_path() -> Result<()> {
 async fn responses_client_sends_extra_headers() -> Result<()> {
     let state = RecordingState::default();
     let transport = RecordingTransport::new(state.clone());
-    let client = ResponsesClient::new(transport, provider("openai"), Arc::new(NoAuth));
+    let client = ResponsesClient::new(transport, provider("provider"), Arc::new(NoAuth));
     let headers = HeaderMap::from_iter([(
         http::HeaderName::from_static("x-custom-request"),
         HeaderValue::from_static("example"),
@@ -329,7 +329,7 @@ async fn responses_client_sends_extra_headers() -> Result<()> {
 async fn responses_client_stream_request_preserves_item_ids() -> Result<()> {
     let state = RecordingState::default();
     let transport = RecordingTransport::new(state.clone());
-    let client = ResponsesClient::new(transport, provider("openai"), Arc::new(NoAuth));
+    let client = ResponsesClient::new(transport, provider("provider"), Arc::new(NoAuth));
     let request = ResponsesApiRequest {
         model: "gpt-test".into(),
         instructions: "Say hi".into(),
@@ -381,7 +381,7 @@ async fn streaming_client_adds_auth_headers() -> Result<()> {
     let state = RecordingState::default();
     let transport = RecordingTransport::new(state.clone());
     let auth = Arc::new(StaticAuth::new("secret-token"));
-    let client = ResponsesClient::new(transport, provider("openai"), auth);
+    let client = ResponsesClient::new(transport, provider("provider"), auth);
 
     let body = serde_json::json!({ "model": "gpt-test" });
     let _stream = client
@@ -417,7 +417,7 @@ async fn streaming_client_adds_auth_headers() -> Result<()> {
 async fn streaming_client_retries_on_transport_error() -> Result<()> {
     let transport = FlakyTransport::new();
 
-    let mut provider = provider("openai");
+    let mut provider = provider("provider");
     provider.retry.max_attempts = 2;
 
     let request = ResponsesApiRequest {
@@ -477,7 +477,7 @@ async fn streaming_client_retries_on_transient_auth_error() -> Result<()> {
     let transport = RecordingTransport::new(state.clone());
     let auth = FailsOnceAuth::transient();
 
-    let mut provider = provider("openai");
+    let mut provider = provider("provider");
     provider.retry.max_attempts = 2;
 
     let client = ResponsesClient::new(transport, provider, Arc::new(auth.clone()));
@@ -502,7 +502,7 @@ async fn streaming_client_does_not_retry_auth_build_error() -> Result<()> {
     let transport = RecordingTransport::new(state.clone());
     let auth = FailsOnceAuth::build();
 
-    let mut provider = provider("openai");
+    let mut provider = provider("provider");
     provider.retry.max_attempts = 2;
 
     let client = ResponsesClient::new(transport, provider, Arc::new(auth.clone()));

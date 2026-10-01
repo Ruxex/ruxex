@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans (recommended) to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove obsolete upstream and historical compatibility layers across the repository before continuing OpenAI-specific integration removal.
+**Goal:** Remove obsolete upstream and historical compatibility layers across the repository before continuing provider-specific integration removal.
 
 **Architecture:** Inventory compatibility candidates first, then remove them by contract boundary: persisted data, protocol/app-server, CLI/config/import, and UI/observability. Preserve current runtime fallbacks and provider-neutral behavior only when a current producer or consumer is demonstrated.
 
@@ -12,7 +12,7 @@
 
 **Inventory:** [`docs/pre-release-compatibility-inventory.md`](../../pre-release-compatibility-inventory.md)
 
-**Phase handoff:** [`docs/openai-decoupling-plan.md`](../../openai-decoupling-plan.md)
+**Phase handoff:** [`docs/provider-decoupling-plan.md`](../../provider-decoupling-plan.md)
 
 ## Global Constraints
 
@@ -33,10 +33,10 @@
 
 ## File Map
 
-- **Policy:** `AGENTS.md`, `docs/openai-decoupling-plan.md`, `docs/openai-specific-crates.md`, and the superseded image-generation compatibility plan.
+- **Policy:** `AGENTS.md`, `docs/provider-decoupling-plan.md`, `docs/provider-specific-crates.md`, and the superseded image-generation compatibility plan.
 - **Inventory:** new `docs/pre-release-compatibility-inventory.md`, produced from repository-wide `rg` searches and manual call-site checks.
 - **Persistence:** `crates/thread-store/src/local/rollout_migration.rs`, `crates/thread-store/src/local/rollout_migration/`, `crates/thread-store/src/local/thread_history/`, `crates/rollout/src/`, and `crates/cli/src/migrate_rollouts.rs`.
-- **Protocol/app-server:** `crates/protocol/src/legacy_events.rs`, `crates/protocol/src/models.rs`, `crates/protocol/src/config_types.rs`, `crates/protocol/src/openai_models.rs`, `crates/app-server-protocol/src/protocol/v1.rs`, `crates/app-server-protocol/src/protocol/common.rs`, `crates/app-server-protocol/src/protocol/v2/`, generated app-server schemas, and app-server request processors.
+- **Protocol/app-server:** `crates/protocol/src/legacy_events.rs`, `crates/protocol/src/models.rs`, `crates/protocol/src/config_types.rs`, `crates/protocol/src/model_types.rs`, `crates/app-server-protocol/src/protocol/v1.rs`, `crates/app-server-protocol/src/protocol/common.rs`, `crates/app-server-protocol/src/protocol/v2/`, generated app-server schemas, and app-server request processors.
 - **CLI/config/import:** `crates/cli/src/`, `crates/core/src/config/`, `crates/app-server/src/config*`, `crates/app-server/src/external_agent_migration/`, and related tests/docs selected by the inventory.
 - **Runtime/UI/observability:** `crates/core/src/context/legacy_*`, `crates/core/src/context/world_state/`, `crates/sandboxing/src/manager.rs`, `crates/tui/src/`, `crates/analytics/src/`, `crates/otel/src/`, `crates/rollout-trace/src/`, and tests selected by the inventory.
 - **Build-system/experimental scaffolding:** `crates/v8-poc/`, the workspace and lockfile registrations, Hawk output, `crates/utils/cargo-bin/`, `crates/code-mode-protocol/`, `crates/linux-sandbox/`, and Bazel-only exec-server/test branches selected by the inventory.
@@ -47,8 +47,8 @@
 **Files:**
 - Create: `docs/pre-release-compatibility-inventory.md`
 - Modify: `AGENTS.md`
-- Modify: `docs/openai-decoupling-plan.md`
-- Modify: `docs/openai-specific-crates.md`
+- Modify: `docs/provider-decoupling-plan.md`
+- Modify: `docs/provider-specific-crates.md`
 - Modify: `docs/superpowers/plans/2026-09-19-remove-image-generation-adapter.md`
 - Modify: `docs/superpowers/plans/2026-09-19-remove-pre-release-image-generation-compatibility.md`
 
@@ -62,7 +62,7 @@ rg -n -i 'image_generation|image_generation_call|image_gen' crates --glob '*.rs'
 - [x] For every candidate, record the exact symbol, current producer/consumer, canonical replacement, decision (`remove`, `retain`, or `migrate-in-place`), and verification command.
 - [x] Mark image-generation history cleanup as one inventory slice, not the whole compatibility project.
 - [x] Add the inventory path and ordering rule to `AGENTS.md`.
-- [x] Update the decoupling documents to require this cleanup before the next OpenAI-specific integration.
+- [x] Update the decoupling documents to require this cleanup before the next provider-specific integration.
 - [x] Mark the image-specific compatibility plan as superseded by this repository-wide plan.
 - [x] Run `git diff --check` and review the inventory for candidates classified solely by name rather than call-site evidence.
 
@@ -88,7 +88,7 @@ external-agent import remain on the paginated contract.
 ### Task 3: Remove obsolete protocol and app-server compatibility
 
 **Files:**
-- Modify: `crates/protocol/src/legacy_events.rs`, `models.rs`, `config_types.rs`, `openai_models.rs`, and selected protocol modules.
+- Modify: `crates/protocol/src/legacy_events.rs`, `models.rs`, `config_types.rs`, `model_types.rs`, and selected protocol modules.
 - Modify: `crates/app-server-protocol/src/protocol/v1.rs`, `common.rs`, `v2/`, generated schema files, and selected app-server request processors.
 - Modify: `docs/protocol_v1.md` and protocol tests for removed aliases.
 
@@ -127,14 +127,14 @@ external-agent import remain on the paginated contract.
 **Files:**
 - Modify: `Cargo.lock` only if dependency removal changes it.
 - Modify: `target/crate-dependency-graph/` only if workspace dependency edges change.
-- Modify: `docs/openai-decoupling-plan.md` and the inventory with final decisions.
+- Modify: `docs/provider-decoupling-plan.md` and the inventory with final decisions.
 
 - [x] Run workspace `cargo check` through `just check`.
 - [x] Check repository-local `target/` size before `just check`; it was 131G, above the 120G cleanup threshold, so only the repository-local `target/` directory was removed before checking.
 - [x] Run `just check`.
 - [x] No manifests or crate dependency edges changed, so dependency-graph regeneration is not required.
 - [x] Confirm the compatibility inventory has no unclassified production entries.
-- [x] Leave the next OpenAI-specific integration selection to the subsequent Phase 3 task.
+- [x] Leave the next provider-specific integration selection to the subsequent Phase 3 task.
 
 ### Task 7: Remove the obsolete `managed_config.toml` compatibility reader
 
@@ -171,7 +171,7 @@ The checked-in Hawk output is described in the [Hawk result analysis](../../hawk
 - Delete: `crates/v8-poc/`.
 - Modify: `Cargo.toml`, `Cargo.lock`, and the checked-in Hawk output [`codex-cli.json`](../../codex-cli.json).
 - Modify: `crates/utils/cargo-bin/`, `crates/code-mode-protocol/`, `crates/linux-sandbox/`, `crates/exec-server/`, and affected test/resource helpers selected by the inventory.
-- Modify: `docs/pre-release-compatibility-inventory.md` and the Phase 3 handoff in `docs/openai-decoupling-plan.md`.
+- Modify: `docs/pre-release-compatibility-inventory.md` and the Phase 3 handoff in `docs/provider-decoupling-plan.md`.
 
 - [x] Record the producer/consumer audit before changing code: `codex-v8-poc` has no product consumer; active code-mode uses `codex-code-mode-runtime` and `rusty_v8` directly. Record the same distinction for each Bazel/runfiles branch.
 - [x] Remove the POC crate, workspace member/dependency, cargo-shear exception, lockfile package, and generated Hawk references together.

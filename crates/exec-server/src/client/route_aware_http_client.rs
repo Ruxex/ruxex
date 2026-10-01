@@ -13,8 +13,6 @@ use codex_http_client::HttpClientFactory;
 use codex_http_client::RouteAwareClientPool;
 use codex_http_client::RouteAwareRequestError;
 use codex_protocol::shell_environment::CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
-use codex_protocol::shell_environment::OPENAI_FEDERATION_RULE_ID_ENV_VAR;
-use codex_protocol::shell_environment::OPENAI_IDENTITY_TOKEN_FILE_ENV_VAR;
 use futures::FutureExt;
 use futures::StreamExt;
 use futures::future::BoxFuture;
@@ -41,9 +39,7 @@ use crate::rpc::invalid_params;
 
 const HTTP_HEADER_ENV_DENYLIST: &[&str] = &[
     CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR,
-    OPENAI_FEDERATION_RULE_ID_ENV_VAR,
-    OPENAI_IDENTITY_TOKEN_FILE_ENV_VAR,
-    "OPENAI_API_KEY",
+    "PROVIDER_API_KEY",
     "CODEX_API_KEY",
     "CODEX_ACCESS_TOKEN",
     "CODEX_CONNECTORS_TOKEN",

@@ -146,8 +146,8 @@ fn event_target(value: &str) -> Option<&'static str> {
     let value = value.to_ascii_lowercase();
     let parts = value.split(['\\', '/']).map(str::trim).collect::<Vec<_>>();
     let name = *parts.last()?;
-    let package = parts.iter().any(|part| part.starts_with("openai.codex_"));
-    let trusted = package || parts.windows(2).any(|pair| pair == ["openai", "codex"]);
+    let package = parts.iter().any(|part| part.starts_with("provider.codex_"));
+    let trusted = package || parts.windows(2).any(|pair| pair == ["provider", "codex"]);
     match name {
         "codex-windows-sandbox-setup.exe" => Some("sandbox_setup"),
         "codex-command-runner.exe" => Some("command_runner"),

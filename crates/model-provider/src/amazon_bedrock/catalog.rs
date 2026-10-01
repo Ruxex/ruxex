@@ -5,56 +5,56 @@ use codex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_SOL_MODEL_ID;
 use codex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_TERRA_MODEL_ID;
 use codex_model_provider_info::AMAZON_BEDROCK_GPT_6_ASTRA_MODEL_ID;
 use codex_models_manager::model_info::model_info_template_from_slug;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelVisibility;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::openai_models::WebSearchToolType;
+use codex_protocol::model_types::ModelInfo;
+use codex_protocol::model_types::ModelVisibility;
+use codex_protocol::model_types::ModelsResponse;
+use codex_protocol::model_types::ReasoningEffort;
+use codex_protocol::model_types::WebSearchToolType;
 use codex_protocol::protocol::MultiAgentVersion;
 
 const GPT_5_BEDROCK_CONTEXT_WINDOW: i64 = 272_000;
-const GPT_5_6_SOL_OPENAI_MODEL_ID: &str = "gpt-5.6-sol";
-const GPT_5_6_TERRA_OPENAI_MODEL_ID: &str = "gpt-5.6-terra";
-const GPT_5_6_LUNA_OPENAI_MODEL_ID: &str = "gpt-5.6-luna";
-const GPT_6_ASTRA_OPENAI_MODEL_ID: &str = "gpt-6-astra";
-const GPT_5_5_OPENAI_MODEL_ID: &str = "gpt-5.5";
-const GPT_5_4_OPENAI_MODEL_ID: &str = "gpt-5.4";
+const GPT_5_6_SOL_MODEL_ID: &str = "gpt-5.6-sol";
+const GPT_5_6_TERRA_MODEL_ID: &str = "gpt-5.6-terra";
+const GPT_5_6_LUNA_MODEL_ID: &str = "gpt-5.6-luna";
+const GPT_6_ASTRA_MODEL_ID: &str = "gpt-6-astra";
+const GPT_5_5_MODEL_ID: &str = "gpt-5.5";
+const GPT_5_4_MODEL_ID: &str = "gpt-5.4";
 
 pub(crate) fn static_model_catalog() -> ModelsResponse {
     normalize_bedrock_catalog(ModelsResponse {
         models: vec![
             bedrock_model(
-                bedrock_model_template(GPT_5_6_SOL_OPENAI_MODEL_ID),
+                bedrock_model_template(GPT_5_6_SOL_MODEL_ID),
                 AMAZON_BEDROCK_GPT_5_6_SOL_MODEL_ID,
                 "GPT-5.6 Sol",
                 /*priority*/ 0,
             ),
             bedrock_model(
-                bedrock_model_template(GPT_6_ASTRA_OPENAI_MODEL_ID),
+                bedrock_model_template(GPT_6_ASTRA_MODEL_ID),
                 AMAZON_BEDROCK_GPT_6_ASTRA_MODEL_ID,
                 "GPT-6-Astra",
                 /*priority*/ 1,
             ),
             bedrock_model(
-                bedrock_model_template(GPT_5_6_TERRA_OPENAI_MODEL_ID),
+                bedrock_model_template(GPT_5_6_TERRA_MODEL_ID),
                 AMAZON_BEDROCK_GPT_5_6_TERRA_MODEL_ID,
                 "GPT-5.6 Terra",
                 /*priority*/ 2,
             ),
             bedrock_model(
-                bedrock_model_template(GPT_5_6_LUNA_OPENAI_MODEL_ID),
+                bedrock_model_template(GPT_5_6_LUNA_MODEL_ID),
                 AMAZON_BEDROCK_GPT_5_6_LUNA_MODEL_ID,
                 "GPT-5.6 Luna",
                 /*priority*/ 3,
             ),
             gpt_5_bedrock_model(
-                GPT_5_5_OPENAI_MODEL_ID,
+                GPT_5_5_MODEL_ID,
                 AMAZON_BEDROCK_GPT_5_5_MODEL_ID,
                 "GPT-5.5",
                 /*priority*/ 4,
             ),
             gpt_5_bedrock_model(
-                GPT_5_4_OPENAI_MODEL_ID,
+                GPT_5_4_MODEL_ID,
                 AMAZON_BEDROCK_GPT_5_4_MODEL_ID,
                 "GPT-5.4",
                 /*priority*/ 5,
@@ -78,12 +78,12 @@ pub(crate) fn normalize_bedrock_catalog(mut catalog: ModelsResponse) -> ModelsRe
 }
 
 fn gpt_5_bedrock_model(
-    openai_slug: &str,
+    model_id: &str,
     bedrock_slug: &str,
     display_name: &str,
     priority: i32,
 ) -> ModelInfo {
-    let mut model = bedrock_model_template(openai_slug);
+    let mut model = bedrock_model_template(model_id);
     model.slug = bedrock_slug.to_string();
     model.display_name = display_name.to_string();
     model.priority = priority;
@@ -208,7 +208,7 @@ mod tests {
 
     #[test]
     fn configured_bedrock_catalogs_normalize_unsupported_model_capabilities() {
-        let model = bedrock_model_template(GPT_5_4_OPENAI_MODEL_ID);
+        let model = bedrock_model_template(GPT_5_4_MODEL_ID);
         let mut expected = model.clone();
         expected.additional_speed_tiers.clear();
         expected.service_tiers.clear();
@@ -250,25 +250,25 @@ mod tests {
 
         for (mut expected, slug, display_name, priority) in [
             (
-                bedrock_model_template(GPT_5_6_SOL_OPENAI_MODEL_ID),
+                bedrock_model_template(GPT_5_6_SOL_MODEL_ID),
                 AMAZON_BEDROCK_GPT_5_6_SOL_MODEL_ID,
                 "GPT-5.6 Sol",
                 0,
             ),
             (
-                bedrock_model_template(GPT_5_6_TERRA_OPENAI_MODEL_ID),
+                bedrock_model_template(GPT_5_6_TERRA_MODEL_ID),
                 AMAZON_BEDROCK_GPT_5_6_TERRA_MODEL_ID,
                 "GPT-5.6 Terra",
                 2,
             ),
             (
-                bedrock_model_template(GPT_5_6_LUNA_OPENAI_MODEL_ID),
+                bedrock_model_template(GPT_5_6_LUNA_MODEL_ID),
                 AMAZON_BEDROCK_GPT_5_6_LUNA_MODEL_ID,
                 "GPT-5.6 Luna",
                 3,
             ),
             (
-                bedrock_model_template(GPT_6_ASTRA_OPENAI_MODEL_ID),
+                bedrock_model_template(GPT_6_ASTRA_MODEL_ID),
                 AMAZON_BEDROCK_GPT_6_ASTRA_MODEL_ID,
                 "GPT-6-Astra",
                 1,

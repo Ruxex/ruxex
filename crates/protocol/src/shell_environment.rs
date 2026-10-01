@@ -6,15 +6,11 @@ use std::collections::HashMap;
 pub const CODEX_SESSION_ID_ENV_VAR: &str = "CODEX_SESSION_ID";
 pub const CODEX_THREAD_ID_ENV_VAR: &str = "CODEX_THREAD_ID";
 pub const CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR: &str = "CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN";
-pub const OPENAI_FEDERATION_RULE_ID_ENV_VAR: &str = "OPENAI_FEDERATION_RULE_ID";
-pub const OPENAI_IDENTITY_TOKEN_FILE_ENV_VAR: &str = "OPENAI_IDENTITY_TOKEN_FILE";
 
 /// Environment variables that model-reachable child processes must not inherit.
 pub const NON_INHERITABLE_ENV_VARS: &[&str] = &[
     CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR,
     "NODE_REPL_AUTH_TOKEN",
-    OPENAI_FEDERATION_RULE_ID_ENV_VAR,
-    OPENAI_IDENTITY_TOKEN_FILE_ENV_VAR,
 ];
 
 pub fn is_non_inheritable_env_var(name: &str) -> bool {
@@ -221,7 +217,7 @@ mod windows_tests {
             ("WinDir", "C:\\Windows"),
             ("AppData", "C:\\Users\\codex\\AppData\\Roaming"),
             ("TmpDir", "C:\\Temp\\custom"),
-            ("OPENAI_API_KEY", "secret"),
+            ("PROVIDER_API_KEY", "secret"),
         ]);
 
         let policy = ShellEnvironmentPolicy {
@@ -298,7 +294,7 @@ mod non_windows_tests {
             ("path", "/usr/bin"),
             ("home", "/home/codex"),
             ("TmpDir", "/tmp/custom"),
-            ("OPENAI_API_KEY", "secret"),
+            ("PROVIDER_API_KEY", "secret"),
         ]);
 
         let policy = ShellEnvironmentPolicy {

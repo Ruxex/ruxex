@@ -71,7 +71,7 @@ use codex_core::config::Config;
 use codex_otel::OtelProvider;
 use codex_otel::current_span_w3c_trace_context;
 use codex_protocol::dynamic_tools::normalize_dynamic_tool_specs;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use codex_protocol::protocol::W3cTraceContext;
 use codex_utils_cli::CliConfigOverrides;
 use serde::Serialize;

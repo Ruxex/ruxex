@@ -860,7 +860,7 @@ pub(super) fn redact_detail(detail: &str) -> String {
     }
 
     let secret_keys = [
-        "openai_api_key",
+        "api_key",
         "codex_api_key",
         "codex_access_token",
         "authorization",
@@ -1244,7 +1244,7 @@ mod tests {
                 CheckStatus::Fail,
                 "token expired",
             )
-            .detail("OPENAI_API_KEY: present")
+            .detail("PROVIDER_API_KEY: present")
             .remediation("Update the configured provider credentials."),
             DoctorCheck::new(
                 "updates.status",
@@ -1325,7 +1325,7 @@ Environment
 
 Configuration
   ✗ auth         token expired — Update the configured provider credentials.
-      OPENAI_API_KEY           present
+      PROVIDER_API_KEY           present
 
 Updates
   ✓ updates      update configuration is locally consistent
@@ -1388,7 +1388,7 @@ Background Server
             )
             .detail("version: 1.2.3")
             .detail("running: true")
-            .detail("log directory: $HOME/Library/Logs/com.openai.codex"),
+            .detail("log directory: $HOME/Library/Logs/com.codex.codex"),
             DoctorCheck::new(
                 "desktop.app_server.handshake",
                 "desktop",
@@ -1552,7 +1552,7 @@ Run codex doctor without --summary for detailed diagnostics.
                 color_enabled: false,
             },
         );
-        assert!(rendered.contains("      OPENAI_API_KEY           present"));
+        assert!(rendered.contains("      PROVIDER_API_KEY           present"));
     }
 
     #[test]
@@ -1679,7 +1679,7 @@ Run codex doctor without --summary for detailed diagnostics.
             checks: vec![
                 DoctorCheck::new("config.load", "config", CheckStatus::Ok, "config loaded")
                     .detail("model: gpt-5.5")
-                    .detail("model provider: openai")
+                    .detail("model provider: provider")
                     .detail("feature flags enabled: 3")
                     .detail("enabled feature flags: shell_tool, goals")
                     .detail("feature flag overrides: goals=true"),
@@ -1748,8 +1748,8 @@ Run codex doctor without --summary for detailed diagnostics.
     #[test]
     fn redact_detail_preserves_env_var_names() {
         assert_eq!(
-            redact_detail("auth env vars present: OPENAI_API_KEY, CODEX_API_KEY"),
-            "auth env vars present: OPENAI_API_KEY, CODEX_API_KEY"
+            redact_detail("auth env vars present: PROVIDER_API_KEY, CODEX_API_KEY"),
+            "auth env vars present: PROVIDER_API_KEY, CODEX_API_KEY"
         );
     }
 

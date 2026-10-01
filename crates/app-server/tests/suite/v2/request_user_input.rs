@@ -15,7 +15,7 @@ use codex_app_server_protocol::UserInput as V2UserInput;
 use codex_protocol::config_types::CollaborationMode;
 use codex_protocol::config_types::ModeKind;
 use codex_protocol::config_types::Settings;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use core_test_support::responses;
 use serde_json::json;
 use tokio::time::timeout;

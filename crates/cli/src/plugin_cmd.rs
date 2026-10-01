@@ -6,7 +6,7 @@ use codex_core::config::Config;
 use codex_core::config::find_codex_home;
 use codex_core::plugins_manager_for_config;
 use codex_core_plugins::ConfiguredMarketplace;
-use codex_core_plugins::OPENAI_BUNDLED_MARKETPLACE_NAME;
+use codex_core_plugins::BUNDLED_MARKETPLACE_NAME;
 use codex_core_plugins::PluginInstallOutcome;
 use codex_core_plugins::PluginInstallRequest;
 use codex_core_plugins::PluginsConfigInput;
@@ -29,8 +29,8 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-const OPENAI_BUNDLED_ALPHA_MARKETPLACE_NAME: &str = "openai-bundled-alpha";
-const OPENAI_PRIMARY_RUNTIME_MARKETPLACE_NAME: &str = "openai-primary-runtime";
+const BUNDLED_ALPHA_MARKETPLACE_NAME: &str = "codex-bundled-alpha";
+const PRIMARY_RUNTIME_MARKETPLACE_NAME: &str = "codex-primary-runtime";
 
 use crate::marketplace_cmd::MarketplaceCli;
 
@@ -824,13 +824,13 @@ fn is_implicit_system_marketplace_root(
 ) -> bool {
     if matches!(
         marketplace_name,
-        OPENAI_BUNDLED_MARKETPLACE_NAME | OPENAI_BUNDLED_ALPHA_MARKETPLACE_NAME
+        BUNDLED_MARKETPLACE_NAME | BUNDLED_ALPHA_MARKETPLACE_NAME
     ) && path_ends_with(root, &[".tmp", "bundled-marketplaces", marketplace_name])
     {
         return true;
     }
 
-    marketplace_name == OPENAI_PRIMARY_RUNTIME_MARKETPLACE_NAME
+    marketplace_name == PRIMARY_RUNTIME_MARKETPLACE_NAME
         && path_ends_with(
             root,
             &[

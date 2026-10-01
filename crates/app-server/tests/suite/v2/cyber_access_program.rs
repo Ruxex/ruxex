@@ -400,7 +400,7 @@ async fn turn_start_forwards_cyber_access_program_with_personal_access_token() -
     std::fs::write(
         home.path().join("config.toml"),
         format!(
-            "model = \"gpt-5.5\"\napproval_policy = \"never\"\n[model_providers.openai]\nbase_url = \"{0}/v1\"\nmanaged_auth_base_url = \"{0}/backend-api\"\n",
+            "model = \"gpt-5.5\"\napproval_policy = \"never\"\n[model_providers.provider]\nbase_url = \"{0}/v1\"\nmanaged_auth_base_url = \"{0}/backend-api\"\n",
             server.uri(),
         ),
     )?;
@@ -409,7 +409,7 @@ async fn turn_start_forwards_cyber_access_program_with_personal_access_token() -
         .with_codex_home(home.path())
         .without_managed_config()
         .with_env_overrides(&[
-            ("OPENAI_API_KEY", None),
+            ("PROVIDER_API_KEY", None),
             ("CODEX_ACCESS_TOKEN", Some("at-test-token")),
             ("CODEX_AUTHAPI_BASE_URL", Some(authapi_base_url.as_str())),
         ])
@@ -444,7 +444,7 @@ async fn start_authenticated_app(home: &Path, server: &MockServer) -> Result<Tes
     std::fs::write(
         home.join("config.toml"),
         format!(
-            "model = \"gpt-5.5\"\napproval_policy = \"never\"\n[model_providers.openai]\nbase_url = \"{}/v1\"\ncli_auth_credentials_store = \"file\"\n",
+            "model = \"gpt-5.5\"\napproval_policy = \"never\"\n[model_providers.provider]\nbase_url = \"{}/v1\"\ncli_auth_credentials_store = \"file\"\n",
             server.uri()
         ),
     )?;

@@ -32,7 +32,7 @@ async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Re
         let id = "00000000-0000-0000-0000-000000000001";
         let thread = json!({
             "id": id, "sessionId": id, "preview": "", "ephemeral": false,
-            "modelProvider": "openai", "createdAt": 1, "updatedAt": 2,
+            "modelProvider": "provider", "createdAt": 1, "updatedAt": 2,
             "status": {"type": "active", "activeFlags": []}, "cwd": server_cwd,
             "cliVersion": "0.0.0", "source": "cli", "turns": [{"id": "running", "items": [], "status": "inProgress", "error": null}]
         });
@@ -78,17 +78,17 @@ async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Re
                 let result = match request.method.as_str() {
                     "initialize" => json!({"userAgent": "reconnect-pty"}),
                     "account/read" => {
-                        json!({"account": {"type": "apiKey"}, "requiresOpenaiAuth": false})
+                        json!({"account": {"type": "apiKey"}, "requiresproviderAuth": false})
                     }
                     "model/list" => json!({"data": [], "nextCursor": null}),
                     "config/read" => {
-                        json!({"config": {"model": "gpt-5.6-terra", "model_provider": "openai", "projects": {
+                        json!({"config": {"model": "gpt-5.6-terra", "model_provider": "provider", "projects": {
                         server_cwd.to_string_lossy(): {"trust_level": "trusted"}
                     }}, "origins": {}, "layers": []})
                     }
                     "configRequirements/read" => json!({"requirements": null}),
                     "thread/start" | "thread/resume" => {
-                        json!({"thread": thread, "model": "gpt-5.6-terra", "modelProvider": "openai",
+                        json!({"thread": thread, "model": "gpt-5.6-terra", "modelProvider": "provider",
                             "cwd": server_cwd, "approvalPolicy": "never", "approvalsReviewer": "user",
                             "sandbox": {"type": "readOnly"}, "reasoningEffort": null})
                     }

@@ -2309,7 +2309,7 @@ mod tests {
         let command_item = CoreTurnItem::CommandExecution(CoreCommandExecutionItem {
             model_context: None,
             id: "exec-1".to_string(),
-            plugin_id: Some("sample@openai-curated".to_string()),
+            plugin_id: Some("sample@test-curated".to_string()),
             script_path: Some("scripts/run.py".to_string()),
             process_id: Some("pid-1".to_string()),
             command: command.clone(),
@@ -2336,7 +2336,7 @@ mod tests {
             }),
             EventMsg::ExecCommandBegin(ExecCommandBeginEvent {
                 call_id: "exec-1".to_string(),
-                plugin_id: Some("sample@openai-curated".to_string()),
+                plugin_id: Some("sample@test-curated".to_string()),
                 script_path: Some("scripts/run.py".to_string()),
                 process_id: Some("pid-1".to_string()),
                 turn_id: turn_id.to_string(),
@@ -2356,7 +2356,7 @@ mod tests {
             }),
             EventMsg::ExecCommandEnd(ExecCommandEndEvent {
                 call_id: "exec-1".to_string(),
-                plugin_id: Some("sample@openai-curated".to_string()),
+                plugin_id: Some("sample@test-curated".to_string()),
                 script_path: Some("scripts/run.py".to_string()),
                 process_id: Some("pid-1".to_string()),
                 turn_id: turn_id.to_string(),
@@ -2395,7 +2395,7 @@ mod tests {
             vec![ThreadItem::CommandExecution {
                 model_context: None,
                 id: "exec-1".to_string(),
-                plugin_id: Some("sample@openai-curated".to_string()),
+                plugin_id: Some("sample@test-curated".to_string()),
                 script_path: Some("scripts/run.py".to_string()),
                 command: "git -c 'http.extraHeader=Authorization: Bearer [REDACTED_SECRET]' push"
                     .to_string(),
@@ -2421,7 +2421,7 @@ mod tests {
             vec![ThreadItem::CommandExecution {
                 model_context: None,
                 id: "exec-1".to_string(),
-                plugin_id: Some("sample@openai-curated".to_string()),
+                plugin_id: Some("sample@test-curated".to_string()),
                 script_path: Some("scripts/run.py".to_string()),
                 command: "git -c 'http.extraHeader=Authorization: Bearer [REDACTED_SECRET]' push"
                     .to_string(),
@@ -4205,7 +4205,7 @@ mod tests {
                 new_agent_role: Some("explorer".into()),
                 prompt: "inspect the repo".into(),
                 model: "gpt-5.4-mini".into(),
-                reasoning_effort: codex_protocol::openai_models::ReasoningEffort::Medium,
+                reasoning_effort: codex_protocol::model_types::ReasoningEffort::Medium,
                 status: AgentStatus::Running,
             }),
         ];
@@ -4227,7 +4227,7 @@ mod tests {
                 receiver_thread_ids: vec!["00000000-0000-0000-0000-000000000002".into()],
                 prompt: Some("inspect the repo".into()),
                 model: Some("gpt-5.4-mini".into()),
-                reasoning_effort: Some(codex_protocol::openai_models::ReasoningEffort::Medium),
+                reasoning_effort: Some(codex_protocol::model_types::ReasoningEffort::Medium),
                 agents_states: [(
                     "00000000-0000-0000-0000-000000000002".into(),
                     CollabAgentState {

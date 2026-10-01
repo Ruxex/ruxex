@@ -6,7 +6,7 @@ use super::TurnStatus;
 use crate::JsonSchema;
 use crate::TS;
 use codex_experimental_api_macros::ExperimentalApi;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use codex_protocol::protocol::MisalignmentErrorDetails as CoreMisalignmentErrorDetails;
 use codex_protocol::protocol::MisalignmentSteer as CoreMisalignmentSteer;
 use codex_protocol::protocol::SessionSource as CoreSessionSource;
@@ -226,7 +226,7 @@ pub struct Thread {
     /// Persisted thread history contract selected when this thread was created.
     #[serde(default)]
     pub history_mode: ThreadHistoryMode,
-    /// Model provider used for this thread (for example, 'openai').
+    /// Model provider used for this thread (for example, 'provider').
     pub model_provider: String,
     /// Current configured model when loaded, otherwise the latest persisted model.
     /// Null when unavailable. This is not per-turn execution telemetry.

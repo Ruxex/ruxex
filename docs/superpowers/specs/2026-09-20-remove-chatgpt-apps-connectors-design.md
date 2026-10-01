@@ -12,7 +12,7 @@ mention syntax.
 The removal covers the ChatGPT connector directory and cache, the
 `codex-connectors` and dedicated connector extension crates, Apps app-server
 protocol/request processors, Apps configuration and feature flags, Apps-only
-core/TUI behavior, and OpenAI-specific MCP metadata/auth/file-parameter
+core/TUI behavior, and provider-specific MCP metadata/auth/file-parameter
 adapters. Existing ordinary MCP runtime, standard OAuth/elicitation, generic
 tool metadata, plugin loading, and non-Apps `app://` parsing remain.
 

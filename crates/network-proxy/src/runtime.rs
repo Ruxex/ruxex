@@ -1299,9 +1299,9 @@ mod tests {
             .force_reload()
             .await
             .expect("enable credential broker");
-        let mut env = HashMap::from([("OPENAI_API_KEY".to_string(), "sk-real".to_string())]);
+        let mut env = HashMap::from([("PROVIDER_API_KEY".to_string(), "sk-real".to_string())]);
         state.virtualize_child_credentials(&mut env);
-        assert_ne!(env["OPENAI_API_KEY"], "sk-real");
+        assert_ne!(env["PROVIDER_API_KEY"], "sk-real");
     }
 
     #[test]
@@ -1317,11 +1317,11 @@ mod tests {
         )
         .expect("managed-disabled credential broker should fail open");
         let state = NetworkProxyState::with_reloader(config_state, Arc::new(NoopReloader));
-        let mut env = HashMap::from([("OPENAI_API_KEY".to_string(), "sk-real".to_string())]);
+        let mut env = HashMap::from([("PROVIDER_API_KEY".to_string(), "sk-real".to_string())]);
 
         state.virtualize_child_credentials(&mut env);
 
-        assert_eq!(env["OPENAI_API_KEY"], "sk-real");
+        assert_eq!(env["PROVIDER_API_KEY"], "sk-real");
     }
 
     #[tokio::test]
@@ -1604,17 +1604,17 @@ mod tests {
 
     #[tokio::test]
     async fn host_blocked_subdomain_wildcards_exclude_apex() {
-        let state = network_proxy_state_for_policy(network_settings(&["*.openai.com"], &[]));
+        let state = network_proxy_state_for_policy(network_settings(&["*.provider.com"], &[]));
 
         assert_eq!(
             state
-                .host_blocked("api.openai.com", /*port*/ 80)
+                .host_blocked("api.example.test", /*port*/ 80)
                 .await
                 .unwrap(),
             HostBlockDecision::Allowed
         );
         assert_eq!(
-            state.host_blocked("openai.com", /*port*/ 80).await.unwrap(),
+            state.host_blocked("provider.com", /*port*/ 80).await.unwrap(),
             HostBlockDecision::Blocked(HostBlockReason::NotAllowed)
         );
     }
@@ -1632,7 +1632,7 @@ mod tests {
         );
         assert_eq!(
             state
-                .host_blocked("api.openai.com", /*port*/ 443)
+                .host_blocked("api.example.test", /*port*/ 443)
                 .await
                 .unwrap(),
             HostBlockDecision::Allowed
@@ -1883,7 +1883,7 @@ mod tests {
             ..NetworkProxyConstraints::default()
         };
 
-        let mut config = network_settings(&["example.com", "api.openai.com"], &[]);
+        let mut config = network_settings(&["example.com", "api.example.test"], &[]);
         config.enabled = true;
 
         assert!(validate_policy_against_constraints(&config, &constraints).is_ok());
@@ -2105,20 +2105,20 @@ mod tests {
 
     #[test]
     fn compile_globset_excludes_apex_for_subdomain_patterns() {
-        let patterns = vec!["*.openai.com".to_string()];
+        let patterns = vec!["*.provider.com".to_string()];
         let set = compile_denylist_globset(&patterns).unwrap();
-        assert!(set.is_match("api.openai.com"));
-        assert!(!set.is_match("openai.com"));
-        assert!(!set.is_match("evilopenai.com"));
+        assert!(set.is_match("api.example.test"));
+        assert!(!set.is_match("provider.com"));
+        assert!(!set.is_match("evilprovider.com"));
     }
 
     #[test]
     fn compile_globset_includes_apex_for_double_wildcard_patterns() {
-        let patterns = vec!["**.openai.com".to_string()];
+        let patterns = vec!["**.provider.com".to_string()];
         let set = compile_denylist_globset(&patterns).unwrap();
-        assert!(set.is_match("openai.com"));
-        assert!(set.is_match("api.openai.com"));
-        assert!(!set.is_match("evilopenai.com"));
+        assert!(set.is_match("provider.com"));
+        assert!(set.is_match("api.example.test"));
+        assert!(!set.is_match("evilprovider.com"));
     }
 
     #[test]
@@ -2132,7 +2132,7 @@ mod tests {
         let patterns = vec!["*".to_string()];
         let set = compile_allowlist_globset(&patterns).unwrap();
         assert!(set.is_match("example.com"));
-        assert!(set.is_match("api.openai.com"));
+        assert!(set.is_match("api.example.test"));
         assert!(set.is_match("localhost"));
     }
 

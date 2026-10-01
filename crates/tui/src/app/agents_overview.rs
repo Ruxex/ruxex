@@ -893,7 +893,7 @@ impl App {
                 if use_server_provider {
                     config.model_provider_id = defaults
                         .model_provider
-                        .unwrap_or_else(|| "openai".to_string());
+                        .unwrap_or_else(|| "provider".to_string());
                 }
             }
             Ok(None) => {}

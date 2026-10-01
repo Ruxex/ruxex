@@ -10,7 +10,7 @@ use codex_login::CodexAuth;
 use codex_model_provider_info::built_in_model_providers;
 use codex_protocol::config_types::AutoCompactTokenLimitScope;
 use codex_protocol::items::TurnItem;
-use codex_protocol::openai_models::ModelTokenBudgetConfig;
+use codex_protocol::model_types::ModelTokenBudgetConfig;
 use codex_protocol::protocol::CONTEXT_WINDOW_CLOSE_TAG;
 use codex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_CLOSE_TAG;
 use codex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_OPEN_TAG;
@@ -302,11 +302,11 @@ async fn token_budget_guidance_precedes_standalone_context_window(
     Ok(())
 }
 
-#[test_case("OpenAI", "/backend-api/codex", None, true, true; "codex_backend")]
-#[test_case("OpenAI", "/backend-api/codex", None, false, false; "unsupported_model")]
+#[test_case("provider", "/backend-api/codex", None, true, true; "codex_backend")]
+#[test_case("provider", "/backend-api/codex", None, false, false; "unsupported_model")]
 #[test_case("Custom", "/backend-api/codex", None, true, false; "custom_provider")]
-#[test_case("OpenAI", "/v1", None, true, false; "non_codex_endpoint")]
-#[test_case("OpenAI", "/backend-api/codex", Some("test-provider-token"), true, false; "provider_credentials")]
+#[test_case("provider", "/v1", None, true, false; "non_codex_endpoint")]
+#[test_case("provider", "/backend-api/codex", Some("test-provider-token"), true, false; "provider_credentials")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn experimental_context_requires_capable_model_and_codex_backend(
     provider_name: &'static str,
@@ -1116,7 +1116,7 @@ async fn token_budget_context_uses_new_window_after_compaction(
         ],
     )
     .await;
-    let mut model_provider = ModelProviderInfo::create_openai_provider(None);
+    let mut model_provider = ModelProviderInfo::create_responses_provider(None);
     model_provider.base_url = Some(format!("{}/v1", server.uri()));
     model_provider.supports_websockets = false;
 
@@ -1288,8 +1288,8 @@ async fn token_budget_mid_turn_auto_compaction_resets_before_active_follow_up(
         ],
     )
     .await;
-    let mut model_provider = ModelProviderInfo::create_openai_provider(None);
-    model_provider.name = "OpenAI (test)".into();
+    let mut model_provider = ModelProviderInfo::create_responses_provider(None);
+    model_provider.name = "provider (test)".into();
     model_provider.base_url = Some(format!("{}/v1", server.uri()));
     model_provider.supports_websockets = false;
     let test = test_codex()
@@ -1427,7 +1427,7 @@ async fn token_budget_auto_compact_fallback_uses_buffer_until_new_context() -> R
     .await;
     let test = test_codex()
         .with_config(|config| {
-            config.model_provider.name = "OpenAI (test)".into();
+            config.model_provider.name = "provider (test)".into();
             config.model_context_window = Some(50_000);
             config.model_auto_compact_token_limit = Some(9_000);
             config.token_budget = Some(TokenBudgetConfig {
@@ -1520,7 +1520,7 @@ async fn token_budget_auto_compact_fallback_rolls_over_after_buffer() -> Result<
     .await;
     let test = test_codex()
         .with_config(|config| {
-            config.model_provider.name = "OpenAI (test)".into();
+            config.model_provider.name = "provider (test)".into();
             config.model_context_window = Some(50_000);
             config.model_auto_compact_token_limit = Some(9_000);
             config.token_budget = Some(TokenBudgetConfig {

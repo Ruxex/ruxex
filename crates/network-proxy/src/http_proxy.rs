@@ -1400,8 +1400,8 @@ mod tests {
         for (host, port, prefix, scope) in [
             ("localhost", 8080, ""),
             ("127.0.0.1", 8081, ""),
-            ("api.provider.example", 443, "https://"),
-            ("api.provider.example", 8443, "https://"),
+            ("api.example.test", 443, "https://"),
+            ("api.example.test", 8443, "https://"),
         ]
         .into_iter()
         .flat_map(|(host, port, prefix)| ["/v1", "/"].map(move |scope| (host, port, prefix, scope)))
@@ -1505,7 +1505,7 @@ mod tests {
                 host: "api.github.com".to_string(),
                 matcher: crate::mitm_hook::MitmHookMatchConfig {
                     methods: vec!["POST".to_string()],
-                    path_prefixes: vec!["/repos/openai/".to_string()],
+                    path_prefixes: vec!["/repos/provider/".to_string()],
                     ..crate::mitm_hook::MitmHookMatchConfig::default()
                 },
                 actions: crate::mitm_hook::MitmHookActionsConfig::default(),
@@ -1645,7 +1645,7 @@ mod tests {
                     host: "127.0.0.1".to_string(),
                     matcher: crate::mitm_hook::MitmHookMatchConfig {
                         methods: vec!["GET".to_string()],
-                        path_prefixes: vec!["/repos/openai/ALLOWED".to_string()],
+                        path_prefixes: vec!["/repos/provider/ALLOWED".to_string()],
                         ..crate::mitm_hook::MitmHookMatchConfig::default()
                     },
                     actions: crate::mitm_hook::MitmHookActionsConfig::default(),
@@ -1673,7 +1673,7 @@ mod tests {
             .await
             .expect("client should connect to proxy");
         let request = format!(
-            "GET https://127.0.0.1:{port}/repos/openai/UNAUTHORIZED HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nConnection: close\r\n\r\n",
+            "GET https://127.0.0.1:{port}/repos/provider/UNAUTHORIZED HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nConnection: close\r\n\r\n",
             port = target_addr.port()
         );
         stream
@@ -1793,16 +1793,16 @@ mod tests {
     async fn http_connect_accept_denies_denylisted_host() {
         let policy = {
             let mut policy = NetworkProxyConfig::default();
-            policy.set_allowed_domains(vec!["**.openai.com".to_string()]);
-            policy.set_denied_domains(vec!["api.openai.com".to_string()]);
+            policy.set_allowed_domains(vec!["**.provider.com".to_string()]);
+            policy.set_denied_domains(vec!["api.example.test".to_string()]);
             policy
         };
         let state = Arc::new(network_proxy_state_for_policy(policy));
 
         let mut req = Request::builder()
             .method(Method::CONNECT)
-            .uri("https://api.openai.com:443")
-            .header("host", "api.openai.com:443")
+            .uri("https://api.example.test:443")
+            .header("host", "api.example.test:443")
             .body(Body::empty())
             .unwrap();
         req.extensions_mut().insert(state);
@@ -1824,7 +1824,7 @@ mod tests {
         let state = Arc::new(network_proxy_state_for_policy(NetworkProxyConfig::default()));
         let mut req = Request::builder()
             .method(Method::GET)
-            .uri("http://raw.githubusercontent.com/openai/codex/main/README.md")
+            .uri("http://raw.githubusercontent.com/codex/codex/main/README.md")
             .header(header::HOST, "api.github.com")
             .body(Body::empty())
             .unwrap();

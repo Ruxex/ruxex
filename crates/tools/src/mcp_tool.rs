@@ -23,7 +23,7 @@ fn parse_mcp_tool_with_description_limit(
 ) -> Result<ToolDefinition, serde_json::Error> {
     let mut serialized_input_schema = serde_json::Value::Object(tool.input_schema.as_ref().clone());
 
-    // OpenAI models mandate the "properties" field in the schema. Some MCP
+    // provider models mandate the "properties" field in the schema. Some MCP
     // servers omit it (or set it to null), so we insert an empty object to
     // match the behavior of the Agents SDK.
     if let serde_json::Value::Object(obj) = &mut serialized_input_schema

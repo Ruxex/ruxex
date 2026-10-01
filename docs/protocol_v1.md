@@ -94,7 +94,7 @@ For complete documentation of the `Op` and `EventMsg` variants, refer to [protoc
 
 For the v1 wire format, `EventMsg::TurnStarted` and `EventMsg::TurnComplete` serialize as `task_started` / `task_complete`.
 
-The `response_id` returned from each turn matches the OpenAI `response_id` stored in the API's `/responses` endpoint. It can be stored and used in future `Sessions` to resume threads of work.
+The `response_id` returned from each turn matches the provider `response_id` stored in the API's `/responses` endpoint. It can be stored and used in future `Sessions` to resume threads of work.
 
 ## Transport
 

@@ -1780,7 +1780,7 @@
           "description": "AWS SigV4 auth configuration for this provider."
         },
         "base_url": {
-          "description": "Base URL for the provider's OpenAI-compatible API.",
+          "description": "Base URL for the provider's provider-compatible API.",
           "type": "string"
         },
         "env_http_headers": {
@@ -2860,7 +2860,7 @@
       "type": "string"
     },
     "ReasoningSummary": {
-      "description": "A summary of the reasoning performed by the model. This can be useful for debugging and understanding the model's reasoning process. See https://platform.openai.com/docs/guides/reasoning?api-mode=responses#reasoning-summaries",
+      "description": "A summary of the reasoning performed by the model. This can be useful for debugging and understanding the model's reasoning process. See https://platform.provider.com/docs/guides/reasoning?api-mode=responses#reasoning-summaries",
       "oneOf": [
         {
           "enum": [
@@ -5270,7 +5270,7 @@
       ]
     },
     "Verbosity": {
-      "description": "Controls output length/detail on GPT-5 models via the Responses API. Serialized with lowercase values to match the OpenAI API.",
+      "description": "Controls output length/detail on GPT-5 models via the Responses API. Serialized with lowercase values to match the provider API.",
       "enum": [
         "low",
         "medium",
@@ -5355,14 +5355,14 @@
       "description": "Wire protocol that the provider speaks.",
       "oneOf": [
         {
-          "description": "The Chat Completions API exposed by OpenAI at `/v1/chat/completions`.",
+          "description": "The Chat Completions API exposed by provider at `/v1/chat/completions`.",
           "enum": [
             "chat"
           ],
           "type": "string"
         },
         {
-          "description": "The Responses API exposed by OpenAI at `/v1/responses`.",
+          "description": "The Responses API exposed by provider at `/v1/responses`.",
           "enum": [
             "responses"
           ],
@@ -5908,7 +5908,7 @@
         }
       ],
       "default": null,
-      "description": "Preferred backend for storing MCP OAuth credentials. keyring: Use an OS-specific keyring service. https://github.com/openai/codex/blob/main/codex-rs/rmcp-client/src/oauth.rs#L2 file: Use a file in the Codex home directory. auto (default): Use the OS-specific keyring service if available, otherwise use a file."
+      "description": "Preferred backend for storing MCP OAuth credentials. keyring: Use an OS-specific keyring service. https://github.com/codex/codex/blob/main/codex-rs/rmcp-client/src/oauth.rs#L2 file: Use a file in the Codex home directory. auto (default): Use the OS-specific keyring service if available, otherwise use a file."
     },
     "mcp_optional_startup_grace_ms": {
       "description": "Milliseconds to wait for optional MCP servers while building the initial tool catalog.\n\nDefaults to 1000. Set to 0 to disable the shared grace and wait for each server's configured `startup_timeout_sec` instead.",

@@ -49,7 +49,7 @@ async fn direct_call_metadata_during_compaction_respects_provider_support(
             .expect("enable tool-call metadata");
         config.update_plan_enabled = true;
         if remote_compaction == RemoteCompactionSupport::Unsupported {
-            config.model_provider.name = "OpenAI-compatible test provider".to_string();
+            config.model_provider.name = "provider-compatible test provider".to_string();
         }
     });
     let test = builder.build_with_auto_env(&server).await?;
@@ -152,7 +152,7 @@ async fn direct_call_metadata_during_compaction_respects_provider_support(
     let compact_output = compact_request.function_call_output("shared");
     assert_eq!(compact_output["output"], seed_output["output"]);
     // The local case uses a third-party provider; compact_tests.rs separately covers
-    // local compaction with an OpenAI provider that accepts passthrough metadata.
+    // local compaction with an provider that accepts passthrough metadata.
     match remote_compaction {
         RemoteCompactionSupport::Unsupported => assert!(
             compact_output

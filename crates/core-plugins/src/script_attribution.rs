@@ -1,4 +1,4 @@
-use crate::OPENAI_PRIMARY_RUNTIME_MARKETPLACE_NAME;
+use crate::PRIMARY_RUNTIME_MARKETPLACE_NAME;
 use crate::PluginLoadOutcome;
 use crate::marketplace::MarketplacePluginSource;
 use crate::marketplace::find_marketplace_plugin;
@@ -96,7 +96,7 @@ impl TrustedPluginRoots {
         primary_runtime_marketplace_root: Option<&Path>,
     ) -> Option<AbsolutePathBuf> {
         match plugin_id.marketplace_name.as_str() {
-            OPENAI_PRIMARY_RUNTIME_MARKETPLACE_NAME => {
+            PRIMARY_RUNTIME_MARKETPLACE_NAME => {
                 let marketplace_root = primary_runtime_marketplace_root?;
                 let expected_source_root = AbsolutePathBuf::from_absolute_path_checked(
                     marketplace_root

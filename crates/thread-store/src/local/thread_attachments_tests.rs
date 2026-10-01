@@ -33,8 +33,8 @@ async fn thread_attachments_require_a_supported_sqlite_store() {
             .add_thread_attachment(AddThreadAttachmentParams {
                 thread_id,
                 attachment_type: "pull_request".to_string(),
-                identity_key: "openai/codex#1".to_string(),
-                payload: json!({"url": "https://github.com/openai/codex/pull/1"}),
+                identity_key: "codex/codex#1".to_string(),
+                payload: json!({"url": "https://github.com/codex/codex/pull/1"}),
             })
             .await,
         Err(ThreadStoreError::Unsupported {
@@ -62,7 +62,7 @@ async fn thread_attachments_require_a_supported_sqlite_store() {
             .remove_thread_attachment(RemoveThreadAttachmentParams {
                 thread_id,
                 attachment_type: "pull_request".to_string(),
-                identity_key: "openai/codex#1".to_string(),
+                identity_key: "codex/codex#1".to_string(),
             })
             .await,
         Err(ThreadStoreError::Unsupported {
@@ -103,8 +103,8 @@ async fn unloaded_thread_attachments_support_listing_and_removal() {
     let params = AddThreadAttachmentParams {
         thread_id: first_thread_id,
         attachment_type: "pull_request".to_string(),
-        identity_key: "openai/codex#1".to_string(),
-        payload: json!({"url": "https://github.com/openai/codex/pull/1"}),
+        identity_key: "codex/codex#1".to_string(),
+        payload: json!({"url": "https://github.com/codex/codex/pull/1"}),
     };
     let AddThreadAttachmentOutcome::Created(first_attachment) = store
         .add_thread_attachment(params.clone())
@@ -123,8 +123,8 @@ async fn unloaded_thread_attachments_support_listing_and_removal() {
 
     let second_params = AddThreadAttachmentParams {
         thread_id: first_thread_id,
-        identity_key: "openai/codex#2".to_string(),
-        payload: json!({"url": "https://github.com/openai/codex/pull/2"}),
+        identity_key: "codex/codex#2".to_string(),
+        payload: json!({"url": "https://github.com/codex/codex/pull/2"}),
         ..params.clone()
     };
     let AddThreadAttachmentOutcome::Created(second_attachment) = store
@@ -207,7 +207,7 @@ async fn attachment_state_errors_preserve_missing_thread_and_invalid_request_cat
             .add_thread_attachment(AddThreadAttachmentParams {
                 thread_id,
                 attachment_type: "pull_request".to_string(),
-                identity_key: "openai/codex#1".to_string(),
+                identity_key: "codex/codex#1".to_string(),
                 payload: json!({}),
             })
             .await,
@@ -218,7 +218,7 @@ async fn attachment_state_errors_preserve_missing_thread_and_invalid_request_cat
             .add_thread_attachment(AddThreadAttachmentParams {
                 thread_id,
                 attachment_type: " ".to_string(),
-                identity_key: "openai/codex#1".to_string(),
+                identity_key: "codex/codex#1".to_string(),
                 payload: json!({}),
             })
             .await,
@@ -266,8 +266,8 @@ async fn attachment_mutations_wait_for_exclusive_thread_lifecycle_operations() {
     let mut attachment = Box::pin(store.add_thread_attachment(AddThreadAttachmentParams {
         thread_id,
         attachment_type: "pull_request".to_string(),
-        identity_key: "openai/codex#1".to_string(),
-        payload: json!({"url": "https://github.com/openai/codex/pull/1"}),
+        identity_key: "codex/codex#1".to_string(),
+        payload: json!({"url": "https://github.com/codex/codex/pull/1"}),
     }));
     tokio::select! {
         biased;
@@ -285,7 +285,7 @@ async fn attachment_mutations_wait_for_exclusive_thread_lifecycle_operations() {
         store.remove_thread_attachment(RemoveThreadAttachmentParams {
             thread_id,
             attachment_type: "pull_request".to_string(),
-            identity_key: "openai/codex#1".to_string(),
+            identity_key: "codex/codex#1".to_string(),
         }),
     );
     tokio::select! {
@@ -330,13 +330,13 @@ async fn attachment_mutations_queued_behind_deletion_reject_deleted_threads() {
         let mut attachment = store.add_thread_attachment(AddThreadAttachmentParams {
             thread_id,
             attachment_type: "pull_request".to_string(),
-            identity_key: "openai/codex#2".to_string(),
-            payload: json!({"url": "https://github.com/openai/codex/pull/2"}),
+            identity_key: "codex/codex#2".to_string(),
+            payload: json!({"url": "https://github.com/codex/codex/pull/2"}),
         });
         let mut removal = store.remove_thread_attachment(RemoveThreadAttachmentParams {
             thread_id,
             attachment_type: "pull_request".to_string(),
-            identity_key: "openai/codex#1".to_string(),
+            identity_key: "codex/codex#1".to_string(),
         });
         assert!(futures::poll!(&mut attachment).is_pending());
         assert!(futures::poll!(&mut removal).is_pending());
@@ -498,8 +498,8 @@ async fn store_with_attachment_owners(
             .add_thread_attachment(AddThreadAttachmentParams {
                 thread_id,
                 attachment_type: "pull_request".to_string(),
-                identity_key: "openai/codex#1".to_string(),
-                payload: json!({"url": "https://github.com/openai/codex/pull/1"}),
+                identity_key: "codex/codex#1".to_string(),
+                payload: json!({"url": "https://github.com/codex/codex/pull/1"}),
             })
             .await
             .expect("attach attachment before deleting its owner");

@@ -130,7 +130,7 @@ async fn agent_plugin_codex_mcp_overlay_only_forwards_matching_stdio_server_env_
     write_file(
         &plugin_root.join("plugin.json"),
         &format!(
-            r#"{{"$schema":"{AGENT_PLUGIN_SCHEMA_URI}","name":"plugin","extensions":{{"com.openai":{{"interface":{{"displayName":"Portable"}}}}}}}}"#
+            r#"{{"$schema":"{AGENT_PLUGIN_SCHEMA_URI}","name":"plugin","extensions":{{"com.codex":{{"interface":{{"displayName":"Portable"}}}}}}}}"#
         ),
     );
     write_file(

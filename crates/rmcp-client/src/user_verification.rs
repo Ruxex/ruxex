@@ -9,7 +9,7 @@ use serde::Deserialize;
 use crate::rmcp_client::Elicitation;
 use crate::rmcp_client::ElicitationResponse;
 
-pub(crate) const MODE: &str = "openai/userVerification";
+pub(crate) const MODE: &str = "provider/userVerification";
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

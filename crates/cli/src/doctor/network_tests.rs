@@ -18,8 +18,8 @@ async fn provider_reachability_rejects_proxy_authentication_challenges() {
         .await;
     let plan = provider_reachability_plan_from_parts(
         ProviderAuthReachabilityMode::Managed,
-        "openai",
-        "OpenAI",
+        "provider",
+        "provider",
         /*provider_base_url*/ None,
         /*provider_query_params*/ None,
         /*is_amazon_bedrock*/ false,

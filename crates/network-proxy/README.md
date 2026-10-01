@@ -54,11 +54,11 @@ allow_local_binding = false
 dangerously_allow_all_unix_sockets = false
 
 # Hosts must match the allowlist (unless denied).
-# Use exact hosts or scoped wildcards like `*.openai.com` or `**.openai.com`.
+# Use exact hosts or scoped wildcards like `*.provider.com` or `**.provider.com`.
 # The global `*` wildcard is rejected.
 # If no domain entries are marked `allow`, the proxy blocks requests until an allowlist is configured.
 [permissions.workspace.network.domains]
-"*.openai.com" = "allow"
+"*.provider.com" = "allow"
 "localhost" = "allow"
 "127.0.0.1" = "allow"
 "::1" = "allow"
@@ -68,7 +68,7 @@ dangerously_allow_all_unix_sockets = false
 [permissions.workspace.network.mitm.hooks.github_write]
 host = "api.github.com"
 methods = ["POST", "PUT"]
-path_prefixes = ["/repos/openai/"]
+path_prefixes = ["/repos/provider/"]
 action = ["strip_auth"]
 
 # Named actions can be shared across hooks and overridden by higher-precedence config layers.

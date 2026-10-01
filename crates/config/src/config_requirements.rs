@@ -5,7 +5,7 @@ use codex_protocol::config_types::ForcedLoginMethod;
 use codex_protocol::config_types::SandboxMode;
 use codex_protocol::config_types::WebSearchMode;
 use codex_protocol::models::PermissionProfile;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use codex_protocol::protocol::AskForApproval;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
@@ -1807,7 +1807,7 @@ mod tests {
 
     fn mdm_requirement_source() -> RequirementSource {
         RequirementSource::MdmManagedPreferences {
-            domain: "com.openai.codex".to_string(),
+            domain: "com.codex.codex".to_string(),
             key: "requirements_toml_base64".to_string(),
         }
     }
@@ -1869,7 +1869,7 @@ mod tests {
     #[test]
     fn composite_requirement_source_flattens_and_deduplicates_sources() {
         let mdm_source = RequirementSource::MdmManagedPreferences {
-            domain: "com.openai.codex".to_string(),
+            domain: "com.codex.codex".to_string(),
             key: "requirements_toml_base64".to_string(),
         };
         let mdm_source_again = mdm_source.clone();
@@ -2732,7 +2732,7 @@ mod tests {
 
         let source_location = RequirementSource::composite([
             RequirementSource::MdmManagedPreferences {
-                domain: "com.openai.codex".to_string(),
+                domain: "com.codex.codex".to_string(),
                 key: "requirements_toml_base64".to_string(),
             },
             mdm_requirement_source(),
@@ -3400,7 +3400,7 @@ command = "python3 /enterprise/hooks/pre.py"
 
             [experimental_network.domains]
             "api.example.com" = "allow"
-            "*.openai.com" = "allow"
+            "*.provider.com" = "allow"
             "blocked.example.com" = "deny"
 
             [experimental_network.unix_sockets]
@@ -3437,7 +3437,7 @@ command = "python3 /enterprise/hooks/pre.py"
             Some(&NetworkDomainPermissionsToml {
                 entries: BTreeMap::from([
                     (
-                        "*.openai.com".to_string(),
+                        "*.provider.com".to_string(),
                         NetworkDomainPermissionToml::Allow,
                     ),
                     (
@@ -3497,7 +3497,7 @@ command = "python3 /enterprise/hooks/pre.py"
             enabled = true
             allow_upstream_proxy = false
             dangerously_allow_all_unix_sockets = true
-            allowed_domains = ["api.example.com", "*.openai.com"]
+            allowed_domains = ["api.example.com", "*.provider.com"]
             managed_allowed_domains_only = true
             denied_domains = ["blocked.example.com"]
             allow_unix_sockets = ["/tmp/example.sock"]
@@ -3525,7 +3525,7 @@ command = "python3 /enterprise/hooks/pre.py"
             Some(&NetworkDomainPermissionsToml {
                 entries: BTreeMap::from([
                     (
-                        "*.openai.com".to_string(),
+                        "*.provider.com".to_string(),
                         NetworkDomainPermissionToml::Allow,
                     ),
                     (
@@ -3565,7 +3565,7 @@ command = "python3 /enterprise/hooks/pre.py"
                 allowed_domains = ["api.example.com"]
 
                 [experimental_network.domains]
-                "*.openai.com" = "allow"
+                "*.provider.com" = "allow"
             "#,
         )
         .expect_err("mixed network domain shapes should fail");
@@ -3599,7 +3599,7 @@ command = "python3 /enterprise/hooks/pre.py"
         let domains = NetworkDomainPermissionsToml {
             entries: BTreeMap::from([
                 (
-                    "*.openai.com".to_string(),
+                    "*.provider.com".to_string(),
                     NetworkDomainPermissionToml::Allow,
                 ),
                 (
@@ -3628,7 +3628,7 @@ command = "python3 /enterprise/hooks/pre.py"
         assert_eq!(
             domains.allowed_domains(),
             Some(vec![
-                "*.openai.com".to_string(),
+                "*.provider.com".to_string(),
                 "api.example.com".to_string()
             ])
         );

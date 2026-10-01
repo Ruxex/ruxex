@@ -34,7 +34,7 @@
 
 **Files:**
 - Modify: `docs/pre-release-compatibility-inventory.md`
-- Inspect: `scripts/count-openai-chatgpt.sh`
+- Inspect: `scripts/count-provider-chatgpt.sh`
 - Inspect: all Rust files returned by `rg -ni 'chatgpt' --glob '*.rs' .`
 
 **Interfaces:**
@@ -209,9 +209,9 @@
 
 **Files:**
 - Modify: `docs/pre-release-compatibility-inventory.md`
-- Modify: `docs/openai-decoupling-candidates.md` only to record this slice's completion or remaining explicit holds
+- Modify: `docs/provider-decoupling-candidates.md` only to record this slice's completion or remaining explicit holds
 - Modify: generated artifacts only when produced by `just generate`
-- Inspect: `scripts/count-openai-chatgpt.sh` output and all Rust source
+- Inspect: `scripts/count-provider-chatgpt.sh` output and all Rust source
 
 **Interfaces:**
 - Consumes: all preceding cleanup commits and their inventory decisions.
@@ -228,11 +228,11 @@
   ```bash
   rg -ni 'chatgpt' --glob '*.rs' .
   rg -ni 'chatgpt' crates --glob '*.rs' --glob '!**/tests/**' --glob '!**/*_tests.rs'
-  scripts/count-openai-chatgpt.sh /tmp/chatgpt-line-counts.tsv
+  scripts/count-provider-chatgpt.sh /tmp/chatgpt-line-counts.tsv
   git diff --check
   ```
 
-  Expected: no unexplained Rust match; every remaining match is listed exactly in the inventory with a valid hold reason. The script output is inspected separately because it also counts `openai`.
+  Expected: no unexplained Rust match; every remaining match is listed exactly in the inventory with a valid hold reason. The script output is inspected separately because it also counts `provider`.
 
 - [ ] **Step 3: Run repository verification**
 
@@ -240,7 +240,7 @@
 
 - [ ] **Step 4: Commit the final audit**
 
-  Stage `docs/pre-release-compatibility-inventory.md`, `docs/openai-decoupling-candidates.md`, and the exact generated files reported by `just generate`, then commit:
+  Stage `docs/pre-release-compatibility-inventory.md`, `docs/provider-decoupling-candidates.md`, and the exact generated files reported by `just generate`, then commit:
 
   ```bash
   git commit -m "docs: close ChatGPT Rust residual audit"

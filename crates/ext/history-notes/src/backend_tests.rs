@@ -23,7 +23,7 @@ async fn routes_through_codex_backend_and_injects_trusted_session_agent_context(
     let server = MockServer::start().await;
     Mock::given(method("POST"))
         .and(path("/backend-api/codex/alpha/notes/v2/read_file"))
-        .and(header("x-openai-actor-authorization", "actor-biscuit"))
+        .and(header("x-provider-actor-authorization", "actor-biscuit"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "encrypted_output": "enc_payload"
         })))
@@ -31,13 +31,13 @@ async fn routes_through_codex_backend_and_injects_trusted_session_agent_context(
         .await;
     let mut headers = HeaderMap::new();
     headers.insert(
-        "x-openai-actor-authorization",
+        "x-provider-actor-authorization",
         HeaderValue::from_static("actor-biscuit"),
     );
     let auth_manager =
         AuthManager::from_auth_for_testing(CodexAuth::Headers(AuthHeaders::new(headers)));
     let provider = create_model_provider(
-        ModelProviderInfo::create_openai_provider(Some(format!(
+        ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/backend-api/codex",
             server.uri()
         ))),
@@ -117,7 +117,7 @@ async fn marks_encrypted_history_and_notes_arguments_without_changing_the_json_b
     let auth_manager =
         AuthManager::from_auth_for_testing(CodexAuth::Headers(AuthHeaders::new(HeaderMap::new())));
     let backend = HistoryNotesBackend::new(create_model_provider(
-        ModelProviderInfo::create_openai_provider(Some(format!(
+        ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/backend-api/codex",
             server.uri()
         ))),

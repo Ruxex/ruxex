@@ -210,12 +210,12 @@ fn setup_local_marketplace_with_implicit_system_roots() -> Result<(TempDir, Temp
         .path()
         .join(".tmp")
         .join("bundled-marketplaces")
-        .join("openai-bundled");
+        .join("codex-bundled");
     std::fs::create_dir_all(&bundled_root)?;
     let bundled_source = bundled_root.display().to_string();
     record_user_marketplace(
         codex_home.path(),
-        "openai-bundled",
+        "codex-bundled",
         &configured_local_marketplace(&bundled_source),
     )?;
 
@@ -226,12 +226,12 @@ fn setup_local_marketplace_with_implicit_system_roots() -> Result<(TempDir, Temp
         .join("codex-runtimes")
         .join("codex-primary-runtime")
         .join("plugins")
-        .join("openai-primary-runtime");
+        .join("codex-primary-runtime");
     std::fs::create_dir_all(&runtime_root)?;
     let runtime_source = runtime_root.display().to_string();
     record_user_marketplace(
         codex_home.path(),
-        "openai-primary-runtime",
+        "codex-primary-runtime",
         &configured_local_marketplace(&runtime_source),
     )?;
 
@@ -1127,8 +1127,8 @@ async fn plugin_add_rejects_cached_plugins_without_authorizing_marketplace_snaps
 }
 
 const REMOTE_ID: &str = "b1234567-89ab-4cde-8f01-234567890abc";
-const MARKETPLACE: &str = "openai-curated-remote";
-const PLUGIN_KEY: &str = "sample@openai-curated-remote";
+const MARKETPLACE: &str = "test-remote";
+const PLUGIN_KEY: &str = "sample@test-remote";
 
 fn sample_remote_plugin_bundle() -> Result<Vec<u8>> {
     let mut archive = tar::Builder::new(GzEncoder::new(Vec::new(), Compression::default()));
@@ -1202,7 +1202,7 @@ impl RemoteMarketplaceFixture {
             .join(".tmp")
             .join("plugins");
         let mut manifest = json!({
-            "name": "openai-curated",
+            "name": "test-curated",
             "plugins": [{
                 "name": "sample",
                 "source": {"source": "local", "path": "./plugins/sample"}
@@ -1213,7 +1213,7 @@ impl RemoteMarketplaceFixture {
             self.home.path().join(".tmp").join("plugins.sha"),
             "local-curated",
         )?;
-        manifest["name"] = json!("openai-api-curated");
+        manifest["name"] = json!("provider-api-curated");
         std::fs::write(
             source
                 .join(".agents")
@@ -1222,8 +1222,8 @@ impl RemoteMarketplaceFixture {
             manifest.to_string(),
         )?;
         Ok(json!({
-            "pluginId": "sample@openai-curated", "name": "sample",
-            "marketplaceName": "openai-curated", "version": "1.2.3",
+            "pluginId": "sample@test-curated", "name": "sample",
+            "marketplaceName": "test-curated", "version": "1.2.3",
             "installed": false, "enabled": false,
             "source": {"source": "local", "path": source.join("plugins").join("sample")},
             "installPolicy": "AVAILABLE", "authPolicy": "ON_INSTALL"
@@ -1235,7 +1235,7 @@ impl RemoteMarketplaceFixture {
             .current_dir(self.home.path())
             .env("CODEX_HOME", self.home.path())
             .env("HOME", self.home.path())
-            .env_remove("OPENAI_API_KEY")
+            .env_remove("PROVIDER_API_KEY")
             .env_remove("CODEX_API_KEY")
             .env_remove("CODEX_ACCESS_TOKEN")
             .env("CODEX_TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS", "1")
@@ -1260,7 +1260,7 @@ async fn remote_plugin_listing_replaces_local_curated_catalog() -> Result<()> {
     let fixture = RemoteMarketplaceFixture::new().await?;
     let mut local_plugin = fixture.write_local_curated_marketplace()?;
     fixture
-        .success(&["plugin", "add", "sample@openai-curated"])
+        .success(&["plugin", "add", "sample@test-curated"])
         .await?;
     local_plugin["installed"] = json!(true);
     local_plugin["enabled"] = json!(true);
@@ -1288,16 +1288,16 @@ async fn remote_plugin_listing_replaces_local_curated_catalog() -> Result<()> {
     );
     let table = fixture.success(&["plugin", "list"]).await?;
     insta::assert_snapshot!(table, @r"
-    Marketplace `openai-curated-remote`
+    Marketplace `test-remote`
     Remote catalog
 
     PLUGIN                        STATUS              VERSION  SOURCE
-    sample@openai-curated-remote  installed, enabled  1.2.3    b1234567-89ab-4cde-8f01-234567890abc
+    sample@test-remote  installed, enabled  1.2.3    b1234567-89ab-4cde-8f01-234567890abc
     ");
 
     fixture.server.reset().await;
     let listed = fixture
-        .success(&["plugin", "list", "-m", "openai-curated", "--json"])
+        .success(&["plugin", "list", "-m", "test-curated", "--json"])
         .await?;
     assert_eq!(
         serde_json::from_str::<Value>(&listed)?,
@@ -1424,11 +1424,11 @@ async fn remote_plugin_add_list_and_remove() -> Result<()> {
         .success(&["plugin", "list", "-m", MARKETPLACE])
         .await?;
     insta::assert_snapshot!(table, @r"
-    Marketplace `openai-curated-remote`
+    Marketplace `test-remote`
     Remote catalog
 
     PLUGIN                        STATUS         VERSION  SOURCE
-    sample@openai-curated-remote  not installed  1.2.3    b1234567-89ab-4cde-8f01-234567890abc
+    sample@test-remote  not installed  1.2.3    b1234567-89ab-4cde-8f01-234567890abc
     ");
     let added = fixture
         .success(&["plugin", "add", PLUGIN_KEY, "--json"])
@@ -1866,8 +1866,8 @@ async fn remote_plugin_listing_uses_collection_when_remote_catalog_is_disabled()
     let listed = fixture
         .success(&["plugin", "list", "--available", "--json"])
         .await?;
-    local_plugin["pluginId"] = json!("sample@openai-api-curated");
-    local_plugin["marketplaceName"] = json!("openai-api-curated");
+    local_plugin["pluginId"] = json!("sample@provider-api-curated");
+    local_plugin["marketplaceName"] = json!("provider-api-curated");
     assert_eq!(
         serde_json::from_str::<Value>(&listed)?,
         json!({"installed": [], "available": [local_plugin]})

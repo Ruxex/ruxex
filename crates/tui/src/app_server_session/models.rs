@@ -8,7 +8,7 @@ use codex_app_server_protocol::ClientRequest;
 use codex_app_server_protocol::ModelListParams;
 use codex_app_server_protocol::ModelListResponse;
 use codex_app_server_protocol::RequestId;
-use codex_protocol::openai_models::ModelPreset;
+use codex_protocol::model_types::ModelPreset;
 use uuid::Uuid;
 
 impl AppServerSession {

@@ -18,10 +18,10 @@ use codex_app_server_protocol::RequestId;
 use codex_config::types::AuthCredentialsStoreMode;
 use codex_login::AuthKeyringBackendKind;
 use codex_login::login_with_api_key;
-use codex_protocol::openai_models::MODEL_SPECIALTY_CYBER;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::ModelsResponse;
+use codex_protocol::model_types::MODEL_SPECIALTY_CYBER;
+use codex_protocol::model_types::ModelInfo;
+use codex_protocol::model_types::ModelPreset;
+use codex_protocol::model_types::ModelsResponse;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -51,7 +51,7 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
         .models
         .remove(0);
     remote_model.slug = "rollout-model".into();
-    remote_model.visibility = codex_protocol::openai_models::ModelVisibility::List;
+    remote_model.visibility = codex_protocol::model_types::ModelVisibility::List;
     remote_model.supported_in_api = true;
     Mock::given(method("GET"))
         .and(path("/v1/models"))
@@ -71,7 +71,7 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
     std::fs::write(
         codex_home.path().join("config.toml"),
         format!(
-            "[model_providers.openai]\nbase_url = \"{server_uri}/v1\"\n{feature_config}"
+            "[model_providers.provider]\nbase_url = \"{server_uri}/v1\"\n{feature_config}"
         ),
     )?;
     login_with_api_key(
@@ -82,7 +82,7 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
     )?;
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
-        .with_env_overrides(&[("OPENAI_API_KEY", None), ("CODEX_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None), ("CODEX_API_KEY", None)])
         .build_initialized()
         .await?;
     let mut bundled = codex_models_manager::test_support::test_models_response()?.models;
@@ -328,7 +328,7 @@ async fn list_models_uses_remote_catalog_as_source_of_truth(
 model = "mock-model"
 approval_policy = "never"
 sandbox_mode = "read-only"
-[model_providers.openai]
+[model_providers.provider]
 base_url = "{server_uri}/v1"
 [features]
 api_key_model_discovery = true
@@ -353,7 +353,7 @@ api_key_model_discovery = true
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[("OPENAI_API_KEY", None), ("CODEX_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None), ("CODEX_API_KEY", None)])
         .build_initialized()
         .await?;
     let request_id = mcp

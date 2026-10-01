@@ -52,7 +52,7 @@ async fn compaction_preserves_updated_summary(mode: CompactionMode) -> Result<()
                 .expect("disable token budget");
             config.model_provider.name = match mode {
                 CompactionMode::Local => "Local compaction test",
-                CompactionMode::RemoteV2 => "OpenAI",
+                CompactionMode::RemoteV2 => "provider",
             }
             .to_string();
         })

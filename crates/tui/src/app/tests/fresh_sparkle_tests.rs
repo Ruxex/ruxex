@@ -5,7 +5,7 @@ use crate::app::session_lifecycle::ThreadAttachPresentation;
 use crate::chatwidget::AstraModelPickerAction;
 use crate::terminal_palette::with_test_default_colors;
 use crate::terminal_probe::DefaultColors;
-use codex_protocol::openai_models::ReasoningEffortPreset;
+use codex_protocol::model_types::ReasoningEffortPreset;
 use pretty_assertions::assert_eq;
 
 fn started(model: &str) -> AppServerStartedThread {

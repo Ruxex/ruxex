@@ -45,7 +45,7 @@ use codex_protocol::models::ActivePermissionProfile;
 use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
 use codex_protocol::models::ManagedFileSystemPermissions;
 use codex_protocol::models::PermissionProfile;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use codex_protocol::permissions::FileSystemAccessMode;
 use codex_protocol::permissions::FileSystemPath;
 use codex_protocol::permissions::FileSystemSandboxEntry;
@@ -288,7 +288,7 @@ async fn status_snapshot_includes_reasoning_details() {
     let temp_home = TempDir::new().expect("temp home");
     let mut config = test_config(&temp_home).await;
     config.model = Some("gpt-5.1-codex-max".to_string());
-    config.model_provider_id = "openai".to_string();
+    config.model_provider_id = "provider".to_string();
     config.model_reasoning_summary = Some(ReasoningSummary::Detailed);
     set_workspace_cwd(&mut config, test_path_buf("/workspace/tests").abs());
     config
@@ -365,7 +365,7 @@ async fn status_permissions_non_default_workspace_write_uses_workspace_label() {
     let temp_home = TempDir::new().expect("temp home");
     let mut config = test_config(&temp_home).await;
     config.model = Some("gpt-5.1-codex-max".to_string());
-    config.model_provider_id = "openai".to_string();
+    config.model_provider_id = "provider".to_string();
     config
         .permissions
         .approval_policy
@@ -690,7 +690,7 @@ async fn status_uses_server_provider_id_and_auth_requirement() {
             auth_refresh: None,
         }));
     config.model_provider.base_url =
-        Some("https://bedrock-mantle.us-east-1.api.aws/openai/v1".to_string());
+        Some("https://bedrock-mantle.us-east-1.api.aws/provider/v1".to_string());
     let usage = TokenUsage::default();
     let captured_at = chrono::Local
         .with_ymd_and_hms(2024, 1, 2, 3, 4, 5)
@@ -721,16 +721,16 @@ async fn status_uses_server_provider_id_and_auth_requirement() {
         sanitize_directory(render_lines(&composite.display_lines(/*width*/ 120))).join("\n");
     assert_snapshot!("status_server_auth_not_required", rendered);
 
-    config.model_provider_id = "openai-proxy".to_string();
+    config.model_provider_id = "provider-proxy".to_string();
     config.model_provider = ModelProviderInfo {
-        name: "OpenAI Proxy".to_string(),
-        base_url: Some("https://openai-proxy.example/v1".to_string()),
+        name: "provider Proxy".to_string(),
+        base_url: Some("https://provider-proxy.example/v1".to_string()),
         requires_auth: false,
         ..ModelProviderInfo::default()
     };
     let (composite, _handle) = new_status_output_with_rate_limits_handle(
         &config,
-        Some("server-openai"),
+        Some("server-provider"),
         /*remote_connection*/ None,
         test_status_account_display().as_ref(),
         /*token_info*/ None,
@@ -867,7 +867,7 @@ async fn status_snapshot_includes_forked_from() {
     let temp_home = TempDir::new().expect("temp home");
     let mut config = test_config(&temp_home).await;
     config.model = Some("gpt-5.1-codex-max".to_string());
-    config.model_provider_id = "openai".to_string();
+    config.model_provider_id = "provider".to_string();
     set_workspace_cwd(&mut config, test_path_buf("/workspace/tests").abs());
 
     let account_display = test_status_account_display();
@@ -921,7 +921,7 @@ async fn status_snapshot_includes_monthly_limit() {
     let temp_home = TempDir::new().expect("temp home");
     let mut config = test_config(&temp_home).await;
     config.model = Some("gpt-5.1-codex-max".to_string());
-    config.model_provider_id = "openai".to_string();
+    config.model_provider_id = "provider".to_string();
     set_workspace_cwd(&mut config, test_path_buf("/workspace/tests").abs());
 
     let account_display = test_status_account_display();
@@ -987,7 +987,7 @@ async fn status_snapshot_includes_enterprise_monthly_credit_limit() {
     let temp_home = TempDir::new().expect("temp home");
     let mut config = test_config(&temp_home).await;
     config.model = Some("gpt-5.1-codex-max".to_string());
-    config.model_provider_id = "openai".to_string();
+    config.model_provider_id = "provider".to_string();
     set_workspace_cwd(&mut config, test_path_buf("/workspace/tests").abs());
 
     let account_display = test_status_account_display();
@@ -1065,7 +1065,7 @@ async fn status_snapshot_uses_generic_limit_labels_for_unsupported_windows() {
     let temp_home = TempDir::new().expect("temp home");
     let mut config = test_config(&temp_home).await;
     config.model = Some("gpt-5.1-codex-max".to_string());
-    config.model_provider_id = "openai".to_string();
+    config.model_provider_id = "provider".to_string();
     set_workspace_cwd(&mut config, test_path_buf("/workspace/tests").abs());
 
     let account_display = test_status_account_display();
@@ -1401,7 +1401,7 @@ async fn status_snapshot_truncates_in_narrow_terminal() {
     let temp_home = TempDir::new().expect("temp home");
     let mut config = test_config(&temp_home).await;
     config.model = Some("gpt-5.1-codex-max".to_string());
-    config.model_provider_id = "openai".to_string();
+    config.model_provider_id = "provider".to_string();
     config.model_reasoning_summary = Some(ReasoningSummary::Detailed);
     set_workspace_cwd(&mut config, test_path_buf("/workspace/tests").abs());
 

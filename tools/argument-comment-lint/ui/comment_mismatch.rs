@@ -1,6 +1,6 @@
 #![warn(argument_comment_mismatch)]
 
-fn create_openai_url(base_url: Option<String>) -> String {
+fn create_provider_url(base_url: Option<String>) -> String {
     let _ = base_url;
     String::new()
 }
@@ -15,6 +15,6 @@ impl Options {
 }
 
 fn main() {
-    let _ = create_openai_url(/*api_base*/ None);
+    let _ = create_provider_url(/*api_base*/ None);
     let _ = Options.enabled(/*value*/ false);
 }

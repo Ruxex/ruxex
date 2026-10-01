@@ -43,7 +43,7 @@
 
 **Files:**
 - Modify: `docs/pre-release-compatibility-inventory.md`
-- Modify: `docs/openai-decoupling-candidates.md`（必要な Phase 3 handoff のみ）
+- Modify: `docs/provider-decoupling-candidates.md`（必要な Phase 3 handoff のみ）
 
 **Interfaces:**
 - Produces: 3子計画が参照する decision、保持境界、検証コマンド。
@@ -83,7 +83,7 @@
 
 **Files:**
 - Modify: `docs/pre-release-compatibility-inventory.md`
-- Modify: `docs/openai-decoupling-plan.md`、`docs/openai-specific-crates.md`（Phase 3 status/handoff のみ）
+- Modify: `docs/provider-decoupling-plan.md`、`docs/provider-specific-crates.md`（Phase 3 status/handoff のみ）
 - Modify: `docs/cli-architecture/`（削除した command/capability の記述がある場合のみ）
 - Modify/Delete: 残存 snapshots、fixtures、generated schema、workspace/dependency references
 

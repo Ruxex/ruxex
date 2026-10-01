@@ -79,7 +79,7 @@ impl ElicitationClientService {
             .capabilities
             .extensions
             .as_ref()
-            .and_then(|extensions| extensions.get("openai/elicitation"))
+            .and_then(|extensions| extensions.get("provider/elicitation"))
             .and_then(|settings| settings.get("userVerification"))
             .is_some_and(Value::is_object);
         Self {
@@ -199,7 +199,7 @@ impl Service<RoleClient> for ElicitationClientService {
                 }
             }
             ServerRequest::CustomRequest(request)
-                if request.method == "openai/elicitation/create"
+                if request.method == "provider/elicitation/create"
                     && self.supports_user_verification
                     && request
                         .params
@@ -216,7 +216,7 @@ impl Service<RoleClient> for ElicitationClientService {
                 )?))
             }
             ServerRequest::CustomRequest(request)
-                if request.method == "openai/elicitation/create"
+                if request.method == "provider/elicitation/create"
                     && self.supports_user_verification =>
             {
                 Err(rmcp::ErrorData::invalid_params(

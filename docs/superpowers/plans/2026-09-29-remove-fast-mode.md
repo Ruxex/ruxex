@@ -24,13 +24,13 @@
 - dynamic service-tier list から Fast だけが消え、Flex/他の現行 tier と model picker が残ること。
 - `Feature::FastMode` 削除が Core の turn/session/review、TUI の effective tier、app-server config に一貫して反映されること。
 - keymap/status/title/config schema の Fast 専用項目が消え、他の項目の順序・既定値・設定 parsing が壊れないこと。
-- Fast 固有の OpenAI model metadata/test fixture を削除しても、一般の `ModelServiceTier` と custom provider の service tier が残ること。
+- Fast 固有の provider model metadata/test fixture を削除しても、一般の `ModelServiceTier` と custom provider の service tier が残ること。
 - 既存設定や履歴を破壊的に削除せず、削除後の unsupported/unknown config の扱いが明確であること。
 
 ## File Map
 
 - Modify: `crates/features/src/lib.rs`、feature schema/generated config metadata。
-- Modify: `crates/protocol/src/config_types.rs`、`openai_models.rs`、model/protocol tests。
+- Modify: `crates/protocol/src/config_types.rs`、`model_types.rs`、model/protocol tests。
 - Modify: `crates/config/src/` の FastMode/config default/requirements/keymap/schema consumers。
 - Modify: `crates/core/src/` の FastMode gate、agent/session/turn/review/config logic と関連 tests。
 - Modify/Delete: `crates/tui/src/service_tier_resolution.rs`、`chatwidget/service_tiers.rs`、slash input/composer/popup、keymap、status/title、tooltips、snapshots/tests。

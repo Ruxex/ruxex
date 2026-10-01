@@ -8,7 +8,7 @@
 
 **Tech Stack:** Rust workspace、Cargo、app-server protocol、OTEL metrics、生成 config/schema artifacts。
 
-**Spec:** `docs/openai-decoupling-plan.md` および `docs/pre-release-compatibility-inventory.md`
+**Spec:** `docs/provider-decoupling-plan.md` および `docs/pre-release-compatibility-inventory.md`
 
 ## Global Constraints
 
@@ -30,7 +30,7 @@
 
 ## File Map
 
-- **Plan and inventory:** `docs/openai-decoupling-plan.md`、`docs/pre-release-compatibility-inventory.md`、この plan。
+- **Plan and inventory:** `docs/provider-decoupling-plan.md`、`docs/pre-release-compatibility-inventory.md`、この plan。
 - **Analytics implementation:** `crates/analytics/Cargo.toml`、`crates/analytics/src/lib.rs`、`client.rs`、`facts.rs`、`events.rs`、`reducer.rs`、`guardian_v2.rs`、`thread_hint.rs`、`accepted_lines.rs`、debug capture、analytics-only tests。
 - **Canonical producer types:** `crates/core-plugins/src/artifact_operation.rs`、`crates/core/src/tools/events.rs`、`crates/core/src/turn_timing.rs`、`crates/core/src/turn_metadata.rs`。
 - **Metrics/config boundary:** `crates/config/src/config_toml.rs`、`profile_toml.rs`、`types.rs`、`crates/core/src/config/mod.rs`、`crates/core/src/otel_init.rs`、`crates/app-server/src/lib.rs`、`otel_reloader.rs`、`crates/cli/src/main.rs`、`daemon_telemetry.rs`。
@@ -42,7 +42,7 @@
 
 **Files:**
 - Modify: `docs/pre-release-compatibility-inventory.md`
-- Modify: `docs/openai-decoupling-plan.md`
+- Modify: `docs/provider-decoupling-plan.md`
 - Create: `docs/superpowers/plans/2026-09-21-remove-analytics-crate.md`
 
 - [x] **Step 1: Enumerate the crate boundary and reverse dependencies**
@@ -72,7 +72,7 @@
 
 - [x] **Step 3: Update the phase handoff**
 
-  Add a new Phase 3 implementation item after the shared provider-boundary audit in `docs/openai-decoupling-plan.md`, linking this plan and stating that `codex-analytics` remains a staged deletion candidate until its consumers and misplaced types are removed.
+  Add a new Phase 3 implementation item after the shared provider-boundary audit in `docs/provider-decoupling-plan.md`, linking this plan and stating that `codex-analytics` remains a staged deletion candidate until its consumers and misplaced types are removed.
 
 - [x] **Step 4: Verify the inventory diff**
 
@@ -206,7 +206,7 @@
 - Modify: `Cargo.lock` if the workspace package disappears from the lockfile
 - Modify: every manifest still declaring `codex-analytics`
 - Modify: generated dependency graph artifacts when the repository task requires them
-- Modify: `docs/openai-decoupling-plan.md` and `docs/pre-release-compatibility-inventory.md`
+- Modify: `docs/provider-decoupling-plan.md` and `docs/pre-release-compatibility-inventory.md`
 
 - [x] **Step 1: Remove manifests and workspace membership**
 

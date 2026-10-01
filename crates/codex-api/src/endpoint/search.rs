@@ -176,12 +176,12 @@ mod tests {
                     }])),
                     commands: Some(SearchCommands {
                         search_query: Some(vec![SearchQuery {
-                            q: "OpenAI news".to_string(),
+                            q: "provider news".to_string(),
                             recency: Some(7),
-                            domains: Some(vec!["openai.com".to_string()]),
+                            domains: Some(vec!["provider.com".to_string()]),
                         }]),
                         open: Some(vec![OpenOperation {
-                            ref_id: "https://openai.com".to_string(),
+                            ref_id: "https://provider.com".to_string(),
                             lineno: Some(12),
                         }]),
                         ..Default::default()
@@ -196,7 +196,7 @@ mod tests {
                         }),
                         search_context_size: Some(SearchContextSize::Low),
                         filters: Some(SearchFilters {
-                            allowed_domains: Some(vec!["openai.com".to_string()]),
+                            allowed_domains: Some(vec!["provider.com".to_string()]),
                             blocked_domains: Some(vec!["example.com".to_string()]),
                         }),
                         image_settings: Some(SearchImageSettings {
@@ -257,11 +257,11 @@ mod tests {
                 }],
                 "commands": {
                     "search_query": [{
-                        "q": "OpenAI news",
+                        "q": "provider news",
                         "recency": 7,
-                        "domains": ["openai.com"]
+                        "domains": ["provider.com"]
                     }],
-                    "open": [{"ref_id": "https://openai.com", "lineno": 12}]
+                    "open": [{"ref_id": "https://provider.com", "lineno": 12}]
                 },
                 "settings": {
                     "user_location": {
@@ -271,7 +271,7 @@ mod tests {
                     },
                     "search_context_size": "low",
                     "filters": {
-                        "allowed_domains": ["openai.com"],
+                        "allowed_domains": ["provider.com"],
                         "blocked_domains": ["example.com"]
                     },
                     "image_settings": {"max_results": 4, "caption": true},

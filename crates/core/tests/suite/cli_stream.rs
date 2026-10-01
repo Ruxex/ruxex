@@ -73,7 +73,7 @@ fn personal_access_token_exec_command(server: &MockServer, home: &TempDir) -> Co
         .arg("--skip-git-repo-check")
         .arg("-c")
         .arg(format!(
-            "model_providers.openai.base_url=\"{}/api/codex\"",
+            "model_providers.provider.base_url=\"{}/api/codex\"",
             server.uri()
         ))
         .arg("-c")
@@ -85,7 +85,7 @@ fn personal_access_token_exec_command(server: &MockServer, home: &TempDir) -> Co
         .env(CODEX_ACCESS_TOKEN_ENV_VAR, PERSONAL_ACCESS_TOKEN)
         .env("CODEX_AUTHAPI_BASE_URL", server.uri())
         .env_remove(CODEX_API_KEY_ENV_VAR)
-        .env_remove("OPENAI_API_KEY");
+        .env_remove("PROVIDER_API_KEY");
     cmd
 }
 
@@ -231,7 +231,7 @@ async fn responses_mode_stream_cli() {
         .arg(&repo_root)
         .arg("hello?");
     cmd.env("CODEX_HOME", home.path())
-        .env("OPENAI_API_KEY", "dummy");
+        .env("PROVIDER_API_KEY", "dummy");
 
     let output = run_cli_command(&mut cmd).unwrap();
     println!("Status: {}", output.status);
@@ -267,14 +267,14 @@ async fn responses_mode_stream_cli_supports_model_provider_base_url_override() {
         .arg("--skip-git-repo-check")
         .arg("-c")
         .arg(format!(
-            "model_providers.openai.base_url=\"{}/v1\"",
+            "model_providers.provider.base_url=\"{}/v1\"",
             server.uri()
         ))
         .arg("-C")
         .arg(&repo_root)
         .arg("hello?");
     cmd.env("CODEX_HOME", home.path())
-        .env("OPENAI_API_KEY", "dummy");
+        .env("PROVIDER_API_KEY", "dummy");
 
     let output = run_cli_command(&mut cmd).unwrap();
     assert!(output.status.success());
@@ -285,7 +285,7 @@ async fn responses_mode_stream_cli_supports_model_provider_base_url_override() {
 
 /// Verify that passing `-c model_instructions_file=...` to the CLI
 /// overrides the built-in base instructions by inspecting the request body
-/// received by a mock OpenAI Responses endpoint.
+/// received by a mock provider Responses endpoint.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn exec_cli_applies_model_instructions_file() {
     skip_if_no_network!();
@@ -332,7 +332,7 @@ async fn exec_cli_applies_model_instructions_file() {
         .arg(&repo_root)
         .arg("hello?\n");
     cmd.env("CODEX_HOME", home.path())
-        .env("OPENAI_API_KEY", "dummy");
+        .env("PROVIDER_API_KEY", "dummy");
 
     let output = run_cli_command(&mut cmd).unwrap();
     println!("Status: {}", output.status);
@@ -404,7 +404,7 @@ async fn exec_cli_profile_applies_model_instructions_file() {
         .arg(&repo_root)
         .arg("hello?\n");
     cmd.env("CODEX_HOME", home.path())
-        .env("OPENAI_API_KEY", "dummy");
+        .env("PROVIDER_API_KEY", "dummy");
 
     let output = run_cli_command(&mut cmd).unwrap();
     println!("Status: {}", output.status);
@@ -441,14 +441,14 @@ async fn responses_api_stream_cli() {
         .arg("--skip-git-repo-check")
         .arg("-c")
         .arg(format!(
-            "model_providers.openai.base_url=\"{}/v1\"",
+            "model_providers.provider.base_url=\"{}/v1\"",
             server.uri()
         ))
         .arg("-C")
         .arg(&repo_root)
         .arg("hello?");
     cmd.env("CODEX_HOME", home.path())
-        .env("OPENAI_API_KEY", "dummy");
+        .env("PROVIDER_API_KEY", "dummy");
 
     let output = run_cli_command(&mut cmd).unwrap();
     assert!(output.status.success());
@@ -485,7 +485,7 @@ async fn integration_creates_and_checks_session_file() -> anyhow::Result<()> {
         .arg("--skip-git-repo-check")
         .arg("-c")
         .arg(format!(
-            "model_providers.openai.base_url=\"{}/v1\"",
+            "model_providers.provider.base_url=\"{}/v1\"",
             server.uri()
         ))
         .arg("-C")
@@ -604,7 +604,7 @@ async fn integration_creates_and_checks_session_file() -> anyhow::Result<()> {
         .arg("--skip-git-repo-check")
         .arg("-c")
         .arg(format!(
-            "model_providers.openai.base_url=\"{}/v1\"",
+            "model_providers.provider.base_url=\"{}/v1\"",
             server.uri()
         ))
         .arg("-C")
@@ -613,7 +613,7 @@ async fn integration_creates_and_checks_session_file() -> anyhow::Result<()> {
         .arg("resume")
         .arg("--last");
     cmd2.env("CODEX_HOME", home.path())
-        .env("OPENAI_API_KEY", "dummy");
+        .env("PROVIDER_API_KEY", "dummy");
 
     let output2 = run_cli_command(&mut cmd2).unwrap();
     assert!(output2.status.success(), "resume codex-cli run failed");

@@ -10,9 +10,9 @@ use codex_login::AuthManager;
 use codex_protocol::auth::AuthMode;
 use codex_protocol::config_types::CollaborationModeMask;
 use codex_protocol::error::Result as CoreResult;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::ModelsResponse;
+use codex_protocol::model_types::ModelInfo;
+use codex_protocol::model_types::ModelPreset;
+use codex_protocol::model_types::ModelsResponse;
 use std::fmt;
 use std::future::Future;
 use std::path::PathBuf;
@@ -30,7 +30,7 @@ use tracing::info;
 const MODEL_CACHE_FILE: &str = "models_cache.json";
 const DEFAULT_MODEL_CACHE_TTL: Duration = Duration::from_secs(300);
 
-/// Remote endpoint used by the OpenAI-compatible model manager.
+/// Remote endpoint used by the provider-compatible model manager.
 ///
 /// Implementations own provider-specific auth and transport details. The model
 /// manager owns refresh policy, cache behavior, and catalog merging; it calls
@@ -48,7 +48,7 @@ pub trait ModelsEndpointClient: fmt::Debug + Send + Sync {
     /// Returns whether the currently resolved auth uses host-managed authentication.
     fn uses_managed_auth(&self) -> ModelsEndpointFuture<'_, bool>;
 
-    /// Returns whether this provider supports an authoritative catalog with OpenAI API keys.
+    /// Returns whether this provider supports an authoritative catalog with provider API keys.
     fn supports_api_key_models(&self) -> bool {
         false
     }
@@ -241,7 +241,7 @@ pub type SharedModelsManager = Arc<dyn ModelsManager>;
 
 /// Provider-compatible model manager backed by the provider `/models` endpoint and cache.
 #[derive(Debug)]
-pub struct OpenAiModelsManager {
+pub struct RemoteModelsManager {
     remote_models: RwLock<ModelsCacheEntry>,
     cache: Option<Arc<dyn ModelsCache>>,
     endpoint_client: SharedModelsEndpointClient,
@@ -256,8 +256,8 @@ pub struct StaticModelsManager {
     auth_manager: Option<Arc<AuthManager>>,
 }
 
-impl OpenAiModelsManager {
-    /// Construct an OpenAI-compatible remote model manager.
+impl RemoteModelsManager {
+    /// Construct an provider-compatible remote model manager.
     pub fn new(
         codex_home: PathBuf,
         endpoint_client: Arc<dyn ModelsEndpointClient>,
@@ -274,7 +274,7 @@ impl OpenAiModelsManager {
         )
     }
 
-    /// Construct an OpenAI-compatible model manager with caching disabled.
+    /// Construct an provider-compatible model manager with caching disabled.
     pub fn new_without_cache(
         endpoint_client: Arc<dyn ModelsEndpointClient>,
         auth_manager: Option<Arc<AuthManager>>,
@@ -282,7 +282,7 @@ impl OpenAiModelsManager {
         Self::new_with_optional_cache(/*cache*/ None, endpoint_client, auth_manager)
     }
 
-    /// Constructs an OpenAI-compatible model manager with a caller-provided cache.
+    /// Constructs an provider-compatible model manager with a caller-provided cache.
     ///
     /// The cache is consulted by cache-aware refresh strategies. Cache misses and backend errors
     /// fall back to the models endpoint, and cache write failures do not fail model discovery.
@@ -325,7 +325,7 @@ impl StaticModelsManager {
     }
 }
 
-impl ModelsManager for OpenAiModelsManager {
+impl ModelsManager for RemoteModelsManager {
     fn set_api_key_model_discovery_enabled(&self, enabled: bool) {
         self.api_key_model_discovery_enabled
             .store(enabled, Ordering::SeqCst);
@@ -336,7 +336,7 @@ impl ModelsManager for OpenAiModelsManager {
         refresh_strategy: RefreshStrategy,
         http_client_factory: HttpClientFactory,
     ) -> ModelsManagerFuture<'_, ModelsResponse> {
-        Box::pin(OpenAiModelsManager::raw_model_catalog(
+        Box::pin(RemoteModelsManager::raw_model_catalog(
             self,
             refresh_strategy,
             http_client_factory,
@@ -378,7 +378,7 @@ impl ModelsManager for OpenAiModelsManager {
         etag: String,
         http_client_factory: HttpClientFactory,
     ) -> ModelsManagerFuture<'_, ()> {
-        Box::pin(OpenAiModelsManager::refresh_if_new_etag(
+        Box::pin(RemoteModelsManager::refresh_if_new_etag(
             self,
             etag,
             http_client_factory,
@@ -386,7 +386,7 @@ impl ModelsManager for OpenAiModelsManager {
     }
 }
 
-impl OpenAiModelsManager {
+impl RemoteModelsManager {
     async fn raw_model_catalog(
         &self,
         refresh_strategy: RefreshStrategy,

@@ -1,7 +1,7 @@
 use super::ConfigurationReasoning;
 use crate::ResponseItemId;
 use crate::models::ResponseItem;
-use crate::openai_models::ReasoningEffort;
+use crate::model_types::ReasoningEffort;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 

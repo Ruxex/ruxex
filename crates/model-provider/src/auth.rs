@@ -302,8 +302,8 @@ mod tests {
     }
 
     #[test]
-    fn openai_provider_preserves_ambient_auth_headers() {
-        let provider = ModelProviderInfo::create_openai_provider(/*base_url*/ None);
+    fn responses_provider_preserves_ambient_auth_headers() {
+        let provider = ModelProviderInfo::create_responses_provider(/*base_url*/ None);
         let mut expected = HeaderMap::new();
         expected.insert(
             AUTHORIZATION,
@@ -333,8 +333,8 @@ mod tests {
     }
 
     #[test]
-    fn openai_provider_rejects_bedrock_api_key_auth() {
-        let provider = ModelProviderInfo::create_openai_provider(/*base_url*/ None);
+    fn responses_provider_rejects_bedrock_api_key_auth() {
+        let provider = ModelProviderInfo::create_responses_provider(/*base_url*/ None);
         let auth = CodexAuth::BedrockApiKey(BedrockApiKeyAuth {
             api_key: "bedrock-api-key-test".to_string(),
             region: "us-east-1".to_string(),

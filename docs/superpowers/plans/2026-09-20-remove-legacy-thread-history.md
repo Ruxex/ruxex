@@ -76,7 +76,7 @@
 - Delete: `crates/thread-store/src/local/rollout_migration.rs` and its migration-only modules under `crates/thread-store/src/local/rollout_migration/`
 - Delete: `crates/cli/src/migrate_rollouts.rs`
 - Modify: `crates/thread-store/src/local/mod.rs`, `crates/cli/src/main.rs`, CLI command/help/completion tests, and manifests only if dependency edges change
-- Modify: `docs/pre-release-compatibility-inventory.md` and `docs/openai-decoupling-plan.md`
+- Modify: `docs/pre-release-compatibility-inventory.md` and `docs/provider-decoupling-plan.md`
 
 **Interfaces:**
 - Consumes: canonical paginated rollouts and SQLite projection from Tasks 1–2.

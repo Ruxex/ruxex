@@ -246,7 +246,7 @@ async fn user_verification_service_cancellation_drops_pending_response() -> anyh
     let mut client_info = ClientInfo::default();
     client_info.capabilities.extensions = Some(
         [(
-            "openai/elicitation".to_string(),
+            "provider/elicitation".to_string(),
             serde_json::Map::from_iter([("userVerification".to_string(), json!({}))]),
         )]
         .into_iter()
@@ -269,9 +269,9 @@ async fn user_verification_service_cancellation_drops_pending_response() -> anyh
     server
         .send(ServerJsonRpcMessage::request(
             ServerRequest::CustomRequest(CustomRequest::new(
-                "openai/elicitation/create",
+                "provider/elicitation/create",
                 Some(json!({
-                    "mode": "openai/userVerification",
+                    "mode": "provider/userVerification",
                     "title": "Approve",
                     "description": "",
                     "challenge": "AQID",
@@ -305,7 +305,7 @@ async fn cancelling_one_verification_leaves_the_mcp_connection_and_other_request
     let mut client_info = ClientInfo::default();
     client_info.capabilities.extensions = Some(
         [(
-            "openai/elicitation".to_string(),
+            "provider/elicitation".to_string(),
             serde_json::Map::from_iter([("userVerification".to_string(), json!({}))]),
         )]
         .into_iter()
@@ -330,9 +330,9 @@ async fn cancelling_one_verification_leaves_the_mcp_connection_and_other_request
         server
             .send(ServerJsonRpcMessage::request(
                 ServerRequest::CustomRequest(CustomRequest::new(
-                    "openai/elicitation/create",
+                    "provider/elicitation/create",
                     Some(json!({
-                        "mode": "openai/userVerification",
+                        "mode": "provider/userVerification",
                         "title": "Approve",
                         "description": "",
                         "challenge": "AQID",

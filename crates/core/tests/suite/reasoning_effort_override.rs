@@ -10,8 +10,8 @@ use codex_core::config::Config;
 use codex_features::Feature;
 use codex_login::CodexAuth;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::openai_models::ReasoningEffortPreset;
+use codex_protocol::model_types::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffortPreset;
 use codex_protocol::protocol::EventMsg;
 use codex_protocol::protocol::Op;
 use codex_protocol::protocol::ThreadSettingsOverrides;
@@ -592,12 +592,12 @@ async fn reasoning_effort_override_websocket_appends_then_replays_after_reconnec
 #[derive(Clone, Copy)]
 enum OverrideUnavailable {
     FeatureDisabled,
-    NonOpenAiProvider,
+    NonproviderProvider,
     ResponsesLiteDisabled,
 }
 
 #[test_case(OverrideUnavailable::FeatureDisabled; "feature disabled")]
-#[test_case(OverrideUnavailable::NonOpenAiProvider; "unsupported provider")]
+#[test_case(OverrideUnavailable::NonproviderProvider; "unsupported provider")]
 #[test_case(OverrideUnavailable::ResponsesLiteDisabled; "responses lite disabled")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn reasoning_effort_override_unavailable_uses_request_effort(
@@ -622,7 +622,7 @@ async fn reasoning_effort_override_unavailable_uses_request_effort(
                 .disable(Feature::ReasoningEffortOverride)
                 .expect("disable overrides");
         }),
-        OverrideUnavailable::NonOpenAiProvider => override_builder().with_config(|config| {
+        OverrideUnavailable::NonproviderProvider => override_builder().with_config(|config| {
             config.model_provider.name = "unsupported provider".into();
         }),
         OverrideUnavailable::ResponsesLiteDisabled => override_builder()

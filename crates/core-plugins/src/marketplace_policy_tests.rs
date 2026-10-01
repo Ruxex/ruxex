@@ -366,7 +366,7 @@ fn curated_marketplace_requires_its_expected_name() {
 restrict_to_allowed_sources = true
 [marketplaces.allowed_sources.curated]
 source = "git"
-url = "https://github.com/openai/plugins.git"
+url = "https://github.com/codex/plugins.git"
 "#,
     );
     let marketplace_path = AbsolutePathBuf::try_from(
@@ -406,9 +406,9 @@ url = "https://github.com/openai/plugins.git"
         for marketplace in [
             TEST_CURATED_MARKETPLACE_NAME,
             TEST_API_CURATED_MARKETPLACE_NAME,
-            OPENAI_BUNDLED_MARKETPLACE_NAME,
-            OPENAI_BUNDLED_ALPHA_MARKETPLACE_NAME,
-            OPENAI_PRIMARY_RUNTIME_MARKETPLACE_NAME,
+            BUNDLED_MARKETPLACE_NAME,
+            BUNDLED_ALPHA_MARKETPLACE_NAME,
+            PRIMARY_RUNTIME_MARKETPLACE_NAME,
         ] {
             assert!(
                 MarketplacePolicy::from_requirements(config.requirements())
@@ -471,7 +471,7 @@ fn managed_bundled_source_is_bound_to_its_expected_name() {
     let bundled_root = codex_home
         .path()
         .join(".tmp/bundled-marketplaces")
-        .join(crate::OPENAI_BUNDLED_MARKETPLACE_NAME);
+        .join(crate::BUNDLED_MARKETPLACE_NAME);
     fs::create_dir_all(&bundled_root).expect("create bundled marketplace root");
     let stack = config_layer_stack(
         r#"
@@ -488,7 +488,7 @@ restrict_to_allowed_sources = true
         validate_marketplace_source_for_add(codex_home.path(), stack.requirements(), &source)
             .expect("managed marketplace source should bypass restrictions");
     assert_eq!(
-        validate_marketplace_name_for_add(expected_name, crate::OPENAI_BUNDLED_MARKETPLACE_NAME,),
+        validate_marketplace_name_for_add(expected_name, crate::BUNDLED_MARKETPLACE_NAME,),
         Ok(())
     );
     assert!(validate_marketplace_name_for_add(expected_name, "other").is_err());
@@ -557,7 +557,7 @@ fn managed_bundled_config_is_retained_only_at_its_owned_path() {
     let bundled_root = codex_home
         .path()
         .join(".tmp/bundled-marketplaces")
-        .join(crate::OPENAI_BUNDLED_MARKETPLACE_NAME);
+        .join(crate::BUNDLED_MARKETPLACE_NAME);
     let config_file = AbsolutePathBuf::try_from(codex_home.path().join("config.toml"))
         .expect("absolute config path");
     let stack = config_layer_stack_with_user_config(
@@ -568,11 +568,11 @@ restrict_to_allowed_sources = true
         Some((
             &format!(
                 r#"
-[marketplaces.openai-bundled]
+[marketplaces.codex-bundled]
 source_type = "local"
 source = {bundled_root:?}
 
-[marketplaces.openai-bundled-alpha]
+[marketplaces.codex-bundled-alpha]
 source_type = "local"
 source = "/tmp/not-managed"
 
@@ -580,10 +580,10 @@ source = "/tmp/not-managed"
 source_type = "local"
 source = {bundled_root:?}
 
-[plugins."sample@openai-bundled"]
+[plugins."sample@codex-bundled"]
 enabled = true
 
-[plugins."sample@openai-bundled-alpha"]
+[plugins."sample@codex-bundled-alpha"]
 enabled = true
 
 [plugins."sample@evil"]
@@ -604,7 +604,7 @@ enabled = true
             .keys()
             .cloned()
             .collect::<Vec<_>>(),
-        vec![crate::OPENAI_BUNDLED_MARKETPLACE_NAME.to_string()]
+        vec![crate::BUNDLED_MARKETPLACE_NAME.to_string()]
     );
     assert_eq!(
         projected["plugins"]
@@ -613,7 +613,7 @@ enabled = true
             .keys()
             .cloned()
             .collect::<Vec<_>>(),
-        vec![format!("sample@{}", crate::OPENAI_BUNDLED_MARKETPLACE_NAME)]
+        vec![format!("sample@{}", crate::BUNDLED_MARKETPLACE_NAME)]
     );
 }
 
@@ -641,7 +641,7 @@ path = {source_root:?}
         Some((
             &format!(
                 r#"
-[marketplaces.openai-bundled]
+[marketplaces.codex-bundled]
 source_type = "local"
 source = {source_root:?}
 
@@ -649,7 +649,7 @@ source = {source_root:?}
 source_type = "local"
 source = {source_root:?}
 
-[plugins."sample@openai-bundled"]
+[plugins."sample@codex-bundled"]
 enabled = true
 
 [plugins."sample@test-curated"]
@@ -724,14 +724,14 @@ source = "https://github.com/example/blocked.git"
     let stack = config_layer_stack_with_user_config(
         "[marketplaces]\nrestrict_to_allowed_sources = false\n",
         Some((
-            "[marketplaces.openai-bundled]\nsource_type = \"git\"\nsource = \"https://github.com/example/blocked.git\"\n",
+            "[marketplaces.codex-bundled]\nsource_type = \"git\"\nsource = \"https://github.com/example/blocked.git\"\n",
             config_file,
         )),
     );
     let outcome = upgrade_configured_git_marketplaces(
         codex_home.path(),
         &stack,
-        Some(crate::OPENAI_BUNDLED_MARKETPLACE_NAME),
+        Some(crate::BUNDLED_MARKETPLACE_NAME),
         &reload_config,
     );
     assert!(outcome.errors[0].message.contains("is reserved"));

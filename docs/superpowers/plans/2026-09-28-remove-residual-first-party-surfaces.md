@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove the remaining OpenAI-only plugin UI residue and migrate the provider-auth capability name to a provider-neutral first-party boundary without removing active Bedrock, custom-provider, workload-identity, plugin, MCP, or security behavior.
+**Goal:** Remove the remaining provider-only plugin UI residue and migrate the provider-auth capability name to a provider-neutral first-party boundary without removing active Bedrock, custom-provider, workload-identity, plugin, MCP, or security behavior.
 
-**Architecture:** Keep the existing local/Git/npm/bundled marketplace and trusted script-attribution implementation. Remove the hard-coded Apps help disclosure, rename the shared auth capability from an OpenAI-specific label to `requires_first_party_auth`, and retain the explicit OpenAI-compatible adapter as a documented opt-in capability until its active auth consumers can be split safely.
+**Architecture:** Keep the existing local/Git/npm/bundled marketplace and trusted script-attribution implementation. Remove the hard-coded Apps help disclosure, rename the shared auth capability from an provider-specific label to `requires_first_party_auth`, and retain the explicit provider-compatible adapter as a documented opt-in capability until its active auth consumers can be split safely.
 
 **Tech Stack:** Rust workspace, generated config/protocol artifacts, `just generate`, `just check --tests`, `just check`, `rg`, and `git diff --check`.
 
-**Spec:** `docs/openai-decoupling-candidates.md` and `docs/pre-release-compatibility-inventory.md`.
+**Spec:** `docs/provider-decoupling-candidates.md` and `docs/pre-release-compatibility-inventory.md`.
 
 ## Global Constraints
 
@@ -21,13 +21,13 @@
 
 ## Review Focus
 
-- An uninstalled plugin detail popup no longer links to an OpenAI Apps article or promises an unavailable hosted policy page.
-- Configured non-OpenAI providers still use the generic base-URL warning and do not lose model selection behavior.
+- An uninstalled plugin detail popup no longer links to an provider Apps article or promises an unavailable hosted policy page.
+- Configured other providerss still use the generic base-URL warning and do not lose model selection behavior.
 - Existing `requires_first_party_auth` consumers continue to distinguish first-party account/API-key auth from unauthenticated custom providers and AWS auth.
 - Generated config/protocol artifacts use the migrated field consistently.
 - Bundled marketplace loading, trusted runtime attribution, ordinary MCP/plugin behavior, and security checks remain unchanged.
 
-### Task 1: Remove OpenAI-only plugin UI and test-only marketplace names
+### Task 1: Remove provider-only plugin UI and test-only marketplace names
 
 **Files:**
 - Modify: `crates/tui/src/chatwidget/plugin_catalog.rs`, `crates/tui/src/chatwidget/model_popups.rs`.
@@ -36,25 +36,25 @@
 
 **Interfaces:**
 - Consumes: existing `ModelProviderInfo::base_url` and plugin detail rendering.
-- Produces: provider-neutral model URL warning; no OpenAI Apps disclosure line; curated test fixtures named as test marketplaces.
+- Produces: provider-neutral model URL warning; no provider Apps disclosure line; curated test fixtures named as test marketplaces.
 
-- [ ] **Step 1: Remove the Apps-specific disclosure and make the model URL warning provider-neutral.** Delete the hard-coded Apps article link and disclosure renderer. Rename the model popup helper and message to refer to the configured provider rather than OpenAI, and warn for any explicitly configured provider base URL.
-- [ ] **Step 2: Replace only test-only curated marketplace constants and values with neutral test names.** Keep production `openai-bundled` and `openai-primary-runtime` paths because active loader, policy, and trusted-attribution consumers depend on them.
+- [ ] **Step 1: Remove the Apps-specific disclosure and make the model URL warning provider-neutral.** Delete the hard-coded Apps article link and disclosure renderer. Rename the model popup helper and message to refer to the configured provider rather than provider, and warn for any explicitly configured provider base URL.
+- [ ] **Step 2: Replace only test-only curated marketplace constants and values with neutral test names.** Keep production `codex-bundled` and `codex-primary-runtime` paths because active loader, policy, and trusted-attribution consumers depend on them.
 - [ ] **Step 3: Run generated/snapshot checks required by the changed UI and inspect the diff.**
 
 ### Task 2: Migrate the auth capability name in place
 
 **Files:**
-- Modify all current Rust/config/protocol consumers of `requires_openai_auth` to use `requires_first_party_auth`.
+- Modify all current Rust/config/protocol consumers of `requires_provider_auth` to use `requires_first_party_auth`.
 - Modify: `crates/config/src/thread_config/proto/codex.thread_config.v1.proto` and generated Rust artifacts.
 - Modify: `crates/cli/src/doctor.rs`, status/account copy, and provider metadata docs where the old label is user-visible.
-- Modify: `docs/openai-decoupling-candidates.md` and `docs/pre-release-compatibility-inventory.md`.
+- Modify: `docs/provider-decoupling-candidates.md` and `docs/pre-release-compatibility-inventory.md`.
 
 **Interfaces:**
 - Consumes: existing `ModelProviderInfo`, app-server protocol, thread-config serialization, and auth/provider routing.
-- Produces: the same boolean behavior under the provider-neutral field `requires_first_party_auth`; explicit OpenAI-compatible auth remains opt-in.
+- Produces: the same boolean behavior under the provider-neutral field `requires_first_party_auth`; explicit provider-compatible auth remains opt-in.
 
-- [ ] **Step 1: Rename the field and all current producers/consumers mechanically, preserving field numbers and behavior.** Keep `OPENAI_API_KEY`, ChatGPT workload-identity claims, account headers, and explicit `create_openai_provider` because their active consumers are first-party/security paths.
+- [ ] **Step 1: Rename the field and all current producers/consumers mechanically, preserving field numbers and behavior.** Keep `PROVIDER_API_KEY`, ChatGPT workload-identity claims, account headers, and explicit `create_responses_provider` because their active consumers are first-party/security paths.
 - [ ] **Step 2: Regenerate checked-in schemas/protobuf-derived artifacts with `just generate`.** Confirm the migrated field appears consistently and no current production source references the old identifier.
 - [ ] **Step 3: Record the producer/consumer decision in the inventory.** Mark the naming migration complete while retaining active first-party auth behavior and the explicit adapter as `retain`/`migrate-in-place`, and explain why crate-wide deletion is unsafe at this stage.
 

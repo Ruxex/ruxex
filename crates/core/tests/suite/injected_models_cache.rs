@@ -21,15 +21,15 @@ use codex_models_manager::cache::ModelsCacheFuture;
 use codex_models_manager::manager::ModelsEndpointClient;
 use codex_models_manager::manager::ModelsEndpointFuture;
 use codex_models_manager::manager::ModelsEndpointResponse;
-use codex_models_manager::manager::OpenAiModelsManager;
+use codex_models_manager::manager::RemoteModelsManager;
 use codex_models_manager::manager::RefreshStrategy;
 use codex_models_manager::manager::SharedModelsManager;
 use codex_models_manager::model_info::model_info_from_slug;
 use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::error::Result as CoreResult;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelVisibility;
-use codex_protocol::openai_models::ModelsResponse;
+use codex_protocol::model_types::ModelInfo;
+use codex_protocol::model_types::ModelVisibility;
+use codex_protocol::model_types::ModelsResponse;
 use codex_protocol::protocol::EventMsg;
 use codex_protocol::protocol::ThreadSettingsOverrides;
 use codex_protocol::user_input::UserInput;
@@ -181,7 +181,7 @@ fn models_manager(
     cache: Arc<dyn ModelsCache>,
     endpoint: Arc<TestModelsEndpoint>,
 ) -> SharedModelsManager {
-    Arc::new(OpenAiModelsManager::new_with_cache(
+    Arc::new(RemoteModelsManager::new_with_cache(
         cache,
         endpoint,
         Some(AuthManager::from_auth_for_testing(
@@ -305,7 +305,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
         initial_auth.clone(),
         home.path().to_path_buf(),
     );
-    let mut provider_info = ModelProviderInfo::create_openai_provider(None);
+    let mut provider_info = ModelProviderInfo::create_responses_provider(None);
     provider_info.base_url = Some(format!("{}/v1", server.uri()));
     provider_info.supports_websockets = false;
     let cache = Arc::new(TestModelsCache {
@@ -368,7 +368,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
     std::fs::write(
         home.path().join("auth.json"),
         serde_json::to_vec(&serde_json::json!({
-            "auth_mode": "apiKey", "OPENAI_API_KEY": "second-account-token",
+            "auth_mode": "apiKey", "PROVIDER_API_KEY": "second-account-token",
         }))?,
     )?;
     auth.reload().await;

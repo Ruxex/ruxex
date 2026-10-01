@@ -629,7 +629,7 @@ fn transform_for_direct_spawn_windows_preserves_only_wrapper_setup_environment()
             ("USERNAME", "alice"),
             ("USERPROFILE", r"C:\Users\alice"),
             ("SystemRoot", r"C:\Windows"),
-            ("OPENAI_API_KEY", "secret"),
+            ("PROVIDER_API_KEY", "secret"),
             ("HTTP_PROXY", "http://127.0.0.1:7890"),
         ]
         .map(|(key, value)| {

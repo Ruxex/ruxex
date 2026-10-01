@@ -1,7 +1,7 @@
 # General-purpose AI Agent Foundation (Rust)
 
 This repository is derived from Codex and is being developed as a general-purpose
-AI agent foundation. OpenAI-specific features and assumptions are removed so the
+AI agent foundation. provider-specific features and assumptions are removed so the
 runtime can provide a provider-neutral base for building a wide range of AI
 agents.
 
@@ -30,7 +30,7 @@ excludes untracked and ignored files. Categories are grouped by file extension.
 
 ## Current repository snapshot
 
-- Snapshot commit: `f42f440d72a7471fc36264cc71de168970e13b50` (`Remove Guardian OpenAI integration`)
+- Snapshot commit: `f42f440d72a7471fc36264cc71de168970e13b50` (`Remove Guardian provider integration`)
 - Approximate size at this commit: 1,755,036 lines across 6,651 Git-tracked files
 
 Approximate line count by file type at this commit:

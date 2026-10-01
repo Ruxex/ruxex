@@ -267,7 +267,7 @@ fn thread_resume_response_round_trips_initial_turns_page() {
             section_entered_at: Some(1),
             project_id: None,
             history_mode: Default::default(),
-            model_provider: "openai".to_string(),
+            model_provider: "provider".to_string(),
             model: None,
             reasoning_effort: None,
             created_at: 1,
@@ -288,7 +288,7 @@ fn thread_resume_response_round_trips_initial_turns_page() {
             turns: Vec::new(),
         },
         model: "gpt-5".to_string(),
-        model_provider: "openai".to_string(),
+        model_provider: "provider".to_string(),
         service_tier: None,
         cwd: absolute_path("tmp"),
         runtime_workspace_roots: Vec::new(),
@@ -2738,7 +2738,7 @@ fn sandbox_policy_rejects_legacy_workspace_write_restricted_read_access_field() 
 #[test]
 fn network_requirements_deserializes_legacy_fields() {
     let requirements: NetworkRequirements = serde_json::from_value(json!({
-        "allowedDomains": ["api.openai.com"],
+        "allowedDomains": ["api.example.com"],
         "deniedDomains": ["blocked.example.com"],
         "allowUnixSockets": ["/tmp/proxy.sock"]
     }))
@@ -2755,7 +2755,7 @@ fn network_requirements_deserializes_legacy_fields() {
             dangerously_allow_all_unix_sockets: None,
             domains: None,
             managed_allowed_domains_only: None,
-            allowed_domains: Some(vec!["api.openai.com".to_string()]),
+            allowed_domains: Some(vec!["api.example.com".to_string()]),
             denied_domains: Some(vec!["blocked.example.com".to_string()]),
             unix_sockets: None,
             allow_unix_sockets: Some(vec!["/tmp/proxy.sock".to_string()]),
@@ -2774,14 +2774,14 @@ fn network_requirements_serializes_canonical_and_legacy_fields() {
         dangerously_allow_non_loopback_proxy: Some(false),
         dangerously_allow_all_unix_sockets: Some(true),
         domains: Some(BTreeMap::from([
-            ("api.openai.com".to_string(), NetworkDomainPermission::Allow),
+            ("api.example.com".to_string(), NetworkDomainPermission::Allow),
             (
                 "blocked.example.com".to_string(),
                 NetworkDomainPermission::Deny,
             ),
         ])),
         managed_allowed_domains_only: Some(true),
-        allowed_domains: Some(vec!["api.openai.com".to_string()]),
+        allowed_domains: Some(vec!["api.example.com".to_string()]),
         denied_domains: Some(vec!["blocked.example.com".to_string()]),
         unix_sockets: Some(BTreeMap::from([
             (
@@ -2807,11 +2807,11 @@ fn network_requirements_serializes_canonical_and_legacy_fields() {
             "dangerouslyAllowNonLoopbackProxy": false,
             "dangerouslyAllowAllUnixSockets": true,
             "domains": {
-                "api.openai.com": "allow",
+                "api.example.com": "allow",
                 "blocked.example.com": "deny"
             },
             "managedAllowedDomainsOnly": true,
-            "allowedDomains": ["api.openai.com"],
+            "allowedDomains": ["api.example.com"],
             "deniedDomains": ["blocked.example.com"],
             "unixSockets": {
                 "/tmp/ignored.sock": "deny",
@@ -2994,7 +2994,7 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
     let command_item = TurnItem::CommandExecution(CommandExecutionItem {
         model_context: None,
         id: "exec-1".to_string(),
-        plugin_id: Some("sample@openai-curated".to_string()),
+        plugin_id: Some("sample@test-curated".to_string()),
         script_path: Some("scripts/run.py".to_string()),
         process_id: Some("pid-1".to_string()),
         command: vec![
@@ -3027,7 +3027,7 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
         ThreadItem::CommandExecution {
             model_context: None,
             id: "exec-1".to_string(),
-            plugin_id: Some("sample@openai-curated".to_string()),
+            plugin_id: Some("sample@test-curated".to_string()),
             script_path: Some("scripts/run.py".to_string()),
             command: "git -c 'http.extraHeader=Authorization: Bearer [REDACTED_SECRET]' -c 'http.extraHeader=X-Trace:example' push"
                 .to_string(),
@@ -3527,7 +3527,7 @@ fn plugin_source_serializes_local_git_npm_and_remote_variants() {
 
     assert_eq!(
         serde_json::to_value(PluginSource::Git {
-            url: "https://github.com/openai/example.git".to_string(),
+            url: "https://github.com/codex/example.git".to_string(),
             path: Some("plugins/example".to_string()),
             ref_name: Some("main".to_string()),
             sha: Some("abc123".to_string()),
@@ -3535,7 +3535,7 @@ fn plugin_source_serializes_local_git_npm_and_remote_variants() {
         .unwrap(),
         json!({
             "type": "git",
-            "url": "https://github.com/openai/example.git",
+            "url": "https://github.com/codex/example.git",
             "path": "plugins/example",
             "refName": "main",
             "sha": "abc123",
@@ -3630,14 +3630,14 @@ fn marketplace_upgrade_params_serialization_uses_optional_marketplace_name() {
 fn plugin_marketplace_entry_serializes_remote_only_path_as_null() {
     assert_eq!(
         serde_json::to_value(PluginMarketplaceEntry {
-            name: "openai-curated-remote".to_string(),
+            name: "test-remote".to_string(),
             path: None,
             interface: None,
             plugins: Vec::new(),
         })
         .unwrap(),
         json!({
-            "name": "openai-curated-remote",
+            "name": "test-remote",
             "path": null,
             "interface": null,
             "plugins": [],
@@ -3833,13 +3833,13 @@ fn plugin_read_params_serialization_uses_install_source_fields() {
 
     assert_eq!(
         serde_json::from_value::<PluginReadParams>(json!({
-            "remoteMarketplaceName": "openai-curated-remote",
+            "remoteMarketplaceName": "test-remote",
             "pluginName": "gmail",
         }))
         .unwrap(),
         PluginReadParams {
             marketplace_path: None,
-            remote_marketplace_name: Some("openai-curated-remote".to_string()),
+            remote_marketplace_name: Some("test-remote".to_string()),
             plugin_name: "gmail".to_string(),
         },
     );
@@ -3888,14 +3888,14 @@ fn plugin_install_params_serialization_omits_force_remote_sync() {
 
     assert_eq!(
         serde_json::from_value::<PluginInstallParams>(json!({
-            "remoteMarketplaceName": "openai-curated-remote",
+            "remoteMarketplaceName": "test-remote",
             "pluginName": "gmail",
             "forceRemoteSync": true,
         }))
         .unwrap(),
         PluginInstallParams {
             marketplace_path: None,
-            remote_marketplace_name: Some("openai-curated-remote".to_string()),
+            remote_marketplace_name: Some("test-remote".to_string()),
             install_attempt_id: None,
             plugin_name: "gmail".to_string(),
         },
@@ -3907,13 +3907,13 @@ fn plugin_install_params_serialization_omits_force_remote_sync() {
 fn plugin_skill_read_params_serialization_uses_remote_plugin_id() {
     assert_eq!(
         serde_json::to_value(PluginSkillReadParams {
-            remote_marketplace_name: "openai-curated-remote".to_string(),
+            remote_marketplace_name: "test-remote".to_string(),
             remote_plugin_id: "plugins~Plugin_00000000000000000000000000000000".to_string(),
             skill_name: "plan-work".to_string(),
         })
         .unwrap(),
         json!({
-            "remoteMarketplaceName": "openai-curated-remote",
+            "remoteMarketplaceName": "test-remote",
             "remotePluginId": "plugins~Plugin_00000000000000000000000000000000",
             "skillName": "plan-work",
         }),
@@ -4112,7 +4112,7 @@ fn plugin_share_list_response_serializes_share_items() {
         serde_json::to_value(PluginShareListResponse {
             data: vec![PluginShareListItem {
                 plugin: PluginSummary {
-                    id: "gmail@openai-curated-remote".to_string(),
+                    id: "gmail@test-remote".to_string(),
                     remote_plugin_id: Some(
                         "plugins~Plugin_00000000000000000000000000000000".to_string(),
                     ),
@@ -4141,7 +4141,7 @@ fn plugin_share_list_response_serializes_share_items() {
         json!({
             "data": [{
                 "plugin": {
-                    "id": "gmail@openai-curated-remote",
+                    "id": "gmail@test-remote",
                     "remotePluginId": "plugins~Plugin_00000000000000000000000000000000",
                     "version": null,
                     "localVersion": null,
@@ -4195,7 +4195,7 @@ fn plugin_summary_defaults_missing_availability_to_available() {
 #[test]
 fn plugin_summary_round_trips_plan_eligibility_metadata() {
     let value = json!({
-        "id": "gmail@openai-curated-remote",
+        "id": "gmail@test-remote",
         "remotePluginId": "plugins~Plugin_00000000000000000000000000000000",
         "version": null,
         "localVersion": null,
@@ -4243,22 +4243,22 @@ fn plugin_availability_deserializes_enabled_alias() {
 fn plugin_uninstall_params_serialization_omits_force_remote_sync() {
     assert_eq!(
         serde_json::to_value(PluginUninstallParams {
-            plugin_id: "gmail@openai-curated".to_string(),
+            plugin_id: "gmail@test-curated".to_string(),
         })
         .unwrap(),
         json!({
-            "pluginId": "gmail@openai-curated",
+            "pluginId": "gmail@test-curated",
         }),
     );
 
     assert_eq!(
         serde_json::from_value::<PluginUninstallParams>(json!({
-            "pluginId": "gmail@openai-curated",
+            "pluginId": "gmail@test-curated",
             "forceRemoteSync": true,
         }))
         .unwrap(),
         PluginUninstallParams {
-            plugin_id: "gmail@openai-curated".to_string(),
+            plugin_id: "gmail@test-curated".to_string(),
         },
     );
 
@@ -4487,7 +4487,7 @@ fn thread_lifecycle_responses_default_missing_optional_fields() {
             "forkedFromId": null,
             "preview": "",
             "ephemeral": false,
-            "modelProvider": "openai",
+            "modelProvider": "provider",
             "createdAt": 1,
             "updatedAt": 1,
             "status": { "type": "idle" },
@@ -4502,7 +4502,7 @@ fn thread_lifecycle_responses_default_missing_optional_fields() {
             "turns": []
         },
         "model": "gpt-5",
-        "modelProvider": "openai",
+        "modelProvider": "provider",
         "serviceTier": null,
         "cwd": absolute_path_string("tmp"),
         "approvalPolicy": "on-request",

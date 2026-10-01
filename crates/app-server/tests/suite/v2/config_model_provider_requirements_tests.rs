@@ -32,7 +32,7 @@ requires_auth = true
     std::fs::write(
         home.path().join("config.toml"),
         r#"
-model_provider = "openai"
+model_provider = "provider"
 [model_providers.gateway]
 name = "Local override"
 base_url = "https://local.example.test"
@@ -87,7 +87,7 @@ X-Local = "no"
 
     let id = server
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model_provider: Some("openai".to_string()),
+            model_provider: Some("provider".to_string()),
             ephemeral: Some(true),
             ..Default::default()
         })
@@ -97,7 +97,7 @@ X-Local = "no"
     assert_eq!(started.model_provider, "gateway");
 
     for (key, value) in [
-        ("model_provider", json!("openai")),
+        ("model_provider", json!("provider")),
         (
             "model_providers.gateway.base_url",
             json!("https://other.example.test"),

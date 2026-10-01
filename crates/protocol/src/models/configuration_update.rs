@@ -1,6 +1,6 @@
 //! Typed reasoning settings for a durable Responses API configuration update.
 
-use crate::openai_models::ReasoningEffort;
+use crate::model_types::ReasoningEffort;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;

@@ -6,7 +6,7 @@ use serde_json::json;
 #[test]
 fn build_request_plugin_install_elicitation_request_injects_plugin_metadata() {
     let plugin = DiscoverableTool::Plugin(Box::new(DiscoverablePluginInfo {
-        id: "sample@openai-curated-remote".to_string(),
+        id: "sample@test-remote".to_string(),
         remote_plugin_id: Some("plugins~Plugin_sample".to_string()),
         name: "Sample Plugin".to_string(),
         description: Some("Includes skills, MCP servers, and apps.".to_string()),
@@ -29,7 +29,7 @@ fn build_request_plugin_install_elicitation_request_injects_plugin_metadata() {
                 tool_type: DiscoverableToolType::Plugin,
                 suggest_type: DiscoverableToolAction::Install,
                 suggest_reason: "Use the sample plugin's skills and MCP server",
-                tool_id: "sample@openai-curated-remote",
+                tool_id: "sample@test-remote",
                 tool_name: "Sample Plugin",
                 suggestion_id: Some("request_plugin_install_install-sample"),
                 install_url: None,

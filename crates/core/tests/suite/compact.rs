@@ -19,9 +19,9 @@ use codex_protocol::config_types::Settings;
 use codex_protocol::items::TurnItem;
 use codex_protocol::models::ImageReference;
 use codex_protocol::models::PermissionProfile;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelServiceTier;
-use codex_protocol::openai_models::ModelsResponse;
+use codex_protocol::model_types::ModelInfo;
+use codex_protocol::model_types::ModelServiceTier;
+use codex_protocol::model_types::ModelsResponse;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::EventMsg;
 use codex_protocol::protocol::HookEventName;
@@ -281,18 +281,18 @@ with Path(r"{manual_post_log_path}").open("a", encoding="utf-8") as handle:
     fs::write(home.join("hooks.json"), hooks.to_string()).expect("write hooks.json");
 }
 
-fn non_openai_model_provider(server: &MockServer) -> ModelProviderInfo {
+fn non_provider_model_provider(server: &MockServer) -> ModelProviderInfo {
     let mut provider =
-        ModelProviderInfo::create_openai_provider(None);
-    provider.name = "OpenAI (test)".into();
+        ModelProviderInfo::create_responses_provider(None);
+    provider.name = "provider (test)".into();
     provider.base_url = Some(format!("{}/v1", server.uri()));
     provider.supports_websockets = false;
     provider
 }
 
-fn openai_model_provider(server: &MockServer) -> ModelProviderInfo {
+fn provider_model_provider(server: &MockServer) -> ModelProviderInfo {
     let mut provider =
-        ModelProviderInfo::create_openai_provider(None);
+        ModelProviderInfo::create_responses_provider(None);
     provider.base_url = Some(format!("{}/v1", server.uri()));
     provider.supports_websockets = false;
     provider
@@ -393,8 +393,8 @@ fn remote_v2_compaction_response() -> String {
 }
 
 fn local_compaction_provider(server: &wiremock::MockServer) -> ModelProviderInfo {
-    let mut provider = ModelProviderInfo::create_openai_provider(None);
-    provider.name = "OpenAI-compatible test provider".to_string();
+    let mut provider = ModelProviderInfo::create_responses_provider(None);
+    provider.name = "provider-compatible test provider".to_string();
     provider.base_url = Some(format!("{}/v1", server.uri()));
     provider.supports_websockets = false;
     provider
@@ -550,7 +550,7 @@ async fn summarize_context_three_requests_and_instructions(
     let request_log = mount_sse_sequence(&server, vec![sse1, sse2, sse3]).await;
 
     // Build config pointing to the mock server and spawn Codex.
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut builder = test_codex().with_config(move |config| {
         config.model = Some("gpt-5.2".to_string());
         config.update_plan_enabled = enable_plan;
@@ -795,7 +795,7 @@ async fn manual_pre_compact_block_decision_does_not_block_compaction() {
     ]);
     let request_log = mount_sse_sequence(&server, vec![first_turn, compact_turn]).await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut builder = test_codex()
         .with_pre_build_hook(write_unsupported_blocking_pre_compact_hook)
         .with_config(move |config| {
@@ -862,7 +862,7 @@ async fn compact_hooks_respect_matchers_and_post_runs_after_compaction() {
     ]);
     let request_log = mount_sse_sequence(&server, vec![first_turn, compact_turn]).await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut builder = test_codex()
         .with_pre_build_hook(write_matching_compact_hooks)
         .with_config(move |config| {
@@ -926,7 +926,7 @@ async fn manual_compact_uses_custom_prompt() {
 
     let custom_prompt = "Use this compact prompt instead";
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut builder = test_codex().with_config(move |config| {
         config.model_provider = model_provider;
         config.compact_prompt = Some(custom_prompt.to_string());
@@ -1003,7 +1003,7 @@ async fn manual_compact_uses_custom_prompt() {
 async fn reasoning_effort_override_remote_v2_compaction_resets_pinned_effort(
     fail_compaction: bool,
 ) -> Result<()> {
-    use codex_protocol::openai_models::ReasoningEffort;
+    use codex_protocol::model_types::ReasoningEffort;
 
     skip_if_no_network!(Ok(()));
 
@@ -1155,7 +1155,7 @@ async fn manual_compact_records_durable_and_local_token_usage() {
     ]);
     mount_sse_once(&server, sse_compact).await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut builder = test_codex().with_config(move |config| {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
@@ -1246,7 +1246,7 @@ async fn manual_compact_emits_context_compaction_items() {
     ]);
     mount_sse_sequence(&server, vec![sse1, sse2]).await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut builder = test_codex().with_config(move |config| {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
@@ -1307,11 +1307,11 @@ async fn multiple_auto_compact_per_task_runs_after_token_limit_hit() {
 
     let server = start_mock_server().await;
 
-    let non_openai_provider_name = non_openai_model_provider(&server).name;
+    let non_responses_provider_name = non_provider_model_provider(&server).name;
     let test = test_codex()
         .with_pre_build_hook(allow_echo_commands)
         .with_config(move |config| {
-            config.model_provider.name = non_openai_provider_name;
+            config.model_provider.name = non_responses_provider_name;
         })
         .build(&server)
         .await
@@ -1874,7 +1874,7 @@ async fn auto_compact_runs_after_token_limit_hit() {
 
     let request_log = mount_sse_sequence(&server, vec![sse1, sse2, sse3, sse4]).await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
 
     let mut builder = test_codex().with_config(move |config| {
         config.model_provider = model_provider;
@@ -2055,7 +2055,7 @@ async fn auto_compact_emits_context_compaction_items() {
 
     mount_sse_sequence(&server, vec![sse1, sse2, sse3, sse4]).await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut builder = test_codex().with_config(move |config| {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
@@ -2135,7 +2135,7 @@ async fn auto_compact_starts_after_turn_started() {
 
     mount_sse_sequence(&server, vec![sse1, sse2, sse3, sse4]).await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut builder = test_codex().with_config(move |config| {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
@@ -2318,7 +2318,7 @@ async fn pre_sampling_compact_runs_on_switch_to_smaller_context_model() {
     )
     .await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut builder = test_codex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
@@ -2421,7 +2421,7 @@ async fn pre_sampling_compact_runs_when_comp_hash_changes() {
     )
     .await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut builder = test_codex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
@@ -2489,7 +2489,7 @@ async fn previous_model_compaction_resolves_selected_settings() -> Result<()> {
         ],
     )
     .await;
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let test = test_codex()
         .with_model_info_override("gpt-5.4", |model| {
             model.comp_hash = Some("hash-a".to_string());
@@ -2606,7 +2606,7 @@ async fn pre_sampling_compact_falls_back_from_retired_previous_model_after_renam
     )
     .await;
 
-    let model_provider = openai_model_provider(&server);
+    let model_provider = provider_model_provider(&server);
     let mut initial_builder = test_codex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(retired_model)
@@ -2649,7 +2649,7 @@ async fn pre_sampling_compact_falls_back_from_retired_previous_model_after_renam
     })
     .await;
 
-    let model_provider = openai_model_provider(&server);
+    let model_provider = provider_model_provider(&server);
     let mut resumed_builder = test_codex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(retired_model)
@@ -2745,7 +2745,7 @@ async fn pre_sampling_compact_falls_back_when_previous_model_is_not_found() {
     )
     .await;
 
-    let model_provider = openai_model_provider(&server);
+    let model_provider = provider_model_provider(&server);
     let mut initial_builder = test_codex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(retired_model)
@@ -2788,7 +2788,7 @@ async fn pre_sampling_compact_falls_back_when_previous_model_is_not_found() {
     })
     .await;
 
-    let mut model_provider = openai_model_provider(&server);
+    let mut model_provider = provider_model_provider(&server);
     model_provider.stream_max_retries = Some(0);
     let mut resumed_builder = test_codex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
@@ -2889,7 +2889,7 @@ async fn pre_sampling_compact_falls_back_after_previous_model_invalid_request_on
     )
     .await;
 
-    let model_provider = openai_model_provider(&server);
+    let model_provider = provider_model_provider(&server);
     let mut builder = test_codex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(retired_model)
@@ -2997,7 +2997,7 @@ async fn pre_sampling_compact_keeps_unknown_previous_model_for_api_key_auth_and_
     )
     .await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut builder = test_codex()
         .with_auth(CodexAuth::from_api_key("Test API Key"))
         .with_model(previous_model)
@@ -3088,7 +3088,7 @@ async fn pre_sampling_compact_skips_when_either_comp_hash_is_missing() {
     )
     .await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut builder = test_codex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(model_without_hash)
@@ -3193,7 +3193,7 @@ async fn body_after_prefix_model_switch_budget_compacts_with_next_model() {
     )
     .await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut builder = test_codex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
@@ -3287,7 +3287,7 @@ async fn pre_sampling_compact_runs_after_resume_and_switch_to_smaller_model() {
     )
     .await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut initial_builder = test_codex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
@@ -3330,7 +3330,7 @@ async fn pre_sampling_compact_runs_after_resume_and_switch_to_smaller_model() {
     })
     .await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut resumed_builder = test_codex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
@@ -3408,7 +3408,7 @@ async fn pre_sampling_compact_recovers_comp_hash_after_resume() {
     )
     .await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut initial_builder = test_codex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
@@ -3461,7 +3461,7 @@ async fn pre_sampling_compact_recovers_comp_hash_after_resume() {
         });
     assert_eq!(persisted_comp_hash.as_deref(), Some("hash-a"));
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut resumed_builder = test_codex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
@@ -3535,7 +3535,7 @@ async fn pre_sampling_compact_skips_missing_comp_hash_after_resume() {
     )
     .await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut initial_builder = test_codex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
@@ -3586,7 +3586,7 @@ async fn pre_sampling_compact_skips_missing_comp_hash_after_resume() {
         .expect("persisted turn context");
     assert!(persisted_turn_context["payload"].get("comp_hash").is_none());
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut resumed_builder = test_codex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
@@ -3684,7 +3684,7 @@ async fn auto_compact_persists_rollout_entries() {
     };
     mount_sse_once_match(&server, fourth_matcher, sse4).await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
 
     let mut builder = test_codex().with_config(move |config| {
         config.model_provider = model_provider;
@@ -3794,7 +3794,7 @@ async fn manual_compact_retries_after_context_window_error() {
     )
     .await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
 
     let mut builder = test_codex().with_config(move |config| {
         config.model_provider = model_provider;
@@ -3887,7 +3887,7 @@ async fn manual_compact_non_context_failure_retries_then_emits_task_error() {
 
     mount_sse_sequence(&server, vec![user_turn, compact_failed_1, compact_failed_2]).await;
 
-    let mut model_provider = non_openai_model_provider(&server);
+    let mut model_provider = non_provider_model_provider(&server);
     model_provider.stream_max_retries = Some(1);
 
     let codex = test_codex()
@@ -3982,7 +3982,7 @@ async fn manual_compact_twice_preserves_latest_user_messages() {
     )
     .await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
 
     let mut builder = test_codex().with_config(move |config| {
         config.update_plan_enabled = true;
@@ -4202,7 +4202,7 @@ async fn auto_compact_allows_multiple_attempts_when_interleaved_with_other_turn_
 
     let request_log = mount_sse_sequence(&server, vec![sse1, sse2, sse3, sse4, sse5, sse6]).await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
 
     let mut builder = test_codex().with_config(move |config| {
         config.model_provider = model_provider;
@@ -4303,7 +4303,7 @@ async fn snapshot_request_shape_mid_turn_continuation_compaction() {
     let auto_compact_mock = mount_sse_once(&server, auto_compact_turn).await;
     let post_auto_compact_mock = mount_sse_once(&server, post_auto_compact_turn).await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
 
     let mut builder = test_codex().with_config(move |config| {
         config.update_plan_enabled = true;
@@ -4398,7 +4398,7 @@ async fn auto_compact_clamps_config_limit_to_context_window() {
     let auto_compact_mock = mount_sse_once(&server, auto_compact_turn).await;
     mount_sse_once(&server, post_auto_compact_turn).await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let mut builder = test_codex().with_config(move |config| {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
@@ -4459,7 +4459,7 @@ async fn auto_compact_body_after_prefix_ignores_starting_window_prefix() {
     )
     .await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let test = test_codex()
         .with_config(move |config| {
             config.model_provider = model_provider;
@@ -4547,7 +4547,7 @@ async fn auto_compact_body_after_prefix_counts_growth_after_compaction() {
     )
     .await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let test = test_codex()
         .with_config(move |config| {
             config.model_provider = model_provider;
@@ -4631,7 +4631,7 @@ async fn auto_compact_body_after_prefix_still_caps_at_context_window() {
     )
     .await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let test = test_codex()
         .with_config(move |config| {
             config.model_provider = model_provider;
@@ -4791,7 +4791,7 @@ async fn snapshot_request_shape_pre_turn_compaction_including_incoming_user_mess
     ]);
     let request_log = mount_sse_sequence(&server, vec![sse1, sse2, sse3, sse4]).await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let codex = test_codex()
         .with_config(move |config| {
             config.update_plan_enabled = true;
@@ -4910,7 +4910,7 @@ async fn snapshot_request_shape_pre_turn_compaction_strips_incoming_model_switch
     )
     .await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let test = test_codex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
@@ -5009,7 +5009,7 @@ async fn snapshot_request_shape_pre_turn_compaction_context_window_exceeded() {
     );
     let request_log = mount_sse_sequence(&server, responses).await;
 
-    let mut model_provider = non_openai_model_provider(&server);
+    let mut model_provider = non_provider_model_provider(&server);
     model_provider.stream_max_retries = Some(0);
     let codex = test_codex()
         .with_config(move |config| {
@@ -5085,7 +5085,7 @@ async fn snapshot_request_shape_manual_compact_without_previous_user_messages() 
     ]);
     let request_log = mount_sse_sequence(&server, vec![compact_turn, follow_up_turn]).await;
 
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
     let codex = test_codex()
         .with_config(move |config| {
             config.update_plan_enabled = true;

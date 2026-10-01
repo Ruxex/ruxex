@@ -18,8 +18,8 @@ use crate::tools::spec_plan::finalize_tool_router;
 use codex_protocol::models::ResponseItem;
 use codex_protocol::models::SearchToolCallParams;
 #[cfg(test)]
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ToolMode;
+use codex_protocol::model_types::ModelInfo;
+use codex_protocol::model_types::ToolMode;
 use codex_tools::DiscoverableTool;
 use codex_tools::ResponsesApiNamespaceTool;
 use codex_tools::ToolName;

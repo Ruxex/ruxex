@@ -9,7 +9,7 @@ use anyhow::Result;
 use base64::Engine;
 use codex_protocol::models::ContentItem;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::ModelsResponse;
+use codex_protocol::model_types::ModelsResponse;
 use futures::SinkExt;
 use futures::StreamExt;
 use serde_json::Value;
@@ -18,8 +18,6 @@ use tokio::sync::Notify;
 use tokio::sync::oneshot;
 use tokio_tungstenite::accept_hdr_async_with_config;
 use tokio_tungstenite::tungstenite::Message;
-use tokio_tungstenite::tungstenite::extensions::ExtensionsConfig;
-use tokio_tungstenite::tungstenite::extensions::compression::deflate::DeflateConfig;
 use tokio_tungstenite::tungstenite::handshake::server::Request;
 use tokio_tungstenite::tungstenite::handshake::server::Response;
 use tokio_tungstenite::tungstenite::protocol::WebSocketConfig;
@@ -760,7 +758,7 @@ pub fn ev_model_verification_metadata(id: &str, verifications: Vec<&str>) -> Val
         "sequence_number": 1,
         "response_id": id,
         "metadata": {
-            "openai_verification_recommendation": verifications,
+            "provider_verification_recommendation": verifications,
         }
     })
 }
@@ -1381,12 +1379,7 @@ fn parse_ws_request_body(message: Message) -> Option<Value> {
 }
 
 fn websocket_accept_config() -> WebSocketConfig {
-    let mut extensions = ExtensionsConfig::default();
-    extensions.permessage_deflate = Some(DeflateConfig::default());
-
-    let mut config = WebSocketConfig::default();
-    config.extensions = extensions;
-    config
+    WebSocketConfig::default()
 }
 
 #[derive(Clone)]

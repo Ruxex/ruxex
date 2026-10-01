@@ -113,8 +113,8 @@ async fn attachment_attachments_are_idempotent_and_scoped_to_their_thread() -> R
         .add_thread_attachment(
             thread_ids[0],
             "pull_request",
-            "openai/codex#123",
-            &json!({ "url": "https://github.com/openai/codex/pull/123" }),
+            "codex/codex#123",
+            &json!({ "url": "https://github.com/codex/codex/pull/123" }),
         )
         .await?;
     let AddThreadAttachmentOutcome::Created(first) = first else {
@@ -126,8 +126,8 @@ async fn attachment_attachments_are_idempotent_and_scoped_to_their_thread() -> R
         .add_thread_attachment(
             thread_ids[0],
             "pull_request",
-            "openai/codex#123",
-            &json!({ "url": "https://github.com/openai/codex/pull/456" }),
+            "codex/codex#123",
+            &json!({ "url": "https://github.com/codex/codex/pull/456" }),
         )
         .await?;
     assert_eq!(
@@ -139,8 +139,8 @@ async fn attachment_attachments_are_idempotent_and_scoped_to_their_thread() -> R
         .add_thread_attachment(
             thread_ids[1],
             "pull_request",
-            "openai/codex#123",
-            &json!({ "url": "https://github.com/openai/codex/pull/123" }),
+            "codex/codex#123",
+            &json!({ "url": "https://github.com/codex/codex/pull/123" }),
         )
         .await?;
     let AddThreadAttachmentOutcome::Created(other) = other else {
@@ -162,7 +162,7 @@ async fn attachment_removals_return_not_found_or_the_removed_record() -> Result<
     let (runtime, _codex_home, thread_ids) = runtime_with_threads(/*count*/ 1).await?;
     let thread_id = thread_ids[0];
     let removed_before_attach = runtime
-        .remove_thread_attachment(thread_id, "pull_request", "openai/codex#123")
+        .remove_thread_attachment(thread_id, "pull_request", "codex/codex#123")
         .await?;
     assert_eq!(
         removed_before_attach,
@@ -173,8 +173,8 @@ async fn attachment_removals_return_not_found_or_the_removed_record() -> Result<
         .add_thread_attachment(
             thread_id,
             "pull_request",
-            "openai/codex#123",
-            &json!({ "url": "https://github.com/openai/codex/pull/123" }),
+            "codex/codex#123",
+            &json!({ "url": "https://github.com/codex/codex/pull/123" }),
         )
         .await?;
     let AddThreadAttachmentOutcome::Created(explicit) = explicit else {
@@ -182,7 +182,7 @@ async fn attachment_removals_return_not_found_or_the_removed_record() -> Result<
     };
     assert_eq!(
         runtime
-            .remove_thread_attachment(thread_id, "pull_request", "openai/codex#123")
+            .remove_thread_attachment(thread_id, "pull_request", "codex/codex#123")
             .await?,
         RemoveThreadAttachmentOutcome::Removed(explicit)
     );
@@ -315,8 +315,8 @@ async fn attachments_survive_restart_and_archive_but_cascade_on_thread_deletion(
         .add_thread_attachment(
             thread_id,
             "pull_request",
-            "openai/codex#123",
-            &json!({ "url": "https://github.com/openai/codex/pull/123" }),
+            "codex/codex#123",
+            &json!({ "url": "https://github.com/codex/codex/pull/123" }),
         )
         .await?
     else {
@@ -429,8 +429,8 @@ async fn concurrent_attachment_attachments_preserve_one_deterministic_identity()
                 .add_thread_attachment(
                     thread_id,
                     "pull_request",
-                    "openai/codex#123",
-                    &json!({ "url": "https://github.com/openai/codex/pull/123" }),
+                    "codex/codex#123",
+                    &json!({ "url": "https://github.com/codex/codex/pull/123" }),
                 )
                 .await
         }));

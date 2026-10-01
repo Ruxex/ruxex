@@ -14087,7 +14087,7 @@
         ]
       },
       "ReasoningSummary": {
-        "description": "A summary of the reasoning performed by the model. This can be useful for debugging and understanding the model's reasoning process. See https://platform.openai.com/docs/guides/reasoning?api-mode=responses#reasoning-summaries",
+        "description": "A summary of the reasoning performed by the model. This can be useful for debugging and understanding the model's reasoning process. See https://platform.provider.com/docs/guides/reasoning?api-mode=responses#reasoning-summaries",
         "oneOf": [
           {
             "enum": [
@@ -16468,7 +16468,7 @@
             ]
           },
           "modelProvider": {
-            "description": "Model provider used for this thread (for example, 'openai').",
+            "description": "Model provider used for this thread (for example, 'provider').",
             "type": "string"
           },
           "name": {
@@ -20759,7 +20759,7 @@
         ]
       },
       "Verbosity": {
-        "description": "Controls output length/detail on GPT-5 models via the Responses API. Serialized with lowercase values to match the OpenAI API.",
+        "description": "Controls output length/detail on GPT-5 models via the Responses API. Serialized with lowercase values to match the provider API.",
         "enum": [
           "low",
           "medium",

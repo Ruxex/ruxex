@@ -159,7 +159,7 @@ async fn plugin_install_rejects_multiple_install_sources() -> Result<()> {
             marketplace_path: Some(AbsolutePathBuf::try_from(
                 codex_home.path().join("marketplace.json"),
             )?),
-            remote_marketplace_name: Some("openai-curated-remote".to_string()),
+            remote_marketplace_name: Some("test-remote".to_string()),
             install_attempt_id: None,
             plugin_name: "sample-plugin".to_string(),
         })
@@ -197,7 +197,7 @@ plugins = false
     let request_id = mcp
         .send_plugin_install_request(PluginInstallParams {
             marketplace_path: None,
-            remote_marketplace_name: Some("openai-curated-remote".to_string()),
+            remote_marketplace_name: Some("test-remote".to_string()),
             install_attempt_id: None,
             plugin_name: "plugins~Plugin_22222222222222222222222222222222".to_string(),
         })
@@ -224,7 +224,7 @@ async fn plugin_install_writes_remote_plugin_to_cloud_and_cache() -> Result<()> 
     let server = MockServer::start().await;
     let installed_path = codex_home
         .path()
-        .join("plugins/cache/openai-curated-remote/linear/1.2.3");
+        .join("plugins/cache/test-remote/linear/1.2.3");
     let remote_app_manifest = json!({
         "apps": {
             "linear-remote": {
@@ -307,7 +307,7 @@ async fn plugin_install_writes_remote_plugin_to_cloud_and_cache() -> Result<()> 
         !codex_home
             .path()
             .join(format!(
-                "plugins/cache/openai-curated-remote/{REMOTE_PLUGIN_ID}/1.2.3"
+                "plugins/cache/test-remote/{REMOTE_PLUGIN_ID}/1.2.3"
             ))
             .exists()
     );
@@ -441,7 +441,7 @@ async fn plugin_install_rejects_missing_remote_bundle_url() -> Result<()> {
     assert!(
         !codex_home
             .path()
-            .join("plugins/cache/openai-curated-remote/linear")
+            .join("plugins/cache/test-remote/linear")
             .exists()
     );
     Ok(())
@@ -484,7 +484,7 @@ async fn plugin_install_rejects_plain_http_remote_bundle_url() -> Result<()> {
     assert!(
         !codex_home
             .path()
-            .join("plugins/cache/openai-curated-remote/linear")
+            .join("plugins/cache/test-remote/linear")
             .exists()
     );
     Ok(())
@@ -528,7 +528,7 @@ async fn plugin_install_rejects_invalid_remote_release_version() -> Result<()> {
     assert!(
         !codex_home
             .path()
-            .join("plugins/cache/openai-curated-remote/linear")
+            .join("plugins/cache/test-remote/linear")
             .exists()
     );
     Ok(())
@@ -546,7 +546,7 @@ async fn plugin_install_rejects_invalid_remote_plugin_name() -> Result<()> {
     let request_id = mcp
         .send_plugin_install_request(PluginInstallParams {
             marketplace_path: None,
-            remote_marketplace_name: Some("openai-curated-remote".to_string()),
+            remote_marketplace_name: Some("test-remote".to_string()),
             install_attempt_id: None,
             plugin_name: "linear/../../oops".to_string(),
         })
@@ -663,9 +663,9 @@ async fn plugin_install_tracks_analytics_when_remote_install_is_rate_limited() -
         payload["events"][0]["event_type"],
         "codex_plugin_install_failed"
     );
-    assert_eq!(event_params["plugin_id"], "linear@openai-curated-remote");
+    assert_eq!(event_params["plugin_id"], "linear@test-remote");
     assert_eq!(event_params["remote_plugin_id"], REMOTE_PLUGIN_ID);
-    assert_eq!(event_params["marketplace_name"], "openai-curated-remote");
+    assert_eq!(event_params["marketplace_name"], "test-remote");
     assert_eq!(event_params["source"], "manual");
     assert_eq!(
         event_params["error_type"],
@@ -729,7 +729,7 @@ async fn plugin_install_rejects_remote_plugin_disabled_by_admin_before_download(
     assert!(
         !codex_home
             .path()
-            .join("plugins/cache/openai-curated-remote/linear")
+            .join("plugins/cache/test-remote/linear")
             .exists()
     );
     let payload = wait_for_plugin_analytics_payload(&server, "codex_plugin_install_failed").await?;
@@ -738,7 +738,7 @@ async fn plugin_install_rejects_remote_plugin_disabled_by_admin_before_download(
         payload["events"][0]["event_type"],
         "codex_plugin_install_failed"
     );
-    assert_eq!(event_params["plugin_id"], "linear@openai-curated-remote");
+    assert_eq!(event_params["plugin_id"], "linear@test-remote");
     assert_eq!(event_params["remote_plugin_id"], REMOTE_PLUGIN_ID);
     assert_eq!(event_params["error_type"], "remote_plugin_not_available");
     assert_eq!(event_params["sub_error_type"], "disabled_by_admin");
@@ -787,7 +787,7 @@ async fn plugin_install_rejects_remote_plugin_not_available() -> Result<()> {
         payload["events"][0]["event_type"],
         "codex_plugin_install_failed"
     );
-    assert_eq!(event_params["plugin_id"], "linear@openai-curated-remote");
+    assert_eq!(event_params["plugin_id"], "linear@test-remote");
     assert_eq!(event_params["remote_plugin_id"], REMOTE_PLUGIN_ID);
     assert_eq!(event_params["error_type"], "remote_plugin_not_available");
     assert_eq!(
@@ -1159,10 +1159,10 @@ async fn plugin_install_tracks_remote_plugin_analytics_event() -> Result<()> {
             "events": [{
                 "event_type": "codex_plugin_installed",
                 "event_params": {
-                    "plugin_id": "linear@openai-curated-remote",
+                    "plugin_id": "linear@test-remote",
                     "remote_plugin_id": REMOTE_PLUGIN_ID,
                     "plugin_name": "linear",
-                    "marketplace_name": "openai-curated-remote",
+                    "marketplace_name": "test-remote",
                     "has_skills": true,
                     "mcp_server_count": 0,
                     "connector_ids": [],
@@ -1236,16 +1236,16 @@ async fn plugin_install_preserves_status_when_remote_bundle_error_body_is_too_la
         payload["events"][0]["event_type"],
         "codex_plugin_install_failed"
     );
-    assert_eq!(event_params["plugin_id"], "linear@openai-curated-remote");
+    assert_eq!(event_params["plugin_id"], "linear@test-remote");
     assert_eq!(event_params["remote_plugin_id"], REMOTE_PLUGIN_ID);
-    assert_eq!(event_params["marketplace_name"], "openai-curated-remote");
+    assert_eq!(event_params["marketplace_name"], "test-remote");
     assert_eq!(event_params["source"], "manual");
     assert_eq!(event_params["error_type"], "remote_bundle_download_status");
     assert_eq!(event_params["sub_error_type"], "http_5xx");
     assert!(
         !codex_home
             .path()
-            .join("plugins/cache/openai-curated-remote/linear")
+            .join("plugins/cache/test-remote/linear")
             .exists()
     );
     Ok(())
@@ -2088,7 +2088,7 @@ connectors = true
 
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
-        .with_env_overrides(&[("OPENAI_API_KEY", Some("test-api-key"))])
+        .with_env_overrides(&[("PROVIDER_API_KEY", Some("test-api-key"))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -2208,7 +2208,7 @@ async fn plugin_install_skips_remote_mcp_oauth_disabled_by_plugin_config() -> Re
     std::fs::write(
         config_path,
         format!(
-            "{existing_config}\n[plugins.\"linear@openai-curated-remote\".mcp_servers.sample-mcp]\nenabled = false\n"
+            "{existing_config}\n[plugins.\"linear@test-remote\".mcp_servers.sample-mcp]\nenabled = false\n"
         ),
     )?;
     mount_remote_plugin_detail(&server, REMOTE_PLUGIN_ID, "1.2.3", Some(&bundle_url)).await;

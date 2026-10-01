@@ -6,7 +6,7 @@ use serde_json::json;
 fn user_verification_request_preserves_signed_bytes_and_display_text() {
     assert_eq!(
         parse_request(CustomRequest::new(
-            "openai/elicitation/create",
+            "provider/elicitation/create",
             Some(json!({
                 "mode": MODE,
                 "title": "Approve purchase",
@@ -41,7 +41,7 @@ fn user_verification_rejects_invalid_or_unbounded_requests_without_echoing_value
         params[field] = value;
         assert_eq!(
             parse_request(CustomRequest::new(
-                "openai/elicitation/create",
+                "provider/elicitation/create",
                 Some(params)
             )),
             Err(invalid_request()),

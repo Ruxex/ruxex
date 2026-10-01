@@ -1,6 +1,6 @@
 use anyhow::Result;
 use codex_protocol::models::ConfigurationReasoning;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use codex_protocol::protocol::ThreadSettingsSnapshot;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -10,7 +10,7 @@ use super::*;
 fn thread_settings_snapshot(disabled_plugin_ids: Vec<String>) -> Result<ThreadSettingsSnapshot> {
     Ok(serde_json::from_value(json!({
         "model": "gpt-5",
-        "model_provider_id": "openai",
+        "model_provider_id": "provider",
         "approval_policy": "never",
         "permission_profile": codex_protocol::models::PermissionProfile::read_only(),
         "cwd": std::env::current_dir()?,

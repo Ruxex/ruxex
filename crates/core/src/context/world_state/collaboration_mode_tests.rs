@@ -9,8 +9,8 @@ use codex_prompts::ResolvedModelMessages;
 use codex_protocol::config_types::ModeKind;
 use codex_protocol::config_types::Settings;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::CollaborationModeMessages;
-use codex_protocol::openai_models::ModelMessages;
+use codex_protocol::model_types::CollaborationModeMessages;
+use codex_protocol::model_types::ModelMessages;
 use pretty_assertions::assert_eq;
 
 #[test]

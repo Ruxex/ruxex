@@ -50,7 +50,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
     let server = MockServer::start().await;
     Mock::given(method("POST"))
         .and(path("/backend-api/codex/alpha/notes/v2/read_file"))
-        .and(header("x-openai-actor-authorization", "actor-biscuit"))
+        .and(header("x-provider-actor-authorization", "actor-biscuit"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "encrypted_output": "enc_payload"
         })))
@@ -58,7 +58,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
         .await;
     Mock::given(method("POST"))
         .and(path("/backend-api/codex/alpha/notes/v2/thread_hint"))
-        .and(header("x-openai-actor-authorization", "actor-biscuit"))
+        .and(header("x-provider-actor-authorization", "actor-biscuit"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"text": THREAD_HINT})))
         .mount(&server)
         .await;
@@ -76,7 +76,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
 
     let mut headers = HeaderMap::new();
     headers.insert(
-        "x-openai-actor-authorization",
+        "x-provider-actor-authorization",
         HeaderValue::from_static("actor-biscuit"),
     );
     let auth_manager =
@@ -249,7 +249,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
             .and(path(format!(
                 "/backend-api/codex/alpha/{namespace}/v2/{name}"
             )))
-            .and(header("x-openai-actor-authorization", "actor-biscuit"))
+            .and(header("x-provider-actor-authorization", "actor-biscuit"))
             .respond_with(ResponseTemplate::new(200).set_body_json(response))
             .mount(&server)
             .await;
@@ -274,7 +274,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
                 serde_json::from_str::<serde_json::Value>(
                     request
                         .headers
-                        .get("x-openai-tool-output-truncation-policy")
+                        .get("x-provider-tool-output-truncation-policy")
                         .expect("truncation policy header")
                         .to_str()?
                 )?,
@@ -299,7 +299,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
     ]);
     Mock::given(method("POST"))
         .and(path("/backend-api/codex/alpha/history/v2/read_item"))
-        .and(header("x-openai-actor-authorization", "actor-biscuit"))
+        .and(header("x-provider-actor-authorization", "actor-biscuit"))
         .respond_with(ResponseTemplate::new(200).set_body_json(response))
         .mount(&server)
         .await;
@@ -359,7 +359,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
 }
 
 #[tokio::test]
-async fn history_notes_require_an_openai_provider_and_codex_backend_auth() -> TestResult {
+async fn history_notes_require_an_responses_provider_and_codex_backend_auth() -> TestResult {
     let codex_home = TempDir::new()?;
     let mut config = ConfigBuilder::default()
         .loader_overrides(LoaderOverrides::without_managed_config_for_tests())

@@ -74,7 +74,7 @@ const TOOL_SEARCH_TOOL_NAME: &str = "tool_search";
 const LIST_AVAILABLE_PLUGINS_TO_INSTALL_TOOL_NAME: &str = "list_available_plugins_to_install";
 const REQUEST_PLUGIN_INSTALL_TOOL_NAME: &str = "request_plugin_install";
 const DISCOVERABLE_GMAIL_ID: &str = "connector_68df038e0ba48191908c8434991bbac2";
-const REMOTE_CALENDAR_PLUGIN_CONFIG_ID: &str = "calendar@openai-curated-remote";
+const REMOTE_CALENDAR_PLUGIN_CONFIG_ID: &str = "calendar@test-remote";
 const REMOTE_CALENDAR_PLUGIN_ID: &str = "plugin_calendar";
 const CALENDAR_CONNECTOR_ID: &str = "calendar";
 const CALENDAR_NAMESPACE: &str = "mcp__codex_apps__calendar";
@@ -552,7 +552,7 @@ async fn startup_recommendations(
         expect_recommendations,
     );
     assert_eq!(
-        user_context.contains("- GitHub (github@openai-curated-remote)"),
+        user_context.contains("- GitHub (github@test-remote)"),
         expect_recommendations,
     );
     let tools = tool_names(&request.body_json());
@@ -623,7 +623,7 @@ async fn mcp_discovery_overlaps_endpoint_plugin_recommendations() -> Result<()> 
         request
             .message_input_texts("user")
             .join("\n")
-            .contains("github@openai-curated-remote"),
+            .contains("github@test-remote"),
         "the completed request should preserve endpoint recommendations"
     );
     assert!(
@@ -895,7 +895,7 @@ async fn endpoint_mode_injects_candidates_hides_list_and_rejects_invented_ids() 
                     call_id,
                     REQUEST_PLUGIN_INSTALL_TOOL_NAME,
                     &serde_json::to_string(&json!({
-                        "plugin_id": "invented@openai-curated-remote",
+                        "plugin_id": "invented@test-remote",
                         "suggest_reason": "Try this"
                     }))?,
                 ),
@@ -917,8 +917,8 @@ async fn endpoint_mode_injects_candidates_hides_list_and_rejects_invented_ids() 
     assert_eq!(requests.len(), 2);
     let contextual_user_message = requests[0].message_input_texts("user").join("\n");
     assert!(contextual_user_message.contains("<recommended_plugins>"));
-    assert!(contextual_user_message.contains("github@openai-curated-remote"));
-    assert!(contextual_user_message.contains("google-calendar@openai-curated-remote"));
+    assert!(contextual_user_message.contains("github@test-remote"));
+    assert!(contextual_user_message.contains("google-calendar@test-remote"));
     let body = requests[0].body_json();
     let tools = tool_names(&body);
     assert!(
@@ -992,7 +992,7 @@ async fn run_remote_plugin_install_metadata_case() -> Result<()> {
                     call_id,
                     REQUEST_PLUGIN_INSTALL_TOOL_NAME,
                     &serde_json::to_string(&json!({
-                        "plugin_id": "github@openai-curated-remote",
+                        "plugin_id": "github@test-remote",
                         "suggest_reason": "Use GitHub for this request"
                     }))?,
                 ),
@@ -1053,7 +1053,7 @@ async fn run_remote_plugin_install_metadata_case() -> Result<()> {
             "event_params": {
                 "suggestion_id": "request_plugin_install_install-github",
                 "plugins": [{
-                    "plugin_id": "github@openai-curated-remote",
+                    "plugin_id": "github@test-remote",
                     "remote_plugin_id": REMOTE_PLUGIN_ID,
                     "plugin_name": "GitHub",
                     "connector_ids": [APP_CONNECTOR_ID],
@@ -1128,7 +1128,7 @@ async fn endpoint_recommendation_skips_unavailable_plugin_elicitation() -> Resul
                     call_id,
                     REQUEST_PLUGIN_INSTALL_TOOL_NAME,
                     &serde_json::to_string(&json!({
-                        "plugin_id": "github@openai-curated-remote",
+                        "plugin_id": "github@test-remote",
                         "suggest_reason": "Use GitHub for this request"
                     }))?,
                 ),
@@ -1311,7 +1311,7 @@ async fn endpoint_mode_with_no_eligible_candidates_exposes_no_suggestion_tools()
             move |config| {
                 configure_apps_without_search_tool(config, apps_base_url.as_str());
                 config.tool_suggest.disabled_tools = vec![ToolSuggestDisabledTool::plugin(
-                    "google-calendar@openai-curated-remote",
+                    "google-calendar@test-remote",
                 )];
             }
         });

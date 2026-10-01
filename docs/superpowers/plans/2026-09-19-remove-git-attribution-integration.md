@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove the OpenAI backend-controlled git attribution integration and its dedicated crate.
+**Goal:** Remove the provider backend-controlled git attribution integration and its dedicated crate.
 
 **Architecture:** Remove the extension registration at both application entry points, then remove the `codex-git-attribution` workspace member and its dependency declarations. The resulting provider-neutral runtime contributes no backend-fetched commit/PR attribution instruction.
 
 **Tech Stack:** Rust workspace, Cargo, just.
 
-**Spec:** `docs/openai-decoupling-plan.md` (Level 1, Phase 3)
+**Spec:** `docs/provider-decoupling-plan.md` (Level 1, Phase 3)
 
 ## Global Constraints
 
@@ -64,7 +64,7 @@ Expected: the generated graph reports one fewer crate and contains no `codex-git
 ### Task 2: Verify removal
 
 **Files:**
-- Modify: `docs/openai-decoupling-plan.md` only if this completes the whole Phase 3 (it does not).
+- Modify: `docs/provider-decoupling-plan.md` only if this completes the whole Phase 3 (it does not).
 
 **Interfaces:**
 - Consumes: the edited workspace.

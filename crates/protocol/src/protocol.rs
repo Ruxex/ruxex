@@ -49,7 +49,7 @@ use crate::models::ResponseItem;
 use crate::models::SandboxEnforcement;
 use crate::models::WebSearchAction;
 use crate::num_format::format_with_separators;
-use crate::openai_models::ReasoningEffort as ReasoningEffortConfig;
+use crate::model_types::ReasoningEffort as ReasoningEffortConfig;
 use crate::parse_command::ParsedCommand;
 use crate::plan_tool::UpdatePlanArgs;
 use crate::request_permissions::RequestPermissionsEvent;
@@ -2863,11 +2863,11 @@ pub enum TruncationPolicy {
     Tokens(usize),
 }
 
-impl From<crate::openai_models::TruncationPolicyConfig> for TruncationPolicy {
-    fn from(config: crate::openai_models::TruncationPolicyConfig) -> Self {
+impl From<crate::model_types::TruncationPolicyConfig> for TruncationPolicy {
+    fn from(config: crate::model_types::TruncationPolicyConfig) -> Self {
         match config.mode {
-            crate::openai_models::TruncationMode::Bytes => Self::Bytes(config.limit as usize),
-            crate::openai_models::TruncationMode::Tokens => Self::Tokens(config.limit as usize),
+            crate::model_types::TruncationMode::Bytes => Self::Bytes(config.limit as usize),
+            crate::model_types::TruncationMode::Tokens => Self::Tokens(config.limit as usize),
         }
     }
 }
@@ -5085,7 +5085,7 @@ mod tests {
             item: TurnItem::CommandExecution(CommandExecutionItem {
                 model_context: None,
                 id: "exec-1".into(),
-                plugin_id: Some("sample@openai-curated".into()),
+                plugin_id: Some("sample@test-curated".into()),
                 script_path: Some("scripts/run.py".into()),
                 process_id: Some("pid-1".into()),
                 command: vec!["echo".into(), "done".into()],
@@ -5112,7 +5112,7 @@ mod tests {
             item: TurnItem::CommandExecution(CommandExecutionItem {
                 model_context: None,
                 id: "exec-1".into(),
-                plugin_id: Some("sample@openai-curated".into()),
+                plugin_id: Some("sample@test-curated".into()),
                 script_path: Some("scripts/run.py".into()),
                 process_id: Some("pid-1".into()),
                 command: vec!["echo".into(), "done".into()],
@@ -5142,7 +5142,7 @@ mod tests {
                 started_at_ms: 10,
                 ..
             })] if call_id == "exec-1"
-                && plugin_id.as_deref() == Some("sample@openai-curated")
+                && plugin_id.as_deref() == Some("sample@test-curated")
                 && script_path.as_deref() == Some("scripts/run.py")
                 && turn_id == "turn-1"
         ));
@@ -5159,7 +5159,7 @@ mod tests {
                 aggregated_output,
                 ..
             })] if call_id == "exec-1"
-                && plugin_id.as_deref() == Some("sample@openai-curated")
+                && plugin_id.as_deref() == Some("sample@test-curated")
                 && script_path.as_deref() == Some("scripts/run.py")
                 && turn_id == "turn-1"
                 && aggregated_output == "done\n"
@@ -5702,7 +5702,7 @@ mod tests {
                 thread_source: None,
                 thread_name: None,
                 model: "codex-mini-latest".to_string(),
-                model_provider_id: "openai".to_string(),
+                model_provider_id: "provider".to_string(),
                 service_tier: None,
                 approval_policy: AskForApproval::Never,
                 permission_profile: permission_profile.clone(),
@@ -5722,7 +5722,7 @@ mod tests {
                 "session_id": "67e55044-10b1-426f-9247-bb680e5fe0c7",
                 "thread_id": "67e55044-10b1-426f-9247-bb680e5fe0c8",
                 "model": "codex-mini-latest",
-                "model_provider_id": "openai",
+                "model_provider_id": "provider",
                 "approval_policy": "never",
                 "permission_profile": permission_profile,
                 "cwd": test_path_buf("/home/user/project"),
@@ -5740,7 +5740,7 @@ mod tests {
         let value = json!({
             "session_id": "67e55044-10b1-426f-9247-bb680e5fe0c8",
             "model": "codex-mini-latest",
-            "model_provider_id": "openai",
+            "model_provider_id": "provider",
             "approval_policy": "never",
             "sandbox_policy": {
                 "type": "read-only"

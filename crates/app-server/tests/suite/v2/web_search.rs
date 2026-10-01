@@ -55,7 +55,7 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
     .to_string();
     let client_metadata = HashMap::from([(
         "mcp_request_meta".to_string(),
-        json!({ "openai/search_context": search_context }).to_string(),
+        json!({ "provider/search_context": search_context }).to_string(),
     )]);
     let server = responses::start_mock_server().await;
     let search_path = "/v1/alpha/search";
@@ -100,7 +100,7 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
     config.write(codex_home.path())?;
 
     let env_overrides = vec![
-        ("OPENAI_API_KEY", None),
+        ("PROVIDER_API_KEY", None),
         ("CUSTOM_RESPONSES_API_KEY", Some("test-api-key")),
     ];
 
@@ -179,7 +179,7 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
         assert!(
             search_request
                 .headers
-                .get("x-openai-actor-authorization")
+                .get("x-provider-actor-authorization")
                 .is_none()
         );
     }
@@ -236,11 +236,11 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
         .context("mcp_request_meta should be a JSON string")?;
     let mcp_request_meta: Value = serde_json::from_str(mcp_request_meta)
         .context("mcp_request_meta should contain valid JSON")?;
-    let search_context = mcp_request_meta["openai/search_context"]
+    let search_context = mcp_request_meta["provider/search_context"]
         .as_str()
-        .context("openai/search_context should be a JSON string")?;
+        .context("provider/search_context should be a JSON string")?;
     let search_context: Value = serde_json::from_str(search_context)
-        .context("openai/search_context should contain valid JSON")?;
+        .context("provider/search_context should contain valid JSON")?;
     assert_eq!(
         search_context
             .pointer("/telemetry_attributes/model_id")

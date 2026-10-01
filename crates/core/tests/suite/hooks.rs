@@ -28,8 +28,8 @@ use codex_protocol::models::ContentItem;
 use codex_protocol::models::NetworkPermissions;
 use codex_protocol::models::PermissionProfile;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ModelsResponse;
+use codex_protocol::model_types::ReasoningEffort;
 use codex_protocol::permissions::NetworkSandboxPolicy;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::EventMsg;
@@ -161,10 +161,10 @@ fn code_mode_custom_tool_output_text(output_item: &Value) -> String {
     }
 }
 
-fn non_openai_model_provider(server: &wiremock::MockServer) -> ModelProviderInfo {
+fn non_provider_model_provider(server: &wiremock::MockServer) -> ModelProviderInfo {
     let mut provider =
-        ModelProviderInfo::create_openai_provider(None);
-    provider.name = "OpenAI (test)".into();
+        ModelProviderInfo::create_responses_provider(None);
+    provider.name = "provider (test)".into();
     provider.base_url = Some(format!("{}/v1", server.uri()));
     provider.supports_websockets = false;
     provider
@@ -2223,7 +2223,7 @@ async fn compact_session_start_hook_records_additional_context_for_next_turn() -
     )
     .await;
     let additional_context = "remember the compacted reef";
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
 
     let mut builder = test_codex()
         .with_pre_build_hook(move |home| {
@@ -2333,7 +2333,7 @@ async fn mid_turn_auto_compact_session_start_hooks_run_before_each_continuation(
         ]),
     )
     .await;
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
 
     let mut builder = test_codex()
         .with_pre_build_hook(|home| {
@@ -2444,7 +2444,7 @@ async fn mid_turn_auto_compact_session_start_hook_stop_blocks_continuation() -> 
         ]),
     )
     .await;
-    let model_provider = non_openai_model_provider(&server);
+    let model_provider = non_provider_model_provider(&server);
 
     let mut builder = test_codex()
         .with_pre_build_hook(|home| {
@@ -4490,7 +4490,7 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
     }
     let plugin_root = home
         .path()
-        .join(format!("plugins/cache/openai-bundled/{plugin_name}/local"));
+        .join(format!("plugins/cache/codex-bundled/{plugin_name}/local"));
     fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
     let hooks = serde_json::json!({ "hooks": { "Stop": [{ "hooks": [{
         "type": "mcp_tool",
@@ -4521,7 +4521,7 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
         }))?,
     )?;
     let hook_key = codex_hooks::hook_key(
-        &format!("{plugin_name}@openai-bundled:{source_relative_path}"),
+        &format!("{plugin_name}@codex-bundled:{source_relative_path}"),
         HookEventName::Stop,
         /*group_index*/ 0,
         /*handler_index*/ 0,
@@ -4529,7 +4529,7 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
     fs::write(
         home.path().join("config.toml"),
         format!(
-            "[features]\nhooks = {hooks_enabled}\n\n[plugins.\"{plugin_name}@openai-bundled\"]\nenabled = {plugin_enabled}\n\n[hooks.state.\"{hook_key}\"]\nenabled = false\n"
+            "[features]\nhooks = {hooks_enabled}\n\n[plugins.\"{plugin_name}@codex-bundled\"]\nenabled = {plugin_enabled}\n\n[hooks.state.\"{hook_key}\"]\nenabled = false\n"
         ),
     )?;
     let repl_url = format!("{}/repl", server.uri());

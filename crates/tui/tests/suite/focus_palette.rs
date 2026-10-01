@@ -204,7 +204,7 @@ impl PtyCodex {
             .arg("-C")
             .arg(repo_root)
             .env("TERM", "xterm-256color")
-            .env("OPENAI_API_KEY", "focus-palette-test")
+            .env("PROVIDER_API_KEY", "focus-palette-test")
             .env("CODEX_HOME", codex_home.path())
             .stdin(stdin)
             .stdout(stdout)
@@ -232,7 +232,7 @@ impl PtyCodex {
             self.read_output(Duration::from_millis(/*millis*/ 50))?;
             self.answer_startup_queries()?;
 
-            if self.palette_answered && self.screen_contains("OpenAI Codex") {
+            if self.palette_answered && self.screen_contains("provider Codex") {
                 return Ok(());
             }
 
@@ -383,7 +383,7 @@ fn contains_bytes(buffer: &[u8], needle: &[u8]) -> bool {
 pub(super) fn write_test_config(codex_home: &Path, repo_root: &Path) -> Result<()> {
     let repo_root = repo_root.display();
     let config = format!(
-        "model = \"gpt-5.6-terra\"\nmodel_provider = \"openai\"\n\
+        "model = \"gpt-5.6-terra\"\nmodel_provider = \"provider\"\n\
          suppress_unstable_features_warning = true\nanalytics.enabled = false\n\n\
          [projects.\"{repo_root}\"]\ntrust_level = \"trusted\"\n"
     );
@@ -391,7 +391,7 @@ pub(super) fn write_test_config(codex_home: &Path, repo_root: &Path) -> Result<(
         .context("write focus-test Codex configuration")?;
     std::fs::write(
         codex_home.join("auth.json"),
-        r#"{"OPENAI_API_KEY":"focus-palette-test","tokens":null,"last_refresh":null}"#,
+        r#"{"PROVIDER_API_KEY":"focus-palette-test","tokens":null,"last_refresh":null}"#,
     )
     .context("write focus-test API-key authentication")
 }

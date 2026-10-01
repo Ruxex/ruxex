@@ -25,7 +25,7 @@ fn project_config_cannot_override_configured_credential_broker_hosts() {
     let mut config: TomlValue = toml::from_str(
         "[shell_environment_policy.set]\n\
          GH_HOST = 'attacker.example'\n\
-         OPENAI_BASE_URL = 'https://attacker.example/v1'",
+         PROVIDER_BASE_URL = 'https://attacker.example/v1'",
     )
     .expect("valid project config");
 
@@ -35,7 +35,7 @@ fn project_config_cannot_override_configured_credential_broker_hosts() {
         ignored,
         [
             "shell_environment_policy.set.GH_HOST",
-            "shell_environment_policy.set.OPENAI_BASE_URL",
+            "shell_environment_policy.set.PROVIDER_BASE_URL",
         ]
     );
     assert_eq!(
@@ -123,7 +123,7 @@ fn project_config_cannot_change_configured_credential_broker_state() {
         "[features]\nshell_snapshot = false",
         "[shell_environment_policy]\nexperimental_use_profile = true",
         "[shell_environment_policy.set]\nGH_TOKEN = ''",
-        "[shell_environment_policy.set]\nOPENAI_API_KEY = ''",
+        "[shell_environment_policy.set]\nPROVIDER_API_KEY = ''",
     ] {
         let mut config: TomlValue = toml::from_str(project_config).expect("valid project config");
 
@@ -163,7 +163,7 @@ fn disabled_credential_broker_preserves_project_shell_settings() {
          [shell_environment_policy]\nexperimental_use_profile = true\n\
          [shell_environment_policy.set]\n\
          GH_HOST = 'attacker.example'\n\
-         OPENAI_BASE_URL = 'https://project.example/v1'\n\
+         PROVIDER_BASE_URL = 'https://project.example/v1'\n\
          ZDOTDIR = '/project-startup'\nBASH_ENV = '/project-startup'",
     )
     .expect("valid project config");
@@ -178,7 +178,7 @@ fn disabled_credential_broker_preserves_project_shell_settings() {
              [shell_environment_policy]\nexperimental_use_profile = true\n\
              [shell_environment_policy.set]\n\
              GH_HOST = 'attacker.example'\n\
-             OPENAI_BASE_URL = 'https://project.example/v1'\n\
+             PROVIDER_BASE_URL = 'https://project.example/v1'\n\
              ZDOTDIR = '/project-startup'\nBASH_ENV = '/project-startup'"
         )
         .expect("valid expected config")
@@ -676,7 +676,7 @@ model = "gpt-work"
         "unexpected error message: {message}"
     );
     assert!(
-        message.contains("https://developers.openai.com/codex/config-advanced#profiles"),
+        message.contains("https://developers.provider.com/codex/config-advanced#profiles"),
         "unexpected error message: {message}"
     );
 }
@@ -802,7 +802,7 @@ fn local_layer_projection_preserves_override_blockers_and_cloud_position() {
                 ),
                 layer(
                     ConfigLayerSource::Mdm {
-                        domain: "com.openai.codex".to_string(),
+                        domain: "com.codex.codex".to_string(),
                         key: "config".to_string(),
                     },
                     "[a]\nunrequested=true",
@@ -845,7 +845,7 @@ fn local_layer_projection_preserves_override_blockers_and_cloud_position() {
                 layer(ConfigLayerSource::SessionFlags, "a=2"),
                 layer(
                     ConfigLayerSource::Mdm {
-                        domain: "com.openai.codex".to_string(),
+                        domain: "com.codex.codex".to_string(),
                         key: "config".to_string(),
                     },
                     "[a]",
@@ -958,7 +958,7 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
             format!(
                 "{}\n[features.network_proxy]\nenabled=true\ncredential_broker=true\n\
                  [shell_environment_policy.set]\ngh_host='github.trusted.example'\n\
-                 gh_enterprise_token='ghp_trusted'\nOPENAI_BASE_URL=''\n",
+                 gh_enterprise_token='ghp_trusted'\nPROVIDER_BASE_URL=''\n",
                 user_config("trusted")
             ),
         )

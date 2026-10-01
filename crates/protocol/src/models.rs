@@ -2158,7 +2158,7 @@ impl From<crate::dynamic_tools::DynamicToolCallOutputContentItem>
     }
 }
 
-/// The payload we send back to OpenAI when reporting a tool call result.
+/// The payload we send back to provider when reporting a tool call result.
 ///
 /// `body` serializes directly as the wire value for `function_call_output.output`.
 /// `success` remains internal metadata for downstream handling.

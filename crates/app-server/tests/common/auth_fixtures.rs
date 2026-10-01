@@ -64,7 +64,7 @@ pub fn write_api_key_auth(
 ) -> Result<()> {
     let auth = AuthDotJson {
         auth_mode: Some(AuthMode::ApiKey),
-        openai_api_key: Some(fixture.api_key),
+        api_key: Some(fixture.api_key),
         bedrock_api_key: None,
         bedrock_access_keys: None,
     };

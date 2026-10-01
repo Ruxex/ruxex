@@ -31,7 +31,7 @@ use super::network;
 const MAX_VERSION_RESPONSE_BYTES: usize = 1024 * 1024;
 
 const VERSION_FILE_NAME: &str = "version.json";
-const GITHUB_LATEST_RELEASE_URL: &str = "https://api.github.com/repos/openai/codex/releases/latest";
+const GITHUB_LATEST_RELEASE_URL: &str = "https://api.github.com/repos/codex/codex/releases/latest";
 const HOMEBREW_CASK_API_URL: &str = "https://formulae.brew.sh/api/cask/codex.json";
 #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
 const DESKTOP_UPDATE_URL: &str = "https://persistent.oaistatic.com/codex-app-prod/appcast-x64.xml";
@@ -228,7 +228,7 @@ fn windows_store_update(
         serde_json::from_slice(manifest).map_err(|_| "invalid Windows Store update manifest")?;
     if manifest.schema_version == 0
         || manifest.store_product_id != "9PLM9XGG6VKS"
-        || manifest.package_identity != "OpenAI.Codex"
+        || manifest.package_identity != "provider.Codex"
     {
         return Err("Windows Store update manifest does not target the production application");
     }
@@ -320,10 +320,10 @@ fn push_cached_version_details(details: &mut Vec<String>, version_file: &Path) {
 
 fn update_action_label(context: &InstallContext) -> &'static str {
     match &context.method {
-        InstallMethod::Npm => "npm install -g @openai/codex",
-        InstallMethod::Bun => "bun install -g @openai/codex",
-        InstallMethod::VitePlus => "vp install -g @openai/codex",
-        InstallMethod::Pnpm => "pnpm add -g @openai/codex",
+        InstallMethod::Npm => "npm install -g @codex/codex",
+        InstallMethod::Bun => "bun install -g @codex/codex",
+        InstallMethod::VitePlus => "vp install -g @codex/codex",
+        InstallMethod::Pnpm => "pnpm add -g @codex/codex",
         InstallMethod::Brew => "brew upgrade --cask codex",
         InstallMethod::Standalone { .. } => "standalone installer",
         InstallMethod::Other => "manual or unknown",
@@ -506,18 +506,18 @@ mod tests {
                 .expect("unrelated Sparkle cache directory should be created");
         }
         for (name, identity, build) in [
-            ("newest", "com.openai.codex", "6268"),
-            ("newer", "com.openai.codex", "6168"),
-            ("older", "com.openai.codex", "6138"),
+            ("newest", "com.codex.codex", "6268"),
+            ("newer", "com.codex.codex", "6168"),
+            ("older", "com.codex.codex", "6138"),
             ("different", "com.example.other", "9999"),
-            ("invalid", "com.openai.codex", "invalid"),
+            ("invalid", "com.codex.codex", "invalid"),
         ] {
             let bundle = root.path().join(name).join("extracted/Codex.app");
             write_macos_bundle(&bundle, identity, build);
         }
         let outside = tempfile::tempdir().expect("external fixture should be created");
         let linked = outside.path().join("Codex.app");
-        write_macos_bundle(&linked, "com.openai.codex", "9999");
+        write_macos_bundle(&linked, "com.codex.codex", "9999");
         std::os::unix::fs::symlink(&linked, root.path().join("Codex.app"))
             .expect("symlinked staged app fixture should be created");
 
@@ -537,7 +537,7 @@ mod tests {
             "schemaVersion": 1,
             "buildVersion": "26.803.5235.1",
             "storeProductId": "9PLM9XGG6VKS",
-            "packageIdentity": "OpenAI.Codex",
+            "packageIdentity": "provider.Codex",
         });
         assert_eq!(
             windows_store_update(&serde_json::to_vec(&manifest).unwrap(), "26.803.5235.0"),
@@ -583,14 +583,14 @@ mod tests {
                 method: InstallMethod::Npm,
                 package_layout: None,
             }),
-            "npm install -g @openai/codex"
+            "npm install -g @codex/codex"
         );
         assert_eq!(
             update_action_label(&InstallContext {
                 method: InstallMethod::Pnpm,
                 package_layout: None,
             }),
-            "pnpm add -g @openai/codex"
+            "pnpm add -g @codex/codex"
         );
         assert_eq!(
             update_action_label(&InstallContext {

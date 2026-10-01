@@ -20,7 +20,7 @@ enum BundledHookTarget {
 // Keep unsigned plugin exceptions together so they can be removed as signing lands.
 const ALLOWLISTED_BUNDLED_HOOKS: &[BundledHook] = &[
     BundledHook {
-        plugin_id: "browser@openai-bundled",
+        plugin_id: "browser@codex-bundled",
         events: &[
             HookEventName::Stop,
             HookEventName::Interrupt,
@@ -32,7 +32,7 @@ const ALLOWLISTED_BUNDLED_HOOKS: &[BundledHook] = &[
         },
     },
     BundledHook {
-        plugin_id: "chrome@openai-bundled",
+        plugin_id: "chrome@codex-bundled",
         events: &[
             HookEventName::Stop,
             HookEventName::Interrupt,
@@ -44,7 +44,7 @@ const ALLOWLISTED_BUNDLED_HOOKS: &[BundledHook] = &[
         },
     },
     BundledHook {
-        plugin_id: "chrome-dev@openai-bundled",
+        plugin_id: "chrome-dev@codex-bundled",
         events: &[
             HookEventName::Stop,
             HookEventName::Interrupt,
@@ -56,7 +56,7 @@ const ALLOWLISTED_BUNDLED_HOOKS: &[BundledHook] = &[
         },
     },
     BundledHook {
-        plugin_id: "chrome-internal@openai-bundled",
+        plugin_id: "chrome-internal@codex-bundled",
         events: &[
             HookEventName::Stop,
             HookEventName::Interrupt,
@@ -68,7 +68,7 @@ const ALLOWLISTED_BUNDLED_HOOKS: &[BundledHook] = &[
         },
     },
     BundledHook {
-        plugin_id: "computer-use@openai-bundled",
+        plugin_id: "computer-use@codex-bundled",
         events: &[
             HookEventName::Stop,
             HookEventName::Interrupt,
@@ -80,7 +80,7 @@ const ALLOWLISTED_BUNDLED_HOOKS: &[BundledHook] = &[
         },
     },
     BundledHook {
-        plugin_id: "unified-computer-use@openai-bundled",
+        plugin_id: "unified-computer-use@codex-bundled",
         events: &[
             HookEventName::Stop,
             HookEventName::Interrupt,

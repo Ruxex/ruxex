@@ -126,8 +126,8 @@ async fn app_server_uses_configured_notes_backend_for_context_window_hints(
             "model_catalog_json = {}",
             serde_json::to_string(&catalog_path)?
         ))
-        .with_model_provider("openai-custom")
-        .with_provider_name("OpenAI")
+        .with_model_provider("provider-custom")
+        .with_provider_name("provider")
         .with_provider_base_url(&format!("{}/backend-api/codex", server.uri()))
         .with_provider_config("supports_websockets = false\nrequires_auth = true")
         .with_extra_config(&format!(
@@ -139,7 +139,7 @@ async fn app_server_uses_configured_notes_backend_for_context_window_hints(
 
     let mut app_server = TestAppServer::builder()
         .with_codex_home(codex_home.path())
-        .with_env_overrides(&[("OPENAI_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized()
         .await?;
     let thread = app_server
@@ -343,8 +343,8 @@ async fn history_notes_and_async_message_emit_control_tool_analytics() -> Result
         serde_json::to_vec(&json!({"models": [model]}))?,
     )?;
     MockResponsesConfig::new(&server.uri())
-        .with_model_provider("openai-custom")
-        .with_provider_name("OpenAI")
+        .with_model_provider("provider-custom")
+        .with_provider_name("provider")
         .with_provider_base_url(&format!("{}/backend-api/codex", server.uri()))
         .with_provider_config("supports_websockets = false\nrequires_auth = true")
         .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
@@ -360,7 +360,7 @@ async fn history_notes_and_async_message_emit_control_tool_analytics() -> Result
 
     let mut app_server = TestAppServer::builder()
         .with_codex_home(codex_home.path())
-        .with_env_overrides(&[("OPENAI_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .without_managed_config()
         .build_initialized()
         .await?;

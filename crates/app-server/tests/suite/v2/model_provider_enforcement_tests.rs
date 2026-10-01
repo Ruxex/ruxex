@@ -276,7 +276,7 @@ async fn local_config_changes_do_not_block_existing_threads() -> Result<()> {
         ],
     )
     .await;
-    for local_settings in ["model_provider = 'openai'", "invalid toml !!!"] {
+    for local_settings in ["model_provider = 'provider'", "invalid toml !!!"] {
         std::fs::write(home.path().join("config.toml"), local_settings)?;
         let id = server
             .send_turn_start_request(TurnStartParams {

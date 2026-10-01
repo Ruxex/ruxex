@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove the remaining OpenAI backend account, usage, workspace, Analytics, and turn-cost capabilities, then delete their dedicated crates.
+**Goal:** Remove the remaining provider backend account, usage, workspace, Analytics, and turn-cost capabilities, then delete their dedicated crates.
 
 **Architecture:** Delete the app-server protocol methods and the UI paths that invoke them instead of leaving disabled stubs. Preserve provider-neutral live rate-limit information carried in core events, but remove account-scoped backend reads, reset-credit actions, usage dashboards, and workspace headlines. With all direct consumers gone, remove `codex-backend-client` and `codex-backend-openapi-models` from the workspace.
 
 **Tech Stack:** Rust workspace, Cargo manifests, app-server protocol bindings.
 
-**Spec:** `docs/openai-decoupling-plan.md`
+**Spec:** `docs/provider-decoupling-plan.md`
 
 ## Global Constraints
 
@@ -58,9 +58,9 @@
 - Delete: `crates/backend-client/`
 - Delete: `crates/codex-backend-openapi-models/`
 - Modify: `Cargo.toml`, `crates/app-server/Cargo.toml`, `crates/tui/Cargo.toml`, and `Cargo.lock`
-- Modify: `docs/openai-decoupling-plan.md` and `docs/openai-specific-crates.md`
+- Modify: `docs/provider-decoupling-plan.md` and `docs/provider-specific-crates.md`
 
-- [ ] Delete the OpenAI turn-cost worker and its tests, which are the remaining app-server consumer of the backend client.
+- [ ] Delete the provider turn-cost worker and its tests, which are the remaining app-server consumer of the backend client.
 - [ ] Remove both workspace members and every dependency declaration after source references are gone.
 - [ ] Record that account/usage/workspace boundaries and both backend crates are removed; retain Phase 3 as in progress because its later integrations remain.
 - [ ] Run `just crate-dependency-graph` and `just check`; do not run tests.

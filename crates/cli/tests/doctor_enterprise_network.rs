@@ -89,7 +89,7 @@ trust_level = "trusted"
             .env("no_proxy", "127.0.0.1,localhost")
             .env_remove("CODEX_ACCESS_TOKEN")
             .env_remove("CODEX_API_KEY")
-            .env_remove("OPENAI_API_KEY")
+            .env_remove("PROVIDER_API_KEY")
             .arg("--cd")
             .arg(workspace.path())
             .args(["doctor", "--json"])

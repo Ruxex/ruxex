@@ -8,7 +8,7 @@ use super::split_top_level;
 use super::split_type_alias;
 use serde_json::Value;
 
-const MODE: &str = "openai/userVerification";
+const MODE: &str = "provider/userVerification";
 
 pub(super) fn filter_ts(content: &str) -> String {
     let Some((prefix, body, suffix)) = split_type_alias(content) else {

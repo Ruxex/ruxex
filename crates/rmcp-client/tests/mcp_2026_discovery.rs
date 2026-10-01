@@ -141,7 +141,7 @@ async fn read_only_tool_requests_preserve_host_policy_and_caller_metadata() -> a
                 .with_read_only_tools(read_only);
             initialize_client(&client).await?;
             client.list_tools(/*params*/ None, /*timeout*/ None).await?;
-            let caller_meta = json!({"openai/readOnly": false, "callId": "preserved"});
+            let caller_meta = json!({"provider/readOnly": false, "callId": "preserved"});
             let mut page = rmcp::model::PaginatedRequestParams::default()
                 .with_cursor(Some("next".to_string()));
             page.meta = Some(serde_json::from_value(caller_meta.clone())?);
@@ -166,7 +166,7 @@ async fn read_only_tool_requests_preserve_host_policy_and_caller_metadata() -> a
                     let params = &body["params"];
                     json!({
                         "method": body["method"],
-                        "readOnly": params["_meta"]["openai/readOnly"],
+                        "readOnly": params["_meta"]["provider/readOnly"],
                         "callId": params["_meta"]["callId"],
                         "cursor": params["cursor"],
                         "arguments": params["arguments"],

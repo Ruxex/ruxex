@@ -225,16 +225,11 @@ mod tests {
         let env = create_env_for_mcp_server(
             Some(HashMap::from([
                 (OsString::from("TZ"), expected.clone()),
-                (
-                    OsString::from("openai_identity_token_file"),
-                    OsString::from("/run/identity-token"),
-                ),
             ])),
             &[],
         )
         .expect("local MCP env should build");
         assert_eq!(env.get(OsStr::new("TZ")), Some(&expected));
-        assert!(!env.contains_key(OsStr::new("openai_identity_token_file")));
     }
 
     #[test]
@@ -259,10 +254,7 @@ mod tests {
         let _custom_guard = EnvVarGuard::set(custom_var, &custom_value);
 
         let env = create_env_overlay_for_remote_mcp_server(
-            Some(HashMap::from([(
-                OsString::from("OpenAI_Federation_Rule_Id"),
-                OsString::from("rule"),
-            )])),
+            /*extra_env*/ None,
             &[custom_var.into()],
         );
 
@@ -314,7 +306,7 @@ mod tests {
                 source: Some("remote".to_string()),
             },
             McpServerEnvVar::Config {
-                name: "openai_identity_token_file".to_string(),
+                name: "REMOTE_IDENTITY_TOKEN_FILE".to_string(),
                 source: Some("remote".to_string()),
             },
         ]);

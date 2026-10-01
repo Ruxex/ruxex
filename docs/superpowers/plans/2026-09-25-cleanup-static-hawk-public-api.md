@@ -8,7 +8,7 @@
 
 **Tech Stack:** Rust workspace, Cargo, `just check`, checked-in Hawk JSON, Markdown compatibility inventory.
 
-**Spec:** `docs/openai-decoupling-plan.md`, `docs/pre-release-compatibility-inventory.md`, and `docs/hawk-codex-cli-result-analysis.md`.
+**Spec:** `docs/provider-decoupling-plan.md`, `docs/pre-release-compatibility-inventory.md`, and `docs/hawk-codex-cli-result-analysis.md`.
 
 ## Global Constraints
 
@@ -24,7 +24,7 @@
 - Deprecated aliases must have no repository consumer beyond their own definitions; verify with exact-symbol searches.
 - The canonical `ThreadManager`, `NewThread`, and `CodexThread` exports must remain unchanged.
 - No protocol, generated schema, OS fallback, or test-support symbol may be changed as collateral.
-- Existing user changes in `AGENTS.md`, `docs/openai-specific-crates.md`, and the untracked CLI architecture document must remain untouched.
+- Existing user changes in `AGENTS.md`, `docs/provider-specific-crates.md`, and the untracked CLI architecture document must remain untouched.
 
 ### Task 1: Remove unused codex-core compatibility aliases
 

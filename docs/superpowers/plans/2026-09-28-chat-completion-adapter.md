@@ -133,7 +133,7 @@
 
 - [ ] **Step 2: Run the focused tests to verify they fail**
 
-  Run: `cargo test -p codex-model-provider-info model_provider_info_tests --lib` and `cargo test -p codex-model-provider provider --lib`
+  Run: `cargo test -p codex-model-provider-info model_provider_info_tests --lib` and `cargo test -p codex-model-provider --lib`
 
   Expected: FAIL because the built-in metadata remains `Responses` and `ProviderApi`/`ModelProvider::api` do not exist.
 
@@ -143,7 +143,7 @@
 
 - [ ] **Step 4: Run the focused tests to verify they pass**
 
-  Run: `cargo test -p codex-model-provider-info model_provider_info_tests --lib` and `cargo test -p codex-model-provider provider --lib`
+  Run: `cargo test -p codex-model-provider-info model_provider_info_tests --lib` and `cargo test -p codex-model-provider --lib`
 
   Expected: PASS.
 

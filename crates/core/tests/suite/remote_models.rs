@@ -12,16 +12,16 @@ use codex_models_manager::model_info::BASE_INSTRUCTIONS;
 use codex_prompts::render_model_instructions;
 use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::models::PermissionProfile;
-use codex_protocol::openai_models::ConfigShellToolType;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelMessages;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::ModelVisibility;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::openai_models::ReasoningEffortPreset;
-use codex_protocol::openai_models::TruncationPolicyConfig;
-use codex_protocol::openai_models::default_input_modalities;
+use codex_protocol::model_types::ConfigShellToolType;
+use codex_protocol::model_types::ModelInfo;
+use codex_protocol::model_types::ModelMessages;
+use codex_protocol::model_types::ModelPreset;
+use codex_protocol::model_types::ModelVisibility;
+use codex_protocol::model_types::ModelsResponse;
+use codex_protocol::model_types::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffortPreset;
+use codex_protocol::model_types::TruncationPolicyConfig;
+use codex_protocol::model_types::default_input_modalities;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::EventMsg;
 use codex_protocol::protocol::ExecCommandSource;
@@ -182,7 +182,7 @@ async fn remote_models_get_model_info_uses_longest_matching_prefix() -> Result<(
     let auth = CodexAuth::from_api_key("test-api-key");
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
-        ..ModelProviderInfo::create_openai_provider(None)
+        ..ModelProviderInfo::create_responses_provider(None)
     };
     let manager = codex_core::test_support::models_manager_with_provider(
         codex_home.path().to_path_buf(),
@@ -1036,7 +1036,7 @@ async fn remote_models_do_not_append_removed_builtin_presets() -> Result<()> {
     let auth = CodexAuth::from_api_key("test-api-key");
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
-        ..ModelProviderInfo::create_openai_provider(None)
+        ..ModelProviderInfo::create_responses_provider(None)
     };
     let manager = codex_core::test_support::models_manager_with_provider(
         codex_home.path().to_path_buf(),
@@ -1102,7 +1102,7 @@ async fn remote_models_merge_adds_new_high_priority_first() -> Result<()> {
     let auth = CodexAuth::from_api_key("test-api-key");
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
-        ..ModelProviderInfo::create_openai_provider(None)
+        ..ModelProviderInfo::create_responses_provider(None)
     };
     let manager = codex_core::test_support::models_manager_with_provider(
         codex_home.path().to_path_buf(),
@@ -1154,7 +1154,7 @@ async fn remote_models_merge_replaces_overlapping_model() -> Result<()> {
     let auth = CodexAuth::from_api_key("test-api-key");
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
-        ..ModelProviderInfo::create_openai_provider(None)
+        ..ModelProviderInfo::create_responses_provider(None)
     };
     let manager = codex_core::test_support::models_manager_with_provider(
         codex_home.path().to_path_buf(),
@@ -1203,7 +1203,7 @@ async fn remote_models_merge_preserves_bundled_models_on_empty_response() -> Res
     let auth = CodexAuth::from_api_key("test-api-key");
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
-        ..ModelProviderInfo::create_openai_provider(None)
+        ..ModelProviderInfo::create_responses_provider(None)
     };
     let manager = codex_core::test_support::models_manager_with_provider(
         codex_home.path().to_path_buf(),
@@ -1250,7 +1250,7 @@ async fn remote_models_request_times_out_after_5s() -> Result<()> {
     let auth = CodexAuth::from_api_key("test-api-key");
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
-        ..ModelProviderInfo::create_openai_provider(None)
+        ..ModelProviderInfo::create_responses_provider(None)
     };
     let manager = codex_core::test_support::models_manager_with_provider(
         codex_home.path().to_path_buf(),
@@ -1325,7 +1325,7 @@ async fn remote_models_hide_picker_only_models() -> Result<()> {
     let auth = CodexAuth::from_api_key("test-api-key");
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
-        ..ModelProviderInfo::create_openai_provider(None)
+        ..ModelProviderInfo::create_responses_provider(None)
     };
     let manager = codex_core::test_support::models_manager_with_provider(
         codex_home.path().to_path_buf(),

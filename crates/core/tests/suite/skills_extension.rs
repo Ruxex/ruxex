@@ -36,8 +36,8 @@ use codex_otel::THREAD_SKILLS_KEPT_TOTAL_METRIC;
 use codex_protocol::capabilities::CapabilityRootLocation;
 use codex_protocol::capabilities::SelectedCapabilityRoot;
 use codex_protocol::models::PermissionProfile;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::openai_models::TruncationPolicyConfig;
+use codex_protocol::model_types::ModelsResponse;
+use codex_protocol::model_types::TruncationPolicyConfig;
 use codex_protocol::permissions::FileSystemAccessMode;
 use codex_protocol::permissions::FileSystemPath;
 use codex_protocol::permissions::FileSystemSandboxEntry;
@@ -778,7 +778,7 @@ async fn agent_plugin_skill_prompt_stays_bounded_without_skills_extension() -> R
     std::fs::create_dir_all(&skill_dir)?;
     std::fs::write(
         plugin_root.join("plugin.json"),
-        r#"{"$schema":"https://agent-plugins.org/schemas/1.0.0/plugin.schema.json","name":"acme.tools","extensions":{"com.openai":{"interface":{"displayName":"Acme Developer Tools"}}}}"#,
+        r#"{"$schema":"https://agent-plugins.org/schemas/1.0.0/plugin.schema.json","name":"acme.tools","extensions":{"com.codex":{"interface":{"displayName":"Acme Developer Tools"}}}}"#,
     )?;
     std::fs::write(
         skill_dir.join("SKILL.md"),

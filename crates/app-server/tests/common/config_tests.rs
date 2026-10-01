@@ -6,8 +6,8 @@ fn mock_responses_config_composes_model_provider_features_and_extra_tables() {
     let home = TempDir::new().expect("temporary CODEX_HOME");
     MockResponsesConfig::new("http://127.0.0.1:1234")
         .with_model("custom-model")
-        .with_model_provider("openai-custom")
-        .with_provider_name("OpenAI")
+        .with_model_provider("provider-custom")
+        .with_provider_name("provider")
         .with_provider_base_url("http://127.0.0.1:1234/api/codex")
         .with_approval_policy("on-request")
         .with_sandbox_mode("workspace-write")
@@ -26,10 +26,10 @@ fn mock_responses_config_composes_model_provider_features_and_extra_tables() {
         "approval_policy = \"on-request\"",
         "sandbox_mode = \"workspace-write\"",
         "managed_auth_base_url = \"http://127.0.0.1:1234\"",
-        "model_provider = \"openai-custom\"",
+        "model_provider = \"provider-custom\"",
         "shell_snapshot = false",
         "network_proxy = true",
-        "[model_providers.openai-custom]\nname = \"OpenAI\"",
+        "[model_providers.provider-custom]\nname = \"provider\"",
         "base_url = \"http://127.0.0.1:1234/api/codex\"",
         "requires_auth = true",
         "[extra]\nenabled = true",
@@ -50,7 +50,7 @@ fn mock_responses_writer_preserves_provider_auth_and_feature_overrides() {
         ]),
         /*auto_compact_limit*/ 321,
         Some(true),
-        "openai",
+        "provider",
         "compact this",
     )
     .expect("write mock Responses config");
@@ -62,7 +62,7 @@ fn mock_responses_writer_preserves_provider_auth_and_feature_overrides() {
         "model_auto_compact_token_limit = 321",
         "shell_snapshot = false",
         "network_proxy = true",
-        "[model_providers.openai]\nname = \"OpenAI\"",
+        "[model_providers.provider]\nname = \"provider\"",
         "supports_websockets = false",
         "requires_auth = true",
     ] {

@@ -4,7 +4,7 @@
 
 **Goal:** Remove ChatGPT Apps, connector directory, and host-owned Apps MCP paths while retaining provider-neutral MCP and plugin capabilities.
 
-**Architecture:** Delete the dedicated connector crates and remove their protocol, configuration, core, app-server, and TUI consumers. In `codex-mcp`, remove only Apps/OpenAI-specific adapters and preserve standard MCP runtime, generic OAuth/elicitation, and tool metadata.
+**Architecture:** Delete the dedicated connector crates and remove their protocol, configuration, core, app-server, and TUI consumers. In `codex-mcp`, remove only Apps/provider-specific adapters and preserve standard MCP runtime, generic OAuth/elicitation, and tool metadata.
 
 **Tech Stack:** Rust workspace, Cargo manifests, app-server Rust protocol and generated JSON/TypeScript schemas, CLI/TUI/core MCP integration.
 
@@ -23,7 +23,7 @@
 
 - No active non-Apps consumer remains for `codex-connectors` or its extension.
 - App-server protocol schemas no longer publish Apps RPCs while ordinary MCP protocol remains.
-- ChatGPT/OpenAI Apps metadata/auth/file handling is removed without removing standard MCP OAuth/elicitation.
+- ChatGPT/provider Apps metadata/auth/file handling is removed without removing standard MCP OAuth/elicitation.
 - Core and TUI no longer expose Apps-only settings, tool routing, or auth UI while generic mentions remain.
 - Workspace manifests and generated artifacts contain no orphaned Apps crate or RPC references.
 
@@ -48,8 +48,8 @@
 - [x] Remove TUI Apps settings, connector discovery/mentions, auth-link rendering, and Apps snapshots.
 - [x] Retain generic MCP lifecycle, tool metadata, standard elicitation, and `app://` parsing used by non-Apps integrations.
 
-### Task 4: Remove OpenAI-specific MCP adapters and finalize inventory
+### Task 4: Remove provider-specific MCP adapters and finalize inventory
 
-- [x] Remove `codex_apps`, OpenAI `fileParams`, Apps source-attribution, and ChatGPT MCP auth adapters while retaining generic MCP OAuth/elicitation.
+- [x] Remove `codex_apps`, provider `fileParams`, Apps source-attribution, and ChatGPT MCP auth adapters while retaining generic MCP OAuth/elicitation.
 - [x] Update compatibility inventory and decoupling plan status for this capability.
 - [x] Run broad searches, `git diff --check`, affected `cargo check`, generated-artifact verification, and `just check`.

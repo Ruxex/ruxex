@@ -865,7 +865,7 @@ def run_adapter(server_url: str) -> dict[str, object]:
                         "capabilities": {
                             "experimentalApi": True,
                             "requestAttestation": False,
-                            "mcpServerOpenaiFormElicitation": True,
+                            "mcpServerproviderFormElicitation": True,
                         },
                     },
                 ),

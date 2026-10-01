@@ -294,7 +294,7 @@ async fn codex_delegate_rejects_skill_mcp_dependency_installation_without_prompt
             )
             .await?;
             fs.write_file(
-                &PathUri::from_host_native_path(agents_dir.join("openai.yaml"))?,
+                &PathUri::from_host_native_path(agents_dir.join("codex.yaml"))?,
                 b"dependencies:\n  tools:\n    - type: mcp\n      value: missing-review-server\n      transport: streamable_http\n      url: http://127.0.0.1:1/mcp\n"
                     .to_vec(),
                 Default::default(), /*sandbox*/ None,

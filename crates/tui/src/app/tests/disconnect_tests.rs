@@ -301,7 +301,7 @@ where
         let response = match request.method.as_str() {
             "initialize" => Some(json!({"result": {"userAgent": "reconnect-test/2.0.0"}})),
             "account/read" => {
-                Some(json!({"result": {"account": null, "requiresOpenaiAuth": false}}))
+                Some(json!({"result": {"account": null, "requiresproviderAuth": false}}))
             }
             "model/list" => Some(json!({"result": {"data": [], "nextCursor": null}})),
             "collaborationMode/list" => Some(json!({"result": {"data": []}})),

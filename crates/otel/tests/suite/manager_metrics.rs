@@ -253,7 +253,7 @@ fn manager_records_plugin_install_elicitation_sent_metric() -> Result<()> {
     )
     .with_metrics_without_metadata_tags(metrics);
 
-    manager.record_plugin_install_elicitation_sent("plugin", "slack@openai-curated", "Slack");
+    manager.record_plugin_install_elicitation_sent("plugin", "slack@test-curated", "Slack");
     manager.shutdown_metrics()?;
 
     let resource_metrics = latest_metrics(&exporter);

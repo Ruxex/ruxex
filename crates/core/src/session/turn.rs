@@ -80,7 +80,7 @@ use codex_protocol::models::BaseInstructions;
 use codex_protocol::models::ContentItem;
 use codex_protocol::models::MessagePhase;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::ModelInfo;
+use codex_protocol::model_types::ModelInfo;
 use codex_protocol::protocol::AgentMessageContentDeltaEvent;
 use codex_protocol::protocol::AgentReasoningSectionBreakEvent;
 use codex_protocol::protocol::CodexErrorInfo;
@@ -972,7 +972,7 @@ fn comp_hash_changed(previous: Option<&str>, current: Option<&str>) -> bool {
 /// Captures the current model's request-scoped state for retrying previous-model compaction.
 ///
 /// Returns `None` when the active authentication does not use the Codex backend, the provider is
-/// not OpenAI, or the previous and current model are the same.
+/// not provider, or the previous and current model are the same.
 async fn capture_current_model_fallback_step_context(
     sess: &Arc<Session>,
     turn_context: &Arc<TurnContext>,
@@ -984,7 +984,7 @@ async fn capture_current_model_fallback_step_context(
         .as_deref()
         .is_some_and(codex_login::AuthManager::current_auth_uses_managed_auth);
     if !uses_managed_auth
-        || !turn_context.provider.info().is_openai()
+        || !turn_context.provider.info().is_responses_provider()
         || previous_model == turn_context.model_info().slug
     {
         return Ok(None);
@@ -1305,7 +1305,7 @@ pub(crate) async fn prepare_tool_recommendations(
 pub(crate) async fn built_tools(
     sess: &Session,
     turn_context: &TurnContext,
-    model_info: &codex_protocol::openai_models::ModelInfo,
+    model_info: &codex_protocol::model_types::ModelInfo,
     environments: &TurnEnvironmentSnapshot,
     mcp: &Arc<codex_mcp::McpBinding>,
     step_store: &ExtensionData,
@@ -1870,7 +1870,7 @@ async fn try_run_sampling_request(
         .config
         .features
         .enabled(Feature::ConcurrentReasoningSummaries)
-        && turn_context.provider.info().is_openai();
+        && turn_context.provider.info().is_responses_provider();
     let mut stream = client_session
         .stream(
             prompt,

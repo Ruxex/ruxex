@@ -1,7 +1,7 @@
 use anyhow::Result;
 use codex_core::TurnInputRequest;
 use codex_protocol::config_types::ServiceTier;
-use codex_protocol::openai_models::ToolMode;
+use codex_protocol::model_types::ToolMode;
 use codex_protocol::protocol::EventMsg;
 use codex_protocol::protocol::ThreadSettingsOverrides;
 use codex_protocol::user_input::UserInput;

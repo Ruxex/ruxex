@@ -105,7 +105,7 @@ async fn plugin_read_rejects_multiple_read_sources() -> Result<()> {
             marketplace_path: Some(AbsolutePathBuf::try_from(
                 codex_home.path().join("marketplace.json"),
             )?),
-            remote_marketplace_name: Some("openai-curated-remote".to_string()),
+            remote_marketplace_name: Some("test-remote".to_string()),
             plugin_name: "sample-plugin".to_string(),
         })
         .await?;
@@ -265,7 +265,7 @@ apps = true
     let request_id = mcp
         .send_plugin_read_request(PluginReadParams {
             marketplace_path: None,
-            remote_marketplace_name: Some("openai-curated-remote".to_string()),
+            remote_marketplace_name: Some("test-remote".to_string()),
             plugin_name: "plugins~Plugin_00000000000000000000000000000000".to_string(),
         })
         .await?;
@@ -273,10 +273,10 @@ apps = true
     let response: PluginReadResponse =
         timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
 
-    assert_eq!(response.plugin.marketplace_name, "openai-curated-remote");
+    assert_eq!(response.plugin.marketplace_name, "test-remote");
     assert_eq!(
         response.plugin.summary.id,
-        "example-plugin@openai-curated-remote"
+        "example-plugin@test-remote"
     );
     assert_eq!(
         response.plugin.summary.remote_plugin_id.as_deref(),
@@ -644,7 +644,7 @@ async fn plugin_read_includes_share_url_for_admin_disabled_remote_plugin() -> Re
     let request_id = mcp
         .send_plugin_read_request(PluginReadParams {
             marketplace_path: None,
-            remote_marketplace_name: Some("openai-curated-remote".to_string()),
+            remote_marketplace_name: Some("test-remote".to_string()),
             plugin_name: "plugins~Plugin_00000000000000000000000000000000".to_string(),
         })
         .await?;
@@ -652,12 +652,12 @@ async fn plugin_read_includes_share_url_for_admin_disabled_remote_plugin() -> Re
     let response: PluginReadResponse =
         timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
 
-    assert_eq!(response.plugin.marketplace_name, "openai-curated-remote");
+    assert_eq!(response.plugin.marketplace_name, "test-remote");
     assert_eq!(response.plugin.marketplace_path, None);
     assert_eq!(response.plugin.summary.source, PluginSource::Remote);
     assert_eq!(
         response.plugin.summary.id,
-        "example-plugin@openai-curated-remote"
+        "example-plugin@test-remote"
     );
     assert_eq!(
         response.plugin.summary.remote_plugin_id.as_deref(),
@@ -787,7 +787,7 @@ async fn plugin_skill_read_reads_remote_skill_contents_when_remote_plugin_enable
 
     let request_id = mcp
         .send_plugin_skill_read_request(PluginSkillReadParams {
-            remote_marketplace_name: "openai-curated-remote".to_string(),
+            remote_marketplace_name: "test-remote".to_string(),
             remote_plugin_id: "plugins~Plugin_00000000000000000000000000000000".to_string(),
             skill_name: "plan-work".to_string(),
         })
@@ -838,7 +838,7 @@ async fn plugin_read_maps_missing_remote_plugin_to_invalid_request() -> Result<(
     let request_id = mcp
         .send_plugin_read_request(PluginReadParams {
             marketplace_path: None,
-            remote_marketplace_name: Some("openai-curated-remote".to_string()),
+            remote_marketplace_name: Some("test-remote".to_string()),
             plugin_name: "plugins~Plugin_missing".to_string(),
         })
         .await?;
@@ -893,7 +893,7 @@ remote_plugin = true
     let request_id = mcp
         .send_plugin_read_request(PluginReadParams {
             marketplace_path: None,
-            remote_marketplace_name: Some("openai-curated-remote".to_string()),
+            remote_marketplace_name: Some("test-remote".to_string()),
             plugin_name: "linear".to_string(),
         })
         .await?;
@@ -926,7 +926,7 @@ async fn plugin_read_rejects_invalid_remote_plugin_name() -> Result<()> {
     let request_id = mcp
         .send_plugin_read_request(PluginReadParams {
             marketplace_path: None,
-            remote_marketplace_name: Some("openai-curated-remote".to_string()),
+            remote_marketplace_name: Some("test-remote".to_string()),
             plugin_name: "linear/../../oops".to_string(),
         })
         .await?;
@@ -948,16 +948,16 @@ async fn plugin_read_rejects_invalid_remote_plugin_name() -> Result<()> {
 }
 
 #[tokio::test]
-async fn plugin_read_returns_canonical_openai_curated_marketplace_name() -> Result<()> {
+async fn plugin_read_returns_canonical_provider_curated_marketplace_name() -> Result<()> {
     let codex_home = TempDir::new()?;
     let repo_root = codex_home.path().join(".tmp/plugins");
-    write_plugin_marketplace(&repo_root, "openai-curated", "demo-plugin", "./demo-plugin")?;
+    write_plugin_marketplace(&repo_root, "test-curated", "demo-plugin", "./demo-plugin")?;
     std::fs::create_dir_all(repo_root.join("demo-plugin/.codex-plugin"))?;
     std::fs::write(
         repo_root.join("demo-plugin/.codex-plugin/plugin.json"),
         r#"{
   "name": "demo-plugin",
-  "description": "OpenAI curated plugin"
+  "description": "provider curated plugin"
 }"#,
     )?;
     std::fs::write(
@@ -965,11 +965,11 @@ async fn plugin_read_returns_canonical_openai_curated_marketplace_name() -> Resu
         r#"[features]
 plugins = true
 
-[plugins."demo-plugin@openai-curated"]
+[plugins."demo-plugin@test-curated"]
 enabled = true
 "#,
     )?;
-    write_installed_plugin(&codex_home, "openai-curated", "demo-plugin")?;
+    write_installed_plugin(&codex_home, "test-curated", "demo-plugin")?;
 
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
@@ -995,9 +995,9 @@ enabled = true
     assert_eq!(response.result["plugin"]["scheduledTasks"], json!(null));
     let response: PluginReadResponse = to_response(response)?;
 
-    assert_eq!(response.plugin.marketplace_name, "openai-curated");
+    assert_eq!(response.plugin.marketplace_name, "test-curated");
     assert_eq!(response.plugin.marketplace_path, Some(marketplace_path));
-    assert_eq!(response.plugin.summary.id, "demo-plugin@openai-curated");
+    assert_eq!(response.plugin.summary.id, "demo-plugin@test-curated");
     assert_eq!(response.plugin.summary.name, "demo-plugin");
     Ok(())
 }
@@ -1460,12 +1460,12 @@ async fn plugin_read_returns_plugin_details_with_bundle_contents() -> Result<()>
     "displayName": "Plugin Display Name",
     "shortDescription": "Short description for subtitle",
     "longDescription": "Long description for details page",
-    "developerName": "OpenAI",
+    "developerName": "provider",
     "category": "Productivity",
     "capabilities": ["Interactive", "Write"],
-    "websiteURL": "https://openai.com/",
-    "privacyPolicyURL": "https://openai.com/policies/row-privacy-policy/",
-    "termsOfServiceURL": "https://openai.com/policies/row-terms-of-use/",
+    "websiteURL": "https://provider.com/",
+    "privacyPolicyURL": "https://provider.com/policies/row-privacy-policy/",
+    "termsOfServiceURL": "https://provider.com/policies/row-terms-of-use/",
     "defaultPrompt": [
       "Draft the reply",
       "Find my next action"
@@ -1500,7 +1500,7 @@ description: Visible only for another product
     )?;
     std::fs::create_dir_all(plugin_root.join("skills/thread-summarizer/agents"))?;
     std::fs::write(
-        plugin_root.join("skills/thread-summarizer/agents/openai.yaml"),
+        plugin_root.join("skills/thread-summarizer/agents/codex.yaml"),
         r#"policy:
   products:
     - CODEX
@@ -1508,7 +1508,7 @@ description: Visible only for another product
     )?;
     std::fs::create_dir_all(plugin_root.join("skills/restricted-skill/agents"))?;
     std::fs::write(
-        plugin_root.join("skills/restricted-skill/agents/openai.yaml"),
+        plugin_root.join("skills/restricted-skill/agents/codex.yaml"),
         r#"policy:
   products:
     - UNKNOWN
@@ -1951,7 +1951,7 @@ async fn plugin_read_hides_apps_for_api_key_auth() -> Result<()> {
     write_connectors_config(codex_home.path(), &server_url)?;
     std::fs::write(
         codex_home.path().join("auth.json"),
-        r#"{"OPENAI_API_KEY":"sk-test-key","tokens":null,"last_refresh":null}"#,
+        r#"{"PROVIDER_API_KEY":"sk-test-key","tokens":null,"last_refresh":null}"#,
     )?;
 
     let repo_root = TempDir::new()?;
@@ -1975,7 +1975,7 @@ async fn plugin_read_hides_apps_for_api_key_auth() -> Result<()> {
         .with_env_overrides(&[
             ("CODEX_ACCESS_TOKEN", None),
             ("CODEX_API_KEY", None),
-            ("OPENAI_API_KEY", None),
+            ("PROVIDER_API_KEY", None),
         ])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;

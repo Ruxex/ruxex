@@ -85,7 +85,7 @@ fn assert_destination(buf: &Buffer, destination: &str) -> Vec<LinkedCell> {
 
 #[test]
 fn wrapped_url_fragments_keep_the_complete_destination() {
-    let url = "https://github.com/openai/codex/pull/20252";
+    let url = "https://github.com/codex/codex/pull/20252";
     let (_, _, buf) = render(
         &format!("Fix CI on {url}"),
         /*width*/ 26,
@@ -113,7 +113,7 @@ fn wrapped_url_fragments_keep_the_complete_destination() {
 
 #[test]
 fn composer_wrapped_url_fragments_keep_the_complete_destination() {
-    let url = "https://github.com/openai/codex/pull/20252";
+    let url = "https://github.com/codex/codex/pull/20252";
     let (sender, _receiver) = unbounded_channel::<AppEvent>();
     let mut composer = ChatComposer::new(
         /*has_input_focus*/ true,

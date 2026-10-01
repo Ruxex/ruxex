@@ -4,11 +4,11 @@
 
 **Goal:** Remove configuration fields that have no current producer/consumer or are obsolete compatibility aliases, while preserving active provider-neutral behavior and security boundaries.
 
-**Architecture:** Treat `ConfigToml` and its nested `*Toml` structs as the public TOML/schema contract. Remove a field only after auditing its consumers, then remove the field from the TOML type, runtime projection, generated schema, and tests together. Keep active runtime/protocol fields when only their TOML entry is obsolete, and migrate provider-specific naming before removing `openai_base_url`.
+**Architecture:** Treat `ConfigToml` and its nested `*Toml` structs as the public TOML/schema contract. Remove a field only after auditing its consumers, then remove the field from the TOML type, runtime projection, generated schema, and tests together. Keep active runtime/protocol fields when only their TOML entry is obsolete, and migrate provider-specific naming before removing `provider_base_url`.
 
 **Tech Stack:** Rust workspace, Serde/TOML, Schemars-generated JSON schema, app-server protocol, Just verification targets.
 
-**Spec:** [`docs/pre-release-compatibility-inventory.md`](../../pre-release-compatibility-inventory.md), [`docs/openai-decoupling-candidates.md`](../../openai-decoupling-candidates.md)
+**Spec:** [`docs/pre-release-compatibility-inventory.md`](../../pre-release-compatibility-inventory.md), [`docs/provider-decoupling-candidates.md`](../../provider-decoupling-candidates.md)
 
 ## Global Constraints
 
@@ -27,7 +27,7 @@
 - The canonical replacement must continue to work: `compact_prompt`, `tui.disable_paste_burst`, and `features.unified_exec`.
 - Unknown removed fields must follow the repository's strict/non-strict configuration behavior without accidentally becoming active again through CLI session flags.
 - `personality` must not be removed while active app-server, TUI, session replay, and prompt consumers remain.
-- `openai_base_url` must not be deleted before the credential-broker trusted-host and redaction behavior has an equivalent provider-neutral source.
+- `provider_base_url` must not be deleted before the credential-broker trusted-host and redaction behavior has an equivalent provider-neutral source.
 
 ## Planned Order
 
@@ -54,11 +54,11 @@
   - Top-level `disable_paste_burst`: `remove`; retain `tui.disable_paste_burst`.
   - Top-level/profile `experimental_use_unified_exec_tool`: `remove` as a legacy alias; retain `features.unified_exec`.
   - `personality`: `retain` for now; active runtime and protocol consumers remain, and no canonical replacement field has been selected.
-  - `openai_base_url`: `migrate-in-place`; retain credential-broker security behavior until a replacement source exists.
+  - `provider_base_url`: `migrate-in-place`; retain credential-broker security behavior until a replacement source exists.
 
 - [ ] **Step 2: Update the compatibility inventory with exact symbols and rationale.**
 
-  Include the canonical replacement, the affected producer/consumer paths, and the verification commands for each decision. Do not mark `personality` or `openai_base_url` as removed in this plan's first implementation slice.
+  Include the canonical replacement, the affected producer/consumer paths, and the verification commands for each decision. Do not mark `personality` or `provider_base_url` as removed in this plan's first implementation slice.
 
 ### Task 2: Remove `experimental_compact_prompt_file`
 
@@ -148,7 +148,7 @@
 
   The design must explicitly choose between existing instruction mechanisms (`instructions`, `developer_instructions`, `model_instructions_file`) and provider/model-owned instruction templates. It must cover `Personality` protocol fields, `none` opt-out behavior, prompt-template rendering, model switching, thread resume/replay, and current tests. Only then decide whether to remove just the TOML default or the runtime/protocol capability as well.
 
-### Task 5: Migrate `openai_base_url` before removal
+### Task 5: Migrate `provider_base_url` before removal
 
 **Files:**
 - Inspect/Modify: `crates/config/src/config_toml.rs`
@@ -171,16 +171,16 @@
 
 - [x] **Step 3: Migrate consumers and fixtures.**
 
-  Update core, credential-broker/network-proxy code, tests, and configuration schema to use the replacement. Keep `openai_base_url` only until all active consumers are migrated.
+  Update core, credential-broker/network-proxy code, tests, and configuration schema to use the replacement. Keep `provider_base_url` only until all active consumers are migrated.
 
 - [x] **Step 4: Remove the old field after the migration gate passes.**
 
-  Delete `ConfigToml::openai_base_url`, regenerate artifacts, update the inventory to `remove`, then run `just check --tests` and `just check`.
+  Delete `ConfigToml::provider_base_url`, regenerate artifacts, update the inventory to `remove`, then run `just check --tests` and `just check`.
 
 ## Completion Criteria
 
 - `experimental_compact_prompt_file` and the selected legacy aliases have no active producers, consumers, schema entries, or generated source-index entries.
 - `compact_prompt`, `tui.disable_paste_burst`, and `features.unified_exec` remain functional.
 - `personality` is either explicitly retained with evidence or removed through a separate protocol-aware migration.
-- `openai_base_url` was removed after its credential-broker security consumers gained the generic credential-provider configuration source.
+- `provider_base_url` was removed after its credential-broker security consumers gained the generic credential-provider configuration source.
 - The compatibility inventory records the final decision and verification evidence for every changed field.

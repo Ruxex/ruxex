@@ -31024,8 +31024,8 @@
       "identity": {
         "compiler_id": "449449b5c953ebd933f94287c83f7dd1",
         "crate": "codex_core_plugins",
-        "id": "v1|18:codex-core-plugins|18:codex_core_plugins|31:OPENAI_CURATED_MARKETPLACE_NAME|8:constant|6:source|30:crates/core-plugins/src/lib.rs|34|1",
-        "item": "OPENAI_CURATED_MARKETPLACE_NAME",
+        "id": "v1|18:codex-core-plugins|18:codex_core_plugins|31:provider_CURATED_MARKETPLACE_NAME|8:constant|6:source|30:crates/core-plugins/src/lib.rs|34|1",
+        "item": "provider_CURATED_MARKETPLACE_NAME",
         "kind": "constant",
         "module_scope": [],
         "package": "codex-core-plugins",
@@ -40213,8 +40213,8 @@
       "identity": {
         "compiler_id": "f30fdb651b820b9cc468376fd9e9bc7f",
         "crate": "codex_core",
-        "id": "v1|10:codex-core|10:codex_core|59:plugins::test_support::write_openai_api_curated_marketplace|8:function|6:source|39:crates/core/src/plugins/test_support.rs|51|1",
-        "item": "plugins::test_support::write_openai_api_curated_marketplace",
+        "id": "v1|10:codex-core|10:codex_core|59:plugins::test_support::write_provider_api_curated_marketplace|8:function|6:source|39:crates/core/src/plugins/test_support.rs|51|1",
+        "item": "plugins::test_support::write_provider_api_curated_marketplace",
         "kind": "function",
         "module_scope": [
           "plugins",
@@ -77134,14 +77134,14 @@
       "identity": {
         "compiler_id": "21db1b4d9b76c95369421bbed2ac63df",
         "crate": "codex_protocol",
-        "id": "v1|14:codex-protocol|14:codex_protocol|44:openai_models::TruncationPolicyConfig::limit|5:field|6:source|36:crates/protocol/src/openai_models.rs|355|5",
-        "item": "openai_models::TruncationPolicyConfig::limit",
+        "id": "v1|14:codex-protocol|14:codex_protocol|44:model_types::TruncationPolicyConfig::limit|5:field|6:source|36:crates/protocol/src/model_types.rs|355|5",
+        "item": "model_types::TruncationPolicyConfig::limit",
         "kind": "field",
         "module_scope": [
-          "openai_models"
+          "model_types"
         ],
         "package": "codex-protocol",
-        "parent": "openai_models::TruncationPolicyConfig"
+        "parent": "model_types::TruncationPolicyConfig"
       },
       "kind": "unnecessary_public",
       "location": {
@@ -77150,7 +77150,7 @@
         "column": 5,
         "end_column": 20,
         "end_line": 355,
-        "file": "crates/protocol/src/openai_models.rs",
+        "file": "crates/protocol/src/model_types.rs",
         "line": 355
       },
       "severity": "warning",
@@ -77164,14 +77164,14 @@
       "identity": {
         "compiler_id": "21db1b4d9b76c95348d7821b2f72cea1",
         "crate": "codex_protocol",
-        "id": "v1|14:codex-protocol|14:codex_protocol|31:openai_models::ClientVersion::0|5:field|6:source|36:crates/protocol/src/openai_models.rs|376|26",
-        "item": "openai_models::ClientVersion::0",
+        "id": "v1|14:codex-protocol|14:codex_protocol|31:model_types::ClientVersion::0|5:field|6:source|36:crates/protocol/src/model_types.rs|376|26",
+        "item": "model_types::ClientVersion::0",
         "kind": "field",
         "module_scope": [
-          "openai_models"
+          "model_types"
         ],
         "package": "codex-protocol",
-        "parent": "openai_models::ClientVersion"
+        "parent": "model_types::ClientVersion"
       },
       "kind": "unnecessary_public",
       "location": {
@@ -77180,7 +77180,7 @@
         "column": 26,
         "end_column": 34,
         "end_line": 376,
-        "file": "crates/protocol/src/openai_models.rs",
+        "file": "crates/protocol/src/model_types.rs",
         "line": 376
       },
       "severity": "warning",
@@ -77194,14 +77194,14 @@
       "identity": {
         "compiler_id": "21db1b4d9b76c95395b52b4aecbb474e",
         "crate": "codex_protocol",
-        "id": "v1|14:codex-protocol|14:codex_protocol|31:openai_models::ClientVersion::1|5:field|6:source|36:crates/protocol/src/openai_models.rs|376|35",
-        "item": "openai_models::ClientVersion::1",
+        "id": "v1|14:codex-protocol|14:codex_protocol|31:model_types::ClientVersion::1|5:field|6:source|36:crates/protocol/src/model_types.rs|376|35",
+        "item": "model_types::ClientVersion::1",
         "kind": "field",
         "module_scope": [
-          "openai_models"
+          "model_types"
         ],
         "package": "codex-protocol",
-        "parent": "openai_models::ClientVersion"
+        "parent": "model_types::ClientVersion"
       },
       "kind": "unnecessary_public",
       "location": {
@@ -77210,7 +77210,7 @@
         "column": 35,
         "end_column": 43,
         "end_line": 376,
-        "file": "crates/protocol/src/openai_models.rs",
+        "file": "crates/protocol/src/model_types.rs",
         "line": 376
       },
       "severity": "warning",
@@ -77224,14 +77224,14 @@
       "identity": {
         "compiler_id": "21db1b4d9b76c953b8b728826790ae71",
         "crate": "codex_protocol",
-        "id": "v1|14:codex-protocol|14:codex_protocol|31:openai_models::ClientVersion::2|5:field|6:source|36:crates/protocol/src/openai_models.rs|376|44",
-        "item": "openai_models::ClientVersion::2",
+        "id": "v1|14:codex-protocol|14:codex_protocol|31:model_types::ClientVersion::2|5:field|6:source|36:crates/protocol/src/model_types.rs|376|44",
+        "item": "model_types::ClientVersion::2",
         "kind": "field",
         "module_scope": [
-          "openai_models"
+          "model_types"
         ],
         "package": "codex-protocol",
-        "parent": "openai_models::ClientVersion"
+        "parent": "model_types::ClientVersion"
       },
       "kind": "unnecessary_public",
       "location": {
@@ -77240,7 +77240,7 @@
         "column": 44,
         "end_column": 51,
         "end_line": 376,
-        "file": "crates/protocol/src/openai_models.rs",
+        "file": "crates/protocol/src/model_types.rs",
         "line": 376
       },
       "severity": "warning",
@@ -77254,14 +77254,14 @@
       "identity": {
         "compiler_id": "21db1b4d9b76c95319a6445ad16b14e5",
         "crate": "codex_protocol",
-        "id": "v1|14:codex-protocol|14:codex_protocol|38:openai_models::ModelInfoUpgrade::model|5:field|6:source|36:crates/protocol/src/openai_models.rs|642|5",
-        "item": "openai_models::ModelInfoUpgrade::model",
+        "id": "v1|14:codex-protocol|14:codex_protocol|38:model_types::ModelInfoUpgrade::model|5:field|6:source|36:crates/protocol/src/model_types.rs|642|5",
+        "item": "model_types::ModelInfoUpgrade::model",
         "kind": "field",
         "module_scope": [
-          "openai_models"
+          "model_types"
         ],
         "package": "codex-protocol",
-        "parent": "openai_models::ModelInfoUpgrade"
+        "parent": "model_types::ModelInfoUpgrade"
       },
       "kind": "unnecessary_public",
       "location": {
@@ -77270,7 +77270,7 @@
         "column": 5,
         "end_column": 23,
         "end_line": 642,
-        "file": "crates/protocol/src/openai_models.rs",
+        "file": "crates/protocol/src/model_types.rs",
         "line": 642
       },
       "severity": "warning",
@@ -77284,14 +77284,14 @@
       "identity": {
         "compiler_id": "21db1b4d9b76c95381a78cdbe50d2a3e",
         "crate": "codex_protocol",
-        "id": "v1|14:codex-protocol|14:codex_protocol|51:openai_models::ModelInfoUpgrade::migration_markdown|5:field|6:source|36:crates/protocol/src/openai_models.rs|643|5",
-        "item": "openai_models::ModelInfoUpgrade::migration_markdown",
+        "id": "v1|14:codex-protocol|14:codex_protocol|51:model_types::ModelInfoUpgrade::migration_markdown|5:field|6:source|36:crates/protocol/src/model_types.rs|643|5",
+        "item": "model_types::ModelInfoUpgrade::migration_markdown",
         "kind": "field",
         "module_scope": [
-          "openai_models"
+          "model_types"
         ],
         "package": "codex-protocol",
-        "parent": "openai_models::ModelInfoUpgrade"
+        "parent": "model_types::ModelInfoUpgrade"
       },
       "kind": "unnecessary_public",
       "location": {
@@ -77300,7 +77300,7 @@
         "column": 5,
         "end_column": 36,
         "end_line": 643,
-        "file": "crates/protocol/src/openai_models.rs",
+        "file": "crates/protocol/src/model_types.rs",
         "line": 643
       },
       "severity": "warning",
@@ -77314,14 +77314,14 @@
       "identity": {
         "compiler_id": "21db1b4d9b76c953d5651a1a06f45fca",
         "crate": "codex_protocol",
-        "id": "v1|14:codex-protocol|14:codex_protocol|46:openai_models::ModelInfoUpgrade::retirement_at|5:field|6:source|36:crates/protocol/src/openai_models.rs|652|5",
-        "item": "openai_models::ModelInfoUpgrade::retirement_at",
+        "id": "v1|14:codex-protocol|14:codex_protocol|46:model_types::ModelInfoUpgrade::retirement_at|5:field|6:source|36:crates/protocol/src/model_types.rs|652|5",
+        "item": "model_types::ModelInfoUpgrade::retirement_at",
         "kind": "field",
         "module_scope": [
-          "openai_models"
+          "model_types"
         ],
         "package": "codex-protocol",
-        "parent": "openai_models::ModelInfoUpgrade"
+        "parent": "model_types::ModelInfoUpgrade"
       },
       "kind": "unnecessary_public",
       "location": {
@@ -77330,7 +77330,7 @@
         "column": 5,
         "end_column": 46,
         "end_line": 652,
-        "file": "crates/protocol/src/openai_models.rs",
+        "file": "crates/protocol/src/model_types.rs",
         "line": 644
       },
       "severity": "warning",
@@ -77344,14 +77344,14 @@
       "identity": {
         "compiler_id": "21db1b4d9b76c953138f802d0023a232",
         "crate": "codex_protocol",
-        "id": "v1|14:codex-protocol|14:codex_protocol|53:openai_models::serialize_model_infos_with_legacy_base|8:function|6:source|36:crates/protocol/src/openai_models.rs|707|1",
-        "item": "openai_models::serialize_model_infos_with_legacy_base",
+        "id": "v1|14:codex-protocol|14:codex_protocol|53:model_types::serialize_model_infos_with_legacy_base|8:function|6:source|36:crates/protocol/src/model_types.rs|707|1",
+        "item": "model_types::serialize_model_infos_with_legacy_base",
         "kind": "function",
         "module_scope": [
-          "openai_models"
+          "model_types"
         ],
         "package": "codex-protocol",
-        "parent": "openai_models"
+        "parent": "model_types"
       },
       "kind": "unnecessary_public",
       "location": {
@@ -77360,7 +77360,7 @@
         "column": 1,
         "end_column": 2,
         "end_line": 738,
-        "file": "crates/protocol/src/openai_models.rs",
+        "file": "crates/protocol/src/model_types.rs",
         "line": 704
       },
       "severity": "warning",
@@ -105611,8 +105611,8 @@
       "identity": {
         "compiler_id": "8808c4a293f19f6556ec23e541eb8883",
         "crate": "codex_tui",
-        "id": "v1|9:codex-tui|9:codex_tui|21:frames::FRAMES_OPENAI|8:constant|6:source|24:crates/tui/src/frames.rs|49|1",
-        "item": "frames::FRAMES_OPENAI",
+        "id": "v1|9:codex-tui|9:codex_tui|21:frames::FRAMES_PROVIDER|8:constant|6:source|24:crates/tui/src/frames.rs|49|1",
+        "item": "frames::FRAMES_PROVIDER",
         "kind": "constant",
         "module_scope": [
           "frames"

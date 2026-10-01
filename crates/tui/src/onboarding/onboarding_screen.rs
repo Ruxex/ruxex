@@ -289,7 +289,7 @@ impl OnboardingScreen {
 impl KeyboardHandler for OnboardingScreen {
     /// Route key events to onboarding steps while preserving text-entry safety.
     ///
-    /// OpenAI API-key entry suppresses printable quit bindings after typing
+    /// provider API-key entry suppresses printable quit bindings after typing
     /// starts, while Bedrock fields suppress them from the first character.
     /// Control/alt quit chords still work as emergency exits.
     fn handle_key_event(&mut self, key_event: KeyEvent) {

@@ -40,16 +40,16 @@ pub(crate) enum ModelsEndpointAuthMode {
     MyProvider,
 }
 
-/// Provider-owned OpenAI-compatible `/models` endpoint.
+/// Provider-owned provider-compatible `/models` endpoint.
 #[derive(Debug)]
-pub(crate) struct OpenAiModelsEndpoint {
+pub(crate) struct ModelsEndpoint {
     provider_info: ModelProviderInfo,
     auth_manager: Option<Arc<AuthManager>>,
     transport_builder: Arc<dyn ModelsTransportBuilder>,
     auth_mode: ModelsEndpointAuthMode,
 }
 
-impl OpenAiModelsEndpoint {
+impl ModelsEndpoint {
     pub(crate) fn new(
         provider_info: ModelProviderInfo,
         auth_manager: Option<Arc<AuthManager>>,
@@ -139,7 +139,7 @@ impl OpenAiModelsEndpoint {
     }
 }
 
-impl ModelsEndpointClient for OpenAiModelsEndpoint {
+impl ModelsEndpointClient for ModelsEndpoint {
     fn supports_api_key_models(&self) -> bool {
         self.provider_info.env_key.is_some()
             || matches!(self.auth_mode, ModelsEndpointAuthMode::MyProvider)
@@ -166,7 +166,7 @@ impl ModelsEndpointClient for OpenAiModelsEndpoint {
         client_version: &'a str,
         http_client_factory: HttpClientFactory,
     ) -> ModelsEndpointFuture<'a, CoreResult<ModelsEndpointResponse>> {
-        Box::pin(OpenAiModelsEndpoint::list_models(
+        Box::pin(ModelsEndpoint::list_models(
             self,
             client_version,
             http_client_factory,
@@ -239,7 +239,6 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             endpoint = MODELS_ENDPOINT,
             auth.header_attached = self.auth_header_attached,
             auth.header_name = self.auth_header_name,
-            auth.env_openai_api_key_present = self.auth_env.openai_api_key_env_present,
             auth.env_codex_api_key_present = self.auth_env.codex_api_key_env_present,
             auth.env_codex_api_key_enabled = self.auth_env.codex_api_key_env_enabled,
             auth.env_provider_key_name = self.auth_env.provider_env_key_name.as_deref(),
@@ -260,7 +259,6 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             endpoint = MODELS_ENDPOINT,
             auth.header_attached = self.auth_header_attached,
             auth.header_name = self.auth_header_name,
-            auth.env_openai_api_key_present = self.auth_env.openai_api_key_env_present,
             auth.env_codex_api_key_present = self.auth_env.codex_api_key_env_present,
             auth.env_codex_api_key_enabled = self.auth_env.codex_api_key_env_enabled,
             auth.env_provider_key_name = self.auth_env.provider_env_key_name.as_deref(),
@@ -288,11 +286,11 @@ mod tests {
     use codex_login::default_client::create_client;
     use codex_login::default_client::set_default_client_residency_requirement;
     use codex_models_manager::manager::ModelsManager;
-    use codex_models_manager::manager::OpenAiModelsManager;
+    use codex_models_manager::manager::RemoteModelsManager;
     use codex_models_manager::manager::RefreshStrategy;
     use codex_protocol::auth::AuthMode;
     use codex_protocol::config_types::ModelProviderAuthInfo;
-    use codex_protocol::openai_models::ModelsResponse;
+    use codex_protocol::model_types::ModelsResponse;
     use pretty_assertions::assert_eq;
     use wiremock::Mock;
     use wiremock::MockServer;
@@ -343,36 +341,36 @@ mod tests {
         let client_version = codex_models_manager::client_version_to_whole();
         for (name, base_url, models_url, inference_url) in [
             (
-                "OpenAI",
+                "provider",
                 None,
                 Some("https://provider.example/models"),
-                "https://api.openai.com/v1",
+                "https://api.example.com/v1",
             ),
             (
-                "OpenAI",
+                "provider",
                 Some("https://example.com/codex"),
                 Some("https://example.com/codex/models"),
                 "https://example.com/codex",
             ),
             (
                 "Azure",
-                Some("https://example.openai.azure.com/openai/v1"),
+                Some("https://example.provider.azure.com/provider/v1"),
                 None,
-                "https://example.openai.azure.com/openai/v1",
+                "https://example.provider.azure.com/provider/v1",
             ),
         ] {
             let capture = Arc::new(CaptureModelsUrl(Mutex::new(/*t*/ None)));
             let auth = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("test-api-key"));
-            let endpoint = Arc::new(OpenAiModelsEndpoint {
+            let endpoint = Arc::new(ModelsEndpoint {
                 provider_info: ModelProviderInfo {
                     name: name.to_string(),
-                    ..ModelProviderInfo::create_openai_provider(base_url.map(str::to_string))
+                    ..ModelProviderInfo::create_responses_provider(base_url.map(str::to_string))
                 },
                 auth_manager: Some(auth.clone()),
                 transport_builder: capture.clone(),
                 auth_mode: ModelsEndpointAuthMode::ConfiguredProvider,
             });
-            let manager = OpenAiModelsManager::new_without_cache(endpoint.clone(), Some(auth));
+            let manager = RemoteModelsManager::new_without_cache(endpoint.clone(), Some(auth));
             manager.set_api_key_model_discovery_enabled(/*enabled*/ true);
             manager
                 .raw_model_catalog(
@@ -408,13 +406,13 @@ mod tests {
                     .expect("current dir should be absolute"),
             }),
             requires_auth: false,
-            ..ModelProviderInfo::create_openai_provider(/*base_url*/ None)
+            ..ModelProviderInfo::create_responses_provider(/*base_url*/ None)
         }
     }
 
     #[test]
     fn command_auth_provider_reports_command_auth_without_cached_auth() {
-        let endpoint = OpenAiModelsEndpoint::new(
+        let endpoint = ModelsEndpoint::new(
             provider_info_with_command_auth(),
             /*auth_manager*/ None,
         );
@@ -424,8 +422,8 @@ mod tests {
 
     #[test]
     fn provider_without_command_auth_reports_no_command_auth() {
-        let endpoint = OpenAiModelsEndpoint::new(
-            ModelProviderInfo::create_openai_provider(/*base_url*/ None),
+        let endpoint = ModelsEndpoint::new(
+            ModelProviderInfo::create_responses_provider(/*base_url*/ None),
             /*auth_manager*/ None,
         );
 
@@ -446,8 +444,8 @@ mod tests {
             .await;
 
         let observed_request = Arc::new(Mutex::new(None));
-        let endpoint = OpenAiModelsEndpoint {
-            provider_info: ModelProviderInfo::create_openai_provider(Some(server.uri())),
+        let endpoint = ModelsEndpoint {
+            provider_info: ModelProviderInfo::create_responses_provider(Some(server.uri())),
             auth_manager: None,
             transport_builder: Arc::new(RecordingTransportBuilder {
                 observed_request: Arc::clone(&observed_request),
@@ -487,12 +485,12 @@ mod tests {
             .mount(&server)
             .await;
 
-        let mut provider_info = ModelProviderInfo::create_openai_provider(Some(server.uri()));
+        let mut provider_info = ModelProviderInfo::create_responses_provider(Some(server.uri()));
         provider_info.http_headers = Some(std::collections::HashMap::from([(
             RESIDENCY_HEADER_NAME.to_string(),
             "eu".into(),
         )]));
-        let endpoint = OpenAiModelsEndpoint {
+        let endpoint = ModelsEndpoint {
             provider_info,
             auth_manager: None,
             transport_builder: Arc::new(RecordingTransportBuilder {
@@ -543,7 +541,7 @@ mod tests {
     #[tokio::test]
     async fn command_auth_refresh_fetches_a_catalog_for_the_current_credentials() {
         use codex_models_manager::manager::ModelsManager;
-        use codex_models_manager::manager::OpenAiModelsManager;
+        use codex_models_manager::manager::RemoteModelsManager;
         use codex_models_manager::manager::RefreshStrategy;
 
         let server = MockServer::start().await;
@@ -553,7 +551,7 @@ mod tests {
         ))))
         .await
         .unwrap();
-        let model = codex_protocol::openai_models::ModelInfo {
+        let model = codex_protocol::model_types::ModelInfo {
             used_fallback_model_metadata: false,
             ..codex_models_manager::model_info::model_info_from_slug("command-auth-model")
         };
@@ -572,8 +570,8 @@ mod tests {
             RESIDENCY_HEADER_NAME.to_string(),
             "us".into(),
         )]));
-        let manager = OpenAiModelsManager::new_without_cache(
-            Arc::new(OpenAiModelsEndpoint::new(provider, Some(auth.clone()))),
+        let manager = RemoteModelsManager::new_without_cache(
+            Arc::new(ModelsEndpoint::new(provider, Some(auth.clone()))),
             Some(auth.clone()),
         );
         let catalog = manager

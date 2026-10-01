@@ -46,13 +46,13 @@ Environment
 
 Configuration
   ✗ auth         token expired — Update the configured provider credentials.
-      OPENAI_API_KEY           present
+      PROVIDER_API_KEY           present
 
 Desktop App
   ✓ desktop      the desktop application is installed
       version                  1.2.3
       running                  true
-      log directory            $HOME/Library/Logs/com.openai.codex
+      log directory            $HOME/Library/Logs/com.codex.codex
   ✓ desktop      the desktop app-server initialized successfully
 
 Updates

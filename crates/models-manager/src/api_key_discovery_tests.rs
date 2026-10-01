@@ -18,7 +18,7 @@ async fn api_key_discovery_disabled_preserves_command_auth_discovery() {
         fetch_count: AtomicUsize::new(0),
         observed_proxy_policy: Mutex::new(None),
     });
-    let manager = OpenAiModelsManager::new_without_cache(
+    let manager = RemoteModelsManager::new_without_cache(
         endpoint.clone(),
         Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
             "test-key",
@@ -41,7 +41,7 @@ async fn api_key_discovery_startup_flag_controls_fetches_and_cached_catalogs() {
     let endpoint = TestModelsEndpoint::without_refresh(vec![models.clone()]);
     let auth = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("test-key"));
     let manager =
-        OpenAiModelsManager::new(home.path().into(), endpoint.clone(), Some(auth.clone()));
+        RemoteModelsManager::new(home.path().into(), endpoint.clone(), Some(auth.clone()));
 
     for strategy in [
         RefreshStrategy::Online,
@@ -59,7 +59,7 @@ async fn api_key_discovery_startup_flag_controls_fetches_and_cached_catalogs() {
     assert_eq!(endpoint.fetch_count(), 0);
 
     let manager =
-        OpenAiModelsManager::new(home.path().into(), endpoint.clone(), Some(auth.clone()));
+        RemoteModelsManager::new(home.path().into(), endpoint.clone(), Some(auth.clone()));
     manager.set_api_key_model_discovery_enabled(/*enabled*/ true);
     assert_eq!(
         manager
@@ -73,7 +73,7 @@ async fn api_key_discovery_startup_flag_controls_fetches_and_cached_catalogs() {
     // A new session must honor its startup flag even when a matching disk cache exists.
     for enabled in [false, true] {
         let restarted =
-            OpenAiModelsManager::new(home.path().into(), endpoint.clone(), Some(auth.clone()));
+            RemoteModelsManager::new(home.path().into(), endpoint.clone(), Some(auth.clone()));
         restarted.set_api_key_model_discovery_enabled(enabled);
         let expected: &[ModelInfo] = if enabled { &models } else { &[] };
         for strategy in [RefreshStrategy::Offline, RefreshStrategy::OnlineIfUncached] {

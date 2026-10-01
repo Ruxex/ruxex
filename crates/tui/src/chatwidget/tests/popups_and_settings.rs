@@ -2728,8 +2728,8 @@ async fn apps_popup_keeps_existing_full_snapshot_while_partial_refresh_loads() {
                     plugin_display_names: Vec::new(),
                 },
                 AppInfo {
-                    id: "connector_openai_hidden".to_string(),
-                    name: "Hidden OpenAI".to_string(),
+                    id: "connector_provider_hidden".to_string(),
+                    name: "Hidden provider".to_string(),
                     description: Some("Should be filtered".to_string()),
                     logo_url: None,
                     logo_url_dark: None,
@@ -2739,7 +2739,7 @@ async fn apps_popup_keeps_existing_full_snapshot_while_partial_refresh_loads() {
                     branding: None,
                     app_metadata: None,
                     labels: None,
-                    install_url: Some("https://example.test/hidden-openai".to_string()),
+                    install_url: Some("https://example.test/hidden-provider".to_string()),
                     is_accessible: true,
                     is_enabled: true,
                     plugin_display_names: Vec::new(),
@@ -2760,7 +2760,7 @@ async fn apps_popup_keeps_existing_full_snapshot_while_partial_refresh_loads() {
         "expected popup to keep the last full snapshot while partial refresh loads, got:\n{popup}"
     );
     assert!(
-        !popup.contains("Hidden OpenAI"),
+        !popup.contains("Hidden provider"),
         "expected popup to ignore partial refresh rows until the full list arrives, got:\n{popup}"
     );
 }

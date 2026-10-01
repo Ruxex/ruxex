@@ -23,7 +23,7 @@ use codex_protocol::approvals::NetworkApprovalProtocol;
 use codex_protocol::error::CodexErr;
 use codex_protocol::items::ModelInvocationContext;
 use codex_protocol::models::AdditionalPermissionProfile;
-use codex_protocol::openai_models::ModelInfo;
+use codex_protocol::model_types::ModelInfo;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::FileChange;
 use codex_protocol::protocol::NetworkPolicyRuleAction;

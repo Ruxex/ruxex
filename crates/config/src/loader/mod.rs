@@ -93,7 +93,7 @@ async fn first_layer_config_error_from_entries(layers: &[ConfigLayerEntry]) -> O
 /// hooks, rules, deny-read permissions, and remote sandbox config:
 ///
 /// - system    `/etc/codex/requirements.toml` (Unix) or
-///   `%ProgramData%\OpenAI\Codex\requirements.toml` (Windows)
+///   `%ProgramData%\provider\Codex\requirements.toml` (Windows)
 /// - admin:    managed preferences (*)
 ///
 /// Configuration is built up from multiple layers in the following order:
@@ -101,7 +101,7 @@ async fn first_layer_config_error_from_entries(layers: &[ConfigLayerEntry]) -> O
 /// - package:  optional default configuration supplied with the Codex package
 /// - admin:    managed preferences (*)
 /// - system    `/etc/codex/config.toml` (Unix) or
-///   `%ProgramData%\OpenAI\Codex\config.toml` (Windows)
+///   `%ProgramData%\provider\Codex\config.toml` (Windows)
 /// - user      `${CODEX_HOME}/config.toml`
 /// - profile   `${CODEX_HOME}/<name>.config.toml`, when selected
 /// - cwd       `${PWD}/config.toml` (loaded but disabled when the directory is untrusted)
@@ -111,7 +111,7 @@ async fn first_layer_config_error_from_entries(layers: &[ConfigLayerEntry]) -> O
 ///
 /// (*) Only available on macOS via managed device profiles.
 ///
-/// See https://developers.openai.com/codex/security for details.
+/// See https://developers.provider.com/codex/security for details.
 ///
 /// When loading the config stack for a thread, there should be a `cwd`
 /// associated with it such that `cwd` should be `Some(...)`. Only for
@@ -264,7 +264,7 @@ pub async fn load_config_layers_state(
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,
                 format!(
-                    "--profile `{active_user_profile}` cannot be used while {} contains legacy `profile = \"{active_user_profile}\"` or `[profiles.{active_user_profile}]` config; move those settings into {} and remove the legacy profile selector/table. See https://developers.openai.com/codex/config-advanced#profiles for more information.",
+                    "--profile `{active_user_profile}` cannot be used while {} contains legacy `profile = \"{active_user_profile}\"` or `[profiles.{active_user_profile}]` config; move those settings into {} and remove the legacy profile selector/table. See https://developers.provider.com/codex/config-advanced#profiles for more information.",
                     base_user_file.as_path().display(),
                     active_user_file.as_path().display()
                 ),
@@ -391,7 +391,7 @@ pub async fn load_config_layers_state(
         )?;
         layers.push(ConfigLayerEntry::new_with_raw_toml(
             ConfigLayerSource::Mdm {
-                domain: "com.openai.codex".to_string(),
+                domain: "com.codex.codex".to_string(),
                 key: "config_toml_base64".to_string(),
             },
             managed_config,
@@ -727,7 +727,7 @@ fn windows_codex_system_dir() -> PathBuf {
         );
         PathBuf::from(DEFAULT_PROGRAM_DATA_DIR_WINDOWS)
     });
-    program_data.join("OpenAI").join("Codex")
+    program_data.join("provider").join("Codex")
 }
 
 #[cfg(windows)]
@@ -1692,7 +1692,7 @@ foo = "xyzzy"
     fn windows_system_requirements_toml_file_uses_expected_suffix() {
         let expected = windows_program_data_dir_from_known_folder()
             .unwrap_or_else(|_| PathBuf::from(DEFAULT_PROGRAM_DATA_DIR_WINDOWS))
-            .join("OpenAI")
+            .join("provider")
             .join("Codex")
             .join("requirements.toml");
         assert_eq!(
@@ -1705,7 +1705,7 @@ foo = "xyzzy"
             windows_system_requirements_toml_file()
                 .expect("requirements.toml path")
                 .as_path()
-                .ends_with(Path::new("OpenAI").join("Codex").join("requirements.toml"))
+                .ends_with(Path::new("provider").join("Codex").join("requirements.toml"))
         );
     }
 
@@ -1714,7 +1714,7 @@ foo = "xyzzy"
     fn windows_system_config_toml_file_uses_expected_suffix() {
         let expected = windows_program_data_dir_from_known_folder()
             .unwrap_or_else(|_| PathBuf::from(DEFAULT_PROGRAM_DATA_DIR_WINDOWS))
-            .join("OpenAI")
+            .join("provider")
             .join("Codex")
             .join("config.toml");
         assert_eq!(
@@ -1727,7 +1727,7 @@ foo = "xyzzy"
             windows_system_config_toml_file()
                 .expect("config.toml path")
                 .as_path()
-                .ends_with(Path::new("OpenAI").join("Codex").join("config.toml"))
+                .ends_with(Path::new("provider").join("Codex").join("config.toml"))
         );
     }
 }

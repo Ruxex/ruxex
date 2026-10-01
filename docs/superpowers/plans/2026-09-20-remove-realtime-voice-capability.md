@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove the OpenAI/ChatGPT-specific Realtime voice capability while preserving ordinary text conversations, generic audio utilities, and non-voice app-server behavior.
+**Goal:** Remove the provider/ChatGPT-specific Realtime voice capability while preserving ordinary text conversations, generic audio utilities, and non-voice app-server behavior.
 
 **Architecture:** Remove the Realtime transport and voice device boundary first, then remove the protocol, persistence, core lifecycle, app-server, and TUI consumers. Keep shared crates such as `codex-api`, `codex-core`, `codex-protocol`, and `codex-tui`; only their Realtime-specific modules, fields, commands, schemas, and registrations are removed.
 
 **Tech Stack:** Rust workspace, Cargo manifests, app-server JSON/TypeScript schemas, SQLite migrations, TUI state and snapshots.
 
-**Spec:** `docs/openai-decoupling-plan.md` and `docs/openai-specific-crates.md` (Realtime voice capability entry).
+**Spec:** `docs/provider-decoupling-plan.md` and `docs/provider-specific-crates.md` (Realtime voice capability entry).
 
 ## Global Constraints
 
@@ -82,7 +82,7 @@
 ### Task 5: Documentation, inventory, and workspace verification
 
 **Files:**
-- Modify: `docs/openai-decoupling-plan.md`, `docs/openai-specific-crates.md`, and `docs/pre-release-compatibility-inventory.md`.
+- Modify: `docs/provider-decoupling-plan.md`, `docs/provider-specific-crates.md`, and `docs/pre-release-compatibility-inventory.md`.
 - Modify any remaining active documentation, packaging metadata, or generated schema indexes identified by the audits.
 
 - [x] Record the Realtime capability as removed, including the retained generic audio/non-voice boundaries and the unsupported-old-history policy.

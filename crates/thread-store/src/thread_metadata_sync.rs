@@ -400,7 +400,7 @@ mod tests {
     use codex_protocol::config_types::Settings;
     use codex_protocol::items::UserMessageItem;
     use codex_protocol::models::PermissionProfile;
-    use codex_protocol::openai_models::ReasoningEffort;
+    use codex_protocol::model_types::ReasoningEffort;
     use codex_protocol::protocol::AskForApproval;
     use codex_protocol::protocol::ItemCompletedEvent;
     use codex_protocol::protocol::SessionMeta;

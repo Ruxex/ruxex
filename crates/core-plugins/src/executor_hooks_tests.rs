@@ -78,7 +78,7 @@ fn cleanup_hook_manifest() -> serde_json::Value {
 
 fn expected_source(index: usize) -> ExecutorPluginHookSource {
     ExecutorPluginHookSource {
-        plugin_id: PluginId::parse("computer-use@openai-bundled").expect("plugin id"),
+        plugin_id: PluginId::parse("computer-use@codex-bundled").expect("plugin id"),
         environment_id: "executor-a".to_string(),
         mcp_environment_id: None,
         mcp_metadata: None,
@@ -124,7 +124,7 @@ fn discovers_allowlisted_executor_plugin_hook_sources() {
         ]
     });
     let snapshot = snapshot_for_manifest(
-        "computer-use@openai-bundled",
+        "computer-use@codex-bundled",
         "executor-a",
         "file:///plugins/computer-use/.codex-plugin/plugin.json",
         manifest,
@@ -152,13 +152,13 @@ fn discovers_unified_computer_use_cleanup_hooks() {
     manifest["name"] = json!("unified-computer-use");
     manifest["hooks"]["hooks"]["Stop"][0]["hooks"][0]["server"] = json!("cua_repl");
     let snapshot = snapshot_for_manifest(
-        "unified-computer-use@openai-bundled",
+        "unified-computer-use@codex-bundled",
         "executor-a",
         "file:///plugins/computer-use/.codex-plugin/plugin.json",
         manifest,
     );
     let mut expected = expected_source(/*index*/ 0);
-    expected.plugin_id = PluginId::parse("unified-computer-use@openai-bundled").expect("plugin id");
+    expected.plugin_id = PluginId::parse("unified-computer-use@codex-bundled").expect("plugin id");
     let HookHandlerConfig::McpTool { server, .. } = &mut expected.hooks.stop[0].hooks[0] else {
         panic!("expected an MCP tool hook");
     };
@@ -195,7 +195,7 @@ fn filters_mixed_handlers_without_rewriting_allowed_groups() {
             json!({ "type": "mcp_tool", "server": "node_repl", "tool": "other" }),
         );
     let snapshot = snapshot_for_manifest(
-        "computer-use@openai-bundled",
+        "computer-use@codex-bundled",
         "executor-a",
         "file:///plugins/computer-use/.codex-plugin/plugin.json",
         manifest,
@@ -216,7 +216,7 @@ fn preserves_allowlisted_executor_plugin_hook_options() {
     handler["statusMessage"] = json!("Cleaning up Computer Use");
     manifest["hooks"]["hooks"]["Interrupt"] = manifest["hooks"]["hooks"]["Stop"].clone();
     let snapshot = snapshot_for_manifest(
-        "computer-use@openai-bundled",
+        "computer-use@codex-bundled",
         "executor-a",
         "file:///plugins/computer-use/.codex-plugin/plugin.json",
         manifest,
@@ -261,7 +261,7 @@ fn ignores_unallowlisted_executor_plugin_hooks() {
     for (name, plugin_id, manifest) in [
         (
             "unallowlisted bundled plugin",
-            "another-plugin@openai-bundled",
+            "another-plugin@codex-bundled",
             cleanup_hook_manifest(),
         ),
         (
@@ -271,25 +271,25 @@ fn ignores_unallowlisted_executor_plugin_hooks() {
         ),
         (
             "bundled alpha marketplace",
-            "computer-use@openai-bundled-alpha",
+            "computer-use@codex-bundled-alpha",
             cleanup_hook_manifest(),
         ),
         (
             "bundled marketplace suffix",
-            "computer-use@fake-openai-bundled",
+            "computer-use@fake-codex-bundled",
             cleanup_hook_manifest(),
         ),
-        ("wrong event", "computer-use@openai-bundled", wrong_event),
+        ("wrong event", "computer-use@codex-bundled", wrong_event),
         (
             "wrong handler",
-            "computer-use@openai-bundled",
+            "computer-use@codex-bundled",
             wrong_handler,
         ),
-        ("wrong server", "computer-use@openai-bundled", wrong_server),
-        ("wrong tool", "computer-use@openai-bundled", wrong_tool),
+        ("wrong server", "computer-use@codex-bundled", wrong_server),
+        ("wrong tool", "computer-use@codex-bundled", wrong_tool),
         (
             "wrong matcher",
-            "computer-use@openai-bundled",
+            "computer-use@codex-bundled",
             wrong_matcher,
         ),
     ] {
@@ -311,7 +311,7 @@ fn ignores_unallowlisted_executor_plugin_hooks() {
 #[test]
 fn ignores_file_backed_executor_plugin_hooks() {
     let file_backed = snapshot_for_manifest(
-        "computer-use@openai-bundled",
+        "computer-use@codex-bundled",
         "executor-a",
         "file:///plugins/computer-use/.codex-plugin/plugin.json",
         json!({

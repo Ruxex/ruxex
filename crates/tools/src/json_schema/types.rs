@@ -7,11 +7,11 @@ use std::collections::BTreeMap;
 
 /// Primitive JSON Schema type names we support in tool definitions.
 ///
-/// This mirrors the OpenAI Structured Outputs subset for JSON Schema `type`:
+/// This mirrors the provider Structured Outputs subset for JSON Schema `type`:
 /// string, number, boolean, integer, object, array, and null.
 /// Keywords such as `enum`, `const`, `anyOf`, `oneOf`, and `allOf` are modeled
 /// separately.
-/// See <https://developers.openai.com/api/docs/guides/structured-outputs#supported-schemas>.
+/// See <https://developers.provider.com/api/docs/guides/structured-outputs#supported-schemas>.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum JsonSchemaPrimitiveType {

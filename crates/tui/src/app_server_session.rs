@@ -121,11 +121,11 @@ use codex_protocol::models::ActivePermissionProfile;
 use codex_protocol::models::BaseInstructionsProvenance;
 use codex_protocol::models::PermissionProfile;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::ModelAvailabilityNux;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::ModelServiceTier;
-use codex_protocol::openai_models::ModelUpgrade;
-use codex_protocol::openai_models::ReasoningEffortPreset;
+use codex_protocol::model_types::ModelAvailabilityNux;
+use codex_protocol::model_types::ModelPreset;
+use codex_protocol::model_types::ModelServiceTier;
+use codex_protocol::model_types::ModelUpgrade;
+use codex_protocol::model_types::ReasoningEffortPreset;
 use codex_protocol::protocol::SubAgentSource;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use codex_utils_path_uri::PathUri;
@@ -279,7 +279,7 @@ pub(crate) struct AppServerBootstrap {
     pub(crate) auth_mode: Option<TelemetryAuthMode>,
     pub(crate) status_account_display: Option<StatusAccountDisplay>,
     pub(crate) plan_type: Option<codex_protocol::account::PlanType>,
-    /// Whether the configured model provider needs OpenAI-style auth. Combined
+    /// Whether the configured model provider needs provider-style auth. Combined
     /// with `has_managed_account` to decide if a startup rate-limit prefetch
     /// should be fired.
     pub(crate) requires_auth: bool,
@@ -1265,7 +1265,7 @@ impl AppServerSession {
         permissions_override: TurnPermissionsOverride,
         workspace_roots: &[AbsolutePathBuf],
         model: String,
-        effort: Option<codex_protocol::openai_models::ReasoningEffort>,
+        effort: Option<codex_protocol::model_types::ReasoningEffort>,
         summary: Option<codex_protocol::config_types::ReasoningSummary>,
         service_tier: Option<Option<String>>,
         collaboration_mode: Option<codex_protocol::config_types::CollaborationMode>,
@@ -2295,7 +2295,7 @@ async fn thread_session_state_from_thread_response(
     cwd: AbsolutePathBuf,
     runtime_workspace_roots: Vec<AbsolutePathBuf>,
     instruction_source_paths: Vec<PathUri>,
-    reasoning_effort: Option<codex_protocol::openai_models::ReasoningEffort>,
+    reasoning_effort: Option<codex_protocol::model_types::ReasoningEffort>,
     local_settings: &LocalSettings,
 ) -> Result<ThreadSessionState, String> {
     let thread_id = ThreadId::from_string(thread_id)

@@ -1,6 +1,6 @@
-use crate::OPENAI_BUNDLED_ALPHA_MARKETPLACE_NAME;
-use crate::OPENAI_BUNDLED_MARKETPLACE_NAME;
-use crate::OPENAI_PRIMARY_RUNTIME_MARKETPLACE_NAME;
+use crate::BUNDLED_ALPHA_MARKETPLACE_NAME;
+use crate::BUNDLED_MARKETPLACE_NAME;
+use crate::PRIMARY_RUNTIME_MARKETPLACE_NAME;
 use crate::installed_marketplaces::marketplace_install_root;
 use crate::installed_marketplaces::resolve_configured_marketplace_root;
 use crate::marketplace::marketplace_root_dir;
@@ -441,9 +441,9 @@ fn validate_expected_marketplace_name(
 fn is_reserved_marketplace_name(marketplace_name: &str) -> bool {
     matches!(
         marketplace_name,
-        OPENAI_BUNDLED_MARKETPLACE_NAME
-            | OPENAI_BUNDLED_ALPHA_MARKETPLACE_NAME
-            | OPENAI_PRIMARY_RUNTIME_MARKETPLACE_NAME
+        BUNDLED_MARKETPLACE_NAME
+            | BUNDLED_ALPHA_MARKETPLACE_NAME
+            | PRIMARY_RUNTIME_MARKETPLACE_NAME
     )
 }
 
@@ -468,8 +468,8 @@ fn managed_marketplace_config_name(
 
 fn managed_local_marketplace_name(codex_home: &Path, root: &Path) -> Option<&'static str> {
     for marketplace_name in [
-        OPENAI_BUNDLED_MARKETPLACE_NAME,
-        OPENAI_BUNDLED_ALPHA_MARKETPLACE_NAME,
+        BUNDLED_MARKETPLACE_NAME,
+        BUNDLED_ALPHA_MARKETPLACE_NAME,
     ] {
         let expected_root = codex_home
             .join(".tmp/bundled-marketplaces")
@@ -480,7 +480,7 @@ fn managed_local_marketplace_name(codex_home: &Path, root: &Path) -> Option<&'st
     }
 
     let runtime_root = primary_runtime_marketplace_root()?;
-    is_expected_managed_path(root, &runtime_root).then_some(OPENAI_PRIMARY_RUNTIME_MARKETPLACE_NAME)
+    is_expected_managed_path(root, &runtime_root).then_some(PRIMARY_RUNTIME_MARKETPLACE_NAME)
 }
 
 fn is_expected_managed_path(path: &Path, expected: &Path) -> bool {
@@ -516,7 +516,7 @@ pub(crate) fn primary_runtime_marketplace_root() -> Option<PathBuf> {
     Some(
         primary_runtime_cache_dir()?
             .join("codex-runtimes/codex-primary-runtime/plugins")
-            .join(OPENAI_PRIMARY_RUNTIME_MARKETPLACE_NAME),
+            .join(PRIMARY_RUNTIME_MARKETPLACE_NAME),
     )
 }
 

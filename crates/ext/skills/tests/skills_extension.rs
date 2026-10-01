@@ -40,7 +40,7 @@ use codex_otel::THREAD_SKILLS_KEPT_TOTAL_METRIC;
 use codex_otel::THREAD_SKILLS_TRUNCATED_METRIC;
 use codex_protocol::capabilities::CapabilityRootLocation;
 use codex_protocol::capabilities::SelectedCapabilityRoot;
-use codex_protocol::openai_models::ModelInfo;
+use codex_protocol::model_types::ModelInfo;
 use codex_protocol::protocol::EnvironmentConfigState;
 use codex_protocol::protocol::Event;
 use codex_protocol::protocol::SKILLS_INSTRUCTIONS_CLOSE_TAG;
@@ -2279,7 +2279,7 @@ async fn executor_catalog_emits_at_most_four_warnings() -> TestResult {
 async fn host_catalog_compacts_shared_paths_under_budget_pressure() -> TestResult {
     let test_root = test_codex_home();
     let root = test_root.join(
-        "plugins/cache/openai-curated/example/hash1234567890/skills-with-a-very-long-shared-prefix",
+        "plugins/cache/test-curated/example/hash1234567890/skills-with-a-very-long-shared-prefix",
     );
     for index in 0..12 {
         let skill_dir = root.join(format!("skill-{index:02}"));

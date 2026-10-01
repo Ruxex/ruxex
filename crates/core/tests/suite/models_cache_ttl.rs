@@ -17,15 +17,15 @@ use codex_protocol::config_types::ModeKind;
 use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::config_types::Settings;
 use codex_protocol::models::PermissionProfile;
-use codex_protocol::openai_models::ConfigShellToolType;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelMessages;
-use codex_protocol::openai_models::ModelVisibility;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::openai_models::ReasoningEffortPreset;
-use codex_protocol::openai_models::TruncationPolicyConfig;
-use codex_protocol::openai_models::default_input_modalities;
+use codex_protocol::model_types::ConfigShellToolType;
+use codex_protocol::model_types::ModelInfo;
+use codex_protocol::model_types::ModelMessages;
+use codex_protocol::model_types::ModelVisibility;
+use codex_protocol::model_types::ModelsResponse;
+use codex_protocol::model_types::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffortPreset;
+use codex_protocol::model_types::TruncationPolicyConfig;
+use codex_protocol::model_types::default_input_modalities;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::EventMsg;
 use codex_protocol::protocol::ThreadSettingsOverrides;
@@ -396,7 +396,7 @@ async fn uses_cache_when_version_matches() -> Result<()> {
 
     let mut builder = test_codex().with_auth(CodexAuth::from_api_key("test-api-key"));
     let identity = codex_model_provider::test_support::models_cache_entry(
-        &codex_model_provider_info::ModelProviderInfo::create_openai_provider(Some(format!(
+        &codex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/v1",
             server.uri()
         ))),
@@ -471,7 +471,7 @@ async fn refreshes_when_cache_version_missing() -> Result<()> {
 
     let mut builder = test_codex().with_auth(CodexAuth::from_api_key("test-api-key"));
     let identity = codex_model_provider::test_support::models_cache_entry(
-        &codex_model_provider_info::ModelProviderInfo::create_openai_provider(Some(format!(
+        &codex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/v1",
             server.uri()
         ))),
@@ -531,7 +531,7 @@ async fn refreshes_when_cache_version_differs() -> Result<()> {
 
     let mut builder = test_codex().with_auth(CodexAuth::from_api_key("test-api-key"));
     let identity = codex_model_provider::test_support::models_cache_entry(
-        &codex_model_provider_info::ModelProviderInfo::create_openai_provider(Some(format!(
+        &codex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/v1",
             server.uri()
         ))),

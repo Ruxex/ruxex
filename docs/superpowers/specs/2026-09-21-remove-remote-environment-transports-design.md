@@ -2,7 +2,7 @@
 
 ## 目的
 
-OpenAI Hostedの環境レジストリ経由のリモート実行環境と、既知のexec-serverへ直接接続するWebSocket環境経路を削除する。ローカル実行、stdioで起動するローカル補助プロセス、exec-serverのProcess/Filesystem RPC本体、app-server自体への接続機能は保持する。
+provider Hostedの環境レジストリ経由のリモート実行環境と、既知のexec-serverへ直接接続するWebSocket環境経路を削除する。ローカル実行、stdioで起動するローカル補助プロセス、exec-serverのProcess/Filesystem RPC本体、app-server自体への接続機能は保持する。
 
 ## 背景
 
@@ -77,7 +77,7 @@ exec-server --remote / WebSocket環境 / Hosted relay          (削除)
 
 ### ドキュメントと棚卸し
 
-`docs/openai-decoupling-plan.md` にHosted remote environmentと直接WebSocket environment transportの完了を反映する。`docs/pre-release-compatibility-inventory.md` には、producer/consumer、`remove`判断、保持したapp-server remoteとlocal/stdio runtimeの根拠を記録する。
+`docs/provider-decoupling-plan.md` にHosted remote environmentと直接WebSocket environment transportの完了を反映する。`docs/pre-release-compatibility-inventory.md` には、producer/consumer、`remove`判断、保持したapp-server remoteとlocal/stdio runtimeの根拠を記録する。
 
 ## 検証方針
 

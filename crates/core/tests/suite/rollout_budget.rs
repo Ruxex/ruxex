@@ -377,7 +377,7 @@ async fn compaction_budget_exhaustion_fails_without_retry(
                 ..rollout_budget()
             });
             if !remote_v2 {
-                config.model_provider.name = "OpenAI-compatible test provider".to_string();
+                config.model_provider.name = "provider-compatible test provider".to_string();
             }
         })
         .build(&server)
@@ -422,8 +422,8 @@ async fn restates_the_current_remainder_after_compaction() -> Result<()> {
         ],
     )
     .await;
-    let mut model_provider = ModelProviderInfo::create_openai_provider(None);
-    model_provider.name = "OpenAI-compatible test provider".to_string();
+    let mut model_provider = ModelProviderInfo::create_responses_provider(None);
+    model_provider.name = "provider-compatible test provider".to_string();
     model_provider.base_url = Some(format!("{}/v1", server.uri()));
     model_provider.supports_websockets = false;
     let test = test_codex()

@@ -250,7 +250,7 @@ impl Harness {
 
 pub(super) fn write_auth(home: &std::path::Path, token: &str) -> Result<()> {
     let payload = URL_SAFE_NO_PAD.encode(serde_json::to_vec(
-        &json!({"jti": token, "https://api.openai.com/auth": {"workspace_id": "account-1"}}),
+        &json!({"jti": token, "https://api.example.com/auth": {"workspace_id": "account-1"}}),
     )?);
     write_api_key_auth(
         home,

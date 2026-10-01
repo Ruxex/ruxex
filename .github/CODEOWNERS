@@ -1,9 +1,9 @@
 # Core crate ownership.
-/crates/arg0/ @openai/codex-core-agent-team
-/crates/codex-mcp/ @openai/codex-core-agent-team
-/crates/core/ @openai/codex-core-agent-team
-/crates/exec-server/ @openai/codex-core-agent-team
-/crates/exec-server-protocol/ @openai/codex-core-agent-team
-/crates/ext/extension-api/ @openai/codex-core-agent-team
-/crates/prompts/ @openai/codex-core-agent-team
-/crates/utils/path-uri/ @openai/codex-core-agent-team
+/crates/arg0/ @codex/codex-core-agent-team
+/crates/codex-mcp/ @codex/codex-core-agent-team
+/crates/core/ @codex/codex-core-agent-team
+/crates/exec-server/ @codex/codex-core-agent-team
+/crates/exec-server-protocol/ @codex/codex-core-agent-team
+/crates/ext/extension-api/ @codex/codex-core-agent-team
+/crates/prompts/ @codex/codex-core-agent-team
+/crates/utils/path-uri/ @codex/codex-core-agent-team

@@ -33,7 +33,7 @@ const CYBER_POLICY_MESSAGE: &str =
     "This request has been flagged for potentially high-risk cyber activity.";
 
 #[tokio::test]
-async fn openai_model_header_mismatch_emits_model_rerouted_notification_v2() -> Result<()> {
+async fn provider_model_header_mismatch_emits_model_rerouted_notification_v2() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -42,7 +42,7 @@ async fn openai_model_header_mismatch_emits_model_rerouted_notification_v2() -> 
         responses::ev_assistant_message("msg-1", "Done"),
         responses::ev_completed("resp-1"),
     ]);
-    let response = responses::sse_response(body).insert_header("OpenAI-Model", SERVER_MODEL);
+    let response = responses::sse_response(body).insert_header("provider-Model", SERVER_MODEL);
     let _response_mock = responses::mount_response_once(&server, response).await;
 
     let codex_home = TempDir::new()?;
@@ -162,14 +162,14 @@ async fn response_model_field_mismatch_emits_model_rerouted_notification_v2_when
             "response": {
                 "id": "resp-1",
                 "headers": {
-                    "OpenAI-Model": SERVER_MODEL
+                    "provider-Model": SERVER_MODEL
                 }
             }
         }),
         responses::ev_assistant_message("msg-1", "Done"),
         responses::ev_completed("resp-1"),
     ]);
-    let response = responses::sse_response(body).insert_header("OpenAI-Model", REQUESTED_MODEL);
+    let response = responses::sse_response(body).insert_header("provider-Model", REQUESTED_MODEL);
     let _response_mock = responses::mount_response_once(&server, response).await;
 
     let codex_home = TempDir::new()?;

@@ -543,11 +543,11 @@ mod tests {
     fn markdown_link_label_survives_history_wrapping() {
         use pretty_assertions::assert_eq;
 
-        let destination = "https://developers.openai.com/";
-        let markdown = "Instead of a Markdown-labeled link. That is the most reliably clickable form. Official OpenAI documentation does not appear to document this exact terminal-link behavior; this is an inference from how terminal hyperlink rendering works. [OpenAI Developers](https://developers.openai.com/)";
-        for label in ["OpenAI Developers", "`OpenAI Developers`"] {
+        let destination = "https://developers.provider.com/";
+        let markdown = "Instead of a Markdown-labeled link. That is the most reliably clickable form. Official provider documentation does not appear to document this exact terminal-link behavior; this is an inference from how terminal hyperlink rendering works. [provider Developers](https://developers.provider.com/)";
+        for label in ["provider Developers", "`provider Developers`"] {
             for markdown in [
-                markdown.replace("[OpenAI Developers]", &format!("[{label}]")),
+                markdown.replace("[provider Developers]", &format!("[{label}]")),
                 format!("| Link |\n| --- |\n| [{label}]({destination}) |"),
             ] {
                 for width in [32, 80, 200] {
@@ -580,7 +580,7 @@ mod tests {
                         .collect::<String>();
                     assert_eq!(
                         linked_text.replace(' ', ""),
-                        format!("OpenAIDevelopers{destination}"),
+                        format!("providerDevelopers{destination}"),
                         "label {label}, width {width}: {wrapped:?}"
                     );
                 }

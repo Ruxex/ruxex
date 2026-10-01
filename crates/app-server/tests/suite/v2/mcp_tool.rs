@@ -41,7 +41,7 @@ use codex_app_server_protocol::TurnStartParams;
 use codex_app_server_protocol::TurnStartResponse;
 use codex_app_server_protocol::UserInput as V2UserInput;
 use codex_features::Feature;
-use codex_protocol::mcp::OPENAI_STANDARD_FORM_INPUT_EXTENSION_ID;
+use codex_protocol::mcp::provider_STANDARD_FORM_INPUT_EXTENSION_ID;
 use codex_protocol::protocol::SessionSource as CoreSessionSource;
 use codex_protocol::protocol::ThreadSource as CoreThreadSource;
 use codex_utils_path_uri::PathUri;
@@ -261,12 +261,12 @@ async fn mcp_server_tool_call_forwards_only_server_extensions() -> Result<()> {
         Some(InitializeCapabilities {
             experimental_api: true,
             request_attestation: false,
-            mcp_server_openai_form_elicitation: true,
+            mcp_server_provider_form_elicitation: true,
             opt_out_notification_methods: None,
             extensions: Some(HashMap::from([
                 ("io.modelcontextprotocol/ui".to_string(), app_ui.clone()),
                 (
-                    OPENAI_STANDARD_FORM_INPUT_EXTENSION_ID.to_string(),
+                    provider_STANDARD_FORM_INPUT_EXTENSION_ID.to_string(),
                     json!({}),
                 ),
             ])),
@@ -301,7 +301,7 @@ async fn mcp_server_tool_call_forwards_only_server_extensions() -> Result<()> {
             "threadId": thread_id,
             "clientCapabilities": {
                 "extensions": {
-                    "openai/form": {},
+                    "provider/form": {},
                     "io.modelcontextprotocol/ui": app_ui,
                 }
             },
@@ -356,7 +356,7 @@ async fn model_mcp_tool_call_uses_session_client_extensions() -> Result<()> {
         Some(InitializeCapabilities {
             experimental_api: true,
             request_attestation: false,
-            mcp_server_openai_form_elicitation: true,
+            mcp_server_provider_form_elicitation: true,
             opt_out_notification_methods: None,
             extensions: Some(std::collections::HashMap::from([(
                 "io.modelcontextprotocol/ui".to_string(),
@@ -400,7 +400,7 @@ async fn model_mcp_tool_call_uses_session_client_extensions() -> Result<()> {
             "threadId": thread.id,
             "clientCapabilities": {
                 "extensions": {
-                    "openai/form": {},
+                    "provider/form": {},
                     "io.modelcontextprotocol/ui": app_ui,
                 }
             },
@@ -783,7 +783,7 @@ async fn initialize_elicitation_app_server(
             experimental_api: true,
             extensions: client_advertises_standard_form_input.then(|| {
                 HashMap::from([(
-                    OPENAI_STANDARD_FORM_INPUT_EXTENSION_ID.to_string(),
+                    provider_STANDARD_FORM_INPUT_EXTENSION_ID.to_string(),
                     json!({}),
                 )])
             }),

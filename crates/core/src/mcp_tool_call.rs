@@ -46,7 +46,7 @@ use codex_protocol::mcp_approval_meta::TOOL_PARAMS_DISPLAY_KEY as MCP_TOOL_APPRO
 use codex_protocol::mcp_approval_meta::TOOL_PARAMS_KEY as MCP_TOOL_APPROVAL_TOOL_PARAMS_KEY;
 use codex_protocol::mcp_approval_meta::TOOL_TITLE_KEY as MCP_TOOL_APPROVAL_TOOL_TITLE_KEY;
 use codex_protocol::models::PermissionProfile;
-use codex_protocol::openai_models::InputModality;
+use codex_protocol::model_types::InputModality;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::McpInvocation;
 use codex_protocol::protocol::ReviewDecision;
@@ -871,7 +871,7 @@ impl Session {
     }
 }
 
-const MCP_TOOL_OPENAI_OUTPUT_TEMPLATE_META_KEY: &str = "openai/outputTemplate";
+const MCP_TOOL_CODEX_OUTPUT_TEMPLATE_META_KEY: &str = "codex/outputTemplate";
 const MCP_TOOL_UI_RESOURCE_URI_META_KEY: &str = "ui/resourceUri";
 const MCP_TOOL_PLUGIN_ID_META_KEY: &str = "plugin_id";
 const MCP_TOOL_ITEM_ID_META_KEY: &str = "itemId";
@@ -1297,7 +1297,7 @@ fn mcp_tool_metadata(tool_info: &ToolInfo, plugin_id: Option<&str>) -> McpToolAp
             .tool
             .meta
             .as_ref()
-            .and_then(|meta| meta.get("openai/ui"))
+            .and_then(|meta| meta.get("codex/ui"))
             .and_then(|ui| ui.get("preferredModelDisplayMode"))
             .and_then(serde_json::Value::as_str)
         {
@@ -1332,7 +1332,7 @@ fn get_mcp_app_resource_uri(
                     .and_then(serde_json::Value::as_str)
             })
             .or_else(|| {
-                meta.get(MCP_TOOL_OPENAI_OUTPUT_TEMPLATE_META_KEY)
+                meta.get(MCP_TOOL_CODEX_OUTPUT_TEMPLATE_META_KEY)
                     .and_then(serde_json::Value::as_str)
             })
             .map(str::to_string)

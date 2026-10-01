@@ -32,25 +32,25 @@ use codex_protocol::dynamic_tools::DynamicToolSpec;
 use codex_protocol::mcp::ClientMcpExtensions;
 use codex_protocol::models::PermissionProfile;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::ApplyPatchToolType;
-use codex_protocol::openai_models::ApprovalMessages;
-use codex_protocol::openai_models::CollaborationModeMessages;
-use codex_protocol::openai_models::ConfigShellToolType;
-use codex_protocol::openai_models::ConfirmationPolicies;
-use codex_protocol::openai_models::InputModality;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelTokenBudgetConfig;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::openai_models::MultiAgentMessages;
-use codex_protocol::openai_models::MultiAgentModeMessages;
-use codex_protocol::openai_models::MultiAgentRoleMessages;
-use codex_protocol::openai_models::MultiAgentToolMessages;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::openai_models::ReasoningEffortPreset;
-use codex_protocol::openai_models::ToolMessage;
-use codex_protocol::openai_models::ToolMessages;
-use codex_protocol::openai_models::ToolMode;
-use codex_protocol::openai_models::TruncationPolicyConfig;
+use codex_protocol::model_types::ApplyPatchToolType;
+use codex_protocol::model_types::ApprovalMessages;
+use codex_protocol::model_types::CollaborationModeMessages;
+use codex_protocol::model_types::ConfigShellToolType;
+use codex_protocol::model_types::ConfirmationPolicies;
+use codex_protocol::model_types::InputModality;
+use codex_protocol::model_types::ModelInfo;
+use codex_protocol::model_types::ModelTokenBudgetConfig;
+use codex_protocol::model_types::ModelsResponse;
+use codex_protocol::model_types::MultiAgentMessages;
+use codex_protocol::model_types::MultiAgentModeMessages;
+use codex_protocol::model_types::MultiAgentRoleMessages;
+use codex_protocol::model_types::MultiAgentToolMessages;
+use codex_protocol::model_types::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffortPreset;
+use codex_protocol::model_types::ToolMessage;
+use codex_protocol::model_types::ToolMessages;
+use codex_protocol::model_types::ToolMode;
+use codex_protocol::model_types::TruncationPolicyConfig;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_CLOSE_TAG;
 use codex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_OPEN_TAG;
@@ -1488,7 +1488,7 @@ async fn mcp_confirmation_policy_follows_step_model_changes() -> Result<()> {
                 let meta = &call["params"]["_meta"];
                 (
                     meta["callId"].clone(),
-                    meta["openai/confirmation_policies"].clone(),
+                    meta["provider/confirmation_policies"].clone(),
                 )
             })
             .collect::<Vec<_>>(),
@@ -1739,12 +1739,12 @@ async fn captured_model_enables_and_executes_code_mode() -> Result<()> {
                 .set_permission_profile(PermissionProfile::Disabled)
                 .expect("test permissions");
             for model in &mut config.model_catalog.as_mut().expect("models").models {
-                model.input_modalities = vec![codex_protocol::openai_models::InputModality::Text];
+                model.input_modalities = vec![codex_protocol::model_types::InputModality::Text];
                 model.supports_image_detail_original = false;
                 if model.slug == MODEL_B {
                     model
                         .input_modalities
-                        .push(codex_protocol::openai_models::InputModality::Image);
+                        .push(codex_protocol::model_types::InputModality::Image);
                     model.supports_image_detail_original = true;
                     model.tool_mode = Some(ToolMode::CodeModeOnly);
                 }
@@ -1827,7 +1827,7 @@ async fn response_metadata_uses_the_captured_step_after_a_turn_update() -> Resul
         vec![
             sse_response(paused_response("resp-1", "pause-turn")),
             sse_response(sse(vec![created, ev_completed("resp-2")]))
-                .insert_header("OpenAI-Model", MODEL_B),
+                .insert_header("provider-Model", MODEL_B),
         ],
     )
     .await;
@@ -2632,8 +2632,8 @@ async fn captured_step_controls_exec_completion_and_write_stdin_output() -> Resu
                 .expect("test permissions");
             for model in &mut config.model_catalog.as_mut().expect("models").models {
                 model.shell_type = ConfigShellToolType::UnifiedExec;
-                model.truncation_policy = codex_protocol::openai_models::TruncationPolicyConfig {
-                    mode: codex_protocol::openai_models::TruncationMode::Bytes,
+                model.truncation_policy = codex_protocol::model_types::TruncationPolicyConfig {
+                    mode: codex_protocol::model_types::TruncationMode::Bytes,
                     limit: match model.slug.as_str() {
                         MODEL_B => 400,
                         MODEL_C => 800,
@@ -2768,14 +2768,14 @@ async fn captured_step_controls_mcp_output_limit(supports_images: bool) -> Resul
         .with_config(move |config| {
             for model in &mut config.model_catalog.as_mut().expect("models").models {
                 model.supports_image_detail_original = model.slug != MODEL_B;
-                model.input_modalities = vec![codex_protocol::openai_models::InputModality::Text];
+                model.input_modalities = vec![codex_protocol::model_types::InputModality::Text];
                 if model.slug != MODEL_B || supports_images {
                     model
                         .input_modalities
-                        .push(codex_protocol::openai_models::InputModality::Image);
+                        .push(codex_protocol::model_types::InputModality::Image);
                 }
-                model.truncation_policy = codex_protocol::openai_models::TruncationPolicyConfig {
-                    mode: codex_protocol::openai_models::TruncationMode::Bytes,
+                model.truncation_policy = codex_protocol::model_types::TruncationPolicyConfig {
+                    mode: codex_protocol::model_types::TruncationMode::Bytes,
                     limit: if model.slug == MODEL_B { 80 } else { 8_000 },
                 };
             }

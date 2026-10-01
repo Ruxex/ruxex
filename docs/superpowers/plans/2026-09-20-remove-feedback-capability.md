@@ -287,8 +287,8 @@ configuration schema generation, TUI, guardian reviewer, Cargo, `just check`.
 
 **Files:**
 - Modify: `docs/pre-release-compatibility-inventory.md`
-- Modify: `docs/openai-decoupling-plan.md`
-- Modify: `docs/openai-specific-crates.md`
+- Modify: `docs/provider-decoupling-plan.md`
+- Modify: `docs/provider-specific-crates.md`
 - Modify: generated dependency graph only if dependency edges changed
 - Modify: any user-facing docs that still advertise `/feedback` or
   `feedback.enabled`

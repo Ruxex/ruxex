@@ -5,7 +5,7 @@ use crate::legacy_core::config::ConfigBuilder;
 use codex_app_server_protocol::JSONRPCMessage;
 use codex_protocol::config_types::CollaborationModeMask;
 use codex_protocol::config_types::ModeKind;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use futures::SinkExt;
 use futures::StreamExt;
 use pretty_assertions::assert_eq;
@@ -42,7 +42,7 @@ async fn collaboration_catalog_is_optional_and_refetched_on_bootstrap() -> Resul
                 let mut reply = match request.method.as_str() {
                     "initialize" => json!({"result": {"userAgent": "catalog-test/1.0.0"}}),
                     "account/read" => {
-                        json!({"result": {"account": null, "requiresOpenaiAuth": false}})
+                        json!({"result": {"account": null, "requiresproviderAuth": false}})
                     }
                     "model/list" => json!({"result": {"data": [], "nextCursor": null}}),
                     "configRequirements/read" => json!({"result": {"requirements": null}}),

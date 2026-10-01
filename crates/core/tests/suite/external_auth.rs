@@ -150,7 +150,7 @@ async fn amazon_bedrock_managed_access_keys_sign_requests() -> anyhow::Result<()
     provider.base_url = Some(format!("{}/v1", server.uri()));
 
     let mut builder = test_codex()
-        .with_model("openai.gpt-5.5")
+        .with_model("provider.gpt-5.5")
         .with_auth(CodexAuth::BedrockAccessKeys(BedrockAccessKeysAuth {
             access_key_id: "managed-access-key-id".to_string(),
             secret_access_key: "managed-secret-access-key".to_string(),
@@ -272,7 +272,7 @@ async fn amazon_bedrock_credential_export_precedence_and_caching() -> anyhow::Re
     provider.stream_max_retries = Some(2);
 
     let mut builder = test_codex()
-        .with_model("openai.gpt-5.5")
+        .with_model("provider.gpt-5.5")
         .with_auth(CodexAuth::BedrockAccessKeys(BedrockAccessKeysAuth {
             access_key_id: "managed-access-key-id".to_string(),
             secret_access_key: "managed-secret-access-key".to_string(),
@@ -497,7 +497,7 @@ async fn amazon_bedrock_aws_auth_refresh_resigns() -> anyhow::Result<()> {
     let recovery_attempts = stream_max_retries as usize + 1;
 
     let mut builder = test_codex()
-        .with_model("openai.gpt-5.5")
+        .with_model("provider.gpt-5.5")
         .with_config(move |config| {
             config.model_provider_id = provider.name.clone();
             config.model_provider = provider;

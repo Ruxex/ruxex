@@ -369,7 +369,7 @@ impl ChatWidget {
     pub(super) fn on_cyber_policy_error(&mut self) {
         self.input_queue.submit_pending_steers_after_interrupt = false;
         self.finalize_turn();
-        let notice = if self.config.model_provider_id == "openai" {
+        let notice = if self.config.model_provider_id == "provider" {
             self.cyber_policy_notice
                 .get()
                 .copied()

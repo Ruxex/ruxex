@@ -82,9 +82,9 @@ fn deserialize_stdio_command_server_config_with_args() {
 #[test]
 fn deserialize_remote_stdio_server_accepts_foreign_absolute_cwd() {
     #[cfg(not(windows))]
-    let cwd = r"C:\Users\openai\share";
+    let cwd = r"C:\Users\provider\share";
     #[cfg(windows)]
-    let cwd = "/home/openai/share";
+    let cwd = "/home/provider/share";
     let expected_cwd = LegacyAppPathString::from_path(Path::new(cwd));
     let cfg: McpServerConfig = match toml::from_str(&format!(
         r#"

@@ -219,7 +219,7 @@ trust_level = "trusted"
     for key in [
         "CODEX_EXEC_SERVER_URL",
         "CODEX_ACCESS_TOKEN",
-        "OPENAI_API_KEY",
+        "PROVIDER_API_KEY",
         "CODEX_API_KEY",
         "TMUX",
         "TMUX_PANE",

@@ -22,7 +22,7 @@ use tokio::time::timeout;
 
 #[tokio::test]
 async fn connection_closure_releases_pending_inputs_and_timeout_pause() -> anyhow::Result<()> {
-    for mode in ["form", "openai/userVerification"] {
+    for mode in ["form", "provider/userVerification"] {
         for close_transport in [false, true] {
             let pause_state = ElicitationPauseState::new();
             let mut paused = pause_state.subscribe();
@@ -30,7 +30,7 @@ async fn connection_closure_releases_pending_inputs_and_timeout_pause() -> anyho
             let mut info = ClientInfo::default();
             info.capabilities.extensions = Some(
                 [(
-                    "openai/elicitation".into(),
+                    "provider/elicitation".into(),
                     serde_json::Map::from_iter([
                         ("userVerification".into(), json!({})),
                         ("form".into(), json!({})),
@@ -73,7 +73,7 @@ async fn connection_closure_releases_pending_inputs_and_timeout_pause() -> anyho
             server.send(ServerJsonRpcMessage::response(
                 ServerResult::CustomResult(CustomResult(json!({
                     "resultType": "input_required",
-                    "inputRequests": {"input": {"method": "openai/elicitation/create", "params": params}},
+                    "inputRequests": {"input": {"method": "provider/elicitation/create", "params": params}},
                 }))),
                 request.id,
             )).await?;

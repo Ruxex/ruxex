@@ -1,5 +1,5 @@
 mod github;
-mod openai;
+mod generic;
 
 use super::destination::CredentialDestination;
 use rama_http::HeaderMap;
@@ -47,7 +47,7 @@ pub(super) struct CredentialSource {
     pub(super) host_binding: fn(&HashMap<String, String>) -> Option<CredentialHostBinding>,
 }
 
-const CREDENTIAL_PROVIDERS: &[&CredentialProvider] = &[&github::PROVIDER, &openai::PROVIDER];
+const CREDENTIAL_PROVIDERS: &[&CredentialProvider] = &[&github::PROVIDER, &generic::PROVIDER];
 
 impl CredentialProvider {
     pub(super) fn sources(&self) -> &[CredentialSource] {

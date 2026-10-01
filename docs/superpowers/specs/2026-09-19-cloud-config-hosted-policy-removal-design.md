@@ -9,7 +9,7 @@ configuration and locally managed requirements.
 ## Scope
 
 This is the first implementation unit of Level 1 Phase 3 in
-`docs/openai-decoupling-plan.md`.
+`docs/provider-decoupling-plan.md`.
 
 The change removes the hosted bundle source from `codex-config` and all
 entrypoint setup paths. It then removes `codex-cloud-config` because its only

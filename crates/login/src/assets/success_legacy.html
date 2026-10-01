@@ -159,7 +159,7 @@
       (function () {
         const params = new URLSearchParams(window.location.search);
         const needsSetup = params.get('needs_setup') === 'true';
-        const platformUrl = params.get('platform_url') || 'https://platform.openai.com';
+        const platformUrl = params.get('platform_url') || 'https://platform.provider.com';
         const orgId = params.get('org_id');
         const projectId = params.get('project_id');
         const planType = params.get('plan_type');
@@ -168,8 +168,8 @@
         if (needsSetup) {
           // The login server selects one of these platform origins from the OAuth issuer.
           if (
-            platformUrl !== 'https://platform.openai.com' &&
-            platformUrl !== 'https://platform.api.openai.org'
+            platformUrl !== 'https://platform.provider.com' &&
+            platformUrl !== 'https://platform.api.provider.org'
           ) {
             return;
           }

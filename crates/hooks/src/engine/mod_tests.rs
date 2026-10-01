@@ -58,7 +58,7 @@ fn cwd() -> AbsolutePathBuf {
 
 fn mdm_requirement_source() -> RequirementSource {
     RequirementSource::MdmManagedPreferences {
-        domain: "com.openai.codex".to_string(),
+        domain: "com.codex.codex".to_string(),
         key: "requirements_toml_base64".to_string(),
     }
 }
@@ -266,7 +266,7 @@ fn required_managed_hooks_allow_disabled_hooks_feature() {
     for plugin_hook_sources in [
         Vec::new(),
         vec![bundled_cleanup_source(
-            "browser@openai-bundled",
+            "browser@codex-bundled",
             "node_repl",
             "Stop",
         )],
@@ -1387,7 +1387,7 @@ fn allow_managed_hooks_only_keeps_managed_requirement_and_config_layer_hooks() {
         vec![
             ConfigLayerEntry::new(
                 ConfigLayerSource::Mdm {
-                    domain: "com.openai.codex".to_string(),
+                    domain: "com.codex.codex".to_string(),
                     key: "config".to_string(),
                 },
                 config_toml_with_pre_tool_use("python3 /tmp/mdm-hook.py"),
@@ -1406,7 +1406,7 @@ fn allow_managed_hooks_only_keeps_managed_requirement_and_config_layer_hooks() {
             ),
             ConfigLayerEntry::new(
                 ConfigLayerSource::Mdm {
-                    domain: "com.openai.codex".to_string(),
+                    domain: "com.codex.codex".to_string(),
                     key: "config".to_string(),
                 },
                 config_toml_with_pre_tool_use("python3 /tmp/mdm-hook.py"),
@@ -1749,12 +1749,12 @@ fn bundled_cleanup_source(plugin_id: &str, server: &str, event: &str) -> PluginH
 #[test]
 fn bundled_cleanup_hooks_are_trusted_without_saved_hashes() {
     for (plugin_id, server) in [
-        ("browser@openai-bundled", "node_repl"),
-        ("chrome@openai-bundled", "node_repl"),
-        ("chrome-dev@openai-bundled", "node_repl"),
-        ("chrome-internal@openai-bundled", "node_repl"),
-        ("computer-use@openai-bundled", "node_repl"),
-        ("unified-computer-use@openai-bundled", "cua_repl"),
+        ("browser@codex-bundled", "node_repl"),
+        ("chrome@codex-bundled", "node_repl"),
+        ("chrome-dev@codex-bundled", "node_repl"),
+        ("chrome-internal@codex-bundled", "node_repl"),
+        ("computer-use@codex-bundled", "node_repl"),
+        ("unified-computer-use@codex-bundled", "cua_repl"),
     ] {
         for event in ["Stop", "Interrupt", "SubagentStop"] {
             let discovered = super::discovery::discover_handlers(
@@ -1786,7 +1786,7 @@ fn bundled_cleanup_hooks_are_trusted_without_saved_hashes() {
 
 #[test]
 fn bundled_cleanup_trust_does_not_extend_to_other_handlers() {
-    let mut source = bundled_cleanup_source("browser@openai-bundled", "node_repl", "Stop");
+    let mut source = bundled_cleanup_source("browser@codex-bundled", "node_repl", "Stop");
     let cleanup = source.hooks.stop[0].hooks[0].clone();
     source.hooks.stop[0].hooks.extend([
         HookHandlerConfig::McpTool {
@@ -1842,15 +1842,15 @@ fn bundled_cleanup_trust_does_not_extend_to_other_handlers() {
 #[test]
 fn bundled_cleanup_trust_requires_matching_plugin_server_and_event() {
     for (plugin_id, server, event) in [
-        ("other@openai-bundled", "node_repl", "Stop"),
+        ("other@codex-bundled", "node_repl", "Stop"),
         ("browser@other", "node_repl", "Stop"),
-        ("browser@openai-bundled-alpha", "node_repl", "Stop"),
-        ("browser@openai-bundled", "node_repl", "PreToolUse"),
-        ("browser@openai-bundled", "cua_repl", "Stop"),
-        ("unified-computer-use@openai-bundled", "node_repl", "Stop"),
+        ("browser@codex-bundled-alpha", "node_repl", "Stop"),
+        ("browser@codex-bundled", "node_repl", "PreToolUse"),
+        ("browser@codex-bundled", "cua_repl", "Stop"),
+        ("unified-computer-use@codex-bundled", "node_repl", "Stop"),
         ("unified-computer-use@other", "cua_repl", "Stop"),
         (
-            "unified-computer-use@openai-bundled",
+            "unified-computer-use@codex-bundled",
             "cua_repl",
             "PreToolUse",
         ),
@@ -1872,7 +1872,7 @@ fn bundled_cleanup_trust_requires_matching_plugin_server_and_event() {
 
 #[test]
 fn local_mcp_cleanup_hooks_require_saved_trust() {
-    let mut source = bundled_cleanup_source("browser@openai-curated-remote", "calendar_mcp", "Stop");
+    let mut source = bundled_cleanup_source("browser@test-remote", "calendar_mcp", "Stop");
     source.hooks.stop[0].hooks[0] = HookHandlerConfig::McpTool {
         server: "calendar_mcp".to_string(),
         tool: "browser.turn_ended".to_string(),
@@ -1899,7 +1899,7 @@ fn local_mcp_cleanup_hooks_require_saved_trust() {
 
 #[test]
 fn builtin_cleanup_ignores_disablement_but_preserves_managed_only_policy() {
-    let source = bundled_cleanup_source("browser@openai-bundled", "node_repl", "Stop");
+    let source = bundled_cleanup_source("browser@codex-bundled", "node_repl", "Stop");
     let discovered = super::discovery::discover_handlers(
         /*config_layer_stack*/ None,
         vec![source.clone()],
@@ -1964,7 +1964,7 @@ fn builtin_cleanup_ignores_disablement_but_preserves_managed_only_policy() {
 
 #[test]
 fn disabled_hooks_feature_keeps_builtin_cleanup_but_not_trusted_plugin_hooks() {
-    let mut source = bundled_cleanup_source("browser@openai-bundled", "node_repl", "Stop");
+    let mut source = bundled_cleanup_source("browser@codex-bundled", "node_repl", "Stop");
     source.hooks.stop[0].hooks.push(HookHandlerConfig::Command {
         command: "echo ordinary hook".to_string(),
         command_windows: None,
@@ -2278,7 +2278,7 @@ fn executor_stop_hook_fixture() -> (
         executor,
     );
     let source = ExecutorPluginHookSource {
-        plugin_id: PluginId::parse("computer-use@openai-bundled").expect("valid plugin ID"),
+        plugin_id: PluginId::parse("computer-use@codex-bundled").expect("valid plugin ID"),
         environment_id: "executor-a".to_string(),
         mcp_environment_id: None,
         mcp_metadata: None,
@@ -2317,7 +2317,7 @@ fn executor_stop_hook_fixture() -> (
             status_message: None,
             additional_context_limit: Default::default(),
             source_path: HandlerSourcePath::ExecutorScoped {
-                plugin_id: PluginId::parse("computer-use@openai-bundled").expect("valid plugin ID"),
+                plugin_id: PluginId::parse("computer-use@codex-bundled").expect("valid plugin ID"),
                 environment_id: "executor-a".to_string(),
                 mcp_environment_id: None,
                 mcp_metadata: None,
@@ -2493,7 +2493,7 @@ fn executor_stop_hooks_register_each_target_environment_once() {
     let (mut engine, _, _, _, first_source) = executor_stop_hook_fixture();
     let mut expected_handlers = engine.handlers.clone();
     let mut duplicate_target = first_source.clone();
-    duplicate_target.plugin_id = PluginId::parse("chrome@openai-bundled").expect("valid plugin ID");
+    duplicate_target.plugin_id = PluginId::parse("chrome@codex-bundled").expect("valid plugin ID");
     let mut second_source = first_source.clone();
     second_source.environment_id = "executor-b".to_string();
     let mut second_handler = expected_handlers[0].clone();

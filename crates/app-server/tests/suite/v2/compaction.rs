@@ -93,7 +93,7 @@ async fn auto_compaction_emits_started_and_completed_items(route: CompactionRout
     let mut config = compaction_config(&server.uri(), /*auto_compact_limit*/ 200_000);
     if let CompactionRoute::Remote = route {
         config = config
-            .with_provider_name("OpenAI")
+            .with_provider_name("provider")
             .with_provider_config("requires_auth = true");
         write_api_key_auth(
             codex_home.path(),
@@ -105,7 +105,7 @@ async fn auto_compaction_emits_started_and_completed_items(route: CompactionRout
 
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
-        .with_env_overrides(&[("OPENAI_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 

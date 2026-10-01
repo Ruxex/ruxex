@@ -15,7 +15,7 @@ fn service() -> ElicitationClientService {
     let mut info = ClientInfo::default();
     info.capabilities.extensions = Some(
         [(
-            "openai/elicitation".into(),
+            "provider/elicitation".into(),
             Map::from_iter([("userVerification".into(), json!({}))]),
         )]
         .into_iter()

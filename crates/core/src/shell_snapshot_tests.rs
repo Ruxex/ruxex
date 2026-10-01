@@ -382,7 +382,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     // Identical concurrent captures must not share one command's cancellation.
     fs::write(
         dir.path().join(".codex/startup.sh"),
-        "export OPENAI_API_KEY=sk-snapshot-cache-test\nprintf started > capture-started\nwhile [ ! -f finish-startup ]; do sleep 0.01; done\n",
+        "export PROVIDER_API_KEY=sk-snapshot-cache-test\nprintf started > capture-started\nwhile [ ! -f finish-startup ]; do sleep 0.01; done\n",
     )
     .await?;
     config.shell_environment_policy.r#set.insert(
@@ -543,8 +543,8 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     new_env = context
         .prepare_child_environment(&proxy, new_env, /*environment_id*/ None)?
         .env;
-    assert_ne!(new_env["OPENAI_API_KEY"], old_env["OPENAI_API_KEY"]);
-    assert_ne!(new_env["OPENAI_API_KEY"], "sk-snapshot-cache-test");
+    assert_ne!(new_env["PROVIDER_API_KEY"], old_env["PROVIDER_API_KEY"]);
+    assert_ne!(new_env["PROVIDER_API_KEY"], "sk-snapshot-cache-test");
 
     // A credential change during capture should recapture once under the new configuration.
     fs::remove_file(refreshed.path()).await?;
@@ -552,7 +552,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     fs::remove_file(dir.path().join("capture-started")).await?;
     fs::write(
         dir.path().join(".codex/startup.sh"),
-        "export OPENAI_API_KEY=sk-snapshot-cache-test\nprintf x >> capture-started\nwhile [ ! -f finish-startup ]; do sleep 0.01; done\n",
+        "export PROVIDER_API_KEY=sk-snapshot-cache-test\nprintf x >> capture-started\nwhile [ ! -f finish-startup ]; do sleep 0.01; done\n",
     )
     .await?;
     let capture =
@@ -600,7 +600,7 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
          declare -rx HOMEBREW_GITHUB_API_TOKEN=\"$GITHUB_TOKEN\"\n\
          export GH_ENTERPRISE_TOKEN='ghp_enterprise_secret'\n\
          export GH_HOST='attacker.example'\n\
-         export OPENAI_API_KEY='sk-proj-snapshot-secret'\n\
+         export PROVIDER_API_KEY='sk-proj-snapshot-secret'\n\
          export STRIPE_API_KEY='stripe_live_abcdefghijklmnopqrstuvwx'\n\
          export STRIPE_HOST='https://startup.stripe.example/v1'\n\
          export STRIPE_AUTH_HEADER=\"Bearer $STRIPE_API_KEY\"\n\
@@ -612,9 +612,8 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
          export LOCAL_AUTH_HEADER=\"Bearer $LOCAL_TOKEN\"\n\
          unset LOCAL_TOKEN\n\
          export AUTH_BUNDLE=\"GitHub $GH_TOKEN\n\
-         OpenAI $OPENAI_API_KEY\"\n\
-         export OPENAI_BASE_URL='https://api.snapshot.example/v1'\n\
-         export IDENTITY_SEEN=\"${OPENAI_IDENTITY_TOKEN_FILE-missing}\"\n\
+         provider $PROVIDER_API_KEY\"\n\
+         export PROVIDER_BASE_URL='https://api.snapshot.example/v1'\n\
          export EXCLUDED_PARENT_HOME=\"${HOME-missing}\"\n\
          export STARTUP_PATH_OVERRIDE_SEEN=\"${PATH%%:*}\"\n\
          export STARTUP_CORP_REGION_SEEN=\"${CORP_REGION-missing}\"\n\
@@ -696,10 +695,6 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
                 "UNSET_AUTH_HEADER".to_string(),
                 "Bearer ghp_removed_enterprise_secret".to_string(),
             ),
-            (
-                "OPENAI_IDENTITY_TOKEN_FILE".to_string(),
-                "identity-token-secret".to_string(),
-            ),
             ("PATH".to_string(), "/enterprise/bin".to_string()),
             ("CORP_REGION".to_string(), "production".to_string()),
             ("NPM_TOKEN".to_string(), "npm_enterprise_token".to_string()),
@@ -743,7 +738,7 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
     assert_eq!(
         captured_credentials
             .context_env
-            .get("OPENAI_BASE_URL")
+            .get("PROVIDER_BASE_URL")
             .map(String::as_str),
         Some("https://api.snapshot.example/v1")
     );
@@ -757,7 +752,6 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
         "stripe_live_abcdefghijklmnopqrstuvwx",
         "pin_abcdefgh",
         "local_abcdefghijklmnopqrstuvwx",
-        "identity-token-secret",
     ] {
         assert!(!snapshot.contains(secret), "snapshot exposed {secret}");
     }
@@ -765,7 +759,6 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
     assert!(!snapshot.contains("CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS"));
     assert!(snapshot.contains("api.snapshot.example"));
     assert!(!snapshot.contains("attacker.vendor.example"));
-    assert!(snapshot.contains("IDENTITY_SEEN=\"missing\""));
     assert!(snapshot.contains("EXCLUDED_PARENT_HOME=\"missing\""));
     assert!(snapshot.contains("STARTUP_PATH_OVERRIDE_SEEN=\"/enterprise/bin\""));
     assert!(snapshot.contains("declare -x PATH=\"/enterprise/bin\""));
@@ -954,7 +947,7 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
         ("GH_ENTERPRISE_TOKEN", "ghp_enterprise_secret"),
         ("GITHUB_ENTERPRISE_TOKEN", "ghp_removed_enterprise_secret"),
         ("UNSET_AUTH_HEADER", "Bearer ghp_removed_enterprise_secret"),
-        ("OPENAI_API_KEY", "sk-proj-snapshot-secret"),
+        ("PROVIDER_API_KEY", "sk-proj-snapshot-secret"),
         ("STRIPE_API_KEY", "stripe_live_abcdefghijklmnopqrstuvwx"),
         ("STRIPE_HOST", "api.stripe.example"),
         ("VENDOR_PASSWORD", "pin_abcdefgh"),
@@ -963,7 +956,7 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
         assert_eq!(env.get(key).map(String::as_str), Some(value), "{key}");
     }
     assert_eq!(
-        env.get("OPENAI_BASE_URL").map(String::as_str),
+        env.get("PROVIDER_BASE_URL").map(String::as_str),
         Some("https://api.snapshot.example/v1")
     );
     let explicit_vendor_policy = ShellEnvironmentPolicy {
@@ -1016,15 +1009,15 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
             policy
                 .exclude
                 .push(EnvironmentVariablePattern::new_case_insensitive(
-                    "OPENAI_BASE_URL",
+                    "PROVIDER_BASE_URL",
                 ));
         }
         let ambient_host = "https://api.ambient.example/v1";
         let mut restored_env =
-            HashMap::from([("OPENAI_BASE_URL".to_string(), ambient_host.to_string())]);
+            HashMap::from([("PROVIDER_BASE_URL".to_string(), ambient_host.to_string())]);
         let context = snapshot_file.restore_credentials(&mut restored_env, &policy);
         assert_eq!(
-            restored_env["OPENAI_BASE_URL"],
+            restored_env["PROVIDER_BASE_URL"],
             if excluded_context {
                 ambient_host
             } else {
@@ -1034,9 +1027,9 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
         restored_env = context
             .prepare_child_environment(&network_proxy, restored_env, /*environment_id*/ None)?
             .env;
-        assert_ne!(restored_env["OPENAI_API_KEY"], "sk-proj-snapshot-secret");
+        assert_ne!(restored_env["PROVIDER_API_KEY"], "sk-proj-snapshot-secret");
         assert_eq!(
-            restored_env["OPENAI_BASE_URL"],
+            restored_env["PROVIDER_BASE_URL"],
             if excluded_context {
                 ambient_host
             } else {
@@ -1092,7 +1085,7 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
     assert!(unbrokered_replay.status.success());
     assert_eq!(
         String::from_utf8(unbrokered_replay.stdout)?,
-        "Bearer ghp_shell_only_secret\nGitHub ghp_shell_only_secret\nOpenAI sk-proj-snapshot-secret"
+        "Bearer ghp_shell_only_secret\nGitHub ghp_shell_only_secret\nprovider sk-proj-snapshot-secret"
     );
 
     let mut cleared_local_context = HashMap::from([
@@ -1117,7 +1110,7 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
     assert_ne!(env["GH_TOKEN"], "ghp_shell_only_secret");
     assert_ne!(env["GITHUB_TOKEN"], "ghp_readonly_secret");
     assert_ne!(env["GH_ENTERPRISE_TOKEN"], "ghp_enterprise_secret");
-    assert_ne!(env["OPENAI_API_KEY"], "sk-proj-snapshot-secret");
+    assert_ne!(env["PROVIDER_API_KEY"], "sk-proj-snapshot-secret");
     assert_ne!(
         env["STRIPE_API_KEY"],
         "stripe_live_abcdefghijklmnopqrstuvwx"
@@ -1151,11 +1144,11 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
     assert_eq!(
         String::from_utf8(replay.stdout)?,
         format!(
-            "{}\nBearer {}\nGitHub {}\nOpenAI {}\n{}\n{}\nmissing\nBearer local_abcdefghijklmnopqrstuvwx",
+            "{}\nBearer {}\nGitHub {}\nprovider {}\n{}\n{}\nmissing\nBearer local_abcdefghijklmnopqrstuvwx",
             env["GITHUB_TOKEN"],
             env["GH_TOKEN"],
             env["GH_TOKEN"],
-            env["OPENAI_API_KEY"],
+            env["PROVIDER_API_KEY"],
             env["VENDOR_PASSWORD"],
             env["VENDOR_HOST"]
         )
@@ -1183,9 +1176,9 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
         },
         allow_login_shell: false,
     };
-    for (github_token, openai_api_key) in [
+    for (github_token, api_key) in [
         ("ghp_shell_only_secret", "sk-proj-snapshot-secret"),
-        (env["GH_TOKEN"].as_str(), env["OPENAI_API_KEY"].as_str()),
+        (env["GH_TOKEN"].as_str(), env["PROVIDER_API_KEY"].as_str()),
     ] {
         std::fs::write(
             &startup,
@@ -1193,10 +1186,10 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
                 "export GH_TOKEN='{github_token}'\n\
                  export GITHUB_TOKEN=\"$GH_TOKEN\"\n\
                  export AUTH_HEADER=\"Bearer $GH_TOKEN\"\n\
-                 export OPENAI_API_KEY='{openai_api_key}'\n\
+                 export PROVIDER_API_KEY='{api_key}'\n\
                  export AUTH_BUNDLE=\"GitHub $GH_TOKEN\n\
-                 OpenAI $OPENAI_API_KEY\"\n\
-                 unset OPENAI_API_KEY\n"
+                 provider $PROVIDER_API_KEY\"\n\
+                 unset PROVIDER_API_KEY\n"
             ),
         )?;
         let partially_filtered_path = dir.path().join("partially-filtered-snapshot.sh").abs();

@@ -192,7 +192,7 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
         test.home_path(),
         &AuthDotJson {
             auth_mode: Some(AuthMode::ApiKey),
-            openai_api_key: Some("test-api-key".to_string()),
+            api_key: Some("test-api-key".to_string()),
             bedrock_api_key: None,
             bedrock_access_keys: None,
         },

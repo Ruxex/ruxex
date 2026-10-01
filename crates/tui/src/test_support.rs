@@ -3,7 +3,7 @@
 use std::sync::LazyLock;
 
 use codex_models_manager::test_support::test_models_response;
-use codex_protocol::openai_models::ModelPreset;
+use codex_protocol::model_types::ModelPreset;
 pub(crate) use codex_utils_absolute_path::test_support::PathBufExt;
 pub(crate) use codex_utils_absolute_path::test_support::test_path_buf;
 use serde::Serialize;

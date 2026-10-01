@@ -44,7 +44,7 @@ use codex_login::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
 use codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
 use codex_protocol::config_types::TrustLevel;
 use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use core_test_support::stdio_server_bin;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -114,7 +114,7 @@ model = "gpt-5.4-mini"
         })
         .await?;
 
-    assert_eq!(response.model, "openai.gpt-5.6-sol");
+    assert_eq!(response.model, "provider.gpt-5.6-sol");
     Ok(())
 }
 
@@ -245,7 +245,7 @@ async fn thread_start_provider_model_fallback_uses_bedrock_static_catalog() -> R
     .await?;
     let supported_with_fallback = start_thread_with_model(
         &mut mcp,
-        "openai.gpt-5.4",
+        "provider.gpt-5.4",
         /*allow_provider_model_fallback*/ true,
     )
     .await?;
@@ -262,7 +262,7 @@ async fn thread_start_provider_model_fallback_uses_bedrock_static_catalog() -> R
             supported_with_fallback.model,
             unsupported_without_fallback.model,
         ],
-        vec!["openai.gpt-5.6-sol", "openai.gpt-5.4", "gpt-5.4-mini"]
+        vec!["provider.gpt-5.6-sol", "provider.gpt-5.4", "gpt-5.4-mini"]
     );
     Ok(())
 }
@@ -280,7 +280,7 @@ async fn thread_start_bedrock_runtime_prefers_global_cross_region_models() -> Re
         .build_initialized()
         .await?;
 
-    for model in ["global.openai.gpt-5.6-sol", "us.openai.gpt-5.6-sol"] {
+    for model in ["global.provider.gpt-5.6-sol", "us.provider.gpt-5.6-sol"] {
         let response =
             start_thread_with_model(&mut mcp, model, /*allow_provider_model_fallback*/ true)
                 .await?;
@@ -289,11 +289,11 @@ async fn thread_start_bedrock_runtime_prefers_global_cross_region_models() -> Re
 
     let response = start_thread_with_model(
         &mut mcp,
-        "openai.gpt-5.6-sol",
+        "provider.gpt-5.6-sol",
         /*allow_provider_model_fallback*/ true,
     )
     .await?;
-    assert_eq!(response.model, "global.openai.gpt-5.6-sol");
+    assert_eq!(response.model, "global.provider.gpt-5.6-sol");
 
     Ok(())
 }
@@ -1450,7 +1450,7 @@ async fn thread_start_surfaces_cloud_config_bundle_load_errors() -> Result<()> {
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
         .with_env_overrides(&[
-            ("OPENAI_API_KEY", None),
+            ("PROVIDER_API_KEY", None),
             (
                 REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR,
                 Some(refresh_token_url.as_str()),

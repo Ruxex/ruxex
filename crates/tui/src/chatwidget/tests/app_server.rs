@@ -24,7 +24,7 @@ fn thread_settings_for_test(
                 codex_app_server_protocol::ActivePermissionProfile::read_only(),
             ),
             model: model.to_string(),
-            model_provider: "openai".to_string(),
+            model_provider: "provider".to_string(),
             service_tier: Some(ServiceTier::Flex.request_value().to_string()),
             effort: Some(ReasoningEffortConfig::High),
             summary: None,
@@ -49,7 +49,7 @@ fn configured_thread_session(thread_id: ThreadId) -> crate::session_state::Threa
         fork_parent_title: None,
         thread_name: None,
         model: "gpt-5.2".to_string(),
-        model_provider_id: "openai".to_string(),
+        model_provider_id: "provider".to_string(),
         service_tier: None,
         approval_policy: AskForApproval::Never,
         approvals_reviewer: ApprovalsReviewer::User,
@@ -216,7 +216,7 @@ async fn safety_buffering_offers_one_retry_with_app_wording() {
             Err(err) => panic!("expected learn-more URL event: {err}"),
         }
     };
-    assert_eq!(opened_url, "https://help.openai.com/en/articles/20001326");
+    assert_eq!(opened_url, "https://help.provider.com/en/articles/20001326");
     assert!(render_bottom_popup(&chat, /*width*/ 80).contains(SAFETY_BUFFERING_HEADER_TEXT));
 
     chat.handle_key_event(KeyEvent::new(KeyCode::Up, KeyModifiers::NONE));

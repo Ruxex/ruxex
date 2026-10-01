@@ -129,7 +129,7 @@ def test_modern_discovery_is_stateless_and_cacheable() -> None:
     assert value["cacheScope"] == "public"
     assert value["_meta"] == {
         "io.modelcontextprotocol/serverInfo": {
-            "name": "openai-mcp-spec-test-server",
+            "name": "provider-mcp-spec-test-server",
             "version": "0.1.0",
         }
     }
@@ -272,7 +272,7 @@ def test_mrtr_requires_capability_and_echoes_state() -> None:
     assert interim["resultType"] == "input_required"
     assert interim["_meta"] == {
         "io.modelcontextprotocol/serverInfo": {
-            "name": "openai-mcp-spec-test-server",
+            "name": "provider-mcp-spec-test-server",
             "version": "0.1.0",
         }
     }

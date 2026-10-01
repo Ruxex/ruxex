@@ -18,7 +18,7 @@ use codex_app_server_protocol::ThreadItem;
 use codex_app_server_protocol::UserInput;
 use codex_protocol::ThreadId;
 use codex_protocol::models::MessagePhase;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 use serde::Deserialize;
 use serde_json::Value;
 use serde_json::json;
@@ -85,7 +85,7 @@ impl App {
         let cancellation = entry.insert(CancellationToken::new()).clone();
         self.sync_thread_title_progress();
         let request_handle = app_server.request_handle();
-        let model = if self.chat_widget.config_ref().model_provider_id == "openai"
+        let model = if self.chat_widget.config_ref().model_provider_id == "provider"
             && self.chat_widget.has_managed_account()
             && self
                 .chat_widget

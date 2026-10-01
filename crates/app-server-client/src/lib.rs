@@ -1329,7 +1329,7 @@ mod tests {
                     id: request.id,
                     result: serde_json::json!({
                         "account": null,
-                        "requiresOpenaiAuth": false,
+                        "requiresproviderAuth": false,
                         "padding": padding,
                     }),
                 }),

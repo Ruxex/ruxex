@@ -54,7 +54,7 @@ async fn connected_trust_cancellation_and_acceptance_control_task_creation() -> 
                     let id = "00000000-0000-0000-0000-000000000001";
                     let thread = json!({
                         "id": id, "sessionId": id, "preview": "Untrusted saved task", "ephemeral": false,
-                        "modelProvider": "openai", "createdAt": 1, "updatedAt": 2,
+                        "modelProvider": "provider", "createdAt": 1, "updatedAt": 2,
                         "status": if trust_level.is_some() { json!({"type": "active", "activeFlags": []}) } else { json!({"type": "notLoaded"}) }, "cwd": other_cwd,
                         "cliVersion": "0.0.0", "source": "cli", "turns": []
                     });
@@ -72,7 +72,7 @@ async fn connected_trust_cancellation_and_acceptance_control_task_creation() -> 
                         let result = match request.method.as_str() {
                             "initialize" => json!({"userAgent": "trust-pty"}),
                             "account/read" => {
-                                json!({"account": {"type": "apiKey"}, "requiresOpenaiAuth": false})
+                                json!({"account": {"type": "apiKey"}, "requiresproviderAuth": false})
                             }
                             "config/read" => {
                                 if request

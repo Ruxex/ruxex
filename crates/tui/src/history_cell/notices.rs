@@ -34,7 +34,7 @@ impl HistoryCell for UpdateAvailableHistoryCell {
         } else {
             line![
                 "See ",
-                "https://github.com/openai/codex".cyan().underlined(),
+                "https://github.com/codex/codex".cyan().underlined(),
                 " for installation options."
             ]
         };
@@ -49,7 +49,7 @@ impl HistoryCell for UpdateAvailableHistoryCell {
             update_instruction,
             "",
             "See full release notes:",
-            "https://github.com/openai/codex/releases/latest"
+            "https://github.com/codex/codex/releases/latest"
                 .cyan()
                 .underlined(),
         ];
@@ -66,7 +66,7 @@ impl HistoryCell for UpdateAvailableHistoryCell {
         let update_instruction = if let Some(update_action) = self.update_action {
             format!("Run {} to update.", update_action.command_str())
         } else {
-            "See https://github.com/openai/codex for installation options.".to_string()
+            "See https://github.com/codex/codex for installation options.".to_string()
         };
         vec![
             Line::from("Update available!"),
@@ -74,7 +74,7 @@ impl HistoryCell for UpdateAvailableHistoryCell {
             Line::from(update_instruction),
             Line::from(""),
             Line::from("See full release notes:"),
-            Line::from("https://github.com/openai/codex/releases/latest"),
+            Line::from("https://github.com/codex/codex/releases/latest"),
         ]
     }
 
@@ -114,7 +114,7 @@ pub(crate) struct SafetyAccessBlockCell {
     actions: &'static [(&'static str, &'static str)],
 }
 
-const SAFETY_ACCESS_BLOCK_LEARN_MORE_URL: &str = "https://help.openai.com/en/articles/20001326";
+const SAFETY_ACCESS_BLOCK_LEARN_MORE_URL: &str = "https://help.provider.com/en/articles/20001326";
 
 pub(crate) fn new_safety_access_block_event() -> SafetyAccessBlockCell {
     SafetyAccessBlockCell {
@@ -135,7 +135,7 @@ pub(crate) fn new_cyber_policy_error_event(
                 ("Learn more", SAFETY_ACCESS_BLOCK_LEARN_MORE_URL),
                 (
                     "Apply for Daybreak",
-                    "https://openai.com/form/enterprise-trusted-access-for-cyber/",
+                    "https://provider.com/form/enterprise-trusted-access-for-cyber/",
                 ),
             ],
         ),

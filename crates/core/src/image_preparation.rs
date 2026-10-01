@@ -18,7 +18,7 @@ use codex_protocol::models::FunctionCallOutputPayload;
 use codex_protocol::models::ImageDetail;
 use codex_protocol::models::ImageReference;
 use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::ModelInfo;
+use codex_protocol::model_types::ModelInfo;
 use codex_utils_image::EncodedImage;
 use codex_utils_image::ImageProcessingError;
 use codex_utils_image::PromptImageMode;

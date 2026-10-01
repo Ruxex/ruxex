@@ -5,7 +5,7 @@ use chrono::Utc;
 #[cfg(test)]
 use codex_protocol::ThreadId;
 #[cfg(test)]
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::ReasoningEffort;
 #[cfg(test)]
 use codex_protocol::protocol::AskForApproval;
 #[cfg(test)]

@@ -59,7 +59,7 @@ async fn daemon_startup(command: &str) -> Result<()> {
     if !bedrock_onboarding {
         fs::write(
             home.path().join("auth.json"),
-            r#"{"OPENAI_API_KEY":"daemon-startup-test","tokens":null,"last_refresh":null}"#,
+            r#"{"PROVIDER_API_KEY":"daemon-startup-test","tokens":null,"last_refresh":null}"#,
         )?;
     }
     let mut env = std::env::vars().collect::<std::collections::HashMap<_, _>>();
@@ -68,9 +68,7 @@ async fn daemon_startup(command: &str) -> Result<()> {
         "CODEX_ACCESS_TOKEN",
         "CODEX_API_KEY",
         "CODEX_CLOUD_TASKS_MODE",
-        "OPENAI_API_KEY",
-        "OPENAI_FEDERATION_RULE_ID",
-        "OPENAI_IDENTITY_TOKEN_FILE",
+        "PROVIDER_API_KEY",
     ] {
         env.remove(key);
     }

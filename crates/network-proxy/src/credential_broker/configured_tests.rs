@@ -713,7 +713,7 @@ fn configured_provider_does_not_guess_ambiguous_alias_destinations() {
         assert!(!broker.host_requires_mitm("first.example", /*port*/ 443));
         assert!(!broker.host_requires_mitm("second.example", /*port*/ 443));
         if overlaps_builtin {
-            assert!(!broker.host_requires_mitm("api.openai.com", /*port*/ 443));
+            assert!(!broker.host_requires_mitm("api.example.test", /*port*/ 443));
         }
 
         env.insert("FIRST_TOKEN".to_string(), token.to_string());
@@ -815,7 +815,7 @@ fn configured_owner_keeps_prefixed_builtin_shaped_aliases_scoped() {
                 assert!(
                     !broker
                         .host_protocols_for_environment(
-                            "api.openai.com",
+                            "api.example.test",
                             /*port*/ 443,
                             environment_id,
                         )
@@ -828,7 +828,7 @@ fn configured_owner_keeps_prefixed_builtin_shaped_aliases_scoped() {
                     )])
                 };
                 for target in [
-                    "https://api.openai.com/v1/models",
+                    "https://api.example.test/v1/models",
                     "https://api.github.com/v1/models",
                     "https://configured.example/v2/models",
                     "https://configured.example/v1/models",
@@ -862,7 +862,7 @@ fn configured_owner_keeps_prefixed_builtin_shaped_aliases_scoped() {
                         &original_env[key],
                         &env[key],
                         &original_env,
-                        |source| source == "OPENAI_API_KEY"
+                        |source| source == "PROVIDER_API_KEY"
                     ));
                     let mut snapshot_alias = original_env[key].clone();
                     if brokered || token.len() >= super::MIN_EMBEDDED_CREDENTIAL_LENGTH {
@@ -1055,21 +1055,21 @@ fn known_credential_spans_preserve_overlaps_and_uncovered_adjacent_credentials()
 #[test]
 fn configured_provider_does_not_claim_embedded_builtin_credentials() {
     let github_token = "ghp_abcdefghijklmnopqrstuvwxyz1234567890";
-    let openai_token = "sk-proj-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let provider_token = "sk-proj-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let broker = broker_for(CredentialProviderConfig {
         env: vec!["COMBINED_TOKEN".to_string()],
         patterns: vec!["^combo_[A-Za-z0-9_-]{80,180}$".to_string()],
         url_prefixes: vec!["combo.example".to_string()],
         ..CredentialProviderConfig::default()
     });
-    let combined = format!("combo_{github_token}_{openai_token}");
+    let combined = format!("combo_{github_token}_{provider_token}");
     let mut env = HashMap::from([("AUTH_HEADER".to_string(), combined.clone())]);
 
     broker.virtualize_child_env(&mut env);
 
     assert_ne!(env["AUTH_HEADER"], combined);
     assert!(!env["AUTH_HEADER"].contains(github_token));
-    assert!(!env["AUTH_HEADER"].contains(openai_token));
+    assert!(!env["AUTH_HEADER"].contains(provider_token));
     assert!(!broker.host_requires_mitm("combo.example", /*port*/ 443));
     let mut headers = HeaderMap::new();
     headers.insert(
@@ -1204,7 +1204,7 @@ fn discovered_credential_aliases_rebind_when_the_destination_changes() {
         ("ghp_abcdefghijklmnopqrstuvwxyz1234567890", "GH_HOST"),
         (
             "sk-proj-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-            "OPENAI_BASE_URL",
+            "PROVIDER_BASE_URL",
         ),
     ] {
         let broker = broker_for(CredentialProviderConfig {
@@ -1215,7 +1215,7 @@ fn discovered_credential_aliases_rebind_when_the_destination_changes() {
         });
         let authorization_header = format!("Bearer {token}");
         for host in ["first.example", "second.example"] {
-            let host_value = if host_key == "OPENAI_BASE_URL" {
+            let host_value = if host_key == "PROVIDER_BASE_URL" {
                 format!("https://{host}/v1")
             } else {
                 host.to_string()
@@ -1245,7 +1245,7 @@ fn discovered_credential_aliases_rebind_when_the_destination_changes() {
         let mut unbound =
             HashMap::from([("AUTH_HEADER".to_string(), authorization_header.clone())]);
         broker.virtualize_child_env(&mut unbound);
-        if host_key == "OPENAI_BASE_URL" {
+        if host_key == "PROVIDER_BASE_URL" {
             assert_ne!(unbound["AUTH_HEADER"], authorization_header);
         } else {
             assert_eq!(unbound["AUTH_HEADER"], authorization_header);
@@ -1293,11 +1293,11 @@ fn credential_rotation_preserves_alias_destination_ownership() {
             None,
         ),
         (
-            "OPENAI_API_KEY",
-            "OPENAI_API_KEY",
-            "OPENAI_BASE_URL",
+            "PROVIDER_API_KEY",
+            "PROVIDER_API_KEY",
+            "PROVIDER_BASE_URL",
             "sk-proj-",
-            Some("api.openai.com"),
+            Some("api.example.test"),
         ),
     ] {
         for (environment, real_aliases, discover_parent) in [
@@ -1321,7 +1321,7 @@ fn credential_rotation_preserves_alias_destination_ownership() {
                 url_prefix_from_env: Some("PROVIDER_URL".to_string()),
                 ..CredentialProviderConfig::default()
             });
-            let suffix_len = if key == "OPENAI_API_KEY" { 64 } else { 36 };
+            let suffix_len = if key == "PROVIDER_API_KEY" { 64 } else { 36 };
             let first = format!("{prefix}{}", "a".repeat(suffix_len));
             let second = format!("{prefix}{}", "b".repeat(suffix_len));
             let auxiliary = format!("{prefix}{}", "c".repeat(suffix_len));
@@ -1506,7 +1506,7 @@ fn configured_provider_accepts_anchored_alternatives_and_ascii_character_classes
         let broker = broker_for(CredentialProviderConfig {
             env: vec!["PROVIDER_TOKEN".to_string()],
             patterns: vec![pattern.to_string()],
-            url_prefixes: vec!["api.provider.example".to_string()],
+            url_prefixes: vec!["api.example.test".to_string()],
             ..CredentialProviderConfig::default()
         });
         let mut env = HashMap::from([("PROVIDER_TOKEN".to_string(), token.to_string())]);
@@ -1528,7 +1528,7 @@ fn configured_provider_accepts_anchored_alternatives_and_ascii_character_classes
             AUTHORIZATION,
             HeaderValue::from_str(&format!("Bearer {dummy}")).expect("valid dummy authentication"),
         );
-        broker.inject_request_headers("https://api.provider.example/", &mut headers);
+        broker.inject_request_headers("https://api.example.test/", &mut headers);
         assert_eq!(
             headers
                 .get(AUTHORIZATION)
@@ -1558,7 +1558,7 @@ fn configured_provider_preserves_word_boundaries_during_unbound_discovery() {
     let broker = broker_for(CredentialProviderConfig {
         env: vec!["PROVIDER_TOKEN".to_string()],
         patterns: vec![r"\btoken_[a-z]{24}\b".to_string()],
-        url_prefixes: vec!["api.provider.example".to_string()],
+        url_prefixes: vec!["api.example.test".to_string()],
         ..CredentialProviderConfig::default()
     });
     let prefixed = format!("my{token}");
@@ -1588,7 +1588,7 @@ fn configured_provider_replaces_exact_known_values_with_lazy_patterns() {
         let broker = broker_for(CredentialProviderConfig {
             env: vec!["PROVIDER_TOKEN".to_string()],
             patterns: vec![pattern.to_string()],
-            url_prefixes: vec!["api.provider.example".to_string()],
+            url_prefixes: vec!["api.example.test".to_string()],
             ..CredentialProviderConfig::default()
         });
         let mut env = HashMap::from([
@@ -1675,7 +1675,7 @@ fn configured_provider_discovers_complete_unregistered_values() {
         let broker = broker_for(CredentialProviderConfig {
             env: vec!["PROVIDER_TOKEN".to_string()],
             patterns: vec![pattern.to_string()],
-            url_prefixes: vec!["api.provider.example".to_string()],
+            url_prefixes: vec!["api.example.test".to_string()],
             ..CredentialProviderConfig::default()
         });
         let mut env = HashMap::from([
@@ -1704,7 +1704,7 @@ fn configured_provider_discovers_complete_unregistered_values() {
             AUTHORIZATION,
             HeaderValue::from_str(&env["AUTH_HEADER"]).unwrap(),
         )]);
-        broker.inject_request_headers("https://api.provider.example/", &mut headers);
+        broker.inject_request_headers("https://api.example.test/", &mut headers);
         assert_eq!(
             headers,
             HeaderMap::from_iter([(
@@ -1822,7 +1822,7 @@ fn configured_provider_virtualizes_short_credentials_in_aliases_and_snapshots() 
         let broker = broker_for(CredentialProviderConfig {
             env: vec!["PROVIDER_PASSWORD".to_string()],
             patterns: vec![pattern.to_string()],
-            url_prefixes: vec!["api.provider.example".to_string()],
+            url_prefixes: vec!["api.example.test".to_string()],
             ..CredentialProviderConfig::default()
         });
         let mut env = HashMap::from([
@@ -1930,7 +1930,7 @@ fn configured_provider_generates_bounded_independent_dummies() {
     let long_broker = broker_for(CredentialProviderConfig {
         env: vec!["PROVIDER_TOKEN".to_string()],
         patterns: vec!["^token_[a-z]+$".to_string()],
-        url_prefixes: vec!["api.provider.example".to_string()],
+        url_prefixes: vec!["api.example.test".to_string()],
         ..CredentialProviderConfig::default()
     });
     let mut long_env = HashMap::from([("PROVIDER_TOKEN".to_string(), long_token.clone())]);
@@ -1946,7 +1946,7 @@ fn configured_provider_generates_bounded_independent_dummies() {
         let narrow_broker = broker_for(CredentialProviderConfig {
             env: vec!["PROVIDER_TOKEN".to_string()],
             patterns: vec!["^token_[ab]{64}$".to_string()],
-            url_prefixes: vec!["api.provider.example".to_string()],
+            url_prefixes: vec!["api.example.test".to_string()],
             ..CredentialProviderConfig::default()
         });
         let mut narrow_env = HashMap::from([("PROVIDER_TOKEN".to_string(), narrow_token.clone())]);
@@ -1969,7 +1969,7 @@ fn configured_provider_rejects_aliases_containing_disallowed_credentials() {
     let broker = broker_for(CredentialProviderConfig {
         env: vec!["FIRST_TOKEN".to_string(), "SECOND_TOKEN".to_string()],
         patterns: vec!["token_[a-z]{24}".to_string()],
-        url_prefixes: vec!["api.provider.example".to_string()],
+        url_prefixes: vec!["api.example.test".to_string()],
         ..CredentialProviderConfig::default()
     });
     let source_env = HashMap::from([("FIRST_TOKEN".to_string(), first.to_string())]);
@@ -1988,7 +1988,7 @@ fn configured_provider_rejects_aliases_containing_disallowed_credentials() {
     let overlapping = broker_for(CredentialProviderConfig {
         env: vec!["FIRST_TOKEN".to_string(), "SECOND_TOKEN".to_string()],
         patterns: vec!["^(token_[a-z]{4}|token_[a-z]{8})$".to_string()],
-        url_prefixes: vec!["api.provider.example".to_string()],
+        url_prefixes: vec!["api.example.test".to_string()],
         ..CredentialProviderConfig::default()
     });
     let first = "token_abcd";
@@ -2012,7 +2012,7 @@ fn configured_provider_preserves_operational_values_while_redacting_url_credenti
     let broker = broker_for(CredentialProviderConfig {
         env: vec!["PROVIDER_PIN".to_string()],
         patterns: vec![r"^\d{3}$".to_string()],
-        url_prefixes: vec!["api.provider.example".to_string()],
+        url_prefixes: vec!["api.example.test".to_string()],
         ..CredentialProviderConfig::default()
     });
     let mut env = HashMap::from([
@@ -2070,7 +2070,7 @@ fn configured_provider_does_not_rescan_registered_credential_prefixes() {
     let broker = broker_for(CredentialProviderConfig {
         env: vec!["PROVIDER_TOKEN".to_string()],
         patterns: vec!["token_[a-z]{4}".to_string(), "token_[a-z]{12}".to_string()],
-        url_prefixes: vec!["api.provider.example".to_string()],
+        url_prefixes: vec!["api.example.test".to_string()],
         ..CredentialProviderConfig::default()
     });
     let mut env = HashMap::from([("PROVIDER_TOKEN".to_string(), token.to_string())]);
@@ -2091,7 +2091,7 @@ fn configured_provider_does_not_register_a_credential_inside_an_existing_dummy()
     let broker = broker_for(CredentialProviderConfig {
         env: vec!["PRIMARY_TOKEN".to_string(), "SECONDARY_TOKEN".to_string()],
         patterns: vec!["token_[a-z]{4}".to_string(), "token_[a-z]{12}".to_string()],
-        url_prefixes: vec!["api.provider.example".to_string()],
+        url_prefixes: vec!["api.example.test".to_string()],
         ..CredentialProviderConfig::default()
     });
     let mut env = HashMap::from([(
@@ -2115,7 +2115,7 @@ fn configured_provider_reload_preserves_credentials_and_rejects_overlapping_sour
     let provider = CredentialProviderConfig {
         env: vec!["PROVIDER_TOKEN".to_string()],
         patterns: vec!["provider_[a-z]{24}".to_string()],
-        url_prefixes: vec!["api.provider.example".to_string()],
+        url_prefixes: vec!["api.example.test".to_string()],
         ..CredentialProviderConfig::default()
     };
     let broker = broker_for(provider.clone());
@@ -2157,7 +2157,7 @@ fn configured_provider_reload_preserves_credentials_and_rejects_overlapping_sour
         AUTHORIZATION,
         HeaderValue::from_str(&format!("Bearer {dummy}")).expect("valid authentication"),
     );
-    broker.inject_request_headers("https://api.provider.example/", &mut headers);
+    broker.inject_request_headers("https://api.example.test/", &mut headers);
     assert_eq!(
         headers
             .get(AUTHORIZATION)
@@ -2198,7 +2198,7 @@ fn configured_provider_preserves_bearer_token_basic_and_custom_header_auth() {
         let host = if method == CredentialAuthMethod::Header {
             "api.github.com"
         } else {
-            "api.provider.example"
+            "api.example.test"
         };
         let broker = broker_for(CredentialProviderConfig {
             env: vec!["PROVIDER_TOKEN".to_string()],
@@ -2312,7 +2312,7 @@ fn configured_provider_translates_full_basic_pairs_only_on_exact_match() {
         let broker = broker_for(CredentialProviderConfig {
             env: vec!["PROVIDER_CREDENTIALS".to_string()],
             patterns: vec![pattern.to_string()],
-            url_prefixes: vec!["api.provider.example".to_string()],
+            url_prefixes: vec!["api.example.test".to_string()],
             auth: vec![CredentialAuthMethod::Basic],
             ..CredentialProviderConfig::default()
         });
@@ -2322,8 +2322,8 @@ fn configured_provider_translates_full_basic_pairs_only_on_exact_match() {
         assert_eq!(dummy != token, brokered);
 
         for (destination, suffix, injected) in [
-            ("https://api.provider.example/", "", true),
-            ("https://api.provider.example/", "extra", false),
+            ("https://api.example.test/", "", true),
+            ("https://api.example.test/", "extra", false),
             ("https://other.example/", "", false),
         ] {
             // curl --user adds an empty password when the argument has no colon.
@@ -2380,7 +2380,7 @@ fn configured_provider_generates_unicode_basic_dummies() {
         let broker = broker_for(CredentialProviderConfig {
             env: vec!["PROVIDER_PASSWORD".to_string()],
             patterns: vec![pattern.to_string()],
-            url_prefixes: vec!["api.provider.example".to_string()],
+            url_prefixes: vec!["api.example.test".to_string()],
             auth: vec![CredentialAuthMethod::Basic],
             ..CredentialProviderConfig::default()
         });
@@ -2401,7 +2401,7 @@ fn configured_provider_generates_unicode_basic_dummies() {
             ))
             .expect("valid dummy authentication"),
         )]);
-        broker.inject_request_headers("https://api.provider.example/", &mut headers);
+        broker.inject_request_headers("https://api.example.test/", &mut headers);
         let expected = format!(
             "Basic {}",
             base64::engine::general_purpose::STANDARD.encode(format!("user:{token}"))
@@ -2435,7 +2435,7 @@ fn configured_provider_does_not_break_usable_auth_methods_when_generating_dummie
         let broker = broker_for(CredentialProviderConfig {
             env: vec!["PROVIDER_PASSWORD".to_string()],
             patterns: vec![format!("^(?:{token}|{alternative})$")],
-            url_prefixes: vec!["api.provider.example".to_string()],
+            url_prefixes: vec!["api.example.test".to_string()],
             auth: vec![method, CredentialAuthMethod::Basic],
             header: (method == CredentialAuthMethod::Header).then(|| "x-api-key".to_string()),
             ..CredentialProviderConfig::default()
@@ -2745,10 +2745,10 @@ fn explicit_invalid_destinations_clear_previous_dynamic_bindings() {
             None,
         ),
         (
-            "OPENAI_API_KEY",
-            "OPENAI_BASE_URL",
+            "PROVIDER_API_KEY",
+            "PROVIDER_BASE_URL",
             "sk-proj-abcdefghijklmnopqrstuvwxyz0123456789",
-            Some("api.openai.com"),
+            Some("api.example.test"),
         ),
         (
             "PROVIDER_TOKEN",
@@ -2908,7 +2908,7 @@ fn configured_provider_limits_injection_to_url_prefixes() {
         patterns: vec!["provider_[a-z]{24}".to_string()],
         url_prefixes: vec![
             "https://root.provider.example".to_string(),
-            "https://api.provider.example/v1".to_string(),
+            "https://api.example.test/v1".to_string(),
             "enterprise.example/v2/".to_string(),
             "https://*.provider.example:8443/private".to_string(),
             "http://localhost:443/v1".to_string(),
@@ -2930,16 +2930,16 @@ fn configured_provider_limits_injection_to_url_prefixes() {
     for (destination, injected) in [
         ("root.provider.example", false),
         ("https://root.provider.example/models", true),
-        ("https://api.provider.example/v1", true),
-        ("https://api.provider.example/v1/models?limit=1", true),
-        ("https://api.provider.example/v10/models", false),
-        ("https://api.provider.example/private", false),
+        ("https://api.example.test/v1", true),
+        ("https://api.example.test/v1/models?limit=1", true),
+        ("https://api.example.test/v10/models", false),
+        ("https://api.example.test/private", false),
         (
-            "https://api.provider.example/public/%2e%2e/v1/models",
+            "https://api.example.test/public/%2e%2e/v1/models",
             false,
         ),
-        ("https://api.provider.example/v1%2f../private", false),
-        ("http://api.provider.example/v1", false),
+        ("https://api.example.test/v1%2f../private", false),
+        ("http://api.example.test/v1", false),
         ("https://enterprise.example/v2/models", true),
         ("https://enterprise.example/v2", false),
         ("https://team.provider.example:8443/private/models", true),

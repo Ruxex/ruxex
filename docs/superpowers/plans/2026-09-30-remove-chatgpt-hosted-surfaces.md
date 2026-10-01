@@ -8,7 +8,7 @@
 
 **Tech Stack:** Rust workspace, app-server protocol, TUI, CLI/doctor, `rg`, `just check`, `just check --tests`, and `just generate` for affected generated artifacts.
 
-**Spec:** `docs/openai-decoupling-candidates.md`, `docs/pre-release-compatibility-inventory.md`, and the ChatGPT residual audit recorded in this plan.
+**Spec:** `docs/provider-decoupling-candidates.md`, `docs/pre-release-compatibility-inventory.md`, and the ChatGPT residual audit recorded in this plan.
 
 ## Global Constraints
 
@@ -172,7 +172,7 @@ production row must be confirmed in
 
 - [x] **Step 2: Define provider-neutral error semantics**
 
-  Keep generic rate-limit and quota classification, retry behavior, and the separate account usage snapshot/status surfaces. Remove the OpenAI-specific `UsageLimitReachedError` payload, plan/credits/promo/reset-time formatting, and `usage_not_included` error variant. Provider-specific adapters may map their responses to generic errors at the boundary.
+  Keep generic rate-limit and quota classification, retry behavior, and the separate account usage snapshot/status surfaces. Remove the provider-specific `UsageLimitReachedError` payload, plan/credits/promo/reset-time formatting, and `usage_not_included` error variant. Provider-specific adapters may map their responses to generic errors at the boundary.
 
 - [x] **Step 3: Remove hosted messages and update snapshots**
 
@@ -198,7 +198,7 @@ production row must be confirmed in
 **Files:**
 - Modify: `docs/pre-release-compatibility-inventory.md`
 - Modify: generated protocol/schema artifacts only if `just generate` changes them
-- Modify: `docs/openai-decoupling-candidates.md` to record completion and remaining follow-ups
+- Modify: `docs/provider-decoupling-candidates.md` to record completion and remaining follow-ups
 
 - [x] **Step 1: Record final decisions**
 
@@ -220,4 +220,4 @@ production row must be confirmed in
 
 - [x] **Step 4: Confirm residual matches are intentional**
 
-  Re-run the ChatGPT/OpenAI search restricted to Rust production code and classify every remaining match as active security behavior, provider-owned adapter, persisted compatibility, test-only fixture, or documentation. Do not mark the plan complete while an unexplained production match remains.
+  Re-run the ChatGPT/provider search restricted to Rust production code and classify every remaining match as active security behavior, provider-owned adapter, persisted compatibility, test-only fixture, or documentation. Do not mark the plan complete while an unexplained production match remains.

@@ -81,7 +81,7 @@ async fn codex_home_symlink_opt_out_uses_loaded_user_config() -> anyhow::Result<
         let mut command = test.cmd_with_server(&server);
         command
             .env_remove("CODEX_API_KEY")
-            .env_remove("OPENAI_API_KEY")
+            .env_remove("PROVIDER_API_KEY")
             .env_remove("CODEX_ACCESS_TOKEN")
             .env("CODEX_HOME", home_env)
             .args(["--skip-git-repo-check", "--sandbox", "workspace-write", "--add-dir"])

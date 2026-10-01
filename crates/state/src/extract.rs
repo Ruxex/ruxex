@@ -187,7 +187,7 @@ mod tests {
     use codex_protocol::models::ContentItem;
     use codex_protocol::models::PermissionProfile;
     use codex_protocol::models::ResponseItem;
-    use codex_protocol::openai_models::ReasoningEffort;
+    use codex_protocol::model_types::ReasoningEffort;
     use codex_protocol::protocol::AskForApproval;
     use codex_protocol::protocol::EventMsg;
     use codex_protocol::protocol::ItemCompletedEvent;
@@ -409,7 +409,7 @@ mod tests {
                     agent_path: None,
                     agent_nickname: None,
                     agent_role: None,
-                    model_provider: Some("openai".to_string()),
+                    model_provider: Some("provider".to_string()),
                     base_instructions: None,
                     dynamic_tools: None,
                     selected_capability_roots: Vec::new(),
@@ -664,7 +664,7 @@ mod tests {
                     agent_path: None,
                     agent_nickname: None,
                     agent_role: None,
-                    model_provider: Some("openai".to_string()),
+                    model_provider: Some("provider".to_string()),
                     base_instructions: None,
                     dynamic_tools: None,
                     selected_capability_roots: Vec::new(),
@@ -700,7 +700,7 @@ mod tests {
             agent_path: None,
             agent_nickname: None,
             agent_role: None,
-            model_provider: "openai".to_string(),
+            model_provider: "provider".to_string(),
             model: None,
             reasoning_effort: None,
             cwd: PathBuf::from("/tmp"),

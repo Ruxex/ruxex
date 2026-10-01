@@ -18,7 +18,7 @@ from urllib.parse import urlsplit
 SHIPPING_LEGACY_VERSION = "2025-06-18"
 LEGACY_VERSION = "2025-11-25"
 MODERN_VERSION = "2026-07-28"
-SERVER_NAME = "openai-mcp-spec-test-server"
+SERVER_NAME = "provider-mcp-spec-test-server"
 SERVER_VERSION = "0.1.0"
 
 DEFAULT_PROFILE = "default"
@@ -610,7 +610,7 @@ class ProtocolServer:
             "resources": {"subscribe": True, "listChanged": True},
             "prompts": {"listChanged": True},
             "logging": {},
-            "extensions": {"com.openai/mcp-spec-test": {}},
+            "extensions": {"com.codex/mcp-spec-test": {}},
         }
 
     @staticmethod

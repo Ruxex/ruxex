@@ -45,7 +45,7 @@ impl HistoryNotesExtension {
             .token_budget
             .as_ref()
             .is_some_and(|token_budget| token_budget.use_history_notes_extension)
-            && config.model_provider.is_openai()
+            && config.model_provider.is_responses_provider()
             && self.auth_manager.current_auth_uses_managed_auth()
         {
             thread_store.insert(HistoryNotesExtensionConfig {

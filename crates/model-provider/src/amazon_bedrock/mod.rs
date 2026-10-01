@@ -27,7 +27,7 @@ use codex_models_manager::manager::StaticModelsManager;
 use codex_protocol::account::ProviderAccount;
 use codex_protocol::error::CodexErr;
 use codex_protocol::error::Result;
-use codex_protocol::openai_models::ModelsResponse;
+use codex_protocol::model_types::ModelsResponse;
 
 use crate::auth::auth_manager_for_provider;
 use crate::auth::resolve_provider_auth as resolve_configured_provider_auth;
@@ -56,7 +56,7 @@ pub(super) enum BedrockEndpoint {
     Runtime,
 }
 
-/// Runtime provider for Amazon Bedrock's OpenAI-compatible endpoints.
+/// Runtime provider for Amazon Bedrock's provider-compatible endpoints.
 #[derive(Clone, Debug)]
 pub(crate) struct AmazonBedrockModelProvider {
     pub(crate) info: ModelProviderInfo,
@@ -580,11 +580,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn openai_auth_is_not_exposed_to_bedrock() {
+    async fn provider_auth_is_not_exposed_to_bedrock() {
         let provider = AmazonBedrockModelProvider::new(
             ModelProviderInfo::create_amazon_bedrock_provider(/*aws*/ None),
             Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
-                "openai-api-key",
+                "provider-api-key",
             ))),
         );
 

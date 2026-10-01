@@ -71,9 +71,9 @@ use codex_protocol::dynamic_tools::DynamicToolNamespaceTool;
 use codex_protocol::dynamic_tools::DynamicToolSpec;
 use codex_protocol::error::CodexErrorDetails;
 use codex_protocol::error::Result as CodexResult;
-use codex_protocol::openai_models::ConfigShellToolType;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ToolMode;
+use codex_protocol::model_types::ConfigShellToolType;
+use codex_protocol::model_types::ModelInfo;
+use codex_protocol::model_types::ToolMode;
 use codex_protocol::protocol::MultiAgentVersion;
 use codex_tools::ResponsesApiNamespace;
 use codex_tools::ResponsesApiNamespaceTool;
@@ -1268,7 +1268,7 @@ fn append_dynamic_tool_runtimes(dynamic_tools: &[DynamicToolSpec], registry: &mu
             DynamicToolSpec::Function(tool) => {
                 let Some(handler) = DynamicToolHandler::new(tool) else {
                     tracing::error!(
-                        "Failed to convert dynamic tool {:?} to OpenAI tool",
+                        "Failed to convert dynamic tool {:?} to provider tool",
                         tool.name
                     );
                     continue;
@@ -1281,7 +1281,7 @@ fn append_dynamic_tool_runtimes(dynamic_tools: &[DynamicToolSpec], registry: &mu
                     let Some(handler) = DynamicToolHandler::new_in_namespace(namespace, tool)
                     else {
                         tracing::error!(
-                            "Failed to convert dynamic tool {:?}.{:?} to OpenAI tool",
+                            "Failed to convert dynamic tool {:?}.{:?} to provider tool",
                             namespace.name,
                             tool.name
                         );

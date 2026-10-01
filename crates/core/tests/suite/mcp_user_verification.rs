@@ -4,7 +4,7 @@ use anyhow::Result;
 use codex_core::StartThreadOptions;
 use codex_core::TurnInputRequest;
 use codex_protocol::mcp::ClientMcpExtensions;
-use codex_protocol::mcp::OPENAI_ELICITATION_EXTENSION_ID;
+use codex_protocol::mcp::provider_ELICITATION_EXTENSION_ID;
 use codex_protocol::protocol::EventMsg;
 use codex_protocol::user_input::UserInput;
 use core_test_support::responses;
@@ -41,8 +41,8 @@ for line in sys.stdin:
                              "annotations": {"readOnlyHint": True}}]}
     elif method == "tools/call":
         pending = request["id"]
-        send({"id": "verification", "method": "openai/elicitation/create", "params": {
-            "mode": "openai/userVerification", "title": "Approve", "description": "", "challenge": "AQID"}})
+        send({"id": "verification", "method": "provider/elicitation/create", "params": {
+            "mode": "provider/userVerification", "title": "Approve", "description": "", "challenge": "AQID"}})
         continue
     elif method is None and request.get("id") == "verification":
         send({"id": pending, "result": {"content": [{"type": "text", "text": json.dumps({
@@ -74,13 +74,13 @@ async fn mcp_user_verification_rejects_configured_servers(source: CapabilitySour
     let server = responses::start_mock_server().await;
     let test = test_codex().build_with_auto_env(&server).await?;
     let declarations = HashMap::from([(
-        OPENAI_ELICITATION_EXTENSION_ID.to_string(),
+        provider_ELICITATION_EXTENSION_ID.to_string(),
         json!({"userVerification": {}}),
     )]);
     let client_mcp_extensions = match source {
         CapabilitySource::HostProjection => codex_mcp::client_mcp_extensions(
             Some(&declarations),
-            /*legacy_openai_form_elicitation*/ false,
+            /*legacy_provider_form_elicitation*/ false,
         ),
         // Even an explicitly enabled session cannot grant this capability to a configured server.
         CapabilitySource::ExplicitSession => ClientMcpExtensions::new(declarations),
@@ -146,13 +146,13 @@ async fn mcp_user_verification_rejects_configured_servers(source: CapabilitySour
             .expect("MCP wire response"),
     )?;
     assert!(
-        echoed["extensions"][OPENAI_ELICITATION_EXTENSION_ID]
+        echoed["extensions"][provider_ELICITATION_EXTENSION_ID]
             .get("userVerification")
             .is_none()
     );
     assert_eq!(
         echoed["response"],
-        json!({"code": -32601, "message": "openai/elicitation/create"})
+        json!({"code": -32601, "message": "provider/elicitation/create"})
     );
     thread.shutdown_and_wait().await?;
     test.codex.shutdown_and_wait().await?;

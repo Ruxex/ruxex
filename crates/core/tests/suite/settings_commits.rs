@@ -71,7 +71,7 @@ async fn initial_plugin_ids_use_turn_context_without_extra_settings_checkpoints(
         .with_history_mode(history_mode)
         .build_with_auto_env(&server)
         .await?;
-    let selected = vec!["slack@openai".to_string()];
+    let selected = vec!["slack@provider".to_string()];
     submit_thread_settings(
         &test.codex,
         ThreadSettingsOverrides {
@@ -202,7 +202,7 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
     initial.disabled_plugin_ids = None;
     let thread_settings = ThreadSettingsOverrides {
         model: Some(COMMITTED_MODEL.to_string()),
-        disabled_plugin_ids: Some(vec!["slack@openai".to_string()]),
+        disabled_plugin_ids: Some(vec!["slack@provider".to_string()]),
         ..Default::default()
     };
     let submission = tokio::spawn({
@@ -234,13 +234,13 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
     timeout(TIMEOUT, entered_rx).await??;
     let expected = test.codex.thread_settings_snapshot().await;
     assert_eq!(expected.model, COMMITTED_MODEL);
-    assert_eq!(expected.disabled_plugin_ids, vec!["slack@openai"]);
+    assert_eq!(expected.disabled_plugin_ids, vec!["slack@provider"]);
     // Submitted operations are serialized. Runtime restoration is an existing
     // direct writer, so it can overlap the first operation's post-commit work.
     timeout(TIMEOUT, test.codex.restore_thread_settings(initial)).await??;
     let restored = test.codex.thread_settings_snapshot().await;
     assert_eq!(restored.model, INITIAL_MODEL);
-    assert_eq!(restored.disabled_plugin_ids, vec!["slack@openai"]);
+    assert_eq!(restored.disabled_plugin_ids, vec!["slack@provider"]);
     release_tx.send(())?;
     let submission_id = timeout(TIMEOUT, submission).await???;
 
@@ -313,7 +313,7 @@ async fn compaction_checkpoints_settings_changed_during_its_model_request() -> R
         .with_model(INITIAL_MODEL)
         .with_config(|config| {
             // Local compaction lets the SSE gate hold its response in flight.
-            config.model_provider.name = "OpenAI (test)".to_string();
+            config.model_provider.name = "provider (test)".to_string();
         })
         .build_with_streaming_server(&server)
         .await?;
@@ -330,7 +330,7 @@ async fn compaction_checkpoints_settings_changed_during_its_model_request() -> R
         ThreadSettingsOverrides {
             environments: Some(local_selections(updated_cwd_path.clone())),
             model: Some(COMMITTED_MODEL.to_string()),
-            disabled_plugin_ids: Some(vec!["slack@openai".to_string()]),
+            disabled_plugin_ids: Some(vec!["slack@provider".to_string()]),
             ..Default::default()
         },
     )

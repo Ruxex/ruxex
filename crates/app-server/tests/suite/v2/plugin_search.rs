@@ -123,8 +123,8 @@ plugin_sharing = false
             .collect::<Vec<_>>(),
         vec![
             (
-                "openai-curated-remote",
-                "global-linear@openai-curated-remote"
+                "test-remote",
+                "global-linear@test-remote"
             ),
             (
                 "created-by-me-remote",
@@ -429,11 +429,11 @@ async fn plugin_search_returns_local_matches_for_api_key_auth() -> Result<()> {
         let curated_root = codex_home.path().join(".tmp/plugins");
         let bundled_alpha_root = codex_home
             .path()
-            .join(".tmp/bundled-marketplaces/openai-bundled-alpha");
+            .join(".tmp/bundled-marketplaces/codex-bundled-alpha");
         let server = MockServer::start().await;
         write_local_marketplace(
             &curated_root,
-            "openai-api-curated",
+            "provider-api-curated",
             "api_marketplace.json",
             &[LocalPluginFixture {
                 name: "calendar-built-in",
@@ -463,7 +463,7 @@ async fn plugin_search_returns_local_matches_for_api_key_auth() -> Result<()> {
         )?;
         write_local_marketplace(
             &bundled_alpha_root,
-            "openai-bundled-alpha",
+            "codex-bundled-alpha",
             "marketplace.json",
             &[LocalPluginFixture {
                 name: "alpha-calendar",
@@ -557,7 +557,7 @@ async fn plugin_search_deduplicates_shared_remote_identities_while_ignoring_loca
     let server = MockServer::start().await;
     write_local_marketplace(
         &curated_root,
-        "openai-curated",
+        "test-curated",
         "marketplace.json",
         &[
             LocalPluginFixture {
@@ -605,7 +605,7 @@ async fn plugin_search_deduplicates_shared_remote_identities_while_ignoring_loca
             },
         }))?,
     )?;
-    write_installed_plugin(codex_home.path(), "openai-curated", "calendar")?;
+    write_installed_plugin(codex_home.path(), "test-curated", "calendar")?;
     write_installed_plugin(codex_home.path(), "personal-tools", "local-planner")?;
     write_installed_plugin(codex_home.path(), "personal-tools", "calendar-local-only")?;
     std::fs::write(
@@ -617,7 +617,7 @@ async fn plugin_search_deduplicates_shared_remote_identities_while_ignoring_loca
 plugins = true
 remote_plugin = true
 
-[plugins."calendar@openai-curated"]
+[plugins."calendar@test-curated"]
 enabled = true
 
 [plugins."local-planner@personal-tools"]
@@ -696,7 +696,7 @@ enabled = true
             ))
             .collect::<Vec<_>>(),
         vec![
-            ("calendar@openai-curated-remote", false, false, None),
+            ("calendar@test-remote", false, false, None),
             (
                 "calendar-local-only@personal-tools",
                 true,

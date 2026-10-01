@@ -411,7 +411,7 @@ fn composite_cell_preserves_child_web_links() {
 
 #[test]
 fn empty_mcp_output_preserves_docs_hyperlink() {
-    let destination = "https://developers.openai.com/codex/mcp";
+    let destination = "https://developers.provider.com/codex/mcp";
     let cell: Box<dyn HistoryCell> = Box::new(empty_mcp_output());
 
     insta::assert_snapshot!(render_lines(&cell.display_lines(/*width*/ 80)).join("\n"), @r"
@@ -919,7 +919,7 @@ Refresh your AWS credentials and retry. If `AWS_BEARER_TOKEN_BEDROCK` is set, up
 unset it, then restart Codex"
                 .to_string(),
         ),
-        url: Some("https://bedrock-mantle.us-east-2.api.aws/openai/v1/responses".to_string()),
+        url: Some("https://bedrock-mantle.us-east-2.api.aws/provider/v1/responses".to_string()),
         cf_ray: None,
         request_id: None,
     };

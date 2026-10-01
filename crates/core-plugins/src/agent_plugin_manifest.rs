@@ -13,7 +13,7 @@ use codex_utils_plugins::SUPPORTED_AGENT_PLUGIN_SCHEMA_URIS;
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
 
-const CODEX_AGENT_PLUGIN_EXTENSION_NAMESPACE: &str = "com.openai";
+const CODEX_AGENT_PLUGIN_EXTENSION_NAMESPACE: &str = "com.codex";
 const AGENT_PLUGIN_FIELDS: &[&str] = &[
     "$schema",
     "name",

@@ -15,16 +15,16 @@ use codex_login::AuthManager;
 use codex_login::CodexAuth;
 use codex_model_provider_info::ModelProviderInfo;
 use codex_models_manager::manager::SharedModelsManager;
-use codex_models_manager::manager::OpenAiModelsManager;
+use codex_models_manager::manager::RemoteModelsManager;
 use codex_models_manager::manager::StaticModelsManager;
 use codex_protocol::account::ProviderAccount;
-use codex_protocol::openai_models::ModelsResponse;
+use codex_protocol::model_types::ModelsResponse;
 use http::HeaderMap;
 use http::HeaderValue;
 
 use super::auth::unauthenticated_auth_provider;
 use super::models_endpoint::ModelsEndpointAuthMode;
-use super::models_endpoint::OpenAiModelsEndpoint;
+use super::models_endpoint::ModelsEndpoint;
 use super::provider::ModelProvider;
 use super::provider::ModelProviderFuture;
 use super::provider::ProviderAccountResult;
@@ -131,12 +131,12 @@ impl ModelProvider for MyModelProvider {
                 model_catalog,
             )),
             None => {
-                let endpoint = Arc::new(OpenAiModelsEndpoint::new_with_auth_mode(
+                let endpoint = Arc::new(ModelsEndpoint::new_with_auth_mode(
                     self.info.clone(),
                     self.auth_manager.clone(),
                     ModelsEndpointAuthMode::MyProvider,
                 ));
-                Arc::new(OpenAiModelsManager::new(
+                Arc::new(RemoteModelsManager::new(
                     codex_home,
                     endpoint,
                     self.auth_manager.clone(),
@@ -155,12 +155,12 @@ impl ModelProvider for MyModelProvider {
                 model_catalog,
             )),
             None => {
-                let endpoint = Arc::new(OpenAiModelsEndpoint::new_with_auth_mode(
+                let endpoint = Arc::new(ModelsEndpoint::new_with_auth_mode(
                     self.info.clone(),
                     self.auth_manager.clone(),
                     ModelsEndpointAuthMode::MyProvider,
                 ));
-                Arc::new(OpenAiModelsManager::new_without_cache(
+                Arc::new(RemoteModelsManager::new_without_cache(
                     endpoint,
                     self.auth_manager.clone(),
                 ))
@@ -176,7 +176,7 @@ mod tests {
     use codex_http_client::OutboundProxyPolicy;
     use codex_login::CodexAuth;
     use codex_models_manager::manager::RefreshStrategy;
-    use codex_protocol::openai_models::ModelsResponse;
+    use codex_protocol::model_types::ModelsResponse;
     use serde_json::json;
     use wiremock::Mock;
     use wiremock::MockServer;
@@ -188,7 +188,7 @@ mod tests {
     #[tokio::test]
     async fn model_list_is_fetched_dynamically_with_my_provider_auth() {
         let server = MockServer::start().await;
-        let model: codex_protocol::openai_models::ModelInfo = serde_json::from_value(json!({
+        let model: codex_protocol::model_types::ModelInfo = serde_json::from_value(json!({
             "slug": "my-dynamic-model",
             "display_name": "My Dynamic Model",
             "description": "model returned by My Provider",

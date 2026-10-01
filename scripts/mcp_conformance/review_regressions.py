@@ -245,7 +245,7 @@ def _initialize_review_client(
                 "capabilities": {
                     "experimentalApi": True,
                     "requestAttestation": False,
-                    "mcpServerOpenaiFormElicitation": True,
+                    "mcpServerproviderFormElicitation": True,
                 },
             },
         )

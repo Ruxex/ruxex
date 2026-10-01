@@ -7,7 +7,7 @@ use crate::context::ContextualUserFragment;
 use codex_features::Feature;
 use codex_login::CodexAuth;
 use codex_protocol::auth::AuthMode;
-use codex_protocol::openai_models::ModelInfo;
+use codex_protocol::model_types::ModelInfo;
 
 fn experimental_context_is_eligible(_auth_mode: AuthMode) -> bool {
     false

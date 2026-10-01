@@ -13,7 +13,7 @@ fn verification_mode_is_removed_from_flattened_typescript_only_for_stable_export
     let filtered = filter_ts(&generated);
     assert!(!filtered.contains(MODE));
     assert_eq!(filter_ts(&filtered), filtered);
-    for mode in ["form", "openai/form", "openaiForm", "url"] {
+    for mode in ["form", "provider/form", "providerForm", "url"] {
         assert!(filtered.contains(&format!("\"mode\": \"{mode}\"")));
     }
     assert!(filtered.contains("threadId: string"));

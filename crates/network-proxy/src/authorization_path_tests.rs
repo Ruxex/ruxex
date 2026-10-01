@@ -4,15 +4,15 @@ use pretty_assertions::assert_eq;
 #[test]
 fn accepts_unambiguous_paths() {
     let paths = [
-        "/openai/openai",
-        "/openai/openai/issues/123",
-        "/openai/openai/a..b",
-        "/openai/openai/%20space",
-        "/openai/openai/%E2%9C%93",
-        "/openai/openai/contents/%2Egitignore",
-        "/openai/openai/contents/.%2Egithub",
-        "/openai/openai/%2e%2efoo",
-        "/openai/openai/%2e%2e%2e",
+        "/provider/provider",
+        "/provider/provider/issues/123",
+        "/provider/provider/a..b",
+        "/provider/provider/%20space",
+        "/provider/provider/%E2%9C%93",
+        "/provider/provider/contents/%2Egitignore",
+        "/provider/provider/contents/.%2Egithub",
+        "/provider/provider/%2e%2efoo",
+        "/provider/provider/%2e%2e%2e",
     ];
 
     assert_eq!(
@@ -24,17 +24,17 @@ fn accepts_unambiguous_paths() {
 #[test]
 fn rejects_paths_with_ambiguous_segments_or_encodings() {
     let paths = [
-        "/openai/openai/../codex",
-        "/openai/openai/./issues",
-        "/openai/openai\\..\\codex",
-        "/openai/openai/%2e%2e/codex",
-        "/openai/openai/%2E%2E/codex",
-        "/openai/openai/%2f..%2fcodex",
-        "/openai/openai/%5c..%5ccodex",
-        "/openai/openai/%252e%252e/codex",
-        "/openai/openai/%",
-        "/openai/openai/%2",
-        "/openai/openai/%zz",
+        "/provider/provider/../codex",
+        "/provider/provider/./issues",
+        "/provider/provider\\..\\codex",
+        "/provider/provider/%2e%2e/codex",
+        "/provider/provider/%2E%2E/codex",
+        "/provider/provider/%2f..%2fcodex",
+        "/provider/provider/%5c..%5ccodex",
+        "/provider/provider/%252e%252e/codex",
+        "/provider/provider/%",
+        "/provider/provider/%2",
+        "/provider/provider/%zz",
     ];
 
     assert_eq!(

@@ -40,7 +40,7 @@ use crate::tools::parallel::ToolCallRuntime;
 use crate::tools::router::ToolCall;
 use crate::tools::router::ToolCallSource;
 use crate::unified_exec::resolve_max_tokens;
-use codex_protocol::openai_models::ToolMode;
+use codex_protocol::model_types::ToolMode;
 use codex_tools::ToolName;
 use codex_utils_audio::estimate_audio_token_count;
 use codex_utils_output_truncation::TruncationPolicy;
@@ -252,7 +252,7 @@ impl CodeModeService {
 }
 
 pub(super) async fn handle_runtime_response(
-    model_info: &codex_protocol::openai_models::ModelInfo,
+    model_info: &codex_protocol::model_types::ModelInfo,
     response: RuntimeResponse,
     max_output_tokens: Option<usize>,
     wall_time: Duration,

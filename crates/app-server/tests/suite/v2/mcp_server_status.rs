@@ -587,7 +587,7 @@ async fn mcp_server_status_list_returns_raw_server_and_tool_names() -> Result<()
             .as_ref()
             .and_then(|caps| caps.get("extensions")),
         Some(&json!({
-            "openai/settings": { "readTool": "settings.read", "updateTool": "settings.update" }
+            "provider/settings": { "readTool": "settings.read", "updateTool": "settings.update" }
         }))
     );
     assert_eq!(status.tools_error, None);
@@ -991,7 +991,7 @@ async fn mcp_server_status_retains_capabilities_when_tool_discovery_fails() -> R
                 .as_ref()
                 .and_then(|caps| caps.get("extensions")),
             Some(&json!({
-                "openai/settings": { "readTool": "settings.read", "updateTool": "settings.update" }
+                "provider/settings": { "readTool": "settings.read", "updateTool": "settings.update" }
             }))
         );
     }
@@ -1010,7 +1010,7 @@ impl ServerHandler for McpStatusServer {
     fn get_info(&self) -> ServerInfo {
         let mut capabilities = ServerCapabilities::builder().enable_tools().build();
         capabilities.extensions = Some(BTreeMap::from([(
-            "openai/settings".to_string(),
+            "provider/settings".to_string(),
             serde_json::from_value(
                 json!({ "readTool": "settings.read", "updateTool": "settings.update" }),
             )

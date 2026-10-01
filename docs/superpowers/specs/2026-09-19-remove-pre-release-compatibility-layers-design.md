@@ -10,12 +10,12 @@ foundation larger and preserve contracts that this fork has not released.
 
 Tracking documents: [implementation plan](../plans/2026-09-19-remove-pre-release-compatibility-layers.md),
 [compatibility inventory](../../pre-release-compatibility-inventory.md), and
-[OpenAI decoupling handoff](../../openai-decoupling-plan.md).
+[provider decoupling handoff](../../provider-decoupling-plan.md).
 
 ## Decision
 
 Perform a repository-wide compatibility cleanup before removing the next
-OpenAI-specific integration. Remove code whose sole purpose is to accept,
+provider-specific integration. Remove code whose sole purpose is to accept,
 produce, migrate, replay, or test historical contracts from before this fork.
 
 Do not interpret every `legacy`-named symbol as removable. Keep a compatibility

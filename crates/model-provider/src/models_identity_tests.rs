@@ -8,7 +8,7 @@ use pretty_assertions::assert_eq;
 #[test]
 fn cache_identity_tracks_provider_routing_and_effective_api_credentials() {
     let auth = CodexAuth::from_api_key("first-key");
-    let provider = ModelProviderInfo::create_openai_provider(Some("https://one.example/v1".into()));
+    let provider = ModelProviderInfo::create_responses_provider(Some("https://one.example/v1".into()));
     let key = identity(&provider, Some(&auth)).unwrap();
     let other_key = CodexAuth::from_api_key("second-key");
     assert_ne!(identity(&provider, Some(&other_key)).unwrap(), key);
@@ -20,7 +20,7 @@ fn cache_identity_tracks_provider_routing_and_effective_api_credentials() {
     assert_ne!(identity(&other_provider, Some(&auth)).unwrap(), key);
     other_provider = provider;
     other_provider.http_headers = Some(std::collections::HashMap::from([(
-        "openai-project".into(),
+        "provider-project".into(),
         "another-project".into(),
     )]));
     assert_ne!(identity(&other_provider, Some(&auth)).unwrap(), key);

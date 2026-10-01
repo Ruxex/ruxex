@@ -42,7 +42,7 @@ projectId: string | null, /**
  * Persisted thread history contract selected when this thread was created.
  */
 historyMode: ThreadHistoryMode, /**
- * Model provider used for this thread (for example, 'openai').
+ * Model provider used for this thread (for example, 'provider').
  */
 modelProvider: string, /**
  * Current configured model when loaded, otherwise the latest persisted model.

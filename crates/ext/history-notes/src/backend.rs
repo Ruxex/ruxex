@@ -12,8 +12,8 @@ use serde_json::Value;
 use serde_json::json;
 
 const HISTORY_NOTES_BACKEND_TIMEOUT: Duration = Duration::from_secs(35);
-const ENCRYPTED_TOOL_ARGUMENTS_HEADER: &str = "x-openai-encrypted-tool-arguments";
-const TOOL_OUTPUT_TRUNCATION_POLICY_HEADER: &str = "x-openai-tool-output-truncation-policy";
+const ENCRYPTED_TOOL_ARGUMENTS_HEADER: &str = "x-provider-encrypted-tool-arguments";
+const TOOL_OUTPUT_TRUNCATION_POLICY_HEADER: &str = "x-provider-tool-output-truncation-policy";
 const OPERATION_ERROR_PREFIX: &str = "Unable to perform operation:";
 
 #[derive(Clone)]

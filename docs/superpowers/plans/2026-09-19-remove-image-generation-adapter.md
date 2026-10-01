@@ -8,13 +8,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove the OpenAI Images API image-generation adapter and its live tool registration while preserving provider-neutral image history, protocol, and display compatibility.
+**Goal:** Remove the provider Images API image-generation adapter and its live tool registration while preserving provider-neutral image history, protocol, and display compatibility.
 
 **Architecture:** Delete the dedicated `codex-image-generation-extension` and the unused Images endpoint/types from `codex-api`. Remove the feature and provider/app-server capability fields that only advertised this deleted live integration. Retain `ImageGenerationItem`, response-history variants, rollout migration, and UI rendering so existing stored image-generation records remain readable.
 
 **Tech Stack:** Rust workspace, Cargo manifests/lockfile, generated app-server and config schemas, dependency-graph script.
 
-**Spec:** `docs/openai-decoupling-plan.md`
+**Spec:** `docs/provider-decoupling-plan.md`
 
 ## Global Constraints
 
@@ -32,7 +32,7 @@
 - Model-provider capability responses no longer advertise a capability with no installed executor.
 - Generated schemas and `Cargo.lock` agree with the source and workspace membership.
 
-### Task 1: Remove the OpenAI image adapter and live registration
+### Task 1: Remove the provider image adapter and live registration
 
 **Files:**
 - Delete: `crates/ext/image-generation/`
@@ -74,7 +74,7 @@
 - Modify: `Cargo.lock`
 - Modify: generated app-server protocol schema files under `crates/app-server-protocol/schema/`
 - Modify: `crates/core/config.schema.json`
-- Modify: `docs/openai-decoupling-plan.md`, `docs/openai-specific-crates.md`
+- Modify: `docs/provider-decoupling-plan.md`, `docs/provider-specific-crates.md`
 - Modify: `target/crate-dependency-graph/` generated outputs
 
 - [x] Synchronize the app-server and config schemas after the source changes. The repository app-server schema generator invokes `cargo test`, so the capability schema was updated directly while the requested verification remained `just check`.

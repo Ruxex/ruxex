@@ -127,7 +127,7 @@ async fn responses_stream_parses_items_and_completed_end_to_end() -> Result<()> 
     let expected_metadata = completed["response"]["usage"].clone();
     let body = build_responses_body(vec![item1, item2, completed]);
     let transport = FixtureSseTransport::new(body);
-    let client = ResponsesClient::new(transport, provider("openai"), Arc::new(NoAuth));
+    let client = ResponsesClient::new(transport, provider("provider"), Arc::new(NoAuth));
 
     let mut stream = client
         .stream(

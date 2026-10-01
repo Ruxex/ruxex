@@ -50,7 +50,7 @@
 - Modify: `crates/rollout/src/lib.rs`
 - Test: `crates/rollout/src/tests.rs`
 - Modify: `docs/pre-release-compatibility-inventory.md`
-- Modify: `docs/openai-decoupling-candidates.md`
+- Modify: `docs/provider-decoupling-candidates.md`
 
 **Interfaces:**
 - `INTERACTIVE_SESSION_SOURCES` contains only current Codex-compatible interactive sources.
@@ -82,7 +82,7 @@
 **Files:**
 - Modify: generated protocol/schema artifacts only if produced by `just generate`
 - Modify: `docs/pre-release-compatibility-inventory.md`
-- Modify: `docs/openai-decoupling-candidates.md`
+- Modify: `docs/provider-decoupling-candidates.md`
 
 - [x] Run `just generate` when Task 1 changes generated protocol/schema output and inspect the complete diff.
 - [x] Search production code and generated artifacts for built-in ChatGPT/Atlas product variants and session-source filters; classify intentional historical/test references.

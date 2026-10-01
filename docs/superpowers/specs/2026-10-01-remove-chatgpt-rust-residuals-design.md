@@ -90,5 +90,5 @@ Rust source から参照される生成物、workspace edge、未登録 test sou
 - 固定 `chatgpt.com` endpoint は、設定済み provider の endpoint や generic transport が現行 consumer を満たすか確認してから削除する。
 - remote client 名による response-only redaction は、producer がリポジトリ外でも active privacy boundary なら、同等の provider-neutral contract がない限り hold 候補とする。
 - persisted data の reader を削除・変更する場合、既存履歴を壊す証拠と、pre-release 方針との整合を inventory に明記する。
-- `openai_chatgpt_moderation_metadata` などの metadata は、consumer が実際に UI/security/telemetry へ到達するかを確認し、不要なら parser と fixture をまとめて削除する。
+- `provider_chatgpt_moderation_metadata` などの metadata は、consumer が実際に UI/security/telemetry へ到達するかを確認し、不要なら parser と fixture をまとめて削除する。
 

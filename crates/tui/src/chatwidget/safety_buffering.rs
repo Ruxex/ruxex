@@ -6,7 +6,7 @@ use crate::wrapping::word_wrap_lines;
 use codex_app_server_protocol::ModelSafetyBufferingUpdatedNotification;
 
 const SAFETY_BUFFERING_PROMPT_VIEW_ID: &str = "safety-buffering-prompt";
-const SAFETY_BUFFERING_LEARN_MORE_URL: &str = "https://help.openai.com/en/articles/20001326";
+const SAFETY_BUFFERING_LEARN_MORE_URL: &str = "https://help.provider.com/en/articles/20001326";
 
 const SAFETY_BUFFERING_HEADER: &str = "Giving this request a little extra thought";
 const SAFETY_BUFFERING_MESSAGE_WITH_RETRY: &str = "If you'd rather not wait, retry with a faster model. It may be less capable of handling complex requests.";

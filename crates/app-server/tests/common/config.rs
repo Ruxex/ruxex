@@ -175,7 +175,7 @@ pub fn write_mock_responses_config_toml(
 
     if matches!(requires_auth, Some(true)) {
         config = config
-            .with_provider_name("OpenAI")
+            .with_provider_name("provider")
             .with_provider_config("requires_auth = true");
     }
 

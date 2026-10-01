@@ -150,7 +150,7 @@ impl CodexAuth {
     ) -> std::io::Result<Self> {
         let auth_mode = auth_dot_json.resolved_mode();
         if auth_mode == AuthMode::ApiKey {
-            let Some(api_key) = auth_dot_json.openai_api_key.as_deref() else {
+            let Some(api_key) = auth_dot_json.api_key.as_deref() else {
                 return Err(std::io::Error::other("API key auth is missing a key."));
             };
             return Ok(Self::from_api_key(api_key));
@@ -287,15 +287,7 @@ impl CodexAuth {
     }
 }
 
-pub const OPENAI_API_KEY_ENV_VAR: &str = "OPENAI_API_KEY";
 pub const CODEX_API_KEY_ENV_VAR: &str = "CODEX_API_KEY";
-
-pub fn read_openai_api_key_from_env() -> Option<String> {
-    env::var(OPENAI_API_KEY_ENV_VAR)
-        .ok()
-        .map(|value| value.trim().to_string())
-        .filter(|value| !value.is_empty())
-}
 
 pub fn read_codex_api_key_from_env() -> Option<String> {
     read_non_empty_env_var(CODEX_API_KEY_ENV_VAR)
@@ -332,7 +324,7 @@ pub fn login_with_api_key(
 ) -> std::io::Result<()> {
     let auth_dot_json = AuthDotJson {
         auth_mode: Some(AuthMode::ApiKey),
-        openai_api_key: Some(api_key.to_string()),
+        api_key: Some(api_key.to_string()),
         bedrock_api_key: None,
         bedrock_access_keys: None,
     };
@@ -712,7 +704,7 @@ async fn load_auth(
 
 impl AuthDotJson {
     fn has_supported_credentials(&self) -> bool {
-        self.openai_api_key.is_some()
+        self.api_key.is_some()
             || self.bedrock_api_key.is_some()
             || self.bedrock_access_keys.is_some()
     }
@@ -727,7 +719,7 @@ impl AuthDotJson {
         if self.bedrock_access_keys.is_some() {
             return AuthMode::BedrockAccessKeys;
         }
-        if self.openai_api_key.is_some() {
+        if self.api_key.is_some() {
             return AuthMode::ApiKey;
         }
         AuthMode::ApiKey

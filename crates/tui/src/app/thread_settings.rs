@@ -15,7 +15,7 @@ impl App {
         &mut self,
         app_server: &mut AppServerSession,
         model: String,
-        effort: Option<codex_protocol::openai_models::ReasoningEffort>,
+        effort: Option<codex_protocol::model_types::ReasoningEffort>,
     ) {
         let Some(mut params) = self.active_thread_model_setting_update_params(model) else {
             return;
@@ -40,7 +40,7 @@ impl App {
     pub(super) async fn sync_active_thread_reasoning_setting(
         &mut self,
         app_server: &mut AppServerSession,
-        effort: Option<codex_protocol::openai_models::ReasoningEffort>,
+        effort: Option<codex_protocol::model_types::ReasoningEffort>,
     ) {
         let Some(params) = self.active_thread_reasoning_setting_update_params(effort) else {
             return;
@@ -50,7 +50,7 @@ impl App {
 
     pub(super) fn active_thread_reasoning_setting_update_params(
         &self,
-        effort: Option<codex_protocol::openai_models::ReasoningEffort>,
+        effort: Option<codex_protocol::model_types::ReasoningEffort>,
     ) -> Option<ThreadSettingsUpdateParams> {
         let thread_id = self.active_thread_id?;
         Some(ThreadSettingsUpdateParams {

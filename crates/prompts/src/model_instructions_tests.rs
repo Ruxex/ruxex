@@ -1,10 +1,10 @@
 //! Covers literal instruction templates and missing-versus-empty inputs.
 
 use super::*;
-use codex_protocol::openai_models::ConfigShellToolType;
-use codex_protocol::openai_models::ModelMessages;
-use codex_protocol::openai_models::ModelVisibility;
-use codex_protocol::openai_models::TruncationPolicyConfig;
+use codex_protocol::model_types::ConfigShellToolType;
+use codex_protocol::model_types::ModelMessages;
+use codex_protocol::model_types::ModelVisibility;
+use codex_protocol::model_types::TruncationPolicyConfig;
 use pretty_assertions::assert_eq;
 
 fn test_model(model_messages: Option<ModelMessages>) -> ModelInfo {

@@ -637,8 +637,8 @@ async fn assert_thread_fork_at_named_boundary_keeps_only_terminal_prefix(
             params: ThreadAttachmentAddParams {
                 thread_id: source_thread_id.clone(),
                 attachment_type: "pull_request".to_string(),
-                identity_key: "openai/codex#123".to_string(),
-                payload: json!({"url": "https://github.com/openai/codex/pull/123"}),
+                identity_key: "codex/codex#123".to_string(),
+                payload: json!({"url": "https://github.com/codex/codex/pull/123"}),
             },
         })
         .await?;
@@ -2283,7 +2283,7 @@ async fn thread_fork_surfaces_cloud_config_bundle_load_errors() -> Result<()> {
         .with_codex_home(codex_home.path())
         .without_auto_env()
         .with_env_overrides(&[
-            ("OPENAI_API_KEY", None),
+            ("PROVIDER_API_KEY", None),
             (
                 REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR,
                 Some(refresh_token_url.as_str()),

@@ -13,14 +13,14 @@ async fn bedrock_astra_model_and_reasoning_pickers() {
         (
             "mantle",
             ModelProviderInfo::create_amazon_bedrock_provider(/*aws*/ None),
-            "openai.gpt-5.6-sol",
-            "openai.gpt-6-astra",
+            "provider.gpt-5.6-sol",
+            "provider.gpt-6-astra",
         ),
         (
             "runtime",
             ModelProviderInfo::create_amazon_bedrock_runtime_provider(/*aws*/ None),
-            "global.openai.gpt-5.6-sol",
-            "global.openai.gpt-6-astra",
+            "global.provider.gpt-5.6-sol",
+            "global.provider.gpt-6-astra",
         ),
     ] {
         let presets = create_model_provider(provider_info, /*auth_manager*/ None)

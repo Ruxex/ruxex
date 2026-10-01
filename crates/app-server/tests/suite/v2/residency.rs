@@ -37,13 +37,13 @@ async fn write_provider_config(
         r#"model = "gpt-5.4"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
-model_provider = "custom-openai"
+model_provider = "custom-provider"
 
 [features]
 shell_snapshot = false
 
-[model_providers.custom-openai]
-name = "OpenAI"
+[model_providers.custom-provider]
+name = "provider"
 base_url = "{model_base_url}/v1"
 wire_api = "responses"
 request_max_retries = 0
@@ -51,12 +51,12 @@ stream_max_retries = 0
 requires_auth = true
 supports_websockets = {supports_websockets}
 
-[model_providers.custom-openai.http_headers]
-"X-OpenAI-Internal-Codex-Residency" = "eu-static"
+[model_providers.custom-provider.http_headers]
+"X-provider-Internal-Codex-Residency" = "eu-static"
 "x-provider-header" = "preserved"
 
-[model_providers.custom-openai.env_http_headers]
-"x-openai-internal-codex-residency" = "{PROVIDER_RESIDENCY_ENV_VAR}"
+[model_providers.custom-provider.env_http_headers]
+"x-provider-internal-codex-residency" = "{PROVIDER_RESIDENCY_ENV_VAR}"
 "#
     );
     std::fs::write(codex_home.join("config.toml"), config)?;
@@ -107,7 +107,7 @@ async fn managed_residency_overrides_provider_headers(transport: ModelTransport)
     let mut app_server = TestAppServer::builder()
         .with_codex_home(codex_home.path())
         .with_env_overrides(&[
-            ("OPENAI_API_KEY", Some("sk-test")),
+            ("PROVIDER_API_KEY", Some("sk-test")),
             ("CODEX_ACCESS_TOKEN", None),
             (PROVIDER_RESIDENCY_ENV_VAR, Some("eu-environment")),
         ])
@@ -115,7 +115,7 @@ async fn managed_residency_overrides_provider_headers(transport: ModelTransport)
         .await?;
 
     let expected_summary = format!(
-        "Ignoring `{RESIDENCY_HEADER_NAME}` in `model_providers.custom-openai` because managed residency is required."
+        "Ignoring `{RESIDENCY_HEADER_NAME}` in `model_providers.custom-provider` because managed residency is required."
     );
     let notification = timeout(
         READ_TIMEOUT,

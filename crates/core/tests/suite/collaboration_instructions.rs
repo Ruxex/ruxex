@@ -7,9 +7,9 @@ use codex_models_manager::model_info::model_info_from_slug;
 use codex_protocol::config_types::CollaborationMode;
 use codex_protocol::config_types::ModeKind;
 use codex_protocol::config_types::Settings;
-use codex_protocol::openai_models::CollaborationModeMessages;
-use codex_protocol::openai_models::ModelMessages;
-use codex_protocol::openai_models::ModelsResponse;
+use codex_protocol::model_types::CollaborationModeMessages;
+use codex_protocol::model_types::ModelMessages;
+use codex_protocol::model_types::ModelsResponse;
 use codex_protocol::protocol::COLLABORATION_MODE_CLOSE_TAG;
 use codex_protocol::protocol::COLLABORATION_MODE_OPEN_TAG;
 use codex_protocol::protocol::EventMsg;
@@ -71,7 +71,7 @@ fn model_with_collaboration_messages(
     slug: &str,
     default: Option<&str>,
     plan: Option<&str>,
-) -> codex_protocol::openai_models::ModelInfo {
+) -> codex_protocol::model_types::ModelInfo {
     let mut model = model_info_from_slug(slug);
     let model_messages = model.model_messages.get_or_insert(ModelMessages {
         persistent_instructions: None,

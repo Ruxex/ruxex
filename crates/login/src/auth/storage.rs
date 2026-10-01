@@ -41,8 +41,7 @@ pub struct AuthDotJson {
     )]
     pub auth_mode: Option<AuthMode>,
 
-    #[serde(rename = "OPENAI_API_KEY")]
-    pub openai_api_key: Option<String>,
+    pub api_key: Option<String>,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bedrock_api_key: Option<BedrockApiKeyAuth>,

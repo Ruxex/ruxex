@@ -13,7 +13,7 @@ use std::sync::Arc;
 use super::test_support::load_plugins_config;
 use super::test_support::write_file;
 
-const PLUGIN_CONFIG_NAME: &str = "sample@openai-curated-remote";
+const PLUGIN_CONFIG_NAME: &str = "sample@test-remote";
 const REMOTE_PLUGIN_ID: &str = "plugins~Plugin_sample";
 
 #[tokio::test]
@@ -21,7 +21,7 @@ async fn host_skills_service_reuses_plugin_manager_skill_snapshot() {
     let codex_home = tempfile::tempdir().expect("create codex home");
     let plugin_root = codex_home
         .path()
-        .join("plugins/cache/openai-curated-remote/sample/local");
+        .join("plugins/cache/test-remote/sample/local");
     write_file(
         &plugin_root.join(".codex-plugin/plugin.json"),
         r#"{"name":"sample","description":"sample plugin"}"#,

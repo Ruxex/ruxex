@@ -20,8 +20,8 @@ async fn catalog_deadline_returns_request_timeout() {
         .expect(1)
         .mount(&server)
         .await;
-    let endpoint = OpenAiModelsEndpoint::new(
-        ModelProviderInfo::create_openai_provider(Some(server.uri())),
+    let endpoint = ModelsEndpoint::new(
+        ModelProviderInfo::create_responses_provider(Some(server.uri())),
         /*auth_manager*/ None,
     );
 

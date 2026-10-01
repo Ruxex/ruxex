@@ -14,8 +14,8 @@
 //! efforts require the explicit advanced-reasoning picker.
 
 use codex_protocol::config_types::ModeKind;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
+use codex_protocol::model_types::ModelPreset;
+use codex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
 use crossterm::event::KeyEvent;
 
 use super::ChatWidget;

@@ -156,12 +156,11 @@ async fn exec_server_http_request_rejects_protected_environment_headers() -> any
     for (index, env_var) in [
         "CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN",
         "codex_exec_server_noise_auth_token",
-        "OPENAI_API_KEY",
+        "PROVIDER_API_KEY",
         "CODEX_ACCESS_TOKEN",
         "CODEX_CONNECTORS_TOKEN",
         "AWS_SECRET_ACCESS_KEY",
         "AZURE_FEDERATED_TOKEN_FILE",
-        "OPENAI_IDENTITY_TOKEN_FILE",
     ]
     .into_iter()
     .enumerate()

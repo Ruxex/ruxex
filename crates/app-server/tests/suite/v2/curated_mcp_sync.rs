@@ -32,7 +32,7 @@ use super::mcp_tool::start_mcp_server;
 
 const API_CURATED_PLUGIN_NAME: &str = "api-plugin";
 const REFRESH_PROBE_SERVER_NAME: &str = "refresh-probe";
-const GITHUB_PLUGINS_GIT_URL: &str = "https://github.com/openai/plugins.git";
+const GITHUB_PLUGINS_GIT_URL: &str = "https://github.com/codex/plugins.git";
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 
 struct CuratedMcpSyncFixture {
@@ -60,11 +60,11 @@ impl CuratedMcpSyncFixture {
         std::fs::create_dir_all(&curated_repo)?;
         std::fs::create_dir_all(&git_wrapper_dir)?;
 
-        write_curated_marketplace(&curated_repo, "marketplace.json", "openai-curated", &[])?;
+        write_curated_marketplace(&curated_repo, "marketplace.json", "test-curated", &[])?;
         write_curated_marketplace(
             &curated_repo,
             "api_marketplace.json",
-            "openai-api-curated",
+            "provider-api-curated",
             &[API_CURATED_PLUGIN_NAME],
         )?;
         write_plugin(
@@ -80,7 +80,7 @@ impl CuratedMcpSyncFixture {
         run_git(
             &real_git,
             &curated_repo,
-            &["config", "user.email", "codex-tests@openai.com"],
+            &["config", "user.email", "codex-tests@provider.com"],
         )?;
         run_git(
             &real_git,
@@ -106,7 +106,7 @@ impl CuratedMcpSyncFixture {
                     .to_str()
                     .context("git config path should be UTF-8")?,
                 &rewrite_key,
-                "https://github.com/openai/",
+                "https://github.com/codex/",
             ],
         )?;
 
@@ -157,7 +157,7 @@ exec "$REAL_GIT" "$@"
                 responses_server.uri()
             ))
             .with_extra_config(&format!(
-                r#"[plugins."{API_CURATED_PLUGIN_NAME}@openai-api-curated"]
+                r#"[plugins."{API_CURATED_PLUGIN_NAME}@provider-api-curated"]
 enabled = true
 
 [mcp_servers.{REFRESH_PROBE_SERVER_NAME}]

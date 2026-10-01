@@ -1813,17 +1813,17 @@ async fn test_model_provider_filter_selects_only_matching_sessions() -> Result<(
     let temp = TempDir::new().unwrap();
     let home = temp.path();
 
-    let openai_id = Uuid::from_u128(1);
+    let provider_id = Uuid::from_u128(1);
     let beta_id = Uuid::from_u128(2);
     let none_id = Uuid::from_u128(3);
 
     write_session_file_with_provider(
         home,
         "2025-09-01T12-00-00",
-        openai_id,
+        provider_id,
         /*num_records*/ 1,
         Some(SessionSource::VSCode),
-        Some("openai"),
+        Some("provider"),
     )?;
     write_session_file_with_provider(
         home,
@@ -1842,28 +1842,28 @@ async fn test_model_provider_filter_selects_only_matching_sessions() -> Result<(
         /*model_provider*/ None,
     )?;
 
-    let openai_id_str = openai_id.to_string();
+    let provider_id_str = provider_id.to_string();
     let none_id_str = none_id.to_string();
-    let openai_filter = provider_vec(&["openai"]);
-    let openai_sessions = get_threads(
+    let provider_filter = provider_vec(&["provider"]);
+    let provider_sessions = get_threads(
         home,
         /*page_size*/ 10,
         /*cursor*/ None,
         ThreadSortKey::CreatedAt,
         NO_SOURCE_FILTER,
-        Some(openai_filter.as_slice()),
+        Some(provider_filter.as_slice()),
         /*cwd_filters*/ None,
-        "openai",
+        "provider",
     )
     .await?;
-    assert_eq!(openai_sessions.items.len(), 2);
-    let openai_ids: Vec<_> = openai_sessions
+    assert_eq!(provider_sessions.items.len(), 2);
+    let provider_ids: Vec<_> = provider_sessions
         .items
         .iter()
         .filter_map(|item| item.thread_id.as_ref().map(ToString::to_string))
         .collect();
-    assert!(openai_ids.contains(&openai_id_str));
-    assert!(openai_ids.contains(&none_id_str));
+    assert!(provider_ids.contains(&provider_id_str));
+    assert!(provider_ids.contains(&none_id_str));
 
     let beta_filter = provider_vec(&["beta"]);
     let beta_sessions = get_threads(
@@ -1874,7 +1874,7 @@ async fn test_model_provider_filter_selects_only_matching_sessions() -> Result<(
         NO_SOURCE_FILTER,
         Some(beta_filter.as_slice()),
         /*cwd_filters*/ None,
-        "openai",
+        "provider",
     )
     .await?;
     assert_eq!(beta_sessions.items.len(), 1);
@@ -1894,7 +1894,7 @@ async fn test_model_provider_filter_selects_only_matching_sessions() -> Result<(
         NO_SOURCE_FILTER,
         Some(unknown_filter.as_slice()),
         /*cwd_filters*/ None,
-        "openai",
+        "provider",
     )
     .await?;
     assert!(unknown_sessions.items.is_empty());
@@ -1907,7 +1907,7 @@ async fn test_model_provider_filter_selects_only_matching_sessions() -> Result<(
         NO_SOURCE_FILTER,
         /*model_providers*/ None,
         /*cwd_filters*/ None,
-        "openai",
+        "provider",
     )
     .await?;
     assert_eq!(all_sessions.items.len(), 3);

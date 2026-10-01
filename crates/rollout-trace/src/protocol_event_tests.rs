@@ -70,7 +70,7 @@ fn exec_command_trace_payloads_use_inferred_native_cwd() -> anyhow::Result<()> {
     // Windows and POSIX paths on every platform.
     let begin = EventMsg::ExecCommandBegin(ExecCommandBeginEvent {
         call_id: "call-begin".to_string(),
-        plugin_id: Some("sample@openai-curated".to_string()),
+        plugin_id: Some("sample@test-curated".to_string()),
         script_path: Some("scripts/run.py".to_string()),
         process_id: Some("process-1".to_string()),
         turn_id: "turn-1".to_string(),
@@ -83,7 +83,7 @@ fn exec_command_trace_payloads_use_inferred_native_cwd() -> anyhow::Result<()> {
     });
     let end = EventMsg::ExecCommandEnd(ExecCommandEndEvent {
         call_id: "call-end".to_string(),
-        plugin_id: Some("sample@openai-curated".to_string()),
+        plugin_id: Some("sample@test-curated".to_string()),
         script_path: Some("scripts/run.py".to_string()),
         process_id: None,
         turn_id: "turn-1".to_string(),
@@ -110,7 +110,7 @@ fn exec_command_trace_payloads_use_inferred_native_cwd() -> anyhow::Result<()> {
         serde_json::to_value(payload)?,
         json!({
             "call_id": "call-begin",
-            "plugin_id": "sample@openai-curated",
+            "plugin_id": "sample@test-curated",
             "script_path": "scripts/run.py",
             "process_id": "process-1",
             "turn_id": "turn-1",
@@ -129,7 +129,7 @@ fn exec_command_trace_payloads_use_inferred_native_cwd() -> anyhow::Result<()> {
         serde_json::to_value(payload)?,
         json!({
             "call_id": "call-end",
-            "plugin_id": "sample@openai-curated",
+            "plugin_id": "sample@test-curated",
             "script_path": "scripts/run.py",
             "turn_id": "turn-1",
             "completed_at_ms": 2345,

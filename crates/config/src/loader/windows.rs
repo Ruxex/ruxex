@@ -28,11 +28,11 @@ pub fn probe_windows_system_config_namespace() -> WindowsSystemConfigNamespacePr
     if !has_system_file {
         return WindowsSystemConfigNamespaceProbe::Missing;
     }
-    let Some(openai_dir) = codex_dir.parent() else {
+    let Some(provider_dir) = codex_dir.parent() else {
         return WindowsSystemConfigNamespaceProbe::CheckError;
     };
     let result = probe_directory(
-        openai_dir,
+        provider_dir,
         codex_windows_sandbox::path_has_standard_user_mutation_allow,
     );
     if !matches!(result, WindowsSystemConfigNamespaceProbe::Expected) {

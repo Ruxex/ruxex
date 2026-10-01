@@ -43,10 +43,10 @@ use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::config_types::Settings;
 use codex_protocol::mcp::ClientMcpExtensions;
 use codex_protocol::models::PermissionProfile;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::openai_models::TruncationPolicyConfig;
-use codex_protocol::openai_models::WebSearchToolType;
+use codex_protocol::model_types::ModelInfo;
+use codex_protocol::model_types::ModelsResponse;
+use codex_protocol::model_types::TruncationPolicyConfig;
+use codex_protocol::model_types::WebSearchToolType;
 use codex_protocol::protocol::AskForApproval;
 use codex_protocol::protocol::EnvironmentConfigState;
 use codex_protocol::protocol::EventMsg;
@@ -771,7 +771,7 @@ impl TestCodexBuilder {
             // Most core tests use SSE-only mock servers, so keep websocket transport off unless
             // a test explicitly opts into websocket coverage.
             supports_websockets: false,
-            ..ModelProviderInfo::create_openai_provider(None)
+            ..ModelProviderInfo::create_responses_provider(None)
         };
         let cwd = Arc::new(TempDir::new()?);
         for hook in self.pre_build_hooks.drain(..) {

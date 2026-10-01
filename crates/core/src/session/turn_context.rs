@@ -21,9 +21,9 @@ use codex_protocol::SessionId;
 use codex_protocol::ThreadId;
 use codex_protocol::config_types::ShellEnvironmentPolicy;
 use codex_protocol::models::AdditionalPermissionProfile;
-use codex_protocol::openai_models::MODEL_SPECIALTY_CYBER;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ReasoningEffort;
+use codex_protocol::model_types::MODEL_SPECIALTY_CYBER;
+use codex_protocol::model_types::ModelInfo;
+use codex_protocol::model_types::ReasoningEffort;
 use codex_protocol::permissions::RawFileSystemSandboxPolicy;
 use codex_protocol::protocol::EnvironmentConfig;
 use codex_protocol::protocol::EnvironmentConfigState;
@@ -1120,8 +1120,8 @@ impl Session {
         if !tc.code_mode_available
             && matches!(
                 crate::tools::requested_tool_mode(tc, tc.model_info()),
-                codex_protocol::openai_models::ToolMode::CodeMode
-                    | codex_protocol::openai_models::ToolMode::CodeModeOnly
+                codex_protocol::model_types::ToolMode::CodeMode
+                    | codex_protocol::model_types::ToolMode::CodeModeOnly
             )
             && let Some(message) = self
                 .services

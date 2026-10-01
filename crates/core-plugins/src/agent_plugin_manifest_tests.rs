@@ -245,14 +245,14 @@ fn legacy_codex_overlay_keeps_portable_components_fixed() {
 }
 
 #[test]
-fn inline_openai_extension_precedes_legacy_overlay() {
+fn inline_provider_extension_precedes_legacy_overlay() {
     let tmp = tempdir().expect("tempdir");
     let plugin_root = tmp.path().join("demo-plugin");
     write_agent_plugin_manifest(
         &plugin_root,
         r#",
   "extensions": {
-    "com.openai": {
+    "com.codex": {
       "interface": {"displayName": "Inline Codex"}
     }
   }"#,

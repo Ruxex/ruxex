@@ -10,7 +10,7 @@ expression: "render_lines(&view, 112)"
                                                                                                                 
   Event     PreToolUse                                                                                          
   Matcher   Bash                                                                                                
-  Source    Plugin - security-tools@openai-curated                                                              
+  Source    Plugin - security-tools@test-curated                                                              
   MCP Server scanner                                                                                            
   MCP Tool  scan_file                                                                                           
   Timeout   30s                                                                                                 

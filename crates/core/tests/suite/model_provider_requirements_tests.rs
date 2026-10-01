@@ -151,7 +151,7 @@ X-Managed = "required"
         assert_eq!(warnings, Vec::<String>::new());
     }
     if !required_selection.is_empty() {
-        for cli_provider in ["openai", "gateway"] {
+        for cli_provider in ["provider", "gateway"] {
             let overridden = ConfigBuilder::default()
                 .codex_home(test.config.codex_home.to_path_buf())
                 .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
@@ -161,7 +161,7 @@ X-Managed = "required"
                     toml::Value::String(cli_provider.into()),
                 )])
                 .harness_overrides(ConfigOverrides {
-                    model_provider: Some("openai".into()),
+                    model_provider: Some("provider".into()),
                     ..Default::default()
                 })
                 .build()

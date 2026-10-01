@@ -10,7 +10,7 @@ use crate::models::ImageReference;
 use crate::models::MessagePhase;
 use crate::models::ResponseItem;
 use crate::models::WebSearchAction;
-use crate::openai_models::ReasoningEffort as ReasoningEffortConfig;
+use crate::model_types::ReasoningEffort as ReasoningEffortConfig;
 use crate::parse_command::ParsedCommand;
 use crate::protocol::AgentStatus;
 use crate::protocol::CollabAgentRef;

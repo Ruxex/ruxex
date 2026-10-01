@@ -1,12 +1,12 @@
 use codex_core::test_support::all_model_presets;
 use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::openai_models::ConfigShellToolType;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelMessages;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::ModelVisibility;
-use codex_protocol::openai_models::TruncationPolicyConfig;
-use codex_protocol::openai_models::default_input_modalities;
+use codex_protocol::model_types::ConfigShellToolType;
+use codex_protocol::model_types::ModelInfo;
+use codex_protocol::model_types::ModelMessages;
+use codex_protocol::model_types::ModelPreset;
+use codex_protocol::model_types::ModelVisibility;
+use codex_protocol::model_types::TruncationPolicyConfig;
+use codex_protocol::model_types::default_input_modalities;
 use std::path::Path;
 
 /// Convert a ModelPreset to ModelInfo for cache storage.

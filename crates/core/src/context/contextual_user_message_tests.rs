@@ -95,7 +95,7 @@ fn detects_internal_model_context_fragment() {
 #[test]
 fn detects_recommended_plugins_fragment() {
     assert!(is_contextual_user_fragment(&ContentItem::InputText {
-        text: "<recommended_plugins>\n- Google Drive (google-drive@openai-curated-remote)\n</recommended_plugins>"
+        text: "<recommended_plugins>\n- Google Drive (google-drive@test-remote)\n</recommended_plugins>"
             .to_string(),
     }));
 }

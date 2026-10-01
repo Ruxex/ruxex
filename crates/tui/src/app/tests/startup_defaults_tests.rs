@@ -79,7 +79,7 @@ async fn cli_fork_omits_implicit_model_and_effort() -> Result<()> {
         .iter_mut()
         .find(|preset| preset.model == "gpt-5.5")
         .expect("client model in catalog");
-    client_preset.upgrade = Some(codex_protocol::openai_models::ModelUpgrade {
+    client_preset.upgrade = Some(codex_protocol::model_types::ModelUpgrade {
         id: "server-model".into(),
         migration_config_key: "test-fork-migration".into(),
         model_link: None,

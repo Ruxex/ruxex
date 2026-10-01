@@ -46,7 +46,7 @@ model = "gpt-5.2"
 model_provider = "reasoning-test"
 {settings}
 [model_providers.reasoning-test]
-name = "OpenAI"
+name = "provider"
 base_url = "{base_url}/v1"
 wire_api = "responses"
 request_max_retries = 0

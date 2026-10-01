@@ -2034,7 +2034,7 @@ fn should_show_bedrock_setup_wizard(
     matches!(app_server_target, AppServerTarget::Embedded)
         && should_show_login_screen(login_status, requires_auth)
         && config.features.enabled(Feature::BedrockSetupWizard)
-        && config.model_provider_id == "openai"
+        && config.model_provider_id == "provider"
         && config
             .config_layer_stack
             .effective_config()

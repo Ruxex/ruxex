@@ -1,6 +1,6 @@
 ## Contributing
 
-We welcome community contributions through the [openai/codex issue tracker](https://github.com/openai/codex/issues). Bug reports, root-cause analyses, and feature requests help us understand what matters most and improve Codex.
+We welcome community contributions through the [codex/codex issue tracker](https://github.com/codex/codex/issues). Bug reports, root-cause analyses, and feature requests help us understand what matters most and improve Codex.
 
 **We do not accept external code contributions or pull requests.**
 
