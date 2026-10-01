@@ -23,8 +23,8 @@ use crate::mcp_skill_dependencies::maybe_prompt_and_install_mcp_dependencies;
 use crate::mentions::collect_explicit_plugin_mentions;
 use crate::mentions::collect_tool_mentions_from_messages;
 use crate::plugins::build_plugin_injections;
-use crate::responses_metadata::CodexResponsesMetadata;
-use crate::responses_metadata::CodexResponsesRequestKind;
+use crate::responses_metadata::GenexResponsesMetadata;
+use crate::responses_metadata::GenexResponsesRequestKind;
 use crate::responses_metadata::CompactionPhase;
 use crate::responses_metadata::CompactionReason;
 use crate::responses_retry::ResponsesStreamRequest;
@@ -446,7 +446,7 @@ pub(crate) async fn run_turn(
             .await;
 
             let responses_metadata = sess
-                .responses_metadata(step_context.as_ref(), CodexResponsesRequestKind::Turn)
+                .responses_metadata(step_context.as_ref(), GenexResponsesRequestKind::Turn)
                 .await;
             run_sampling_request(
                 Arc::clone(&sess),
@@ -1189,7 +1189,7 @@ async fn run_sampling_request(
     turn_store: Arc<genex_extension_api::ExtensionData>,
     turn_diff_tracker: SharedTurnDiffTracker,
     client_session: &mut ModelClientSession,
-    responses_metadata: &CodexResponsesMetadata,
+    responses_metadata: &GenexResponsesMetadata,
     input: Vec<ResponseItem>,
     cancellation_token: CancellationToken,
 ) -> CodexResult<(SamplingRequestResult, Vec<ResponseItem>)> {
@@ -1855,7 +1855,7 @@ async fn try_run_sampling_request(
     step_context: Arc<StepContext>,
     turn_store: Arc<genex_extension_api::ExtensionData>,
     client_session: &mut ModelClientSession,
-    responses_metadata: &CodexResponsesMetadata,
+    responses_metadata: &GenexResponsesMetadata,
     turn_diff_tracker: SharedTurnDiffTracker,
     prompt: &Prompt,
     cancellation_token: CancellationToken,

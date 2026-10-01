@@ -198,18 +198,18 @@ impl CompactionTurnMetadata {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub(crate) enum CodexResponsesRequestKind {
+pub(crate) enum GenexResponsesRequestKind {
     Turn,
     Prewarm,
     Compaction(CompactionTurnMetadata),
 }
 
-impl CodexResponsesRequestKind {
+impl GenexResponsesRequestKind {
     fn metadata(self) -> (&'static str, Option<CompactionTurnMetadata>) {
         match self {
-            CodexResponsesRequestKind::Turn => ("turn", None),
-            CodexResponsesRequestKind::Prewarm => ("prewarm", None),
-            CodexResponsesRequestKind::Compaction(metadata) => ("compaction", Some(metadata)),
+            GenexResponsesRequestKind::Turn => ("turn", None),
+            GenexResponsesRequestKind::Prewarm => ("prewarm", None),
+            GenexResponsesRequestKind::Compaction(metadata) => ("compaction", Some(metadata)),
         }
     }
 
@@ -263,7 +263,7 @@ pub(crate) enum TurnToolSource {
 /// headers are generated compatibility projections of this snapshot, not separate sources of
 /// truth.
 #[derive(Clone, Debug)]
-pub struct CodexResponsesMetadata {
+pub struct GenexResponsesMetadata {
     pub(crate) installation_id: String,
     pub(crate) session_id: String,
     pub(crate) thread_id: String,
@@ -273,7 +273,7 @@ pub struct CodexResponsesMetadata {
     pub(crate) window_id: String,
     pub(crate) window_number: Option<u64>,
     pub(crate) context_window_id: Option<Uuid>,
-    pub(crate) request_kind: Option<CodexResponsesRequestKind>,
+    pub(crate) request_kind: Option<GenexResponsesRequestKind>,
     pub(crate) forked_from_thread_id: Option<ThreadId>,
     pub(crate) forked_from_ordinal_exclusive: Option<u64>,
     pub(crate) parent_thread_id: Option<ThreadId>,
@@ -292,7 +292,7 @@ pub struct CodexResponsesMetadata {
     pub(crate) extra: BTreeMap<String, String>,
 }
 
-impl CodexResponsesMetadata {
+impl GenexResponsesMetadata {
     pub(crate) fn new(
         installation_id: String,
         session_id: String,
@@ -380,7 +380,7 @@ impl CodexResponsesMetadata {
         // Direct x-codex-turn-metadata is compatibility output. Keep the unbounded tool inventory
         // in client_metadata only so HTTP and WebSocket compatibility headers remain bounded.
         if self.has_turn_metadata()
-            && let Ok(turn_metadata_json) = to_ascii_json_string(&CodexTurnMetadataPayload {
+            && let Ok(turn_metadata_json) = to_ascii_json_string(&GenexTurnMetadataPayload {
                 tool_namespaces_info: None,
                 ..self.turn_metadata_payload()
             })
@@ -401,17 +401,17 @@ impl CodexResponsesMetadata {
         headers
     }
 
-    fn turn_metadata_payload(&self) -> CodexTurnMetadataPayload<'_> {
+    fn turn_metadata_payload(&self) -> GenexTurnMetadataPayload<'_> {
         let request_kind = self.request_kind;
         let (request_kind_value, compaction) = request_kind.map_or((None, None), |request_kind| {
             let (request_kind, compaction) = request_kind.metadata();
             (Some(request_kind), compaction)
         });
         let has_thread_identity =
-            request_kind.is_none_or(CodexResponsesRequestKind::has_thread_identity);
+            request_kind.is_none_or(GenexResponsesRequestKind::has_thread_identity);
         let has_request_identity =
-            request_kind.is_some_and(CodexResponsesRequestKind::has_thread_identity);
-        CodexTurnMetadataPayload {
+            request_kind.is_some_and(GenexResponsesRequestKind::has_thread_identity);
+        GenexTurnMetadataPayload {
             installation_id: has_request_identity.then_some(self.installation_id.as_str()),
             session_id: has_thread_identity.then_some(self.session_id.as_str()),
             thread_id: has_thread_identity.then_some(self.thread_id.as_str()),
@@ -514,7 +514,7 @@ fn non_empty_workspaces(
 }
 
 #[derive(Serialize)]
-struct CodexTurnMetadataPayload<'a> {
+struct GenexTurnMetadataPayload<'a> {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     installation_id: Option<&'a str>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

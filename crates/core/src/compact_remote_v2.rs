@@ -17,7 +17,7 @@ use crate::hook_runtime::PostCompactHookOutcome;
 use crate::hook_runtime::PreCompactHookOutcome;
 use crate::hook_runtime::run_post_compact_hooks;
 use crate::hook_runtime::run_pre_compact_hooks;
-use crate::responses_metadata::CodexResponsesMetadata;
+use crate::responses_metadata::GenexResponsesMetadata;
 use crate::responses_metadata::CompactionImplementation;
 use crate::responses_metadata::CompactionPhase;
 use crate::responses_metadata::CompactionReason;
@@ -326,7 +326,7 @@ async fn run_remote_compaction_request_v2(
     step_context: &StepContext,
     client_session: &mut ModelClientSession,
     prompt: &Prompt,
-    responses_metadata: &CodexResponsesMetadata,
+    responses_metadata: &GenexResponsesMetadata,
 ) -> CodexResult<RemoteCompactionV2Output> {
     let turn_context = &step_context.turn;
     let max_retries = turn_context

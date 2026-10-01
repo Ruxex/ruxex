@@ -1,7 +1,7 @@
 #![allow(clippy::unwrap_used)]
 use genex_api::WS_REQUEST_HEADER_TRACEPARENT_CLIENT_METADATA_KEY;
 use genex_api::WS_REQUEST_HEADER_TRACESTATE_CLIENT_METADATA_KEY;
-use genex_core::CodexResponsesMetadata;
+use genex_core::GenexResponsesMetadata;
 use genex_core::ModelClient;
 use genex_core::ModelClientSession;
 use genex_core::Prompt;
@@ -125,7 +125,7 @@ fn responses_metadata(
     harness: &WebsocketTestHarness,
     turn_id: Option<&str>,
     request_kind: TestCodexResponsesRequestKind,
-) -> CodexResponsesMetadata {
+) -> GenexResponsesMetadata {
     test_responses_metadata(
         TEST_INSTALLATION_ID,
         &harness.session_id.to_string(),
@@ -138,18 +138,18 @@ fn responses_metadata(
     )
 }
 
-fn turn_metadata(harness: &WebsocketTestHarness, turn_id: Option<&str>) -> CodexResponsesMetadata {
+fn turn_metadata(harness: &WebsocketTestHarness, turn_id: Option<&str>) -> GenexResponsesMetadata {
     responses_metadata(harness, turn_id, TestCodexResponsesRequestKind::Turn)
 }
 
 fn prewarm_metadata(
     harness: &WebsocketTestHarness,
     turn_id: Option<&str>,
-) -> CodexResponsesMetadata {
+) -> GenexResponsesMetadata {
     responses_metadata(harness, turn_id, TestCodexResponsesRequestKind::Prewarm)
 }
 
-fn websocket_connection_metadata(harness: &WebsocketTestHarness) -> CodexResponsesMetadata {
+fn websocket_connection_metadata(harness: &WebsocketTestHarness) -> GenexResponsesMetadata {
     responses_metadata(
         harness,
         /*turn_id*/ None,
@@ -2974,7 +2974,7 @@ async fn stream_until_complete_with_metadata(
     harness: &WebsocketTestHarness,
     prompt: &Prompt,
     service_tier: Option<ServiceTier>,
-    responses_metadata: &CodexResponsesMetadata,
+    responses_metadata: &GenexResponsesMetadata,
 ) {
     let mut stream = client_session
         .stream(

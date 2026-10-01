@@ -1,7 +1,7 @@
 //! Captures configuration-derived sandbox labels and writes them to diagnostics.
 //! Labels never inspect the filesystem and must not be used for authorization.
 
-use crate::responses_metadata::CodexResponsesMetadata;
+use crate::responses_metadata::GenexResponsesMetadata;
 use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::models::PermissionProfile;
 use genex_sandboxing::SandboxType;
@@ -40,7 +40,7 @@ impl SandboxTags {
     }
 
     /// Records the same captured labels in model and MCP request metadata.
-    pub(crate) fn record_metadata(&self, metadata: &mut CodexResponsesMetadata) {
+    pub(crate) fn record_metadata(&self, metadata: &mut GenexResponsesMetadata) {
         metadata.sandbox = Some(self.sandbox.to_string());
         metadata.sandbox_mode = Some(self.policy.to_string());
     }

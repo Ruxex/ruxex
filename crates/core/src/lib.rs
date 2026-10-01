@@ -22,7 +22,7 @@ pub use genex_protocol::turn_input::TurnInput;
 pub use genex_protocol::turn_input::TurnInputRequest;
 pub use genex_protocol::turn_input::TurnInputSubmission;
 pub use genex_protocol::turn_input::TurnStartOptions;
-pub use responses_metadata::CodexResponsesMetadata;
+pub use responses_metadata::GenexResponsesMetadata;
 mod genex_thread;
 mod compact_model_fallback;
 mod compact_remote_history;

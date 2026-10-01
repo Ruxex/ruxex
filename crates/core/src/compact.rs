@@ -10,7 +10,7 @@ use crate::hook_runtime::PostCompactHookOutcome;
 use crate::hook_runtime::PreCompactHookOutcome;
 use crate::hook_runtime::run_post_compact_hooks;
 use crate::hook_runtime::run_pre_compact_hooks;
-use crate::responses_metadata::CodexResponsesMetadata;
+use crate::responses_metadata::GenexResponsesMetadata;
 use crate::responses_metadata::CompactionImplementation;
 use crate::responses_metadata::CompactionPhase;
 use crate::responses_metadata::CompactionReason;
@@ -606,7 +606,7 @@ async fn drain_to_completed(
     sess: &Session,
     turn_context: &TurnContext,
     client_session: &mut ModelClientSession,
-    responses_metadata: &CodexResponsesMetadata,
+    responses_metadata: &GenexResponsesMetadata,
     prompt: &Prompt,
 ) -> CodexResult<String> {
     let mut stream = client_session

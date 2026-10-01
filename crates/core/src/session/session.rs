@@ -13,8 +13,8 @@ use crate::environment_selection::ThreadEnvironments;
 use crate::environment_selection::TurnEnvironmentSnapshot;
 use crate::hook_mcp_executor::CoreHookMcpExecutor;
 use crate::mcp_tool_call::McpToolApprovalMetadata;
-use crate::responses_metadata::CodexResponsesMetadata;
-use crate::responses_metadata::CodexResponsesRequestKind;
+use crate::responses_metadata::GenexResponsesMetadata;
+use crate::responses_metadata::GenexResponsesRequestKind;
 use crate::responses_metadata::CompactionTurnMetadata;
 use crate::shell_snapshot::ShellSnapshot;
 use crate::shell_snapshot::SnapshotCredentialBrokerState;
@@ -634,8 +634,8 @@ impl Session {
     pub(crate) async fn responses_metadata(
         &self,
         step_context: &StepContext,
-        request_kind: CodexResponsesRequestKind,
-    ) -> CodexResponsesMetadata {
+        request_kind: GenexResponsesRequestKind,
+    ) -> GenexResponsesMetadata {
         let (window_id, window_number, context_window_id) = self.current_window().await;
         let mut responses_metadata = step_context.turn.turn_metadata_state.to_responses_metadata(
             self.installation_id.clone(),
@@ -669,12 +669,12 @@ impl Session {
         &self,
         turn_context: &TurnContext,
         compaction_metadata: CompactionTurnMetadata,
-    ) -> CodexResponsesMetadata {
+    ) -> GenexResponsesMetadata {
         let (window_id, window_number, context_window_id) = self.current_window().await;
         let responses_metadata = turn_context.turn_metadata_state.to_responses_metadata(
             self.installation_id.clone(),
             window_id,
-            CodexResponsesRequestKind::Compaction(compaction_metadata),
+            GenexResponsesRequestKind::Compaction(compaction_metadata),
         );
         self.with_window_and_fork_metadata(
             turn_context,
@@ -687,11 +687,11 @@ impl Session {
     fn with_window_and_fork_metadata(
         &self,
         turn_context: &TurnContext,
-        responses_metadata: CodexResponsesMetadata,
+        responses_metadata: GenexResponsesMetadata,
         window_number: u64,
         context_window_id: uuid::Uuid,
-    ) -> CodexResponsesMetadata {
-        CodexResponsesMetadata {
+    ) -> GenexResponsesMetadata {
+        GenexResponsesMetadata {
             window_number: Some(window_number),
             context_window_id: Some(context_window_id),
             history_ingest_requested: turn_context

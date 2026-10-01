@@ -30,8 +30,8 @@ use once_cell::sync::Lazy;
 
 use crate::ThreadManager;
 use crate::config::Config;
-use crate::responses_metadata::CodexResponsesMetadata;
-use crate::responses_metadata::CodexResponsesRequestKind;
+use crate::responses_metadata::GenexResponsesMetadata;
+use crate::responses_metadata::GenexResponsesRequestKind;
 use crate::responses_metadata::subagent_metadata_kind;
 use crate::thread_manager;
 use crate::unified_exec;
@@ -154,18 +154,18 @@ pub fn responses_metadata(
     session_source: &SessionSource,
     parent_thread_id: Option<ThreadId>,
     request_kind: TestCodexResponsesRequestKind,
-) -> CodexResponsesMetadata {
+) -> GenexResponsesMetadata {
     let request_kind = match request_kind {
-        TestCodexResponsesRequestKind::Turn => Some(CodexResponsesRequestKind::Turn),
-        TestCodexResponsesRequestKind::Prewarm => Some(CodexResponsesRequestKind::Prewarm),
+        TestCodexResponsesRequestKind::Turn => Some(GenexResponsesRequestKind::Turn),
+        TestCodexResponsesRequestKind::Prewarm => Some(GenexResponsesRequestKind::Prewarm),
         TestCodexResponsesRequestKind::WebsocketConnection => None,
     };
-    CodexResponsesMetadata {
+    GenexResponsesMetadata {
         turn_id: request_kind.and(turn_id.map(ToString::to_string)),
         request_kind,
         parent_thread_id,
         subagent_kind: request_kind.and_then(|_| subagent_metadata_kind(session_source)),
-        ..CodexResponsesMetadata::new(
+        ..GenexResponsesMetadata::new(
             installation_id.to_string(),
             session_id.to_string(),
             thread_id.to_string(),
@@ -174,7 +174,7 @@ pub fn responses_metadata(
     }
 }
 
-pub fn with_parent_turn(mut metadata: CodexResponsesMetadata, id: &str) -> CodexResponsesMetadata {
+pub fn with_parent_turn(mut metadata: GenexResponsesMetadata, id: &str) -> GenexResponsesMetadata {
     metadata.parent_turn_id = Some(id.to_string());
     metadata
 }

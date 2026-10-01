@@ -164,25 +164,25 @@ Task 0 の coverage matrix は workspace member ごとに次のいずれかを�
 
 **Interfaces:**
 - Consumes: Task 2 の public helper rename と Task 0 の trace/protocol boundary audit。
-- Produces: crate-local の `GenexTurn*`、`GenexStatus`、`GenexResponsesMetadata` 系。serialized field、event tag、rollout source name は変更しない。
+- Produces: `GenexStatus`、`GenexResponsesMetadata`、`GenexResponsesRequestKind`、`GenexTurnMetadataPayload`。serialized field、event tag、rollout source name は変更しない。`CodexTurn` / `CodexTurnId` / trace event names are explicitly deferred because they are part of serialized trace models.
 
-- [ ] **Step 1: trace/protocol/persistence の境界を audit する**
+- [x] **Step 1: trace/protocol/persistence の境界を audit する**
 
   `CodexTurnId`、`CodexTurn`、`CodexTurnTraceEvent`、`codex_turn_trace_event`、`CodexStatus`、`CodexResponsesMetadata`、`CodexResponsesRequestKind` の各 producer/consumer を確認する。保存データ、JSONL、app-server protocol に露出するものは retain/defer として記録する。
 
-- [ ] **Step 2: private/crate-local subset を先に migrate する**
+- [x] **Step 2: private/crate-local subset を先に migrate する**
 
-  public re-export や serde tag に到達しない `CodexResponsesRequestKind`、`CodexTurnMetadataPayload` などを先に `Genex*` へ変更する。共有型は一つの symbol family ごとに分ける。
+  public re-export や serde tag に到達しない `CodexResponsesRequestKind`、`CodexTurnMetadataPayload`、および wire name を変えない `CodexResponsesMetadata` / `CodexStatus` を `Genex*` へ変更する。共有型は一つの symbol family ごとに分ける。
 
-- [ ] **Step 3: non-wire public utility subset を audit 後に migrate する**
+- [x] **Step 3: non-wire public utility subset を audit 後に migrate する**
 
   `CodexStatus` など、JSONL/event processor の external contract でないものだけを consumer map に従って変更する。wire output の key/value、snapshot、CLI output は変更しない。
 
-- [ ] **Step 4: Verification**
+- [x] **Step 4: Verification**
 
   Run: `just check --tests`, `just check`。rollout-trace または schema generator の入力を変更した場合は `just generate` を実行し、persisted/protocol 差分がないことを確認する。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   `git commit -m "Rename crate-local Rust models to Genex"`
 

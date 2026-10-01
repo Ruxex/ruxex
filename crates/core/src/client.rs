@@ -120,7 +120,7 @@ use crate::client_common::ResponseStream;
 use crate::context::BaseInstructionsFragment;
 use crate::context::ContextualUserFragment;
 use crate::cyber_access_program;
-use crate::responses_metadata::CodexResponsesMetadata;
+use crate::responses_metadata::GenexResponsesMetadata;
 use genex_model_provider::ProviderApi;
 use genex_model_provider::ProviderAuthScope;
 use genex_model_provider::ProviderUnauthorizedRecovery;
@@ -473,7 +473,7 @@ impl ModelClient {
         self
     }
 
-    fn prompt_cache_key(&self, responses_metadata: &CodexResponsesMetadata) -> String {
+    fn prompt_cache_key(&self, responses_metadata: &GenexResponsesMetadata) -> String {
         if let Some(prompt_cache_key) = &self.prompt_cache_key_override {
             return prompt_cache_key.clone();
         }
@@ -489,7 +489,7 @@ impl ModelClient {
 
     // Hosted Responses clients may derive cache affinity from the session-id header.
     // Keep the actual session identity in turn metadata, hooks, and history/notes requests.
-    fn responses_session_id(&self, metadata: &CodexResponsesMetadata) -> String {
+    fn responses_session_id(&self, metadata: &GenexResponsesMetadata) -> String {
         if self.state.session_source.is_non_root_agent() {
             metadata.session_id.clone()
         } else {
@@ -569,7 +569,7 @@ impl ModelClient {
 
     fn build_responses_compatibility_headers(
         &self,
-        responses_metadata: &CodexResponsesMetadata,
+        responses_metadata: &GenexResponsesMetadata,
     ) -> ApiHeaderMap {
         let extra_headers = responses_metadata.compatibility_headers();
         extra_headers
@@ -577,7 +577,7 @@ impl ModelClient {
 
     fn build_ws_client_metadata(
         &self,
-        responses_metadata: &CodexResponsesMetadata,
+        responses_metadata: &GenexResponsesMetadata,
         use_responses_lite: bool,
     ) -> HashMap<String, String> {
         let mut client_metadata = responses_metadata.client_metadata();
@@ -647,7 +647,7 @@ impl ModelClient {
         effort: Option<ReasoningEffortConfig>,
         summary: ReasoningSummaryConfig,
         service_tier: Option<String>,
-        responses_metadata: &CodexResponsesMetadata,
+        responses_metadata: &GenexResponsesMetadata,
     ) -> Result<ResponsesApiRequest> {
         let mut input = prompt.get_formatted_input_for_request(model_info);
         let is_responses_provider = self.state.provider.info().is_responses_provider();
@@ -899,7 +899,7 @@ impl ModelClient {
         session_telemetry: &SessionTelemetry,
         api_provider: genex_api::Provider,
         api_auth: SharedAuthProvider,
-        responses_metadata: &CodexResponsesMetadata,
+        responses_metadata: &GenexResponsesMetadata,
         auth_context: AuthRequestTelemetryContext,
         request_route_telemetry: RequestRouteTelemetry,
         responses_headers: &ApiHeaderMap,
@@ -955,7 +955,7 @@ impl ModelClient {
     /// Builds websocket handshake headers for both prewarm and turn-time reconnect.
     async fn build_websocket_headers(
         &self,
-        responses_metadata: &CodexResponsesMetadata,
+        responses_metadata: &GenexResponsesMetadata,
     ) -> ApiHeaderMap {
         let mut headers = build_responses_headers(
             self.state.beta_features_header.as_deref(),
@@ -1002,7 +1002,7 @@ impl ModelClientSession {
     /// regardless of transport choice.
     async fn build_responses_options(
         &self,
-        responses_metadata: &CodexResponsesMetadata,
+        responses_metadata: &GenexResponsesMetadata,
         compression: Compression,
         use_responses_lite: bool,
     ) -> ApiResponsesOptions {
@@ -1105,7 +1105,7 @@ impl ModelClientSession {
         &mut self,
         model_info: &ModelInfo,
         session_telemetry: &SessionTelemetry,
-        responses_metadata: &CodexResponsesMetadata,
+        responses_metadata: &GenexResponsesMetadata,
     ) -> std::result::Result<(), ApiError> {
         if !self.client.responses_websocket_enabled() {
             return Ok(());
@@ -1249,7 +1249,7 @@ impl ModelClientSession {
         prompt: &Prompt,
         model_info: &ModelInfo,
         session_telemetry: &SessionTelemetry,
-        responses_metadata: &CodexResponsesMetadata,
+        responses_metadata: &GenexResponsesMetadata,
         inference_trace: &InferenceTraceContext,
         chat_api: Arc<dyn genex_api::ChatCompletionApi>,
     ) -> Result<ResponseStream> {
@@ -1379,7 +1379,7 @@ impl ModelClientSession {
         effort: Option<ReasoningEffortConfig>,
         summary: ReasoningSummaryConfig,
         service_tier: Option<String>,
-        responses_metadata: &CodexResponsesMetadata,
+        responses_metadata: &GenexResponsesMetadata,
         inference_trace: &InferenceTraceContext,
     ) -> Result<ResponseStream> {
         let auth_manager = self.client.state.provider.auth_manager();
@@ -1530,7 +1530,7 @@ impl ModelClientSession {
         effort: Option<ReasoningEffortConfig>,
         summary: ReasoningSummaryConfig,
         service_tier: Option<String>,
-        responses_metadata: &CodexResponsesMetadata,
+        responses_metadata: &GenexResponsesMetadata,
         warmup: bool,
         request_trace: Option<W3cTraceContext>,
         inference_trace: &InferenceTraceContext,
@@ -1782,7 +1782,7 @@ impl ModelClientSession {
         effort: Option<ReasoningEffortConfig>,
         summary: ReasoningSummaryConfig,
         service_tier: Option<String>,
-        responses_metadata: &CodexResponsesMetadata,
+        responses_metadata: &GenexResponsesMetadata,
     ) -> Result<()> {
         if !self.client.responses_websocket_enabled() {
             return Ok(());
@@ -1843,7 +1843,7 @@ impl ModelClientSession {
         effort: Option<ReasoningEffortConfig>,
         summary: ReasoningSummaryConfig,
         service_tier: Option<String>,
-        responses_metadata: &CodexResponsesMetadata,
+        responses_metadata: &GenexResponsesMetadata,
         inference_trace: &InferenceTraceContext,
     ) -> Result<ResponseStream> {
         match self.client.state.provider.api() {
@@ -2191,7 +2191,7 @@ struct WebsocketConnectParams<'a> {
     auth_revision: Option<u64>,
     api_auth: SharedAuthProvider,
     auth_owner_generation: Option<u64>,
-    responses_metadata: &'a CodexResponsesMetadata,
+    responses_metadata: &'a GenexResponsesMetadata,
     auth_context: AuthRequestTelemetryContext,
     request_route_telemetry: RequestRouteTelemetry,
     responses_headers: &'a ApiHeaderMap,

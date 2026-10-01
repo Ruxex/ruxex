@@ -101,7 +101,7 @@ use genex_worktree::CreateWorktree;
 use genex_worktree::WorktreeManager;
 use genex_worktree::WorktreeSettings;
 use event_processor_with_human_output::EventProcessorWithHumanOutput;
-pub use event_processor_with_jsonl_output::CodexStatus;
+pub use event_processor_with_jsonl_output::GenexStatus;
 pub use event_processor_with_jsonl_output::CollectedThreadEvents;
 pub use event_processor_with_jsonl_output::EventProcessorWithJsonOutput;
 pub use exec_events::AgentMessageItem;
@@ -1096,8 +1096,8 @@ async fn run_exec_session(args: ExecRunArgs) -> anyhow::Result<()> {
                     .await;
 
                     match event_processor.process_server_notification(notification) {
-                        CodexStatus::Running => {}
-                        CodexStatus::InitiateShutdown => {
+                        GenexStatus::Running => {}
+                        GenexStatus::InitiateShutdown => {
                             if let Err(err) = request_shutdown(
                                 &client,
                                 &mut request_ids,

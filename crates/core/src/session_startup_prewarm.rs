@@ -12,7 +12,7 @@ use tracing::trace_span;
 use tracing::warn;
 
 use crate::client::ModelClientSession;
-use crate::responses_metadata::CodexResponsesRequestKind;
+use crate::responses_metadata::GenexResponsesRequestKind;
 use crate::session::INITIAL_SUBMIT_ID;
 use crate::session::RequestEffortUsage;
 use crate::session::session::Session;
@@ -301,7 +301,7 @@ async fn schedule_startup_prewarm_inner(
         /*status*/ None,
     );
     let responses_metadata = session
-        .responses_metadata(step_context.as_ref(), CodexResponsesRequestKind::Prewarm)
+        .responses_metadata(step_context.as_ref(), GenexResponsesRequestKind::Prewarm)
         .await;
     let mut client_session = session.services.model_client.new_session();
     let websocket_warmup_started_at = Instant::now();

@@ -13,8 +13,8 @@ use tokio::sync::watch;
 use tokio_util::task::AbortOnDropHandle;
 
 use crate::responses_metadata::AGENT_NAME_KEY;
-use crate::responses_metadata::CodexResponsesMetadata;
-use crate::responses_metadata::CodexResponsesRequestKind;
+use crate::responses_metadata::GenexResponsesMetadata;
+use crate::responses_metadata::GenexResponsesRequestKind;
 use crate::responses_metadata::PARENT_TURN_ID_KEY;
 use crate::responses_metadata::ROOT_TURN_ID_KEY;
 use crate::responses_metadata::TurnMetadataWorkspace;
@@ -59,7 +59,7 @@ impl<'a> ExecutionMetadata<'a> {
         }
     }
 
-    pub(crate) fn apply_to(&self, metadata: &mut CodexResponsesMetadata) {
+    pub(crate) fn apply_to(&self, metadata: &mut GenexResponsesMetadata) {
         metadata.node_repl_disabled = Some(self.node_repl_disabled);
         metadata
             .extra
@@ -219,9 +219,9 @@ impl TurnMetadataState {
         &self,
         installation_id: String,
         window_id: String,
-        request_kind: CodexResponsesRequestKind,
-    ) -> CodexResponsesMetadata {
-        CodexResponsesMetadata {
+        request_kind: GenexResponsesRequestKind,
+    ) -> GenexResponsesMetadata {
+        GenexResponsesMetadata {
             installation_id,
             window_id,
             request_kind: Some(request_kind),
@@ -305,7 +305,7 @@ impl TurnMetadataState {
             .cloned()
     }
 
-    fn responses_metadata_template(&self) -> CodexResponsesMetadata {
+    fn responses_metadata_template(&self) -> GenexResponsesMetadata {
         let mut metadata = self.mcp_metadata_template();
         if metadata.parent_thread_id.is_some() {
             metadata.forked_from_thread_id = None;
@@ -319,7 +319,7 @@ impl TurnMetadataState {
         metadata
     }
 
-    fn mcp_metadata_template(&self) -> CodexResponsesMetadata {
+    fn mcp_metadata_template(&self) -> GenexResponsesMetadata {
         let mut extra = self
             .responsesapi_client_metadata
             .read()
@@ -333,7 +333,7 @@ impl TurnMetadataState {
         {
             extra.remove(key);
         }
-        let mut metadata = CodexResponsesMetadata {
+        let mut metadata = GenexResponsesMetadata {
             turn_id: Some(self.turn_id.clone()),
             agent_name: Some(self.agent_name.clone()),
             forked_from_thread_id: self.forked_from_thread_id,
@@ -348,7 +348,7 @@ impl TurnMetadataState {
             tool_namespaces_info: None,
             turn_started_at_unix_ms: self.current_turn_started_at_unix_ms(),
             extra,
-            ..CodexResponsesMetadata::new(
+            ..GenexResponsesMetadata::new(
                 String::new(),
                 self.session_id.clone(),
                 self.thread_id.clone(),
