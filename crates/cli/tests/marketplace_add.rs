@@ -8,7 +8,7 @@ use serde_json::json;
 use std::path::Path;
 use tempfile::TempDir;
 
-fn codex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
+fn genex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
     let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("codex")?);
     cmd.env("CODEX_HOME", codex_home);
     Ok(cmd)
@@ -48,7 +48,7 @@ async fn marketplace_add_local_directory_source() -> Result<()> {
     let source_parent = source.path().parent().unwrap();
     let source_arg = format!("./{}", source.path().file_name().unwrap().to_string_lossy());
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .current_dir(source_parent)
         .args(["plugin", "marketplace", "add", source_arg.as_str()])
         .assert()
@@ -80,7 +80,7 @@ async fn marketplace_add_json_prints_add_outcome() -> Result<()> {
     let source_parent = source.path().parent().unwrap();
     let source_arg = format!("./{}", source.path().file_name().unwrap().to_string_lossy());
 
-    let assert = codex_command(codex_home.path())?
+    let assert = genex_command(codex_home.path())?
         .current_dir(source_parent)
         .args([
             "plugin",
@@ -114,7 +114,7 @@ async fn marketplace_add_rejects_local_manifest_file_source() -> Result<()> {
     write_marketplace_source(source.path(), "local ref")?;
     let manifest_path = source.path().join(".agents/plugins/marketplace.json");
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args([
             "plugin",
             "marketplace",
@@ -136,7 +136,7 @@ async fn marketplace_add_rejects_sparse_for_local_directory_source() -> Result<(
     let source = TempDir::new()?;
     write_marketplace_source(source.path(), "local ref")?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args([
             "plugin",
             "marketplace",

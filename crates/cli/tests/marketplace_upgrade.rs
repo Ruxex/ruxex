@@ -7,7 +7,7 @@ use serde_json::json;
 use std::path::Path;
 use tempfile::TempDir;
 
-fn codex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
+fn genex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
     let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("codex")?);
     cmd.env("CODEX_HOME", codex_home);
     Ok(cmd)
@@ -17,7 +17,7 @@ fn codex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
 async fn marketplace_upgrade_runs_under_plugin() -> Result<()> {
     let codex_home = TempDir::new()?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "marketplace", "upgrade"])
         .assert()
         .success()
@@ -63,7 +63,7 @@ async fn marketplace_upgrade_json_prints_upgrade_outcome() -> Result<()> {
     let marketplace_override =
         format!("marketplaces.debug={{source_type=\"git\",source={source_arg}}}");
 
-    let assert = codex_command(codex_home.path())?
+    let assert = genex_command(codex_home.path())?
         .current_dir(codex_home.path())
         .args(["--config", &marketplace_override])
         .args(["plugin", "marketplace", "upgrade", "--json"])
@@ -96,7 +96,7 @@ async fn marketplace_upgrade_json_prints_upgrade_outcome() -> Result<()> {
 async fn marketplace_upgrade_no_longer_runs_at_top_level() -> Result<()> {
     let codex_home = TempDir::new()?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["marketplace", "upgrade"])
         .assert()
         .failure()

@@ -19,7 +19,7 @@ use wiremock::matchers::header;
 use wiremock::matchers::method;
 use wiremock::matchers::path;
 
-fn codex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
+fn genex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
     let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("codex")?);
     cmd.env("CODEX_HOME", codex_home);
     Ok(cmd)
@@ -29,7 +29,7 @@ fn codex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
 fn strict_config_rejects_unknown_config_override() -> Result<()> {
     let codex_home = TempDir::new()?;
 
-    let mut cmd = codex_command(codex_home.path())?;
+    let mut cmd = genex_command(codex_home.path())?;
     cmd.args(["--strict-config", "-c", "foo=bar", "exec", "hello"])
         .assert()
         .failure()
@@ -73,7 +73,7 @@ fn interactive_validates_config_before_requiring_terminal() -> Result<()> {
         let codex_home = TempDir::new()?;
         std::fs::write(codex_home.path().join(config_file), contents)?;
 
-        let mut cmd = codex_command(codex_home.path())?;
+        let mut cmd = genex_command(codex_home.path())?;
         cmd.env("TERM", "xterm-256color")
             .current_dir(codex_home.path())
             .args(args)
@@ -102,7 +102,7 @@ url = "ws://127.0.0.1:4512"
     )?;
     let remote_only_cwd = codex_home.path().join("remote-only-working-directory");
 
-    let mut cmd = codex_command(codex_home.path())?;
+    let mut cmd = genex_command(codex_home.path())?;
     cmd.env("TERM", "xterm-256color")
         .current_dir(codex_home.path())
         .arg("--cd")
@@ -118,7 +118,7 @@ url = "ws://127.0.0.1:4512"
 fn strict_config_is_not_supported_for_cloud_command() -> Result<()> {
     let codex_home = TempDir::new()?;
 
-    let mut cmd = codex_command(codex_home.path())?;
+    let mut cmd = genex_command(codex_home.path())?;
     cmd.args(["--strict-config", "-c", "foo=bar", "cloud", "list"])
         .assert()
         .failure()
@@ -134,7 +134,7 @@ async fn features_enable_writes_feature_flag_to_config() -> Result<()> {
     let codex_home = TempDir::new()?;
 
     for feature in ["unified_exec"] {
-        let mut cmd = codex_command(codex_home.path())?;
+        let mut cmd = genex_command(codex_home.path())?;
         cmd.args(["features", "enable", feature])
             .assert()
             .success()
@@ -154,7 +154,7 @@ async fn features_enable_writes_feature_flag_to_config() -> Result<()> {
 async fn features_disable_writes_feature_flag_to_config() -> Result<()> {
     let codex_home = TempDir::new()?;
 
-    let mut cmd = codex_command(codex_home.path())?;
+    let mut cmd = genex_command(codex_home.path())?;
     cmd.args(["features", "disable", "shell_tool"])
         .assert()
         .success()
@@ -171,7 +171,7 @@ async fn features_disable_writes_feature_flag_to_config() -> Result<()> {
 async fn features_enable_under_development_feature_prints_warning() -> Result<()> {
     let codex_home = TempDir::new()?;
 
-    let mut cmd = codex_command(codex_home.path())?;
+    let mut cmd = genex_command(codex_home.path())?;
     cmd.args(["features", "enable", "runtime_metrics"])
         .assert()
         .success()
@@ -186,7 +186,7 @@ async fn features_enable_under_development_feature_prints_warning() -> Result<()
 async fn features_list_is_sorted_alphabetically_by_feature_name() -> Result<()> {
     let codex_home = TempDir::new()?;
 
-    let mut cmd = codex_command(codex_home.path())?;
+    let mut cmd = genex_command(codex_home.path())?;
     let output = cmd
         .args(["features", "list"])
         .assert()
@@ -268,7 +268,7 @@ async fn features_list_honors_cloud_managed_feature_requirements() -> Result<()>
         .mount(&server)
         .await;
 
-    let mut cmd = codex_command(codex_home.path())?;
+    let mut cmd = genex_command(codex_home.path())?;
     let output = cmd
         .current_dir(codex_home.path())
         .env("NO_PROXY", "127.0.0.1,localhost")
@@ -323,7 +323,7 @@ fn no_daemon_rejects_agents_and_explicit_remote_targets() -> Result<()> {
         } else {
             "--no-daemon cannot be used with --remote."
         };
-        codex_command(home.path())?
+        genex_command(home.path())?
             .args(args)
             .assert()
             .failure()

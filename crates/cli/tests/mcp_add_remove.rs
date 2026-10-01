@@ -12,7 +12,7 @@ use wiremock::ResponseTemplate;
 use wiremock::matchers::method;
 use wiremock::matchers::path;
 
-fn codex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
+fn genex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
     let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("codex")?);
     cmd.env("CODEX_HOME", codex_home);
     Ok(cmd)
@@ -22,7 +22,7 @@ fn codex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
 async fn add_and_remove_server_updates_global_config() -> Result<()> {
     let codex_home = TempDir::new()?;
 
-    let mut add_cmd = codex_command(codex_home.path())?;
+    let mut add_cmd = genex_command(codex_home.path())?;
     add_cmd
         .args(["mcp", "add", "docs", "--", "echo", "hello"])
         .assert()
@@ -50,7 +50,7 @@ async fn add_and_remove_server_updates_global_config() -> Result<()> {
     }
     assert!(docs.enabled);
 
-    let mut remove_cmd = codex_command(codex_home.path())?;
+    let mut remove_cmd = genex_command(codex_home.path())?;
     remove_cmd
         .args(["mcp", "remove", "docs"])
         .assert()
@@ -60,7 +60,7 @@ async fn add_and_remove_server_updates_global_config() -> Result<()> {
     let servers = load_global_mcp_servers(codex_home.path()).await?;
     assert!(servers.is_empty());
 
-    let mut remove_again_cmd = codex_command(codex_home.path())?;
+    let mut remove_again_cmd = genex_command(codex_home.path())?;
     remove_again_cmd
         .args(["mcp", "remove", "docs"])
         .assert()
@@ -78,7 +78,7 @@ async fn npm_server_names_round_trip_through_cli() -> Result<()> {
     let codex_home = TempDir::new()?;
     let name = "npm:@modelcontextprotocol/server-sequential.thinking";
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["mcp", "add", name, "--", "echo", "hello"])
         .assert()
         .success();
@@ -91,7 +91,7 @@ async fn npm_server_names_round_trip_through_cli() -> Result<()> {
         vec![name]
     );
 
-    let output = codex_command(codex_home.path())?
+    let output = genex_command(codex_home.path())?
         .args(["mcp", "get", name, "--json"])
         .assert()
         .success()
@@ -101,7 +101,7 @@ async fn npm_server_names_round_trip_through_cli() -> Result<()> {
     let server: serde_json::Value = serde_json::from_slice(&output)?;
     assert_eq!(server["name"], name);
 
-    let output = codex_command(codex_home.path())?
+    let output = genex_command(codex_home.path())?
         .args(["mcp", "list", "--json"])
         .assert()
         .success()
@@ -112,7 +112,7 @@ async fn npm_server_names_round_trip_through_cli() -> Result<()> {
     assert_eq!(listed.len(), 1);
     assert_eq!(listed[0]["name"], name);
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["mcp", "remove", name])
         .assert()
         .success();
@@ -156,7 +156,7 @@ async fn add_and_login_discover_oauth_through_configured_http_proxy() -> Result<
         .mount(&proxy)
         .await;
 
-    let mut add = codex_command(codex_home.path())?;
+    let mut add = genex_command(codex_home.path())?;
     add.env("HTTP_PROXY", proxy.uri())
         .env("http_proxy", proxy.uri())
         .env_remove("HTTPS_PROXY")
@@ -200,7 +200,7 @@ async fn add_and_login_discover_oauth_through_configured_http_proxy() -> Result<
     // Local OAuth login does not require the execution-environment registry.
     std::fs::write(codex_home.path().join("environments.toml"), "invalid = [")?;
 
-    let mut login = codex_command(codex_home.path())?;
+    let mut login = genex_command(codex_home.path())?;
     login
         .env("HTTP_PROXY", proxy.uri())
         .env("http_proxy", proxy.uri())
@@ -252,7 +252,7 @@ model = "gpt-5"
 "#,
     )?;
 
-    let mut list_cmd = codex_command(codex_home.path())?;
+    let mut list_cmd = genex_command(codex_home.path())?;
     list_cmd
         .args(["--profile", "work", "mcp", "list"])
         .assert()
@@ -268,7 +268,7 @@ model = "gpt-5"
 async fn add_with_env_preserves_key_order_and_values() -> Result<()> {
     let codex_home = TempDir::new()?;
 
-    let mut add_cmd = codex_command(codex_home.path())?;
+    let mut add_cmd = genex_command(codex_home.path())?;
     add_cmd
         .args([
             "mcp",
@@ -304,7 +304,7 @@ async fn add_with_env_preserves_key_order_and_values() -> Result<()> {
 async fn add_streamable_http_without_manual_token() -> Result<()> {
     let codex_home = TempDir::new()?;
 
-    let mut add_cmd = codex_command(codex_home.path())?;
+    let mut add_cmd = genex_command(codex_home.path())?;
     add_cmd
         .args([
             "mcp",
@@ -351,7 +351,7 @@ async fn add_streamable_http_without_manual_token() -> Result<()> {
 async fn add_streamable_http_with_custom_env_var() -> Result<()> {
     let codex_home = TempDir::new()?;
 
-    let mut add_cmd = codex_command(codex_home.path())?;
+    let mut add_cmd = genex_command(codex_home.path())?;
     add_cmd
         .args([
             "mcp",
@@ -391,7 +391,7 @@ async fn add_streamable_http_with_oauth_options() -> Result<()> {
     let codex_home = TempDir::new()?;
     let expected_callback = "http://127.0.0.1/callback/w9gKTtkB7gWy";
 
-    let mut add_cmd = codex_command(codex_home.path())?;
+    let mut add_cmd = genex_command(codex_home.path())?;
     add_cmd
         .args([
             "-c",
@@ -450,7 +450,7 @@ async fn add_persists_issuer_bound_callback_before_starting_oauth() -> Result<()
         .and(path("/.well-known/oauth-authorization-server/mcp"))
         .respond_with(move |_: &wiremock::Request| {
             concurrent_add.call_once(|| {
-                codex_command(&concurrent_codex_home)
+                genex_command(&concurrent_codex_home)
                     .expect("create concurrent MCP add command")
                     .args(["mcp", "add", "concurrent", "--", "echo", "concurrent"])
                     .assert()
@@ -461,7 +461,7 @@ async fn add_persists_issuer_bound_callback_before_starting_oauth() -> Result<()
         .mount(&oauth_server)
         .await;
 
-    let mut add_cmd = codex_command(codex_home.path())?;
+    let mut add_cmd = genex_command(codex_home.path())?;
     add_cmd.args([
         "mcp",
         "add",
@@ -494,7 +494,7 @@ async fn add_persists_issuer_bound_callback_before_starting_oauth() -> Result<()
 async fn add_streamable_http_rejects_removed_flag() -> Result<()> {
     let codex_home = TempDir::new()?;
 
-    let mut add_cmd = codex_command(codex_home.path())?;
+    let mut add_cmd = genex_command(codex_home.path())?;
     add_cmd
         .args([
             "mcp",
@@ -518,7 +518,7 @@ async fn add_streamable_http_rejects_removed_flag() -> Result<()> {
 async fn add_cant_add_command_and_url() -> Result<()> {
     let codex_home = TempDir::new()?;
 
-    let mut add_cmd = codex_command(codex_home.path())?;
+    let mut add_cmd = genex_command(codex_home.path())?;
     add_cmd
         .args([
             "mcp",

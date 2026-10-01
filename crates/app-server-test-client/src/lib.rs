@@ -1169,7 +1169,7 @@ async fn with_client<T>(
     command_name: &'static str,
     endpoint: &Endpoint,
     config_overrides: &[String],
-    f: impl FnOnce(&mut CodexClient) -> Result<T>,
+    f: impl FnOnce(&mut GenexClient) -> Result<T>,
 ) -> Result<T> {
     let tracing = TestClientTracing::initialize(config_overrides).await?;
     let command_span = info_span!(
@@ -1180,7 +1180,7 @@ async fn with_client<T>(
     );
     let trace_summary = command_span.in_scope(|| TraceSummary::capture(tracing.traces_enabled));
     let result = command_span.in_scope(|| {
-        let mut client = CodexClient::connect(endpoint, config_overrides)?;
+        let mut client = GenexClient::connect(endpoint, config_overrides)?;
         f(&mut client)
     });
     print_trace_summary(&trace_summary);
@@ -1189,7 +1189,7 @@ async fn with_client<T>(
 
 fn thread_increment_elicitation(url: &str, thread_id: String) -> Result<()> {
     let endpoint = Endpoint::ConnectWs(url.to_string());
-    let mut client = CodexClient::connect(&endpoint, &[])?;
+    let mut client = GenexClient::connect(&endpoint, &[])?;
 
     let initialize = client.initialize()?;
     println!("< initialize response: {initialize:?}");
@@ -1203,7 +1203,7 @@ fn thread_increment_elicitation(url: &str, thread_id: String) -> Result<()> {
 
 fn thread_decrement_elicitation(url: &str, thread_id: String) -> Result<()> {
     let endpoint = Endpoint::ConnectWs(url.to_string());
-    let mut client = CodexClient::connect(&endpoint, &[])?;
+    let mut client = GenexClient::connect(&endpoint, &[])?;
 
     let initialize = client.initialize()?;
     println!("< initialize response: {initialize:?}");
@@ -1259,7 +1259,7 @@ fn live_elicitation_timeout_pause(
     let app_server_test_client_bin = std::env::current_exe()
         .context("failed to resolve codex-app-server-test-client binary path")?;
     let endpoint = Endpoint::ConnectWs(websocket_url.clone());
-    let mut client = CodexClient::connect(&endpoint, &[])?;
+    let mut client = GenexClient::connect(&endpoint, &[])?;
 
     let initialize = client.initialize()?;
     println!("< initialize response: {initialize:?}");
@@ -1419,7 +1419,7 @@ enum ClientTransport {
     },
 }
 
-struct CodexClient {
+struct GenexClient {
     transport: ClientTransport,
     pending_notifications: VecDeque<JSONRPCNotification>,
     command_approval_behavior: CommandApprovalBehavior,
@@ -1454,7 +1454,7 @@ fn item_started_before_helper_done_is_unexpected(
     !matches!(item, ThreadItem::UserMessage { .. })
 }
 
-impl CodexClient {
+impl GenexClient {
     fn connect(endpoint: &Endpoint, config_overrides: &[String]) -> Result<Self> {
         match endpoint {
             Endpoint::SpawnCodex(codex_bin) => Self::spawn_stdio(codex_bin, config_overrides),
@@ -2235,7 +2235,7 @@ fn print_trace_summary(trace_summary: &TraceSummary) {
     }
 }
 
-impl Drop for CodexClient {
+impl Drop for GenexClient {
     fn drop(&mut self) {
         let ClientTransport::Stdio { child, stdin, .. } = &mut self.transport else {
             return;

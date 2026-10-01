@@ -9,7 +9,7 @@ use serde_json::json;
 use std::path::Path;
 use tempfile::TempDir;
 
-fn codex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
+fn genex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
     let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("codex")?);
     cmd.env("CODEX_HOME", codex_home);
     Ok(cmd)
@@ -38,7 +38,7 @@ async fn marketplace_remove_deletes_config_and_installed_root() -> Result<()> {
     record_user_marketplace(codex_home.path(), "debug", &configured_marketplace_update())?;
     write_installed_marketplace(codex_home.path(), "debug")?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "marketplace", "remove", "debug"])
         .assert()
         .success()
@@ -63,7 +63,7 @@ async fn marketplace_remove_json_prints_remove_outcome() -> Result<()> {
     let installed_root = marketplace_install_root(codex_home.path()).join("debug");
     let normalized_installed_root = canonicalize_existing_preserving_symlinks(&installed_root)?;
 
-    let assert = codex_command(codex_home.path())?
+    let assert = genex_command(codex_home.path())?
         .args(["plugin", "marketplace", "remove", "debug", "--json"])
         .assert()
         .success();
@@ -85,7 +85,7 @@ async fn marketplace_remove_json_prints_remove_outcome() -> Result<()> {
 async fn marketplace_remove_rejects_unknown_marketplace() -> Result<()> {
     let codex_home = TempDir::new()?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "marketplace", "remove", "debug"])
         .assert()
         .failure()
@@ -104,7 +104,7 @@ async fn marketplace_remove_preserves_marketplace_referenced_by_session_config()
     let config_path = codex_home.path().join("config.toml");
     let config = std::fs::read_to_string(&config_path)?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args([
             "plugin", "marketplace",
             "-c", "marketplaces.debug.source_type=\"git\"",

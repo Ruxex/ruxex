@@ -749,7 +749,7 @@ fn set_env_keys(env: &mut HashMap<String, String>, keys: &[&str], value: &str) {
 }
 
 #[cfg(target_os = "macos")]
-fn codex_proxy_git_ssh_command(socks_addr: SocketAddr) -> String {
+fn genex_proxy_git_ssh_command(socks_addr: SocketAddr) -> String {
     format!("{CODEX_PROXY_GIT_SSH_COMMAND_PREFIX}{socks_addr}{CODEX_PROXY_GIT_SSH_COMMAND_SUFFIX}")
 }
 
@@ -844,7 +844,7 @@ fn apply_proxy_env_overrides(
             _ => {
                 env.insert(
                     GIT_SSH_COMMAND_ENV_KEY.to_string(),
-                    codex_proxy_git_ssh_command(socks_addr),
+                    genex_proxy_git_ssh_command(socks_addr),
                 );
             }
         }
@@ -2975,7 +2975,7 @@ mod tests {
         let mut env = HashMap::new();
         env.insert(
             GIT_SSH_COMMAND_ENV_KEY.to_string(),
-            codex_proxy_git_ssh_command(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 8081)),
+            genex_proxy_git_ssh_command(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 8081)),
         );
 
         apply_proxy_env_overrides(
@@ -2989,7 +2989,7 @@ mod tests {
 
         assert_eq!(
             env.get(GIT_SSH_COMMAND_ENV_KEY),
-            Some(&codex_proxy_git_ssh_command(SocketAddr::new(
+            Some(&genex_proxy_git_ssh_command(SocketAddr::new(
                 IpAddr::V4(Ipv4Addr::LOCALHOST),
                 48081,
             )))

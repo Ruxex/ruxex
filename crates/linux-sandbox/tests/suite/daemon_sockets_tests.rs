@@ -14,7 +14,7 @@ async fn private_tmp_mount_preserves_daemon_socket_isolation() {
     let test_executable = std::env::current_exe().unwrap();
     // Keep both executables available after the original /tmp is hidden.
     std::fs::copy(&test_executable, private.path().join("test")).unwrap();
-    std::fs::copy(codex_linux_sandbox_exe(), private.path().join("sandbox")).unwrap();
+    std::fs::copy(genex_linux_sandbox_exe(), private.path().join("sandbox")).unwrap();
     let (_, test_module) = module_path!().split_once("::").unwrap();
     let fixture_test = format!("{test_module}::private_tmp_fixture");
     // Mount setup needs capabilities, which bubblewrap only accepts as namespace root.
@@ -170,7 +170,7 @@ finally:
         .arg(&root)
         .arg(alias.path())
         .arg(private.path().strip_prefix(&root).unwrap().join("rpc.sock"))
-        .arg(codex_linux_sandbox_exe())
+        .arg(genex_linux_sandbox_exe())
         .arg(serde_json::to_string(&profile).unwrap())
         .kill_on_drop(true)
         .output()
@@ -256,7 +256,7 @@ if sys.argv[6] == 'host-proc' and not os.path.isdir('/run/WSL'):
     // Inherited procfs remains useful in containers that prohibit a fresh mount.
     // Its host-process magic links must still respect the user namespace boundary.
     for proc_mode in ["fresh-proc", "host-proc"] {
-        let mut command = tokio::process::Command::new(codex_linux_sandbox_exe());
+        let mut command = tokio::process::Command::new(genex_linux_sandbox_exe());
         command
             .arg("--sandbox-policy-cwd")
             .arg(workspace.path())

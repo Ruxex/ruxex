@@ -26,7 +26,7 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
     }
 
     let repo_root = genex_utils_cargo_bin::repo_root()?;
-    let codex = codex_binary(&repo_root)?;
+    let codex = genex_binary(&repo_root)?;
     let codex_home = tempdir()?;
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
@@ -194,7 +194,7 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
     }
 
     let repo_root = genex_utils_cargo_bin::repo_root()?;
-    let codex = codex_binary(&repo_root)?;
+    let codex = genex_binary(&repo_root)?;
     let codex_home = tempdir()?;
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
@@ -326,7 +326,7 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
     }
 
     let repo_root = genex_utils_cargo_bin::repo_root()?;
-    let codex = codex_binary(&repo_root)?;
+    let codex = genex_binary(&repo_root)?;
     let codex_home = tempdir()?;
     let server = MockServer::start().await;
     let provider_base_url_config =
@@ -453,7 +453,7 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
 
 async fn run_repeated_resize_smoke() -> Result<()> {
     let repo_root = genex_utils_cargo_bin::repo_root()?;
-    let codex = codex_binary(&repo_root)?;
+    let codex = genex_binary(&repo_root)?;
     let codex_home = tempdir()?;
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
@@ -589,7 +589,7 @@ impl Drop for TmuxSession {
     }
 }
 
-fn codex_binary(repo_root: &Path) -> Result<PathBuf> {
+fn genex_binary(repo_root: &Path) -> Result<PathBuf> {
     if let Ok(path) = genex_utils_cargo_bin::cargo_bin("codex") {
         return Ok(path);
     }

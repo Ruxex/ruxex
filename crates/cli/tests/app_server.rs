@@ -7,7 +7,7 @@ use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
 
-fn codex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
+fn genex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
     let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("codex")?);
     cmd.env("CODEX_HOME", codex_home);
     Ok(cmd)
@@ -23,7 +23,7 @@ foo = "bar"
 "#,
     )?;
 
-    let mut cmd = codex_command(codex_home.path())?;
+    let mut cmd = genex_command(codex_home.path())?;
     cmd.args(["app-server", "--strict-config", "--listen", "off"])
         .assert()
         .failure()
@@ -43,7 +43,7 @@ fn agents_accept_interactive_configuration_overrides() -> Result<()> {
         ["--approve-for-me", "agents"].as_slice(),
         ["--cd", ".", "agents"].as_slice(),
     ] {
-        let mut cmd = codex_command(codex_home.path())?;
+        let mut cmd = genex_command(codex_home.path())?;
         cmd.env("TERM", "xterm-256color").args(args);
         #[cfg(not(any(unix, windows)))]
         cmd.args(["--remote", "ws://127.0.0.1:4512"]);
@@ -92,7 +92,7 @@ fn agents_reject_inputs_that_cannot_be_applied() -> Result<()> {
             "cannot apply local provider or additional-directory overrides",
         ),
     ] {
-        let mut cmd = codex_command(codex_home.path())?;
+        let mut cmd = genex_command(codex_home.path())?;
         cmd.args(args)
             .assert()
             .failure()

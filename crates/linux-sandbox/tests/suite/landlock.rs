@@ -52,7 +52,7 @@ fn create_env_from_core_vars() -> HashMap<String, String> {
     create_env(&policy, /*thread_id*/ None)
 }
 
-fn codex_linux_sandbox_exe() -> PathBuf {
+fn genex_linux_sandbox_exe() -> PathBuf {
     let sandbox_program = PathBuf::from(env!("CARGO_BIN_EXE_codex-linux-sandbox"));
     match sandbox_program.canonicalize() {
         Ok(path) => path,
@@ -190,14 +190,14 @@ async fn run_cmd_result_with_permission_profile_for_cwd(
         justification: None,
         arg0: None,
     };
-    let codex_linux_sandbox_exe = Some(codex_linux_sandbox_exe());
+    let genex_linux_sandbox_exe = Some(genex_linux_sandbox_exe());
 
     process_exec_tool_call(
         params,
         &permission_profile,
         &sandbox_cwd,
         std::slice::from_ref(&sandbox_cwd),
-        &codex_linux_sandbox_exe,
+        &genex_linux_sandbox_exe,
         /*codex_self_exe*/ &None,
         use_legacy_landlock,
         /*stdout_stream*/ None,
@@ -428,7 +428,7 @@ async fn wsl_interop_bind_alias_cannot_run_windows_program() {
             .args(["/bin/sh", "-c", script, "sh"])
             .arg(&alias)
             .arg(&powershell)
-            .arg(codex_linux_sandbox_exe())
+            .arg(genex_linux_sandbox_exe())
             .arg(&cwd)
             .arg(profile)
             .kill_on_drop(true)
@@ -478,7 +478,7 @@ async fn wsl_no_proc_masks_inherited_procfs_and_windows_interop() {
     let cwd = std::env::current_dir().expect("current directory");
     let proc_check = tokio::time::timeout(
         Duration::from_millis(NETWORK_TIMEOUT_MS),
-        tokio::process::Command::new(codex_linux_sandbox_exe())
+        tokio::process::Command::new(genex_linux_sandbox_exe())
             .arg("--sandbox-policy-cwd")
             .arg(&cwd)
             .args([
@@ -504,7 +504,7 @@ async fn wsl_no_proc_masks_inherited_procfs_and_windows_interop() {
 
     let output = tokio::time::timeout(
         Duration::from_millis(NETWORK_TIMEOUT_MS),
-        tokio::process::Command::new(codex_linux_sandbox_exe())
+        tokio::process::Command::new(genex_linux_sandbox_exe())
             .arg("--sandbox-policy-cwd")
             .arg(&cwd)
             .args([
@@ -777,7 +777,7 @@ async fn sandbox_inner_stage_rejects_retained_capabilities() {
         .expect("read-only permission profile should serialize");
     let output = std::process::Command::new("unshare")
         .args(["--user", "--map-root-user", "--"])
-        .arg(codex_linux_sandbox_exe())
+        .arg(genex_linux_sandbox_exe())
         .args(["--sandbox-policy-cwd", "/", "--permission-profile"])
         .arg(permission_profile)
         .args([
@@ -830,14 +830,14 @@ async fn assert_network_blocked(cmd: &[&str]) {
         arg0: None,
     };
 
-    let codex_linux_sandbox_exe: Option<PathBuf> = Some(codex_linux_sandbox_exe());
+    let genex_linux_sandbox_exe: Option<PathBuf> = Some(genex_linux_sandbox_exe());
     let permission_profile = PermissionProfile::read_only();
     let result = process_exec_tool_call(
         params,
         &permission_profile,
         &sandbox_cwd,
         std::slice::from_ref(&sandbox_cwd),
-        &codex_linux_sandbox_exe,
+        &genex_linux_sandbox_exe,
         /*codex_self_exe*/ &None,
         /*use_legacy_landlock*/ false,
         /*stdout_stream*/ None,
@@ -1257,7 +1257,7 @@ async fn sandbox_blocks_explicit_split_policy_carveouts_under_bwrap() {
     let blocked_target = blocked.join("secret.txt");
     // These tests bypass the usual legacy-policy bridge, so explicitly keep
     // the sandbox helper binary and minimal runtime paths readable.
-    let sandbox_helper_dir = codex_linux_sandbox_exe()
+    let sandbox_helper_dir = genex_linux_sandbox_exe()
         .parent()
         .expect("sandbox helper should have a parent")
         .to_path_buf();
@@ -1331,7 +1331,7 @@ async fn sandbox_starts_with_denied_tmp_without_exposing_registry() {
     std::fs::write(temp.path().join("AGENTS.md"), "project instructions\n")
         .expect("write instructions");
     let cwd = AbsolutePathBuf::try_from(temp.path()).expect("absolute workspace");
-    let sandbox_helper = codex_linux_sandbox_exe();
+    let sandbox_helper = genex_linux_sandbox_exe();
     let helper_dir = AbsolutePathBuf::try_from(sandbox_helper.parent().expect("helper parent"))
         .expect("absolute helper directory");
 
@@ -1410,7 +1410,7 @@ async fn sandbox_reenables_writable_subpaths_under_unreadable_parents() {
     let allowed_target = allowed.join("note.txt");
     // These tests bypass the usual legacy-policy bridge, so explicitly keep
     // the sandbox helper binary and minimal runtime paths readable.
-    let sandbox_helper_dir = codex_linux_sandbox_exe()
+    let sandbox_helper_dir = genex_linux_sandbox_exe()
         .parent()
         .expect("sandbox helper should have a parent")
         .to_path_buf();

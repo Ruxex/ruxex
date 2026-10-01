@@ -40,15 +40,15 @@ fn marketplace_list_row(marketplace_name: &str, root: &Path) -> String {
     )
 }
 
-fn codex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
+fn genex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
     let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("codex")?);
     cmd.env("CODEX_HOME", codex_home);
     cmd.env("HOME", codex_home);
     Ok(cmd)
 }
 
-fn codex_command_in(codex_home: &Path, current_dir: &Path) -> Result<assert_cmd::Command> {
-    let mut cmd = codex_command(codex_home)?;
+fn genex_command_in(codex_home: &Path, current_dir: &Path) -> Result<assert_cmd::Command> {
+    let mut cmd = genex_command(codex_home)?;
     cmd.current_dir(current_dir);
     Ok(cmd)
 }
@@ -345,7 +345,7 @@ async fn marketplace_list_shows_configured_marketplace_names() -> Result<()> {
     let (codex_home, source) = setup_local_marketplace()?;
     let expected_row = marketplace_list_row("debug", source.path());
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "marketplace", "list"])
         .assert()
         .success()
@@ -361,7 +361,7 @@ async fn marketplace_list_json_prints_configured_marketplaces() -> Result<()> {
     let (codex_home, source) = setup_local_marketplace()?;
     let source_path = source.path().display().to_string();
 
-    let assert = codex_command(codex_home.path())?
+    let assert = genex_command(codex_home.path())?
         .args(["plugin", "marketplace", "list", "--json"])
         .assert()
         .success();
@@ -406,7 +406,7 @@ async fn marketplace_list_json_includes_configured_git_marketplace_source() -> R
     record_user_marketplace(codex_home.path(), "debug", &update)?;
     let normalized_root = canonicalize_existing_preserving_symlinks(&marketplace_root)?;
 
-    let assert = codex_command(codex_home.path())?
+    let assert = genex_command(codex_home.path())?
         .args(["plugin", "marketplace", "list", "--json"])
         .assert()
         .success();
@@ -453,7 +453,7 @@ async fn marketplace_list_json_keys_configured_source_by_root() -> Result<()> {
     record_user_marketplace(codex_home.path(), "debug", &update)?;
     let normalized_root = canonicalize_existing_preserving_symlinks(&marketplace_root)?;
 
-    let assert = codex_command(codex_home.path())?
+    let assert = genex_command(codex_home.path())?
         .env("HOME", home.path())
         .args(["plugin", "marketplace", "list", "--json"])
         .assert()
@@ -492,7 +492,7 @@ async fn marketplace_list_includes_home_marketplace_when_present() -> Result<()>
     write_plugins_enabled_config(codex_home.path())?;
     let expected_row = marketplace_list_row("debug", home.path());
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .env("HOME", home.path())
         .args(["plugin", "marketplace", "list"])
         .assert()
@@ -509,7 +509,7 @@ async fn marketplace_list_includes_root_when_plugins_are_filtered_out() -> Resul
     let (codex_home, source) = setup_local_marketplace_with_explicit_empty_products()?;
     let expected_row = marketplace_list_row("debug", source.path());
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "marketplace", "list"])
         .assert()
         .success()
@@ -524,7 +524,7 @@ async fn marketplace_list_fails_when_configured_marketplace_snapshot_is_missing(
     let (codex_home, source) = setup_configured_marketplace_without_manifest()?;
 
     assert_marketplace_failure(
-        codex_command(codex_home.path())?
+        genex_command(codex_home.path())?
             .args(["plugin", "marketplace", "list"])
             .assert(),
         "debug",
@@ -540,7 +540,7 @@ async fn marketplace_list_fails_when_configured_marketplace_name_is_invalid() ->
     let codex_home = setup_configured_local_marketplace_with_invalid_name()?;
 
     assert_marketplace_failure(
-        codex_command(codex_home.path())?
+        genex_command(codex_home.path())?
             .args(["plugin", "marketplace", "list"])
             .assert(),
         "bad/name",
@@ -556,7 +556,7 @@ async fn marketplace_list_fails_when_configured_local_marketplace_source_is_miss
 {
     let codex_home = setup_configured_local_marketplace_with_missing_source()?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "marketplace", "list"])
         .assert()
         .failure()
@@ -583,7 +583,7 @@ async fn marketplace_list_fails_when_home_marketplace_is_malformed() -> Result<(
         .join("marketplace.json");
     std::fs::write(&home_marketplace_path, "{not valid json")?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .env("HOME", home.path())
         .args(["plugin", "marketplace", "list"])
         .assert()
@@ -600,7 +600,7 @@ async fn marketplace_list_fails_when_configured_marketplace_snapshot_is_malforme
     let (codex_home, source) = setup_configured_marketplace_with_malformed_manifest()?;
 
     assert_marketplace_failure(
-        codex_command(codex_home.path())?
+        genex_command(codex_home.path())?
             .args(["plugin", "marketplace", "list"])
             .assert(),
         "debug",
@@ -621,7 +621,7 @@ async fn plugin_list_prints_plugins_in_a_table() -> Result<()> {
         .join("marketplace.json");
     let plugin_path = source.path().join("plugins").join("sample");
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "list"])
         .assert()
         .success()
@@ -644,7 +644,7 @@ async fn plugin_list_json_prints_available_plugins_when_requested() -> Result<()
     let plugin_path = source.path().join("plugins").join("sample");
     let source_path = source.path().to_string_lossy().into_owned();
 
-    let assert = codex_command(codex_home.path())?
+    let assert = genex_command(codex_home.path())?
         .args(["plugin", "list", "--available", "--json"])
         .assert()
         .success();
@@ -701,7 +701,7 @@ async fn plugin_list_json_includes_configured_git_marketplace_source() -> Result
     let plugin_path = marketplace_root.join("plugins").join("sample");
     let normalized_plugin_path = canonicalize_existing_preserving_symlinks(&plugin_path)?;
 
-    let assert = codex_command(codex_home.path())?
+    let assert = genex_command(codex_home.path())?
         .args(["plugin", "list", "--available", "--json"])
         .assert()
         .success();
@@ -744,12 +744,12 @@ async fn plugin_list_json_prints_installed_plugins() -> Result<()> {
     let plugin_path = source.path().join("plugins").join("sample");
     let source_path = source.path().to_string_lossy().into_owned();
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .success();
 
-    let assert = codex_command(codex_home.path())?
+    let assert = genex_command(codex_home.path())?
         .args(["plugin", "list", "--json"])
         .assert()
         .success();
@@ -790,7 +790,7 @@ async fn plugin_list_json_prints_installed_plugins() -> Result<()> {
 async fn plugin_list_available_requires_json() -> Result<()> {
     let (codex_home, _source) = setup_local_marketplace()?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "list", "--available"])
         .assert()
         .failure()
@@ -806,12 +806,12 @@ async fn plugin_list_available_requires_json() -> Result<()> {
 async fn plugin_list_shows_installed_version_when_plugin_is_installed() -> Result<()> {
     let (codex_home, _source) = setup_local_marketplace()?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .success();
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "list"])
         .assert()
         .success()
@@ -826,7 +826,7 @@ async fn plugin_list_shows_installed_version_when_plugin_is_installed() -> Resul
 async fn plugin_list_excludes_unconfigured_repo_local_marketplaces() -> Result<()> {
     let (codex_home, source) = setup_unconfigured_local_marketplace()?;
 
-    codex_command_in(codex_home.path(), source.path())?
+    genex_command_in(codex_home.path(), source.path())?
         .args(["plugin", "list", "--marketplace", "debug"])
         .assert()
         .success()
@@ -841,7 +841,7 @@ async fn plugin_list_fails_when_configured_marketplace_snapshot_is_missing() -> 
     let (codex_home, source) = setup_configured_marketplace_without_manifest()?;
 
     assert_configured_marketplace_snapshot_failure(
-        codex_command(codex_home.path())?
+        genex_command(codex_home.path())?
             .args(["plugin", "list"])
             .assert(),
         source.path(),
@@ -855,7 +855,7 @@ async fn plugin_list_fails_when_configured_marketplace_snapshot_is_missing() -> 
 async fn plugin_list_ignores_implicit_system_marketplace_roots_without_manifests() -> Result<()> {
     let (codex_home, source, cache_home) = setup_local_marketplace_with_implicit_system_roots()?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .env("HOME", cache_home.path())
         .env("USERPROFILE", cache_home.path())
         .args(["plugin", "list"])
@@ -882,7 +882,7 @@ async fn plugin_list_ignores_implicit_system_marketplace_roots_without_manifests
 async fn plugin_list_fails_for_custom_marketplace_under_system_root() -> Result<()> {
     let (codex_home, custom_root) = setup_custom_marketplace_under_implicit_system_root()?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "list"])
         .assert()
         .failure()
@@ -902,14 +902,14 @@ async fn plugin_list_fails_for_custom_marketplace_under_system_root() -> Result<
 async fn plugin_list_hides_version_for_cached_but_unconfigured_plugin() -> Result<()> {
     let (codex_home, _source) = setup_local_marketplace()?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .success();
 
     remove_installed_plugin_config(codex_home.path(), "sample@debug")?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "list"])
         .assert()
         .success()
@@ -924,7 +924,7 @@ async fn plugin_list_hides_version_for_cached_but_unconfigured_plugin() -> Resul
 async fn plugin_add_and_remove_updates_installed_plugin_config() -> Result<()> {
     let (codex_home, _source) = setup_local_marketplace()?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .success()
@@ -933,7 +933,7 @@ async fn plugin_add_and_remove_updates_installed_plugin_config() -> Result<()> {
     let config = std::fs::read_to_string(codex_home.path().join(CONFIG_TOML_FILE))?;
     assert!(config.contains("[plugins.\"sample@debug\"]"));
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "remove", "sample", "--marketplace", "debug"])
         .assert()
         .success()
@@ -951,7 +951,7 @@ async fn plugin_add_and_remove_updates_installed_plugin_config() -> Result<()> {
 async fn plugin_add_json_prints_install_outcome() -> Result<()> {
     let (codex_home, _source) = setup_local_marketplace()?;
 
-    let assert = codex_command(codex_home.path())?
+    let assert = genex_command(codex_home.path())?
         .args(["plugin", "add", "sample@debug", "--json"])
         .assert()
         .success();
@@ -979,12 +979,12 @@ async fn plugin_add_json_prints_install_outcome() -> Result<()> {
 async fn plugin_remove_json_prints_remove_outcome() -> Result<()> {
     let (codex_home, _source) = setup_local_marketplace()?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .success();
 
-    let assert = codex_command(codex_home.path())?
+    let assert = genex_command(codex_home.path())?
         .args([
             "plugin",
             "remove",
@@ -1014,7 +1014,7 @@ async fn plugin_remove_json_prints_remove_outcome() -> Result<()> {
 async fn plugin_add_rejects_unconfigured_repo_local_marketplaces() -> Result<()> {
     let (codex_home, source) = setup_unconfigured_local_marketplace()?;
 
-    codex_command_in(codex_home.path(), source.path())?
+    genex_command_in(codex_home.path(), source.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .failure()
@@ -1030,7 +1030,7 @@ async fn plugin_add_fails_when_configured_marketplace_snapshot_is_malformed() ->
     let (codex_home, source) = setup_configured_marketplace_with_malformed_manifest()?;
 
     assert_configured_marketplace_snapshot_failure(
-        codex_command(codex_home.path())?
+        genex_command(codex_home.path())?
             .args(["plugin", "add", "sample@debug"])
             .assert(),
         source.path(),
@@ -1044,12 +1044,12 @@ async fn plugin_add_fails_when_configured_marketplace_snapshot_is_malformed() ->
 async fn plugin_add_reinstalls_from_configured_marketplace_snapshot() -> Result<()> {
     let (codex_home, _source) = setup_local_marketplace()?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .success();
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .success()
@@ -1069,17 +1069,17 @@ async fn plugin_add_reinstalls_from_configured_marketplace_snapshot() -> Result<
 async fn plugin_remove_works_after_marketplace_is_removed() -> Result<()> {
     let (codex_home, _source) = setup_local_marketplace()?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "add", "sample", "--marketplace", "debug"])
         .assert()
         .success();
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "marketplace", "remove", "debug"])
         .assert()
         .success();
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "remove", "sample@debug"])
         .assert()
         .success()
@@ -1098,12 +1098,12 @@ async fn plugin_add_rejects_cached_plugins_without_authorizing_marketplace_snaps
 {
     let (codex_home, _source) = setup_local_marketplace()?;
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .success();
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "marketplace", "remove", "debug"])
         .assert()
         .success();
@@ -1115,7 +1115,7 @@ async fn plugin_add_rejects_cached_plugins_without_authorizing_marketplace_snaps
             .is_file()
     );
 
-    codex_command(codex_home.path())?
+    genex_command(codex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .failure()

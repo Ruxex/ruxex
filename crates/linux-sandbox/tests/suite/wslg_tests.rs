@@ -1,7 +1,7 @@
 //! WSLg runtime coverage for the duplicate-view mask and procfs fallback.
 
 use super::NETWORK_TIMEOUT_MS;
-use super::codex_linux_sandbox_exe;
+use super::genex_linux_sandbox_exe;
 use super::should_skip_bwrap_tests;
 use genex_protocol::models::PermissionProfile;
 use pretty_assertions::assert_eq;
@@ -26,7 +26,7 @@ async fn wslg_duplicate_view_is_masked_with_and_without_fresh_procfs() {
         .expect("serialize read-only profile");
 
     for no_proc in [false, true] {
-        let mut command = tokio::process::Command::new(codex_linux_sandbox_exe());
+        let mut command = tokio::process::Command::new(genex_linux_sandbox_exe());
         command
             .arg("--sandbox-policy-cwd")
             .arg(workspace.path())
@@ -60,7 +60,7 @@ async fn wslg_duplicate_view_is_masked_with_and_without_fresh_procfs() {
     }
     // Exercise the public helper boundary: production wraps the requested
     // executable in another helper command before constructing bwrap args.
-    let output = tokio::process::Command::new(codex_linux_sandbox_exe())
+    let output = tokio::process::Command::new(genex_linux_sandbox_exe())
         .arg("--sandbox-policy-cwd")
         .arg(workspace.path())
         .args([
