@@ -112,6 +112,20 @@ producer/consumer boundary:
 
 ## 0.5 Genex Rust symbol waves (2026-10-02)
 
+### Contract-boundary vocabulary for the remaining declarations
+
+ここでいう「外部」は単にインターネット上の利用者という意味ではない。対象を次のように分けて記録する。
+
+| Declaration family | 具体的な契約相手 | 保持理由 |
+|---|---|---|
+| `CodexAuth` | workspace 内の `genex-core-api`、core、CLI、MCP、model-provider、および実行時の auth.json/keyring・provider 認証経路 | 公開 workspace API と認証状態・provider auth の producer/consumer が結合している |
+| `CodexResponsesHeaders` | workspace 内の core/client・thread extension と、実行時の Responses HTTP/WebSocket endpoint | model-scoped auth/routing header の wire/endpoint 契約である |
+| `CodexErrorInfo` | app-server protocol の workspace 内 producer/translator、workspace 外の app-server client、checked-in JSON schema、thread history reader | JSON/RPC schema と既存履歴の読み手が同じ名前を要求する |
+| `CodexTurn*` / `CodexTurnTraceEvent` | rollout-trace reducer/writer、trace viewer/search/replay、ディスク上の serialized rollout trace | `codex_turn_id` を含む保存形式と replay の契約である |
+| `CodexHarnessMetadata` | history/rollout/core の writer/reader、ディスク上の thread history、JSON Schema consumer | 保存済み履歴と schema definition 名に結合している |
+
+したがって、以下の表で `retain` / `defer` としたものは、workspace 内の crate 間 APIだけでなく、上記の実行時・保存済み・workspace 外 consumer を含む。
+
 | Symbol family | Producer/consumer audit | Decision |
 |---|---|---|
 | `genex-app-server-test-client::CodexClient`, leaf private helpers, CLI test command helpers, and TUI resize test helper | Definitions and consumers are private to test/client crates; no wire, persisted, or external binary name is changed. | `migrate-in-place` to Genex names (completed in Task 1) |

@@ -89,6 +89,20 @@ earlier one being free of obsolete persisted data:
 
 ### Genex Rust symbol waves (2026-10-02)
 
+#### 「外部契約」の具体的な対象
+
+この台帳で「外部」と書く場合の対象を明示する。workspace 外の利用者だけでなく、定義 crate の外にある workspace consumer、実行時 endpoint、既存のディスク上データも含む。
+
+| 宣言 | 具体的な producer/consumer | 契約の種類 |
+|---|---|---|
+| `CodexAuth` | `genex-core-api`、core、CLI、MCP、model-provider、auth.json/keyring、provider 認証経路 | workspace 公開 API・認証状態・provider auth |
+| `CodexResponsesHeaders` | core/client、thread extension、Responses HTTP/WebSocket endpoint | endpoint wire/header・認証 routing |
+| `CodexErrorInfo` | protocol producer、app-server translator、workspace 外の app-server client、checked-in JSON schema、thread history reader | JSON/RPC protocol・schema・永続履歴 |
+| `CodexTurn` / `CodexTurnId` / `CodexTurnTraceEvent` | rollout-trace writer/reducer、trace viewer/search/replay、保存済み rollout trace | serialized trace・永続化 |
+| `CodexHarnessMetadata` | history/rollout/core の writer/reader、保存済み thread history、JSON Schema consumer | JSON Schema・永続化 |
+
+この分類により、単なる crate 内 private symbol は `migrate-in-place` とし、上記 consumer に影響する名前は `retain` / `defer` としている。
+
 | Exact symbol/path | Current producer/consumer audit | Canonical replacement | Decision | Verification |
 |---|---|---|---|---|
 | `genex-app-server-test-client::CodexClient`, leaf private helpers, CLI test command helpers, and TUI resize test helper | Definitions and consumers are private to test/client crates; no wire, persisted, or external binary name is changed. | Genex-named private/test helpers | `migrate-in-place` (completed) | Old/new invariants; `just check --tests`; `just check` |
