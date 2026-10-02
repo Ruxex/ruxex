@@ -29,7 +29,7 @@ impl Drop for CurrentDirGuard {
 #[test]
 fn conpty_ignores_dll_in_current_directory() -> anyhow::Result<()> {
     let temp_dir = std::env::temp_dir().join(format!(
-        "codex-conpty-search-path-{}-{}",
+        "genex-conpty-search-path-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)?

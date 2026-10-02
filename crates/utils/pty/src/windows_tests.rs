@@ -19,8 +19,8 @@ use winapi::um::jobapi::IsProcessInJob;
 use winapi::um::processthreadsapi::OpenProcess;
 use winapi::um::winnt::PROCESS_QUERY_LIMITED_INFORMATION;
 
-const READY_MARKER: &str = "__CODEX_CHILD_READY__";
-const VALUE_MARKER: &str = "__CODEX_CHILD_VALUE__";
+const READY_MARKER: &str = "__GENEX_CHILD_READY__";
+const VALUE_MARKER: &str = "__GENEX_CHILD_VALUE__";
 
 struct WindowsShell {
     name: &'static str,
@@ -71,7 +71,7 @@ async fn assert_terminate_kills_descendant(
     env: &HashMap<String, String>,
 ) -> anyhow::Result<()> {
     let marker = std::env::temp_dir().join(format!(
-        "codex-job-descendant-{backend}-{}-{}",
+        "genex-job-descendant-{backend}-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)?
@@ -125,7 +125,7 @@ async fn assert_normal_exit_preserves_descendant(
     env: &HashMap<String, String>,
 ) -> anyhow::Result<()> {
     let marker_base = std::env::temp_dir().join(format!(
-        "codex-job-natural-exit-{backend}-{}-{}",
+        "genex-job-natural-exit-{backend}-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)?
@@ -307,7 +307,7 @@ async fn conpty_delivers_input_to_foreground_children() -> anyhow::Result<()> {
         return Ok(());
     };
     let code = format!(
-        "print('__CODEX_CHILD_'+'READY__', flush=True); value=input(); print('{VALUE_MARKER}'+value.encode('utf-8').hex(), flush=True)"
+        "print('__GENEX_CHILD_'+'READY__', flush=True); value=input(); print('{VALUE_MARKER}'+value.encode('utf-8').hex(), flush=True)"
     );
     let expected = "cafeé 漢字";
     let expected_marker = format!("{VALUE_MARKER}{}", utf8_hex(expected));

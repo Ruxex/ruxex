@@ -88,7 +88,7 @@ impl<P: AwsCredentialsProvider> ProvideCredentials for AwsCredentialsProviderAda
                 access_keys.secret_access_key,
                 access_keys.session_token,
                 /*expires_after*/ None,
-                "codex-bedrock-credential-export",
+                "genex-bedrock-credential-export",
             ))
         })
     }
@@ -180,7 +180,7 @@ impl AwsAuthContext {
                 access_keys.secret_access_key,
                 access_keys.session_token,
                 /*expires_after*/ None,
-                "codex-managed-bedrock-access-keys",
+                "genex-managed-bedrock-access-keys",
             ));
         Ok(context)
     }
@@ -359,7 +359,7 @@ mod tests {
                 "secret-access-key",
                 Some("session-token".to_string()),
                 /*expires_after*/ None,
-                "codex-bedrock-credential-export",
+                "genex-bedrock-credential-export",
             )
         );
 

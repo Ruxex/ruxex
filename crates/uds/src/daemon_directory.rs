@@ -14,7 +14,7 @@ pub fn shared_daemon_socket_directory() -> io::Result<PathBuf> {
     // Resolve the system alias /tmp -> /private/tmp on macOS.
     let temporary_root = fs::canonicalize("/tmp")?;
     let uid = unsafe { libc::geteuid() };
-    Ok(temporary_root.join(format!("codex-daemon-{uid}")))
+    Ok(temporary_root.join(format!("genex-daemon-{uid}")))
 }
 
 /// Creates the reserved directory, rejecting symlinks and unsafe existing owners or modes.

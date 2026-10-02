@@ -34,7 +34,7 @@ tui-with-exec-server *args:
 
 # Run the CLI version of the file-search crate.
 file-search *args:
-    cargo run --bin codex-file-search -- {args}
+    cargo run --bin genex-file-search -- {args}
 
 # Run the standalone code-mode host from source.
 code-mode-host *args:

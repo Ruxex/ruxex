@@ -22,9 +22,9 @@ Lightweight helpers for spawning interactive processes either under a PTY (pseud
 ```rust
 use std::collections::HashMap;
 use std::path::Path;
-use codex_utils_pty::combine_output_receivers;
-use codex_utils_pty::spawn_pty_process;
-use codex_utils_pty::TerminalSize;
+use genex_utils_pty::combine_output_receivers;
+use genex_utils_pty::spawn_pty_process;
+use genex_utils_pty::TerminalSize;
 
 # tokio_test::block_on(async {
 let env_map: HashMap<String, String> = std::env::vars().collect();
