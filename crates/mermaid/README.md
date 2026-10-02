@@ -57,7 +57,7 @@ and 4 fragment levels. Source labels and identifiers are limited to 40 display
 cells/ASCII bytes respectively. Rendered canvases are capped at 65,536 cells,
 independent of the caller's maximum width. The library performs no I/O.
 
-From `codex-rs`, preview a file, optionally specifying the available width:
+From the repository, preview a file, optionally specifying the available width:
 
 ```sh
 cargo run -p genex-mermaid --example render -- 180 < diagram.mmd
