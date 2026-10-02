@@ -32,7 +32,7 @@ fn retryability_preserves_error_details_distinctions() {
     let errors = [
         (GenexErr::ServerOverloaded, false),
         (
-            GenexErr::new(CodexErrorDetails::RateLimitExceeded("retry later".into())),
+            GenexErr::new(GenexErrorDetails::RateLimitExceeded("retry later".into())),
             true,
         ),
         (
@@ -54,7 +54,7 @@ fn retryability_preserves_error_details_distinctions() {
             true,
         ),
         (
-            CodexErrorDetails::ToolCollision("functions.update_plan".to_string()).into(),
+            GenexErrorDetails::ToolCollision("functions.update_plan".to_string()).into(),
             false,
         ),
         (GenexErr::InternalServerError, true),

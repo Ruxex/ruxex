@@ -9,7 +9,7 @@ use crate::session::turn_context::TurnContext;
 use crate::state::TaskKind;
 use genex_features::Feature;
 use genex_model_provider::RemoteCompactionSupport;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::user_input::UserInput;
 use tokio_util::sync::CancellationToken;
 
@@ -66,7 +66,7 @@ impl SessionTask for CompactTask {
             }
         };
         if let Err(err) = result
-            && matches!(err.details(), CodexErrorDetails::TurnAborted)
+            && matches!(err.details(), GenexErrorDetails::TurnAborted)
         {
             return Err(err);
         }

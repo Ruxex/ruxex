@@ -7,7 +7,7 @@ use genex_core::exec_env::create_env;
 use genex_core::sandboxing::SandboxPermissions;
 use genex_protocol::config_types::ShellEnvironmentPolicy;
 use genex_protocol::config_types::WindowsSandboxLevel;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::error::Result;
 use genex_protocol::error::SandboxErr;
 use genex_protocol::models::PermissionProfile;
@@ -228,12 +228,12 @@ async fn should_skip_bwrap_tests() -> bool {
     {
         Ok(output) => is_bwrap_unavailable_output(&output),
         Err(err) => match err.details() {
-            CodexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
+            GenexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
                 is_bwrap_unavailable_output(output)
             }
             // Probe timeouts are not actionable for the bwrap-specific assertions below;
             // skip rather than fail the whole suite.
-            CodexErrorDetails::Sandbox(SandboxErr::Timeout { .. }) => true,
+            GenexErrorDetails::Sandbox(SandboxErr::Timeout { .. }) => true,
             details => panic!("bwrap availability probe failed unexpectedly: {details:?}"),
         },
     }
@@ -249,7 +249,7 @@ fn expect_denied(
             output
         }
         Err(err) => match err.details() {
-            CodexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
+            GenexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
                 output.as_ref().clone()
             }
             details => panic!("{context}: {details:?}"),
@@ -847,7 +847,7 @@ async fn assert_network_blocked(cmd: &[&str]) {
     let output = match result {
         Ok(output) => output,
         Err(err) => match err.details() {
-            CodexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
+            GenexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
                 output.as_ref().clone()
             }
             details => panic!("expected sandbox denied error, got: {details:?}"),
@@ -1005,7 +1005,7 @@ async fn sandbox_reports_codex_symlink_build_failure_without_panicking() {
     .await
     {
         Err(err) => match err.details() {
-            CodexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
+            GenexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
                 output.as_ref().clone()
             }
             details => panic!(".codex symlink build failure should deny: {details:?}"),

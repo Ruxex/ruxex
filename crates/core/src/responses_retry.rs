@@ -9,7 +9,7 @@ use crate::util::backoff;
 use genex_client::RetryOperation;
 use genex_features::Feature;
 use genex_protocol::error::GenexErr;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::WarningEvent;
 use tracing::warn;
@@ -60,7 +60,7 @@ pub(crate) async fn handle_retryable_response_stream_error(
         .features
         .enabled(Feature::UnboundedConnectionRetries)
         && matches!(request, ResponsesStreamRequest::Sampling)
-        && matches!(err.details(), CodexErrorDetails::ConnectionFailed(_))
+        && matches!(err.details(), GenexErrorDetails::ConnectionFailed(_))
         && !turn_context.session_source.is_internal()
         && !turn_context.provider.info().is_amazon_bedrock()
     {

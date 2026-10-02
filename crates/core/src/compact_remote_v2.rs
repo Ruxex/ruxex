@@ -36,7 +36,7 @@ use genex_features::Feature;
 use genex_history::CodexHarnessMetadata;
 use genex_history::ResponseItemEnvelope;
 use genex_protocol::error::GenexErr;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::items::ContextCompactionItem;
 use genex_protocol::items::TurnItem;
@@ -166,7 +166,7 @@ async fn run_remote_compact_task_inner(
     }
     match result {
         Ok(()) => Ok(()),
-        Err(err) if matches!(err.details(), CodexErrorDetails::TurnAborted) => Err(err),
+        Err(err) if matches!(err.details(), GenexErrorDetails::TurnAborted) => Err(err),
         Err(err) => {
             // Pre-turn failures are reported by run_turn after preserving the incoming prompt.
             if !matches!(phase, CompactionPhase::PreTurn) {

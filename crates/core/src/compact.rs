@@ -30,7 +30,7 @@ use genex_history::CodexHarnessMetadata;
 use genex_history::ResponseItemEnvelope;
 use genex_protocol::ResponseItemId;
 use genex_protocol::error::GenexErr;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::items::ContextCompactionItem;
 use genex_protocol::items::TurnItem;
@@ -249,12 +249,12 @@ async fn run_compact_task_inner_impl(
             Err(err)
                 if matches!(
                     err.details(),
-                    CodexErrorDetails::Interrupted | CodexErrorDetails::TurnAborted
+                    GenexErrorDetails::Interrupted | GenexErrorDetails::TurnAborted
                 ) =>
             {
                 return Err(err);
             }
-            Err(e) if matches!(e.details(), CodexErrorDetails::SessionBudgetExceeded) => {
+            Err(e) if matches!(e.details(), GenexErrorDetails::SessionBudgetExceeded) => {
                 // Pre-turn failures are reported after preserving the incoming prompt.
                 if !matches!(compaction_metadata.phase(), CompactionPhase::PreTurn) {
                     let event = EventMsg::Error(e.to_error_event(/*message_prefix*/ None));
@@ -262,7 +262,7 @@ async fn run_compact_task_inner_impl(
                 }
                 return Err(e);
             }
-            Err(e) if matches!(e.details(), CodexErrorDetails::ContextWindowExceeded) => {
+            Err(e) if matches!(e.details(), GenexErrorDetails::ContextWindowExceeded) => {
                 if turn_input_len > 1 {
                     // Trim from the beginning to preserve cache (prefix-based) and keep recent messages intact.
                     error!(

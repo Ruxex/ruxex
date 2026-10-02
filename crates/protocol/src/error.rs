@@ -61,7 +61,7 @@ pub enum SandboxErr {
 }
 
 pub struct GenexErr {
-    details: CodexErrorDetails,
+    details: GenexErrorDetails,
     retry_delay: Option<Duration>,
 }
 
@@ -71,7 +71,7 @@ pub struct GenexErr {
 #[strum_discriminants(derive(serde::Serialize))]
 #[strum_discriminants(serde(rename_all = "snake_case"))]
 #[strum_discriminants(doc = "The payload-free semantic category used for analytics.")]
-pub enum CodexErrorDetails {
+pub enum GenexErrorDetails {
     #[error("turn aborted. Something went wrong.")]
     TurnAborted,
 
@@ -185,7 +185,7 @@ impl From<&GenexErr> for GenexErrKind {
 impl fmt::Debug for GenexErr {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.details {
-            CodexErrorDetails::Stream(message) => formatter
+            GenexErrorDetails::Stream(message) => formatter
                 .debug_tuple("Stream")
                 .field(message)
                 .field(&self.retry_delay)
@@ -207,8 +207,8 @@ impl std::error::Error for GenexErr {
     }
 }
 
-impl From<CodexErrorDetails> for GenexErr {
-    fn from(details: CodexErrorDetails) -> Self {
+impl From<GenexErrorDetails> for GenexErr {
+    fn from(details: GenexErrorDetails) -> Self {
         Self {
             details,
             retry_delay: None,
@@ -218,63 +218,63 @@ impl From<CodexErrorDetails> for GenexErr {
 
 impl From<CancelErr> for GenexErr {
     fn from(error: CancelErr) -> Self {
-        CodexErrorDetails::from(error).into()
+        GenexErrorDetails::from(error).into()
     }
 }
 
 impl From<SandboxErr> for GenexErr {
     fn from(error: SandboxErr) -> Self {
-        CodexErrorDetails::from(error).into()
+        GenexErrorDetails::from(error).into()
     }
 }
 
 impl From<io::Error> for GenexErr {
     fn from(error: io::Error) -> Self {
-        CodexErrorDetails::from(error).into()
+        GenexErrorDetails::from(error).into()
     }
 }
 
 impl From<serde_json::Error> for GenexErr {
     fn from(error: serde_json::Error) -> Self {
-        CodexErrorDetails::from(error).into()
+        GenexErrorDetails::from(error).into()
     }
 }
 
 impl From<JoinError> for GenexErr {
     fn from(error: JoinError) -> Self {
-        CodexErrorDetails::from(error).into()
+        GenexErrorDetails::from(error).into()
     }
 }
 
 #[cfg(target_os = "linux")]
 impl From<landlock::RulesetError> for GenexErr {
     fn from(error: landlock::RulesetError) -> Self {
-        CodexErrorDetails::from(error).into()
+        GenexErrorDetails::from(error).into()
     }
 }
 
 #[cfg(target_os = "linux")]
 impl From<landlock::PathFdError> for GenexErr {
     fn from(error: landlock::PathFdError) -> Self {
-        CodexErrorDetails::from(error).into()
+        GenexErrorDetails::from(error).into()
     }
 }
 
-impl From<CancelErr> for CodexErrorDetails {
+impl From<CancelErr> for GenexErrorDetails {
     fn from(_: CancelErr) -> Self {
-        CodexErrorDetails::TurnAborted
+        GenexErrorDetails::TurnAborted
     }
 }
 
 // TODO(anp): Remove this compatibility macro once callers construct
-// `CodexErrorDetails` directly.
+// `GenexErrorDetails` directly.
 macro_rules! genex_err_unit_constructors {
     ($($variant:ident),* $(,)?) => {
         $(
             #[doc(hidden)]
             #[allow(non_upper_case_globals)]
             pub const $variant: Self = Self {
-                details: CodexErrorDetails::$variant,
+                details: GenexErrorDetails::$variant,
                 retry_delay: None,
             };
         )*
@@ -282,7 +282,7 @@ macro_rules! genex_err_unit_constructors {
 }
 
 // TODO(anp): Remove this compatibility macro once callers construct
-// `CodexErrorDetails` directly.
+// `GenexErrorDetails` directly.
 macro_rules! genex_err_tuple_constructors {
     ($($(#[$attr:meta])* $variant:ident($value:ident: $value_type:ty)),* $(,)?) => {
         $(
@@ -290,7 +290,7 @@ macro_rules! genex_err_tuple_constructors {
             #[doc(hidden)]
             #[allow(non_snake_case)]
             pub fn $variant($value: $value_type) -> Self {
-                CodexErrorDetails::$variant($value).into()
+                GenexErrorDetails::$variant($value).into()
             }
         )*
     };
@@ -336,61 +336,61 @@ impl GenexErr {
     );
 
     // TODO(anp): Remove this compatibility constructor once callers construct
-    // `CodexErrorDetails` directly.
+    // `GenexErrorDetails` directly.
     #[doc(hidden)]
     #[allow(non_snake_case)]
     pub fn InvalidImageRequest() -> Self {
-        CodexErrorDetails::InvalidImageRequest().into()
+        GenexErrorDetails::InvalidImageRequest().into()
     }
 
     /// Creates an error with no server-provided retry delay.
-    pub fn new(details: CodexErrorDetails) -> Self {
+    pub fn new(details: GenexErrorDetails) -> Self {
         details.into()
     }
 
     /// Returns the semantic failure and its diagnostic payload.
-    pub fn details(&self) -> &CodexErrorDetails {
+    pub fn details(&self) -> &GenexErrorDetails {
         &self.details
     }
 
     pub fn is_retryable(&self) -> bool {
         match self.details() {
-            CodexErrorDetails::TurnAborted
-            | CodexErrorDetails::SessionBudgetExceeded
-            | CodexErrorDetails::Interrupted
-            | CodexErrorDetails::EnvVar(_)
-            | CodexErrorDetails::Fatal(_)
-            | CodexErrorDetails::QuotaExceeded
-            | CodexErrorDetails::InvalidImageRequest()
-            | CodexErrorDetails::InvalidRequest(_)
-            | CodexErrorDetails::ToolCollision(_)
-            | CodexErrorDetails::RefreshTokenFailed(_)
-            | CodexErrorDetails::UnsupportedOperation(_)
-            | CodexErrorDetails::Sandbox(_)
-            | CodexErrorDetails::LandlockSandboxExecutableNotProvided
-            | CodexErrorDetails::RetryLimit(_)
-            | CodexErrorDetails::ContextWindowExceeded
-            | CodexErrorDetails::ThreadNotFound(_)
-            | CodexErrorDetails::AgentLimitReached { .. }
-            | CodexErrorDetails::Spawn
-            | CodexErrorDetails::SessionConfiguredNotFirstEvent
-            | CodexErrorDetails::ServerOverloaded
-            | CodexErrorDetails::CyberPolicy { .. }
-            | CodexErrorDetails::MisalignmentPolicyViolation { .. } => false,
-            CodexErrorDetails::Stream(..)
-            | CodexErrorDetails::RateLimitExceeded(_)
-            | CodexErrorDetails::Timeout
-            | CodexErrorDetails::RequestTimeout
-            | CodexErrorDetails::UnexpectedStatus(_)
-            | CodexErrorDetails::ResponseStreamFailed(_)
-            | CodexErrorDetails::ConnectionFailed(_)
-            | CodexErrorDetails::InternalServerError
-            | CodexErrorDetails::InternalAgentDied
-            | CodexErrorDetails::Io(_)
-            | CodexErrorDetails::Json(_)
-            | CodexErrorDetails::TokioJoin(_) => true,
+            GenexErrorDetails::TurnAborted
+            | GenexErrorDetails::SessionBudgetExceeded
+            | GenexErrorDetails::Interrupted
+            | GenexErrorDetails::EnvVar(_)
+            | GenexErrorDetails::Fatal(_)
+            | GenexErrorDetails::QuotaExceeded
+            | GenexErrorDetails::InvalidImageRequest()
+            | GenexErrorDetails::InvalidRequest(_)
+            | GenexErrorDetails::ToolCollision(_)
+            | GenexErrorDetails::RefreshTokenFailed(_)
+            | GenexErrorDetails::UnsupportedOperation(_)
+            | GenexErrorDetails::Sandbox(_)
+            | GenexErrorDetails::LandlockSandboxExecutableNotProvided
+            | GenexErrorDetails::RetryLimit(_)
+            | GenexErrorDetails::ContextWindowExceeded
+            | GenexErrorDetails::ThreadNotFound(_)
+            | GenexErrorDetails::AgentLimitReached { .. }
+            | GenexErrorDetails::Spawn
+            | GenexErrorDetails::SessionConfiguredNotFirstEvent
+            | GenexErrorDetails::ServerOverloaded
+            | GenexErrorDetails::CyberPolicy { .. }
+            | GenexErrorDetails::MisalignmentPolicyViolation { .. } => false,
+            GenexErrorDetails::Stream(..)
+            | GenexErrorDetails::RateLimitExceeded(_)
+            | GenexErrorDetails::Timeout
+            | GenexErrorDetails::RequestTimeout
+            | GenexErrorDetails::UnexpectedStatus(_)
+            | GenexErrorDetails::ResponseStreamFailed(_)
+            | GenexErrorDetails::ConnectionFailed(_)
+            | GenexErrorDetails::InternalServerError
+            | GenexErrorDetails::InternalAgentDied
+            | GenexErrorDetails::Io(_)
+            | GenexErrorDetails::Json(_)
+            | GenexErrorDetails::TokioJoin(_) => true,
             #[cfg(target_os = "linux")]
-            CodexErrorDetails::LandlockRuleset(_) | CodexErrorDetails::LandlockPathFd(_) => false,
+            GenexErrorDetails::LandlockRuleset(_) | GenexErrorDetails::LandlockPathFd(_) => false,
         }
     }
 
@@ -406,34 +406,34 @@ impl GenexErr {
     /// Translate core error to client-facing protocol error.
     pub fn to_codex_protocol_error(&self) -> CodexErrorInfo {
         match &self.details {
-            CodexErrorDetails::ContextWindowExceeded => CodexErrorInfo::ContextWindowExceeded,
-            CodexErrorDetails::SessionBudgetExceeded => CodexErrorInfo::SessionBudgetExceeded,
-            CodexErrorDetails::RateLimitExceeded(_) => CodexErrorInfo::RateLimitExceeded,
-            CodexErrorDetails::QuotaExceeded => CodexErrorInfo::UsageLimitExceeded,
-            CodexErrorDetails::ServerOverloaded => CodexErrorInfo::ServerOverloaded,
-            CodexErrorDetails::CyberPolicy { .. } => CodexErrorInfo::CyberPolicy,
-            CodexErrorDetails::MisalignmentPolicyViolation { .. } => {
+            GenexErrorDetails::ContextWindowExceeded => CodexErrorInfo::ContextWindowExceeded,
+            GenexErrorDetails::SessionBudgetExceeded => CodexErrorInfo::SessionBudgetExceeded,
+            GenexErrorDetails::RateLimitExceeded(_) => CodexErrorInfo::RateLimitExceeded,
+            GenexErrorDetails::QuotaExceeded => CodexErrorInfo::UsageLimitExceeded,
+            GenexErrorDetails::ServerOverloaded => CodexErrorInfo::ServerOverloaded,
+            GenexErrorDetails::CyberPolicy { .. } => CodexErrorInfo::CyberPolicy,
+            GenexErrorDetails::MisalignmentPolicyViolation { .. } => {
                 CodexErrorInfo::MisalignmentPolicyViolation
             }
-            CodexErrorDetails::RetryLimit(_) => CodexErrorInfo::ResponseTooManyFailedAttempts {
+            GenexErrorDetails::RetryLimit(_) => CodexErrorInfo::ResponseTooManyFailedAttempts {
                 http_status_code: self.http_status_code_value(),
             },
-            CodexErrorDetails::ConnectionFailed(_) => CodexErrorInfo::HttpConnectionFailed {
+            GenexErrorDetails::ConnectionFailed(_) => CodexErrorInfo::HttpConnectionFailed {
                 http_status_code: self.http_status_code_value(),
             },
-            CodexErrorDetails::ResponseStreamFailed(_) => {
+            GenexErrorDetails::ResponseStreamFailed(_) => {
                 CodexErrorInfo::ResponseStreamConnectionFailed {
                     http_status_code: self.http_status_code_value(),
                 }
             }
-            CodexErrorDetails::RefreshTokenFailed(_) => CodexErrorInfo::Unauthorized,
-            CodexErrorDetails::SessionConfiguredNotFirstEvent
-            | CodexErrorDetails::InternalServerError
-            | CodexErrorDetails::InternalAgentDied => CodexErrorInfo::InternalServerError,
-            CodexErrorDetails::UnsupportedOperation(_)
-            | CodexErrorDetails::ThreadNotFound(_)
-            | CodexErrorDetails::AgentLimitReached { .. } => CodexErrorInfo::BadRequest,
-            CodexErrorDetails::Sandbox(_) => CodexErrorInfo::SandboxError,
+            GenexErrorDetails::RefreshTokenFailed(_) => CodexErrorInfo::Unauthorized,
+            GenexErrorDetails::SessionConfiguredNotFirstEvent
+            | GenexErrorDetails::InternalServerError
+            | GenexErrorDetails::InternalAgentDied => CodexErrorInfo::InternalServerError,
+            GenexErrorDetails::UnsupportedOperation(_)
+            | GenexErrorDetails::ThreadNotFound(_)
+            | GenexErrorDetails::AgentLimitReached { .. } => CodexErrorInfo::BadRequest,
+            GenexErrorDetails::Sandbox(_) => CodexErrorInfo::SandboxError,
             _ => CodexErrorInfo::Other,
         }
     }
@@ -448,7 +448,7 @@ impl GenexErr {
             message,
             codex_error_info: Some(self.to_codex_protocol_error()),
             misalignment: match &self.details {
-                CodexErrorDetails::MisalignmentPolicyViolation { misalignment, .. } => {
+                GenexErrorDetails::MisalignmentPolicyViolation { misalignment, .. } => {
                     misalignment.clone()
                 }
                 _ => None,
@@ -458,10 +458,10 @@ impl GenexErr {
 
     pub fn http_status_code_value(&self) -> Option<u16> {
         let http_status_code = match &self.details {
-            CodexErrorDetails::RetryLimit(err) => Some(err.status),
-            CodexErrorDetails::UnexpectedStatus(err) => Some(err.status),
-            CodexErrorDetails::ConnectionFailed(err) => err.source.status(),
-            CodexErrorDetails::ResponseStreamFailed(err) => err.source.status(),
+            GenexErrorDetails::RetryLimit(err) => Some(err.status),
+            GenexErrorDetails::UnexpectedStatus(err) => Some(err.status),
+            GenexErrorDetails::ConnectionFailed(err) => err.source.status(),
+            GenexErrorDetails::ResponseStreamFailed(err) => err.source.status(),
             _ => None,
         };
         http_status_code.as_ref().map(StatusCode::as_u16)
@@ -626,7 +626,7 @@ impl std::fmt::Display for EnvVarError {
 
 pub fn get_error_message_ui(e: &GenexErr) -> String {
     let message = match e.details() {
-        CodexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
+        GenexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
             let aggregated = output.aggregated_output.text.trim();
             if !aggregated.is_empty() {
                 output.aggregated_output.text.clone()
@@ -645,7 +645,7 @@ pub fn get_error_message_ui(e: &GenexErr) -> String {
             }
         }
         // Timeouts are not sandbox errors from a UX perspective; present them plainly.
-        CodexErrorDetails::Sandbox(SandboxErr::Timeout { output }) => {
+        GenexErrorDetails::Sandbox(SandboxErr::Timeout { output }) => {
             format!(
                 "error: command timed out after {} ms",
                 output.duration.as_millis()

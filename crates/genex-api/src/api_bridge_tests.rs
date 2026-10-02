@@ -5,7 +5,7 @@ use pretty_assertions::assert_eq;
 #[test]
 fn map_api_error_maps_server_overloaded() {
     let err = map_api_error(ApiError::ServerOverloaded);
-    assert!(matches!(err.details(), CodexErrorDetails::ServerOverloaded));
+    assert!(matches!(err.details(), GenexErrorDetails::ServerOverloaded));
 }
 
 #[test]
@@ -88,8 +88,8 @@ fn map_api_error_maps_cloudflare_blocked_response_to_user_message() {
         ),
     }));
 
-    let CodexErrorDetails::UnexpectedStatus(err) = err.details() else {
-        panic!("expected CodexErrorDetails::UnexpectedStatus, got {err:?}");
+    let GenexErrorDetails::UnexpectedStatus(err) = err.details() else {
+        panic!("expected GenexErrorDetails::UnexpectedStatus, got {err:?}");
     };
     assert_eq!(
         err.user_message.as_deref(),
@@ -121,8 +121,8 @@ fn map_api_error_maps_cyber_policy_from_400_body() {
         body: Some(body),
     }));
 
-    let CodexErrorDetails::CyberPolicy { message } = err.details() else {
-        panic!("expected CodexErrorDetails::CyberPolicy, got {err:?}");
+    let GenexErrorDetails::CyberPolicy { message } = err.details() else {
+        panic!("expected GenexErrorDetails::CyberPolicy, got {err:?}");
     };
     assert_eq!(
         message,
@@ -149,8 +149,8 @@ fn map_api_error_maps_wrapped_websocket_cyber_policy_from_400_body() {
         body: Some(body),
     }));
 
-    let CodexErrorDetails::CyberPolicy { message } = err.details() else {
-        panic!("expected CodexErrorDetails::CyberPolicy, got {err:?}");
+    let GenexErrorDetails::CyberPolicy { message } = err.details() else {
+        panic!("expected GenexErrorDetails::CyberPolicy, got {err:?}");
     };
     assert_eq!(message, "This websocket request was flagged.");
 }
@@ -170,8 +170,8 @@ fn map_api_error_uses_cyber_policy_fallback_for_missing_message() {
         body: Some(body),
     }));
 
-    let CodexErrorDetails::CyberPolicy { message } = err.details() else {
-        panic!("expected CodexErrorDetails::CyberPolicy, got {err:?}");
+    let GenexErrorDetails::CyberPolicy { message } = err.details() else {
+        panic!("expected GenexErrorDetails::CyberPolicy, got {err:?}");
     };
     assert_eq!(
         message,
@@ -205,12 +205,12 @@ fn assert_misalignment_policy_violation_from_http_body(status: http::StatusCode)
         body: Some(body),
     }));
 
-    let CodexErrorDetails::MisalignmentPolicyViolation {
+    let GenexErrorDetails::MisalignmentPolicyViolation {
         message,
         misalignment,
     } = err.details()
     else {
-        panic!("expected CodexErrorDetails::MisalignmentPolicyViolation, got {err:?}");
+        panic!("expected GenexErrorDetails::MisalignmentPolicyViolation, got {err:?}");
     };
     assert_eq!(message, "This request violated the misalignment policy.");
     assert_eq!(misalignment, &None);
@@ -238,12 +238,12 @@ fn map_api_error_preserves_misalignment_details_from_403_body() {
         body: Some(body),
     }));
 
-    let CodexErrorDetails::MisalignmentPolicyViolation {
+    let GenexErrorDetails::MisalignmentPolicyViolation {
         message,
         misalignment,
     } = err.details()
     else {
-        panic!("expected CodexErrorDetails::MisalignmentPolicyViolation, got {err:?}");
+        panic!("expected GenexErrorDetails::MisalignmentPolicyViolation, got {err:?}");
     };
     assert_eq!(message, "This request violated the misalignment policy.");
     assert_eq!(
@@ -282,12 +282,12 @@ fn map_api_error_preserves_misalignment_details_from_wrapped_websocket_error() {
         body: Some(body),
     }));
 
-    let CodexErrorDetails::MisalignmentPolicyViolation {
+    let GenexErrorDetails::MisalignmentPolicyViolation {
         message,
         misalignment,
     } = err.details()
     else {
-        panic!("expected CodexErrorDetails::MisalignmentPolicyViolation, got {err:?}");
+        panic!("expected GenexErrorDetails::MisalignmentPolicyViolation, got {err:?}");
     };
     assert_eq!(
         message,
@@ -322,8 +322,8 @@ fn map_api_error_keeps_unknown_400_errors_generic() {
         body: Some(body.clone()),
     }));
 
-    let CodexErrorDetails::InvalidRequest(message) = err.details() else {
-        panic!("expected CodexErrorDetails::InvalidRequest, got {err:?}");
+    let GenexErrorDetails::InvalidRequest(message) = err.details() else {
+        panic!("expected GenexErrorDetails::InvalidRequest, got {err:?}");
     };
     assert_eq!(message, &body);
 }
@@ -369,8 +369,8 @@ fn map_api_error_preserves_generic_response_diagnostics() {
         body: Some(r#"{"detail":"Unauthorized"}"#.to_string()),
     }));
 
-    let CodexErrorDetails::UnexpectedStatus(err) = err.details() else {
-        panic!("expected CodexErrorDetails::UnexpectedStatus, got {err:?}");
+    let GenexErrorDetails::UnexpectedStatus(err) = err.details() else {
+        panic!("expected GenexErrorDetails::UnexpectedStatus, got {err:?}");
     };
     assert_eq!(err.request_id.as_deref(), Some("req-401"));
     assert_eq!(err.cf_ray.as_deref(), Some("ray-401"));

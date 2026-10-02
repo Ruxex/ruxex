@@ -1,7 +1,7 @@
 use crate::TransportError;
 use crate::error::ApiError;
 use genex_protocol::error::GenexErr;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::error::ConnectionFailedError;
 use genex_protocol::error::RetryLimitReachedError;
 use genex_protocol::error::UnexpectedResponseError;
@@ -21,7 +21,7 @@ pub fn map_api_error(err: ApiError) -> GenexErr {
             }
         }
         ApiError::RateLimitExceeded { message, delay } => {
-            let error = GenexErr::new(CodexErrorDetails::RateLimitExceeded(message));
+            let error = GenexErr::new(GenexErrorDetails::RateLimitExceeded(message));
             match delay {
                 Some(delay) => error.with_retry_delay(delay),
                 None => error,
@@ -42,12 +42,12 @@ pub fn map_api_error(err: ApiError) -> GenexErr {
         }
         ApiError::InvalidRequest { message } => GenexErr::InvalidRequest(message),
         ApiError::CyberPolicy { message } => {
-            GenexErr::new(CodexErrorDetails::CyberPolicy { message })
+            GenexErr::new(GenexErrorDetails::CyberPolicy { message })
         }
         ApiError::MisalignmentPolicyViolation {
             message,
             misalignment,
-        } => GenexErr::new(CodexErrorDetails::MisalignmentPolicyViolation {
+        } => GenexErr::new(GenexErrorDetails::MisalignmentPolicyViolation {
             message,
             misalignment,
         }),
@@ -67,7 +67,7 @@ pub fn map_api_error(err: ApiError) -> GenexErr {
                     match error.get("code").and_then(Value::as_str) {
                         Some("server_is_overloaded") => return GenexErr::ServerOverloaded,
                         Some("slow_down") => {
-                            return GenexErr::new(CodexErrorDetails::RateLimitExceeded(
+                            return GenexErr::new(GenexErrorDetails::RateLimitExceeded(
                                 error
                                     .get("message")
                                     .and_then(Value::as_str)
@@ -94,7 +94,7 @@ pub fn map_api_error(err: ApiError) -> GenexErr {
                         .unwrap_or_else(|| {
                             MISALIGNMENT_POLICY_VIOLATION_FALLBACK_MESSAGE.to_string()
                         });
-                    return GenexErr::new(CodexErrorDetails::MisalignmentPolicyViolation {
+                    return GenexErr::new(GenexErrorDetails::MisalignmentPolicyViolation {
                         message,
                         misalignment: error.get("misalignment").cloned().and_then(|details| {
                             serde_json::from_value::<MisalignmentErrorDetails>(details).ok()
@@ -114,7 +114,7 @@ pub fn map_api_error(err: ApiError) -> GenexErr {
                             .filter(|message| !message.trim().is_empty())
                             .map(str::to_string)
                             .unwrap_or_else(|| CYBER_POLICY_FALLBACK_MESSAGE.to_string());
-                        GenexErr::new(CodexErrorDetails::CyberPolicy { message })
+                        GenexErr::new(GenexErrorDetails::CyberPolicy { message })
                     } else if body_text
                         .contains("The image data you provided does not represent a valid image")
                     {
@@ -149,7 +149,7 @@ pub fn map_api_error(err: ApiError) -> GenexErr {
                             .filter(|message| !message.trim().is_empty())
                             .unwrap_or("Rate limit exceeded")
                             .to_owned();
-                        return GenexErr::new(CodexErrorDetails::RateLimitExceeded(message));
+                        return GenexErr::new(GenexErrorDetails::RateLimitExceeded(message));
                     }
 
                     GenexErr::RetryLimit(RetryLimitReachedError {

@@ -54,7 +54,7 @@ use genex_protocol::protocol::WarningEvent;
 use genex_thread_store::PersistContext;
 
 use genex_features::Feature;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::error::Result as GenexResult;
 pub(crate) use compact::CompactTask;
 pub(crate) use regular::RegularTask;
@@ -570,7 +570,7 @@ impl Session {
     ) {
         let (last_agent_message, abort_reason) = match task_result {
             Ok(last_agent_message) => (last_agent_message, None),
-            Err(err) if matches!(err.details(), CodexErrorDetails::TurnAborted) => {
+            Err(err) if matches!(err.details(), GenexErrorDetails::TurnAborted) => {
                 (None, Some(TurnAbortReason::Interrupted))
             }
             Err(err) => {

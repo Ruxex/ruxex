@@ -195,7 +195,7 @@ mod tests {
     use genex_model_provider_info::WireApi;
     use genex_model_provider_info::create_responses_provider_with_base_url;
     use genex_protocol::config_types::ModelProviderAuthInfo;
-    use genex_protocol::error::CodexErrorDetails;
+    use genex_protocol::error::GenexErrorDetails;
     use http::HeaderValue;
     use http::header::AUTHORIZATION;
     use pretty_assertions::assert_eq;
@@ -342,7 +342,7 @@ mod tests {
 
         match resolve_provider_auth(Some(&auth), &provider) {
             Err(err) => match err.details() {
-                CodexErrorDetails::UnsupportedOperation(message) => {
+                GenexErrorDetails::UnsupportedOperation(message) => {
                     assert_eq!(message, BEDROCK_API_KEY_UNSUPPORTED_MESSAGE);
                 }
                 details => panic!("unexpected auth error: {details:?}"),

@@ -1,5 +1,5 @@
 use super::*;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_thread_store::PersistContext;
 
 impl AgentControl {
@@ -63,7 +63,7 @@ impl AgentControl {
                 }
             }
             Err(err)
-                if known_agent && matches!(err.details(), CodexErrorDetails::ThreadNotFound(_)) =>
+                if known_agent && matches!(err.details(), GenexErrorDetails::ThreadNotFound(_)) =>
             {
                 if let Some(agent_graph_store) = state.agent_graph_store()
                     && let Err(err) = agent_graph_store
@@ -78,7 +78,7 @@ impl AgentControl {
                     )));
                 }
             }
-            Err(err) if matches!(err.details(), CodexErrorDetails::ThreadNotFound(_)) => {}
+            Err(err) if matches!(err.details(), GenexErrorDetails::ThreadNotFound(_)) => {}
             Err(err) => {
                 warn!("failed to inspect agent before close {agent_id}: {err}");
             }
@@ -88,7 +88,7 @@ impl AgentControl {
                 if known_agent
                     && matches!(
                         err.details(),
-                        CodexErrorDetails::ThreadNotFound(_) | CodexErrorDetails::InternalAgentDied
+                        GenexErrorDetails::ThreadNotFound(_) | GenexErrorDetails::InternalAgentDied
                     ) =>
             {
                 Ok(String::new())
@@ -107,7 +107,7 @@ impl AgentControl {
                 Err(err)
                     if matches!(
                         err.details(),
-                        CodexErrorDetails::ThreadNotFound(_) | CodexErrorDetails::InternalAgentDied
+                        GenexErrorDetails::ThreadNotFound(_) | GenexErrorDetails::InternalAgentDied
                     ) => {}
                 Err(err) => return Err(err),
             }

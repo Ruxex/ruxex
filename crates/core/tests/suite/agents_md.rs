@@ -17,7 +17,7 @@ use genex_history::RolloutItem;
 use genex_home::GenexHomeUserInstructionsProvider;
 use genex_protocol::ThreadId;
 use genex_protocol::config_types::TrustLevel;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::models::PermissionProfile;
 use genex_protocol::permissions::FileSystemAccessMode;
 use genex_protocol::permissions::FileSystemSandboxEntry;
@@ -1326,7 +1326,7 @@ async fn thread_provider_enforces_its_own_limit_before_startup_and_sampling() ->
         .ok_or_else(|| anyhow!("oversized instructions must fail before thread creation"))?;
     assert!(matches!(
         error.details(),
-        CodexErrorDetails::InvalidRequest(_)
+        GenexErrorDetails::InvalidRequest(_)
     ));
     assert!(error.to_string().contains("10000 estimated tokens"));
 

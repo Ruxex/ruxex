@@ -1,7 +1,7 @@
 use genex_protocol::AgentPath;
 use genex_protocol::ThreadId;
 use genex_protocol::error::GenexErr;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::error::Result;
 use genex_protocol::protocol::SessionSource;
 use genex_protocol::protocol::SubAgentSource;
@@ -99,7 +99,7 @@ impl AgentRegistry {
     ) -> Result<SpawnReservation> {
         if let Some(max_threads) = max_threads {
             if !self.try_increment_spawned(max_threads) {
-                return Err(GenexErr::new(CodexErrorDetails::AgentLimitReached {
+                return Err(GenexErr::new(GenexErrorDetails::AgentLimitReached {
                     max_threads,
                 }));
             }

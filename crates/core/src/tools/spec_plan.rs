@@ -69,7 +69,7 @@ use genex_protocol::DEFAULT_FUNCTION_NAMESPACE;
 use genex_protocol::config_types::WebSearchMode;
 use genex_protocol::dynamic_tools::DynamicToolNamespaceTool;
 use genex_protocol::dynamic_tools::DynamicToolSpec;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::model_types::ConfigShellToolType;
 use genex_protocol::model_types::ModelInfo;
@@ -400,7 +400,7 @@ pub(crate) fn finalize_tool_router(
         if let Some(tool_name) = registry.first_collision() {
             let namespace = tool_name.namespace.as_deref().unwrap_or("functions");
             let name = format!("{namespace}.{}", tool_name.name);
-            return Err(CodexErrorDetails::ToolCollision(name).into());
+            return Err(GenexErrorDetails::ToolCollision(name).into());
         }
 
         let mut namespace_descriptions = BTreeMap::new();
@@ -424,7 +424,7 @@ pub(crate) fn finalize_tool_router(
                 match namespace_owners.get(namespace_name) {
                     Some(existing_owner) if existing_owner != &owner => {
                         return Err(
-                            CodexErrorDetails::ToolCollision(namespace_name.to_string()).into()
+                            GenexErrorDetails::ToolCollision(namespace_name.to_string()).into()
                         );
                     }
                     Some(_) => {}
@@ -445,7 +445,7 @@ pub(crate) fn finalize_tool_router(
                     entry.insert(namespace.description.clone());
                 }
                 Entry::Occupied(entry) if entry.get() != &namespace.description => {
-                    return Err(CodexErrorDetails::ToolCollision(entry.key().clone()).into());
+                    return Err(GenexErrorDetails::ToolCollision(entry.key().clone()).into());
                 }
                 Entry::Occupied(_) => {}
             }

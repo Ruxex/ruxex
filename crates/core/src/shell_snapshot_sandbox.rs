@@ -10,7 +10,7 @@ use anyhow::anyhow;
 use anyhow::bail;
 use genex_network_proxy::NetworkProxy;
 use genex_protocol::config_types::WindowsSandboxLevel;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::error::SandboxErr;
 use genex_protocol::models::AdditionalPermissionProfile;
 use genex_protocol::models::FileSystemPermissions;
@@ -208,11 +208,11 @@ impl ShellSnapshotSandbox {
             .context("shell snapshot execution task failed")?
             .map_err(|err| match err.details() {
                 // Startup output can contain credentials, even when execution fails.
-                CodexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => anyhow!(
+                GenexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => anyhow!(
                     "Snapshot command was denied by sandbox with status {}",
                     output.exit_code
                 ),
-                CodexErrorDetails::Sandbox(SandboxErr::Timeout { .. }) => {
+                GenexErrorDetails::Sandbox(SandboxErr::Timeout { .. }) => {
                     anyhow!("Snapshot command timed out")
                 }
                 _ => anyhow::Error::new(err)

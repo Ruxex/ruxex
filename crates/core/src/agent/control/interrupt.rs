@@ -8,7 +8,7 @@ use crate::agent::AgentStatus;
 use genex_protocol::AgentPath;
 use genex_protocol::ThreadId;
 use genex_protocol::error::GenexErr;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 
 pub(crate) struct AgentInterruptOutcome {
     pub(crate) agent_path: AgentPath,
@@ -56,7 +56,7 @@ impl AgentControl {
             Err(err)
                 if matches!(
                     err.details(),
-                    CodexErrorDetails::ThreadNotFound(_) | CodexErrorDetails::InternalAgentDied
+                    GenexErrorDetails::ThreadNotFound(_) | GenexErrorDetails::InternalAgentDied
                 ) => {}
             Err(err) => return Err(AgentInterruptError::Agent(err)),
         }

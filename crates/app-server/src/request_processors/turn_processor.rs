@@ -4,7 +4,7 @@ use genex_agent_extension::AgentInvocation;
 use genex_agent_extension::AgentRun;
 use genex_agent_extension::AgentRunner;
 use genex_app_server_protocol::ImageReference as V2ImageReference;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::models::ContentItem;
 use genex_protocol::models::FunctionCallOutputBody;
 use genex_protocol::models::FunctionCallOutputContentItem;
@@ -854,7 +854,7 @@ impl TurnRequestProcessor {
             .inject_response_items(items)
             .await
             .map_err(|err| match err.details() {
-                CodexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
+                GenexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
                 _ => internal_error(format!("failed to inject response items: {err}")),
             })?;
         Ok(ThreadInjectItemsResponse {})

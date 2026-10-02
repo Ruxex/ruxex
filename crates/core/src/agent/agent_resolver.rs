@@ -2,7 +2,7 @@ use crate::function_tool::FunctionCallError;
 use crate::session::session::Session;
 use crate::session::turn_context::TurnContext;
 use genex_protocol::ThreadId;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use std::sync::Arc;
 
 /// Resolves a single tool-facing agent target to a thread id.
@@ -22,7 +22,7 @@ pub(crate) async fn resolve_agent_target(
         .resolve_agent_reference(session.thread_id, &turn.session_source, target)
         .await
         .map_err(|err| match err.details() {
-            CodexErrorDetails::UnsupportedOperation(message) => {
+            GenexErrorDetails::UnsupportedOperation(message) => {
                 FunctionCallError::RespondToModel(message.clone())
             }
             _ => FunctionCallError::RespondToModel(err.to_string()),

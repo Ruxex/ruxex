@@ -1255,7 +1255,7 @@ fn build_exec_request_projects_workspace_roots_only_for_windows_sandbox() -> Res
         let error = request.expect_err("native Windows sandbox must reject foreign roots");
         assert!(matches!(
             error.details(),
-            genex_protocol::error::CodexErrorDetails::InvalidRequest(message)
+            genex_protocol::error::GenexErrorDetails::InvalidRequest(message)
                 if message.starts_with("invalid Windows sandbox workspace roots:")
         ));
     } else {

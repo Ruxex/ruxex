@@ -2,20 +2,20 @@ use crate::responses_metadata::CompactionImplementation;
 use crate::responses_metadata::CompactionReason;
 use genex_otel::SessionTelemetry;
 use genex_protocol::error::GenexErr;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use tracing::warn;
 
 /// Retries failures that may be model-specific and succeed with a different model.
 pub(crate) fn should_retry_with_current_model(error: &GenexErr) -> bool {
     matches!(
         error.details(),
-        CodexErrorDetails::InvalidRequest(_)
-            | CodexErrorDetails::UnexpectedStatus(_)
-            | CodexErrorDetails::ContextWindowExceeded
-            | CodexErrorDetails::RateLimitExceeded(_)
-            | CodexErrorDetails::ServerOverloaded
-            | CodexErrorDetails::InternalServerError
-            | CodexErrorDetails::RetryLimit(_)
+        GenexErrorDetails::InvalidRequest(_)
+            | GenexErrorDetails::UnexpectedStatus(_)
+            | GenexErrorDetails::ContextWindowExceeded
+            | GenexErrorDetails::RateLimitExceeded(_)
+            | GenexErrorDetails::ServerOverloaded
+            | GenexErrorDetails::InternalServerError
+            | GenexErrorDetails::RetryLimit(_)
     )
 }
 

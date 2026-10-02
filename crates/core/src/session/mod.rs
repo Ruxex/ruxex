@@ -209,7 +209,7 @@ use genex_config::types::McpServerConfig;
 use genex_model_provider::create_model_provider;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::error::GenexErr;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::error::Result as GenexResult;
 #[cfg(test)]
 use genex_protocol::exec_output::StreamOutput;
@@ -964,7 +964,7 @@ impl SessionIo {
         let session_loop_termination = self.session_loop_termination.clone();
         match self.submit(Op::Shutdown).await {
             Ok(_) => {}
-            Err(err) if matches!(err.details(), CodexErrorDetails::InternalAgentDied) => {}
+            Err(err) if matches!(err.details(), GenexErrorDetails::InternalAgentDied) => {}
             Err(err) => return Err(err),
         }
         session_loop_termination.await;

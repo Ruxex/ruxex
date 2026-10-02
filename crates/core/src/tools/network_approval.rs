@@ -849,7 +849,7 @@ impl NetworkApprovalService {
             Err(ToolError::Codex(err)) => {
                 let telemetry_decision = if matches!(
                     err.details(),
-                    genex_protocol::error::CodexErrorDetails::TurnAborted
+                    genex_protocol::error::GenexErrorDetails::TurnAborted
                 ) {
                     ReviewDecision::Abort
                 } else {
@@ -858,7 +858,7 @@ impl NetworkApprovalService {
                 if let Some(owner_call) = owner_call.as_ref() {
                     let rejection = if matches!(
                         err.details(),
-                        genex_protocol::error::CodexErrorDetails::TurnAborted
+                        genex_protocol::error::GenexErrorDetails::TurnAborted
                     ) {
                         "rejected by user".to_string()
                     } else {

@@ -26,7 +26,7 @@ use crate::tools::sandboxing::default_exec_approval_requirement;
 use crate::tools::sandboxing::sandbox_override_for_first_attempt;
 use crate::tools::sandboxing::unsandboxed_execution_allowed;
 use genex_otel::ToolDecisionSource;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::error::SandboxErr;
 use genex_protocol::exec_output::ExecToolCallOutput;
 use genex_protocol::protocol::AskForApproval;
@@ -296,7 +296,7 @@ impl ToolOrchestrator {
                 })
             }
             Err(ToolError::Codex(err)) => {
-                let CodexErrorDetails::Sandbox(SandboxErr::Denied {
+                let GenexErrorDetails::Sandbox(SandboxErr::Denied {
                     output,
                     network_policy_decision,
                 }) = err.details()
@@ -508,9 +508,9 @@ impl ToolOrchestrator {
 fn sandbox_outcome_from_tool_error(err: &ToolError) -> Option<&'static str> {
     match err {
         ToolError::Codex(err) => match err.details() {
-            CodexErrorDetails::Sandbox(SandboxErr::Denied { .. }) => Some("denied"),
-            CodexErrorDetails::Sandbox(SandboxErr::Timeout { .. }) => Some("timed_out"),
-            CodexErrorDetails::Sandbox(SandboxErr::Signal(_)) => Some("signal"),
+            GenexErrorDetails::Sandbox(SandboxErr::Denied { .. }) => Some("denied"),
+            GenexErrorDetails::Sandbox(SandboxErr::Timeout { .. }) => Some("timed_out"),
+            GenexErrorDetails::Sandbox(SandboxErr::Signal(_)) => Some("signal"),
             _ => None,
         },
         ToolError::Rejected(_) => None,

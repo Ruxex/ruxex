@@ -1,7 +1,7 @@
 use genex_api::ApiError;
 use genex_api::TransportError;
 use genex_protocol::error::GenexErr;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use http::StatusCode;
 
 pub(super) const CREDENTIAL_EXPORT_CONFIG_ERROR_PREFIX: &str =
@@ -20,13 +20,13 @@ pub(super) fn map_api_error(error: ApiError) -> GenexErr {
         return GenexErr::InvalidRequest(message.clone());
     }
     let error = genex_api::map_api_error(error);
-    if let CodexErrorDetails::UnexpectedStatus(response) = error.details()
+    if let GenexErrorDetails::UnexpectedStatus(response) = error.details()
         && response.status == StatusCode::UNAUTHORIZED
         && response.body.contains("Signature expired:")
     {
         let mut response = response.clone();
         response.user_message = Some(BEDROCK_EXPIRED_SIGNATURE_MESSAGE.to_string());
-        let mapped_error = GenexErr::new(CodexErrorDetails::UnexpectedStatus(response));
+        let mapped_error = GenexErr::new(GenexErrorDetails::UnexpectedStatus(response));
         return match error.retry_delay() {
             Some(retry_delay) => mapped_error.with_retry_delay(retry_delay),
             None => mapped_error,

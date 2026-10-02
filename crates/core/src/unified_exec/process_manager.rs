@@ -76,7 +76,7 @@ use genex_network_proxy::NetworkPolicyDecider;
 use genex_network_proxy::NetworkProxy;
 use genex_protocol::config_types::ShellEnvironmentPolicy;
 use genex_protocol::error::GenexErr;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::error::SandboxErr;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::ExecCommandSource;
@@ -1522,7 +1522,7 @@ impl UnifiedExecProcessManager {
             .map(|result| (result.output, result.deferred_network_approval))
             .map_err(|err| match err {
                 ToolError::Codex(err) => match err.details() {
-                    CodexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
+                    GenexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
                         let output = output.as_ref().clone();
                         let message = if output.aggregated_output.text.is_empty() {
                             let exit_code = output.exit_code;

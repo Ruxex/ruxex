@@ -15,7 +15,7 @@ use genex_protocol::config_types::CollaborationMode;
 use genex_protocol::config_types::ModeKind;
 use genex_protocol::config_types::Settings;
 use genex_protocol::config_types::WindowsSandboxLevel;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::models::PermissionProfile;
 use genex_protocol::models::PermissionProfileSnapshot;
 use genex_protocol::protocol::AskForApproval;
@@ -735,7 +735,7 @@ async fn environment_command_restrictions_override_saved_prefix_approvals() -> R
         .expect_err("environment policies must not introduce command allowances");
     assert!(matches!(
         error.details(),
-        CodexErrorDetails::InvalidRequest(message)
+        GenexErrorDetails::InvalidRequest(message)
             if message == "environment command policy cannot contain allow rules"
     ));
 

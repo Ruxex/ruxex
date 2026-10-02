@@ -1,7 +1,7 @@
 use super::*;
 use genex_app_server_protocol::AuthRecoveryNotification;
 use genex_protocol::error::GenexErr;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use pretty_assertions::assert_eq;
 
 const SAFETY_BUFFERING_HEADER_TEXT: &str = "Giving this request a little extra thought";

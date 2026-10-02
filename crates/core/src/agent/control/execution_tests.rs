@@ -1,5 +1,5 @@
 use crate::agent::AgentControl;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::protocol::MultiAgentVersion;
 use genex_protocol::protocol::SessionSource;
 use genex_protocol::protocol::SubAgentSource;
@@ -29,7 +29,7 @@ fn execution_guards_count_active_v2_subagent_turns() {
     let Err(err) = control.ensure_execution_capacity(MultiAgentVersion::V2, &source) else {
         panic!("second active turn should exceed the derived non-root cap");
     };
-    let CodexErrorDetails::AgentLimitReached { max_threads } = err.details() else {
+    let GenexErrorDetails::AgentLimitReached { max_threads } = err.details() else {
         panic!("expected AgentLimitReached");
     };
     assert_eq!(*max_threads, 1);

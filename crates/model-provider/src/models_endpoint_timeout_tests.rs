@@ -1,6 +1,6 @@
 use super::*;
 use genex_http_client::OutboundProxyPolicy;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use wiremock::Mock;
 use wiremock::MockServer;
 use wiremock::ResponseTemplate;
@@ -34,7 +34,7 @@ async fn catalog_deadline_returns_request_timeout() {
         .expect_err("delayed catalog request should time out");
 
     assert!(
-        matches!(error.details(), CodexErrorDetails::RequestTimeout),
+        matches!(error.details(), GenexErrorDetails::RequestTimeout),
         "{error}"
     );
 }

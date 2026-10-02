@@ -25,7 +25,7 @@ use genex_extension_api::ExtensionDataInit;
 use genex_extension_api::ThreadIdleCause;
 use genex_protocol::SanitizedGitUrl;
 use genex_protocol::config_types::MultiAgentMode;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::mcp::ClientMcpExtensions;
 use genex_protocol::protocol::ThreadHistoryMode;
 use genex_thread_store::PersistContext;
@@ -1467,8 +1467,8 @@ impl ThreadRequestProcessor {
             Err(err) => {
                 remove_pending_thread_metadata(thread_store.as_ref(), reserved_thread_id).await;
                 return Err(match err.details() {
-                    CodexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
-                    CodexErrorDetails::UnsupportedOperation(message) => {
+                    GenexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
+                    GenexErrorDetails::UnsupportedOperation(message) => {
                         method_not_found(message.clone())
                     }
                     _ => internal_error(format!("error creating thread: {err}")),
@@ -1751,7 +1751,7 @@ impl ThreadRequestProcessor {
             .decrement_out_of_band_elicitation_count()
             .await
             .map_err(|err| match err.details() {
-                CodexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
+                GenexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
                 _ => internal_error(format!(
                     "failed to decrement out-of-band elicitation counter: {err}"
                 )),
@@ -4028,7 +4028,7 @@ impl ThreadRequestProcessor {
             }
             Err(err) => {
                 let error = match err.details() {
-                    CodexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
+                    GenexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
                     _ => internal_error(format!("error resuming thread: {err}")),
                 };
                 return Err(error);
@@ -4997,10 +4997,10 @@ impl ThreadRequestProcessor {
                 remove_pending_thread_metadata(self.thread_store.as_ref(), reserved_thread_id)
                     .await;
                 return Err(match err.details() {
-                    CodexErrorDetails::Io(_) | CodexErrorDetails::Json(_) => {
+                    GenexErrorDetails::Io(_) | GenexErrorDetails::Json(_) => {
                         invalid_request(format!("failed to load thread {source_thread_id}: {err}"))
                     }
-                    CodexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
+                    GenexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
                     _ => internal_error(format!("error forking thread: {err}")),
                 });
             }
@@ -5838,11 +5838,11 @@ fn conversation_summary_rollout_path_read_error(
 
 pub(super) fn core_thread_write_error(operation: &str, err: GenexErr) -> JSONRPCErrorError {
     match err.details() {
-        CodexErrorDetails::ThreadNotFound(thread_id) => {
+        GenexErrorDetails::ThreadNotFound(thread_id) => {
             invalid_request(format!("thread not found: {thread_id}"))
         }
-        CodexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
-        CodexErrorDetails::UnsupportedOperation(message) => method_not_found(message.clone()),
+        GenexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
+        GenexErrorDetails::UnsupportedOperation(message) => method_not_found(message.clone()),
         _ => internal_error(format!("failed to {operation}: {err}")),
     }
 }

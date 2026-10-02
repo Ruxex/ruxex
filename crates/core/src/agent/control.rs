@@ -32,7 +32,7 @@ use genex_protocol::AgentPath;
 use genex_protocol::SessionId;
 use genex_protocol::ThreadId;
 use genex_protocol::error::GenexErr;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::items::SubAgentActivityItem;
 use genex_protocol::items::TurnItem;
@@ -389,7 +389,7 @@ impl AgentControl {
     ) -> GenexResult<String> {
         if result
             .as_ref()
-            .is_err_and(|err| matches!(err.details(), CodexErrorDetails::InternalAgentDied))
+            .is_err_and(|err| matches!(err.details(), GenexErrorDetails::InternalAgentDied))
         {
             let _ = state.remove_thread(&agent_id).await;
             self.forget_v2_residency(agent_id);

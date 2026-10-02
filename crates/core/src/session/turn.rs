@@ -71,7 +71,7 @@ use genex_protocol::ResponseItemId;
 use genex_protocol::config_types::AutoCompactTokenLimitScope;
 use genex_protocol::config_types::ModeKind;
 use genex_protocol::error::GenexErr;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::items::PlanItem;
 use genex_protocol::items::TurnItem;
@@ -173,10 +173,10 @@ pub(crate) async fn run_turn(
             PersistContext::Standard,
         )
         .await;
-        if matches!(err.details(), CodexErrorDetails::TurnAborted) {
+        if matches!(err.details(), GenexErrorDetails::TurnAborted) {
             return Err(err);
         }
-        if matches!(err.details(), CodexErrorDetails::ToolCollision(_)) {
+        if matches!(err.details(), GenexErrorDetails::ToolCollision(_)) {
             return Err(err);
         }
         let error = err.to_codex_protocol_error();
@@ -240,7 +240,7 @@ pub(crate) async fn run_turn(
         .await
     {
         Ok(step_context) => step_context,
-        Err(err) if matches!(err.details(), CodexErrorDetails::TurnAborted) => {
+        Err(err) if matches!(err.details(), GenexErrorDetails::TurnAborted) => {
             run_hooks_and_record_inputs(
                 &sess,
                 &turn_context,
@@ -552,7 +552,7 @@ pub(crate) async fn run_turn(
                     )
                     .await
                     {
-                        if matches!(err.details(), CodexErrorDetails::TurnAborted) {
+                        if matches!(err.details(), GenexErrorDetails::TurnAborted) {
                             return Err(err);
                         }
                         let error = err.to_codex_protocol_error();
@@ -621,13 +621,13 @@ pub(crate) async fn run_turn(
                 }
                 continue;
             }
-            Err(err) if matches!(err.details(), CodexErrorDetails::TurnAborted) => {
+            Err(err) if matches!(err.details(), GenexErrorDetails::TurnAborted) => {
                 return Err(err);
             }
             Err(codex_error)
                 if matches!(
                     codex_error.details(),
-                    CodexErrorDetails::InvalidImageRequest()
+                    GenexErrorDetails::InvalidImageRequest()
                 ) =>
             {
                 let error = CodexErrorInfo::BadRequest;
@@ -646,7 +646,7 @@ pub(crate) async fn run_turn(
                 info!("Turn error: {e:#}");
                 if matches!(
                     e.details(),
-                    CodexErrorDetails::MisalignmentPolicyViolation { .. }
+                    GenexErrorDetails::MisalignmentPolicyViolation { .. }
                 ) {}
                 let error = e.to_codex_protocol_error();
                 sess.emit_turn_error_lifecycle(turn_context.as_ref(), error.clone())
@@ -1247,7 +1247,7 @@ async fn run_sampling_request(
                 return Ok((output, original_input.unwrap_or(prompt.input)));
             }
             Err(err) => match err.details() {
-                CodexErrorDetails::ContextWindowExceeded => {
+                GenexErrorDetails::ContextWindowExceeded => {
                     sess.set_total_tokens_full(&turn_context).await;
                     return Err(err);
                 }

@@ -3,7 +3,7 @@ use crate::agent::status::is_final;
 use crate::session::session::Session;
 use crate::tools::handlers::multi_agents_spec::WaitAgentTimeoutOptions;
 use crate::tools::handlers::multi_agents_spec::create_wait_agent_tool_v1;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_tools::ToolSpec;
 use futures::FutureExt;
 use futures::StreamExt;
@@ -128,7 +128,7 @@ impl Handler {
                     }
                     status_rxs.push((*id, rx));
                 }
-                Err(err) if matches!(err.details(), CodexErrorDetails::ThreadNotFound(_)) => {
+                Err(err) if matches!(err.details(), GenexErrorDetails::ThreadNotFound(_)) => {
                     initial_final_statuses.push((*id, AgentStatus::NotFound));
                 }
                 Err(err) => {

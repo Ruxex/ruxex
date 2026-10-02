@@ -5,7 +5,7 @@ use crate::config::Config;
 use crate::thread_manager::ThreadManagerState;
 use genex_protocol::ThreadId;
 use genex_protocol::error::GenexErr;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::protocol::MultiAgentVersion;
 use genex_protocol::protocol::SessionSource;
@@ -95,7 +95,7 @@ impl V2Residency {
                 .try_unload_one_resident(manager, protected_thread_id)
                 .await
             {
-                return Err(GenexErr::new(CodexErrorDetails::AgentLimitReached {
+                return Err(GenexErr::new(GenexErrorDetails::AgentLimitReached {
                     max_threads: capacity,
                 }));
             }

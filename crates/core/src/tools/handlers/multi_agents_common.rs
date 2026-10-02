@@ -7,7 +7,7 @@ use crate::tools::context::ToolPayload;
 use genex_protocol::AgentPath;
 use genex_protocol::ThreadId;
 use genex_protocol::error::GenexErr;
-use genex_protocol::error::CodexErrorDetails;
+use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::models::ResponseInputItem;
 use genex_protocol::protocol::SessionSource;
 use genex_protocol::protocol::SubAgentSource;
@@ -62,10 +62,10 @@ where
 
 pub(crate) fn collab_spawn_error(err: GenexErr) -> FunctionCallError {
     match err.details() {
-        CodexErrorDetails::UnsupportedOperation(message) if message == "thread manager dropped" => {
+        GenexErrorDetails::UnsupportedOperation(message) if message == "thread manager dropped" => {
             FunctionCallError::RespondToModel("collab manager unavailable".to_string())
         }
-        CodexErrorDetails::UnsupportedOperation(message) => {
+        GenexErrorDetails::UnsupportedOperation(message) => {
             FunctionCallError::RespondToModel(message.clone())
         }
         _ => FunctionCallError::RespondToModel(format!("collab spawn failed: {err}")),
@@ -74,13 +74,13 @@ pub(crate) fn collab_spawn_error(err: GenexErr) -> FunctionCallError {
 
 pub(crate) fn collab_agent_error(agent_id: ThreadId, err: GenexErr) -> FunctionCallError {
     match err.details() {
-        CodexErrorDetails::ThreadNotFound(id) => {
+        GenexErrorDetails::ThreadNotFound(id) => {
             FunctionCallError::RespondToModel(format!("agent with id {id} not found"))
         }
-        CodexErrorDetails::InternalAgentDied => {
+        GenexErrorDetails::InternalAgentDied => {
             FunctionCallError::RespondToModel(format!("agent with id {agent_id} is closed"))
         }
-        CodexErrorDetails::UnsupportedOperation(_) => {
+        GenexErrorDetails::UnsupportedOperation(_) => {
             FunctionCallError::RespondToModel("collab manager unavailable".to_string())
         }
         _ => FunctionCallError::RespondToModel(format!("collab tool failed: {err}")),
