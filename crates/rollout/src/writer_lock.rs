@@ -17,7 +17,7 @@ use tracing::warn;
 const WRITER_LOCK_DIR: &str = "thread-writer-locks";
 const COORDINATION_LOCK_FILE: &str = ".coordination.lock";
 
-/// Coordinates writer ownership within one Codex home.
+/// Coordinates writer ownership within one Genex home.
 pub struct WriterLockCoordinator {
     directory: PathBuf,
     cleanup_attempted: AtomicBool,

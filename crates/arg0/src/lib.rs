@@ -30,7 +30,7 @@ pub struct Arg0DispatchPaths {
     ///
     /// Prefer this over [`std::env::current_exe()`] in code that may run under
     /// a test harness, where `current_exe()` can point at the harness binary
-    /// instead of the real Codex CLI.
+    /// instead of the real Genex CLI.
     pub codex_self_exe: Option<PathBuf>,
     pub codex_linux_sandbox_exe: Option<PathBuf>,
     pub main_execve_wrapper_exe: Option<PathBuf>,
@@ -195,7 +195,7 @@ fn prepare_path_env_var_with_aliases(
     }
 }
 
-/// While we want to deploy the Codex CLI as a single executable for simplicity,
+/// While we want to deploy the Genex CLI as a single executable for simplicity,
 /// we also want to expose some of its functionality as distinct CLIs, so we use
 /// the "arg0 trick" to determine which CLI to dispatch. This effectively allows
 /// us to simulate deploying multiple executables as a single binary on Mac and

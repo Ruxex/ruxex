@@ -1,6 +1,6 @@
 # Thread Store
 
-`genex-thread-store` is the storage boundary for Codex threads. It defines the
+`genex-thread-store` is the storage boundary for Genex threads. It defines the
 `ThreadStore` trait plus local and in-memory implementations. Other storage
 implementations may live outside this repository.
 
