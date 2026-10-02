@@ -1,4 +1,4 @@
-//! Public facade for thread management APIs built on `codex-core`.
+//! Public facade for thread management APIs built on `genex-core`.
 
 #![deny(private_bounds, private_interfaces, unreachable_pub)]
 

@@ -1,4 +1,4 @@
-//! Aggregates MCP server connections for Codex.
+//! Aggregates MCP server connections for Genex.
 //!
 //! [`McpConnectionSet`] is the private connection set behind
 //! [`crate::McpRuntime`] and [`crate::McpBinding`]. It coordinates startup status

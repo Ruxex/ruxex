@@ -17,9 +17,9 @@ pub(crate) fn server_mcp_extensions(
     )
 }
 
-/// Selects the MCP extensions Codex supports from those declared by the app-server host.
+/// Selects the MCP extensions Genex supports from those declared by the app-server host.
 ///
-/// App-server clients may declare unrelated extensions. Codex retains only the
+/// App-server clients may declare unrelated extensions. Genex retains only the
 /// provider-neutral extension namespaces it knows how to project downstream.
 pub fn client_mcp_extensions(extensions: Option<&HashMap<String, Value>>) -> ClientMcpExtensions {
     let selected = extensions

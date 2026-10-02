@@ -276,7 +276,7 @@ impl PreparedMcpCall {
     }
 
     /// Runs irreversible call preparation and execution under the authority of
-    /// this call's captured catalog and the extensions owned by the Codex session.
+    /// this call's captured catalog and the extensions owned by the Genex session.
     /// A caller-supplied timeout can further restrict the server's configured timeout.
     pub async fn call_with_preparation<F, Fut>(
         &self,
