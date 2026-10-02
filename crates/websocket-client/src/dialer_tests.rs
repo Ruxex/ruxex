@@ -127,9 +127,9 @@ async fn tungstenite_default_tls_mode_ignores_invalid_custom_ca_in_a_subprocess(
         command
             .env(
                 "CODEX_CA_CERTIFICATE",
-                "/codex-websocket-client-nonexistent-custom-ca.pem",
+                "/genex-websocket-client-nonexistent-custom-ca.pem",
             )
-            .env("CODEX_WEBSOCKET_DEFAULT_TLS_PROBE_URL", target_url)
+            .env("GENEX_WEBSOCKET_DEFAULT_TLS_PROBE_URL", target_url)
             .output()
             .expect("WebSocket default-TLS subprocess should run")
     })
@@ -147,13 +147,13 @@ async fn tungstenite_default_tls_mode_ignores_invalid_custom_ca_in_a_subprocess(
 
 #[tokio::test]
 async fn tungstenite_default_tls_mode_subprocess_probe() {
-    let Ok(url) = std::env::var("CODEX_WEBSOCKET_DEFAULT_TLS_PROBE_URL") else {
+    let Ok(url) = std::env::var("GENEX_WEBSOCKET_DEFAULT_TLS_PROBE_URL") else {
         return;
     };
     let factory = HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault);
     assert!(
         WebSocketConnector::new(&factory).is_err(),
-        "explicit Codex TLS should reject the invalid custom CA"
+        "explicit Genex TLS should reject the invalid custom CA"
     );
     let connector =
         WebSocketConnector::new_with_tls_mode(&factory, WebSocketTlsMode::TungsteniteDefault)
@@ -164,7 +164,7 @@ async fn tungstenite_default_tls_mode_subprocess_probe() {
     let (mut websocket, _) = connector
         .connect(request, WebSocketConfig::default())
         .await
-        .expect("WebSocket should connect without constructing Codex TLS");
+        .expect("WebSocket should connect without constructing Genex TLS");
     let expected = Message::Text("Tungstenite default TLS".into());
     websocket
         .send(expected.clone())
@@ -237,17 +237,17 @@ async fn environment_proxy_route_honors_no_proxy_in_a_subprocess() {
 
 #[tokio::test]
 async fn no_proxy_subprocess_probe() {
-    let Ok(url) = std::env::var("CODEX_WEBSOCKET_NO_PROXY_PROBE_URL") else {
+    let Ok(url) = std::env::var("GENEX_WEBSOCKET_NO_PROXY_PROBE_URL") else {
         return;
     };
-    let proxy_url = std::env::var("CODEX_WEBSOCKET_NO_PROXY_PROBE_PROXY")
+    let proxy_url = std::env::var("GENEX_WEBSOCKET_NO_PROXY_PROBE_PROXY")
         .expect("parent test should provide a proxy URL");
     let no_proxy = std::env::var("NO_PROXY").expect("parent test should provide a no-proxy value");
     let request = url
         .into_client_request()
         .expect("websocket request should build");
     let tls_config =
-        if let Ok(certificate_hex) = std::env::var("CODEX_WEBSOCKET_NO_PROXY_PROBE_CA_DER") {
+        if let Ok(certificate_hex) = std::env::var("GENEX_WEBSOCKET_NO_PROXY_PROBE_CA_DER") {
             ensure_rustls_crypto_provider();
             assert_eq!(
                 certificate_hex.len() % 2,
@@ -546,16 +546,16 @@ async fn assert_no_proxy_subprocess(no_proxy: &str, expect_proxy: bool, proxy_tl
                 &proxy_url,
             )
             .env("NO_PROXY", no_proxy)
-            .env("CODEX_WEBSOCKET_NO_PROXY_PROBE_URL", target_url)
-            .env("CODEX_WEBSOCKET_NO_PROXY_PROBE_PROXY", proxy_url);
-        command.env_remove("CODEX_WEBSOCKET_NO_PROXY_PROBE_CA_DER");
+            .env("GENEX_WEBSOCKET_NO_PROXY_PROBE_URL", target_url)
+            .env("GENEX_WEBSOCKET_NO_PROXY_PROBE_PROXY", proxy_url);
+        command.env_remove("GENEX_WEBSOCKET_NO_PROXY_PROBE_CA_DER");
         if let Some(certificate) = certificate {
             let certificate_hex = certificate
                 .as_ref()
                 .iter()
                 .map(|byte| format!("{byte:02x}"))
                 .collect::<String>();
-            command.env("CODEX_WEBSOCKET_NO_PROXY_PROBE_CA_DER", certificate_hex);
+            command.env("GENEX_WEBSOCKET_NO_PROXY_PROBE_CA_DER", certificate_hex);
         }
         command
             .output()

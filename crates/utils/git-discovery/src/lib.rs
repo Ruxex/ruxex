@@ -83,7 +83,7 @@ impl GitRootDiscovery {
             // A failed spawn drops the closure and its guard, so do not hold the map lock.
             // Dropping the handle detaches the thread; Tokio never owns or joins it.
             let worker = std::thread::Builder::new()
-                .name("codex-git-root".to_string())
+                .name("genex-git-root".to_string())
                 .spawn(move || {
                     let root = (probe.discovery.find_root)(probe.cwd.as_path());
                     drop(probe);

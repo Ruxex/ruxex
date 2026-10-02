@@ -14,7 +14,7 @@
 
 ## 内部トランスポートヘルパー
 
-- `stdio-to-uds` は `codex-stdio-to-uds` を使い、stdio のバイト列を Unix ドメインソケットに中継します。
+- `stdio-to-uds` は `genex-stdio-to-uds` を使い、stdio のバイト列を Unix ドメインソケットに中継します。
 - 非表示の `tcp-tunnel` は HTTP/3 CONNECT プロキシ経由でローカル TCP ソケットを転送します。
 
 これらはトランスポートの配管であり、汎用エージェントコマンドではありません。どちらも `cli_main` でディスパッチされ、ローカルでの担当範囲が曖昧になるリモートモードの組み合わせを拒否します。
