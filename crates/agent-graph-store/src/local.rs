@@ -132,7 +132,7 @@ mod tests {
 
     struct TestRuntime {
         state_db: Arc<StateRuntime>,
-        _codex_home: TempDir,
+        _genex_home: TempDir,
     }
 
     fn thread_id(suffix: u128) -> ThreadId {
@@ -141,16 +141,16 @@ mod tests {
     }
 
     async fn state_runtime() -> TestRuntime {
-        let codex_home = TempDir::new().expect("tempdir should be created");
+        let genex_home = TempDir::new().expect("tempdir should be created");
         let state_db = StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+            genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
             "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
         TestRuntime {
             state_db,
-            _codex_home: codex_home,
+            _genex_home: genex_home,
         }
     }
 
