@@ -49,10 +49,10 @@ use core_test_support::responses::sse;
 #[cfg(unix)]
 use core_test_support::skip_if_remote;
 #[cfg(unix)]
-use core_test_support::test_genex::TestCodexBuilder;
-use core_test_support::test_genex::TestCodexHarness;
+use core_test_support::test_genex::TestGenexBuilder;
+use core_test_support::test_genex::TestGenexHarness;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
@@ -157,14 +157,14 @@ async fn run_snapshot_command_with_options(
     let SnapshotRunOptions {
         shell_environment_set,
     } = options;
-    let builder = test_codex().with_config(move |config| {
+    let builder = test_genex().with_config(move |config| {
         config
             .features
             .enable(Feature::ShellSnapshot)
             .expect("test config should allow feature update");
         config.permissions.shell_environment_policy.r#set = shell_environment_set;
     });
-    let harness = TestCodexHarness::with_builder(builder).await?;
+    let harness = TestGenexHarness::with_builder(builder).await?;
     let args = json!({
         "cmd": command,
         "yield_time_ms": 1000,
@@ -242,7 +242,7 @@ async fn run_snapshot_command_with_options(
 }
 
 async fn run_tool_turn_on_harness(
-    harness: &TestCodexHarness,
+    harness: &TestGenexHarness,
     prompt: &str,
     call_id: &str,
     tool_name: &str,
@@ -322,10 +322,10 @@ fn assert_posix_snapshot_sections(snapshot: &str) {
 }
 
 #[cfg(unix)]
-fn shell_snapshot_v2_prewarm_builder(profile_home: &Path) -> TestCodexBuilder {
+fn shell_snapshot_v2_prewarm_builder(profile_home: &Path) -> TestGenexBuilder {
     let configured_home = profile_home.to_string_lossy().into_owned();
     let shell = get_shell_by_model_provided_path(&PathBuf::from("/bin/bash"));
-    test_codex()
+    test_genex()
         .with_user_shell(shell)
         .with_config(move |config| {
             config
@@ -350,7 +350,7 @@ fn shell_snapshot_v2_prewarm_builder(profile_home: &Path) -> TestCodexBuilder {
 }
 
 #[cfg(unix)]
-async fn run_no_shell_turn(harness: &TestCodexHarness) -> Result<()> {
+async fn run_no_shell_turn(harness: &TestGenexHarness) -> Result<()> {
     let response = mount_sse_once(
         harness.server(),
         sse(vec![
@@ -400,7 +400,7 @@ async fn shell_snapshot_v2_warms_after_hooks_without_blocking_the_model() -> Res
             }).to_string()).expect("write startup hook");
         })
         .with_config(trust_discovered_hooks);
-    let harness = TestCodexHarness::with_auto_env_builder(builder).await?;
+    let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
 
     // The model can finish a text-only turn while the profile is still blocked.
     run_no_shell_turn(&harness).await?;
@@ -450,7 +450,7 @@ async fn shell_snapshot_v2_recovers_after_failed_prewarm() -> Result<()> {
             let policy = &mut config.permissions.shell_environment_policy;
             policy.r#set.insert("BASH_ENV".to_string(), bash_env);
         });
-    let harness = TestCodexHarness::with_auto_env_builder(builder).await?;
+    let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
     run_no_shell_turn(&harness).await?;
     wait_for_file_contents(&profile_home.path().join("failed"), "x").await?;
 
@@ -520,7 +520,7 @@ async fn shell_snapshot_v2_prewarm_preserves_the_sandbox() -> Result<()> {
             )
             .expect("allow the former warm-up sentinel");
         });
-    let harness = TestCodexHarness::with_auto_env_builder(builder).await?;
+    let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
     run_no_shell_turn(&harness).await?;
     wait_for_file_contents(&profile_home.path().join("captures"), "done").await?;
     harness.test().codex.shutdown_and_wait().await?;
@@ -540,7 +540,7 @@ async fn shell_snapshot_v2_prewarm_stops_on_shutdown() -> Result<()> {
         profile_home.path().join(".bashrc"),
         "printf '%s' \"$$\" > \"$HOME/pid\"\nprintf x > \"$HOME/captures\"\nwhile :; do /bin/sleep 0.01; done\n",
     ).await?;
-    let harness = TestCodexHarness::with_auto_env_builder(shell_snapshot_v2_prewarm_builder(
+    let harness = TestGenexHarness::with_auto_env_builder(shell_snapshot_v2_prewarm_builder(
         profile_home.path(),
     ))
     .await?;
@@ -591,7 +591,7 @@ async fn shell_snapshot_v2_prewarm_skips_ineligible_sessions(
     )
     .await?;
     let builder = shell_snapshot_v2_prewarm_builder(profile_home.path()).with_config(configure);
-    let harness = TestCodexHarness::with_auto_env_builder(builder).await?;
+    let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
     run_no_shell_turn(&harness).await?;
     harness.test().codex.shutdown_and_wait().await?;
     assert!(!profile_home.path().join("captures").exists());
@@ -622,7 +622,7 @@ async fn shell_snapshot_v2_does_not_warm_a_hook_stopped_turn(hook_event: &str) -
             }).to_string()).expect("write stopping hook");
             })
             .with_config(trust_discovered_hooks);
-    let harness = TestCodexHarness::with_auto_env_builder(builder).await?;
+    let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
     harness.submit("do not start the model or shell").await?;
     harness.test().codex.shutdown_and_wait().await?;
     assert!(harness.request_bodies().await.is_empty());
@@ -660,7 +660,7 @@ async fn shell_snapshot_v2_guardian_uses_its_resolved_permissions_and_tools(
             )
             .expect("require review even for an unrestricted owner environment");
         });
-    let harness = TestCodexHarness::with_auto_env_builder(builder).await?;
+    let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
     let test = harness.test();
     let responses = mount_sse_sequence(
         harness.server(),
@@ -769,7 +769,7 @@ async fn shell_snapshot_v2_filters_profile_secrets_without_creating_files() -> R
     .await?;
     let configured_home = profile_home.path().to_string_lossy().into_owned();
     let shell = get_shell_by_model_provided_path(&PathBuf::from("/bin/sh"));
-    let builder = test_codex()
+    let builder = test_genex()
         .with_user_shell(shell)
         .with_config(move |config| {
             config
@@ -789,7 +789,7 @@ async fn shell_snapshot_v2_filters_profile_secrets_without_creating_files() -> R
                 ("PROFILE_ALLOWED".to_string(), "policy".to_string()),
             ]);
         });
-    let harness = TestCodexHarness::with_auto_env_builder(builder).await?;
+    let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
 
     for attempt in 0..2 {
         let end = run_tool_turn_on_harness(
@@ -824,7 +824,7 @@ async fn shell_snapshot_v2_filters_profile_secrets_without_creating_files() -> R
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn shell_snapshot_v2_preserves_legacy_snapshots_for_user_shell() -> Result<()> {
     skip_if_remote!(Ok(()), "legacy shell snapshots require a local environment");
-    let builder = test_codex().with_config(|config| {
+    let builder = test_genex().with_config(|config| {
         config
             .features
             .disable(Feature::ShellTool)
@@ -838,7 +838,7 @@ async fn shell_snapshot_v2_preserves_legacy_snapshots_for_user_shell() -> Result
             .enable(Feature::ShellSnapshotV2)
             .expect("test config should enable in-memory snapshots");
     });
-    let harness = TestCodexHarness::with_auto_env_builder(builder).await?;
+    let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
     let snapshot_path = wait_for_snapshot(harness.test().home.path()).await?;
     assert_posix_snapshot_sections(&fs::read_to_string(snapshot_path).await?);
     let codex = &harness.test().codex;
@@ -883,14 +883,14 @@ async fn linux_unified_exec_uses_shell_snapshot() -> Result<()> {
 #[cfg_attr(target_os = "windows", ignore)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_snapshot_preserves_shell_environment_policy_set() -> Result<()> {
-    let builder = test_codex().with_config(|config| {
+    let builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::ShellSnapshot)
             .expect("test config should allow feature update");
         config.permissions.shell_environment_policy.r#set = policy_set_path_for_test();
     });
-    let harness = TestCodexHarness::with_builder(builder).await?;
+    let harness = TestGenexHarness::with_builder(builder).await?;
     let codex_home = harness.test().home.path().to_path_buf();
     run_tool_turn_on_harness(
         &harness,
@@ -932,13 +932,13 @@ async fn unified_exec_snapshot_preserves_shell_environment_policy_set() -> Resul
 #[cfg_attr(target_os = "windows", ignore)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_snapshot_still_intercepts_apply_patch() -> Result<()> {
-    let builder = test_codex().with_config(|config| {
+    let builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::ShellSnapshot)
             .expect("test config should allow feature update");
     });
-    let harness = TestCodexHarness::with_builder(builder).await?;
+    let harness = TestGenexHarness::with_builder(builder).await?;
 
     let test = harness.test();
     let codex = test.codex.clone();
@@ -1034,13 +1034,13 @@ async fn unified_exec_snapshot_still_intercepts_apply_patch() -> Result<()> {
 #[cfg_attr(target_os = "windows", ignore)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn shell_snapshot_deleted_after_shutdown_with_skills() -> Result<()> {
-    let builder = test_codex().with_config(|config| {
+    let builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::ShellSnapshot)
             .expect("test config should allow feature update");
     });
-    let harness = TestCodexHarness::with_builder(builder).await?;
+    let harness = TestGenexHarness::with_builder(builder).await?;
     let home = harness.test().home.clone();
     let codex_home = home.path().to_path_buf();
     let codex = harness.test().codex.clone();
@@ -1071,7 +1071,7 @@ async fn shell_snapshot_deleted_after_shutdown_with_skills() -> Result<()> {
 async fn macos_unified_exec_resolves_command_from_tied_path_snapshot(
     disabled_proxy: bool,
 ) -> Result<()> {
-    let builder = test_codex()
+    let builder = test_genex()
         .with_user_shell(get_shell_by_model_provided_path(&PathBuf::from("/bin/zsh")))
         .with_config(move |config| {
             config
@@ -1094,7 +1094,7 @@ async fn macos_unified_exec_resolves_command_from_tied_path_snapshot(
                 );
             }
         });
-    let harness = TestCodexHarness::with_builder(builder).await?;
+    let harness = TestGenexHarness::with_builder(builder).await?;
     let command_dir = harness
         .test()
         .config

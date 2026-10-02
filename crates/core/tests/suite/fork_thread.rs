@@ -21,7 +21,7 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use wiremock::Mock;
 use wiremock::MockServer;
@@ -48,7 +48,7 @@ async fn fork_thread_twice_drops_to_first_message() {
         .mount(&server)
         .await;
 
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build(&server).await.expect("create conversation");
     let codex = test.codex.clone();
     let thread_manager = test.thread_manager.clone();
@@ -174,7 +174,7 @@ async fn fork_thread_restores_history_selection_and_preserves_explicit_clear() -
     skip_if_no_network!(Ok(()));
 
     let server = MockServer::start().await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build_with_auto_env(&server).await?;
     let selected = vec!["slack@provider".to_string()];
     submit_thread_settings(
@@ -271,7 +271,7 @@ async fn assert_copied_fork_persists_inherited_history(history_mode: ThreadHisto
         .mount(&server)
         .await;
 
-    let mut builder = test_codex().with_history_mode(history_mode);
+    let mut builder = test_genex().with_history_mode(history_mode);
     let test = builder.build(&server).await.expect("create conversation");
     let codex = test.codex.clone();
     let thread_manager = test.thread_manager.clone();

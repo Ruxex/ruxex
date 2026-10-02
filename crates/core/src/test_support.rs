@@ -138,7 +138,7 @@ pub fn construct_model_info_offline(model: &str, config: &Config) -> ModelInfo {
 }
 
 #[derive(Clone, Copy)]
-pub enum TestCodexResponsesRequestKind {
+pub enum TestGenexResponsesRequestKind {
     Turn,
     Prewarm,
     WebsocketConnection,
@@ -153,12 +153,12 @@ pub fn responses_metadata(
     window_id: String,
     session_source: &SessionSource,
     parent_thread_id: Option<ThreadId>,
-    request_kind: TestCodexResponsesRequestKind,
+    request_kind: TestGenexResponsesRequestKind,
 ) -> GenexResponsesMetadata {
     let request_kind = match request_kind {
-        TestCodexResponsesRequestKind::Turn => Some(GenexResponsesRequestKind::Turn),
-        TestCodexResponsesRequestKind::Prewarm => Some(GenexResponsesRequestKind::Prewarm),
-        TestCodexResponsesRequestKind::WebsocketConnection => None,
+        TestGenexResponsesRequestKind::Turn => Some(GenexResponsesRequestKind::Turn),
+        TestGenexResponsesRequestKind::Prewarm => Some(GenexResponsesRequestKind::Prewarm),
+        TestGenexResponsesRequestKind::WebsocketConnection => None,
     };
     GenexResponsesMetadata {
         turn_id: request_kind.and(turn_id.map(ToString::to_string)),

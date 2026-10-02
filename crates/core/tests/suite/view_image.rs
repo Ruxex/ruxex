@@ -48,9 +48,9 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_no_remote_env;
-use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::TestGenex;
 use core_test_support::test_genex::local;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::test_target_os;
 use core_test_support::wait_for_event_with_timeout;
@@ -85,7 +85,7 @@ enum ImageBudgetPolicy {
     UnifiedResponsesLiteWithoutOriginalSupport,
 }
 
-fn disabled_user_turn(test: &TestCodex, items: Vec<UserInput>, model: String) -> TurnInputRequest {
+fn disabled_user_turn(test: &TestGenex, items: Vec<UserInput>, model: String) -> TurnInputRequest {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
     TurnInputRequest::user_input(items).with_thread_settings(ThreadSettingsOverrides {
@@ -161,7 +161,7 @@ fn png_bytes(width: u32, height: u32, rgba: [u8; 4]) -> anyhow::Result<Vec<u8>> 
     Ok(cursor.into_inner())
 }
 
-async fn create_workspace_directory(test: &TestCodex, rel_path: &str) -> anyhow::Result<PathUri> {
+async fn create_workspace_directory(test: &TestGenex, rel_path: &str) -> anyhow::Result<PathUri> {
     let abs_path_uri = test.workspace_path_uri(rel_path)?;
     test.fs()
         .create_directory(
@@ -177,7 +177,7 @@ async fn create_workspace_directory(test: &TestCodex, rel_path: &str) -> anyhow:
 }
 
 async fn write_workspace_file(
-    test: &TestCodex,
+    test: &TestGenex,
     rel_path: &str,
     contents: Vec<u8>,
 ) -> anyhow::Result<PathBuf> {
@@ -206,7 +206,7 @@ async fn write_workspace_file(
 }
 
 async fn write_workspace_png(
-    test: &TestCodex,
+    test: &TestGenex,
     rel_path: &str,
     width: u32,
     height: u32,
@@ -224,8 +224,8 @@ async fn assert_user_turn_local_image_resizes_to(
     let server = start_mock_server().await;
 
     let builder = match image_budget_policy {
-        ImageBudgetPolicy::DetailBased | ImageBudgetPolicy::Unified => test_codex(),
-        ImageBudgetPolicy::UnifiedResponsesLiteWithoutOriginalSupport => test_codex()
+        ImageBudgetPolicy::DetailBased | ImageBudgetPolicy::Unified => test_genex(),
+        ImageBudgetPolicy::UnifiedResponsesLiteWithoutOriginalSupport => test_genex()
             .with_model_info_override("gpt-5.4", |model_info| {
                 model_info.supports_image_detail_original = false;
                 model_info.use_responses_lite = true;
@@ -240,7 +240,7 @@ async fn assert_user_turn_local_image_resizes_to(
         }
     });
     let test = builder.build_with_auto_env(&server).await?;
-    let TestCodex {
+    let TestGenex {
         codex,
         session_configured,
         ..
@@ -421,11 +421,11 @@ async fn view_image_tool_attaches_local_image() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         let _ = config.features.enable(Feature::ImageResizeNotice);
     });
     let test = builder.build_with_auto_env(&server).await?;
-    let TestCodex {
+    let TestGenex {
         codex,
         session_configured,
         ..
@@ -587,7 +587,7 @@ async fn view_image_routes_to_selected_local_environment() -> anyhow::Result<()>
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build(&server).await?;
     write_workspace_file(
         &test,
@@ -653,7 +653,7 @@ async fn view_image_tool_applies_local_sandbox_read_denies() -> anyhow::Result<(
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build(&server).await?;
     let rel_path = "denied.png";
     let denied_path = test.config.cwd.join(rel_path);
@@ -733,7 +733,7 @@ async fn view_image_routes_to_selected_remote_environment() -> anyhow::Result<()
     skip_if_no_remote_env!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build_with_remote_and_local_env(&server).await?;
     let local_cwd = TempDir::new()?;
     fs::write(local_cwd.path().join("remote.png"), b"not a remote image")?;
@@ -844,9 +844,9 @@ async fn view_image_tool_can_preserve_original_resolution_when_requested_on_gpt5
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_model("gpt-5.4");
+    let mut builder = test_genex().with_model("gpt-5.4");
     let test = builder.build_with_auto_env(&server).await?;
-    let TestCodex {
+    let TestGenex {
         codex,
         session_configured,
         ..
@@ -935,7 +935,7 @@ async fn view_image_unified_budget_hides_detail_but_accepts_legacy_hints() -> an
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_model("gpt-5.4").with_config(|config| {
+    let mut builder = test_genex().with_model("gpt-5.4").with_config(|config| {
         let _ = config.features.enable(Feature::UnifiedImageBudget);
     });
     let test = builder.build_with_auto_env(&server).await?;
@@ -1011,9 +1011,9 @@ async fn view_image_tool_errors_clearly_for_unsupported_detail_values() -> anyho
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_model("gpt-5.4");
+    let mut builder = test_genex().with_model("gpt-5.4");
     let test = builder.build_with_auto_env(&server).await?;
-    let TestCodex {
+    let TestGenex {
         codex,
         session_configured,
         ..
@@ -1089,9 +1089,9 @@ async fn view_image_tool_treats_null_detail_as_omitted() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_model("gpt-5.4");
+    let mut builder = test_genex().with_model("gpt-5.4");
     let test = builder.build_with_auto_env(&server).await?;
-    let TestCodex {
+    let TestGenex {
         codex,
         session_configured,
         ..
@@ -1192,7 +1192,7 @@ async fn assert_view_image_tool_resizes_without_original_support(
     image_budget_policy: ImageBudgetPolicy,
 ) -> anyhow::Result<()> {
     let server = start_mock_server().await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("gpt-5.2")
         .with_config(move |config| {
             if image_budget_policy == ImageBudgetPolicy::Unified {
@@ -1200,7 +1200,7 @@ async fn assert_view_image_tool_resizes_without_original_support(
             }
         });
     let test = builder.build_with_auto_env(&server).await?;
-    let TestCodex {
+    let TestGenex {
         codex,
         session_configured,
         ..
@@ -1292,9 +1292,9 @@ async fn view_image_tool_does_not_force_original_resolution_with_capability_only
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_model("gpt-5.4");
+    let mut builder = test_genex().with_model("gpt-5.4");
     let test = builder.build_with_auto_env(&server).await?;
-    let TestCodex {
+    let TestGenex {
         codex,
         session_configured,
         ..
@@ -1383,9 +1383,9 @@ async fn view_image_tool_errors_when_path_is_directory() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build_with_auto_env(&server).await?;
-    let TestCodex {
+    let TestGenex {
         codex,
         session_configured,
         ..
@@ -1453,9 +1453,9 @@ async fn view_image_tool_rejects_invalid_image_before_tool_output() -> anyhow::R
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build_with_auto_env(&server).await?;
-    let TestCodex {
+    let TestGenex {
         codex,
         session_configured,
         ..
@@ -1525,9 +1525,9 @@ async fn view_image_tool_errors_when_file_missing() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build_with_auto_env(&server).await?;
-    let TestCodex {
+    let TestGenex {
         codex,
         session_configured,
         ..
@@ -1665,13 +1665,13 @@ async fn view_image_tool_returns_unsupported_message_for_text_only_model() -> an
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(model_slug.to_string());
         });
     let test = builder.build_with_auto_env(&server).await?;
-    let TestCodex { codex, .. } = &test;
+    let TestGenex { codex, .. } = &test;
 
     let rel_path = "assets/example.png";
     write_workspace_png(

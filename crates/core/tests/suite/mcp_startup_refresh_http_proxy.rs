@@ -29,7 +29,7 @@ use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_target_windows;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_mcp_server;
 use pretty_assertions::assert_eq;
@@ -108,7 +108,7 @@ async fn local_mcp_startup_and_refresh_use_configured_http_client() -> Result<()
     }
 
     let responses_server = responses::start_mock_server().await;
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_config(|config| {
             if cfg!(target_os = "linux") {
                 config
@@ -294,7 +294,7 @@ async fn skill_mcp_dependency_oauth_uses_configured_http_client() -> Result<()> 
     let skill_callback_port = std::env::var(SKILL_CALLBACK_PORT_ENV_VAR)?.parse::<u16>()?;
     let global_callback_port = std::env::var(SKILL_GLOBAL_CALLBACK_PORT_ENV_VAR)?.parse::<u16>()?;
     let responses_server = responses::start_mock_server().await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_config(move |config| {
             config
                 .features

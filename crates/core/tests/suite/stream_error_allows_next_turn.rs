@@ -7,8 +7,8 @@ use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestCodex;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use wiremock::Mock;
 use wiremock::MockServer;
@@ -84,7 +84,7 @@ async fn continue_after_stream_error() {
         supports_standalone_web_search: false,
     };
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_config(move |config| {
             config.base_instructions = Some("You are a helpful assistant".to_string());
             config.model_provider = provider;

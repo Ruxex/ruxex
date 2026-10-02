@@ -39,7 +39,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::sse_response;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
@@ -72,7 +72,7 @@ async fn guardian_reused_reviewer_avoids_stale_catalog_lookup() -> Result<()> {
     let initial_models =
         responses::mount_models_once_with_etag(&server, catalog.clone(), ETAG).await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.4");
     builder = builder.with_config(|config| {
@@ -169,7 +169,7 @@ async fn renews_cache_ttl_on_matching_models_etag() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex().with_auth(CodexAuth::from_api_key("test-api-key"));
+    let mut builder = test_genex().with_auth(CodexAuth::from_api_key("test-api-key"));
     builder = builder.with_config(|config| {
         config.model = Some("gpt-5.2".to_string());
         config.model_provider.request_max_retries = Some(0);
@@ -274,7 +274,7 @@ async fn matching_models_etag_does_not_rewrite_recent_cache() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex().with_auth(CodexAuth::from_api_key("test-api-key"));
+    let mut builder = test_genex().with_auth(CodexAuth::from_api_key("test-api-key"));
     builder = builder.with_config(|config| {
         config.model = Some("gpt-5.2".to_string());
         config.model_provider.request_max_retries = Some(0);
@@ -334,7 +334,7 @@ async fn matching_models_etag_renews_cache_after_half_its_lifetime() -> Result<(
     )
     .await;
 
-    let mut builder = test_codex().with_auth(CodexAuth::from_api_key("test-api-key"));
+    let mut builder = test_genex().with_auth(CodexAuth::from_api_key("test-api-key"));
     builder = builder.with_config(|config| {
         config.model = Some("gpt-5.2".to_string());
         config.model_provider.request_max_retries = Some(0);
@@ -394,7 +394,7 @@ async fn uses_cache_when_version_matches() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex().with_auth(CodexAuth::from_api_key("test-api-key"));
+    let mut builder = test_genex().with_auth(CodexAuth::from_api_key("test-api-key"));
     let identity = genex_model_provider::test_support::models_cache_entry(
         &genex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/v1",
@@ -469,7 +469,7 @@ async fn refreshes_when_cache_version_missing() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex().with_auth(CodexAuth::from_api_key("test-api-key"));
+    let mut builder = test_genex().with_auth(CodexAuth::from_api_key("test-api-key"));
     let identity = genex_model_provider::test_support::models_cache_entry(
         &genex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/v1",
@@ -529,7 +529,7 @@ async fn refreshes_when_cache_version_differs() -> Result<()> {
         models_mocks.push(responses::mount_models_once(&server, models_response.clone()).await);
     }
 
-    let mut builder = test_codex().with_auth(CodexAuth::from_api_key("test-api-key"));
+    let mut builder = test_genex().with_auth(CodexAuth::from_api_key("test-api-key"));
     let identity = genex_model_provider::test_support::models_cache_entry(
         &genex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/v1",

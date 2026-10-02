@@ -17,9 +17,9 @@ use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::TestGenex;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use pretty_assertions::assert_eq;
 use tokio::time::Duration;
@@ -47,7 +47,7 @@ async fn websocket_fallback_switches_to_http_on_upgrade_required_connect() -> Re
     )
     .await;
 
-    let mut builder = test_codex().with_config({
+    let mut builder = test_genex().with_config({
         let base_url = format!("{}/v1", server.uri());
         move |config| {
             config.model_provider.base_url = Some(base_url);
@@ -93,7 +93,7 @@ async fn websocket_fallback_switches_to_http_after_retries_exhausted() -> Result
     )
     .await;
 
-    let mut builder = test_codex().with_config({
+    let mut builder = test_genex().with_config({
         let base_url = format!("{}/v1", server.uri());
         move |config| {
             config.model_provider.base_url = Some(base_url);
@@ -138,7 +138,7 @@ async fn websocket_fallback_hides_first_websocket_retry_stream_error() -> Result
     )
     .await;
 
-    let mut builder = test_codex().with_config({
+    let mut builder = test_genex().with_config({
         let base_url = format!("{}/v1", server.uri());
         move |config| {
             config.model_provider.base_url = Some(base_url);
@@ -148,7 +148,7 @@ async fn websocket_fallback_hides_first_websocket_retry_stream_error() -> Result
             config.model_provider.request_max_retries = Some(0);
         }
     });
-    let TestCodex {
+    let TestGenex {
         codex,
         session_configured,
         cwd,
@@ -220,7 +220,7 @@ async fn websocket_fallback_is_sticky_across_turns() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex().with_config({
+    let mut builder = test_genex().with_config({
         let base_url = format!("{}/v1", server.uri());
         move |config| {
             config.model_provider.base_url = Some(base_url);

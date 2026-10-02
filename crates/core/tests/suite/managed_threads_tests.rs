@@ -18,7 +18,7 @@ use genex_thread_store::ThreadStoreError;
 use core_test_support::apps_test_server::AppsTestServer;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -31,7 +31,7 @@ async fn dropping_startup_cleans_up_while_required_mcp_is_stalled() -> anyhow::R
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
-    let fixture = test_codex().build_with_auto_env(&server).await?;
+    let fixture = test_genex().build_with_auto_env(&server).await?;
     let mcp_server = responses::start_mock_server().await;
     let (http_server, control) = AppsTestServer::mount_with_startup_control(&mcp_server).await?;
     let release = control.hold_next_successful_initialize();
@@ -102,7 +102,7 @@ async fn dropping_startup_before_receiving_the_agent_finishes_cleanup() -> anyho
         }
     }
     let server = responses::start_mock_server().await;
-    let fixture = test_codex().build_with_auto_env(&server).await?;
+    let fixture = test_genex().build_with_auto_env(&server).await?;
     let mut options = StartThreadOptions::new(fixture.config.clone());
     let thread_id = fixture.thread_manager.reserve_thread_id();
     options.reserved_thread_id = Some(thread_id);
@@ -148,7 +148,7 @@ async fn owner_cancellation_closes_agent_and_preserves_history_and_parent() -> a
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
-    let fixture = test_codex().build_with_auto_env(&server).await?;
+    let fixture = test_genex().build_with_auto_env(&server).await?;
     let mut options = StartThreadOptions::new(fixture.config.clone());
     options.environments = Some(fixture.codex.environment_selections().await);
     options
@@ -255,7 +255,7 @@ async fn startup_allowlist_controls_advertising_and_execution(
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_config(|config| {
             config.update_plan_enabled = true;
             config

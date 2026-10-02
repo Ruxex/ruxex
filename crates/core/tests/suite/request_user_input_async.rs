@@ -26,7 +26,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
@@ -50,7 +50,7 @@ async fn persistent_async_message_guidance_follows_tool_availability(
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.2", move |model| {
             model.tool_mode = Some(ToolMode::CodeModeOnly);
             model
@@ -147,7 +147,7 @@ async fn freeform_async_message_requires_root_and_catalog_or_feature_opt_in(
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.2", move |model| {
             model.tool_mode = Some(ToolMode::CodeModeOnly);
             model.experimental_supported_tools =
@@ -234,7 +234,7 @@ async fn freeform_async_message_emits_an_item_without_ending_the_turn(
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.2", move |model| {
             model.tool_mode = Some(ToolMode::CodeModeOnly);
             model.experimental_supported_tools = vec!["request_user_input_async".to_string()];
@@ -401,7 +401,7 @@ async fn request_user_input_async_emits_item_and_does_not_end_the_turn(
             "Ask the user one or more questions during ongoing work. Use this tool only to request missing information, preferences, constraints, clarification, or approval. The tool returns immediately without ending the turn or waiting for a reply; any reply arrives asynchronously as a new user message. Keep questions concise, self-contained, and easy to understand, using a level of detail appropriate to the user and task. The UI always allows a free-text answer, including when suggested options are provided. A preselected option is not submitted automatically.",
         )
         .to_string();
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.2", move |model| {
             model.tool_mode = Some(ToolMode::CodeModeOnly);
             model.experimental_supported_tools.retain(|tool| {
@@ -546,7 +546,7 @@ async fn invalid_async_questions_do_not_emit_an_item(
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.2", |model| {
             model.tool_mode = Some(ToolMode::CodeModeOnly);
             model

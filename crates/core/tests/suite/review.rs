@@ -44,7 +44,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use std::path::PathBuf;
@@ -593,7 +593,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
     let (server, request_log) =
         start_responses_server_with_sse(completed_sse(), /*expected_requests*/ 1).await;
     let codex_home = Arc::new(TempDir::new().unwrap());
-    let test = test_codex()
+    let test = test_genex()
         .with_home(codex_home.clone())
         .with_model_info_override("gpt-5.2", |model_info| {
             model_info.service_tiers.clear();
@@ -803,7 +803,7 @@ async fn review_resolves_inherited_summary_preferences() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
     let (server, request_log) =
         start_responses_server_with_sse(completed_sse(), /*expected_requests*/ 2).await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.2", |model| {
             model.default_reasoning_summary = ReasoningSummary::Auto;
         })
@@ -874,7 +874,7 @@ async fn review_uses_custom_review_model_from_config() {
     let (server, request_log) =
         start_responses_server_with_sse(completed_sse(), /*expected_requests*/ 1).await;
     let codex_home = Arc::new(TempDir::new().unwrap());
-    let test = test_codex()
+    let test = test_genex()
         .with_home(Arc::clone(&codex_home))
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
@@ -955,7 +955,7 @@ async fn review_uses_session_model_when_review_model_unset() {
     let (server, request_log) =
         start_responses_server_with_sse(completed_sse(), /*expected_requests*/ 1).await;
     let codex_home = Arc::new(TempDir::new().unwrap());
-    let test = test_codex()
+    let test = test_genex()
         .with_home(Arc::clone(&codex_home))
         .with_config(|config| {
             config.model = Some("gpt-5.4".to_string());
@@ -1417,7 +1417,7 @@ where
     F: FnOnce(&mut Config) + Send + 'static,
 {
     let base_url = format!("{}/v1", server.uri());
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(codex_home)
         .with_config(move |config| {
             config.model_provider.base_url = Some(base_url.clone());
@@ -1441,7 +1441,7 @@ where
     F: FnOnce(&mut Config) + Send + 'static,
 {
     let base_url = format!("{}/v1", server.uri());
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(codex_home.clone())
         .with_config(move |config| {
             config.model_provider.base_url = Some(base_url.clone());

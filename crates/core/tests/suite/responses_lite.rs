@@ -26,7 +26,7 @@ use core_test_support::apps_test_server::SEARCH_CALENDAR_NAMESPACE;
 use core_test_support::apps_test_server::apps_enabled_builder;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_mcp_server;
 use pretty_assertions::assert_eq;
@@ -100,7 +100,7 @@ async fn responses_lite_uses_input_items_for_instructions_and_tools() -> Result<
     .await;
 
     let builder = || {
-        test_codex()
+        test_genex()
             .with_model_info_override("gpt-5.4", |model_info| {
                 model_info.use_responses_lite = true;
                 model_info.tool_mode = Some(ToolMode::CodeMode);
@@ -266,7 +266,7 @@ async fn responses_lite_prepares_images() -> Result<()> {
     .await;
     let image_url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==";
     let remote_image_url = "https://example.com/image.png";
-    let mut builder = test_codex().with_model_info_override("gpt-5.4", |model_info| {
+    let mut builder = test_genex().with_model_info_override("gpt-5.4", |model_info| {
         model_info.use_responses_lite = true;
         configure_image_capable_model(model_info);
     });
@@ -336,7 +336,7 @@ async fn responses_lite_exposes_standalone_tools_for_actor_authorized_provider()
 
     let auth = CodexAuth::from_api_key("dummy");
     let extensions = responses_extensions(&auth);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(auth)
         .with_extensions(extensions)
         .with_model_info_override("gpt-5.4", |model_info| {
@@ -413,7 +413,7 @@ async fn responses_lite_does_not_expose_standalone_web_search_for_bedrock_provid
         region: "us-east-1".to_string(),
     });
     let extensions = responses_extensions(&auth);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(auth)
         .with_extensions(extensions)
         .with_model_info_override("gpt-5.4", |model_info| {
@@ -464,7 +464,7 @@ async fn assert_responses_lite_custom_provider_web_search(
 
     let auth = CodexAuth::from_api_key("dummy");
     let extensions = responses_extensions(&auth);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(auth)
         .with_extensions(extensions)
         .with_model_info_override("gpt-5.4", |model_info| {
@@ -522,7 +522,7 @@ async fn responses_lite_compact_request_uses_lite_transport_contract() -> Result
     )
     .await;
 
-    let mut builder = test_codex().with_model_info_override("gpt-5.4", |model_info| {
+    let mut builder = test_genex().with_model_info_override("gpt-5.4", |model_info| {
         model_info.use_responses_lite = true;
     });
     let test = builder.build(&server).await?;
@@ -576,7 +576,7 @@ async fn responses_lite_omits_hosted_tools_without_standalone_extensions() -> Re
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model_info_override("gpt-5.4", |model_info| {
             model_info.use_responses_lite = true;

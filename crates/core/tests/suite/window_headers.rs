@@ -14,7 +14,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
@@ -42,7 +42,7 @@ async fn window_id_advances_after_compact_persists_on_resume_and_resets_on_fork(
     )
     .await;
 
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config.model_provider.name = "Non-provider Model provider".to_string();
         config.compact_prompt = Some(SUMMARIZATION_PROMPT.to_string());
     });

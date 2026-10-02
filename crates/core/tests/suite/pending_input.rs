@@ -46,8 +46,8 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::StreamingSseServer;
 use core_test_support::streaming_sse::start_streaming_sse_server;
-use core_test_support::test_genex::TestCodex;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
@@ -78,7 +78,7 @@ async fn idle_response_items_include_pending_mailbox_in_first_request() -> anyho
         ]),
     )
     .await;
-    let test = test_codex().build_with_auto_env(&server).await?;
+    let test = test_genex().build_with_auto_env(&server).await?;
 
     submit_queue_only_agent_mail(test.codex.as_ref(), "pending mailbox input").await;
     let submission = test
@@ -128,7 +128,7 @@ async fn standalone_tool_output_starts_instruction_turn() -> anyhow::Result<()> 
         responses::sse(vec![ev_response_created("turn"), ev_completed("turn")]),
     )
     .await;
-    let test = test_codex().build_with_auto_env(&server).await?;
+    let test = test_genex().build_with_auto_env(&server).await?;
 
     let expected_output = json!({
         "type": "function_call_output",
@@ -170,7 +170,7 @@ async fn assert_idle_user_input_reaches_the_first_model_request(
         ]),
     )
     .await;
-    let test = test_codex().build_with_auto_env(&server).await?;
+    let test = test_genex().build_with_auto_env(&server).await?;
 
     if mode == ModeKind::Plan {
         core_test_support::submit_thread_settings(
@@ -317,7 +317,7 @@ fn response_completed_chunks(response_id: &str) -> Vec<StreamingSseChunk> {
 }
 
 async fn build_codex(server: &StreamingSseServer) -> Arc<GenexThread> {
-    test_codex()
+    test_genex()
         .with_config(|config| config.update_plan_enabled = true)
         .with_model("gpt-5.4")
         .build_with_streaming_server(server)
@@ -336,7 +336,7 @@ async fn submit_user_input(codex: &GenexThread, text: &str) {
         .expect("submit user input");
 }
 
-async fn submit_danger_full_access_user_turn(test: &TestCodex, text: &str) {
+async fn submit_danger_full_access_user_turn(test: &TestGenex, text: &str) {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
     test.codex
@@ -516,7 +516,7 @@ async fn queue_only_agent_mail_wakes_sleeping_root_with_previous_turn_context() 
     let mut extensions =
         genex_extension_api::ExtensionRegistryBuilder::<genex_core::config::Config>::new();
     extensions.thread_lifecycle_contributor(Arc::new(SleepingRootExtension));
-    let codex = test_codex()
+    let codex = test_genex()
         .with_model("gpt-5.4")
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_extensions(Arc::new(extensions.build()))
@@ -590,7 +590,7 @@ async fn steer_interrupts_wait_agent_and_is_sent_in_follow_up_request() {
     ];
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, response_completed_chunks("resp-2")]).await;
-    let codex = test_codex()
+    let codex = test_genex()
         .with_model("gpt-5.4")
         .with_config(|config| {
             config
@@ -670,7 +670,7 @@ async fn any_new_input_interrupts_sleep() {
         response_completed_chunks("resp-3"),
     ])
     .await;
-    let codex = test_codex()
+    let codex = test_genex()
         .with_model("gpt-5.4")
         .with_config(|config| {
             config
@@ -811,7 +811,7 @@ async fn injected_user_input_triggers_follow_up_request_with_deltas() {
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, second_chunks]).await;
 
-    let codex = test_codex()
+    let codex = test_genex()
         .with_model("gpt-5.4")
         .build_with_streaming_server(&server)
         .await
@@ -1242,7 +1242,7 @@ async fn terminal_compaction_error_does_not_retry_pending_input(
     let (server, _completions) = start_streaming_sse_server(streams).await;
     let config_server = responses::start_mock_server().await;
     let base_url = format!("{}/v1", server.uri());
-    let test = test_codex()
+    let test = test_genex()
         .with_model("gpt-5.4")
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
@@ -1423,7 +1423,7 @@ async fn steered_user_input_waits_for_model_continuation_after_mid_turn_compact(
     ])
     .await;
 
-    let codex = test_codex()
+    let codex = test_genex()
         .with_model("gpt-5.4")
         .with_config(|config| {
             config.model_provider.name = "provider (test)".to_string();
@@ -1508,7 +1508,7 @@ async fn steered_user_input_follows_compact_when_only_the_steer_needs_follow_up(
         start_streaming_sse_server(vec![first_chunks, compact_chunks, steered_follow_up_chunks])
             .await;
 
-    let codex = test_codex()
+    let codex = test_genex()
         .with_model("gpt-5.4")
         .with_config(|config| {
             config.model_provider.name = "provider (test)".to_string();
@@ -1625,7 +1625,7 @@ async fn steered_user_input_waits_when_tool_output_triggers_compact_before_next_
     ])
     .await;
 
-    let test = test_codex()
+    let test = test_genex()
         .with_model("gpt-5.4")
         .with_config(|config| {
             config.model_provider.name = "provider (test)".to_string();

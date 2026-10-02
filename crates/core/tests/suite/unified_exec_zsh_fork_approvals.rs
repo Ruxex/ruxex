@@ -38,7 +38,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::TestGenex;
 use core_test_support::test_genex::local_selections;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
@@ -644,7 +644,7 @@ async fn build_unified_exec_zsh_fork_test_or_skip<F>(
     approval_policy: AskForApproval,
     permission_profile: PermissionProfile,
     pre_build_hook: F,
-) -> Result<Option<(MockServer, TestCodex)>>
+) -> Result<Option<(MockServer, TestGenex)>>
 where
     F: FnOnce(&Path) + Send + 'static,
 {
@@ -785,7 +785,7 @@ async fn mount_unified_exec_command(
 }
 
 async fn submit_turn_with_session_permissions(
-    test: &TestCodex,
+    test: &TestGenex,
     prompt: &str,
     approval_policy: AskForApproval,
     approvals_reviewer: ApprovalsReviewer,
@@ -823,12 +823,12 @@ async fn submit_turn_with_session_permissions(
     Ok(())
 }
 
-async fn approve_expected_exec(test: &TestCodex, expected_command: &str) -> Result<()> {
+async fn approve_expected_exec(test: &TestGenex, expected_command: &str) -> Result<()> {
     let approval = expect_exec_approval(test, expected_command).await;
     approve_exec(test, approval.effective_approval_id()).await
 }
 
-async fn approve_exec(test: &TestCodex, approval_id: String) -> Result<()> {
+async fn approve_exec(test: &TestGenex, approval_id: String) -> Result<()> {
     test.codex
         .submit(Op::ExecApproval {
             id: approval_id,
@@ -903,7 +903,7 @@ fn parsed_regex_result(pattern: &str, output_str: &str) -> Option<CommandResult>
 }
 
 async fn expect_exec_approval(
-    test: &TestCodex,
+    test: &TestGenex,
     expected_command: &str,
 ) -> ExecApprovalRequestEvent {
     let event = wait_for_event(&test.codex, |event| {
@@ -932,7 +932,7 @@ async fn expect_exec_approval(
     }
 }
 
-async fn wait_for_completion_without_approval(test: &TestCodex) {
+async fn wait_for_completion_without_approval(test: &TestGenex) {
     let event = wait_for_event(&test.codex, |event| {
         matches!(
             event,
@@ -950,7 +950,7 @@ async fn wait_for_completion_without_approval(test: &TestCodex) {
     }
 }
 
-async fn wait_for_completion(test: &TestCodex) {
+async fn wait_for_completion(test: &TestGenex) {
     wait_for_event(&test.codex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })

@@ -19,7 +19,7 @@ async fn failed_global_read_keeps_instructions_until_recovery() -> Result<()> {
     .await;
     let home = Arc::new(TempDir::new()?);
     let source = write_global_file(&home, GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
-    let mut builder = test_codex().with_home(Arc::clone(&home));
+    let mut builder = test_genex().with_home(Arc::clone(&home));
     let test = builder.build_with_auto_env(&server).await?;
     test.submit_turn("initial instructions").await?;
 
@@ -73,7 +73,7 @@ async fn live_global_removal_preserves_repository_instructions(
     .await;
     let home = Arc::new(TempDir::new()?);
     let source = write_global_file(&home, GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&home))
         .with_workspace_setup(|cwd, fs| async move {
             fs.write_file(
@@ -144,7 +144,7 @@ async fn global_instructions_refresh_after_a_tool_in_the_same_turn() -> Result<(
     .await;
     let home = Arc::new(TempDir::new()?);
     write_global_file(&home, GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&home))
         .with_config(|config| {
             config
@@ -226,7 +226,7 @@ async fn interrupting_a_provider_read_allows_the_next_turn_to_refresh() -> Resul
         block_next: AtomicBool::new(/*v*/ false),
         started: Notify::new(),
     });
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&home))
         .with_user_instructions_provider(provider.clone());
     let test = builder.build_with_auto_env(&server).await?;

@@ -48,7 +48,7 @@ use genex_rollout_trace::InferenceTraceContext;
 use genex_rollout_trace::RawTraceEventPayload;
 use genex_rollout_trace::TraceWriter;
 use genex_rollout_trace::replay_bundle;
-use core_test_support::TestCodexResponsesRequestKind;
+use core_test_support::TestGenexResponsesRequestKind;
 use core_test_support::load_default_config_for_test;
 use core_test_support::responses::WebSocketConnectionConfig;
 use core_test_support::responses::WebSocketTestServer;
@@ -59,7 +59,7 @@ use core_test_support::responses::start_websocket_server;
 use core_test_support::responses::start_websocket_server_with_headers;
 use core_test_support::responses_metadata as test_responses_metadata;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::tracing::install_test_tracing;
 use core_test_support::wait_for_event;
 use futures::StreamExt;
@@ -124,7 +124,7 @@ struct WebsocketTestHarness {
 fn responses_metadata(
     harness: &WebsocketTestHarness,
     turn_id: Option<&str>,
-    request_kind: TestCodexResponsesRequestKind,
+    request_kind: TestGenexResponsesRequestKind,
 ) -> GenexResponsesMetadata {
     test_responses_metadata(
         TEST_INSTALLATION_ID,
@@ -139,21 +139,21 @@ fn responses_metadata(
 }
 
 fn turn_metadata(harness: &WebsocketTestHarness, turn_id: Option<&str>) -> GenexResponsesMetadata {
-    responses_metadata(harness, turn_id, TestCodexResponsesRequestKind::Turn)
+    responses_metadata(harness, turn_id, TestGenexResponsesRequestKind::Turn)
 }
 
 fn prewarm_metadata(
     harness: &WebsocketTestHarness,
     turn_id: Option<&str>,
 ) -> GenexResponsesMetadata {
-    responses_metadata(harness, turn_id, TestCodexResponsesRequestKind::Prewarm)
+    responses_metadata(harness, turn_id, TestGenexResponsesRequestKind::Prewarm)
 }
 
 fn websocket_connection_metadata(harness: &WebsocketTestHarness) -> GenexResponsesMetadata {
     responses_metadata(
         harness,
         /*turn_id*/ None,
-        TestCodexResponsesRequestKind::WebsocketConnection,
+        TestGenexResponsesRequestKind::WebsocketConnection,
     )
 }
 
@@ -1796,7 +1796,7 @@ async fn responses_websocket_usage_limit_error_emits_rate_limit_event() {
         vec![usage_limit_error],
     ]])
     .await;
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config.model_provider.request_max_retries = Some(0);
         config.model_provider.stream_max_retries = Some(0);
     });
@@ -1885,7 +1885,7 @@ async fn responses_websocket_invalid_request_error_with_status_is_forwarded() {
         vec![invalid_request_error],
     ]])
     .await;
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config.model_provider.request_max_retries = Some(0);
         config.model_provider.stream_max_retries = Some(0);
     });
@@ -1938,7 +1938,7 @@ async fn responses_websocket_connection_limit_error_reconnects_and_completes() {
         vec![vec![ev_response_created("resp-1"), ev_completed("resp-1")]],
     ])
     .await;
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config.model_provider.request_max_retries = Some(0);
         config.model_provider.stream_max_retries = Some(1);
     });
@@ -2833,7 +2833,7 @@ async fn responses_websocket_restored_history_metric(fork: bool) -> anyhow::Resu
     let warmup = vec![ev_response_created("warmup"), ev_completed("warmup")];
     let turn = vec![ev_response_created("turn"), ev_completed("turn")];
     let server = start_websocket_server(vec![vec![warmup, turn]; 2]).await;
-    let mut initial = test_codex().build_with_websocket_server(&server).await?;
+    let mut initial = test_genex().build_with_websocket_server(&server).await?;
     initial.submit_text_turn("original history marker").await?;
     let rollout_path = initial.codex.rollout_path().expect("persisted history");
     initial.codex.shutdown_and_wait().await?;

@@ -262,7 +262,7 @@ pub fn turn_permission_fields(
     (sandbox_policy, Some(permission_profile))
 }
 
-pub struct TestCodexBuilder {
+pub struct TestGenexBuilder {
     config_mutators: Vec<Box<ConfigMutator>>,
     auth: CodexAuth,
     pre_build_hooks: Vec<Box<PreBuildHook>>,
@@ -280,7 +280,7 @@ pub struct TestCodexBuilder {
     image_store: Arc<dyn AttachmentStore>,
 }
 
-impl TestCodexBuilder {
+impl TestGenexBuilder {
     pub fn with_thread_store(mut self, thread_store: Arc<dyn ThreadStore>) -> Self {
         self.thread_store = Some(thread_store);
         self
@@ -419,7 +419,7 @@ impl TestCodexBuilder {
         }
     }
 
-    pub async fn build(&mut self, server: &wiremock::MockServer) -> anyhow::Result<TestCodex> {
+    pub async fn build(&mut self, server: &wiremock::MockServer) -> anyhow::Result<TestGenex> {
         let home = match self.home.clone() {
             Some(home) => home,
             None => Arc::new(TempDir::new()?),
@@ -445,7 +445,7 @@ impl TestCodexBuilder {
     pub async fn build_with_auto_env(
         &mut self,
         server: &wiremock::MockServer,
-    ) -> anyhow::Result<TestCodex> {
+    ) -> anyhow::Result<TestGenex> {
         let test_env = test_env().await?;
         self.build_with_environment(server, test_env).await
     }
@@ -455,7 +455,7 @@ impl TestCodexBuilder {
         &mut self,
         server: &wiremock::MockServer,
         test_env: TestEnv,
-    ) -> anyhow::Result<TestCodex> {
+    ) -> anyhow::Result<TestGenex> {
         let home = match self.home.clone() {
             Some(home) => home,
             None => Arc::new(TempDir::new()?),
@@ -471,7 +471,7 @@ impl TestCodexBuilder {
     pub async fn build_with_remote_and_local_env(
         &mut self,
         server: &wiremock::MockServer,
-    ) -> anyhow::Result<TestCodex> {
+    ) -> anyhow::Result<TestGenex> {
         let home = match self.home.clone() {
             Some(home) => home,
             None => Arc::new(TempDir::new()?),
@@ -488,7 +488,7 @@ impl TestCodexBuilder {
     pub async fn build_with_streaming_server(
         &mut self,
         server: &StreamingSseServer,
-    ) -> anyhow::Result<TestCodex> {
+    ) -> anyhow::Result<TestGenex> {
         let base_url = server.uri();
         let home = match self.home.clone() {
             Some(home) => home,
@@ -508,7 +508,7 @@ impl TestCodexBuilder {
     pub async fn build_with_websocket_server(
         &mut self,
         server: &WebSocketTestServer,
-    ) -> anyhow::Result<TestCodex> {
+    ) -> anyhow::Result<TestGenex> {
         let base_url = format!("{}/v1", server.uri());
         let home = match self.home.clone() {
             Some(home) => home,
@@ -530,7 +530,7 @@ impl TestCodexBuilder {
         server: &wiremock::MockServer,
         home: Arc<TempDir>,
         rollout_path: PathBuf,
-    ) -> anyhow::Result<TestCodex> {
+    ) -> anyhow::Result<TestGenex> {
         let base_url = format!("{}/v1", server.uri());
         let test_env = TestEnv::local().await?;
         Box::pin(self.build_with_home_and_base_url(
@@ -546,8 +546,8 @@ impl TestCodexBuilder {
     pub async fn restart(
         &mut self,
         server: &MockServer,
-        previous: &TestCodex,
-    ) -> Result<TestCodex> {
+        previous: &TestGenex,
+    ) -> Result<TestGenex> {
         let rollout_path = previous
             .session_configured
             .rollout_path
@@ -565,7 +565,7 @@ impl TestCodexBuilder {
         resume_from: Option<PathBuf>,
         test_env: TestEnv,
         include_local_environment: bool,
-    ) -> anyhow::Result<TestCodex> {
+    ) -> anyhow::Result<TestGenex> {
         let (config, fallback_cwd) = self
             .prepare_config(base_url, &home, test_env.cwd().clone())
             .await?;
@@ -623,7 +623,7 @@ impl TestCodexBuilder {
         resume_from: Option<PathBuf>,
         mut test_env: TestEnv,
         environment_manager: Arc<genex_exec_server::EnvironmentManager>,
-    ) -> anyhow::Result<TestCodex> {
+    ) -> anyhow::Result<TestGenex> {
         let auth = self.auth.clone();
         let state_db = genex_core::init_state_db(&config).await;
         let thread_store = self
@@ -748,7 +748,7 @@ impl TestCodexBuilder {
             }
         };
 
-        Ok(TestCodex {
+        Ok(TestGenex {
             home,
             cwd,
             config,
@@ -842,7 +842,7 @@ fn ensure_test_model_catalog(config: &mut Config) -> Result<()> {
     Ok(())
 }
 
-pub struct TestCodex {
+pub struct TestGenex {
     pub home: Arc<TempDir>,
     pub cwd: Arc<TempDir>,
     pub codex: Arc<GenexThread>,
@@ -853,7 +853,7 @@ pub struct TestCodex {
     _test_env: TestEnv,
 }
 
-impl TestCodex {
+impl TestGenex {
     pub fn cwd_path(&self) -> &Path {
         self.cwd.path()
     }
@@ -1063,19 +1063,19 @@ impl TestCodex {
     }
 }
 
-pub struct TestCodexHarness {
+pub struct TestGenexHarness {
     server: MockServer,
-    test: TestCodex,
+    test: TestGenex,
 }
 
-impl TestCodexHarness {
-    pub async fn with_builder(mut builder: TestCodexBuilder) -> Result<Self> {
+impl TestGenexHarness {
+    pub async fn with_builder(mut builder: TestGenexBuilder) -> Result<Self> {
         let server = start_mock_server().await;
         let test = builder.build(&server).await?;
         Ok(Self { server, test })
     }
 
-    pub async fn with_auto_env_builder(mut builder: TestCodexBuilder) -> Result<Self> {
+    pub async fn with_auto_env_builder(mut builder: TestGenexBuilder) -> Result<Self> {
         let server = start_mock_server().await;
         let test = builder.build_with_auto_env(&server).await?;
         Ok(Self { server, test })
@@ -1085,7 +1085,7 @@ impl TestCodexHarness {
         &self.server
     }
 
-    pub fn test(&self) -> &TestCodex {
+    pub fn test(&self) -> &TestGenex {
         &self.test
     }
 
@@ -1286,8 +1286,8 @@ fn function_call_output<'a>(bodies: &'a [Value], call_id: &str) -> &'a Value {
         .expect(&missing_output)
 }
 
-pub fn test_codex() -> TestCodexBuilder {
-    TestCodexBuilder {
+pub fn test_genex() -> TestGenexBuilder {
+    TestGenexBuilder {
         config_mutators: vec![Box::new(|config| {
             // Snapshot tests opt in explicitly; avoid spawning login shells for every test.
             config

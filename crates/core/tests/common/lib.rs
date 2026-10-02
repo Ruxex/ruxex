@@ -13,7 +13,7 @@ use genex_core::GenexThread;
 use genex_core::config::Config;
 use genex_core::config::ConfigBuilder;
 use genex_core::config::ConfigOverrides;
-pub use genex_core::test_support::TestCodexResponsesRequestKind;
+pub use genex_core::test_support::TestGenexResponsesRequestKind;
 pub use genex_core::test_support::responses_metadata;
 use genex_utils_absolute_path::AbsolutePathBuf;
 pub use genex_utils_absolute_path::test_support::PathBufExt;

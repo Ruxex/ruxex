@@ -32,8 +32,8 @@ use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::responses::sse_response;
 use core_test_support::responses::start_mock_server;
-use core_test_support::test_genex::TestCodex;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -121,7 +121,7 @@ async fn responses_api_emits_api_request_event() {
 
     let response_mock = mount_sse_once(&server, sse(vec![ev_completed("done")])).await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_model("gpt-5.4")
         .with_config(|config| {
             config.service_tier = Some(ServiceTier::Flex.request_value().to_string());
@@ -188,7 +188,7 @@ async fn process_sse_emits_tracing_for_output_item() {
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex().build(&server).await.unwrap();
+    let TestGenex { codex, .. } = test_genex().build(&server).await.unwrap();
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
@@ -219,7 +219,7 @@ async fn process_sse_emits_failed_event_on_parse_error() {
 
     mount_sse_once(&server, "data: not-json\n\n".to_string()).await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -260,7 +260,7 @@ async fn process_sse_records_failed_event_when_stream_closes_without_completed()
 
     mount_sse_once(&server, sse(vec![ev_assistant_message("id", "hi")])).await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -321,7 +321,7 @@ async fn process_sse_failed_event_records_response_error_message() {
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -380,7 +380,7 @@ async fn process_sse_failed_event_logs_parse_error() {
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -426,7 +426,7 @@ async fn process_sse_failed_event_logs_missing_error() {
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -481,7 +481,7 @@ async fn process_sse_failed_event_logs_response_completed_parse_error() {
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -545,7 +545,7 @@ async fn process_sse_emits_completed_telemetry() {
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex().build(&server).await.unwrap();
+    let TestGenex { codex, .. } = test_genex().build(&server).await.unwrap();
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
@@ -613,7 +613,7 @@ async fn turn_and_completed_response_spans_record_token_usage() {
     )
     .await;
 
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_reasoning_effort = Some(ReasoningEffort::High);
             config
@@ -625,7 +625,7 @@ async fn turn_and_completed_response_spans_record_token_usage() {
         .await
         .unwrap();
 
-    let TestCodex { codex, .. } = test;
+    let TestGenex { codex, .. } = test;
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
@@ -700,7 +700,7 @@ async fn handle_responses_span_records_response_kind_and_tool_name() {
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_config(|config| {
             config
                 .features
@@ -786,7 +786,7 @@ async fn record_responses_sets_span_fields_for_response_events() {
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_model("gpt-5.4")
         .with_config(|config| {
             config.model_reasoning_effort = Some(ReasoningEffort::High);
@@ -871,7 +871,7 @@ async fn handle_response_item_records_tool_result_for_custom_tool_call() {
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -941,7 +941,7 @@ async fn handle_response_item_records_tool_result_for_function_call() {
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -1011,7 +1011,7 @@ async fn handle_response_item_records_tool_result_for_exec_command_call() {
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -1251,7 +1251,7 @@ async fn handle_exec_command_autoapprove_from_config_records_tool_decision() {
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
             config
@@ -1303,7 +1303,7 @@ async fn handle_exec_command_user_approved_records_tool_decision() {
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_config(|config| {
             config.permissions.approval_policy =
                 Constrained::allow_any(AskForApproval::UnlessTrusted);
@@ -1367,7 +1367,7 @@ async fn handle_exec_command_user_approved_for_session_records_tool_decision() {
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_config(|config| {
             config.permissions.approval_policy =
                 Constrained::allow_any(AskForApproval::UnlessTrusted);
@@ -1431,7 +1431,7 @@ async fn handle_exec_command_user_denies_records_tool_decision() {
         ]),
     )
     .await;
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_config(|config| {
             config.permissions.approval_policy =
                 Constrained::allow_any(AskForApproval::UnlessTrusted);

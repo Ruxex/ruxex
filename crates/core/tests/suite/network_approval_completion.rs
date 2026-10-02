@@ -27,7 +27,7 @@ use core_test_support::responses::sse;
 use core_test_support::responses::sse_response;
 use core_test_support::responses::start_mock_server;
 use core_test_support::startup::STARTUP_TIMEOUT;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -153,7 +153,7 @@ async fn completed_remote_process_withdraws_pending_network_review() -> Result<(
             }
         }
     });
-    let test = test_codex()
+    let test = test_genex()
         .with_exec_server_url(exec_server_url)
         .with_cloud_config_bundle(managed_network_requirements_loader())
         .with_pre_build_hook(|home| {

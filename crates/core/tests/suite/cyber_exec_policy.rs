@@ -25,8 +25,8 @@ use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_sandbox;
 use core_test_support::skip_if_wine_exec;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::TestCodex;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use core_test_support::zsh_fork::zsh_fork_runtime;
 use core_test_support::zsh_fork::zsh_fork_test_builder;
@@ -94,7 +94,7 @@ fn guardian_allow_response(response_id: &str) -> String {
     ])
 }
 
-async fn submit_model_turn(test: &TestCodex, model: &str, prompt: &str) -> Result<()> {
+async fn submit_model_turn(test: &TestGenex, model: &str, prompt: &str) -> Result<()> {
     submit_thread_settings(
         &test.codex,
         ThreadSettingsOverrides {
@@ -122,7 +122,7 @@ async fn saved_prefix_only_bypasses_guardian_for_general_models(
 
     let server = start_mock_server().await;
     let builder = match shell_backend {
-        ShellBackend::Standard => test_codex(),
+        ShellBackend::Standard => test_genex(),
         ShellBackend::ZshFork => {
             skip_if_host_windows!(Ok(()));
             let Some(runtime) = zsh_fork_runtime("cyber model zsh-fork saved prefix")? else {
@@ -193,7 +193,7 @@ async fn cyber_model_user_approval_never_offers_a_reusable_prefix() -> Result<()
     skip_if_wine_exec!(Ok(()), "command approval requires host-native paths");
 
     let server = start_mock_server().await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model_info_override("gpt-5.4", |model| {
             model.model_specialty = Some(MODEL_SPECIALTY_CYBER.to_string());
         })
@@ -272,7 +272,7 @@ async fn switching_models_suppresses_and_restores_saved_prefix_approvals() -> Re
     skip_if_wine_exec!(Ok(()), "Guardian command reviews require host-native paths");
 
     let server = start_mock_server().await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model_info_override("gpt-5.4", |model| {
             model.model_specialty = Some(MODEL_SPECIALTY_CYBER.to_string());
         })

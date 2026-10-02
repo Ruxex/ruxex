@@ -24,8 +24,8 @@ use core_test_support::responses::ev_function_call;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
-use core_test_support::test_genex::TestCodexHarness;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenexHarness;
+use core_test_support::test_genex::test_genex;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;
@@ -62,12 +62,12 @@ impl Drop for EnvVarGuard {
     }
 }
 
-enum TestCodexHome {
+enum TestGenexHome {
     Persistent(PathBuf),
     Temporary(TempDir),
 }
 
-impl TestCodexHome {
+impl TestGenexHome {
     fn path(&self) -> &Path {
         match self {
             Self::Persistent(path) => path.as_path(),
@@ -76,9 +76,9 @@ impl TestCodexHome {
     }
 }
 
-fn codex_home_for_windows_sandbox_test(name: &str) -> anyhow::Result<TestCodexHome> {
+fn genex_home_for_windows_sandbox_test(name: &str) -> anyhow::Result<TestGenexHome> {
     let _ = name;
-    Ok(TestCodexHome::Temporary(TempDir::new()?))
+    Ok(TestGenexHome::Temporary(TempDir::new()?))
 }
 
 fn stage_windows_sandbox_helpers() -> anyhow::Result<()> {
@@ -173,7 +173,7 @@ fn assert_managed_deny_probe(output: &std::process::Output, launch: usize) -> an
 #[serial(codex_home)]
 fn windows_sandbox_cli_preserves_managed_deny_reads_across_launches() -> anyhow::Result<()> {
     let codex_home =
-        codex_home_for_windows_sandbox_test("windows-cli-managed-deny-read-codex-home")?;
+        genex_home_for_windows_sandbox_test("windows-cli-managed-deny-read-codex-home")?;
 
     let fixture = TempDir::new()?;
     let fixture_root = dunce::canonicalize(fixture.path())?;
@@ -258,7 +258,7 @@ fn windows_sandbox_cli_preserves_managed_deny_reads_across_launches() -> anyhow:
 #[tokio::test]
 #[serial(codex_home)]
 async fn windows_elevated_setup_rejects_default_root_deny() -> anyhow::Result<()> {
-    let codex_home = codex_home_for_windows_sandbox_test("windows-elevated-root-deny-codex-home")?;
+    let codex_home = genex_home_for_windows_sandbox_test("windows-elevated-root-deny-codex-home")?;
     let workspace = TempDir::new()?;
     let cwd = dunce::canonicalize(workspace.path())?.abs();
     let file_system_sandbox_policy =
@@ -296,7 +296,7 @@ async fn windows_elevated_setup_rejects_default_root_deny() -> anyhow::Result<()
 #[serial(codex_home)]
 async fn windows_restricted_token_rejects_exact_and_glob_deny_read_policy() -> anyhow::Result<()> {
     let codex_home =
-        codex_home_for_windows_sandbox_test("windows-restricted-token-deny-read-codex-home")?;
+        genex_home_for_windows_sandbox_test("windows-restricted-token-deny-read-codex-home")?;
     let _codex_home_guard = EnvVarGuard::set("CODEX_HOME", codex_home.path().as_os_str());
     let workspace = TempDir::new()?;
     let cwd = dunce::canonicalize(workspace.path())?.abs();
@@ -384,7 +384,7 @@ async fn windows_restricted_token_rejects_exact_and_glob_deny_read_policy() -> a
 #[serial(codex_home)]
 async fn windows_elevated_does_not_create_missing_workspace_metadata() -> anyhow::Result<()> {
     let codex_home =
-        codex_home_for_windows_sandbox_test("windows-elevated-missing-metadata-codex-home")?;
+        genex_home_for_windows_sandbox_test("windows-elevated-missing-metadata-codex-home")?;
     let _codex_home_guard = EnvVarGuard::set("CODEX_HOME", codex_home.path().as_os_str());
     stage_windows_sandbox_helpers()?;
     let workspace = TempDir::new()?;
@@ -509,7 +509,7 @@ $rules = foreach ($name in @('codex_sandbox_offline_block_inbound', 'codex_sandb
 #[tokio::test]
 #[serial(codex_home)]
 async fn windows_elevated_enforces_deny_read_and_protects_setup_marker() -> anyhow::Result<()> {
-    let codex_home = codex_home_for_windows_sandbox_test("windows-elevated-deny-read-codex-home")?;
+    let codex_home = genex_home_for_windows_sandbox_test("windows-elevated-deny-read-codex-home")?;
     let _codex_home_guard = EnvVarGuard::set("CODEX_HOME", codex_home.path().as_os_str());
     stage_windows_sandbox_helpers()?;
     let workspace = TempDir::new()?;
@@ -651,12 +651,12 @@ async fn windows_elevated_enforces_deny_read_and_protects_setup_marker() -> anyh
 #[serial(codex_home)]
 async fn windows_elevated_unified_exec_enforces_managed_deny_reads() -> anyhow::Result<()> {
     let codex_home =
-        codex_home_for_windows_sandbox_test("windows-elevated-tool-runtime-deny-read-codex-home")?;
+        genex_home_for_windows_sandbox_test("windows-elevated-tool-runtime-deny-read-codex-home")?;
     let _codex_home_guard = EnvVarGuard::set("CODEX_HOME", codex_home.path().as_os_str());
     stage_windows_sandbox_helpers()?;
 
     let configured_codex_home = dunce::canonicalize(codex_home.path())?.abs();
-    let builder = test_codex()
+    let builder = test_genex()
         .with_windows_cmd_shell()
         .with_config(move |config| {
             config.codex_home = configured_codex_home;
@@ -716,7 +716,7 @@ async fn windows_elevated_unified_exec_enforces_managed_deny_reads() -> anyhow::
             std::fs::write(cwd.join("public.txt"), "public ok\n")?;
             Ok(())
         });
-    let harness = TestCodexHarness::with_builder(builder).await?;
+    let harness = TestGenexHarness::with_builder(builder).await?;
 
     let command = concat!(
         "(type secret.env 1>NUL 2>NUL && echo GLOB-READ || echo GLOB-DENIED) & ",

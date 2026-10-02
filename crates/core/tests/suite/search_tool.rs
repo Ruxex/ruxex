@@ -67,7 +67,7 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_mcp_server;
 use pretty_assertions::assert_eq;
@@ -343,7 +343,7 @@ async fn app_search_sources_are_hidden_for_api_key_auth() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("Test API Key"))
         .with_config(move |config| {
             configure_search_capable_apps(config, apps_server.managed_auth_base_url.as_str())
@@ -861,7 +861,7 @@ async fn tool_search_returns_deferred_v1_multi_agent_tools() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex().with_config(configure_search_capable_model);
+    let mut builder = test_genex().with_config(configure_search_capable_model);
     let test = builder.build_with_auto_env(&server).await?;
     test.submit_turn_with_approval_and_permission_profile(
         "Find the spawn agent tool",
@@ -1016,7 +1016,7 @@ async fn tool_search_returns_deferred_custom_tool_and_routes_follow_up_call() ->
 
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     extensions.tool_contributor(Arc::new(DeferredCustomTool));
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .with_config(configure_search_capable_model);
     let test = builder.build_with_auto_env(&server).await?;
@@ -1142,7 +1142,7 @@ async fn tool_search_returns_deferred_dynamic_tool_and_routes_follow_up_call() -
         defer_loading: false,
     });
 
-    let mut builder = test_codex().with_config(configure_search_capable_model);
+    let mut builder = test_genex().with_config(configure_search_capable_model);
     let base_test = builder.build_with_auto_env(&server).await?;
     let new_thread = base_test
         .thread_manager
@@ -1795,7 +1795,7 @@ async fn tool_search_matches_dynamic_tools_by_name_description_namespace_and_sch
         )],
     });
 
-    let mut builder = test_codex().with_config(configure_search_capable_model);
+    let mut builder = test_genex().with_config(configure_search_capable_model);
     let base_test = builder.build_with_auto_env(&server).await?;
     let new_thread = base_test
         .thread_manager

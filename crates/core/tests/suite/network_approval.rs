@@ -68,10 +68,10 @@ use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_no_remote_env;
 use core_test_support::skip_if_sandbox;
 use core_test_support::skip_if_target_windows;
-use core_test_support::test_genex::TestCodex;
-use core_test_support::test_genex::TestCodexBuilder;
+use core_test_support::test_genex::TestGenex;
+use core_test_support::test_genex::TestGenexBuilder;
 use core_test_support::test_genex::local;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_with_timeout;
@@ -2355,7 +2355,7 @@ async fn owner_network_policy_follows_the_selected_remote_command() -> Result<()
     let server = start_mock_server().await;
     let mut scenarios = vec![("ROOTED", managed_network_unified_exec_test(&server).await?)];
     for (scenario, configured_controller) in [("ROOTLESS", false), ("USER_ROOTED", true)] {
-        let mut builder = test_codex().with_config(move |config| {
+        let mut builder = test_genex().with_config(move |config| {
             for feature in [Feature::UnifiedExec, Feature::ExecPermissionApprovals] {
                 config
                     .features
@@ -2689,14 +2689,14 @@ pub(super) fn guardian_parent_catalog() -> ModelsResponse {
     }
 }
 
-async fn managed_network_unified_exec_test(server: &wiremock::MockServer) -> Result<TestCodex> {
+async fn managed_network_unified_exec_test(server: &wiremock::MockServer) -> Result<TestGenex> {
     managed_network_unified_exec_test_with_features(server, &[]).await
 }
 
 async fn managed_network_unified_exec_test_with_features(
     server: &wiremock::MockServer,
     features: &[Feature],
-) -> Result<TestCodex> {
+) -> Result<TestGenex> {
     let test = managed_network_unified_exec_builder(features)?
         .build_with_remote_and_local_env(server)
         .await?;
@@ -2706,7 +2706,7 @@ async fn managed_network_unified_exec_test_with_features(
     Ok(test)
 }
 
-fn managed_network_unified_exec_builder(features: &[Feature]) -> Result<TestCodexBuilder> {
+fn managed_network_unified_exec_builder(features: &[Feature]) -> Result<TestGenexBuilder> {
     let home = Arc::new(TempDir::new()?);
     fs::write(
         home.path().join("config.toml"),
@@ -2730,7 +2730,7 @@ allow_local_binding = true
     );
     let permission_profile_for_config = permission_profile;
     let features = features.to_vec();
-    Ok(test_codex()
+    Ok(test_genex()
         .with_home(home)
         .with_cloud_config_bundle(managed_network_requirements_loader())
         .with_config(move |config| {
@@ -2795,7 +2795,7 @@ fn remote_network_proxy_request_command(marker: &str) -> String {
 }
 
 async fn submit_managed_network_turn(
-    test: &TestCodex,
+    test: &TestGenex,
     prompt: &str,
     environments: Vec<TurnEnvironmentSelection>,
     approvals_reviewer: ApprovalsReviewer,
@@ -2955,7 +2955,7 @@ fn guardian_network_actions(responses: &ResponseMock) -> Result<Vec<Value>> {
 }
 
 async fn expect_network_approval(
-    test: &TestCodex,
+    test: &TestGenex,
     expected_environment_id: &str,
 ) -> Result<ExecApprovalRequestEvent> {
     expect_network_approval_target(
@@ -2968,7 +2968,7 @@ async fn expect_network_approval(
 }
 
 async fn expect_network_approval_target(
-    test: &TestCodex,
+    test: &TestGenex,
     expected_environment_id: &str,
     expected_target: &str,
     expected_protocol: NetworkApprovalProtocol,
@@ -3014,7 +3014,7 @@ async fn expect_network_approval_target(
     }
 }
 
-async fn wait_for_completion_without_network_prompt(test: &TestCodex) {
+async fn wait_for_completion_without_network_prompt(test: &TestGenex) {
     let event = wait_for_event(&test.codex, |event| {
         matches!(
             event,
@@ -3089,7 +3089,7 @@ async fn wait_for_paths(paths: &[&std::path::Path]) -> Result<()> {
     Ok(())
 }
 
-async fn wait_for_turn_complete(test: &TestCodex) {
+async fn wait_for_turn_complete(test: &TestGenex) {
     wait_for_event(&test.codex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })

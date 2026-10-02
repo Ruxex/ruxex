@@ -57,7 +57,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::TestGenex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
@@ -430,7 +430,7 @@ default_tools_approval_mode = "{approval_mode}"
 }
 
 async fn submit_user_turn(
-    test: &TestCodex,
+    test: &TestGenex,
     text: &str,
     approval_policy: AskForApproval,
     permission_profile: PermissionProfile,
@@ -488,7 +488,7 @@ fn attribution_models(model_slugs: [&str; 2]) -> Vec<genex_protocol::model_types
 }
 
 async fn apply_turn_attribution_update(
-    test: &TestCodex,
+    test: &TestGenex,
     request_user_input_call_id: &str,
     model: &str,
 ) -> Result<()> {
@@ -530,7 +530,7 @@ async fn apply_turn_attribution_update(
 }
 
 async fn wait_for_mcp_tool_call_item(
-    test: &TestCodex,
+    test: &TestGenex,
     call_id: &str,
     status: McpToolCallStatus,
 ) -> Option<bool> {

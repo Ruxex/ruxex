@@ -24,9 +24,9 @@ use core_test_support::responses::sse_completed;
 use core_test_support::responses::sse_response;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::TestGenex;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
@@ -39,7 +39,7 @@ const TRUSTED_ACCESS_FOR_CYBER_VERIFICATION: &str = "trusted_access_for_cyber";
 const CYBER_POLICY_MESSAGE: &str =
     "This request has been flagged for potentially high-risk cyber activity.";
 
-fn disabled_text_turn(test: &TestCodex, text: &str) -> TurnInputRequest {
+fn disabled_text_turn(test: &TestGenex, text: &str) -> TurnInputRequest {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.cwd_path());
     TurnInputRequest::user_input(vec![UserInput::Text {
@@ -72,7 +72,7 @@ async fn provider_model_header_mismatch_emits_warning_event() -> Result<()> {
         sse_response(sse_completed("resp-1")).insert_header("provider-Model", SERVER_MODEL);
     let _mock = mount_response_once(&server, response).await;
 
-    let mut builder = test_codex().with_model(REQUESTED_MODEL);
+    let mut builder = test_genex().with_model(REQUESTED_MODEL);
     let test = builder.build(&server).await?;
 
     test.codex
@@ -120,7 +120,7 @@ async fn cyber_policy_response_emits_typed_error_without_retry() -> Result<()> {
     }));
     let mock = mount_response_once(&server, response).await;
 
-    let mut builder = test_codex().with_model(REQUESTED_MODEL);
+    let mut builder = test_genex().with_model(REQUESTED_MODEL);
     let test = builder.build(&server).await?;
 
     test.codex
@@ -159,7 +159,7 @@ async fn response_model_field_mismatch_emits_warning_when_header_matches_request
     .insert_header("provider-Model", REQUESTED_MODEL);
     let _mock = mount_response_once(&server, response).await;
 
-    let mut builder = test_codex().with_model(REQUESTED_MODEL);
+    let mut builder = test_genex().with_model(REQUESTED_MODEL);
     let test = builder.build(&server).await?;
 
     test.codex
@@ -229,7 +229,7 @@ async fn provider_model_header_mismatch_only_emits_one_warning_per_turn() -> Res
     .insert_header("provider-Model", SERVER_MODEL);
     let _mock = mount_response_sequence(&server, vec![first_response, second_response]).await;
 
-    let mut builder = test_codex().with_model(REQUESTED_MODEL);
+    let mut builder = test_genex().with_model(REQUESTED_MODEL);
     let test = builder.build(&server).await?;
 
     test.codex
@@ -267,7 +267,7 @@ async fn provider_model_header_casing_only_mismatch_does_not_warn() -> Result<()
         .insert_header("provider-Model", requested_header.as_str());
     let _mock = mount_response_once(&server, response).await;
 
-    let mut builder = test_codex().with_model(REQUESTED_MODEL);
+    let mut builder = test_genex().with_model(REQUESTED_MODEL);
     let test = builder.build(&server).await?;
 
     test.codex
@@ -310,7 +310,7 @@ async fn model_verification_emits_structured_event_without_reroute_or_warning() 
     ]));
     let _mock = mount_response_once(&server, response).await;
 
-    let mut builder = test_codex().with_model("gpt-5.5");
+    let mut builder = test_genex().with_model("gpt-5.5");
     let test = builder.build(&server).await?;
 
     test.codex
@@ -386,7 +386,7 @@ async fn model_verification_only_emits_once_per_turn() -> Result<()> {
     ]));
     let _mock = mount_response_sequence(&server, vec![first_response, second_response]).await;
 
-    let mut builder = test_codex().with_model(SERVER_MODEL);
+    let mut builder = test_genex().with_model(SERVER_MODEL);
     let test = builder.build(&server).await?;
 
     test.codex

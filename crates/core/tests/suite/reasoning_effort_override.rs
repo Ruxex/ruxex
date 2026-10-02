@@ -20,8 +20,8 @@ use core_test_support::responses;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::skip_if_no_network;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::TestCodexBuilder;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenexBuilder;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -30,8 +30,8 @@ use std::time::Duration;
 use test_case::test_case;
 use wiremock::ResponseTemplate;
 
-fn override_builder() -> TestCodexBuilder {
-    test_codex()
+fn override_builder() -> TestGenexBuilder {
+    test_genex()
         .with_model_info_override("gpt-5.4", |model| {
             model.use_responses_lite = true;
         })

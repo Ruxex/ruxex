@@ -5,7 +5,7 @@ use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use pretty_assertions::assert_eq;
 use std::time::Duration;
 use tokio::io::AsyncReadExt;
@@ -105,7 +105,7 @@ async fn regular_responses_turn_honors_respect_system_proxy() -> Result<()> {
     }
 
     let server = MockServer::start().await;
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         // The proxy serves one inference response; model discovery must not consume it.
         config.model_catalog =
             Some(test_models_response().expect("bundled models.json should parse"));

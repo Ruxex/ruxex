@@ -52,9 +52,9 @@ use core_test_support::skip_if_remote;
 use core_test_support::skip_if_target_windows;
 use core_test_support::stdio_server_bin;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::TestGenex;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
@@ -278,9 +278,9 @@ fn write_plugin_app_plugin_with_name(home: &TempDir, app_name: &str) {
 async fn build_analytics_plugin_test_codex(
     server: &MockServer,
     codex_home: Arc<TempDir>,
-) -> Result<TestCodex> {
+) -> Result<TestGenex> {
     let managed_auth_base_url = server.uri();
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(codex_home)
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.2")
@@ -294,8 +294,8 @@ async fn build_apps_enabled_plugin_test_codex(
     server: &MockServer,
     codex_home: Arc<TempDir>,
     managed_auth_base_url: String,
-) -> Result<TestCodex> {
-    let mut builder = test_codex()
+) -> Result<TestGenex> {
+    let mut builder = test_genex()
         .with_home(codex_home)
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
@@ -392,7 +392,7 @@ async fn persisted_remote_plugin_command_attribution_flows_through_turn_context(
         };
         zsh_fork_test_builder(runtime, AskForApproval::Never)
     } else {
-        test_codex()
+        test_genex()
     };
     let command = shlex::try_join(["/bin/sh", script_path.to_string_lossy().as_ref()])?;
     let call_id = "remote-plugin-command";
@@ -423,10 +423,10 @@ async fn persisted_remote_plugin_command_attribution_flows_through_turn_context(
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.2")
         .with_config(move |config| config.managed_auth_base_url = managed_auth_base_url);
-    let test_codex = builder.build_with_auto_env(&server).await?;
-    let codex = Arc::clone(&test_codex.codex);
-    let cwd = test_codex.config.cwd.clone();
-    let session_model = test_codex.session_configured.model.clone();
+    let test_genex = builder.build_with_auto_env(&server).await?;
+    let codex = Arc::clone(&test_genex.codex);
+    let cwd = test_genex.config.cwd.clone();
+    let session_model = test_genex.session_configured.model.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::read_only(), cwd.as_path());
     codex
@@ -511,7 +511,7 @@ async fn thread_disabled_plugins_filter_skills_and_tools_without_changing_shared
     )?;
     write_plugin_mcp_plugin(home.as_ref(), &stdio_server_bin()?);
     write_plugin_app_plugin_with_name(home.as_ref(), "sample_app");
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(home)
         .with_extensions(skills_extensions())
         .with_auth(CodexAuth::from_api_key("test-api-key"))
@@ -654,19 +654,19 @@ async fn agent_plugin_skills_use_shared_catalog_and_direct_child_discovery() -> 
     .await;
     let codex_home = Arc::new(TempDir::new()?);
     let skill_path = dunce::canonicalize(write_agent_plugin_skill_plugin(codex_home.as_ref()))?;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&codex_home))
         .with_extensions(skills_extensions());
-    let test_codex = builder.build_with_auto_env(&server).await?;
+    let test_genex = builder.build_with_auto_env(&server).await?;
 
-    test_codex
+    test_genex
         .codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Skill {
             name: "acme.tools:review".into(),
             path: skill_path,
         }]))
         .await?;
-    let warning = wait_for_event(&test_codex.codex, |ev| {
+    let warning = wait_for_event(&test_genex.codex, |ev| {
         matches!(
             ev,
             EventMsg::Warning(warning)
@@ -674,7 +674,7 @@ async fn agent_plugin_skills_use_shared_catalog_and_direct_child_discovery() -> 
         )
     })
     .await;
-    wait_for_event(&test_codex.codex, |ev| {
+    wait_for_event(&test_genex.codex, |ev| {
         matches!(ev, EventMsg::TurnComplete(_))
     })
     .await;
@@ -737,7 +737,7 @@ async fn plugin_skill_product_policy_and_migrated_command_precedence_reach_agent
         )?;
     }
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&codex_home))
         .with_extensions(skills_extensions());
     let test = builder.build_with_auto_env(&server).await?;
@@ -812,19 +812,19 @@ async fn legacy_plugin_skill_prompt_remains_complete() -> Result<()> {
     );
     std::fs::write(&skill_path, &skill_contents)?;
     let skill_path = dunce::canonicalize(skill_path)?;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(codex_home)
         .with_extensions(skills_extensions());
-    let test_codex = builder.build_with_auto_env(&server).await?;
+    let test_genex = builder.build_with_auto_env(&server).await?;
 
-    test_codex
+    test_genex
         .codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Skill {
             name: "sample:sample-search".into(),
             path: skill_path,
         }]))
         .await?;
-    wait_for_event(&test_codex.codex, |ev| {
+    wait_for_event(&test_genex.codex, |ev| {
         matches!(ev, EventMsg::TurnComplete(_))
     })
     .await;
@@ -911,7 +911,7 @@ enabled = true
     }
 
     let managed_auth_base_url = server.uri();
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(codex_home)
         .with_extensions(skills_extensions())
         .with_auth(CodexAuth::from_api_key("test-api-key"))
@@ -1025,9 +1025,9 @@ async fn agent_plugin_root_mcp_stdio_tool_round_trip_expands_reserved_paths_and_
         plugin_root.join(".codex-plugin/plugin.json"),
         r#"{"name":"acme.tools","mcpServers":{"agent":{"command":"ignored","env_vars":["INSTA_WORKSPACE_ROOT"]}}}"#,
     )?;
-    let mut builder = test_codex().with_home(Arc::clone(&codex_home));
-    let test_codex = builder.build_with_remote_and_local_env(&server).await?;
-    wait_for_mcp_server(&test_codex.codex, "agent").await?;
+    let mut builder = test_genex().with_home(Arc::clone(&codex_home));
+    let test_genex = builder.build_with_remote_and_local_env(&server).await?;
+    wait_for_mcp_server(&test_genex.codex, "agent").await?;
     let data_root = dunce::canonicalize(
         std::fs::read_dir(codex_home.path().join("plugins/data/agent-plugins"))?
             .next()
@@ -1040,22 +1040,22 @@ async fn agent_plugin_root_mcp_stdio_tool_round_trip_expands_reserved_paths_and_
         data_root.display()
     );
 
-    test_codex
+    test_genex
         .codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "call the Agent Plugin echo tool".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    let end = wait_for_event(&test_codex.codex, |event| {
+    let end = wait_for_event(&test_genex.codex, |event| {
         matches!(event, EventMsg::McpToolCallEnd(_))
     })
     .await;
-    let overlay_end = wait_for_event(&test_codex.codex, |event| {
+    let overlay_end = wait_for_event(&test_genex.codex, |event| {
         matches!(event, EventMsg::McpToolCallEnd(_))
     })
     .await;
-    wait_for_event(&test_codex.codex, |event| {
+    wait_for_event(&test_genex.codex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1160,9 +1160,9 @@ async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
         },
     ];
 
-    async fn loaded_plugin_skills_for_config(test_codex: &TestCodex, config: &Config) -> String {
+    async fn loaded_plugin_skills_for_config(test_genex: &TestGenex, config: &Config) -> String {
         let plugins_input = config.plugins_config_input();
-        let plugins_manager = test_codex.thread_manager.plugins_manager();
+        let plugins_manager = test_genex.thread_manager.plugins_manager();
         let plugin_outcome = plugins_manager.plugins_for_config(&plugins_input).await;
         let skills_input = HostSkillsLoadInput::new(
             config.cwd.clone(),
@@ -1172,7 +1172,7 @@ async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
         .with_plugin_skill_snapshots(
             plugins_manager.plugin_skill_snapshots_for_config(&plugins_input),
         );
-        let skills_snapshot = test_codex
+        let skills_snapshot = test_genex
             .thread_manager
             .skills_service()
             .snapshot_for_config(&skills_input, /*fs*/ None)
@@ -1260,12 +1260,12 @@ enabled = true
             )?;
         }
 
-        let mut builder = test_codex()
+        let mut builder = test_genex()
             .with_home(Arc::clone(&codex_home))
             .with_extensions(skills_extensions())
             .with_auth(CodexAuth::from_api_key("test-api-key"));
-        let test_codex = builder.build_with_auto_env(&server).await?;
-        let initial_skills = loaded_plugin_skills_for_config(&test_codex, &test_codex.config).await;
+        let test_genex = builder.build_with_auto_env(&server).await?;
+        let initial_skills = loaded_plugin_skills_for_config(&test_genex, &test_genex.config).await;
         assert_loaded_plugin_skills(
             fixture.name,
             "initial managed config",
@@ -1289,7 +1289,7 @@ enabled = true
                     genex_login::AuthCredentialsStoreMode::File,
                     genex_login::AuthKeyringBackendKind::default(),
                 )?;
-                test_codex.thread_manager.auth_manager().reload().await;
+                test_genex.thread_manager.auth_manager().reload().await;
                 Some(AuthMode::ApiKey)
             }
             TargetAuth::BedrockApiKey => {
@@ -1300,22 +1300,22 @@ enabled = true
                     genex_login::AuthCredentialsStoreMode::File,
                     genex_login::AuthKeyringBackendKind::default(),
                 )?;
-                test_codex.thread_manager.auth_manager().reload().await;
+                test_genex.thread_manager.auth_manager().reload().await;
                 Some(AuthMode::BedrockApiKey)
             }
             TargetAuth::NoCodexAuth => {
-                test_codex.thread_manager.auth_manager().logout().await?;
+                test_genex.thread_manager.auth_manager().logout().await?;
                 None
             }
         };
         assert_eq!(
-            test_codex.thread_manager.auth_manager().get_api_auth_mode(),
+            test_genex.thread_manager.auth_manager().get_api_auth_mode(),
             expected_auth_mode
         );
-        test_codex.thread_manager.skills_service().clear_cache();
-        let mut target_config = test_codex.config.clone();
+        test_genex.thread_manager.skills_service().clear_cache();
+        let mut target_config = test_genex.config.clone();
         target_config.model_provider_id = fixture.target_model_provider_id.to_string();
-        let target_skills = loaded_plugin_skills_for_config(&test_codex, &target_config).await;
+        let target_skills = loaded_plugin_skills_for_config(&test_genex, &target_config).await;
         assert_loaded_plugin_skills(
             fixture.name,
             "target config",
@@ -1363,10 +1363,10 @@ async fn explicit_plugin_mentions_use_apps_for_managed_dual_surface_plugins(
         format!("{config}\n[apps.calendar]\nenabled = {app_enabled}\n"),
     )?;
 
-    let test_codex =
+    let test_genex =
         build_apps_enabled_plugin_test_codex(&server, codex_home, apps_server.managed_auth_base_url)
             .await?;
-    let codex = Arc::clone(&test_codex.codex);
+    let codex = Arc::clone(&test_genex.codex);
     wait_for_mcp_server(&codex, CODEX_APPS_MCP_SERVER_NAME).await?;
 
     codex
@@ -1450,10 +1450,10 @@ async fn explicit_plugin_mentions_keep_non_conflicting_mcp_for_managed_auth() ->
     write_plugin_mcp_plugin(codex_home.as_ref(), &rmcp_test_server_bin);
     write_plugin_app_plugin_with_name(codex_home.as_ref(), "sample_app");
 
-    let test_codex =
+    let test_genex =
         build_apps_enabled_plugin_test_codex(&server, codex_home, apps_server.managed_auth_base_url)
             .await?;
-    let codex = Arc::clone(&test_codex.codex);
+    let codex = Arc::clone(&test_genex.codex);
     wait_for_mcp_server(&codex, "sample").await?;
 
     codex
@@ -1564,7 +1564,7 @@ async fn system_marketplace_plugin_honors_layered_activation_and_mcp_policy(
         })
         .build()
         .await?;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(codex_home)
         .with_config(move |config| config.config_layer_stack = layered_config.config_layer_stack);
     let test = builder.build_with_remote_and_local_env(&server).await?;
@@ -1638,7 +1638,7 @@ async fn explicitly_requested_mcp_waits_for_startup(request: ExplicitMcpRequest)
     write_plugin_app_plugin(codex_home.as_ref());
     let initialize_barrier = block_plugin_mcp_startup(codex_home.as_ref(), &rmcp_test_server_bin);
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(codex_home)
         .with_auth(CodexAuth::from_api_key("Test API Key"))
         .with_config(move |config| {
@@ -1647,8 +1647,8 @@ async fn explicitly_requested_mcp_waits_for_startup(request: ExplicitMcpRequest)
                 .enable(Feature::Apps)
                 .expect("test config should allow feature update");
         });
-    let test_codex = builder.build_with_remote_and_local_env(&server).await?;
-    let codex = Arc::clone(&test_codex.codex);
+    let test_genex = builder.build_with_remote_and_local_env(&server).await?;
+    let codex = Arc::clone(&test_genex.codex);
 
     let input = match request {
         ExplicitMcpRequest::Plugin => UserInput::Mention {
@@ -1740,8 +1740,8 @@ async fn explicit_plugin_mentions_track_plugin_used_analytics() -> Result<()> {
 
     let codex_home = Arc::new(TempDir::new()?);
     write_plugin_skill_plugin(codex_home.as_ref());
-    let test_codex = build_analytics_plugin_test_codex(&server, codex_home).await?;
-    let codex = Arc::clone(&test_codex.codex);
+    let test_genex = build_analytics_plugin_test_codex(&server, codex_home).await?;
+    let codex = Arc::clone(&test_genex.codex);
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
@@ -1791,8 +1791,8 @@ async fn explicit_plugin_skill_invocation_tracks_remote_plugin_id() -> Result<()
     let codex_home = Arc::new(TempDir::new()?);
     let skill_path = dunce::canonicalize(write_remote_plugin_skill_plugin(codex_home.as_ref()))?;
     persist_sample_remote_plugin_id(codex_home.as_ref());
-    let test_codex = build_analytics_plugin_test_codex(&server, codex_home).await?;
-    let codex = Arc::clone(&test_codex.codex);
+    let test_genex = build_analytics_plugin_test_codex(&server, codex_home).await?;
+    let codex = Arc::clone(&test_genex.codex);
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Skill {
@@ -1870,8 +1870,8 @@ async fn implicit_plugin_skill_invocation_tracks_remote_plugin_id(
         ],
     )
     .await;
-    let test_codex = build_analytics_plugin_test_codex(&server, codex_home).await?;
-    let codex = Arc::clone(&test_codex.codex);
+    let test_genex = build_analytics_plugin_test_codex(&server, codex_home).await?;
+    let codex = Arc::clone(&test_genex.codex);
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {

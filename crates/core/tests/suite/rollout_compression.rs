@@ -29,7 +29,7 @@ use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use wiremock::MockServer;
@@ -39,7 +39,7 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let test = test_codex()
+    let test = test_genex()
         .with_history_mode(ThreadHistoryMode::Paginated)
         .with_config(|config| {
             config.model_provider.name = "Local compaction test provider".to_string();

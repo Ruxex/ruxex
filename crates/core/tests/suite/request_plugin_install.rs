@@ -43,8 +43,8 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
-use core_test_support::test_genex::TestCodex;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
@@ -200,8 +200,8 @@ fn assert_legacy_tools(body: &Value) {
 async fn build_test(
     server: &wiremock::MockServer,
     apps_server: &AppsTestServer,
-) -> Result<TestCodex> {
-    let mut builder = test_codex()
+) -> Result<TestGenex> {
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config({
             let apps_base_url = apps_server.managed_auth_base_url.clone();
@@ -219,11 +219,11 @@ async fn build_test(
 async fn build_gated_step_preparation_test(
     server: &MockServer,
     apps_server: &AppsTestServer,
-) -> Result<TestCodex> {
+) -> Result<TestGenex> {
     let command = remote_aware_stdio_server_bin()?;
     let environment_id = remote_aware_environment_id();
     let apps_base_url = apps_server.managed_auth_base_url.clone();
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config
@@ -258,7 +258,7 @@ async fn build_gated_step_preparation_test(
     builder.build_with_auto_env(server).await
 }
 
-async fn start_gated_step_preparation(test: &TestCodex, server: &MockServer) -> Result<PathUri> {
+async fn start_gated_step_preparation(test: &TestGenex, server: &MockServer) -> Result<PathUri> {
     // Settle startup work before clearing its cache so these tests still exercise
     // a fresh recommendation fetch alongside first-turn MCP discovery.
     wait_for_startup_recommendations(server).await?;
@@ -320,7 +320,7 @@ async fn start_gated_step_preparation(test: &TestCodex, server: &MockServer) -> 
         .map_err(Into::into)
 }
 
-async fn start_install_turn(test: &TestCodex, prompt: &str) -> Result<ElicitationRequestEvent> {
+async fn start_install_turn(test: &TestGenex, prompt: &str) -> Result<ElicitationRequestEvent> {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
     test.codex
@@ -354,7 +354,7 @@ async fn start_install_turn(test: &TestCodex, prompt: &str) -> Result<Elicitatio
 }
 
 async fn resolve_install_elicitation(
-    test: &TestCodex,
+    test: &TestGenex,
     elicitation: ElicitationRequestEvent,
     decision: ElicitationAction,
 ) -> Result<()> {
@@ -500,7 +500,7 @@ async fn startup_recommendations(
     });
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     extensions.mcp_server_contributor(barrier.clone());
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
@@ -1304,7 +1304,7 @@ async fn endpoint_mode_with_no_eligible_candidates_exposes_no_suggestion_tools()
         ]),
     )
     .await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config({
             let apps_base_url = apps_server.managed_auth_base_url.clone();

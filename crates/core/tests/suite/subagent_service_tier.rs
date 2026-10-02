@@ -19,7 +19,7 @@ use core_test_support::responses::mount_sse_once_match;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
@@ -159,7 +159,7 @@ async fn root_service_tier_change_updates_existing_subagent(
     let initial_service_tier_owned = initial_service_tier.map(str::to_string);
     let updated_request_service_tier = updated_service_tier
         .filter(|service_tier| *service_tier != SERVICE_TIER_DEFAULT_REQUEST_VALUE);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("gpt-5.6-sol")
         .with_config(move |config| {
             config.service_tier = initial_service_tier_owned;
@@ -307,7 +307,7 @@ async fn root_service_tier_change_updates_existing_subagent(
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn evicted_role_subagent_uses_root_service_tier_after_reload() -> Result<()> {
     let server = start_mock_server().await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("gpt-5.6-sol")
         .with_config(|config| {
             config.service_tier = Some("flex".to_string());

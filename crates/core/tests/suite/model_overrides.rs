@@ -2,7 +2,7 @@ use genex_protocol::model_types::ReasoningEffort;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::Op;
 use core_test_support::responses::start_mock_server;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 
@@ -12,7 +12,7 @@ const CONFIG_TOML: &str = "config.toml";
 async fn thread_settings_update_does_not_persist_when_config_exists() {
     let server = start_mock_server().await;
     let initial_contents = "model = \"gpt-4o\"\n";
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(move |home| {
             let config_path = home.join(CONFIG_TOML);
             std::fs::write(config_path, initial_contents).expect("seed config.toml");
@@ -47,7 +47,7 @@ async fn thread_settings_update_does_not_persist_when_config_exists() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn thread_settings_update_does_not_create_config_file() {
     let server = start_mock_server().await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build(&server).await.expect("create conversation");
     let codex = test.codex.clone();
     let config_path = test.home.path().join(CONFIG_TOML);

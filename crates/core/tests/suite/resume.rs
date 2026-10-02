@@ -15,7 +15,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
@@ -25,7 +25,7 @@ async fn resume_restores_windows_sandbox_override() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let initial = builder.build(&server).await?;
     core_test_support::submit_thread_settings(
         &initial.codex,
@@ -57,7 +57,7 @@ async fn resume_includes_initial_messages_from_rollout_events() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let initial = builder.build(&server).await?;
     let codex = Arc::clone(&initial.codex);
 
@@ -114,7 +114,7 @@ async fn resume_includes_initial_messages_from_reasoning_events() -> Result<()> 
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config.show_raw_agent_reasoning = true;
     });
     let initial = builder.build(&server).await?;
@@ -172,7 +172,7 @@ async fn resume_switches_models_preserves_base_instructions() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config.model = Some("gpt-5.2".to_string());
     });
     let initial = builder.build(&server).await?;
@@ -216,7 +216,7 @@ async fn resume_switches_models_preserves_base_instructions() -> Result<()> {
     )
     .await;
 
-    let mut resume_builder = test_codex().with_config(|config| {
+    let mut resume_builder = test_genex().with_config(|config| {
         config.model = Some("gpt-5.4".to_string());
     });
     let resumed = resume_builder.restart(&server, &initial).await?;
@@ -279,7 +279,7 @@ async fn resume_model_switch_is_not_duplicated_after_pre_turn_override() -> Resu
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config.model = Some("gpt-5.2".to_string());
     });
     let initial = builder.build(&server).await?;
@@ -313,7 +313,7 @@ async fn resume_model_switch_is_not_duplicated_after_pre_turn_override() -> Resu
     )
     .await;
 
-    let mut resume_builder = test_codex().with_config(|config| {
+    let mut resume_builder = test_genex().with_config(|config| {
         config.model = Some("gpt-5.5".to_string());
     });
     let resumed = resume_builder.restart(&server, &initial).await?;

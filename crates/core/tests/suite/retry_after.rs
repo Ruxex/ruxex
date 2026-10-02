@@ -13,8 +13,8 @@ use genex_protocol::turn_input::TurnInputRequest;
 use genex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestCodex;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use http::Method;
 use http::StatusCode;
@@ -221,7 +221,7 @@ async fn wait_for_retry(
     elapsed
 }
 
-async fn submit_user_input(test: &TestCodex, text: &str) -> Result<()> {
+async fn submit_user_input(test: &TestGenex, text: &str) -> Result<()> {
     test.codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: text.to_string(),
@@ -231,7 +231,7 @@ async fn submit_user_input(test: &TestCodex, text: &str) -> Result<()> {
     Ok(())
 }
 
-async fn wait_for_turn_completion(test: &TestCodex) {
+async fn wait_for_turn_completion(test: &TestGenex) {
     let EventMsg::TurnComplete(completed) = wait_for_event(&test.codex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
@@ -263,7 +263,7 @@ async fn responses_http_uses_local_backoff_despite_retry_after() -> Result<()> {
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(1);
             config.model_provider.stream_max_retries = Some(0);
@@ -360,7 +360,7 @@ async fn responses_http_overload_without_retry_after_exhausts_request_retries() 
         )
         .mount(&server)
         .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(2);
             config.model_provider.stream_max_retries = Some(2);
@@ -448,7 +448,7 @@ async fn compact_v2_uses_local_backoff_despite_retry_after() -> Result<()> {
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(1);
@@ -523,7 +523,7 @@ async fn compact_v2_stream_failure_uses_local_backoff_despite_retry_after() -> R
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(0);
@@ -592,7 +592,7 @@ async fn compact_v2_stream_failure_without_retry_after_exhausts_stream_retries()
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(0);
@@ -693,7 +693,7 @@ async fn compact_v2_rate_limit_message_uses_server_advised_retry_delay() -> Resu
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(0);
@@ -767,7 +767,7 @@ async fn compact_v2_rate_limit_message_without_retry_after_uses_server_advised_d
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(0);
@@ -831,7 +831,7 @@ async fn compact_v2_overload_without_retry_after_exhausts_request_retries() -> R
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(2);
@@ -957,7 +957,7 @@ async fn sse_failure_uses_local_backoff_despite_retry_after() -> Result<()> {
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(0);
             config.model_provider.stream_max_retries = Some(1);
@@ -1013,7 +1013,7 @@ async fn sse_failure_without_retry_after_exhausts_stream_retries(code: &str) -> 
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(0);
             config.model_provider.stream_max_retries = Some(1);
@@ -1094,7 +1094,7 @@ async fn sse_rate_limit_message_uses_server_advised_retry_delay(code: &str) -> R
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(0);
             config.model_provider.stream_max_retries = Some(1);
@@ -1149,7 +1149,7 @@ async fn sse_rate_limit_message_with_retry_after_uses_server_advised_retry_delay
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(0);
             config.model_provider.stream_max_retries = Some(1);
@@ -1198,7 +1198,7 @@ async fn sse_overload_with_retry_after_is_terminal() -> Result<()> {
         .insert_header("Retry-After", "1"),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(2);
             config.model_provider.stream_max_retries = Some(2);
@@ -1270,7 +1270,7 @@ async fn sse_overload_without_retry_after_is_terminal() -> Result<()> {
         ),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(2);
             config.model_provider.stream_max_retries = Some(2);
@@ -1338,7 +1338,7 @@ async fn connection_failures_increment_retry_telemetry_without_consuming_retry_b
     let unavailable_address = unavailable_listener.local_addr()?;
     drop(unavailable_listener);
 
-    let test = test_codex()
+    let test = test_genex()
         .with_config(move |config| {
             config.model_provider.base_url = Some(format!("http://{unavailable_address}/v1"));
             config.model_provider.request_max_retries = Some(0);
@@ -1426,7 +1426,7 @@ async fn websocket_connection_limit_retries_with_local_backoff() -> Result<()> {
         ]],
     ])
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(0);
             config.model_provider.stream_max_retries = Some(1);
@@ -1486,7 +1486,7 @@ async fn websocket_rate_limit_with_nested_retry_after_is_terminal() -> Result<()
         })],
     ]])
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(0);
             config.model_provider.stream_max_retries = Some(1);
@@ -1558,7 +1558,7 @@ async fn websocket_rate_limit_without_retry_after_is_terminal() -> Result<()> {
         })],
     ]])
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(0);
             config.model_provider.stream_max_retries = Some(1);
@@ -1631,7 +1631,7 @@ async fn websocket_overload_with_nested_retry_after_is_terminal() -> Result<()> 
         })],
     ]])
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             // Capture inference retries without unrelated startup model-discovery retries.
             config.model_catalog =
@@ -1715,7 +1715,7 @@ async fn websocket_overload_without_retry_after_is_terminal() -> Result<()> {
         })],
     ]])
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             // Capture inference retries without unrelated startup model-discovery retries.
             config.model_catalog =

@@ -23,8 +23,8 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
-use core_test_support::test_genex::TestCodex;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -86,9 +86,9 @@ fn read_interrupt_hook_inputs(home: &Path) -> Result<Vec<Value>> {
         .collect()
 }
 
-async fn build_test(server: &MockServer, system_message: Option<&str>) -> Result<TestCodex> {
+async fn build_test(server: &MockServer, system_message: Option<&str>) -> Result<TestGenex> {
     let system_message = system_message.map(str::to_string);
-    test_codex()
+    test_genex()
         .with_model("gpt-5.4")
         .with_pre_build_hook(move |home| {
             write_interrupt_hook(home, system_message.as_deref())
@@ -102,7 +102,7 @@ async fn build_test(server: &MockServer, system_message: Option<&str>) -> Result
         .await
 }
 
-async fn start_interruptible_turn(test: &TestCodex, server: &MockServer) -> Result<()> {
+async fn start_interruptible_turn(test: &TestGenex, server: &MockServer) -> Result<()> {
     let tool_args = json!({
         "cmd": "sleep 60",
         "yield_time_ms": 60_000,
@@ -287,7 +287,7 @@ async fn async_interrupt_hook_runs_without_delaying_turn_aborted() -> Result<()>
     );
 
     let server = start_mock_server().await;
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(|home| {
             write_interrupt_hook(home, Some("async interrupt completed"))
                 .expect("write interrupt hook fixture");
@@ -361,7 +361,7 @@ async fn self_aborted_turn_runs_interrupt_hook_before_turn_aborted() -> Result<(
     );
 
     let server = start_mock_server().await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model("gpt-5.4")
         .with_pre_build_hook(|home| {
             write_interrupt_hook(home, Some("compaction was interrupted"))

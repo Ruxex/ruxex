@@ -15,7 +15,7 @@ use genex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
@@ -52,7 +52,7 @@ async fn ordinary_settings_updates_keep_the_running_turn_snapshot() -> Result<()
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model("snapshot-model-a")
         .with_config(|config| {
             // This regression exercises ordinary turn construction without

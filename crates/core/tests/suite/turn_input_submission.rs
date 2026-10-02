@@ -33,7 +33,7 @@ use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
 use core_test_support::submit_thread_settings;
 use core_test_support::test_genex::local;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -66,7 +66,7 @@ async fn host_drain_rejects_turn_start_paths_without_recording_input() -> anyhow
     let admission = Arc::new(TestAdmission(AtomicBool::new(true)));
     let mut extensions = ExtensionRegistryBuilder::new();
     extensions.turn_start_admission(admission.clone());
-    let test = test_codex()
+    let test = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await?;
@@ -115,7 +115,7 @@ async fn host_drain_allows_spawned_agent_input_but_not_automatic_work() -> anyho
     let response = responses::mount_sse_once(&server, responses::sse_completed("child")).await;
     let mut extensions = ExtensionRegistryBuilder::new();
     extensions.turn_start_admission(Arc::new(TestAdmission(AtomicBool::new(true))));
-    let test = test_codex()
+    let test = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await?;
@@ -195,7 +195,7 @@ async fn host_drain_allows_running_review_to_finish_its_delegate() -> anyhow::Re
     .await;
     let mut extensions = ExtensionRegistryBuilder::new();
     extensions.turn_start_admission(Arc::new(TestAdmission(AtomicBool::new(true))));
-    let test = test_codex()
+    let test = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await?;
@@ -248,7 +248,7 @@ async fn host_drain_closes_realtime_after_handoff_error() -> anyhow::Result<()> 
     .await;
     let mut extensions = ExtensionRegistryBuilder::new();
     extensions.turn_start_admission(Arc::new(TestAdmission(AtomicBool::new(true))));
-    let test = test_codex()
+    let test = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .with_config({
             let realtime_url = realtime.uri().to_string();
@@ -328,7 +328,7 @@ async fn host_drain_allows_mailbox_work_to_start_a_turn() -> anyhow::Result<()> 
     let response = responses::mount_sse_once(&server, responses::sse_completed("mailbox")).await;
     let mut extensions = ExtensionRegistryBuilder::new();
     extensions.turn_start_admission(Arc::new(TestAdmission(AtomicBool::new(true))));
-    let test = test_codex()
+    let test = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await?;
@@ -379,7 +379,7 @@ async fn start_turn_if_idle_keeps_automatic_plan_rejections_atomic(
     proposed_mode: ModeKind,
 ) {
     let server = responses::start_mock_server().await;
-    let test = test_codex()
+    let test = test_genex()
         .build_with_auto_env(&server)
         .await
         .expect("build turn-input submission session");
@@ -454,7 +454,7 @@ async fn recover_turn_if_idle_preserves_id_and_resumes_plan_mode() {
     let server = responses::start_mock_server().await;
     let response_mock =
         responses::mount_sse_once(&server, responses::sse_completed("resp-1")).await;
-    let test = test_codex()
+    let test = test_genex()
         .build_with_auto_env(&server)
         .await
         .expect("build recovered turn session");
@@ -523,7 +523,7 @@ async fn recover_turn_if_idle_preserves_id_and_resumes_plan_mode() {
 #[tokio::test]
 async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     let server = responses::start_mock_server().await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model("gpt-5.6-sol")
         .build_with_auto_env(&server)
         .await
@@ -653,7 +653,7 @@ async fn turn_input_submission_reports_started_and_steered_for_concurrent_submis
         }],
     ])
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model("gpt-5.4")
         .build_with_streaming_server(&server)
         .await
@@ -755,7 +755,7 @@ async fn turn_input_submission_applies_thread_settings_only_after_accepted_input
         }],
     ])
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model("gpt-5.4")
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
@@ -860,7 +860,7 @@ async fn start_or_steer_turn_requires_matching_active_output_schema() {
         }],
     ])
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
         })
@@ -969,7 +969,7 @@ async fn sampling_is_ready_for_daemon_recovery(
     } else {
         None
     };
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     #[cfg(unix)]
     if let Some(remote) = &remote {
         builder = builder.with_exec_server_url(&remote.websocket_url);

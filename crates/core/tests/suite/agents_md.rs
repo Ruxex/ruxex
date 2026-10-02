@@ -55,10 +55,10 @@ use core_test_support::skip_if_no_remote_env;
 use core_test_support::skip_if_sandbox;
 use core_test_support::skip_if_target_windows;
 use core_test_support::test_genex::RecordingUserInstructionsProvider;
-use core_test_support::test_genex::TestCodex;
-use core_test_support::test_genex::TestCodexBuilder;
+use core_test_support::test_genex::TestGenex;
+use core_test_support::test_genex::TestGenexBuilder;
 use core_test_support::test_genex::executor_path_uri;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
@@ -164,7 +164,7 @@ impl ThreadInstructionsProvider for RecordingThreadInstructionsProvider {
     }
 }
 
-async fn agents_instructions(mut builder: TestCodexBuilder) -> Result<String> {
+async fn agents_instructions(mut builder: TestGenexBuilder) -> Result<String> {
     let server = start_mock_server().await;
     let resp_mock = mount_sse_once(
         &server,
@@ -299,7 +299,7 @@ fn request_body_contains(request: &wiremock::Request, text: &str) -> bool {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn agents_override_is_preferred_over_agents_md() -> Result<()> {
     let instructions =
-        agents_instructions(test_codex().with_workspace_setup(|cwd, fs| async move {
+        agents_instructions(test_genex().with_workspace_setup(|cwd, fs| async move {
             let agents_md = cwd.join("AGENTS.md");
             let override_md = cwd.join("AGENTS.override.md");
             let agents_md_uri = executor_path_uri(&agents_md)?;
@@ -337,7 +337,7 @@ async fn agents_override_is_preferred_over_agents_md() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn configured_fallback_is_used_when_agents_candidate_is_directory() -> Result<()> {
     let instructions = agents_instructions(
-        test_codex()
+        test_genex()
             .with_config(|config| {
                 config.project_doc_fallback_filenames = vec!["WORKFLOW.md".to_string()];
             })
@@ -383,7 +383,7 @@ async fn invalid_fallback_paths_do_not_prevent_loading_valid_filenames() -> Resu
         sse(vec![ev_response_created("resp1"), ev_completed("resp1")]),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.project_doc_fallback_filenames =
                 [".", "..", "nested/WORKFLOW.md", "WORKFLOW.md"]
@@ -430,7 +430,7 @@ async fn invalid_fallback_paths_do_not_prevent_loading_valid_filenames() -> Resu
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn agents_docs_are_concatenated_from_project_root_to_cwd() -> Result<()> {
     let instructions = agents_instructions(
-        test_codex()
+        test_genex()
             .with_config(|config| {
                 config.cwd = config.cwd.join("nested/workspace");
             })
@@ -506,7 +506,7 @@ async fn symlinked_cwd_uses_logical_parent_for_agents_discovery() -> Result<()> 
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_config(|config| {
             config.cwd = config.cwd.join("logical-repo/workspace");
         })
@@ -589,7 +589,7 @@ async fn selected_environment_sources_match_model_visible_instructions() -> Resu
     let global_agents = home.path().join("AGENTS.md");
     std::fs::write(&global_agents, "global doc")?;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(home)
         .with_workspace_setup(|cwd, fs| async move {
             let agents_md_uri = executor_path_uri(cwd.join("AGENTS.md"))?;
@@ -637,7 +637,7 @@ async fn untrusted_project_excludes_project_instructions() -> Result<()> {
     let global_agents =
         write_global_file(home.as_ref(), GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(home)
         .with_config(|config| {
             config.active_project.trust_level = Some(TrustLevel::Untrusted);
@@ -687,7 +687,7 @@ async fn runtime_trust_reload_refreshes_project_instructions() -> Result<()> {
     let home = Arc::new(TempDir::new()?);
     let global_agents =
         write_global_file(home.as_ref(), GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(home)
         .with_config(|config| {
             config.active_project.trust_level = Some(TrustLevel::Trusted);
@@ -758,7 +758,7 @@ async fn restricted_project_without_instructions_starts_successfully() -> Result
         sse(vec![ev_response_created("resp1"), ev_completed("resp1")]),
     )
     .await;
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         let mut file_system_policy = FileSystemSandboxPolicy::read_only();
         file_system_policy.entries.push(FileSystemSandboxEntry::new(
             config.cwd.join("private.txt").into(),
@@ -798,7 +798,7 @@ async fn denied_project_instructions_fail_thread_creation() -> Result<()> {
     let home = Arc::new(TempDir::new()?);
     write_global_file(home.as_ref(), GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(home)
         .with_config(|config| {
             let mut file_system_policy = FileSystemSandboxPolicy::read_only();
@@ -852,7 +852,7 @@ async fn symlinked_writable_root_reports_sandbox_failure_instead_of_session_corr
     let visualization_root = home.path().join("visualizations");
     create_directory_symlink(&visualization_target, &visualization_root);
 
-    let mut builder = test_codex().with_home(home).with_config(move |config| {
+    let mut builder = test_genex().with_home(home).with_config(move |config| {
         config.project_doc_max_bytes = 1;
         let mut file_system_policy = FileSystemSandboxPolicy::read_only();
         file_system_policy.entries.push(FileSystemSandboxEntry::new(
@@ -922,7 +922,7 @@ async fn tightening_environment_read_permissions_invalidates_cached_project_inst
     inner: GenexHomeUserInstructionsProvider::new(home.path().to_path_buf().abs()),
         warning_active: AtomicBool::new(/*v*/ false),
     });
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(home)
         .with_user_instructions_provider(provider.clone())
         .with_workspace_setup(|cwd, fs| async move {
@@ -1023,7 +1023,7 @@ async fn loads_user_instructions_without_a_primary_environment() -> Result<()> {
         )?),
     )));
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&home))
         .with_user_instructions_provider(provider.clone())
         .with_workspace_setup(|cwd, fs| async move {
@@ -1074,7 +1074,7 @@ async fn loads_user_instructions_without_a_primary_environment() -> Result<()> {
 }
 
 struct ThreadInstructionsFixture {
-    test: TestCodex,
+    test: TestGenex,
     thread: Arc<genex_core::GenexThread>,
     provider: Arc<RecordingThreadInstructionsProvider>,
 }
@@ -1088,7 +1088,7 @@ impl ThreadInstructionsFixture {
                 home.path().to_path_buf(),
             )?),
         )));
-        let mut builder = test_codex()
+        let mut builder = test_genex()
             .with_home(home)
             .with_user_instructions_provider(global_provider.clone())
             .with_config(|config| {
@@ -1426,7 +1426,7 @@ async fn fork_preserves_thread_instructions(source: InstructionForkSource) -> Re
         }
         InstructionForkSource::OfflinePrepared => ThreadHistoryMode::Paginated,
     };
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_config(|config| {
             config
                 .features
@@ -1551,7 +1551,7 @@ async fn thread_provider_lives_with_its_session_across_resume() -> Result<()> {
             .to_vec(),
     )
     .await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build_with_auto_env(&server).await?;
     let provider = Arc::new(RecordingThreadInstructionsProvider::new(
         /*instructions*/ None,
@@ -1650,7 +1650,7 @@ async fn fresh_thread_composes_global_before_project_and_reports_sources() -> Re
     let global_source =
         write_global_file(home.as_ref(), GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&home))
         .with_workspace_setup(|cwd, fs| async move {
             let agents_md_uri = executor_path_uri(cwd.join("AGENTS.md"))?;
@@ -1770,7 +1770,7 @@ async fn multi_environment_project_instructions_share_one_byte_budget() -> Resul
     .await;
     let local_root = TempDir::new()?;
     std::fs::write(local_root.path().join(GLOBAL_AGENTS_FILENAME), "VWXYZ")?;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_config(|config| config.project_doc_max_bytes = 7)
         .with_workspace_setup(|cwd, fs| async move {
             fs.write_file(
@@ -1852,7 +1852,7 @@ async fn multi_environment_thread_refreshes_global_and_keeps_repository_snapshot
     let local_root = TempDir::new()?;
     let local_source = local_root.path().join(GLOBAL_AGENTS_FILENAME);
     std::fs::write(&local_source, "local project instructions")?;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&home))
         .with_user_instructions_provider(provider.clone())
         .with_workspace_setup(|cwd, fs| async move {
@@ -1986,7 +1986,7 @@ async fn global_instruction_warnings_reappear_only_after_recovery() -> Result<()
         "Failed to read global AGENTS.md instructions from `{}`: {read_error}",
         override_path.display()
     );
-    let mut builder = test_codex().with_home(Arc::clone(&home));
+    let mut builder = test_genex().with_home(Arc::clone(&home));
     let test = builder.build_with_auto_env(&server).await?;
     wait_for_event(
         &test.codex,
@@ -2051,7 +2051,7 @@ async fn invalid_utf8_global_instructions_are_lossy() -> Result<()> {
         b"global\xFFinstructions",
     )?;
 
-    let mut builder = test_codex().with_home(home);
+    let mut builder = test_genex().with_home(home);
     let test = builder.build(&server).await?;
     test.submit_turn("inspect lossy global instructions")
         .await?;
@@ -2098,7 +2098,7 @@ async fn cold_resume_invalidates_deleted_legacy_agents_md_once() -> Result<()> {
     )?;
 
     // Create the initial thread and persist its creation-time instruction snapshot.
-    let mut initial_builder = test_codex().with_home(Arc::clone(&home));
+    let mut initial_builder = test_genex().with_home(Arc::clone(&home));
     let initial = initial_builder.build(&server).await?;
 
     // Assert the pre-resume thread reports the source used to create its snapshot.
@@ -2123,7 +2123,7 @@ async fn cold_resume_invalidates_deleted_legacy_agents_md_once() -> Result<()> {
     remove_agents_md_world_state_section(&rollout_path)?;
 
     std::fs::remove_file(old_source.as_path())?;
-    let mut resume_builder = test_codex().with_home(Arc::clone(&home));
+    let mut resume_builder = test_genex().with_home(Arc::clone(&home));
     let resumed = resume_builder
         .resume(&server, Arc::clone(&home), rollout_path)
         .await?;
@@ -2202,7 +2202,7 @@ async fn fork_injects_changed_agents_md_once() -> Result<()> {
     )?;
 
     // Create the parent and persist its creation-time instruction snapshot.
-    let mut builder = test_codex().with_home(Arc::clone(&home));
+    let mut builder = test_genex().with_home(Arc::clone(&home));
     let parent = builder.build(&server).await?;
 
     // Assert the parent reports the source used to create its snapshot.
@@ -2372,7 +2372,7 @@ async fn run_subagent_global_instruction_case(fork_context: bool) -> Result<()> 
         GLOBAL_AGENTS_FILENAME,
         OLD_GLOBAL_INSTRUCTIONS,
     )?;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&home))
         .with_config(|config| {
             let _ = config.features.enable(Feature::Collab);

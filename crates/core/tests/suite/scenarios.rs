@@ -58,7 +58,7 @@ use core_test_support::stdio_server_bin;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
 use core_test_support::test_genex::executor_path_uri;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use core_test_support::wait_for_mcp_server;
@@ -235,7 +235,7 @@ async fn astra_asks_an_async_question_and_receives_the_answer_while_working() ->
     .await;
     let config_server = start_mock_server().await;
     let base_url = format!("{}/v1", streaming.uri());
-    let test = test_codex()
+    let test = test_genex()
         .with_model("gpt-6-astra")
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
@@ -341,7 +341,7 @@ async fn astra_kickoff_with_skills_plugins_and_remote_compaction() -> Result<()>
         ],
     )
     .await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("gpt-6-astra")
         .with_home(home)
         .with_auth(CodexAuth::from_api_key("test-api-key"))
@@ -468,7 +468,7 @@ async fn astra_omits_disabled_executor_skills_from_model_context() -> Result<()>
         ])],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model("gpt-6-astra")
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_extensions(Arc::new(extensions.build()))
@@ -536,7 +536,7 @@ async fn astra_settings_release_check_with_direct_and_code_mode_tools() -> Resul
     let server = start_mock_server().await;
     let rmcp_server_bin = stdio_server_bin()?;
     let home = Arc::new(TempDir::new()?);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("gpt-6-astra")
         .with_home(home)
         .with_auth(CodexAuth::from_api_key("test-api-key"))
@@ -697,7 +697,7 @@ async fn astra_refreshes_plugin_tools_and_skills_in_an_existing_thread() -> Resu
         ],
     )
     .await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("gpt-6-astra")
         .with_home(Arc::clone(&home))
         .with_auth(CodexAuth::from_api_key("test-api-key"))

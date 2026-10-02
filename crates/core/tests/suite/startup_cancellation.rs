@@ -19,7 +19,7 @@ use genex_rollout::RolloutRecorder;
 use genex_thread_store::LocalThreadStore;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use pretty_assertions::assert_eq;
 use tokio::sync::Notify;
 use tokio::time::timeout;
@@ -59,7 +59,7 @@ async fn cancelled_resume_releases_writer_while_mcp_startup_is_pending() -> Resu
     });
     let mut extensions = ExtensionRegistryBuilder::new();
     extensions.mcp_server_contributor(barrier.clone());
-    let test = test_codex()
+    let test = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .with_config(|config| config.experimental_thread_store = ThreadStoreConfig::Local)
         .build_with_auto_env(&server)

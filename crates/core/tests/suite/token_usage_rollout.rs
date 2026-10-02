@@ -12,7 +12,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
@@ -71,14 +71,14 @@ async fn observed_response_usage_accumulates_per_turn_and_thread() -> Result<()>
         ],
     )
     .await;
-    let test = test_codex().build_with_auto_env(&server).await?;
+    let test = test_genex().build_with_auto_env(&server).await?;
     let rollout_path = test.codex.rollout_path().expect("rollout path");
     let home = test.home.clone();
 
     test.submit_turn("first").await?;
     test.codex.shutdown_and_wait().await?;
 
-    let resumed = test_codex()
+    let resumed = test_genex()
         .resume(&server, home, rollout_path.clone())
         .await?;
     for prompt in ["second", "third"] {

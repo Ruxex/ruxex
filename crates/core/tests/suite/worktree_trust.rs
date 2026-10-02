@@ -11,7 +11,7 @@ use genex_protocol::protocol::SandboxPolicy;
 use genex_utils_cargo_bin::cargo_bin;
 use core_test_support::responses;
 use core_test_support::skip_if_remote;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
@@ -125,7 +125,7 @@ async fn forged_worktree_project_config_cannot_start_host_mcp() -> Result<()> {
             ]),
         )
         .await;
-        let fixture = test_codex()
+        let fixture = test_genex()
             .with_home(Arc::clone(&home))
             .with_config(move |config| {
                 let model = config.model.clone();

@@ -20,7 +20,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use http::HeaderMap;
 use http::HeaderValue;
@@ -49,7 +49,7 @@ async fn header_auth_is_attached_to_responses_requests() -> anyhow::Result<()> {
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, HeaderValue::from_static("Bearer external"));
     headers.insert("x-external-auth", HeaderValue::from_static("enabled"));
-    let mut builder = test_codex().with_auth(CodexAuth::Headers(
+    let mut builder = test_genex().with_auth(CodexAuth::Headers(
         AuthHeaders::new(headers).with_account_id("account-123"),
     ));
     let test = builder.build_with_auto_env(&server).await?;
@@ -82,7 +82,7 @@ async fn custom_provider_does_not_receive_ambient_auth_headers() -> anyhow::Resu
     headers.insert(AUTHORIZATION, HeaderValue::from_static("Bearer ambient"));
     let provider =
         create_responses_provider_with_base_url(&format!("{}/v1", server.uri()), WireApi::Responses);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::Headers(AuthHeaders::new(headers)))
         .with_config(move |config| {
             config.model_provider_id = provider.name.clone();
@@ -112,7 +112,7 @@ async fn custom_provider_uses_explicit_bearer_without_ambient_account() -> anyho
     let mut provider =
         create_responses_provider_with_base_url(&format!("{}/v1", server.uri()), WireApi::Responses);
     provider.experimental_bearer_token = Some("provider-token".into());
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::Headers(AuthHeaders::new(headers)))
         .with_config(move |config| {
             config.model_provider_id = provider.name.clone();
@@ -149,7 +149,7 @@ async fn amazon_bedrock_managed_access_keys_sign_requests() -> anyhow::Result<()
         }));
     provider.base_url = Some(format!("{}/v1", server.uri()));
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("provider.gpt-5.5")
         .with_auth(CodexAuth::BedrockAccessKeys(BedrockAccessKeysAuth {
             access_key_id: "managed-access-key-id".to_string(),
@@ -271,7 +271,7 @@ async fn amazon_bedrock_credential_export_precedence_and_caching() -> anyhow::Re
     provider.request_max_retries = Some(0);
     provider.stream_max_retries = Some(2);
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("provider.gpt-5.5")
         .with_auth(CodexAuth::BedrockAccessKeys(BedrockAccessKeysAuth {
             access_key_id: "managed-access-key-id".to_string(),
@@ -496,7 +496,7 @@ async fn amazon_bedrock_aws_auth_refresh_resigns() -> anyhow::Result<()> {
     provider.stream_max_retries = Some(stream_max_retries);
     let recovery_attempts = stream_max_retries as usize + 1;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("provider.gpt-5.5")
         .with_config(move |config| {
             config.model_provider_id = provider.name.clone();

@@ -22,7 +22,7 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event_with_timeout;
 use pretty_assertions::assert_eq;
@@ -107,7 +107,7 @@ async fn two_exec_servers_isolate_workspace_write_roots() -> Result<()> {
     let second_workspace = TempDir::new()?;
 
     let server = start_mock_server().await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build(&server).await?;
     let environment_manager = test.thread_manager.environment_manager();
     environment_manager.upsert_environment(

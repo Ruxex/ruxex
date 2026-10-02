@@ -48,8 +48,8 @@ use core_test_support::responses;
 use core_test_support::responses::start_mock_server;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
-use core_test_support::test_genex::TestCodex;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event_match;
 use core_test_support::wait_for_event_with_timeout;
 use pretty_assertions::assert_eq;
@@ -138,7 +138,7 @@ fn registered_queue_extensions() -> (
 }
 
 fn install_registered_queue(
-    test: &TestCodex,
+    test: &TestGenex,
     installed: &InstalledQueue,
 ) -> anyhow::Result<Arc<QueuedItemService>> {
     let service = Arc::new(QueuedItemService::new(
@@ -190,7 +190,7 @@ async fn test_queue() -> anyhow::Result<(Arc<dyn QueueStore>, TempDir)> {
     Ok((queue, home))
 }
 
-fn loaded_thread_queue(test: &TestCodex) -> anyhow::Result<Arc<dyn QueueStore>> {
+fn loaded_thread_queue(test: &TestGenex) -> anyhow::Result<Arc<dyn QueueStore>> {
     let runtime = test.codex.state_db().context("state runtime unavailable")?;
     Ok(Arc::new(LocalQueueStore::new(runtime)))
 }
@@ -253,7 +253,7 @@ async fn drain_leaves_persisted_queued_message_for_a_later_start() -> anyhow::Re
     let admission = Arc::new(TestAdmission(AtomicBool::new(true)));
     let mut extensions = ExtensionRegistryBuilder::new();
     extensions.turn_start_admission(admission.clone());
-    let test = test_codex()
+    let test = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await?;
@@ -374,7 +374,7 @@ async fn starting_a_selected_item_preserves_the_remaining_queue() -> anyhow::Res
     let server = start_mock_server().await;
     let response =
         responses::mount_sse_once(&server, responses::sse_completed("selected-turn")).await;
-    let test = test_codex().build_with_auto_env(&server).await?;
+    let test = test_genex().build_with_auto_env(&server).await?;
     let thread_id = test.session_configured.thread_id;
     let queue = loaded_thread_queue(&test)?;
     let service = QueuedItemService::new(queue, Weak::new(), Arc::new(NoopExtensionEventSink));
@@ -426,7 +426,7 @@ async fn starting_a_selected_item_while_active_leaves_it_queued() -> anyhow::Res
         },
     ]])
     .await;
-    let test = test_codex().build_with_streaming_server(&server).await?;
+    let test = test_genex().build_with_streaming_server(&server).await?;
     let thread_id = test.session_configured.thread_id;
     let service = QueuedItemService::new(
         loaded_thread_queue(&test)?,
@@ -482,7 +482,7 @@ async fn interrupted_turns_pause_queued_messages_but_failed_turns_drain_them() -
     let server = start_mock_server().await;
     let response =
         responses::mount_sse_once(&server, responses::sse_completed("failed-follow-up")).await;
-    let test = test_codex().build_with_auto_env(&server).await?;
+    let test = test_genex().build_with_auto_env(&server).await?;
     let thread_id = test.session_configured.thread_id;
     let queue = loaded_thread_queue(&test)?;
     let service = QueuedItemService::new(
@@ -526,7 +526,7 @@ async fn registered_queue_lifecycle_starts_messages_in_fifo_order() -> anyhow::R
     )
     .await;
     let (installed, extensions) = registered_queue_extensions();
-    let test = test_codex()
+    let test = test_genex()
         .with_extensions(extensions)
         .with_config(|config| config.include_environment_context = false)
         .build_with_auto_env(&server)
@@ -586,7 +586,7 @@ async fn externally_changed_queues_dispatch_independently_and_retry_failed_wakes
     )
     .await;
     let (installed, extensions) = registered_queue_extensions();
-    let test = test_codex()
+    let test = test_genex()
         .with_extensions(extensions)
         .with_config(|config| config.include_environment_context = false)
         .build_with_auto_env(&server)
@@ -712,7 +712,7 @@ async fn rejected_queue_messages_are_consumed_without_retrying_or_blocking_follo
     )
     .await;
     let (installed, extensions) = registered_queue_extensions();
-    let test = test_codex()
+    let test = test_genex()
         .with_extensions(extensions)
         .with_pre_build_hook(write_rejecting_prompt_hook)
         .with_config(trust_discovered_hooks)
@@ -768,7 +768,7 @@ async fn explicitly_started_rejected_queue_messages_are_consumed() -> anyhow::Re
     let server = start_mock_server().await;
     let responses =
         responses::mount_sse_once(&server, responses::sse_completed("unexpected-turn")).await;
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(write_rejecting_prompt_hook)
         .with_config(trust_discovered_hooks)
         .with_config(|config| config.include_environment_context = false)
@@ -1015,7 +1015,7 @@ async fn invalid_head_is_skipped_and_a_live_user_turn_is_accepted() -> anyhow::R
     let server = start_mock_server().await;
     let response =
         responses::mount_sse_once(&server, responses::sse_completed("queued-turn")).await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| config.include_environment_context = false)
         .build_with_auto_env(&server)
         .await?;
@@ -1061,7 +1061,7 @@ async fn invalid_head_is_skipped_and_a_live_user_turn_is_accepted() -> anyhow::R
 async fn resumed_idle_dispatches_input_without_a_loaded_manager() -> anyhow::Result<()> {
     let server = start_mock_server().await;
     responses::mount_sse_once(&server, responses::sse_completed("resumed-turn")).await;
-    let test = test_codex().build_with_auto_env(&server).await?;
+    let test = test_genex().build_with_auto_env(&server).await?;
     let thread_id = test.session_configured.thread_id;
     let queue = loaded_thread_queue(&test)?;
     QueuedItemService::new(

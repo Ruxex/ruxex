@@ -20,9 +20,9 @@ use core_test_support::skip_if_no_network;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::TestGenex;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
@@ -38,7 +38,7 @@ const INITIAL_MODEL: &str = "gpt-5.4";
 const COMMITTED_MODEL: &str = "gpt-5.2";
 const TIMEOUT: Duration = Duration::from_secs(10);
 
-fn assert_checkpoints(test: &TestCodex, expected: &[ThreadSettingsSnapshot]) -> Result<()> {
+fn assert_checkpoints(test: &TestGenex, expected: &[ThreadSettingsSnapshot]) -> Result<()> {
     let rollout_path = test.codex.rollout_path().expect("rollout path");
     let rollout: Vec<RolloutLine> = std::fs::read_to_string(rollout_path)?
         .lines()
@@ -67,7 +67,7 @@ async fn initial_plugin_ids_use_turn_context_without_extra_settings_checkpoints(
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
-    let test = test_codex()
+    let test = test_genex()
         .with_history_mode(history_mode)
         .build_with_auto_env(&server)
         .await?;
@@ -192,7 +192,7 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
     extensions.config_contributor(Arc::new(PauseAfterCommit {
         gate: Mutex::new(Some((entered_tx, release_rx))),
     }));
-    let test = test_codex()
+    let test = test_genex()
         .with_model(INITIAL_MODEL)
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
@@ -309,7 +309,7 @@ async fn compaction_checkpoints_settings_changed_during_its_model_request() -> R
         }],
     ])
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model(INITIAL_MODEL)
         .with_config(|config| {
             // Local compaction lets the SSE gate hold its response in flight.

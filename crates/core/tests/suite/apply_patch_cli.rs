@@ -65,11 +65,11 @@ use core_test_support::skip_if_no_remote_env;
 use core_test_support::skip_if_remote;
 use core_test_support::skip_if_target_windows;
 use core_test_support::skip_if_wine_exec;
-use core_test_support::test_genex::TestCodexBuilder;
-use core_test_support::test_genex::TestCodexHarness;
+use core_test_support::test_genex::TestGenexBuilder;
+use core_test_support::test_genex::TestGenexHarness;
 use core_test_support::test_genex::executor_path_uri;
 use core_test_support::test_genex::local;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::test_target_os;
 use core_test_support::wait_for_event;
@@ -82,20 +82,20 @@ use wiremock::ResponseTemplate;
 use wiremock::matchers::method;
 use wiremock::matchers::path_regex;
 
-pub async fn apply_patch_harness() -> Result<TestCodexHarness> {
+pub async fn apply_patch_harness() -> Result<TestGenexHarness> {
     apply_patch_harness_with(|builder| builder).await
 }
 
 async fn apply_patch_harness_with(
-    configure: impl FnOnce(TestCodexBuilder) -> TestCodexBuilder,
-) -> Result<TestCodexHarness> {
-    let builder = configure(test_codex());
+    configure: impl FnOnce(TestGenexBuilder) -> TestGenexBuilder,
+) -> Result<TestGenexHarness> {
+    let builder = configure(test_genex());
     // Box harness construction so apply_patch_cli tests do not inline the
     // full test-thread startup path into each test future.
-    Box::pin(TestCodexHarness::with_auto_env_builder(builder)).await
+    Box::pin(TestGenexHarness::with_auto_env_builder(builder)).await
 }
 
-async fn submit_without_wait(harness: &TestCodexHarness, prompt: &str) -> Result<()> {
+async fn submit_without_wait(harness: &TestGenexHarness, prompt: &str) -> Result<()> {
     submit_without_wait_with_turn_permissions(
         harness,
         prompt,
@@ -106,7 +106,7 @@ async fn submit_without_wait(harness: &TestCodexHarness, prompt: &str) -> Result
 }
 
 async fn submit_without_wait_with_turn_permissions(
-    harness: &TestCodexHarness,
+    harness: &TestGenexHarness,
     prompt: &str,
     sandbox_policy: SandboxPolicy,
     permission_profile: Option<PermissionProfile>,
@@ -227,7 +227,7 @@ fn create_file_symlink(_source: &std::path::Path, _link: &std::path::Path) -> st
 }
 
 pub async fn mount_apply_patch(
-    harness: &TestCodexHarness,
+    harness: &TestGenexHarness,
     call_id: &str,
     patch: &str,
     assistant_msg: &str,
@@ -245,7 +245,7 @@ pub async fn mount_apply_patch(
 }
 
 async fn mount_apply_patch_model_output(
-    harness: &TestCodexHarness,
+    harness: &TestGenexHarness,
     call_id: &str,
     patch: &str,
     assistant_msg: &str,
@@ -284,7 +284,7 @@ fn apply_patch_responses(
 }
 
 async fn assert_apply_patch_crlf_update(
-    configure: impl FnOnce(TestCodexBuilder) -> TestCodexBuilder,
+    configure: impl FnOnce(TestGenexBuilder) -> TestGenexBuilder,
     model_output: CrLfApplyPatchModelOutput,
     expected: &str,
 ) -> Result<()> {
@@ -2259,7 +2259,7 @@ async fn apply_patch_turn_diff_tracks_local_and_remote_environment_paths() -> Re
     skip_if_no_remote_env!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build_with_remote_and_local_env(&server).await?;
     let file_name = "shared-turn-diff.txt";
     let shared_cwd = PathBuf::from(format!(

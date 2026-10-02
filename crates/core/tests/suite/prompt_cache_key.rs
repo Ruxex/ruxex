@@ -11,7 +11,7 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_once_match;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -85,7 +85,7 @@ async fn api_key_subagent_uses_session_id_as_prompt_cache_key() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("dummy"))
         .with_config(|config| {
             config
@@ -174,7 +174,7 @@ async fn ephemeral_fork_shares_cache_routing_but_keeps_session_identity() -> Res
         ],
     )
     .await;
-    let mut test = test_codex().build_with_auto_env(&server).await?;
+    let mut test = test_genex().build_with_auto_env(&server).await?;
     test.submit_text_turn("parent").await?;
     test.codex.flush_rollout().await?;
     let parent_session = test.session_configured.session_id.to_string();

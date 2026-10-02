@@ -144,11 +144,11 @@ fn should_use_test_thread_manager_behavior() -> bool {
     FORCE_TEST_THREAD_MANAGER_BEHAVIOR.load(Ordering::Relaxed)
 }
 
-struct TempCodexHomeGuard {
+struct TempGenexHomeGuard {
     path: PathBuf,
 }
 
-impl Drop for TempCodexHomeGuard {
+impl Drop for TempGenexHomeGuard {
     fn drop(&mut self) {
         let _ = std::fs::remove_dir_all(&self.path);
     }
@@ -224,7 +224,7 @@ enum ShutdownOutcome {
 /// them in memory.
 pub struct ThreadManager {
     state: Arc<ThreadManagerState>,
-    _test_codex_home_guard: Option<TempCodexHomeGuard>,
+    _test_codex_home_guard: Option<TempGenexHomeGuard>,
 }
 
 /// Captured parent identity for an internal child, including inline parents that
@@ -597,7 +597,7 @@ impl ThreadManager {
             codex_home.clone(),
             Arc::new(EnvironmentManager::default_for_tests()),
         );
-        manager._test_codex_home_guard = Some(TempCodexHomeGuard { path: codex_home });
+        manager._test_codex_home_guard = Some(TempGenexHomeGuard { path: codex_home });
         manager
     }
 

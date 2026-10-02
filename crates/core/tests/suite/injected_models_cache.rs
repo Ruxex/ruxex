@@ -40,7 +40,7 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
@@ -201,7 +201,7 @@ async fn run_agent_with_model(models_manager: SharedModelsManager, model_slug: &
         ]),
     )
     .await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_models_manager(models_manager);
     let test = builder.build(&server).await?;
@@ -325,7 +325,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
         },
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_home(home.clone())
         .with_auth(initial_auth.clone())
         .with_model("gpt-5.4")

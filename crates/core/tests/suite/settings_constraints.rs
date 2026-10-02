@@ -20,7 +20,7 @@ use genex_protocol::protocol::ThreadSettingsSnapshot;
 use genex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use std::time::Duration;
@@ -112,7 +112,7 @@ async fn protected_model_settings_use_the_proposed_permissions(
         workspace_write: None,
         read_only: Some(PERMISSION_INSTRUCTIONS.to_string()),
     });
-    let test = test_codex()
+    let test = test_genex()
         .with_model(INITIAL_MODEL)
         .with_cloud_config_bundle(
             CloudConfigBundleFixture::loader_with_enterprise_requirement(

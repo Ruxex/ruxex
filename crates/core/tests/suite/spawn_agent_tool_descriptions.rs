@@ -10,7 +10,7 @@ use core_test_support::responses::namespace_child_tool;
 use core_test_support::responses::sse_completed;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -41,7 +41,7 @@ async fn spawn_agent_catalog_descriptions_preserve_outbound_schema(
         None,
         serde_json::from_value::<Option<ToolMessages>>(tool_messages.clone())?,
     ] {
-        let test = test_codex()
+        let test = test_genex()
             .with_model_info_override("gpt-5.2", move |model| {
                 model.multi_agent_version = Some(MultiAgentVersion::V2);
                 model.model_messages.as_mut().expect("model messages").tools = messages;

@@ -29,7 +29,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::namespace_child_tool;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use serde_json::Value;
 use std::time::Duration;
 use std::time::Instant;
@@ -201,7 +201,7 @@ async fn spawn_agent_description_lists_visible_models_and_reasoning_efforts() ->
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model("visible-model")
         .with_config(|config| {
@@ -293,7 +293,7 @@ async fn configured_agent_roles_control_spawn_agent_type(
         sse(vec![ev_response_created("resp1"), ev_completed("resp1")]),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -348,7 +348,7 @@ async fn multi_agent_v2_wait_guidance_uses_overridable_developer_instructions(
         sse(vec![ev_response_created("resp1"), ev_completed("resp1")]),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -413,7 +413,7 @@ async fn multi_agent_v2_cold_resume_refreshes_legacy_usage_hints_once(
         ]),
     )
     .await;
-    let initial = test_codex()
+    let initial = test_genex()
         .with_pre_build_hook(move |home| {
             std::fs::write(home.join("config.toml"), &config_toml)
                 .expect("write multi-agent configuration");
@@ -497,7 +497,7 @@ async fn multi_agent_v2_cold_resume_refreshes_legacy_usage_hints_once(
         ],
     )
     .await;
-    let mut resumed_builder = test_codex().with_config(move |config| {
+    let mut resumed_builder = test_genex().with_config(move |config| {
         if let Some(root_agent_usage_hint_text) = resumed_root_agent_usage_hint_text {
             config.multi_agent_v2.root_agent_usage_hint_text = Some(root_agent_usage_hint_text);
         }
@@ -587,7 +587,7 @@ async fn multi_agent_v2_resume_refreshes_changed_wait_guidance(
         ]),
     )
     .await;
-    let initial = test_codex()
+    let initial = test_genex()
         .with_pre_build_hook(move |home| {
             std::fs::write(home.join("config.toml"), &initial_config_toml)
                 .expect("write initial multi-agent configuration");
@@ -638,7 +638,7 @@ async fn multi_agent_v2_resume_refreshes_changed_wait_guidance(
         ],
     )
     .await;
-    let resumed = test_codex().resume(&server, home, rollout_path).await?;
+    let resumed = test_genex().resume(&server, home, rollout_path).await?;
 
     resumed
         .submit_turn("first turn with updated wait-agent availability")
@@ -725,7 +725,7 @@ wait_agent_enabled = {wait_agent_enabled}
         sse(vec![ev_response_created("resp1"), ev_completed("resp1")]),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(move |home| {
             std::fs::write(home.join("config.toml"), &config_toml)
                 .expect("write multi-agent configuration");

@@ -34,9 +34,9 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::responses::strip_metadata_from_json;
 use core_test_support::responses::strip_response_item_ids_from_json;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::TestGenex;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
@@ -172,14 +172,14 @@ async fn prompt_tools_are_consistent_across_requests(
     )
     .await;
 
-    let TestCodex {
+    let TestGenex {
         // Keep the file-backed instructions alive across request-boundary refreshes.
         home: _home,
         codex,
         config,
         thread_manager,
         ..
-    } = test_codex()
+    } = test_genex()
         .with_models_manager(models_manager)
         .with_pre_build_hook(write_global_instructions)
         .with_config(move |config| {
@@ -328,9 +328,9 @@ async fn gpt_5_tools_without_apply_patch_append_apply_patch_instructions() -> an
     )
     .await;
 
-    let TestCodex {
+    let TestGenex {
         home: _home, codex, ..
-    } = test_codex()
+    } = test_genex()
         .with_pre_build_hook(write_global_instructions)
         .with_config(|config| {
             config
@@ -398,12 +398,12 @@ async fn prefixes_context_and_instructions_once_and_consistently_across_requests
     )
     .await;
 
-    let TestCodex {
+    let TestGenex {
         home: _home,
         codex,
         config,
         ..
-    } = test_codex()
+    } = test_genex()
         .with_pre_build_hook(write_global_instructions)
         .with_config(|config| {
             config
@@ -492,12 +492,12 @@ async fn overrides_turn_context_but_keeps_cached_prefix_and_key_constant() -> an
     )
     .await;
 
-    let TestCodex {
+    let TestGenex {
         home: _home,
         codex,
         config,
         ..
-    } = test_codex()
+    } = test_genex()
         .with_pre_build_hook(write_global_instructions)
         .with_config(|config| {
             config
@@ -612,7 +612,7 @@ async fn override_before_first_turn_emits_environment_context() -> anyhow::Resul
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex().build(&server).await?;
+    let TestGenex { codex, .. } = test_genex().build(&server).await?;
 
     let collaboration_mode = CollaborationMode {
         mode: ModeKind::Default,
@@ -765,9 +765,9 @@ async fn per_turn_overrides_keep_cached_prefix_and_key_constant() -> anyhow::Res
     )
     .await;
 
-    let TestCodex {
+    let TestGenex {
         home: _home, codex, ..
-    } = test_codex()
+    } = test_genex()
         .with_pre_build_hook(write_global_instructions)
         .with_config(|config| {
             config
@@ -894,13 +894,13 @@ async fn send_user_turn_with_no_changes_does_not_send_environment_context() -> a
     )
     .await;
 
-    let TestCodex {
+    let TestGenex {
         home: _home,
         codex,
         config,
         session_configured,
         ..
-    } = test_codex()
+    } = test_genex()
         .with_pre_build_hook(write_global_instructions)
         .with_config(|config| {
             config
@@ -1028,13 +1028,13 @@ async fn send_user_turn_with_changes_sends_environment_context() -> anyhow::Resu
         sse(vec![ev_response_created("resp-2"), ev_completed("resp-2")]),
     )
     .await;
-    let TestCodex {
+    let TestGenex {
         home: _home,
         codex,
         config,
         session_configured,
         ..
-    } = test_codex()
+    } = test_genex()
         .with_pre_build_hook(write_global_instructions)
         .with_config(|config| {
             config

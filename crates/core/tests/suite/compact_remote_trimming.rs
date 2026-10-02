@@ -19,8 +19,8 @@ async fn remote_compact_v2_token_estimate_ignores_message_bookkeeping_and_json_e
 -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let harness = TestCodexHarness::with_auto_env_builder(
-        test_codex().with_auth(CodexAuth::from_api_key("test-api-key")),
+    let harness = TestGenexHarness::with_auto_env_builder(
+        test_genex().with_auth(CodexAuth::from_api_key("test-api-key")),
     )
     .await?;
     let escaped_text = "a \"quoted\" line\nand\\path";
@@ -100,8 +100,8 @@ async fn remote_compact_v2_trims_tool_search_output_to_empty_tools_array() -> Re
         }],
     }]);
     for (context_window, expected_tools) in [(200_000, &tools), (2_000, &json!([]))] {
-        let harness = TestCodexHarness::with_builder(
-            test_codex()
+        let harness = TestGenexHarness::with_builder(
+            test_genex()
                 .with_auth(CodexAuth::from_api_key("test-api-key"))
                 .with_config(move |config| {
                     configure_search_capable_model(config);
@@ -155,8 +155,8 @@ async fn remote_compact_v2_trim_estimate_uses_session_base_instructions() -> Res
             CONTEXT_WINDOW_TRUNCATED_OUTPUT_MESSAGE,
         ),
     ] {
-        let harness = TestCodexHarness::with_builder(
-            test_codex()
+        let harness = TestGenexHarness::with_builder(
+            test_genex()
                 .with_auth(CodexAuth::from_api_key("test-api-key"))
                 .with_config({
                     let instructions = instructions.to_string();

@@ -26,7 +26,7 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
 use core_test_support::stdio_server_bin;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_mcp_server;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -354,7 +354,7 @@ async fn run_mcp_permission_request_hook_test(outcome: PermissionRequestHookOutc
     };
     let arguments = json!({ "message": RMCP_ECHO_MESSAGE }).to_string();
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(move |home| {
             write_permission_request_hook(home, outcome)
                 .expect("failed to write MCP permission request hook fixture");
@@ -465,7 +465,7 @@ async fn mcp_tool_hook_interpolates_prompt_and_runs_without_tool_approval() -> R
     )
     .await;
     let rmcp_test_server_bin = stdio_server_bin()?;
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(|home| {
             write_mcp_tool_hook(
                 home,
@@ -520,7 +520,7 @@ async fn mcp_tool_hook_passes_thread_metadata_to_model_hidden_tools() -> Result<
     )
     .await;
     let rmcp_test_server_bin = stdio_server_bin()?;
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(|home| {
             let hooks = json!({
                 "hooks": {
@@ -602,7 +602,7 @@ async fn mcp_tool_hook_blocks_model_tool_without_recursive_hooks_or_approval() -
     )
     .await;
     let rmcp_test_server_bin = stdio_server_bin()?;
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(|home| {
             write_mcp_tool_hook(
                 home,
@@ -657,7 +657,7 @@ async fn mcp_tool_hook_fails_open_when_server_is_unavailable() -> Result<()> {
         ]),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(|home| {
             write_mcp_tool_hook(
                 home,
@@ -733,7 +733,7 @@ async fn pre_tool_use_blocks_mcp_tool_before_execution(
 
     let block_reason = "blocked mcp pre hook";
     let rmcp_test_server_bin = stdio_server_bin()?;
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(move |home| {
             write_pre_tool_use_hook(home, block_reason)
                 .expect("failed to write MCP pre tool use hook fixture");
@@ -831,7 +831,7 @@ async fn pre_tool_use_rewrites_mcp_tool_before_execution() -> Result<()> {
     .await;
 
     let rmcp_test_server_bin = stdio_server_bin()?;
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(move |home| {
             write_updating_pre_tool_use_hook(home, rewritten_message)
                 .expect("failed to write MCP updating pre tool use hook fixture");
@@ -928,7 +928,7 @@ async fn post_tool_use_records_mcp_tool_payload_and_context(
 
     let post_context = "Remember the MCP post-tool note.";
     let rmcp_test_server_bin = stdio_server_bin()?;
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(move |home| {
             write_post_tool_use_hook(home, post_context)
                 .expect("failed to write MCP post tool use hook fixture");

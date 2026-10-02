@@ -48,11 +48,11 @@ fn test_standalone_exec_cli_can_use_apply_patch() -> anyhow::Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn test_apply_patch_tool() -> anyhow::Result<()> {
     use core_test_support::skip_if_no_network;
-    use core_test_support::test_genex_exec::test_codex_exec;
+    use core_test_support::test_genex_exec::test_genex_exec;
 
     skip_if_no_network!(Ok(()));
 
-    let test = test_codex_exec();
+    let test = test_genex_exec();
     let tmp_path = test.cwd_path().to_path_buf();
     let add_patch = r#"*** Begin Patch
 *** Add File: test.md
@@ -96,11 +96,11 @@ async fn test_apply_patch_tool() -> anyhow::Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn test_apply_patch_freeform_tool() -> anyhow::Result<()> {
     use core_test_support::skip_if_no_network;
-    use core_test_support::test_genex_exec::test_codex_exec;
+    use core_test_support::test_genex_exec::test_genex_exec;
 
     skip_if_no_network!(Ok(()));
 
-    let test = test_codex_exec();
+    let test = test_genex_exec();
     let freeform_add_patch = r#"*** Begin Patch
 *** Add File: app.py
 +class BaseClass:
@@ -154,7 +154,7 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
     use genex_login::save_auth;
     use genex_protocol::auth::AuthMode;
     use core_test_support::skip_if_no_network;
-    use core_test_support::test_genex_exec::test_codex_exec;
+    use core_test_support::test_genex_exec::test_genex_exec;
     use std::sync::Arc;
     use std::sync::atomic::AtomicUsize;
     use std::sync::atomic::Ordering;
@@ -165,7 +165,7 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
 
     skip_if_no_network!(Ok(()));
 
-    let test = test_codex_exec();
+    let test = test_genex_exec();
     let run_dir = test.cwd_path();
     assert!(
         std::process::Command::new("git")

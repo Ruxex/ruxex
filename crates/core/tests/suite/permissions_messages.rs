@@ -22,7 +22,7 @@ use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use std::collections::HashSet;
@@ -67,7 +67,7 @@ fn model_with_permission_messages(
 }
 
 async fn submit_text_turn(
-    test: &core_test_support::test_genex::TestCodex,
+    test: &core_test_support::test_genex::TestGenex,
     text: &str,
 ) -> Result<()> {
     test.codex
@@ -97,7 +97,7 @@ async fn catalog_approval_message_is_sent_in_initial_permissions() -> Result<()>
         "catalog user approval instructions",
         "catalog auto-review approval instructions",
     );
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model(model_slug)
         .with_config(move |config| {
             config.base_instructions = Some(override_instructions.to_string());
@@ -139,7 +139,7 @@ async fn model_change_appends_new_catalog_approval_message() -> Result<()> {
     let second_slug = "catalog-approvals-model-b";
     let first = model_with_approval_messages(first_slug, "model A approvals", "model A auto");
     let second = model_with_approval_messages(second_slug, "model B approvals", "model B auto");
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model(first_slug)
         .with_config(move |config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
@@ -210,7 +210,7 @@ async fn catalog_non_on_request_approval_messages_are_sent_in_initial_permission
             approvals: Some(approvals),
             ..Default::default()
         });
-        let mut builder = test_codex()
+        let mut builder = test_genex()
             .with_model(model_slug)
             .with_config(move |config| {
                 config.permissions.approval_policy = Constrained::allow_any(approval_policy);
@@ -263,7 +263,7 @@ async fn catalog_permission_message_is_sent_initially_and_after_model_change() -
             read_only: Some("model B permissions: {{ network_access }}".to_string()),
         },
     );
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model(first_slug)
         .with_config(move |config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::Never);
@@ -328,7 +328,7 @@ async fn empty_catalog_permission_message_preserves_approval_instructions() -> R
             read_only: Some(String::new()),
         },
     );
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model(model_slug)
         .with_config(move |config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::Never);
@@ -363,7 +363,7 @@ async fn permissions_message_sent_once_on_start() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
     });
     let test = builder.build(&server).await?;
@@ -397,7 +397,7 @@ async fn permissions_message_added_on_override_change() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
     });
     let test = builder.build(&server).await?;
@@ -454,7 +454,7 @@ async fn permissions_message_not_added_when_no_change() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
     });
     let test = builder.build(&server).await?;
@@ -501,7 +501,7 @@ async fn permissions_message_omitted_when_disabled() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.include_permissions_instructions = false;
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
     });
@@ -565,7 +565,7 @@ async fn resume_replays_permissions_messages() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
     });
     let initial = builder.build(&server).await?;
@@ -641,7 +641,7 @@ async fn resume_and_fork_append_permissions_messages() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
     });
     let initial = builder.build(&server).await?;
@@ -755,7 +755,7 @@ async fn permissions_message_includes_writable_roots() -> Result<()> {
         /*exclude_slash_tmp*/ true,
     );
 
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
         config
             .permissions

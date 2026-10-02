@@ -17,7 +17,7 @@ use genex_protocol::protocol::EventMsg;
 use core_test_support::apps_test_server::AppsTestServer;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_mcp_server;
 use pretty_assertions::assert_eq;
@@ -81,7 +81,7 @@ async fn http_auth_challenge_reaches_agent_tool_call_events_without_replay() -> 
         "url": format!("{}/api/codex/ps/mcp", http_server.managed_auth_base_url),
         "environment_id": DEFAULT_MCP_SERVER_ENVIRONMENT_ID,
     }))?;
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_config(move |config| {
             config
                 .mcp_servers
@@ -177,7 +177,7 @@ async fn oauth_mode_refresh_replaces_the_live_connection(
         OAuthCredentialExpiry::Valid,
     )
     .await?;
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_home(home)
         .with_config(move |config| {
             config

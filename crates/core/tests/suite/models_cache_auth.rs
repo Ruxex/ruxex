@@ -15,7 +15,7 @@ use core_test_support::responses;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -37,7 +37,7 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
         },
     )
     .await;
-    let managed = test_codex()
+    let managed = test_genex()
         .with_home(home.clone())
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.5")
@@ -85,7 +85,7 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
         },
     )
     .await;
-    let api = test_codex()
+    let api = test_genex()
         .with_home(home.clone())
         .with_auth(CodexAuth::from_api_key("api-key"))
         .with_config(|config| {
@@ -138,7 +138,7 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
         },
     )
     .await;
-    let other = test_codex()
+    let other = test_genex()
         .with_home(home)
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.5")

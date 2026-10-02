@@ -35,7 +35,7 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_target_windows;
 use core_test_support::skip_if_wine_exec;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
@@ -57,7 +57,7 @@ fn collaboration_mode_for_model(model: String) -> CollaborationMode {
 }
 
 async fn submit_user_turn(
-    test: &core_test_support::test_genex::TestCodex,
+    test: &core_test_support::test_genex::TestGenex,
     prompt: &str,
     approval_policy: AskForApproval,
     permission_profile: PermissionProfile,
@@ -110,7 +110,7 @@ async fn git_status_requires_approval_under_unless_trusted() -> Result<()> {
     skip_if_wine_exec!(Ok(()), "command approval requires host-native paths");
 
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_model("gpt-5.2").with_config(|config| {
+    let mut builder = test_genex().with_model("gpt-5.2").with_config(|config| {
         config
             .features
             .enable(Feature::UnifiedExec)
@@ -200,7 +200,7 @@ prefix_rule(pattern=["git", "status"], decision="allow")
     const MIGRATION_MARKER_FILENAME: &str = ".sandbox_migration";
 
     let server = start_mock_server().await;
-    let mut migrated_builder = test_codex().with_config(|config| {
+    let mut migrated_builder = test_genex().with_config(|config| {
         let policy_path = config.codex_home.join("rules/default.rules");
         fs::create_dir_all(policy_path.parent().expect("rules directory"))
             .expect("create rules directory");
@@ -214,7 +214,7 @@ prefix_rule(pattern=["git", "status"], decision="allow")
         "v1\n"
     );
 
-    let mut ignored_builder = test_codex().with_config(|config| {
+    let mut ignored_builder = test_genex().with_config(|config| {
         let policy_path = config.codex_home.join("rules/default.rules");
         fs::create_dir_all(policy_path.parent().expect("rules directory"))
             .expect("create rules directory");
@@ -244,7 +244,7 @@ async fn granular_complex_forced_rm_denial_explains_why_the_command_was_rejected
     skip_if_target_windows!(Ok(()), "uses a POSIX shell command fixture");
 
     let server = start_mock_server().await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build_with_auto_env(&server).await?;
     let call_id = "forced-rm-denied";
     let args = json!({
@@ -308,7 +308,7 @@ async fn granular_complex_forced_rm_requests_approval_when_allowed() -> Result<(
     skip_if_target_windows!(Ok(()), "uses a POSIX shell command fixture");
 
     let server = start_mock_server().await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build_with_auto_env(&server).await?;
     let call_id = "forced-rm-approval";
     let args = json!({
@@ -385,7 +385,7 @@ async fn deeply_nested_forced_rm_is_rejected_before_execution_when_approvals_are
     skip_if_target_windows!(Ok(()), "uses a POSIX shell command fixture");
 
     let server = start_mock_server().await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build_with_auto_env(&server).await?;
     let sentinel = test.config.cwd.join("forced-rm-sentinel");
     fs::write(&sentinel, "must not be deleted")?;
@@ -445,7 +445,7 @@ async fn deeply_nested_forced_rm_is_rejected_before_execution_when_approvals_are
 #[tokio::test]
 async fn unified_exec_disabled_windows_sandbox_rejects_managed_read_only_command() -> Result<()> {
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::UnifiedExec)
@@ -515,7 +515,7 @@ async fn unified_exec_disabled_windows_sandbox_rejects_managed_read_only_command
 
 #[tokio::test]
 async fn execpolicy_blocks_shell_invocation() -> Result<()> {
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         let policy_path = config.codex_home.join("rules").join("policy.rules");
         fs::create_dir_all(
             policy_path
@@ -607,7 +607,7 @@ async fn malformed_custom_rules_preserve_managed_forbidden_prefix() -> Result<()
         "managed prefix fixture uses POSIX executable semantics"
     );
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_cloud_config_bundle(
             CloudConfigBundleFixture::loader_with_enterprise_requirement(
                 r#"
@@ -685,7 +685,7 @@ async fn environment_command_restrictions_override_saved_prefix_approvals() -> R
         "managed prefix fixture uses POSIX executable semantics"
     );
 
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::UnifiedExec)
@@ -813,7 +813,7 @@ async fn environment_command_policy_changes_invalidate_session_approvals() -> Re
         "managed prefix fixture uses POSIX executable semantics"
     );
 
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::UnifiedExec)
@@ -929,7 +929,7 @@ async fn environment_command_policy_changes_invalidate_session_approvals() -> Re
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_empty_script_with_collaboration_mode_does_not_panic() -> Result<()> {
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_model("gpt-5.2").with_config(|config| {
+    let mut builder = test_genex().with_model("gpt-5.2").with_config(|config| {
         config
             .features
             .enable(Feature::UnifiedExec)
@@ -988,7 +988,7 @@ async fn unified_exec_empty_script_with_collaboration_mode_does_not_panic() -> R
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_whitespace_script_with_collaboration_mode_does_not_panic() -> Result<()> {
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_model("gpt-5.2").with_config(|config| {
+    let mut builder = test_genex().with_model("gpt-5.2").with_config(|config| {
         config
             .features
             .enable(Feature::UnifiedExec)

@@ -18,7 +18,7 @@ use core_test_support::responses::mount_models_once;
 use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use wiremock::MockServer;
@@ -58,7 +58,7 @@ async fn catalog_permission_message_loaded_from_remote_models_is_sent() -> Resul
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::Never);

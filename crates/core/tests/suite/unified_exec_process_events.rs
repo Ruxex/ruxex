@@ -36,7 +36,7 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::startup::STARTUP_TIMEOUT;
 use core_test_support::startup::expect_startup;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use futures::SinkExt;
 use futures::StreamExt;
@@ -643,7 +643,7 @@ async fn exec_command_consumes_pushed_remote_process_events(
     .await;
     let exec_server_url = format!("ws://{}", listener.local_addr()?);
     let exec_server = tokio::spawn(serve_exec_with_pushed_events(listener, scenario));
-    let mut builder = test_codex().with_exec_server_url(exec_server_url);
+    let mut builder = test_genex().with_exec_server_url(exec_server_url);
     if managed_network_configured {
         let cloud_config_bundle = match managed_network {
             ManagedNetworkScenario::Enabled {

@@ -17,7 +17,7 @@ use core_test_support::responses;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_mcp_server;
 use pretty_assertions::assert_eq;
@@ -100,7 +100,7 @@ pub(super) async fn mcp_server_elicitation_scenario(
     request_kind: RequestKind,
 ) -> Result<Vec<ResponsesRequest>> {
     let server = responses::start_mock_server().await;
-    let test = test_codex().build_with_auto_env(&server).await?;
+    let test = test_genex().build_with_auto_env(&server).await?;
     let mut elicitation = json!({
         "mode": "form",
         "message": "Provide the requested input.",

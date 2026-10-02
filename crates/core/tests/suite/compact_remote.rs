@@ -33,9 +33,9 @@ use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_websocket_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestCodexBuilder;
-use core_test_support::test_genex::TestCodexHarness;
-use core_test_support::test_genex::test_codex as base_test_codex;
+use core_test_support::test_genex::TestGenexBuilder;
+use core_test_support::test_genex::TestGenexHarness;
+use core_test_support::test_genex::test_genex as base_test_codex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use core_test_support::wait_for_event_with_timeout;
@@ -57,7 +57,7 @@ const REMOTE_COMPACT_TURN_COMPLETE_TIMEOUT: Duration = Duration::from_secs(30);
 const CONTEXT_WINDOW_TRUNCATED_OUTPUT_MESSAGE: &str =
     "Output exceeded the available model context and was truncated";
 
-fn test_codex() -> TestCodexBuilder {
+fn test_genex() -> TestGenexBuilder {
     base_test_codex().with_config(|config| {
         config.update_plan_enabled = true;
     })
@@ -65,9 +65,9 @@ fn test_codex() -> TestCodexBuilder {
 
 fn remote_realtime_test_codex_builder(
     realtime_server: &responses::WebSocketTestServer,
-) -> TestCodexBuilder {
+) -> TestGenexBuilder {
     let realtime_base_url = realtime_server.uri().to_string();
-    test_codex()
+    test_genex()
         .with_auth(CodexAuth::from_api_key("dummy"))
         .with_config(move |config| {
             config.experimental_realtime_ws_base_url = Some(realtime_base_url);
@@ -180,12 +180,12 @@ async fn wait_for_turn_complete(codex: &genex_core::GenexThread) {
     .await;
 }
 
-fn amazon_bedrock_test_codex() -> TestCodexBuilder {
+fn amazon_bedrock_test_codex() -> TestGenexBuilder {
     let auth = CodexAuth::BedrockApiKey(BedrockApiKeyAuth {
         api_key: "bedrock-test-api-key".to_string(),
         region: "us-east-1".to_string(),
     });
-    test_codex()
+    test_genex()
         .with_auth(auth)
         .with_model(AMAZON_BEDROCK_GPT_5_5_MODEL_ID)
         .with_config(|config| {
@@ -295,7 +295,7 @@ async fn remote_compact_v2_retains_metadata_from_resumed_history() -> Result<()>
     )
     .await;
 
-    let builder = || test_codex().with_auth(CodexAuth::from_api_key("test-api-key"));
+    let builder = || test_genex().with_auth(CodexAuth::from_api_key("test-api-key"));
     let initial = builder()
         .with_pre_build_hook(|home| {
             fs::write(
@@ -349,8 +349,8 @@ async fn remote_compact_v2_retains_only_client_developer_messages_when_enabled(
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let harness = TestCodexHarness::with_auto_env_builder(
-        test_codex()
+    let harness = TestGenexHarness::with_auto_env_builder(
+        test_genex()
             .with_auth(CodexAuth::from_api_key("test-api-key"))
             .with_config(move |config| {
                 if enabled {
@@ -436,8 +436,8 @@ async fn remote_compact_v2_retains_only_client_developer_messages_when_enabled(
 async fn remote_compact_v2_records_usage_before_output_validation() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let harness = TestCodexHarness::with_auto_env_builder(
-        test_codex()
+    let harness = TestGenexHarness::with_auto_env_builder(
+        test_genex()
             .with_auth(CodexAuth::from_api_key("test-api-key"))
             .with_config(|config| {
                 config.model_auto_compact_token_limit = Some(200);
@@ -531,7 +531,7 @@ async fn remote_compact_v2_records_usage_before_output_validation() -> Result<()
 async fn amazon_bedrock_automatic_compaction_uses_v2_responses_endpoint() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let harness = TestCodexHarness::with_auto_env_builder(amazon_bedrock_test_codex().with_config(
+    let harness = TestGenexHarness::with_auto_env_builder(amazon_bedrock_test_codex().with_config(
         |config| {
             config.model_auto_compact_token_limit = Some(200);
         },
@@ -616,8 +616,8 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let harness = TestCodexHarness::with_auto_env_builder(
-        test_codex()
+    let harness = TestGenexHarness::with_auto_env_builder(
+        test_genex()
             .with_auth(CodexAuth::from_api_key("test-api-key"))
             .with_config(move |config| {
                 let _ = config.features.enable(Feature::UnifiedImageBudget);
@@ -802,8 +802,8 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
 async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let harness = TestCodexHarness::with_builder(
-        test_codex().with_auth(CodexAuth::from_api_key("test-api-key")),
+    let harness = TestGenexHarness::with_builder(
+        test_genex().with_auth(CodexAuth::from_api_key("test-api-key")),
     )
     .await?;
     let image_url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=";
@@ -1152,8 +1152,8 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
 async fn remote_compact_v2_retries_failures_with_stream_retry_budget() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let harness = TestCodexHarness::with_builder(
-        test_codex()
+    let harness = TestGenexHarness::with_builder(
+        test_genex()
             .with_history_mode(ThreadHistoryMode::Paginated)
             .with_auth(CodexAuth::from_api_key("test-api-key"))
             .with_config(|config| {
@@ -1269,8 +1269,8 @@ async fn remote_compact_v2_rewrites_multiple_trailing_function_call_outputs(
     let second_trimmed_call_id = "second-trimmed-call";
     let retained_output = "retained tool output";
 
-    let harness = TestCodexHarness::with_builder(
-        test_codex()
+    let harness = TestGenexHarness::with_builder(
+        test_genex()
             .with_auth(CodexAuth::from_api_key("test-api-key"))
             .with_config(|config| {
                 config.model_context_window = Some(2_000);
@@ -1488,8 +1488,8 @@ async fn active_realtime_refreshes_changed_start_instructions_only_after_compact
 async fn remote_mid_turn_compact_v2_sends_turn_state_over_http() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let harness = TestCodexHarness::with_builder(
-        test_codex()
+    let harness = TestGenexHarness::with_builder(
+        test_genex()
             .with_auth(CodexAuth::from_api_key("test-api-key"))
             .with_config(|config| {
                 config.model_auto_compact_token_limit = Some(200);
@@ -1617,7 +1617,7 @@ async fn remote_mid_turn_compact_v2_sends_turn_state_over_websocket() -> Result<
         ],
     ]])
     .await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model_auto_compact_token_limit = Some(200);

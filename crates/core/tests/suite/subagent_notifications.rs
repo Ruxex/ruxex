@@ -49,9 +49,9 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::responses::strip_metadata_from_json;
 use core_test_support::responses::strip_response_item_ids_from_json;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::TestGenex;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
@@ -353,7 +353,7 @@ async fn wait_for_hook_log(
     }
 }
 
-async fn wait_for_spawned_thread_id(test: &TestCodex) -> Result<String> {
+async fn wait_for_spawned_thread_id(test: &TestGenex) -> Result<String> {
     let deadline = Instant::now() + Duration::from_secs(2);
     loop {
         let ids = test.thread_manager.list_thread_ids().await;
@@ -409,7 +409,7 @@ async fn wait_for_request_with_model(
 async fn setup_turn_one_with_spawned_child(
     server: &MockServer,
     child_response_delay: Option<Duration>,
-) -> Result<(TestCodex, String)> {
+) -> Result<(TestGenex, String)> {
     let (test, spawned_id, _child_request_log) = setup_turn_one_with_custom_spawned_child(
         server,
         json!({
@@ -431,10 +431,10 @@ async fn setup_turn_one_with_custom_spawned_child(
     wait_for_parent_notification: bool,
     turn_reasoning_effort: ReasoningEffort,
     configure_test: impl FnOnce(
-        core_test_support::test_genex::TestCodexBuilder,
-    ) -> core_test_support::test_genex::TestCodexBuilder,
+        core_test_support::test_genex::TestGenexBuilder,
+    ) -> core_test_support::test_genex::TestGenexBuilder,
 ) -> Result<(
-    TestCodex,
+    TestGenex,
     String,
     core_test_support::responses::ResponseMock,
 )> {
@@ -493,7 +493,7 @@ async fn setup_turn_one_with_custom_spawned_child(
     .await;
 
     let configured_reasoning_effort = turn_reasoning_effort.clone();
-    let mut builder = configure_test(test_codex().with_config(move |config| {
+    let mut builder = configure_test(test_genex().with_config(move |config| {
         config
             .features
             .enable(Feature::Collab)
@@ -549,8 +549,8 @@ async fn spawn_child_and_capture_snapshot(
     server: &MockServer,
     spawn_args: serde_json::Value,
     configure_test: impl FnOnce(
-        core_test_support::test_genex::TestCodexBuilder,
-    ) -> core_test_support::test_genex::TestCodexBuilder,
+        core_test_support::test_genex::TestGenexBuilder,
+    ) -> core_test_support::test_genex::TestGenexBuilder,
 ) -> Result<ThreadConfigSnapshot> {
     let (test, spawned_id, _child_request_log) = setup_turn_one_with_custom_spawned_child(
         server,
@@ -675,7 +675,7 @@ async fn subagent_start_replaces_session_start_and_injects_context(
     )
     .await;
 
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(|home| {
             write_subagent_lifecycle_hooks(home, /*stop_prompts*/ &[], "worker")
                 .expect("failed to write subagent hook fixture");
@@ -826,7 +826,7 @@ async fn subagent_stop_replaces_stop_and_skips_internal_subagents() -> Result<()
     )
     .await;
 
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(|home| {
             write_subagent_lifecycle_hooks(
                 home,
@@ -1043,7 +1043,7 @@ async fn spawned_child_receives_forked_parent_context(
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model_info_override(INHERITED_MODEL, |model| model.comp_hash = None)
         .with_history_mode(history_mode)
         .with_config(|config| {
@@ -1160,7 +1160,7 @@ async fn spawned_child_receives_forked_parent_context(
     Ok(())
 }
 
-async fn submit_turn_with_trigger(test: &TestCodex, prompt: &str, trigger: &str) -> Result<()> {
+async fn submit_turn_with_trigger(test: &TestGenex, prompt: &str, trigger: &str) -> Result<()> {
     test.codex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
@@ -1331,7 +1331,7 @@ async fn grandchild_full_fork_preserves_context_baseline(
         .with_priority(/*p*/ 6)
         .mount(&server)
         .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_history_mode(history_mode)
         .with_config(move |config| {
             config
@@ -1562,7 +1562,7 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
         ]),
     )
     .await;
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config
             .features
             .enable(Feature::Collab)
@@ -2171,7 +2171,7 @@ async fn spawned_multi_agent_v2_child_inherits_parent_developer_context() -> Res
     )
     .await;
 
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::Collab)
@@ -2281,7 +2281,7 @@ async fn multi_agent_v2_spawn_sends_agent_message_to_child(
     } else {
         "koffing"
     };
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model(parent_model)
         .with_config(move |config| {
             config
@@ -2562,7 +2562,7 @@ async fn plaintext_multi_agent_v2_completion_sends_agent_message(
         ]),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model("koffing")
         .with_config(|config| {
             config
@@ -2792,7 +2792,7 @@ async fn multi_agent_v2_peer_followup_completion_notifies_initiating_turn() -> R
     const FOLLOWUP_CALL_ID: &str = "request-peer-followup";
 
     let server = start_mock_server().await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("gpt-5.6-sol")
         .with_config(|config| {
             for feature in [Feature::Collab, Feature::MultiAgentV2] {
@@ -3135,7 +3135,7 @@ async fn skills_toggle_skips_instructions_for_parent_and_spawned_child() -> Resu
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_home_skill(home, "demo", "demo-skill", "demo skill").expect("write home skill");
         })
@@ -3284,7 +3284,7 @@ async fn spawn_agent_rejects_reasoning_effort_unsupported_by_role_model() -> Res
     )
     .await;
 
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config
                 .features
@@ -3351,7 +3351,7 @@ async fn spawn_agent_tool_description_mentions_role_locked_settings() -> Result<
     )
     .await;
 
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::Collab)

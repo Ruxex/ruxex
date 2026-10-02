@@ -26,7 +26,7 @@ use core_test_support::responses::sse_response;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -125,7 +125,7 @@ async fn no_collaboration_instructions_by_default() -> Result<()> {
     )
     .await;
 
-    let test = test_codex().build(&server).await?;
+    let test = test_genex().build(&server).await?;
 
     test.codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
@@ -171,7 +171,7 @@ async fn catalog_collaboration_messages_track_mode_changes() -> Result<()> {
     let default_text = "## Plan tool\nPreserve the custom default policy.\n";
     let plan_text = "## `update_plan`\nPreserve the custom Plan Mode policy.\n";
     let model = model_with_collaboration_messages(model_slug, Some(default_text), Some(plan_text));
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model(model_slug)
         .with_config(move |config| {
             config.model_catalog = Some(ModelsResponse {
@@ -264,7 +264,7 @@ async fn catalog_collaboration_messages_refresh_without_mode_or_model_change(
     let server = MockServer::start().await;
     let mut models_mocks =
         vec![mount_models_once_with_etag(&server, catalog(ORIGINAL), ETAG_1).await];
-    let test = test_codex()
+    let test = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(MODEL)
         .with_config(|config| {
@@ -364,7 +364,7 @@ async fn empty_collaboration_guidance_clears_prior_instructions_once(
         model_with_collaboration_messages(model_slug, Some(default_text), empty_instructions);
     let empty_model =
         model_with_collaboration_messages(empty_model_slug, empty_instructions, empty_instructions);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model(model_slug)
         .with_config(move |config| {
             config.model_catalog = Some(ModelsResponse {
@@ -433,7 +433,7 @@ async fn model_change_appends_new_catalog_collaboration_message() -> Result<()> 
     let first = model_with_collaboration_messages(first_slug, Some(first_text), /*plan*/ None);
     let second =
         model_with_collaboration_messages(second_slug, Some(second_text), /*plan*/ None);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model(first_slug)
         .with_config(move |config| {
             config.model_catalog = Some(ModelsResponse {
@@ -490,7 +490,7 @@ async fn user_input_includes_collaboration_instructions_after_override() -> Resu
     )
     .await;
 
-    let test = test_codex().build(&server).await?;
+    let test = test_genex().build(&server).await?;
 
     let collab_text = "collab instructions";
     let collaboration_mode = collab_mode_with_instructions(Some(collab_text));
@@ -530,7 +530,7 @@ async fn collaboration_instructions_added_on_user_turn() -> Result<()> {
     )
     .await;
 
-    let test = test_codex().build(&server).await?;
+    let test = test_genex().build(&server).await?;
     let collab_text = "turn instructions";
     let collaboration_mode = collab_mode_with_instructions(Some(collab_text));
 
@@ -575,7 +575,7 @@ async fn collaboration_instructions_omitted_when_disabled() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config.include_collaboration_mode_instructions = false;
     });
     let test = builder.build(&server).await?;
@@ -624,7 +624,7 @@ async fn user_turn_overrides_collaboration_instructions_after_override() -> Resu
     )
     .await;
 
-    let test = test_codex().build(&server).await?;
+    let test = test_genex().build(&server).await?;
     let base_text = "base instructions";
     let base_mode = collab_mode_with_instructions(Some(base_text));
     let turn_text = "turn override";
@@ -687,7 +687,7 @@ async fn collaboration_mode_update_appends_instruction_changes_within_same_mode(
     )
     .await;
 
-    let test = test_codex().build(&server).await?;
+    let test = test_genex().build(&server).await?;
     let first_text = "first instructions";
     let second_text = "second instructions";
 
@@ -751,7 +751,7 @@ async fn collaboration_mode_update_noop_does_not_append() -> Result<()> {
     )
     .await;
 
-    let test = test_codex().build(&server).await?;
+    let test = test_genex().build(&server).await?;
     let collab_text = "same instructions";
 
     core_test_support::submit_thread_settings(
@@ -812,7 +812,7 @@ async fn collaboration_mode_update_emits_new_instruction_message_when_mode_chang
     )
     .await;
 
-    let test = test_codex().build(&server).await?;
+    let test = test_genex().build(&server).await?;
     let default_text = "default mode instructions";
     let plan_text = "plan mode instructions";
 
@@ -882,7 +882,7 @@ async fn collaboration_mode_update_noop_does_not_append_when_mode_is_unchanged()
     )
     .await;
 
-    let test = test_codex().build(&server).await?;
+    let test = test_genex().build(&server).await?;
     let collab_text = "mode-stable instructions";
 
     core_test_support::submit_thread_settings(
@@ -949,7 +949,7 @@ async fn resume_replays_collaboration_instructions() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let initial = builder.build_with_auto_env(&server).await?;
 
     let collab_text = "resume instructions";
@@ -1013,7 +1013,7 @@ async fn cold_resume_refreshes_legacy_collaboration_snapshot_once(
     let builder_with_instructions = |instructions: &str| {
         let model =
             model_with_collaboration_messages(MODEL, Some(instructions), /*plan*/ None);
-        test_codex().with_model(MODEL).with_config(move |config| {
+        test_genex().with_model(MODEL).with_config(move |config| {
             config.model_catalog = Some(ModelsResponse {
                 models: vec![model],
             });
@@ -1108,7 +1108,7 @@ async fn empty_collaboration_instructions_are_ignored() -> Result<()> {
     )
     .await;
 
-    let test = test_codex().build(&server).await?;
+    let test = test_genex().build(&server).await?;
     let current_model = test.session_configured.model.clone();
 
     core_test_support::submit_thread_settings(

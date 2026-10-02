@@ -23,9 +23,9 @@ use core_test_support::responses::mount_sse_once_match;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::TestGenex;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -90,7 +90,7 @@ async fn responses_api_parent_and_subagent_requests_include_identity_headers_and
     )
     .await;
 
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config
             .features
             .disable(Feature::EnableRequestCompression)
@@ -156,7 +156,7 @@ async fn responses_api_parent_and_subagent_requests_include_identity_headers_and
     Ok(())
 }
 
-async fn submit_turn_with_timeout(test: &TestCodex, prompt: &str) -> Result<()> {
+async fn submit_turn_with_timeout(test: &TestGenex, prompt: &str) -> Result<()> {
     let session_model = test.session_configured.model.clone();
     let cwd = test.config.cwd.clone();
     let (sandbox_policy, permission_profile) =
@@ -226,7 +226,7 @@ where
 }
 
 async fn wait_for_event_result<F>(
-    test: &TestCodex,
+    test: &TestGenex,
     stage: &str,
     mut predicate: F,
 ) -> Result<EventMsg>

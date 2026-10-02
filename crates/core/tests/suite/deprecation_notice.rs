@@ -6,8 +6,8 @@ use genex_protocol::protocol::DeprecationNoticeEvent;
 use genex_protocol::protocol::EventMsg;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestCodex;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
@@ -18,7 +18,7 @@ async fn emits_deprecation_notice_for_legacy_feature_flag() -> anyhow::Result<()
 
     let server = start_mock_server().await;
 
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         let mut features = config.features.get().clone();
         features
             .record_legacy_usage_force("use_experimental_unified_exec_tool", Feature::UnifiedExec);
@@ -28,7 +28,7 @@ async fn emits_deprecation_notice_for_legacy_feature_flag() -> anyhow::Result<()
             .expect("test config should allow managed feature metadata updates");
     });
 
-    let TestCodex { codex, .. } = builder.build(&server).await?;
+    let TestGenex { codex, .. } = builder.build(&server).await?;
 
     let notice = wait_for_event_match(&codex, |event| match event {
         EventMsg::DeprecationNotice(ev) => Some(ev.clone()),
@@ -58,7 +58,7 @@ async fn emits_deprecation_notice_for_web_search_feature_flag_values() -> anyhow
     for enabled in [true, false] {
         let server = start_mock_server().await;
 
-        let mut builder = test_codex().with_config(move |config| {
+        let mut builder = test_genex().with_config(move |config| {
             let mut entries = BTreeMap::new();
             entries.insert("web_search_request".to_string(), enabled);
             let mut features = config.features.get().clone();
@@ -69,7 +69,7 @@ async fn emits_deprecation_notice_for_web_search_feature_flag_values() -> anyhow
                 .expect("test config should allow managed feature map updates");
         });
 
-        let TestCodex { codex, .. } = builder.build(&server).await?;
+        let TestGenex { codex, .. } = builder.build(&server).await?;
 
         let notice = wait_for_event_match(&codex, |event| match event {
             EventMsg::DeprecationNotice(ev)
@@ -104,7 +104,7 @@ async fn emits_deprecation_notice_for_use_legacy_landlock() -> anyhow::Result<()
 
     let server = start_mock_server().await;
 
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         let mut entries = BTreeMap::new();
         entries.insert("use_legacy_landlock".to_string(), true);
         let mut features = config.features.get().clone();
@@ -115,7 +115,7 @@ async fn emits_deprecation_notice_for_use_legacy_landlock() -> anyhow::Result<()
             .expect("test config should allow managed feature map updates");
     });
 
-    let TestCodex { codex, .. } = builder.build(&server).await?;
+    let TestGenex { codex, .. } = builder.build(&server).await?;
 
     let notice = wait_for_event_match(&codex, |event| match event {
         EventMsg::DeprecationNotice(ev)

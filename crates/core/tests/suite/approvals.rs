@@ -48,9 +48,9 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::TestGenex;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_with_timeout;
@@ -84,7 +84,7 @@ enum TargetPath {
 }
 
 impl TargetPath {
-    fn resolve_for_patch(self, test: &TestCodex) -> (PathBuf, String) {
+    fn resolve_for_patch(self, test: &TestGenex) -> (PathBuf, String) {
         match self {
             TargetPath::Workspace(name) => {
                 let path = test.cwd.path().join(name);
@@ -159,7 +159,7 @@ impl ActionKind {
 
     async fn prepare(
         &self,
-        test: &TestCodex,
+        test: &TestGenex,
         server: &MockServer,
         call_id: &str,
         sandbox_permissions: SandboxPermissions,
@@ -418,7 +418,7 @@ enum Expectation {
 }
 
 impl Expectation {
-    fn verify(&self, test: &TestCodex, result: &CommandResult) -> Result<()> {
+    fn verify(&self, test: &TestGenex, result: &CommandResult) -> Result<()> {
         match self {
             Expectation::FileCreated { target, content } => {
                 let (path, _) = target.resolve_for_patch(test);
@@ -662,7 +662,7 @@ struct CommandResult {
 }
 
 async fn submit_turn(
-    test: &TestCodex,
+    test: &TestGenex,
     prompt: &str,
     approval_policy: AskForApproval,
     sandbox_policy: SandboxPolicy,
@@ -697,7 +697,7 @@ async fn submit_turn(
 }
 
 async fn submit_turn_preserving_active_permission_profile(
-    test: &TestCodex,
+    test: &TestGenex,
     prompt: &str,
     approval_policy: AskForApproval,
 ) -> Result<()> {
@@ -729,7 +729,7 @@ async fn submit_turn_preserving_active_permission_profile(
     Ok(())
 }
 
-fn assert_active_workspace_permission_profile(test: &TestCodex) {
+fn assert_active_workspace_permission_profile(test: &TestGenex) {
     assert_eq!(
         test.session_configured
             .active_permission_profile
@@ -780,7 +780,7 @@ fn parse_result(item: &Value) -> CommandResult {
 }
 
 async fn expect_exec_approval(
-    test: &TestCodex,
+    test: &TestGenex,
     expected_command: &str,
 ) -> ExecApprovalRequestEvent {
     let event = wait_for_event(&test.codex, |event| {
@@ -807,7 +807,7 @@ async fn expect_exec_approval(
 }
 
 async fn expect_patch_approval(
-    test: &TestCodex,
+    test: &TestGenex,
     expected_call_id: &str,
 ) -> ApplyPatchApprovalRequestEvent {
     let event = wait_for_event_with_timeout(
@@ -837,7 +837,7 @@ async fn expect_patch_approval(
     }
 }
 
-async fn wait_for_completion_without_approval(test: &TestCodex) {
+async fn wait_for_completion_without_approval(test: &TestGenex) {
     let event = wait_for_event(&test.codex, |event| {
         matches!(
             event,
@@ -855,7 +855,7 @@ async fn wait_for_completion_without_approval(test: &TestCodex) {
     }
 }
 
-async fn wait_for_completion(test: &TestCodex) {
+async fn wait_for_completion(test: &TestGenex) {
     wait_for_event(&test.codex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
@@ -882,7 +882,7 @@ fn body_contains(req: &Request, text: &str) -> bool {
         .is_some_and(|body| body.contains(text))
 }
 
-async fn wait_for_spawned_thread(test: &TestCodex) -> Result<Arc<GenexThread>> {
+async fn wait_for_spawned_thread(test: &TestGenex) -> Result<Arc<GenexThread>> {
     let deadline = tokio::time::Instant::now() + Duration::from_secs(2);
     loop {
         let ids = test.thread_manager.list_thread_ids().await;
@@ -1971,7 +1971,7 @@ async fn run_scenario(scenario: &ScenarioSpec) -> Result<()> {
     let policy_src = scenario.action.policy_src();
     let thread_store_id = format!("approval-scenario-{}", scenario.name);
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("gpt-5.5")
         .with_config(move |config| {
             // These scenarios assert tool behavior, not rollout persistence.
@@ -2151,7 +2151,7 @@ async fn approving_apply_patch_for_session_skips_future_prompts_for_same_file() 
     let sandbox_policy = SandboxPolicy::DangerFullAccess;
     let sandbox_policy_for_config = sandbox_policy.clone();
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("gpt-5.4")
         .with_config(move |config| {
             config.permissions.approval_policy = Constrained::allow_any(approval_policy);
@@ -2286,7 +2286,7 @@ async fn assert_execpolicy_amendment_context(
     let approval_policy = AskForApproval::OnRequest;
     let sandbox_policy = SandboxPolicy::new_read_only_policy();
     let sandbox_policy_for_config = sandbox_policy.clone();
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model_info_override("gpt-5.4", |model_info| {
             model_info.model_messages = None;
         })
@@ -2385,7 +2385,7 @@ async fn approving_execpolicy_amendment_persists_policy_and_skips_future_prompts
     let approval_policy = AskForApproval::UnlessTrusted;
     let sandbox_policy = SandboxPolicy::new_workspace_write_policy();
     let sandbox_policy_for_config = sandbox_policy.clone();
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(approval_policy);
         config
             .set_legacy_sandbox_policy(sandbox_policy_for_config)
@@ -2558,7 +2558,7 @@ async fn spawned_subagent_execpolicy_amendment_propagates_to_parent_session() ->
     let approval_policy = AskForApproval::UnlessTrusted;
     let sandbox_policy = SandboxPolicy::new_workspace_write_policy();
     let sandbox_policy_for_config = sandbox_policy.clone();
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(approval_policy);
         config
             .set_legacy_sandbox_policy(sandbox_policy_for_config)
@@ -2778,7 +2778,7 @@ async fn shell_startup_credentials_are_brokered(
         let Some(zsh) = genex_core::shell::get_shell(genex_core::shell::ShellType::Zsh) else {
             return Ok(());
         };
-        test_codex()
+        test_genex()
             .with_user_shell(zsh)
             .with_config(move |config| {
                 config.permissions.approval_policy = Constrained::allow_any(approval_policy);
@@ -3147,7 +3147,7 @@ GH_TOKEN = "{REAL_GITHUB_TOKEN}"
         AskForApproval::Never
     };
     let server = start_mock_server().await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(home)
         .with_user_shell(bash)
         .with_cloud_config_bundle(managed_network_requirements_loader())
@@ -3369,7 +3369,7 @@ ENV = "{}"
     )?;
     let shell_path = shell.derive_exec_args("", /*use_login_shell*/ false)[0].clone();
     let server = start_mock_server().await;
-    let test = test_codex()
+    let test = test_genex()
         .with_home(home)
         .with_user_shell(shell)
         .with_cloud_config_bundle(managed_network_requirements_loader())
@@ -3742,7 +3742,7 @@ touch {outside_path:?}
     )?;
 
     let approval_policy = AskForApproval::OnRequest;
-    let mut builder = test_codex().with_home(home).with_config(move |config| {
+    let mut builder = test_genex().with_home(home).with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(approval_policy);
     });
     let test = builder.build(&server).await?;
@@ -4024,7 +4024,7 @@ async fn invalid_requested_prefix_rule_falls_back_for_compound_command() -> Resu
     let approval_policy = AskForApproval::OnRequest;
     let sandbox_policy = SandboxPolicy::new_read_only_policy();
     let sandbox_policy_for_config = sandbox_policy.clone();
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(approval_policy);
         config
             .set_legacy_sandbox_policy(sandbox_policy_for_config)
@@ -4077,7 +4077,7 @@ async fn approving_fallback_rule_for_compound_command_works() -> Result<()> {
     let approval_policy = AskForApproval::OnRequest;
     let sandbox_policy = SandboxPolicy::new_read_only_policy();
     let sandbox_policy_for_config = sandbox_policy.clone();
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(approval_policy);
         config
             .set_legacy_sandbox_policy(sandbox_policy_for_config)
@@ -4214,7 +4214,7 @@ allow_local_binding = true
         exclude_slash_tmp: true,
     };
     let sandbox_policy_for_config = sandbox_policy.clone();
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(home)
         .with_cloud_config_bundle(managed_network_requirements_loader())
         .with_config(move |config| {
@@ -4500,7 +4500,7 @@ allow_local_binding = true
         exclude_tmpdir_env_var: true,
         exclude_slash_tmp: true,
     };
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(home)
         .with_cloud_config_bundle(managed_network_requirements_loader())
         .with_config(move |config| {
@@ -4702,7 +4702,7 @@ allow_local_binding = true
         exclude_tmpdir_env_var: true,
         exclude_slash_tmp: true,
     };
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(home)
         .with_cloud_config_bundle(managed_network_requirements_loader())
         .with_config(move |config| {
@@ -4829,7 +4829,7 @@ async fn compound_command_with_one_safe_command_still_requires_approval() -> Res
     let approval_policy = AskForApproval::UnlessTrusted;
     let sandbox_policy = SandboxPolicy::new_workspace_write_policy();
     let sandbox_policy_for_config = sandbox_policy.clone();
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(approval_policy);
         config
             .set_legacy_sandbox_policy(sandbox_policy_for_config)

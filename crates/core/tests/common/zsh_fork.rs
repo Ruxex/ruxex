@@ -9,9 +9,9 @@ use genex_protocol::models::PermissionProfile;
 use genex_protocol::permissions::NetworkSandboxPolicy;
 use genex_protocol::protocol::AskForApproval;
 
-use crate::test_genex::TestCodex;
-use crate::test_genex::TestCodexBuilder;
-use crate::test_genex::test_codex;
+use crate::test_genex::TestGenex;
+use crate::test_genex::TestGenexBuilder;
+use crate::test_genex::test_genex;
 
 #[derive(Clone)]
 pub struct ZshForkRuntime {
@@ -74,7 +74,7 @@ pub async fn build_zsh_fork_test<F>(
     approval_policy: AskForApproval,
     permission_profile: PermissionProfile,
     pre_build_hook: F,
-) -> Result<TestCodex>
+) -> Result<TestGenex>
 where
     F: FnOnce(&Path) + Send + 'static,
 {
@@ -92,8 +92,8 @@ where
 pub fn zsh_fork_test_builder(
     runtime: ZshForkRuntime,
     approval_policy: AskForApproval,
-) -> TestCodexBuilder {
-    test_codex().with_config(move |config| {
+) -> TestGenexBuilder {
+    test_genex().with_config(move |config| {
         runtime.apply_to_config(config, approval_policy);
     })
 }

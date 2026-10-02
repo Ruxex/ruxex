@@ -18,7 +18,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -88,7 +88,7 @@ async fn adds_weighted_initial_and_threshold_reminders(
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.rollout_budget = Some(RolloutBudgetConfig {
                 sampling_token_weight: 2.0,
@@ -135,7 +135,7 @@ async fn invalid_provider_rollout_budget_units_fail_without_retry() -> Result<()
         vec![sse(vec![ev_response_created("invalid-units"), completed])],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.rollout_budget = Some(rollout_budget());
         })
@@ -230,7 +230,7 @@ async fn subagent_usage_draws_from_the_shared_budget() -> Result<()> {
     )
     .await;
 
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config
                 .features
@@ -295,7 +295,7 @@ async fn exhausted_budget_fails_current_and_later_turns() -> Result<()> {
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.rollout_budget = Some(RolloutBudgetConfig {
                 limit_tokens: 30,
@@ -369,7 +369,7 @@ async fn compaction_budget_exhaustion_fails_without_retry(
         ])
     };
     let responses = mount_sse_sequence(&server, vec![compact_response]).await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(move |config| {
             config.rollout_budget = Some(RolloutBudgetConfig {
                 limit_tokens: 10,
@@ -426,7 +426,7 @@ async fn restates_the_current_remainder_after_compaction() -> Result<()> {
     model_provider.name = "provider-compatible test provider".to_string();
     model_provider.base_url = Some(format!("{}/v1", server.uri()));
     model_provider.supports_websockets = false;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(move |config| {
             config.model_provider = model_provider;
             config.rollout_budget = Some(RolloutBudgetConfig {

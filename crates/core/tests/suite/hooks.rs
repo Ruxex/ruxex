@@ -72,7 +72,7 @@ use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::test_target_os;
 use core_test_support::wait_for_event;
@@ -98,7 +98,7 @@ const PERMISSION_REQUEST_ALLOW_REASON: &str = "should not be used for allow";
 #[tokio::test]
 async fn managed_hook_discovery_failure_rejects_session_startup_when_hooks_enabled() -> Result<()> {
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_cloud_config_bundle(
+    let mut builder = test_genex().with_cloud_config_bundle(
         CloudConfigBundleFixture::loader_with_enterprise_requirement(
             r#"
 [hooks]
@@ -1344,7 +1344,7 @@ async fn stop_hook_can_block_multiple_times_in_same_turn() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_stop_hook(
                 home,
@@ -1440,7 +1440,7 @@ async fn session_start_hook_sees_materialized_transcript_path() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_session_start_hook_recording_transcript(home, /*stop*/ false)
                 .expect("failed to write session start hook test fixture");
@@ -1470,7 +1470,7 @@ async fn session_start_hook_skips_persistence_for_non_local_thread_store() -> Re
     let server = start_mock_server().await;
     let store_id = uuid::Uuid::new_v4().to_string();
     let store = InMemoryThreadStore::for_id(store_id.clone());
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_session_start_hook_recording_transcript(home, /*stop*/ true)
                 .expect("failed to write session start hook test fixture");
@@ -1506,7 +1506,7 @@ async fn session_end_flushes_transcript_and_ignores_control_output() -> Result<(
         ]),
     )
     .await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_session_end_hook(home).expect("write session end hook fixture");
         })
@@ -1538,7 +1538,7 @@ async fn session_end_skips_subagents() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_session_end_hook(home).expect("write session end hook fixture");
         })
@@ -1591,7 +1591,7 @@ async fn session_start_runs_before_user_prompt_submit_on_first_turn() -> Result<
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_session_start_and_user_prompt_submit_order_hooks(home)
                 .expect("failed to write hook ordering fixtures");
@@ -1638,7 +1638,7 @@ async fn forked_thread_matches_fork_session_start_without_repeating_startup_cont
         ],
     )
     .await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             let script_path = home.join("session_start_hook.py");
             fs::write(
@@ -1720,7 +1720,7 @@ async fn explicit_history_runs_resume_session_start_hook() -> Result<()> {
 
     let server = start_mock_server().await;
     let response = mount_sse_once(&server, sse(vec![ev_completed("resp-resume")])).await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_resume_and_compact_session_start_hook_with_context(
                 home,
@@ -1805,7 +1805,7 @@ async fn async_hook_context_is_injected_into_the_active_turn() -> Result<()> {
     )
     .await;
 
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(|home| {
             write_async_user_prompt_submit_hook(home, /*gated*/ false)
                 .expect("write immediate async user prompt submit hook");
@@ -1915,7 +1915,7 @@ async fn async_hook_finishing_while_idle_waits_for_the_next_turn(
     )
     .await;
 
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(|home| {
             write_async_user_prompt_submit_hook(home, /*gated*/ true)
                 .expect("write gated async user prompt submit hook");
@@ -2059,7 +2059,7 @@ async fn session_start_hook_spills_large_additional_context() -> Result<()> {
     .await;
     let additional_context = "remember the reef ".repeat(800);
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook({
             let additional_context = additional_context.clone();
             move |home| {
@@ -2102,7 +2102,7 @@ async fn session_start_hooks_apply_additional_context_limits_individually() -> R
     let limited_additional_context = "spill this limited reef context".to_string();
     let expanded_additional_context = "keep this expanded reef context inline".to_string();
 
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook({
             let limited_additional_context = limited_additional_context.clone();
             let expanded_additional_context = expanded_additional_context.clone();
@@ -2168,7 +2168,7 @@ async fn pre_tool_use_hook_spills_large_additional_context() -> Result<()> {
     .await;
     let additional_context = "remember the pre tool reef ".repeat(800);
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook({
             let additional_context = additional_context.clone();
             move |home| {
@@ -2225,7 +2225,7 @@ async fn compact_session_start_hook_records_additional_context_for_next_turn() -
     let additional_context = "remember the compacted reef";
     let model_provider = non_provider_model_provider(&server);
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(move |home| {
             write_compact_session_start_hook_with_context(home, additional_context)
                 .expect("failed to write compact session start hook fixture");
@@ -2335,7 +2335,7 @@ async fn mid_turn_auto_compact_session_start_hooks_run_before_each_continuation(
     .await;
     let model_provider = non_provider_model_provider(&server);
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_dynamic_compact_session_start_hook(
                 home,
@@ -2446,7 +2446,7 @@ async fn mid_turn_auto_compact_session_start_hook_stop_blocks_continuation() -> 
     .await;
     let model_provider = non_provider_model_provider(&server);
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_dynamic_compact_session_start_hook(home, DynamicCompactSessionStartHook::Stop)
                 .expect("failed to write stopping compact session start hook fixture");
@@ -2515,7 +2515,7 @@ async fn resumed_thread_runs_resume_then_compact_session_start_hooks() -> Result
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(move |home| {
             write_resume_and_compact_session_start_hook_with_context(
                 home,
@@ -2533,7 +2533,7 @@ async fn resumed_thread_runs_resume_then_compact_session_start_hooks() -> Result
     initial.submit_turn("hello before resume").await?;
     assert_eq!(responses_mock.requests().len(), 1);
 
-    let mut resume_builder = test_codex().with_config(move |config| {
+    let mut resume_builder = test_genex().with_config(move |config| {
         config.model_auto_compact_token_limit = Some(limit);
         trust_discovered_hooks(config);
     });
@@ -2593,7 +2593,7 @@ async fn stop_hook_spills_large_continuation_prompt() -> Result<()> {
         .collect::<Vec<_>>()
         .join(" ");
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook({
             let continuation_prompt = continuation_prompt.clone();
             move |home| {
@@ -2640,7 +2640,7 @@ async fn resumed_thread_keeps_stop_continuation_prompt_in_history() -> Result<()
     )
     .await;
 
-    let mut initial_builder = test_codex()
+    let mut initial_builder = test_genex()
         .with_pre_build_hook(|home| {
             write_stop_hook(home, &[FIRST_CONTINUATION_PROMPT])
                 .expect("failed to write stop hook test fixture");
@@ -2662,7 +2662,7 @@ async fn resumed_thread_keeps_stop_continuation_prompt_in_history() -> Result<()
     )
     .await;
 
-    let mut resume_builder = test_codex().with_config(trust_discovered_hooks);
+    let mut resume_builder = test_genex().with_config(trust_discovered_hooks);
     let resumed = resume_builder.restart(&server, &initial).await?;
 
     resumed.submit_turn("and now continue").await?;
@@ -2699,7 +2699,7 @@ async fn multiple_blocking_stop_hooks_persist_multiple_hook_prompt_fragments() -
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_parallel_stop_hooks(
                 home,
@@ -2752,7 +2752,7 @@ async fn blocked_user_prompt_submit_persists_additional_context_for_next_turn() 
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_user_prompt_submit_hook(home, "blocked first prompt", BLOCKED_PROMPT_CONTEXT)
                 .expect("failed to write user prompt submit hook test fixture");
@@ -2854,7 +2854,7 @@ async fn blocked_queued_prompt_does_not_strand_earlier_accepted_prompt(
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, second_chunks]).await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("gpt-5.4")
         .with_pre_build_hook(|home| {
             write_user_prompt_submit_hook(home, "blocked queued prompt", BLOCKED_PROMPT_CONTEXT)
@@ -3023,7 +3023,7 @@ async fn permission_request_hook_allows_exec_command_without_user_approval() -> 
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             install_allow_permission_request_hook(home)
                 .expect("failed to write permission request hook test fixture");
@@ -3125,7 +3125,7 @@ async fn permission_request_hook_allow_bypasses_strict_auto_review() -> Result<(
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             install_allow_permission_request_hook(home)
                 .expect("failed to write permission request hook test fixture");
@@ -3245,7 +3245,7 @@ async fn permission_request_hook_allows_apply_patch_with_write_alias() -> Result
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_permission_request_hook(
                 home,
@@ -3322,7 +3322,7 @@ async fn permission_request_hook_sees_raw_exec_command_input() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             install_allow_permission_request_hook(home)
                 .expect("failed to write permission request hook test fixture");
@@ -3430,7 +3430,7 @@ allow_local_binding = true
     let approval_policy = AskForApproval::OnRequest;
     let permission_profile = network_workspace_write_profile();
     let permission_profile_for_config = permission_profile.clone();
-    let test = test_codex()
+    let test = test_genex()
         .with_home(Arc::clone(&home))
         .with_pre_build_hook(move |home| {
             write_permission_request_hook(
@@ -3553,7 +3553,7 @@ async fn pre_tool_use_json_deny_blocks_exec_command_before_execution() -> Result
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(home, Some("^Bash$"), "json_deny", "blocked by pre hook")
                 .expect("failed to write pre tool use hook test fixture");
@@ -3668,7 +3668,7 @@ async fn pre_tool_use_hook_model_tracks_step_after_a_turn_update() -> Result<()>
             model
         })
         .collect();
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model(model_a)
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(home, Some("^Bash$"), "json_deny", "blocked by pre hook")
@@ -3780,7 +3780,7 @@ async fn pre_tool_use_records_additional_context_for_exec_command() -> Result<()
     .await;
 
     let pre_context = "Remember the bash pre-tool note.";
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(home, Some("^Bash$"), "context", pre_context)
                 .expect("failed to write pre tool use hook test fixture");
@@ -3843,7 +3843,7 @@ async fn blocked_pre_tool_use_records_additional_context_for_exec_command() -> R
     .await;
 
     let pre_context = "blocked by pre hook with context";
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(home, Some("^Bash$"), "json_deny_with_context", pre_context)
                 .expect("failed to write pre tool use hook test fixture");
@@ -3925,7 +3925,7 @@ async fn async_pre_tool_use_cannot_block_or_rewrite_and_still_records_additional
     let updated_input = serde_json::json!({
         "command": format!("printf rewritten > {}", rewritten_marker.display())
     });
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(move |home| {
             let denying_script = home.join("async_deny_pre_tool_use_hook.py");
             fs::write(
@@ -4081,7 +4081,7 @@ async fn pre_tool_use_rewrites_exec_command_before_execution() -> Result<()> {
     .await;
 
     let updated_input = serde_json::json!({ "command": rewritten_command });
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(move |home| {
             write_updating_pre_tool_use_hook(home, "^Bash$", &updated_input)
                 .expect("failed to write updating pre tool use hook fixture");
@@ -4154,7 +4154,7 @@ text(output.output);
     .await;
 
     let updated_input = serde_json::json!({ "command": rewritten_command });
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("test-gpt-5.1-codex")
         .with_pre_build_hook(move |home| {
             write_updating_pre_tool_use_hook(home, "^Bash$", &updated_input)
@@ -4234,7 +4234,7 @@ try {{
     .await;
 
     let reason = "blocked nested command";
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("test-gpt-5.1-codex")
         .with_pre_build_hook(move |home| {
             write_pre_tool_use_hook(home, Some("^Bash$"), "json_deny", reason)
@@ -4313,7 +4313,7 @@ try {{
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("test-gpt-5.1-codex")
         .with_pre_build_hook(move |home| {
             write_post_tool_use_hook(home, Some("^Bash$"), hook_mode, reason)
@@ -4533,7 +4533,7 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
         ),
     )?;
     let repl_url = format!("{}/repl", server.uri());
-    let mut builder = test_codex().with_home(home).with_config(move |config| {
+    let mut builder = test_genex().with_home(home).with_config(move |config| {
         for feature in [Feature::Plugins, Feature::CodexHooks] {
             config.features.enable(feature).expect("enable feature");
         }
@@ -4754,7 +4754,7 @@ print(json.dumps({{
             .hooks,
     }];
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&home))
         .with_config(move |config| {
             config
@@ -4831,7 +4831,7 @@ async fn pre_tool_use_blocks_shell_when_defined_in_config_toml() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook_toml(
                 home,
@@ -4914,7 +4914,7 @@ async fn pre_tool_use_merges_hooks_json_and_config_toml() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(home, Some("^Bash$"), "allow", "unused")
                 .expect("failed to write hooks.json hook fixture");
@@ -5016,7 +5016,7 @@ async fn pre_tool_use_blocks_exec_command_before_execution() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(home, Some("^Bash$"), "exit_2", "blocked exec command")
                 .expect("failed to write pre tool use hook test fixture");
@@ -5092,7 +5092,7 @@ async fn pre_tool_use_blocks_apply_patch_before_execution() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(
                 home,
@@ -5172,7 +5172,7 @@ async fn pre_tool_use_rewrites_apply_patch_before_execution() -> Result<()> {
     .await;
 
     let updated_input = serde_json::json!({ "command": rewritten_patch });
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(move |home| {
             write_updating_pre_tool_use_hook(home, "^apply_patch$", &updated_input)
                 .expect("failed to write updating pre tool use hook fixture");
@@ -5234,7 +5234,7 @@ async fn pre_tool_use_blocks_apply_patch_with_write_alias() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(home, Some("^Write$"), "json_deny", "blocked write alias")
                 .expect("failed to write pre tool use hook test fixture");
@@ -5297,7 +5297,7 @@ async fn pre_tool_use_blocks_local_function_tool_before_execution() -> Result<()
     .await;
 
     let reason = "blocked local function pre hook";
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("test-gpt-5.1-codex")
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(home, Some("^test_sync_tool$"), "json_deny", reason)
@@ -5367,7 +5367,7 @@ async fn pre_tool_use_rewrites_local_function_tool_before_execution() -> Result<
     .await;
 
     let updated_input = serde_json::json!({});
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("test-gpt-5.1-codex")
         .with_pre_build_hook(move |home| {
             write_updating_pre_tool_use_hook(home, "^test_sync_tool$", &updated_input)
@@ -5425,7 +5425,7 @@ async fn post_tool_use_records_additional_context_for_exec_command() -> Result<(
     .await;
 
     let post_context = "Remember the bash post-tool note.";
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_post_tool_use_hook(home, Some("^Bash$"), "context", post_context)
                 .expect("failed to write post tool use hook test fixture");
@@ -5514,7 +5514,7 @@ async fn post_tool_use_block_decision_replaces_exec_command_output_with_reason()
     .await;
 
     let reason = "bash output looked sketchy";
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_post_tool_use_hook(home, Some("^Bash$"), "decision_block", reason)
                 .expect("failed to write post tool use hook test fixture");
@@ -5575,7 +5575,7 @@ async fn post_tool_use_continue_false_replaces_exec_command_output_with_stop_rea
     .await;
 
     let stop_reason = "Execution halted by post-tool hook";
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_post_tool_use_hook(home, Some("^Bash$"), "continue_false", stop_reason)
                 .expect("failed to write post tool use hook test fixture");
@@ -5635,7 +5635,7 @@ async fn post_tool_use_exit_two_replaces_one_shot_exec_command_output_with_feedb
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_post_tool_use_hook(home, Some("^Bash$"), "exit_2", "blocked by post hook")
                 .expect("failed to write post tool use hook test fixture");
@@ -5699,7 +5699,7 @@ async fn post_tool_use_spills_large_feedback_message() -> Result<()> {
     .await;
     let feedback = "blocked by post hook ".repeat(800);
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook({
             let feedback = feedback.clone();
             move |home| {
@@ -5781,7 +5781,7 @@ async fn post_tool_use_blocks_when_exec_session_completes_via_write_stdin() -> R
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_logging_pre_and_blocking_post_tool_use_hooks(home, feedback)
                 .expect("failed to write tool use hook test fixture");
@@ -5857,7 +5857,7 @@ async fn post_tool_use_records_additional_context_for_apply_patch() -> Result<()
     .await;
 
     let post_context = "Remember the apply_patch post-tool note.";
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_post_tool_use_hook(home, Some("^apply_patch$"), "context", post_context)
                 .expect("failed to write post tool use hook test fixture");
@@ -5928,7 +5928,7 @@ async fn post_tool_use_records_apply_patch_context_with_edit_alias() -> Result<(
     .await;
 
     let post_context = "Remember the edit alias post-tool note.";
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(|home| {
             write_post_tool_use_hook(home, Some("^Edit$"), "context", post_context)
                 .expect("failed to write post tool use hook test fixture");

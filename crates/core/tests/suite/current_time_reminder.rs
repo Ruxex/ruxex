@@ -42,7 +42,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -162,7 +162,7 @@ async fn environment_context_uses_external_current_time_on_each_turn() -> Result
     )
     .await;
     let time_provider = Arc::new(TestTimeProvider::default());
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             enable_current_time_reminder(config, /*interval*/ 0, CurrentTimeSource::External);
             config.include_environment_context = true;
@@ -229,7 +229,7 @@ async fn current_time_reminders_follow_time_interval_and_persist_in_history() ->
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             enable_current_time_reminder(config, /*interval*/ 120, CurrentTimeSource::External)
         })
@@ -266,7 +266,7 @@ async fn zero_current_time_reminder_interval_delivers_when_time_moves_backward()
     )
     .await;
     let time_provider = Arc::new(TestTimeProvider::default());
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             enable_current_time_reminder(config, /*interval*/ 0, CurrentTimeSource::External)
         })
@@ -323,7 +323,7 @@ async fn current_time_reminders_can_follow_only_user_or_tool_outputs() -> Result
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             enable_current_time_reminder(config, /*interval*/ 0, CurrentTimeSource::External);
             config
@@ -369,7 +369,7 @@ async fn system_time_source_adds_current_time_reminder(clock_setup: ClockSetup) 
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model_info_override("gpt-5.5", move |model_info| {
             if matches!(clock_setup, ClockSetup::Configured | ClockSetup::ModelTools) {
                 model_info
@@ -463,7 +463,7 @@ async fn client_feature_map_can_disable_sleep_tool(
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.5", |model_info| {
             model_info
                 .experimental_supported_tools
@@ -525,7 +525,7 @@ async fn sleep_tool_configuration_controls_registration(
             "\n[features.current_time_reminder]\nenabled = true\nsleep_tool = {sleep_tool}\n"
         ));
     }
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.5", |model_info| {
             model_info
                 .experimental_supported_tools
@@ -578,7 +578,7 @@ async fn current_time_reminder_is_refreshed_after_compaction() -> Result<()> {
     model_provider.name = "provider-compatible test provider".to_string();
     model_provider.base_url = Some(format!("{}/v1", server.uri()));
     model_provider.supports_websockets = false;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(move |config| {
             config.model_provider = model_provider;
             enable_current_time_reminder(
@@ -628,7 +628,7 @@ async fn time_provider_failure_stops_before_inference() -> Result<()> {
         ]),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             enable_current_time_reminder(config, /*interval*/ 1, CurrentTimeSource::External);
             config.include_environment_context = true;
@@ -699,7 +699,7 @@ async fn opted_in_clock_failures_reach_the_model_without_aborting() -> Result<()
     model_provider.name = "provider-compatible test provider".to_string();
     model_provider.base_url = Some(format!("{}/v1", server.uri()));
     model_provider.supports_websockets = false;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(move |config| {
             config.model_provider = model_provider;
             config.model_auto_compact_token_limit = Some(200);
@@ -778,7 +778,7 @@ async fn opted_in_clock_failures_are_reported_again_after_recovery() -> Result<(
         ]))),
         ..TestTimeProvider::default()
     };
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             enable_current_time_reminder(config, /*interval*/ 0, CurrentTimeSource::External);
             config
@@ -837,7 +837,7 @@ async fn current_time_tool_returns_the_latest_time() -> Result<()> {
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             enable_current_time_reminder(
                 config,
@@ -894,7 +894,7 @@ async fn sleep_tool_uses_configured_time_provider() -> Result<()> {
     )
     .await;
     let time_provider = Arc::new(TestTimeProvider::default());
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             enable_current_time_reminder(
                 config,

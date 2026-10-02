@@ -17,7 +17,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -42,7 +42,7 @@ async fn direct_call_metadata_during_compaction_respects_provider_support(
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config
             .features
             .enable(Feature::ExecutedToolCallMetadata)
@@ -213,7 +213,7 @@ async fn direct_function_and_tool_search_mark_complete_attempts(
 
     let request_budget = 32 * 1024;
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         configure_search_capable_model(config);
         config.update_plan_enabled = true;
         if metadata_enabled {

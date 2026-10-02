@@ -31,7 +31,7 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 
@@ -50,7 +50,7 @@ async fn codex_delegate_ignores_legacy_deltas() {
     let server = start_mock_server().await;
     mount_sse_sequence(&server, vec![sse_stream]).await;
 
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build(&server).await.expect("build test codex");
 
     // Kick off review (delegated).
@@ -104,7 +104,7 @@ async fn codex_delegate_rejects_escalation_requests_when_parent_can_prompt() {
     )
     .await;
 
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
         })
@@ -265,7 +265,7 @@ async fn codex_delegate_rejects_skill_mcp_dependency_installation_without_prompt
     )
     .await;
 
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
             config
@@ -348,7 +348,7 @@ async fn guardian_delegate_rejects_escalation_requests_without_prompting() {
     skip_if_no_network!();
 
     let server = start_mock_server().await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
             config.approvals_reviewer = ApprovalsReviewer::AutoReview;

@@ -41,7 +41,7 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::stdio_server_bin;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
@@ -62,7 +62,7 @@ use wiremock::matchers::path;
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn new_thread_is_recorded_in_state_db() -> Result<()> {
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::Sqlite)
@@ -123,7 +123,7 @@ async fn staged_metadata_is_persisted_on_first_turn() -> Result<()> {
         responses::sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::Sqlite)
@@ -208,7 +208,7 @@ async fn resume_restores_dynamic_tools_from_rollout_with_sqlite_enabled() -> Res
             },
         )],
     });
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::Sqlite)
@@ -241,7 +241,7 @@ async fn resume_restores_dynamic_tools_from_rollout_with_sqlite_enabled() -> Res
     .await;
 
     started.thread.shutdown_and_wait().await?;
-    let mut resume_builder = test_codex().with_config(|config| {
+    let mut resume_builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::Sqlite)
@@ -303,7 +303,7 @@ async fn resume_restores_legacy_dynamic_tools_from_rollout_with_sqlite_enabled()
         "required": ["query"],
         "additionalProperties": false,
     });
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::Sqlite)
@@ -355,7 +355,7 @@ async fn resume_restores_legacy_dynamic_tools_from_rollout_with_sqlite_enabled()
         .join("\n");
     fs::write(&rollout_path, format!("{rollout}\n"))?;
 
-    let mut resume_builder = test_codex().with_config(|config| {
+    let mut resume_builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::Sqlite)
@@ -405,7 +405,7 @@ async fn backfill_scans_existing_rollouts() -> Result<()> {
     let rollout_rel_path = format!("sessions/2026/01/27/rollout-2026-01-27T12-00-00-{uuid}.jsonl");
     let rollout_rel_path_for_hook = rollout_rel_path.clone();
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(move |codex_home| {
             let rollout_path = codex_home.join(&rollout_rel_path_for_hook);
             let parent = rollout_path
@@ -521,7 +521,7 @@ async fn user_messages_persist_in_state_db() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::Sqlite)
@@ -588,7 +588,7 @@ async fn tool_call_logs_include_thread_id() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::Sqlite)

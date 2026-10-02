@@ -32,9 +32,9 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_sandbox;
-use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::TestGenex;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
@@ -129,7 +129,7 @@ fn parse_result(item: &Value) -> (Option<i64>, String) {
 }
 
 async fn submit_turn(
-    test: &TestCodex,
+    test: &TestGenex,
     prompt: &str,
     approval_policy: AskForApproval,
     permission_profile: PermissionProfile,
@@ -165,7 +165,7 @@ async fn submit_turn(
     Ok(())
 }
 
-async fn wait_for_completion(test: &TestCodex) {
+async fn wait_for_completion(test: &TestGenex) {
     wait_for_event(&test.codex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
@@ -173,7 +173,7 @@ async fn wait_for_completion(test: &TestCodex) {
 }
 
 async fn expect_request_permissions_event(
-    test: &TestCodex,
+    test: &TestGenex,
     expected_call_id: &str,
 ) -> RequestPermissionProfile {
     let event = wait_for_event(&test.codex, |event| {
@@ -206,7 +206,7 @@ async fn approved_folder_write_request_permissions_unblocks_later_exec_without_s
     let permission_profile = workspace_write_excluding_tmp();
     let permission_profile_for_config = permission_profile.clone();
 
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(approval_policy);
         config
             .permissions
@@ -340,7 +340,7 @@ async fn apply_patch_after_request_permissions(strict_auto_review: bool) -> Resu
     let permission_profile = workspace_write_excluding_tmp();
     let permission_profile_for_config = permission_profile.clone();
 
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(approval_policy);
         config
             .permissions

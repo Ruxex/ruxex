@@ -89,7 +89,7 @@ use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_remote;
 use core_test_support::skip_if_target_windows;
 use core_test_support::skip_if_wine_exec;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::test_env;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
@@ -526,7 +526,7 @@ async fn rendered_catalogs_for_turns(
     }
     let (extensions, event_rx) =
         catalog_extensions(executor_catalog(executor_skills), !host_skills.is_empty());
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&codex_home))
         .with_extensions(extensions)
         .with_model_info_override("gpt-5.5", move |model_info| {
@@ -557,7 +557,7 @@ async fn rendered_catalogs_for_turns(
         .expect("production turn should issue a responses request")
         .message_input_texts("developer");
     // Extension warnings are client-visible through the app-server event sink,
-    // while core warnings are delivered through the TestCodex event stream.
+    // while core warnings are delivered through the TestGenex event stream.
     // Count both paths so duplicate warning ownership cannot hide in this test.
     client_warning_messages.extend(event_rx.try_iter().filter_map(|event| match event {
         CapturedExtensionEvent::Warning(warning) => Some(warning.message),
@@ -629,7 +629,7 @@ async fn capability_sections_render_in_order_with_host_repo_and_plugin_skills() 
         orchestrator_skills_enabled: config.orchestrator_skills_enabled,
         shadow_selection_enabled: config.features.enabled(Feature::SkillSearch),
     });
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&codex_home))
         .with_extensions(Arc::new(extensions.build()))
         .with_auth(CodexAuth::from_api_key("test-api-key"))
@@ -792,7 +792,7 @@ async fn agent_plugin_skill_prompt_stays_bounded_without_skills_extension() -> R
         "[features]\nplugins = true\n\n[plugins.\"acme.tools@test\"]\nenabled = true\n",
     )?;
     let skill_path = dunce::canonicalize(skill_dir.join("SKILL.md"))?;
-    let mut builder = test_codex().with_home(codex_home);
+    let mut builder = test_genex().with_home(codex_home);
     let test = builder.build_with_auto_env(&server).await?;
 
     test.codex
@@ -858,7 +858,7 @@ async fn explicit_skill_prompt_precedes_plugin_instructions() -> Result<()> {
     let skill_path = dunce::canonicalize(skill_dir.join("SKILL.md"))?;
     let (extensions, _) =
         catalog_extensions(SkillCatalog::default(), /*include_host_provider*/ true);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(codex_home)
         .with_extensions(extensions);
     let test = builder.build_with_auto_env(&server).await?;
@@ -1546,7 +1546,7 @@ async fn production_turn_aliases_executor_skill_roots() -> Result<()> {
         warnings: Vec::new(),
     };
     let (extensions, _) = catalog_extensions(catalog, /*include_host_provider*/ false);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_extensions(extensions)
         .with_model_info_override("gpt-5.6-sol", |model_info| {
             model_info.context_window = Some(3_000);
@@ -1650,7 +1650,7 @@ async fn opted_in_executor_provider_skips_host_discovery_but_injects_discovered_
             shadow_selection_enabled: false,
         },
     );
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(codex_home)
         .with_extensions(Arc::new(extensions.build()))
         .with_workspace_setup(|cwd, fs| async move {
@@ -1876,7 +1876,7 @@ async fn executor_only_provider_preserves_structured_repo_skill_without_discover
             shadow_selection_enabled: false,
         },
     );
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .with_workspace_setup(|cwd, fs| async move {
             let skill_dir = cwd.join(".agents/skills").join(AMBIENT_SKILL_NAME);
@@ -2020,7 +2020,7 @@ async fn executor_skill_tool_reads_references_under_current_permissions(
             shadow_selection_enabled: false,
         },
     );
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .with_model_info_override("gpt-5.4", |model_info| {
             model_info.truncation_policy = TruncationPolicyConfig::bytes(/*limit*/ 8192);
@@ -2322,7 +2322,7 @@ async fn explicit_executor_skill_prompt_rejects_oversized_resource() -> Result<(
             shadow_selection_enabled: false,
         },
     );
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .with_config(configure_catalog_test);
     let test = builder.build_with_environment(&server, environment).await?;
@@ -2443,7 +2443,7 @@ async fn executor_skill_invocation_is_environment_scoped_and_deduplicated() -> R
 
     let (extensions, _) = catalog_extensions(catalog, /*include_host_provider*/ false);
     let managed_auth_base_url = server.uri();
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(codex_home)
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_extensions(extensions)
@@ -2552,7 +2552,7 @@ async fn production_turn_aliases_combined_skill_catalogs_under_shared_budget() -
             shadow_selection_enabled: false,
         },
     );
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&codex_home))
         .with_exec_server_url("none")
         .with_extensions(Arc::new(extensions.build()))
@@ -2689,7 +2689,7 @@ async fn assert_catalog_model_switch(max_context_tokens: Option<usize>) -> Resul
             shadow_selection_enabled: false,
         },
     );
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(codex_home)
         .with_model(MODEL_A)
         .with_extensions(Arc::new(extensions.build()))
@@ -2927,7 +2927,7 @@ async fn production_turn_uses_configured_skill_catalog_token_budget() -> Result<
         executor_catalog(&EXECUTOR_CATALOG),
         /*include_host_provider*/ true,
     );
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(codex_home)
         .with_extensions(extensions)
         .with_model_info_override("gpt-5.5", |model_info| {
@@ -3012,7 +3012,7 @@ async fn production_turn_preserves_host_alias_root_order_across_turns() -> Resul
     let second_root = AbsolutePathBuf::try_from(std::fs::canonicalize(&second_root_path)?)?;
     let (extensions, _) =
         catalog_extensions(SkillCatalog::default(), /*include_host_provider*/ true);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&codex_home))
         .with_extensions(extensions)
         .with_model_info_override("gpt-5.5", |model_info| {
@@ -3247,7 +3247,7 @@ async fn production_turn_suppresses_only_the_superseded_host_skill_prompt() -> R
             shadow_selection_enabled: false,
         },
     );
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(codex_home)
         .with_extensions(Arc::new(extensions.build()))
         .with_config(configure_catalog_test);
@@ -3307,7 +3307,7 @@ async fn production_turn_warns_and_omits_unreadable_host_skill() -> Result<()> {
     let available_skill_contents = std::fs::read_to_string(&available_skill_path)?;
     let (extensions, _) =
         catalog_extensions(SkillCatalog::default(), /*include_host_provider*/ true);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&codex_home))
         .with_extensions(extensions)
         .with_config(configure_catalog_test);
@@ -3382,7 +3382,7 @@ async fn production_turn_keeps_full_snapshot_host_skill_prompt() -> Result<()> {
     std::fs::write(skill_dir.join("SKILL.md"), &skill_contents)?;
     let (extensions, _) =
         catalog_extensions(SkillCatalog::default(), /*include_host_provider*/ true);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&codex_home))
         .with_extensions(extensions)
         .with_config(|config| {
@@ -3429,7 +3429,7 @@ async fn production_turn_keeps_core_host_injection_when_catalog_listings_are_dis
     std::fs::write(skill_dir.join("SKILL.md"), &skill_contents)?;
     let (extensions, _) =
         catalog_extensions(SkillCatalog::default(), /*include_host_provider*/ true);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&codex_home))
         .with_extensions(extensions)
         .with_config(configure_catalog_test)
@@ -3509,7 +3509,7 @@ async fn production_turn_keeps_orchestrator_world_state_incremental_across_turns
             shadow_selection_enabled: false,
         },
     );
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .with_config(|config| {
             configure_catalog_test(config);
@@ -3773,7 +3773,7 @@ async fn production_turn_fairly_shortens_extension_catalog_descriptions() -> Res
             shadow_selection_enabled: false,
         },
     );
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .with_model_info_override("gpt-5.5", |model_info| {
             model_info.context_window = Some(100_000);

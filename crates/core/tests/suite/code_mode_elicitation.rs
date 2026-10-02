@@ -27,8 +27,8 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
-use core_test_support::test_genex::TestCodex;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
@@ -40,7 +40,7 @@ const TURN_COMPLETE_TIMEOUT: Duration = Duration::from_secs(30);
 
 struct CodeModeElicitationHarness {
     _server: MockServer,
-    test: TestCodex,
+    test: TestGenex,
     follow_up: ResponseMock,
     turn_id: String,
 }
@@ -53,7 +53,7 @@ impl CodeModeElicitationHarness {
     ) -> Result<Self> {
         let server = responses::start_mock_server().await;
         let mut builder =
-            test_codex()
+            test_genex()
                 .with_model("test-gpt-5.1-codex")
                 .with_config(move |config| {
                     let _ = config.features.enable(Feature::CodeMode);
@@ -112,7 +112,7 @@ async fn mount_code_mode_responses(server: &MockServer, code: &str) -> ResponseM
     .await
 }
 
-async fn submit_turn(test: &TestCodex, permission_profile: PermissionProfile) -> Result<String> {
+async fn submit_turn(test: &TestGenex, permission_profile: PermissionProfile) -> Result<String> {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(permission_profile, test.config.cwd.as_path());
     test.codex

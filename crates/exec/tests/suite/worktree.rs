@@ -7,7 +7,7 @@ use genex_worktree::CreateWorktree;
 use genex_worktree::WorktreeManager;
 use genex_worktree::WorktreeSettings;
 use core_test_support::responses;
-use core_test_support::test_genex_exec::test_codex_exec;
+use core_test_support::test_genex_exec::test_genex_exec;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use std::fs;
@@ -56,7 +56,7 @@ fn started_thread(output: Output) -> anyhow::Result<String> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn worktree_start_and_fork_use_host_pool_and_preserve_legacy_resume() -> anyhow::Result<()> {
-    let test = test_codex_exec();
+    let test = test_genex_exec();
     let home = AbsolutePathBuf::from_absolute_path(test.home_path())?
         .canonicalize()?
         .into_path_buf();
@@ -382,7 +382,7 @@ async fn worktree_start_and_fork_use_host_pool_and_preserve_legacy_resume() -> a
 #[test]
 fn worktree_rejects_remote_defaults_before_allocation() -> anyhow::Result<()> {
     for route in ["environment", "file"] {
-        let test = test_codex_exec();
+        let test = test_genex_exec();
         let mut command = test.cmd();
         if route == "environment" {
             command.env("CODEX_EXEC_SERVER_URL", "ws://127.0.0.1:9");
@@ -430,7 +430,7 @@ fn worktree_rejects_disabled_features_and_ignored_config_before_allocation() -> 
             "--enable worktrees",
         ),
     ] {
-        let test = test_codex_exec();
+        let test = test_genex_exec();
         fs::write(test.home_path().join("config.toml"), config)?;
         let output = test.cmd().arg("--worktree").args(args).output()?;
         assert!(!output.status.success());

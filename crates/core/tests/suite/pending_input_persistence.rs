@@ -33,7 +33,7 @@ use genex_thread_store::UpdateThreadMetadataParams;
 use core_test_support::responses;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -166,7 +166,7 @@ async fn steered_input_checkpoint_controls_next_request(
     });
     let base_url = format!("{}/v1", server.uri());
     let config_server = responses::start_mock_server().await;
-    let test = test_codex()
+    let test = test_genex()
         .with_thread_store(store.clone())
         .with_history_mode(ThreadHistoryMode::Paginated)
         .with_config(move |config| config.model_provider.base_url = Some(base_url))

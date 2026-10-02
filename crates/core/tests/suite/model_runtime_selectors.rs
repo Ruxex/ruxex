@@ -26,7 +26,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -115,7 +115,7 @@ async fn response_for_remote_model(
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(configure);
     let test = builder.build(&server).await?;
@@ -296,7 +296,7 @@ async fn unsupported_code_mode_warning_is_emitted_each_turn() -> Result<()> {
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config
@@ -434,7 +434,7 @@ async fn remote_multi_agent_selector_uses_model_selected_before_first_turn() -> 
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(ROOT_MODEL.to_string());

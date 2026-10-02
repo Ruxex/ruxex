@@ -45,7 +45,7 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::stdio_server_bin;
 use core_test_support::test_genex::local;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use core_test_support::wait_for_mcp_server;
@@ -199,7 +199,7 @@ async fn token_budget_context_is_only_emitted_with_full_context() -> Result<()> 
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
             config
@@ -254,7 +254,7 @@ async fn token_budget_guidance_precedes_standalone_context_window(
     .await;
     let guidance_message = "Preserve important state before compaction.";
     let backend_url = format!("{}/backend-api/codex", server.uri());
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.2", |model| {
             model.supports_experimental_context = true;
         })
@@ -320,7 +320,7 @@ async fn experimental_context_requires_capable_model_and_codex_backend(
     let server = start_mock_server().await;
     let response = mount_sse_once(&server, sse_completed("resp-1")).await;
     let base_url = format!("{}{base_path}", server.uri());
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.2", move |model| {
             model.supports_experimental_context = supports_context;
         })
@@ -372,7 +372,7 @@ async fn token_budget_history_notes_requires_capable_starting_model(
 
     let server = start_mock_server().await;
     let backend_url = format!("{}/backend-api/codex", server.uri());
-    let result = test_codex()
+    let result = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_pre_build_hook(move |home| {
             let config = if use_model_defaults {
@@ -436,7 +436,7 @@ async fn token_budget_uses_model_message_defaults() -> Result<()> {
     model_defaults.enabled = true;
     model_defaults.use_history_notes_extension = true;
     let expected_guidance = model_defaults.guidance_message.clone();
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.2", move |model_info| {
             model_info.supports_experimental_context = true;
             model_info
@@ -477,7 +477,7 @@ async fn token_budget_explicit_default_template_overrides_model_defaults() -> Re
 
     let server = start_mock_server().await;
     let response = mount_sse_once(&server, sse_completed("resp-1")).await;
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(|home| {
             let default_template = TokenBudgetConfig::default().reminder_message_template;
             std::fs::write(
@@ -529,7 +529,7 @@ async fn token_budget_defaults_follow_the_active_model(activation: Feature) -> R
     )
     .await;
     let backend_url = format!("{}/backend-api/codex", server.uri());
-    let test = test_codex()
+    let test = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model_info_override("gpt-5.2", |model_info| {
             model_info.supports_experimental_context = true;
@@ -636,7 +636,7 @@ async fn token_budget_ignores_invalid_model_message_defaults() -> Result<()> {
     ] {
         let server = start_mock_server().await;
         let response = mount_sse_once(&server, sse_completed("resp-1")).await;
-        let test = test_codex()
+        let test = test_genex()
             .with_model_info_override("gpt-5.2", move |model_info| {
                 model_info
                     .model_messages
@@ -676,7 +676,7 @@ async fn model_token_budget_defaults_do_not_enable_disabled_feature() -> Result<
 
     let server = start_mock_server().await;
     let response = mount_sse_once(&server, sse_completed("resp-1")).await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.2", |model_info| {
             model_info
                 .model_messages
@@ -714,7 +714,7 @@ async fn token_budget_context_injects_plain_thread_hint_text() -> Result<()> {
 
     let server = start_mock_server().await;
     let rmcp_test_server_bin = stdio_server_bin()?;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(move |config| {
             config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
             config
@@ -809,7 +809,7 @@ async fn token_budget_reminder_emits_after_crossing_compaction_threshold() -> Re
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_context_window = Some(10_000);
             config.token_budget = Some(TokenBudgetConfig {
@@ -865,7 +865,7 @@ async fn token_budget_reminder_uses_body_after_prefix_window() -> Result<()> {
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_context_window = Some(10_000);
             config.model_auto_compact_token_limit = Some(1_000);
@@ -936,7 +936,7 @@ async fn get_context_remaining_returns_token_budget_remaining_fragment() -> Resu
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_context_window = Some(10_000);
             config
@@ -1000,7 +1000,7 @@ async fn get_context_remaining_uses_body_after_prefix_window() -> Result<()> {
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_context_window = Some(10_000);
             config.model_auto_compact_token_limit = Some(7_000);
@@ -1057,7 +1057,7 @@ async fn get_context_remaining_returns_unknown_when_threshold_is_unbounded() -> 
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.2", |model_info| {
             model_info.context_window = None;
             model_info.max_context_window = None;
@@ -1120,7 +1120,7 @@ async fn token_budget_context_uses_new_window_after_compaction(
     model_provider.base_url = Some(format!("{}/v1", server.uri()));
     model_provider.supports_websockets = false;
 
-    let test = test_codex()
+    let test = test_genex()
         .with_config(move |config| {
             config.model_provider = model_provider;
             config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
@@ -1218,7 +1218,7 @@ async fn token_budget_compaction_runs_compact_hooks() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(write_token_budget_compact_hooks)
         .with_config(|config| {
             config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
@@ -1292,7 +1292,7 @@ async fn token_budget_mid_turn_auto_compaction_resets_before_active_follow_up(
     model_provider.name = "provider (test)".into();
     model_provider.base_url = Some(format!("{}/v1", server.uri()));
     model_provider.supports_websockets = false;
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.2", |model_info| {
             model_info
                 .model_messages
@@ -1425,7 +1425,7 @@ async fn token_budget_auto_compact_fallback_uses_buffer_until_new_context() -> R
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_provider.name = "provider (test)".into();
             config.model_context_window = Some(50_000);
@@ -1518,7 +1518,7 @@ async fn token_budget_auto_compact_fallback_rolls_over_after_buffer() -> Result<
         ],
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.model_provider.name = "provider (test)".into();
             config.model_context_window = Some(50_000);
@@ -1596,7 +1596,7 @@ async fn new_context_tool_skips_auto_compact_fallback() -> Result<()> {
         orchestrator_skills_enabled: config.orchestrator_skills_enabled,
         shadow_selection_enabled: config.features.enabled(Feature::SkillSearch),
     });
-    let test = test_codex()
+    let test = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .with_config(|config| {
             config.update_plan_enabled = true;

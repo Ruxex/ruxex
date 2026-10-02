@@ -13,7 +13,7 @@ use genex_protocol::config_types::TrustLevel;
 use genex_protocol::protocol::EventMsg;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -65,7 +65,7 @@ async fn enterprise_activation_respects_managed_config_and_plugin_ownership(
             "[mcp_servers.enterprise]\nurl = {resource:?}\nauth = \"ema_auth\"\n[mcp_servers.enterprise.oauth]\nclient_id = \"mcp-client\"\n"
         ));
     }
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_home(home)
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_cloud_config_bundle(CloudConfigBundleFixture::loader_with_enterprise_config(

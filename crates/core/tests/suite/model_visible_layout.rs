@@ -43,7 +43,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
@@ -165,7 +165,7 @@ async fn turn_input_contributors_receive_foreign_environment_cwds() -> Result<()
     extensions.turn_input_contributor(Arc::new(RecordingTurnInputContributor(Arc::clone(
         &recorded_environments,
     ))));
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .with_config(|config| config.project_doc_max_bytes = 0);
     let test = builder.build_with_auto_env(&server).await?;
@@ -214,7 +214,7 @@ async fn model_visible_environment_context_preserves_foreign_workspace_roots() -
         ]),
     )
     .await;
-    let test = test_codex().build(&server).await?;
+    let test = test_genex().build(&server).await?;
     let foreign_root = PathUri::parse("file:///C:/workspace")?;
 
     test.codex
@@ -283,7 +283,7 @@ async fn snapshot_model_visible_layout_turn_overrides() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_extensions(skills_extensions())
         .with_model("gpt-5.4")
         .with_config(|config| {
@@ -395,7 +395,7 @@ async fn snapshot_model_visible_layout_cwd_change_refreshes_agents() -> Result<(
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_config(|config| config.update_plan_enabled = true)
         .with_extensions(skills_extensions())
         .with_model("gpt-5.4");
@@ -506,7 +506,7 @@ async fn snapshot_model_visible_layout_resume_with_model_change() -> Result<()> 
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut initial_builder = test_codex()
+    let mut initial_builder = test_genex()
         .with_extensions(skills_extensions())
         .with_config(|config| {
             config.update_plan_enabled = true;
@@ -543,7 +543,7 @@ async fn snapshot_model_visible_layout_resume_with_model_change() -> Result<()> 
     )
     .await;
 
-    let mut resume_builder = test_codex()
+    let mut resume_builder = test_genex()
         .with_extensions(skills_extensions())
         .with_config(|config| {
             config.update_plan_enabled = true;
@@ -612,7 +612,7 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut initial_builder = test_codex()
+    let mut initial_builder = test_genex()
         .with_extensions(skills_extensions())
         .with_config(|config| {
             config.update_plan_enabled = true;
@@ -649,7 +649,7 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
     )
     .await;
 
-    let mut resume_builder = test_codex()
+    let mut resume_builder = test_genex()
         .with_extensions(skills_extensions())
         .with_config(|config| {
             config.update_plan_enabled = true;

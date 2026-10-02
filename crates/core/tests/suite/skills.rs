@@ -34,7 +34,7 @@ use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_remote;
 use core_test_support::skip_if_wine_exec;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
@@ -101,7 +101,7 @@ async fn user_turn_includes_skill_instructions() -> Result<()> {
     let recorder = Arc::new(SkillInvocationRecorder::default());
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     extensions.skill_invocation_contributor(recorder.clone());
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .with_workspace_setup(move |cwd, fs| async move {
             write_repo_skill(cwd, fs, "demo", "demo skill", skill_body).await
@@ -209,7 +209,7 @@ async fn user_turn_selects_symlinked_skill_by_advertised_discovery_path() -> Res
         orchestrator_skills_enabled: false,
         shadow_selection_enabled: false,
     });
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .with_workspace_setup(move |cwd, _fs| async move {
             let source_skill_dir = cwd.join("shared-skills/linked-demo");
@@ -310,7 +310,7 @@ async fn idle_user_turn_includes_skill_instructions_in_the_first_request() -> Re
 
     let server = start_mock_server().await;
     let skill_body = "queued skill body";
-    let mut builder = test_codex().with_workspace_setup(move |cwd, fs| async move {
+    let mut builder = test_genex().with_workspace_setup(move |cwd, fs| async move {
         write_repo_skill(cwd, fs, "queued-demo", "queued demo skill", skill_body).await
     });
     let test = builder.build_with_auto_env(&server).await?;

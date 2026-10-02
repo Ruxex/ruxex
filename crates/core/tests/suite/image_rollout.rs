@@ -38,9 +38,9 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::responses::strip_metadata;
 use core_test_support::responses::strip_response_item_id;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::TestGenex;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use image::GenericImageView;
@@ -147,13 +147,13 @@ async fn copy_paste_local_image_persists_rollout_request_shape() -> anyhow::Resu
 
     let server = start_mock_server().await;
 
-    let TestCodex {
+    let TestGenex {
         codex,
         cwd,
         session_configured,
         home: _home,
         ..
-    } = test_codex().build(&server).await?;
+    } = test_genex().build(&server).await?;
 
     let rel_path = "images/paste.png";
     let abs_path = cwd.path().join(rel_path);
@@ -245,13 +245,13 @@ async fn drag_drop_image_persists_rollout_request_shape() -> anyhow::Result<()> 
 
     let server = start_mock_server().await;
 
-    let TestCodex {
+    let TestGenex {
         codex,
         cwd,
         session_configured,
         home: _home,
         ..
-    } = test_codex().build(&server).await?;
+    } = test_genex().build(&server).await?;
 
     let image_url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==".to_string();
 
@@ -335,7 +335,7 @@ async fn file_image_passes_through_request_and_rollout() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let test = test_codex().build_with_auto_env(&server).await?;
+    let test = test_genex().build_with_auto_env(&server).await?;
     let response_mock = responses::mount_sse_once(
         &server,
         sse(vec![
@@ -411,7 +411,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let initial = test_codex().build_with_auto_env(&server).await?;
+    let initial = test_genex().build_with_auto_env(&server).await?;
     responses::mount_sse_once(
         &server,
         sse(vec![
@@ -476,7 +476,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
     fs::write(&rollout_path, format!("{rollout}\n"))?;
 
     let resume_image_store = Arc::new(RecordingFileAttachmentStore::default());
-    let mut resume_builder = test_codex()
+    let mut resume_builder = test_genex()
         .with_image_store(resume_image_store.clone())
         .with_config(|config| {
             let _ = config.features.enable(Feature::ImageResizeNotice);
@@ -620,7 +620,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
         .collect::<Vec<_>>();
     assert_eq!(replayed_notices, vec![expected_notice.to_string()]);
 
-    let replayed = test_codex()
+    let replayed = test_genex()
         .with_config(|config| {
             let _ = config.features.enable(Feature::ImageResizeNotice);
             let _ = config

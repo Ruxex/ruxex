@@ -31,7 +31,7 @@ use core_test_support::skip_if_no_network;
 use core_test_support::submit_thread_settings;
 use core_test_support::test_genex::local;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
@@ -57,7 +57,7 @@ async fn user_shell_cmd_ls_and_cat_in_temp_dir() {
     // Pin cwd to the temp dir so ls/cat operate there.
     let server = start_mock_server().await;
     let cwd_path = cwd.path().to_path_buf();
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.cwd = cwd_path.abs();
     });
     let codex = builder
@@ -117,7 +117,7 @@ async fn user_shell_cmd_ls_and_cat_in_temp_dir() {
 #[tokio::test]
 async fn user_shell_command_without_local_environment_emits_error() -> anyhow::Result<()> {
     let server = start_mock_server().await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build(&server).await?;
     submit_thread_settings(
         &test.codex,
@@ -153,7 +153,7 @@ async fn user_shell_command_without_local_environment_emits_error() -> anyhow::R
 async fn user_shell_cmd_can_be_interrupted() {
     // Set up isolated config and conversation.
     let server = start_mock_server().await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let fixture = builder
         .build(&server)
         .await
@@ -195,7 +195,7 @@ async fn user_shell_command_honors_default_and_extended_deadlines() -> anyhow::R
     for (timeout_ms, expected_ms) in [(None, 3_600_000), (Some(28_800_000), 28_800_000)] {
         let server = start_mock_server().await;
         // Honor the CI executor while retaining the local environment used by user shell commands.
-        let mut builder = test_codex();
+        let mut builder = test_genex();
         let fixture = builder.build_with_remote_and_local_env(&server).await?;
         // The remote cwd need not exist on the host, and may use a different path convention.
         let local_cwd = fixture.cwd_path().abs();
@@ -274,7 +274,7 @@ fn slow_user_shell_command() -> &'static str {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn user_shell_command_does_not_replace_active_turn() -> anyhow::Result<()> {
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_model("gpt-5.4");
+    let mut builder = test_genex().with_model("gpt-5.4");
     let fixture = builder.build(&server).await?;
 
     let call_id = "active-turn-shell-call";
@@ -397,7 +397,7 @@ async fn user_shell_command_does_not_replace_active_turn() -> anyhow::Result<()>
 async fn user_shell_command_history_is_persisted_and_shared_with_model() -> anyhow::Result<()> {
     let server = responses::start_mock_server().await;
     // Disable it to ease command matching.
-    let mut builder = core_test_support::test_genex::test_codex().with_config(move |config| {
+    let mut builder = core_test_support::test_genex::test_genex().with_config(move |config| {
         config
             .features
             .disable(Feature::ShellSnapshot)
@@ -480,7 +480,7 @@ async fn user_shell_command_history_is_persisted_and_shared_with_model() -> anyh
 #[tokio::test]
 async fn user_shell_command_does_not_set_network_sandbox_env_var() -> anyhow::Result<()> {
     let server = responses::start_mock_server().await;
-    let mut builder = core_test_support::test_genex::test_codex().with_config(|config| {
+    let mut builder = core_test_support::test_genex::test_genex().with_config(|config| {
         let file_system_sandbox_policy = config.permissions.file_system_sandbox_policy();
         config
             .permissions
@@ -529,7 +529,7 @@ async fn user_shell_command_does_not_set_network_sandbox_env_var() -> anyhow::Re
 #[cfg(not(target_os = "windows"))] // TODO: unignore on windows
 async fn user_shell_command_output_is_truncated_in_history() -> anyhow::Result<()> {
     let server = responses::start_mock_server().await;
-    let builder = core_test_support::test_genex::test_codex();
+    let builder = core_test_support::test_genex::test_genex();
     let test = builder
         .with_config(|config| {
             config.tool_output_token_limit = Some(100);
@@ -596,7 +596,7 @@ async fn user_shell_command_is_truncated_only_once() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_codex().with_model("gpt-5.4").with_config(|config| {
+    let mut builder = test_genex().with_model("gpt-5.4").with_config(|config| {
         config.tool_output_token_limit = Some(100);
     });
     let fixture = builder.build(&server).await?;

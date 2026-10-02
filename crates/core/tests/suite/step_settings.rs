@@ -95,8 +95,8 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
-use core_test_support::test_genex::TestCodexBuilder;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenexBuilder;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use core_test_support::wait_for_mcp_server;
@@ -139,8 +139,8 @@ fn step_settings_models() -> Vec<ModelInfo> {
         .collect()
 }
 
-fn step_settings_test() -> TestCodexBuilder {
-    test_codex().with_model(MODEL_A).with_config(move |config| {
+fn step_settings_test() -> TestGenexBuilder {
+    test_genex().with_model(MODEL_A).with_config(move |config| {
         for feature in [
             Feature::StepModelSwitching,
             Feature::DefaultModeRequestUserInput,
@@ -161,7 +161,7 @@ fn step_settings_test() -> TestCodexBuilder {
     })
 }
 
-fn direct_tool_settings_test() -> TestCodexBuilder {
+fn direct_tool_settings_test() -> TestGenexBuilder {
     step_settings_test().with_config(|config| {
         for model in &mut config.model_catalog.as_mut().expect("test models").models {
             model.tool_mode = Some(ToolMode::Direct);

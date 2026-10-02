@@ -13,7 +13,7 @@ use core_test_support::process::wait_for_process_exit;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use core_test_support::stdio_server_bin;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_mcp_server;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -25,7 +25,7 @@ async fn refresh_keeps_superseded_mcp_server_alive_for_in_flight_calls() -> anyh
     let pid_file = temp_dir.path().join("mcp.pid");
     let pid_file_for_config = pid_file.clone();
     let command = stdio_server_bin()?;
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_config(move |config| {
             let mut servers = config.mcp_servers.get().clone();
             servers.insert(

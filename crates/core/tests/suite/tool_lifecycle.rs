@@ -35,7 +35,7 @@ use core_test_support::hooks::trust_discovered_hooks;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::test_env;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_mcp_server;
@@ -159,7 +159,7 @@ async fn tool_start_receives_conversation_history() -> Result<()> {
     let recorder = Arc::new(ConversationHistoryRecorder::default());
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     extensions.tool_lifecycle_contributor(recorder.clone());
-    let test = test_codex()
+    let test = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .with_config(|config| config.update_plan_enabled = true)
         .build_with_auto_env(&server)
@@ -513,7 +513,7 @@ async fn tool_start_receives_frozen_host_plugin_root() -> Result<()> {
     let recorder = Arc::new(ConversationHistoryRecorder::default());
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     extensions.tool_lifecycle_contributor(recorder.clone());
-    let test = test_codex()
+    let test = test_genex()
         .with_home(codex_home)
         .with_extensions(Arc::new(extensions.build()))
         .with_model_info_override("gpt-5.4", |model| model.supports_search_tool = false)
@@ -597,7 +597,7 @@ async fn tool_start_receives_rewritten_payload_and_post_hook_history() -> Result
     let recorder = Arc::new(ConversationHistoryRecorder::default());
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     extensions.tool_lifecycle_contributor(recorder.clone());
-    let test = test_codex()
+    let test = test_genex()
         .with_extensions(Arc::new(extensions.build()))
         .with_pre_build_hook(move |home| {
             write_pre_tool_hook(home, "^update_plan$", &hook_output)
@@ -688,7 +688,7 @@ async fn tool_start_is_not_called_when_pre_tool_hook_prevents_execution() -> Res
         let recorder = Arc::new(ConversationHistoryRecorder::default());
         let mut extensions = ExtensionRegistryBuilder::<Config>::new();
         extensions.tool_lifecycle_contributor(recorder.clone());
-        let test = test_codex()
+        let test = test_genex()
             .with_extensions(Arc::new(extensions.build()))
             .with_pre_build_hook(move |home| {
                 write_pre_tool_hook(home, matcher, &hook_output)

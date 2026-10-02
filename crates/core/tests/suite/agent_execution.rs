@@ -19,7 +19,7 @@ use core_test_support::responses::mount_sse_once_match;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -171,7 +171,7 @@ async fn v2_nested_spawn_checks_shared_active_execution_capacity() -> Result<()>
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("gpt-5.6-sol")
         .with_config(|config| {
             config
@@ -219,7 +219,7 @@ async fn child_turn_start_preserves_root_attribution() -> Result<()> {
     )
     .await;
     let worker = mount_completed_worker(&server, FIRST_TASK, "first-call").await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model("gpt-5.6-sol")
         .with_config(|config| {
             config.features.enable(Feature::Collab).unwrap();
@@ -313,7 +313,7 @@ async fn v2_residency_reload_preserves_inherited_environment_and_tools(
     let reloaded_worker_request =
         mount_completed_worker(&server, FOLLOWUP_TASK, "followup-call").await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("gpt-5.6-sol")
         .with_exec_server_url("none")
         .with_config(|config| {

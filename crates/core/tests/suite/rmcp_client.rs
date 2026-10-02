@@ -99,8 +99,8 @@ use core_test_support::skip_if_no_remote_env;
 use core_test_support::skip_if_wine_exec;
 use core_test_support::stdio_server_bin;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::TestCodex;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::test_env;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::test_docker_container_name;
@@ -150,19 +150,19 @@ fn assert_wall_time_header(output: &str) {
     assert_eq!(marker, "Output:");
 }
 
-fn read_only_user_turn(fixture: &TestCodex, text: impl Into<String>) -> TurnInputRequest {
+fn read_only_user_turn(fixture: &TestGenex, text: impl Into<String>) -> TurnInputRequest {
     read_only_user_turn_with_model(fixture, text, fixture.session_configured.model.clone())
 }
 
 fn read_only_user_turn_with_model(
-    fixture: &TestCodex,
+    fixture: &TestGenex,
     text: impl Into<String>,
     model: String,
 ) -> TurnInputRequest {
     user_turn_with_permission_profile(fixture, text, model, PermissionProfile::read_only())
 }
 
-fn auto_approved_user_turn(fixture: &TestCodex, text: impl Into<String>) -> TurnInputRequest {
+fn auto_approved_user_turn(fixture: &TestGenex, text: impl Into<String>) -> TurnInputRequest {
     user_turn_with_permission_profile(
         fixture,
         text,
@@ -172,7 +172,7 @@ fn auto_approved_user_turn(fixture: &TestCodex, text: impl Into<String>) -> Turn
 }
 
 fn user_turn_with_permission_profile(
-    fixture: &TestCodex,
+    fixture: &TestGenex,
     text: impl Into<String>,
     model: String,
     permission_profile: PermissionProfile,
@@ -393,7 +393,7 @@ fn insert_mcp_server(
 
 async fn call_cwd_tool(
     server: &MockServer,
-    fixture: &TestCodex,
+    fixture: &TestGenex,
     server_name: &str,
     call_id: &str,
 ) -> anyhow::Result<Value> {
@@ -402,7 +402,7 @@ async fn call_cwd_tool(
 
 async fn call_structured_tool(
     server: &MockServer,
-    fixture: &TestCodex,
+    fixture: &TestGenex,
     server_name: &str,
     tool_name: &str,
     call_id: &str,
@@ -474,7 +474,7 @@ async fn assert_provider_form_capability_advertisement(expected: bool) -> anyhow
     let server = start_mock_server().await;
     let server_name = "capabilities";
     let command = stdio_server_bin()?;
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         insert_mcp_server(
             config,
             server_name,
@@ -552,7 +552,7 @@ async fn mcp_namespace_instructions_are_preserved_without_hiding_tools() -> anyh
     )
     .await;
     let command = remote_aware_stdio_server_bin()?;
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_model_info_override("gpt-5.4", |model| model.supports_search_tool = false)
         .with_config(move |config| {
             insert_mcp_server(
@@ -642,7 +642,7 @@ async fn text_only_mcp_content_uses_content_items() -> anyhow::Result<()> {
     .await;
 
     let command = remote_aware_stdio_server_bin()?;
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_model_info_override("gpt-5.4", |model| model.supports_search_tool = false)
         .with_config(move |config| {
             insert_mcp_server(
@@ -735,7 +735,7 @@ async fn environment_mcp_policy_filters_runtime_config_and_model_tools(
             }))?,
         )?;
     }
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_home(codex_home)
         .with_model_info_override("gpt-5.4", |model| model.supports_search_tool = false)
         .with_config(move |config| {
@@ -930,7 +930,7 @@ async fn stdio_server_round_trip(server_name: &'static str, namespace: &str) -> 
     let instructions = expected_description.clone();
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_config(move |config| {
             insert_mcp_server(
                 config,
@@ -1111,7 +1111,7 @@ async fn stdio_mcp_tool_names_respect_selected_servers() -> anyhow::Result<()> {
     .await;
 
     let command = remote_aware_stdio_server_bin()?;
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_pre_build_hook(move |codex_home| {
             fs::write(
                 codex_home.join("config.toml"),
@@ -1197,7 +1197,7 @@ async fn modern_mcp_pagination_preserves_valid_tools_and_rejects_oversized_curso
     )
     .await;
     let command = remote_aware_stdio_server_bin()?;
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_model_info_override("gpt-5.4", |model| model.supports_search_tool = false)
         .with_config(move |config| {
             config
@@ -1292,7 +1292,7 @@ async fn shutdown_cancels_startup_prewarm_waiting_for_mcp_startup() -> anyhow::R
     let pending_mcp_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
     let pending_mcp_url = format!("http://{}/mcp", pending_mcp_listener.local_addr()?);
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_config(move |config| {
             insert_mcp_server(
                 config,
@@ -1347,7 +1347,7 @@ async fn interrupt_during_mcp_startup_preserves_user_input_in_history(
     let pending_mcp_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
     let pending_mcp_url = format!("http://{}/mcp", pending_mcp_listener.local_addr()?);
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_model_info_override("gpt-5.4", |model| {
             model.use_responses_lite = false;
             model.supports_image_detail_original = false;
@@ -1513,7 +1513,7 @@ async fn stdio_server_uses_configured_cwd_before_runtime_fallback() -> anyhow::R
     let expected_cwd_for_config = Arc::clone(&expected_cwd);
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_workspace_setup(|cwd, fs| async move {
             let configured_cwd = cwd.join("mcp-configured-cwd");
             let configured_cwd_uri = PathUri::from_host_native_path(&configured_cwd)?;
@@ -1586,7 +1586,7 @@ async fn local_stdio_server_uses_runtime_fallback_cwd_when_config_omits_cwd() ->
     );
     let relative_command = relative_server_path.to_string_lossy().into_owned();
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_config(move |config| {
             *expected_cwd_for_config
                 .lock()
@@ -1722,7 +1722,7 @@ async fn stdio_mcp_tool_call_includes_sandbox_state_meta(
     .await;
 
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.5")
         .with_config(move |config| {
@@ -1984,7 +1984,7 @@ async fn stdio_mcp_parallel_tool_calls_default_false_runs_serially() -> anyhow::
 
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_config(move |config| {
             insert_mcp_server(
                 config,
@@ -2125,7 +2125,7 @@ async fn stdio_mcp_read_only_tool_calls_run_concurrently_without_server_opt_in()
 
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_config(move |config| {
             insert_mcp_server(
                 config,
@@ -2214,7 +2214,7 @@ async fn stdio_mcp_parallel_tool_calls_opt_in_runs_concurrently() -> anyhow::Res
 
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_config(move |config| {
             insert_mcp_server(
                 config,
@@ -2299,7 +2299,7 @@ async fn stdio_encrypted_content_responses_round_trip() -> anyhow::Result<()> {
     .await;
 
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_config(move |config| {
             insert_mcp_server(
                 config,
@@ -2390,7 +2390,7 @@ async fn stdio_image_responses_round_trip() -> anyhow::Result<()> {
     // Build the stdio rmcp server and pass the image as data URL so it can construct ImageContent.
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_model("gpt-5.2")
         .with_config(move |config| {
             insert_mcp_server(
@@ -2564,7 +2564,7 @@ async fn stdio_image_responses_resize_large_image() -> anyhow::Result<()> {
     .await;
 
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_config(move |config| {
             insert_mcp_server(
                 config,
@@ -2651,7 +2651,7 @@ async fn stdio_image_responses_preserve_original_detail_metadata() -> anyhow::Re
 
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_model("gpt-5.4")
         .with_config(move |config| {
             insert_mcp_server(
@@ -2797,7 +2797,7 @@ async fn stdio_image_responses_are_sanitized_for_text_only_model() -> anyhow::Re
 
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             insert_mcp_server(
@@ -2912,7 +2912,7 @@ async fn stdio_server_propagates_whitelisted_env_vars() -> anyhow::Result<()> {
     let _guard = EnvVarGuard::set("MCP_TEST_VALUE", OsStr::new(expected_env_value));
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_config(move |config| {
             insert_mcp_server(
                 config,
@@ -3034,7 +3034,7 @@ async fn stdio_server_propagates_explicit_local_env_var_source() -> anyhow::Resu
     let _guard = EnvVarGuard::set(env_name, OsStr::new(expected_env_value));
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_config(move |config| {
             insert_mcp_server(
                 config,
@@ -3130,7 +3130,7 @@ async fn remote_stdio_env_var_source_does_not_copy_local_env() -> anyhow::Result
     let _guard = EnvVarGuard::set(env_name, OsStr::new("local-value-should-not-cross"));
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_config(move |config| {
             insert_mcp_server(
                 config,
@@ -3362,7 +3362,7 @@ async fn streamable_http_tool_call_round_trip(mode: HeadersHelperMode) -> anyhow
     // Phase 3: configure Codex with the Streamable HTTP MCP server and build a
     // fixture that selects remote MCP placement only when the remote test
     // environment is active.
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_config(move |config| {
             insert_mcp_server(
                 config,
@@ -3608,7 +3608,7 @@ async fn streamable_http_with_oauth_round_trip_impl() -> anyhow::Result<()> {
 
     // Phase 4: configure Codex with the OAuth-backed Streamable HTTP MCP
     // server and build the fixture in the active local or remote-aware mode.
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_model_info_override("gpt-5.4", |model| model.supports_search_tool = false)
         .with_home(temp_home.clone())
         .with_config(move |config| {

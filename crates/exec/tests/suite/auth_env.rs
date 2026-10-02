@@ -3,12 +3,12 @@ use core_test_support::responses::ev_completed;
 use core_test_support::responses::mount_sse_once_match;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
-use core_test_support::test_genex_exec::test_codex_exec;
+use core_test_support::test_genex_exec::test_genex_exec;
 use wiremock::matchers::header;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn exec_uses_codex_api_key_env_var() -> anyhow::Result<()> {
-    let test = test_codex_exec();
+    let test = test_genex_exec();
     let server = start_mock_server().await;
     let repo_root = genex_utils_cargo_bin::repo_root()?;
 

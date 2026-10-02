@@ -6,7 +6,7 @@ use anyhow::Context;
 use core_test_support::apps_test_server::AppsTestServer;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use test_case::test_case;
@@ -67,7 +67,7 @@ async fn optional_mcp_startup_grace_controls_initial_turn_tool_catalog(
     )
     .await;
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_model_info_override("gpt-5.4", |model| model.supports_search_tool = false)
         .with_config(move |config| {
             config.mcp_optional_startup_grace = startup_grace;
@@ -195,7 +195,7 @@ async fn running_thread_uses_refreshed_optional_mcp_startup_grace(
     )
     .await;
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_model_info_override("gpt-5.4", |model| model.supports_search_tool = false)
         .with_config(move |config| {
             config.mcp_optional_startup_grace = Duration::from_millis(50);

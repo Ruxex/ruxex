@@ -43,7 +43,7 @@ use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_sandbox;
 use core_test_support::submit_thread_settings;
 use core_test_support::test_genex::local;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -81,7 +81,7 @@ async fn strict_tool_collisions_fail_the_turn_before_sampling(
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.tool_registry.error_on_tool_collisions = true;
         config.update_plan_enabled = true;
         if pre_compact {
@@ -203,7 +203,7 @@ async fn strict_tool_collisions_do_not_duplicate_unrelated_compaction_errors() -
     });
     let compact_mock =
         mount_response_once(&server, ResponseTemplate::new(400).set_body_json(&error)).await;
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config.tool_registry.error_on_tool_collisions = true;
         config.model_auto_compact_token_limit = Some(0);
     });
@@ -251,7 +251,7 @@ async fn empty_turn_environments_omits_environment_backed_tools() -> Result<()> 
     )
     .await;
 
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config.update_plan_enabled = true;
         config
             .features
@@ -293,7 +293,7 @@ async fn turn_environment_selection_keeps_environment_backed_tools() -> Result<(
     )
     .await;
 
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::UnifiedExec)
@@ -321,7 +321,7 @@ async fn custom_tool_unknown_returns_custom_output_error() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     let test = builder.build(&server).await?;
 
     let call_id = "custom-unsupported";
@@ -374,7 +374,7 @@ async fn namespaced_custom_tool_call_preserves_namespace_through_dispatch_and_re
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex();
+    let mut builder = test_genex();
     builder = builder.with_config(|config| {
         let _ = config.features.enable(Feature::ExecutedToolCallMetadata);
     });
@@ -573,7 +573,7 @@ async fn exec_command_escalated_permissions_rejected_then_ok() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("test-gpt-5-codex")
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
@@ -675,7 +675,7 @@ async fn sandbox_denied_exec_command_returns_original_output() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_model("gpt-5.4");
+    let mut builder = test_genex().with_model("gpt-5.4");
     let fixture = builder.build(&server).await?;
 
     let call_id = "sandbox-denied-exec-command";
@@ -763,7 +763,7 @@ async fn exec_command_enforces_glob_deny_read_policy() -> Result<()> {
     skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("gpt-5.4")
         .with_config(move |config| {
             let mut file_system_sandbox_policy = FileSystemSandboxPolicy::default();
@@ -879,8 +879,8 @@ async fn collect_tools(availability: CommandToolAvailability) -> Result<Vec<Stri
     let mock = mount_sse_sequence(&server, responses).await;
 
     let mut builder = match availability {
-        CommandToolAvailability::Default => test_codex(),
-        CommandToolAvailability::ManagedUnifiedExecDisabled => test_codex()
+        CommandToolAvailability::Default => test_genex(),
+        CommandToolAvailability::ManagedUnifiedExecDisabled => test_genex()
             .with_cloud_config_bundle(
                 CloudConfigBundleFixture::loader_with_enterprise_requirement(
                     r#"
@@ -890,14 +890,14 @@ shell_tool = true
 "#,
                 ),
             ),
-        CommandToolAvailability::ShellToolDisabled => test_codex().with_config(|config| {
+        CommandToolAvailability::ShellToolDisabled => test_genex().with_config(|config| {
             config
                 .features
                 .disable(Feature::ShellTool)
                 .expect("test config should allow feature update");
         }),
         CommandToolAvailability::ModelDisabled => {
-            test_codex().with_model_info_override("gpt-5.4", |model| {
+            test_genex().with_model_info_override("gpt-5.4", |model| {
                 model.shell_type = ConfigShellToolType::Disabled;
             })
         }

@@ -20,7 +20,7 @@ use genex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 
@@ -73,7 +73,7 @@ async fn dynamic_tool_audio_exceeding_the_output_budget_is_omitted() -> Result<(
     )
     .await;
 
-    let mut builder = test_codex().with_model_info_override("gpt-5.5", |model_info| {
+    let mut builder = test_genex().with_model_info_override("gpt-5.5", |model_info| {
         model_info.input_modalities.push(InputModality::Audio);
         model_info.truncation_policy = TruncationPolicyConfig::tokens(/*limit*/ 50);
     });

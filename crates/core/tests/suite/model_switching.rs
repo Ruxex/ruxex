@@ -50,9 +50,9 @@ use core_test_support::responses::sse;
 use core_test_support::responses::sse_completed;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::TestGenex;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
@@ -63,7 +63,7 @@ use std::sync::Arc;
 use test_case::test_case;
 use wiremock::MockServer;
 
-fn read_only_user_turn(test: &TestCodex, items: Vec<UserInput>, model: String) -> TurnInputRequest {
+fn read_only_user_turn(test: &TestGenex, items: Vec<UserInput>, model: String) -> TurnInputRequest {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::read_only(), test.cwd_path());
     TurnInputRequest::user_input(items).with_thread_settings(ThreadSettingsOverrides {
@@ -177,7 +177,7 @@ async fn first_turn_model_change_appends_model_instructions_developer_message() 
     let resp_mock = mount_sse_once(&server, sse_completed("resp-1")).await;
 
     let mut builder =
-        test_codex().with_model_info_override("gpt-5.6-terra", configure_model_switching_fixture);
+        test_genex().with_model_info_override("gpt-5.6-terra", configure_model_switching_fixture);
     let test = builder.build_with_auto_env(&server).await?;
     let next_model = "gpt-5.5";
 
@@ -221,7 +221,7 @@ async fn first_turn_after_empty_prefix_fork_preserves_inherited_base_instruction
     let resp_mock = mount_sse_once(&server, sse_completed("resp-fork")).await;
 
     let initial_model = "gpt-5.6-terra";
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model_info_override(initial_model, configure_model_switching_fixture)
         .with_config(move |config| {
             config.base_instructions = custom_base_instructions.map(str::to_string);
@@ -289,7 +289,7 @@ async fn model_change_appends_model_instructions_developer_message() -> Result<(
     .await;
 
     let mut builder =
-        test_codex().with_model_info_override("gpt-5.6-terra", configure_model_switching_fixture);
+        test_genex().with_model_info_override("gpt-5.6-terra", configure_model_switching_fixture);
     let test = builder.build(&server).await?;
     let next_model = "gpt-5.5";
 
@@ -413,7 +413,7 @@ async fn settings_update_during_active_turn_applies_to_next_turn_only() -> Resul
         ],
     )
     .await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model_info_override("gpt-5.6-terra", configure_model_switching_fixture)
         .with_config(|config| {
             config
@@ -526,7 +526,7 @@ async fn service_tier_change_is_applied_on_next_http_turn() -> Result<()> {
     )
     .await;
 
-    let test = test_codex().build(&server).await?;
+    let test = test_genex().build(&server).await?;
 
     test.submit_turn_with_service_tier("flex turn", Some(ServiceTier::Flex.request_value()))
         .await?;
@@ -564,7 +564,7 @@ async fn flex_service_tier_is_applied_to_http_turn() -> Result<()> {
     }];
     let resp_mock = mount_sse_once(&server, sse_completed("resp-1")).await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model(model_slug)
         .with_config(move |config| {
             config.model_catalog = Some(ModelsResponse {
@@ -597,7 +597,7 @@ async fn unsupported_service_tier_is_omitted_from_http_turn() -> Result<()> {
     );
     let resp_mock = mount_sse_once(&server, sse_completed("resp-1")).await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model(model_slug)
         .with_config(move |config| {
             config.model_catalog = Some(ModelsResponse {
@@ -628,7 +628,7 @@ async fn unsupported_configured_service_tier_warns_at_session_start() -> Result<
         "no service tiers",
         default_input_modalities(),
     );
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model(model_slug)
         .with_config(move |config| {
             config.service_tier = Some(ServiceTier::Flex.request_value().to_string());
@@ -676,7 +676,7 @@ async fn default_service_tier_override_is_omitted_from_http_turn() -> Result<()>
     model.default_service_tier = Some(ServiceTier::Flex.request_value().to_string());
     let resp_mock = mount_sse_once(&server, sse_completed("resp-1")).await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model(model_slug)
         .with_config(move |config| {
             config.model_catalog = Some(ModelsResponse {
@@ -715,7 +715,7 @@ async fn null_service_tier_override_is_omitted_from_http_turn_with_catalog_defau
     model.default_service_tier = Some(ServiceTier::Flex.request_value().to_string());
     let resp_mock = mount_sse_once(&server, sse_completed("resp-1")).await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model(model_slug)
         .with_config(move |config| {
             config.model_catalog = Some(ModelsResponse {
@@ -784,7 +784,7 @@ async fn model_change_projects_media_without_changing_live_or_replayed_history(
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config.model = Some(text_model_slug.to_string());
@@ -972,7 +972,7 @@ async fn generated_image_is_replayed_for_image_capable_models() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config.model = Some(image_model_slug.to_string());
@@ -1069,7 +1069,7 @@ async fn model_change_from_generated_image_to_text_preserves_prior_generated_ima
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config.model = Some(image_model_slug.to_string());
@@ -1229,7 +1229,7 @@ async fn model_switch_to_smaller_model_updates_token_context_window() -> Result<
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(large_model_slug.to_string());

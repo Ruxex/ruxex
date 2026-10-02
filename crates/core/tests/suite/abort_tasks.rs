@@ -20,7 +20,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::sse_response;
 use core_test_support::responses::start_mock_server;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use regex_lite::Regex;
 use serde_json::json;
@@ -44,7 +44,7 @@ async fn interrupt_long_running_tool_emits_turn_aborted() {
     let server = start_mock_server().await;
     mount_sse_once(&server, body).await;
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_model("gpt-5.4")
         .build(&server)
         .await
@@ -84,7 +84,7 @@ async fn root_turn_suspension_preserves_unfinished_turn_history() {
         .set_delay(Duration::from_secs(60)),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model("gpt-5.4")
         .build_with_auto_env(&server)
         .await
@@ -173,7 +173,7 @@ async fn root_turn_suspension_preserves_unfinished_turn_history() {
         ]),
     )
     .await;
-    let resumed = test_codex()
+    let resumed = test_genex()
         .with_model("gpt-5.4")
         .resume(&recovery_server, Arc::clone(&test.home), rollout_path)
         .await
@@ -231,7 +231,7 @@ async fn interrupt_tool_records_history_entries() {
     let server = start_mock_server().await;
     let response_mock = mount_sse_sequence(&server, vec![first_body, follow_up_body]).await;
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_model("gpt-5.4")
         .build(&server)
         .await
@@ -324,7 +324,7 @@ async fn interrupt_persists_turn_aborted_marker_in_next_request() {
     let server = start_mock_server().await;
     let response_mock = mount_sse_sequence(&server, vec![first_body, follow_up_body]).await;
 
-    let fixture = test_codex()
+    let fixture = test_genex()
         .with_model("gpt-5.4")
         .build(&server)
         .await

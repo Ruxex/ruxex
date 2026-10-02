@@ -20,7 +20,7 @@ use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
@@ -35,7 +35,7 @@ async fn first_request_item_types_roles_and_content_annotations() -> Result<()> 
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.5", |model_info| {
             model_info.input_modalities.push(InputModality::Audio);
         })
@@ -232,7 +232,7 @@ async fn content_item_kinds_are_omitted_when_feature_disabled() -> Result<()> {
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_config(|config| {
             config.developer_instructions = Some("Keep other metadata intact.".into());
             config

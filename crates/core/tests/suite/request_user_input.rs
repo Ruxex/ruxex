@@ -27,8 +27,8 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestCodex;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
@@ -78,8 +78,8 @@ async fn request_user_input_round_trip_for_mode(mode: ModeKind) -> anyhow::Resul
 
     let server = start_mock_server().await;
 
-    let builder = test_codex();
-    let TestCodex {
+    let builder = test_genex();
+    let TestGenex {
         codex,
         cwd,
         session_configured,
@@ -240,12 +240,12 @@ async fn request_user_input_interrupt_emits_deferred_token_count() -> anyhow::Re
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let TestCodex {
+    let TestGenex {
         codex,
         cwd,
         session_configured,
         ..
-    } = test_codex().build(&server).await?;
+    } = test_genex().build(&server).await?;
 
     let call_id = "user-input-interrupt";
     let request_args = json!({
@@ -330,8 +330,8 @@ where
 
     let server = start_mock_server().await;
 
-    let mut builder = test_codex();
-    let TestCodex {
+    let mut builder = test_genex();
+    let TestGenex {
         codex,
         cwd,
         session_configured,

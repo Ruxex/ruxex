@@ -8,8 +8,8 @@ use genex_protocol::user_input::UserInput;
 use core_test_support::fs_wait;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestCodex;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -49,7 +49,7 @@ mv "${tmp_path}" "${payload_path}""#,
     let notify_file = notify_dir.path().join("notify.txt");
     let notify_script_str = notify_script.to_str().unwrap().to_string();
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_config(move |cfg| cfg.notify = Some(vec![notify_script_str]))
         .build(&server)
         .await?;

@@ -10,7 +10,7 @@ use genex_login::AuthHeaders;
 use genex_login::AuthManager;
 use genex_login::CodexAuth;
 use core_test_support::responses;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use http::HeaderMap;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -62,7 +62,7 @@ async fn history_images_reach_the_next_model_request() -> Result<(), Box<dyn std
         &mut extensions,
         AuthManager::from_auth_for_testing(auth.clone()),
     );
-    let test = test_codex()
+    let test = test_genex()
         .with_auth(auth)
         .with_model_info_override("gpt-5.5", |model_info| {
             model_info.supports_experimental_context = true;

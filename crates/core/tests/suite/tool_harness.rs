@@ -27,8 +27,8 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestCodex;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use serde_json::Value;
@@ -67,8 +67,8 @@ async fn exec_command_tool_executes_command_and_streams_output() -> anyhow::Resu
 
     let server = start_mock_server().await;
 
-    let mut builder = test_codex().with_model("test-gpt-5-codex");
-    let TestCodex {
+    let mut builder = test_genex().with_model("test-gpt-5-codex");
+    let TestGenex {
         codex,
         cwd,
         session_configured,
@@ -141,8 +141,8 @@ async fn update_plan_tool_emits_plan_update_event() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_codex().with_config(|config| config.update_plan_enabled = true);
-    let TestCodex {
+    let mut builder = test_genex().with_config(|config| config.update_plan_enabled = true);
+    let TestGenex {
         codex,
         cwd,
         session_configured,
@@ -233,8 +233,8 @@ async fn update_plan_tool_rejects_malformed_payload() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_codex().with_config(|config| config.update_plan_enabled = true);
-    let TestCodex {
+    let mut builder = test_genex().with_config(|config| config.update_plan_enabled = true);
+    let TestGenex {
         codex,
         cwd,
         session_configured,
@@ -327,8 +327,8 @@ async fn apply_patch_tool_executes_and_emits_patch_events() -> anyhow::Result<()
 
     let server = start_mock_server().await;
 
-    let mut builder = test_codex();
-    let TestCodex {
+    let mut builder = test_genex();
+    let TestGenex {
         codex,
         cwd,
         session_configured,
@@ -467,8 +467,8 @@ async fn apply_patch_reports_parse_diagnostics() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_codex();
-    let TestCodex {
+    let mut builder = test_genex();
+    let TestGenex {
         codex,
         cwd,
         session_configured,

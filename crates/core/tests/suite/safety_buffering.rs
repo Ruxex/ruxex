@@ -10,7 +10,7 @@ use core_test_support::responses::sse;
 use core_test_support::responses::sse_response;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
@@ -46,7 +46,7 @@ async fn emits_safety_buffering_from_response_metadata_with_the_header_fallback_
     )
     .await;
 
-    let test = test_codex().build(&server).await?;
+    let test = test_genex().build(&server).await?;
     test.codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Check this request".into(),
@@ -95,7 +95,7 @@ async fn emits_safety_buffering_with_the_responses_api_model_without_header_gati
     )
     .await;
 
-    let test = test_codex().build(&server).await?;
+    let test = test_genex().build(&server).await?;
     test.codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Check this request".into(),

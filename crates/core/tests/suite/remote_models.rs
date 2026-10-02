@@ -41,9 +41,9 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_sandbox;
-use core_test_support::test_genex::TestCodex;
+use core_test_support::test_genex::TestGenex;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
@@ -85,7 +85,7 @@ async fn disabled_update_plan_preserves_custom_catalog_instructions() -> Result<
         .as_mut()
         .expect("model prompt templates");
     messages.instructions_template = Some(INSTRUCTIONS.to_string());
-    let test = test_codex()
+    let test = test_genex()
         .with_model("gpt-5.5")
         .with_config(move |config| {
             config.update_plan_enabled = false;
@@ -110,7 +110,7 @@ async fn unknown_model_sends_builtin_instructions() -> Result<()> {
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_model("future-custom-model")
         .with_config(|config| config.update_plan_enabled = true);
     let test = builder.build_with_auto_env(&server).await?;
@@ -238,7 +238,7 @@ async fn remote_models_config_context_window_override_clamps_to_max_context_wind
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(requested_model.to_string());
@@ -299,7 +299,7 @@ async fn remote_models_config_override_above_max_uses_max_context_window() -> Re
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(requested_model.to_string());
@@ -360,7 +360,7 @@ async fn remote_models_use_context_window_when_config_override_is_absent() -> Re
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(requested_model.to_string());
@@ -447,7 +447,7 @@ async fn remote_models_long_model_slug_is_sent_with_supported_reasoning(
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(requested_model.to_string());
@@ -523,7 +523,7 @@ async fn namespaced_model_slug_uses_catalog_metadata_without_fallback_warning() 
     )
     .await;
 
-    let TestCodex { codex, .. } = test_codex()
+    let TestGenex { codex, .. } = test_genex()
         .with_model(requested_model)
         .build(&server)
         .await?;
@@ -629,12 +629,12 @@ async fn remote_models_remote_model_uses_unified_exec() -> Result<()> {
         .mount(&server)
         .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some("gpt-5.4".to_string());
         });
-    let TestCodex {
+    let TestGenex {
         codex,
         cwd,
         config,
@@ -756,7 +756,7 @@ async fn remote_models_truncation_policy_without_override_preserves_remote() -> 
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some("gpt-5.4".to_string());
@@ -802,7 +802,7 @@ async fn remote_models_truncation_policy_with_tool_output_override() -> Result<(
     )
     .await;
 
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some("gpt-5.4".to_string());
@@ -923,7 +923,7 @@ async fn remote_models_apply_legacy_instructions(auth: CodexAuth) -> Result<()> 
     )
     .await;
 
-    let mut builder = test_codex().with_auth(auth).with_config(|config| {
+    let mut builder = test_genex().with_auth(auth).with_config(|config| {
         config
             .features
             .enable(Feature::ApiKeyModelDiscovery)
@@ -931,7 +931,7 @@ async fn remote_models_apply_legacy_instructions(auth: CodexAuth) -> Result<()> 
         config.update_plan_enabled = true;
         config.model = Some("gpt-5.2".to_string());
     });
-    let TestCodex {
+    let TestGenex {
         codex,
         cwd,
         config,

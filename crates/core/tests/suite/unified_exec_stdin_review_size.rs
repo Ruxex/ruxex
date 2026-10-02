@@ -19,7 +19,7 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_sandbox;
 use core_test_support::skip_if_target_windows;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -41,7 +41,7 @@ async fn unreviewable_stdin_is_rejected_before_approval_or_execution(
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
     let server = start_mock_server().await;
-    let mut builder = test_codex().with_config(|config| {
+    let mut builder = test_genex().with_config(|config| {
         config
             .features
             .enable(Feature::WriteStdinApproval)

@@ -26,7 +26,7 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
 use core_test_support::responses::sse_response;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event_with_timeout;
 use pretty_assertions::assert_eq;
@@ -51,7 +51,7 @@ async fn refresh_models_on_models_etag_mismatch_and_avoid_duplicate_models_fetch
     .await;
 
     let auth = CodexAuth::from_api_key("test-api-key");
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(auth)
         .with_model("gpt-5.2")
         .with_config(|config| {

@@ -38,9 +38,9 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_remote;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::TestCodex;
-use core_test_support::test_genex::TestCodexBuilder;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::TestGenex;
+use core_test_support::test_genex::TestGenexBuilder;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_mcp_server;
 use pretty_assertions::assert_eq;
@@ -655,7 +655,7 @@ async fn executor_stop_hook_fixture() -> Result<ExecutorHookFixture> {
 
 async fn executor_hook_fixture(responses: Vec<ResponseTemplate>) -> Result<ExecutorHookFixture> {
     executor_plugin_hook_fixture(
-        test_codex(),
+        test_genex(),
         &[("computer-use@codex-bundled", computer_use_hook_manifest())],
         responses,
     )
@@ -702,7 +702,7 @@ fn computer_use_hook_manifest() -> Value {
 }
 
 async fn executor_plugin_hook_fixture(
-    builder: TestCodexBuilder,
+    builder: TestGenexBuilder,
     plugins: &[(&'static str, Value)],
     responses: Vec<ResponseTemplate>,
 ) -> Result<ExecutorHookFixture> {
@@ -810,7 +810,7 @@ async fn executor_plugin_hook_fixture(
 
 struct ExecutorHookFixture {
     server: MockServer,
-    test: TestCodex,
+    test: TestGenex,
     responses: ResponseMock,
     hook_called: Arc<Notify>,
     plugin_roots: Vec<(&'static str, PathUri)>,

@@ -19,7 +19,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -138,7 +138,7 @@ async fn ultra_reasoning_uses_highest_non_ultra_and_proactive_mode() -> Result<(
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.4", add_ultra_reasoning)
         .with_config(configure_ultra)
         .build(&server)
@@ -183,7 +183,7 @@ async fn mode_hints_override_reasoning_effort(source: ModeHintSource) -> Result<
             .collect(),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.4", |model_info| {
             add_ultra_reasoning(model_info);
             set_multi_agent_mode(
@@ -247,7 +247,7 @@ async fn catalog_proactive_mode_is_ultra_only(
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.4", move |model_info| {
             add_ultra_reasoning(model_info);
             set_multi_agent_mode(
@@ -303,7 +303,7 @@ async fn model_switch_refreshes_catalog_role_and_mode(
             .collect(),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.2", |model_info| {
             add_ultra_reasoning(model_info);
             set_multi_agent_mode(
@@ -396,7 +396,7 @@ async fn empty_configured_mode_hint_emits_no_mode_message(effort: ReasoningEffor
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.4", |model_info| {
             add_ultra_reasoning(model_info);
             set_multi_agent_mode(
@@ -447,14 +447,14 @@ async fn changing_configured_mode_hint_to_empty_emits_no_update() -> Result<()> 
             .collect(),
     )
     .await;
-    let initial = test_codex()
+    let initial = test_genex()
         .with_config(configure_custom_mode_hint)
         .build(&server)
         .await?;
 
     submit_turn(&initial.codex, "before resume", /*effort*/ None).await?;
 
-    let mut resume_builder = test_codex().with_config(|config| {
+    let mut resume_builder = test_genex().with_config(|config| {
         configure_multi_agent_v2(config);
         config.multi_agent_v2.multi_agent_mode_hint_text = Some(String::new());
     });
@@ -496,7 +496,7 @@ async fn live_mode_change_appends_mode_without_reappending_usage_hint() -> Resul
             .collect(),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.4", add_ultra_reasoning)
         .with_config(|config| {
             configure_ultra(config);
@@ -577,7 +577,7 @@ async fn leaving_ultra_after_cold_resume_emits_explicit_mode() -> Result<()> {
             .collect(),
     )
     .await;
-    let initial = test_codex()
+    let initial = test_genex()
         .with_model_info_override("gpt-5.4", add_ultra_reasoning)
         .with_config(configure_ultra)
         .build(&server)
@@ -585,7 +585,7 @@ async fn leaving_ultra_after_cold_resume_emits_explicit_mode() -> Result<()> {
 
     submit_turn(&initial.codex, "before resume", /*effort*/ None).await?;
 
-    let mut resume_builder = test_codex()
+    let mut resume_builder = test_genex()
         .with_model_info_override("gpt-5.4", add_ultra_reasoning)
         .with_config(configure_ultra);
     let resumed = resume_builder.restart(&server, &initial).await?;
@@ -628,7 +628,7 @@ async fn ultra_on_multi_agent_v1_uses_highest_non_ultra_without_mode_instruction
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.4", add_ultra_reasoning)
         .with_config(|config| {
             config.model_reasoning_effort = Some(ReasoningEffort::Ultra);

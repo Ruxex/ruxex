@@ -44,7 +44,7 @@ use core_test_support::responses::mount_models_once;
 use core_test_support::responses::strip_response_item_ids_from_json;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_codex;
+use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::test_path_buf;
 use core_test_support::wait_for_event;
@@ -551,7 +551,7 @@ async fn summarize_context_three_requests_and_instructions(
 
     // Build config pointing to the mock server and spawn Codex.
     let model_provider = non_provider_model_provider(&server);
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.model = Some("gpt-5.2".to_string());
         config.update_plan_enabled = enable_plan;
         if custom_instructions {
@@ -796,7 +796,7 @@ async fn manual_pre_compact_block_decision_does_not_block_compaction() {
     let request_log = mount_sse_sequence(&server, vec![first_turn, compact_turn]).await;
 
     let model_provider = non_provider_model_provider(&server);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(write_unsupported_blocking_pre_compact_hook)
         .with_config(move |config| {
             config.model_provider = model_provider;
@@ -863,7 +863,7 @@ async fn compact_hooks_respect_matchers_and_post_runs_after_compaction() {
     let request_log = mount_sse_sequence(&server, vec![first_turn, compact_turn]).await;
 
     let model_provider = non_provider_model_provider(&server);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_pre_build_hook(write_matching_compact_hooks)
         .with_config(move |config| {
             config.model_provider = model_provider;
@@ -927,7 +927,7 @@ async fn manual_compact_uses_custom_prompt() {
     let custom_prompt = "Use this compact prompt instead";
 
     let model_provider = non_provider_model_provider(&server);
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.model_provider = model_provider;
         config.compact_prompt = Some(custom_prompt.to_string());
     });
@@ -1034,7 +1034,7 @@ async fn reasoning_effort_override_remote_v2_compaction_resets_pinned_effort(
     )
     .await;
 
-    let test = test_codex()
+    let test = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model_info_override("gpt-5.4", |model| {
             model.use_responses_lite = true;
@@ -1156,7 +1156,7 @@ async fn manual_compact_records_durable_and_local_token_usage() {
     mount_sse_once(&server, sse_compact).await;
 
     let model_provider = non_provider_model_provider(&server);
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
     });
@@ -1247,7 +1247,7 @@ async fn manual_compact_emits_context_compaction_items() {
     mount_sse_sequence(&server, vec![sse1, sse2]).await;
 
     let model_provider = non_provider_model_provider(&server);
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
     });
@@ -1308,7 +1308,7 @@ async fn multiple_auto_compact_per_task_runs_after_token_limit_hit() {
     let server = start_mock_server().await;
 
     let non_responses_provider_name = non_provider_model_provider(&server).name;
-    let test = test_codex()
+    let test = test_genex()
         .with_pre_build_hook(allow_echo_commands)
         .with_config(move |config| {
             config.model_provider.name = non_responses_provider_name;
@@ -1876,7 +1876,7 @@ async fn auto_compact_runs_after_token_limit_hit() {
 
     let model_provider = non_provider_model_provider(&server);
 
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
         config.model_auto_compact_token_limit = Some(200_000);
@@ -2056,7 +2056,7 @@ async fn auto_compact_emits_context_compaction_items() {
     mount_sse_sequence(&server, vec![sse1, sse2, sse3, sse4]).await;
 
     let model_provider = non_provider_model_provider(&server);
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
         config.model_auto_compact_token_limit = Some(200_000);
@@ -2136,7 +2136,7 @@ async fn auto_compact_starts_after_turn_started() {
     mount_sse_sequence(&server, vec![sse1, sse2, sse3, sse4]).await;
 
     let model_provider = non_provider_model_provider(&server);
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
         config.model_auto_compact_token_limit = Some(200_000);
@@ -2204,7 +2204,7 @@ async fn auto_compact_runs_after_resume_when_token_usage_is_over_limit() {
     let over_limit_tokens = 250_000;
     let remote_summary = REMOTE_V2_SUMMARY;
 
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         set_test_compact_prompt(config);
         config.model_auto_compact_token_limit = Some(limit);
     });
@@ -2230,7 +2230,7 @@ async fn auto_compact_runs_after_resume_when_token_usage_is_over_limit() {
         "remote compaction should not run before the next user message"
     );
 
-    let mut resume_builder = test_codex().with_config(move |config| {
+    let mut resume_builder = test_genex().with_config(move |config| {
         set_test_compact_prompt(config);
         config.model_auto_compact_token_limit = Some(limit);
     });
@@ -2319,7 +2319,7 @@ async fn pre_sampling_compact_runs_on_switch_to_smaller_context_model() {
     .await;
 
     let model_provider = non_provider_model_provider(&server);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
         .with_config(move |config| {
@@ -2422,7 +2422,7 @@ async fn pre_sampling_compact_runs_when_comp_hash_changes() {
     .await;
 
     let model_provider = non_provider_model_provider(&server);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
         .with_config(move |config| {
@@ -2490,7 +2490,7 @@ async fn previous_model_compaction_resolves_selected_settings() -> Result<()> {
     )
     .await;
     let model_provider = non_provider_model_provider(&server);
-    let test = test_codex()
+    let test = test_genex()
         .with_model_info_override("gpt-5.4", |model| {
             model.comp_hash = Some("hash-a".to_string());
             model.default_reasoning_summary = ReasoningSummary::Detailed;
@@ -2607,7 +2607,7 @@ async fn pre_sampling_compact_falls_back_from_retired_previous_model_after_renam
     .await;
 
     let model_provider = provider_model_provider(&server);
-    let mut initial_builder = test_codex()
+    let mut initial_builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(retired_model)
         .with_config(move |config| {
@@ -2650,7 +2650,7 @@ async fn pre_sampling_compact_falls_back_from_retired_previous_model_after_renam
     .await;
 
     let model_provider = provider_model_provider(&server);
-    let mut resumed_builder = test_codex()
+    let mut resumed_builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(retired_model)
         .with_config(move |config| {
@@ -2746,7 +2746,7 @@ async fn pre_sampling_compact_falls_back_when_previous_model_is_not_found() {
     .await;
 
     let model_provider = provider_model_provider(&server);
-    let mut initial_builder = test_codex()
+    let mut initial_builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(retired_model)
         .with_config(move |config| {
@@ -2790,7 +2790,7 @@ async fn pre_sampling_compact_falls_back_when_previous_model_is_not_found() {
 
     let mut model_provider = provider_model_provider(&server);
     model_provider.stream_max_retries = Some(0);
-    let mut resumed_builder = test_codex()
+    let mut resumed_builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(retired_model)
         .with_config(move |config| {
@@ -2890,7 +2890,7 @@ async fn pre_sampling_compact_falls_back_after_previous_model_invalid_request_on
     .await;
 
     let model_provider = provider_model_provider(&server);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(retired_model)
         .with_config(move |config| {
@@ -2998,7 +2998,7 @@ async fn pre_sampling_compact_keeps_unknown_previous_model_for_api_key_auth_and_
     .await;
 
     let model_provider = non_provider_model_provider(&server);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("Test API Key"))
         .with_model(previous_model)
         .with_config(move |config| {
@@ -3089,7 +3089,7 @@ async fn pre_sampling_compact_skips_when_either_comp_hash_is_missing() {
     .await;
 
     let model_provider = non_provider_model_provider(&server);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(model_without_hash)
         .with_config(move |config| {
@@ -3194,7 +3194,7 @@ async fn body_after_prefix_model_switch_budget_compacts_with_next_model() {
     .await;
 
     let model_provider = non_provider_model_provider(&server);
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
         .with_config(move |config| {
@@ -3288,7 +3288,7 @@ async fn pre_sampling_compact_runs_after_resume_and_switch_to_smaller_model() {
     .await;
 
     let model_provider = non_provider_model_provider(&server);
-    let mut initial_builder = test_codex()
+    let mut initial_builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
         .with_config(move |config| {
@@ -3331,7 +3331,7 @@ async fn pre_sampling_compact_runs_after_resume_and_switch_to_smaller_model() {
     .await;
 
     let model_provider = non_provider_model_provider(&server);
-    let mut resumed_builder = test_codex()
+    let mut resumed_builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
         .with_config(move |config| {
@@ -3409,7 +3409,7 @@ async fn pre_sampling_compact_recovers_comp_hash_after_resume() {
     .await;
 
     let model_provider = non_provider_model_provider(&server);
-    let mut initial_builder = test_codex()
+    let mut initial_builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
         .with_config(move |config| {
@@ -3462,7 +3462,7 @@ async fn pre_sampling_compact_recovers_comp_hash_after_resume() {
     assert_eq!(persisted_comp_hash.as_deref(), Some("hash-a"));
 
     let model_provider = non_provider_model_provider(&server);
-    let mut resumed_builder = test_codex()
+    let mut resumed_builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
         .with_config(move |config| {
@@ -3536,7 +3536,7 @@ async fn pre_sampling_compact_skips_missing_comp_hash_after_resume() {
     .await;
 
     let model_provider = non_provider_model_provider(&server);
-    let mut initial_builder = test_codex()
+    let mut initial_builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
         .with_config(move |config| {
@@ -3587,7 +3587,7 @@ async fn pre_sampling_compact_skips_missing_comp_hash_after_resume() {
     assert!(persisted_turn_context["payload"].get("comp_hash").is_none());
 
     let model_provider = non_provider_model_provider(&server);
-    let mut resumed_builder = test_codex()
+    let mut resumed_builder = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
         .with_config(move |config| {
@@ -3686,7 +3686,7 @@ async fn auto_compact_persists_rollout_entries() {
 
     let model_provider = non_provider_model_provider(&server);
 
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
         config.model_auto_compact_token_limit = Some(200_000);
@@ -3796,7 +3796,7 @@ async fn manual_compact_retries_after_context_window_error() {
 
     let model_provider = non_provider_model_provider(&server);
 
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
         config.model_auto_compact_token_limit = Some(200_000);
@@ -3890,7 +3890,7 @@ async fn manual_compact_non_context_failure_retries_then_emits_task_error() {
     let mut model_provider = non_provider_model_provider(&server);
     model_provider.stream_max_retries = Some(1);
 
-    let codex = test_codex()
+    let codex = test_genex()
         .with_config(move |config| {
             config.model_provider = model_provider;
             set_test_compact_prompt(config);
@@ -3984,7 +3984,7 @@ async fn manual_compact_twice_preserves_latest_user_messages() {
 
     let model_provider = non_provider_model_provider(&server);
 
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.update_plan_enabled = true;
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
@@ -4204,7 +4204,7 @@ async fn auto_compact_allows_multiple_attempts_when_interleaved_with_other_turn_
 
     let model_provider = non_provider_model_provider(&server);
 
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
         // Leave enough headroom for per-item request metadata before the second compaction.
@@ -4305,7 +4305,7 @@ async fn snapshot_request_shape_mid_turn_continuation_compaction() {
 
     let model_provider = non_provider_model_provider(&server);
 
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.update_plan_enabled = true;
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
@@ -4399,7 +4399,7 @@ async fn auto_compact_clamps_config_limit_to_context_window() {
     mount_sse_once(&server, post_auto_compact_turn).await;
 
     let model_provider = non_provider_model_provider(&server);
-    let mut builder = test_codex().with_config(move |config| {
+    let mut builder = test_genex().with_config(move |config| {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
         config.model_context_window = Some(context_window);
@@ -4460,7 +4460,7 @@ async fn auto_compact_body_after_prefix_ignores_starting_window_prefix() {
     .await;
 
     let model_provider = non_provider_model_provider(&server);
-    let test = test_codex()
+    let test = test_genex()
         .with_config(move |config| {
             config.model_provider = model_provider;
             set_test_compact_prompt(config);
@@ -4548,7 +4548,7 @@ async fn auto_compact_body_after_prefix_counts_growth_after_compaction() {
     .await;
 
     let model_provider = non_provider_model_provider(&server);
-    let test = test_codex()
+    let test = test_genex()
         .with_config(move |config| {
             config.model_provider = model_provider;
             set_test_compact_prompt(config);
@@ -4632,7 +4632,7 @@ async fn auto_compact_body_after_prefix_still_caps_at_context_window() {
     .await;
 
     let model_provider = non_provider_model_provider(&server);
-    let test = test_codex()
+    let test = test_genex()
         .with_config(move |config| {
             config.model_provider = model_provider;
             set_test_compact_prompt(config);
@@ -4710,7 +4710,7 @@ async fn auto_compact_accounts_for_encrypted_reasoning(first_response_includes_r
     )
     .await;
 
-    let codex = test_codex()
+    let codex = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             set_test_compact_prompt(config);
@@ -4792,7 +4792,7 @@ async fn snapshot_request_shape_pre_turn_compaction_including_incoming_user_mess
     let request_log = mount_sse_sequence(&server, vec![sse1, sse2, sse3, sse4]).await;
 
     let model_provider = non_provider_model_provider(&server);
-    let codex = test_codex()
+    let codex = test_genex()
         .with_config(move |config| {
             config.update_plan_enabled = true;
             config.model_provider = model_provider;
@@ -4911,7 +4911,7 @@ async fn snapshot_request_shape_pre_turn_compaction_strips_incoming_model_switch
     .await;
 
     let model_provider = non_provider_model_provider(&server);
-    let test = test_codex()
+    let test = test_genex()
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_model(previous_model)
         .with_config(move |config| {
@@ -5011,7 +5011,7 @@ async fn snapshot_request_shape_pre_turn_compaction_context_window_exceeded() {
 
     let mut model_provider = non_provider_model_provider(&server);
     model_provider.stream_max_retries = Some(0);
-    let codex = test_codex()
+    let codex = test_genex()
         .with_config(move |config| {
             config.update_plan_enabled = true;
             config.model_provider = model_provider;
@@ -5086,7 +5086,7 @@ async fn snapshot_request_shape_manual_compact_without_previous_user_messages() 
     let request_log = mount_sse_sequence(&server, vec![compact_turn, follow_up_turn]).await;
 
     let model_provider = non_provider_model_provider(&server);
-    let codex = test_codex()
+    let codex = test_genex()
         .with_config(move |config| {
             config.update_plan_enabled = true;
             config.model_provider = model_provider;
@@ -5160,7 +5160,7 @@ async fn manual_compaction_refreshes_global_instructions_for_next_turn() -> Resu
     let provider = local_compaction_provider(&server);
 
     // Create the thread with the old global source loaded into its instruction snapshot.
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&home))
         .with_config(move |config| {
             config.model_provider = provider;
@@ -5238,7 +5238,7 @@ async fn mid_turn_compaction_uses_refreshed_global_instructions() -> Result<()> 
     let provider = local_compaction_provider(&server);
 
     // Create the thread with the old global source loaded into its instruction snapshot.
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&home))
         .with_config(move |config| {
             config.model_provider = provider;
@@ -5311,7 +5311,7 @@ async fn remote_v2_compaction_refreshes_instructions_and_preserves_them_on_cold_
         GLOBAL_AGENTS_FILENAME,
         OLD_GLOBAL_INSTRUCTIONS,
     )?;
-    let mut builder = test_codex()
+    let mut builder = test_genex()
         .with_home(Arc::clone(&home))
         .with_auth(CodexAuth::from_api_key("test-api-key"));
     let test = builder.build(&server).await?;
@@ -5370,7 +5370,7 @@ async fn remote_v2_compaction_refreshes_instructions_and_preserves_them_on_cold_
     })
     .await;
     let resumed_cwd = test.config.cwd.clone();
-    let mut resume_builder = test_codex()
+    let mut resume_builder = test_genex()
         .with_home(Arc::clone(&home))
         .with_auth(CodexAuth::from_api_key("test-api-key"))
         .with_config(move |config| config.cwd = resumed_cwd);
