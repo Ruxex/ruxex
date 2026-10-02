@@ -38,14 +38,14 @@ impl Drop for ExecServerHarness {
     }
 }
 
-pub(crate) struct TestCodexHelperPaths {
+pub(crate) struct TestGenexHelperPaths {
     pub(crate) codex_exe: PathBuf,
     pub(crate) codex_linux_sandbox_exe: Option<PathBuf>,
 }
 
-pub(crate) fn test_codex_helper_paths() -> anyhow::Result<TestCodexHelperPaths> {
+pub(crate) fn test_genex_helper_paths() -> anyhow::Result<TestGenexHelperPaths> {
     let (helper_binary, codex_linux_sandbox_exe) = super::current_test_binary_helper_paths()?;
-    Ok(TestCodexHelperPaths {
+    Ok(TestGenexHelperPaths {
         codex_exe: helper_binary,
         codex_linux_sandbox_exe,
     })
@@ -64,7 +64,7 @@ where
     K: AsRef<std::ffi::OsStr>,
     V: AsRef<std::ffi::OsStr>,
 {
-    let helper_paths = test_codex_helper_paths()?;
+    let helper_paths = test_genex_helper_paths()?;
     let mut child = Command::new(&helper_paths.codex_exe);
     child.args(["exec-server", "--listen", "stdio"]);
     child.args(args);

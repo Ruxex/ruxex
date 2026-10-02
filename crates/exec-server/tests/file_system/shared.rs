@@ -1064,7 +1064,7 @@ async fn file_system_restricted_reads_require_sandbox() -> Result<()> {
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn sandboxed_file_operations_cannot_read_helper_siblings() -> Result<()> {
-    let helper_paths = crate::common::exec_server::test_codex_helper_paths()?;
+    let helper_paths = crate::common::exec_server::test_genex_helper_paths()?;
     let root = TempDir::new()?;
     let runtime_dir = root.path().join("runtime");
     let workspace = root.path().join("workspace");

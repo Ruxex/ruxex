@@ -940,7 +940,7 @@ mod tests {
     use super::resolve_authorization_manager;
     use super::start_authorization;
     use crate::oauth::stored_oauth_credentials;
-    use crate::oauth::test_support::TempCodexHome;
+    use crate::oauth::test_support::TempGenexHome;
 
     #[derive(Default)]
     struct RecordingHttpClient {
@@ -1064,7 +1064,7 @@ mod tests {
 
     #[tokio::test]
     async fn ordinary_oauth_login_persists_issuer_without_a_refresh_token() -> anyhow::Result<()> {
-        let _env = TempCodexHome::new();
+        let _env = TempGenexHome::new();
         let (base_url, _registration_requests) = spawn_oauth_metadata_server().await;
         let server_url = format!("{base_url}/mcp");
         let flow = OauthLoginFlow::new(

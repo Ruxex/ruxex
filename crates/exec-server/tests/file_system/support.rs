@@ -17,12 +17,12 @@ use genex_protocol::permissions::NetworkSandboxPolicy;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_path_uri::PathUri;
 
-use crate::common::exec_server::TestCodexHelperPaths;
-use crate::common::exec_server::test_codex_helper_paths;
+use crate::common::exec_server::TestGenexHelperPaths;
+use crate::common::exec_server::test_genex_helper_paths;
 
 pub(crate) struct FileSystemContext {
     pub(crate) file_system: Arc<dyn ExecutorFileSystem>,
-    _helper_paths: Option<TestCodexHelperPaths>,
+    _helper_paths: Option<TestGenexHelperPaths>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -43,7 +43,7 @@ pub(crate) async fn create_file_system_context(
 ) -> Result<FileSystemContext> {
     match implementation {
         FileSystemImplementation::Local => {
-            let helper_paths = test_codex_helper_paths()?;
+            let helper_paths = test_genex_helper_paths()?;
             let runtime_paths = ExecServerRuntimePaths::new(
                 helper_paths.codex_exe.clone(),
                 helper_paths.codex_linux_sandbox_exe.clone(),

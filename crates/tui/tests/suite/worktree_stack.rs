@@ -1,6 +1,6 @@
 //! Exercises stack-sensitive session transitions through the real TUI event loop.
 
-use super::focus_palette::PtyCodex;
+use super::focus_palette::PtyGenex;
 use super::focus_palette::write_test_config;
 use anyhow::Result;
 use anyhow::ensure;
@@ -78,7 +78,7 @@ async fn picker_side_worktree_fork_and_cd_run_on_the_production_stack() -> Resul
         /*desktop*/ None,
     )?);
     // The launcher gives codex-main and Tokio workers explicit 16 MiB stacks.
-    let mut terminal = PtyCodex::start(
+    let mut terminal = PtyGenex::start(
         &root,
         codex_home,
         &[
@@ -146,7 +146,7 @@ async fn picker_side_worktree_fork_and_cd_run_on_the_production_stack() -> Resul
     Ok(())
 }
 
-fn submit(terminal: &mut PtyCodex, input: &str) -> Result<()> {
+fn submit(terminal: &mut PtyGenex, input: &str) -> Result<()> {
     terminal.write_input(input.as_bytes())?;
     terminal.wait_for_screen(input)?;
     // Bulk PTY writes resemble a paste; wait out the Enter suppression window.
@@ -156,7 +156,7 @@ fn submit(terminal: &mut PtyCodex, input: &str) -> Result<()> {
 }
 
 fn wait_for_owned_worktrees(
-    terminal: &mut PtyCodex,
+    terminal: &mut PtyGenex,
     manager: &WorktreeManager,
     source: &Path,
     count: usize,

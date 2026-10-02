@@ -1,6 +1,6 @@
 //! Exercises folder consent against a connected server through the real terminal event loop.
 
-use super::focus_palette::PtyCodex;
+use super::focus_palette::PtyGenex;
 use super::focus_palette::write_test_config;
 use anyhow::Result;
 use genex_app_server_protocol::JSONRPCMessage;
@@ -141,7 +141,7 @@ async fn connected_trust_cancellation_and_acceptance_control_task_creation() -> 
                 });
             }
         });
-        let mut terminal = PtyCodex::start(
+        let mut terminal = PtyGenex::start(
             &repo_root,
             codex_home,
             &["do not submit this launch prompt"],

@@ -28,7 +28,7 @@ fn focus_gained_with_unanswered_palette_queries_preserves_immediate_input() -> R
     let codex_home = tempfile::tempdir()?;
     write_test_config(codex_home.path(), &repo_root)?;
 
-    let mut terminal = PtyCodex::start(&repo_root, codex_home, &[])?;
+    let mut terminal = PtyGenex::start(&repo_root, codex_home, &[])?;
     terminal.wait_for_startup()?;
 
     let startup_output_len = terminal.output.len();
@@ -118,7 +118,7 @@ async fn interactive_startup_honors_codex_home_symlink_opt_out() -> Result<()> {
 
     // A fresh home has no daemon. Writing through the link exercises the embedded server's
     // local executor and its sandbox policy.
-    let mut terminal = PtyCodex::start(
+    let mut terminal = PtyGenex::start(
         &workspace_path,
         codex_home,
         &["-c", "model_provider=\"test\"", "Write ready.txt"],
@@ -148,7 +148,7 @@ async fn interactive_startup_honors_codex_home_symlink_opt_out() -> Result<()> {
     );
 }
 
-pub(super) struct PtyCodex {
+pub(super) struct PtyGenex {
     master: File,
     child: Child,
     parser: vt100::Parser,
@@ -159,7 +159,7 @@ pub(super) struct PtyCodex {
     _codex_home: TempDir,
 }
 
-impl PtyCodex {
+impl PtyGenex {
     pub(super) fn start(
         repo_root: &Path,
         codex_home: TempDir,
@@ -369,7 +369,7 @@ impl PtyCodex {
     }
 }
 
-impl Drop for PtyCodex {
+impl Drop for PtyGenex {
     fn drop(&mut self) {
         let _ = self.child.kill();
         let _ = self.child.wait();
@@ -417,7 +417,7 @@ fn no_daemon_skips_startup_and_discovery() -> Result<()> {
         } else {
             None
         };
-        let mut terminal = PtyCodex::start(workspace.path(), home, &["--no-daemon"])?;
+        let mut terminal = PtyGenex::start(workspace.path(), home, &["--no-daemon"])?;
         terminal.wait_for_startup()?;
         terminal.write_input(b"/status")?;
         terminal.wait_for_screen("show current session configuration")?;

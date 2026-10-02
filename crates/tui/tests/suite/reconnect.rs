@@ -1,6 +1,6 @@
 //! Drives automatic reconnect through the real binary and terminal event loop.
 
-use super::focus_palette::PtyCodex;
+use super::focus_palette::PtyGenex;
 use super::focus_palette::write_test_config;
 use anyhow::Result;
 use anyhow::ensure;
@@ -135,7 +135,7 @@ async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Re
         }
         Ok::<_, anyhow::Error>(methods)
     });
-    let mut terminal = PtyCodex::start(&repo_root, codex_home, &[])?;
+    let mut terminal = PtyGenex::start(&repo_root, codex_home, &[])?;
     terminal.wait_for_startup()?;
     let mut disconnect_tx = Some(disconnect_tx);
     let mut restore_tx = Some(restore_tx);
