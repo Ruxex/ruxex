@@ -40,13 +40,13 @@ use serde::de::Error as _;
 #[derive(Debug, Clone, PartialEq)]
 pub struct ResponseItemEnvelope {
     pub item: ResponseItem,
-    pub metadata: Option<CodexHarnessMetadata>,
+    pub metadata: Option<GenexHarnessMetadata>,
 }
 
 /// Metadata owned by the Codex harness and persisted with a response item.
 ///
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, JsonSchema)]
-pub struct CodexHarnessMetadata {
+pub struct GenexHarnessMetadata {
     /// Whether a developer message was supplied by an app-server client.
     #[serde(default)]
     pub client_authored: bool,

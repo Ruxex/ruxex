@@ -74,7 +74,7 @@ fn server_overloaded_maps_to_protocol() {
     let err = GenexErr::ServerOverloaded;
     assert_eq!(
         err.to_codex_protocol_error(),
-        CodexErrorInfo::ServerOverloaded
+        GenexErrorInfo::ServerOverloaded
     );
 }
 
@@ -151,8 +151,8 @@ fn to_error_event_handles_response_stream_failed() {
         "prefix: Error while reading the server response: HTTP status client error (429 Too Many Requests) for url (http://example.com/), request id: req-123"
     );
     assert_eq!(
-        event.codex_error_info,
-        Some(CodexErrorInfo::ResponseStreamConnectionFailed {
+        event.genex_error_info,
+        Some(GenexErrorInfo::ResponseStreamConnectionFailed {
             http_status_code: Some(429)
         })
     );

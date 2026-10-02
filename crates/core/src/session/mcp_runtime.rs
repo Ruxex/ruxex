@@ -21,7 +21,7 @@ use std::collections::HashSet;
 
 pub(super) struct McpDesiredState {
     pub(super) config: Arc<Config>,
-    pub(super) auth: Option<CodexAuth>,
+    pub(super) auth: Option<GenexAuth>,
     pub(super) submit_id: String,
     pub(super) originator: String,
     pub(super) session_source: SessionSource,
@@ -72,7 +72,7 @@ impl Session {
 
     pub(super) async fn latest_mcp_desired_state(
         &self,
-        auth: Option<CodexAuth>,
+        auth: Option<GenexAuth>,
     ) -> McpDesiredState {
         let (session_configuration, disabled_plugin_ids) = {
             let state = self.state.lock().await;
@@ -107,7 +107,7 @@ impl Session {
     pub(super) async fn install_initial_mcp_runtime(
         self: &Arc<Self>,
         session_configuration: &SessionConfiguration,
-        auth: Option<CodexAuth>,
+        auth: Option<GenexAuth>,
         mcp_projection: McpRuntimeProjection,
         resolved_environments: &TurnEnvironmentSnapshot,
         mcp_runtime_cwd: PathBuf,

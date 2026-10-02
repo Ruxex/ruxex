@@ -43,7 +43,7 @@ use genex_config::RequirementsLayerEntry;
 use genex_config::SkillConfigRules;
 use genex_config::compose_requirements;
 use genex_config::types::McpServerTransportConfig;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_model_provider::AMAZON_BEDROCK_PROVIDER_ID;
 use genex_plugin::PluginId;
 use genex_protocol::auth::AuthMode;

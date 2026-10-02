@@ -7,10 +7,10 @@ use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
 use genex_core::StartThreadOptions;
 use genex_core::TurnInputRequest;
 use genex_features::Feature;
-use genex_history::CodexHarnessMetadata;
+use genex_history::GenexHarnessMetadata;
 use genex_history::InitialHistory;
 use genex_history::RolloutItem;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_login::auth::BedrockApiKeyAuth;
 use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_5_MODEL_ID;
 use genex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
@@ -68,7 +68,7 @@ fn remote_realtime_test_genex_builder(
 ) -> TestGenexBuilder {
     let realtime_base_url = realtime_server.uri().to_string();
     test_genex()
-        .with_auth(CodexAuth::from_api_key("dummy"))
+        .with_auth(GenexAuth::from_api_key("dummy"))
         .with_config(move |config| {
             config.experimental_realtime_ws_base_url = Some(realtime_base_url);
         })
@@ -181,7 +181,7 @@ async fn wait_for_turn_complete(codex: &genex_core::GenexThread) {
 }
 
 fn amazon_bedrock_test_genex() -> TestGenexBuilder {
-    let auth = CodexAuth::BedrockApiKey(BedrockApiKeyAuth {
+    let auth = GenexAuth::BedrockApiKey(BedrockApiKeyAuth {
         api_key: "bedrock-test-api-key".to_string(),
         region: "us-east-1".to_string(),
     });
@@ -225,7 +225,7 @@ fn annotate_retained_user_in_rollout(path: &Path, retained_text: &str) -> Result
             _ => None,
         })
         .context("persisted user response missing from rollout")?
-        .metadata = Some(CodexHarnessMetadata::default());
+        .metadata = Some(GenexHarnessMetadata::default());
 
     let contents = rollout
         .iter()
@@ -295,7 +295,7 @@ async fn remote_compact_v2_retains_metadata_from_resumed_history() -> Result<()>
     )
     .await;
 
-    let builder = || test_genex().with_auth(CodexAuth::from_api_key("test-api-key"));
+    let builder = || test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
     let initial = builder()
         .with_pre_build_hook(|home| {
             fs::write(
@@ -351,7 +351,7 @@ async fn remote_compact_v2_retains_only_client_developer_messages_when_enabled(
 
     let harness = TestGenexHarness::with_auto_env_builder(
         test_genex()
-            .with_auth(CodexAuth::from_api_key("test-api-key"))
+            .with_auth(GenexAuth::from_api_key("test-api-key"))
             .with_config(move |config| {
                 if enabled {
                     config
@@ -438,7 +438,7 @@ async fn remote_compact_v2_records_usage_before_output_validation() -> Result<()
 
     let harness = TestGenexHarness::with_auto_env_builder(
         test_genex()
-            .with_auth(CodexAuth::from_api_key("test-api-key"))
+            .with_auth(GenexAuth::from_api_key("test-api-key"))
             .with_config(|config| {
                 config.model_auto_compact_token_limit = Some(200);
             }),
@@ -618,7 +618,7 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
 
     let harness = TestGenexHarness::with_auto_env_builder(
         test_genex()
-            .with_auth(CodexAuth::from_api_key("test-api-key"))
+            .with_auth(GenexAuth::from_api_key("test-api-key"))
             .with_config(move |config| {
                 let _ = config.features.enable(Feature::UnifiedImageBudget);
                 if let Some(enabled) = image_budget_enabled {
@@ -803,7 +803,7 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
     skip_if_no_network!(Ok(()));
 
     let harness = TestGenexHarness::with_builder(
-        test_genex().with_auth(CodexAuth::from_api_key("test-api-key")),
+        test_genex().with_auth(GenexAuth::from_api_key("test-api-key")),
     )
     .await?;
     let image_url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=";
@@ -1155,7 +1155,7 @@ async fn remote_compact_v2_retries_failures_with_stream_retry_budget() -> Result
     let harness = TestGenexHarness::with_builder(
         test_genex()
             .with_history_mode(ThreadHistoryMode::Paginated)
-            .with_auth(CodexAuth::from_api_key("test-api-key"))
+            .with_auth(GenexAuth::from_api_key("test-api-key"))
             .with_config(|config| {
                 config.model_provider.request_max_retries = Some(0);
                 config.model_provider.stream_max_retries = Some(2);
@@ -1271,7 +1271,7 @@ async fn remote_compact_v2_rewrites_multiple_trailing_function_call_outputs(
 
     let harness = TestGenexHarness::with_builder(
         test_genex()
-            .with_auth(CodexAuth::from_api_key("test-api-key"))
+            .with_auth(GenexAuth::from_api_key("test-api-key"))
             .with_config(|config| {
                 config.model_context_window = Some(2_000);
                 config.model_auto_compact_token_limit = Some(200_000);
@@ -1490,7 +1490,7 @@ async fn remote_mid_turn_compact_v2_sends_turn_state_over_http() -> Result<()> {
 
     let harness = TestGenexHarness::with_builder(
         test_genex()
-            .with_auth(CodexAuth::from_api_key("test-api-key"))
+            .with_auth(GenexAuth::from_api_key("test-api-key"))
             .with_config(|config| {
                 config.model_auto_compact_token_limit = Some(200);
             }),
@@ -1618,7 +1618,7 @@ async fn remote_mid_turn_compact_v2_sends_turn_state_over_websocket() -> Result<
     ]])
     .await;
     let mut builder = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model_auto_compact_token_limit = Some(200);
         });

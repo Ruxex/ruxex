@@ -21,7 +21,7 @@ use genex_extension_api::ToolPayload;
 use genex_history_notes_extension::install;
 use genex_login::AuthHeaders;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::AgentPath;
 use genex_protocol::ThreadId;
@@ -80,7 +80,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
         HeaderValue::from_static("actor-biscuit"),
     );
     let auth_manager =
-        AuthManager::from_auth_for_testing(CodexAuth::Headers(AuthHeaders::new(headers)));
+        AuthManager::from_auth_for_testing(GenexAuth::Headers(AuthHeaders::new(headers)));
     let mut builder = ExtensionRegistryBuilder::<Config>::new();
     install(&mut builder, auth_manager);
     let registry = builder.build();
@@ -374,11 +374,11 @@ async fn history_notes_require_an_responses_provider_and_codex_backend_auth() ->
     for (provider, auth) in [
         (
             config.model_provider.clone(),
-            CodexAuth::from_api_key("test-api-key"),
+            GenexAuth::from_api_key("test-api-key"),
         ),
         (
             ModelProviderInfo::create_amazon_bedrock_provider(/*aws*/ None),
-            CodexAuth::from_api_key("test-api-key"),
+            GenexAuth::from_api_key("test-api-key"),
         ),
     ] {
         config.model_provider = provider;

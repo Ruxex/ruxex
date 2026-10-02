@@ -10,7 +10,7 @@ use genex_extension_api::ExtensionData;
 use genex_extension_api::ExtensionRegistryBuilder;
 use genex_extension_api::ToolContributor;
 use genex_features::Feature;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem;
 use genex_protocol::dynamic_tools::DynamicToolFunctionSpec;
 use genex_protocol::dynamic_tools::DynamicToolNamespaceSpec;
@@ -344,7 +344,7 @@ async fn app_search_sources_are_hidden_for_api_key_auth() -> Result<()> {
     .await;
 
     let mut builder = test_genex()
-        .with_auth(CodexAuth::from_api_key("Test API Key"))
+        .with_auth(GenexAuth::from_api_key("Test API Key"))
         .with_config(move |config| {
             configure_search_capable_apps(config, apps_server.managed_auth_base_url.as_str())
         });

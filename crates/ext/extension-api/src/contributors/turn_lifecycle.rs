@@ -1,5 +1,5 @@
 use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::TokenUsage;
 use genex_protocol::protocol::TurnAbortReason;
 
@@ -48,7 +48,7 @@ pub struct TurnErrorInput<'a> {
     /// Stable host-owned turn identifier.
     pub turn_id: &'a str,
     /// Error surfaced by the host for this turn.
-    pub error: CodexErrorInfo,
+    pub error: GenexErrorInfo,
     /// Store scoped to the host session runtime.
     pub session_store: &'a ExtensionData,
     /// Store scoped to this thread runtime.

@@ -1,7 +1,7 @@
 use anyhow::Result;
 use genex_core::TurnInputRequest;
 use genex_core::config::Constrained;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_models_manager::manager::RefreshStrategy;
 use genex_models_manager::model_info::model_info_from_slug;
 use genex_protocol::models::PermissionProfile;
@@ -59,7 +59,7 @@ async fn catalog_permission_message_loaded_from_remote_models_is_sent() -> Resul
     )
     .await;
     let mut builder = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::Never);
             config

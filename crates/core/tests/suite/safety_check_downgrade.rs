@@ -7,7 +7,7 @@ use genex_protocol::models::ContentItem;
 use genex_protocol::models::PermissionProfile;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::ModelRerouteReason;
 use genex_protocol::protocol::ModelVerification;
@@ -132,7 +132,7 @@ async fn cyber_policy_response_emits_typed_error_without_retry() -> Result<()> {
         panic!("expected error event");
     };
     assert_eq!(error.message, CYBER_POLICY_MESSAGE);
-    assert_eq!(error.codex_error_info, Some(CodexErrorInfo::CyberPolicy));
+    assert_eq!(error.genex_error_info, Some(GenexErrorInfo::CyberPolicy));
 
     mock.single_request();
 

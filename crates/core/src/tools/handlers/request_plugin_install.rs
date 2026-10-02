@@ -309,7 +309,7 @@ async fn verify_request_plugin_install_completed(
     _turn: &crate::session::turn_context::TurnContext,
     _mcp: &genex_mcp::McpBinding,
     tool: &DiscoverableTool,
-    _auth: Option<&genex_login::CodexAuth>,
+    _auth: Option<&genex_login::GenexAuth>,
 ) -> bool {
     match tool {
         DiscoverableTool::Plugin(plugin) => {

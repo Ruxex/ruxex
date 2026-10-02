@@ -9,14 +9,14 @@ use http::HeaderMap;
 /// are sent on HTTP requests and WebSocket handshakes; changes require a new socket.
 /// Other provider endpoints and unrelated threads do not inherit these headers.
 #[derive(Clone)]
-pub struct CodexResponsesHeaders {
+pub struct GenexResponsesHeaders {
     pub model: String,
     pub headers: HeaderMap,
 }
 
-impl std::fmt::Debug for CodexResponsesHeaders {
+impl std::fmt::Debug for GenexResponsesHeaders {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("CodexResponsesHeaders")
+        f.debug_struct("GenexResponsesHeaders")
             .field("model", &self.model)
             .field("header_names", &self.headers.keys())
             .finish()

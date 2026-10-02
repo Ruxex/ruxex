@@ -9,7 +9,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::CodexHarnessMetadata;
+use crate::GenexHarnessMetadata;
 use crate::ResponseItemEnvelope;
 use crate::SenderUserMessages;
 
@@ -60,8 +60,8 @@ impl RetainedInputSource {
     }
 }
 
-impl From<Option<&CodexHarnessMetadata>> for RetainedInputSource {
-    fn from(metadata: Option<&CodexHarnessMetadata>) -> Self {
+impl From<Option<&GenexHarnessMetadata>> for RetainedInputSource {
+    fn from(metadata: Option<&GenexHarnessMetadata>) -> Self {
         if metadata.is_some_and(|metadata| metadata.inherited_user_message) {
             Self::Inherited
         } else {
@@ -212,7 +212,7 @@ impl RetainedContext {
     }
 
     /// Retains host metadata with the delivery's acceptance order, including during replay.
-    pub fn record_sender_user_messages(&mut self, metadata: &CodexHarnessMetadata) -> bool {
+    pub fn record_sender_user_messages(&mut self, metadata: &GenexHarnessMetadata) -> bool {
         let Some(messages) = metadata.sender_user_messages.as_deref() else {
             return false;
         };

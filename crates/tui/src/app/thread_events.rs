@@ -193,8 +193,8 @@ impl ThreadEventStore {
             ServerNotification::Error(n)
                 if self.active_turn_id.is_none()
                     && !n.will_retry
-                    && n.error.codex_error_info
-                        == Some(AppServerCodexErrorInfo::MisalignmentPolicyViolation) =>
+                    && n.error.genex_error_info
+                        == Some(AppServerGenexErrorInfo::MisalignmentPolicyViolation) =>
             {
                 self.latest_turn_id = Some(n.turn_id.clone());
             }

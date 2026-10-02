@@ -200,7 +200,7 @@ fn response_item_envelope_stores_metadata_beside_rollout_payload() -> Result<()>
         ordinal: Some(7),
         item: RolloutItem::ResponseItem(ResponseItemEnvelope {
             item: response_item.clone(),
-            metadata: Some(CodexHarnessMetadata {
+            metadata: Some(GenexHarnessMetadata {
                 client_authored: true,
                 history_truncation_token_limit: Some(20_000),
                 inherited_user_message: true,
@@ -232,7 +232,7 @@ fn response_item_envelope_stores_metadata_beside_rollout_payload() -> Result<()>
     };
     assert_eq!(
         envelope.metadata,
-        Some(CodexHarnessMetadata {
+        Some(GenexHarnessMetadata {
             client_authored: true,
             history_truncation_token_limit: Some(20_000),
             inherited_user_message: true,
@@ -249,7 +249,7 @@ fn response_item_envelope_preserves_harness_authored_configuration_provenance() 
             effort: ReasoningEffort::High,
         },
     };
-    let metadata = CodexHarnessMetadata {
+    let metadata = GenexHarnessMetadata {
         harness_authored_configuration: true,
         ..Default::default()
     };
@@ -311,7 +311,7 @@ fn response_item_envelope_ignores_unknown_harness_metadata_fields() -> Result<()
     let RolloutItem::ResponseItem(envelope) = line else {
         panic!("expected response item");
     };
-    assert_eq!(envelope.metadata, Some(CodexHarnessMetadata::default()));
+    assert_eq!(envelope.metadata, Some(GenexHarnessMetadata::default()));
 
     let compacted = serde_json::from_value::<CompactedItem>(json!({
         "message": "summary",
@@ -320,7 +320,7 @@ fn response_item_envelope_ignores_unknown_harness_metadata_fields() -> Result<()
     }))?;
     assert_eq!(
         compacted.replacement_history.expect("replacement history")[0].metadata,
-        Some(CodexHarnessMetadata::default())
+        Some(GenexHarnessMetadata::default())
     );
     Ok(())
 }
@@ -371,7 +371,7 @@ fn compacted_replacement_history_stores_metadata_in_an_aligned_sidecar() -> Resu
         replacement_history: Some(vec![
             ResponseItemEnvelope {
                 item: developer_message.clone(),
-                metadata: Some(CodexHarnessMetadata {
+                metadata: Some(GenexHarnessMetadata {
                     client_authored: true,
                     ..Default::default()
                 }),
@@ -408,14 +408,14 @@ fn compacted_replacement_history_stores_metadata_in_an_aligned_sidecar() -> Resu
         Some(vec![
             ResponseItemEnvelope {
                 item: developer_message,
-                metadata: Some(CodexHarnessMetadata {
+                metadata: Some(GenexHarnessMetadata {
                     client_authored: true,
                     ..Default::default()
                 }),
             },
             ResponseItemEnvelope {
                 item: compaction_item,
-                metadata: Some(CodexHarnessMetadata::default()),
+                metadata: Some(GenexHarnessMetadata::default()),
             },
         ])
     );
@@ -470,7 +470,7 @@ fn compacted_metadata_remains_compatible_with_legacy_response_item_readers() -> 
     let response_item = response_message("developer");
     let envelope = ResponseItemEnvelope {
         item: response_item.clone(),
-        metadata: Some(CodexHarnessMetadata {
+        metadata: Some(GenexHarnessMetadata {
             client_authored: true,
             ..Default::default()
         }),
@@ -665,7 +665,7 @@ fn rollout_item_schema_matches_tagged_payload_and_sibling_metadata() -> Result<(
     );
     assert_eq!(
         compacted["properties"]["replacement_history_metadata"]["items"]["$ref"],
-        json!("#/definitions/CodexHarnessMetadata")
+            json!("#/definitions/GenexHarnessMetadata")
     );
     let required = compacted["required"].as_array().expect("required fields");
     assert!(!required.contains(&json!("replacement_history")));

@@ -80,7 +80,7 @@ pub use genex_history::InitialHistory;
 pub use genex_home::GenexHomeUserInstructionsProvider;
 pub use genex_login::AuthHeaders;
 pub use genex_login::AuthManager;
-pub use genex_login::CodexAuth;
+pub use genex_login::GenexAuth;
 pub use genex_login::ExternalAuth;
 pub use genex_login::ExternalAuthFuture;
 pub use genex_login::ExternalAuthRefreshContext;

@@ -13,7 +13,7 @@ use genex_core::test_support::with_parent_turn;
 use genex_features::Feature;
 use genex_http_client::OutboundProxyPolicy;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_model_provider_info::WireApi;
 use genex_otel::MetricsClient;
@@ -334,7 +334,7 @@ async fn responses_websocket_omits_routing_hint_for_provider_with_own_credential
         /*runtime_metrics_enabled*/ false,
         /*concurrent_reasoning_summaries_enabled*/ false,
         /*enabled_features*/ &[],
-        Some(CodexAuth::from_api_key("test-api-key")),
+        Some(GenexAuth::from_api_key("test-api-key")),
     )
     .await;
     let mut client_session = harness.client.new_session();
@@ -790,8 +790,8 @@ async fn responses_websocket_request_prewarm_traces_logical_request() {
         })
         .expect("thread started");
     writer
-        .append(RawTraceEventPayload::CodexTurnStarted {
-            codex_turn_id: "turn-1".to_string(),
+        .append(RawTraceEventPayload::GenexTurnStarted {
+            genex_turn_id: "turn-1".to_string(),
             thread_id: harness.thread_id.to_string(),
         })
         .expect("turn started");
@@ -2674,7 +2674,7 @@ async fn websocket_harness_for_codex_backend(server: &WebSocketTestServer) -> We
         /*runtime_metrics_enabled*/ false,
         /*concurrent_reasoning_summaries_enabled*/ false,
         /*enabled_features*/ &[],
-        Some(CodexAuth::from_api_key("test-api-key")),
+        Some(GenexAuth::from_api_key("test-api-key")),
     )
     .await
 }
@@ -2727,7 +2727,7 @@ async fn websocket_harness_with_provider_options_and_auth(
     runtime_metrics_enabled: bool,
     concurrent_reasoning_summaries_enabled: bool,
     enabled_features: &[Feature],
-    auth: Option<CodexAuth>,
+    auth: Option<GenexAuth>,
 ) -> WebsocketTestHarness {
     let codex_home = TempDir::new().unwrap();
     let mut config = load_default_config_for_test(&codex_home).await;
@@ -2764,7 +2764,7 @@ async fn websocket_harness_with_provider_options_and_auth(
         )
     });
     let auth_manager = client_auth_manager.clone().unwrap_or_else(|| {
-        genex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("Test API Key"))
+        genex_core::test_support::auth_manager_from_auth(GenexAuth::from_api_key("Test API Key"))
     });
     let exporter = InMemoryMetricExporter::default();
     let metrics = MetricsClient::new(

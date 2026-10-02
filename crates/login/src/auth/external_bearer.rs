@@ -1,4 +1,4 @@
-use super::manager::CodexAuth;
+use super::manager::GenexAuth;
 use super::manager::ExternalAuth;
 use super::manager::ExternalAuthFuture;
 use super::manager::ExternalAuthRefreshContext;
@@ -30,7 +30,7 @@ impl BearerTokenRefresher {
         clippy::await_holding_invalid_type,
         reason = "external bearer cache misses intentionally hold cached_token across the provider command to avoid duplicate refreshes"
     )]
-    async fn resolve(&self) -> io::Result<CodexAuth> {
+    async fn resolve(&self) -> io::Result<GenexAuth> {
         let access_token = {
             let mut cached = self.state.cached_token.lock().await;
             if let Some(cached_token) = cached.as_ref() {
@@ -39,7 +39,7 @@ impl BearerTokenRefresher {
                     None => true,
                 };
                 if should_use_cached_token {
-                    return Ok(CodexAuth::from_api_key(cached_token.access_token.as_str()));
+                    return Ok(GenexAuth::from_api_key(cached_token.access_token.as_str()));
                 }
             }
 
@@ -50,26 +50,26 @@ impl BearerTokenRefresher {
             });
             access_token
         };
-        Ok(CodexAuth::from_api_key(access_token.as_str()))
+        Ok(GenexAuth::from_api_key(access_token.as_str()))
     }
 
-    async fn refresh(&self, _context: ExternalAuthRefreshContext) -> io::Result<CodexAuth> {
+    async fn refresh(&self, _context: ExternalAuthRefreshContext) -> io::Result<GenexAuth> {
         let access_token = run_provider_auth_command(&self.state.config).await?;
         let mut cached = self.state.cached_token.lock().await;
         *cached = Some(CachedExternalBearerToken {
             access_token: access_token.clone(),
             fetched_at: Instant::now(),
         });
-        Ok(CodexAuth::from_api_key(access_token.as_str()))
+        Ok(GenexAuth::from_api_key(access_token.as_str()))
     }
 }
 
 impl ExternalAuth for BearerTokenRefresher {
-    fn resolve(&self) -> ExternalAuthFuture<'_, CodexAuth> {
+    fn resolve(&self) -> ExternalAuthFuture<'_, GenexAuth> {
         Box::pin(BearerTokenRefresher::resolve(self))
     }
 
-    fn refresh(&self, context: ExternalAuthRefreshContext) -> ExternalAuthFuture<'_, CodexAuth> {
+    fn refresh(&self, context: ExternalAuthRefreshContext) -> ExternalAuthFuture<'_, GenexAuth> {
         Box::pin(BearerTokenRefresher::refresh(self, context))
     }
 }

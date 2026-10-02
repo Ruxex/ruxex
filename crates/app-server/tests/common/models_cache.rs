@@ -107,7 +107,7 @@ pub async fn write_models_cache_with_models(
         .codex_home(codex_home.to_path_buf())
         .build()
         .await?;
-    let auth = genex_login::CodexAuth::from_auth_storage(
+    let auth = genex_login::GenexAuth::from_auth_storage(
         codex_home,
         config.cli_auth_credentials_store_mode,
         Some(&config.managed_auth_base_url),

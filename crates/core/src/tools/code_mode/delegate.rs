@@ -9,7 +9,7 @@ use genex_code_mode::CodeModeNestedToolCall;
 use genex_code_mode::CodeModeSessionDelegate;
 use genex_code_mode::NotificationFuture;
 use genex_code_mode::ToolInvocationFuture;
-use genex_history::CodexHarnessMetadata;
+use genex_history::GenexHarnessMetadata;
 use genex_history::ResponseItemEnvelope;
 use genex_protocol::ThreadId;
 use genex_protocol::models::FunctionCallOutputPayload;
@@ -480,7 +480,7 @@ impl CoreTurnHost {
                     output: FunctionCallOutputPayload::from_text(text),
                     internal_chat_message_metadata_passthrough: None,
                 },
-                metadata: Some(CodexHarnessMetadata {
+                metadata: Some(GenexHarnessMetadata {
                     history_truncation_token_limit: Some(output_token_limit),
                     ..Default::default()
                 }),

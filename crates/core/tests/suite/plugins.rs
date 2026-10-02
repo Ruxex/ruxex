@@ -14,7 +14,7 @@ use genex_core_plugins::store::PluginStore;
 use genex_extension_api::ExtensionRegistry;
 use genex_extension_api::ExtensionRegistryBuilder;
 use genex_features::Feature;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_mcp::CODEX_APPS_MCP_SERVER_NAME;
 use genex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
 use genex_plugin::PluginId;
@@ -282,7 +282,7 @@ async fn build_analytics_plugin_test_genex(
     let managed_auth_base_url = server.uri();
     let mut builder = test_genex()
         .with_home(codex_home)
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.2")
         .with_config(move |config| {
             config.managed_auth_base_url = managed_auth_base_url;
@@ -297,7 +297,7 @@ async fn build_apps_enabled_plugin_test_genex(
 ) -> Result<TestGenex> {
     let mut builder = test_genex()
         .with_home(codex_home)
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config
                 .features
@@ -420,7 +420,7 @@ async fn persisted_remote_plugin_command_attribution_flows_through_turn_context(
     let managed_auth_base_url = server.uri();
     let mut builder = builder
         .with_home(Arc::clone(&codex_home))
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.2")
         .with_config(move |config| config.managed_auth_base_url = managed_auth_base_url);
     let test_genex = builder.build_with_auto_env(&server).await?;
@@ -514,7 +514,7 @@ async fn thread_disabled_plugins_filter_skills_and_tools_without_changing_shared
     let mut builder = test_genex()
         .with_home(home)
         .with_extensions(skills_extensions())
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config.features.enable(Feature::Apps).unwrap();
             config.managed_auth_base_url = apps.managed_auth_base_url;
@@ -914,7 +914,7 @@ enabled = true
     let mut builder = test_genex()
         .with_home(codex_home)
         .with_extensions(skills_extensions())
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(move |config| config.managed_auth_base_url = managed_auth_base_url);
     let test = builder.build_with_auto_env(&server).await?;
 
@@ -1110,7 +1110,7 @@ async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
     enum TargetAuth {
         ApiKey,
         BedrockApiKey,
-        NoCodexAuth,
+        NoGenexAuth,
     }
 
     #[derive(Clone, Copy)]
@@ -1139,21 +1139,21 @@ async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
         },
         Fixture {
             name: "ambient Bedrock",
-            target_auth: TargetAuth::NoCodexAuth,
+            target_auth: TargetAuth::NoGenexAuth,
             target_model_provider_id: AMAZON_BEDROCK_PROVIDER_ID,
             expected_target_loaded_plugin_skills: &[API_CURATED_PLUGIN_SKILL],
             expected_target_skill_description: "api description before",
         },
         Fixture {
             name: "unauthenticated provider",
-            target_auth: TargetAuth::NoCodexAuth,
+            target_auth: TargetAuth::NoGenexAuth,
             target_model_provider_id: "provider",
             expected_target_loaded_plugin_skills: &[API_CURATED_PLUGIN_SKILL],
             expected_target_skill_description: "api description before",
         },
         Fixture {
             name: "unauthenticated custom provider",
-            target_auth: TargetAuth::NoCodexAuth,
+            target_auth: TargetAuth::NoGenexAuth,
             target_model_provider_id: "ollama",
             expected_target_loaded_plugin_skills: &[API_CURATED_PLUGIN_SKILL],
             expected_target_skill_description: "api description before",
@@ -1263,7 +1263,7 @@ enabled = true
         let mut builder = test_genex()
             .with_home(Arc::clone(&codex_home))
             .with_extensions(skills_extensions())
-            .with_auth(CodexAuth::from_api_key("test-api-key"));
+            .with_auth(GenexAuth::from_api_key("test-api-key"));
         let test_genex = builder.build_with_auto_env(&server).await?;
         let initial_skills = loaded_plugin_skills_for_config(&test_genex, &test_genex.config).await;
         assert_loaded_plugin_skills(
@@ -1303,7 +1303,7 @@ enabled = true
                 test_genex.thread_manager.auth_manager().reload().await;
                 Some(AuthMode::BedrockApiKey)
             }
-            TargetAuth::NoCodexAuth => {
+            TargetAuth::NoGenexAuth => {
                 test_genex.thread_manager.auth_manager().logout().await?;
                 None
             }
@@ -1640,7 +1640,7 @@ async fn explicitly_requested_mcp_waits_for_startup(request: ExplicitMcpRequest)
 
     let mut builder = test_genex()
         .with_home(codex_home)
-        .with_auth(CodexAuth::from_api_key("Test API Key"))
+        .with_auth(GenexAuth::from_api_key("Test API Key"))
         .with_config(move |config| {
             config
                 .features

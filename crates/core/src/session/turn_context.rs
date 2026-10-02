@@ -921,7 +921,7 @@ impl Session {
                     msg: EventMsg::Error(ErrorEvent {
                         misalignment: None,
                         message: message.clone(),
-                        codex_error_info: Some(CodexErrorInfo::BadRequest),
+                        genex_error_info: Some(GenexErrorInfo::BadRequest),
                     }),
                 })
                 .await;

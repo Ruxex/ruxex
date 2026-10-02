@@ -8,7 +8,7 @@ use genex_config::McpServerAuth;
 use genex_config::test_support::CloudConfigBundleFixture;
 use genex_core::config::ConfigBuilder;
 use genex_core::config::set_project_trust_level;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_protocol::config_types::TrustLevel;
 use genex_protocol::protocol::EventMsg;
 use core_test_support::responses;
@@ -67,7 +67,7 @@ async fn enterprise_activation_respects_managed_config_and_plugin_ownership(
     }
     let fixture = test_genex()
         .with_home(home)
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_cloud_config_bundle(CloudConfigBundleFixture::loader_with_enterprise_config(
             managed_config,
         ))

@@ -8,7 +8,7 @@ use genex_core::config::Config;
 use genex_extension_api::ExtensionRegistry;
 use genex_extension_api::ExtensionRegistryBuilder;
 use genex_features::Feature;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_login::auth::BedrockApiKeyAuth;
 use genex_mcp::CODEX_APPS_MCP_SERVER_NAME;
 use genex_protocol::config_types::WebSearchMode;
@@ -34,7 +34,7 @@ use serde_json::Value;
 
 const RESPONSES_LITE_HEADER: &str = "x-provider-internal-codex-responses-lite";
 
-fn responses_extensions(auth: &CodexAuth) -> Arc<ExtensionRegistry<Config>> {
+fn responses_extensions(auth: &GenexAuth) -> Arc<ExtensionRegistry<Config>> {
     let auth_manager = genex_core::test_support::auth_manager_from_auth(auth.clone());
     let mut extension_builder = ExtensionRegistryBuilder::<Config>::new();
     install_web_search_extension(&mut extension_builder, Arc::clone(&auth_manager));
@@ -334,7 +334,7 @@ async fn responses_lite_exposes_standalone_tools_for_actor_authorized_provider()
     )
     .await;
 
-    let auth = CodexAuth::from_api_key("dummy");
+    let auth = GenexAuth::from_api_key("dummy");
     let extensions = responses_extensions(&auth);
     let mut builder = test_genex()
         .with_auth(auth)
@@ -408,7 +408,7 @@ async fn responses_lite_does_not_expose_standalone_web_search_for_bedrock_provid
     )
     .await;
 
-    let auth = CodexAuth::BedrockApiKey(BedrockApiKeyAuth {
+    let auth = GenexAuth::BedrockApiKey(BedrockApiKeyAuth {
         api_key: "dummy".to_string(),
         region: "us-east-1".to_string(),
     });
@@ -462,7 +462,7 @@ async fn assert_responses_lite_custom_provider_web_search(
     )
     .await;
 
-    let auth = CodexAuth::from_api_key("dummy");
+    let auth = GenexAuth::from_api_key("dummy");
     let extensions = responses_extensions(&auth);
     let mut builder = test_genex()
         .with_auth(auth)
@@ -577,7 +577,7 @@ async fn responses_lite_omits_hosted_tools_without_standalone_extensions() -> Re
     .await;
 
     let mut builder = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_model_info_override("gpt-5.4", |model_info| {
             model_info.use_responses_lite = true;
         })

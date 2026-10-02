@@ -1398,7 +1398,7 @@ pub enum NonSteerableTurnKind {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, TS)]
 #[serde(rename_all = "snake_case")]
 #[ts(rename_all = "snake_case")]
-pub enum CodexErrorInfo {
+pub enum GenexErrorInfo {
     ContextWindowExceeded,
     SessionBudgetExceeded,
     UsageLimitExceeded,
@@ -1435,7 +1435,7 @@ pub enum CodexErrorInfo {
     Other,
 }
 
-impl CodexErrorInfo {
+impl GenexErrorInfo {
     /// Whether this error should mark the current turn as failed when replaying history.
     pub fn affects_turn_status(&self) -> bool {
         match self {
@@ -1614,7 +1614,7 @@ impl fmt::Debug for MisalignmentSteer {
 pub struct ErrorEvent {
     pub message: String,
     #[serde(default)]
-    pub codex_error_info: Option<CodexErrorInfo>,
+    pub genex_error_info: Option<GenexErrorInfo>,
     /// Sensitive explanation and steering are delivered live but never enter rollout storage.
     #[serde(skip)]
     #[schemars(skip)]
@@ -1625,9 +1625,9 @@ pub struct ErrorEvent {
 impl ErrorEvent {
     /// Whether this error should mark the current turn as failed when replaying history.
     pub fn affects_turn_status(&self) -> bool {
-        self.codex_error_info
+        self.genex_error_info
             .as_ref()
-            .is_none_or(CodexErrorInfo::affects_turn_status)
+            .is_none_or(GenexErrorInfo::affects_turn_status)
     }
 }
 
@@ -3177,7 +3177,7 @@ pub struct ThreadRolledBackEvent {
 pub struct StreamErrorEvent {
     pub message: String,
     #[serde(default)]
-    pub codex_error_info: Option<CodexErrorInfo>,
+    pub genex_error_info: Option<GenexErrorInfo>,
     /// Optional details about the underlying stream failure (often the same
     /// human-readable message that is surfaced as the terminal error if retries
     /// are exhausted).
@@ -5355,7 +5355,7 @@ mod tests {
         let event = ErrorEvent {
             misalignment: None,
             message: "rollback failed".into(),
-            codex_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
+            genex_error_info: Some(GenexErrorInfo::ThreadRollbackFailed),
         };
         assert!(!event.affects_turn_status());
     }
@@ -5365,7 +5365,7 @@ mod tests {
         let event = ErrorEvent {
             misalignment: None,
             message: "cannot steer a review turn".into(),
-            codex_error_info: Some(CodexErrorInfo::ActiveTurnNotSteerable {
+            genex_error_info: Some(GenexErrorInfo::ActiveTurnNotSteerable {
                 turn_kind: NonSteerableTurnKind::Review,
             }),
         };
@@ -5377,7 +5377,7 @@ mod tests {
         let event = ErrorEvent {
             misalignment: None,
             message: "generic".into(),
-            codex_error_info: Some(CodexErrorInfo::Other),
+            genex_error_info: Some(GenexErrorInfo::Other),
         };
         assert!(event.affects_turn_status());
     }
@@ -5386,7 +5386,7 @@ mod tests {
     fn misalignment_explanation_and_steer_are_never_serialized_into_error_events() {
         let event = ErrorEvent {
             message: "This request violated the misalignment policy.".to_string(),
-            codex_error_info: Some(CodexErrorInfo::MisalignmentPolicyViolation),
+            genex_error_info: Some(GenexErrorInfo::MisalignmentPolicyViolation),
             misalignment: Some(MisalignmentErrorDetails {
                 error_type: Some("unauthorized_data_transfer".to_string()),
                 detailed_explanation: Some("Sensitive customer explanation".to_string()),
@@ -5401,7 +5401,7 @@ mod tests {
             serialized,
             json!({
                 "message": "This request violated the misalignment policy.",
-                "codex_error_info": "misalignment_policy_violation"
+                "genex_error_info": "misalignment_policy_violation"
             })
         );
         let restored: ErrorEvent =

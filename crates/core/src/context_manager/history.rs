@@ -18,7 +18,7 @@ use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
 use genex_context_fragments::set_annotated_content;
 use genex_context_fragments::to_annotated_content;
 use genex_extension_api::ConversationHistorySnapshot;
-use genex_history::CodexHarnessMetadata;
+use genex_history::GenexHarnessMetadata;
 use genex_history::ResponseItemEnvelope;
 use genex_history::RetainedContext;
 use genex_history::RetainedContextEvent;
@@ -245,7 +245,7 @@ impl ContextManager {
 
     fn record_items_with_metadata<'a, I, T>(&mut self, items: I, policy: TruncationPolicy)
     where
-        I: IntoIterator<Item = (T, Option<&'a CodexHarnessMetadata>)>,
+        I: IntoIterator<Item = (T, Option<&'a GenexHarnessMetadata>)>,
         T: Deref<Target = ResponseItem>,
     {
         for (item, metadata) in items {
@@ -621,7 +621,7 @@ impl ContextManager {
 }
 
 /// Configuration updates require harness provenance; raw system messages are never retained.
-fn is_api_message(message: &ResponseItem, metadata: Option<&CodexHarnessMetadata>) -> bool {
+fn is_api_message(message: &ResponseItem, metadata: Option<&GenexHarnessMetadata>) -> bool {
     match message {
         ResponseItem::Message { role, .. } => role.as_str() != "system",
         ResponseItem::ConfigurationUpdate { .. } => {

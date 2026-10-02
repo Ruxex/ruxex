@@ -17,7 +17,7 @@ use genex_core::compact::SUMMARIZATION_PROMPT;
 use genex_core::config::Config;
 use genex_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
 use genex_extension_api::ExtensionRegistryBuilder;
-use genex_history::CodexHarnessMetadata;
+use genex_history::GenexHarnessMetadata;
 use genex_history::RolloutItem;
 use genex_protocol::mcp::ClientMcpExtensions;
 use genex_protocol::models::ContentItem;
@@ -99,7 +99,7 @@ fn seed_first_checkpoint_harness_metadata(path: &Path, retained_text: &str) -> R
         .find(|envelope| response_message_contains_text(&envelope.item, retained_text))
         .context("retained user message missing from first compacted checkpoint")?;
     for envelope in replacement_history {
-        envelope.metadata = Some(CodexHarnessMetadata::default());
+        envelope.metadata = Some(GenexHarnessMetadata::default());
     }
 
     let rewritten = lines
@@ -685,7 +685,7 @@ async fn resume_conversation(
     path: std::path::PathBuf,
 ) -> Arc<GenexThread> {
     let auth_manager = genex_core::test_support::auth_manager_from_auth(
-        genex_login::CodexAuth::from_api_key("dummy"),
+        genex_login::GenexAuth::from_api_key("dummy"),
     );
     Box::pin(manager.resume_thread_from_rollout(
         config.clone(),

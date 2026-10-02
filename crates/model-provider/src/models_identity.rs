@@ -2,7 +2,7 @@
 //! Only a digest is persisted; credential values are included only through the
 //! resulting request headers when the provider explicitly supplies them.
 
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::error::Result as CoreResult;
 use sha2::Digest;
@@ -12,9 +12,9 @@ use crate::auth::resolve_provider_auth;
 
 pub(crate) fn identity(
     provider_info: &ModelProviderInfo,
-    auth: Option<&CodexAuth>,
+    auth: Option<&GenexAuth>,
 ) -> CoreResult<String> {
-    let mut provider = provider_info.to_api_provider(auth.map(CodexAuth::auth_mode))?;
+    let mut provider = provider_info.to_api_provider(auth.map(GenexAuth::auth_mode))?;
     let mut digest = Sha256::new();
     // Length-prefix every field to avoid ambiguity between adjacent values.
     let mut field = |value: &[u8]| {
@@ -33,7 +33,7 @@ pub(crate) fn identity(
     }
     field(&[u8::from(provider_info.requires_auth)]);
     field(&[u8::from(provider_info.has_command_auth())]);
-    field(format!("{:?}", auth.map(CodexAuth::api_auth_mode)).as_bytes());
+    field(format!("{:?}", auth.map(GenexAuth::api_auth_mode)).as_bytes());
     if let Some(auth) = auth {
         field(format!("{:?}", auth.get_account_id()).as_bytes());
     }

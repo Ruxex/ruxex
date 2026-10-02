@@ -364,7 +364,7 @@ impl TurnInputQueue {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_history::CodexHarnessMetadata;
+    use genex_history::GenexHarnessMetadata;
     use genex_protocol::AgentPath;
     use genex_protocol::user_input::UserInput;
     use pretty_assertions::assert_eq;
@@ -384,7 +384,7 @@ mod tests {
 
         let annotated = wrap(ResponseItemEnvelope {
             item: ResponseItem::Other,
-            metadata: Some(CodexHarnessMetadata {
+            metadata: Some(GenexHarnessMetadata {
                 client_authored: true,
                 ..Default::default()
             }),

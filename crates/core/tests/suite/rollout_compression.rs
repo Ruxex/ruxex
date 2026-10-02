@@ -173,7 +173,7 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
                 history: Arc::new(context.items),
                 rollout_path: Some(child_path),
             }),
-            genex_core::test_support::auth_manager_from_auth(genex_login::CodexAuth::from_api_key(
+            genex_core::test_support::auth_manager_from_auth(genex_login::GenexAuth::from_api_key(
                 "dummy",
             )),
             /*parent_trace*/ None,

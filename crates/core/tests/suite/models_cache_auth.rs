@@ -5,7 +5,7 @@ use std::sync::Arc;
 use anyhow::Result;
 use genex_login::AuthCredentialsStoreMode;
 use genex_login::AuthKeyringBackendKind;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_login::login_with_api_key;
 use genex_models_manager::test_support::test_models_response;
 use genex_models_manager::manager::RefreshStrategy;
@@ -39,7 +39,7 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
     .await;
     let managed = test_genex()
         .with_home(home.clone())
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.5")
         .build_with_auto_env(&server)
         .await?;
@@ -87,7 +87,7 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
     .await;
     let api = test_genex()
         .with_home(home.clone())
-        .with_auth(CodexAuth::from_api_key("api-key"))
+        .with_auth(GenexAuth::from_api_key("api-key"))
         .with_config(|config| {
             config
                 .features
@@ -140,7 +140,7 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
     .await;
     let other = test_genex()
         .with_home(home)
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.5")
         .with_config(|config| {
             config.model_provider_id = "second".into();

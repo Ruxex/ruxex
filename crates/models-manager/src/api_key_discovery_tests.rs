@@ -20,7 +20,7 @@ async fn api_key_discovery_disabled_preserves_command_auth_discovery() {
     });
     let manager = RemoteModelsManager::new_without_cache(
         endpoint.clone(),
-        Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
+        Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
             "test-key",
         ))),
     );
@@ -39,7 +39,7 @@ async fn api_key_discovery_startup_flag_controls_fetches_and_cached_catalogs() {
     let home = tempdir().unwrap();
     let models = vec![remote_model("dynamic", "Dynamic", /*priority*/ 0)];
     let endpoint = TestModelsEndpoint::without_refresh(vec![models.clone()]);
-    let auth = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("test-key"));
+    let auth = AuthManager::from_auth_for_testing(GenexAuth::from_api_key("test-key"));
     let manager =
         RemoteModelsManager::new(home.path().into(), endpoint.clone(), Some(auth.clone()));
 

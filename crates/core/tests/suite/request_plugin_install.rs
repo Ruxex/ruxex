@@ -15,7 +15,7 @@ use genex_extension_api::McpServerContribution;
 use genex_extension_api::McpServerContributionContext;
 use genex_extension_api::McpServerContributor;
 use genex_features::Feature;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_models_manager::test_support::test_models_response;
 use genex_protocol::approvals::ElicitationAction;
 use genex_protocol::approvals::ElicitationRequest;
@@ -202,7 +202,7 @@ async fn build_test(
     apps_server: &AppsTestServer,
 ) -> Result<TestGenex> {
     let mut builder = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config({
             let apps_base_url = apps_server.managed_auth_base_url.clone();
             move |config| {
@@ -224,7 +224,7 @@ async fn build_gated_step_preparation_test(
     let environment_id = remote_aware_environment_id();
     let apps_base_url = apps_server.managed_auth_base_url.clone();
     let mut builder = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config
                 .permissions
@@ -502,7 +502,7 @@ async fn startup_recommendations(
     extensions.mcp_server_contributor(barrier.clone());
     let mut builder = test_genex()
         .with_extensions(Arc::new(extensions.build()))
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             configure_apps_without_search_tool(config, &apps_server.managed_auth_base_url);
             config.model_provider.supports_websockets = false;
@@ -1305,7 +1305,7 @@ async fn endpoint_mode_with_no_eligible_candidates_exposes_no_suggestion_tools()
     )
     .await;
     let mut builder = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config({
             let apps_base_url = apps_server.managed_auth_base_url.clone();
             move |config| {

@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use anyhow::Result;
 use genex_features::Feature;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_protocol::config_types::CollaborationMode;
 use genex_protocol::config_types::ModeKind;
 use genex_protocol::config_types::Settings;
@@ -50,7 +50,7 @@ async fn refresh_models_on_models_etag_mismatch_and_avoid_duplicate_models_fetch
     )
     .await;
 
-    let auth = CodexAuth::from_api_key("test-api-key");
+    let auth = GenexAuth::from_api_key("test-api-key");
     let mut builder = test_genex()
         .with_auth(auth)
         .with_model("gpt-5.2")

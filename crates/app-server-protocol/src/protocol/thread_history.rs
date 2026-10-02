@@ -1144,7 +1144,7 @@ impl ThreadHistoryBuilder {
             turn.error = Some(V2TurnError {
                 misalignment: payload.misalignment.clone().map(Into::into),
                 message: payload.message.clone(),
-                codex_error_info: payload.codex_error_info.clone().map(Into::into),
+                genex_error_info: payload.genex_error_info.clone().map(Into::into),
                 additional_details: None,
             });
             tracking_changes.then(|| ThreadHistoryTurnChange::from_pending_turn(turn))
@@ -1204,7 +1204,7 @@ impl ThreadHistoryBuilder {
         let terminal_error = payload.error.as_ref().map(|error| V2TurnError {
             misalignment: error.misalignment.clone().map(Into::into),
             message: error.message.clone(),
-            codex_error_info: error.codex_error_info.clone().map(Into::into),
+            genex_error_info: error.genex_error_info.clone().map(Into::into),
             additional_details: None,
         });
         let apply_completion = |turn: &mut PendingTurn| {
@@ -1684,7 +1684,7 @@ mod tests {
     use genex_protocol::protocol::AgentReasoningEvent;
     use genex_protocol::protocol::AgentReasoningRawContentEvent;
     use genex_protocol::protocol::ApplyPatchApprovalRequestEvent;
-    use genex_protocol::protocol::CodexErrorInfo;
+    use genex_protocol::protocol::GenexErrorInfo;
     use genex_protocol::protocol::DynamicToolCallResponseEvent;
     use genex_protocol::protocol::EnteredReviewModeEvent;
     use genex_protocol::protocol::ExecCommandBeginEvent;
@@ -3925,7 +3925,7 @@ mod tests {
                 error: Some(ErrorEvent {
                     misalignment: None,
                     message: "Selected model is at capacity. Please try a different model.".into(),
-                    codex_error_info: Some(CodexErrorInfo::ServerOverloaded),
+                    genex_error_info: Some(GenexErrorInfo::ServerOverloaded),
                 }),
                 completed_at: Some(20),
                 duration_ms: Some(10_000),
@@ -3957,8 +3957,8 @@ mod tests {
                         misalignment: None,
                         message: "Selected model is at capacity. Please try a different model."
                             .into(),
-                        codex_error_info: Some(
-                            crate::protocol::v2::CodexErrorInfo::ServerOverloaded,
+                        genex_error_info: Some(
+                            crate::protocol::v2::GenexErrorInfo::ServerOverloaded,
                         ),
                         additional_details: None,
                     }),
@@ -4314,7 +4314,7 @@ mod tests {
             EventMsg::Error(ErrorEvent {
                 misalignment: None,
                 message: "rollback failed".into(),
-                codex_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
+                genex_error_info: Some(GenexErrorInfo::ThreadRollbackFailed),
             }),
         ];
 
@@ -4359,7 +4359,7 @@ mod tests {
             EventMsg::Error(ErrorEvent {
                 misalignment: None,
                 message: "request-level failure".into(),
-                codex_error_info: Some(CodexErrorInfo::BadRequest),
+                genex_error_info: Some(GenexErrorInfo::BadRequest),
             }),
         ];
 
@@ -4413,7 +4413,7 @@ mod tests {
             EventMsg::Error(ErrorEvent {
                 misalignment: None,
                 message: "stream failure".into(),
-                codex_error_info: Some(CodexErrorInfo::ResponseStreamDisconnected {
+                genex_error_info: Some(GenexErrorInfo::ResponseStreamDisconnected {
                     http_status_code: Some(502),
                 }),
             }),
@@ -4441,8 +4441,8 @@ mod tests {
             Some(TurnError {
                 misalignment: None,
                 message: "stream failure".into(),
-                codex_error_info: Some(
-                    crate::protocol::v2::CodexErrorInfo::ResponseStreamDisconnected {
+                genex_error_info: Some(
+                    crate::protocol::v2::GenexErrorInfo::ResponseStreamDisconnected {
                         http_status_code: Some(502),
                     }
                 ),
@@ -4477,7 +4477,7 @@ mod tests {
                 error: Some(ErrorEvent {
                     misalignment: None,
                     message: "Selected model is at capacity. Please try a different model.".into(),
-                    codex_error_info: Some(CodexErrorInfo::ServerOverloaded),
+                    genex_error_info: Some(GenexErrorInfo::ServerOverloaded),
                 }),
                 completed_at: Some(20),
                 duration_ms: Some(10_000),
@@ -4507,7 +4507,7 @@ mod tests {
                 error: Some(TurnError {
                     misalignment: None,
                     message: "Selected model is at capacity. Please try a different model.".into(),
-                    codex_error_info: Some(crate::protocol::v2::CodexErrorInfo::ServerOverloaded),
+                    genex_error_info: Some(crate::protocol::v2::GenexErrorInfo::ServerOverloaded),
                     additional_details: None,
                 }),
                 started_at: Some(10),

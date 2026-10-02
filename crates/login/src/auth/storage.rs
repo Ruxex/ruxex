@@ -260,7 +260,7 @@ impl SecretsKeyringAuthStorage {
             codex_home.clone(),
             SecretsBackendKind::Local,
             keyring_store,
-            LocalSecretsNamespace::CodexAuth,
+            LocalSecretsNamespace::GenexAuth,
         );
         Self {
             codex_home,

@@ -753,7 +753,7 @@ async fn live_app_server_failed_turn_does_not_duplicate_error_history() {
             error: AppServerTurnError {
                 misalignment: None,
                 message: "permission denied".to_string(),
-                codex_error_info: None,
+                genex_error_info: None,
                 additional_details: None,
             },
             will_retry: false,
@@ -777,7 +777,7 @@ async fn live_app_server_failed_turn_does_not_duplicate_error_history() {
                 error: Some(AppServerTurnError {
                     misalignment: None,
                     message: "permission denied".to_string(),
-                    codex_error_info: None,
+                    genex_error_info: None,
                     additional_details: None,
                 }),
                 started_at: None,
@@ -806,7 +806,7 @@ async fn live_app_server_failed_turn_consolidates_streamed_answer() {
     handle_error(
         &mut chat,
         "stream disconnected before completion",
-        /*codex_error_info*/ None,
+        /*genex_error_info*/ None,
     );
 
     let mut saw_consolidate = false;
@@ -854,7 +854,7 @@ async fn live_app_server_stream_recovery_restores_previous_status_header() {
             error: AppServerTurnError {
                 misalignment: None,
                 message: "Reconnecting... 1/5".to_string(),
-                codex_error_info: Some(CodexErrorInfo::Other),
+                genex_error_info: Some(GenexErrorInfo::Other),
                 additional_details: None,
             },
             will_retry: true,
@@ -912,7 +912,7 @@ async fn live_app_server_server_overloaded_error_renders_warning() {
             error: AppServerTurnError {
                 misalignment: None,
                 message: "server overloaded".to_string(),
-                codex_error_info: Some(CodexErrorInfo::ServerOverloaded),
+                genex_error_info: Some(GenexErrorInfo::ServerOverloaded),
                 additional_details: None,
             },
             will_retry: false,
@@ -955,7 +955,7 @@ async fn live_app_server_cyber_policy_error_renders_dedicated_notice() {
             error: AppServerTurnError {
                 misalignment: None,
                 message: "server fallback message".to_string(),
-                codex_error_info: Some(CodexErrorInfo::CyberPolicy),
+                genex_error_info: Some(GenexErrorInfo::CyberPolicy),
                 additional_details: None,
             },
             will_retry: false,

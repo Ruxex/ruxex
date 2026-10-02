@@ -12,7 +12,7 @@ use genex_protocol::model_types::ApprovalMessages;
 use genex_protocol::model_types::ModelsResponse;
 use genex_protocol::model_types::PermissionMessages;
 use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::Op;
 use genex_protocol::protocol::ThreadSettingsOverrides;
@@ -71,7 +71,7 @@ impl SettingsOperation {
                 match event.msg {
                     EventMsg::ThreadSettingsApplied(applied) => return Ok(applied.thread_settings),
                     EventMsg::Error(error) => {
-                        assert_eq!(error.codex_error_info, Some(CodexErrorInfo::BadRequest));
+                        assert_eq!(error.genex_error_info, Some(GenexErrorInfo::BadRequest));
                         anyhow::bail!(error.message);
                     }
                     _ => {}

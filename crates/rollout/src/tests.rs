@@ -33,7 +33,7 @@ use crate::list::get_threads;
 use crate::list::read_head_for_summary;
 use crate::rollout_date_parts;
 use anyhow::Result;
-use genex_history::CodexHarnessMetadata;
+use genex_history::GenexHarnessMetadata;
 use genex_protocol::ThreadId;
 use genex_protocol::models::ContentItem;
 use genex_protocol::models::ResponseItem;
@@ -1408,7 +1408,7 @@ async fn read_head_for_summary_omits_harness_metadata() {
         ordinal: None,
         item: RolloutItem::ResponseItem(ResponseItemEnvelope {
             item: response_item.clone(),
-            metadata: Some(CodexHarnessMetadata::default()),
+            metadata: Some(GenexHarnessMetadata::default()),
         }),
     };
     fs::write(

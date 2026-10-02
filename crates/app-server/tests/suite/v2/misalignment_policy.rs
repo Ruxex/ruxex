@@ -2,7 +2,7 @@ use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::CodexErrorInfo;
+use genex_app_server_protocol::GenexErrorInfo;
 use genex_app_server_protocol::ErrorNotification;
 use genex_app_server_protocol::MisalignmentErrorDetails;
 use genex_app_server_protocol::MisalignmentSteer;
@@ -218,7 +218,7 @@ async fn assert_policy_violation_completes_turn_with_typed_terminal_error(
             error: TurnError {
                 misalignment: expected_misalignment.clone(),
                 message: MESSAGE.to_string(),
-                codex_error_info: Some(CodexErrorInfo::MisalignmentPolicyViolation),
+                genex_error_info: Some(GenexErrorInfo::MisalignmentPolicyViolation),
                 additional_details: None,
             },
             will_retry: false,
@@ -240,7 +240,7 @@ async fn assert_policy_violation_completes_turn_with_typed_terminal_error(
         Some(TurnError {
             misalignment: expected_misalignment,
             message: MESSAGE.to_string(),
-            codex_error_info: Some(CodexErrorInfo::MisalignmentPolicyViolation),
+            genex_error_info: Some(GenexErrorInfo::MisalignmentPolicyViolation),
             additional_details: None,
         })
     );

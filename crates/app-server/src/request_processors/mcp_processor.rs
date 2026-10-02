@@ -328,7 +328,7 @@ impl McpRequestProcessor {
         request_id: String,
         params: ListMcpServerStatusParams,
         mcp_config: genex_mcp::McpConfig,
-        auth: Option<CodexAuth>,
+        auth: Option<GenexAuth>,
         runtime_context: McpRuntimeContext,
         mcp_manager: Arc<McpManager>,
         thread: Option<Arc<genex_core::GenexThread>>,

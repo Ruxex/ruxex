@@ -30,7 +30,7 @@ use genex_protocol::items::UserMessageItem;
 use genex_protocol::model_types::ModelInfo;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::HookCompletedEvent;
 use genex_protocol::protocol::HookEventName;
@@ -626,7 +626,7 @@ pub(crate) async fn run_legacy_after_agent_hook(
     let event = EventMsg::Error(genex_protocol::protocol::ErrorEvent {
         misalignment: None,
         message,
-        codex_error_info: Some(CodexErrorInfo::Other),
+        genex_error_info: Some(GenexErrorInfo::Other),
     });
     sess.send_event(turn_context, event).await;
     true

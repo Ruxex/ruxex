@@ -8,7 +8,7 @@ use genex_core::TurnInputRequest;
 use genex_core::TurnInputSubmission;
 use genex_core::config::Config;
 use genex_features::Feature;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::model_types::ReasoningEffort;
 use genex_protocol::model_types::ReasoningEffortPreset;
@@ -682,7 +682,7 @@ async fn reasoning_effort_override_disabled_on_resume_retires_update_at_compacti
     initial.submit_text_turn("before resume").await?;
     let managed_auth_base_url = format!("{}/backend-api", server.uri());
     let resumed = override_builder()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config
                 .features
@@ -896,7 +896,7 @@ async fn reasoning_effort_override_compaction_fallback_uses_each_models_effort()
     .await;
     let managed_auth_base_url = format!("{}/backend-api", server.uri());
     let test = override_builder()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_model_info_override("gpt-5.4", |model| {
             model.comp_hash = Some("original".to_string());
         })

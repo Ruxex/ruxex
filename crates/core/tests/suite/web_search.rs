@@ -2,7 +2,7 @@
 
 use genex_config::test_support::CloudConfigBundleFixture;
 use genex_features::Feature;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_login::auth::BedrockApiKeyAuth;
 use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_4_MODEL_ID;
 use genex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
@@ -100,7 +100,7 @@ async fn amazon_bedrock_web_search_uses_text_only_hosted_tools() {
         )
         .await;
 
-        let auth = CodexAuth::BedrockApiKey(BedrockApiKeyAuth {
+        let auth = GenexAuth::BedrockApiKey(BedrockApiKeyAuth {
             api_key: "dummy".to_string(),
             region: "us-east-1".to_string(),
         });
@@ -162,7 +162,7 @@ async fn amazon_bedrock_runtime_preserves_cross_region_models_without_web_search
             ]),
         )
         .await;
-        let auth = CodexAuth::BedrockApiKey(BedrockApiKeyAuth {
+        let auth = GenexAuth::BedrockApiKey(BedrockApiKeyAuth {
             api_key: "dummy".to_string(),
             region: "us-east-1".to_string(),
         });
@@ -226,7 +226,7 @@ async fn amazon_bedrock_web_search_is_disabled_when_managed_requirements_prohibi
         )
         .await;
 
-        let auth = CodexAuth::BedrockApiKey(BedrockApiKeyAuth {
+        let auth = GenexAuth::BedrockApiKey(BedrockApiKeyAuth {
             api_key: "dummy".to_string(),
             region: "us-east-1".to_string(),
         });

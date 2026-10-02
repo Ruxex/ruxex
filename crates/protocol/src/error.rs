@@ -3,7 +3,7 @@ pub use crate::auth::RefreshTokenFailedError;
 pub use crate::auth::RefreshTokenFailedReason;
 use crate::exec_output::ExecToolCallOutput;
 use crate::network_policy::NetworkPolicyDecisionPayload;
-use crate::protocol::CodexErrorInfo;
+use crate::protocol::GenexErrorInfo;
 use crate::protocol::ErrorEvent;
 use crate::protocol::MisalignmentErrorDetails;
 use crate::protocol::TruncationPolicy;
@@ -404,37 +404,37 @@ impl GenexErr {
     }
 
     /// Translate core error to client-facing protocol error.
-    pub fn to_codex_protocol_error(&self) -> CodexErrorInfo {
+    pub fn to_codex_protocol_error(&self) -> GenexErrorInfo {
         match &self.details {
-            GenexErrorDetails::ContextWindowExceeded => CodexErrorInfo::ContextWindowExceeded,
-            GenexErrorDetails::SessionBudgetExceeded => CodexErrorInfo::SessionBudgetExceeded,
-            GenexErrorDetails::RateLimitExceeded(_) => CodexErrorInfo::RateLimitExceeded,
-            GenexErrorDetails::QuotaExceeded => CodexErrorInfo::UsageLimitExceeded,
-            GenexErrorDetails::ServerOverloaded => CodexErrorInfo::ServerOverloaded,
-            GenexErrorDetails::CyberPolicy { .. } => CodexErrorInfo::CyberPolicy,
+            GenexErrorDetails::ContextWindowExceeded => GenexErrorInfo::ContextWindowExceeded,
+            GenexErrorDetails::SessionBudgetExceeded => GenexErrorInfo::SessionBudgetExceeded,
+            GenexErrorDetails::RateLimitExceeded(_) => GenexErrorInfo::RateLimitExceeded,
+            GenexErrorDetails::QuotaExceeded => GenexErrorInfo::UsageLimitExceeded,
+            GenexErrorDetails::ServerOverloaded => GenexErrorInfo::ServerOverloaded,
+            GenexErrorDetails::CyberPolicy { .. } => GenexErrorInfo::CyberPolicy,
             GenexErrorDetails::MisalignmentPolicyViolation { .. } => {
-                CodexErrorInfo::MisalignmentPolicyViolation
+                GenexErrorInfo::MisalignmentPolicyViolation
             }
-            GenexErrorDetails::RetryLimit(_) => CodexErrorInfo::ResponseTooManyFailedAttempts {
+            GenexErrorDetails::RetryLimit(_) => GenexErrorInfo::ResponseTooManyFailedAttempts {
                 http_status_code: self.http_status_code_value(),
             },
-            GenexErrorDetails::ConnectionFailed(_) => CodexErrorInfo::HttpConnectionFailed {
+            GenexErrorDetails::ConnectionFailed(_) => GenexErrorInfo::HttpConnectionFailed {
                 http_status_code: self.http_status_code_value(),
             },
             GenexErrorDetails::ResponseStreamFailed(_) => {
-                CodexErrorInfo::ResponseStreamConnectionFailed {
+                GenexErrorInfo::ResponseStreamConnectionFailed {
                     http_status_code: self.http_status_code_value(),
                 }
             }
-            GenexErrorDetails::RefreshTokenFailed(_) => CodexErrorInfo::Unauthorized,
+            GenexErrorDetails::RefreshTokenFailed(_) => GenexErrorInfo::Unauthorized,
             GenexErrorDetails::SessionConfiguredNotFirstEvent
             | GenexErrorDetails::InternalServerError
-            | GenexErrorDetails::InternalAgentDied => CodexErrorInfo::InternalServerError,
+            | GenexErrorDetails::InternalAgentDied => GenexErrorInfo::InternalServerError,
             GenexErrorDetails::UnsupportedOperation(_)
             | GenexErrorDetails::ThreadNotFound(_)
-            | GenexErrorDetails::AgentLimitReached { .. } => CodexErrorInfo::BadRequest,
-            GenexErrorDetails::Sandbox(_) => CodexErrorInfo::SandboxError,
-            _ => CodexErrorInfo::Other,
+            | GenexErrorDetails::AgentLimitReached { .. } => GenexErrorInfo::BadRequest,
+            GenexErrorDetails::Sandbox(_) => GenexErrorInfo::SandboxError,
+            _ => GenexErrorInfo::Other,
         }
     }
 
@@ -446,7 +446,7 @@ impl GenexErr {
         };
         ErrorEvent {
             message,
-            codex_error_info: Some(self.to_codex_protocol_error()),
+            genex_error_info: Some(self.to_codex_protocol_error()),
             misalignment: match &self.details {
                 GenexErrorDetails::MisalignmentPolicyViolation { misalignment, .. } => {
                     misalignment.clone()

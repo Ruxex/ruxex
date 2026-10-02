@@ -12,7 +12,7 @@ use genex_config::McpServerTransportConfig;
 use genex_config::types::AuthKeyringBackendKind;
 use genex_config::types::OAuthCredentialsStoreMode;
 use genex_exec_server::Environment;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_protocol::mcp::ClientMcpExtensions;
 use genex_rmcp_client::McpOAuthRefreshMode;
 use genex_rmcp_client::StoredOAuthCredentialSnapshot;
@@ -116,7 +116,7 @@ pub(crate) struct McpServerConnectionIdentity {
     resolved_environment: Result<Option<Arc<Environment>>, String>,
     local_stdio_fallback_cwd: Option<PathBuf>,
     referenced_environment_variables: Vec<(String, Option<OsString>)>,
-    runtime_auth: Option<CodexAuth>,
+    runtime_auth: Option<GenexAuth>,
     runtime_auth_token: Option<String>,
     client_elicitation_capability: ElicitationCapability,
     client_mcp_extensions: ClientMcpExtensions,
@@ -136,7 +136,7 @@ impl McpServerConnectionIdentity {
         resolved_environment: &Result<Option<Arc<Environment>>, String>,
         runtime_context: &McpRuntimeContext,
         runtime_auth_provider: Option<&SharedAuthProvider>,
-        auth: Option<&CodexAuth>,
+        auth: Option<&GenexAuth>,
         client_elicitation_capability: ElicitationCapability,
         client_mcp_extensions: ClientMcpExtensions,
         previous_identity: Option<&Self>,

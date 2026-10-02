@@ -1,6 +1,6 @@
 use genex_login::AuthHeaders;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_model_provider::create_model_provider;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_utils_output_truncation::TruncationPolicy;
@@ -35,7 +35,7 @@ async fn routes_through_codex_backend_and_injects_trusted_session_agent_context(
         HeaderValue::from_static("actor-biscuit"),
     );
     let auth_manager =
-        AuthManager::from_auth_for_testing(CodexAuth::Headers(AuthHeaders::new(headers)));
+        AuthManager::from_auth_for_testing(GenexAuth::Headers(AuthHeaders::new(headers)));
     let provider = create_model_provider(
         ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/backend-api/codex",
@@ -115,7 +115,7 @@ async fn marks_encrypted_history_and_notes_arguments_without_changing_the_json_b
     }
 
     let auth_manager =
-        AuthManager::from_auth_for_testing(CodexAuth::Headers(AuthHeaders::new(HeaderMap::new())));
+        AuthManager::from_auth_for_testing(GenexAuth::Headers(AuthHeaders::new(HeaderMap::new())));
     let backend = HistoryNotesBackend::new(create_model_provider(
         ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/backend-api/codex",

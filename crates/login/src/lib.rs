@@ -15,7 +15,7 @@ pub use auth::AuthManager;
 pub use auth::AuthManagerConfig;
 pub use auth::AuthManagerInitializationError;
 pub use auth::CODEX_API_KEY_ENV_VAR;
-pub use auth::CodexAuth;
+pub use auth::GenexAuth;
 pub use auth::ExternalAuth;
 pub use auth::ExternalAuthFuture;
 pub use auth::ExternalAuthRefreshContext;

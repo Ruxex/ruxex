@@ -1,6 +1,6 @@
 //! Fixtures for integration tests that seed the provider's model cache.
 
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::cache::ModelsCacheEntry;
 use genex_protocol::model_types::ModelInfo;
@@ -8,7 +8,7 @@ use genex_protocol::model_types::ModelInfo;
 /// Constructs a cache fixture matching the supplied test provider and authentication.
 pub fn models_cache_entry(
     provider_info: &ModelProviderInfo,
-    auth: Option<&CodexAuth>,
+    auth: Option<&GenexAuth>,
     models: Vec<ModelInfo>,
 ) -> ModelsCacheEntry {
     ModelsCacheEntry {

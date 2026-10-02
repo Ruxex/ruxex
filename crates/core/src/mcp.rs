@@ -15,7 +15,7 @@ use genex_extension_api::McpServerContributionContext;
 use genex_extension_api::SelectedPluginIdentity;
 use genex_extension_api::SelectedPluginSnapshot;
 use genex_features::Feature;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_mcp::EffectiveMcpServer;
 use genex_mcp::McpConfig;
 use genex_mcp::McpEnvironmentAuthority;
@@ -317,7 +317,7 @@ impl McpManager {
     pub async fn effective_servers(
         &self,
         config: &Config,
-        auth: Option<&CodexAuth>,
+        auth: Option<&GenexAuth>,
     ) -> HashMap<String, EffectiveMcpServer> {
         let mcp_config = self.runtime_config(config).await;
         effective_mcp_servers(&mcp_config, auth)

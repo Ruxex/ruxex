@@ -28,50 +28,50 @@ use serde::Serialize;
 use std::time::Duration;
 
 use crate::AgentThreadId;
-use crate::CodexTurnId;
+use crate::GenexTurnId;
 use crate::ExecutionStatus;
 use crate::RawTraceEventPayload;
 
-pub(crate) struct CodexTurnTraceEvent {
-    pub context_turn_id: CodexTurnId,
+pub(crate) struct GenexTurnTraceEvent {
+    pub context_turn_id: GenexTurnId,
     pub payload: RawTraceEventPayload,
 }
 
-pub(crate) fn codex_turn_trace_event(
+pub(crate) fn genex_turn_trace_event(
     thread_id: AgentThreadId,
     default_turn_id: &str,
     event: &EventMsg,
-) -> Option<CodexTurnTraceEvent> {
+) -> Option<GenexTurnTraceEvent> {
     match event {
         EventMsg::TurnStarted(event) => {
-            let codex_turn_id = event.turn_id.clone();
-            Some(CodexTurnTraceEvent {
-                context_turn_id: codex_turn_id.clone(),
-                payload: RawTraceEventPayload::CodexTurnStarted {
-                    codex_turn_id,
+            let genex_turn_id = event.turn_id.clone();
+            Some(GenexTurnTraceEvent {
+                context_turn_id: genex_turn_id.clone(),
+                payload: RawTraceEventPayload::GenexTurnStarted {
+                    genex_turn_id,
                     thread_id,
                 },
             })
         }
         EventMsg::TurnComplete(event) => {
-            let codex_turn_id = event.turn_id.clone();
-            Some(CodexTurnTraceEvent {
-                context_turn_id: codex_turn_id.clone(),
-                payload: RawTraceEventPayload::CodexTurnEnded {
-                    codex_turn_id,
+            let genex_turn_id = event.turn_id.clone();
+            Some(GenexTurnTraceEvent {
+                context_turn_id: genex_turn_id.clone(),
+                payload: RawTraceEventPayload::GenexTurnEnded {
+                    genex_turn_id,
                     status: ExecutionStatus::Completed,
                 },
             })
         }
         EventMsg::TurnAborted(event) => {
-            let codex_turn_id = event
+            let genex_turn_id = event
                 .turn_id
                 .clone()
                 .unwrap_or_else(|| default_turn_id.to_string());
-            Some(CodexTurnTraceEvent {
-                context_turn_id: codex_turn_id.clone(),
-                payload: RawTraceEventPayload::CodexTurnEnded {
-                    codex_turn_id,
+            Some(GenexTurnTraceEvent {
+                context_turn_id: genex_turn_id.clone(),
+                payload: RawTraceEventPayload::GenexTurnEnded {
+                    genex_turn_id,
                     status: execution_status_for_abort_reason(&event.reason),
                 },
             })

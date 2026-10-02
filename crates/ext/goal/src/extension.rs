@@ -29,7 +29,7 @@ use genex_extension_api::TurnStopInput;
 use genex_otel::MetricsClient;
 use genex_protocol::ThreadId;
 use genex_protocol::items::TurnItem;
-use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::SessionSource;
 use genex_protocol::protocol::SubAgentSource;
 use genex_protocol::protocol::ThreadGoalStatus;
@@ -390,7 +390,7 @@ where
             };
 
             let reason = match input.error {
-                CodexErrorInfo::UsageLimitExceeded => ActiveGoalStopReason::UsageLimit,
+                GenexErrorInfo::UsageLimitExceeded => ActiveGoalStopReason::UsageLimit,
                 // The turn has ended because the error was non-retryable or its
                 // retries were exhausted. Block the goal to prevent automatic
                 // continuation from looping and consuming tokens, as can happen

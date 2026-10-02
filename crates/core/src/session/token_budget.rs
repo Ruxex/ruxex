@@ -5,7 +5,7 @@ use crate::config::TokenBudgetConfig;
 use crate::config::resolve_token_budget_config;
 use crate::context::ContextualUserFragment;
 use genex_features::Feature;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_protocol::auth::AuthMode;
 use genex_protocol::model_types::ModelInfo;
 
@@ -15,7 +15,7 @@ fn experimental_context_is_eligible(_auth_mode: AuthMode) -> bool {
 
 pub(super) fn apply_experimental_context(
     config: &mut Config,
-    auth: Option<&CodexAuth>,
+    auth: Option<&GenexAuth>,
     starting_model: &ModelInfo,
 ) -> std::io::Result<()> {
     let provider = &config.model_provider;

@@ -1,5 +1,5 @@
 use genex_aws_auth::AwsAuthConfig;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderAwsAuthInfo;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result;
@@ -59,7 +59,7 @@ pub(super) fn base_url(region: &str) -> Result<String> {
 
 pub(super) async fn bedrock_mantle_runtime_base_url(
     source: BedrockAuthSource,
-    managed_auth: Option<&CodexAuth>,
+    managed_auth: Option<&GenexAuth>,
     aws: &ModelProviderAwsAuthInfo,
 ) -> Result<String> {
     let region = resolve_region(source, managed_auth, aws, BedrockEndpoint::Mantle).await?;

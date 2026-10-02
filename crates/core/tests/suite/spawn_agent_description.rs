@@ -6,7 +6,7 @@ use genex_core::config::AgentRoleConfig;
 use genex_core::config::Config;
 use genex_features::Feature;
 use genex_history::RolloutItem;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_models_manager::manager::RefreshStrategy;
 use genex_models_manager::manager::SharedModelsManager;
 use genex_protocol::config_types::ReasoningSummary;
@@ -202,7 +202,7 @@ async fn spawn_agent_description_lists_visible_models_and_reasoning_efforts() ->
     .await;
 
     let mut builder = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_model("visible-model")
         .with_config(|config| {
             config

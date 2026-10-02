@@ -8,7 +8,7 @@ use genex_extension_api::ExtensionRegistryBuilder;
 use genex_history_notes_extension::install;
 use genex_login::AuthHeaders;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use core_test_support::responses;
 use core_test_support::test_genex::test_genex;
 use http::HeaderMap;
@@ -56,7 +56,7 @@ async fn history_images_reach_the_next_model_request() -> Result<(), Box<dyn std
         ],
     )
     .await;
-    let auth = CodexAuth::Headers(AuthHeaders::new(HeaderMap::new()));
+    let auth = GenexAuth::Headers(AuthHeaders::new(HeaderMap::new()));
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     install(
         &mut extensions,

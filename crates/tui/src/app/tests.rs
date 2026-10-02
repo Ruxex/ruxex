@@ -5622,7 +5622,7 @@ fn active_turn_not_steerable_turn_error_extracts_structured_server_error() {
     let turn_error = AppServerTurnError {
         misalignment: None,
         message: "cannot steer a review turn".to_string(),
-        codex_error_info: Some(AppServerCodexErrorInfo::ActiveTurnNotSteerable {
+        genex_error_info: Some(AppServerGenexErrorInfo::ActiveTurnNotSteerable {
             turn_kind: AppServerNonSteerableTurnKind::Review,
         }),
         additional_details: None,

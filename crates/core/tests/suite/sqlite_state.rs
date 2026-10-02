@@ -8,7 +8,7 @@ use genex_extension_api::ExtensionRegistryBuilder;
 use genex_features::Feature;
 use genex_history::RolloutItem;
 use genex_history::RolloutLine;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_protocol::ThreadId;
 use genex_protocol::config_types::CollaborationMode;
 use genex_protocol::config_types::ModeKind;

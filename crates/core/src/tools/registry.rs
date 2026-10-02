@@ -25,7 +25,7 @@ use crate::tools::tool_dispatch_trace::ToolDispatchTrace;
 use crate::util::error_or_panic;
 use genex_extension_api::AllowedTools;
 use genex_extension_api::ToolCallOutcome;
-use genex_history::CodexHarnessMetadata;
+use genex_history::GenexHarnessMetadata;
 use genex_history::ResponseItemEnvelope;
 use genex_protocol::models::FunctionCallOutputPayload;
 use genex_protocol::models::ResponseInputItem;
@@ -196,7 +196,7 @@ impl AnyToolResult {
             item: result.to_response_item(&call_id, &payload).into(),
             metadata: result
                 .fallback_token_limit_override()
-                .map(|limit| CodexHarnessMetadata {
+                .map(|limit| GenexHarnessMetadata {
                     history_truncation_token_limit: Some(limit),
                     ..Default::default()
                 }),

@@ -6,7 +6,7 @@ use super::session::SessionSettingsUpdate;
 use super::step_settings::StepSettingsUpdate;
 use crate::config::ConstraintResult;
 use genex_history::RolloutItem;
-use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::ErrorEvent;
 use genex_protocol::protocol::Event;
 use genex_protocol::protocol::EventMsg;
@@ -46,7 +46,7 @@ pub(super) async fn update(
                 msg: EventMsg::Error(ErrorEvent {
                     misalignment: None,
                     message: format!("invalid thread settings override: {error}"),
-                    codex_error_info: Some(CodexErrorInfo::BadRequest),
+                    genex_error_info: Some(GenexErrorInfo::BadRequest),
                 }),
             })
             .await;

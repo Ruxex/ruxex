@@ -5,7 +5,7 @@ use crate::raw_event::RawEventSeq;
 
 use super::AgentPath;
 use super::AgentThreadId;
-use super::CodexTurnId;
+use super::GenexTurnId;
 use super::ConversationItemId;
 use super::EdgeId;
 
@@ -101,8 +101,8 @@ pub enum ExecutionStatus {
 /// It is not a user/assistant message pair; conversation belongs in
 /// `ConversationItem`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct CodexTurn {
-    pub codex_turn_id: CodexTurnId,
+pub struct GenexTurn {
+    pub genex_turn_id: GenexTurnId,
     pub thread_id: AgentThreadId,
     pub execution: ExecutionWindow,
     /// Conversation items that directly triggered this activation, when known.

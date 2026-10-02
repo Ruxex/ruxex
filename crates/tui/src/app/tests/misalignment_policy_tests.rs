@@ -8,7 +8,7 @@ use pretty_assertions::assert_eq;
 fn policy_error() -> AppServerTurnError {
     AppServerTurnError {
         message: "Chat paused".into(),
-        codex_error_info: Some(AppServerCodexErrorInfo::MisalignmentPolicyViolation),
+        genex_error_info: Some(AppServerGenexErrorInfo::MisalignmentPolicyViolation),
         additional_details: None,
         misalignment: Some(MisalignmentErrorDetails {
             error_type: None,

@@ -25,7 +25,7 @@ use genex_extension_api::ExtensionWarning;
 use genex_extension_api::SkillInvocationContributor;
 use genex_extension_api::SkillInvocationInput;
 use genex_features::Feature;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_mcp::CODEX_APPS_MCP_SERVER_NAME;
 use genex_models_manager::test_support::test_models_response;
 use genex_otel::OtelExporter;
@@ -632,7 +632,7 @@ async fn capability_sections_render_in_order_with_host_repo_and_plugin_skills() 
     let mut builder = test_genex()
         .with_home(Arc::clone(&codex_home))
         .with_extensions(Arc::new(extensions.build()))
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_workspace_setup(|cwd, fs| async move {
             let skill_dir = cwd.join(".agents/skills/repo-search");
             fs.create_directory(
@@ -2445,7 +2445,7 @@ async fn executor_skill_invocation_is_environment_scoped_and_deduplicated() -> R
     let managed_auth_base_url = server.uri();
     let mut builder = test_genex()
         .with_home(codex_home)
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_extensions(extensions)
         .with_config(move |config| {
             configure_catalog_test(config);

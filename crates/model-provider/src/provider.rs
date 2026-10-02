@@ -12,7 +12,7 @@ use genex_api::StandardChatCompletionApi;
 use genex_api::TransportError;
 use genex_api::is_azure_responses_provider;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_model_provider_info::WireApi;
 use genex_models_manager::cache::ModelsCache;
@@ -201,7 +201,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
     }
 
     /// Returns the current provider-scoped auth value, if one is configured.
-    fn auth(&self) -> ModelProviderFuture<'_, Option<CodexAuth>>;
+    fn auth(&self) -> ModelProviderFuture<'_, Option<GenexAuth>>;
 
     /// Returns the current app-visible account state for this provider.
     fn account_state(&self) -> ProviderAccountResult;
@@ -216,7 +216,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
         Box::pin(async move {
             let auth = self.auth().await;
             self.info()
-                .to_api_provider(auth.as_ref().map(CodexAuth::auth_mode))
+                .to_api_provider(auth.as_ref().map(GenexAuth::auth_mode))
         })
     }
 
@@ -359,7 +359,7 @@ impl ModelProvider for ConfiguredModelProvider {
         false
     }
 
-    fn auth(&self) -> ModelProviderFuture<'_, Option<CodexAuth>> {
+    fn auth(&self) -> ModelProviderFuture<'_, Option<GenexAuth>> {
         Box::pin(async move {
             match self.auth_manager.as_ref() {
                 Some(auth_manager) => auth_manager.auth().await,
@@ -377,17 +377,17 @@ impl ModelProvider for ConfiguredModelProvider {
                     if auth_manager.refresh_failure_for_auth(&auth).is_some() {
                         return None;
                     }
-                    if matches!(auth, CodexAuth::Headers(_)) {
+                    if matches!(auth, GenexAuth::Headers(_)) {
                         return None;
                     }
                     Some(auth)
                 })
                 .map(|auth| match &auth {
-                    CodexAuth::ApiKey(_) => Ok(ProviderAccount::ApiKey),
-                    CodexAuth::BedrockApiKey(_) | CodexAuth::BedrockAccessKeys(_) => {
+                    GenexAuth::ApiKey(_) => Ok(ProviderAccount::ApiKey),
+                    GenexAuth::BedrockApiKey(_) | GenexAuth::BedrockAccessKeys(_) => {
                         Err(ProviderAccountError::UnsupportedBedrockApiKeyAuth)
                     }
-                    CodexAuth::Headers(_) => Ok(ProviderAccount::ApiKey),
+                    GenexAuth::Headers(_) => Ok(ProviderAccount::ApiKey),
                 })
                 .transpose()?
         } else {
@@ -592,8 +592,8 @@ mod tests {
         .expect("valid model")
     }
 
-    fn bedrock_api_key_auth() -> CodexAuth {
-        CodexAuth::BedrockApiKey(BedrockApiKeyAuth {
+    fn bedrock_api_key_auth() -> GenexAuth {
+        GenexAuth::BedrockApiKey(BedrockApiKeyAuth {
             api_key: "bedrock-api-key-test".to_string(),
             region: "us-east-1".to_string(),
         })
@@ -625,7 +625,7 @@ mod tests {
                 base_url: Some("https://example.com".to_string()),
                 ..ModelProviderInfo::default()
             },
-            Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
+            Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
                 "test-key",
             ))),
         );
@@ -730,7 +730,7 @@ mod tests {
                 credential_export: None,
                 auth_refresh: None,
             })),
-            Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
+            Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
                 "provider-api-key",
             ))),
         );
@@ -806,7 +806,7 @@ mod tests {
 
         let first = create_model_provider(
             provider_info.clone(),
-            Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
+            Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
                 "provider-api-key",
             ))),
         );
@@ -1001,7 +1001,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
     fn responses_provider_returns_api_key_account_state() {
         let provider = create_model_provider(
             ModelProviderInfo::create_responses_provider(/*base_url*/ None),
-            Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
+            Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
                 "provider-api-key",
             ))),
         );
@@ -1218,7 +1218,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
         provider_info.experimental_bearer_token = Some("provider-token".into());
         let provider = create_model_provider(
             provider_info,
-            Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
+            Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
                 "ambient-api-key",
             ))),
         );

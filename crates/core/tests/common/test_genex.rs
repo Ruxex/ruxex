@@ -33,7 +33,7 @@ use genex_extension_api::UserInstructionsProvider;
 use genex_extension_api::empty_extension_registry;
 use genex_features::Feature;
 use genex_home::GenexHomeUserInstructionsProvider;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::manager::SharedModelsManager;
 use genex_models_manager::test_support::test_models_response;
@@ -264,7 +264,7 @@ pub fn turn_permission_fields(
 
 pub struct TestGenexBuilder {
     config_mutators: Vec<Box<ConfigMutator>>,
-    auth: CodexAuth,
+    auth: GenexAuth,
     pre_build_hooks: Vec<Box<PreBuildHook>>,
     workspace_setups: Vec<Box<WorkspaceSetup>>,
     home: Option<Arc<TempDir>>,
@@ -294,7 +294,7 @@ impl TestGenexBuilder {
         self
     }
 
-    pub fn with_auth(mut self, auth: CodexAuth) -> Self {
+    pub fn with_auth(mut self, auth: GenexAuth) -> Self {
         self.auth = auth;
         self
     }
@@ -1295,7 +1295,7 @@ pub fn test_genex() -> TestGenexBuilder {
                 .disable(Feature::ShellSnapshot)
                 .expect("test config should allow ShellSnapshot override");
         })],
-        auth: CodexAuth::from_api_key("dummy"),
+        auth: GenexAuth::from_api_key("dummy"),
         pre_build_hooks: vec![],
         workspace_setups: vec![],
         home: None,

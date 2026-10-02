@@ -12,7 +12,7 @@ use genex_api::SseTelemetry;
 use genex_api::StandardChatCompletionApi;
 use genex_api::StreamResponse;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::manager::RemoteModelsManager;
 use genex_models_manager::manager::SharedModelsManager;
@@ -48,7 +48,7 @@ struct MyApiKeyAuthProvider {
     api_key: String,
 }
 
-pub(crate) fn my_provider_auth_provider(auth: Option<&CodexAuth>) -> SharedAuthProvider {
+pub(crate) fn my_provider_auth_provider(auth: Option<&GenexAuth>) -> SharedAuthProvider {
     let Some(auth) = auth else {
         return unauthenticated_auth_provider();
     };
@@ -98,7 +98,7 @@ impl ModelProvider for MyModelProvider {
         self.auth_manager.clone()
     }
 
-    fn auth(&self) -> ModelProviderFuture<'_, Option<CodexAuth>> {
+    fn auth(&self) -> ModelProviderFuture<'_, Option<GenexAuth>> {
         Box::pin(async move {
             match self.auth_manager.as_ref() {
                 Some(auth_manager) => auth_manager.auth().await,
@@ -174,7 +174,7 @@ mod tests {
     use super::*;
     use genex_http_client::HttpClientFactory;
     use genex_http_client::OutboundProxyPolicy;
-    use genex_login::CodexAuth;
+    use genex_login::GenexAuth;
     use genex_models_manager::manager::RefreshStrategy;
     use genex_protocol::model_types::ModelsResponse;
     use serde_json::json;
@@ -223,7 +223,7 @@ mod tests {
         let mut provider_info = ModelProviderInfo::create_my_provider();
         provider_info.base_url = Some(server.uri());
         let auth_manager =
-            AuthManager::from_auth_for_testing(CodexAuth::from_api_key("test-api-key"));
+            AuthManager::from_auth_for_testing(GenexAuth::from_api_key("test-api-key"));
         let provider = MyModelProvider::new(provider_info, Some(auth_manager));
         let manager = provider.models_manager_without_cache(None);
         manager.set_api_key_model_discovery_enabled(true);

@@ -336,7 +336,7 @@ async fn assert_copied_fork_persists_inherited_history(history_mode: ThreadHisto
                 test.config.clone(),
                 resumed_history,
                 genex_core::test_support::auth_manager_from_auth(
-                    genex_login::CodexAuth::from_api_key("dummy"),
+                    genex_login::GenexAuth::from_api_key("dummy"),
                 ),
                 /*parent_trace*/ None,
                 ClientMcpExtensions::default(),

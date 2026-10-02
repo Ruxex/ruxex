@@ -8,7 +8,7 @@ use chrono::DateTime;
 use chrono::TimeZone;
 use chrono::Utc;
 use genex_core::config::Constrained;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_models_manager::client_version_to_whole;
 use genex_models_manager::manager::RefreshStrategy;
 use genex_protocol::config_types::ApprovalsReviewer;
@@ -73,7 +73,7 @@ async fn guardian_reused_reviewer_avoids_stale_catalog_lookup() -> Result<()> {
         responses::mount_models_once_with_etag(&server, catalog.clone(), ETAG).await;
 
     let mut builder = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.4");
     builder = builder.with_config(|config| {
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
@@ -169,7 +169,7 @@ async fn renews_cache_ttl_on_matching_models_etag() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex().with_auth(CodexAuth::from_api_key("test-api-key"));
+    let mut builder = test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
     builder = builder.with_config(|config| {
         config.model = Some("gpt-5.2".to_string());
         config.model_provider.request_max_retries = Some(0);
@@ -274,7 +274,7 @@ async fn matching_models_etag_does_not_rewrite_recent_cache() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex().with_auth(CodexAuth::from_api_key("test-api-key"));
+    let mut builder = test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
     builder = builder.with_config(|config| {
         config.model = Some("gpt-5.2".to_string());
         config.model_provider.request_max_retries = Some(0);
@@ -334,7 +334,7 @@ async fn matching_models_etag_renews_cache_after_half_its_lifetime() -> Result<(
     )
     .await;
 
-    let mut builder = test_genex().with_auth(CodexAuth::from_api_key("test-api-key"));
+    let mut builder = test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
     builder = builder.with_config(|config| {
         config.model = Some("gpt-5.2".to_string());
         config.model_provider.request_max_retries = Some(0);
@@ -394,13 +394,13 @@ async fn uses_cache_when_version_matches() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex().with_auth(CodexAuth::from_api_key("test-api-key"));
+    let mut builder = test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
     let identity = genex_model_provider::test_support::models_cache_entry(
         &genex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/v1",
             server.uri()
         ))),
-        Some(&CodexAuth::from_api_key("test-api-key")),
+        Some(&GenexAuth::from_api_key("test-api-key")),
         Vec::new(),
     )
     .identity;
@@ -469,13 +469,13 @@ async fn refreshes_when_cache_version_missing() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex().with_auth(CodexAuth::from_api_key("test-api-key"));
+    let mut builder = test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
     let identity = genex_model_provider::test_support::models_cache_entry(
         &genex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/v1",
             server.uri()
         ))),
-        Some(&CodexAuth::from_api_key("test-api-key")),
+        Some(&GenexAuth::from_api_key("test-api-key")),
         Vec::new(),
     )
     .identity;
@@ -529,13 +529,13 @@ async fn refreshes_when_cache_version_differs() -> Result<()> {
         models_mocks.push(responses::mount_models_once(&server, models_response.clone()).await);
     }
 
-    let mut builder = test_genex().with_auth(CodexAuth::from_api_key("test-api-key"));
+    let mut builder = test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
     let identity = genex_model_provider::test_support::models_cache_entry(
         &genex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/v1",
             server.uri()
         ))),
-        Some(&CodexAuth::from_api_key("test-api-key")),
+        Some(&GenexAuth::from_api_key("test-api-key")),
         Vec::new(),
     )
     .identity;

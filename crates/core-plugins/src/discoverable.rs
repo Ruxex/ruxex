@@ -1,6 +1,6 @@
 use anyhow::Context;
 use genex_config::skill_config_rules_from_stack;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use std::collections::HashSet;
 use tracing::warn;
 
@@ -29,7 +29,7 @@ impl PluginsManager {
     pub async fn list_tool_suggest_discoverable_plugins(
         &self,
         input: &ToolSuggestPluginDiscoveryInput,
-        _auth: Option<&CodexAuth>,
+        _auth: Option<&GenexAuth>,
     ) -> anyhow::Result<Vec<ToolSuggestDiscoverablePlugin>> {
         if !input.plugins.plugins_enabled {
             return Ok(Vec::new());

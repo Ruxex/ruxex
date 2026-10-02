@@ -184,7 +184,7 @@ async fn completion_failed_and_interrupted_turns_do_not_report_success() {
             turn.error = (status == AppServerTurnStatus::Failed).then(|| AppServerTurnError {
                 misalignment: None,
                 message: "The task failed.".to_string(),
-                codex_error_info: None,
+                genex_error_info: None,
                 additional_details: None,
             });
             if let Some(replay_kind) = replay_kind {

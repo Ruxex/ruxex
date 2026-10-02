@@ -1,6 +1,6 @@
 use genex_core::TurnInputRequest;
 use genex_login::AuthHeaders;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_login::auth::BedrockAccessKeysAuth;
 use genex_model_provider_info::AwsAuthRefreshConfig;
 use genex_model_provider_info::AwsCredentialExportConfig;
@@ -49,7 +49,7 @@ async fn header_auth_is_attached_to_responses_requests() -> anyhow::Result<()> {
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, HeaderValue::from_static("Bearer external"));
     headers.insert("x-external-auth", HeaderValue::from_static("enabled"));
-    let mut builder = test_genex().with_auth(CodexAuth::Headers(
+    let mut builder = test_genex().with_auth(GenexAuth::Headers(
         AuthHeaders::new(headers).with_account_id("account-123"),
     ));
     let test = builder.build_with_auto_env(&server).await?;
@@ -83,7 +83,7 @@ async fn custom_provider_does_not_receive_ambient_auth_headers() -> anyhow::Resu
     let provider =
         create_responses_provider_with_base_url(&format!("{}/v1", server.uri()), WireApi::Responses);
     let mut builder = test_genex()
-        .with_auth(CodexAuth::Headers(AuthHeaders::new(headers)))
+        .with_auth(GenexAuth::Headers(AuthHeaders::new(headers)))
         .with_config(move |config| {
             config.model_provider_id = provider.name.clone();
             config.model_provider = provider;
@@ -113,7 +113,7 @@ async fn custom_provider_uses_explicit_bearer_without_ambient_account() -> anyho
         create_responses_provider_with_base_url(&format!("{}/v1", server.uri()), WireApi::Responses);
     provider.experimental_bearer_token = Some("provider-token".into());
     let mut builder = test_genex()
-        .with_auth(CodexAuth::Headers(AuthHeaders::new(headers)))
+        .with_auth(GenexAuth::Headers(AuthHeaders::new(headers)))
         .with_config(move |config| {
             config.model_provider_id = provider.name.clone();
             config.model_provider = provider;
@@ -151,7 +151,7 @@ async fn amazon_bedrock_managed_access_keys_sign_requests() -> anyhow::Result<()
 
     let mut builder = test_genex()
         .with_model("provider.gpt-5.5")
-        .with_auth(CodexAuth::BedrockAccessKeys(BedrockAccessKeysAuth {
+        .with_auth(GenexAuth::BedrockAccessKeys(BedrockAccessKeysAuth {
             access_key_id: "managed-access-key-id".to_string(),
             secret_access_key: "managed-secret-access-key".to_string(),
             session_token: Some("managed-session-token".to_string()),
@@ -273,7 +273,7 @@ async fn amazon_bedrock_credential_export_precedence_and_caching() -> anyhow::Re
 
     let mut builder = test_genex()
         .with_model("provider.gpt-5.5")
-        .with_auth(CodexAuth::BedrockAccessKeys(BedrockAccessKeysAuth {
+        .with_auth(GenexAuth::BedrockAccessKeys(BedrockAccessKeysAuth {
             access_key_id: "managed-access-key-id".to_string(),
             secret_access_key: "managed-secret-access-key".to_string(),
             session_token: Some("managed-session-token".to_string()),

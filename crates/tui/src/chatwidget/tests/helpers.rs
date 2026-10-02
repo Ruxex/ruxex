@@ -457,14 +457,14 @@ pub(super) fn handle_token_count(chat: &mut ChatWidget, info: Option<TokenUsageI
 pub(super) fn handle_error(
     chat: &mut ChatWidget,
     message: impl Into<String>,
-    codex_error_info: Option<CodexErrorInfo>,
+    genex_error_info: Option<GenexErrorInfo>,
 ) {
     chat.handle_server_notification(
         ServerNotification::Error(ErrorNotification {
             error: AppServerTurnError {
                 misalignment: None,
                 message: message.into(),
-                codex_error_info,
+                genex_error_info,
                 additional_details: None,
             },
             will_retry: false,
@@ -498,7 +498,7 @@ pub(super) fn handle_stream_error_with_replay(
             error: AppServerTurnError {
                 misalignment: None,
                 message: message.into(),
-                codex_error_info: None,
+                genex_error_info: None,
                 additional_details,
             },
             will_retry: true,

@@ -1951,7 +1951,7 @@ async fn server_overloaded_error_does_not_switch_models() {
     handle_error(
         &mut chat,
         "server overloaded",
-        Some(CodexErrorInfo::ServerOverloaded),
+        Some(GenexErrorInfo::ServerOverloaded),
     );
 
     while let Ok(event) = rx.try_recv() {

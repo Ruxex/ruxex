@@ -11,7 +11,7 @@ use base64::Engine;
 use chrono::Utc;
 use genex_http_client::HttpClientFactory;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_model_provider::create_model_provider;
 use genex_model_provider_info::built_in_model_providers;
 use genex_models_manager::cache::ModelsCache;
@@ -185,7 +185,7 @@ fn models_manager(
         cache,
         endpoint,
         Some(AuthManager::from_auth_for_testing(
-            CodexAuth::from_api_key("test-api-key"),
+            GenexAuth::from_api_key("test-api-key"),
         )),
     ))
 }
@@ -202,7 +202,7 @@ async fn run_agent_with_model(models_manager: SharedModelsManager, model_slug: &
     )
     .await;
     let mut builder = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_models_manager(models_manager);
     let test = builder.build(&server).await?;
     let available_models = test
@@ -300,7 +300,7 @@ async fn injected_cache_error_falls_back_for_agent_model_selection() -> Result<(
 async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn() -> Result<()> {
     let server = wiremock::MockServer::start().await;
     let home = Arc::new(TempDir::new()?);
-    let initial_auth = CodexAuth::from_api_key("test-api-key");
+    let initial_auth = GenexAuth::from_api_key("test-api-key");
     let auth = AuthManager::from_auth_for_testing_with_home(
         initial_auth.clone(),
         home.path().to_path_buf(),

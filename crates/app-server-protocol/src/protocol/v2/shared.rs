@@ -3,7 +3,7 @@ use crate::TS;
 use genex_experimental_api_macros::ExperimentalApi;
 use genex_protocol::config_types::SandboxMode as CoreSandboxMode;
 use genex_protocol::protocol::AskForApproval as CoreAskForApproval;
-use genex_protocol::protocol::CodexErrorInfo as CoreCodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo as CoreGenexErrorInfo;
 use genex_protocol::protocol::GranularApprovalConfig as CoreGranularApprovalConfig;
 use genex_protocol::protocol::NonSteerableTurnKind as CoreNonSteerableTurnKind;
 use serde::Deserialize;
@@ -53,11 +53,11 @@ pub enum NonSteerableTurnKind {
 /// This translation layer make sure that we expose codex error code in camel case.
 ///
 /// When an upstream HTTP status is available (for example, from the Responses API or a provider),
-/// it is forwarded in `httpStatusCode` on the relevant `codexErrorInfo` variant.
+/// it is forwarded in `httpStatusCode` on the relevant `genexErrorInfo` variant.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
-pub enum CodexErrorInfo {
+pub enum GenexErrorInfo {
     ContextWindowExceeded,
     SessionBudgetExceeded,
     UsageLimitExceeded,
@@ -103,41 +103,41 @@ pub enum CodexErrorInfo {
     Other,
 }
 
-impl From<CoreCodexErrorInfo> for CodexErrorInfo {
-    fn from(value: CoreCodexErrorInfo) -> Self {
+impl From<CoreGenexErrorInfo> for GenexErrorInfo {
+    fn from(value: CoreGenexErrorInfo) -> Self {
         match value {
-            CoreCodexErrorInfo::ContextWindowExceeded => CodexErrorInfo::ContextWindowExceeded,
-            CoreCodexErrorInfo::SessionBudgetExceeded => CodexErrorInfo::SessionBudgetExceeded,
-            CoreCodexErrorInfo::UsageLimitExceeded => CodexErrorInfo::UsageLimitExceeded,
-            CoreCodexErrorInfo::RateLimitExceeded => CodexErrorInfo::RateLimitExceeded,
-            CoreCodexErrorInfo::ServerOverloaded => CodexErrorInfo::ServerOverloaded,
-            CoreCodexErrorInfo::CyberPolicy => CodexErrorInfo::CyberPolicy,
-            CoreCodexErrorInfo::MisalignmentPolicyViolation => {
-                CodexErrorInfo::MisalignmentPolicyViolation
+            CoreGenexErrorInfo::ContextWindowExceeded => GenexErrorInfo::ContextWindowExceeded,
+            CoreGenexErrorInfo::SessionBudgetExceeded => GenexErrorInfo::SessionBudgetExceeded,
+            CoreGenexErrorInfo::UsageLimitExceeded => GenexErrorInfo::UsageLimitExceeded,
+            CoreGenexErrorInfo::RateLimitExceeded => GenexErrorInfo::RateLimitExceeded,
+            CoreGenexErrorInfo::ServerOverloaded => GenexErrorInfo::ServerOverloaded,
+            CoreGenexErrorInfo::CyberPolicy => GenexErrorInfo::CyberPolicy,
+            CoreGenexErrorInfo::MisalignmentPolicyViolation => {
+                GenexErrorInfo::MisalignmentPolicyViolation
             }
-            CoreCodexErrorInfo::HttpConnectionFailed { http_status_code } => {
-                CodexErrorInfo::HttpConnectionFailed { http_status_code }
+            CoreGenexErrorInfo::HttpConnectionFailed { http_status_code } => {
+                GenexErrorInfo::HttpConnectionFailed { http_status_code }
             }
-            CoreCodexErrorInfo::ResponseStreamConnectionFailed { http_status_code } => {
-                CodexErrorInfo::ResponseStreamConnectionFailed { http_status_code }
+            CoreGenexErrorInfo::ResponseStreamConnectionFailed { http_status_code } => {
+                GenexErrorInfo::ResponseStreamConnectionFailed { http_status_code }
             }
-            CoreCodexErrorInfo::InternalServerError => CodexErrorInfo::InternalServerError,
-            CoreCodexErrorInfo::Unauthorized => CodexErrorInfo::Unauthorized,
-            CoreCodexErrorInfo::BadRequest => CodexErrorInfo::BadRequest,
-            CoreCodexErrorInfo::ThreadRollbackFailed => CodexErrorInfo::ThreadRollbackFailed,
-            CoreCodexErrorInfo::SandboxError => CodexErrorInfo::SandboxError,
-            CoreCodexErrorInfo::ResponseStreamDisconnected { http_status_code } => {
-                CodexErrorInfo::ResponseStreamDisconnected { http_status_code }
+            CoreGenexErrorInfo::InternalServerError => GenexErrorInfo::InternalServerError,
+            CoreGenexErrorInfo::Unauthorized => GenexErrorInfo::Unauthorized,
+            CoreGenexErrorInfo::BadRequest => GenexErrorInfo::BadRequest,
+            CoreGenexErrorInfo::ThreadRollbackFailed => GenexErrorInfo::ThreadRollbackFailed,
+            CoreGenexErrorInfo::SandboxError => GenexErrorInfo::SandboxError,
+            CoreGenexErrorInfo::ResponseStreamDisconnected { http_status_code } => {
+                GenexErrorInfo::ResponseStreamDisconnected { http_status_code }
             }
-            CoreCodexErrorInfo::ResponseTooManyFailedAttempts { http_status_code } => {
-                CodexErrorInfo::ResponseTooManyFailedAttempts { http_status_code }
+            CoreGenexErrorInfo::ResponseTooManyFailedAttempts { http_status_code } => {
+                GenexErrorInfo::ResponseTooManyFailedAttempts { http_status_code }
             }
-            CoreCodexErrorInfo::ActiveTurnNotSteerable { turn_kind } => {
-                CodexErrorInfo::ActiveTurnNotSteerable {
+            CoreGenexErrorInfo::ActiveTurnNotSteerable { turn_kind } => {
+                GenexErrorInfo::ActiveTurnNotSteerable {
                     turn_kind: turn_kind.into(),
                 }
             }
-            CoreCodexErrorInfo::Other => CodexErrorInfo::Other,
+            CoreGenexErrorInfo::Other => GenexErrorInfo::Other,
         }
     }
 }

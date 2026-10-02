@@ -235,14 +235,14 @@ async fn steer_rejection_queues_review_follow_up_before_existing_queued_messages
     handle_error(
         &mut chat,
         "cannot steer a review turn",
-        Some(CodexErrorInfo::ActiveTurnNotSteerable {
+        Some(GenexErrorInfo::ActiveTurnNotSteerable {
             turn_kind: NonSteerableTurnKind::Review,
         }),
     );
     handle_error(
         &mut chat,
         "cannot steer a review turn",
-        Some(CodexErrorInfo::ActiveTurnNotSteerable {
+        Some(GenexErrorInfo::ActiveTurnNotSteerable {
             turn_kind: NonSteerableTurnKind::Review,
         }),
     );

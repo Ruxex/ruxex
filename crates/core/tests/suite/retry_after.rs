@@ -4,9 +4,9 @@ use genex_client::RetryPolicy;
 use genex_client::run_with_retry;
 use genex_http_client::Request;
 use genex_http_client::TransportError;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_models_manager::test_support::test_models_response;
-use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::Op;
 use genex_protocol::turn_input::TurnInputRequest;
@@ -377,8 +377,8 @@ async fn responses_http_overload_without_retry_after_exhausts_request_retries() 
                 EventMsg::Error(error) => {
                     error_events += 1;
                     assert_eq!(
-                        error.codex_error_info,
-                        Some(CodexErrorInfo::ServerOverloaded)
+                        error.genex_error_info,
+                        Some(GenexErrorInfo::ServerOverloaded)
                     );
                     assert_eq!(
                         error.message,
@@ -388,8 +388,8 @@ async fn responses_http_overload_without_retry_after_exhausts_request_retries() 
                 EventMsg::StreamError(_) => stream_error_events += 1,
                 EventMsg::TurnComplete(event) => {
                     assert_eq!(
-                        event.error.and_then(|error| error.codex_error_info),
-                        Some(CodexErrorInfo::ServerOverloaded)
+                        event.error.and_then(|error| error.genex_error_info),
+                        Some(GenexErrorInfo::ServerOverloaded)
                     );
                     break;
                 }
@@ -449,7 +449,7 @@ async fn compact_v2_uses_local_backoff_despite_retry_after() -> Result<()> {
     )
     .await;
     let test = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(1);
             config.model_provider.stream_max_retries = Some(0);
@@ -524,7 +524,7 @@ async fn compact_v2_stream_failure_uses_local_backoff_despite_retry_after() -> R
     )
     .await;
     let test = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(0);
             config.model_provider.stream_max_retries = Some(1);
@@ -593,7 +593,7 @@ async fn compact_v2_stream_failure_without_retry_after_exhausts_stream_retries()
     )
     .await;
     let test = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(0);
             config.model_provider.stream_max_retries = Some(1);
@@ -623,16 +623,16 @@ async fn compact_v2_stream_failure_without_retry_after_exhausts_stream_retries()
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(
-                    error.codex_error_info,
-                    Some(CodexErrorInfo::RateLimitExceeded)
+                    error.genex_error_info,
+                    Some(GenexErrorInfo::RateLimitExceeded)
                 );
                 assert!(error.message.contains("Rate limit exceeded."));
             }
             EventMsg::StreamError(_) => stream_error_events += 1,
             EventMsg::TurnComplete(event) => {
                 assert_eq!(
-                    event.error.and_then(|error| error.codex_error_info),
-                    Some(CodexErrorInfo::RateLimitExceeded)
+                    event.error.and_then(|error| error.genex_error_info),
+                    Some(GenexErrorInfo::RateLimitExceeded)
                 );
                 break;
             }
@@ -694,7 +694,7 @@ async fn compact_v2_rate_limit_message_uses_server_advised_retry_delay() -> Resu
     )
     .await;
     let test = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(0);
             config.model_provider.stream_max_retries = Some(1);
@@ -768,7 +768,7 @@ async fn compact_v2_rate_limit_message_without_retry_after_uses_server_advised_d
     )
     .await;
     let test = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(0);
             config.model_provider.stream_max_retries = Some(1);
@@ -832,7 +832,7 @@ async fn compact_v2_overload_without_retry_after_exhausts_request_retries() -> R
     )
     .await;
     let test = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(2);
             config.model_provider.stream_max_retries = Some(2);
@@ -873,8 +873,8 @@ async fn compact_v2_overload_without_retry_after_exhausts_request_retries() -> R
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(
-                    error.codex_error_info,
-                    Some(CodexErrorInfo::ServerOverloaded)
+                    error.genex_error_info,
+                    Some(GenexErrorInfo::ServerOverloaded)
                 );
                 assert!(
                     error
@@ -885,8 +885,8 @@ async fn compact_v2_overload_without_retry_after_exhausts_request_retries() -> R
             EventMsg::StreamError(_) => stream_error_events += 1,
             EventMsg::TurnComplete(event) => {
                 assert_eq!(
-                    event.error.and_then(|error| error.codex_error_info),
-                    Some(CodexErrorInfo::ServerOverloaded)
+                    event.error.and_then(|error| error.genex_error_info),
+                    Some(GenexErrorInfo::ServerOverloaded)
                 );
                 break;
             }
@@ -1042,16 +1042,16 @@ async fn sse_failure_without_retry_after_exhausts_stream_retries(code: &str) -> 
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(
-                    error.codex_error_info,
-                    Some(CodexErrorInfo::RateLimitExceeded)
+                    error.genex_error_info,
+                    Some(GenexErrorInfo::RateLimitExceeded)
                 );
                 assert!(error.message.contains("Rate limit exceeded."));
             }
             EventMsg::StreamError(_) => stream_error_events += 1,
             EventMsg::TurnComplete(event) => {
                 assert_eq!(
-                    event.error.and_then(|error| error.codex_error_info),
-                    Some(CodexErrorInfo::RateLimitExceeded)
+                    event.error.and_then(|error| error.genex_error_info),
+                    Some(GenexErrorInfo::RateLimitExceeded)
                 );
                 break;
             }
@@ -1215,8 +1215,8 @@ async fn sse_overload_with_retry_after_is_terminal() -> Result<()> {
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(
-                    error.codex_error_info,
-                    Some(CodexErrorInfo::ServerOverloaded)
+                    error.genex_error_info,
+                    Some(GenexErrorInfo::ServerOverloaded)
                 );
                 assert_eq!(
                     error.message,
@@ -1226,8 +1226,8 @@ async fn sse_overload_with_retry_after_is_terminal() -> Result<()> {
             EventMsg::StreamError(_) => stream_error_events += 1,
             EventMsg::TurnComplete(event) => {
                 assert_eq!(
-                    event.error.and_then(|error| error.codex_error_info),
-                    Some(CodexErrorInfo::ServerOverloaded)
+                    event.error.and_then(|error| error.genex_error_info),
+                    Some(GenexErrorInfo::ServerOverloaded)
                 );
                 break;
             }
@@ -1287,8 +1287,8 @@ async fn sse_overload_without_retry_after_is_terminal() -> Result<()> {
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(
-                    error.codex_error_info,
-                    Some(CodexErrorInfo::ServerOverloaded)
+                    error.genex_error_info,
+                    Some(GenexErrorInfo::ServerOverloaded)
                 );
                 assert_eq!(
                     error.message,
@@ -1298,8 +1298,8 @@ async fn sse_overload_without_retry_after_is_terminal() -> Result<()> {
             EventMsg::StreamError(_) => stream_error_events += 1,
             EventMsg::TurnComplete(event) => {
                 assert_eq!(
-                    event.error.and_then(|error| error.codex_error_info),
-                    Some(CodexErrorInfo::ServerOverloaded)
+                    event.error.and_then(|error| error.genex_error_info),
+                    Some(GenexErrorInfo::ServerOverloaded)
                 );
                 break;
             }
@@ -1503,8 +1503,8 @@ async fn websocket_rate_limit_with_nested_retry_after_is_terminal() -> Result<()
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(
-                    error.codex_error_info,
-                    Some(CodexErrorInfo::ResponseTooManyFailedAttempts {
+                    error.genex_error_info,
+                    Some(GenexErrorInfo::ResponseTooManyFailedAttempts {
                         http_status_code: Some(429),
                     })
                 );
@@ -1512,8 +1512,8 @@ async fn websocket_rate_limit_with_nested_retry_after_is_terminal() -> Result<()
             EventMsg::StreamError(_) => stream_error_events += 1,
             EventMsg::TurnComplete(event) => {
                 assert_eq!(
-                    event.error.and_then(|error| error.codex_error_info),
-                    Some(CodexErrorInfo::ResponseTooManyFailedAttempts {
+                    event.error.and_then(|error| error.genex_error_info),
+                    Some(GenexErrorInfo::ResponseTooManyFailedAttempts {
                         http_status_code: Some(429),
                     })
                 );
@@ -1575,8 +1575,8 @@ async fn websocket_rate_limit_without_retry_after_is_terminal() -> Result<()> {
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(
-                    error.codex_error_info,
-                    Some(CodexErrorInfo::ResponseTooManyFailedAttempts {
+                    error.genex_error_info,
+                    Some(GenexErrorInfo::ResponseTooManyFailedAttempts {
                         http_status_code: Some(429),
                     })
                 );
@@ -1584,8 +1584,8 @@ async fn websocket_rate_limit_without_retry_after_is_terminal() -> Result<()> {
             EventMsg::StreamError(_) => stream_error_events += 1,
             EventMsg::TurnComplete(event) => {
                 assert_eq!(
-                    event.error.and_then(|error| error.codex_error_info),
-                    Some(CodexErrorInfo::ResponseTooManyFailedAttempts {
+                    event.error.and_then(|error| error.genex_error_info),
+                    Some(GenexErrorInfo::ResponseTooManyFailedAttempts {
                         http_status_code: Some(429),
                     })
                 );
@@ -1652,8 +1652,8 @@ async fn websocket_overload_with_nested_retry_after_is_terminal() -> Result<()> 
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(
-                    error.codex_error_info,
-                    Some(CodexErrorInfo::ServerOverloaded)
+                    error.genex_error_info,
+                    Some(GenexErrorInfo::ServerOverloaded)
                 );
                 assert_eq!(
                     error.message,
@@ -1668,8 +1668,8 @@ async fn websocket_overload_with_nested_retry_after_is_terminal() -> Result<()> 
             }
             EventMsg::TurnComplete(event) => {
                 assert_eq!(
-                    event.error.and_then(|error| error.codex_error_info),
-                    Some(CodexErrorInfo::ServerOverloaded)
+                    event.error.and_then(|error| error.genex_error_info),
+                    Some(GenexErrorInfo::ServerOverloaded)
                 );
                 break;
             }
@@ -1736,8 +1736,8 @@ async fn websocket_overload_without_retry_after_is_terminal() -> Result<()> {
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(
-                    error.codex_error_info,
-                    Some(CodexErrorInfo::ServerOverloaded)
+                    error.genex_error_info,
+                    Some(GenexErrorInfo::ServerOverloaded)
                 );
                 assert_eq!(
                     error.message,
@@ -1752,8 +1752,8 @@ async fn websocket_overload_without_retry_after_is_terminal() -> Result<()> {
             }
             EventMsg::TurnComplete(event) => {
                 assert_eq!(
-                    event.error.and_then(|error| error.codex_error_info),
-                    Some(CodexErrorInfo::ServerOverloaded)
+                    event.error.and_then(|error| error.genex_error_info),
+                    Some(GenexErrorInfo::ServerOverloaded)
                 );
                 break;
             }

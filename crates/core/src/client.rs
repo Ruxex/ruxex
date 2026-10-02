@@ -32,7 +32,7 @@ use std::sync::OnceLock;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
-use crate::CodexResponsesHeaders;
+use crate::GenexResponsesHeaders;
 use async_channel::Sender;
 use genex_api::AggregateStreamExt;
 use genex_api::ApiError;
@@ -64,7 +64,7 @@ use genex_api::response_create_client_metadata;
 use genex_http_client::ClientRouteClass;
 use genex_http_client::HttpClientFactory;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_login::RefreshTokenError;
 use genex_login::UnauthorizedRecovery;
 use genex_login::default_client::ClientRedirectPolicy;
@@ -195,7 +195,7 @@ struct ModelClientState {
 /// Keeping this as a single bundle ensures prewarm and normal request paths
 /// share the same auth/provider setup flow.
 struct CurrentClientSetup {
-    auth: Option<CodexAuth>,
+    auth: Option<GenexAuth>,
     auth_owner_generation: Option<u64>,
     auth_revision: Option<u64>,
     api_provider: ApiProvider,
@@ -229,7 +229,7 @@ impl RequestRouteTelemetry {
 pub struct ModelClient {
     state: Arc<ModelClientState>,
     prompt_cache_key_override: Option<String>,
-    codex_responses_headers: Option<Arc<CodexResponsesHeaders>>,
+    codex_responses_headers: Option<Arc<GenexResponsesHeaders>>,
     event_sender: Option<Sender<ProtocolEvent>>,
     http_client_factory: HttpClientFactory,
     restored_history: bool,
@@ -465,7 +465,7 @@ impl ModelClient {
         mut self,
         prompt_cache_key_override: Option<String>,
         event_sender: Sender<ProtocolEvent>,
-        codex_responses_headers: Option<Arc<CodexResponsesHeaders>>,
+        codex_responses_headers: Option<Arc<GenexResponsesHeaders>>,
     ) -> Self {
         self.prompt_cache_key_override = prompt_cache_key_override;
         self.event_sender = Some(event_sender);
@@ -833,7 +833,7 @@ impl ModelClient {
         }
     }
 
-    fn responses_headers(&self, auth: Option<&CodexAuth>, model: &str) -> ApiHeaderMap {
+    fn responses_headers(&self, auth: Option<&GenexAuth>, model: &str) -> ApiHeaderMap {
         self.codex_responses_headers
             .as_ref()
             .filter(|config| config.model == model && self.uses_managed_auth(auth))
@@ -841,9 +841,9 @@ impl ModelClient {
             .unwrap_or_default()
     }
 
-    fn uses_managed_auth(&self, auth: Option<&CodexAuth>) -> bool {
+    fn uses_managed_auth(&self, auth: Option<&GenexAuth>) -> bool {
         let provider = self.state.provider.info();
-        auth.is_some_and(CodexAuth::uses_managed_auth)
+        auth.is_some_and(GenexAuth::uses_managed_auth)
             && provider.is_responses_provider()
             && provider.requires_auth
             && provider.env_key.is_none()
@@ -854,7 +854,7 @@ impl ModelClient {
 
     fn build_routing_hint_header(
         &self,
-        auth: Option<&CodexAuth>,
+        auth: Option<&GenexAuth>,
         model: &str,
         service_tier: Option<&str>,
     ) -> Option<HeaderValue> {
@@ -1228,9 +1228,9 @@ impl ModelClientSession {
             ))
     }
 
-    fn responses_request_compression(&self, auth: Option<&CodexAuth>) -> Compression {
+    fn responses_request_compression(&self, auth: Option<&GenexAuth>) -> Compression {
         if self.client.state.enable_request_compression
-            && auth.is_some_and(CodexAuth::uses_managed_auth)
+            && auth.is_some_and(GenexAuth::uses_managed_auth)
             && self.client.state.provider.info().is_responses_provider()
         {
             Compression::Zstd

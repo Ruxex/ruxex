@@ -278,11 +278,11 @@ impl ChatWidget {
 
     pub(super) fn handle_app_server_steer_rejected_error(
         &mut self,
-        codex_error_info: &AppServerCodexErrorInfo,
+        genex_error_info: &AppServerGenexErrorInfo,
     ) -> bool {
         matches!(
-            codex_error_info,
-            AppServerCodexErrorInfo::ActiveTurnNotSteerable { .. }
+            genex_error_info,
+            AppServerGenexErrorInfo::ActiveTurnNotSteerable { .. }
         ) && self.enqueue_rejected_steer()
     }
 
@@ -425,15 +425,15 @@ impl ChatWidget {
     pub(super) fn handle_non_retry_error(
         &mut self,
         message: String,
-        codex_error_info: Option<AppServerCodexErrorInfo>,
+        genex_error_info: Option<AppServerGenexErrorInfo>,
     ) {
-        if codex_error_info == Some(AppServerCodexErrorInfo::MisalignmentPolicyViolation) {
+        if genex_error_info == Some(AppServerGenexErrorInfo::MisalignmentPolicyViolation) {
             self.on_misalignment_policy_violation();
-        } else if codex_error_info
+        } else if genex_error_info
             .as_ref()
             .is_some_and(|info| self.handle_app_server_steer_rejected_error(info))
         {
-        } else if codex_error_info
+        } else if genex_error_info
             .as_ref()
             .is_some_and(is_app_server_cyber_policy_error)
         {
@@ -451,7 +451,7 @@ impl ChatWidget {
             self.add_to_history(history_cell::new_safety_access_block_event());
             self.request_redraw();
             self.maybe_send_next_queued_input();
-        } else if let Some(info) = codex_error_info
+        } else if let Some(info) = genex_error_info
             .as_ref()
             .and_then(app_server_rate_limit_error_kind)
         {

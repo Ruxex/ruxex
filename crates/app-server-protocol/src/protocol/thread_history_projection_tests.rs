@@ -76,7 +76,7 @@ fn projects_failed_turn_completion_as_snapshot() {
     let error = ErrorEvent {
         misalignment: None,
         message: "request failed".to_string(),
-        codex_error_info: None,
+        genex_error_info: None,
     };
 
     let changes = project(RolloutItem::EventMsg(EventMsg::TurnComplete(
@@ -101,7 +101,7 @@ fn projects_failed_turn_completion_as_snapshot() {
                 error: Some(TurnError {
                     misalignment: None,
                     message: "request failed".to_string(),
-                    codex_error_info: None,
+                    genex_error_info: None,
                     additional_details: None,
                 }),
                 started_at: Some(10),

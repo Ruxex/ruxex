@@ -15,7 +15,7 @@ use genex_api::Provider;
 use genex_api::SharedAuthProvider;
 use genex_api::TransportError;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_LUNA_MODEL_ID;
 use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_TERRA_MODEL_ID;
 use genex_model_provider_info::AMAZON_BEDROCK_RUNTIME_GLOBAL_GPT_5_6_LUNA_MODEL_ID;
@@ -118,7 +118,7 @@ impl AmazonBedrockModelProvider {
         auth::auth_source(&self.info, self.auth_manager.as_deref(), std::env::var)
     }
 
-    fn managed_auth(&self) -> Option<CodexAuth> {
+    fn managed_auth(&self) -> Option<GenexAuth> {
         let source = self.auth_source();
         self.auth_manager
             .as_deref()
@@ -128,10 +128,10 @@ impl AmazonBedrockModelProvider {
                     (source, auth),
                     (
                         auth::BedrockAuthSource::ManagedBearerToken,
-                        CodexAuth::BedrockApiKey(_)
+                        GenexAuth::BedrockApiKey(_)
                     ) | (
                         auth::BedrockAuthSource::ManagedAccessKeys,
-                        CodexAuth::BedrockAccessKeys(_)
+                        GenexAuth::BedrockAccessKeys(_)
                     )
                 )
             })
@@ -147,7 +147,7 @@ impl AmazonBedrockModelProvider {
                 ))
     }
 
-    async fn auth(&self) -> Option<CodexAuth> {
+    async fn auth(&self) -> Option<GenexAuth> {
         match self.auth_source() {
             auth::BedrockAuthSource::CommandBearerToken => match self.auth_manager.as_ref() {
                 Some(auth_manager) => auth_manager.auth().await,
@@ -308,7 +308,7 @@ impl ModelProvider for AmazonBedrockModelProvider {
         })
     }
 
-    fn auth(&self) -> ModelProviderFuture<'_, Option<CodexAuth>> {
+    fn auth(&self) -> ModelProviderFuture<'_, Option<GenexAuth>> {
         Box::pin(AmazonBedrockModelProvider::auth(self))
     }
 
@@ -480,7 +480,7 @@ mod tests {
             region: "us-east-1".to_string(),
         };
         let auth_manager =
-            AuthManager::from_auth_for_testing(CodexAuth::BedrockApiKey(managed_auth.clone()));
+            AuthManager::from_auth_for_testing(GenexAuth::BedrockApiKey(managed_auth.clone()));
         let aws = ModelProviderAwsAuthInfo {
             profile: None,
             region: Some("us-west-2".to_string()),
@@ -504,7 +504,7 @@ mod tests {
         ));
         assert_eq!(
             provider.auth().await,
-            Some(CodexAuth::BedrockApiKey(managed_auth))
+            Some(GenexAuth::BedrockApiKey(managed_auth))
         );
         assert_eq!(
             provider.account_state(),
@@ -535,7 +535,7 @@ mod tests {
         assert!(!provider.uses_aws_auth_recovery());
 
         let access_keys_auth_manager = AuthManager::from_auth_for_testing(
-            CodexAuth::BedrockAccessKeys(BedrockAccessKeysAuth {
+            GenexAuth::BedrockAccessKeys(BedrockAccessKeysAuth {
                 access_key_id: "managed-access-key-id".to_string(),
                 secret_access_key: "managed-secret-access-key".to_string(),
                 session_token: None,
@@ -587,7 +587,7 @@ mod tests {
     async fn provider_auth_is_not_exposed_to_bedrock() {
         let provider = AmazonBedrockModelProvider::new(
             ModelProviderInfo::create_amazon_bedrock_provider(/*aws*/ None),
-            Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
+            Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
                 "provider-api-key",
             ))),
         );
@@ -648,7 +648,7 @@ mod tests {
             region: "eu-west-1".to_string(),
         };
         let auth_manager =
-            AuthManager::from_auth_for_testing(CodexAuth::BedrockApiKey(managed_auth));
+            AuthManager::from_auth_for_testing(GenexAuth::BedrockApiKey(managed_auth));
         let provider = AmazonBedrockModelProvider::new(
             ModelProviderInfo::create_amazon_bedrock_runtime_provider(/*aws*/ None),
             Some(auth_manager),

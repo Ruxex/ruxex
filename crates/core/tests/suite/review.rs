@@ -7,7 +7,7 @@ use genex_core::find_thread_path_by_id_str;
 use genex_exec_server::CreateDirectoryOptions;
 use genex_features::Feature;
 use genex_history::RolloutItem;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_protocol::config_types::ApprovalsReviewer;
 use genex_protocol::config_types::CollaborationMode;
 use genex_protocol::config_types::ModeKind;
@@ -876,7 +876,7 @@ async fn review_uses_custom_review_model_from_config() {
     let codex_home = Arc::new(TempDir::new().unwrap());
     let test = test_genex()
         .with_home(Arc::clone(&codex_home))
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some("gpt-4.1".to_string());
             config.review_model = Some("custom-review-model".to_string());

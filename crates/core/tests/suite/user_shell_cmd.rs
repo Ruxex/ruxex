@@ -144,7 +144,7 @@ async fn user_shell_command_without_local_environment_emits_error() -> anyhow::R
         unreachable!()
     };
     assert_eq!(error.message, "shell is unavailable in this session");
-    assert_eq!(error.codex_error_info, None);
+    assert_eq!(error.genex_error_info, None);
 
     Ok(())
 }

@@ -24,7 +24,7 @@ use genex_exec_server::EnvironmentManager;
 use genex_exec_server::HttpClient;
 use genex_exec_server::RouteAwareHttpClient;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_protocol::capabilities::SelectedCapabilityRoot;
 use genex_protocol::mcp::CallToolResult;
 use genex_protocol::mcp::ClientMcpExtensions;
@@ -75,7 +75,7 @@ pub struct McpRuntimeInput {
     pub runtime_context: McpRuntimeContext,
     pub tool_catalog_cache: McpToolCatalogCache,
     pub client_mcp_extensions: ClientMcpExtensions,
-    pub auth: Option<CodexAuth>,
+    pub auth: Option<GenexAuth>,
     pub auth_manager: Option<Arc<AuthManager>>,
     /// Whether the owning thread may prompt the user; automatic decisions remain available.
     pub allow_user_interaction: bool,
@@ -97,7 +97,7 @@ pub struct McpRuntime {
 struct PublishedMcpRuntime {
     connections: Arc<McpConnectionSet>,
     config: Option<Arc<McpConfig>>,
-    auth: Option<CodexAuth>,
+    auth: Option<GenexAuth>,
     auth_token: Option<String>,
     plugins_available: bool,
     ready_selected_capability_roots: Vec<SelectedCapabilityRoot>,
@@ -321,7 +321,7 @@ impl McpRuntime {
     }
 
     /// Returns whether the published snapshot still belongs to the current credentials.
-    pub fn current_auth_matches(&self, auth: Option<&CodexAuth>) -> bool {
+    pub fn current_auth_matches(&self, auth: Option<&GenexAuth>) -> bool {
         let current = self.current.load();
         match (current.auth.as_ref(), auth) {
             (Some(previous), Some(latest)) => {

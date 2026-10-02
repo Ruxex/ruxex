@@ -36,7 +36,7 @@ use genex_protocol::permissions::FileSystemSandboxEntry as CoreFileSystemSandbox
 use genex_protocol::permissions::FileSystemSpecialPath as CoreFileSystemSpecialPath;
 use genex_protocol::protocol::AgentStatus as CoreAgentStatus;
 use genex_protocol::protocol::AskForApproval as CoreAskForApproval;
-use genex_protocol::protocol::CodexErrorInfo as CoreCodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo as CoreGenexErrorInfo;
 use genex_protocol::protocol::ExecCommandSource as CoreExecCommandSource;
 use genex_protocol::protocol::GranularApprovalConfig as CoreGranularApprovalConfig;
 use genex_protocol::protocol::NetworkAccess as CoreNetworkAccess;
@@ -4353,8 +4353,8 @@ fn marketplace_upgrade_response_serializes_camel_case_fields() {
 }
 
 #[test]
-fn codex_error_info_serializes_http_status_code_in_camel_case() {
-    let value = CodexErrorInfo::ResponseTooManyFailedAttempts {
+fn genex_error_info_serializes_http_status_code_in_camel_case() {
+    let value = GenexErrorInfo::ResponseTooManyFailedAttempts {
         http_status_code: Some(401),
     };
 
@@ -4371,22 +4371,22 @@ fn codex_error_info_serializes_http_status_code_in_camel_case() {
 #[test]
 fn core_error_info_converts_to_camel_case() {
     for (core, expected) in [
-        (CoreCodexErrorInfo::CyberPolicy, json!("cyberPolicy")),
+        (CoreGenexErrorInfo::CyberPolicy, json!("cyberPolicy")),
         (
-            CoreCodexErrorInfo::RateLimitExceeded,
+            CoreGenexErrorInfo::RateLimitExceeded,
             json!("rateLimitExceeded"),
         ),
     ] {
         assert_eq!(
-            serde_json::to_value(CodexErrorInfo::from(core)).unwrap(),
+            serde_json::to_value(GenexErrorInfo::from(core)).unwrap(),
             expected
         );
     }
 }
 
 #[test]
-fn codex_error_info_serializes_active_turn_not_steerable_turn_kind_in_camel_case() {
-    let value = CodexErrorInfo::ActiveTurnNotSteerable {
+fn genex_error_info_serializes_active_turn_not_steerable_turn_kind_in_camel_case() {
+    let value = GenexErrorInfo::ActiveTurnNotSteerable {
         turn_kind: NonSteerableTurnKind::Review,
     };
 

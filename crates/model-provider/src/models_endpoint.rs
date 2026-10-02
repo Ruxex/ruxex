@@ -14,7 +14,7 @@ use genex_http_client::ClientRouteClass;
 use genex_http_client::HttpClientFactory;
 use genex_login::AuthEnvTelemetry;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_login::collect_auth_env_telemetry;
 use genex_login::default_client::create_client_for_route_async;
 use genex_model_provider_info::ModelProviderInfo;
@@ -74,7 +74,7 @@ impl ModelsEndpoint {
         }
     }
 
-    async fn auth(&self) -> Option<CodexAuth> {
+    async fn auth(&self) -> Option<GenexAuth> {
         match self.auth_manager.as_ref() {
             Some(auth_manager) => auth_manager.auth().await,
             None => None,
@@ -90,7 +90,7 @@ impl ModelsEndpoint {
             genex_otel::start_global_timer("codex.remote_models.fetch_update.duration_ms", &[]);
         let auth = self.auth().await;
         let identity = crate::models_identity::identity(&self.provider_info, auth.as_ref())?;
-        let auth_mode = auth.as_ref().map(CodexAuth::auth_mode);
+        let auth_mode = auth.as_ref().map(GenexAuth::auth_mode);
         let api_provider = self.provider_info.to_api_provider(auth_mode)?;
         let api_auth = match self.auth_mode {
             ModelsEndpointAuthMode::ConfiguredProvider => {
@@ -360,7 +360,7 @@ mod tests {
             ),
         ] {
             let capture = Arc::new(CaptureModelsUrl(Mutex::new(/*t*/ None)));
-            let auth = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("test-api-key"));
+            let auth = AuthManager::from_auth_for_testing(GenexAuth::from_api_key("test-api-key"));
             let endpoint = Arc::new(ModelsEndpoint {
                 provider_info: ModelProviderInfo {
                     name: name.to_string(),
@@ -523,17 +523,17 @@ mod tests {
     struct RotatingAuth(std::sync::atomic::AtomicUsize);
 
     impl genex_login::ExternalAuth for RotatingAuth {
-        fn resolve(&self) -> genex_login::ExternalAuthFuture<'_, CodexAuth> {
+        fn resolve(&self) -> genex_login::ExternalAuthFuture<'_, GenexAuth> {
             Box::pin(async move {
                 let generation = self.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-                Ok(CodexAuth::from_api_key(&format!("token-{generation}")))
+                Ok(GenexAuth::from_api_key(&format!("token-{generation}")))
             })
         }
 
         fn refresh(
             &self,
             _context: genex_login::ExternalAuthRefreshContext,
-        ) -> genex_login::ExternalAuthFuture<'_, CodexAuth> {
+        ) -> genex_login::ExternalAuthFuture<'_, GenexAuth> {
             self.resolve()
         }
     }
@@ -545,7 +545,7 @@ mod tests {
         use genex_models_manager::manager::RemoteModelsManager;
 
         let server = MockServer::start().await;
-        let auth = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("initial"));
+        let auth = AuthManager::from_auth_for_testing(GenexAuth::from_api_key("initial"));
         auth.set_external_auth(Arc::new(RotatingAuth(std::sync::atomic::AtomicUsize::new(
             0,
         ))))

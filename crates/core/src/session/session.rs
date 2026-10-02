@@ -1163,9 +1163,9 @@ impl Session {
             }
             let telemetry_auth = auth.as_ref();
             let auth_mode = telemetry_auth
-                .map(CodexAuth::auth_mode)
+                .map(GenexAuth::auth_mode)
                 .map(TelemetryAuthMode::from);
-            let account_id = telemetry_auth.and_then(CodexAuth::get_account_id);
+            let account_id = telemetry_auth.and_then(GenexAuth::get_account_id);
             let account_email = None;
             let originator = session_configuration.originator.clone();
             let terminal_type = user_agent();
@@ -1535,7 +1535,7 @@ impl Session {
                 &config.features,
                 &initial_history,
             );
-            let codex_responses_headers = thread_extension_data.get::<crate::CodexResponsesHeaders>();
+            let codex_responses_headers = thread_extension_data.get::<crate::GenexResponsesHeaders>();
             let services = SessionServices {
                 // Start with an empty connection set. The initialized set is
                 // published after SessionConfigured so MCP events follow it.

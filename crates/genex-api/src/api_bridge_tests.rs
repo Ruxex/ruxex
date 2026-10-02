@@ -1,5 +1,5 @@
 use super::*;
-use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo;
 use pretty_assertions::assert_eq;
 
 #[test]
@@ -17,7 +17,7 @@ fn map_api_error_preserves_retry_delay() {
                 message: "retry later".to_string(),
                 delay: Some(retry_delay),
             },
-            CodexErrorInfo::Other,
+            GenexErrorInfo::Other,
             "stream disconnected before completion: retry later",
         ),
         (
@@ -25,7 +25,7 @@ fn map_api_error_preserves_retry_delay() {
                 message: "retry later".to_string(),
                 delay: Some(retry_delay),
             },
-            CodexErrorInfo::RateLimitExceeded,
+            GenexErrorInfo::RateLimitExceeded,
             "rate limit exceeded: retry later",
         ),
     ] {
@@ -54,11 +54,11 @@ fn map_api_error_distinguishes_capacity_from_slow_down() {
     for (code, expected, retryable) in [
         (
             "server_is_overloaded",
-            CodexErrorInfo::ServerOverloaded,
+            GenexErrorInfo::ServerOverloaded,
             false,
         ),
-        ("slow_down", CodexErrorInfo::RateLimitExceeded, true),
-        ("unknown_error", CodexErrorInfo::Other, true),
+        ("slow_down", GenexErrorInfo::RateLimitExceeded, true),
+        ("unknown_error", GenexErrorInfo::Other, true),
     ] {
         let err = map_api_error(ApiError::Transport(TransportError::Http {
             status: http::StatusCode::SERVICE_UNAVAILABLE,
@@ -341,9 +341,9 @@ fn map_api_error_distinguishes_http_quota_errors_from_rate_limits() {
         serde_json::json!({"type": "rate_limit_error", "code": "slow_down"}),
     ] {
         let expected = if error["type"] == "rate_limit_error" {
-            CodexErrorInfo::RateLimitExceeded
+            GenexErrorInfo::RateLimitExceeded
         } else {
-            CodexErrorInfo::UsageLimitExceeded
+            GenexErrorInfo::UsageLimitExceeded
         };
         let err = map_api_error(ApiError::Transport(TransportError::Http {
             status: http::StatusCode::TOO_MANY_REQUESTS,

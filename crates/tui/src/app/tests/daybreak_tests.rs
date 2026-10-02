@@ -5,7 +5,7 @@ use app_test_support::write_api_key_auth;
 use genex_app_server_client::AppServerEvent;
 use genex_app_server_protocol::AccountUpdatedNotification;
 use genex_app_server_protocol::AuthMode;
-use genex_app_server_protocol::CodexErrorInfo;
+use genex_app_server_protocol::GenexErrorInfo;
 use genex_app_server_protocol::ErrorNotification;
 use genex_login::AuthCredentialsStoreMode;
 use pretty_assertions::assert_eq;
@@ -94,7 +94,7 @@ async fn cyber_refusal_reads_eligibility_without_changing_the_model() -> Result<
                         error: AppServerTurnError {
                             misalignment: None,
                             message: "server fallback".into(),
-                            codex_error_info: Some(CodexErrorInfo::CyberPolicy),
+                            genex_error_info: Some(GenexErrorInfo::CyberPolicy),
                             additional_details: None,
                         },
                         will_retry: false,

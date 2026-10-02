@@ -71,7 +71,7 @@ use genex_history::RolloutItem;
 use genex_hooks::Hooks;
 use genex_hooks::HooksConfig;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_login::auth_env_telemetry::collect_auth_env_telemetry;
 use genex_mcp::McpResourceClient;
 use genex_mcp::McpRuntime;
@@ -311,7 +311,7 @@ use crate::windows_sandbox::managed_proxy_routing_for_windows_sandbox;
 use genex_core_plugins::PluginCommandAttribution;
 use genex_core_plugins::PluginsManager;
 use genex_git_utils::get_git_repo_root;
-use genex_history::CodexHarnessMetadata;
+use genex_history::GenexHarnessMetadata;
 use genex_history::CompactedItem;
 use genex_history::InitialHistory;
 use genex_history::ResponseItemEnvelope;
@@ -334,7 +334,7 @@ use genex_protocol::models::ResponseInputItem;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::ApplyPatchApprovalRequestEvent;
 use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::DeprecationNoticeEvent;
 use genex_protocol::protocol::Event;
 use genex_protocol::protocol::EventMsg;
@@ -2156,9 +2156,9 @@ impl Session {
         let legacy_source = msg.clone();
         if let EventMsg::Error(error) = &legacy_source
             && error
-                .codex_error_info
+                .genex_error_info
                 .as_ref()
-                .is_some_and(CodexErrorInfo::affects_turn_status)
+                .is_some_and(GenexErrorInfo::affects_turn_status)
         {
             turn_context
                 .terminal_error
@@ -4404,7 +4404,7 @@ impl Session {
             model_info,
             vec![ResponseItemEnvelope {
                 item: response_item,
-                metadata: acceptance_order.map(|order| CodexHarnessMetadata {
+                metadata: acceptance_order.map(|order| GenexHarnessMetadata {
                     user_input_order: Some(order),
                     ..Default::default()
                 }),
@@ -4426,12 +4426,12 @@ impl Session {
         codex_error: GenexErr,
     ) {
         let additional_details = codex_error.to_string();
-        let codex_error_info = CodexErrorInfo::ResponseStreamDisconnected {
+        let genex_error_info = GenexErrorInfo::ResponseStreamDisconnected {
             http_status_code: codex_error.http_status_code_value(),
         };
         let event = EventMsg::StreamError(StreamErrorEvent {
             message: message.into(),
-            codex_error_info: Some(codex_error_info),
+            genex_error_info: Some(genex_error_info),
             additional_details: Some(additional_details),
         });
         self.send_event(turn_context, event).await;

@@ -455,7 +455,7 @@ async fn misalignment_replay_blocks_when_turn_start_was_evicted() {
     let error = AppServerTurnError {
         misalignment: None,
         message: "Chat stopped".into(),
-        codex_error_info: Some(AppServerCodexErrorInfo::MisalignmentPolicyViolation),
+        genex_error_info: Some(AppServerGenexErrorInfo::MisalignmentPolicyViolation),
         additional_details: None,
     };
     let previous_turn = test_turn("old-turn", TurnStatus::Completed, Vec::new());
@@ -487,7 +487,7 @@ async fn misalignment_replay_blocks_when_turn_start_was_evicted() {
                 thread_id: thread_id.to_string(),
                 turn_id: "settings-update".into(),
                 error: AppServerTurnError {
-                    codex_error_info: Some(AppServerCodexErrorInfo::BadRequest),
+                    genex_error_info: Some(AppServerGenexErrorInfo::BadRequest),
                     ..error
                 },
                 will_retry: false,

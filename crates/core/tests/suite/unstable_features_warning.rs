@@ -4,7 +4,7 @@ use genex_config::CONFIG_TOML_FILE;
 use genex_core::NewThread;
 use genex_features::Feature;
 use genex_history::InitialHistory;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_protocol::mcp::ClientMcpExtensions;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::WarningEvent;
@@ -36,11 +36,11 @@ async fn emits_warning_when_unstable_features_enabled_via_config() {
         .expect("feature user config should be valid");
 
     let thread_manager = genex_core::test_support::thread_manager_with_models_provider(
-        CodexAuth::from_api_key("test"),
+        GenexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );
     let auth_manager =
-        genex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("test"));
+        genex_core::test_support::auth_manager_from_auth(GenexAuth::from_api_key("test"));
 
     let NewThread {
         thread: conversation,
@@ -86,11 +86,11 @@ async fn suppresses_warning_when_configured() {
         .expect("feature user config should be valid");
 
     let thread_manager = genex_core::test_support::thread_manager_with_models_provider(
-        CodexAuth::from_api_key("test"),
+        GenexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );
     let auth_manager =
-        genex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("test"));
+        genex_core::test_support::auth_manager_from_auth(GenexAuth::from_api_key("test"));
 
     let NewThread {
         thread: conversation,

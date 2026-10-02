@@ -1,5 +1,5 @@
 use super::*;
-use genex_history::CodexHarnessMetadata;
+use genex_history::GenexHarnessMetadata;
 
 #[test]
 fn rewritten_output_preserves_harness_metadata() {
@@ -15,7 +15,7 @@ fn rewritten_output_preserves_harness_metadata() {
             },
             internal_chat_message_metadata_passthrough: None,
         },
-        metadata: Some(CodexHarnessMetadata::default()),
+        metadata: Some(GenexHarnessMetadata::default()),
     };
 
     let rewritten = rewritten_output_for_context_window(&envelope)

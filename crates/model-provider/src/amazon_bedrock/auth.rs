@@ -11,7 +11,7 @@ use genex_http_client::Request;
 use genex_http_client::RequestBody;
 use genex_http_client::RequestCompression;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderAwsAuthInfo;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::error::GenexErr;
@@ -71,12 +71,12 @@ pub(super) fn auth_source(
         BedrockAuthSource::ConfiguredAwsProfile
     } else if matches!(
         auth_manager.and_then(AuthManager::auth_cached),
-        Some(CodexAuth::BedrockApiKey(_))
+        Some(GenexAuth::BedrockApiKey(_))
     ) {
         BedrockAuthSource::ManagedBearerToken
     } else if matches!(
         auth_manager.and_then(AuthManager::auth_cached),
-        Some(CodexAuth::BedrockAccessKeys(_))
+        Some(GenexAuth::BedrockAccessKeys(_))
     ) {
         BedrockAuthSource::ManagedAccessKeys
     } else if non_empty_env_var_from(AWS_BEARER_TOKEN_BEDROCK_ENV_VAR, env_var).is_some() {
@@ -92,7 +92,7 @@ pub(super) fn auth_source(
 
 pub(super) async fn resolve_auth_method(
     source: BedrockAuthSource,
-    managed_auth: Option<&CodexAuth>,
+    managed_auth: Option<&GenexAuth>,
     aws: &ModelProviderAwsAuthInfo,
     endpoint: BedrockEndpoint,
 ) -> Result<BedrockAuthMethod> {
@@ -120,7 +120,7 @@ pub(super) async fn resolve_auth_method(
             Ok(BedrockAuthMethod::AwsSdkAuth { context })
         }
         BedrockAuthSource::ManagedBearerToken => {
-            let Some(CodexAuth::BedrockApiKey(auth)) = managed_auth else {
+            let Some(GenexAuth::BedrockApiKey(auth)) = managed_auth else {
                 return Err(GenexErr::Fatal(
                     "selected Codex-managed Amazon Bedrock API key is no longer available"
                         .to_string(),
@@ -153,7 +153,7 @@ pub(super) async fn resolve_auth_method(
             Ok(BedrockAuthMethod::AwsSdkAuth { context })
         }
         BedrockAuthSource::ManagedAccessKeys => {
-            let Some(CodexAuth::BedrockAccessKeys(auth)) = managed_auth else {
+            let Some(GenexAuth::BedrockAccessKeys(auth)) = managed_auth else {
                 return Err(GenexErr::Fatal(
                     "selected Codex-managed Amazon Bedrock access keys are no longer available"
                         .to_string(),
@@ -188,7 +188,7 @@ pub(super) async fn resolve_auth_method(
 
 pub(super) async fn resolve_provider_auth(
     source: BedrockAuthSource,
-    managed_auth: Option<&CodexAuth>,
+    managed_auth: Option<&GenexAuth>,
     aws: &ModelProviderAwsAuthInfo,
     endpoint: BedrockEndpoint,
 ) -> Result<SharedAuthProvider> {
@@ -205,7 +205,7 @@ pub(super) async fn resolve_provider_auth(
 
 pub(super) async fn resolve_region(
     source: BedrockAuthSource,
-    managed_auth: Option<&CodexAuth>,
+    managed_auth: Option<&GenexAuth>,
     aws: &ModelProviderAwsAuthInfo,
     endpoint: BedrockEndpoint,
 ) -> Result<String> {
@@ -375,11 +375,11 @@ mod tests {
                 auth_refresh: None,
             }));
         let managed_auth =
-            AuthManager::from_auth_for_testing(CodexAuth::BedrockApiKey(BedrockApiKeyAuth {
+            AuthManager::from_auth_for_testing(GenexAuth::BedrockApiKey(BedrockApiKeyAuth {
                 api_key: "managed-bedrock-api-key".to_string(),
                 region: "us-east-1".to_string(),
             }));
-        let managed_access_keys = AuthManager::from_auth_for_testing(CodexAuth::BedrockAccessKeys(
+        let managed_access_keys = AuthManager::from_auth_for_testing(GenexAuth::BedrockAccessKeys(
             BedrockAccessKeysAuth {
                 access_key_id: "managed-access-key-id".to_string(),
                 secret_access_key: "managed-secret-access-key".to_string(),

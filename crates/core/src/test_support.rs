@@ -13,7 +13,7 @@ use genex_extension_api::UserInstructionsProvider;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_model_provider::create_model_provider;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::collaboration_mode_presets;
@@ -63,11 +63,11 @@ pub fn set_deterministic_process_ids(enabled: bool) {
     unified_exec::set_deterministic_process_ids_for_tests(enabled);
 }
 
-pub fn auth_manager_from_auth(auth: CodexAuth) -> Arc<AuthManager> {
+pub fn auth_manager_from_auth(auth: GenexAuth) -> Arc<AuthManager> {
     AuthManager::from_auth_for_testing(auth)
 }
 
-pub fn auth_manager_from_auth_with_home(auth: CodexAuth, codex_home: PathBuf) -> Arc<AuthManager> {
+pub fn auth_manager_from_auth_with_home(auth: GenexAuth, codex_home: PathBuf) -> Arc<AuthManager> {
     AuthManager::from_auth_for_testing_with_home(auth, codex_home)
 }
 
@@ -80,7 +80,7 @@ pub fn with_code_mode_host_program(
 }
 
 pub fn thread_manager_with_models_provider(
-    auth: CodexAuth,
+    auth: GenexAuth,
     provider: ModelProviderInfo,
 ) -> ThreadManager {
     ThreadManager::with_models_provider_for_tests(auth, provider)

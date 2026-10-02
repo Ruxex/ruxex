@@ -1,6 +1,6 @@
 //! Tracks credential changes separately from ownership changes, before notifications coalesce.
 
-use super::CodexAuth;
+use super::GenexAuth;
 
 /// Opaque revisions local to one auth manager. Consumers must reset on reconnect.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -12,7 +12,7 @@ pub struct AuthChangeState {
     pub owner_generation: u64,
 }
 
-pub(super) fn same_owner(previous: Option<&CodexAuth>, current: Option<&CodexAuth>) -> bool {
+pub(super) fn same_owner(previous: Option<&GenexAuth>, current: Option<&GenexAuth>) -> bool {
     let (Some(previous), Some(current)) = (previous, current) else {
         return false;
     };

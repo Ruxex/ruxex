@@ -1,6 +1,6 @@
 use super::*;
 use crate::chatwidget::UserMessage;
-use genex_app_server_protocol::CodexErrorInfo;
+use genex_app_server_protocol::GenexErrorInfo;
 use genex_app_server_protocol::ErrorNotification;
 use genex_app_server_protocol::ThreadGoalStatus;
 use genex_protocol::models::ManagedFileSystemPermissions;
@@ -68,7 +68,7 @@ async fn misalignment_policy_blocks_queued_turns_and_goal_resumption() -> Result
         error: Some(AppServerTurnError {
             misalignment: None,
             message: "misalignment policy violation".to_string(),
-            codex_error_info: Some(CodexErrorInfo::MisalignmentPolicyViolation),
+            genex_error_info: Some(GenexErrorInfo::MisalignmentPolicyViolation),
             additional_details: None,
         }),
         ..test_turn("turn-1", TurnStatus::Failed, Vec::new())
@@ -164,7 +164,7 @@ async fn misalignment_policy_in_parent_stops_active_side_conversation() -> Resul
             error: AppServerTurnError {
                 misalignment: None,
                 message: "misalignment policy violation".to_string(),
-                codex_error_info: Some(CodexErrorInfo::MisalignmentPolicyViolation),
+                genex_error_info: Some(GenexErrorInfo::MisalignmentPolicyViolation),
                 additional_details: None,
             },
             will_retry: false,

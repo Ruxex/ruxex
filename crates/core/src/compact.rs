@@ -26,7 +26,7 @@ use crate::state::AutoCompactWindowIds;
 use crate::util::backoff;
 use genex_context_fragments::AnnotatedContent;
 use genex_context_fragments::set_annotated_content;
-use genex_history::CodexHarnessMetadata;
+use genex_history::GenexHarnessMetadata;
 use genex_history::ResponseItemEnvelope;
 use genex_protocol::ResponseItemId;
 use genex_protocol::error::GenexErr;
@@ -382,7 +382,7 @@ pub(crate) struct CompactedUserMessage {
     id: Option<ResponseItemId>,
     message: String,
     internal_chat_message_metadata_passthrough: Option<InternalChatMessageMetadataPassthrough>,
-    harness_metadata: Option<CodexHarnessMetadata>,
+    harness_metadata: Option<GenexHarnessMetadata>,
 }
 
 #[cfg(test)]
@@ -416,7 +416,7 @@ pub(crate) fn collect_annotated_user_messages(
 
 fn compacted_user_message(
     item: &ResponseItem,
-    harness_metadata: Option<CodexHarnessMetadata>,
+    harness_metadata: Option<GenexHarnessMetadata>,
 ) -> Option<CompactedUserMessage> {
     let Some(TurnItem::UserMessage(user)) = crate::event_mapping::parse_turn_item(item) else {
         return None;

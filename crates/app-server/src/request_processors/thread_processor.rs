@@ -5695,7 +5695,7 @@ fn stored_turn_to_api_turn(
     let error = turn.error.map(|error| TurnError {
         misalignment: None,
         message: error.message,
-        codex_error_info: error.codex_error_info,
+        genex_error_info: error.genex_error_info,
         additional_details: error.additional_details,
     });
     let items = turn

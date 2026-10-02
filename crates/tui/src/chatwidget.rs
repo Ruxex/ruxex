@@ -78,7 +78,7 @@ use crate::text_formatting::proper_join;
 use crate::token_usage::TokenUsage;
 use crate::token_usage::TokenUsageInfo;
 use crate::version::CODEX_CLI_VERSION;
-use genex_app_server_protocol::CodexErrorInfo as AppServerCodexErrorInfo;
+use genex_app_server_protocol::GenexErrorInfo as AppServerGenexErrorInfo;
 use genex_app_server_protocol::CollabAgentTool;
 use genex_app_server_protocol::CollabAgentToolCallStatus;
 use genex_app_server_protocol::CommandExecutionRequestApprovalParams;

@@ -19,7 +19,7 @@ use genex_extension_api::ToolContributor;
 use genex_extension_api::TurnContextContributionInput;
 use genex_features::Feature;
 use genex_history::RolloutItem;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_models_manager::test_support::test_models_response;
 use genex_models_manager::manager::RefreshStrategy;
 use genex_protocol::config_types::ApprovalsReviewer;
@@ -569,7 +569,7 @@ async fn tool_result_history_keeps_originating_model_across_switch_and_replay() 
             .resume_thread_from_rollout(
                 replay_config.clone(),
                 rollout_path.clone(),
-                genex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("dummy")),
+                genex_core::test_support::auth_manager_from_auth(GenexAuth::from_api_key("dummy")),
                 /*parent_trace*/ None,
                 ClientMcpExtensions::default(),
             )
@@ -702,7 +702,7 @@ async fn custom_tool_output_replay_preserves_originating_budget() -> Result<()> 
         .resume_thread_from_rollout(
             replay_config.clone(),
             rollout_path.clone(),
-            genex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("dummy")),
+            genex_core::test_support::auth_manager_from_auth(GenexAuth::from_api_key("dummy")),
             /*parent_trace*/ None,
             ClientMcpExtensions::default(),
         )
@@ -2507,7 +2507,7 @@ async fn request_preference_activation_keeps_admitted_model_metadata() -> Result
     )
     .await;
     let test = step_settings_test()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             // Use the real refreshable models manager, and retain an unset
             // preference so the selected model's default is observable.

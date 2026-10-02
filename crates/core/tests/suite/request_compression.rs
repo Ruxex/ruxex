@@ -2,7 +2,7 @@
 
 use genex_core::TurnInputRequest;
 use genex_features::Feature;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_completed;
@@ -28,7 +28,7 @@ async fn request_body_is_zstd_compressed_for_codex_backend_when_enabled() -> any
 
     let base_url = format!("{}/backend-api/codex/v1", server.uri());
     let mut builder = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config
                 .features

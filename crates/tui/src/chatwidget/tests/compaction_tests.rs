@@ -138,7 +138,7 @@ async fn compaction_retry_status_returns_to_compacting() {
             will_retry: true,
             error: genex_app_server_protocol::TurnError {
                 message: "Reconnecting".to_string(),
-                codex_error_info: None,
+                genex_error_info: None,
                 additional_details: None,
                 misalignment: None,
             },

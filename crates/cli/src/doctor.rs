@@ -50,7 +50,7 @@ use genex_install_context::StandalonePlatform;
 use genex_login::AuthDotJson;
 use genex_login::AuthManager;
 use genex_login::CODEX_API_KEY_ENV_VAR;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_login::default_client::create_client_without_request_logging;
 use genex_login::default_client::default_headers;
 use genex_login::load_auth_dot_json;
@@ -2292,7 +2292,7 @@ fn websocket_error_detail(err: &ApiError) -> String {
     }
 }
 
-fn auth_mode_name(auth: &CodexAuth) -> &'static str {
+fn auth_mode_name(auth: &GenexAuth) -> &'static str {
     match auth.auth_mode() {
         AuthMode::ApiKey => "api_key",
         AuthMode::Headers => "headers",

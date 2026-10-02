@@ -17,7 +17,7 @@ use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
 use genex_login::AuthHeaders;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_login::ExternalAuth;
 use genex_login::ExternalAuthFuture;
 use genex_login::ExternalAuthRefreshContext;
@@ -88,7 +88,7 @@ pub(crate) async fn set_test_auth_mode(auth_manager: &AuthManager, auth_mode: Op
     set_test_auth(auth_manager, test_genex_auth(auth_mode)).await;
 }
 
-pub(crate) async fn set_test_auth(auth_manager: &AuthManager, auth: Option<CodexAuth>) {
+pub(crate) async fn set_test_auth(auth_manager: &AuthManager, auth: Option<GenexAuth>) {
     let Some(auth) = auth else {
         auth_manager.clear_external_auth();
         return;
@@ -99,24 +99,24 @@ pub(crate) async fn set_test_auth(auth_manager: &AuthManager, auth: Option<Codex
         .expect("test auth should update");
 }
 
-fn test_genex_auth(auth_mode: Option<AuthMode>) -> Option<CodexAuth> {
+fn test_genex_auth(auth_mode: Option<AuthMode>) -> Option<GenexAuth> {
     auth_mode.map(|auth_mode| match auth_mode {
-        AuthMode::ApiKey => CodexAuth::from_api_key("test-api-key"),
-        AuthMode::Headers => CodexAuth::Headers(AuthHeaders::new(http::HeaderMap::new())),
+        AuthMode::ApiKey => GenexAuth::from_api_key("test-api-key"),
+        AuthMode::Headers => GenexAuth::Headers(AuthHeaders::new(http::HeaderMap::new())),
         AuthMode::BedrockApiKey | AuthMode::BedrockAccessKeys => {
-            panic!("test auth mode requires a purpose-built CodexAuth")
+            panic!("test auth mode requires a purpose-built GenexAuth")
         }
     })
 }
 
-struct StaticExternalAuth(CodexAuth);
+struct StaticExternalAuth(GenexAuth);
 
 impl ExternalAuth for StaticExternalAuth {
-    fn resolve(&self) -> ExternalAuthFuture<'_, CodexAuth> {
+    fn resolve(&self) -> ExternalAuthFuture<'_, GenexAuth> {
         Box::pin(async { Ok(self.0.clone()) })
     }
 
-    fn refresh(&self, _context: ExternalAuthRefreshContext) -> ExternalAuthFuture<'_, CodexAuth> {
+    fn refresh(&self, _context: ExternalAuthRefreshContext) -> ExternalAuthFuture<'_, GenexAuth> {
         Box::pin(async { Ok(self.0.clone()) })
     }
 }

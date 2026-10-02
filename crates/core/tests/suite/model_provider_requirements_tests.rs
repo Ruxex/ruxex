@@ -7,7 +7,7 @@ use genex_config::test_support::CloudConfigBundleFixture;
 use genex_core::config::Config;
 use genex_core::config::ConfigBuilder;
 use genex_core::config::ConfigOverrides;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_models_manager::test_support::test_models_response;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
@@ -122,7 +122,7 @@ X-Managed = "required"
         ]),
     )
     .await;
-    let auth = CodexAuth::from_api_key("test-api-key");
+    let auth = GenexAuth::from_api_key("test-api-key");
     let expected_authorization = format!("Bearer {}", auth.get_token()?);
     let test = test_genex()
         .with_auth(auth)

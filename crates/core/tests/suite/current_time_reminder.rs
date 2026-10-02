@@ -25,7 +25,7 @@ use genex_model_provider_info::built_in_model_providers;
 use genex_protocol::ThreadId;
 use genex_protocol::models::PermissionProfile;
 use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::Op;
 use genex_protocol::user_input::UserInput;
@@ -653,7 +653,7 @@ async fn time_provider_failure_stops_before_inference() -> Result<()> {
         error.message,
         "Fatal error: failed to read current time: test clock unavailable"
     );
-    assert_eq!(error.codex_error_info, Some(CodexErrorInfo::Other));
+    assert_eq!(error.genex_error_info, Some(GenexErrorInfo::Other));
 
     wait_for_event(&test.codex, |event| {
         matches!(event, EventMsg::TurnComplete(_))

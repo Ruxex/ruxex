@@ -11,7 +11,7 @@ use crate::thread_status::ThreadWatchManager;
 use genex_app_server_protocol::AccountRateLimitsUpdatedNotification;
 use genex_app_server_protocol::AdditionalPermissionProfile as V2AdditionalPermissionProfile;
 use genex_app_server_protocol::AuthRecoveryNotification;
-use genex_app_server_protocol::CodexErrorInfo as V2CodexErrorInfo;
+use genex_app_server_protocol::GenexErrorInfo as V2GenexErrorInfo;
 use genex_app_server_protocol::CommandAction as V2ParsedCommand;
 use genex_app_server_protocol::CommandExecutionApprovalDecision;
 use genex_app_server_protocol::CommandExecutionPresentation;
@@ -705,7 +705,7 @@ pub(crate) async fn apply_bespoke_event_handling(
             let turn_error = TurnError {
                 misalignment: ev.misalignment.map(Into::into),
                 message: ev.message,
-                codex_error_info: ev.codex_error_info.map(V2CodexErrorInfo::from),
+                genex_error_info: ev.genex_error_info.map(V2GenexErrorInfo::from),
                 additional_details: None,
             };
             handle_error_notification(
@@ -723,7 +723,7 @@ pub(crate) async fn apply_bespoke_event_handling(
             let turn_error = TurnError {
                 misalignment: None,
                 message: ev.message,
-                codex_error_info: ev.codex_error_info.map(V2CodexErrorInfo::from),
+                genex_error_info: ev.genex_error_info.map(V2GenexErrorInfo::from),
                 additional_details: ev.additional_details,
             };
             outgoing
@@ -1477,7 +1477,7 @@ async fn on_request_permissions_response(
                 TurnError {
                     misalignment: None,
                     message,
-                    codex_error_info: None,
+                    genex_error_info: None,
                     additional_details: None,
                 },
                 &outgoing,

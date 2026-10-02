@@ -9,7 +9,7 @@ use super::step_context::StepContext;
 use super::step_settings::ResolvedStepSettings;
 use crate::state::ReasoningEffortPin;
 use genex_features::Feature;
-use genex_history::CodexHarnessMetadata;
+use genex_history::GenexHarnessMetadata;
 use genex_history::ResponseItemEnvelope;
 use genex_protocol::model_types::ReasoningEffort;
 use genex_protocol::models::ConfigurationReasoning;
@@ -80,7 +80,7 @@ impl Session {
                 item: ResponseItem::ConfigurationUpdate {
                     reasoning: ConfigurationReasoning { effort },
                 },
-                metadata: Some(CodexHarnessMetadata {
+                metadata: Some(GenexHarnessMetadata {
                     harness_authored_configuration: true,
                     ..Default::default()
                 }),

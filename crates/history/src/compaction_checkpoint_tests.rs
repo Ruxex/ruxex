@@ -1,7 +1,7 @@
 //! Latest-checkpoint selection keeps structural validity and producer provenance together.
 
 use super::*;
-use crate::CodexHarnessMetadata;
+use crate::GenexHarnessMetadata;
 use genex_protocol::ResponseItemId;
 use pretty_assertions::assert_eq;
 
@@ -13,7 +13,7 @@ fn latest_checkpoint_keeps_its_own_producer_even_when_unusable() {
             encrypted_content: "older checkpoint".to_owned(),
             internal_chat_message_metadata_passthrough: None,
         },
-        metadata: Some(CodexHarnessMetadata {
+        metadata: Some(GenexHarnessMetadata {
             compaction_model_hash: Some("producer".to_owned()),
             ..Default::default()
         }),

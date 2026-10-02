@@ -34,14 +34,14 @@ use thiserror::Error;
 
 /// Authentication mechanism used by the current user.
 #[derive(Debug, Clone)]
-pub enum CodexAuth {
+pub enum GenexAuth {
     ApiKey(ApiKeyAuth),
     Headers(AuthHeaders),
     BedrockApiKey(BedrockApiKeyAuth),
     BedrockAccessKeys(BedrockAccessKeysAuth),
 }
 
-impl PartialEq for CodexAuth {
+impl PartialEq for GenexAuth {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Headers(a), Self::Headers(b)) => a == b,
@@ -108,10 +108,10 @@ pub struct ExternalAuthRefreshContext {
 /// Implementations own the current auth value and any source-specific refresh mechanism.
 pub trait ExternalAuth: Send + Sync {
     /// Returns the provider's current auth value.
-    fn resolve(&self) -> ExternalAuthFuture<'_, CodexAuth>;
+    fn resolve(&self) -> ExternalAuthFuture<'_, GenexAuth>;
 
     /// Refreshes auth and makes the returned value current for future `resolve()` calls.
-    fn refresh(&self, context: ExternalAuthRefreshContext) -> ExternalAuthFuture<'_, CodexAuth>;
+    fn refresh(&self, context: ExternalAuthRefreshContext) -> ExternalAuthFuture<'_, GenexAuth>;
 
     /// Maps a provider error into the retry policy used by external-auth reload and recovery.
     fn classify_error(&self, error: std::io::Error) -> RefreshTokenError {
@@ -139,7 +139,7 @@ impl From<RefreshTokenError> for std::io::Error {
     }
 }
 
-impl CodexAuth {
+impl GenexAuth {
     async fn from_auth_dot_json(
         _codex_home: &Path,
         auth_dot_json: AuthDotJson,
@@ -402,7 +402,7 @@ impl AuthConfig {
         }
     }
 
-    pub fn allows_auth(&self, auth: &CodexAuth) -> bool {
+    pub fn allows_auth(&self, auth: &GenexAuth) -> bool {
         let allowed_login_methods = self.allowed_login_methods();
         let workspaces = self.effective_managed_workspaces();
         validate_auth_restrictions(Some(&allowed_login_methods), workspaces.as_deref(), auth)
@@ -412,7 +412,7 @@ impl AuthConfig {
     pub async fn load_auth(
         &self,
         enable_codex_api_key_env: bool,
-    ) -> std::io::Result<Option<CodexAuth>> {
+    ) -> std::io::Result<Option<GenexAuth>> {
         let allowed_login_methods = self.allowed_login_methods();
         let workspaces = self.effective_managed_workspaces();
         let auth = load_auth(
@@ -452,7 +452,7 @@ fn auth_mode_is_allowed(
 fn validate_auth_restrictions(
     allowed_login_methods: Option<&[ForcedLoginMethod]>,
     expected_workspaces: Option<&[String]>,
-    auth: &CodexAuth,
+    auth: &GenexAuth,
 ) -> Result<(), String> {
     if !auth_mode_is_allowed(allowed_login_methods, auth.auth_mode()) {
         return Err(match allowed_login_methods {
@@ -469,7 +469,7 @@ fn validate_auth_restrictions(
     };
     if matches!(
         auth,
-        CodexAuth::ApiKey(_) | CodexAuth::BedrockApiKey(_) | CodexAuth::BedrockAccessKeys(_)
+        GenexAuth::ApiKey(_) | GenexAuth::BedrockApiKey(_) | GenexAuth::BedrockAccessKeys(_)
     ) {
         return Ok(());
     }
@@ -541,12 +541,12 @@ pub async fn enforce_login_restrictions(config: &AuthConfig) -> std::io::Result<
 
     if let Some(expected_account_ids) = config.forced_managed_workspace_id.as_deref() {
         let workspace_id = match &auth {
-            CodexAuth::ApiKey(_)
-            | CodexAuth::BedrockApiKey(_)
-            | CodexAuth::BedrockAccessKeys(_) => {
+            GenexAuth::ApiKey(_)
+            | GenexAuth::BedrockApiKey(_)
+            | GenexAuth::BedrockAccessKeys(_) => {
                 return Ok(());
             }
-            CodexAuth::Headers(_) => auth.get_account_id(),
+            GenexAuth::Headers(_) => auth.get_account_id(),
         };
 
         // workspace is the external identifier for account id.
@@ -632,13 +632,13 @@ async fn load_auth(
     managed_auth_base_url: Option<&str>,
     keyring_backend_kind: AuthKeyringBackendKind,
     auth_route_config: &AuthRouteConfig,
-) -> std::io::Result<Option<CodexAuth>> {
+) -> std::io::Result<Option<GenexAuth>> {
     // API key via env var takes precedence over any other auth method.
     if enable_codex_api_key_env
         && auth_mode_is_allowed(allowed_login_methods, AuthMode::ApiKey)
         && let Some(api_key) = read_codex_api_key_from_env()
     {
-        return Ok(Some(CodexAuth::from_api_key(api_key.as_str())));
+        return Ok(Some(GenexAuth::from_api_key(api_key.as_str())));
     }
 
     // Ephemeral credentials take precedence over persisted credentials.
@@ -651,7 +651,7 @@ async fn load_auth(
         && auth_dot_json.has_supported_credentials()
         && auth_mode_is_allowed(allowed_login_methods, auth_dot_json.resolved_mode())
     {
-        let auth = CodexAuth::from_auth_dot_json(
+        let auth = GenexAuth::from_auth_dot_json(
             codex_home,
             auth_dot_json,
             AuthCredentialsStoreMode::Ephemeral,
@@ -684,7 +684,7 @@ async fn load_auth(
     if !auth_mode_is_allowed(allowed_login_methods, auth_dot_json.resolved_mode()) {
         return Ok(None);
     }
-    let auth = CodexAuth::from_auth_dot_json(
+    let auth = GenexAuth::from_auth_dot_json(
         codex_home,
         auth_dot_json,
         auth_credentials_store_mode,
@@ -723,7 +723,7 @@ impl AuthDotJson {
 /// Internal cached auth state.
 #[derive(Clone)]
 struct CachedAuth {
-    auth: Option<CodexAuth>,
+    auth: Option<GenexAuth>,
     /// Permanent refresh failure cached for the current auth snapshot so
     /// later refresh attempts for the same credentials fail fast without network.
     permanent_refresh_failure: Option<AuthScopedRefreshFailure>,
@@ -731,7 +731,7 @@ struct CachedAuth {
 
 #[derive(Clone)]
 struct AuthScopedRefreshFailure {
-    auth: CodexAuth,
+    auth: GenexAuth,
     error: RefreshTokenFailedError,
 }
 
@@ -740,7 +740,7 @@ impl Debug for CachedAuth {
         f.debug_struct("CachedAuth")
             .field(
                 "auth_mode",
-                &self.auth.as_ref().map(CodexAuth::api_auth_mode),
+                &self.auth.as_ref().map(GenexAuth::api_auth_mode),
             )
             .field(
                 "permanent_refresh_failure",
@@ -804,7 +804,7 @@ impl UnauthorizedRecoveryStepResult {
 impl UnauthorizedRecovery {
     fn new(manager: Arc<AuthManager>) -> Self {
         let cached_auth = manager.auth_cached();
-        let expected_account_id = cached_auth.as_ref().and_then(CodexAuth::get_account_id);
+        let expected_account_id = cached_auth.as_ref().and_then(GenexAuth::get_account_id);
         let mode = if manager.has_external_auth() {
             UnauthorizedRecoveryMode::External
         } else {
@@ -831,7 +831,7 @@ impl UnauthorizedRecovery {
             .manager
             .auth_cached()
             .as_ref()
-            .is_some_and(CodexAuth::supports_unauthorized_recovery)
+            .is_some_and(GenexAuth::supports_unauthorized_recovery)
         {
             return false;
         }
@@ -856,7 +856,7 @@ impl UnauthorizedRecovery {
             .manager
             .auth_cached()
             .as_ref()
-            .is_some_and(CodexAuth::supports_unauthorized_recovery)
+            .is_some_and(GenexAuth::supports_unauthorized_recovery)
         {
             return "not_managed_auth";
         }
@@ -948,7 +948,7 @@ impl UnauthorizedRecovery {
 
 /// Central manager providing a single source of truth for auth.json derived
 /// authentication data. It loads once (or on preference change) and then
-/// hands out cloned `CodexAuth` values so the rest of the program has a
+/// hands out cloned `GenexAuth` values so the rest of the program has a
 /// consistent snapshot.
 ///
 /// External modifications to `auth.json` will NOT be observed until
@@ -1095,13 +1095,13 @@ impl AuthManager {
         }
     }
 
-    /// Create an AuthManager with a specific CodexAuth, for testing only.
-    pub fn from_auth_for_testing(auth: CodexAuth) -> Arc<Self> {
+    /// Create an AuthManager with a specific GenexAuth, for testing only.
+    pub fn from_auth_for_testing(auth: GenexAuth) -> Arc<Self> {
         Self::from_optional_auth_for_testing(Some(auth))
     }
 
-    /// Create an AuthManager with an optional CodexAuth, for testing only.
-    pub(crate) fn from_optional_auth_for_testing(auth: Option<CodexAuth>) -> Arc<Self> {
+    /// Create an AuthManager with an optional GenexAuth, for testing only.
+    pub(crate) fn from_optional_auth_for_testing(auth: Option<GenexAuth>) -> Arc<Self> {
         let cached = CachedAuth {
             auth,
             permanent_refresh_failure: None,
@@ -1126,8 +1126,8 @@ impl AuthManager {
         })
     }
 
-    /// Create an AuthManager with a specific CodexAuth and codex home, for testing only.
-    pub fn from_auth_for_testing_with_home(auth: CodexAuth, codex_home: PathBuf) -> Arc<Self> {
+    /// Create an AuthManager with a specific GenexAuth and codex home, for testing only.
+    pub fn from_auth_for_testing_with_home(auth: GenexAuth, codex_home: PathBuf) -> Arc<Self> {
         let cached = CachedAuth {
             auth: Some(auth),
             permanent_refresh_failure: None,
@@ -1179,7 +1179,7 @@ impl AuthManager {
     }
 
     /// Current cached auth (clone) without attempting a refresh.
-    pub fn auth_cached(&self) -> Option<CodexAuth> {
+    pub fn auth_cached(&self) -> Option<GenexAuth> {
         self.inner
             .read()
             .ok()
@@ -1196,7 +1196,7 @@ impl AuthManager {
         self.auth_change_state_tx.subscribe()
     }
 
-    pub fn refresh_failure_for_auth(&self, auth: &CodexAuth) -> Option<RefreshTokenFailedError> {
+    pub fn refresh_failure_for_auth(&self, auth: &GenexAuth) -> Option<RefreshTokenFailedError> {
         self.inner.read().ok().and_then(|cached| {
             cached
                 .permanent_refresh_failure
@@ -1209,7 +1209,7 @@ impl AuthManager {
     /// Current cached auth (clone). May be `None` if not logged in or load failed.
     /// Resolve current authentication, refreshing configured external credentials first.
     #[instrument(level = "trace", skip_all)]
-    pub async fn auth(&self) -> Option<CodexAuth> {
+    pub async fn auth(&self) -> Option<GenexAuth> {
         if self.has_external_auth() {
             self.reload().await;
             return self.auth_cached();
@@ -1238,7 +1238,7 @@ impl AuthManager {
         };
 
         let new_auth = self.load_auth().await;
-        let new_account_id = new_auth.as_ref().and_then(CodexAuth::get_account_id);
+        let new_account_id = new_auth.as_ref().and_then(GenexAuth::get_account_id);
 
         if new_account_id.as_deref() != Some(expected_account_id) {
             let found_account_id = new_account_id.as_deref().unwrap_or("unknown");
@@ -1260,7 +1260,7 @@ impl AuthManager {
         }
     }
 
-    fn auths_equal_for_refresh(a: Option<&CodexAuth>, b: Option<&CodexAuth>) -> bool {
+    fn auths_equal_for_refresh(a: Option<&GenexAuth>, b: Option<&GenexAuth>) -> bool {
         match (a, b) {
             (None, None) => true,
             (Some(a), Some(b)) => match (a.api_auth_mode(), b.api_auth_mode()) {
@@ -1274,7 +1274,7 @@ impl AuthManager {
         }
     }
 
-    fn auths_equal(a: Option<&CodexAuth>, b: Option<&CodexAuth>) -> bool {
+    fn auths_equal(a: Option<&GenexAuth>, b: Option<&GenexAuth>) -> bool {
         match (a, b) {
             (None, None) => true,
             (Some(a), Some(b)) => a == b,
@@ -1286,7 +1286,7 @@ impl AuthManager {
     /// attempted against the auth snapshot that is still cached.
     fn record_permanent_refresh_failure_if_unchanged(
         &self,
-        attempted_auth: &CodexAuth,
+        attempted_auth: &GenexAuth,
         error: &RefreshTokenFailedError,
     ) {
         if let Ok(mut guard) = self.inner.write() {
@@ -1301,7 +1301,7 @@ impl AuthManager {
         }
     }
 
-    async fn load_auth(&self) -> Option<CodexAuth> {
+    async fn load_auth(&self) -> Option<GenexAuth> {
         if let Some(external_auth) = self.external_auth_provider() {
             let cached_auth = self.auth_cached();
             if cached_auth
@@ -1352,7 +1352,7 @@ impl AuthManager {
         })
     }
 
-    fn set_cached_auth(&self, new_auth: Option<CodexAuth>) -> bool {
+    fn set_cached_auth(&self, new_auth: Option<GenexAuth>) -> bool {
         if let Ok(mut guard) = self.inner.write() {
             let previous = guard.auth.as_ref();
             let changed = !AuthManager::auths_equal(previous, new_auth.as_ref());
@@ -1518,7 +1518,7 @@ impl AuthManager {
     async fn resolve_external_auth(
         &self,
         external_auth: &dyn ExternalAuth,
-    ) -> Result<CodexAuth, RefreshTokenError> {
+    ) -> Result<GenexAuth, RefreshTokenError> {
         let auth = external_auth
             .resolve()
             .await
@@ -1541,13 +1541,13 @@ impl AuthManager {
         let auth_before_reload = self.auth_cached();
         if auth_before_reload
             .as_ref()
-            .is_some_and(CodexAuth::is_api_key_auth)
+            .is_some_and(GenexAuth::is_api_key_auth)
         {
             return Ok(());
         }
         let expected_account_id = auth_before_reload
             .as_ref()
-            .and_then(CodexAuth::get_account_id);
+            .and_then(GenexAuth::get_account_id);
 
         match self
             .reload_if_account_id_matches(expected_account_id.as_deref())
@@ -1597,10 +1597,10 @@ impl AuthManager {
         } else {
             match attempted_auth.as_ref() {
                 Some(
-                    CodexAuth::ApiKey(_)
-                    | CodexAuth::Headers(_)
-                    | CodexAuth::BedrockApiKey(_)
-                    | CodexAuth::BedrockAccessKeys(_),
+                    GenexAuth::ApiKey(_)
+                    | GenexAuth::Headers(_)
+                    | GenexAuth::BedrockApiKey(_)
+                    | GenexAuth::BedrockAccessKeys(_),
                 )
                 | None => Ok(()),
             }
@@ -1636,12 +1636,12 @@ impl AuthManager {
 
     /// Returns the precise kind of credentials backing the current authentication.
     pub fn get_api_auth_mode(&self) -> Option<AuthMode> {
-        self.auth_cached().as_ref().map(CodexAuth::api_auth_mode)
+        self.auth_cached().as_ref().map(GenexAuth::api_auth_mode)
     }
 
     /// Returns the effective backend auth mode for the current authentication.
     pub fn auth_mode(&self) -> Option<AuthMode> {
-        self.auth_cached().as_ref().map(CodexAuth::auth_mode)
+        self.auth_cached().as_ref().map(GenexAuth::auth_mode)
     }
 
     pub fn current_auth_uses_managed_auth(&self) -> bool {
@@ -1661,7 +1661,7 @@ impl AuthManager {
         let previous_account_id = self
             .auth_cached()
             .as_ref()
-            .and_then(CodexAuth::get_account_id);
+            .and_then(GenexAuth::get_account_id);
         let context = ExternalAuthRefreshContext {
             reason,
             previous_account_id,
@@ -1676,14 +1676,14 @@ impl AuthManager {
         Ok(())
     }
 
-    fn commit_external_auth(&self, auth: CodexAuth) -> Result<(), RefreshTokenError> {
+    fn commit_external_auth(&self, auth: GenexAuth) -> Result<(), RefreshTokenError> {
         self.set_cached_auth(Some(auth));
         Ok(())
     }
 
     fn validate_external_auth(
         &self,
-        auth: &CodexAuth,
+        auth: &GenexAuth,
         external_auth: &dyn ExternalAuth,
     ) -> Result<(), RefreshTokenError> {
         let allowed_login_methods = self.allowed_login_methods();
@@ -1723,7 +1723,7 @@ mod tests {
         }))
         .expect("legacy token fields should remain parseable as unknown fields");
 
-        let result = CodexAuth::from_auth_dot_json(
+        let result = GenexAuth::from_auth_dot_json(
             Path::new("/tmp/codex-test"),
             auth,
             AuthCredentialsStoreMode::File,

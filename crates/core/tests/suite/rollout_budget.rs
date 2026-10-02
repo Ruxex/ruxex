@@ -3,7 +3,7 @@ use genex_core::TurnInputRequest;
 use genex_core::config::RolloutBudgetConfig;
 use genex_features::Feature;
 use genex_model_provider_info::built_in_model_providers;
-use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::Op;
 use genex_protocol::user_input::UserInput;
@@ -158,7 +158,7 @@ async fn invalid_provider_rollout_budget_units_fail_without_retry() -> Result<()
         error.message,
         "Fatal error: response.completed usage.codex_rollout_budget_units must be finite and non-negative"
     );
-    assert_eq!(error.codex_error_info, Some(CodexErrorInfo::Other));
+    assert_eq!(error.genex_error_info, Some(GenexErrorInfo::Other));
     wait_for_event(&test.codex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
@@ -318,7 +318,7 @@ async fn exhausted_budget_fails_current_and_later_turns() -> Result<()> {
             matches!(
                 event,
                 EventMsg::Error(error)
-                    if error.codex_error_info == Some(CodexErrorInfo::SessionBudgetExceeded)
+                    if error.genex_error_info == Some(GenexErrorInfo::SessionBudgetExceeded)
             )
         })
         .await;
@@ -388,7 +388,7 @@ async fn compaction_budget_exhaustion_fails_without_retry(
         matches!(
             event,
             EventMsg::Error(error)
-                if error.codex_error_info == Some(CodexErrorInfo::SessionBudgetExceeded)
+                if error.genex_error_info == Some(GenexErrorInfo::SessionBudgetExceeded)
         )
     })
     .await;

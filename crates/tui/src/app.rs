@@ -83,7 +83,7 @@ use genex_app_server_client::AppServerRequestHandle;
 use genex_app_server_client::TypedRequestError;
 use genex_app_server_protocol::AskForApproval;
 use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::CodexErrorInfo as AppServerCodexErrorInfo;
+use genex_app_server_protocol::GenexErrorInfo as AppServerGenexErrorInfo;
 use genex_app_server_protocol::ConfigBatchWriteParams;
 use genex_app_server_protocol::ConfigReadResponse;
 use genex_app_server_protocol::ConfigValueWriteParams;
@@ -677,8 +677,8 @@ fn active_turn_not_steerable_turn_error(error: &TypedRequestError) -> Option<App
     };
     let turn_error: AppServerTurnError = serde_json::from_value(source.data.clone()?).ok()?;
     matches!(
-        turn_error.codex_error_info,
-        Some(AppServerCodexErrorInfo::ActiveTurnNotSteerable { .. })
+        turn_error.genex_error_info,
+        Some(AppServerGenexErrorInfo::ActiveTurnNotSteerable { .. })
     )
     .then_some(turn_error)
 }

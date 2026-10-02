@@ -159,8 +159,8 @@ impl ChatWidget {
                         notification.error.message.clone(),
                     ));
                     if !from_replay
-                        && notification.error.codex_error_info
-                            == Some(AppServerCodexErrorInfo::MisalignmentPolicyViolation)
+                        && notification.error.genex_error_info
+                            == Some(AppServerGenexErrorInfo::MisalignmentPolicyViolation)
                     {
                         self.on_misalignment_error(
                             Some(notification.turn_id),
@@ -169,7 +169,7 @@ impl ChatWidget {
                     } else {
                         self.handle_non_retry_error(
                             notification.error.message,
-                            notification.error.codex_error_info,
+                            notification.error.genex_error_info,
                         );
                     }
                 }
@@ -336,8 +336,8 @@ impl ChatWidget {
             TurnStatus::Failed => {
                 if let Some(error) = notification.turn.error {
                     if replay_kind.is_none()
-                        && error.codex_error_info
-                            == Some(AppServerCodexErrorInfo::MisalignmentPolicyViolation)
+                        && error.genex_error_info
+                            == Some(AppServerGenexErrorInfo::MisalignmentPolicyViolation)
                     {
                         self.on_misalignment_error(
                             Some(notification.turn.id.clone()),
@@ -349,7 +349,7 @@ impl ChatWidget {
                     {
                         self.last_non_retry_error = None;
                     } else {
-                        self.handle_non_retry_error(error.message, error.codex_error_info);
+                        self.handle_non_retry_error(error.message, error.genex_error_info);
                     }
                 } else {
                     self.last_non_retry_error = None;

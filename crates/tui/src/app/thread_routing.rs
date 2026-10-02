@@ -1004,15 +1004,15 @@ impl App {
         let misalignment_policy_violation =
             match &notification {
                 ServerNotification::Error(notification) if !notification.will_retry => {
-                    notification.error.codex_error_info.as_ref()
+                    notification.error.genex_error_info.as_ref()
                 }
                 ServerNotification::TurnCompleted(notification) => notification
                     .turn
                     .error
                     .as_ref()
-                    .and_then(|error| error.codex_error_info.as_ref()),
+                    .and_then(|error| error.genex_error_info.as_ref()),
                 _ => None,
-            } == Some(&AppServerCodexErrorInfo::MisalignmentPolicyViolation);
+            } == Some(&AppServerGenexErrorInfo::MisalignmentPolicyViolation);
         if misalignment_policy_violation && self.active_side_parent_thread_id() == Some(thread_id) {
             if self.chat_widget.is_user_turn_pending_or_running() {
                 self.chat_widget.submit_op(AppCommand::Interrupt);

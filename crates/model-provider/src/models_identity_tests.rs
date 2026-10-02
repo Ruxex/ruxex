@@ -7,11 +7,11 @@ use pretty_assertions::assert_eq;
 
 #[test]
 fn cache_identity_tracks_provider_routing_and_effective_api_credentials() {
-    let auth = CodexAuth::from_api_key("first-key");
+    let auth = GenexAuth::from_api_key("first-key");
     let provider =
         ModelProviderInfo::create_responses_provider(Some("https://one.example/v1".into()));
     let key = identity(&provider, Some(&auth)).unwrap();
-    let other_key = CodexAuth::from_api_key("second-key");
+    let other_key = GenexAuth::from_api_key("second-key");
     assert_ne!(identity(&provider, Some(&other_key)).unwrap(), key);
     let mut other_provider = provider.clone();
     other_provider.base_url = Some("https://two.example/v1".into());

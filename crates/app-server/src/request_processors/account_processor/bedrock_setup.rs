@@ -13,7 +13,7 @@ use genex_app_server_protocol::BedrockSetupParams;
 use genex_app_server_protocol::BedrockSetupResponse;
 use genex_app_server_protocol::ClientResponsePayload;
 use genex_app_server_protocol::JSONRPCErrorError;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_model_provider::is_supported_amazon_bedrock_region;
 
 const AWS_ACCESS_KEY_ID: &str = "AWS_ACCESS_KEY_ID";
@@ -74,7 +74,7 @@ impl AccountRequestProcessor {
         if matches!(&params, BedrockSetupParams::Environment { .. })
             && matches!(
                 self.auth_manager.auth_cached(),
-                Some(CodexAuth::BedrockApiKey(_) | CodexAuth::BedrockAccessKeys(_))
+                Some(GenexAuth::BedrockApiKey(_) | GenexAuth::BedrockAccessKeys(_))
             )
         {
             return Err(invalid_request(

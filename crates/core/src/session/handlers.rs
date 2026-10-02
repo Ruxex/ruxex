@@ -15,7 +15,7 @@ use crate::tasks::CompactTask;
 use crate::tasks::UserShellCommandMode;
 use crate::tasks::UserShellCommandTask;
 use crate::tasks::execute_user_shell_command;
-use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::ErrorEvent;
 use genex_protocol::protocol::Event;
 use genex_protocol::protocol::EventMsg;
@@ -289,7 +289,7 @@ pub async fn shutdown(sess: &Arc<Session>, sub_id: String) -> bool {
             msg: EventMsg::Error(ErrorEvent {
                 misalignment: None,
                 message: "Failed to shutdown thread persistence".to_string(),
-                codex_error_info: Some(CodexErrorInfo::Other),
+                genex_error_info: Some(GenexErrorInfo::Other),
             }),
         };
         sess.send_event_raw(event).await;
@@ -338,7 +338,7 @@ pub async fn review(
                 msg: EventMsg::Error(ErrorEvent {
                     misalignment: None,
                     message: err.to_string(),
-                    codex_error_info: Some(CodexErrorInfo::Other),
+                    genex_error_info: Some(GenexErrorInfo::Other),
                 }),
             };
             sess.send_event(&turn_context, event.msg).await;

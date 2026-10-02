@@ -161,7 +161,7 @@ mod tests {
     use genex_extension_api::ExtensionData;
     use genex_extension_api::ExtensionRegistryBuilder;
     use genex_extension_api::ToolName;
-    use genex_login::CodexAuth;
+    use genex_login::GenexAuth;
     use genex_model_provider_info::ModelProviderInfo;
     use pretty_assertions::assert_eq;
 
@@ -201,7 +201,7 @@ mod tests {
         let mut builder = ExtensionRegistryBuilder::<Config>::new();
         install(
             &mut builder,
-            AuthManager::from_auth_for_testing(CodexAuth::from_api_key("dummy")),
+            AuthManager::from_auth_for_testing(GenexAuth::from_api_key("dummy")),
         );
         let registry = builder.build();
         let session_store = ExtensionData::new("session");

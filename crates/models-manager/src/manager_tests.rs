@@ -9,7 +9,7 @@ use chrono::Utc;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_protocol::model_types::ModelAccessPrograms;
 use genex_protocol::model_types::ModelsResponse;
 use genex_protocol::turn_input::CyberAccessProgram;
@@ -275,7 +275,7 @@ fn provider_manager_for_tests(
     provider_manager_for_tests_with_auth(
         codex_home,
         endpoint_client,
-        Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
+        Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
             "test-api-key",
         ))),
     )
@@ -593,7 +593,7 @@ async fn refresh_available_models_uses_only_dynamic_models_for_custom_api_auth()
     let manager = provider_manager_for_tests_with_auth(
         codex_home.path().to_path_buf(),
         endpoint.clone(),
-        Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
+        Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
             "test-api-key",
         ))),
     );
@@ -800,7 +800,7 @@ async fn refresh_available_models_drops_removed_remote_models() {
             Duration::ZERO,
         )),
         endpoint.clone(),
-        Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
+        Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
             "test-api-key",
         ))),
     );
@@ -898,7 +898,7 @@ impl TestAuthAwareModelsEndpoint {
                 .auth()
                 .await
                 .as_ref()
-                .is_some_and(CodexAuth::uses_managed_auth),
+                .is_some_and(GenexAuth::uses_managed_auth),
             None => false,
         }
     }

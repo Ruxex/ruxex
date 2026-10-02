@@ -33,7 +33,7 @@ use crate::session::turn_context::TurnContext;
 use genex_context_fragments::set_annotated_content;
 use genex_context_fragments::to_annotated_content;
 use genex_features::Feature;
-use genex_history::CodexHarnessMetadata;
+use genex_history::GenexHarnessMetadata;
 use genex_history::ResponseItemEnvelope;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::GenexErrorDetails;
@@ -442,7 +442,7 @@ async fn collect_compaction_output(
 
 fn build_v2_compacted_history(
     prompt_input: Vec<ResponseItem>,
-    prompt_input_metadata: Vec<Option<CodexHarnessMetadata>>,
+    prompt_input_metadata: Vec<Option<GenexHarnessMetadata>>,
     compaction_output: ResponseItem,
     retain_client_developer_messages: bool,
     image_budget: RetainedImageBudget,

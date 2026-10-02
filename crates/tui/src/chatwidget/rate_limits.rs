@@ -2,7 +2,7 @@
 
 use super::*;
 use crate::model_catalog::LUNA_RESERVE_MODEL;
-use genex_app_server_protocol::CodexErrorInfo as AppServerCodexErrorInfo;
+use genex_app_server_protocol::GenexErrorInfo as AppServerGenexErrorInfo;
 
 pub(super) const NUDGE_MODEL_SLUG: &str = crate::model_catalog::LUNA_MODEL;
 pub(super) const RATE_LIMIT_SWITCH_PROMPT_THRESHOLD: f64 = 90.0;
@@ -151,20 +151,20 @@ pub(super) enum RateLimitErrorKind {
 }
 
 pub(super) fn app_server_rate_limit_error_kind(
-    info: &AppServerCodexErrorInfo,
+    info: &AppServerGenexErrorInfo,
 ) -> Option<RateLimitErrorKind> {
     match info {
-        AppServerCodexErrorInfo::ServerOverloaded => Some(RateLimitErrorKind::ServerOverloaded),
-        AppServerCodexErrorInfo::UsageLimitExceeded => Some(RateLimitErrorKind::UsageLimit),
-        AppServerCodexErrorInfo::ResponseTooManyFailedAttempts {
+        AppServerGenexErrorInfo::ServerOverloaded => Some(RateLimitErrorKind::ServerOverloaded),
+        AppServerGenexErrorInfo::UsageLimitExceeded => Some(RateLimitErrorKind::UsageLimit),
+        AppServerGenexErrorInfo::ResponseTooManyFailedAttempts {
             http_status_code: Some(429),
         } => Some(RateLimitErrorKind::Generic),
         _ => None,
     }
 }
 
-pub(super) fn is_app_server_cyber_policy_error(info: &AppServerCodexErrorInfo) -> bool {
-    matches!(info, AppServerCodexErrorInfo::CyberPolicy)
+pub(super) fn is_app_server_cyber_policy_error(info: &AppServerGenexErrorInfo) -> bool {
+    matches!(info, AppServerGenexErrorInfo::CyberPolicy)
 }
 
 #[derive(Clone, Copy)]

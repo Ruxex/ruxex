@@ -8,7 +8,7 @@ use genex_config::McpServerTransportConfig;
 use genex_config::types::AuthKeyringBackendKind;
 use genex_config::types::OAuthCredentialsStoreMode;
 use genex_exec_server::HttpClient;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_rmcp_client::McpAuthState;
 use genex_rmcp_client::McpOAuthCallbackMode;
 use genex_rmcp_client::OAuthDiscoveryTimeout;
@@ -197,7 +197,7 @@ pub async fn compute_auth_statuses<'a, I>(
     servers: I,
     store_mode: OAuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
-    auth: Option<&CodexAuth>,
+    auth: Option<&GenexAuth>,
     runtime_context: &McpRuntimeContext,
 ) -> HashMap<String, McpAuthStatusEntry>
 where
@@ -246,7 +246,7 @@ async fn compute_auth_status(
     config: &McpServerConfig,
     store_mode: OAuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
-    _auth: Option<&CodexAuth>,
+    _auth: Option<&GenexAuth>,
     runtime_context: &McpRuntimeContext,
     redirect_mode: StreamableHttpRedirectMode,
 ) -> Result<McpAuthState> {

@@ -44,7 +44,7 @@ pub fn project_rollout_line(line: &RolloutLine) -> ThreadHistoryChangeSet {
                 error: event.error.as_ref().map(|error| TurnError {
                     misalignment: error.misalignment.clone().map(Into::into),
                     message: error.message.clone(),
-                    codex_error_info: error.codex_error_info.clone().map(Into::into),
+                    genex_error_info: error.genex_error_info.clone().map(Into::into),
                     additional_details: None,
                 }),
                 started_at: event.started_at,

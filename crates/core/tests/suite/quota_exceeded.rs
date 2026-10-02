@@ -1,6 +1,6 @@
 use anyhow::Result;
 use genex_core::TurnInputRequest;
-use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_response_created;
@@ -64,8 +64,8 @@ async fn quota_exceeded_emits_single_error_event(code: &str) -> Result<()> {
                     "Quota exceeded. Check your plan and billing details."
                 );
                 assert_eq!(
-                    err.codex_error_info,
-                    Some(CodexErrorInfo::UsageLimitExceeded)
+                    err.genex_error_info,
+                    Some(GenexErrorInfo::UsageLimitExceeded)
                 );
             }
             EventMsg::TurnComplete(_) => break,

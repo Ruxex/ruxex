@@ -9,7 +9,7 @@ use genex_exec_server::LOCAL_ENVIRONMENT_ID;
 use genex_exec_server::REMOTE_ENVIRONMENT_ID;
 use genex_exec_server::RemoveOptions;
 use genex_features::Feature;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_protocol::config_types::CollaborationMode;
 use genex_protocol::config_types::ModeKind;
 use genex_protocol::config_types::ReasoningSummary;
@@ -1666,7 +1666,7 @@ async fn view_image_tool_returns_unsupported_message_for_text_only_model() -> an
     .await;
 
     let mut builder = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(model_slug.to_string());
         });

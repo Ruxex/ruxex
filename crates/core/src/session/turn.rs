@@ -65,7 +65,7 @@ use genex_extension_api::TurnInputEnvironment;
 use genex_features::Feature;
 use genex_file_system::FindUpErrorPolicy;
 use genex_file_system::find_nearest_ancestor_with_markers;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_model_provider::RemoteCompactionSupport;
 use genex_protocol::ResponseItemId;
 use genex_protocol::config_types::AutoCompactTokenLimitScope;
@@ -83,7 +83,7 @@ use genex_protocol::models::MessagePhase;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::AgentMessageContentDeltaEvent;
 use genex_protocol::protocol::AgentReasoningSectionBreakEvent;
-use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::ErrorEvent;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::PlanDeltaEvent;
@@ -630,14 +630,14 @@ pub(crate) async fn run_turn(
                     GenexErrorDetails::InvalidImageRequest()
                 ) =>
             {
-                let error = CodexErrorInfo::BadRequest;
+                let error = GenexErrorInfo::BadRequest;
                 sess.emit_turn_error_lifecycle(turn_context.as_ref(), error.clone())
                     .await;
                 let event = EventMsg::Error(ErrorEvent {
                     misalignment: None,
                     message: "Invalid image in your last message. Please remove it and try again."
                         .to_string(),
-                    codex_error_info: Some(error),
+                    genex_error_info: Some(error),
                 });
                 sess.send_event(&turn_context, event).await;
                 break;
@@ -1277,7 +1277,7 @@ async fn run_sampling_request(
 }
 
 pub(crate) struct PreparedToolRecommendations {
-    auth: Option<CodexAuth>,
+    auth: Option<GenexAuth>,
 }
 
 #[instrument(level = "trace", skip_all)]

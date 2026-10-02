@@ -6,7 +6,7 @@ use genex_core::NewThread;
 use genex_history::InitialHistory;
 use genex_history::ResumedHistory;
 use genex_history::RolloutItem;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_protocol::ThreadId;
 use genex_protocol::config_types::ModeKind;
 use genex_protocol::config_types::ReasoningSummary;
@@ -105,11 +105,11 @@ async fn emits_warning_when_resumed_model_differs() {
     let initial_history = resume_history(&config, "previous-model", &rollout_path);
 
     let thread_manager = genex_core::test_support::thread_manager_with_models_provider(
-        CodexAuth::from_api_key("test"),
+        GenexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );
     let auth_manager =
-        genex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("test"));
+        genex_core::test_support::auth_manager_from_auth(GenexAuth::from_api_key("test"));
 
     // Act: resume the conversation.
     let NewThread {

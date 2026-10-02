@@ -2,7 +2,7 @@ use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::CodexErrorInfo;
+use genex_app_server_protocol::GenexErrorInfo;
 use genex_app_server_protocol::ErrorNotification;
 use genex_app_server_protocol::ItemCompletedNotification;
 use genex_app_server_protocol::ItemStartedNotification;
@@ -138,7 +138,7 @@ async fn cyber_policy_response_emits_typed_error_notification_v2() -> Result<()>
             error: genex_app_server_protocol::TurnError {
                 misalignment: None,
                 message: CYBER_POLICY_MESSAGE.to_string(),
-                codex_error_info: Some(CodexErrorInfo::CyberPolicy),
+                genex_error_info: Some(GenexErrorInfo::CyberPolicy),
                 additional_details: None,
             },
             will_retry: false,
@@ -383,7 +383,7 @@ async fn collect_cyber_policy_error_and_validate_no_reroute(
                     .params
                     .ok_or_else(|| anyhow::anyhow!("error notifications must include params"))?;
                 let payload: ErrorNotification = serde_json::from_value(params)?;
-                if payload.error.codex_error_info == Some(CodexErrorInfo::CyberPolicy) {
+                if payload.error.genex_error_info == Some(GenexErrorInfo::CyberPolicy) {
                     error = Some(payload);
                 }
             }

@@ -1,4 +1,4 @@
-use super::CodexErrorInfo;
+use super::GenexErrorInfo;
 use super::ThreadEnvironment;
 use super::ThreadItem;
 use super::ThreadStatus;
@@ -411,7 +411,7 @@ pub enum TurnItemsView {
 #[error("{message}")]
 pub struct TurnError {
     pub message: String,
-    pub codex_error_info: Option<CodexErrorInfo>,
+    pub genex_error_info: Option<GenexErrorInfo>,
     #[serde(default)]
     pub additional_details: Option<String>,
     /// Optional public explanation and continuation instruction for a misalignment block.

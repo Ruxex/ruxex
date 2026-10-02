@@ -947,7 +947,7 @@ impl TurnRequestProcessor {
                         let error = TurnError {
                             misalignment: None,
                             message: message.clone(),
-                            codex_error_info: Some(CodexErrorInfo::ActiveTurnNotSteerable {
+                            genex_error_info: Some(GenexErrorInfo::ActiveTurnNotSteerable {
                                 turn_kind: turn_kind.into(),
                             }),
                             additional_details: None,

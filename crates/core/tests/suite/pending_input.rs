@@ -12,7 +12,7 @@ use genex_extension_items::ExtensionItem;
 use genex_extension_items::sleep::SleepItem;
 use genex_features::Feature;
 use genex_history::RolloutItem;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_protocol::AgentPath;
 use genex_protocol::config_types::CollaborationMode;
 use genex_protocol::config_types::ModeKind;
@@ -23,7 +23,7 @@ use genex_protocol::models::ContentItem;
 use genex_protocol::models::PermissionProfile;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::InterAgentCommunication;
 use genex_protocol::protocol::Op;
@@ -518,7 +518,7 @@ async fn queue_only_agent_mail_wakes_sleeping_root_with_previous_turn_context() 
     extensions.thread_lifecycle_contributor(Arc::new(SleepingRootExtension));
     let codex = test_genex()
         .with_model("gpt-5.4")
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await
@@ -1244,7 +1244,7 @@ async fn terminal_compaction_error_does_not_retry_pending_input(
     let base_url = format!("{}/v1", server.uri());
     let test = test_genex()
         .with_model("gpt-5.4")
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config.model_provider.base_url = Some(base_url);
             config.model_auto_compact_token_limit = Some(100_000);
@@ -1299,8 +1299,8 @@ async fn terminal_compaction_error_does_not_retry_pending_input(
         match event {
             EventMsg::Error(error) => {
                 assert_eq!(
-                    error.codex_error_info,
-                    Some(CodexErrorInfo::UsageLimitExceeded)
+                    error.genex_error_info,
+                    Some(GenexErrorInfo::UsageLimitExceeded)
                 );
                 errors.push(error.clone());
             }

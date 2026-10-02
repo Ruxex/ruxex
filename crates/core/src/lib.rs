@@ -9,7 +9,7 @@ mod apply_patch;
 mod client;
 mod client_common;
 mod responses_headers;
-pub use responses_headers::CodexResponsesHeaders;
+pub use responses_headers::GenexResponsesHeaders;
 mod responses_metadata;
 mod responses_retry;
 pub(crate) mod session;

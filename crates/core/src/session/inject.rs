@@ -2,7 +2,7 @@ use super::TurnInput as PendingTurnInput;
 use super::session::Session;
 use super::turn_context::TurnContext;
 use genex_features::Feature;
-use genex_history::CodexHarnessMetadata;
+use genex_history::GenexHarnessMetadata;
 use genex_history::ResponseItemEnvelope;
 use genex_protocol::model_types::ModelInfo;
 use genex_protocol::models::ResponseItem;
@@ -100,7 +100,7 @@ impl Session {
     pub(crate) fn annotate_client_response_item(&self, item: ResponseItem) -> ResponseItemEnvelope {
         let metadata = (self.enabled(Feature::RetainClientDeveloperMessages)
             && matches!(&item, ResponseItem::Message { role, .. } if role == "developer"))
-        .then_some(CodexHarnessMetadata {
+        .then_some(GenexHarnessMetadata {
             client_authored: true,
             ..Default::default()
         });

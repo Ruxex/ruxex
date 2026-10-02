@@ -34,7 +34,7 @@ use genex_exec_server::HttpRedirectPolicy;
 use genex_exec_server::HttpRequestParams;
 use genex_features::Feature;
 use genex_http_client::HttpClientBuilder;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_mcp::CODEX_APPS_MCP_SERVER_NAME;
 use genex_mcp::MCP_SANDBOX_STATE_META_CAPABILITY;
 use genex_mcp::SandboxState;
@@ -1723,7 +1723,7 @@ async fn stdio_mcp_tool_call_includes_sandbox_state_meta(
 
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
     let fixture = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.5")
         .with_config(move |config| {
             insert_mcp_server(
@@ -2798,7 +2798,7 @@ async fn stdio_image_responses_are_sanitized_for_text_only_model() -> anyhow::Re
     let rmcp_test_server_bin = remote_aware_stdio_server_bin()?;
 
     let fixture = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             insert_mcp_server(
                 config,

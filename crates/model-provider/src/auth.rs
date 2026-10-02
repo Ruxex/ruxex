@@ -6,7 +6,7 @@ use genex_api::AuthProvider;
 use genex_api::SharedAuthProvider;
 use genex_login::AuthHeaders;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::error::GenexErr;
 use http::HeaderMap;
@@ -45,16 +45,16 @@ impl AuthProvider for HeaderAuthProvider {
 struct AuthManagerAuthProvider {
     auth_manager: Arc<AuthManager>,
     // Request headers always come from the current AuthManager snapshot below.
-    expected_auth: CodexAuth,
+    expected_auth: GenexAuth,
 }
 
 impl AuthManagerAuthProvider {
-    fn is_expected_auth(&self, auth: &CodexAuth) -> bool {
+    fn is_expected_auth(&self, auth: &GenexAuth) -> bool {
         auth.api_auth_mode() == self.expected_auth.api_auth_mode()
             && auth.get_account_id() == self.expected_auth.get_account_id()
     }
 
-    fn current_auth(&self) -> Option<CodexAuth> {
+    fn current_auth(&self) -> Option<GenexAuth> {
         self.auth_manager
             .auth_cached()
             .filter(|auth| self.is_expected_auth(auth))
@@ -111,7 +111,7 @@ pub(crate) fn auth_manager_for_provider(
 }
 
 pub(crate) fn resolve_provider_auth(
-    auth: Option<&CodexAuth>,
+    auth: Option<&GenexAuth>,
     provider: &ModelProviderInfo,
 ) -> genex_protocol::error::Result<SharedAuthProvider> {
     if let Some(auth) = bearer_auth_for_provider(provider)? {
@@ -124,7 +124,7 @@ pub(crate) fn resolve_provider_auth(
 
     if matches!(
         auth,
-        Some(CodexAuth::BedrockApiKey(_) | CodexAuth::BedrockAccessKeys(_))
+        Some(GenexAuth::BedrockApiKey(_) | GenexAuth::BedrockAccessKeys(_))
     ) {
         return Err(GenexErr::UnsupportedOperation(
             BEDROCK_API_KEY_UNSUPPORTED_MESSAGE.to_string(),
@@ -139,7 +139,7 @@ pub(crate) fn resolve_provider_auth(
 
 pub(crate) async fn resolve_provider_auth_for_scope(
     auth_manager: Option<Arc<AuthManager>>,
-    auth: Option<&CodexAuth>,
+    auth: Option<&GenexAuth>,
     provider: &ModelProviderInfo,
     scope: ProviderAuthScope,
 ) -> genex_protocol::error::Result<ResolvedProviderAuth> {
@@ -162,13 +162,13 @@ fn bearer_auth_for_provider(
 }
 
 /// Builds request-header auth for a stored Codex auth snapshot.
-pub fn auth_provider_from_auth(auth: &CodexAuth) -> SharedAuthProvider {
+pub fn auth_provider_from_auth(auth: &GenexAuth) -> SharedAuthProvider {
     match auth {
-        CodexAuth::Headers(auth) => Arc::new(HeaderAuthProvider { auth: auth.clone() }),
-        CodexAuth::BedrockApiKey(_) | CodexAuth::BedrockAccessKeys(_) => {
+        GenexAuth::Headers(auth) => Arc::new(HeaderAuthProvider { auth: auth.clone() }),
+        GenexAuth::BedrockApiKey(_) | GenexAuth::BedrockAccessKeys(_) => {
             unreachable!("{BEDROCK_API_KEY_UNSUPPORTED_MESSAGE}")
         }
-        CodexAuth::ApiKey(_) => Arc::new(BearerAuthProvider {
+        GenexAuth::ApiKey(_) => Arc::new(BearerAuthProvider {
             token: auth.get_token().ok(),
         }),
     }
@@ -181,7 +181,7 @@ pub fn auth_provider_from_auth(auth: &CodexAuth) -> SharedAuthProvider {
 /// that state so a later account switch cannot reuse it.
 pub fn auth_provider_from_auth_manager(
     auth_manager: Arc<AuthManager>,
-    expected_auth: &CodexAuth,
+    expected_auth: &GenexAuth,
 ) -> SharedAuthProvider {
     Arc::new(AuthManagerAuthProvider {
         auth_manager,
@@ -225,7 +225,7 @@ mod tests {
             AUTHORIZATION,
             HeaderValue::from_static("Bearer ambient-token"),
         );
-        let ambient_auth = CodexAuth::Headers(AuthHeaders::new(ambient_headers));
+        let ambient_auth = GenexAuth::Headers(AuthHeaders::new(ambient_headers));
 
         let auth =
             resolve_provider_auth(Some(&ambient_auth), &provider).expect("auth should resolve");
@@ -239,7 +239,7 @@ mod tests {
             "http://localhost:11434/v1",
             WireApi::Responses,
         );
-        let ambient_auth = CodexAuth::BedrockApiKey(BedrockApiKeyAuth {
+        let ambient_auth = GenexAuth::BedrockApiKey(BedrockApiKeyAuth {
             api_key: "bedrock-api-key-test".to_string(),
             region: "us-east-1".to_string(),
         });
@@ -257,7 +257,7 @@ mod tests {
             WireApi::Responses,
         );
         provider.experimental_bearer_token = Some("provider-token".into());
-        let ambient_auth = CodexAuth::BedrockApiKey(BedrockApiKeyAuth {
+        let ambient_auth = GenexAuth::BedrockApiKey(BedrockApiKeyAuth {
             api_key: "bedrock-api-key-test".to_string(),
             region: "us-east-1".to_string(),
         });
@@ -289,7 +289,7 @@ mod tests {
                 .try_into()
                 .expect("current directory should be absolute"),
         });
-        let command_auth = CodexAuth::from_api_key("command-token");
+        let command_auth = GenexAuth::from_api_key("command-token");
 
         let headers = resolve_provider_auth(Some(&command_auth), &provider)
             .expect("auth should resolve")
@@ -309,7 +309,7 @@ mod tests {
             AUTHORIZATION,
             HeaderValue::from_static("Bearer ambient-token"),
         );
-        let ambient_auth = CodexAuth::Headers(AuthHeaders::new(expected.clone()));
+        let ambient_auth = GenexAuth::Headers(AuthHeaders::new(expected.clone()));
 
         let auth =
             resolve_provider_auth(Some(&ambient_auth), &provider).expect("auth should resolve");
@@ -325,7 +325,7 @@ mod tests {
             HeaderValue::from_static("Bearer external"),
         );
         expected.insert("x-external-auth", HeaderValue::from_static("enabled"));
-        let auth = CodexAuth::Headers(AuthHeaders::new(expected.clone()));
+        let auth = GenexAuth::Headers(AuthHeaders::new(expected.clone()));
 
         let actual = auth_provider_from_auth(&auth).to_auth_headers();
 
@@ -335,7 +335,7 @@ mod tests {
     #[test]
     fn responses_provider_rejects_bedrock_api_key_auth() {
         let provider = ModelProviderInfo::create_responses_provider(/*base_url*/ None);
-        let auth = CodexAuth::BedrockApiKey(BedrockApiKeyAuth {
+        let auth = GenexAuth::BedrockApiKey(BedrockApiKeyAuth {
             api_key: "bedrock-api-key-test".to_string(),
             region: "us-east-1".to_string(),
         });

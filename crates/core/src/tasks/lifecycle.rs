@@ -1,6 +1,6 @@
 use genex_extension_api::ExtensionData;
 use genex_extension_api::ThreadIdleCause;
-use genex_protocol::protocol::CodexErrorInfo;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::TokenUsage;
 use genex_protocol::protocol::TurnAbortReason;
 
@@ -87,7 +87,7 @@ impl Session {
     pub(crate) async fn emit_turn_error_lifecycle(
         &self,
         turn_context: &TurnContext,
-        error: CodexErrorInfo,
+        error: GenexErrorInfo,
     ) {
         for contributor in self.services.extensions.turn_lifecycle_contributors() {
             contributor

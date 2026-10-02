@@ -8,7 +8,7 @@ use crate::compact_remote_history::trim_function_call_history_to_fit_context_win
 use crate::responses_metadata::CompactionTurnMetadata;
 use crate::session::session::Session;
 use crate::session::step_context::StepContext;
-use genex_history::CodexHarnessMetadata;
+use genex_history::GenexHarnessMetadata;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::TokenUsage;
@@ -18,7 +18,7 @@ use tracing::info;
 pub(super) struct RemoteCompactV2Attempt {
     pub(super) trace_input_history: Option<Vec<ResponseItem>>,
     pub(super) prompt_input: Vec<ResponseItem>,
-    pub(super) prompt_input_metadata: Vec<Option<CodexHarnessMetadata>>,
+    pub(super) prompt_input_metadata: Vec<Option<GenexHarnessMetadata>>,
     pub(super) compaction_output: ResponseItem,
     pub(super) compaction_response_id: String,
     pub(super) token_usage: Option<TokenUsage>,

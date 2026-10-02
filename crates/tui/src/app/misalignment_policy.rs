@@ -74,9 +74,9 @@ impl App {
                     ServerNotification::Error(n)
                         if !n.will_retry
                             && (n.turn_id == review.turn_id
-                                || n.error.codex_error_info
+                                || n.error.genex_error_info
                                     == Some(
-                                        AppServerCodexErrorInfo::MisalignmentPolicyViolation,
+                                        AppServerGenexErrorInfo::MisalignmentPolicyViolation,
                                     )) =>
                     {
                         (&n.turn_id, Some(&n.error))
@@ -87,8 +87,8 @@ impl App {
                     return Some(false);
                 };
                 if turn_id != &review.turn_id
-                    || error.codex_error_info
-                        != Some(AppServerCodexErrorInfo::MisalignmentPolicyViolation)
+                    || error.genex_error_info
+                        != Some(AppServerGenexErrorInfo::MisalignmentPolicyViolation)
                 {
                     return Some(false);
                 }

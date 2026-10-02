@@ -2,7 +2,7 @@ use anyhow::Result;
 use genex_core::TurnInputRequest;
 use genex_features::Feature;
 use genex_history::RolloutItem;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_models_manager::model_info::model_info_from_slug;
 use genex_protocol::config_types::CollaborationMode;
 use genex_protocol::config_types::ModeKind;
@@ -265,7 +265,7 @@ async fn catalog_collaboration_messages_refresh_without_mode_or_model_change(
     let mut models_mocks =
         vec![mount_models_once_with_etag(&server, catalog(ORIGINAL), ETAG_1).await];
     let test = test_genex()
-        .with_auth(CodexAuth::from_api_key("test-api-key"))
+        .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_model(MODEL)
         .with_config(|config| {
             config.model_provider.request_max_retries = Some(0);

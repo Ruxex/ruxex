@@ -800,7 +800,7 @@ async fn replayed_retryable_app_server_error_keeps_turn_running() {
             error: AppServerTurnError {
                 misalignment: None,
                 message: "Reconnecting... 1/5".to_string(),
-                codex_error_info: None,
+                genex_error_info: None,
                 additional_details: Some("Idle timeout waiting for SSE".to_string()),
             },
             will_retry: true,

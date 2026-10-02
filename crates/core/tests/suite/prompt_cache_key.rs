@@ -3,7 +3,7 @@ use std::time::Duration;
 use anyhow::Result;
 use anyhow::anyhow;
 use genex_features::Feature;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_function_call_with_namespace;
@@ -86,7 +86,7 @@ async fn api_key_subagent_uses_session_id_as_prompt_cache_key() -> Result<()> {
     .await;
 
     let mut builder = test_genex()
-        .with_auth(CodexAuth::from_api_key("dummy"))
+        .with_auth(GenexAuth::from_api_key("dummy"))
         .with_config(|config| {
             config
                 .features

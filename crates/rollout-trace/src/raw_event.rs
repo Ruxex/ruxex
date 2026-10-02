@@ -2,7 +2,7 @@
 
 use crate::model::AgentThreadId;
 use crate::model::CodeCellRuntimeStatus;
-use crate::model::CodexTurnId;
+use crate::model::GenexTurnId;
 use crate::model::CompactionId;
 use crate::model::CompactionRequestId;
 use crate::model::EdgeId;
@@ -38,7 +38,7 @@ pub struct RawTraceEvent {
     pub wall_time_unix_ms: i64,
     pub rollout_id: String,
     pub thread_id: Option<AgentThreadId>,
-    pub codex_turn_id: Option<CodexTurnId>,
+    pub genex_turn_id: Option<GenexTurnId>,
     pub payload: RawTraceEventPayload,
 }
 
@@ -46,7 +46,7 @@ pub struct RawTraceEvent {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct RawTraceEventContext {
     pub thread_id: Option<AgentThreadId>,
-    pub codex_turn_id: Option<CodexTurnId>,
+    pub genex_turn_id: Option<GenexTurnId>,
 }
 
 /// Runtime requester as observed at the raw tool boundary.
@@ -84,18 +84,18 @@ pub enum RawTraceEventPayload {
         thread_id: AgentThreadId,
         status: RolloutStatus,
     },
-    CodexTurnStarted {
-        codex_turn_id: CodexTurnId,
+    GenexTurnStarted {
+        genex_turn_id: GenexTurnId,
         thread_id: AgentThreadId,
     },
-    CodexTurnEnded {
-        codex_turn_id: CodexTurnId,
+    GenexTurnEnded {
+        genex_turn_id: GenexTurnId,
         status: ExecutionStatus,
     },
     InferenceStarted {
         inference_call_id: InferenceCallId,
         thread_id: AgentThreadId,
-        codex_turn_id: CodexTurnId,
+        genex_turn_id: GenexTurnId,
         model: String,
         provider_name: String,
         request_payload: RawPayloadRef,
@@ -184,7 +184,7 @@ pub enum RawTraceEventPayload {
         compaction_id: CompactionId,
         compaction_request_id: CompactionRequestId,
         thread_id: AgentThreadId,
-        codex_turn_id: CodexTurnId,
+        genex_turn_id: GenexTurnId,
         model: String,
         provider_name: String,
         request_payload: RawPayloadRef,
@@ -209,7 +209,7 @@ pub enum RawTraceEventPayload {
     AgentResultObserved {
         edge_id: EdgeId,
         child_thread_id: AgentThreadId,
-        child_codex_turn_id: CodexTurnId,
+        child_genex_turn_id: GenexTurnId,
         parent_thread_id: AgentThreadId,
         message: String,
         /// Raw notification payload. This is evidence for the runtime delivery,
@@ -238,8 +238,8 @@ impl RawTraceEventPayload {
             RawTraceEventPayload::RolloutStarted { .. }
             | RawTraceEventPayload::RolloutEnded { .. }
             | RawTraceEventPayload::ThreadEnded { .. }
-            | RawTraceEventPayload::CodexTurnStarted { .. }
-            | RawTraceEventPayload::CodexTurnEnded { .. }
+            | RawTraceEventPayload::GenexTurnStarted { .. }
+            | RawTraceEventPayload::GenexTurnEnded { .. }
             | RawTraceEventPayload::CompactionRequestFailed { .. }
             | RawTraceEventPayload::CodeCellStarted { .. }
             | RawTraceEventPayload::McpToolCallCorrelationAssigned { .. }

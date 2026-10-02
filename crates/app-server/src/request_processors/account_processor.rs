@@ -140,7 +140,7 @@ impl AccountRequestProcessor {
                 .auth_manager
                 .auth_cached()
                 .as_ref()
-                .map(CodexAuth::api_auth_mode)
+                .map(GenexAuth::api_auth_mode)
                 .map(auth_mode_to_api),
             plan_type: None,
         }
@@ -163,7 +163,7 @@ impl AccountRequestProcessor {
     async fn maybe_refresh_plugin_caches_for_current_config(
         config_manager: &ConfigManager,
         thread_manager: &Arc<ThreadManager>,
-        _auth: Option<CodexAuth>,
+        _auth: Option<GenexAuth>,
     ) {
         thread_manager.plugins_manager().clear_cache();
 
@@ -492,7 +492,7 @@ impl AccountRequestProcessor {
             .auth_manager
             .auth_cached()
             .as_ref()
-            .map(CodexAuth::api_auth_mode)
+            .map(GenexAuth::api_auth_mode)
             .map(auth_mode_to_api))
     }
 
@@ -566,7 +566,7 @@ impl AccountRequestProcessor {
                     let permanent_refresh_failure =
                         self.auth_manager.refresh_failure_for_auth(&auth).is_some();
                     let auth_mode = auth_mode_to_api(auth.api_auth_mode());
-                    let (reported_auth_method, token_opt) = if matches!(auth, CodexAuth::Headers(_))
+                    let (reported_auth_method, token_opt) = if matches!(auth, GenexAuth::Headers(_))
                         || include_token && permanent_refresh_failure
                     {
                         // Host-owned and metadata-bearing credentials are never exported.

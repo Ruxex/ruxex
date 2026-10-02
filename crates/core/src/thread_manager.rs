@@ -42,7 +42,7 @@ use genex_history::InitialHistory;
 use genex_history::ResumedHistory;
 use genex_history::RolloutItem;
 use genex_login::AuthManager;
-use genex_login::CodexAuth;
+use genex_login::GenexAuth;
 use genex_login::default_client::CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
 use genex_login::default_client::originator;
 use genex_model_provider::create_model_provider;
@@ -578,10 +578,10 @@ impl ThreadManager {
         self
     }
 
-    /// Construct with a dummy AuthManager containing the provided CodexAuth.
+    /// Construct with a dummy AuthManager containing the provided GenexAuth.
     /// Used for integration tests: should not be used by ordinary business logic.
     pub(crate) fn with_models_provider_for_tests(
-        auth: CodexAuth,
+        auth: GenexAuth,
         provider: ModelProviderInfo,
     ) -> Self {
         set_thread_manager_test_mode_for_tests(/*enabled*/ true);
@@ -601,10 +601,10 @@ impl ThreadManager {
         manager
     }
 
-    /// Construct with a dummy AuthManager containing the provided CodexAuth and codex home.
+    /// Construct with a dummy AuthManager containing the provided GenexAuth and codex home.
     /// Used for integration tests: should not be used by ordinary business logic.
     pub(crate) fn with_models_provider_and_home_for_tests(
-        auth: CodexAuth,
+        auth: GenexAuth,
         provider: ModelProviderInfo,
         codex_home: PathBuf,
         environment_manager: Arc<EnvironmentManager>,
@@ -619,7 +619,7 @@ impl ThreadManager {
     }
 
     pub(crate) fn with_models_provider_home_and_state_for_tests(
-        auth: CodexAuth,
+        auth: GenexAuth,
         provider: ModelProviderInfo,
         codex_home: PathBuf,
         environment_manager: Arc<EnvironmentManager>,

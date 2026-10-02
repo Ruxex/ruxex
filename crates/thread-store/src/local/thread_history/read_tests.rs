@@ -2,7 +2,7 @@ use std::fs;
 use std::time::Duration;
 
 use chrono::Utc;
-use genex_app_server_protocol::CodexErrorInfo;
+use genex_app_server_protocol::GenexErrorInfo;
 use genex_app_server_protocol::ThreadTimelineEntry;
 use genex_protocol::ThreadId;
 use genex_protocol::protocol::EventMsg;
@@ -43,7 +43,7 @@ async fn list_turns_pages_projected_rows_and_applies_item_views() {
             20,
             "failed",
             Some(
-                r#"{"message":"turn failed","codexErrorInfo":"serverOverloaded","additionalDetails":"retry later"}"#,
+                r#"{"message":"turn failed","genexErrorInfo":"serverOverloaded","additionalDetails":"retry later"}"#,
             ),
             None,
             None,
@@ -92,7 +92,7 @@ async fn list_turns_pages_projected_rows_and_applies_item_views() {
         first_page.turns[1].error,
         Some(StoredTurnError {
             message: "turn failed".to_string(),
-            codex_error_info: Some(CodexErrorInfo::ServerOverloaded),
+            genex_error_info: Some(GenexErrorInfo::ServerOverloaded),
             additional_details: Some("retry later".to_string()),
         })
     );
@@ -231,7 +231,7 @@ async fn list_items_pages_whole_thread_and_per_turn_rows() {
 async fn timeline_turn_boundaries_page_through_shared_ordinals() {
     let (_home, store, thread_id) = store_with_mode(ThreadHistoryMode::Paginated).await;
     let db = history_db(&store).await;
-    let error = r#"{"message":"failed","codexErrorInfo":null,"additionalDetails":null}"#;
+    let error = r#"{"message":"failed","genexErrorInfo":null,"additionalDetails":null}"#;
     for (turn_id, start, end, status, error_json) in [
         ("complete", 10, Some(20), "completed", None),
         ("interrupt", 20, Some(30), "interrupted", None),
