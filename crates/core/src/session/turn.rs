@@ -72,7 +72,7 @@ use genex_protocol::config_types::AutoCompactTokenLimitScope;
 use genex_protocol::config_types::ModeKind;
 use genex_protocol::error::CodexErr;
 use genex_protocol::error::CodexErrorDetails;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::items::PlanItem;
 use genex_protocol::items::TurnItem;
 use genex_protocol::items::build_hook_prompt_message;
@@ -146,7 +146,7 @@ pub(crate) async fn run_turn(
     mcp_startup_requirements: &mut McpStartupRequirements,
     prewarmed_client_session: Option<ModelClientSession>,
     cancellation_token: CancellationToken,
-) -> CodexResult<Option<String>> {
+) -> GenexResult<Option<String>> {
     // Record results from hooks that finished after the previous turn before this turn's user prompt.
     drain_async_hook_results(&sess, &turn_context, /*before_user_prompt*/ true).await;
 
@@ -420,7 +420,7 @@ pub(crate) async fn run_turn(
                 .await?
             }
         };
-        let sampling_request_result: CodexResult<_> = async {
+        let sampling_request_result: GenexResult<_> = async {
             super::time_reminder::maybe_record_current_time_reminder(
                 sess.as_ref(),
                 turn_context.as_ref(),
@@ -935,7 +935,7 @@ async fn run_pre_sampling_compact(
     turn_context: &Arc<TurnContext>,
     client_session: &mut ModelClientSession,
     cancellation_token: &CancellationToken,
-) -> CodexResult<()> {
+) -> GenexResult<()> {
     maybe_run_previous_model_inline_compact(sess, turn_context, client_session, cancellation_token)
         .await?;
     let token_status =
@@ -978,7 +978,7 @@ async fn capture_current_model_fallback_step_context(
     turn_context: &Arc<TurnContext>,
     previous_model: &str,
     cancellation_token: &CancellationToken,
-) -> CodexResult<Option<Arc<StepContext>>> {
+) -> GenexResult<Option<Arc<StepContext>>> {
     let uses_managed_auth = turn_context
         .auth_manager
         .as_deref()
@@ -1003,7 +1003,7 @@ async fn maybe_run_previous_model_inline_compact(
     turn_context: &Arc<TurnContext>,
     client_session: &mut ModelClientSession,
     cancellation_token: &CancellationToken,
-) -> CodexResult<()> {
+) -> GenexResult<()> {
     let Some(previous_turn_settings) = sess.previous_turn_settings().await else {
         return Ok(());
     };
@@ -1104,7 +1104,7 @@ async fn run_auto_compact(
     initial_context_injection: InitialContextInjection,
     reason: CompactionReason,
     phase: CompactionPhase,
-) -> CodexResult<()> {
+) -> GenexResult<()> {
     let turn_context = &step_context.turn;
     if turn_context.config.features.enabled(Feature::TokenBudget) {
         // Compaction is the reset request, so force a new context window
@@ -1192,7 +1192,7 @@ async fn run_sampling_request(
     responses_metadata: &GenexResponsesMetadata,
     input: Vec<ResponseItem>,
     cancellation_token: CancellationToken,
-) -> CodexResult<(SamplingRequestResult, Vec<ResponseItem>)> {
+) -> GenexResult<(SamplingRequestResult, Vec<ResponseItem>)> {
     let turn_context = Arc::clone(&step_context.turn);
     let base_instructions = sess.get_prompt_base_instructions().await;
 
@@ -1310,7 +1310,7 @@ pub(crate) async fn built_tools(
     mcp: &Arc<genex_mcp::McpBinding>,
     step_store: &ExtensionData,
     prepared_recommendations: PreparedToolRecommendations,
-) -> CodexResult<Arc<ToolRouter>> {
+) -> GenexResult<Arc<ToolRouter>> {
     let tool_suggest_is_enabled = tool_suggest_enabled(turn_context);
     let PreparedToolRecommendations { auth } = prepared_recommendations;
     let tool_suggest_candidates = if tool_suggest_is_enabled {
@@ -1806,7 +1806,7 @@ async fn drain_in_flight(
     in_flight: &mut FuturesOrdered<InFlightFuture<'static>>,
     sess: Arc<Session>,
     step_context: &StepContext,
-) -> CodexResult<()> {
+) -> GenexResult<()> {
     let turn_context = &step_context.turn;
     while let Some(res) = in_flight.next().await {
         match res {
@@ -1859,7 +1859,7 @@ async fn try_run_sampling_request(
     turn_diff_tracker: SharedTurnDiffTracker,
     prompt: &Prompt,
     cancellation_token: CancellationToken,
-) -> CodexResult<SamplingRequestResult> {
+) -> GenexResult<SamplingRequestResult> {
     let turn_context = Arc::clone(&step_context.turn);
     let inference_trace = sess.services.rollout_thread_trace.inference_trace_context(
         turn_context.sub_id.as_str(),
@@ -1916,7 +1916,7 @@ async fn try_run_sampling_request(
         !sess.services.extensions.turn_item_contributors().is_empty();
     let mut active_item_is_streaming_to_client = false;
     let receiving_span = trace_span!("receiving_stream");
-    let outcome: CodexResult<SamplingRequestResult> = loop {
+    let outcome: GenexResult<SamplingRequestResult> = loop {
         let handle_responses = trace_span!(
             parent: &receiving_span,
             "handle_responses",

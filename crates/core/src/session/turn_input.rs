@@ -23,7 +23,7 @@ use crate::tasks::RegularTask;
 use genex_history::ResponseItemEnvelope;
 use genex_protocol::config_types::ModeKind;
 use genex_protocol::error::CodexErr;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::AdditionalContextEntry;
 use genex_protocol::protocol::NonSteerableTurnKind;
@@ -85,7 +85,7 @@ impl PreparedTurnInputSettings {
         session: &Session,
         thread_settings: ThreadSettingsOverrides,
         start_options: TurnStartOptions,
-    ) -> CodexResult<Self> {
+    ) -> GenexResult<Self> {
         let thread_settings_update = if thread_settings == ThreadSettingsOverrides::default() {
             None
         } else {
@@ -114,7 +114,7 @@ impl PreparedTurnInputSettings {
         session: &Arc<Session>,
         submission_id: String,
         kind: TurnStartKind,
-    ) -> CodexResult<Option<Arc<TurnContext>>> {
+    ) -> GenexResult<Option<Arc<TurnContext>>> {
         let TurnStartOptions {
             turn_trigger,
             final_output_json_schema,
@@ -179,7 +179,7 @@ impl PreparedTurnInputSettings {
 
     /// Applies only persistent settings after steering succeeds. The active
     /// turn keeps its existing context; subsequent turns see the update.
-    async fn apply_steered(self, session: &Session, submission_id: String) -> CodexResult<()> {
+    async fn apply_steered(self, session: &Session, submission_id: String) -> GenexResult<()> {
         let Some(thread_settings_update) = self.thread_settings_update else {
             return Ok(());
         };
@@ -194,7 +194,7 @@ pub(super) async fn handle(
     request: TurnInputRequest,
     mode: TurnInputMode,
     submission_id: String,
-) -> CodexResult<TurnInputSubmission> {
+) -> GenexResult<TurnInputSubmission> {
     match mode {
         TurnInputMode::StartOrSteer => start_or_steer(session, request, submission_id).await,
         TurnInputMode::StartIfIdle => {
@@ -243,7 +243,7 @@ pub(super) async fn handle_recovery(
     thread_settings: ThreadSettingsOverrides,
     start_options: TurnStartOptions,
     submission_id: String,
-) -> CodexResult<TurnInputSubmission> {
+) -> GenexResult<TurnInputSubmission> {
     let request = TurnInputRequest::user_input(Vec::new())
         .with_thread_settings(thread_settings)
         .on_start(TurnStartOptions {
@@ -264,7 +264,7 @@ async fn start_or_steer(
     session: &Arc<Session>,
     request: TurnInputRequest,
     submission_id: String,
-) -> CodexResult<TurnInputSubmission> {
+) -> GenexResult<TurnInputSubmission> {
     let TurnInputRequest {
         mut input,
         thread_settings,
@@ -366,7 +366,7 @@ async fn start_if_idle(
     submission_id: String,
     kind: TurnStartKind,
     expected_previous_turn_id: Option<String>,
-) -> CodexResult<TurnInputSubmission> {
+) -> GenexResult<TurnInputSubmission> {
     let TurnInputRequest {
         input,
         thread_settings,
@@ -503,7 +503,7 @@ async fn steer(
     request: TurnInputRequest,
     expected_turn_id: String,
     submission_id: String,
-) -> CodexResult<TurnInputSubmission> {
+) -> GenexResult<TurnInputSubmission> {
     let TurnInputRequest {
         mut input,
         thread_settings,

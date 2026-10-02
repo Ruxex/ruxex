@@ -21,7 +21,7 @@ use genex_protocol::config_types::CollaborationMode;
 use genex_protocol::config_types::ReasoningSummary;
 use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::error::CodexErr;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::mcp::CallToolResult;
 use genex_protocol::mcp::ClientMcpExtensions;
 use genex_protocol::model_types::ReasoningEffort;
@@ -195,7 +195,7 @@ impl GenexThread {
         }
     }
 
-    pub async fn submit(&self, op: Op) -> CodexResult<String> {
+    pub async fn submit(&self, op: Op) -> GenexResult<String> {
         self.io.submit(op).await
     }
 
@@ -209,7 +209,7 @@ impl GenexThread {
         &self.session.services.thread_extension_data
     }
 
-    pub async fn shutdown_and_wait(&self) -> CodexResult<()> {
+    pub async fn shutdown_and_wait(&self) -> GenexResult<()> {
         self.io.shutdown_and_wait().await
     }
 
@@ -290,7 +290,7 @@ impl GenexThread {
         &self,
         op: Op,
         trace: Option<W3cTraceContext>,
-    ) -> CodexResult<String> {
+    ) -> GenexResult<String> {
         self.io
             .submit_with_trace(
                 op, trace, /*parent_turn_id*/ None, /*root_turn_id*/ None,
@@ -306,7 +306,7 @@ impl GenexThread {
     pub async fn start_or_steer_turn(
         &self,
         request: TurnInputRequest,
-    ) -> CodexResult<TurnInputSubmission> {
+    ) -> GenexResult<TurnInputSubmission> {
         self.submit_turn_input_with_mode(request, TurnInputMode::StartOrSteer)
             .await
     }
@@ -318,7 +318,7 @@ impl GenexThread {
     pub async fn start_turn_if_idle(
         &self,
         request: TurnInputRequest,
-    ) -> CodexResult<StartIfIdleSubmission> {
+    ) -> GenexResult<StartIfIdleSubmission> {
         match self
             .submit_turn_input_with_mode(request, TurnInputMode::StartIfIdle)
             .await?
@@ -342,7 +342,7 @@ impl GenexThread {
         &self,
         request: TurnInputRequest,
         expected_previous_turn_id: String,
-    ) -> CodexResult<TurnInputSubmission> {
+    ) -> GenexResult<TurnInputSubmission> {
         self.submit_turn_input_with_mode(
             request,
             TurnInputMode::ContinueIfIdle {
@@ -359,7 +359,7 @@ impl GenexThread {
     pub async fn recover_turn_if_idle(
         &self,
         request: RecoverTurnRequest,
-    ) -> CodexResult<StartIfIdleSubmission> {
+    ) -> GenexResult<StartIfIdleSubmission> {
         self.session
             .services
             .agent_control
@@ -410,7 +410,7 @@ impl GenexThread {
     /// The session processes an accepted request even if its caller disconnects.
     /// Callers must not transfer ownership until suspension succeeds, which
     /// requires stopping execution, flushing history, and closing its writer.
-    pub async fn suspend_turn_and_shutdown(&self) -> CodexResult<SuspendTurnOutcome> {
+    pub async fn suspend_turn_and_shutdown(&self) -> GenexResult<SuspendTurnOutcome> {
         if self.session_source.is_non_root_agent() {
             return Err(CodexErr::UnsupportedOperation(
                 "turn suspension requires the owning root thread".to_string(),
@@ -445,7 +445,7 @@ impl GenexThread {
         &self,
         request: TurnInputRequest,
         expected_turn_id: String,
-    ) -> CodexResult<SteerSubmission> {
+    ) -> GenexResult<SteerSubmission> {
         match self
             .submit_turn_input_with_mode(request, TurnInputMode::Steer { expected_turn_id })
             .await?
@@ -464,7 +464,7 @@ impl GenexThread {
         &self,
         request: TurnInputRequest,
         mode: TurnInputMode,
-    ) -> CodexResult<TurnInputSubmission> {
+    ) -> GenexResult<TurnInputSubmission> {
         if !matches!(mode, TurnInputMode::Steer { .. }) {
             self.session
                 .services
@@ -585,7 +585,7 @@ impl GenexThread {
         }
     }
 
-    pub async fn next_event(&self) -> CodexResult<Event> {
+    pub async fn next_event(&self) -> GenexResult<Event> {
         self.io.next_event().await
     }
 
@@ -633,7 +633,7 @@ impl GenexThread {
     }
 
     /// Record raw Responses API items without starting a new turn.
-    pub async fn inject_response_items(&self, items: Vec<ResponseItem>) -> CodexResult<()> {
+    pub async fn inject_response_items(&self, items: Vec<ResponseItem>) -> GenexResult<()> {
         self.inject_response_items_for_turn(items).await?;
         self.session.flush_rollout().await?;
         Ok(())
@@ -647,7 +647,7 @@ impl GenexThread {
     pub async fn inject_response_items_for_turn(
         &self,
         items: Vec<ResponseItem>,
-    ) -> CodexResult<()> {
+    ) -> GenexResult<()> {
         if items.is_empty() {
             return Err(CodexErr::InvalidRequest(
                 "items must not be empty".to_string(),
@@ -842,7 +842,7 @@ impl GenexThread {
         &self,
         selection: &TurnEnvironmentSelection,
         config: EnvironmentConfig,
-    ) -> CodexResult<()> {
+    ) -> GenexResult<()> {
         self.session.environment_ready(selection, config).await
     }
 
@@ -851,7 +851,7 @@ impl GenexThread {
         &self,
         selection: &TurnEnvironmentSelection,
         error: String,
-    ) -> CodexResult<()> {
+    ) -> GenexResult<()> {
         self.session.environment_failed(selection, error).await
     }
 
@@ -898,7 +898,7 @@ impl GenexThread {
         self.session.enabled(feature)
     }
 
-    pub async fn increment_out_of_band_elicitation_count(&self) -> CodexResult<i64> {
+    pub async fn increment_out_of_band_elicitation_count(&self) -> GenexResult<i64> {
         let mut elicitations = self.out_of_band_elicitations.lock().await;
         let incremented = elicitations.count.checked_add(1).ok_or_else(|| {
             CodexErr::Fatal("out-of-band elicitation count overflowed".to_string())
@@ -910,7 +910,7 @@ impl GenexThread {
         Ok(incremented)
     }
 
-    pub async fn decrement_out_of_band_elicitation_count(&self) -> CodexResult<i64> {
+    pub async fn decrement_out_of_band_elicitation_count(&self) -> GenexResult<i64> {
         let mut elicitations = self.out_of_band_elicitations.lock().await;
         if elicitations.count == 0 {
             return Err(CodexErr::InvalidRequest(

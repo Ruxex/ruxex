@@ -29,7 +29,7 @@ use crate::dynamic_tools::DynamicToolCallOutputContentItem;
 use crate::dynamic_tools::DynamicToolCallRequest;
 use crate::dynamic_tools::DynamicToolResponse;
 use crate::dynamic_tools::DynamicToolSpec;
-use crate::error::Result as CodexResult;
+use crate::error::Result as GenexResult;
 use crate::items::AgentMessageDelivery;
 use crate::items::AsyncUserInputQuestion;
 use crate::items::TurnItem;
@@ -270,19 +270,19 @@ pub enum Op {
     TurnInput {
         request: Box<TurnInputRequest>,
         mode: TurnInputMode,
-        reply: oneshot::Sender<CodexResult<TurnInputSubmission>>,
+        reply: oneshot::Sender<GenexResult<TurnInputSubmission>>,
     },
 
     /// Resume an interrupted regular turn.
     RecoverTurn {
         thread_settings: ThreadSettingsOverrides,
         start_options: TurnStartOptions,
-        reply: oneshot::Sender<CodexResult<TurnInputSubmission>>,
+        reply: oneshot::Sender<GenexResult<TurnInputSubmission>>,
     },
 
     /// Stop the active root turn without recording a terminal turn event.
     SuspendTurnAndShutdown {
-        reply: oneshot::Sender<CodexResult<SuspendTurnOutcome>>,
+        reply: oneshot::Sender<GenexResult<SuspendTurnOutcome>>,
     },
 
     /// Apply thread-settings overrides without starting a turn.

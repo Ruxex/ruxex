@@ -210,7 +210,7 @@ use genex_model_provider::create_model_provider;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::error::CodexErr;
 use genex_protocol::error::CodexErrorDetails;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 #[cfg(test)]
 use genex_protocol::exec_output::StreamOutput;
 
@@ -480,7 +480,7 @@ impl Session {
     #[inline(never)]
     pub(crate) fn spawn(
         args: SessionSpawnArgs,
-    ) -> BoxFuture<'static, CodexResult<(Arc<Self>, SessionIo)>> {
+    ) -> BoxFuture<'static, GenexResult<(Arc<Self>, SessionIo)>> {
         Box::pin(async move {
             let parent_trace = match args.parent_trace {
                 Some(trace) => {
@@ -506,7 +506,7 @@ impl Session {
         })
     }
 
-    async fn spawn_internal(args: SessionSpawnArgs) -> CodexResult<(Arc<Self>, SessionIo)> {
+    async fn spawn_internal(args: SessionSpawnArgs) -> GenexResult<(Arc<Self>, SessionIo)> {
         let SessionSpawnArgs {
             startup,
             config,
@@ -872,7 +872,7 @@ impl Session {
 
 impl SessionIo {
     /// Submit the `op` wrapped in a `Submission` with a unique ID.
-    pub(crate) async fn submit(&self, op: Op) -> CodexResult<String> {
+    pub(crate) async fn submit(&self, op: Op) -> GenexResult<String> {
         self.submit_with_trace(
             op, /*trace*/ None, /*parent_turn_id*/ None, /*root_turn_id*/ None,
         )
@@ -885,7 +885,7 @@ impl SessionIo {
         trace: Option<W3cTraceContext>,
         parent_turn_id: Option<String>,
         root_turn_id: Option<String>,
-    ) -> CodexResult<String> {
+    ) -> GenexResult<String> {
         let id = new_submission_id();
         let sub = Submission {
             id: id.clone(),
@@ -899,7 +899,7 @@ impl SessionIo {
     }
 
     /// Use sparingly: prefer `submit()` so submission IDs are generated consistently.
-    pub(crate) async fn submit_with_id(&self, mut sub: Submission) -> CodexResult<()> {
+    pub(crate) async fn submit_with_id(&self, mut sub: Submission) -> GenexResult<()> {
         if sub.trace.is_none() {
             sub.trace = current_span_w3c_trace_context();
         }
@@ -918,7 +918,7 @@ impl SessionIo {
         &self,
         mut request: TurnInputRequest,
         mode: TurnInputMode,
-    ) -> CodexResult<TurnInputSubmission> {
+    ) -> GenexResult<TurnInputSubmission> {
         let id = new_submission_id();
         let (reply_tx, reply_rx) = oneshot::channel();
         let trace = request.trace.take();
@@ -943,7 +943,7 @@ impl SessionIo {
         start_options: TurnStartOptions,
         trace: Option<W3cTraceContext>,
         turn_id: String,
-    ) -> CodexResult<TurnInputSubmission> {
+    ) -> GenexResult<TurnInputSubmission> {
         let (reply_tx, reply_rx) = oneshot::channel();
         self.submit_with_id(Submission {
             id: turn_id,
@@ -960,7 +960,7 @@ impl SessionIo {
         reply_rx.await.unwrap_or(Err(CodexErr::InternalAgentDied))
     }
 
-    pub(crate) async fn shutdown_and_wait(&self) -> CodexResult<()> {
+    pub(crate) async fn shutdown_and_wait(&self) -> GenexResult<()> {
         let session_loop_termination = self.session_loop_termination.clone();
         match self.submit(Op::Shutdown).await {
             Ok(_) => {}
@@ -971,7 +971,7 @@ impl SessionIo {
         Ok(())
     }
 
-    pub(crate) async fn next_event(&self) -> CodexResult<Event> {
+    pub(crate) async fn next_event(&self) -> GenexResult<Event> {
         let event = self
             .rx_event
             .recv()
@@ -1020,7 +1020,7 @@ fn unsupported_service_tier_warning(
 
 fn session_permission_profile_state_from_config(
     config: &Config,
-) -> CodexResult<PermissionProfileState> {
+) -> GenexResult<PermissionProfileState> {
     Ok(config.permissions.permission_profile_state().clone())
 }
 
@@ -3289,7 +3289,7 @@ impl Session {
         &self,
         previous_world_state: &Arc<WorldState>,
         step_context: &step_context::StepContext,
-    ) -> CodexResult<Arc<WorldState>> {
+    ) -> GenexResult<Arc<WorldState>> {
         let turn_context = step_context.turn.as_ref();
         // Render model-visible state from the same step used to build and run tools.
         let world_state = Arc::new(self.build_world_state_for_step(step_context).await?);
@@ -3347,7 +3347,7 @@ impl Session {
         self: &Arc<Self>,
         turn_context: Arc<TurnContext>,
         cancellation_token: &CancellationToken,
-    ) -> CodexResult<Arc<StepContext>> {
+    ) -> GenexResult<Arc<StepContext>> {
         self.capture_step_context_with_required_mcp_servers(
             turn_context,
             cancellation_token,
@@ -3363,7 +3363,7 @@ impl Session {
         cancellation_token: &CancellationToken,
         required_servers: &[String],
         required_plugins: &HashSet<String>,
-    ) -> CodexResult<Arc<StepContext>> {
+    ) -> GenexResult<Arc<StepContext>> {
         let step_context = self
             .capture_step_context_inner(
                 turn_context,
@@ -3382,7 +3382,7 @@ impl Session {
         self: &Arc<Self>,
         turn_context: Arc<TurnContext>,
         cancellation_token: &CancellationToken,
-    ) -> CodexResult<Arc<StepContext>> {
+    ) -> GenexResult<Arc<StepContext>> {
         self.capture_step_context_inner(
             turn_context,
             cancellation_token,
@@ -3399,7 +3399,7 @@ impl Session {
         cancellation_token: &CancellationToken,
         required_servers: &[String],
         required_plugins: &HashSet<String>,
-    ) -> CodexResult<Arc<StepContext>> {
+    ) -> GenexResult<Arc<StepContext>> {
         // Capture once before asynchronous planning; all request consumers
         // retain this immutable settings version even if the turn is updated.
         let mut settings = turn_context.current_settings.load_full();
@@ -4103,7 +4103,7 @@ impl Session {
     pub(crate) async fn record_context_updates_and_set_reference_context_item(
         &self,
         step_context: &StepContext,
-    ) -> CodexResult<Arc<WorldState>> {
+    ) -> GenexResult<Arc<WorldState>> {
         let turn_context = step_context.turn.as_ref();
         let reference_context_item = {
             let state = self.state.lock().await;
@@ -4184,7 +4184,7 @@ impl Session {
         &self,
         turn_context: &TurnContext,
         token_usage: Option<&TokenUsage>,
-    ) -> CodexResult<()> {
+    ) -> GenexResult<()> {
         let result = self
             .record_token_usage_info(turn_context, &turn_context.initial_settings, token_usage)
             .await;
@@ -4231,7 +4231,7 @@ impl Session {
         turn_context: &TurnContext,
         settings: &ResolvedStepSettings,
         token_usage: Option<&TokenUsage>,
-    ) -> CodexResult<()> {
+    ) -> GenexResult<()> {
         if let Some(token_usage) = token_usage {
             let token_info = {
                 let mut state = self.state.lock().await;

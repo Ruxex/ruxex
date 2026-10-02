@@ -2,7 +2,7 @@ use super::AgentControl;
 use crate::genex_thread::GenexThread;
 use genex_protocol::error::CodexErr;
 use genex_protocol::error::CodexErrorDetails;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::protocol::MultiAgentVersion;
 use genex_protocol::protocol::SessionSource;
 use std::sync::Arc;
@@ -30,7 +30,7 @@ impl AgentControl {
     pub(crate) async fn ensure_execution_capacity_for_turn_start(
         &self,
         thread: &GenexThread,
-    ) -> CodexResult<()> {
+    ) -> GenexResult<()> {
         if thread.session.active_turn.lock().await.is_some() {
             return Ok(());
         }
@@ -45,7 +45,7 @@ impl AgentControl {
         &self,
         multi_agent_version: MultiAgentVersion,
         session_source: &SessionSource,
-    ) -> CodexResult<()> {
+    ) -> GenexResult<()> {
         if !is_execution_limited(multi_agent_version, session_source) {
             return Ok(());
         }

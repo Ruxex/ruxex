@@ -9,7 +9,7 @@ use crate::responses_metadata::CompactionTurnMetadata;
 use crate::session::session::Session;
 use crate::session::step_context::StepContext;
 use genex_history::CodexHarnessMetadata;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::TokenUsage;
 use genex_rollout_trace::CompactionTraceContext;
@@ -32,7 +32,7 @@ pub(super) async fn run_remote_compact_v2_attempt(
     client_session: Option<&mut ModelClientSession>,
     compaction_trace: &CompactionTraceContext,
     compaction_metadata: CompactionTurnMetadata,
-) -> CodexResult<RemoteCompactV2Attempt> {
+) -> GenexResult<RemoteCompactV2Attempt> {
     let turn_context = &step_context.turn;
     let mut history = sess.clone_history().await;
     let base_instructions = sess.get_prompt_base_instructions().await;

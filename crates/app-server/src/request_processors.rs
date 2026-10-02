@@ -288,7 +288,7 @@ use genex_protocol::config_types::ReasoningSummary;
 use genex_protocol::config_types::TrustLevel;
 use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::error::CodexErr;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 #[cfg(test)]
 use genex_protocol::items::TurnItem;
 use genex_protocol::model_types::ReasoningEffort;

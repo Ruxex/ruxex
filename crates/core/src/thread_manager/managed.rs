@@ -5,7 +5,7 @@ use std::future::Future;
 use std::sync::Arc;
 
 use genex_protocol::error::CodexErr;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use tokio::sync::oneshot;
 use tokio_util::sync::CancellationToken;
 use tokio_util::task::TaskTracker;
@@ -28,7 +28,7 @@ impl ThreadManager {
         options: StartThreadOptions,
         until: impl Future<Output = ()> + Send + 'static,
         tasks: &TaskTracker,
-    ) -> CodexResult<NewThread> {
+    ) -> GenexResult<NewThread> {
         if matches!(
             options.initial_history,
             genex_history::InitialHistory::Resumed(_)

@@ -2,7 +2,7 @@ use super::session::Session;
 use super::turn_context::TurnContext;
 use crate::context::ContextualUserFragment;
 use genex_protocol::error::CodexErr;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::protocol::TokenUsage;
 
 pub(super) async fn maybe_record_reminder(
@@ -27,7 +27,7 @@ pub(super) async fn maybe_record_reminder(
 }
 
 impl Session {
-    pub(crate) fn record_rollout_budget_usage(&self, usage: &TokenUsage) -> CodexResult<()> {
+    pub(crate) fn record_rollout_budget_usage(&self, usage: &TokenUsage) -> GenexResult<()> {
         if self
             .services
             .agent_control

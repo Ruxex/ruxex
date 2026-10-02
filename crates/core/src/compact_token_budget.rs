@@ -11,7 +11,7 @@ use crate::session::session::Session;
 use crate::session::step_context::StepContext;
 use crate::session::turn_context::TurnContext;
 use genex_protocol::error::CodexErr;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::items::ContextCompactionItem;
 use genex_protocol::items::TurnItem;
 use tokio_util::sync::CancellationToken;
@@ -24,7 +24,7 @@ use tokio_util::sync::CancellationToken;
 pub(crate) async fn run_manual_compact_task(
     sess: Arc<Session>,
     turn_context: Arc<TurnContext>,
-) -> CodexResult<()> {
+) -> GenexResult<()> {
     sess.emit_turn_started(&turn_context).await;
 
     // Manual compaction runs outside run_turn, so it captures its own current step.
@@ -44,7 +44,7 @@ pub(crate) async fn run_inline_auto_compact_task(
     sess: Arc<Session>,
     step_context: Arc<StepContext>,
     initial_context_injection: InitialContextInjection,
-) -> CodexResult<()> {
+) -> GenexResult<()> {
     let world_state = match initial_context_injection {
         InitialContextInjection::BeforeLastUserMessage { world_state, .. } => world_state,
         InitialContextInjection::DoNotInject => {
@@ -59,7 +59,7 @@ async fn run_compact_task_inner(
     step_context: &Arc<StepContext>,
     world_state: Arc<WorldState>,
     trigger: CompactionTrigger,
-) -> CodexResult<()> {
+) -> GenexResult<()> {
     let turn_context = &step_context.turn;
     let pre_compact_outcome = run_pre_compact_hooks(sess, turn_context, trigger).await;
     match pre_compact_outcome {

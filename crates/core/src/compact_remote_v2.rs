@@ -37,7 +37,7 @@ use genex_history::CodexHarnessMetadata;
 use genex_history::ResponseItemEnvelope;
 use genex_protocol::error::CodexErr;
 use genex_protocol::error::CodexErrorDetails;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::items::ContextCompactionItem;
 use genex_protocol::items::TurnItem;
 use genex_protocol::models::AgentMessageInputContent;
@@ -83,7 +83,7 @@ pub(crate) async fn run_inline_remote_auto_compact_task(
     initial_context_injection: InitialContextInjection,
     reason: CompactionReason,
     phase: CompactionPhase,
-) -> CodexResult<()> {
+) -> GenexResult<()> {
     let compaction_metadata = CompactionTurnMetadata::new(
         CompactionTrigger::Auto,
         reason,
@@ -104,7 +104,7 @@ pub(crate) async fn run_inline_remote_auto_compact_task(
 pub(crate) async fn run_remote_compact_task(
     sess: Arc<Session>,
     turn_context: Arc<TurnContext>,
-) -> CodexResult<()> {
+) -> GenexResult<()> {
     // Standalone compaction is its own request boundary, so it captures a fresh step.
     let step_context = sess
         .capture_step_context(Arc::clone(&turn_context), &CancellationToken::new())
@@ -135,7 +135,7 @@ async fn run_remote_compact_task_inner(
     client_session: Option<&mut ModelClientSession>,
     initial_context_injection: InitialContextInjection,
     compaction_metadata: CompactionTurnMetadata,
-) -> CodexResult<()> {
+) -> GenexResult<()> {
     let turn_context = &step_context.turn;
     let trigger = compaction_metadata.trigger();
     let _reason = compaction_metadata.reason();
@@ -187,7 +187,7 @@ async fn run_remote_compact_task_inner_impl(
     mut client_session: Option<&mut ModelClientSession>,
     initial_context_injection: InitialContextInjection,
     compaction_metadata: CompactionTurnMetadata,
-) -> CodexResult<()> {
+) -> GenexResult<()> {
     let turn_context = &step_context.turn;
     let context_compaction_item = ContextCompactionItem::new();
     let compaction_id = context_compaction_item.id.clone();
@@ -327,7 +327,7 @@ async fn run_remote_compaction_request_v2(
     client_session: &mut ModelClientSession,
     prompt: &Prompt,
     responses_metadata: &GenexResponsesMetadata,
-) -> CodexResult<RemoteCompactionV2Output> {
+) -> GenexResult<RemoteCompactionV2Output> {
     let turn_context = &step_context.turn;
     let max_retries = turn_context
         .provider
@@ -380,7 +380,7 @@ async fn collect_compaction_output(
     sess: &Session,
     turn_context: &TurnContext,
     mut stream: ResponseStream,
-) -> CodexResult<RemoteCompactionV2Output> {
+) -> GenexResult<RemoteCompactionV2Output> {
     let mut output_item_count = 0usize;
     let mut compaction_count = 0usize;
     let mut compaction_output = None;

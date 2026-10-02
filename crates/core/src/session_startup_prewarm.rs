@@ -21,11 +21,11 @@ use genex_features::Feature;
 use genex_otel::STARTUP_PREWARM_AGE_AT_FIRST_TURN_METRIC;
 use genex_otel::STARTUP_PREWARM_DURATION_METRIC;
 use genex_otel::SessionTelemetry;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::models::BaseInstructions;
 
 pub(crate) struct SessionStartupPrewarmHandle {
-    task: AbortOnDropHandle<CodexResult<ModelClientSession>>,
+    task: AbortOnDropHandle<GenexResult<ModelClientSession>>,
     started_at: Instant,
     timeout: Duration,
 }
@@ -41,7 +41,7 @@ pub(crate) enum SessionStartupPrewarmResolution {
 
 impl SessionStartupPrewarmHandle {
     pub(crate) fn new(
-        task: JoinHandle<CodexResult<ModelClientSession>>,
+        task: JoinHandle<GenexResult<ModelClientSession>>,
         started_at: Instant,
         timeout: Duration,
     ) -> Self {
@@ -157,7 +157,7 @@ impl SessionStartupPrewarmHandle {
     }
 
     fn resolution_from_join_result(
-        result: std::result::Result<CodexResult<ModelClientSession>, tokio::task::JoinError>,
+        result: std::result::Result<GenexResult<ModelClientSession>, tokio::task::JoinError>,
         started_at: Instant,
     ) -> SessionStartupPrewarmResolution {
         match result {
@@ -262,7 +262,7 @@ impl Session {
 async fn schedule_startup_prewarm_inner(
     session: Arc<Session>,
     base_instructions: String,
-) -> CodexResult<ModelClientSession> {
+) -> GenexResult<ModelClientSession> {
     let prewarm_started_at = Instant::now();
     let startup_turn_context = session
         .new_startup_prewarm_turn_with_sub_id(INITIAL_SUBMIT_ID.to_owned())

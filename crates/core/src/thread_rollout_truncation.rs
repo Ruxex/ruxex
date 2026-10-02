@@ -10,7 +10,7 @@ use genex_app_server_protocol::build_turns_from_rollout_items;
 use genex_history::InitialHistory;
 use genex_history::RolloutItem;
 use genex_protocol::error::CodexErr;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::items::TurnItem;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::EventMsg;
@@ -164,7 +164,7 @@ pub(crate) fn truncate_rollout_before_nth_user_message_from_start(
 pub fn truncate_rollout_after_turn_id(
     mut items: Vec<RolloutItem>,
     last_turn_id: &str,
-) -> CodexResult<Vec<RolloutItem>> {
+) -> GenexResult<Vec<RolloutItem>> {
     let turns = build_turns_from_rollout_items(&items);
     let turn = turns
         .iter()
@@ -212,7 +212,7 @@ pub fn truncate_rollout_after_turn_id(
 pub fn truncate_rollout_before_turn_id(
     mut items: Vec<RolloutItem>,
     before_turn_id: &str,
-) -> CodexResult<Vec<RolloutItem>> {
+) -> GenexResult<Vec<RolloutItem>> {
     let cut_index = items.iter().position(|item| {
         matches!(
             item,

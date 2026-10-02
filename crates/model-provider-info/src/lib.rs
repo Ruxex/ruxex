@@ -14,7 +14,7 @@ use genex_protocol::auth::AuthMode;
 use genex_protocol::config_types::ModelProviderAuthInfo;
 use genex_protocol::error::CodexErr;
 use genex_protocol::error::EnvVarError;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_utils_redacted_string::RedactedString;
 use http::HeaderMap;
 use http::header::HeaderName;
@@ -372,7 +372,7 @@ other non-default provider fields are not supported"
         }
     }
 
-    fn build_header_map(&self) -> CodexResult<HeaderMap> {
+    fn build_header_map(&self) -> GenexResult<HeaderMap> {
         let capacity = self.http_headers.as_ref().map_or(0, HashMap::len)
             + self.env_http_headers.as_ref().map_or(0, HashMap::len);
         let mut headers = HeaderMap::with_capacity(capacity);
@@ -402,7 +402,7 @@ other non-default provider fields are not supported"
     }
 
     /// Builds an API provider with managed residency taking precedence over configured headers.
-    pub fn to_api_provider(&self, _auth_mode: Option<AuthMode>) -> CodexResult<ApiProvider> {
+    pub fn to_api_provider(&self, _auth_mode: Option<AuthMode>) -> GenexResult<ApiProvider> {
         let default_base_url = "https://example.com/v1";
         let base_url = self
             .base_url
@@ -442,7 +442,7 @@ other non-default provider fields are not supported"
     /// If `env_key` is Some, returns the API key for this provider if present
     /// (and non-empty) in the environment. If `env_key` is required but
     /// cannot be found, returns an error.
-    pub fn api_key(&self) -> CodexResult<Option<String>> {
+    pub fn api_key(&self) -> GenexResult<Option<String>> {
         match &self.env_key {
             Some(env_key) => {
                 let api_key = std::env::var(env_key)

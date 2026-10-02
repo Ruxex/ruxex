@@ -31,7 +31,7 @@ use genex_history::ResponseItemEnvelope;
 use genex_protocol::ResponseItemId;
 use genex_protocol::error::CodexErr;
 use genex_protocol::error::CodexErrorDetails;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::items::ContextCompactionItem;
 use genex_protocol::items::TurnItem;
 use genex_protocol::models::AgentMessageInputContent;
@@ -111,7 +111,7 @@ pub(crate) async fn run_inline_auto_compact_task(
     initial_context_injection: InitialContextInjection,
     reason: CompactionReason,
     phase: CompactionPhase,
-) -> CodexResult<()> {
+) -> GenexResult<()> {
     let prompt = turn_context
         .config
         .compact_prompt
@@ -141,7 +141,7 @@ pub(crate) async fn run_compact_task(
     sess: Arc<Session>,
     turn_context: Arc<TurnContext>,
     input: Vec<UserInput>,
-) -> CodexResult<()> {
+) -> GenexResult<()> {
     sess.emit_turn_started(&turn_context).await;
     run_compact_task_inner(
         sess.clone(),
@@ -164,7 +164,7 @@ async fn run_compact_task_inner(
     trigger: CompactionTrigger,
     reason: CompactionReason,
     phase: CompactionPhase,
-) -> CodexResult<()> {
+) -> GenexResult<()> {
     let compaction_metadata =
         CompactionTurnMetadata::new(trigger, reason, CompactionImplementation::Responses, phase);
     let pre_compact_outcome = run_pre_compact_hooks(&sess, &turn_context, trigger).await;
@@ -198,7 +198,7 @@ async fn run_compact_task_inner_impl(
     input: Vec<UserInput>,
     initial_context_injection: InitialContextInjection,
     mut compaction_metadata: CompactionTurnMetadata,
-) -> CodexResult<String> {
+) -> GenexResult<String> {
     let compaction_item = TurnItem::ContextCompaction(ContextCompactionItem::new());
     sess.emit_turn_item_started(&turn_context, &compaction_item)
         .await;
@@ -608,7 +608,7 @@ async fn drain_to_completed(
     client_session: &mut ModelClientSession,
     responses_metadata: &GenexResponsesMetadata,
     prompt: &Prompt,
-) -> CodexResult<String> {
+) -> GenexResult<String> {
     let mut stream = client_session
         .stream(
             prompt,

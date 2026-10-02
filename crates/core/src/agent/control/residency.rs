@@ -6,7 +6,7 @@ use crate::thread_manager::ThreadManagerState;
 use genex_protocol::ThreadId;
 use genex_protocol::error::CodexErr;
 use genex_protocol::error::CodexErrorDetails;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::protocol::MultiAgentVersion;
 use genex_protocol::protocol::SessionSource;
 use std::collections::VecDeque;
@@ -51,7 +51,7 @@ impl AgentControl {
         state: &Arc<ThreadManagerState>,
         config: &Config,
         protected_thread_id: Option<ThreadId>,
-    ) -> CodexResult<V2ResidencySlot> {
+    ) -> GenexResult<V2ResidencySlot> {
         let capacity = config
             .effective_agent_max_threads(MultiAgentVersion::V2)
             .unwrap_or(usize::MAX);
@@ -83,7 +83,7 @@ impl V2Residency {
         manager: &Arc<ThreadManagerState>,
         capacity: usize,
         protected_thread_id: Option<ThreadId>,
-    ) -> CodexResult<V2ResidencySlot> {
+    ) -> GenexResult<V2ResidencySlot> {
         loop {
             if self.try_reserve_pending_slot(capacity) {
                 return Ok(V2ResidencySlot {

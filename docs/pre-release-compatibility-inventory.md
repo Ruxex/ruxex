@@ -699,3 +699,9 @@ The dependency-ordered crate ledger records the local `rg` audit for this slice.
 | `genex-hooks` | Hook protocol names, env vars, plugin namespace, generated schema descriptions, and host domain have active hook/plugin consumers. | `retain/defer` hook/plugin protocol contract | `rg -n -i 'codex' crates/hooks`; `just check --tests`; `just check` |
 | `genex-prompts` | Only owned prompt comments/template wording matched; custom/caller prompt content is not rewritten. | `migrate-in-place` | `rg -n -i 'codex' crates/prompts`; `just check --tests`; `just check` |
 | `genex-linux-sandbox` | Sandbox executable, bwrap hash/env, `.codex` protected path, and security fixtures are consumed by platform/security tests and packaging. | `retain/defer` security/platform contract | `rg -n -i 'codex' crates/linux-sandbox`; `just check --tests`; `just check` |
+
+### Declaration-led cross-crate migration
+
+| Declaration | Producer/consumer audit | Decision | Verification |
+|---|---|---|---|
+| `genex_protocol::error::Result as CodexResult` | 207 Rust references were local type aliases/annotations across protocol, core, app-server, model-provider-info, linux-sandbox, extensions, and the in-repository `core-api` re-export. The alias spelling was not used in wire, JSON, persisted, CLI/env, or security contracts. | `migrate-in-place` to `GenexResult` | `rg -n -w 'CodexResult' crates --glob '*.rs'` returns 0; `rg -n -w 'GenexResult' crates --glob '*.rs'` returns 207; `just check --tests`; `just check` |

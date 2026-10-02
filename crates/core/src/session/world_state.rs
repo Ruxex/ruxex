@@ -23,7 +23,7 @@ use genex_features::Feature;
 use genex_prompts::ApprovalPromptContext;
 use genex_prompts::ResolvedModelMessages;
 use genex_prompts::render_model_instructions;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::models::BaseInstructionsProvenance;
 
 impl Session {
@@ -31,7 +31,7 @@ impl Session {
     pub(crate) async fn build_world_state_for_step(
         &self,
         step_context: &StepContext,
-    ) -> CodexResult<WorldState> {
+    ) -> GenexResult<WorldState> {
         let turn_context = step_context.turn.as_ref();
         let settings = &step_context.settings;
         let model_info = settings.model_info.as_ref();

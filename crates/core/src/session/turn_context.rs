@@ -887,7 +887,7 @@ impl Session {
         sub_id: String,
         updates: SessionSettingsUpdate,
         options: NewTurnContextOptions,
-    ) -> CodexResult<(Arc<TurnContext>, ThreadSettingsSnapshot)> {
+    ) -> GenexResult<(Arc<TurnContext>, ThreadSettingsSnapshot)> {
         let Some((turn_context, snapshot)) = self
             .new_turn_with_sub_id_if(sub_id, updates, options, |_, _| true)
             .await?
@@ -909,7 +909,7 @@ impl Session {
         updates: SessionSettingsUpdate,
         options: NewTurnContextOptions,
         should_start: impl FnOnce(&SessionConfiguration, &SessionConfiguration) -> bool + Send,
-    ) -> CodexResult<Option<(Arc<TurnContext>, ThreadSettingsSnapshot)>> {
+    ) -> GenexResult<Option<(Arc<TurnContext>, ThreadSettingsSnapshot)>> {
         let service_tier_for_turn = updates.service_tier_for_turn.clone();
         let commit = match self.update_settings_if(updates, should_start).await {
             Ok(Some(commit)) => commit,

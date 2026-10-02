@@ -2,7 +2,7 @@ use super::handlers;
 use super::session::Session;
 use crate::state::TaskKind;
 use genex_protocol::error::CodexErr;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::protocol::Event;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::turn_input::SuspendTurnOutcome;
@@ -13,7 +13,7 @@ use tracing::warn;
 pub(super) async fn suspend_turn_and_shutdown(
     session: &Arc<Session>,
     submission_id: String,
-) -> CodexResult<SuspendTurnOutcome> {
+) -> GenexResult<SuspendTurnOutcome> {
     {
         let active = session.active_turn.lock().await;
         let Some(task) = active.as_ref().and_then(|turn| turn.task.as_ref()) else {

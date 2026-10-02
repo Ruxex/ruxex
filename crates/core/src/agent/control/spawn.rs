@@ -134,7 +134,7 @@ async fn load_agent_model_context(
     state: &ThreadManagerState,
     thread_id: ThreadId,
     _history_mode: ThreadHistoryMode,
-) -> CodexResult<Option<Vec<RolloutItem>>> {
+) -> GenexResult<Option<Vec<RolloutItem>>> {
     Ok(Some(
         state
             .load_latest_model_context(LoadThreadHistoryParams {
@@ -225,7 +225,7 @@ impl AgentControl {
         config: Config,
         initial_input: Vec<UserInput>,
         session_source: Option<SessionSource>,
-    ) -> CodexResult<ThreadId> {
+    ) -> GenexResult<ThreadId> {
         let spawned_agent = Box::pin(self.spawn_agent_internal(
             config,
             SpawnInitialInput::UserInput(initial_input),
@@ -243,7 +243,7 @@ impl AgentControl {
         initial_input: Vec<UserInput>,
         session_source: Option<SessionSource>,
         options: SpawnAgentOptions, // TODO(jif) drop with new fork.
-    ) -> CodexResult<LiveAgent> {
+    ) -> GenexResult<LiveAgent> {
         Box::pin(self.spawn_agent_internal(
             config,
             SpawnInitialInput::UserInput(initial_input),
@@ -260,7 +260,7 @@ impl AgentControl {
         context: AgentCommunicationContext,
         session_source: Option<SessionSource>,
         options: SpawnAgentOptions,
-    ) -> CodexResult<LiveAgent> {
+    ) -> GenexResult<LiveAgent> {
         Box::pin(self.spawn_agent_internal(
             config,
             SpawnInitialInput::InterAgentCommunication(communication, context),
@@ -274,7 +274,7 @@ impl AgentControl {
         &self,
         thread: &GenexThread,
         parent_thread_id: ThreadId,
-    ) -> CodexResult<()> {
+    ) -> GenexResult<()> {
         if thread.is_running()
             && thread.multi_agent_version() == Some(MultiAgentVersion::V2)
             && thread.session_source.parent_thread_id() == Some(parent_thread_id)
@@ -294,7 +294,7 @@ impl AgentControl {
         mut config: Config,
         thread_id: ThreadId,
         parent: Option<Arc<GenexThread>>,
-    ) -> CodexResult<()> {
+    ) -> GenexResult<()> {
         let state = self.upgrade()?;
         let parent = if let Some(parent) = parent {
             let parent_thread_id = parent.session.thread_id;
@@ -592,7 +592,7 @@ impl AgentControl {
         initial_input: SpawnInitialInput,
         session_source: Option<SessionSource>,
         options: SpawnAgentOptions,
-    ) -> CodexResult<LiveAgent> {
+    ) -> GenexResult<LiveAgent> {
         let state = self.upgrade()?;
         let multi_agent_version = state
             .effective_multi_agent_version_for_spawn(
@@ -776,7 +776,7 @@ impl AgentControl {
         options: &SpawnAgentOptions,
         inheritance: SpawnAgentThreadInheritance,
         multi_agent_version: MultiAgentVersion,
-    ) -> CodexResult<crate::thread_manager::NewThread> {
+    ) -> GenexResult<crate::thread_manager::NewThread> {
         let SpawnAgentThreadInheritance {
             environments: inherited_environments,
             exec_policy: inherited_exec_policy,
@@ -1086,7 +1086,7 @@ impl AgentControl {
         config: Config,
         thread_id: ThreadId,
         session_source: SessionSource,
-    ) -> CodexResult<ThreadId> {
+    ) -> GenexResult<ThreadId> {
         let root_depth = thread_spawn_depth(&session_source).unwrap_or(0);
         let (resumed_thread_id, resumed_multi_agent_version) = Box::pin(
             self.resume_single_agent_from_rollout(config.clone(), thread_id, session_source),
@@ -1161,7 +1161,7 @@ impl AgentControl {
         config: Config,
         thread_id: ThreadId,
         session_source: SessionSource,
-    ) -> CodexResult<(ThreadId, MultiAgentVersion)> {
+    ) -> GenexResult<(ThreadId, MultiAgentVersion)> {
         let state = self.upgrade()?;
         let stored_thread = state
             .read_stored_thread(ReadThreadParams {

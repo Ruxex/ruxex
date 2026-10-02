@@ -1252,7 +1252,7 @@ impl ThreadRequestProcessor {
         request_id: &ConnectionRequestId,
         thread: &GenexThread,
         op: Op,
-    ) -> CodexResult<String> {
+    ) -> GenexResult<String> {
         thread
             .submit_with_trace(op, self.request_trace_context(request_id).await)
             .await

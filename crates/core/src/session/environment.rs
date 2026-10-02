@@ -6,7 +6,7 @@ use genex_exec_server::SelectedCapabilityRootsStatus;
 use genex_execpolicy::Policy;
 use genex_protocol::capabilities::CapabilityRootLocation;
 use genex_protocol::error::CodexErr;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::protocol::EnvironmentConfig;
 use genex_protocol::protocol::EnvironmentConfigState;
 use genex_protocol::protocol::TurnEnvironmentSelection;
@@ -44,7 +44,7 @@ pub(super) fn validate_environment_selections(
 fn validate_environment_config(
     selection: &TurnEnvironmentSelection,
     config: &EnvironmentConfig,
-) -> CodexResult<()> {
+) -> GenexResult<()> {
     if let Some(policy) = config.network_policy.as_ref() {
         if selection.environment_id == LOCAL_ENVIRONMENT_ID {
             return Err(CodexErr::InvalidRequest(
@@ -133,7 +133,7 @@ impl Session {
         &self,
         selection: &TurnEnvironmentSelection,
         config: EnvironmentConfig,
-    ) -> CodexResult<()> {
+    ) -> GenexResult<()> {
         validate_environment_config(selection, &config)?;
         self.update_environment_configuration(selection, EnvironmentConfigState::Ready(config))
             .await
@@ -143,7 +143,7 @@ impl Session {
         &self,
         selection: &TurnEnvironmentSelection,
         error: String,
-    ) -> CodexResult<()> {
+    ) -> GenexResult<()> {
         self.update_environment_configuration(selection, EnvironmentConfigState::Failed(error))
             .await
     }
@@ -152,7 +152,7 @@ impl Session {
         &self,
         selection: &TurnEnvironmentSelection,
         config: EnvironmentConfigState,
-    ) -> CodexResult<()> {
+    ) -> GenexResult<()> {
         // Serialize owner callbacks with ordinary thread settings updates.
         let state = self.state.lock().await;
         let mut environments = self.services.turn_environments.selections();

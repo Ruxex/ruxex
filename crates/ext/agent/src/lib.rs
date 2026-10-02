@@ -7,7 +7,7 @@ use genex_core::TurnInputRequest;
 use genex_core::config::Config;
 use genex_protocol::ThreadId;
 use genex_protocol::error::CodexErr;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::protocol::W3cTraceContext;
 use genex_protocol::user_input::UserInput;
 use std::sync::Arc;
@@ -46,7 +46,7 @@ impl AgentRunner {
         &self,
         parent_thread_id: ThreadId,
         invocation: AgentInvocation,
-    ) -> CodexResult<AgentRun> {
+    ) -> GenexResult<AgentRun> {
         let AgentInvocation {
             config,
             prompt,

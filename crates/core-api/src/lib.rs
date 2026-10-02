@@ -103,7 +103,7 @@ pub use genex_protocol::dynamic_tools::DynamicToolFunctionSpec;
 pub use genex_protocol::dynamic_tools::DynamicToolNamespaceSpec;
 pub use genex_protocol::dynamic_tools::DynamicToolNamespaceTool;
 pub use genex_protocol::dynamic_tools::DynamicToolSpec;
-pub use genex_protocol::error::Result as CodexResult;
+pub use genex_protocol::error::Result as GenexResult;
 pub use genex_protocol::model_types::ModelPreset;
 pub use genex_protocol::models::PermissionProfile;
 pub use genex_protocol::models::PermissionProfileSnapshot;

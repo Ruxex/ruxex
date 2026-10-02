@@ -52,7 +52,7 @@ use genex_models_manager::manager::SharedModelsManager;
 use genex_protocol::ThreadId;
 use genex_protocol::config_types::CollaborationModeMask;
 use genex_protocol::error::CodexErr;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::mcp::ClientMcpExtensions;
 use genex_protocol::model_types::ModelPreset;
 use genex_protocol::protocol::Event;
@@ -780,7 +780,7 @@ impl ThreadManager {
     pub fn validate_environment_selections(
         &self,
         environments: &[TurnEnvironmentSelection],
-    ) -> CodexResult<()> {
+    ) -> GenexResult<()> {
         let mut environment_ids = HashSet::with_capacity(environments.len());
         for environment in environments {
             if environment.cwd.inferred_native_path_string().len() > MAX_TURN_ENVIRONMENT_CWD_BYTES
@@ -839,7 +839,7 @@ impl ThreadManager {
         self.state.thread_created_tx.subscribe()
     }
 
-    pub async fn get_thread(&self, thread_id: ThreadId) -> CodexResult<Arc<GenexThread>> {
+    pub async fn get_thread(&self, thread_id: ThreadId) -> GenexResult<Arc<GenexThread>> {
         self.state.get_thread(thread_id).await
     }
 
@@ -854,7 +854,7 @@ impl ThreadManager {
         thread_id: ThreadId,
         patch: ThreadMetadataPatch,
         include_archived: bool,
-    ) -> CodexResult<StoredThread> {
+    ) -> GenexResult<StoredThread> {
         if let Ok(thread) = self.get_thread(thread_id).await {
             if thread.config_snapshot().await.ephemeral {
                 return Err(CodexErr::InvalidRequest(format!(
@@ -902,7 +902,7 @@ impl ThreadManager {
         thread_id: ThreadId,
         section: Option<&str>,
         before_thread_id: Option<ThreadId>,
-    ) -> CodexResult<()> {
+    ) -> GenexResult<()> {
         if let Ok(thread) = self.get_thread(thread_id).await {
             if thread.config_snapshot().await.ephemeral {
                 return Err(CodexErr::InvalidRequest(format!(
@@ -929,7 +929,7 @@ impl ThreadManager {
     pub async fn list_agent_subtree_thread_ids(
         &self,
         thread_id: ThreadId,
-    ) -> CodexResult<Vec<ThreadId>> {
+    ) -> GenexResult<Vec<ThreadId>> {
         let mut subtree_thread_ids = Vec::new();
         let mut seen_thread_ids = HashSet::new();
         subtree_thread_ids.push(thread_id);
@@ -962,7 +962,7 @@ impl ThreadManager {
         Ok(subtree_thread_ids)
     }
 
-    pub async fn start_thread(&self, options: StartThreadOptions) -> CodexResult<NewThread> {
+    pub async fn start_thread(&self, options: StartThreadOptions) -> GenexResult<NewThread> {
         Box::pin(self.start_thread_inner(
             options, /*forked_from_thread_id*/ None, /*startup*/ None,
         ))
@@ -974,7 +974,7 @@ impl ThreadManager {
         &self,
         parent_thread_id: ThreadId,
         options: StartThreadOptions,
-    ) -> CodexResult<NewThread> {
+    ) -> GenexResult<NewThread> {
         self.spawn_internal_session_with_history(
             parent_thread_id,
             options,
@@ -993,7 +993,7 @@ impl ThreadManager {
         parent_thread_id: ThreadId,
         options: StartThreadOptions,
         history: Vec<RolloutItem>,
-    ) -> CodexResult<NewThread> {
+    ) -> GenexResult<NewThread> {
         self.spawn_internal_session_with_history(
             parent_thread_id,
             options,
@@ -1009,7 +1009,7 @@ impl ThreadManager {
         mut options: StartThreadOptions,
         history: InitialHistory,
         inherited_instructions: Option<SessionInstructions>,
-    ) -> CodexResult<NewThread> {
+    ) -> GenexResult<NewThread> {
         if !matches!(options.session_source, Some(SessionSource::Internal(_))) {
             return Err(CodexErr::InvalidRequest(
                 "internal sessions require an internal session source".to_string(),
@@ -1037,7 +1037,7 @@ impl ThreadManager {
         mut options: StartThreadOptions,
         forked_from_thread_id: Option<ThreadId>,
         startup: Option<Arc<crate::session::startup::SessionStartup>>,
-    ) -> CodexResult<NewThread> {
+    ) -> GenexResult<NewThread> {
         let (resumed_session_source, resumed_thread_source) = options
             .initial_history
             .get_resumed_session_sources()
@@ -1086,7 +1086,7 @@ impl ThreadManager {
         &self,
         forked_from_thread_id: ThreadId,
         mut options: StartThreadOptions,
-    ) -> CodexResult<NewThread> {
+    ) -> GenexResult<NewThread> {
         let fork_source = self.get_thread(forked_from_thread_id).await?;
         // Persist queued rollout updates before reading the fork snapshot.
         fork_source.ensure_rollout_materialized().await;
@@ -1124,7 +1124,7 @@ impl ThreadManager {
         auth_manager: Arc<AuthManager>,
         parent_trace: Option<W3cTraceContext>,
         client_mcp_extensions: ClientMcpExtensions,
-    ) -> CodexResult<NewThread> {
+    ) -> GenexResult<NewThread> {
         let initial_history = self.initial_history_from_rollout_path(rollout_path).await?;
         Box::pin(self.resume_thread_with_history(
             config,
@@ -1143,7 +1143,7 @@ impl ThreadManager {
     pub async fn ensure_multi_agent_v2_child_loaded(
         &self,
         child_thread_id: ThreadId,
-    ) -> CodexResult<()> {
+    ) -> GenexResult<()> {
         let stored_thread = self
             .state
             .read_stored_thread(ReadThreadParams {
@@ -1177,7 +1177,7 @@ impl ThreadManager {
         auth_manager: Arc<AuthManager>,
         parent_trace: Option<W3cTraceContext>,
         client_mcp_extensions: ClientMcpExtensions,
-    ) -> CodexResult<NewThread> {
+    ) -> GenexResult<NewThread> {
         let agent_control = self.agent_control_for_config(&config);
         let (session_source, thread_source) = initial_history
             .get_resumed_session_sources()
@@ -1203,7 +1203,7 @@ impl ThreadManager {
         config: Config,
         user_shell_override: crate::shell::Shell,
         client_mcp_extensions: ClientMcpExtensions,
-    ) -> CodexResult<NewThread> {
+    ) -> GenexResult<NewThread> {
         let agent_control = self.agent_control_for_config(&config);
         let options = StartThreadOptions {
             client_mcp_extensions,
@@ -1222,7 +1222,7 @@ impl ThreadManager {
         auth_manager: Arc<AuthManager>,
         user_shell_override: crate::shell::Shell,
         client_mcp_extensions: ClientMcpExtensions,
-    ) -> CodexResult<NewThread> {
+    ) -> GenexResult<NewThread> {
         let agent_control = self.agent_control_for_config(&config);
         let initial_history = self.initial_history_from_rollout_path(rollout_path).await?;
         let (session_source, thread_source) = initial_history
@@ -1252,7 +1252,7 @@ impl ThreadManager {
     pub async fn remove_thread_for_client(
         &self,
         thread_id: &ThreadId,
-    ) -> CodexResult<Option<Arc<GenexThread>>> {
+    ) -> GenexResult<Option<Arc<GenexThread>>> {
         let mut threads = self.state.threads.write().await;
         if threads
             .get(thread_id)
@@ -1346,7 +1346,7 @@ impl ThreadManager {
         snapshot: S,
         options: StartThreadOptions,
         path: PathBuf,
-    ) -> CodexResult<NewThread>
+    ) -> GenexResult<NewThread>
     where
         S: Into<ForkSnapshot>,
     {
@@ -1359,7 +1359,7 @@ impl ThreadManager {
     async fn initial_history_from_rollout_path(
         &self,
         rollout_path: PathBuf,
-    ) -> CodexResult<InitialHistory> {
+    ) -> GenexResult<InitialHistory> {
         let requested_rollout_path = rollout_path.clone();
         let stored_thread = self
             .state
@@ -1380,7 +1380,7 @@ impl ThreadManager {
         snapshot: S,
         options: StartThreadOptions,
         history: InitialHistory,
-    ) -> CodexResult<NewThread>
+    ) -> GenexResult<NewThread>
     where
         S: Into<ForkSnapshot>,
     {
@@ -1400,7 +1400,7 @@ impl ThreadManager {
         &self,
         options: StartThreadOptions,
         prepared: PreparedFork,
-    ) -> CodexResult<NewThread> {
+    ) -> GenexResult<NewThread> {
         let history = InitialHistory::Resumed(ResumedHistory {
             conversation_id: prepared.source_thread_id,
             history: Arc::clone(&prepared.model_context),
@@ -1428,7 +1428,7 @@ impl ThreadManager {
         &self,
         mut options: StartThreadOptions,
         fork_history: ForkHistory,
-    ) -> CodexResult<NewThread> {
+    ) -> GenexResult<NewThread> {
         let ForkHistory {
             snapshot,
             initial_history: history,
@@ -1551,7 +1551,7 @@ impl ThreadManagerState {
     }
 
     /// Fetch a thread by ID or return ThreadNotFound.
-    pub(crate) async fn get_thread(&self, thread_id: ThreadId) -> CodexResult<Arc<GenexThread>> {
+    pub(crate) async fn get_thread(&self, thread_id: ThreadId) -> GenexResult<Arc<GenexThread>> {
         let threads = self.threads.read().await;
         match threads.get(&thread_id) {
             Some(thread) if !thread.session_source.is_internal() => Ok(thread.clone()),
@@ -1562,7 +1562,7 @@ impl ThreadManagerState {
     pub(crate) async fn read_stored_thread(
         &self,
         params: ReadThreadParams,
-    ) -> CodexResult<StoredThread> {
+    ) -> GenexResult<StoredThread> {
         let thread_id = params.thread_id;
         self.thread_store
             .read_thread(params)
@@ -1587,7 +1587,7 @@ impl ThreadManagerState {
     pub(crate) async fn load_latest_model_context(
         &self,
         params: LoadThreadHistoryParams,
-    ) -> CodexResult<StoredModelContext> {
+    ) -> GenexResult<StoredModelContext> {
         let thread_id = params.thread_id;
         self.thread_store
             .load_latest_model_context(params)
@@ -1609,7 +1609,7 @@ impl ThreadManagerState {
         op: Op,
         parent_turn_id: Option<String>,
         root_turn_id: Option<String>,
-    ) -> CodexResult<String> {
+    ) -> GenexResult<String> {
         let thread = self.get_thread(thread_id).await?;
         if let Some(ops_log) = &self.ops_log
             && let Ok(mut log) = ops_log.lock()
@@ -1781,7 +1781,7 @@ impl ThreadManagerState {
         &self,
         config: Config,
         agent_control: AgentControl,
-    ) -> CodexResult<NewThread> {
+    ) -> GenexResult<NewThread> {
         Box::pin(self.spawn_new_thread_with_source(
             config,
             agent_control,
@@ -1812,7 +1812,7 @@ impl ThreadManagerState {
         inherited_environments: Option<TurnEnvironmentSnapshot>,
         inherited_exec_policy: Option<Arc<crate::exec_policy::ExecPolicyManager>>,
         environments: Option<Vec<TurnEnvironmentSelection>>,
-    ) -> CodexResult<NewThread> {
+    ) -> GenexResult<NewThread> {
         let client_mcp_extensions = self.client_mcp_extensions_for_child(parent_thread_id).await;
         let options = StartThreadOptions {
             history_mode,
@@ -1835,7 +1835,7 @@ impl ThreadManagerState {
     pub(crate) async fn resume_thread_with_history_with_source(
         &self,
         options: ResumeThreadWithHistoryOptions,
-    ) -> CodexResult<NewThread> {
+    ) -> GenexResult<NewThread> {
         let ResumeThreadWithHistoryOptions {
             config,
             initial_history,
@@ -1890,7 +1890,7 @@ impl ThreadManagerState {
         inherited_exec_policy: Option<Arc<crate::exec_policy::ExecPolicyManager>>,
         environments: Option<Vec<TurnEnvironmentSelection>>,
         thread_extension_init: ExtensionDataInit,
-    ) -> CodexResult<NewThread> {
+    ) -> GenexResult<NewThread> {
         let client_mcp_extensions = self.client_mcp_extensions_for_child(parent_thread_id).await;
         let options = StartThreadOptions {
             initial_history,
@@ -1925,7 +1925,7 @@ impl ThreadManagerState {
     }
 
     /// Spawn a new thread with optional history and register it with the manager.
-    async fn spawn_thread(&self, request: ThreadSpawnRequest) -> CodexResult<NewThread> {
+    async fn spawn_thread(&self, request: ThreadSpawnRequest) -> GenexResult<NewThread> {
         let ThreadSpawnRequest {
             startup,
             options,
@@ -2160,7 +2160,7 @@ impl ThreadManagerState {
         session: Arc<Session>,
         io: SessionIo,
         session_source: SessionSource,
-    ) -> CodexResult<NewThread> {
+    ) -> GenexResult<NewThread> {
         let thread_id = session.thread_id();
         let event = io.next_event().await?;
         let session_configured = match event {
@@ -2238,7 +2238,7 @@ impl ThreadManagerState {
 fn stored_thread_to_initial_history(
     stored_thread: StoredThread,
     rollout_path: Option<PathBuf>,
-) -> CodexResult<InitialHistory> {
+) -> GenexResult<InitialHistory> {
     let thread_id = stored_thread.thread_id;
     let history = stored_thread.history.ok_or_else(|| {
         CodexErr::Fatal(format!(

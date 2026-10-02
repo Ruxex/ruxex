@@ -10,7 +10,7 @@ use genex_extension_api::ThreadInstructionsProvider;
 use genex_extension_api::UserInstructionsProvider;
 use genex_protocol::config_types::TrustLevel;
 use genex_protocol::error::CodexErr;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::protocol::TurnEnvironmentSelection;
 use genex_utils_string::approx_bytes_for_tokens;
 use genex_utils_string::approx_tokens_from_byte_count;
@@ -66,7 +66,7 @@ impl AgentsMdManager {
         &self,
         config: &Config,
         environments: &TurnEnvironmentSnapshot,
-    ) -> (CodexResult<Option<Arc<LoadedAgentsMd>>>, Vec<String>) {
+    ) -> (GenexResult<Option<Arc<LoadedAgentsMd>>>, Vec<String>) {
         // Serialize overlapping captures without blocking reads of the applied snapshot.
         let Ok(_refresh_guard) = self.refresh_lock.acquire().await else {
             return (
@@ -162,7 +162,7 @@ impl AgentsMdManager {
 // size policy is unchanged; reject oversized thread input rather than truncate it.
 const MAX_THREAD_INSTRUCTIONS_TOKENS: usize = 10_000;
 
-fn validate_thread_instruction_size(bytes: usize) -> CodexResult<()> {
+fn validate_thread_instruction_size(bytes: usize) -> GenexResult<()> {
     if bytes > approx_bytes_for_tokens(MAX_THREAD_INSTRUCTIONS_TOKENS) {
         let estimated_tokens = approx_tokens_from_byte_count(bytes);
         return Err(CodexErr::InvalidRequest(format!(

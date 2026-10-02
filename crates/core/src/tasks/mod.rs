@@ -55,7 +55,7 @@ use genex_thread_store::PersistContext;
 
 use genex_features::Feature;
 use genex_protocol::error::CodexErrorDetails;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 pub(crate) use compact::CompactTask;
 pub(crate) use regular::RegularTask;
 pub(crate) use review::ReviewTask;
@@ -67,7 +67,7 @@ pub(crate) const GRACEFULL_INTERRUPTION_TIMEOUT_MS: u64 = 100;
 const TASK_COMPACT_METRIC: &str = "codex.task.compact";
 static ACTIVE_TURNS: Gauge = Gauge::new("core.turns.active");
 
-pub(crate) type SessionTaskResult = CodexResult<Option<String>>;
+pub(crate) type SessionTaskResult = GenexResult<Option<String>>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum InterruptedTurnHistoryMarker {

@@ -70,7 +70,7 @@ use genex_protocol::config_types::WebSearchMode;
 use genex_protocol::dynamic_tools::DynamicToolNamespaceTool;
 use genex_protocol::dynamic_tools::DynamicToolSpec;
 use genex_protocol::error::CodexErrorDetails;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::model_types::ConfigShellToolType;
 use genex_protocol::model_types::ModelInfo;
 use genex_protocol::model_types::ToolMode;
@@ -123,7 +123,7 @@ pub(crate) fn build_tool_router(
     mcp: &Arc<genex_mcp::McpBinding>,
     step_store: &ExtensionData,
     tool_suggest_candidates: Option<&crate::tools::router::ToolSuggestCandidates>,
-) -> CodexResult<ToolRouter> {
+) -> GenexResult<ToolRouter> {
     let default_agent_type_description =
         crate::agent::role::spawn_tool_spec::build(&std::collections::BTreeMap::new());
     let wait_for_environment_tool_config = session
@@ -334,7 +334,7 @@ pub(crate) fn finalize_tool_router(
     mut registry: ToolRegistry,
     mut hosted_specs: Vec<ToolSpec>,
     tool_search_handler_cache: &ToolSearchHandlerCache,
-) -> CodexResult<ToolRouter> {
+) -> GenexResult<ToolRouter> {
     if let Some(allowed) = &registry.allowed_tools {
         hosted_specs.retain(|spec| allowed.contains(&ToolName::plain(spec.name())));
     }

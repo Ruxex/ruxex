@@ -6,7 +6,7 @@ use genex_extension_api::ExtensionRegistry;
 use genex_extension_api::UserInstructionsProvider;
 use genex_login::AuthManager;
 use genex_protocol::error::CodexErr;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::SessionSource;
 use genex_protocol::user_input::UserInput;
@@ -29,7 +29,7 @@ pub async fn build_prompt_input(
     state_db: Option<StateDbHandle>,
     extensions: Arc<ExtensionRegistry<Config>>,
     user_instructions_provider: Arc<dyn UserInstructionsProvider>,
-) -> CodexResult<Vec<ResponseItem>> {
+) -> GenexResult<Vec<ResponseItem>> {
     config.ephemeral = true;
 
     let auth_manager =
@@ -82,7 +82,7 @@ pub async fn build_prompt_input(
 pub(crate) async fn build_prompt_input_from_session(
     sess: &Arc<Session>,
     input: Vec<UserInput>,
-) -> CodexResult<Vec<ResponseItem>> {
+) -> GenexResult<Vec<ResponseItem>> {
     let turn_context = sess.new_default_turn().await;
     // Prompt debugging builds a standalone request without entering run_turn.
     let step_context = sess

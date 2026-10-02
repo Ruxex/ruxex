@@ -1,7 +1,7 @@
 use crate::config::RolloutBudgetConfig;
 use genex_protocol::ThreadId;
 use genex_protocol::error::CodexErr;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::protocol::TokenUsage;
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -43,7 +43,7 @@ impl RolloutBudget {
     }
 
     /// Returns true once the configured budget is exhausted, including on later calls.
-    pub(crate) fn record_usage(&self, usage: &TokenUsage) -> CodexResult<bool> {
+    pub(crate) fn record_usage(&self, usage: &TokenUsage) -> GenexResult<bool> {
         let Some(mut state) = self.lock() else {
             return Ok(false);
         };

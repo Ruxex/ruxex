@@ -33,7 +33,7 @@ use genex_protocol::SessionId;
 use genex_protocol::ThreadId;
 use genex_protocol::error::CodexErr;
 use genex_protocol::error::CodexErrorDetails;
-use genex_protocol::error::Result as CodexResult;
+use genex_protocol::error::Result as GenexResult;
 use genex_protocol::items::SubAgentActivityItem;
 use genex_protocol::items::TurnItem;
 use genex_protocol::models::ContentItem;
@@ -201,7 +201,7 @@ impl AgentControl {
         agent_id: ThreadId,
         input: Vec<UserInput>,
         start_options: TurnStartOptions,
-    ) -> CodexResult<String> {
+    ) -> GenexResult<String> {
         let state = self.upgrade()?;
         let thread = state.get_thread(agent_id).await?;
         let result = match thread
@@ -231,7 +231,7 @@ impl AgentControl {
         communication: InterAgentCommunication,
         agent_communication_context: AgentCommunicationContext,
         start_options: TurnStartOptions,
-    ) -> CodexResult<String> {
+    ) -> GenexResult<String> {
         let state = self.upgrade()?;
         if communication.trigger_turn {
             let thread = state.get_thread(agent_id).await?;
@@ -253,7 +253,7 @@ impl AgentControl {
         thread_id: ThreadId,
         turn_id: String,
         item: SubAgentActivityItem,
-    ) -> CodexResult<()> {
+    ) -> GenexResult<()> {
         let state = self.upgrade()?;
         let thread = state.get_thread(thread_id).await?;
         let started_at_ms = now_unix_timestamp_ms();
@@ -304,7 +304,7 @@ impl AgentControl {
         communication: InterAgentCommunication,
         context: AgentCommunicationContext,
         start_options: TurnStartOptions,
-    ) -> CodexResult<String> {
+    ) -> GenexResult<String> {
         self.submit_inter_agent_communication(
             agent_id,
             state,
@@ -322,7 +322,7 @@ impl AgentControl {
         communication: InterAgentCommunication,
         context: AgentCommunicationContext,
         start_options: TurnStartOptions,
-    ) -> CodexResult<String> {
+    ) -> GenexResult<String> {
         let communication_for_log =
             crate::agent_communication::logging_enabled().then(|| communication.clone());
         let (parent_turn_id, root_turn_id) = if communication.trigger_turn {
@@ -364,7 +364,7 @@ impl AgentControl {
     }
 
     /// Interrupt the current task for an existing agent thread.
-    pub(crate) async fn interrupt_agent(&self, agent_id: ThreadId) -> CodexResult<String> {
+    pub(crate) async fn interrupt_agent(&self, agent_id: ThreadId) -> GenexResult<String> {
         let state = self.upgrade()?;
         self.handle_thread_request_result(
             agent_id,
@@ -385,8 +385,8 @@ impl AgentControl {
         &self,
         agent_id: ThreadId,
         state: &Arc<ThreadManagerState>,
-        result: CodexResult<String>,
-    ) -> CodexResult<String> {
+        result: GenexResult<String>,
+    ) -> GenexResult<String> {
         if result
             .as_ref()
             .is_err_and(|err| matches!(err.details(), CodexErrorDetails::InternalAgentDied))
@@ -424,7 +424,7 @@ impl AgentControl {
         self.state.agent_metadata_for_thread(agent_id)
     }
 
-    pub(crate) fn ensure_agent_known(&self, agent_id: ThreadId) -> CodexResult<AgentMetadata> {
+    pub(crate) fn ensure_agent_known(&self, agent_id: ThreadId) -> GenexResult<AgentMetadata> {
         self.state
             .agent_metadata_for_thread(agent_id)
             .ok_or_else(|| CodexErr::ThreadNotFound(agent_id))
@@ -433,7 +433,7 @@ impl AgentControl {
     pub(crate) async fn list_live_agent_subtree_thread_ids(
         &self,
         agent_id: ThreadId,
-    ) -> CodexResult<Vec<ThreadId>> {
+    ) -> GenexResult<Vec<ThreadId>> {
         let mut thread_ids = vec![agent_id];
         thread_ids.extend(self.live_thread_spawn_descendants(agent_id).await?);
         Ok(thread_ids)
@@ -457,7 +457,7 @@ impl AgentControl {
         _current_thread_id: ThreadId,
         current_session_source: &SessionSource,
         agent_reference: &str,
-    ) -> CodexResult<ThreadId> {
+    ) -> GenexResult<ThreadId> {
         let current_agent_path = current_session_source
             .get_agent_path()
             .unwrap_or_else(AgentPath::root);
@@ -477,7 +477,7 @@ impl AgentControl {
     pub(crate) async fn subscribe_status(
         &self,
         agent_id: ThreadId,
-    ) -> CodexResult<watch::Receiver<AgentStatus>> {
+    ) -> GenexResult<watch::Receiver<AgentStatus>> {
         let state = self.upgrade()?;
         let thread = state.get_thread(agent_id).await?;
         Ok(thread.subscribe_status())
@@ -556,7 +556,7 @@ impl AgentControl {
         &self,
         current_session_source: &SessionSource,
         path_prefix: Option<&str>,
-    ) -> CodexResult<Vec<ListedAgent>> {
+    ) -> GenexResult<Vec<ListedAgent>> {
         let state = self.upgrade()?;
         let resolved_prefix = path_prefix
             .map(|prefix| {
@@ -727,7 +727,7 @@ impl AgentControl {
         agent_path: Option<AgentPath>,
         agent_role: Option<String>,
         preferred_agent_nickname: Option<String>,
-    ) -> CodexResult<AgentMetadata> {
+    ) -> GenexResult<AgentMetadata> {
         if let Some(agent_path) = agent_path.as_ref() {
             reservation.reserve_agent_path(agent_path)?;
         }
@@ -755,7 +755,7 @@ impl AgentControl {
         agent_path: Option<AgentPath>,
         agent_role: Option<String>,
         preferred_agent_nickname: Option<String>,
-    ) -> CodexResult<(SessionSource, AgentMetadata)> {
+    ) -> GenexResult<(SessionSource, AgentMetadata)> {
         if depth == 1 {
             self.state.register_root_thread(parent_thread_id);
         }
@@ -776,7 +776,7 @@ impl AgentControl {
         Ok((session_source, agent_metadata))
     }
 
-    fn upgrade(&self) -> CodexResult<Arc<ThreadManagerState>> {
+    fn upgrade(&self) -> GenexResult<Arc<ThreadManagerState>> {
         self.manager
             .upgrade()
             .ok_or_else(|| CodexErr::UnsupportedOperation("thread manager dropped".to_string()))
@@ -830,7 +830,7 @@ impl AgentControl {
     async fn open_thread_spawn_children(
         &self,
         parent_thread_id: ThreadId,
-    ) -> CodexResult<Vec<(ThreadId, AgentMetadata)>> {
+    ) -> GenexResult<Vec<(ThreadId, AgentMetadata)>> {
         let mut children_by_parent = self.live_thread_spawn_children().await?;
         Ok(children_by_parent
             .remove(&parent_thread_id)
@@ -839,7 +839,7 @@ impl AgentControl {
 
     async fn live_thread_spawn_children(
         &self,
-    ) -> CodexResult<HashMap<ThreadId, Vec<(ThreadId, AgentMetadata)>>> {
+    ) -> GenexResult<HashMap<ThreadId, Vec<(ThreadId, AgentMetadata)>>> {
         let state = self.upgrade()?;
         let mut children_by_parent = HashMap::<ThreadId, Vec<(ThreadId, AgentMetadata)>>::new();
 
@@ -906,7 +906,7 @@ impl AgentControl {
     async fn live_thread_spawn_descendants(
         &self,
         root_thread_id: ThreadId,
-    ) -> CodexResult<Vec<ThreadId>> {
+    ) -> GenexResult<Vec<ThreadId>> {
         let mut children_by_parent = self.live_thread_spawn_children().await?;
         let mut descendants = Vec::new();
         let mut stack = children_by_parent
