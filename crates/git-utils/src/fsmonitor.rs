@@ -1,6 +1,6 @@
 //! Policy for preserving Git's built-in filesystem monitor.
 //!
-//! Codex overrides `core.fsmonitor` so repository configuration cannot select
+//! Genex overrides `core.fsmonitor` so repository configuration cannot select
 //! an executable helper. Preserve the built-in daemon only when the effective
 //! value is boolean true and Git advertises daemon support.
 //!

@@ -11,7 +11,7 @@ diff from that baseline to the current directory contents.
 ```rust,no_run
 use std::path::Path;
 
-use codex_git_utils::{apply_git_patch, ApplyGitRequest};
+use genex_git_utils::{apply_git_patch, ApplyGitRequest};
 
 let repo = Path::new("/path/to/repo");
 

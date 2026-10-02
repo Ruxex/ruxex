@@ -1,8 +1,8 @@
 # genex-api
 
-Typed clients for Codex/provider APIs built on top of the generic transport in `genex-client`.
+Typed clients for Genex/provider APIs built on top of the generic transport in `genex-client`.
 
-- Hosts the request/response models and request builders for Responses and related Codex APIs.
+- Hosts the request/response models and request builders for Responses and related Genex APIs.
 - Owns provider configuration (base URLs, headers, query params), auth header injection, retry tuning, and stream idle settings.
 - Parses SSE streams into `ResponseEvent`/`ResponseStream`, including rate-limit snapshots and API-specific error mapping.
 - Serves as the wire-level layer consumed by `genex-core`; higher layers handle auth refresh and business logic.
