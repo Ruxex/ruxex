@@ -1,6 +1,6 @@
 # genex-core
 
-This crate implements the business logic for Codex. It is designed to be used by the various Codex UIs written in Rust.
+This crate implements the business logic for Genex. It is designed to be used by the various Genex UIs written in Rust.
 
 ## Dependencies
 
@@ -40,12 +40,12 @@ current working directory whenever it is available. If `bwrap` is present but
 too old to support `--argv0`, the helper keeps using system bubblewrap and
 switches to a no-`--argv0` compatibility path for the inner re-exec. If
 `bwrap` is missing, it falls back to the bundled `codex-resources/bwrap`
-binary shipped with Codex and Codex surfaces a startup warning through its
+binary shipped with Genex and Genex surfaces a startup warning through its
 normal notification path instead of printing directly from the sandbox helper.
-Codex also surfaces a startup warning when bubblewrap cannot create user
+Genex also surfaces a startup warning when bubblewrap cannot create user
 namespaces. WSL2 uses the normal Linux bubblewrap path. WSL1 is not supported
 for bubblewrap sandboxing because it cannot create the required user
-namespaces, so Codex rejects sandboxed shell commands that would enter the
+namespaces, so Genex rejects sandboxed shell commands that would enter the
 bubblewrap path before invoking `bwrap`.
 
 ### Windows
