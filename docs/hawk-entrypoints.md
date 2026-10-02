@@ -48,7 +48,7 @@ Level 3 の削除判断では通常実行の16件を主起点としつつ、対�
 | パッケージ | バイナリ | 用途 | Hawk での扱い |
 | --- | --- | --- | --- |
 | `genex-cli` | `logs_client` | 状態 DB のログを条件付きで表示・追跡する診断ツール。 | 開発・診断 API を評価する場合に含める。 |
-| `genex-config-schema` | `codex-write-config-schema` | `config.toml` の JSON Schema fixture を生成する。 | スキーマ生成コードを評価する場合に含める。 |
+| `genex-config-schema` | `genex-write-config-schema` | `config.toml` の JSON Schema fixture を生成する。 | スキーマ生成コードを評価する場合に含める。 |
 | `genex-hooks` | `write_hooks_schema_fixtures` | hooks の schema fixture を生成する。 | hooks の生成コードを評価する場合に含める。 |
 | `genex-http-client` | `custom_ca_probe` | カスタム CA を利用する HTTP 接続を検査する。 | HTTP クライアントの補助コードを評価する場合に含める。 |
 | `codex-tui` | `md-events` | Markdown 入力を pulldown-cmark のイベント列として表示する診断ツール。 | TUI の Markdown 補助コードを評価する場合に含める。 |

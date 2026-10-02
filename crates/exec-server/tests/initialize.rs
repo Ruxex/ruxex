@@ -44,7 +44,7 @@ async fn exec_server_accepts_initialize(version: Option<&str>) -> anyhow::Result
             "ffffffffffffffffffffffffffffffffffffffff",
         ),
         ("GITHUB_SHA", "ffffffffffffffffffffffffffffffffffffffff"),
-        ("CODEX_BUILD_TARGET", "runtime-override"),
+        ("GENEX_BUILD_TARGET", "runtime-override"),
     ]);
     let mut server = ExecServerHarness::start(command).await?;
 

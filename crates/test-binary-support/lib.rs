@@ -6,7 +6,7 @@ use genex_arg0::arg0_dispatch;
 use tempfile::TempDir;
 
 pub struct TestBinaryDispatchGuard {
-    _codex_home: TempDir,
+    _genex_home: TempDir,
     arg0: Arg0PathEntryGuard,
     _previous_codex_home: Option<std::ffi::OsString>,
 }
@@ -24,7 +24,7 @@ pub enum TestBinaryDispatchMode {
 }
 
 pub fn configure_test_binary_dispatch<F>(
-    codex_home_prefix: &str,
+    genex_home_prefix: &str,
     classify: F,
 ) -> Option<TestBinaryDispatchGuard>
 where
@@ -44,14 +44,14 @@ where
         }
         TestBinaryDispatchMode::Skip => None,
         TestBinaryDispatchMode::InstallAliases => {
-            let codex_home = match tempfile::Builder::new().prefix(codex_home_prefix).tempdir() {
-                Ok(codex_home) => codex_home,
+            let genex_home = match tempfile::Builder::new().prefix(genex_home_prefix).tempdir() {
+                Ok(genex_home) => genex_home,
                 Err(error) => panic!("failed to create test CODEX_HOME: {error}"),
             };
             let previous_codex_home = std::env::var_os("CODEX_HOME");
             // Safety: this runs from a test ctor before test threads begin.
             unsafe {
-                std::env::set_var("CODEX_HOME", codex_home.path());
+                std::env::set_var("CODEX_HOME", genex_home.path());
             }
 
             let arg0 = match arg0_dispatch() {
@@ -68,7 +68,7 @@ where
             }
 
             Some(TestBinaryDispatchGuard {
-                _codex_home: codex_home,
+                _genex_home: genex_home,
                 arg0,
                 _previous_codex_home: previous_codex_home,
             })

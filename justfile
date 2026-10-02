@@ -112,7 +112,7 @@ generate: write-config-schema write-app-server-schema write-hooks-schema
 
 # Regenerate the json schema for config.toml from the current config types.
 write-config-schema:
-    cargo run -p genex-config-schema --bin codex-write-config-schema
+    cargo run -p genex-config-schema --bin genex-write-config-schema
 
 # Regenerate app-server protocol schemas.
 write-app-server-schema *args:
