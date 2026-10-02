@@ -275,7 +275,7 @@ fn write_plugin_app_plugin_with_name(home: &TempDir, app_name: &str) {
     .expect("write plugin app config");
 }
 
-async fn build_analytics_plugin_test_codex(
+async fn build_analytics_plugin_test_genex(
     server: &MockServer,
     codex_home: Arc<TempDir>,
 ) -> Result<TestGenex> {
@@ -290,7 +290,7 @@ async fn build_analytics_plugin_test_codex(
     builder.build_with_auto_env(server).await
 }
 
-async fn build_apps_enabled_plugin_test_codex(
+async fn build_apps_enabled_plugin_test_genex(
     server: &MockServer,
     codex_home: Arc<TempDir>,
     managed_auth_base_url: String,
@@ -1364,7 +1364,7 @@ async fn explicit_plugin_mentions_use_apps_for_managed_dual_surface_plugins(
     )?;
 
     let test_genex =
-        build_apps_enabled_plugin_test_codex(&server, codex_home, apps_server.managed_auth_base_url)
+        build_apps_enabled_plugin_test_genex(&server, codex_home, apps_server.managed_auth_base_url)
             .await?;
     let codex = Arc::clone(&test_genex.codex);
     wait_for_mcp_server(&codex, CODEX_APPS_MCP_SERVER_NAME).await?;
@@ -1451,7 +1451,7 @@ async fn explicit_plugin_mentions_keep_non_conflicting_mcp_for_managed_auth() ->
     write_plugin_app_plugin_with_name(codex_home.as_ref(), "sample_app");
 
     let test_genex =
-        build_apps_enabled_plugin_test_codex(&server, codex_home, apps_server.managed_auth_base_url)
+        build_apps_enabled_plugin_test_genex(&server, codex_home, apps_server.managed_auth_base_url)
             .await?;
     let codex = Arc::clone(&test_genex.codex);
     wait_for_mcp_server(&codex, "sample").await?;
@@ -1740,7 +1740,7 @@ async fn explicit_plugin_mentions_track_plugin_used_analytics() -> Result<()> {
 
     let codex_home = Arc::new(TempDir::new()?);
     write_plugin_skill_plugin(codex_home.as_ref());
-    let test_genex = build_analytics_plugin_test_codex(&server, codex_home).await?;
+    let test_genex = build_analytics_plugin_test_genex(&server, codex_home).await?;
     let codex = Arc::clone(&test_genex.codex);
 
     codex
@@ -1791,7 +1791,7 @@ async fn explicit_plugin_skill_invocation_tracks_remote_plugin_id() -> Result<()
     let codex_home = Arc::new(TempDir::new()?);
     let skill_path = dunce::canonicalize(write_remote_plugin_skill_plugin(codex_home.as_ref()))?;
     persist_sample_remote_plugin_id(codex_home.as_ref());
-    let test_genex = build_analytics_plugin_test_codex(&server, codex_home).await?;
+    let test_genex = build_analytics_plugin_test_genex(&server, codex_home).await?;
     let codex = Arc::clone(&test_genex.codex);
 
     codex
@@ -1870,7 +1870,7 @@ async fn implicit_plugin_skill_invocation_tracks_remote_plugin_id(
         ],
     )
     .await;
-    let test_genex = build_analytics_plugin_test_codex(&server, codex_home).await?;
+    let test_genex = build_analytics_plugin_test_genex(&server, codex_home).await?;
     let codex = Arc::clone(&test_genex.codex);
 
     codex

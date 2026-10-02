@@ -541,7 +541,7 @@ mod tests {
         }
     }
 
-    fn test_codex_home() -> std::path::PathBuf {
+    fn test_genex_home() -> std::path::PathBuf {
         std::env::temp_dir().join(format!("codex-model-provider-test-{}", std::process::id()))
     }
 
@@ -1075,7 +1075,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
             /*auth_manager*/ None,
         );
         let manager =
-            provider.models_manager(test_codex_home(), /*config_model_catalog*/ None);
+            provider.models_manager(test_genex_home(), /*config_model_catalog*/ None);
         let uncached_manager =
             provider.models_manager_without_cache(/*config_model_catalog*/ None);
 
@@ -1172,7 +1172,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
             /*auth_manager*/ None,
         );
         let manager = provider.models_manager(
-            test_codex_home(),
+            test_genex_home(),
             Some(ModelsResponse {
                 models: vec![configured_model],
             }),
@@ -1224,7 +1224,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
         );
 
         let manager =
-            provider.models_manager(test_codex_home(), /*config_model_catalog*/ None);
+            provider.models_manager(test_genex_home(), /*config_model_catalog*/ None);
         let catalog = manager
             .raw_model_catalog(
                 RefreshStrategy::Online,

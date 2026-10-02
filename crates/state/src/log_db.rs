@@ -556,7 +556,7 @@ mod tests {
 
     use super::*;
 
-    fn temp_codex_home() -> std::path::PathBuf {
+    fn temp_genex_home() -> std::path::PathBuf {
         std::env::temp_dir().join(format!("codex-state-log-db-{}", Uuid::new_v4()))
     }
 
@@ -597,7 +597,7 @@ mod tests {
 
     #[tokio::test]
     async fn flush_persists_logs_for_query() {
-        let codex_home = temp_codex_home();
+        let codex_home = temp_genex_home();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
             "test-provider".to_string(),
@@ -631,7 +631,7 @@ mod tests {
 
     #[tokio::test]
     async fn configured_batch_size_flushes_without_explicit_flush() {
-        let codex_home = temp_codex_home();
+        let codex_home = temp_genex_home();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
             "test-provider".to_string(),
@@ -683,7 +683,7 @@ mod tests {
 
     #[tokio::test]
     async fn configured_flush_interval_persists_buffered_logs() {
-        let codex_home = temp_codex_home();
+        let codex_home = temp_genex_home();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
             "test-provider".to_string(),

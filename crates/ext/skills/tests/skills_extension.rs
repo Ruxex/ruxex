@@ -152,7 +152,7 @@ async fn skill_world_state_fragments(
 
 #[tokio::test]
 async fn installed_extension_uses_host_service_snapshot() -> TestResult {
-    let codex_home = test_codex_home();
+    let codex_home = test_genex_home();
     let skill_path = codex_home.join("skills").join("demo").join("SKILL.md");
     std::fs::create_dir_all(
         skill_path
@@ -264,7 +264,7 @@ async fn host_world_state_records_catalog_metrics_on_publish_and_change() -> Tes
         })
         .await;
 
-    let skill_path = AbsolutePathBuf::try_from(test_codex_home().join("skills/demo/SKILL.md"))?;
+    let skill_path = AbsolutePathBuf::try_from(test_genex_home().join("skills/demo/SKILL.md"))?;
     let mut outcome = SkillLoadOutcome::default();
     outcome.skills.push(SkillMetadata {
         name: "demo".to_string(),
@@ -331,7 +331,7 @@ async fn host_world_state_records_catalog_metrics_on_publish_and_change() -> Tes
     assert_eq!(turn_metrics.samples(), expected);
 
     let second_skill_path =
-        AbsolutePathBuf::try_from(test_codex_home().join("skills/other/SKILL.md"))?;
+        AbsolutePathBuf::try_from(test_genex_home().join("skills/other/SKILL.md"))?;
     outcome.skills.push(SkillMetadata {
         name: "other".to_string(),
         description: "Other skill.".to_string(),
@@ -383,7 +383,7 @@ async fn persisted_host_snapshot_deduplicates_warning_after_reinitialization() -
     let registry = builder.build();
     let session_store = ExtensionData::new("session");
     let config = default_config();
-    let skill_path = AbsolutePathBuf::try_from(test_codex_home().join("skills/demo/SKILL.md"))?;
+    let skill_path = AbsolutePathBuf::try_from(test_genex_home().join("skills/demo/SKILL.md"))?;
     let mut outcome = SkillLoadOutcome::default();
     outcome.skills.push(SkillMetadata {
         name: "demo".to_string(),
@@ -2277,7 +2277,7 @@ async fn executor_catalog_emits_at_most_four_warnings() -> TestResult {
 
 #[tokio::test]
 async fn host_catalog_compacts_shared_paths_under_budget_pressure() -> TestResult {
-    let test_root = test_codex_home();
+    let test_root = test_genex_home();
     let root = test_root.join(
         "plugins/cache/test-curated/example/hash1234567890/skills-with-a-very-long-shared-prefix",
     );
@@ -2670,7 +2670,7 @@ fn skills_extension_config(config: &TestConfig) -> SkillsExtensionConfig {
     }
 }
 
-fn test_codex_home() -> PathBuf {
+fn test_genex_home() -> PathBuf {
     let id = NEXT_CODEX_HOME_ID.fetch_add(1, Ordering::Relaxed);
     std::env::temp_dir().join(format!(
         "codex-skills-extension-test-{}-{id}",

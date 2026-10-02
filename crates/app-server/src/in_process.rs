@@ -274,7 +274,7 @@ pub struct InProcessClientHandle {
     event_rx: mpsc::Receiver<InProcessServerEvent>,
     runtime_handle: tokio::task::JoinHandle<()>,
     #[cfg(test)]
-    _test_codex_home: Option<tempfile::TempDir>,
+    _test_genex_home: Option<tempfile::TempDir>,
 }
 
 impl InProcessClientHandle {
@@ -772,7 +772,7 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
         event_rx,
         runtime_handle,
         #[cfg(test)]
-        _test_codex_home: None,
+        _test_genex_home: None,
     })
 }
 
@@ -846,7 +846,7 @@ mod tests {
             channel_capacity,
         };
         let mut client = start(args).await.expect("in-process runtime should start");
-        client._test_codex_home = Some(codex_home);
+        client._test_genex_home = Some(codex_home);
         client
     }
 
@@ -973,7 +973,7 @@ mod tests {
             client: InProcessClientSender { client_tx },
             event_rx,
             runtime_handle,
-            _test_codex_home: None,
+            _test_genex_home: None,
         };
 
         client

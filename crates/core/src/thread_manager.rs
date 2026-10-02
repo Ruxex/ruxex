@@ -224,7 +224,7 @@ enum ShutdownOutcome {
 /// them in memory.
 pub struct ThreadManager {
     state: Arc<ThreadManagerState>,
-    _test_codex_home_guard: Option<TempGenexHomeGuard>,
+    _test_genex_home_guard: Option<TempGenexHomeGuard>,
 }
 
 /// Captured parent identity for an internal child, including inline parents that
@@ -536,7 +536,7 @@ impl ThreadManager {
                 ops_log: should_use_test_thread_manager_behavior()
                     .then(|| Arc::new(std::sync::Mutex::new(Vec::new()))),
             }),
-            _test_codex_home_guard: None,
+            _test_genex_home_guard: None,
         }
     }
 
@@ -597,7 +597,7 @@ impl ThreadManager {
             codex_home.clone(),
             Arc::new(EnvironmentManager::default_for_tests()),
         );
-        manager._test_codex_home_guard = Some(TempGenexHomeGuard { path: codex_home });
+        manager._test_genex_home_guard = Some(TempGenexHomeGuard { path: codex_home });
         manager
     }
 
@@ -686,7 +686,7 @@ impl ThreadManager {
                 ops_log: should_use_test_thread_manager_behavior()
                     .then(|| Arc::new(std::sync::Mutex::new(Vec::new()))),
             }),
-            _test_codex_home_guard: None,
+            _test_genex_home_guard: None,
         }
     }
 

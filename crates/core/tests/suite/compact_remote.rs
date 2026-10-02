@@ -63,7 +63,7 @@ fn test_genex() -> TestGenexBuilder {
     })
 }
 
-fn remote_realtime_test_codex_builder(
+fn remote_realtime_test_genex_builder(
     realtime_server: &responses::WebSocketTestServer,
 ) -> TestGenexBuilder {
     let realtime_base_url = realtime_server.uri().to_string();
@@ -180,7 +180,7 @@ async fn wait_for_turn_complete(codex: &genex_core::GenexThread) {
     .await;
 }
 
-fn amazon_bedrock_test_codex() -> TestGenexBuilder {
+fn amazon_bedrock_test_genex() -> TestGenexBuilder {
     let auth = CodexAuth::BedrockApiKey(BedrockApiKeyAuth {
         api_key: "bedrock-test-api-key".to_string(),
         region: "us-east-1".to_string(),
@@ -531,7 +531,7 @@ async fn remote_compact_v2_records_usage_before_output_validation() -> Result<()
 async fn amazon_bedrock_automatic_compaction_uses_v2_responses_endpoint() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let harness = TestGenexHarness::with_auto_env_builder(amazon_bedrock_test_codex().with_config(
+    let harness = TestGenexHarness::with_auto_env_builder(amazon_bedrock_test_genex().with_config(
         |config| {
             config.model_auto_compact_token_limit = Some(200);
         },
@@ -1401,7 +1401,7 @@ async fn active_realtime_refreshes_changed_start_instructions_only_after_compact
     let server = wiremock::MockServer::start().await;
     let initial_realtime_server = start_remote_realtime_server().await;
     let initial_instructions = "initial custom realtime start instructions";
-    let mut initial_builder = remote_realtime_test_codex_builder(&initial_realtime_server)
+    let mut initial_builder = remote_realtime_test_genex_builder(&initial_realtime_server)
         .with_config({
             let initial_instructions = initial_instructions.to_string();
             move |config| {
@@ -1444,7 +1444,7 @@ async fn active_realtime_refreshes_changed_start_instructions_only_after_compact
 
     let resumed_realtime_server = start_remote_realtime_server().await;
     let changed_instructions = "changed custom realtime start instructions";
-    let mut resume_builder = remote_realtime_test_codex_builder(&resumed_realtime_server)
+    let mut resume_builder = remote_realtime_test_genex_builder(&resumed_realtime_server)
         .with_config({
             let changed_instructions = changed_instructions.to_string();
             move |config| {

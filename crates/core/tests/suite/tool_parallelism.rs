@@ -76,7 +76,7 @@ async fn run_turn_and_measure(test: &TestGenex, prompt: &str) -> anyhow::Result<
     Ok(start.elapsed())
 }
 
-async fn build_codex_with_test_tool(server: &wiremock::MockServer) -> anyhow::Result<TestGenex> {
+async fn build_genex_with_test_tool(server: &wiremock::MockServer) -> anyhow::Result<TestGenex> {
     let mut builder = test_genex().with_model("test-gpt-5.1-codex");
     builder.build(server).await
 }
@@ -94,7 +94,7 @@ async fn read_file_tools_run_in_parallel() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let test = build_codex_with_test_tool(&server).await?;
+    let test = build_genex_with_test_tool(&server).await?;
 
     let warmup_args = json!({
         "sleep_after_ms": 10,
@@ -191,7 +191,7 @@ async fn mixed_parallel_tools_run_in_parallel() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let test = build_codex_with_test_tool(&server).await?;
+    let test = build_genex_with_test_tool(&server).await?;
 
     let sync_args = json!({
         "sleep_after_ms": 300
@@ -227,7 +227,7 @@ async fn tool_results_grouped() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let test = build_codex_with_test_tool(&server).await?;
+    let test = build_genex_with_test_tool(&server).await?;
 
     let shell_args = serde_json::to_string(&json!({
         "cmd": "echo 'shell output'",

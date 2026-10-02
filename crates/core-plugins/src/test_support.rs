@@ -81,11 +81,11 @@ pub(crate) fn test_plugins_manager_with_auth_manager(
 }
 
 pub(crate) fn test_auth_manager(auth_mode: Option<AuthMode>) -> Arc<AuthManager> {
-    auth_manager_from_optional_auth(test_codex_auth(auth_mode))
+    auth_manager_from_optional_auth(test_genex_auth(auth_mode))
 }
 
 pub(crate) async fn set_test_auth_mode(auth_manager: &AuthManager, auth_mode: Option<AuthMode>) {
-    set_test_auth(auth_manager, test_codex_auth(auth_mode)).await;
+    set_test_auth(auth_manager, test_genex_auth(auth_mode)).await;
 }
 
 pub(crate) async fn set_test_auth(auth_manager: &AuthManager, auth: Option<CodexAuth>) {
@@ -99,7 +99,7 @@ pub(crate) async fn set_test_auth(auth_manager: &AuthManager, auth: Option<Codex
         .expect("test auth should update");
 }
 
-fn test_codex_auth(auth_mode: Option<AuthMode>) -> Option<CodexAuth> {
+fn test_genex_auth(auth_mode: Option<AuthMode>) -> Option<CodexAuth> {
     auth_mode.map(|auth_mode| match auth_mode {
         AuthMode::ApiKey => CodexAuth::from_api_key("test-api-key"),
         AuthMode::Headers => CodexAuth::Headers(AuthHeaders::new(http::HeaderMap::new())),
