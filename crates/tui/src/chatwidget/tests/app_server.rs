@@ -1,6 +1,6 @@
 use super::*;
 use genex_app_server_protocol::AuthRecoveryNotification;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::CodexErrorDetails;
 use pretty_assertions::assert_eq;
 

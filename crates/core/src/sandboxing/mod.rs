@@ -19,7 +19,7 @@ use genex_network_proxy::ManagedNetworkSandboxContext;
 use genex_network_proxy::NetworkProxy;
 use genex_network_proxy::RemoteNetworkProxyLaunchConfig;
 use genex_protocol::config_types::WindowsSandboxLevel;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::exec_output::ExecToolCallOutput;
 use genex_protocol::models::PermissionProfile;
 pub use genex_protocol::models::SandboxPermissions;
@@ -121,7 +121,7 @@ impl ExecRequest {
         request: SandboxExecRequest,
         options: ExecOptions,
         windows_sandbox_workspace_roots: Vec<AbsolutePathBuf>,
-    ) -> Result<Self, CodexErr> {
+    ) -> Result<Self, GenexErr> {
         let SandboxExecRequest {
             command,
             cwd,
@@ -144,7 +144,7 @@ impl ExecRequest {
         {
             let sandbox_policy_cwd = windows_sandbox_policy_cwd
                 .to_abs_path()
-                .map_err(|err| CodexErr::InvalidRequest(format!("invalid sandbox cwd: {err}")))?;
+                .map_err(|err| GenexErr::InvalidRequest(format!("invalid sandbox cwd: {err}")))?;
             let use_windows_elevated_backend =
                 windows_sandbox_uses_elevated_backend(windows_sandbox_level);
             if use_windows_elevated_backend {
@@ -163,7 +163,7 @@ impl ExecRequest {
                 )
             }
             .map_err(|error| {
-                CodexErr::UnsupportedOperation(
+                GenexErr::UnsupportedOperation(
                     truncate_middle_with_token_budget(&error, /*max_tokens*/ 900).0,
                 )
             })?

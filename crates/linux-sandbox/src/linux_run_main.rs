@@ -481,7 +481,7 @@ fn build_bwrap_argv(
     })
 }
 
-fn exit_with_bwrap_build_error(err: genex_protocol::error::CodexErr) -> ! {
+fn exit_with_bwrap_build_error(err: genex_protocol::error::GenexErr) -> ! {
     eprintln!("error building bubblewrap command: {err}");
     std::process::exit(1);
 }

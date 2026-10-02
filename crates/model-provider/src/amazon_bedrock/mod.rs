@@ -25,7 +25,7 @@ use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::manager::SharedModelsManager;
 use genex_models_manager::manager::StaticModelsManager;
 use genex_protocol::account::ProviderAccount;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result;
 use genex_protocol::model_types::ModelsResponse;
 
@@ -299,9 +299,9 @@ impl ModelProvider for AmazonBedrockModelProvider {
                         | std::io::ErrorKind::NotFound
                         | std::io::ErrorKind::PermissionDenied
                 ) {
-                    CodexErr::InvalidRequest(error.to_string())
+                    GenexErr::InvalidRequest(error.to_string())
                 } else {
-                    CodexErr::Io(error)
+                    GenexErr::Io(error)
                 }
             })?;
             Ok(ProviderUnauthorizedRecovery::Recovered)
@@ -325,7 +325,7 @@ impl ModelProvider for AmazonBedrockModelProvider {
         })
     }
 
-    fn map_api_error(&self, error: ApiError) -> CodexErr {
+    fn map_api_error(&self, error: ApiError) -> GenexErr {
         error::map_api_error(error)
     }
 

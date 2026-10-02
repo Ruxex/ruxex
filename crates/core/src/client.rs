@@ -130,7 +130,7 @@ use genex_model_provider::create_model_provider;
 #[cfg(test)]
 use genex_model_provider_info::DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS;
 use genex_model_provider_info::ModelProviderInfo;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result;
 use genex_response_debug_context::extract_response_debug_context;
 use genex_response_debug_context::extract_response_debug_context_from_api_error;
@@ -1254,7 +1254,7 @@ impl ModelClientSession {
         chat_api: Arc<dyn genex_api::ChatCompletionApi>,
     ) -> Result<ResponseStream> {
         if prompt.output_schema.is_some() {
-            return Err(genex_protocol::error::CodexErr::UnsupportedOperation(
+            return Err(genex_protocol::error::GenexErr::UnsupportedOperation(
                 "output_schema is not supported for Chat Completions API".to_string(),
             ));
         }
@@ -2139,7 +2139,7 @@ where
 /// Handles a 401 response by optionally refreshing external credentials once.
 ///
 /// When refresh succeeds, the caller should retry the API call; otherwise
-/// the mapped `CodexErr` is returned to the caller.
+/// the mapped `GenexErr` is returned to the caller.
 #[derive(Clone, Copy, Debug)]
 struct UnauthorizedRecoveryExecution {
     mode: &'static str,
@@ -2298,7 +2298,7 @@ async fn handle_unauthorized(
                     /*recovery_reason*/ None,
                     /*auth_state_changed*/ None,
                 );
-                Err(CodexErr::RefreshTokenFailed(failed))
+                Err(GenexErr::RefreshTokenFailed(failed))
             }
             Err(RefreshTokenError::Transient(other)) => {
                 session_telemetry.record_auth_recovery(
@@ -2310,7 +2310,7 @@ async fn handle_unauthorized(
                     /*recovery_reason*/ None,
                     /*auth_state_changed*/ None,
                 );
-                Err(CodexErr::Io(other))
+                Err(GenexErr::Io(other))
             }
         };
     }

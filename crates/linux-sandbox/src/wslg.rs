@@ -38,7 +38,7 @@ pub(crate) fn ensure_supported_path(path: &Path) -> genex_protocol::error::Resul
     if path.starts_with(alias)
         || fs::canonicalize(path).is_ok_and(|resolved| resolved.starts_with(alias))
     {
-        return Err(genex_protocol::error::CodexErr::Fatal(format!(
+        return Err(genex_protocol::error::GenexErr::Fatal(format!(
             "restricted sandboxes do not support paths under {alias}: {}; use the corresponding path under the primary filesystem root instead",
             path.display()
         )));

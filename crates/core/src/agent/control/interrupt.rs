@@ -7,7 +7,7 @@ use super::AgentControl;
 use crate::agent::AgentStatus;
 use genex_protocol::AgentPath;
 use genex_protocol::ThreadId;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::CodexErrorDetails;
 
 pub(crate) struct AgentInterruptOutcome {
@@ -19,7 +19,7 @@ pub(crate) struct AgentInterruptOutcome {
 #[derive(Debug)]
 pub(crate) enum AgentInterruptError {
     InvalidRequest(String),
-    Agent(CodexErr),
+    Agent(GenexErr),
 }
 
 impl AgentControl {

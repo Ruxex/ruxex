@@ -2,7 +2,7 @@ use chrono::DateTime;
 use chrono::Utc;
 use genex_features::CurrentTimeReminderDeliveryMode;
 use genex_features::Feature;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::models::ResponseItem;
 
@@ -120,7 +120,7 @@ impl Session {
             .features
             .enabled(Feature::NonfatalClockReadErrors)
         {
-            return Err(CodexErr::Fatal(format!(
+            return Err(GenexErr::Fatal(format!(
                 "failed to read current time: {error:#}"
             )));
         }

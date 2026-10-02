@@ -8,7 +8,7 @@ use genex_login::AuthHeaders;
 use genex_login::AuthManager;
 use genex_login::CodexAuth;
 use genex_model_provider_info::ModelProviderInfo;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use http::HeaderMap;
 
 use crate::bearer_auth_provider::BearerAuthProvider;
@@ -126,7 +126,7 @@ pub(crate) fn resolve_provider_auth(
         auth,
         Some(CodexAuth::BedrockApiKey(_) | CodexAuth::BedrockAccessKeys(_))
     ) {
-        return Err(CodexErr::UnsupportedOperation(
+        return Err(GenexErr::UnsupportedOperation(
             BEDROCK_API_KEY_UNSUPPORTED_MESSAGE.to_string(),
         ));
     }

@@ -20,7 +20,7 @@ use genex_protocol::ThreadId;
 use genex_protocol::config_types::CollaborationMode;
 use genex_protocol::config_types::ReasoningSummary;
 use genex_protocol::config_types::WindowsSandboxLevel;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::mcp::CallToolResult;
 use genex_protocol::mcp::ClientMcpExtensions;
@@ -412,7 +412,7 @@ impl GenexThread {
     /// requires stopping execution, flushing history, and closing its writer.
     pub async fn suspend_turn_and_shutdown(&self) -> GenexResult<SuspendTurnOutcome> {
         if self.session_source.is_non_root_agent() {
-            return Err(CodexErr::UnsupportedOperation(
+            return Err(GenexErr::UnsupportedOperation(
                 "turn suspension requires the owning root thread".to_string(),
             ));
         }
@@ -430,10 +430,10 @@ impl GenexThread {
                 root_turn_id: None,
             })
             .await
-            .map_err(|_| CodexErr::Fatal("thread session has stopped".to_string()))?;
+            .map_err(|_| GenexErr::Fatal("thread session has stopped".to_string()))?;
         let outcome = result
             .await
-            .map_err(|_| CodexErr::Fatal("thread suspension reply was lost".to_string()))??;
+            .map_err(|_| GenexErr::Fatal("thread suspension reply was lost".to_string()))??;
         if matches!(&outcome, SuspendTurnOutcome::Suspended { .. }) {
             self.io.session_loop_termination.clone().await;
         }
@@ -649,7 +649,7 @@ impl GenexThread {
         items: Vec<ResponseItem>,
     ) -> GenexResult<()> {
         if items.is_empty() {
-            return Err(CodexErr::InvalidRequest(
+            return Err(GenexErr::InvalidRequest(
                 "items must not be empty".to_string(),
             ));
         }
@@ -901,7 +901,7 @@ impl GenexThread {
     pub async fn increment_out_of_band_elicitation_count(&self) -> GenexResult<i64> {
         let mut elicitations = self.out_of_band_elicitations.lock().await;
         let incremented = elicitations.count.checked_add(1).ok_or_else(|| {
-            CodexErr::Fatal("out-of-band elicitation count overflowed".to_string())
+            GenexErr::Fatal("out-of-band elicitation count overflowed".to_string())
         })?;
         if elicitations.count == 0 {
             elicitations.registration = Some(self.session.services.elicitations.register());
@@ -913,7 +913,7 @@ impl GenexThread {
     pub async fn decrement_out_of_band_elicitation_count(&self) -> GenexResult<i64> {
         let mut elicitations = self.out_of_band_elicitations.lock().await;
         if elicitations.count == 0 {
-            return Err(CodexErr::InvalidRequest(
+            return Err(GenexErr::InvalidRequest(
                 "out-of-band elicitation count is already zero".to_string(),
             ));
         }

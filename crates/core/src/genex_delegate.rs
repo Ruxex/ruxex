@@ -30,7 +30,7 @@ use crate::session::turn_context::TurnContext;
 use genex_history::InitialHistory;
 use genex_login::AuthManager;
 use genex_models_manager::manager::SharedModelsManager;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::protocol::MultiAgentVersion;
 use genex_protocol::turn_input::TurnInputMode;
 use genex_protocol::turn_input::TurnInputRequest;
@@ -58,9 +58,9 @@ pub(crate) async fn run_genex_thread_interactive(
     initial_history: Option<InitialHistory>,
     git_enrichment_policy: GitEnrichmentPolicy,
     windows_sandbox_proxy_settings_mode: genex_sandboxing::WindowsSandboxProxySettingsMode,
-) -> Result<(Arc<Session>, SessionIo), CodexErr> {
+) -> Result<(Arc<Session>, SessionIo), GenexErr> {
     if config.permissions.approval_policy.value() != AskForApproval::Never {
-        return Err(CodexErr::InvalidRequest(
+        return Err(GenexErr::InvalidRequest(
             "Codex delegates require approval policy `never`".to_string(),
         ));
     }
@@ -176,7 +176,7 @@ pub(crate) async fn run_genex_thread_one_shot(
     subagent_source: SubAgentSource,
     final_output_json_schema: Option<Value>,
     initial_history: Option<InitialHistory>,
-) -> Result<(Arc<Session>, SessionIo), CodexErr> {
+) -> Result<(Arc<Session>, SessionIo), GenexErr> {
     // Use a child token so we can stop the delegate after completion without
     // requiring the caller to cancel the parent token.
     let child_cancel = cancel_token.child_token();
@@ -215,7 +215,7 @@ pub(crate) async fn run_genex_thread_one_shot(
     match submission {
         TurnInputSubmission::Started { .. } => {}
         submission => {
-            return Err(CodexErr::InvalidRequest(format!(
+            return Err(GenexErr::InvalidRequest(format!(
                 "delegate turn input was not started: {submission:?}"
             )));
         }

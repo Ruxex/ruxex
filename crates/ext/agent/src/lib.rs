@@ -6,7 +6,7 @@ use genex_core::ThreadManager;
 use genex_core::TurnInputRequest;
 use genex_core::config::Config;
 use genex_protocol::ThreadId;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::protocol::W3cTraceContext;
 use genex_protocol::user_input::UserInput;
@@ -53,7 +53,7 @@ impl AgentRunner {
             parent_trace,
         } = invocation;
         if prompt.trim().is_empty() {
-            return Err(CodexErr::InvalidRequest(
+            return Err(GenexErr::InvalidRequest(
                 "agent prompt must not be empty".to_string(),
             ));
         }
@@ -61,7 +61,7 @@ impl AgentRunner {
         let thread_manager = self
             .thread_manager
             .upgrade()
-            .ok_or_else(|| CodexErr::UnsupportedOperation("thread manager dropped".to_string()))?;
+            .ok_or_else(|| GenexErr::UnsupportedOperation("thread manager dropped".to_string()))?;
         let NewThread {
             thread_id, thread, ..
         } = thread_manager
@@ -85,7 +85,7 @@ impl AgentRunner {
         {
             StartIfIdleSubmission::Started { turn_id } => turn_id,
             StartIfIdleSubmission::NotSubmitted { reason } => {
-                return Err(CodexErr::InvalidRequest(format!(
+                return Err(GenexErr::InvalidRequest(format!(
                     "agent prompt was not submitted: {reason:?}"
                 )));
             }

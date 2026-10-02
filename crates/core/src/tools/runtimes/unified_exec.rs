@@ -44,7 +44,7 @@ use genex_core_plugins::PluginMetricsSidecar;
 use genex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY;
 use genex_network_proxy::ManagedNetworkSandboxContext;
 use genex_network_proxy::NetworkProxy;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::SandboxErr;
 use genex_protocol::models::AdditionalPermissionProfile;
 use genex_sandboxing::SandboxCommand;
@@ -350,7 +350,7 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
         let (mut env, managed_network_context, network_proxy_launch) = match managed_network {
             Some(network) if environment_is_remote => {
                 let launch = network.remote_launch_config().await.map_err(|err| {
-                    ToolError::Codex(CodexErr::Io(io::Error::other(err.to_string())))
+                    ToolError::Codex(GenexErr::Io(io::Error::other(err.to_string())))
                 })?;
                 if !launch.proxy.enabled {
                     (env, None, None)
@@ -361,7 +361,7 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
                             .info()
                             .await
                             .map_err(|err| {
-                                ToolError::Codex(CodexErr::Io(io::Error::other(format!(
+                                ToolError::Codex(GenexErr::Io(io::Error::other(format!(
                                     "failed to query exec-server capabilities: {err}"
                                 ))))
                             })?;
@@ -383,7 +383,7 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
                         Some(&req.turn_environment.selection.environment_id),
                     )
                     .map_err(|err| {
-                        ToolError::Codex(CodexErr::Io(io::Error::other(format!(
+                        ToolError::Codex(GenexErr::Io(io::Error::other(format!(
                             "failed to prepare network proxy for environment `{}`: {err}",
                             req.turn_environment.selection.environment_id
                         ))))
@@ -636,7 +636,7 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
                         .await
                         .map_err(|err| match err {
                             UnifiedExecError::SandboxDenied { output, .. } => {
-                                ToolError::Codex(CodexErr::Sandbox(SandboxErr::Denied {
+                                ToolError::Codex(GenexErr::Sandbox(SandboxErr::Denied {
                                     output: Box::new(output),
                                     network_policy_decision: None,
                                 }))

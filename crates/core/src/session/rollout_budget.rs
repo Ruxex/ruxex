@@ -1,7 +1,7 @@
 use super::session::Session;
 use super::turn_context::TurnContext;
 use crate::context::ContextualUserFragment;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::protocol::TokenUsage;
 
@@ -34,7 +34,7 @@ impl Session {
             .rollout_budget()
             .record_usage(usage)?
         {
-            return Err(CodexErr::SessionBudgetExceeded);
+            return Err(GenexErr::SessionBudgetExceeded);
         }
         Ok(())
     }

@@ -29,7 +29,7 @@ use genex_context_fragments::set_annotated_content;
 use genex_history::CodexHarnessMetadata;
 use genex_history::ResponseItemEnvelope;
 use genex_protocol::ResponseItemId;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::CodexErrorDetails;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::items::ContextCompactionItem;
@@ -171,7 +171,7 @@ async fn run_compact_task_inner(
     match pre_compact_outcome {
         PreCompactHookOutcome::Continue => {}
         PreCompactHookOutcome::Stopped => {
-            let error = CodexErr::TurnAborted;
+            let error = GenexErr::TurnAborted;
             return Err(error);
         }
     }
@@ -186,7 +186,7 @@ async fn run_compact_task_inner(
     if result.is_ok() {
         let post_compact_outcome = run_post_compact_hooks(&sess, &turn_context, trigger).await;
         if let PostCompactHookOutcome::Stopped = post_compact_outcome {
-            return Err(CodexErr::TurnAborted);
+            return Err(GenexErr::TurnAborted);
         }
     }
     result.map(|_| ())
@@ -630,7 +630,7 @@ async fn drain_to_completed(
     loop {
         let maybe_event = stream.next().await;
         let Some(event) = maybe_event else {
-            return Err(CodexErr::Stream(
+            return Err(GenexErr::Stream(
                 "stream closed before response.completed".into(),
             ));
         };

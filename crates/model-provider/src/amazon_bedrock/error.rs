@@ -1,6 +1,6 @@
 use genex_api::ApiError;
 use genex_api::TransportError;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::CodexErrorDetails;
 use http::StatusCode;
 
@@ -13,11 +13,11 @@ pub(super) const BEDROCK_EXPIRED_SIGNATURE_MESSAGE: &str = concat!(
     "update or unset it, then restart Codex",
 );
 
-pub(super) fn map_api_error(error: ApiError) -> CodexErr {
+pub(super) fn map_api_error(error: ApiError) -> GenexErr {
     if let ApiError::Transport(TransportError::Build(message)) = &error
         && message.starts_with(CREDENTIAL_EXPORT_CONFIG_ERROR_PREFIX)
     {
-        return CodexErr::InvalidRequest(message.clone());
+        return GenexErr::InvalidRequest(message.clone());
     }
     let error = genex_api::map_api_error(error);
     if let CodexErrorDetails::UnexpectedStatus(response) = error.details()
@@ -26,7 +26,7 @@ pub(super) fn map_api_error(error: ApiError) -> CodexErr {
     {
         let mut response = response.clone();
         response.user_message = Some(BEDROCK_EXPIRED_SIGNATURE_MESSAGE.to_string());
-        let mapped_error = CodexErr::new(CodexErrorDetails::UnexpectedStatus(response));
+        let mapped_error = GenexErr::new(CodexErrorDetails::UnexpectedStatus(response));
         return match error.retry_delay() {
             Some(retry_delay) => mapped_error.with_retry_delay(retry_delay),
             None => mapped_error,

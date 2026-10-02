@@ -6,7 +6,7 @@ use crate::tools::context::ToolOutput;
 use crate::tools::context::ToolPayload;
 use genex_protocol::AgentPath;
 use genex_protocol::ThreadId;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::CodexErrorDetails;
 use genex_protocol::models::ResponseInputItem;
 use genex_protocol::protocol::SessionSource;
@@ -60,7 +60,7 @@ where
     })
 }
 
-pub(crate) fn collab_spawn_error(err: CodexErr) -> FunctionCallError {
+pub(crate) fn collab_spawn_error(err: GenexErr) -> FunctionCallError {
     match err.details() {
         CodexErrorDetails::UnsupportedOperation(message) if message == "thread manager dropped" => {
             FunctionCallError::RespondToModel("collab manager unavailable".to_string())
@@ -72,7 +72,7 @@ pub(crate) fn collab_spawn_error(err: CodexErr) -> FunctionCallError {
     }
 }
 
-pub(crate) fn collab_agent_error(agent_id: ThreadId, err: CodexErr) -> FunctionCallError {
+pub(crate) fn collab_agent_error(agent_id: ThreadId, err: GenexErr) -> FunctionCallError {
     match err.details() {
         CodexErrorDetails::ThreadNotFound(id) => {
             FunctionCallError::RespondToModel(format!("agent with id {id} not found"))

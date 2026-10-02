@@ -915,7 +915,7 @@ impl Session {
             Ok(Some(commit)) => commit,
             Ok(None) => return Ok(None),
             Err(error) => {
-                let message = CodexErr::InvalidRequest(error.to_string()).to_string();
+                let message = GenexErr::InvalidRequest(error.to_string()).to_string();
                 self.send_event_raw(Event {
                     id: sub_id,
                     msg: EventMsg::Error(ErrorEvent {
@@ -925,7 +925,7 @@ impl Session {
                     }),
                 })
                 .await;
-                return Err(CodexErr::InvalidRequest(message));
+                return Err(GenexErr::InvalidRequest(message));
             }
         };
         let mut configuration = commit.configuration;

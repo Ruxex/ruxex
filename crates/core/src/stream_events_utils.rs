@@ -17,7 +17,7 @@ use crate::tools::call_trace;
 use crate::tools::parallel::ToolCallRuntime;
 use crate::tools::router::ToolRouter;
 use crate::tools::router::tool_log_payload;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result;
 use genex_protocol::models::FunctionCallOutputBody;
 use genex_protocol::models::FunctionCallOutputPayload;
@@ -306,7 +306,7 @@ pub(crate) async fn handle_output_item_done(
         }
         // A fatal error occurred; surface it back into history.
         Err(FunctionCallError::Fatal(message)) => {
-            return Err(CodexErr::Fatal(message));
+            return Err(GenexErr::Fatal(message));
         }
     }
 

@@ -168,7 +168,7 @@ pub(crate) trait SessionTask: Send + Sync + 'static {
     /// abort; implementers should watch for it and terminate quickly once it
     /// fires. Returning [`Some`] yields a final message that
     /// [`Session::on_task_finished`] will emit to the client. Returning
-    /// [`CodexErr::TurnAborted`] completes the task through the aborted-turn
+    /// [`GenexErr::TurnAborted`] completes the task through the aborted-turn
     /// lifecycle instead.
     fn run(
         self: Arc<Self>,

@@ -75,7 +75,7 @@ use genex_core_plugins::strip_output_env;
 use genex_network_proxy::NetworkPolicyDecider;
 use genex_network_proxy::NetworkProxy;
 use genex_protocol::config_types::ShellEnvironmentPolicy;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::CodexErrorDetails;
 use genex_protocol::error::SandboxErr;
 use genex_protocol::protocol::EventMsg;
@@ -1283,7 +1283,7 @@ impl UnifiedExecProcessManager {
         .await
         .map_err(|err| match err {
             UnifiedExecError::SandboxDenied { output, .. } => {
-                ToolError::Codex(CodexErr::Sandbox(SandboxErr::Denied {
+                ToolError::Codex(GenexErr::Sandbox(SandboxErr::Denied {
                     output: Box::new(output),
                     network_policy_decision: None,
                 }))

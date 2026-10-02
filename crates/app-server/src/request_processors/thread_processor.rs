@@ -5836,7 +5836,7 @@ fn conversation_summary_rollout_path_read_error(
     }
 }
 
-pub(super) fn core_thread_write_error(operation: &str, err: CodexErr) -> JSONRPCErrorError {
+pub(super) fn core_thread_write_error(operation: &str, err: GenexErr) -> JSONRPCErrorError {
     match err.details() {
         CodexErrorDetails::ThreadNotFound(thread_id) => {
             invalid_request(format!("thread not found: {thread_id}"))

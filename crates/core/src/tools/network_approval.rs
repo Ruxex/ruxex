@@ -1206,7 +1206,7 @@ pub(crate) async fn begin_network_approval(
             fallback_policy_decider,
         )
         .map_err(|err| {
-            ToolError::Codex(genex_protocol::error::CodexErr::Io(io::Error::other(
+            ToolError::Codex(genex_protocol::error::GenexErr::Io(io::Error::other(
                 format!("failed to create execution-scoped network proxy: {err}"),
             )))
         })?;

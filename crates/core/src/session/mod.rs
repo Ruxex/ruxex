@@ -208,7 +208,7 @@ use genex_config::ConfigLayerSource;
 use genex_config::types::McpServerConfig;
 use genex_model_provider::create_model_provider;
 use genex_model_provider_info::ModelProviderInfo;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::CodexErrorDetails;
 use genex_protocol::error::Result as GenexResult;
 #[cfg(test)]
@@ -590,7 +590,7 @@ impl Session {
             Arc::new(
                 ExecPolicyManager::load(&config.config_layer_stack)
                     .await
-                    .map_err(|err| CodexErr::Fatal(format!("failed to load rules: {err}")))?,
+                    .map_err(|err| GenexErr::Fatal(format!("failed to load rules: {err}")))?,
             )
         };
 
@@ -645,7 +645,7 @@ impl Session {
         if !inherits_token_budget {
             Arc::make_mut(&mut config)
                 .prepare_token_budget_for_startup()
-                .map_err(|err| CodexErr::InvalidRequest(err.to_string()))?;
+                .map_err(|err| GenexErr::InvalidRequest(err.to_string()))?;
             // Resolve activation for this runtime, including when resuming saved history.
             token_budget::apply_experimental_context(
                 Arc::make_mut(&mut config),
@@ -659,7 +659,7 @@ impl Session {
                 .is_some_and(|token_budget| token_budget.use_history_notes_extension)
                 && !model_info.supports_experimental_context
             {
-                return Err(CodexErr::InvalidRequest(format!(
+                return Err(GenexErr::InvalidRequest(format!(
                     "features.token_budget.use_history_notes_extension is not supported by model `{model}`; disable it or select a model that supports experimental context"
                 )));
             }
@@ -788,7 +788,7 @@ impl Session {
         };
         session_configuration
             .validate(&environment_selections)
-            .map_err(|err| CodexErr::InvalidRequest(err.to_string()))?;
+            .map_err(|err| GenexErr::InvalidRequest(err.to_string()))?;
 
         // Generate a unique ID for the lifetime of this session.
         let session_source_clone = session_configuration.session_source.clone();
@@ -834,7 +834,7 @@ impl Session {
         .await
         .map_err(|e| {
             error!("Failed to create session: {e:#}");
-            match e.downcast::<CodexErr>() {
+            match e.downcast::<GenexErr>() {
                 Ok(error) => error,
                 Err(error) => map_session_init_error(&error, &config.codex_home),
             }
@@ -906,7 +906,7 @@ impl SessionIo {
         self.tx_sub
             .send(sub)
             .await
-            .map_err(|_| CodexErr::InternalAgentDied)?;
+            .map_err(|_| GenexErr::InternalAgentDied)?;
         Ok(())
     }
 
@@ -934,7 +934,7 @@ impl SessionIo {
             root_turn_id: None,
         })
         .await?;
-        reply_rx.await.unwrap_or(Err(CodexErr::InternalAgentDied))
+        reply_rx.await.unwrap_or(Err(GenexErr::InternalAgentDied))
     }
 
     pub(crate) async fn submit_recover_turn(
@@ -957,7 +957,7 @@ impl SessionIo {
             root_turn_id: None,
         })
         .await?;
-        reply_rx.await.unwrap_or(Err(CodexErr::InternalAgentDied))
+        reply_rx.await.unwrap_or(Err(GenexErr::InternalAgentDied))
     }
 
     pub(crate) async fn shutdown_and_wait(&self) -> GenexResult<()> {
@@ -976,7 +976,7 @@ impl SessionIo {
             .rx_event
             .recv()
             .await
-            .map_err(|_| CodexErr::InternalAgentDied)?;
+            .map_err(|_| GenexErr::InternalAgentDied)?;
         Ok(event)
     }
 
@@ -4423,7 +4423,7 @@ impl Session {
         &self,
         turn_context: &TurnContext,
         message: impl Into<String>,
-        codex_error: CodexErr,
+        codex_error: GenexErr,
     ) {
         let additional_details = codex_error.to_string();
         let codex_error_info = CodexErrorInfo::ResponseStreamDisconnected {

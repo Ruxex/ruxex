@@ -70,7 +70,7 @@ use genex_model_provider::RemoteCompactionSupport;
 use genex_protocol::ResponseItemId;
 use genex_protocol::config_types::AutoCompactTokenLimitScope;
 use genex_protocol::config_types::ModeKind;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::CodexErrorDetails;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::items::PlanItem;
@@ -1940,7 +1940,7 @@ async fn try_run_sampling_request(
         {
             Ok(event) => event,
             Err(genex_async_utils::CancelErr::Cancelled) => {
-                break Err(CodexErr::TurnAborted);
+                break Err(GenexErr::TurnAborted);
             }
         };
 
@@ -1948,7 +1948,7 @@ async fn try_run_sampling_request(
             Some(Ok(event)) => event,
             Some(Err(err)) => break Err(err),
             None => {
-                break Err(CodexErr::Stream(
+                break Err(GenexErr::Stream(
                     "stream closed before response.completed".into(),
                 ));
             }
@@ -2400,7 +2400,7 @@ async fn try_run_sampling_request(
     }
 
     if cancellation_token.is_cancelled() {
-        return Err(CodexErr::TurnAborted);
+        return Err(GenexErr::TurnAborted);
     }
 
     if should_emit_turn_diff {

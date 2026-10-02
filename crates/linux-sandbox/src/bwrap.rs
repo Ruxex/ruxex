@@ -29,7 +29,7 @@ use std::path::PathBuf;
 use std::process::Command;
 
 use crate::linux_run_main::synthetic_mount_registry_root;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result;
 use genex_protocol::permissions::is_protected_metadata_name;
 use genex_protocol::protocol::FileSystemAccessMode;
@@ -784,7 +784,7 @@ fn append_daemon_socket_mask(
 ) -> Result<()> {
     let source = fs::canonicalize(mount_root)?;
     if source.starts_with(daemon_directory) {
-        return Err(CodexErr::Fatal(
+        return Err(GenexErr::Fatal(
             "app-server socket directory cannot be a sandbox mount root".to_string(),
         ));
     }
@@ -817,7 +817,7 @@ fn expand_unreadable_globs_with_ripgrep(
     let mut patterns_by_search_root: BTreeMap<AbsolutePathBuf, Vec<String>> = BTreeMap::new();
     for pattern in patterns {
         let Some((search_root, glob)) = split_pattern_for_ripgrep(pattern, cwd) else {
-            return Err(CodexErr::Fatal(format!(
+            return Err(GenexErr::Fatal(format!(
                 "unreadable glob `{pattern}` cannot be safely expanded; use a pattern with a non-root directory prefix"
             )));
         };
@@ -840,7 +840,7 @@ fn expand_unreadable_globs_with_ripgrep(
             }
             expanded_paths.insert(path);
             if expanded_paths.len() > MAX_UNREADABLE_GLOB_MATCHES {
-                return Err(CodexErr::Fatal(format!(
+                return Err(GenexErr::Fatal(format!(
                     "unreadable glob expansion for {} matched more than {MAX_UNREADABLE_GLOB_MATCHES} paths",
                     search_root.display()
                 )));
@@ -959,7 +959,7 @@ fn ripgrep_files(
         }
 
         let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(CodexErr::Fatal(format!(
+        return Err(GenexErr::Fatal(format!(
             "ripgrep unreadable glob scan failed for {}: {stderr}",
             search_root.display()
         )));
@@ -994,7 +994,7 @@ fn glob_files(
             .allow_unclosed_class(true)
             .build()
             .map_err(|err| {
-                CodexErr::Fatal(format!(
+                GenexErr::Fatal(format!(
                     "unreadable glob pattern is invalid for {}: {err}",
                     search_root.display()
                 ))
@@ -1002,7 +1002,7 @@ fn glob_files(
         builder.add(glob);
     }
     let glob_set = builder.build().map_err(|err| {
-        CodexErr::Fatal(format!(
+        GenexErr::Fatal(format!(
             "unreadable glob matcher failed for {}: {err}",
             search_root.display()
         ))
@@ -1138,7 +1138,7 @@ fn append_read_only_subpath_args(
          * only protect a startup-time snapshot; the sandboxed process could
          * replace the writable symlink before it reads through the logical path.
          */
-        return Err(CodexErr::Fatal(format!(
+        return Err(GenexErr::Fatal(format!(
             "cannot enforce sandbox read-only path {} because it crosses writable symlink {}",
             subpath.display(),
             symlink.display()
@@ -1264,7 +1264,7 @@ fn append_unreadable_root_args(
          * protect the old target while the logical path could later point
          * somewhere else.
          */
-        return Err(CodexErr::Fatal(format!(
+        return Err(GenexErr::Fatal(format!(
             "cannot enforce sandbox deny-read path {} because it crosses writable symlink {}",
             unreadable_root.display(),
             symlink.display()

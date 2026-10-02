@@ -35,7 +35,7 @@ use genex_context_fragments::to_annotated_content;
 use genex_features::Feature;
 use genex_history::CodexHarnessMetadata;
 use genex_history::ResponseItemEnvelope;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::CodexErrorDetails;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::items::ContextCompactionItem;
@@ -145,7 +145,7 @@ async fn run_remote_compact_task_inner(
     match pre_compact_outcome {
         PreCompactHookOutcome::Continue => {}
         PreCompactHookOutcome::Stopped => {
-            let error = CodexErr::TurnAborted;
+            let error = GenexErr::TurnAborted;
             return Err(error);
         }
     }
@@ -161,7 +161,7 @@ async fn run_remote_compact_task_inner(
     if result.is_ok() {
         let post_compact_outcome = run_post_compact_hooks(sess, turn_context, trigger).await;
         if let PostCompactHookOutcome::Stopped = post_compact_outcome {
-            return Err(CodexErr::TurnAborted);
+            return Err(GenexErr::TurnAborted);
         }
     }
     match result {
@@ -419,13 +419,13 @@ async fn collect_compaction_output(
     }
 
     let Some(response_id) = completed_response_id else {
-        return Err(CodexErr::Stream(
+        return Err(GenexErr::Stream(
             "remote compaction v2 stream closed before response.completed".to_string(),
         ));
     };
 
     if compaction_count != 1 {
-        return Err(CodexErr::Fatal(format!(
+        return Err(GenexErr::Fatal(format!(
             "remote compaction v2 expected exactly one compaction output item, got {compaction_count} from {output_item_count} output items"
         )));
     }

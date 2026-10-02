@@ -22,7 +22,7 @@ use crate::state::TurnState;
 use crate::tasks::RegularTask;
 use genex_history::ResponseItemEnvelope;
 use genex_protocol::config_types::ModeKind;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::AdditionalContextEntry;
@@ -93,7 +93,7 @@ impl PreparedTurnInputSettings {
             session
                 .preview_settings(&updates)
                 .await
-                .map_err(|error| CodexErr::InvalidRequest(error.to_string()))?;
+                .map_err(|error| GenexErr::InvalidRequest(error.to_string()))?;
             Some(updates)
         };
         Ok(Self {
@@ -185,7 +185,7 @@ impl PreparedTurnInputSettings {
         };
         thread_settings::apply_update(session, submission_id, thread_settings_update)
             .await
-            .map_err(|error| CodexErr::InvalidRequest(error.to_string()))
+            .map_err(|error| GenexErr::InvalidRequest(error.to_string()))
     }
 }
 
@@ -219,7 +219,7 @@ pub(super) async fn handle(
             expected_previous_turn_id,
         } => {
             if !matches!(&request.input, SubmittedTurnInput::ResponseItem(_)) {
-                return Err(CodexErr::InvalidRequest(
+                return Err(GenexErr::InvalidRequest(
                     "continuation requires internal response input".to_string(),
                 ));
             }
@@ -280,7 +280,7 @@ async fn start_or_steer(
             ..
         }) => true,
         _ => {
-            return Err(CodexErr::InvalidRequest(
+            return Err(GenexErr::InvalidRequest(
                 "only user input or standalone function-call outputs can start or steer a turn"
                     .to_string(),
             ));
@@ -513,7 +513,7 @@ async fn steer(
         ..
     } = request;
     if !matches!(&input, SubmittedTurnInput::UserInput { .. }) {
-        return Err(CodexErr::InvalidRequest(
+        return Err(GenexErr::InvalidRequest(
             "only user input can steer a turn".to_string(),
         ));
     }

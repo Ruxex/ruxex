@@ -14,7 +14,7 @@ use genex_login::AuthManager;
 use genex_login::CodexAuth;
 use genex_model_provider_info::ModelProviderAwsAuthInfo;
 use genex_model_provider_info::ModelProviderInfo;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result;
 use http::HeaderMap;
 
@@ -97,7 +97,7 @@ pub(super) async fn resolve_auth_method(
     endpoint: BedrockEndpoint,
 ) -> Result<BedrockAuthMethod> {
     match source {
-        BedrockAuthSource::CommandBearerToken => Err(CodexErr::Fatal(
+        BedrockAuthSource::CommandBearerToken => Err(GenexErr::Fatal(
             "Amazon Bedrock command authentication must be resolved by the model provider"
                 .to_string(),
         )),
@@ -109,19 +109,19 @@ pub(super) async fn resolve_auth_method(
             let credential_export = process_shared_state()
                 .aws_credential_export(aws)
                 .ok_or_else(|| {
-                    CodexErr::Fatal(
+                    GenexErr::Fatal(
                         "selected Amazon Bedrock credential exporter is no longer configured"
                             .to_string(),
                     )
                 })?;
             let context = AwsAuthContext::load_with_credentials_provider(config, credential_export)
                 .await
-                .map_err(aws_auth_error_to_codex_error)?;
+                .map_err(aws_auth_error_to_genex_error)?;
             Ok(BedrockAuthMethod::AwsSdkAuth { context })
         }
         BedrockAuthSource::ManagedBearerToken => {
             let Some(CodexAuth::BedrockApiKey(auth)) = managed_auth else {
-                return Err(CodexErr::Fatal(
+                return Err(GenexErr::Fatal(
                     "selected Codex-managed Amazon Bedrock API key is no longer available"
                         .to_string(),
                 ));
@@ -134,7 +134,7 @@ pub(super) async fn resolve_auth_method(
         BedrockAuthSource::EnvBearerToken => {
             let token = non_empty_env_var_from(AWS_BEARER_TOKEN_BEDROCK_ENV_VAR, std::env::var)
                 .ok_or_else(|| {
-                    CodexErr::Fatal(
+                    GenexErr::Fatal(
                         "selected `AWS_BEARER_TOKEN_BEDROCK` credential is no longer available"
                             .to_string(),
                     )
@@ -149,12 +149,12 @@ pub(super) async fn resolve_auth_method(
             };
             let context = AwsAuthContext::load_profile(config)
                 .await
-                .map_err(aws_auth_error_to_codex_error)?;
+                .map_err(aws_auth_error_to_genex_error)?;
             Ok(BedrockAuthMethod::AwsSdkAuth { context })
         }
         BedrockAuthSource::ManagedAccessKeys => {
             let Some(CodexAuth::BedrockAccessKeys(auth)) = managed_auth else {
-                return Err(CodexErr::Fatal(
+                return Err(GenexErr::Fatal(
                     "selected Codex-managed Amazon Bedrock access keys are no longer available"
                         .to_string(),
                 ));
@@ -170,7 +170,7 @@ pub(super) async fn resolve_auth_method(
             };
             let context = AwsAuthContext::load_with_access_keys(config, access_keys)
                 .await
-                .map_err(aws_auth_error_to_codex_error)?;
+                .map_err(aws_auth_error_to_genex_error)?;
             Ok(BedrockAuthMethod::AwsSdkAuth { context })
         }
         BedrockAuthSource::EnvAwsCredentials | BedrockAuthSource::AwsSdk => {
@@ -180,7 +180,7 @@ pub(super) async fn resolve_auth_method(
             };
             let context = AwsAuthContext::load(config)
                 .await
-                .map_err(aws_auth_error_to_codex_error)?;
+                .map_err(aws_auth_error_to_genex_error)?;
             Ok(BedrockAuthMethod::AwsSdkAuth { context })
         }
     }
@@ -216,7 +216,7 @@ pub(super) async fn resolve_region(
         };
         let context = AwsAuthContext::load(config)
             .await
-            .map_err(aws_auth_error_to_codex_error)?;
+            .map_err(aws_auth_error_to_genex_error)?;
         return Ok(context.region().to_string());
     }
 
@@ -245,7 +245,7 @@ pub(super) fn bearer_token_region(
         .or_else(|| non_empty_env_var_from(AWS_REGION_ENV_VAR, env_var))
         .or_else(|| non_empty_env_var_from(AWS_DEFAULT_REGION_ENV_VAR, env_var))
         .ok_or_else(|| {
-            CodexErr::Fatal(
+            GenexErr::Fatal(
                 "Amazon Bedrock bearer token auth requires \
 `model_providers.amazon-bedrock.aws.region`, `AWS_REGION`, or `AWS_DEFAULT_REGION`"
                     .to_string(),
@@ -253,8 +253,8 @@ pub(super) fn bearer_token_region(
         })
 }
 
-fn aws_auth_error_to_codex_error(error: AwsAuthError) -> CodexErr {
-    CodexErr::Fatal(format!("failed to resolve Amazon Bedrock auth: {error}"))
+fn aws_auth_error_to_genex_error(error: AwsAuthError) -> GenexErr {
+    GenexErr::Fatal(format!("failed to resolve Amazon Bedrock auth: {error}"))
 }
 
 fn aws_auth_error_to_auth_error(error: AwsAuthError) -> AuthError {

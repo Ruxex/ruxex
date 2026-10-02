@@ -22,7 +22,7 @@ use genex_models_manager::manager::ModelsEndpointClient;
 use genex_models_manager::manager::ModelsEndpointFuture;
 use genex_models_manager::manager::ModelsEndpointResponse;
 use genex_otel::TelemetryAuthMode;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as CoreResult;
 use genex_response_debug_context::extract_response_debug_context;
 use genex_response_debug_context::telemetry_transport_error_message;
@@ -122,7 +122,7 @@ impl ModelsEndpoint {
                 .map_err(map_api_error)
         })
         .await
-        .map_err(|_| CodexErr::RequestTimeout)??;
+        .map_err(|_| GenexErr::RequestTimeout)??;
         Ok(ModelsEndpointResponse {
             models,
             etag,

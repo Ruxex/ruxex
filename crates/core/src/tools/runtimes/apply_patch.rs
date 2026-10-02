@@ -18,7 +18,7 @@ use genex_apply_patch::AppliedPatchDelta;
 use genex_apply_patch::ApplyPatchAction;
 use genex_apply_patch::ApplyPatchOptions;
 use genex_exec_server::FileSystemSandboxContext;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::SandboxErr;
 use genex_protocol::exec_output::ExecToolCallOutput;
 use genex_protocol::exec_output::StreamOutput;
@@ -225,7 +225,7 @@ impl ToolRuntime<ApplyPatchRequest, ApplyPatchRuntimeOutput> for ApplyPatchRunti
             if attempt.sandbox != SandboxType::None {
                 record_filesystem_sandbox_violation(attempt.sandbox, &output);
             }
-            return Err(ToolError::Codex(CodexErr::Sandbox(SandboxErr::Denied {
+            return Err(ToolError::Codex(GenexErr::Sandbox(SandboxErr::Denied {
                 output: Box::new(output),
                 network_policy_decision: None,
             })));

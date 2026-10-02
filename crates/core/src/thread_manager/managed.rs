@@ -4,7 +4,7 @@
 use std::future::Future;
 use std::sync::Arc;
 
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as GenexResult;
 use tokio::sync::oneshot;
 use tokio_util::sync::CancellationToken;
@@ -33,7 +33,7 @@ impl ThreadManager {
             options.initial_history,
             genex_history::InitialHistory::Resumed(_)
         ) {
-            return Err(CodexErr::InvalidRequest(
+            return Err(GenexErr::InvalidRequest(
                 "owned thread startup requires new or forked history".to_owned(),
             ));
         }
@@ -43,7 +43,7 @@ impl ThreadManager {
             .as_deref()
             != Some(&genex_extension_api::SessionIsolation::Isolated)
         {
-            return Err(CodexErr::InvalidRequest(
+            return Err(GenexErr::InvalidRequest(
                 "owned thread startup requires explicit session isolation".to_owned(),
             ));
         }
@@ -66,8 +66,8 @@ impl ThreadManager {
                 );
                 tokio::select! {
                     biased;
-                    _ = &mut until => Err(CodexErr::TurnAborted),
-                    _ = abandoned.cancelled() => Err(CodexErr::TurnAborted),
+                    _ = &mut until => Err(GenexErr::TurnAborted),
+                    _ = abandoned.cancelled() => Err(GenexErr::TurnAborted),
                     result = start => result,
                 }
             };
@@ -102,7 +102,7 @@ impl ThreadManager {
                 }
             }
         });
-        let thread = receiver.await.map_err(|_| CodexErr::InternalAgentDied)??;
+        let thread = receiver.await.map_err(|_| GenexErr::InternalAgentDied)??;
         handoff.disarm();
         Ok(thread)
     }

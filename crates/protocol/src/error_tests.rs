@@ -7,12 +7,12 @@ use pretty_assertions::assert_eq;
 use std::time::Duration;
 
 #[test]
-fn codex_err_debug_preserves_legacy_shape() {
+fn genex_err_debug_preserves_legacy_shape() {
     let actual = [
-        CodexErr::Timeout,
-        CodexErr::Stream("disconnected".to_string()),
-        CodexErr::Stream("retry later".to_string()).with_retry_delay(Duration::from_secs(2)),
-        CodexErr::InternalServerError.with_retry_delay(Duration::from_secs(3)),
+        GenexErr::Timeout,
+        GenexErr::Stream("disconnected".to_string()),
+        GenexErr::Stream("retry later".to_string()).with_retry_delay(Duration::from_secs(2)),
+        GenexErr::InternalServerError.with_retry_delay(Duration::from_secs(3)),
     ]
     .map(|err| format!("{err:?}"));
 
@@ -30,20 +30,20 @@ fn codex_err_debug_preserves_legacy_shape() {
 #[test]
 fn retryability_preserves_error_details_distinctions() {
     let errors = [
-        (CodexErr::ServerOverloaded, false),
+        (GenexErr::ServerOverloaded, false),
         (
-            CodexErr::new(CodexErrorDetails::RateLimitExceeded("retry later".into())),
+            GenexErr::new(CodexErrorDetails::RateLimitExceeded("retry later".into())),
             true,
         ),
         (
-            CodexErr::RetryLimit(RetryLimitReachedError {
+            GenexErr::RetryLimit(RetryLimitReachedError {
                 status: StatusCode::TOO_MANY_REQUESTS,
                 request_id: None,
             }),
             false,
         ),
         (
-            CodexErr::UnexpectedStatus(UnexpectedResponseError {
+            GenexErr::UnexpectedStatus(UnexpectedResponseError {
                 status: StatusCode::TOO_MANY_REQUESTS,
                 body: String::new(),
                 user_message: None,
@@ -57,7 +57,7 @@ fn retryability_preserves_error_details_distinctions() {
             CodexErrorDetails::ToolCollision("functions.update_plan".to_string()).into(),
             false,
         ),
-        (CodexErr::InternalServerError, true),
+        (GenexErr::InternalServerError, true),
     ];
 
     for (err, expected) in errors {
@@ -71,7 +71,7 @@ fn retryability_preserves_error_details_distinctions() {
 
 #[test]
 fn server_overloaded_maps_to_protocol() {
-    let err = CodexErr::ServerOverloaded;
+    let err = GenexErr::ServerOverloaded;
     assert_eq!(
         err.to_codex_protocol_error(),
         CodexErrorInfo::ServerOverloaded
@@ -88,7 +88,7 @@ fn sandbox_denied_uses_aggregated_output_when_stderr_empty() {
         duration: Duration::from_millis(10),
         timed_out: false,
     };
-    let err = CodexErr::Sandbox(SandboxErr::Denied {
+    let err = GenexErr::Sandbox(SandboxErr::Denied {
         output: Box::new(output),
         network_policy_decision: None,
     });
@@ -105,7 +105,7 @@ fn sandbox_denied_reports_both_streams_when_available() {
         duration: Duration::from_millis(10),
         timed_out: false,
     };
-    let err = CodexErr::Sandbox(SandboxErr::Denied {
+    let err = GenexErr::Sandbox(SandboxErr::Denied {
         output: Box::new(output),
         network_policy_decision: None,
     });
@@ -122,7 +122,7 @@ fn sandbox_denied_reports_stdout_when_no_stderr() {
         duration: Duration::from_millis(8),
         timed_out: false,
     };
-    let err = CodexErr::Sandbox(SandboxErr::Denied {
+    let err = GenexErr::Sandbox(SandboxErr::Denied {
         output: Box::new(output),
         network_policy_decision: None,
     });
@@ -139,7 +139,7 @@ fn to_error_event_handles_response_stream_failed() {
         .error_for_status_ref()
         .unwrap_err()
         .with_url("http://example.com".parse().unwrap());
-    let err = CodexErr::ResponseStreamFailed(ResponseStreamFailed {
+    let err = GenexErr::ResponseStreamFailed(ResponseStreamFailed {
         source,
         request_id: Some("req-123".to_string()),
     });
@@ -168,7 +168,7 @@ fn sandbox_denied_reports_exit_code_when_no_output_available() {
         duration: Duration::from_millis(5),
         timed_out: false,
     };
-    let err = CodexErr::Sandbox(SandboxErr::Denied {
+    let err = GenexErr::Sandbox(SandboxErr::Denied {
         output: Box::new(output),
         network_policy_decision: None,
     });

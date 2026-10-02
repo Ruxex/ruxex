@@ -1,6 +1,6 @@
 use genex_protocol::AgentPath;
 use genex_protocol::ThreadId;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::CodexErrorDetails;
 use genex_protocol::error::Result;
 use genex_protocol::protocol::SessionSource;
@@ -99,7 +99,7 @@ impl AgentRegistry {
     ) -> Result<SpawnReservation> {
         if let Some(max_threads) = max_threads {
             if !self.try_increment_spawned(max_threads) {
-                return Err(CodexErr::new(CodexErrorDetails::AgentLimitReached {
+                return Err(GenexErr::new(CodexErrorDetails::AgentLimitReached {
                     max_threads,
                 }));
             }
@@ -307,7 +307,7 @@ impl AgentRegistry {
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         match active_agents.agent_tree.entry(agent_path.to_string()) {
-            Entry::Occupied(_) => Err(CodexErr::UnsupportedOperation(format!(
+            Entry::Occupied(_) => Err(GenexErr::UnsupportedOperation(format!(
                 "agent path `{agent_path}` already exists"
             ))),
             Entry::Vacant(entry) => {
@@ -370,7 +370,7 @@ impl SpawnReservation {
             .state
             .reserve_agent_nickname(names, preferred)
             .ok_or_else(|| {
-                CodexErr::UnsupportedOperation("no available agent nicknames".to_string())
+                GenexErr::UnsupportedOperation("no available agent nicknames".to_string())
             })?;
         self.reserved_agent_nickname = Some(agent_nickname.clone());
         Ok(agent_nickname)

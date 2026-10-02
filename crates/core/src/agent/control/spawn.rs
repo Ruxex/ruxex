@@ -193,7 +193,7 @@ impl AgentControl {
                     .map(AgentPath::try_from)
                     .transpose()
                     .map_err(|err| {
-                        CodexErr::InvalidRequest(format!("invalid stored agent path: {err}"))
+                        GenexErr::InvalidRequest(format!("invalid stored agent path: {err}"))
                     })?;
                 let mut reservation = self.state.reserve_spawn_slot(/*max_threads*/ None)?;
                 let mut metadata = self.prepare_agent_metadata(
@@ -209,7 +209,7 @@ impl AgentControl {
                 )?;
                 metadata.agent_id = Some(thread_id);
                 reservation.commit(metadata);
-                Ok::<(), CodexErr>(())
+                Ok::<(), GenexErr>(())
             }
             .await;
             if let Err(err) = restore_result {
@@ -282,7 +282,7 @@ impl AgentControl {
         {
             return Ok(());
         }
-        Err(CodexErr::InvalidRequest(format!(
+        Err(GenexErr::InvalidRequest(format!(
             "multi-agent v2 child {} is not owned by its loaded parent",
             thread.session.thread_id
         )))
@@ -300,7 +300,7 @@ impl AgentControl {
             let parent_thread_id = parent.session.thread_id;
             let turn = parent.session.new_default_turn().await;
             config = build_agent_resume_config(&turn).map_err(|_| {
-                CodexErr::InvalidRequest(format!(
+                GenexErr::InvalidRequest(format!(
                     "cannot resume multi-agent v2 child {thread_id} with the current parent settings"
                 ))
             })?;
@@ -312,7 +312,7 @@ impl AgentControl {
                 || parent.multi_agent_version() != Some(MultiAgentVersion::V2)
                 || !Arc::ptr_eq(&self.state, &parent.session.services.agent_control.state)
             {
-                return Err(CodexErr::InvalidRequest(format!(
+                return Err(GenexErr::InvalidRequest(format!(
                     "cannot resume multi-agent v2 child {thread_id}: parent ownership is unavailable; resume the parent first"
                 )));
             }
@@ -326,7 +326,7 @@ impl AgentControl {
             return Ok(());
         }
         if self.state.agent_metadata_for_thread(thread_id).is_none() {
-            return Err(CodexErr::ThreadNotFound(thread_id));
+            return Err(GenexErr::ThreadNotFound(thread_id));
         }
         let mut environment_selections = self.state.evicted_environments(thread_id);
 
@@ -344,14 +344,14 @@ impl AgentControl {
         let stored_parent_thread_id = stored_thread.parent_thread_id;
         let history = load_agent_model_context(&state, thread_id, stored_thread.history_mode)
             .await?
-            .ok_or(CodexErr::ThreadNotFound(thread_id))?;
+            .ok_or(GenexErr::ThreadNotFound(thread_id))?;
         let initial_history = InitialHistory::Resumed(ResumedHistory {
             conversation_id: thread_id,
             history: Arc::new(history),
             rollout_path: stored_thread.rollout_path,
         });
         if initial_history.get_multi_agent_version() != Some(MultiAgentVersion::V2) {
-            return Err(CodexErr::ThreadNotFound(thread_id));
+            return Err(GenexErr::ThreadNotFound(thread_id));
         }
         let (session_source, _) = initial_history
             .get_resumed_session_sources()
@@ -364,7 +364,7 @@ impl AgentControl {
                 || stored_parent_thread_id
                     .is_some_and(|recorded_parent| recorded_parent != parent_thread_id)
             {
-                return Err(CodexErr::InvalidRequest(format!(
+                return Err(GenexErr::InvalidRequest(format!(
                     "cannot resume multi-agent v2 child {thread_id}: recorded parent ownership is inconsistent"
                 )));
             }
@@ -393,20 +393,20 @@ impl AgentControl {
 
             apply_role_to_config(&mut config, Some(&role_name))
                 .await
-                .map_err(CodexErr::InvalidRequest)?;
+                .map_err(GenexErr::InvalidRequest)?;
             config
                 .permissions
                 .approval_policy
                 .set(runtime_approval_policy)
                 .map_err(|err| {
-                    CodexErr::InvalidRequest(format!("approval_policy is invalid: {err}"))
+                    GenexErr::InvalidRequest(format!("approval_policy is invalid: {err}"))
                 })?;
             config.cwd = runtime_cwd;
             config
                 .permissions
                 .set_permission_profile_from_session_snapshot(runtime_permission_profile)
                 .map_err(|err| {
-                    CodexErr::InvalidRequest(format!("permission_profile is invalid: {err}"))
+                    GenexErr::InvalidRequest(format!("permission_profile is invalid: {err}"))
                 })?;
         }
         config.service_tier = self.root_service_tier();
@@ -419,7 +419,7 @@ impl AgentControl {
                 .get(&stored_model_provider)
                 .cloned()
                 .ok_or_else(|| {
-                    CodexErr::InvalidRequest(format!(
+                    GenexErr::InvalidRequest(format!(
                         "Model provider `{stored_model_provider}` not found"
                     ))
                 })?;
@@ -435,7 +435,7 @@ impl AgentControl {
         {
             let parent_config = parent.session.get_config().await;
             if !crate::exec_policy::child_uses_parent_exec_policy(&parent_config, &config) {
-                return Err(CodexErr::InvalidRequest(format!(
+                return Err(GenexErr::InvalidRequest(format!(
                     "cannot resume multi-agent v2 child {thread_id}: parent execution policy has changed; retry through the parent"
                 )));
             }
@@ -443,7 +443,7 @@ impl AgentControl {
                 for selection in selections {
                     let environment_id = &selection.environment_id;
                     let invalid_environment = |reason: &str| {
-                        CodexErr::InvalidRequest(format!(
+                        GenexErr::InvalidRequest(format!(
                             "cannot resume multi-agent v2 child {thread_id}: cached environment {environment_id} {reason}"
                         ))
                     };
@@ -782,12 +782,12 @@ impl AgentControl {
             exec_policy: inherited_exec_policy,
         } = inheritance;
         if options.fork_parent_spawn_call_id.is_none() {
-            return Err(CodexErr::Fatal(
+            return Err(GenexErr::Fatal(
                 "spawn_agent fork requires a parent spawn call id".to_string(),
             ));
         }
         let Some(fork_mode) = options.fork_mode.as_ref() else {
-            return Err(CodexErr::Fatal(
+            return Err(GenexErr::Fatal(
                 "spawn_agent fork requires a fork mode".to_string(),
             ));
         };
@@ -795,7 +795,7 @@ impl AgentControl {
             parent_thread_id, ..
         }) = &session_source
         else {
-            return Err(CodexErr::Fatal(
+            return Err(GenexErr::Fatal(
                 "spawn_agent fork requires a thread-spawn session source".to_string(),
             ));
         };
@@ -842,7 +842,7 @@ impl AgentControl {
             load_agent_model_context(state, parent_thread_id, parent_history_mode)
                 .await?
                 .ok_or_else(|| {
-                    CodexErr::Fatal(format!(
+                    GenexErr::Fatal(format!(
                         "parent thread history unavailable for fork: {parent_thread_id}"
                     ))
                 })?;
@@ -1175,12 +1175,12 @@ impl AgentControl {
             .as_deref()
             .map(AgentPath::try_from)
             .transpose()
-            .map_err(|err| CodexErr::InvalidRequest(format!("invalid stored agent path: {err}")))?;
+            .map_err(|err| GenexErr::InvalidRequest(format!("invalid stored agent path: {err}")))?;
         let resumed_agent_nickname = stored_thread.agent_nickname.clone();
         let resumed_agent_role = stored_thread.agent_role.clone();
         let history = load_agent_model_context(&state, thread_id, stored_thread.history_mode)
             .await?
-            .ok_or(CodexErr::ThreadNotFound(thread_id))?;
+            .ok_or(GenexErr::ThreadNotFound(thread_id))?;
         let initial_history = InitialHistory::Resumed(ResumedHistory {
             conversation_id: thread_id,
             history: Arc::new(history),

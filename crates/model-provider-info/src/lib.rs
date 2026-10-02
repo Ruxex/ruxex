@@ -12,7 +12,7 @@ use genex_api::Provider as ApiProvider;
 use genex_api::RetryConfig as ApiRetryConfig;
 use genex_protocol::auth::AuthMode;
 use genex_protocol::config_types::ModelProviderAuthInfo;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::EnvVarError;
 use genex_protocol::error::Result as GenexResult;
 use genex_utils_redacted_string::RedactedString;
@@ -449,7 +449,7 @@ other non-default provider fields are not supported"
                     .ok()
                     .filter(|v| !v.trim().is_empty())
                     .ok_or_else(|| {
-                        CodexErr::EnvVar(EnvVarError {
+                        GenexErr::EnvVar(EnvVarError {
                             var: env_key.clone(),
                             instructions: self.env_key_instructions.clone(),
                         })

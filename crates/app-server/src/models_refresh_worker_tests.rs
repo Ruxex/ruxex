@@ -10,7 +10,7 @@ use genex_models_manager::manager::ModelsEndpointFuture;
 use genex_models_manager::manager::ModelsEndpointResponse;
 use genex_models_manager::manager::RemoteModelsManager;
 use genex_models_manager::manager::SharedModelsManager;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as CoreResult;
 use pretty_assertions::assert_eq;
 use tempfile::tempdir;
@@ -67,7 +67,7 @@ impl ModelsEndpointClient for TestModelsEndpoint {
             let fetch_index = self.fetch_count.fetch_add(1, Ordering::SeqCst);
             self.fetched.notify_one();
             if fetch_index == 0 {
-                return Err(CodexErr::Io(std::io::Error::other("test failure")));
+                return Err(GenexErr::Io(std::io::Error::other("test failure")));
             }
             if fetch_index == 1 {
                 self.release_second_fetch.notified().await;

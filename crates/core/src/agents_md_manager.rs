@@ -9,7 +9,7 @@ use genex_extension_api::Instructions;
 use genex_extension_api::ThreadInstructionsProvider;
 use genex_extension_api::UserInstructionsProvider;
 use genex_protocol::config_types::TrustLevel;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::protocol::TurnEnvironmentSelection;
 use genex_utils_string::approx_bytes_for_tokens;
@@ -70,7 +70,7 @@ impl AgentsMdManager {
         // Serialize overlapping captures without blocking reads of the applied snapshot.
         let Ok(_refresh_guard) = self.refresh_lock.acquire().await else {
             return (
-                Err(CodexErr::Fatal(
+                Err(GenexErr::Fatal(
                     "instruction refresh semaphore closed".to_string(),
                 )),
                 Vec::new(),
@@ -165,7 +165,7 @@ const MAX_THREAD_INSTRUCTIONS_TOKENS: usize = 10_000;
 fn validate_thread_instruction_size(bytes: usize) -> GenexResult<()> {
     if bytes > approx_bytes_for_tokens(MAX_THREAD_INSTRUCTIONS_TOKENS) {
         let estimated_tokens = approx_tokens_from_byte_count(bytes);
-        return Err(CodexErr::InvalidRequest(format!(
+        return Err(GenexErr::InvalidRequest(format!(
             "thread instructions exceed the limit of {MAX_THREAD_INSTRUCTIONS_TOKENS} estimated tokens ({estimated_tokens} estimated tokens provided)"
         )));
     }

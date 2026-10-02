@@ -27,7 +27,7 @@ use crate::tools::registry::ToolArgumentDiffConsumer;
 use crate::tools::router::ToolCall;
 use crate::tools::router::ToolCallSource;
 use genex_history::ResponseItemEnvelope;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::models::ResponseInputItem;
 use genex_protocol::models::ToolResultMetadata;
 
@@ -77,7 +77,7 @@ impl ToolCallRuntime {
         self,
         call: ToolCall,
         cancellation_token: CancellationToken,
-    ) -> impl std::future::Future<Output = Result<ResponseItemEnvelope, CodexErr>> {
+    ) -> impl std::future::Future<Output = Result<ResponseItemEnvelope, GenexErr>> {
         let error_call = call.clone();
         let source = call.direct_source();
         let recorder = self.session.services.executed_tool_calls.clone();
@@ -98,7 +98,7 @@ impl ToolCallRuntime {
                     }
                     result.into_response()
                 }
-                Err(FunctionCallError::Fatal(message)) => return Err(CodexErr::Fatal(message)),
+                Err(FunctionCallError::Fatal(message)) => return Err(GenexErr::Fatal(message)),
                 Err(other) => {
                     ResponseItemEnvelope::new(Self::failure_response(error_call, other).into())
                 }

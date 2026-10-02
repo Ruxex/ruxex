@@ -17,7 +17,7 @@ use genex_execpolicy::MatchOptions;
 use genex_execpolicy::Policy;
 use genex_execpolicy::RuleMatch;
 use genex_protocol::config_types::WindowsSandboxLevel;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::models::AdditionalPermissionProfile;
 use genex_protocol::models::PermissionProfile;
 use genex_protocol::protocol::AskForApproval;
@@ -801,7 +801,7 @@ impl CoreShellCommandExecutor {
                 .map_err(|err| {
                     let environment_id =
                         self.network_environment_id.as_deref().unwrap_or("default");
-                    CodexErr::Io(io::Error::other(format!(
+                    GenexErr::Io(io::Error::other(format!(
                         "failed to prepare network proxy for environment `{environment_id}`: {err}"
                     )))
                 })?;

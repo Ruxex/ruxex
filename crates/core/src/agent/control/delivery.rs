@@ -13,7 +13,7 @@ use crate::context::InterAgentMessageType;
 use crate::session::turn_context::TurnContext;
 use genex_protocol::AgentPath;
 use genex_protocol::ThreadId;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::protocol::InterAgentCommunication;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -66,7 +66,7 @@ impl AgentMessage {
 #[derive(Debug)]
 pub(crate) enum MessageDeliveryError {
     InvalidRequest(String),
-    Agent(CodexErr),
+    Agent(GenexErr),
 }
 
 impl AgentControl {

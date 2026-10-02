@@ -1,6 +1,6 @@
 use super::AgentControl;
 use crate::genex_thread::GenexThread;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::CodexErrorDetails;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::protocol::MultiAgentVersion;
@@ -53,7 +53,7 @@ impl AgentControl {
         if self.agent_execution_limiter.has_capacity() {
             Ok(())
         } else {
-            Err(CodexErr::new(CodexErrorDetails::AgentLimitReached {
+            Err(GenexErr::new(CodexErrorDetails::AgentLimitReached {
                 max_threads,
             }))
         }

@@ -31,7 +31,7 @@ use genex_history::RolloutItem;
 use genex_protocol::AgentPath;
 use genex_protocol::SessionId;
 use genex_protocol::ThreadId;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::CodexErrorDetails;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::items::SubAgentActivityItem;
@@ -216,7 +216,7 @@ impl AgentControl {
                 // unique without adding a submission receipt back to Core.
                 Ok(Uuid::now_v7().to_string())
             }
-            Ok(TurnInputSubmission::NotSubmitted { reason }) => Err(CodexErr::InvalidRequest(
+            Ok(TurnInputSubmission::NotSubmitted { reason }) => Err(GenexErr::InvalidRequest(
                 format!("turn input was not submitted: {reason:?}"),
             )),
             Err(err) => Err(err),
@@ -427,7 +427,7 @@ impl AgentControl {
     pub(crate) fn ensure_agent_known(&self, agent_id: ThreadId) -> GenexResult<AgentMetadata> {
         self.state
             .agent_metadata_for_thread(agent_id)
-            .ok_or_else(|| CodexErr::ThreadNotFound(agent_id))
+            .ok_or_else(|| GenexErr::ThreadNotFound(agent_id))
     }
 
     pub(crate) async fn list_live_agent_subtree_thread_ids(
@@ -463,11 +463,11 @@ impl AgentControl {
             .unwrap_or_else(AgentPath::root);
         let agent_path = current_agent_path
             .resolve(agent_reference)
-            .map_err(CodexErr::UnsupportedOperation)?;
+            .map_err(GenexErr::UnsupportedOperation)?;
         if let Some(thread_id) = self.state.agent_id_for_path(&agent_path) {
             return Ok(thread_id);
         }
-        Err(CodexErr::UnsupportedOperation(format!(
+        Err(GenexErr::UnsupportedOperation(format!(
             "live agent path `{}` not found",
             agent_path.as_str()
         )))
@@ -564,7 +564,7 @@ impl AgentControl {
                     .get_agent_path()
                     .unwrap_or_else(AgentPath::root)
                     .resolve(prefix)
-                    .map_err(CodexErr::UnsupportedOperation)
+                    .map_err(GenexErr::UnsupportedOperation)
             })
             .transpose()?;
 
@@ -779,7 +779,7 @@ impl AgentControl {
     fn upgrade(&self) -> GenexResult<Arc<ThreadManagerState>> {
         self.manager
             .upgrade()
-            .ok_or_else(|| CodexErr::UnsupportedOperation("thread manager dropped".to_string()))
+            .ok_or_else(|| GenexErr::UnsupportedOperation("thread manager dropped".to_string()))
     }
 
     async fn inherited_environments_for_source(

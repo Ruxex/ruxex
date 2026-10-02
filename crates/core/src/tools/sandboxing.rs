@@ -17,7 +17,7 @@ use genex_file_system::WindowsSandboxSelection;
 use genex_network_proxy::NetworkProxy;
 use genex_protocol::approvals::ExecPolicyAmendment;
 use genex_protocol::config_types::WindowsSandboxLevel;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::permissions::FileSystemSandboxKind;
 use genex_protocol::permissions::FileSystemSandboxPolicy;
 use genex_protocol::protocol::AskForApproval;
@@ -358,7 +358,7 @@ pub(crate) struct ToolCtx {
 #[derive(Debug)]
 pub(crate) enum ToolError {
     Rejected(String),
-    Codex(CodexErr),
+    Codex(GenexErr),
 }
 
 pub(crate) trait ToolRuntime<Req, Out>: Approvable<Req> + Sandboxable {
@@ -459,7 +459,7 @@ impl<'a> SandboxAttempt<'a> {
         options: ExecOptions,
         network: Option<&NetworkProxy>,
         environment_id: Option<&str>,
-    ) -> Result<crate::sandboxing::ExecRequest, CodexErr> {
+    ) -> Result<crate::sandboxing::ExecRequest, GenexErr> {
         let network = self.network_proxy(network);
         let request = self
             .manager
@@ -476,7 +476,7 @@ impl<'a> SandboxAttempt<'a> {
                 windows_sandbox_level: self.windows_sandbox_level,
                 windows_sandbox_private_desktop: self.windows_sandbox_private_desktop,
             })
-            .map_err(CodexErr::from)?;
+            .map_err(GenexErr::from)?;
         let workspace_roots = self
             .workspace_roots
             .iter()
@@ -489,7 +489,7 @@ impl<'a> SandboxAttempt<'a> {
         &self,
         command: SandboxCommand,
         options: ExecOptions,
-    ) -> Result<crate::sandboxing::ExecRequest, CodexErr> {
+    ) -> Result<crate::sandboxing::ExecRequest, GenexErr> {
         let managed_network = command.managed_network.clone();
         let exec_server_permissions = effective_permission_profile(
             self.exec_server_permissions,
@@ -511,7 +511,7 @@ impl<'a> SandboxAttempt<'a> {
                 windows_sandbox_level: self.windows_sandbox_level,
                 windows_sandbox_private_desktop: self.windows_sandbox_private_desktop,
             })
-            .map_err(CodexErr::from)?;
+            .map_err(GenexErr::from)?;
         let mut exec_request = crate::sandboxing::ExecRequest::from_sandbox_exec_request(
             request,
             options,

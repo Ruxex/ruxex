@@ -20,7 +20,7 @@ use genex_protocol::approvals::ExecPolicyAmendment;
 #[cfg(unix)]
 use genex_protocol::approvals::NetworkApprovalContext;
 use genex_protocol::approvals::NetworkApprovalProtocol;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::items::ModelInvocationContext;
 use genex_protocol::model_types::ModelInfo;
 use genex_protocol::models::AdditionalPermissionProfile;
@@ -362,7 +362,7 @@ impl ApprovalResolution {
             ReviewDecision::TimedOut => Err(ToolError::Rejected(
                 "approval request timed out".to_string(),
             )),
-            ReviewDecision::Abort => Err(ToolError::Codex(CodexErr::TurnAborted)),
+            ReviewDecision::Abort => Err(ToolError::Codex(GenexErr::TurnAborted)),
             decision => Ok(decision),
         }
     }

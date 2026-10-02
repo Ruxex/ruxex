@@ -2,20 +2,20 @@ use std::io::ErrorKind;
 use std::path::Path;
 
 use crate::rollout::SESSIONS_SUBDIR;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_thread_store::ThreadStoreError;
 
-pub(crate) fn map_session_init_error(err: &anyhow::Error, codex_home: &Path) -> CodexErr {
+pub(crate) fn map_session_init_error(err: &anyhow::Error, codex_home: &Path) -> GenexErr {
     if let Some(store_error) = err
         .chain()
         .find_map(|cause| cause.downcast_ref::<ThreadStoreError>())
     {
         match store_error {
             ThreadStoreError::Unsupported { operation } => {
-                return CodexErr::UnsupportedOperation(format!("{operation} is not supported yet"));
+                return GenexErr::UnsupportedOperation(format!("{operation} is not supported yet"));
             }
             ThreadStoreError::Conflict { message } => {
-                return CodexErr::InvalidRequest(message.clone());
+                return GenexErr::InvalidRequest(message.clone());
             }
             ThreadStoreError::ThreadNotFound { .. }
             | ThreadStoreError::InvalidRequest { .. }
@@ -31,10 +31,10 @@ pub(crate) fn map_session_init_error(err: &anyhow::Error, codex_home: &Path) -> 
         return mapped;
     }
 
-    CodexErr::Fatal(format!("Failed to initialize session: {err:#}"))
+    GenexErr::Fatal(format!("Failed to initialize session: {err:#}"))
 }
 
-fn map_rollout_io_error(io_err: &std::io::Error, codex_home: &Path) -> Option<CodexErr> {
+fn map_rollout_io_error(io_err: &std::io::Error, codex_home: &Path) -> Option<GenexErr> {
     let sessions_dir = codex_home.join(SESSIONS_SUBDIR);
     let hint = match io_err.kind() {
         ErrorKind::PermissionDenied => format!(
@@ -61,7 +61,7 @@ fn map_rollout_io_error(io_err: &std::io::Error, codex_home: &Path) -> Option<Co
         _ => return None,
     };
 
-    Some(CodexErr::Fatal(format!(
+    Some(GenexErr::Fatal(format!(
         "{hint} (underlying error: {io_err})"
     )))
 }

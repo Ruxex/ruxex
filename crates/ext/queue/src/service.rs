@@ -18,7 +18,7 @@ use genex_extension_api::ThreadIdleInput;
 use genex_extension_api::ThreadLifecycleContributor;
 use genex_extension_api::ThreadResumeInput;
 use genex_protocol::ThreadId;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::models::snapshot_local_user_input;
 use genex_protocol::protocol::AgentStatus;
 use genex_protocol::protocol::Event;
@@ -53,7 +53,7 @@ pub enum QueueServiceError {
     #[error("local queued attachment is invalid: {0}")]
     InvalidAttachment(#[from] std::io::Error),
     #[error("Core failed to submit queued user message: {0}")]
-    CoreSubmissionError(#[from] CodexErr),
+    CoreSubmissionError(#[from] GenexErr),
     #[error("only user input can be added to the user-message queue")]
     InvalidInput,
     #[error(

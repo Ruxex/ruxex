@@ -5,7 +5,7 @@ use genex_exec_server::ExecServerRuntimePaths;
 use genex_extension_api::ExtensionRegistry;
 use genex_extension_api::UserInstructionsProvider;
 use genex_login::AuthManager;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::SessionSource;
@@ -35,7 +35,7 @@ pub async fn build_prompt_input(
     let auth_manager =
         AuthManager::shared_from_config(&config, /*enable_codex_api_key_env*/ false)
             .await
-            .map_err(|err| CodexErr::Fatal(err.to_string()))?;
+            .map_err(|err| GenexErr::Fatal(err.to_string()))?;
 
     let local_runtime_paths = ExecServerRuntimePaths::from_optional_paths(
         config.codex_self_exe.clone(),
@@ -56,7 +56,7 @@ pub async fn build_prompt_input(
                 config.http_client_factory(),
             )
             .await
-            .map_err(|err| CodexErr::Fatal(err.to_string()))?,
+            .map_err(|err| GenexErr::Fatal(err.to_string()))?,
         ),
         extensions,
         user_instructions_provider,

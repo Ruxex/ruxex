@@ -1,6 +1,6 @@
 use crate::TransportError;
 use crate::error::ApiError;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::CodexErrorDetails;
 use genex_protocol::error::ConnectionFailedError;
 use genex_protocol::error::RetryLimitReachedError;
@@ -9,29 +9,29 @@ use genex_protocol::protocol::MisalignmentErrorDetails;
 use http::HeaderMap;
 use serde_json::Value;
 
-pub fn map_api_error(err: ApiError) -> CodexErr {
+pub fn map_api_error(err: ApiError) -> GenexErr {
     match err {
-        ApiError::ContextWindowExceeded => CodexErr::ContextWindowExceeded,
-        ApiError::QuotaExceeded => CodexErr::QuotaExceeded,
+        ApiError::ContextWindowExceeded => GenexErr::ContextWindowExceeded,
+        ApiError::QuotaExceeded => GenexErr::QuotaExceeded,
         ApiError::Retryable { message, delay } => {
-            let error = CodexErr::Stream(message);
+            let error = GenexErr::Stream(message);
             match delay {
                 Some(delay) => error.with_retry_delay(delay),
                 None => error,
             }
         }
         ApiError::RateLimitExceeded { message, delay } => {
-            let error = CodexErr::new(CodexErrorDetails::RateLimitExceeded(message));
+            let error = GenexErr::new(CodexErrorDetails::RateLimitExceeded(message));
             match delay {
                 Some(delay) => error.with_retry_delay(delay),
                 None => error,
             }
         }
-        ApiError::Stream(msg) => CodexErr::Stream(msg),
-        ApiError::ServerOverloaded => CodexErr::ServerOverloaded,
+        ApiError::Stream(msg) => GenexErr::Stream(msg),
+        ApiError::ServerOverloaded => GenexErr::ServerOverloaded,
         ApiError::Api { status, message } => {
             let user_message = api_error_user_message(status, &message);
-            CodexErr::UnexpectedStatus(UnexpectedResponseError {
+            GenexErr::UnexpectedStatus(UnexpectedResponseError {
                 status,
                 body: message,
                 user_message,
@@ -40,14 +40,14 @@ pub fn map_api_error(err: ApiError) -> CodexErr {
                 request_id: None,
             })
         }
-        ApiError::InvalidRequest { message } => CodexErr::InvalidRequest(message),
+        ApiError::InvalidRequest { message } => GenexErr::InvalidRequest(message),
         ApiError::CyberPolicy { message } => {
-            CodexErr::new(CodexErrorDetails::CyberPolicy { message })
+            GenexErr::new(CodexErrorDetails::CyberPolicy { message })
         }
         ApiError::MisalignmentPolicyViolation {
             message,
             misalignment,
-        } => CodexErr::new(CodexErrorDetails::MisalignmentPolicyViolation {
+        } => GenexErr::new(CodexErrorDetails::MisalignmentPolicyViolation {
             message,
             misalignment,
         }),
@@ -65,9 +65,9 @@ pub fn map_api_error(err: ApiError) -> CodexErr {
                     && let Some(error) = value.get("error")
                 {
                     match error.get("code").and_then(Value::as_str) {
-                        Some("server_is_overloaded") => return CodexErr::ServerOverloaded,
+                        Some("server_is_overloaded") => return GenexErr::ServerOverloaded,
                         Some("slow_down") => {
-                            return CodexErr::new(CodexErrorDetails::RateLimitExceeded(
+                            return GenexErr::new(CodexErrorDetails::RateLimitExceeded(
                                 error
                                     .get("message")
                                     .and_then(Value::as_str)
@@ -94,7 +94,7 @@ pub fn map_api_error(err: ApiError) -> CodexErr {
                         .unwrap_or_else(|| {
                             MISALIGNMENT_POLICY_VIOLATION_FALLBACK_MESSAGE.to_string()
                         });
-                    return CodexErr::new(CodexErrorDetails::MisalignmentPolicyViolation {
+                    return GenexErr::new(CodexErrorDetails::MisalignmentPolicyViolation {
                         message,
                         misalignment: error.get("misalignment").cloned().and_then(|details| {
                             serde_json::from_value::<MisalignmentErrorDetails>(details).ok()
@@ -114,16 +114,16 @@ pub fn map_api_error(err: ApiError) -> CodexErr {
                             .filter(|message| !message.trim().is_empty())
                             .map(str::to_string)
                             .unwrap_or_else(|| CYBER_POLICY_FALLBACK_MESSAGE.to_string());
-                        CodexErr::new(CodexErrorDetails::CyberPolicy { message })
+                        GenexErr::new(CodexErrorDetails::CyberPolicy { message })
                     } else if body_text
                         .contains("The image data you provided does not represent a valid image")
                     {
-                        CodexErr::InvalidImageRequest()
+                        GenexErr::InvalidImageRequest()
                     } else {
-                        CodexErr::InvalidRequest(body_text)
+                        GenexErr::InvalidRequest(body_text)
                     }
                 } else if status == http::StatusCode::INTERNAL_SERVER_ERROR {
-                    CodexErr::InternalServerError
+                    GenexErr::InternalServerError
                 } else if status == http::StatusCode::TOO_MANY_REQUESTS {
                     if let Ok(parsed) = serde_json::from_str::<Value>(&body_text)
                         && let Some(error) = parsed.get("error")
@@ -141,7 +141,7 @@ pub fn map_api_error(err: ApiError) -> CodexErr {
                                     | "organization_usage_limit_exceeded"
                             )
                         ) {
-                            return CodexErr::QuotaExceeded;
+                            return GenexErr::QuotaExceeded;
                         }
                         let message = error
                             .get("message")
@@ -149,15 +149,15 @@ pub fn map_api_error(err: ApiError) -> CodexErr {
                             .filter(|message| !message.trim().is_empty())
                             .unwrap_or("Rate limit exceeded")
                             .to_owned();
-                        return CodexErr::new(CodexErrorDetails::RateLimitExceeded(message));
+                        return GenexErr::new(CodexErrorDetails::RateLimitExceeded(message));
                     }
 
-                    CodexErr::RetryLimit(RetryLimitReachedError {
+                    GenexErr::RetryLimit(RetryLimitReachedError {
                         status,
                         request_id: extract_request_tracking_id(headers.as_ref()),
                     })
                 } else {
-                    CodexErr::UnexpectedStatus(UnexpectedResponseError {
+                    GenexErr::UnexpectedStatus(UnexpectedResponseError {
                         status,
                         user_message: api_error_user_message(status, &body_text),
                         body: body_text,
@@ -167,20 +167,20 @@ pub fn map_api_error(err: ApiError) -> CodexErr {
                     })
                 }
             }
-            TransportError::RetryLimit => CodexErr::RetryLimit(RetryLimitReachedError {
+            TransportError::RetryLimit => GenexErr::RetryLimit(RetryLimitReachedError {
                 status: http::StatusCode::INTERNAL_SERVER_ERROR,
                 request_id: None,
             }),
-            TransportError::Timeout => CodexErr::RequestTimeout,
+            TransportError::Timeout => GenexErr::RequestTimeout,
             TransportError::Connection(source) => {
-                CodexErr::ConnectionFailed(ConnectionFailedError { source })
+                GenexErr::ConnectionFailed(ConnectionFailedError { source })
             }
-            TransportError::Network(msg) | TransportError::Build(msg) => CodexErr::Stream(msg),
+            TransportError::Network(msg) | TransportError::Build(msg) => GenexErr::Stream(msg),
             error @ TransportError::ResponseTooLarge { .. } => {
-                CodexErr::InvalidRequest(error.to_string())
+                GenexErr::InvalidRequest(error.to_string())
             }
         },
-        ApiError::RateLimit(msg) => CodexErr::Stream(msg),
+        ApiError::RateLimit(msg) => GenexErr::Stream(msg),
     }
 }
 

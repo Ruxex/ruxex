@@ -1,7 +1,7 @@
 use genex_aws_auth::AwsAuthConfig;
 use genex_login::CodexAuth;
 use genex_model_provider_info::ModelProviderAwsAuthInfo;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result;
 
 use super::BedrockEndpoint;
@@ -51,7 +51,7 @@ pub(super) fn base_url(region: &str) -> Result<String> {
         // The `openai/v1` segment is an external AWS wire contract, not a Codex naming choice.
         Ok(format!("https://bedrock-mantle.{region}.api.aws/openai/v1"))
     } else {
-        Err(CodexErr::Fatal(format!(
+        Err(GenexErr::Fatal(format!(
             "Amazon Bedrock does not support region `{region}`"
         )))
     }

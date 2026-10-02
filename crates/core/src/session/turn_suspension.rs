@@ -1,7 +1,7 @@
 use super::handlers;
 use super::session::Session;
 use crate::state::TaskKind;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::protocol::Event;
 use genex_protocol::protocol::EventMsg;
@@ -39,10 +39,10 @@ pub(super) async fn suspend_turn_and_shutdown(
 
     let live_thread = session
         .live_thread_for_persistence("suspend an unfinished root turn")
-        .map_err(|error| CodexErr::Fatal(error.to_string()))?;
+        .map_err(|error| GenexErr::Fatal(error.to_string()))?;
     // Flush before canceling execution so a persistence failure leaves the original turn running.
     live_thread.flush().await.map_err(|error| {
-        CodexErr::Fatal(format!("flush before root turn suspension failed: {error}"))
+        GenexErr::Fatal(format!("flush before root turn suspension failed: {error}"))
     })?;
 
     // The flush can yield while the active turn completes or changes. Recheck its
@@ -59,12 +59,12 @@ pub(super) async fn suspend_turn_and_shutdown(
             return Ok(SuspendTurnOutcome::UnsupportedTask);
         }
         active.take().ok_or_else(|| {
-            CodexErr::Fatal("accepted root turn suspension had no running turn".to_string())
+            GenexErr::Fatal("accepted root turn suspension had no running turn".to_string())
         })?
     };
 
     let task = turn.task.take().ok_or_else(|| {
-        CodexErr::Fatal("accepted root turn suspension had no running task".to_string())
+        GenexErr::Fatal("accepted root turn suspension had no running task".to_string())
     })?;
     let turn_id = task.turn_context.sub_id.clone();
     // Normal shutdown records a terminal turn event, preventing another worker from
@@ -102,10 +102,10 @@ pub(super) async fn suspend_turn_and_shutdown(
     // retains ownership until worker-failure recovery can take responsibility.
     handlers::shutdown_session_runtime(session).await;
     live_thread.flush().await.map_err(|error| {
-        CodexErr::Fatal(format!("flush after root turn suspension failed: {error}"))
+        GenexErr::Fatal(format!("flush after root turn suspension failed: {error}"))
     })?;
     live_thread.shutdown().await.map_err(|error| {
-        CodexErr::Fatal(format!("close suspended root turn writer failed: {error}"))
+        GenexErr::Fatal(format!("close suspended root turn writer failed: {error}"))
     })?;
     // Announce completion only after extension cleanup and writer closure so a
     // replacement worker cannot write the same thread concurrently.

@@ -5,7 +5,7 @@ use genex_exec_server::MAX_SELECTED_CAPABILITY_ROOTS;
 use genex_exec_server::SelectedCapabilityRootsStatus;
 use genex_execpolicy::Policy;
 use genex_protocol::capabilities::CapabilityRootLocation;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::protocol::EnvironmentConfig;
 use genex_protocol::protocol::EnvironmentConfigState;
@@ -47,7 +47,7 @@ fn validate_environment_config(
 ) -> GenexResult<()> {
     if let Some(policy) = config.network_policy.as_ref() {
         if selection.environment_id == LOCAL_ENVIRONMENT_ID {
-            return Err(CodexErr::InvalidRequest(
+            return Err(GenexErr::InvalidRequest(
                 "attachment-owned network policy requires a remote executor".to_string(),
             ));
         }
@@ -56,7 +56,7 @@ fn validate_environment_config(
             .as_ref()
             .is_some_and(|policy| !policy.as_ref().network_rules().is_empty())
         {
-            return Err(CodexErr::InvalidRequest(
+            return Err(GenexErr::InvalidRequest(
                 "environment network restrictions must use network_policy".to_string(),
             ));
         }
@@ -68,11 +68,11 @@ fn validate_environment_config(
             &Policy::empty(),
         )
         .map_err(|error| {
-            CodexErr::InvalidRequest(format!("invalid environment network policy: {error}"))
+            GenexErr::InvalidRequest(format!("invalid environment network policy: {error}"))
         })?;
     }
     if config.selected_capability_roots.len() > MAX_SELECTED_CAPABILITY_ROOTS {
-        return Err(CodexErr::InvalidRequest(format!(
+        return Err(GenexErr::InvalidRequest(format!(
             "environment readiness contains more than {MAX_SELECTED_CAPABILITY_ROOTS} selected capability roots"
         )));
     }
@@ -81,7 +81,7 @@ fn validate_environment_config(
         .as_ref()
         .is_some_and(|policy| !policy.as_ref().get_allowed_prefixes().is_empty())
     {
-        return Err(CodexErr::InvalidRequest(
+        return Err(GenexErr::InvalidRequest(
             "environment command policy cannot contain allow rules".to_string(),
         ));
     }
@@ -93,7 +93,7 @@ fn validate_environment_config(
             || environment_id != &selection.environment_id
             || !root_ids.insert(root.id.as_str())
         {
-            return Err(CodexErr::InvalidRequest(format!(
+            return Err(GenexErr::InvalidRequest(format!(
                 "selected capability roots must have unique non-empty IDs and belong to environment `{}`",
                 selection.environment_id
             )));
@@ -161,7 +161,7 @@ impl Session {
                 && environment.cwd == selection.cwd
                 && environment.workspace_roots == selection.workspace_roots
         }) else {
-            return Err(CodexErr::InvalidRequest(format!(
+            return Err(GenexErr::InvalidRequest(format!(
                 "environment `{}` is not selected on this thread with the requested workspace",
                 selection.environment_id
             )));
@@ -172,7 +172,7 @@ impl Session {
             state
                 .session_configuration
                 .validate(&environments)
-                .map_err(|error| CodexErr::InvalidRequest(error.to_string()))?;
+                .map_err(|error| GenexErr::InvalidRequest(error.to_string()))?;
         }
 
         // Invalidate MCP before installed configuration can wake a waiting turn.

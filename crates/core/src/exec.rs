@@ -24,7 +24,7 @@ use crate::spawn::SpawnChildRequest;
 use crate::spawn::StdioPolicy;
 use crate::spawn::spawn_child_async;
 use genex_network_proxy::NetworkProxy;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result;
 use genex_protocol::error::SandboxErr;
 use genex_protocol::exec_output::ExecToolCallOutput;
@@ -139,9 +139,9 @@ fn select_process_exec_tool_sandbox_type(
 fn network_proxy_environment_error(
     network_environment_id: Option<&str>,
     err: impl std::fmt::Display,
-) -> CodexErr {
+) -> GenexErr {
     let environment_id = network_environment_id.unwrap_or("default");
-    CodexErr::Io(io::Error::other(format!(
+    GenexErr::Io(io::Error::other(format!(
         "failed to prepare network proxy for environment `{environment_id}`: {err}"
     )))
 }
@@ -371,7 +371,7 @@ pub fn build_exec_request(
             })?;
     }
     let (program, args) = command.split_first().ok_or_else(|| {
-        CodexErr::Io(io::Error::new(
+        GenexErr::Io(io::Error::new(
             io::ErrorKind::InvalidInput,
             "command args are empty",
         ))
@@ -410,7 +410,7 @@ pub fn build_exec_request(
             windows_sandbox_level,
             windows_sandbox_private_desktop,
         })
-        .map_err(CodexErr::from)?;
+        .map_err(GenexErr::from)?;
     // These hints belong to the native Windows backend. Other backends use
     // the materialized profile and must not project executor paths onto this host.
     let windows_sandbox_workspace_roots = if sandbox_type == SandboxType::WindowsRestrictedToken {
@@ -422,7 +422,7 @@ pub fn build_exec_request(
                 .map(PathUri::to_abs_path)
                 .collect::<io::Result<Vec<_>>>()
                 .map_err(|err| {
-                    CodexErr::InvalidRequest(format!(
+                    GenexErr::InvalidRequest(format!(
                         "invalid Windows sandbox workspace roots: {err}"
                     ))
                 })?
@@ -466,11 +466,11 @@ pub(crate) async fn execute_exec_request(
     // TODO(anp): Keep PathUri through the local process launch boundary.
     let cwd = cwd
         .to_abs_path()
-        .map_err(|err| CodexErr::InvalidRequest(format!("invalid exec cwd: {err}")))?;
+        .map_err(|err| GenexErr::InvalidRequest(format!("invalid exec cwd: {err}")))?;
     // TODO(anp): Keep PathUri through the Windows sandbox launch boundary.
     let windows_sandbox_policy_cwd = windows_sandbox_policy_cwd
         .to_abs_path()
-        .map_err(|err| CodexErr::InvalidRequest(format!("invalid sandbox cwd: {err}")))?;
+        .map_err(|err| GenexErr::InvalidRequest(format!("invalid sandbox cwd: {err}")))?;
 
     let params = ExecParams {
         command,
@@ -637,7 +637,7 @@ async fn exec_windows_sandbox(
             network
                 .network_proxy_restricting_sid(network_environment_id.as_deref())
                 .ok_or_else(|| {
-                    CodexErr::Io(io::Error::other(
+                    GenexErr::Io(io::Error::other(
                         "managed Windows proxy route is missing its restricting SID",
                     ))
                 })
@@ -663,7 +663,7 @@ async fn exec_windows_sandbox(
     };
     let permission_profile = permission_profile.clone();
     let codex_home = find_codex_home().map_err(|err| {
-        CodexErr::Io(io::Error::other(format!(
+        GenexErr::Io(io::Error::other(format!(
             "windows sandbox: failed to resolve codex_home: {err}"
         )))
     })?;
@@ -732,12 +732,12 @@ async fn exec_windows_sandbox(
                 sandbox_level,
                 &err.to_string(),
             );
-            return Err(CodexErr::Io(io::Error::other(format!(
+            return Err(GenexErr::Io(io::Error::other(format!(
                 "windows sandbox: {err}"
             ))));
         }
         Err(join_err) => {
-            return Err(CodexErr::Io(io::Error::other(format!(
+            return Err(GenexErr::Io(io::Error::other(format!(
                 "windows sandbox join error: {join_err}"
             ))));
         }
@@ -776,7 +776,7 @@ async fn exec_windows_sandbox(
 }
 
 fn finalize_exec_result(
-    raw_output_result: std::result::Result<RawExecToolCallOutput, CodexErr>,
+    raw_output_result: std::result::Result<RawExecToolCallOutput, GenexErr>,
     sandbox_type: SandboxType,
     duration: Duration,
     capture_policy: ExecCapturePolicy,
@@ -792,7 +792,7 @@ fn finalize_exec_result(
                     if signal == TIMEOUT_CODE {
                         timed_out = true;
                     } else {
-                        return Err(CodexErr::Sandbox(SandboxErr::Signal(signal)));
+                        return Err(GenexErr::Sandbox(SandboxErr::Signal(signal)));
                     }
                 }
             }
@@ -815,7 +815,7 @@ fn finalize_exec_result(
             };
 
             if timed_out {
-                return Err(CodexErr::Sandbox(SandboxErr::Timeout {
+                return Err(GenexErr::Sandbox(SandboxErr::Timeout {
                     output: Box::new(exec_output),
                 }));
             }
@@ -824,7 +824,7 @@ fn finalize_exec_result(
                 if capture_policy != ExecCapturePolicy::SensitiveFullBuffer {
                     record_filesystem_sandbox_violation(sandbox_type, &exec_output);
                 }
-                return Err(CodexErr::Sandbox(SandboxErr::Denied {
+                return Err(GenexErr::Sandbox(SandboxErr::Denied {
                     output: Box::new(exec_output),
                     network_policy_decision: None,
                 }));
@@ -947,7 +947,7 @@ async fn exec(
     }
 
     let (program, args) = command.split_first().ok_or_else(|| {
-        CodexErr::Io(io::Error::new(
+        GenexErr::Io(io::Error::new(
             io::ErrorKind::InvalidInput,
             "command args are empty",
         ))
@@ -986,12 +986,12 @@ async fn consume_output(
     // we treat it as an exceptional I/O error
 
     let stdout_reader = child.stdout.take().ok_or_else(|| {
-        CodexErr::Io(io::Error::other(
+        GenexErr::Io(io::Error::other(
             "stdout pipe was unexpectedly not available",
         ))
     })?;
     let stderr_reader = child.stderr.take().ok_or_else(|| {
-        CodexErr::Io(io::Error::other(
+        GenexErr::Io(io::Error::other(
             "stderr pipe was unexpectedly not available",
         ))
     })?;

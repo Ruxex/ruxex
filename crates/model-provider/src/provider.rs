@@ -20,7 +20,7 @@ use genex_models_manager::manager::RemoteModelsManager;
 use genex_models_manager::manager::SharedModelsManager;
 use genex_models_manager::manager::StaticModelsManager;
 use genex_protocol::account::ProviderAccount;
-use genex_protocol::error::CodexErr;
+use genex_protocol::error::GenexErr;
 use genex_protocol::model_types::ModelsResponse;
 
 use crate::amazon_bedrock::AmazonBedrockModelProvider;
@@ -207,7 +207,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
     fn account_state(&self) -> ProviderAccountResult;
 
     /// Maps an API client error into the provider's user-facing error representation.
-    fn map_api_error(&self, error: ApiError) -> CodexErr {
+    fn map_api_error(&self, error: ApiError) -> GenexErr {
         genex_api::map_api_error(error)
     }
 
