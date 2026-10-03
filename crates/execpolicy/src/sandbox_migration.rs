@@ -9,32 +9,32 @@ use tokio::io::AsyncWriteExt;
 
 const MIGRATION_MARKER_FILENAME: &str = ".sandbox_migration";
 
-/// removes legacy allow rules that newer codex versions no longer offer.
+/// Removes legacy allow rules that newer Genex versions no longer offer.
 ///
-/// this migration is intentionally one-shot. once complete, a marker in `codex_home` prevents
-/// policies saved by newer codex versions from being removed on later startups.
+/// This migration is intentionally one-shot. Once complete, a marker in `genex_home` prevents
+/// policies saved by newer Genex versions from being removed on later startups.
 pub async fn prefix_rule_migration(
-    codex_home: &Path,
+    genex_home: &Path,
     policy_path: &Path,
     banned_prefixes: &[&[&str]],
 ) -> io::Result<()> {
-    let marker_path = codex_home.join(MIGRATION_MARKER_FILENAME);
+    let marker_path = genex_home.join(MIGRATION_MARKER_FILENAME);
     if tokio::fs::try_exists(&marker_path).await? {
         return Ok(());
     }
     clean_rules_file(policy_path, banned_prefixes).await?;
 
-    write_migration_marker(codex_home, &marker_path).await?;
+    write_migration_marker(genex_home, &marker_path).await?;
     Ok(())
 }
 
-// atomically writes the marker after creating codex home when needed.
-async fn write_migration_marker(codex_home: &Path, marker_path: &Path) -> io::Result<()> {
-    tokio::fs::create_dir_all(codex_home).await?;
-    let codex_home = codex_home.to_owned();
+// Atomically writes the marker after creating the Genex home when needed.
+async fn write_migration_marker(genex_home: &Path, marker_path: &Path) -> io::Result<()> {
+    tokio::fs::create_dir_all(genex_home).await?;
+    let genex_home = genex_home.to_owned();
     let marker_path = marker_path.to_owned();
     tokio::task::spawn_blocking(move || {
-        let mut marker = tempfile::NamedTempFile::new_in(codex_home)?;
+        let mut marker = tempfile::NamedTempFile::new_in(genex_home)?;
         marker.write_all(b"v1\n")?;
         match marker.persist_noclobber(marker_path) {
             Ok(_) => Ok(()),

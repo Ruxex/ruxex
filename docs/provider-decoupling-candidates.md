@@ -34,6 +34,21 @@ serialized という理由だけで `retain` や `defer` にはしない。
 telemetry、hosted assumption を見つけた場合は、命名変更へ混ぜず本メモの独立
 follow-up と compatibility inventory の decision に記録する。
 
+### 0.6 依存順 leaf wave の decisions (2026-10-03)
+
+- `genex-execpolicy` の standalone binary、README、description、local migration
+  variable は repository-owned のため `migrate-in-place` とした。policy matcher と
+  security behaviorは維持する。
+- `genex-shell-escalation` の wrapper binary、内部 escalation socket env、test
+  variable、in-repository zsh helper/release labels は producer/consumer が全て
+  repository 内にあるため Genex へ移行した。execve/escalation protocolの挙動は変更しない。
+- `genex-tcp-tunnel` の README に残る `codex tcp-tunnel` は CLI producer と一体で
+  `migrate-in-place` とする。`genex-user-verification` の `com.codex.codex` は OS
+  keychain/lock namespaceのため `retain` とする。
+- `CODEX_HOME` / `.codex` / `find_codex_home` は high fan-out を理由に保留せず、
+  home/config/persisted consumerを同じ横断 waveで `migrate-in-place` する対象とした。
+  `codex-env` は path URI compatibility scheme のため retainする。
+
 既存の計画書・インベントリには、現在のソースツリーに残る実装を完了済みと記載している箇所もある。以下の候補は、その差分を解消するための再監査対象として扱う。
 
 互換性クリーンアップ計画の Task 1〜8 は完了している。削除済み feature

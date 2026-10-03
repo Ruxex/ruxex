@@ -5,7 +5,7 @@ name = "genex-shell-escalation"
 version.workspace = true
 
 [[bin]]
-name = "codex-execve-wrapper"
+name = "genex-execve-wrapper"
 path = "src/bin/main_execve_wrapper.rs"
 
 [lints]

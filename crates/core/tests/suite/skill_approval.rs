@@ -244,7 +244,7 @@ async fn shell_zsh_fork_still_enforces_workspace_write_sandbox() -> Result<()> {
 
     let server = start_mock_server().await;
     let tool_call_id = "zsh-fork-workspace-write-deny";
-    let outside_path = "/tmp/codex-zsh-fork-workspace-write-deny.txt";
+    let outside_path = "/tmp/genex-zsh-fork-workspace-write-deny.txt";
     let workspace_write_profile = restrictive_workspace_write_profile();
     let _ = fs::remove_file(outside_path);
     let test = build_zsh_fork_test(

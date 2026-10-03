@@ -3,7 +3,7 @@ name = "genex-execpolicy"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Codex exec policy: prefix-based Starlark rules for command decisions."
+description = "Genex exec policy: prefix-based Starlark rules for command decisions."
 
 [lib]
 name = "genex_execpolicy"
@@ -11,7 +11,7 @@ path = "src/lib.rs"
 doctest = false
 
 [[bin]]
-name = "codex-execpolicy"
+name = "genex-execpolicy"
 path = "src/main.rs"
 
 [lints]

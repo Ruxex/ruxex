@@ -95,7 +95,7 @@
 
 ### `Rule`
 
-- 定義: `codex-execpolicy`、[`src/rule.rs:214`](../../../../crates/execpolicy/src/rule.rs#L214)
+- 定義: `genex-execpolicy`、[`src/rule.rs:214`](../../../../crates/execpolicy/src/rule.rs#L214)
 - 可視性: `pub`
 - 役割: ポリシー評価が利用する実行可能ルールのマッチング抽象化。
 

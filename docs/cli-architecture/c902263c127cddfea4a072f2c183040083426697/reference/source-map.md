@@ -16,7 +16,7 @@
 | 診断 | [`DoctorCommand` のディスパッチ](../../../../crates/cli/src/main.rs#L1428) | `genex-cli` の doctor モジュール、`genex-api`、Core 設定 |
 | サンドボックス | [`HostSandboxArgs` とディスパッチ](../../../../crates/cli/src/main.rs#L414) | `genex-cli`、`genex-sandboxing`、プラットフォーム用クレート |
 | デバッグ | [`DebugSubcommand`](../../../../crates/cli/src/main.rs#L210)、[L1498](../../../../crates/cli/src/main.rs#L1498) でディスパッチ | `genex-cli`、モデル/トレース/Core ヘルパー |
-| 実行ポリシー | [`ExecpolicySubcommand`](../../../../crates/cli/src/main.rs#L439)、[L1546](../../../../crates/cli/src/main.rs#L1546) でディスパッチ | `codex-execpolicy`、Core ポリシー |
+| 実行ポリシー | [`ExecpolicySubcommand`](../../../../crates/cli/src/main.rs#L439)、[L1546](../../../../crates/cli/src/main.rs#L1546) でディスパッチ | `genex-execpolicy`、Core ポリシー |
 | ユーティリティ | [L1420～1617](../../../../crates/cli/src/main.rs#L1420) の completion/features/exec-server/内部トランスポート | コマンド固有のクレート |
 
 ## ネストしたコマンド一覧

@@ -14,7 +14,7 @@
 | プロトコル | `genex-protocol`、`genex-app-server-protocol` | ドメイン型とワイヤー型、スキーマ生成、実験的 API マーカー |
 | サーバー | `codex-app-server`、`genex-app-server-transport`、`genex-app-server-client` | リクエスト処理、トランスポート、クライアント/サーバーのライフサイクル |
 | ツール | `genex-tools` | 汎用ツール呼び出し/出力の Trait と型 |
-| ポリシー/サンドボックス | `codex-execpolicy`、`genex-sandboxing`、プラットフォーム用サンドボックスクレート | ルール、承認/サンドボックスのプリミティブ、ホスト側の適用 |
+| ポリシー/サンドボックス | `genex-execpolicy`、`genex-sandboxing`、プラットフォーム用サンドボックスクレート | ルール、承認/サンドボックスのプリミティブ、ホスト側の適用 |
 | 永続化 | `genex-thread-store`、`genex-rollout`、`genex-history`、`genex-state` | スレッド/キューストア、ロールアウト/履歴、ローカル状態 |
 | 拡張性 | `genex-mcp`、`genex-rmcp-client`、`genex-plugin`、`genex-core-plugins` | MCP とプラグインの設定/ランタイム統合 |
 | プラットフォーム/プロセス | `genex-arg0`、`genex-install-context`、`genex-terminal-detection`、`genex-process-hardening` | 起動コンテキスト、インストール、ターミナル、プロセス安全性 |

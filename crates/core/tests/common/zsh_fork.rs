@@ -56,9 +56,9 @@ pub fn zsh_fork_runtime(test_name: &str) -> Result<Option<ZshForkRuntime>> {
         );
         return Ok(None);
     }
-    let Ok(main_execve_wrapper_exe) = genex_utils_cargo_bin::cargo_bin("codex-execve-wrapper")
+    let Ok(main_execve_wrapper_exe) = genex_utils_cargo_bin::cargo_bin("genex-execve-wrapper")
     else {
-        eprintln!("skipping {test_name}: unable to resolve `codex-execve-wrapper` binary");
+        eprintln!("skipping {test_name}: unable to resolve `genex-execve-wrapper` binary");
         return Ok(None);
     };
 

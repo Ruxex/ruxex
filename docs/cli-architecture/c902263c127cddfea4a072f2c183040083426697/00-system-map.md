@@ -30,7 +30,7 @@ argv
 | App-server の実行時処理 | [`codex-app-server`](../../../crates/app-server/src/lib.rs) | リクエスト処理、トランスポート、デーモン向けランタイム、ライフサイクル |
 | 公開プロトコル | [`genex-app-server-protocol`](../../../crates/app-server-protocol/src/lib.rs) と [`genex-protocol`](../../../crates/protocol/src/lib.rs) | ワイヤー型、通知、リクエスト、共有ドメイン型 |
 | プロバイダー/API 境界 | [`genex-api`](../../../crates/genex-api/src/lib.rs)、[`genex-client`](../../../crates/genex-client/src/lib.rs) | プロバイダーへのリクエスト、ストリーミング、再試行、認証ヘッダー、トランスポート |
-| 実行/ポリシー | [`genex-tools`](../../../crates/tools/src/lib.rs)、[`codex-execpolicy`](../../../crates/execpolicy/src/lib.rs)、[`genex-sandboxing`](../../../crates/sandboxing/src/lib.rs) | ツールレジストリ、コマンドポリシー、ホストのサンドボックス構築 |
+| 実行/ポリシー | [`genex-tools`](../../../crates/tools/src/lib.rs)、[`genex-execpolicy`](../../../crates/execpolicy/src/lib.rs)、[`genex-sandboxing`](../../../crates/sandboxing/src/lib.rs) | ツールレジストリ、コマンドポリシー、ホストのサンドボックス構築 |
 | 永続化 | [`genex-rollout`](../../../crates/rollout/src/lib.rs)、[`genex-thread-store`](../../../crates/thread-store/src/lib.rs)、[`genex-history`](../../../crates/history/src/lib.rs) | ロールアウトファイル、スレッドメタデータ、履歴、状態ストア |
 
 ## 重要な境界
