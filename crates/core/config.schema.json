@@ -464,9 +464,6 @@
             "code_mode_prewarm": {
               "type": "boolean"
             },
-            "codex_hooks": {
-              "type": "boolean"
-            },
             "collab": {
               "type": "boolean"
             },
@@ -5494,9 +5491,6 @@
           "type": "boolean"
         },
         "code_mode_prewarm": {
-          "type": "boolean"
-        },
-        "codex_hooks": {
           "type": "boolean"
         },
         "collab": {

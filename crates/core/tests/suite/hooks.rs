@@ -173,7 +173,7 @@ fn non_provider_model_provider(server: &wiremock::MockServer) -> ModelProviderIn
 fn trust_plugin_hooks(config: &mut Config, plugin_hook_sources: Vec<PluginHookSource>) {
     config
         .features
-        .enable(Feature::CodexHooks)
+        .enable(Feature::GenexHooks)
         .expect("test config should allow feature update");
     let listed = genex_hooks::list_hooks(genex_hooks::HooksConfig {
         feature_enabled: true,
@@ -4534,14 +4534,14 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
     )?;
     let repl_url = format!("{}/repl", server.uri());
     let mut builder = test_genex().with_home(home).with_config(move |config| {
-        for feature in [Feature::Plugins, Feature::CodexHooks] {
+        for feature in [Feature::Plugins, Feature::GenexHooks] {
             config.features.enable(feature).expect("enable feature");
         }
         if !hooks_enabled {
             trust_discovered_hooks(config);
             config
                 .features
-                .disable(Feature::CodexHooks)
+                .disable(Feature::GenexHooks)
                 .expect("disable regular hooks");
         }
         config
@@ -4565,7 +4565,7 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
     let test = builder.build_with_auto_env(&server).await?;
     assert!(!test.config.bypass_hook_trust);
     assert_eq!(
-        test.config.features.enabled(Feature::CodexHooks),
+        test.config.features.enabled(Feature::GenexHooks),
         hooks_enabled
     );
     let mut expected_hook_states = HashMap::from([(

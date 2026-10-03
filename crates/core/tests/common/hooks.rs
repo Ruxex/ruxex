@@ -9,7 +9,7 @@ use genex_utils_absolute_path::AbsolutePathBuf;
 pub fn trust_discovered_hooks(config: &mut Config) {
     config
         .features
-        .enable(Feature::CodexHooks)
+        .enable(Feature::GenexHooks)
         .expect("test config should allow feature update");
 
     let listed = genex_hooks::list_hooks(genex_hooks::HooksConfig {

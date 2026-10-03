@@ -90,7 +90,7 @@ pub enum Feature {
     /// Allow registration of the built-in sleep tool.
     SleepTool,
     /// Enable Claude-style lifecycle hooks loaded from hooks.json files.
-    CodexHooks,
+    GenexHooks,
     /// Store CLI auth in the encrypted local secrets backend when keyring storage is selected.
     SecretAuthStorage,
 
@@ -973,7 +973,7 @@ pub const FEATURES: &[FeatureSpec] = &[
         default_enabled: false,
     },
     FeatureSpec {
-        id: Feature::CodexHooks,
+        id: Feature::GenexHooks,
         key: "hooks",
         stage: Stage::Stable,
         default_enabled: true,

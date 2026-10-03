@@ -243,7 +243,7 @@ async fn start_app_server(server: &MockServer) -> Result<(TestAppServer, TempDir
         .with_root_config(&format!("managed_auth_base_url = \"{base_url}\""))
         .disable_feature(Feature::Apps)
         .enable_feature(Feature::Plugins)
-        .enable_feature(Feature::CodexHooks)
+        .enable_feature(Feature::GenexHooks)
         .disable_feature(Feature::RemotePlugin)
         .disable_feature(Feature::PluginSharing)
         .write(codex_home.path())?;

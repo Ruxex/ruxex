@@ -750,7 +750,7 @@ async fn executor_plugin_hook_fixture(
             .expect("enable executor capability discovery");
         config
             .features
-            .disable(Feature::CodexHooks)
+            .disable(Feature::GenexHooks)
             .expect("disable ordinary hooks");
         let node_repl: McpServerConfig = serde_json::from_value(json!({
             "url": node_repl_url,
