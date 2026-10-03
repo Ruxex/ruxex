@@ -437,7 +437,7 @@ impl BedrockState {
             }
             BedrockView::EnvironmentInstructions => {
                 lines.push(
-                    "  Configure AWS credentials in your environment, then restart Codex.".into(),
+                    "  Configure AWS credentials in your environment, then restart Genex.".into(),
                 );
                 lines.push("".into());
                 lines.push(

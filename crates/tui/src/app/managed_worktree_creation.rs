@@ -41,7 +41,7 @@ impl App {
     ) {
         if !self.config.features.enabled(Feature::Worktrees) {
             self.chat_widget.add_error_message(
-                "Enable worktrees in your Codex configuration to create a worktree.".to_string(),
+                "Enable worktrees in your Genex configuration to create a worktree.".to_string(),
             );
         } else if self.config.active_project.is_untrusted() {
             self.chat_widget.add_error_message(
@@ -254,7 +254,7 @@ impl App {
             Ok(_) => {
                 return self.retained_worktree_error(
                     &checkout,
-                    "The new worktree is not trusted; run Codex there.",
+                    "The new worktree is not trusted; run Genex there.",
                 );
             }
             Err(error) => {

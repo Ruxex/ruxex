@@ -9,7 +9,7 @@ impl ChatWidget {
 
     pub(super) fn new_with_op_target(
         common: ChatWidgetInit,
-        codex_op_target: GenexOpTarget,
+        genex_op_target: GenexOpTarget,
     ) -> Self {
         let ChatWidgetInit {
             config,
@@ -98,7 +98,7 @@ impl ChatWidget {
             cyber_policy_notice: Default::default(),
             app_event_tx: app_event_tx.clone(),
             frame_requester: frame_requester.clone(),
-            codex_op_target,
+            genex_op_target,
             bottom_pane: BottomPane::new(BottomPaneParams {
                 frame_requester,
                 app_event_tx,

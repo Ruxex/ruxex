@@ -323,7 +323,7 @@ fn select_model_availability_nux_returns_none_when_all_models_are_exhausted() {
 
 #[tokio::test]
 async fn prepare_startup_tooltip_override_persists_model_availability_nux_count() {
-    let codex_home = tempdir().expect("temp codex home");
+    let codex_home = tempdir().expect("temp genex home");
     let config = ConfigBuilder::default()
         .codex_home(codex_home.path().to_path_buf())
         .build()

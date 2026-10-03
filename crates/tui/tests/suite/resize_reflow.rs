@@ -14,7 +14,7 @@ use tempfile::tempdir;
 use wiremock::MockServer;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[ignore = "requires tmux and a locally built codex binary; run with --ignored for manual resize smoke"]
+#[ignore = "requires tmux and a locally built genex binary; run with --ignored for manual resize smoke"]
 async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -> Result<()> {
     if cfg!(windows) {
         return Ok(());
@@ -26,7 +26,7 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
     }
 
     let repo_root = genex_utils_cargo_bin::repo_root()?;
-    let codex = genex_binary(&repo_root)?;
+    let genex = genex_binary(&repo_root)?;
     let codex_home = tempdir()?;
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
@@ -58,7 +58,7 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
             .arg("env")
             .arg(format!("CODEX_HOME={}", codex_home.path().display()))
             .arg("PROVIDER_API_KEY=dummy")
-            .arg(codex)
+            .arg(genex)
             .arg("-c")
             .arg("analytics.enabled=false")
             .arg("-c")
@@ -165,7 +165,7 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[ignore = "requires tmux and a locally built codex binary; run with --ignored for manual resize smoke"]
+#[ignore = "requires tmux and a locally built genex binary; run with --ignored for manual resize smoke"]
 async fn tmux_repeated_resizes_do_not_push_composer_down() -> Result<()> {
     if cfg!(windows) {
         return Ok(());
@@ -182,7 +182,7 @@ async fn tmux_repeated_resizes_do_not_push_composer_down() -> Result<()> {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[ignore = "requires tmux and a locally built codex binary; run with --ignored for manual resize smoke"]
+#[ignore = "requires tmux and a locally built genex binary; run with --ignored for manual resize smoke"]
 async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()> {
     if cfg!(windows) {
         return Ok(());
@@ -194,7 +194,7 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
     }
 
     let repo_root = genex_utils_cargo_bin::repo_root()?;
-    let codex = genex_binary(&repo_root)?;
+    let genex = genex_binary(&repo_root)?;
     let codex_home = tempdir()?;
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
@@ -226,7 +226,7 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
             .arg("env")
             .arg(format!("CODEX_HOME={}", codex_home.path().display()))
             .arg("PROVIDER_API_KEY=dummy")
-            .arg(codex)
+            .arg(genex)
             .arg("-c")
             .arg("analytics.enabled=false")
             .arg("-c")
@@ -314,7 +314,7 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[ignore = "requires tmux and a locally built codex binary; run with --ignored for manual resize smoke"]
+#[ignore = "requires tmux and a locally built genex binary; run with --ignored for manual resize smoke"]
 async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<()> {
     if cfg!(windows) {
         return Ok(());
@@ -326,7 +326,7 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
     }
 
     let repo_root = genex_utils_cargo_bin::repo_root()?;
-    let codex = genex_binary(&repo_root)?;
+    let genex = genex_binary(&repo_root)?;
     let codex_home = tempdir()?;
     let server = MockServer::start().await;
     let provider_base_url_config =
@@ -356,7 +356,7 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
             .arg("env")
             .arg(format!("CODEX_HOME={}", codex_home.path().display()))
             .arg("PROVIDER_API_KEY=dummy")
-            .arg(codex)
+            .arg(genex)
             .arg("--model")
             .arg("gpt-5.6-terra")
             .arg("-c")
@@ -453,7 +453,7 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
 
 async fn run_repeated_resize_smoke() -> Result<()> {
     let repo_root = genex_utils_cargo_bin::repo_root()?;
-    let codex = genex_binary(&repo_root)?;
+    let genex = genex_binary(&repo_root)?;
     let codex_home = tempdir()?;
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
@@ -485,7 +485,7 @@ async fn run_repeated_resize_smoke() -> Result<()> {
             .arg("env")
             .arg(format!("CODEX_HOME={}", codex_home.path().display()))
             .arg("PROVIDER_API_KEY=dummy")
-            .arg(codex)
+            .arg(genex)
             .arg("-c")
             .arg("analytics.enabled=false")
             .arg("-c")
@@ -597,7 +597,7 @@ fn genex_binary(repo_root: &Path) -> Result<PathBuf> {
     let fallback = repo_root.join("genex-rs/target/debug/genex");
     anyhow::ensure!(
         fallback.is_file(),
-        "codex binary is unavailable; run `cargo build -p genex-cli` first"
+        "genex binary is unavailable; run `cargo build -p genex-cli` first"
     );
     Ok(fallback)
 }

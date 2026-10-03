@@ -1,4 +1,4 @@
-//! Codex App directives embedded in assistant markdown.
+//! Genex App directives embedded in assistant markdown.
 
 use crate::assistant_directives::AssistantDirective;
 use crate::assistant_directives::QuoteEscaping;

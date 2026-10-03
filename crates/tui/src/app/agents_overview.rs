@@ -91,7 +91,7 @@ impl App {
                     Some(SelectionItem {
                         name: "Start background server".to_string(),
                         description: Some(
-                            "Open `codex agents` in another terminal afterward.".to_string(),
+                            "Open `genex agents` in another terminal afterward.".to_string(),
                         ),
                         actions: vec![Box::new(|tx| tx.send(AppEvent::StartAgentsDaemon))],
                         dismiss_on_select: true,
@@ -997,7 +997,7 @@ impl App {
                     current_executable.with_file_name(if cfg!(windows) {
                         "codex.exe"
                     } else {
-                        "codex"
+                        "genex"
                     })
                 } else {
                     current_executable

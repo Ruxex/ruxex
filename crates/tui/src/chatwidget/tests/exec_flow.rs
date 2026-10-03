@@ -820,11 +820,11 @@ async fn apply_patch_full_flow_integration_like() {
     }
     let op = maybe_op.expect("expected thread-scoped op after key press");
 
-    // 3) App forwards to widget.submit_op, which pushes onto codex_op_tx
+    // 3) App forwards to widget.submit_op, which pushes onto genex_op_tx
     chat.submit_op(op);
     let forwarded = op_rx
         .try_recv()
-        .expect("expected op forwarded to codex channel");
+        .expect("expected op forwarded to genex channel");
     match forwarded {
         Op::PatchApproval { id, decision } => {
             assert_eq!(id, "call-1");

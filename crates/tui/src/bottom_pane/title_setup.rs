@@ -37,7 +37,7 @@ use crate::render::renderable::Renderable;
 #[derive(EnumIter, EnumString, Display, Debug, Clone, Copy, Eq, PartialEq, Hash)]
 #[strum(serialize_all = "kebab-case")]
 pub(crate) enum TerminalTitleItem {
-    /// Codex app name.
+    /// Genex app name.
     AppName,
     /// Project root name, or a compact cwd fallback.
     #[strum(to_string = "project-name", serialize = "project")]
@@ -95,7 +95,7 @@ pub(crate) enum TerminalTitleItem {
 impl TerminalTitleItem {
     pub(crate) fn description(self) -> &'static str {
         match self {
-            TerminalTitleItem::AppName => "Codex app name",
+            TerminalTitleItem::AppName => "Genex app name",
             TerminalTitleItem::Project => "Project name (falls back to current directory name)",
             TerminalTitleItem::CurrentDir => "Current working directory",
             TerminalTitleItem::Spinner => {

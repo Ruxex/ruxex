@@ -24,7 +24,7 @@ impl EditorPaths {
             dunce::canonicalize(root.path()).expect("canonicalize editor test root");
         let codex_home = canonical_root.join("codex-home");
         let cwd = canonical_root.join("workspace");
-        fs::create_dir(&codex_home).expect("create Codex home");
+        fs::create_dir(&codex_home).expect("create Genex home");
         fs::create_dir(&cwd).expect("create workspace");
 
         Self {
@@ -96,7 +96,7 @@ fn editor_directory_rejects_read_only_carveout_with_writable_parent() {
     let policy = FileSystemSandboxPolicy::restricted(vec![
         FileSystemSandboxEntry::new(
             AbsolutePathBuf::from_absolute_path(&paths.codex_home)
-                .expect("absolute Codex home")
+                .expect("absolute Genex home")
                 .into(),
             FileSystemAccessMode::Write,
         ),
@@ -149,7 +149,7 @@ fn editor_directory_rejects_writable_codex_home_alias_target() {
     let alias_parent = paths
         .codex_home
         .parent()
-        .expect("Codex home parent")
+        .expect("Genex home parent")
         .join("aliases");
     fs::create_dir(&alias_parent).expect("create protected alias parent");
     let aliased_home = alias_parent.join("codex-home-link");
@@ -167,7 +167,7 @@ fn editor_directory_uses_protected_workspace_fallback_with_default_temporary_gra
     let root = tempfile::tempdir().expect("create editor test root");
     let codex_home = root.path().join("codex-home");
     let cwd = root.path().join("workspace");
-    fs::create_dir(&codex_home).expect("create Codex home");
+    fs::create_dir(&codex_home).expect("create Genex home");
     fs::create_dir(&cwd).expect("create workspace");
     let workspace_codex_home = cwd.join(".codex");
     let policy = FileSystemSandboxPolicy::workspace_write(
@@ -199,7 +199,7 @@ fn editor_directory_rejects_explicitly_writable_workspace_fallback() {
     let root = tempfile::tempdir().expect("create editor test root");
     let codex_home = root.path().join("codex-home");
     let cwd = root.path().join("workspace");
-    fs::create_dir(&codex_home).expect("create Codex home");
+    fs::create_dir(&codex_home).expect("create Genex home");
     fs::create_dir(&cwd).expect("create workspace");
     let workspace_codex_home = cwd.join(".codex");
     let writable_workspace_codex_home = AbsolutePathBuf::from_absolute_path(&workspace_codex_home)
@@ -247,9 +247,9 @@ fn editor_directory_uses_next_protected_candidate_after_creation_error() {
     let unavailable_home = paths
         .codex_home
         .parent()
-        .expect("Codex home parent")
+        .expect("Genex home parent")
         .join("unavailable-home");
-    fs::write(&unavailable_home, "not a directory").expect("create unavailable Codex home");
+    fs::write(&unavailable_home, "not a directory").expect("create unavailable Genex home");
     let policy = workspace_write_policy(&[]);
 
     let directory = editor_directory(&[&unavailable_home, &paths.codex_home], &policy, &paths.cwd)
@@ -323,11 +323,11 @@ async fn editor_process_uses_protected_workspace_fallback_with_default_temporary
     let root = tempfile::tempdir().expect("create editor test root");
     let codex_home = root.path().join("codex-home");
     let cwd = root.path().join("workspace");
-    fs::create_dir(&codex_home).expect("create Codex home");
+    fs::create_dir(&codex_home).expect("create Genex home");
     fs::create_dir(&cwd).expect("create workspace");
     let default_codex_home = dirs::home_dir().expect("home directory").join(".codex");
     let writable_default_codex_home = AbsolutePathBuf::from_absolute_path(&default_codex_home)
-        .expect("absolute default Codex home");
+        .expect("absolute default Genex home");
     let policy = FileSystemSandboxPolicy::workspace_write(
         &[writable_default_codex_home],
         /*exclude_tmpdir_env_var*/ false,

@@ -268,7 +268,7 @@ impl AuthModeWidget {
     }
 
     fn render_pick_mode(&self, area: Rect, buf: &mut Buffer) {
-        let mut lines: Vec<Line> = vec!["  Choose how you want to use Codex.".into(), "".into()];
+        let mut lines: Vec<Line> = vec!["  Choose how you want to use Genex.".into(), "".into()];
 
         let create_mode_item = |idx: usize,
                                 selected_mode: SignInOption,
@@ -352,7 +352,7 @@ impl AuthModeWidget {
         let lines = vec![
             "✓ API key configured".fg(Color::Green).into(),
             "".into(),
-            "  Codex will use usage-based billing with your API key.".into(),
+            "  Genex will use usage-based billing with your API key.".into(),
         ];
 
         Paragraph::new(lines)

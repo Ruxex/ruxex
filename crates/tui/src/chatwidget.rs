@@ -1,4 +1,4 @@
-//! The main Codex TUI chat surface.
+//! The main Genex TUI chat surface.
 //!
 //! `ChatWidget` consumes protocol events, builds and updates history cells, and drives rendering
 //! for both the main viewport and overlay UIs.
@@ -510,7 +510,7 @@ pub(crate) enum ExternalEditorState {
 /// intent (`Op` submissions and `AppEvent` requests).
 ///
 /// It is not responsible for running the agent itself; it reflects progress by updating UI state
-/// and by sending requests back to codex-core.
+/// and by sending requests back to genex-core.
 ///
 /// Quit/interrupt behavior intentionally spans layers: the bottom pane owns local input routing
 /// (which view gets Ctrl+C), while `ChatWidget` owns process-level decisions such as interrupting
@@ -518,7 +518,7 @@ pub(crate) enum ExternalEditorState {
 pub(crate) struct ChatWidget {
     pub(crate) cyber_policy_notice: crate::daybreak::NoticeCache,
     app_event_tx: AppEventSender,
-    codex_op_target: GenexOpTarget,
+    genex_op_target: GenexOpTarget,
     bottom_pane: BottomPane,
     transcript: TranscriptState,
     config: Config,
@@ -1664,7 +1664,7 @@ impl ChatWidget {
         ));
     }
 
-    /// Forward a command directly to codex.
+    /// Forward a command directly to genex.
     pub(crate) fn submit_op<T>(&mut self, op: T) -> bool
     where
         T: Into<AppCommand>,
@@ -1691,11 +1691,11 @@ impl ChatWidget {
         if op.is_review() && !self.bottom_pane.is_task_running() {
             self.bottom_pane.set_task_running(/*running*/ true);
         }
-        match &self.codex_op_target {
-            GenexOpTarget::Direct(codex_op_tx) => {
+        match &self.genex_op_target {
+            GenexOpTarget::Direct(genex_op_tx) => {
                 crate::session_log::log_outbound_op(&op);
                 let is_review = op.is_review();
-                if let Err(e) = codex_op_tx.send(op) {
+                if let Err(e) = genex_op_tx.send(op) {
                     tracing::error!("failed to submit op: {e}");
                     return false;
                 }
@@ -1873,7 +1873,7 @@ impl Drop for ChatWidget {
     }
 }
 
-const PLACEHOLDER: &str = "Ask Codex to do anything";
+const PLACEHOLDER: &str = "Ask Genex to do anything";
 const SIDE_PLACEHOLDER: &str = "Ask a follow-up question";
 
 // Extract the first bold (Markdown) element in the form **...** from `s`.

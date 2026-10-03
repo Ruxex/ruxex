@@ -552,7 +552,7 @@ async fn execute_inner(
                 "schemaVersion": 1,
                 "thread": {
                     "id": thread.id,
-                    "kind": "codex",
+                    "kind": "genex",
                     "title": thread.name,
                     "preview": truncate(&thread.preview, DEFAULT_OUTPUT_CHARS),
                     "status": thread.status,
@@ -1304,7 +1304,7 @@ async fn start_turn(
 fn thread_summary(thread: &Thread) -> Value {
     json!({
         "id": thread.id,
-        "kind": "codex",
+        "kind": "genex",
         "projectId": thread.project_id,
         "title": thread.name.as_deref().map(|title| truncate(title, DEFAULT_OUTPUT_CHARS)),
         "summary": truncate(&thread.preview, /*limit*/ 300),

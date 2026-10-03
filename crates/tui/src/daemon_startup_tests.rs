@@ -133,7 +133,7 @@ fn daemon_eligibility_preserves_launch_options_and_explains_exclusions() {
             None,
         ),
     ] {
-        let cli = Cli::parse_from(std::iter::once("codex").chain(args.split_whitespace()));
+        let cli = Cli::parse_from(std::iter::once("genex").chain(args.split_whitespace()));
         assert_eq!(
             daemon_startup::exclusion(
                 &cli,
@@ -143,7 +143,7 @@ fn daemon_eligibility_preserves_launch_options_and_explains_exclusions() {
             expected
         );
     }
-    let mut cli = Cli::parse_from(["codex"]);
+    let mut cli = Cli::parse_from(["genex"]);
     let overrides = vec![("web_search".into(), toml::Value::String("live".into()))];
     let loader = LoaderOverrides {
         ignore_user_config: true,

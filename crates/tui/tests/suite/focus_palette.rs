@@ -196,9 +196,9 @@ impl PtyGenex {
         let stdin = slave.try_clone().context("clone pseudo-terminal stdin")?;
         let stdout = slave.try_clone().context("clone pseudo-terminal stdout")?;
 
-        let codex = genex_utils_cargo_bin::cargo_bin("codex-tui")
+        let genex = genex_utils_cargo_bin::cargo_bin("codex-tui")
             .or_else(|_| genex_utils_cargo_bin::cargo_bin("genex"))?;
-        let child = Command::new(codex)
+        let child = Command::new(genex)
             .args(extra_args)
             .arg("--no-alt-screen")
             .arg("-C")
@@ -210,7 +210,7 @@ impl PtyGenex {
             .stdout(stdout)
             .stderr(slave)
             .spawn()
-            .context("start Codex in focus-test pseudo-terminal")?;
+            .context("start Genex in focus-test pseudo-terminal")?;
 
         Ok(Self {
             master,
@@ -238,14 +238,14 @@ impl PtyGenex {
 
             if let Some(status) = self.child.try_wait()? {
                 bail!(
-                    "Codex exited before the focus test started ({status}); screen:\n{}",
+                    "Genex exited before the focus test started ({status}); screen:\n{}",
                     self.screen_contents(),
                 );
             }
         }
 
         bail!(
-            "Codex did not initialize within {:?}; screen:\n{}",
+            "Genex did not initialize within {:?}; screen:\n{}",
             STARTUP_TIMEOUT,
             self.screen_contents(),
         );
@@ -353,7 +353,7 @@ impl PtyGenex {
                 return Ok(());
             }
             if let Some(status) = self.child.try_wait()? {
-                bail!("Codex exited while waiting for {text:?} ({status})");
+                bail!("Genex exited while waiting for {text:?} ({status})");
             }
         }
         bail!("missing {text:?}; screen:\n{}", self.screen_contents())
@@ -362,7 +362,7 @@ impl PtyGenex {
     pub(super) fn ensure_running(&mut self) -> Result<()> {
         ensure!(
             self.child.try_wait()?.is_none(),
-            "Codex exited unexpectedly; screen:\n{}",
+            "Genex exited unexpectedly; screen:\n{}",
             self.screen_contents()
         );
         Ok(())
@@ -388,7 +388,7 @@ pub(super) fn write_test_config(codex_home: &Path, repo_root: &Path) -> Result<(
          [projects.\"{repo_root}\"]\ntrust_level = \"trusted\"\n"
     );
     std::fs::write(codex_home.join("config.toml"), config)
-        .context("write focus-test Codex configuration")?;
+        .context("write focus-test Genex configuration")?;
     std::fs::write(
         codex_home.join("auth.json"),
         r#"{"PROVIDER_API_KEY":"focus-palette-test","tokens":null,"last_refresh":null}"#,
