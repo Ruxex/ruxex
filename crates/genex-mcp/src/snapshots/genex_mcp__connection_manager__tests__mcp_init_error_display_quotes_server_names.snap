@@ -1,5 +1,5 @@
 ---
-source: codex-mcp/src/connection_manager_tests.rs
+source: genex-mcp/src/connection_manager_tests.rs
 expression: "displays.join(\"\\n\\n\")"
 ---
 MCP client for `npm:@scope/package.name` timed out after 30 seconds. Add or adjust `startup_timeout_sec` in your config.toml:

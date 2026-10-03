@@ -265,7 +265,7 @@ impl ElicitationRequestManager {
         tx_event: Option<Sender<Event>>,
         _client_mcp_extensions: &ClientMcpExtensions,
     ) -> SendElicitation {
-        // Event receivers such as codex mcp-server do not necessarily handle verification.
+        // Event receivers such as a Genex MCP server do not necessarily handle verification.
         // Only wait for a response when trusted host activation enabled this exact route.
         let router = self.router.clone();
         let authority = self.authority.clone();

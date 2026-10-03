@@ -75,7 +75,7 @@ use tracing::Instrument;
 use tracing::instrument;
 use tracing::warn;
 
-/// MCP server capability indicating that Codex should include [`SandboxState`]
+/// MCP server capability indicating that Genex should include [`SandboxState`]
 /// in tool-call request `_meta` under this key.
 pub const MCP_SANDBOX_STATE_META_CAPABILITY: &str = "codex/sandbox-state-meta";
 /// Experimental MCP server capability for development and testing only; production servers should
