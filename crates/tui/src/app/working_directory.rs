@@ -443,7 +443,7 @@ impl App {
             name_error,
         } = attach;
         self.local_settings = local_settings;
-        self.refresh_server_version_overview_notice(CODEX_CLI_VERSION);
+        self.refresh_server_version_overview_notice(GENEX_CLI_VERSION);
         self.config = *config;
         self.file_search
             .update_search_dir(self.config.cwd.to_path_buf());

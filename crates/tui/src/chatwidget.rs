@@ -77,7 +77,7 @@ use crate::terminal_title::set_terminal_title;
 use crate::text_formatting::proper_join;
 use crate::token_usage::TokenUsage;
 use crate::token_usage::TokenUsageInfo;
-use crate::version::CODEX_CLI_VERSION;
+use crate::version::GENEX_CLI_VERSION;
 use genex_app_server_protocol::GenexErrorInfo as AppServerGenexErrorInfo;
 use genex_app_server_protocol::CollabAgentTool;
 use genex_app_server_protocol::CollabAgentToolCallStatus;
@@ -1364,7 +1364,7 @@ impl ChatWidget {
                 placeholder_style,
                 /*reasoning_effort*/ None,
                 config.cwd.to_path_buf(),
-                CODEX_CLI_VERSION,
+                GENEX_CLI_VERSION,
             )
             .with_yolo_mode(history_cell::is_yolo_mode(config)),
         )

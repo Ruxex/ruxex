@@ -66,8 +66,8 @@ pub(crate) enum TerminalTitleItem {
     FiveHourLimit,
     /// Remaining usage on the secondary rate limit.
     WeeklyLimit,
-    /// Codex application version.
-    CodexVersion,
+    /// Genex application version.
+    GenexVersion,
     /// Total tokens used in the current session.
     UsedTokens,
     /// Total input tokens consumed.
@@ -119,7 +119,7 @@ impl TerminalTitleItem {
             TerminalTitleItem::WeeklyLimit => {
                 "Remaining usage on the secondary usage limit (omitted when unavailable)"
             }
-            TerminalTitleItem::CodexVersion => "Codex application version",
+            TerminalTitleItem::GenexVersion => "Genex application version",
             TerminalTitleItem::UsedTokens => "Total tokens used in session (omitted when zero)",
             TerminalTitleItem::TotalInputTokens => "Total input tokens used in session",
             TerminalTitleItem::TotalOutputTokens => "Total output tokens used in session",
@@ -155,7 +155,7 @@ impl TerminalTitleItem {
             TerminalTitleItem::ContextUsed => Some(StatusSurfacePreviewItem::ContextUsed),
             TerminalTitleItem::FiveHourLimit => Some(StatusSurfacePreviewItem::FiveHourLimit),
             TerminalTitleItem::WeeklyLimit => Some(StatusSurfacePreviewItem::WeeklyLimit),
-            TerminalTitleItem::CodexVersion => Some(StatusSurfacePreviewItem::CodexVersion),
+            TerminalTitleItem::GenexVersion => Some(StatusSurfacePreviewItem::GenexVersion),
             TerminalTitleItem::UsedTokens => Some(StatusSurfacePreviewItem::UsedTokens),
             TerminalTitleItem::TotalInputTokens => Some(StatusSurfacePreviewItem::TotalInputTokens),
             TerminalTitleItem::TotalOutputTokens => {

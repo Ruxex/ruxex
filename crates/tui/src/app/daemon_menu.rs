@@ -97,7 +97,7 @@ impl App {
             DaemonUpdateSource::ThisCli => {
                 let version = genex_install_context::InstallContext::current()
                     .package_manifest()
-                    .map_or_else(|| CODEX_CLI_VERSION.to_string(), |manifest| manifest.version.to_string());
+                    .map_or_else(|| GENEX_CLI_VERSION.to_string(), |manifest| manifest.version.to_string());
                 format!("Use this CLI package v{version} from {}. The complete local package will be copied and pinned against automatic updates.", executable.display())
             }
         };

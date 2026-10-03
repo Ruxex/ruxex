@@ -269,7 +269,7 @@ impl App {
                     &local_settings.tui,
                     &app_server_target,
                     app_server.server_codex_home(),
-                    CODEX_CLI_VERSION,
+                    GENEX_CLI_VERSION,
                     app_server.server_version(),
                     /*last_shown*/ None,
                 )
@@ -806,10 +806,10 @@ See the Codex keymap documentation for supported actions and examples."
             app.recap.note_focus_lost(Instant::now());
         }
         let _ =
-            app.initialize_server_version_notice(CODEX_CLI_VERSION, app_server.server_version());
+            app.initialize_server_version_notice(GENEX_CLI_VERSION, app_server.server_version());
         if initial_server_version_notice.is_none() {
             app.update_server_version_overview_notice(
-                CODEX_CLI_VERSION,
+                GENEX_CLI_VERSION,
                 /*older_server*/ None,
             );
         }
@@ -1122,7 +1122,7 @@ See the Codex keymap documentation for supported actions and examples."
                         reconnect = None;
                         match result {
                             Ok(connected) => {
-                                app.finish_reconnect(tui, &mut app_server, &mut app_event_rx, connected, CODEX_CLI_VERSION).await?;
+                                app.finish_reconnect(tui, &mut app_server, &mut app_event_rx, connected, GENEX_CLI_VERSION).await?;
                                 listen_for_app_server_events = true;
                                 waiting_for_initial_session_configured = false;
                             }

@@ -111,7 +111,7 @@ async fn reconnect_reconciles_offscreen_pending_profile_before_restoring_permiss
         &mut session,
         &mut events,
         connected,
-        CODEX_CLI_VERSION,
+        GENEX_CLI_VERSION,
     )
     .await?;
     assert!(app.pending_server_profiles.contains_key(&primary));

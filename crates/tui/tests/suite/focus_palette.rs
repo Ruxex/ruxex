@@ -232,7 +232,7 @@ impl PtyGenex {
             self.read_output(Duration::from_millis(/*millis*/ 50))?;
             self.answer_startup_queries()?;
 
-            if self.palette_answered && self.screen_contains("provider Codex") {
+            if self.palette_answered && self.screen_contains("provider Genex") {
                 return Ok(());
             }
 
