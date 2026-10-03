@@ -11,7 +11,7 @@ async fn exits_non_zero_when_required_mcp_server_fails_to_initialize() -> anyhow
 
     let config_toml = r#"
         [mcp_servers.required_broken]
-        command = "codex-definitely-not-a-real-binary"
+        command = "genex-definitely-not-a-real-binary"
         required = true
     "#;
     std::fs::write(test.home_path().join("config.toml"), config_toml)?;

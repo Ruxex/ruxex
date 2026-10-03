@@ -1,8 +1,8 @@
-# `codex exec`
+# `genex exec`
 
 ## エントリ
 
-`codex exec [OPTIONS] [PROMPT]` は [`codex_exec::Cli`](../../../../crates/exec/src/cli.rs#L15) で解析され、`genex-cli` により [main.rs#L1034](../../../../crates/cli/src/main.rs#L1034) でディスパッチされます。ネストしたコマンドがない場合は新しい非対話セッションを実行し、[`Command`](../../../../crates/exec/src/cli.rs#L149) を通じてネストした `resume`、`fork`、`review` 操作にも対応します。
+`genex exec [OPTIONS] [PROMPT]` は [`genex_exec::Cli`](../../../../crates/exec/src/cli.rs#L15) で解析され、`genex-cli` により [main.rs#L1034](../../../../crates/cli/src/main.rs#L1034) でディスパッチされます。ネストしたコマンドがない場合は新しい非対話セッションを実行し、[`Command`](../../../../crates/exec/src/cli.rs#L149) を通じてネストした `resume`、`fork`、`review` 操作にも対応します。
 
 ## 入出力モデル
 
@@ -14,14 +14,14 @@ exec パーサーは次のフラグを管理します。
 - 一時実行と設定/ルール読み込みの制御。
 - グローバルモデル、承認のバイパス、フックの信頼、worktree のオプション。
 
-`codex_exec::run_main` は [`exec/src/lib.rs#L244`](../../../../crates/exec/src/lib.rs#L244) にあるランタイムのエントリです。設定を読み込み、app-server/セッション経路を解決または起動し、リクエストを送信し、イベントを処理して、完了/エラー状態をプロセス出力に変換します。
+`genex_exec::run_main` は [`exec/src/lib.rs#L244`](../../../../crates/exec/src/lib.rs#L244) にあるランタイムのエントリです。設定を読み込み、app-server/セッション経路を解決または起動し、リクエストを送信し、イベントを処理して、完了/エラー状態をプロセス出力に変換します。
 
 ## フロー
 
 ```text
-codex exec
-  -> codex_exec::Cli
-  -> codex_exec::run_main
+genex exec
+  -> genex_exec::Cli
+  -> genex_exec::run_main
   -> 設定/ブートストラップ
   -> スレッドを開始/再開/フォーク
   -> app-server/Core 経由でプロンプトを送信
@@ -35,7 +35,7 @@ codex exec
 
 | 型 | クレート | 役割 |
 | --- | --- | --- |
-| `Cli`、`Command` | `codex-exec` | コマンド文法 |
-| `EventProcessor` | `codex-exec` | 内部のイベントから出力への処理 |
+| `Cli`、`Command` | `genex-exec` | コマンド文法 |
+| `EventProcessor` | `genex-exec` | 内部のイベントから出力への処理 |
 | `ResponseEvent` | `genex-api` | モデル応答ストリームの境界 |
 | `ThreadId`、`ClientRequest` | `genex-protocol` / app-server protocol | リクエスト/セッションの識別情報 |

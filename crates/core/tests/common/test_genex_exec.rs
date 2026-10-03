@@ -11,8 +11,8 @@ pub struct TestGenexExecBuilder {
 impl TestGenexExecBuilder {
     pub fn cmd(&self) -> assert_cmd::Command {
         let mut cmd = assert_cmd::Command::new(
-            genex_utils_cargo_bin::cargo_bin("codex-exec")
-                .expect("should find binary for codex-exec"),
+            genex_utils_cargo_bin::cargo_bin("genex-exec")
+                .expect("should find binary for genex-exec"),
         );
         cmd.current_dir(self.cwd.path())
             .env("GENEX_HOME", self.home.path())

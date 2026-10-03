@@ -15,7 +15,7 @@ argv
   -> TUI、JSONL、プロトコル、またはプロセス終了時の出力
 ```
 
-これは概念上の正規化であり、単一の関数呼び出しを表すものではありません。コマンドによって段階を省略したり、順序を入れ替えたりします。たとえば `codex completion` は CLI 解析後に終了しますが、`codex exec` は app-server リクエストを利用でき、`codex` の対話モードはローカルデーモン経由で実行できます。
+これは概念上の正規化であり、単一の関数呼び出しを表すものではありません。コマンドによって段階を省略したり、順序を入れ替えたりします。たとえば `genex completion` は CLI 解析後に終了しますが、`genex exec` は app-server リクエストを利用でき、`genex` の対話モードはローカルデーモン経由で実行できます。
 
 ## 段階ごとの担当
 
@@ -23,7 +23,7 @@ argv
 | --- | --- | --- |
 | 解析とディスパッチ | [`genex-cli`](../../../crates/cli/src/main.rs) | `MultitoolCli`、`Subcommand`、ルート検証、ディスパッチ |
 | 対話用引数モデル | [`codex-tui`](../../../crates/tui/src/cli.rs) | TUI 固有のフラグと、resume/fork/agents 用のラッパー状態 |
-| 非対話用引数モデル | [`codex-exec`](../../../crates/exec/src/cli.rs) | `codex exec` のオプションと exec サブコマンド |
+| 非対話用引数モデル | [`genex-exec`](../../../crates/exec/src/cli.rs) | `genex exec` のオプションと exec サブコマンド |
 | 設定 | [`genex-core`](../../../crates/core/src/config/mod.rs) と [`genex-config`](../../../crates/config/src/lib.rs) | 読み込み、上書き、プロファイル、検証、実行時設定 |
 | エージェントのオーケストレーション | [`genex-core`](../../../crates/core/src/lib.rs) | スレッド、ターン、ツール、承認、モデルリクエスト、共有状態 |
 | UI 表示 | [`codex-tui`](../../../crates/tui/src/lib.rs) | ターミナルのイベントループ、履歴セル、入力、レンダリング |
@@ -37,7 +37,7 @@ argv
 
 ### CLI とランタイム
 
-`genex-cli` はユーザー向けのコマンド文法を管理し、経路を選択します。コマンドの動作全体を所有するわけではありません。ランタイム処理は `codex-tui`、`codex-exec`、`genex-core`、app-server、またはユーティリティクレートに委譲されます。
+`genex-cli` はユーザー向けのコマンド文法を管理し、経路を選択します。コマンドの動作全体を所有するわけではありません。ランタイム処理は `genex-tui`、`genex-exec`、`genex-core`、app-server、またはユーティリティクレートに委譲されます。
 
 ### プロトコルとサーバー
 

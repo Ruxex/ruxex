@@ -115,7 +115,7 @@ impl Drop for ChildProcessCleanupGuard {
     }
 }
 
-// Use this for new `codex exec` subprocess tests in this file. These commands
+// Use this for new `genex exec` subprocess tests in this file. These commands
 // can spawn shell/Python grandchildren, so the timeout path must reap the whole
 // process group instead of only the direct CLI child.
 fn run_cli_command(command: &mut Command) -> io::Result<Output> {
@@ -355,7 +355,7 @@ async fn exec_cli_applies_model_instructions_file() {
     );
 }
 
-/// Verify that `codex exec --profile ...` preserves the active user config
+/// Verify that `genex exec --profile ...` preserves the active user config
 /// profile when it starts the in-process app-server thread, so the selected
 /// profile's `model_instructions_file` reaches the outbound request.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

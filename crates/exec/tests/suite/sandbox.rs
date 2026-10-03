@@ -352,7 +352,7 @@ async fn sandbox_distinguishes_command_and_policy_cwds() {
 }
 
 #[tokio::test]
-async fn sandbox_blocks_first_time_dot_codex_creation() {
+async fn sandbox_blocks_first_time_dot_genex_creation() {
     core_test_support::skip_if_sandbox!();
     #[cfg(target_os = "linux")]
     let sandbox_env = match linux_sandbox_test_env().await {
@@ -365,8 +365,8 @@ async fn sandbox_blocks_first_time_dot_codex_creation() {
     let temp = tempfile::tempdir().expect("should be able to create temp dir");
     let repo_root = temp.path().join("repo").abs();
     create_dir_all(&repo_root).await.expect("mkdir repo");
-    let dot_codex = repo_root.join(".genex");
-    let config_toml = dot_codex.join("config.toml");
+    let dot_genex = repo_root.join(".genex");
+    let config_toml = dot_genex.join("config.toml");
     let permission_profile = PermissionProfile::workspace_write_with(
         &[],
         NetworkSandboxPolicy::Restricted,
@@ -395,19 +395,19 @@ async fn sandbox_blocks_first_time_dot_codex_creation() {
         !status.success(),
         "sandbox unexpectedly allowed first-time .genex creation: {status:?}"
     );
-    let dot_codex_metadata = tokio::fs::symlink_metadata(&dot_codex).await;
-    if let Ok(metadata) = dot_codex_metadata {
+    let dot_genex_metadata = tokio::fs::symlink_metadata(&dot_genex).await;
+    if let Ok(metadata) = dot_genex_metadata {
         assert!(
             !metadata.is_dir(),
             "{} should not be creatable as a directory",
-            dot_codex.display()
+            dot_genex.display()
         );
-    } else if let Err(err) = &dot_codex_metadata {
+    } else if let Err(err) = &dot_genex_metadata {
         assert_eq!(
             err.kind(),
             io::ErrorKind::NotFound,
             "unexpected metadata error for {}: {err}",
-            dot_codex.display()
+            dot_genex.display()
         );
     }
     let config_toml_exists = match tokio::fs::try_exists(&config_toml).await {

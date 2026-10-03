@@ -29,7 +29,7 @@
 | ルート入力 | ディスパッチ先 |
 | --- | --- |
 | サブコマンドなし / `agents` | `run_interactive_tui` と `codex-tui` |
-| `exec` | `codex_exec::run_main` |
+| `exec` | `genex_exec::run_main` |
 | `review` | exec のレビューコマンド経路 |
 | `mcp` | `McpCli::run` in `crates/cli/src/mcp_cmd.rs` |
 | `plugin` | `PluginCli::run` in `crates/cli/src/plugin_cmd.rs` |

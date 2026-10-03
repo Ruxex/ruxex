@@ -19,7 +19,7 @@
 | --- | --- |
 | `codex` の対話 TUI | [対話モード](commands/interactive.md) |
 | `codex agents` | [エージェント](commands/agents.md) |
-| `codex exec` | [実行](commands/exec.md) |
+| `genex exec` | [実行](commands/exec.md) |
 | `codex review` | [レビュー](commands/review.md) |
 | `resume`、`queue`、`archive`、`delete`、`unarchive`、`fork` | [セッション](commands/sessions.md) |
 | `mcp` | [MCP](commands/mcp.md) |

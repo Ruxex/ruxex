@@ -109,7 +109,7 @@
 
 ### `EventProcessor`
 
-- 定義: `codex-exec`、[`src/event_processor.rs:13`](../../../../crates/exec/src/event_processor.rs#L13)
+- 定義: `genex-exec`、[`src/event_processor.rs:13`](../../../../crates/exec/src/event_processor.rs#L13)
 - 可視性: `pub(crate)`
 - 役割: 応答イベント/ステータスを非対話出力の動作へ変換する内部処理。
 

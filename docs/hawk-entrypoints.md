@@ -29,7 +29,7 @@ Level 3 の削除判断では通常実行の16件を主起点としつつ、対�
 | --- | --- | --- | --- |
 | `genex-cli` | `codex` | 対話 TUI、非対話実行、MCP、app-server 管理などを提供する主 CLI。 | 全プラットフォーム |
 | `codex-tui` | `codex-tui` | TUI を単独で起動するエントリーポイント。 | 全プラットフォーム |
-| `codex-exec` | `codex-exec` | 非対話のエージェント実行を行う CLI。 | 全プラットフォーム |
+| `genex-exec` | `genex-exec` | 非対話のエージェント実行を行う CLI。 | 全プラットフォーム |
 | `genex-app-server` | `genex-app-server` | IDE・クライアント向け app-server を stdio、Unix socket、WebSocket で提供する。 | 全プラットフォーム |
 | `genex-code-mode-host` | `genex-code-mode-host` | code mode 用の stdio/gRPC ホストと任意の OTEL trace transport を提供する。 | 全プラットフォーム |
 | `genex-apply-patch` | `apply_patch` | パッチ適用ツールを起動する。 | 全プラットフォーム |

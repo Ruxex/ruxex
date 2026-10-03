@@ -14,7 +14,7 @@
 
 CLI ヘルパー [`cloud_config::config_builder`](../../../../crates/cli/src/cloud_config.rs#L20) は `-c` の上書きを解析し、`CODEX_HOME` と有効な CWD を解決して、[`codex_core::config::ConfigBuilder`](../../../../crates/core/src/config/mod.rs#L1290) を構築します。ビルダーはランタイムの利用側に `Config` が渡される前に、永続化済み/ユーザー/プロジェクトの層とコマンド固有の上書きを組み合わせます。
 
-`genex-utils-cli` は [`SharedCliOptions`](../../../../crates/utils/cli/src/shared_options.rs#L9) のような共有引数の形を管理し、`genex-cli`、`codex-exec`、`codex-tui` は各コマンドでどの共有フラグを公開/グローバル化するかを決めます。
+`genex-utils-cli` は [`SharedCliOptions`](../../../../crates/utils/cli/src/shared_options.rs#L9) のような共有引数の形を管理し、`genex-cli`、`genex-exec`、`genex-tui` は各コマンドでどの共有フラグを公開/グローバル化するかを決めます。
 
 ## 優先順位
 

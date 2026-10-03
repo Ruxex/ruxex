@@ -6,8 +6,8 @@
 | --- | --- | --- |
 | ルートパーサー | [`MultitoolCli` と `Subcommand`](../../../../crates/cli/src/main.rs#L104)、[L930](../../../../crates/cli/src/main.rs#L930) でディスパッチ | `genex-cli` |
 | 対話 TUI | [`None | Agents`](../../../../crates/cli/src/main.rs#L981) でディスパッチ | `codex-tui`、`genex-core` |
-| `exec` | [`ExecCli` のフィールドとディスパッチ](../../../../crates/cli/src/main.rs#L1034) | `codex-exec` |
-| `review` | [`ReviewCommand` とディスパッチ](../../../../crates/cli/src/main.rs#L266) | `codex-exec`、`genex-core` |
+| `exec` | [`ExecCli` のフィールドとディスパッチ](../../../../crates/cli/src/main.rs#L1034) | `genex-exec` |
+| `review` | [`ReviewCommand` とディスパッチ](../../../../crates/cli/src/main.rs#L266) | `genex-exec`、`genex-core` |
 | セッションコマンド | [`ResumeCommand`～`ForkCommand`](../../../../crates/cli/src/main.rs#L304) と [L1284](../../../../crates/cli/src/main.rs#L1284) でのディスパッチ | `codex-tui`、`genex-app-server`、`genex-thread-store` |
 | MCP | [`McpCli`](../../../../crates/cli/src/mcp_cmd.rs#L56)、[L223](../../../../crates/cli/src/mcp_cmd.rs#L223) で実行 | `genex-cli`、MCP/Core クレート |
 | プラグイン | [`PluginCli`](../../../../crates/cli/src/plugin_cmd.rs#L39) | `genex-cli`、`genex-plugin`、app-server |
@@ -30,4 +30,4 @@
 - [`mcp_cmd.rs#L65`](../../../../crates/cli/src/mcp_cmd.rs#L65) の `McpSubcommand`。
 - [`plugin_cmd.rs#L48`](../../../../crates/cli/src/plugin_cmd.rs#L48) の `PluginSubcommand`。
 - [`marketplace_cmd.rs#L44`](../../../../crates/cli/src/marketplace_cmd.rs#L44) の `MarketplaceSubcommand`。
-- [`exec/cli.rs#L149`](../../../../crates/exec/src/cli.rs#L149) の `codex exec` 用 `Command`。
+- [`exec/cli.rs#L149`](../../../../crates/exec/src/cli.rs#L149) の `genex exec` 用 `Command`。

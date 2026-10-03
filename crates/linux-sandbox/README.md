@@ -4,8 +4,8 @@ This crate is responsible for producing:
 
 - a `codex-linux-sandbox` standalone executable for Linux that is bundled with the Node.js version of the Genex CLI
 - a lib crate that exposes the business logic of the executable as `run_main()` so that
-  - the `codex-exec` CLI can check if its arg0 is `codex-linux-sandbox` and, if so, execute as if it were `codex-linux-sandbox`
-  - this should also be true of the `codex` multitool CLI
+  - the `genex-exec` CLI can check if its arg0 is `codex-linux-sandbox` and, if so, execute as if it were `codex-linux-sandbox`
+  - this should also be true of the `genex` multitool CLI
 
 On Linux, Genex prefers the first `bwrap` found on `PATH`
 outside the current working directory whenever it is available. If `bwrap` is
@@ -91,4 +91,4 @@ commands that would enter the bubblewrap path.
   you can skip this in restrictive container environments with `--no-proc`.
 
 **Notes**
-- The CLI surface is `codex sandbox`; the host OS selects the sandbox backend.
+- The CLI surface is `genex sandbox`; the host OS selects the sandbox backend.

@@ -6,10 +6,10 @@ use core_test_support::responses;
 use core_test_support::test_genex_exec::test_genex_exec;
 use wiremock::matchers::header;
 
-/// Verify that when the server reports an error, `codex-exec` exits with a
+/// Verify that when the server reports an error, `genex-exec` exits with a
 /// non-zero status code so automation can detect failures.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn send_codex_exec_originator() -> anyhow::Result<()> {
+async fn send_genex_exec_originator() -> anyhow::Result<()> {
     let test = test_genex_exec();
 
     let server = responses::start_mock_server().await;

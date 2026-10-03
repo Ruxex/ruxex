@@ -785,7 +785,7 @@ impl TestGenexBuilder {
         config.model_provider = model_provider;
         if let Ok(path) = genex_utils_cargo_bin::cargo_bin("genex") {
             config.genex_self_exe = Some(path);
-        } else if let Ok(path) = genex_utils_cargo_bin::cargo_bin("codex-exec") {
+        } else if let Ok(path) = genex_utils_cargo_bin::cargo_bin("genex-exec") {
             // `genex-exec` also supports `--genex-run-as-apply-patch`, so use it
             // when the multitool binary is not available in test builds.
             config.genex_self_exe = Some(path);
@@ -793,7 +793,7 @@ impl TestGenexBuilder {
             && let Some(bin_dir) = exe.parent().and_then(|parent| parent.parent())
         {
             let genex = bin_dir.join("genex");
-            let genex_exec = bin_dir.join("codex-exec");
+            let genex_exec = bin_dir.join("genex-exec");
             if genex.is_file() {
                 config.genex_self_exe = Some(genex);
             } else if genex_exec.is_file() {
