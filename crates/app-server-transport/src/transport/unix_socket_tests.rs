@@ -36,9 +36,9 @@ fn listen_unix_socket_parses_as_unix_socket_transport() {
 #[test]
 fn listen_unix_socket_accepts_absolute_custom_path() {
     assert_eq!(
-        AppServerTransport::from_listen_url("unix:///tmp/codex.sock"),
+        AppServerTransport::from_listen_url("unix:///tmp/genex.sock"),
         Ok(AppServerTransport::UnixSocket {
-            socket_path: absolute_path("/tmp/codex.sock")
+            socket_path: absolute_path("/tmp/genex.sock")
         })
     );
 }
@@ -46,9 +46,9 @@ fn listen_unix_socket_accepts_absolute_custom_path() {
 #[test]
 fn listen_unix_socket_accepts_relative_custom_path() {
     assert_eq!(
-        AppServerTransport::from_listen_url("unix://codex.sock"),
+        AppServerTransport::from_listen_url("unix://genex.sock"),
         Ok(AppServerTransport::UnixSocket {
-            socket_path: AbsolutePathBuf::relative_to_current_dir("codex.sock")
+            socket_path: AbsolutePathBuf::relative_to_current_dir("genex.sock")
                 .expect("relative path should resolve")
         })
     );
