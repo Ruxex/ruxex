@@ -428,7 +428,7 @@ impl SandboxManager {
                 let pending = pending_sandboxed_request?;
                 let exe = sandbox_exe.ok_or_else(|| {
                     SandboxTransformError::WindowsMxcPreparation(
-                        "missing Codex executable path".to_string(),
+                        "missing Genex executable path".to_string(),
                     )
                 })?;
                 let mut full_command =

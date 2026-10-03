@@ -2,7 +2,7 @@ use genex_network_proxy::ManagedNetworkSandboxContext;
 use genex_protocol::models::PermissionProfile;
 use std::path::Path;
 
-/// Basename used when the Codex executable self-invokes as the Linux sandbox
+/// Basename used when the Genex executable self-invokes as the Linux sandbox
 /// helper.
 pub const CODEX_LINUX_SANDBOX_ARG0: &str = "codex-linux-sandbox";
 
