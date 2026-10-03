@@ -17,7 +17,7 @@ async fn host_catalog_entries_carry_their_render_metadata() -> Result<(), Box<dy
 {
     let unique = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
     let root = std::env::temp_dir().join(format!(
-        "codex-skills-extension-host-provider-{}-{unique}",
+        "genex-skills-extension-host-provider-{}-{unique}",
         std::process::id()
     ));
     let skill_path = root.join("demo").join("SKILL.md");

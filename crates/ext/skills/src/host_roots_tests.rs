@@ -246,7 +246,7 @@ fn layer_roots_preserve_scope_precedence_and_disabled_projects() {
     let temp_dir = TempDir::new().expect("temp dir");
     let system_folder = absolute(temp_dir.path().join("etc/codex"));
     let home_folder = absolute(temp_dir.path().join("home"));
-    let user_folder = home_folder.join("codex");
+    let user_folder = home_folder.join("genex");
     let project_folder = absolute(temp_dir.path().join("repo/.genex"));
     let nested_project_folder = absolute(temp_dir.path().join("repo/nested/.genex"));
     let config_stack = stack(vec![
@@ -447,11 +447,11 @@ async fn repo_ancestry_stops_at_project_root_and_preserves_root_to_cwd_order() {
 async fn resolved_project_layer_loads_skill_without_git_marker() {
     let temp_dir = TempDir::new().expect("temp dir");
     let workspace = absolute(temp_dir.path().join("workspace"));
-    let dot_codex = workspace.join(".genex");
-    let skill_root = dot_codex.join("skills");
+    let dot_genex = workspace.join(".genex");
+    let skill_root = dot_genex.join("skills");
     fs::create_dir_all(&workspace).expect("create workspace");
     let skill_path = write_skill(&skill_root, "local", "local-skill");
-    let config_stack = stack(vec![project_layer(&dot_codex)]);
+    let config_stack = stack(vec![project_layer(&dot_genex)]);
 
     let roots = resolve_skill_roots_with_home_dir(
         Some(Arc::clone(&LOCAL_FS)),
@@ -481,14 +481,14 @@ async fn resolved_project_layer_loads_skill_without_git_marker() {
 async fn resolved_project_layer_loads_skill_when_cwd_is_file() {
     let temp_dir = TempDir::new().expect("temp dir");
     let repository = absolute(temp_dir.path().join("repo"));
-    let dot_codex = repository.join(".genex");
-    let skill_root = dot_codex.join("skills");
+    let dot_genex = repository.join(".genex");
+    let skill_root = dot_genex.join("skills");
     fs::create_dir_all(&repository).expect("create repository");
     fs::write(repository.join(".git"), "gitdir: fake\n").expect("write git marker");
     let cwd = repository.join("some-file.txt");
     fs::write(&cwd, "contents").expect("write cwd file");
     let skill_path = write_skill(&skill_root, "repo", "repo-skill");
-    let config_stack = stack(vec![project_layer(&dot_codex)]);
+    let config_stack = stack(vec![project_layer(&dot_genex)]);
 
     let roots = resolve_skill_roots_with_home_dir(
         Some(Arc::clone(&LOCAL_FS)),
@@ -598,23 +598,23 @@ async fn repo_ancestry_limits_concurrent_probes_and_preserves_order() {
 async fn resolved_config_and_repo_roots_preserve_order_and_dedupe_paths_not_names() {
     let temp_dir = TempDir::new().expect("temp dir");
     let home_folder = absolute(temp_dir.path().join("home"));
-    let genex_home = home_folder.join("codex");
+    let genex_home = home_folder.join("genex");
     let system_folder = absolute(temp_dir.path().join("etc/codex"));
     let repository = absolute(temp_dir.path().join("repo"));
     let cwd = repository.join("nested/inner");
     fs::create_dir_all(&cwd).expect("create cwd");
     fs::write(repository.join(".git"), "gitdir: fake\n").expect("write git marker");
 
-    let project_dot_codex = repository.join(".genex");
-    let nested_project_dot_codex = repository.join("nested/.genex");
+    let project_dot_genex = repository.join(".genex");
+    let nested_project_dot_genex = repository.join("nested/.genex");
     let user_skills = genex_home.join("skills");
     let root_project_skill = write_skill(
-        &project_dot_codex.join("skills"),
+        &project_dot_genex.join("skills"),
         "root-duplicate",
         "duplicate-skill",
     );
     let nested_project_skill = write_skill(
-        &nested_project_dot_codex.join("skills"),
+        &nested_project_dot_genex.join("skills"),
         "nested-duplicate",
         "duplicate-skill",
     );
@@ -640,8 +640,8 @@ async fn resolved_config_and_repo_roots_preserve_order_and_dedupe_paths_not_name
             empty_config(),
         ),
         user_layer(&genex_home),
-        project_layer(&project_dot_codex),
-        project_layer(&nested_project_dot_codex),
+        project_layer(&project_dot_genex),
+        project_layer(&nested_project_dot_genex),
     ]);
 
     let roots = resolve_skill_roots_with_home_dir(

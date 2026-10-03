@@ -776,7 +776,7 @@ async fn shadow_selection_uses_host_catalog_when_instructions_are_disabled() -> 
     let metrics = MetricsClient::new(
         MetricsConfig::in_memory(
             "test",
-            "codex-skills-extension",
+            "genex-skills-extension",
             env!("CARGO_PKG_VERSION"),
             InMemoryMetricExporter::default(),
         )
@@ -890,7 +890,7 @@ async fn shadow_lru_selector_recovers_a_skill_invoked_on_an_earlier_turn() -> Te
     let metrics = MetricsClient::new(
         MetricsConfig::in_memory(
             "test",
-            "codex-skills-extension",
+            "genex-skills-extension",
             env!("CARGO_PKG_VERSION"),
             InMemoryMetricExporter::default(),
         )
@@ -2673,7 +2673,7 @@ fn skills_extension_config(config: &TestConfig) -> SkillsExtensionConfig {
 fn test_genex_home() -> PathBuf {
     let id = NEXT_GENEX_HOME_ID.fetch_add(1, Ordering::Relaxed);
     std::env::temp_dir().join(format!(
-        "codex-skills-extension-test-{}-{id}",
+        "genex-skills-extension-test-{}-{id}",
         std::process::id(),
     ))
 }

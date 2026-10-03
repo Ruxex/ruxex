@@ -62,7 +62,7 @@ async fn task_context_recovers_prior_requests_and_explicit_intent_without_changi
     let metrics = MetricsClient::new(
         MetricsConfig::in_memory(
             "test",
-            "codex-skills-extension",
+            "genex-skills-extension",
             env!("CARGO_PKG_VERSION"),
             InMemoryMetricExporter::default(),
         )

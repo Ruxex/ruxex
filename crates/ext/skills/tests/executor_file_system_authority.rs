@@ -248,7 +248,7 @@ impl ExecutorFileSystem for SyntheticFileSystem {
 #[tokio::test]
 async fn skill_loading_and_reads_use_the_supplied_executor_file_system() {
     let test_root =
-        std::env::temp_dir().join(format!("codex-executor-skill-fs-{}", std::process::id()));
+        std::env::temp_dir().join(format!("genex-executor-skill-fs-{}", std::process::id()));
     let project_folder = AbsolutePathBuf::from_absolute_path_checked(test_root.join(".genex"))
         .expect("absolute project folder");
     let alias_root = project_folder.join("skills");
@@ -521,7 +521,7 @@ async fn executor_discovery_preserves_posix_and_windows_locator_alias_roots() {
 async fn executor_discovery_routes_produce_equivalent_catalog_metadata() {
     let id = NEXT_TEST_ROOT_ID.fetch_add(1, Ordering::Relaxed);
     let test_root = std::env::temp_dir().join(format!(
-        "codex-executor-skill-parity-{}-{id}",
+        "genex-executor-skill-parity-{}-{id}",
         std::process::id()
     ));
     let plugin_manifest = test_root.join(".codex-plugin/plugin.json");
@@ -812,7 +812,7 @@ async fn pre_discovered_executor_catalog_snapshot() {
 async fn direct_executor_discovery_preserves_hidden_nested_and_probed_metadata() {
     let id = NEXT_TEST_ROOT_ID.fetch_add(1, Ordering::Relaxed);
     let test_root = std::env::temp_dir().join(format!(
-        "codex-executor-skill-discovery-{}-{id}",
+        "genex-executor-skill-discovery-{}-{id}",
         std::process::id()
     ));
     let outer_manifest = test_root.join(".codex-plugin/plugin.json");
@@ -1040,7 +1040,7 @@ async fn high_level_discovery_batches_more_than_128_roots() {
 fn create_local_skill_root(label: &str) -> io::Result<std::path::PathBuf> {
     let id = NEXT_TEST_ROOT_ID.fetch_add(1, Ordering::Relaxed);
     let test_root = std::env::temp_dir().join(format!(
-        "codex-executor-skill-{label}-{}-{id}",
+        "genex-executor-skill-{label}-{}-{id}",
         std::process::id()
     ));
     let skill_dir = test_root.join("skill");

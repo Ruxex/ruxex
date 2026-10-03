@@ -742,11 +742,11 @@ async fn skills_for_config_disables_plugin_skills_by_name() {
 async fn skills_for_cwd_loads_repo_and_user_roots_with_local_fs() {
     let genex_home = tempfile::tempdir().expect("tempdir");
     let cwd = tempfile::tempdir().expect("tempdir");
-    let repo_dot_codex = cwd.path().join(".genex");
-    fs::create_dir_all(&repo_dot_codex).expect("create repo config dir");
+    let repo_dot_genex = cwd.path().join(".genex");
+    fs::create_dir_all(&repo_dot_genex).expect("create repo config dir");
 
     write_user_skill(&genex_home, "user", "user-skill", "from local user root");
-    let repo_skill_dir = repo_dot_codex.join("skills/repo");
+    let repo_skill_dir = repo_dot_genex.join("skills/repo");
     fs::create_dir_all(&repo_skill_dir).expect("create repo skill dir");
     fs::write(
         repo_skill_dir.join("SKILL.md"),
@@ -759,7 +759,7 @@ async fn skills_for_cwd_loads_repo_and_user_roots_with_local_fs() {
             user_config_layer(&genex_home, ""),
             ConfigLayerEntry::new(
                 ConfigLayerSource::Project {
-                    dot_genex_folder: repo_dot_codex.abs(),
+                    dot_genex_folder: repo_dot_genex.abs(),
                 },
                 toml::Value::Table(toml::map::Map::new()),
             ),
@@ -809,11 +809,11 @@ async fn skills_for_cwd_loads_repo_and_user_roots_with_local_fs() {
 async fn skills_for_cwd_without_fs_skips_repo_roots() {
     let genex_home = tempfile::tempdir().expect("tempdir");
     let cwd = tempfile::tempdir().expect("tempdir");
-    let repo_dot_codex = cwd.path().join(".genex");
-    fs::create_dir_all(&repo_dot_codex).expect("create repo config dir");
+    let repo_dot_genex = cwd.path().join(".genex");
+    fs::create_dir_all(&repo_dot_genex).expect("create repo config dir");
 
     write_user_skill(&genex_home, "user", "user-skill", "from local user root");
-    let repo_skill_dir = repo_dot_codex.join("skills/repo");
+    let repo_skill_dir = repo_dot_genex.join("skills/repo");
     fs::create_dir_all(&repo_skill_dir).expect("create repo skill dir");
     fs::write(
         repo_skill_dir.join("SKILL.md"),
@@ -826,7 +826,7 @@ async fn skills_for_cwd_without_fs_skips_repo_roots() {
             user_config_layer(&genex_home, ""),
             ConfigLayerEntry::new(
                 ConfigLayerSource::Project {
-                    dot_genex_folder: repo_dot_codex.abs(),
+                    dot_genex_folder: repo_dot_genex.abs(),
                 },
                 toml::Value::Table(toml::map::Map::new()),
             ),

@@ -428,7 +428,7 @@ fn executor_aliases_preserve_literal_backslashes_in_package_ids() {
 async fn host_alias_roots_follow_core_discovery_order() -> Result<(), Box<dyn std::error::Error>> {
     let unique = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
     let parent = std::env::temp_dir().join(format!(
-        "codex-skills-extension-alias-order-{}-{unique}",
+        "genex-skills-extension-alias-order-{}-{unique}",
         std::process::id()
     ));
     let user_root_path = parent.join("user-root");
@@ -808,7 +808,7 @@ async fn singleton_plugin_versions_share_the_marketplace_alias_root()
 -> Result<(), Box<dyn std::error::Error>> {
     let unique = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
     let parent = std::env::temp_dir().join(format!(
-        "codex-skills-extension-marketplace-alias-{}-{unique}",
+        "genex-skills-extension-marketplace-alias-{}-{unique}",
         std::process::id()
     ));
     let marketplace_path = parent.join("plugins/cache/test-curated");
