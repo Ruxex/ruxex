@@ -51,7 +51,7 @@ async fn exec_includes_output_schema_in_request() -> anyhow::Result<()> {
     assert_eq!(
         format,
         &serde_json::json!({
-            "name": "codex_output_schema",
+            "name": "genex_output_schema",
             "type": "json_schema",
             "strict": true,
             "schema": expected_schema,

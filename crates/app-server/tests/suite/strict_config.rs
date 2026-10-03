@@ -82,7 +82,7 @@ foo = "bar"
 "#,
     )?;
 
-    let output = Command::new(genex_utils_cargo_bin::cargo_bin("codex-app-server")?)
+    let output = Command::new(genex_utils_cargo_bin::cargo_bin("genex-app-server")?)
         .env("GENEX_HOME", genex_home.path())
         .env(
             "CODEX_APP_SERVER_MANAGED_CONFIG_PATH",
@@ -122,7 +122,7 @@ fn managed_auth_requirements_fail_closed_for_standalone_app_server() -> Result<(
         std::fs::write(genex_home.path().join("requirements.toml"), requirements)?;
         std::fs::write(genex_home.path().join("config.toml"), config)?;
 
-        let output = Command::new(genex_utils_cargo_bin::cargo_bin("codex-app-server")?)
+        let output = Command::new(genex_utils_cargo_bin::cargo_bin("genex-app-server")?)
             .env("GENEX_HOME", genex_home.path())
             .env(
                 "CODEX_APP_SERVER_MANAGED_CONFIG_PATH",

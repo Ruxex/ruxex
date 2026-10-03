@@ -5,5 +5,5 @@ reason = "codex CLI binary"
 
 [[production]]
 package = "genex-app-server"
-bin = "codex-app-server"
-reason = "app-server binary"
+bin = "genex-app-server"
+reason = "Genex app-server binary"

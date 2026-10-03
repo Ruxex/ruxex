@@ -184,7 +184,7 @@ fn serializes_text_schema_with_strict_format() {
 
     assert_eq!(
         format.get("name"),
-        Some(&serde_json::Value::String("codex_output_schema".into()))
+        Some(&serde_json::Value::String("genex_output_schema".into()))
     );
     assert_eq!(
         format.get("type"),

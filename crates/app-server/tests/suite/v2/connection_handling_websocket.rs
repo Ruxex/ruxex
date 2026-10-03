@@ -313,7 +313,7 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
         "--ws-issuer".to_string(),
         "codex-enroller".to_string(),
         "--ws-audience".to_string(),
-        "codex-app-server".to_string(),
+        "genex-app-server".to_string(),
         "--ws-max-clock-skew-seconds".to_string(),
         "1".to_string(),
     ];
@@ -325,7 +325,7 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
         json!({
             "exp": OffsetDateTime::now_utc().unix_timestamp() - 30,
             "iss": "codex-enroller",
-            "aud": "codex-app-server",
+            "aud": "genex-app-server",
         }),
     )?;
     assert_websocket_connect_rejected(bind_addr, Some(expired_token.as_str())).await?;
@@ -339,7 +339,7 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
             "exp": OffsetDateTime::now_utc().unix_timestamp() + 60,
             "nbf": OffsetDateTime::now_utc().unix_timestamp() + 30,
             "iss": "codex-enroller",
-            "aud": "codex-app-server",
+            "aud": "genex-app-server",
         }),
     )?;
     assert_websocket_connect_rejected(bind_addr, Some(not_yet_valid_token.as_str())).await?;
@@ -349,7 +349,7 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
         json!({
             "exp": OffsetDateTime::now_utc().unix_timestamp() + 60,
             "iss": "someone-else",
-            "aud": "codex-app-server",
+            "aud": "genex-app-server",
         }),
     )?;
     assert_websocket_connect_rejected(bind_addr, Some(wrong_issuer_token.as_str())).await?;
@@ -369,7 +369,7 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
         json!({
             "exp": OffsetDateTime::now_utc().unix_timestamp() + 60,
             "iss": "codex-enroller",
-            "aud": "codex-app-server",
+            "aud": "genex-app-server",
         }),
     )?;
     assert_websocket_connect_rejected(bind_addr, Some(wrong_signature_token.as_str())).await?;
@@ -379,7 +379,7 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
         json!({
             "exp": OffsetDateTime::now_utc().unix_timestamp() + 60,
             "iss": "codex-enroller",
-            "aud": "codex-app-server",
+            "aud": "genex-app-server",
         }),
     )?;
     let mut ws = connect_websocket_with_bearer(bind_addr, Some(valid_token.as_str())).await?;
@@ -495,7 +495,7 @@ pub(super) async fn spawn_websocket_server_with_args(
     listen_url: &str,
     extra_args: &[String],
 ) -> Result<(Child, SocketAddr)> {
-    let program = genex_utils_cargo_bin::cargo_bin("codex-app-server")
+    let program = genex_utils_cargo_bin::cargo_bin("genex-app-server")
         .context("should find app-server binary")?;
     let mut cmd = Command::new(program);
     cmd.arg("--listen")
@@ -632,7 +632,7 @@ async fn run_websocket_server_to_completion_with_args(
     listen_url: &str,
     extra_args: &[String],
 ) -> Result<std::process::Output> {
-    let program = genex_utils_cargo_bin::cargo_bin("codex-app-server")
+    let program = genex_utils_cargo_bin::cargo_bin("genex-app-server")
         .context("should find app-server binary")?;
     let mut cmd = Command::new(program);
     cmd.arg("--listen")

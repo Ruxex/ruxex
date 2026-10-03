@@ -73,7 +73,7 @@ use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::registry::Registry;
 use tracing_subscriber::util::SubscriberInitExt;
 
-const SQLITE_RECOVERY_CONFIG_WARNING_SUMMARY: &str = "Codex rebuilt its local database.";
+const SQLITE_RECOVERY_CONFIG_WARNING_SUMMARY: &str = "Genex rebuilt its local database.";
 
 fn is_unsupported_untrusted_approval_policy_error(err: &std::io::Error) -> bool {
     err.get_ref().is_some_and(
@@ -138,7 +138,7 @@ pub use crate::transport::auth::AppServerWebsocketAuthSettings;
 pub use crate::transport::auth::WebsocketAuthCliMode;
 
 const LOG_FORMAT_ENV_VAR: &str = "LOG_FORMAT";
-const OTEL_SERVICE_NAME: &str = "codex-app-server";
+const OTEL_SERVICE_NAME: &str = "genex-app-server";
 #[cfg(debug_assertions)]
 const TEST_USER_CONFIG_FILE_ENV_VAR: &str = "CODEX_APP_SERVER_TEST_USER_CONFIG_FILE";
 
@@ -1247,7 +1247,7 @@ async fn init_sqlite_state_db_with_fresh_start_on_corruption(
 
         let original_error = err.to_string();
         emit_state_db_backup_warning(&format!(
-            "Codex local database at {} appears damaged. Moving it into a backup folder so the app server can rebuild it from saved data.",
+            "Genex local database at {} appears damaged. Moving it into a backup folder so the app server can rebuild it from saved data.",
             database_path.display()
         ));
         let backups = genex_state::backup_runtime_db_for_fresh_start(database_path.as_path())
@@ -1259,7 +1259,7 @@ async fn init_sqlite_state_db_with_fresh_start_on_corruption(
             })?;
         for backup in &backups {
             emit_state_db_backup_warning(&format!(
-                "Moved damaged Codex local database file {} to {}",
+                "Moved damaged Genex local database file {} to {}",
                 backup.original_path.display(),
                 backup.backup_path.display()
             ));
@@ -1417,7 +1417,7 @@ mod tests {
     #[cfg(debug_assertions)]
     #[test]
     fn debug_test_user_config_file_overrides_loader_path() {
-        let path = std::env::temp_dir().join("codex-app-server-test-config.toml");
+        let path = std::env::temp_dir().join("genex-app-server-test-config.toml");
         let loader_overrides = loader_overrides_with_test_user_config_file(
             LoaderOverrides::default(),
             Some(path.clone()),

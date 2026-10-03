@@ -52,7 +52,7 @@ const READ_TIMEOUT: Duration = Duration::from_secs(10);
 #[test]
 fn standalone_app_server_emits_json_info_events() -> Result<()> {
     let genex_home = TempDir::new()?;
-    let event = app_server_json_shutdown_event("codex-app-server", &[], genex_home.path())?;
+    let event = app_server_json_shutdown_event("genex-app-server", &[], genex_home.path())?;
 
     assert_eq!(
         event,
@@ -64,7 +64,7 @@ fn standalone_app_server_emits_json_info_events() -> Result<()> {
                 "remaining_connection_count": 0,
                 "shutdown_forced": false,
             },
-            "target": "codex_app_server",
+            "target": "genex_app_server",
         })
     );
 
@@ -173,7 +173,7 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
                     attributes,
                     BTreeMap::from([
                         ("error", "none"),
-                        ("originator", "codex-app-server"),
+                        ("originator", "genex-app-server"),
                         ("status", "success"),
                     ]),
                     "metric {name} must preserve its production dimensions"

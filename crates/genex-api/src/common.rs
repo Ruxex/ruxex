@@ -354,7 +354,7 @@ pub fn create_text_param_for_request(
             r#type: TextFormatType::JsonSchema,
             strict: output_schema_strict,
             schema: schema.clone(),
-            name: "codex_output_schema".to_string(),
+            name: "genex_output_schema".to_string(),
         }),
     })
 }

@@ -57,7 +57,7 @@ deleted normally. Ordinary client-controlled threads keep their existing behavio
 
 ## User verification (experimental)
 
-Codex app-server advertises `provider/elicitation.userVerification` to the
+Genex app-server advertises `provider/elicitation.userVerification` to the
 host-owned plugin service for bundled, in-process TUI sessions (`codex-tui`) and
 local stdio desktop sessions (`Codex Desktop`) on devices with supported biometric
 hardware and the `experimentalApi` opt-in. This is an app-server decision,
@@ -136,7 +136,7 @@ The worker retains its existing cold-file checks, maintenance and writer locks,
 concurrency limit, and cooldown. Acknowledgement does not imply completion or that
 any files were compressed; failures are reported through existing logs and metrics.
 There are no progress notifications or cancellation API. Clients sharing this
-Codex home must support compressed rollout files, including shared histories.
+Genex home must support compressed rollout files, including shared histories.
 
 ## Managed model provider requirements
 

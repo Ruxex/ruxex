@@ -31,10 +31,10 @@
 //! `MessageProcessor` with overload or internal errors so approval flows do
 //! not hang indefinitely.
 //!
-//! # Relationship to `codex-app-server-client`
+//! # Relationship to `genex-app-server-client`
 //!
 //! This module provides the low-level runtime handle ([`InProcessClientHandle`]).
-//! Higher-level callers (TUI, exec) should go through `codex-app-server-client`,
+//! Higher-level callers (TUI, exec) should go through `genex-app-server-client`,
 //! which wraps this module behind a worker task with async request/response
 //! helpers, surface-specific startup policy, and bounded shutdown.
 
@@ -267,7 +267,7 @@ impl InProcessClientSender {
 /// Handle used by an in-process client to call app-server and consume events.
 ///
 /// This is the low-level runtime handle. Higher-level callers should usually go
-/// through `codex-app-server-client`, which adds worker-task buffering,
+/// through `genex-app-server-client`, which adds worker-task buffering,
 /// request/response helpers, and surface-specific startup policy.
 pub struct InProcessClientHandle {
     client: InProcessClientSender,
@@ -837,7 +837,7 @@ mod tests {
             enable_api_key_env: false,
             initialize: InitializeParams {
                 client_info: ClientInfo {
-                    name: "codex-in-process-test".to_string(),
+                    name: "genex-in-process-test".to_string(),
                     title: None,
                     version: "0.0.0".to_string(),
                 },

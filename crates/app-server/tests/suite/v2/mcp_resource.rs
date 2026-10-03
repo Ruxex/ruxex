@@ -117,13 +117,13 @@ use tokio::task::JoinHandle;
 use tokio::time::timeout;
 
 pub(super) const DEFAULT_READ_TIMEOUT: Duration = Duration::from_secs(10);
-const TEST_RESOURCE_URI: &str = "test://codex/resource";
+const TEST_RESOURCE_URI: &str = "test://genex/resource";
 pub(super) const TEST_WIDGET_RESOURCE_URI: &str = "ui://widget/checkout-session.html";
-const TEST_BLOB_RESOURCE_URI: &str = "test://codex/resource.bin";
+const TEST_BLOB_RESOURCE_URI: &str = "test://genex/resource.bin";
 const TEST_RESOURCE_BLOB: &str = "YmluYXJ5LXJlc291cmNl";
 const TEST_RESOURCE_TEXT: &str = "Resource body from the MCP server.";
-const TEST_ERROR_RESOURCE_URI: &str = "test://codex/error";
-const TEST_ELICITATION_RESOURCE_URI: &str = "test://codex/elicitation";
+const TEST_ERROR_RESOURCE_URI: &str = "test://genex/error";
+const TEST_ELICITATION_RESOURCE_URI: &str = "test://genex/elicitation";
 const TEST_ELICITATION_RESOURCE_TEXT: &str = "Threadless elicitation was declined.";
 const SKILL_NAME: &str = "demo-plugin:deploy";
 const RAW_SKILL_DESCRIPTION: &str = "Deploy\nthrough the <hosted> orchestrator.";

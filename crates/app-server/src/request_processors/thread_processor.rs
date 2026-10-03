@@ -2148,7 +2148,7 @@ impl ThreadRequestProcessor {
         let response_history = thread_history.clone();
         let NewThread {
             thread_id: resumed_thread_id,
-            thread: codex_thread,
+            thread: genex_thread,
             session_configured,
             ..
         } = self
@@ -2167,7 +2167,7 @@ impl ThreadRequestProcessor {
                 "thread {thread_id} reloaded as {resumed_thread_id} after revert"
             )));
         }
-        codex_thread
+        genex_thread
             .restore_thread_settings(settings)
             .await
             .map_err(|err| {
@@ -2176,7 +2176,7 @@ impl ThreadRequestProcessor {
                 ))
             })?;
         // Replace the resume-time checkpoint written from the original config.
-        codex_thread
+        genex_thread
             .checkpoint_thread_settings()
             .await
             .map_err(|err| {
@@ -2185,7 +2185,7 @@ impl ThreadRequestProcessor {
                 ))
             })?;
         Self::set_app_server_client_info(
-            codex_thread.as_ref(),
+            genex_thread.as_ref(),
             app_server_client_name,
             app_server_client_version,
         )
@@ -2200,12 +2200,12 @@ impl ThreadRequestProcessor {
         // Start the replacement listener from that state instead of depending on the requesting
         // connection still being open.
         let thread_state = self.thread_state_manager.thread_state(thread_id).await;
-        self.ensure_listener_task_running(thread_id, Arc::clone(&codex_thread), thread_state)
+        self.ensure_listener_task_running(thread_id, Arc::clone(&genex_thread), thread_state)
             .await?;
         let mut thread = self
             .load_thread_from_resume_source_or_send_internal(
                 thread_id,
-                codex_thread.as_ref(),
+                genex_thread.as_ref(),
                 &response_history,
                 rollout_path.as_path(),
                 Some(resume_source_thread),
@@ -3804,7 +3804,7 @@ impl ThreadRequestProcessor {
         {
             Ok(NewThread {
                 thread_id,
-                thread: codex_thread,
+                thread: genex_thread,
                 session_configured,
                 ..
             }) => {
@@ -3814,7 +3814,7 @@ impl ThreadRequestProcessor {
                         .upsert_thread(&thread_id.to_string())
                         .await;
                     // Invoke idle work before arming subscriber-based unloading.
-                    codex_thread
+                    genex_thread
                         .emit_thread_idle_lifecycle_if_idle(ThreadIdleCause::Completed)
                         .await;
                     if let ThreadResumeTarget::DaemonRecovery(Some(saved)) = target {
@@ -3822,13 +3822,13 @@ impl ThreadRequestProcessor {
                             .await;
                     }
                     let state = self.thread_state_manager.thread_state(thread_id).await;
-                    self.ensure_listener_task_running(thread_id, Arc::clone(&codex_thread), state)
+                    self.ensure_listener_task_running(thread_id, Arc::clone(&genex_thread), state)
                         .await?;
                     return Ok(ControlFlow::Break(()));
                 };
                 let request_id = request_id.clone();
                 if let Err(err) = Self::set_app_server_client_info(
-                    codex_thread.as_ref(),
+                    genex_thread.as_ref(),
                     app_server_client_name,
                     app_server_client_version,
                 )
@@ -3837,7 +3837,7 @@ impl ThreadRequestProcessor {
                     self.outgoing.send_error(request_id, err).await;
                     return Ok(ControlFlow::Break(()));
                 }
-                let instruction_sources = codex_thread.legacy_instruction_sources().await;
+                let instruction_sources = genex_thread.legacy_instruction_sources().await;
                 let SessionConfiguredEvent { rollout_path, .. } = session_configured;
                 let Some(rollout_path) = rollout_path else {
                     let error =
@@ -3885,7 +3885,7 @@ impl ThreadRequestProcessor {
                 let mut thread = match self
                     .load_thread_from_resume_source_or_send_internal(
                         thread_id,
-                        codex_thread.as_ref(),
+                        genex_thread.as_ref(),
                         &response_history,
                         rollout_path.as_path(),
                         resume_source_thread,
@@ -3901,7 +3901,7 @@ impl ThreadRequestProcessor {
                         return Ok(ControlFlow::Break(()));
                     }
                 };
-                thread.thread_source = codex_thread
+                thread.thread_source = genex_thread
                     .config_snapshot()
                     .await
                     .thread_source
@@ -3922,7 +3922,7 @@ impl ThreadRequestProcessor {
                     thread_status,
                     /*has_live_in_progress_turn*/ false,
                 );
-                let config_snapshot = codex_thread.config_snapshot().await;
+                let config_snapshot = genex_thread.config_snapshot().await;
                 let (turns_backwards_cursor, items_backwards_cursor) =
                     if matches!(config_snapshot.history_mode, ThreadHistoryMode::Paginated) {
                         match Self::paginated_resume_backwards_cursors(
@@ -4014,7 +4014,7 @@ impl ThreadRequestProcessor {
                         &self.outgoing,
                         connection_id,
                         thread_id,
-                        codex_thread.as_ref(),
+                        genex_thread.as_ref(),
                         token_usage_turn_id,
                     )
                     .await;
@@ -4022,7 +4022,7 @@ impl ThreadRequestProcessor {
                 self.thread_goal_processor
                     .emit_resume_goal_snapshot(thread_id)
                     .await;
-                codex_thread
+                genex_thread
                     .emit_thread_idle_lifecycle_if_idle(ThreadIdleCause::Completed)
                     .await;
             }
@@ -4466,7 +4466,7 @@ impl ThreadRequestProcessor {
         if stored_thread.archived_at.is_some() {
             let thread_id = stored_thread.thread_id;
             return Err(invalid_request(format!(
-                "session {thread_id} is archived. Run `codex unarchive {thread_id}` to unarchive it first."
+                "session {thread_id} is archived. Run `genex unarchive {thread_id}` to unarchive it first."
             )));
         }
 

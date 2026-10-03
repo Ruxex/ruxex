@@ -1192,7 +1192,7 @@ async fn command_exec_process_ids_are_connection_scoped_and_disconnect_terminate
     let genex_home = TempDir::new()?;
     create_config_toml(genex_home.path(), &server.uri(), "never")?;
     let marker = format!(
-        "codex-command-exec-marker-{}",
+        "genex-command-exec-marker-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)?
             .as_nanos()

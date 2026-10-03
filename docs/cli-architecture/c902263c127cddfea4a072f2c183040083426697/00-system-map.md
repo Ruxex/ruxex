@@ -27,7 +27,7 @@ argv
 | 設定 | [`genex-core`](../../../crates/core/src/config/mod.rs) と [`genex-config`](../../../crates/config/src/lib.rs) | 読み込み、上書き、プロファイル、検証、実行時設定 |
 | エージェントのオーケストレーション | [`genex-core`](../../../crates/core/src/lib.rs) | スレッド、ターン、ツール、承認、モデルリクエスト、共有状態 |
 | UI 表示 | [`codex-tui`](../../../crates/tui/src/lib.rs) | ターミナルのイベントループ、履歴セル、入力、レンダリング |
-| App-server の実行時処理 | [`codex-app-server`](../../../crates/app-server/src/lib.rs) | リクエスト処理、トランスポート、デーモン向けランタイム、ライフサイクル |
+| App-server の実行時処理 | [`genex-app-server`](../../../crates/app-server/src/lib.rs) | リクエスト処理、トランスポート、デーモン向けランタイム、ライフサイクル |
 | 公開プロトコル | [`genex-app-server-protocol`](../../../crates/app-server-protocol/src/lib.rs) と [`genex-protocol`](../../../crates/protocol/src/lib.rs) | ワイヤー型、通知、リクエスト、共有ドメイン型 |
 | プロバイダー/API 境界 | [`genex-api`](../../../crates/genex-api/src/lib.rs)、[`genex-client`](../../../crates/genex-client/src/lib.rs) | プロバイダーへのリクエスト、ストリーミング、再試行、認証ヘッダー、トランスポート |
 | 実行/ポリシー | [`genex-tools`](../../../crates/tools/src/lib.rs)、[`genex-execpolicy`](../../../crates/execpolicy/src/lib.rs)、[`genex-sandboxing`](../../../crates/sandboxing/src/lib.rs) | ツールレジストリ、コマンドポリシー、ホストのサンドボックス構築 |
@@ -41,7 +41,7 @@ argv
 
 ### プロトコルとサーバー
 
-`genex-app-server-protocol` と `genex-protocol` は、シリアライズ可能な形とドメイン値を定義します。`codex-app-server` はリクエストを処理し、状態を調整します。プロトコル型がプロトコルクレートで定義されているからといって、そのクレートが動作を所有するとは限りません。
+`genex-app-server-protocol` と `genex-protocol` は、シリアライズ可能な形とドメイン値を定義します。`genex-app-server` はリクエストを処理し、状態を調整します。プロトコル型がプロトコルクレートで定義されているからといって、そのクレートが動作を所有するとは限りません。
 
 ### プロバイダー境界とエージェントの動作
 

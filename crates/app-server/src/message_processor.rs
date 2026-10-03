@@ -587,16 +587,16 @@ impl MessageProcessor {
             Arc::clone(&self.outgoing),
             request_context.clone(),
             async {
-                let codex_request = deserialize_client_request(request);
-                let result = match codex_request {
-                    Ok(codex_request) => {
+                let genex_request = deserialize_client_request(request);
+                let result = match genex_request {
+                    Ok(genex_request) => {
                         // Websocket callers finalize outbound readiness in lib.rs after mirroring
                         // session state into outbound state and sending initialize notifications to
                         // this specific connection. Passing `None` avoids marking the connection
                         // ready too early from inside the shared request handler.
                         self.handle_client_request(
                             request_id.clone(),
-                            codex_request,
+                            genex_request,
                             Arc::clone(&session),
                             /*outbound_initialized*/ None,
                             request_context.clone(),
@@ -852,7 +852,7 @@ impl MessageProcessor {
     async fn handle_client_request(
         self: &Arc<Self>,
         connection_request_id: ConnectionRequestId,
-        codex_request: ClientRequest,
+        genex_request: ClientRequest,
         session: Arc<ConnectionSessionState>,
         // `Some(...)` means the caller wants initialize to immediately mark the
         // connection outbound-ready. Websocket JSON-RPC calls pass `None` so
@@ -861,7 +861,7 @@ impl MessageProcessor {
         request_context: RequestContext,
     ) -> Result<(), JSONRPCErrorError> {
         let connection_id = connection_request_id.connection_id;
-        if let ClientRequest::Initialize { request_id, params } = codex_request {
+        if let ClientRequest::Initialize { request_id, params } = genex_request {
             let connection_initialized = self
                 .initialize_processor
                 .initialize(
@@ -881,7 +881,7 @@ impl MessageProcessor {
 
         self.dispatch_initialized_client_request(
             connection_request_id,
-            codex_request,
+            genex_request,
             session,
             request_context,
         )
@@ -891,7 +891,7 @@ impl MessageProcessor {
     async fn dispatch_initialized_client_request(
         self: &Arc<Self>,
         connection_request_id: ConnectionRequestId,
-        codex_request: ClientRequest,
+        genex_request: ClientRequest,
         session: Arc<ConnectionSessionState>,
         request_context: RequestContext,
     ) -> Result<(), JSONRPCErrorError> {
@@ -899,13 +899,13 @@ impl MessageProcessor {
             return Err(invalid_request("Not initialized"));
         }
 
-        if let Some(reason) = codex_request.experimental_reason()
+        if let Some(reason) = genex_request.experimental_reason()
             && !session.experimental_api_enabled()
         {
             return Err(invalid_request(experimental_required_message(reason)));
         }
         let connection_id = connection_request_id.connection_id;
-        let (turn_admission, recheck_turn_admission) = match &codex_request {
+        let (turn_admission, recheck_turn_admission) = match &genex_request {
             ClientRequest::ThreadStart { .. }
             | ClientRequest::ThreadFork { .. }
             | ClientRequest::ThreadResume { .. }
@@ -923,7 +923,7 @@ impl MessageProcessor {
             _ => (None, false),
         };
 
-        let serialization_scope = codex_request.serialization_scope();
+        let serialization_scope = genex_request.serialization_scope();
         let error_request_id = connection_request_id.clone();
         let rpc_gate = Arc::clone(&session.rpc_gate);
         let processor = Arc::clone(self);
@@ -942,7 +942,7 @@ impl MessageProcessor {
                 // Keep queued requests small to avoid large stack temporaries during construction.
                 let result = Box::pin(processor_for_request.handle_initialized_client_request(
                     connection_request_id,
-                    codex_request,
+                    genex_request,
                     request_context,
                     session,
                 ))
@@ -970,7 +970,7 @@ impl MessageProcessor {
     async fn handle_initialized_client_request(
         self: Arc<Self>,
         connection_request_id: ConnectionRequestId,
-        codex_request: ClientRequest,
+        genex_request: ClientRequest,
         request_context: RequestContext,
         session: Arc<ConnectionSessionState>,
     ) -> Result<(), JSONRPCErrorError> {
@@ -980,9 +980,9 @@ impl MessageProcessor {
         let client_mcp_extensions = session.client_mcp_extensions();
         let request_id = ConnectionRequestId {
             connection_id,
-            request_id: codex_request.id().clone(),
+            request_id: genex_request.id().clone(),
         };
-        let result: Result<Option<ClientResponsePayload>, JSONRPCErrorError> = match codex_request {
+        let result: Result<Option<ClientResponsePayload>, JSONRPCErrorError> = match genex_request {
             ClientRequest::Initialize { .. } => {
                 panic!("Initialize should be handled before initialized request dispatch");
             }

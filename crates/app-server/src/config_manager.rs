@@ -29,11 +29,11 @@ use tracing::warn;
 
 #[derive(Debug, thiserror::Error)]
 #[error(
-    "Your organization's required model provider settings changed. Restart Codex to apply them; this request was not sent"
+    "Your organization's required model provider settings changed. Restart Genex to apply them; this request was not sent"
 )]
 pub(crate) struct ModelProviderRequirementsChanged;
 
-/// Shared app-server entry point for loading effective Codex configuration.
+/// Shared app-server entry point for loading effective Genex configuration.
 #[derive(Clone)]
 pub(crate) struct ConfigManager {
     genex_home: PathBuf,

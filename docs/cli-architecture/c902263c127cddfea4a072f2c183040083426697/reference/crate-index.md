@@ -12,7 +12,7 @@
 | プロバイダー/モデル | `genex-model-provider`、`genex-models-manager` | プロバイダーの機能/設定とモデルカタログ |
 | API 境界 | `genex-api`、`genex-client` | リクエスト/応答ストリーム、プロバイダーエンドポイント、再試行、トランスポートテレメトリ |
 | プロトコル | `genex-protocol`、`genex-app-server-protocol` | ドメイン型とワイヤー型、スキーマ生成、実験的 API マーカー |
-| サーバー | `codex-app-server`、`genex-app-server-transport`、`genex-app-server-client` | リクエスト処理、トランスポート、クライアント/サーバーのライフサイクル |
+| サーバー | `genex-app-server`、`genex-app-server-transport`、`genex-app-server-client` | リクエスト処理、トランスポート、クライアント/サーバーのライフサイクル |
 | ツール | `genex-tools` | 汎用ツール呼び出し/出力の Trait と型 |
 | ポリシー/サンドボックス | `genex-execpolicy`、`genex-sandboxing`、プラットフォーム用サンドボックスクレート | ルール、承認/サンドボックスのプリミティブ、ホスト側の適用 |
 | 永続化 | `genex-thread-store`、`genex-rollout`、`genex-history`、`genex-state` | スレッド/キューストア、ロールアウト/履歴、ローカル状態 |

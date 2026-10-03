@@ -93,7 +93,7 @@ async fn turn_start_accepts_output_schema_v2() -> Result<()> {
     assert_eq!(
         format,
         &serde_json::json!({
-            "name": "codex_output_schema",
+            "name": "genex_output_schema",
             "type": "json_schema",
             "strict": true,
             "schema": output_schema,
@@ -174,7 +174,7 @@ async fn turn_start_output_schema_is_per_turn_v2() -> Result<()> {
     assert_eq!(
         payload1.pointer("/text/format"),
         Some(&serde_json::json!({
-            "name": "codex_output_schema",
+            "name": "genex_output_schema",
             "type": "json_schema",
             "strict": true,
             "schema": output_schema,

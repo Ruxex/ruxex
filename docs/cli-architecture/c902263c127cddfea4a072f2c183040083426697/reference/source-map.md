@@ -8,10 +8,10 @@
 | 対話 TUI | [`None | Agents`](../../../../crates/cli/src/main.rs#L981) でディスパッチ | `codex-tui`、`genex-core` |
 | `exec` | [`ExecCli` のフィールドとディスパッチ](../../../../crates/cli/src/main.rs#L1034) | `codex-exec` |
 | `review` | [`ReviewCommand` とディスパッチ](../../../../crates/cli/src/main.rs#L266) | `codex-exec`、`genex-core` |
-| セッションコマンド | [`ResumeCommand`～`ForkCommand`](../../../../crates/cli/src/main.rs#L304) と [L1284](../../../../crates/cli/src/main.rs#L1284) でのディスパッチ | `codex-tui`、`codex-app-server`、`genex-thread-store` |
+| セッションコマンド | [`ResumeCommand`～`ForkCommand`](../../../../crates/cli/src/main.rs#L304) と [L1284](../../../../crates/cli/src/main.rs#L1284) でのディスパッチ | `codex-tui`、`genex-app-server`、`genex-thread-store` |
 | MCP | [`McpCli`](../../../../crates/cli/src/mcp_cmd.rs#L56)、[L223](../../../../crates/cli/src/mcp_cmd.rs#L223) で実行 | `genex-cli`、MCP/Core クレート |
 | プラグイン | [`PluginCli`](../../../../crates/cli/src/plugin_cmd.rs#L39) | `genex-cli`、`genex-plugin`、app-server |
-| App-server | [`AppServerCommand`](../../../../crates/cli/src/main.rs#L473)、[L1119](../../../../crates/cli/src/main.rs#L1119) でディスパッチ | `codex-app-server`、デーモン、プロトコル |
+| App-server | [`AppServerCommand`](../../../../crates/cli/src/main.rs#L473)、[L1119](../../../../crates/cli/src/main.rs#L1119) でディスパッチ | `genex-app-server`、デーモン、プロトコル |
 | 認証 | [`LoginCommand` / `LogoutCommand`](../../../../crates/cli/src/main.rs#L452)、[L1392](../../../../crates/cli/src/main.rs#L1392) でディスパッチ | `genex-login` |
 | 診断 | [`DoctorCommand` のディスパッチ](../../../../crates/cli/src/main.rs#L1428) | `genex-cli` の doctor モジュール、`genex-api`、Core 設定 |
 | サンドボックス | [`HostSandboxArgs` とディスパッチ](../../../../crates/cli/src/main.rs#L414) | `genex-cli`、`genex-sandboxing`、プラットフォーム用クレート |

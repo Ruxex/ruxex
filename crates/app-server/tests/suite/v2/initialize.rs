@@ -295,7 +295,7 @@ async fn turn_start_notify_payload_includes_initialize_client_name() -> Result<(
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
     let genex_home = TempDir::new()?;
     let notify_file = genex_home.path().join("notify.json");
-    let notify_capture = cargo_bin("codex-app-server-test-notify-capture")?;
+    let notify_capture = cargo_bin("genex-app-server-test-notify-capture")?;
     let notify_capture = notify_capture
         .to_str()
         .expect("notify capture path should be valid UTF-8");

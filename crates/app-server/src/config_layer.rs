@@ -5,7 +5,7 @@ use genex_config::ConfigLayer;
 use genex_config::ConfigLayerMetadata;
 use genex_config::ConfigLayerSource;
 
-/// Converts a config-layer source owned by `codex-config` into the app-server wire type owned by
+/// Converts a config-layer source owned by `genex-config` into the app-server wire type owned by
 /// `genex-app-server-protocol`.
 ///
 /// The types stay separate so app-server protocol ownership does not leak into the config domain
@@ -29,7 +29,7 @@ pub(crate) fn config_layer_source_to_api(source: ConfigLayerSource) -> ApiConfig
     }
 }
 
-/// Converts config-layer metadata owned by `codex-config` into the app-server wire type owned by
+/// Converts config-layer metadata owned by `genex-config` into the app-server wire type owned by
 /// `genex-app-server-protocol`.
 ///
 /// The types stay separate so app-server protocol ownership does not leak into the config domain
@@ -44,7 +44,7 @@ pub(crate) fn config_layer_metadata_to_api(
     }
 }
 
-/// Converts a config layer owned by `codex-config` into the app-server wire type owned by
+/// Converts a config layer owned by `genex-config` into the app-server wire type owned by
 /// `genex-app-server-protocol`.
 ///
 /// The types stay separate so app-server protocol ownership does not leak into the config domain

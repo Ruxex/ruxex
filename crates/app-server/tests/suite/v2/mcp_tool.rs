@@ -254,7 +254,7 @@ async fn mcp_server_tool_call_forwards_only_server_extensions() -> Result<()> {
         .await?;
     mcp.initialize_with_capabilities(
         ClientInfo {
-            name: "codex_test".to_string(),
+            name: "genex_test".to_string(),
             title: None,
             version: "0.1.0".to_string(),
         },
@@ -349,7 +349,7 @@ async fn model_mcp_tool_call_uses_session_client_extensions() -> Result<()> {
         .await?;
     mcp.initialize_with_capabilities(
         ClientInfo {
-            name: "codex_test".to_string(),
+            name: "genex_test".to_string(),
             title: None,
             version: "0.1.0".to_string(),
         },
@@ -775,7 +775,7 @@ async fn initialize_elicitation_app_server(
         .await?;
     mcp.initialize_with_capabilities(
         ClientInfo {
-            name: "codex_test".to_string(),
+            name: "genex_test".to_string(),
             title: None,
             version: "0.1.0".to_string(),
         },

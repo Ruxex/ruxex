@@ -427,7 +427,7 @@ async fn guardian_review_does_not_discover_executor_mcp() -> Result<()> {
         .enable_feature(Feature::GuardianApproval)
         .write(genex_home.path())?;
     std::fs::write(executor_home.path().join("config.toml"), "")?;
-    let codex_bin = toml::Value::String(
+    let genex_bin = toml::Value::String(
         genex_utils_cargo_bin::cargo_bin("genex")?
             .to_string_lossy()
             .into_owned(),
@@ -437,7 +437,7 @@ async fn guardian_review_does_not_discover_executor_mcp() -> Result<()> {
     std::fs::write(
         genex_home.path().join("environments.toml"),
         format!(
-            "default = \"{EXECUTOR_ID}\"\ninclude_local = false\n\n[[environments]]\nid = \"{EXECUTOR_ID}\"\nprogram = {codex_bin}\nargs = [\"exec-server\", \"--listen\", \"stdio\"]\n[environments.env]\nGENEX_HOME = {executor_home_value}\n"
+            "default = \"{EXECUTOR_ID}\"\ninclude_local = false\n\n[[environments]]\nid = \"{EXECUTOR_ID}\"\nprogram = {genex_bin}\nargs = [\"exec-server\", \"--listen\", \"stdio\"]\n[environments.env]\nGENEX_HOME = {executor_home_value}\n"
         ),
     )?;
     let mut app_server = TestAppServer::builder()

@@ -36,11 +36,11 @@ const SCHEMA: &str = r#"
 "#;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn codex_returns_json_result_for_gpt5() -> anyhow::Result<()> {
-    codex_returns_json_result("gpt-5.4".to_string()).await
+async fn genex_returns_json_result_for_gpt5() -> anyhow::Result<()> {
+    genex_returns_json_result("gpt-5.4".to_string()).await
 }
 
-async fn codex_returns_json_result(model: String) -> anyhow::Result<()> {
+async fn genex_returns_json_result(model: String) -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
@@ -63,7 +63,7 @@ async fn codex_returns_json_result(model: String) -> anyhow::Result<()> {
             return false;
         };
 
-        format.get("name") == Some(&serde_json::Value::String("codex_output_schema".into()))
+        format.get("name") == Some(&serde_json::Value::String("genex_output_schema".into()))
             && format.get("type") == Some(&serde_json::Value::String("json_schema".into()))
             && format.get("strict") == Some(&serde_json::Value::Bool(true))
             && format.get("schema") == Some(&expected_schema)

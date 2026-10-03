@@ -1565,7 +1565,7 @@ async fn on_file_change_request_approval_response(
     item_id: String,
     pending_request_id: RequestId,
     receiver: oneshot::Receiver<ClientRequestResult>,
-    codex: Arc<GenexThread>,
+    genex: Arc<GenexThread>,
     thread_state: Arc<Mutex<ThreadState>>,
     permission_guard: ThreadWatchActiveGuard,
 ) {
@@ -1591,7 +1591,7 @@ async fn on_file_change_request_approval_response(
         }
     };
 
-    if let Err(err) = codex
+    if let Err(err) = genex
         .submit(Op::PatchApproval {
             id: item_id,
             decision,

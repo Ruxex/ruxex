@@ -92,7 +92,7 @@ pub fn app_server_json_shutdown_event(
             genex_home.join("managed_config.toml"),
         )
         .env("LOG_FORMAT", "json")
-        .env("RUST_LOG", "codex_app_server=info")
+        .env("RUST_LOG", "genex_app_server=info")
         .args(args)
         .output()?;
 
