@@ -153,7 +153,7 @@ mod tests {
         let argv = vec!["notify-command".to_string()];
         let environment = vec![
             (
-                OsString::from("CODEX_LEGACY_NOTIFY_SNAPSHOT"),
+                OsString::from("GENEX_LEGACY_NOTIFY_SNAPSHOT"),
                 OsString::from("captured"),
             ),
             (
@@ -175,7 +175,7 @@ mod tests {
         assert_eq!(
             configured_environment,
             vec![(
-                OsString::from("CODEX_LEGACY_NOTIFY_SNAPSHOT"),
+                OsString::from("GENEX_LEGACY_NOTIFY_SNAPSHOT"),
                 OsString::from("captured"),
             )]
         );
