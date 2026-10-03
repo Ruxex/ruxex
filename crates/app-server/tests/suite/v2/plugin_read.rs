@@ -1021,7 +1021,7 @@ async fn plugin_read_returns_share_context_for_shared_local_plugin() -> Result<(
     )?;
     write_plugin_marketplace(
         repo_root.path(),
-        "codex-curated",
+        "test-curated",
         "demo-plugin",
         "./demo-plugin",
     )?;
@@ -1162,7 +1162,7 @@ async fn plugin_read_keeps_remote_version_when_share_principals_are_missing() ->
     )?;
     write_plugin_marketplace(
         repo_root.path(),
-        "codex-curated",
+        "test-curated",
         "demo-plugin",
         "./demo-plugin",
     )?;
@@ -1253,7 +1253,7 @@ async fn plugin_read_falls_back_to_local_share_context_without_remote_auth() -> 
     write_plugins_enabled_config(&genex_home)?;
     write_plugin_marketplace(
         repo_root.path(),
-        "codex-curated",
+        "test-curated",
         "demo-plugin",
         "./demo-plugin",
     )?;
@@ -1305,7 +1305,7 @@ async fn plugin_read_fails_on_malformed_share_mapping() -> Result<()> {
     write_plugins_enabled_config(&genex_home)?;
     write_plugin_marketplace(
         repo_root.path(),
-        "codex-curated",
+        "test-curated",
         "demo-plugin",
         "./demo-plugin",
     )?;
@@ -1358,7 +1358,7 @@ async fn plugin_read_agent_plugin_excludes_nested_skills() -> Result<()> {
     write_plugins_enabled_config(&genex_home)?;
     write_plugin_marketplace(
         repo_root.path(),
-        "codex-curated",
+        "test-curated",
         "demo-plugin",
         "./plugins/demo-plugin",
     )?;
@@ -1433,7 +1433,7 @@ async fn plugin_read_returns_plugin_details_with_bundle_contents() -> Result<()>
     std::fs::write(
         repo_root.path().join(".agents/plugins/marketplace.json"),
         r#"{
-  "name": "codex-curated",
+  "name": "test-curated",
   "plugins": [
     {
       "name": "demo-plugin",
@@ -1575,14 +1575,14 @@ plugins = true
 name = "demo-plugin:thread-summarizer"
 enabled = false
 
-[plugins."demo-plugin@codex-curated"]
+[plugins."demo-plugin@test-curated"]
 enabled = true
 
-[hooks.state."demo-plugin@codex-curated:hooks/hooks.json:pre_tool_use:0:0"]
+[hooks.state."demo-plugin@test-curated:hooks/hooks.json:pre_tool_use:0:0"]
 enabled = false
 "#,
     )?;
-    write_installed_plugin(&genex_home, "codex-curated", "demo-plugin")?;
+    write_installed_plugin(&genex_home, "test-curated", "demo-plugin")?;
 
     let mut mcp = TestAppServer::builder()
         .with_genex_home(genex_home.path())
@@ -1603,9 +1603,9 @@ enabled = false
     let response: PluginReadResponse =
         timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
 
-    assert_eq!(response.plugin.marketplace_name, "codex-curated");
+    assert_eq!(response.plugin.marketplace_name, "test-curated");
     assert_eq!(response.plugin.marketplace_path, Some(marketplace_path));
-    assert_eq!(response.plugin.summary.id, "demo-plugin@codex-curated");
+    assert_eq!(response.plugin.summary.id, "demo-plugin@test-curated");
     assert_eq!(response.plugin.summary.name, "demo-plugin");
     assert_eq!(
         response.plugin.description.as_deref(),
@@ -1681,15 +1681,15 @@ enabled = false
         response.plugin.hooks,
         vec![
             genex_app_server_protocol::PluginHookSummary {
-                key: "demo-plugin@codex-curated:hooks/hooks.json:pre_tool_use:0:0".to_string(),
+                key: "demo-plugin@test-curated:hooks/hooks.json:pre_tool_use:0:0".to_string(),
                 event_name: HookEventName::PreToolUse,
             },
             genex_app_server_protocol::PluginHookSummary {
-                key: "demo-plugin@codex-curated:hooks/hooks.json:pre_tool_use:0:1".to_string(),
+                key: "demo-plugin@test-curated:hooks/hooks.json:pre_tool_use:0:1".to_string(),
                 event_name: HookEventName::PreToolUse,
             },
             genex_app_server_protocol::PluginHookSummary {
-                key: "demo-plugin@codex-curated:hooks/hooks.json:session_start:0:0".to_string(),
+                key: "demo-plugin@test-curated:hooks/hooks.json:session_start:0:0".to_string(),
                 event_name: HookEventName::SessionStart,
             },
         ]
@@ -2010,7 +2010,7 @@ async fn plugin_read_accepts_legacy_string_default_prompt() -> Result<()> {
     std::fs::write(
         repo_root.path().join(".agents/plugins/marketplace.json"),
         r#"{
-  "name": "codex-curated",
+  "name": "test-curated",
   "plugins": [
     {
       "name": "demo-plugin",
@@ -2142,7 +2142,7 @@ async fn plugin_read_returns_invalid_request_when_plugin_is_missing() -> Result<
     std::fs::write(
         repo_root.path().join(".agents/plugins/marketplace.json"),
         r#"{
-  "name": "codex-curated",
+  "name": "test-curated",
   "plugins": [
     {
       "name": "demo-plugin",
@@ -2198,7 +2198,7 @@ async fn plugin_read_returns_invalid_request_when_plugin_manifest_is_missing() -
     std::fs::write(
         repo_root.path().join(".agents/plugins/marketplace.json"),
         r#"{
-  "name": "codex-curated",
+  "name": "test-curated",
   "plugins": [
     {
       "name": "demo-plugin",

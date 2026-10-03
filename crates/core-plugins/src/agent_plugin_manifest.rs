@@ -13,7 +13,7 @@ use genex_utils_plugins::SUPPORTED_AGENT_PLUGIN_SCHEMA_URIS;
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
 
-const CODEX_AGENT_PLUGIN_EXTENSION_NAMESPACE: &str = "com.codex";
+const AGENT_PLUGIN_EXTENSION_NAMESPACE: &str = "com.codex";
 const AGENT_PLUGIN_FIELDS: &[&str] = &[
     "$schema",
     "name",
@@ -85,17 +85,17 @@ pub(super) fn parse_agent_plugin_manifest_uri(
         tracing::warn!(path = %manifest_path, "ignoring non-object Agent Plugins `extensions` field");
         object.remove("extensions");
     }
-    let codex_extension = object
+    let agent_plugin_extension = object
         .get("extensions")
         .and_then(JsonValue::as_object)
-        .and_then(|extensions| extensions.get(CODEX_AGENT_PLUGIN_EXTENSION_NAMESPACE))
+        .and_then(|extensions| extensions.get(AGENT_PLUGIN_EXTENSION_NAMESPACE))
         .and_then(|extension| {
             if extension.is_object() {
                 Some(serde_json::to_string(extension))
             } else {
                 tracing::warn!(
                     path = %manifest_path,
-                    namespace = CODEX_AGENT_PLUGIN_EXTENSION_NAMESPACE,
+                    namespace = AGENT_PLUGIN_EXTENSION_NAMESPACE,
                     "ignoring non-object Agent Plugins extension"
                 );
                 None
@@ -178,15 +178,15 @@ pub(super) fn parse_agent_plugin_manifest_uri(
         },
     )?;
 
-    if let Some(extension_contents) = codex_extension.as_deref() {
-        apply_codex_agent_plugin_extension(
+    if let Some(extension_contents) = agent_plugin_extension.as_deref() {
+        apply_agent_plugin_extension(
             &mut resolved,
             plugin_root,
             manifest_path,
             extension_contents,
         )?;
     } else if let Some((overlay_path, overlay_contents)) = overlay {
-        apply_codex_agent_plugin_extension(
+        apply_agent_plugin_extension(
             &mut resolved,
             plugin_root,
             overlay_path,
@@ -201,7 +201,7 @@ fn non_empty_trimmed(value: String) -> Option<String> {
     (!value.is_empty()).then(|| value.to_string())
 }
 
-fn apply_codex_agent_plugin_extension(
+fn apply_agent_plugin_extension(
     resolved: &mut UriPluginManifest,
     plugin_root: &PathUri,
     source_path: &PathUri,

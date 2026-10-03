@@ -54,7 +54,7 @@ fn write_marketplace_files(root: &Path, marketplace_name: &str, marker: &str) ->
 fn init_marketplace_repo(root: &Path, marketplace_name: &str, marker: &str) -> Result<String> {
     run_git(root, &["init"])?;
     run_git(root, &["config", "user.email", "codex@example.com"])?;
-    run_git(root, &["config", "user.name", "Codex Tests"])?;
+    run_git(root, &["config", "user.name", "Genex Tests"])?;
     write_marketplace_files(root, marketplace_name, marker)?;
     run_git(root, &["add", "."])?;
     run_git(root, &["commit", "-m", "initial marketplace"])?;
@@ -195,7 +195,7 @@ async fn marketplace_upgrade_all_configured_git_marketplaces() -> Result<()> {
         (tools_root, tools_new_revision),
     ] {
         let metadata: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(
-            root.as_path().join(".codex-marketplace-install.json"),
+            root.as_path().join(".genex-marketplace-install.json"),
         )?)?;
         assert_eq!(
             metadata.get("revision").and_then(serde_json::Value::as_str),

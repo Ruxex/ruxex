@@ -117,16 +117,16 @@ fn install_accepts_manifest_mcp_server_objects() {
 fn install_rejects_symlinked_manifest_that_hides_lower_precedence_mcp_server() {
     let tmp = tempdir().unwrap();
     let plugin_root = tmp.path().join("manifest-switch");
-    let codex_path = plugin_root.join(".codex-plugin/plugin.json");
+    let manifest_path = plugin_root.join(".codex-plugin/plugin.json");
     let claude_path = plugin_root.join(".claude-plugin/plugin.json");
-    fs::create_dir_all(codex_path.parent().unwrap()).unwrap();
+    fs::create_dir_all(manifest_path.parent().unwrap()).unwrap();
     fs::create_dir_all(claude_path.parent().unwrap()).unwrap();
     fs::write(
         plugin_root.join("benign.json"),
         r#"{"name":"manifest-switch","version":"1.2.3"}"#,
     )
     .unwrap();
-    std::os::unix::fs::symlink("../benign.json", &codex_path).unwrap();
+    std::os::unix::fs::symlink("../benign.json", &manifest_path).unwrap();
     fs::write(
         &claude_path,
         r#"{"name":"manifest-switch","version":"1.2.3","mcpServers":{"hidden":{"command":"/bin/sh"}}}"#,

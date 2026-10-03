@@ -96,8 +96,8 @@ source = {good_url:?}
 
 #[test]
 fn automatic_marketplace_git_ignores_inherited_repository_configuration() {
-    const CHILD_HOME: &str = "CODEX_MARKETPLACE_GIT_ISOLATION_CHILD_HOME";
-    const CHILD_SOURCE: &str = "CODEX_MARKETPLACE_GIT_ISOLATION_CHILD_SOURCE";
+    const CHILD_HOME: &str = "GENEX_MARKETPLACE_GIT_ISOLATION_CHILD_HOME";
+    const CHILD_SOURCE: &str = "GENEX_MARKETPLACE_GIT_ISOLATION_CHILD_SOURCE";
 
     if let Some(genex_home) = std::env::var_os(CHILD_HOME) {
         let genex_home = PathBuf::from(genex_home);
@@ -164,7 +164,7 @@ fn automatic_marketplace_git_ignores_inherited_repository_configuration() {
     run_git(&remote, &["switch", "--create", "manual-filter"]);
     std::fs::write(
         remote.join(".gitattributes"),
-        "manual.txt filter=codex-required\n",
+        "manual.txt filter=genex-required\n",
     )
     .expect("write required manual checkout filter");
     std::fs::write(remote.join("manual.txt"), "manual checkout")
@@ -212,7 +212,7 @@ fn automatic_marketplace_git_ignores_inherited_repository_configuration() {
         .env("GIT_CONFIG_VALUE_0", &source)
         .env("GIT_CONFIG_KEY_1", "url.../remote.insteadOf")
         .env("GIT_CONFIG_VALUE_1", "manual:marketplace")
-        .env("GIT_CONFIG_KEY_2", "filter.codex-required.smudge")
+        .env("GIT_CONFIG_KEY_2", "filter.genex-required.smudge")
         .env("GIT_CONFIG_VALUE_2", "git version")
         .output()
         .expect("run marketplace Git isolation regression");
@@ -499,7 +499,7 @@ fn changed_config_rolls_back_marketplace_activation() {
     );
     assert!(initial.all_succeeded());
     let root = &initial.upgraded_roots[0];
-    let original_metadata = std::fs::read(root.join(".codex-marketplace-install.json")).unwrap();
+    let original_metadata = std::fs::read(root.join(".genex-marketplace-install.json")).unwrap();
     std::fs::write(remote.path().join("new-file"), "new revision").unwrap();
     run_git(remote.path(), &["add", "."]);
     run_git(remote.path(), &["commit", "-m", "update"]);
@@ -524,7 +524,7 @@ fn changed_config_rolls_back_marketplace_activation() {
         assert_eq!(outcome.errors.len(), 1);
         assert!(!root.join("new-file").exists());
         assert_eq!(
-            std::fs::read(root.join(".codex-marketplace-install.json")).unwrap(),
+            std::fs::read(root.join(".genex-marketplace-install.json")).unwrap(),
             original_metadata
         );
     }
@@ -539,8 +539,8 @@ fn init_marketplace_repo(repo: &Path, marketplace_name: &str) {
     )
     .expect("write marketplace manifest");
     run_git(repo, &["init"]);
-    run_git(repo, &["config", "user.email", "codex-test@example.com"]);
-    run_git(repo, &["config", "user.name", "Codex Test"]);
+    run_git(repo, &["config", "user.email", "genex-test@example.com"]);
+    run_git(repo, &["config", "user.name", "Genex Test"]);
     run_git(repo, &["add", "."]);
     run_git(repo, &["commit", "-m", "initial"]);
 }

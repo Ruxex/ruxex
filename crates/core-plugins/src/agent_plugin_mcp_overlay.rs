@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::path::Path;
 use tracing::warn;
 
-pub(super) async fn apply_codex_env_overlay(
+pub(super) async fn apply_agent_plugin_env_overlay(
     plugin_root: &Path,
     agent_servers: &mut HashMap<String, McpServerConfig>,
 ) {
@@ -27,7 +27,7 @@ pub(super) async fn apply_codex_env_overlay(
         Err(err) => {
             warn!(
                 path = %overlay_path.display(),
-                "failed to parse Codex Agent Plugin MCP overlay: {err}"
+                "failed to parse Genex Agent Plugin MCP overlay: {err}"
             );
             return;
         }

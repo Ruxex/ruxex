@@ -4078,20 +4078,20 @@ fn plugin_share_params_and_response_serialization_use_camel_case_fields() {
     assert_eq!(
         serde_json::to_value(PluginShareCheckoutResponse {
             remote_plugin_id: "plugins~Plugin_00000000000000000000000000000000".to_string(),
-            plugin_id: "gmail@codex-curated".to_string(),
+            plugin_id: "gmail@test-curated".to_string(),
             plugin_name: "gmail".to_string(),
             plugin_path,
-            marketplace_name: "codex-curated".to_string(),
+            marketplace_name: "test-curated".to_string(),
             marketplace_path,
             remote_version: Some("1.2.3".to_string()),
         })
         .unwrap(),
         json!({
             "remotePluginId": "plugins~Plugin_00000000000000000000000000000000",
-            "pluginId": "gmail@codex-curated",
+            "pluginId": "gmail@test-curated",
             "pluginName": "gmail",
             "pluginPath": plugin_path_json,
-            "marketplaceName": "codex-curated",
+            "marketplaceName": "test-curated",
             "marketplacePath": marketplace_path_json,
             "remoteVersion": "1.2.3",
         }),

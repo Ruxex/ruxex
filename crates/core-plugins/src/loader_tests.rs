@@ -124,7 +124,7 @@ async fn ema_policy_overlays_native_and_agent_plugins_without_changing_endpoints
 }
 
 #[tokio::test]
-async fn agent_plugin_codex_mcp_overlay_only_forwards_matching_stdio_server_env_vars() {
+async fn agent_plugin_mcp_overlay_only_forwards_matching_stdio_server_env_vars() {
     let temp_dir = TempDir::new().expect("tempdir");
     let plugin_root = temp_dir.path().join("plugin");
     write_file(
@@ -192,7 +192,7 @@ async fn agent_plugin_codex_mcp_overlay_only_forwards_matching_stdio_server_env_
 }
 
 #[tokio::test]
-async fn agent_plugin_codex_mcp_overlay_supports_inline_legacy_servers_without_portable_env() {
+async fn agent_plugin_mcp_overlay_supports_inline_legacy_servers_without_portable_env() {
     let temp_dir = TempDir::new().expect("tempdir");
     let plugin_root = temp_dir.path().join("plugin");
     write_file(

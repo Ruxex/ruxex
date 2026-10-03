@@ -156,7 +156,7 @@ impl MarketplacePluginSource {
 pub struct MarketplacePluginPolicy {
     pub installation: MarketplacePluginInstallPolicy,
     pub authentication: MarketplacePluginAuthPolicy,
-    // TODO: Surface or enforce product gating at the Codex/plugin consumer boundary instead of
+    // TODO: Surface or enforce product gating at the Genex/plugin consumer boundary instead of
     // only carrying it through core marketplace metadata.
     pub products: Option<Vec<Product>>,
 }

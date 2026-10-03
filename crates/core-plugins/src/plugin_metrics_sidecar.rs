@@ -107,7 +107,7 @@ struct OutputMeasurement {
 impl PluginMetricsSidecar {
     pub fn create(resolved: ResolvedPluginMetricsOperation) -> Option<Self> {
         let sidecar_dir = tempfile::Builder::new()
-            .prefix("codex-plugin-metrics-")
+            .prefix("genex-plugin-metrics-")
             .tempdir()
             .ok()?;
         let output_file = tempfile::Builder::new()
@@ -146,7 +146,7 @@ impl PluginMetricsSidecar {
         }
         let execution_id = Uuid::new_v4().to_string();
         let directory_path = temp_dir
-            .join(&format!("codex-plugin-metrics-{execution_id}"))
+            .join(&format!("genex-plugin-metrics-{execution_id}"))
             .ok()?;
         let absolute_output_dir = directory_path.to_abs_path().ok()?;
         let filesystem = environment.get_filesystem();

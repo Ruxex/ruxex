@@ -1015,7 +1015,7 @@ pub(crate) async fn load_plugin_mcp_servers_from_manifest_with_format(
     }
 
     if manifest_format == PluginManifestFormat::AgentPlugin {
-        agent_plugin_mcp_overlay::apply_codex_env_overlay(plugin_root, &mut mcp_servers).await;
+        agent_plugin_mcp_overlay::apply_agent_plugin_env_overlay(plugin_root, &mut mcp_servers).await;
     }
 
     mcp_servers
