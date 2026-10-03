@@ -23,7 +23,7 @@ async fn import_repo_mcp_preserves_existing_same_named_server() {
         }"#,
     )
     .expect("write mcp");
-    fs::create_dir_all(repo_root.join(".genex")).expect("create codex dir");
+    fs::create_dir_all(repo_root.join(".genex")).expect("create genex dir");
     let existing_config = r#"[mcp_servers.mixedTransport]
 url = "https://example.com/mixed-transport"
 "#;
@@ -78,7 +78,7 @@ async fn detect_repo_mcp_lists_only_missing_servers() {
         }"#,
     )
     .expect("write mcp");
-    fs::create_dir_all(repo_root.join(".genex")).expect("create codex dir");
+    fs::create_dir_all(repo_root.join(".genex")).expect("create genex dir");
     fs::write(
         repo_root.join(".genex").join("config.toml"),
         r#"[mcp_servers.mixedTransport]
@@ -172,7 +172,7 @@ async fn import_home_migrates_supported_config_fields_skills_and_agents_md() {
 
     assert_eq!(
         fs::read_to_string(genex_home.join("AGENTS.md")).expect("read agents"),
-        "Codex guidance"
+        "Genex guidance"
     );
 
     let config: TomlValue =
@@ -197,7 +197,7 @@ MY_TEAM = "codex"
     assert_eq!(
         fs::read_to_string(agents_skills.join("skill-a").join("SKILL.md"))
             .expect("read copied skill"),
-        "Use Codex and Codex utilities."
+        "Use Genex and Genex utilities."
     );
 }
 

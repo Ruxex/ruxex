@@ -208,7 +208,7 @@ source = {configured_marketplace_root:?}
 "#
         ),
     )
-    .expect("write Codex config");
+    .expect("write Genex config");
     fs::write(
         configured_marketplace_root.join(".agents/plugins/marketplace.json"),
         r#"{

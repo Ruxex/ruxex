@@ -126,7 +126,7 @@ async fn detect_and_import_claude_commands_without_frontmatter() {
                     .join("SKILL.md")
             )
             .expect("read migrated command"),
-            "---\nname: \"source-command-pr-review\"\ndescription: \"Migrated source command `pr-review`\"\n---\n\n# source-command-pr-review\n\nUse this skill when the user asks to run the migrated source command `pr-review`.\n\n## Command Template\n\nReview changes with Codex and AGENTS.md.\n"
+            "---\nname: \"source-command-pr-review\"\ndescription: \"Migrated source command `pr-review`\"\n---\n\n# source-command-pr-review\n\nUse this skill when the user asks to run the migrated source command `pr-review`.\n\n## Command Template\n\nReview changes with Genex and AGENTS.md.\n"
         );
         assert!(!target_skills.join("source-command-deploy").exists());
         assert_eq!(
@@ -451,7 +451,7 @@ async fn detect_repo_still_reports_non_plugin_items_when_home_config_is_invalid(
     .expect("create repo skills");
     fs::create_dir_all(&genex_home).expect("create genex home");
     fs::write(genex_home.join("config.toml"), "this is not valid = [toml")
-        .expect("write invalid codex config");
+        .expect("write invalid genex config");
     fs::write(
         repo_root.join(EXTERNAL_AGENT_DIR).join("settings.json"),
         r#"{"env":{"FOO":"bar"}}"#,
@@ -868,7 +868,7 @@ description = "Research role"
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
 developer_instructions = """
-Research with Codex carefully."""
+Research with Genex carefully."""
 "#,
     )
     .expect("parse expected agent");
