@@ -16,7 +16,7 @@ fn packaged_runtime_uses_manifest_version() {
     let package = tempdir().expect("create runtime package");
     let bin_dir = package.path().join("bin");
     fs::create_dir(&bin_dir).expect("create runtime binary directory");
-    let executable = bin_dir.join("codex");
+    let executable = bin_dir.join("genex");
     fs::write(&executable, b"").expect("create runtime binary");
     fs::write(
         package.path().join("genex-package.json"),
@@ -65,7 +65,7 @@ fn legacy_package_without_version_uses_build_commit() {
     let package = tempdir().expect("create runtime package");
     let bin_dir = package.path().join("bin");
     fs::create_dir(&bin_dir).expect("create runtime binary directory");
-    let executable = bin_dir.join("codex");
+    let executable = bin_dir.join("genex");
     fs::write(&executable, b"").expect("create runtime binary");
     fs::write(package.path().join("genex-package.json"), "{}")
         .expect("create legacy runtime package manifest");
@@ -92,7 +92,7 @@ fn invalid_package_version_uses_build_commit() {
     let package = tempdir().expect("create runtime package");
     let bin_dir = package.path().join("bin");
     fs::create_dir(&bin_dir).expect("create runtime binary directory");
-    let executable = bin_dir.join("codex");
+    let executable = bin_dir.join("genex");
     fs::write(&executable, b"").expect("create runtime binary");
     fs::write(
         package.path().join("genex-package.json"),

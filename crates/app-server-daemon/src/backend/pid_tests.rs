@@ -46,7 +46,7 @@ async fn locked_empty_pid_file_is_treated_as_active_reservation() {
     tokio::fs::write(&pid_file, "")
         .await
         .expect("write pid file");
-    let backend = PidBackend::new(temp_dir.path().join("codex"), pid_file.clone());
+    let backend = PidBackend::new(temp_dir.path().join("genex"), pid_file.clone());
     let reservation = tokio::fs::OpenOptions::new()
         .create(true)
         .truncate(false)
@@ -70,7 +70,7 @@ async fn unlocked_empty_pid_file_is_treated_as_stale_reservation() {
     tokio::fs::write(&pid_file, "")
         .await
         .expect("write pid file");
-    let backend = PidBackend::new(temp_dir.path().join("codex"), pid_file.clone());
+    let backend = PidBackend::new(temp_dir.path().join("genex"), pid_file.clone());
 
     assert_eq!(
         backend.read_pid_file_state().await.expect("read pid"),
@@ -86,7 +86,7 @@ async fn stop_waits_for_live_reservation_to_resolve() {
     tokio::fs::write(&pid_file, "")
         .await
         .expect("write pid file");
-    let backend = PidBackend::new(temp_dir.path().join("codex"), pid_file.clone());
+    let backend = PidBackend::new(temp_dir.path().join("genex"), pid_file.clone());
     let reservation = tokio::fs::OpenOptions::new()
         .create(true)
         .truncate(false)
@@ -170,7 +170,7 @@ async fn legacy_launch_clears_recovery_best_effort() {
 async fn stale_record_cleanup_preserves_replacement_record() {
     let temp_dir = TempDir::new().expect("temp dir");
     let pid_file = temp_dir.path().join("app-server.pid");
-    let backend = PidBackend::new(temp_dir.path().join("codex"), pid_file.clone());
+    let backend = PidBackend::new(temp_dir.path().join("genex"), pid_file.clone());
     let stale = PidRecord {
         pid: 1,
         process_start_time: "old".to_string(),
@@ -256,7 +256,7 @@ async fn pid_record_captures_the_resolved_launch_binary() {
 async fn legacy_start_time_mismatch_preserves_record_and_process() {
     let temp = TempDir::new().unwrap();
     let backend = PidBackend::new(
-        temp.path().join("codex"),
+        temp.path().join("genex"),
         temp.path().join("app-server.pid"),
     );
     let contents = serde_json::to_vec(&serde_json::json!({
@@ -307,7 +307,7 @@ async fn stop_reaps_untracked_app_server_child() {
     )
     .await
     .expect("write pid file");
-    let backend = PidBackend::new(temp_dir.path().join("codex"), pid_file.clone());
+    let backend = PidBackend::new(temp_dir.path().join("genex"), pid_file.clone());
 
     let result = tokio::time::timeout(Duration::from_secs(2), backend.stop()).await;
     if matches!(child.try_wait(), Ok(None)) {
@@ -396,10 +396,10 @@ async fn shutdown_grace_handles_process_exit() {
         .await
         .expect("write pid file");
         #[cfg(unix)]
-        let backend = PidBackend::new(temp.path().join("codex"), pid_file);
+        let backend = PidBackend::new(temp.path().join("genex"), pid_file);
         #[cfg(windows)]
         let backend = PidBackend::new_update_loop(
-            temp.path().join("codex"),
+            temp.path().join("genex"),
             pid_file,
             /*restore_release*/ None,
         );
@@ -472,7 +472,7 @@ async fn stopping_updater_signals_its_installer_process_group() {
     .await
     .expect("write pid file");
     let backend = PidBackend::new_update_loop(
-        temp.path().join("codex"),
+        temp.path().join("genex"),
         pid_file,
         /*restore_release*/ None,
     );
@@ -515,7 +515,7 @@ async fn exited_unreaped_updater_is_reaped() {
         executable_identity: None,
     };
     let backend = PidBackend::new_update_loop(
-        temp.path().join("codex"),
+        temp.path().join("genex"),
         temp.path().join("updater.pid"),
         /*restore_release*/ None,
     );
@@ -580,7 +580,7 @@ async fn read_stderr_log_tail_returns_recent_complete_lines() {
 async fn stale_creation_time_never_stops_reused_pid() {
     let temp = TempDir::new().expect("temp");
     let backend = PidBackend::new(
-        temp.path().join("codex.exe"),
+        temp.path().join("genex.exe"),
         temp.path().join("server.pid"),
     );
     #[cfg(any(target_os = "linux", target_os = "macos"))]
@@ -681,7 +681,7 @@ async fn updater_readiness_and_post_publication_failure_preserve_ownership() {
 
     let temp = TempDir::new().expect("temp");
     let backend = PidBackend::new_update_loop(
-        temp.path().join("codex.exe"),
+        temp.path().join("genex.exe"),
         temp.path().join("updater.pid"),
         /*restore_release*/ None,
     );

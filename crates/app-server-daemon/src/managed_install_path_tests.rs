@@ -117,7 +117,7 @@ async fn older_managed_binary_does_not_claim_updater_support() {
     use std::os::unix::fs::PermissionsExt;
 
     let temp = tempfile::TempDir::new().expect("home");
-    let binary = temp.path().join("codex");
+    let binary = temp.path().join("genex");
     std::fs::write(&binary, b"#!/bin/sh\nexit 2\n").expect("older binary");
     std::fs::set_permissions(&binary, std::fs::Permissions::from_mode(0o755))
         .expect("executable binary");

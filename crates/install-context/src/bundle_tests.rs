@@ -52,7 +52,7 @@ fn bundle_executable_preserves_package_layout_and_install_method() -> std::io::R
 fn winget_root_requires_metadata_for_the_actual_executable() -> std::io::Result<()> {
     let temp = tempfile::tempdir()?;
     let package = canonical_absolute_path(temp.path()).unwrap();
-    let name = "codex-x86_64-pc-windows-msvc.exe";
+    let name = "genex-x86_64-pc-windows-msvc.exe";
     let executable = package.join(name);
     fs::write(&executable, "signed CLI")?;
     for directory in [RESOURCES_DIRNAME, PATH_DIRNAME] {

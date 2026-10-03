@@ -226,7 +226,7 @@ mod tests {
     #[test]
     fn finds_legacy_standalone_bundled_bwrap_next_to_exe_resources() {
         let temp_dir = tempdir().expect("temp dir");
-        let exe = temp_dir.path().join("codex");
+        let exe = temp_dir.path().join("genex");
         let expected_bwrap = temp_dir.path().join("genex-resources").join("bwrap");
         write_executable(&exe);
         write_executable(&expected_bwrap);
@@ -241,7 +241,7 @@ mod tests {
     fn finds_npm_bundled_bwrap_next_to_target_vendor_dir() {
         let temp_dir = tempdir().expect("temp dir");
         let target_dir = temp_dir.path().join("vendor/x86_64-unknown-linux-musl");
-        let exe = target_dir.join("codex").join("codex");
+        let exe = target_dir.join("genex").join("genex");
         let expected_bwrap = target_dir.join("genex-resources").join("bwrap");
         write_executable(&exe);
         write_executable(&expected_bwrap);
@@ -255,7 +255,7 @@ mod tests {
     #[test]
     fn finds_adjacent_dev_bwrap() {
         let temp_dir = tempdir().expect("temp dir");
-        let exe = temp_dir.path().join("codex");
+        let exe = temp_dir.path().join("genex");
         let expected_bwrap = temp_dir.path().join("bwrap");
         write_executable(&exe);
         write_executable(&expected_bwrap);

@@ -121,13 +121,13 @@ impl InstallContext {
     pub fn current() -> &'static Self {
         INSTALL_CONTEXT.get_or_init(|| {
             let current_exe = std::env::current_exe().ok();
-            let method_override = if std::env::var_os("CODEX_MANAGED_BY_VITE_PLUS").is_some() {
+            let method_override = if std::env::var_os("GENEX_MANAGED_BY_VITE_PLUS").is_some() {
                 Some(InstallMethod::VitePlus)
-            } else if std::env::var_os("CODEX_MANAGED_BY_PNPM").is_some() {
+            } else if std::env::var_os("GENEX_MANAGED_BY_PNPM").is_some() {
                 Some(InstallMethod::Pnpm)
-            } else if std::env::var_os("CODEX_MANAGED_BY_NPM").is_some() {
+            } else if std::env::var_os("GENEX_MANAGED_BY_NPM").is_some() {
                 Some(InstallMethod::Npm)
-            } else if std::env::var_os("CODEX_MANAGED_BY_BUN").is_some() {
+            } else if std::env::var_os("GENEX_MANAGED_BY_BUN").is_some() {
                 Some(InstallMethod::Bun)
             } else {
                 None
@@ -654,7 +654,7 @@ mod tests {
         let bin_dir = package_dir.path().join(BIN_DIRNAME);
         fs::create_dir_all(&bin_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join("codex");
+        let exe_path = bin_dir.join("genex");
         let executable_target = package_dir.path().join("host-target");
         let executable_path = bin_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME);
         fs::write(&exe_path, "")?;
@@ -797,7 +797,7 @@ mod tests {
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
         let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
         fs::write(&exe_path, "")?;
-        let fallback_exe_path = package_dir.path().join("fallback-codex");
+        let fallback_exe_path = package_dir.path().join("fallback-genex");
         fs::write(&fallback_exe_path, "")?;
 
         let context = InstallContext::from_exe_with_genex_home(

@@ -75,7 +75,7 @@ async fn promotes_timestamp_only_macos_record() {
         executable_identity: None,
     };
     std::fs::write(&path, serde_json::to_vec(&record).unwrap()).unwrap();
-    let backend = PidBackend::new(temp.path().join("codex"), path.clone());
+    let backend = PidBackend::new(temp.path().join("genex"), path.clone());
     backend.promote_legacy_identity().await.unwrap();
     record.process_identity = Some(identity);
     assert_eq!(

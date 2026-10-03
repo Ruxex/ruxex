@@ -259,8 +259,8 @@ async fn prepare_from_package(
         );
     } else {
         #[cfg(unix)]
-        if !stage.path().join("codex").exists() {
-            std::os::unix::fs::symlink("bin/genex", stage.path().join("codex"))?;
+        if !stage.path().join("genex").exists() {
+            std::os::unix::fs::symlink("bin/genex", stage.path().join("genex"))?;
         }
         std::fs::rename(stage.path(), &release)?;
     }

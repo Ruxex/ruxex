@@ -983,7 +983,7 @@ mod tests {
             update_pid_file: state.join("updater.pid"),
             operation_lock_file: state.join("daemon.lock"),
             settings_file: state.join("settings.json"),
-            managed_codex_bin: home.path().join("codex"),
+            managed_codex_bin: home.path().join("genex"),
         };
         genex_app_server_transport::daemon_recovery::write_candidates(
             &daemon.recovery_file().expect("recovery path"),
