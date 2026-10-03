@@ -79,7 +79,7 @@ pub(super) fn render_human_report(report: &DoctorReport, options: HumanOutputOpt
     let _ = writeln!(
         out,
         "{} {}",
-        bold("Codex Doctor", options),
+        bold("Genex Doctor", options),
         dim(&header_suffix(report), options)
     );
     out.push('\n');
@@ -459,7 +459,7 @@ fn write_footer(out: &mut String, options: HumanOutputOptions) {
             out,
             "{}",
             dim(
-                "Run codex doctor without --summary for detailed diagnostics.",
+                "Run genex doctor without --summary for detailed diagnostics.",
                 options
             )
         );
@@ -482,7 +482,7 @@ fn write_footer(out: &mut String, options: HumanOutputOptions) {
 }
 
 fn header_suffix(report: &DoctorReport) -> String {
-    let version = format!("v{}", report.codex_version);
+    let version = format!("v{}", report.genex_version);
     report
         .checks
         .iter()
@@ -535,7 +535,7 @@ fn update_note(check: &DoctorCheck, report: &DoctorReport) -> Option<DoctorNote>
         .or_else(|| detail::detail_value(check, "cached latest version"))
         .unwrap_or_else(|| "newer version".to_string());
     let dismissed = detail::detail_value(check, "dismissed version");
-    let mut parenthetical = format!("current {}", report.codex_version);
+    let mut parenthetical = format!("current {}", report.genex_version);
     if let Some(dismissed) = dismissed
         && !detail::is_falsy(&dismissed)
     {
@@ -1281,7 +1281,7 @@ mod tests {
             schema_version: 1,
             generated_at: "0s since unix epoch".to_string(),
             overall_status: CheckStatus::Fail,
-            codex_version: "0.0.0".to_string(),
+            genex_version: "0.0.0".to_string(),
             checks,
         }
     }
@@ -1291,7 +1291,7 @@ mod tests {
         let rendered = render_human_report(&sample_report(), detailed_no_color_unicode_options());
         let expected = format!(
             "\
-Codex Doctor v0.0.0
+Genex Doctor v0.0.0
 
 Notes
    ⚠ terminal     narrow terminal
@@ -1422,7 +1422,7 @@ Background Server
         let rendered = render_human_report(&sample_report(), summary_no_color_unicode_options());
         let expected = format!(
             "\
-Codex Doctor v0.0.0
+Genex Doctor v0.0.0
 
 Notes
    ⚠ terminal     narrow terminal
@@ -1456,7 +1456,7 @@ Background Server
 {}
 12 ok · 2 notes · 1 warn · 1 fail failed
 
-Run codex doctor without --summary for detailed diagnostics.
+Run genex doctor without --summary for detailed diagnostics.
 --all expand truncated lists       --json redacted report
 ",
             "─".repeat(SEPARATOR_WIDTH)
@@ -1499,7 +1499,7 @@ Run codex doctor without --summary for detailed diagnostics.
         );
         let expected = format!(
             "\
-Codex Doctor v0.0.0
+Genex Doctor v0.0.0
 
 Notes
    [!!] terminal     narrow terminal
@@ -1533,7 +1533,7 @@ Background Server
 {}
 12 ok | 2 notes | 1 warn | 1 fail failed
 
-Run codex doctor without --summary for detailed diagnostics.
+Run genex doctor without --summary for detailed diagnostics.
 --all expand truncated lists       --json redacted report
 ",
             "-".repeat(SEPARATOR_WIDTH)
@@ -1561,7 +1561,7 @@ Run codex doctor without --summary for detailed diagnostics.
             schema_version: 1,
             generated_at: "0s since unix epoch".to_string(),
             overall_status: CheckStatus::Warning,
-            codex_version: "0.0.0".to_string(),
+            genex_version: "0.0.0".to_string(),
             checks: vec![
                 DoctorCheck::new(
                     "terminal.env",
@@ -1600,7 +1600,7 @@ Run codex doctor without --summary for detailed diagnostics.
             schema_version: 1,
             generated_at: "0s since unix epoch".to_string(),
             overall_status: CheckStatus::Warning,
-            codex_version: "0.0.0".to_string(),
+            genex_version: "0.0.0".to_string(),
             checks: vec![
                 DoctorCheck::new(
                     "updates.status",
@@ -1675,7 +1675,7 @@ Run codex doctor without --summary for detailed diagnostics.
             schema_version: 1,
             generated_at: "0s since unix epoch".to_string(),
             overall_status: CheckStatus::Ok,
-            codex_version: "0.0.0".to_string(),
+            genex_version: "0.0.0".to_string(),
             checks: vec![
                 DoctorCheck::new("config.load", "config", CheckStatus::Ok, "config loaded")
                     .detail("model: gpt-5.5")

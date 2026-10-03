@@ -82,7 +82,7 @@ use genex_protocol::protocol::AskForApproval;
 use genex_protocol::user_input::UserInput;
 use genex_terminal_detection::TerminalName;
 
-/// Codex CLI
+/// Genex CLI
 ///
 /// If no subcommand is specified, options will be forwarded to the interactive CLI.
 #[derive(Debug, Parser)]
@@ -92,10 +92,10 @@ use genex_terminal_detection::TerminalName;
     // If a sub‑command is given, ignore requirements of the default args.
     subcommand_negates_reqs = true,
     // The executable is sometimes invoked via a platform‑specific name like
-    // `codex-x86_64-unknown-linux-musl`, but the help output should always use
-    // the generic `codex` command name that users run.
+    // `genex-x86_64-unknown-linux-musl`, but the help output should always use
+    // the generic `genex` command name that users run.
     bin_name = "genex",
-    override_usage = "codex [OPTIONS] [PROMPT]\n       codex [OPTIONS] <COMMAND> [ARGS]"
+    override_usage = "genex [OPTIONS] [PROMPT]\n       genex [OPTIONS] <COMMAND> [ARGS]"
 )]
 struct MultitoolCli {
     #[clap(flatten)]
@@ -122,7 +122,7 @@ enum Subcommand {
     /// Internal: forward a local TCP socket through an HTTP/3 CONNECT proxy.
     #[clap(hide = true)]
     TcpTunnel(genex_tcp_tunnel::Args),
-    /// Run Codex non-interactively.
+    /// Run Genex non-interactively.
     #[clap(visible_alias = "e")]
     Exec(ExecCli),
 
@@ -135,10 +135,10 @@ enum Subcommand {
     /// Remove stored authentication credentials.
     Logout(LogoutCommand),
 
-    /// Manage external MCP servers for Codex.
+    /// Manage external MCP servers for Genex.
     Mcp(McpCli),
 
-    /// Manage Codex plugins.
+    /// Manage Genex plugins.
     Plugin(PluginCli),
 
     /// [experimental] Run the app server or related tooling.
@@ -147,10 +147,10 @@ enum Subcommand {
     /// Generate shell completion scripts.
     Completion(CompletionCommand),
 
-    /// Diagnose local Codex installation, config, auth, and runtime health.
+    /// Diagnose local Genex installation, config, auth, and runtime health.
     Doctor(DoctorCommand),
 
-    /// Run commands within a Codex-provided sandbox.
+    /// Run commands within a Genex-provided sandbox.
     Sandbox(HostSandboxArgs),
 
     /// Debugging tools.
@@ -252,7 +252,7 @@ struct DebugModelsCommand {}
 
 #[derive(Debug, Parser)]
 struct ReviewCommand {
-    /// Error out when config.toml contains fields that are not recognized by this version of Codex.
+    /// Error out when config.toml contains fields that are not recognized by this version of Genex.
     #[arg(long = "strict-config", default_value_t = false)]
     strict_config: bool,
 
@@ -332,7 +332,7 @@ struct SessionArchiveConfigOverrides {
     #[clap(flatten)]
     shared: SharedCliOptions,
 
-    /// Error out when config.toml contains fields that are not recognized by this version of Codex.
+    /// Error out when config.toml contains fields that are not recognized by this version of Genex.
     #[arg(long = "strict-config", default_value_t = false)]
     strict_config: bool,
 
@@ -466,7 +466,7 @@ struct AppServerCommand {
     #[command(flatten)]
     code_mode_host: genex_app_server::AppServerCodeModeHostArgs,
 
-    /// Error out when config.toml contains fields that are not recognized by this version of Codex.
+    /// Error out when config.toml contains fields that are not recognized by this version of Genex.
     #[arg(long = "strict-config", default_value_t = false)]
     strict_config: bool,
 
@@ -511,7 +511,7 @@ struct AppServerCommand {
 
 #[derive(Debug, Parser)]
 struct ExecServerCommand {
-    /// Error out when config.toml contains fields that are not recognized by this version of Codex.
+    /// Error out when config.toml contains fields that are not recognized by this version of Genex.
     #[arg(
         id = "exec_server_strict_config",
         long = "strict-config",
@@ -548,7 +548,7 @@ enum AppServerSubcommand {
     /// [experimental] Generate JSON Schema for the app server protocol.
     GenerateJsonSchema(GenerateJsonSchemaCommand),
 
-    /// [internal] Generate internal JSON Schema artifacts for Codex tooling.
+    /// [internal] Generate internal JSON Schema artifacts for Genex tooling.
     #[clap(hide = true)]
     GenerateInternalJsonSchema(GenerateInternalJsonSchemaCommand),
 }
@@ -686,7 +686,7 @@ fn run_update_action(
 ) -> anyhow::Result<()> {
     if let UpdateAction::Daemon(source) = action {
         let executable = cli_executable
-            .ok_or_else(|| anyhow::anyhow!("Cannot locate the launching Codex CLI"))?;
+            .ok_or_else(|| anyhow::anyhow!("Cannot locate the launching Genex CLI"))?;
         println!("Updating the local background server...");
         let status = std::process::Command::new(executable)
             .args(source.command_args())
@@ -696,12 +696,12 @@ fn run_update_action(
             status.success(),
             "Daemon update failed with status {status}"
         );
-        println!("Relaunch Codex to reconnect.");
+        println!("Relaunch Genex to reconnect.");
         return Ok(());
     }
     println!();
     let cmd_str = action.command_str();
-    println!("Updating Codex via `{cmd_str}`...");
+    println!("Updating Genex via `{cmd_str}`...");
     let status = {
         #[cfg(windows)]
         {
@@ -743,7 +743,7 @@ fn run_update_action(
     if !status.success() {
         anyhow::bail!("`{cmd_str}` failed with status {status}");
     }
-    println!("\n🎉 Update ran successfully! Please restart Codex.");
+    println!("\n🎉 Update ran successfully! Please restart Genex.");
     Ok(())
 }
 
@@ -940,7 +940,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
         && let Some(agents_endpoint) = &options.remote.remote
         && root_endpoint != agents_endpoint
     {
-        anyhow::bail!("`codex agents` received conflicting remote server endpoints");
+        anyhow::bail!("`genex agents` received conflicting remote server endpoints");
     }
     let root_remote = agents_options
         .and_then(|options| options.remote.remote.clone())
@@ -968,7 +968,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
             );
             if open_agents_overview {
                 if interactive.prompt.is_some() || !interactive.images.is_empty() {
-                    anyhow::bail!("`codex agents` does not accept an initial prompt or images");
+                    anyhow::bail!("`genex agents` does not accept an initial prompt or images");
                 }
                 if root_remote.is_some()
                     && (!interactive.add_dir.is_empty()
@@ -984,7 +984,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                             }))
                 {
                     anyhow::bail!(
-                        "`codex agents` cannot apply additional-directory overrides to a remote server"
+                        "`genex agents` cannot apply additional-directory overrides to a remote server"
                     );
                 }
                 if root_remote.is_none() {
@@ -993,7 +993,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                         root_remote_auth_token_env.clone(),
                     )?;
                     #[cfg(not(any(unix, windows)))]
-                    anyhow::bail!("`codex agents` requires `--remote` on this platform");
+                    anyhow::bail!("`genex agents` requires `--remote` on this platform");
                 }
                 interactive.agents_overview = true;
             }
@@ -1034,7 +1034,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 root_remote_auth_token_env.as_deref(),
                 "review",
             )?;
-            let mut exec_cli = ExecCli::try_parse_from(["codex", "exec"])?;
+            let mut exec_cli = ExecCli::try_parse_from(["genex", "exec"])?;
             exec_cli
                 .shared
                 .inherit_exec_root_options(&interactive.shared);
@@ -1466,7 +1466,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
             #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
             {
                 let _ = loader_overrides;
-                anyhow::bail!("`codex sandbox` is not supported on this operating system");
+                anyhow::bail!("`genex sandbox` is not supported on this operating system");
             }
         }
         Some(Subcommand::Debug(DebugCommand { subcommand })) => match subcommand {
@@ -1618,7 +1618,7 @@ fn profile_v2_for_subcommand<'a>(
             subcommand: DebugSubcommand::PromptInput(_),
         }) => Ok(Some(profile_v2)),
         _ => anyhow::bail!(
-            "--profile only applies to runtime commands and `codex mcp`: `codex`, `codex exec`, `codex review`, `codex resume`, `codex queue`, `codex archive`, `codex delete`, `codex unarchive`, `codex fork`, `codex mcp`, `codex sandbox`, and `codex debug prompt-input`."
+            "--profile only applies to runtime commands and `genex mcp`: `genex`, `genex exec`, `genex review`, `genex resume`, `genex queue`, `genex archive`, `genex delete`, `genex unarchive`, `genex fork`, `genex mcp`, `genex sandbox`, and `genex debug prompt-input`."
         ),
     }
 }
@@ -1632,7 +1632,7 @@ async fn run_exec_server_command(
     let codex_self_exe = arg0_paths
         .codex_self_exe
         .clone()
-        .ok_or_else(|| anyhow::anyhow!("Codex executable path is not configured"))?;
+        .ok_or_else(|| anyhow::anyhow!("Genex executable path is not configured"))?;
     let runtime_paths =
         ExecServerRuntimePaths::new(codex_self_exe, arg0_paths.codex_linux_sandbox_exe.clone())?;
     let config_result = load_exec_server_config(root_config_overrides, strict_config).await;
@@ -1896,12 +1896,12 @@ fn reject_remote_mode_for_subcommand(
 ) -> anyhow::Result<()> {
     if let Some(remote) = remote {
         anyhow::bail!(
-            "`--remote {remote}` is only supported for interactive TUI commands, not `codex {subcommand}`"
+            "`--remote {remote}` is only supported for interactive TUI commands, not `genex {subcommand}`"
         );
     }
     if remote_auth_token_env.is_some() {
         anyhow::bail!(
-            "`--remote-auth-token-env` is only supported for interactive TUI commands, not `codex {subcommand}`"
+            "`--remote-auth-token-env` is only supported for interactive TUI commands, not `genex {subcommand}`"
         );
     }
     Ok(())
@@ -1931,12 +1931,12 @@ fn reject_unsupported_worktree_for_subcommand(
         None => Ok(()),
         Some(Subcommand::Fork(command)) if command.session_id.is_some() && !command.last => Ok(()),
         Some(Subcommand::Fork(_)) => {
-            anyhow::bail!("`codex fork --worktree` requires an explicit session ID")
+            anyhow::bail!("`genex fork --worktree` requires an explicit session ID")
         }
         Some(Subcommand::Exec(command)) => match &command.command {
             None | Some(ExecCommand::Fork(_)) => Ok(()),
             Some(ExecCommand::Resume(_)) => anyhow::bail!(
-                "`--worktree` cannot resume an existing session; use `codex exec fork --worktree`"
+                "`--worktree` cannot resume an existing session; use `genex exec fork --worktree`"
             ),
             Some(ExecCommand::Review(_)) => {
                 anyhow::bail!("`--worktree` is not supported for code review")
@@ -1944,7 +1944,7 @@ fn reject_unsupported_worktree_for_subcommand(
         },
         _ => {
             anyhow::bail!(
-                "`--worktree` supports new interactive sessions, `codex fork`, `codex exec`, and `codex exec fork`"
+                "`--worktree` supports new interactive sessions, `genex fork`, `genex exec`, and `genex exec fork`"
             )
         }
     }
@@ -1959,9 +1959,9 @@ fn reject_removed_top_level_command(
     }
 
     match interactive.prompt.as_deref() {
-        Some("app") => anyhow::bail!("`codex app` has been removed"),
+        Some("app") => anyhow::bail!("`genex app` has been removed"),
         Some("update") => anyhow::bail!(
-            "`codex update` has been removed; update Codex with the package manager or distribution that installed it"
+            "`genex update` has been removed; update Genex with the package manager or distribution that installed it"
         ),
         _ => Ok(()),
     }
@@ -1987,7 +1987,7 @@ fn reject_root_strict_config_for_subcommand(
 /// flag should be rejected after parsing.
 ///
 /// `--strict-config` is parsed on the root interactive CLI so commands like
-/// `codex --strict-config` continue to work for the TUI and for wrappers that
+/// `genex --strict-config` continue to work for the TUI and for wrappers that
 /// forward root options into another command shape. Clap will still accept that
 /// root flag before the dispatcher knows which subcommand the user selected, so
 /// unsupported subcommands need an explicit post-parse reject path.
@@ -2047,7 +2047,7 @@ fn reject_strict_config_for_unsupported_subcommand(
     subcommand: &str,
 ) -> anyhow::Result<()> {
     if strict_config {
-        anyhow::bail!("`--strict-config` is not supported for `codex {subcommand}`");
+        anyhow::bail!("`--strict-config` is not supported for `genex {subcommand}`");
     }
     Ok(())
 }
@@ -2131,7 +2131,7 @@ async fn run_interactive_tui(
     if interactive.no_daemon {
         if interactive.agents_overview {
             return Ok(AppExitInfo::fatal(
-                "--no-daemon cannot be used with codex agents. The agents overview requires a shared server. Use codex --no-daemon to work without it.",
+                "--no-daemon cannot be used with genex agents. The agents overview requires a shared server. Use genex --no-daemon to work without it.",
             ));
         }
         if remote.is_some() {
@@ -2154,7 +2154,7 @@ async fn run_interactive_tui(
         }
 
         eprintln!(
-            "WARNING: TERM is set to \"dumb\". Codex's interactive TUI may not work in this terminal."
+            "WARNING: TERM is set to \"dumb\". Genex's interactive TUI may not work in this terminal."
         );
         if !confirm("Continue anyway? [y/N]: ")? {
             return Ok(AppExitInfo::fatal(
@@ -2177,7 +2177,7 @@ async fn run_interactive_tui(
         genex_app_server_daemon::run(AppServerLifecycleCommand::Start)
             .await
             .map_err(|err| std::io::Error::other(format!(
-                "{err:#}\nThe agents overview requires a shared server. Use codex --no-daemon to work without it."
+                "{err:#}\nThe agents overview requires a shared server. Use genex --no-daemon to work without it."
             )))?;
     }
 
@@ -2245,7 +2245,7 @@ where
             Err(backup_err) => {
                 local_state_db::print_diagnostic_guidance(startup_error);
                 return Ok(AppExitInfo::fatal(format!(
-                    "failed to move damaged Codex local database files into a backup folder automatically: {backup_err}"
+                    "failed to move damaged Genex local database files into a backup folder automatically: {backup_err}"
                 )));
             }
         }
@@ -2301,7 +2301,7 @@ fn confirm(prompt: &str) -> std::io::Result<bool> {
     Ok(answer.eq_ignore_ascii_case("y") || answer.eq_ignore_ascii_case("yes"))
 }
 
-/// Build the final `TuiCli` for a `codex resume` invocation.
+/// Build the final `TuiCli` for a `genex resume` invocation.
 fn finalize_resume_interactive(
     mut interactive: TuiCli,
     root_config_overrides: CliConfigOverrides,
@@ -2312,7 +2312,7 @@ fn finalize_resume_interactive(
     mut resume_cli: TuiCli,
 ) -> TuiCli {
     // Start with the parsed interactive CLI so resume shares the same
-    // configuration surface area as `codex` without additional flags.
+    // configuration surface area as `genex` without additional flags.
     // Clap assigns the first positional to `session_id`. With `--last`, reinterpret it as the
     // prompt when no second positional prompt was provided.
     let resume_session_id = if last && resume_cli.prompt.is_none() {
@@ -2336,7 +2336,7 @@ fn finalize_resume_interactive(
     interactive
 }
 
-/// Build the final `TuiCli` for a `codex fork` invocation.
+/// Build the final `TuiCli` for a `genex fork` invocation.
 fn finalize_fork_interactive(
     mut interactive: TuiCli,
     root_config_overrides: CliConfigOverrides,
@@ -2346,7 +2346,7 @@ fn finalize_fork_interactive(
     mut fork_cli: TuiCli,
 ) -> TuiCli {
     // Start with the parsed interactive CLI so fork shares the same
-    // configuration surface area as `codex` without additional flags.
+    // configuration surface area as `genex` without additional flags.
     // Clap assigns the first positional to `session_id`. With `--last`, reinterpret it as the
     // prompt when no second positional prompt was provided.
     let fork_session_id = if last && fork_cli.prompt.is_none() {

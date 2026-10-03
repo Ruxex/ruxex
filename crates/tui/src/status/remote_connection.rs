@@ -46,7 +46,7 @@ pub(crate) fn server_version_notice(client: &str, server: Option<&str>) -> Optio
     let server = server?;
     crate::update_versions::is_official_server_older(client, server).then(|| {
         format!(
-            "A background Codex service is running v{server}, older than your Codex CLI v{client}."
+            "A background Genex service is running v{server}, older than your Genex CLI v{client}."
         )
     })
 }

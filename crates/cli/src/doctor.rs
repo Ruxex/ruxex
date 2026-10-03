@@ -1,4 +1,4 @@
-//! Implements the `codex doctor` diagnostic report.
+//! Implements the `genex doctor` diagnostic report.
 //!
 //! Doctor is intentionally read-mostly: checks inspect the current installation,
 //! configuration, authentication, terminal, state paths, and bounded reachability
@@ -189,7 +189,7 @@ struct DoctorReport {
     schema_version: u32,
     generated_at: String,
     overall_status: CheckStatus,
-    codex_version: String,
+    genex_version: String,
     checks: Vec<DoctorCheck>,
 }
 
@@ -301,7 +301,7 @@ impl DoctorCheck {
 
 /// Builds, renders, and exits according to the current doctor report.
 ///
-/// This is the CLI entry point for codex doctor. It does not repair issues;
+/// This is the CLI entry point for genex doctor. It does not repair issues;
 /// failures are represented in the report and cause a non-zero process exit so
 /// scripts can distinguish a clean environment from one that needs attention.
 pub async fn run_doctor(
@@ -414,7 +414,7 @@ async fn build_report(
                         )
                         .detail(error.to_string())
                         .remediation(
-                            "Fix the reported authentication error, then rerun codex doctor.",
+                            "Fix the reported authentication error, then rerun genex doctor.",
                         ),
                     })
                 },
@@ -505,7 +505,7 @@ async fn build_report(
                             "config could not be loaded",
                         )
                         .detail(err.to_string())
-                        .remediation("Fix the reported config error, then rerun codex doctor.")
+                        .remediation("Fix the reported config error, then rerun genex doctor.")
                     })
                 },
                 async {
@@ -555,7 +555,7 @@ async fn build_report(
         schema_version: 1,
         generated_at: generated_at(),
         overall_status,
-        codex_version: env!("CARGO_PKG_VERSION").to_string(),
+        genex_version: env!("CARGO_PKG_VERSION").to_string(),
         checks,
     }
 }
@@ -616,7 +616,7 @@ fn config_overrides_from_interactive(
     }
 }
 
-/// JSON support report emitted by `codex doctor --json`.
+/// JSON support report emitted by `genex doctor --json`.
 ///
 /// The report is keyed by check id so support tooling can fetch paths like
 /// `checks["terminal.metadata"]` without scanning arrays. Human rendering can
@@ -628,7 +628,7 @@ struct JsonDoctorReport {
     schema_version: u32,
     generated_at: String,
     overall_status: CheckStatus,
-    codex_version: String,
+    genex_version: String,
     checks: BTreeMap<String, JsonDoctorCheck>,
 }
 
@@ -693,7 +693,7 @@ fn redacted_json_report(report: &DoctorReport) -> JsonDoctorReport {
         schema_version: report.schema_version,
         generated_at: report.generated_at.clone(),
         overall_status: report.overall_status,
-        codex_version: report.codex_version.clone(),
+        genex_version: report.genex_version.clone(),
         checks,
     }
 }

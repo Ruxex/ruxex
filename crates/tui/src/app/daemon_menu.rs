@@ -40,7 +40,7 @@ impl App {
                 "Manage this server on its host. Local daemon updates are unavailable for remote connections.",
             )
         } else if self.daemon_cli_executable.is_none() {
-            Some("Run the Codex CLI to manage the daemon from this menu.")
+            Some("Run the Genex CLI to manage the daemon from this menu.")
         } else {
             None
         };
@@ -101,8 +101,8 @@ impl App {
                 format!("Use this CLI package v{version} from {}. The complete local package will be copied and pinned against automatic updates.", executable.display())
             }
         };
-        explanation.push_str("\nThe daemon will restart if needed. Active or queued work may be interrupted.\nCodex will exit and run the update in this terminal, then return to the shell. Relaunch Codex afterward.");
-        let mut header = vec![Line::from("Update daemon and exit Codex?".bold())];
+        explanation.push_str("\nThe daemon will restart if needed. Active or queued work may be interrupted.\nGenex will exit and run the update in this terminal, then return to the shell. Relaunch Genex afterward.");
+        let mut header = vec![Line::from("Update daemon and exit Genex?".bold())];
         header.extend(explanation.lines().map(|line| Line::from(line.to_owned())));
         self.chat_widget.show_selection_view(SelectionViewParams {
             header: Box::new(DaemonMenuHeader(header)),

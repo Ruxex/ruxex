@@ -54,7 +54,7 @@ impl App {
             } else {
                 ""
             };
-            format!("Service v{server} < Codex CLI v{client_version}{guidance}")
+            format!("Service v{server} < Genex CLI v{client_version}{guidance}")
         });
     }
 }

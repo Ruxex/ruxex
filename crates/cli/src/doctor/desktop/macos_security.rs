@@ -179,7 +179,7 @@ fn enforcement_check(gatekeeper: Evidence, events: Evidence) -> DoctorCheck {
         (
             CheckStatus::Warning,
             "recent macos security enforcement history was unavailable",
-            "check access to macos unified security logs and rerun codex doctor",
+            "check access to macos unified security logs and rerun genex doctor",
         )
     } else {
         return desktop_check(

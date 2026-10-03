@@ -74,7 +74,7 @@ fn git_check_from_inputs(inputs: GitCheckInputs) -> DoctorCheck {
                 "Git repository detected but git executable was not found",
             )
             .expected("git available on PATH")
-            .remedy("Install Git or fix PATH so Codex can inspect repository metadata.")
+            .remedy("Install Git or fix PATH so Genex can inspect repository metadata.")
             .field("selected git"),
         );
     }
@@ -144,7 +144,7 @@ mod tests {
             schema_version: 1,
             generated_at: "2026-01-01T00:00:00Z".to_string(),
             overall_status: check.status,
-            codex_version: "test".to_string(),
+            genex_version: "test".to_string(),
             checks: vec![check],
         };
         insta::assert_snapshot!(super::super::render_human_report(
