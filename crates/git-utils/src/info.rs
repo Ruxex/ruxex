@@ -839,7 +839,7 @@ mod tests {
 
     #[tokio::test]
     async fn git_metadata_commands_do_not_inherit_stdin() {
-        const CHILD_ENV: &str = "CODEX_GIT_UTILS_STDIN_CHILD";
+        const CHILD_ENV: &str = "GENEX_GIT_UTILS_STDIN_CHILD";
 
         if std::env::var_os(CHILD_ENV).is_some() {
             let temp_dir = tempfile::tempdir().expect("create temp dir");
@@ -1044,9 +1044,9 @@ mod tests {
         run_git(&["init", "-q", "--initial-branch=main"]);
         run_git(&[
             "-c",
-            "user.name=Codex Tests",
+            "user.name=Genex Tests",
             "-c",
-            "user.email=codex-tests@example.com",
+            "user.email=genex-tests@example.com",
             "commit",
             "--allow-empty",
             "-q",
