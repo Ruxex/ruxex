@@ -28,7 +28,7 @@
               "title": "AmazonBedrockAccountType",
               "type": "string"
             },
-            "usesCodexManagedCredentials": {
+            "usesGenexManagedCredentials": {
               "default": false,
               "type": "boolean"
             }

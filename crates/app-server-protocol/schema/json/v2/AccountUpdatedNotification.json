@@ -5,7 +5,7 @@
       "description": "Authentication mode for configured model providers.",
       "oneOf": [
         {
-          "description": "API key provided by the caller and stored by Codex.",
+          "description": "API key provided by the caller and stored by Genex.",
           "enum": [
             "apikey"
           ],
@@ -19,14 +19,14 @@
           "type": "string"
         },
         {
-          "description": "Amazon Bedrock bearer token managed by Codex.",
+          "description": "Amazon Bedrock bearer token managed by Genex.",
           "enum": [
             "bedrockApiKey"
           ],
           "type": "string"
         },
         {
-          "description": "Amazon Bedrock AWS access keys managed by Codex.",
+          "description": "Amazon Bedrock AWS access keys managed by Genex.",
           "enum": [
             "bedrockAccessKeys"
           ],

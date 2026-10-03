@@ -525,7 +525,7 @@
       ]
     },
     "GenexErrorInfo": {
-      "description": "This translation layer make sure that we expose codex error code in camel case.\n\nWhen an upstream HTTP status is available (for example, from the Responses API or a provider), it is forwarded in `httpStatusCode` on the relevant `genexErrorInfo` variant.",
+      "description": "This translation layer make sure that we expose Genex error code in camel case.\n\nWhen an upstream HTTP status is available (for example, from the Responses API or a provider), it is forwarded in `httpStatusCode` on the relevant `genexErrorInfo` variant.",
       "oneOf": [
         {
           "enum": [
@@ -1283,7 +1283,7 @@
           "description": "Persisted thread history contract selected when this thread was created."
         },
         "id": {
-          "description": "Identifier for this thread. Codex-generated thread IDs are UUIDv7.",
+          "description": "Identifier for this thread. Genex-generated thread IDs are UUIDv7.",
           "type": "string"
         },
         "model": {
@@ -1386,7 +1386,7 @@
               "$ref": "#/definitions/SessionSource"
             }
           ],
-          "description": "Origin of the thread (CLI, VSCode, codex exec, codex app-server, etc.)."
+          "description": "Origin of the thread (CLI, VSCode, genex exec, genex app-server, etc.)."
         },
         "status": {
           "allOf": [
@@ -2472,7 +2472,7 @@
           "description": "Only populated when the Turn's status is failed."
         },
         "id": {
-          "description": "Identifier for this turn. Codex-generated turn IDs are UUIDv7.",
+          "description": "Identifier for this turn. Genex-generated turn IDs are UUIDv7.",
           "type": "string"
         },
         "items": {

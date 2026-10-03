@@ -48,7 +48,7 @@ pub enum PlanType {
 pub enum ProviderAccount {
     ApiKey,
     AmazonBedrock {
-        uses_codex_managed_credentials: bool,
+        uses_genex_managed_credentials: bool,
     },
 }
 

@@ -28,7 +28,7 @@ use std::path::PathBuf;
 #[ts(tag = "type")]
 #[ts(export_to = "v2/")]
 pub enum ConfigLayerSource {
-    /// Default configuration supplied with the installed Codex package.
+    /// Default configuration supplied with the installed Genex package.
     #[serde(rename_all = "camelCase")]
     #[ts(rename_all = "camelCase")]
     PackagedDefaults {

@@ -25,7 +25,7 @@ pub enum Account {
     #[ts(rename = "amazonBedrock", rename_all = "camelCase")]
     AmazonBedrock {
         #[serde(default)]
-        uses_codex_managed_credentials: bool,
+        uses_genex_managed_credentials: bool,
     },
 }
 
@@ -34,9 +34,9 @@ impl From<ProviderAccount> for Account {
         match account {
             ProviderAccount::ApiKey => Self::ApiKey {},
             ProviderAccount::AmazonBedrock {
-                uses_codex_managed_credentials,
+                uses_genex_managed_credentials,
             } => Self::AmazonBedrock {
-                uses_codex_managed_credentials,
+                uses_genex_managed_credentials,
             },
         }
     }

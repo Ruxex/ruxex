@@ -2409,7 +2409,7 @@ mod tests {
 
     #[test]
     fn stable_schema_filter_removes_mock_thread_start_field() -> Result<()> {
-        let output_dir = std::env::temp_dir().join(format!("codex_schema_{}", Uuid::now_v7()));
+        let output_dir = std::env::temp_dir().join(format!("genex_schema_{}", Uuid::now_v7()));
         fs::create_dir(&output_dir)?;
         let schema = write_json_schema_with_return::<v2::ThreadStartParams>(
             &output_dir,
@@ -2696,7 +2696,7 @@ mod tests {
 
     #[test]
     fn experimental_type_fields_ts_filter_handles_interface_shape() -> Result<()> {
-        let output_dir = std::env::temp_dir().join(format!("codex_ts_filter_{}", Uuid::now_v7()));
+        let output_dir = std::env::temp_dir().join(format!("genex_ts_filter_{}", Uuid::now_v7()));
         fs::create_dir_all(&output_dir)?;
 
         struct TempDirGuard(PathBuf);
@@ -2735,7 +2735,7 @@ mod tests {
     #[test]
     fn experimental_type_fields_ts_filter_keeps_imports_used_in_intersection_suffix() -> Result<()>
     {
-        let output_dir = std::env::temp_dir().join(format!("codex_ts_filter_{}", Uuid::now_v7()));
+        let output_dir = std::env::temp_dir().join(format!("genex_ts_filter_{}", Uuid::now_v7()));
         fs::create_dir_all(&output_dir)?;
 
         struct TempDirGuard(PathBuf);
@@ -2778,7 +2778,7 @@ export type Config = { stableField: Keep, unstableField: string | null } & ({ [k
 
     #[test]
     fn experimental_type_fields_ts_filter_handles_generated_command_params_shape() -> Result<()> {
-        let output_dir = std::env::temp_dir().join(format!("codex_ts_filter_{}", Uuid::now_v7()));
+        let output_dir = std::env::temp_dir().join(format!("genex_ts_filter_{}", Uuid::now_v7()));
         fs::create_dir_all(&output_dir)?;
 
         struct TempDirGuard(PathBuf);
@@ -2843,7 +2843,7 @@ permissionProfile?: string | null};
 
     #[test]
     fn stable_schema_filter_removes_mock_experimental_method() -> Result<()> {
-        let output_dir = std::env::temp_dir().join(format!("codex_schema_{}", Uuid::now_v7()));
+        let output_dir = std::env::temp_dir().join(format!("genex_schema_{}", Uuid::now_v7()));
         fs::create_dir(&output_dir)?;
         let schema =
             write_json_schema_with_return::<crate::ClientRequest>(&output_dir, "ClientRequest")?;
@@ -2858,7 +2858,7 @@ permissionProfile?: string | null};
 
     #[test]
     fn generate_json_filters_experimental_fields_and_methods() -> Result<()> {
-        let output_dir = std::env::temp_dir().join(format!("codex_schema_{}", Uuid::now_v7()));
+        let output_dir = std::env::temp_dir().join(format!("genex_schema_{}", Uuid::now_v7()));
         fs::create_dir(&output_dir)?;
         generate_json_with_experimental(&output_dir, /*experimental_api*/ false)?;
 

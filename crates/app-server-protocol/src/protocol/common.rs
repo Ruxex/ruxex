@@ -23,19 +23,19 @@ use strum_macros::Display;
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Display, JsonSchema, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum AuthMode {
-    /// API key provided by the caller and stored by Codex.
+    /// API key provided by the caller and stored by Genex.
     ApiKey,
     /// Backend auth supplied as request headers.
     #[serde(rename = "headers")]
     #[ts(rename = "headers")]
     #[strum(serialize = "headers")]
     Headers,
-    /// Amazon Bedrock bearer token managed by Codex.
+    /// Amazon Bedrock bearer token managed by Genex.
     #[serde(rename = "bedrockApiKey")]
     #[ts(rename = "bedrockApiKey")]
     #[strum(serialize = "bedrockApiKey")]
     BedrockApiKey,
-    /// Amazon Bedrock AWS access keys managed by Codex.
+    /// Amazon Bedrock AWS access keys managed by Genex.
     #[serde(rename = "bedrockAccessKeys")]
     #[ts(rename = "bedrockAccessKeys")]
     #[strum(serialize = "bedrockAccessKeys")]
@@ -1080,7 +1080,7 @@ client_request_definitions! {
         response: v2::CommandExecResizeResponse,
     },
     #[experimental("process/spawn")]
-    /// Spawn a standalone process (argv vector) without a Codex sandbox.
+    /// Spawn a standalone process (argv vector) without a Genex sandbox.
     ProcessSpawn => "process/spawn" {
         params: v2::ProcessSpawnParams,
         serialization: process_handle(params.process_handle),
@@ -2907,24 +2907,24 @@ mod tests {
             serde_json::to_value(&api_key)?,
         );
 
-        let codex_managed_bedrock = v2::Account::AmazonBedrock {
-            uses_codex_managed_credentials: true,
+        let genex_managed_bedrock = v2::Account::AmazonBedrock {
+            uses_genex_managed_credentials: true,
         };
         assert_eq!(
             json!({
                 "type": "amazonBedrock",
-                "usesCodexManagedCredentials": true,
+                "usesGenexManagedCredentials": true,
             }),
-            serde_json::to_value(&codex_managed_bedrock)?,
+            serde_json::to_value(&genex_managed_bedrock)?,
         );
 
         let externally_managed_bedrock = v2::Account::AmazonBedrock {
-            uses_codex_managed_credentials: false,
+            uses_genex_managed_credentials: false,
         };
         assert_eq!(
             json!({
                 "type": "amazonBedrock",
-                "usesCodexManagedCredentials": false,
+                "usesGenexManagedCredentials": false,
             }),
             serde_json::to_value(&externally_managed_bedrock)?,
         );
@@ -2936,7 +2936,7 @@ mod tests {
     fn account_defaults_legacy_bedrock_managed_credentials_flag() -> Result<()> {
         assert_eq!(
             v2::Account::AmazonBedrock {
-                uses_codex_managed_credentials: false,
+                uses_genex_managed_credentials: false,
             },
             serde_json::from_value(json!({
                 "type": "amazonBedrock",

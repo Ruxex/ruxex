@@ -1061,7 +1061,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
             provider.account_state(),
             Ok(ProviderAccountState {
                 account: Some(ProviderAccount::AmazonBedrock {
-                    uses_codex_managed_credentials: false,
+                    uses_genex_managed_credentials: false,
                 }),
                 requires_auth: false,
             })

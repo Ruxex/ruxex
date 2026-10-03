@@ -315,7 +315,7 @@ impl ModelProvider for AmazonBedrockModelProvider {
     fn account_state(&self) -> ProviderAccountResult {
         Ok(ProviderAccountState {
             account: Some(ProviderAccount::AmazonBedrock {
-                uses_codex_managed_credentials: matches!(
+                uses_genex_managed_credentials: matches!(
                     self.auth_source(),
                     auth::BedrockAuthSource::ManagedBearerToken
                         | auth::BedrockAuthSource::ManagedAccessKeys
@@ -447,7 +447,7 @@ mod tests {
             provider.account_state(),
             Ok(ProviderAccountState {
                 account: Some(ProviderAccount::AmazonBedrock {
-                    uses_codex_managed_credentials: false,
+                uses_genex_managed_credentials: false,
                 }),
                 requires_auth: false,
             })
@@ -510,7 +510,7 @@ mod tests {
             provider.account_state(),
             Ok(ProviderAccountState {
                 account: Some(ProviderAccount::AmazonBedrock {
-                    uses_codex_managed_credentials: true,
+                uses_genex_managed_credentials: true,
                 }),
                 requires_auth: false,
             })
@@ -557,7 +557,7 @@ mod tests {
                 configured_profile_provider.account_state(),
                 Ok(ProviderAccountState {
                     account: Some(ProviderAccount::AmazonBedrock {
-                        uses_codex_managed_credentials: false,
+                        uses_genex_managed_credentials: false,
                     }),
                     requires_auth: false,
                 })
@@ -598,7 +598,7 @@ mod tests {
             provider.account_state(),
             Ok(ProviderAccountState {
                 account: Some(ProviderAccount::AmazonBedrock {
-                    uses_codex_managed_credentials: false,
+                    uses_genex_managed_credentials: false,
                 }),
                 requires_auth: false,
             })

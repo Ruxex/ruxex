@@ -110,7 +110,7 @@ command = "print-token"
         account,
         GetAccountResponse {
             account: Some(Account::AmazonBedrock {
-                uses_codex_managed_credentials: false
+                uses_genex_managed_credentials: false
             }),
             requires_auth: false,
         }

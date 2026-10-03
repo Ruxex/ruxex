@@ -201,7 +201,7 @@
       "description": "Authentication mode for configured model providers.",
       "oneOf": [
         {
-          "description": "API key provided by the caller and stored by Codex.",
+          "description": "API key provided by the caller and stored by Genex.",
           "enum": [
             "apikey"
           ],
@@ -215,14 +215,14 @@
           "type": "string"
         },
         {
-          "description": "Amazon Bedrock bearer token managed by Codex.",
+          "description": "Amazon Bedrock bearer token managed by Genex.",
           "enum": [
             "bedrockApiKey"
           ],
           "type": "string"
         },
         {
-          "description": "Amazon Bedrock AWS access keys managed by Codex.",
+          "description": "Amazon Bedrock AWS access keys managed by Genex.",
           "enum": [
             "bedrockAccessKeys"
           ],
@@ -1208,7 +1208,7 @@
       "type": "object"
     },
     "GenexErrorInfo": {
-      "description": "This translation layer make sure that we expose codex error code in camel case.\n\nWhen an upstream HTTP status is available (for example, from the Responses API or a provider), it is forwarded in `httpStatusCode` on the relevant `genexErrorInfo` variant.",
+      "description": "This translation layer make sure that we expose Genex error code in camel case.\n\nWhen an upstream HTTP status is available (for example, from the Responses API or a provider), it is forwarded in `httpStatusCode` on the relevant `genexErrorInfo` variant.",
       "oneOf": [
         {
           "enum": [
@@ -2973,7 +2973,7 @@
           "description": "Persisted thread history contract selected when this thread was created."
         },
         "id": {
-          "description": "Identifier for this thread. Codex-generated thread IDs are UUIDv7.",
+          "description": "Identifier for this thread. Genex-generated thread IDs are UUIDv7.",
           "type": "string"
         },
         "model": {
@@ -3076,7 +3076,7 @@
               "$ref": "#/definitions/SessionSource"
             }
           ],
-          "description": "Origin of the thread (CLI, VSCode, codex exec, codex app-server, etc.)."
+          "description": "Origin of the thread (CLI, VSCode, genex exec, genex app-server, etc.)."
         },
         "status": {
           "allOf": [
@@ -4582,7 +4582,7 @@
           "description": "Only populated when the Turn's status is failed."
         },
         "id": {
-          "description": "Identifier for this turn. Codex-generated turn IDs are UUIDv7.",
+          "description": "Identifier for this turn. Genex-generated turn IDs are UUIDv7.",
           "type": "string"
         },
         "items": {

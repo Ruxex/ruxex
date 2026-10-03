@@ -453,7 +453,7 @@
       ]
     },
     "GenexErrorInfo": {
-      "description": "This translation layer make sure that we expose codex error code in camel case.\n\nWhen an upstream HTTP status is available (for example, from the Responses API or a provider), it is forwarded in `httpStatusCode` on the relevant `genexErrorInfo` variant.",
+      "description": "This translation layer make sure that we expose Genex error code in camel case.\n\nWhen an upstream HTTP status is available (for example, from the Responses API or a provider), it is forwarded in `httpStatusCode` on the relevant `genexErrorInfo` variant.",
       "oneOf": [
         {
           "enum": [
@@ -1743,7 +1743,7 @@
           "description": "Only populated when the Turn's status is failed."
         },
         "id": {
-          "description": "Identifier for this turn. Codex-generated turn IDs are UUIDv7.",
+          "description": "Identifier for this turn. Genex-generated turn IDs are UUIDv7.",
           "type": "string"
         },
         "items": {

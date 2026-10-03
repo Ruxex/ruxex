@@ -607,7 +607,7 @@ async fn login_amazon_bedrock_replaces_primary_auth_and_persists_provider(
         read_account(&mut mcp).await?,
         GetAccountResponse {
             account: Some(Account::AmazonBedrock {
-                uses_codex_managed_credentials: true,
+                uses_genex_managed_credentials: true,
             }),
             requires_auth: false,
         }
@@ -850,7 +850,7 @@ async fn logout_managed_bedrock_restores_default_account(
         read_account(&mut mcp).await?,
         GetAccountResponse {
             account: Some(Account::AmazonBedrock {
-                uses_codex_managed_credentials: true,
+                uses_genex_managed_credentials: true,
             }),
             requires_auth: false,
         }
@@ -964,7 +964,7 @@ async fn logout_aws_managed_bedrock_clears_provider_and_restores_default_account
             read_account(&mut mcp).await?,
             GetAccountResponse {
                 account: Some(Account::AmazonBedrock {
-                    uses_codex_managed_credentials: false,
+                    uses_genex_managed_credentials: false,
                 }),
                 requires_auth: false,
             }
@@ -1149,7 +1149,7 @@ async fn login_managed_bedrock_updates_active_bedrock_account() -> Result<()> {
         read_account(&mut mcp).await?,
         GetAccountResponse {
             account: Some(Account::AmazonBedrock {
-                uses_codex_managed_credentials: true,
+                uses_genex_managed_credentials: true,
             }),
             requires_auth: false,
         }
@@ -1387,7 +1387,7 @@ region = "us-west-2"
 
     let expected = GetAccountResponse {
         account: Some(Account::AmazonBedrock {
-            uses_codex_managed_credentials: false,
+            uses_genex_managed_credentials: false,
         }),
         requires_auth: false,
     };
@@ -1425,7 +1425,7 @@ command = "print-token"
         read_account(&mut mcp).await?,
         GetAccountResponse {
             account: Some(Account::AmazonBedrock {
-                uses_codex_managed_credentials: false,
+            uses_genex_managed_credentials: false,
             }),
             requires_auth: false,
         }
@@ -1463,7 +1463,7 @@ region = "us-west-2"
         read_account(&mut mcp).await?,
         GetAccountResponse {
             account: Some(Account::AmazonBedrock {
-                uses_codex_managed_credentials: false,
+            uses_genex_managed_credentials: false,
             }),
             requires_auth: false,
         }
@@ -1528,7 +1528,7 @@ async fn get_account_with_managed_bedrock_provider() -> Result<()> {
         received,
         GetAccountResponse {
             account: Some(Account::AmazonBedrock {
-                uses_codex_managed_credentials: true,
+            uses_genex_managed_credentials: true,
             }),
             requires_auth: false,
         }

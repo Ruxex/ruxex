@@ -496,7 +496,7 @@
     "ConfigLayerSource": {
       "oneOf": [
         {
-          "description": "Default configuration supplied with the installed Codex package.",
+          "description": "Default configuration supplied with the installed Genex package.",
           "properties": {
             "file": {
               "allOf": [
