@@ -262,7 +262,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn parse_rate_limit_for_limit_defaults_to_codex_headers() {
+    fn parse_rate_limit_for_limit_defaults_to_default_headers() {
         let mut headers = HeaderMap::new();
         headers.insert(
             "x-codex-primary-used-percent",
@@ -352,7 +352,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_all_rate_limits_includes_default_codex_snapshot() {
+    fn parse_all_rate_limits_includes_default_snapshot() {
         let headers = HeaderMap::new();
 
         let updates = parse_all_rate_limits(&headers);

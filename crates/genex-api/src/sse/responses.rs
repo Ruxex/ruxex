@@ -27,7 +27,7 @@ use tracing::debug;
 use tracing::trace;
 
 const X_REASONING_INCLUDED_HEADER: &str = "x-reasoning-included";
-const X_CODEX_TURN_STATE_HEADER: &str = "x-codex-turn-state";
+const TURN_STATE_HEADER: &str = "x-codex-turn-state";
 const PROVIDER_MODEL_HEADER: &str = "provider-model";
 const REQUEST_ID_HEADER: &str = "x-request-id";
 const TRUSTED_ACCESS_FOR_CYBER_VERIFICATION: &str = "trusted_access_for_cyber";
@@ -63,7 +63,7 @@ pub fn spawn_response_stream(
     if let Some(turn_state) = turn_state.as_ref()
         && let Some(header_value) = stream_response
             .headers
-            .get(X_CODEX_TURN_STATE_HEADER)
+            .get(TURN_STATE_HEADER)
             .and_then(|value| value.to_str().ok())
     {
         let _ = turn_state.set(header_value.to_string());
@@ -277,7 +277,7 @@ fn header_provider_model_value_from_json(value: &Value) -> Option<String> {
 fn header_turn_state_value_from_json(value: &Value) -> Option<String> {
     let headers = value.as_object()?;
     headers.iter().find_map(|(name, value)| {
-        if name.eq_ignore_ascii_case(X_CODEX_TURN_STATE_HEADER) {
+        if name.eq_ignore_ascii_case(TURN_STATE_HEADER) {
             json_value_as_string(value)
         } else {
             None

@@ -90,7 +90,7 @@ pub trait ChatCompletionApi: Send + Sync {
     ) -> ResponseStream;
 }
 
-/// Converts one Chat Completions `usage` payload into Codex token usage.
+/// Converts one Chat Completions `usage` payload into provider token usage.
 pub trait ChatUsageDecoder: Send + Sync {
     fn decode(&self, usage: &Value) -> Option<TokenUsage>;
 }

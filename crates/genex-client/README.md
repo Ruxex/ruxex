@@ -1,6 +1,6 @@
 # genex-client
 
-Higher-level request policy layered on `genex-http-client` without any Codex/provider API awareness.
+Higher-level request policy layered on `genex-http-client` without any Genex/provider API awareness.
 
 - Provides retry utilities (`RetryPolicy`, `RetryOn`, `run_with_retry`, `backoff`) that callers plug into for unary and streaming calls.
 - Supplies the `sse_stream` helper to turn byte streams into raw SSE `data:` frames with idle timeouts and surfaced stream errors.
