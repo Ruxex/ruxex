@@ -93,12 +93,12 @@ async fn paginated_history_without_state_db_does_not_initialize_sqlite() {
     }
 }
 
-/// Separate Codex and SQLite homes must work together across startup backfill,
+/// Separate Genex and SQLite homes must work together across startup backfill,
 /// thread listing, and projection-backed paginated history reads.
 #[tokio::test]
 async fn split_homes_support_backfill_listing_and_paginated_history() {
     let root = TempDir::new().expect("temp dir");
-    let genex_home = root.path().join("codex");
+    let genex_home = root.path().join("genex");
     let sqlite_home = root.path().join("sqlite");
     let thread_id = ThreadId::new();
     let sqlite = genex_state::SqliteConfig::new_for_testing(sqlite_home.as_path().abs());
