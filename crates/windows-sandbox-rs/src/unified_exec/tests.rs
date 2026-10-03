@@ -82,7 +82,7 @@ fn sandbox_cwd() -> PathBuf {
 
 fn sandbox_home(name: &str) -> TempDir {
     let id = TEST_HOME_COUNTER.fetch_add(1, Ordering::Relaxed);
-    let path = std::env::temp_dir().join(format!("codex-windows-sandbox-{name}-{id}"));
+    let path = std::env::temp_dir().join(format!("genex-windows-sandbox-{name}-{id}"));
     let _ = fs::remove_dir_all(&path);
     fs::create_dir_all(&path).expect("create sandbox home");
     tempfile::TempDir::new_in(&path).expect("create sandbox home tempdir")
@@ -309,7 +309,7 @@ fn elevated_non_tty_cmd_forwards_env_output_and_exit() {
         let genex_home = sandbox_home("elevated-non-tty-cmd");
         let permission_profile = PermissionProfile::workspace_write();
         let env_map = HashMap::from([(
-            "CODEX_ELEVATED_TEST".to_string(),
+            "GENEX_ELEVATED_TEST".to_string(),
             "ELEVATED-ENV-OK".to_string(),
         )]);
         let spawned = spawn_windows_sandbox_session_elevated_for_permission_profile(
@@ -320,7 +320,7 @@ fn elevated_non_tty_cmd_forwards_env_output_and_exit() {
                 "C:\\Windows\\System32\\cmd.exe".to_string(),
                 "/d".to_string(),
                 "/c".to_string(),
-                "echo %CODEX_ELEVATED_TEST% & exit /b 23".to_string(),
+                "echo %GENEX_ELEVATED_TEST% & exit /b 23".to_string(),
             ],
             cwd.as_path(),
             env_map,

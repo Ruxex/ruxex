@@ -13,7 +13,7 @@ use genex_install_context::InstallContext;
 use genex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
 use genex_utils_home_dir::find_genex_home;
 #[cfg(target_os = "windows")]
-use genex_windows_sandbox::CODEX_WINDOWS_SANDBOX_ARG1;
+use genex_windows_sandbox::GENEX_WINDOWS_SANDBOX_ARG1;
 #[cfg(unix)]
 use std::os::unix::fs::symlink;
 use tempfile::TempDir;
@@ -111,7 +111,7 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
         genex_exec_server::run_fs_helper_main();
     }
     #[cfg(target_os = "windows")]
-    if argv1 == CODEX_WINDOWS_SANDBOX_ARG1 {
+    if argv1 == GENEX_WINDOWS_SANDBOX_ARG1 {
         genex_windows_sandbox::run_windows_sandbox_wrapper_main();
     }
     if argv1 == GENEX_CORE_APPLY_PATCH_ARG1 {
@@ -643,10 +643,10 @@ mod tests {
     fn windows_batch_alias_preserves_cross_volume_executable_paths() {
         assert_eq!(
             super::windows_batch_executable_path(
-                Path::new(r"D:\Tools\codex.exe"),
+                Path::new(r"D:\Tools\genex.exe"),
                 Path::new(r"C:\Users\person\.genex\tmp\arg0"),
             ),
-            r"D:\Tools\codex.exe",
+            r"D:\Tools\genex.exe",
         );
     }
 

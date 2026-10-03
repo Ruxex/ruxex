@@ -17,7 +17,7 @@ use crate::logging::log_note;
 use crate::sandbox_bin_dir;
 
 const DEV_BUILD_VERSION_SENTINEL: &str = "0.0.0";
-const COMMAND_RUNNER_EXE: &str = "codex-command-runner.exe";
+const COMMAND_RUNNER_EXE: &str = "genex-command-runner.exe";
 pub(crate) const BIN_DIRNAME: &str = "bin";
 pub(crate) const RESOURCES_DIRNAME: &str = "genex-resources";
 
@@ -160,7 +160,7 @@ pub(crate) fn bundled_executable_path_for_exe(exe: &Path, file_name: &str) -> Op
 }
 
 fn materialized_file_name(suffix: &str) -> String {
-    format!("codex-command-runner-{suffix}.exe")
+    format!("genex-command-runner-{suffix}.exe")
 }
 
 fn helper_version_suffix(source: &Path) -> Result<String> {
@@ -216,10 +216,10 @@ mod tests {
     #[test]
     fn request_materializes_the_same_source() {
         let tmp = TempDir::new().expect("tempdir");
-        let executable = tmp.path().join("codex.exe");
+        let executable = tmp.path().join("genex.exe");
         let home = tmp.path().join("home");
         fs::write(&executable, b"fixture").expect("write source");
-        let destination = helper_bin_dir(&home).join("codex.exe");
+        let destination = helper_bin_dir(&home).join("genex.exe");
         assert_eq!(resolve_exe_for_runtime(&executable, &home), destination);
         assert_eq!(fs::read(destination).expect("read copy"), b"fixture");
     }
@@ -230,7 +230,7 @@ mod tests {
         let genex_home = tmp.path().join("genex-home");
         let source_dir = tmp.path().join("sibling-source");
         fs::create_dir_all(&source_dir).expect("create source dir");
-        let runner_source = source_dir.join("codex-command-runner.exe");
+        let runner_source = source_dir.join("genex-command-runner.exe");
         fs::write(&runner_source, b"runner").expect("runner");
         let runner_suffix = helper_version_suffix(&runner_source).expect("runner suffix");
         let runner_destination =
@@ -252,13 +252,13 @@ mod tests {
         let release_dir = tmp.path().join("release");
         let resources_dir = release_dir.join(RESOURCES_DIRNAME);
         fs::create_dir_all(&resources_dir).expect("create resources dir");
-        let exe = release_dir.join("codex.exe");
-        let helper = resources_dir.join("codex-command-runner.exe");
-        fs::write(&exe, b"codex").expect("write exe");
+        let exe = release_dir.join("genex.exe");
+        let helper = resources_dir.join("genex-command-runner.exe");
+        fs::write(&exe, b"genex").expect("write exe");
         fs::write(&helper, b"runner").expect("write helper");
 
         let resolved =
-            bundled_executable_path_for_exe(&exe, /*file_name*/ "codex-command-runner.exe")
+            bundled_executable_path_for_exe(&exe, /*file_name*/ "genex-command-runner.exe")
                 .expect("helper path");
 
         assert_eq!(resolved, helper);
@@ -272,13 +272,13 @@ mod tests {
         let resources_dir = package_dir.join(RESOURCES_DIRNAME);
         fs::create_dir_all(&bin_dir).expect("create bin dir");
         fs::create_dir_all(&resources_dir).expect("create resources dir");
-        let exe = bin_dir.join("codex.exe");
-        let helper = resources_dir.join("codex-command-runner.exe");
-        fs::write(&exe, b"codex").expect("write exe");
+        let exe = bin_dir.join("genex.exe");
+        let helper = resources_dir.join("genex-command-runner.exe");
+        fs::write(&exe, b"genex").expect("write exe");
         fs::write(&helper, b"runner").expect("write helper");
 
         let resolved =
-            bundled_executable_path_for_exe(&exe, /*file_name*/ "codex-command-runner.exe")
+            bundled_executable_path_for_exe(&exe, /*file_name*/ "genex-command-runner.exe")
                 .expect("helper path");
 
         assert_eq!(resolved, helper);
@@ -294,8 +294,8 @@ mod tests {
         fs::create_dir_all(&bin_dir).expect("create bin dir");
         fs::create_dir_all(&resources_dir).expect("create resources dir");
         fs::create_dir_all(&install_dir).expect("create install dir");
-        fs::write(bin_dir.join("codex.exe"), b"codex").expect("write exe");
-        let helper = resources_dir.join("codex-windows-sandbox-setup.exe");
+        fs::write(bin_dir.join("genex.exe"), b"genex").expect("write exe");
+        let helper = resources_dir.join("genex-windows-sandbox-setup.exe");
         fs::write(&helper, b"setup").expect("write helper");
 
         let junction = install_dir.join(BIN_DIRNAME);
@@ -309,8 +309,8 @@ mod tests {
 
         assert_eq!(
             bundled_executable_path_for_exe(
-                &junction.join("codex.exe"),
-                /*file_name*/ "codex-windows-sandbox-setup.exe"
+                &junction.join("genex.exe"),
+                /*file_name*/ "genex-windows-sandbox-setup.exe"
             ),
             Some(dunce::canonicalize(&helper).expect("canonical helper"))
         );
@@ -325,15 +325,15 @@ mod tests {
         let bin_resources_dir = bin_dir.join(RESOURCES_DIRNAME);
         fs::create_dir_all(&package_resources_dir).expect("create package resources dir");
         fs::create_dir_all(&bin_resources_dir).expect("create bin resources dir");
-        let exe = bin_dir.join("codex.exe");
-        let package_helper = package_resources_dir.join("codex-command-runner.exe");
-        let bin_helper = bin_resources_dir.join("codex-command-runner.exe");
-        fs::write(&exe, b"codex").expect("write exe");
+        let exe = bin_dir.join("genex.exe");
+        let package_helper = package_resources_dir.join("genex-command-runner.exe");
+        let bin_helper = bin_resources_dir.join("genex-command-runner.exe");
+        fs::write(&exe, b"genex").expect("write exe");
         fs::write(&package_helper, b"package runner").expect("write package helper");
         fs::write(&bin_helper, b"bin runner").expect("write bin helper");
 
         let resolved =
-            bundled_executable_path_for_exe(&exe, /*file_name*/ "codex-command-runner.exe")
+            bundled_executable_path_for_exe(&exe, /*file_name*/ "genex-command-runner.exe")
                 .expect("helper path");
 
         assert_eq!(resolved, package_helper);
@@ -345,15 +345,15 @@ mod tests {
         let release_dir = tmp.path().join("release");
         let resources_dir = release_dir.join(RESOURCES_DIRNAME);
         fs::create_dir_all(&resources_dir).expect("create resources dir");
-        let exe = release_dir.join("codex.exe");
-        let sibling_helper = release_dir.join("codex-command-runner.exe");
-        let resource_helper = resources_dir.join("codex-command-runner.exe");
-        fs::write(&exe, b"codex").expect("write exe");
+        let exe = release_dir.join("genex.exe");
+        let sibling_helper = release_dir.join("genex-command-runner.exe");
+        let resource_helper = resources_dir.join("genex-command-runner.exe");
+        fs::write(&exe, b"genex").expect("write exe");
         fs::write(&sibling_helper, b"sibling runner").expect("write sibling helper");
         fs::write(&resource_helper, b"resource runner").expect("write resource helper");
 
         let resolved =
-            bundled_executable_path_for_exe(&exe, /*file_name*/ "codex-command-runner.exe")
+            bundled_executable_path_for_exe(&exe, /*file_name*/ "genex-command-runner.exe")
                 .expect("helper path");
 
         assert_eq!(resolved, sibling_helper);
@@ -377,6 +377,6 @@ mod tests {
     fn materialized_file_name_adds_suffix_before_extension() {
         let file_name = materialized_file_name("test-suffix");
 
-        assert_eq!(file_name, "codex-command-runner-test-suffix.exe");
+        assert_eq!(file_name, "genex-command-runner-test-suffix.exe");
     }
 }

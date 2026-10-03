@@ -149,8 +149,9 @@ fn event_target(value: &str) -> Option<&'static str> {
     let package = parts.iter().any(|part| part.starts_with("provider.codex_"));
     let trusted = package || parts.windows(2).any(|pair| pair == ["provider", "codex"]);
     match name {
-        "codex-windows-sandbox-setup.exe" => Some("sandbox_setup"),
-        "codex-command-runner.exe" => Some("command_runner"),
+        "genex-windows-sandbox-setup.exe" | "codex-windows-sandbox-setup.exe" => Some("sandbox_setup"),
+        "genex-command-runner.exe" | "codex-command-runner.exe" => Some("command_runner"),
+        "genex.exe" => Some("genex"),
         "codex.exe" => Some("codex"),
         "codex-desktop.exe" => Some("codex_desktop"),
         "rg.exe" if trusted => Some("ripgrep"),

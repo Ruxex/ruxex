@@ -217,7 +217,7 @@ fn connect_pipe_with_timeout(
     let (connect_result_tx, connect_result_rx) = mpsc::sync_channel(1);
     let mut connect_thread = Some(
         thread::Builder::new()
-            .name(format!("codex-runner-connect-{pipe_label}"))
+            .name(format!("genex-runner-connect-{pipe_label}"))
             .spawn(move || {
                 let current_process = unsafe { GetCurrentProcess() };
                 let mut thread_handle = 0;
@@ -355,7 +355,7 @@ pub(crate) fn spawn_runner_transport(
     let runner_cmdline = runner_exe
         .to_str()
         .map(str::to_owned)
-        .unwrap_or_else(|| "codex-command-runner.exe".to_string());
+        .unwrap_or_else(|| "genex-command-runner.exe".to_string());
     let runner_full_cmd = format!(
         "{} {} {}",
         quote_windows_arg(&runner_cmdline),

@@ -9,7 +9,7 @@ use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 
 use super::GENEX_HOME_FLAG;
-use super::CODEX_WINDOWS_SANDBOX_ARG1;
+use super::GENEX_WINDOWS_SANDBOX_ARG1;
 use super::COMMAND_CWD_FLAG;
 use super::DENY_READ_PATHS_JSON_FLAG;
 use super::DENY_WRITE_PATHS_JSON_FLAG;
@@ -54,7 +54,7 @@ fn windows_wrapper_args_round_trip() {
 
     let args = create_windows_sandbox_command_args_for_permission_profile(
         vec![
-            "codex.exe".to_string(),
+            "genex.exe".to_string(),
             "--codex-run-as-fs-helper".to_string(),
         ],
         &command_cwd,
@@ -75,7 +75,7 @@ fn windows_wrapper_args_round_trip() {
     )
     .expect("build wrapper args");
 
-    assert_eq!(args[0], CODEX_WINDOWS_SANDBOX_ARG1);
+    assert_eq!(args[0], GENEX_WINDOWS_SANDBOX_ARG1);
     assert!(args.contains(&GENEX_HOME_FLAG.to_string()));
     assert!(args.contains(&COMMAND_CWD_FLAG.to_string()));
     assert!(args.contains(&WORKSPACE_ROOT_FLAG.to_string()));
@@ -96,7 +96,7 @@ fn windows_wrapper_args_round_trip() {
 
     assert_eq!(
         parsed.command,
-        vec!["codex.exe", "--codex-run-as-fs-helper"]
+        vec!["genex.exe", "--codex-run-as-fs-helper"]
     );
     assert_eq!(parsed.command_cwd, command_cwd);
     assert_eq!(parsed.workspace_roots, workspace_roots);

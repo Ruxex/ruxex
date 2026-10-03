@@ -46,7 +46,7 @@ pub fn find_runner_exe(genex_home: &Path, log_dir: Option<&Path>) -> anyhow::Res
 pub fn pipe_pair() -> (String, String) {
     let mut rng = SmallRng::from_entropy();
     let nonce: u128 = rng.r#gen();
-    let base = format!(r"\\.\pipe\codex-runner-{nonce:x}");
+    let base = format!(r"\\.\pipe\genex-runner-{nonce:x}");
     (format!("{base}-in"), format!("{base}-out"))
 }
 

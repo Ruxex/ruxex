@@ -380,7 +380,7 @@ async fn file_system_elevated_relative_read_denial_uses_policy_cwd(
     {
         return Err(error).context("create Windows sandbox test resources");
     }
-    for name in ["codex-windows-sandbox-setup", "codex-command-runner"] {
+    for name in ["genex-windows-sandbox-setup", "genex-command-runner"] {
         let source = genex_utils_cargo_bin::cargo_bin(name)?;
         let destination = resources.join(Path::new(name).with_extension("exe"));
         if let Err(error) = std::fs::copy(&source, &destination)

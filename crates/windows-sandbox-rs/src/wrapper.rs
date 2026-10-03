@@ -1,4 +1,4 @@
-//! Internal `codex.exe --run-as-windows-sandbox` wrapper.
+//! Internal `genex.exe --run-as-windows-sandbox` wrapper.
 //!
 //! This gives direct-spawn callers an argv-shaped Windows sandbox launcher,
 //! analogous to the macOS seatbelt and Linux sandbox wrapper paths. The wrapper
@@ -30,7 +30,7 @@ use genex_protocol::models::PermissionProfile;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use windows_sys::Win32::Foundation::CloseHandle;
 
-pub const CODEX_WINDOWS_SANDBOX_ARG1: &str = "--run-as-windows-sandbox";
+pub const GENEX_WINDOWS_SANDBOX_ARG1: &str = "--run-as-windows-sandbox";
 
 const COMMAND_CWD_FLAG: &str = "--command-cwd";
 const GENEX_HOME_FLAG: &str = "--genex-home";
@@ -73,7 +73,7 @@ pub fn create_windows_sandbox_command_args_for_permission_profile(
     let env_json = serde_json::to_string(env_map)
         .unwrap_or_else(|err| panic!("failed to serialize env: {err}"));
     let mut args = vec![
-        CODEX_WINDOWS_SANDBOX_ARG1.to_string(),
+        GENEX_WINDOWS_SANDBOX_ARG1.to_string(),
         GENEX_HOME_FLAG.to_string(),
         genex_home.to_string_lossy().into_owned(),
         COMMAND_CWD_FLAG.to_string(),

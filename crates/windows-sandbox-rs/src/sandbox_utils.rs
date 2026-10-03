@@ -99,7 +99,7 @@ mod tests {
         fs::create_dir_all(&nested).expect("create nested dir");
         fs::write(
             repo.join(".git"),
-            "gitdir: C:/Users/example/repo/.git/worktrees/codex3\n",
+            "gitdir: C:/Users/example/repo/.git/worktrees/genex3\n",
         )
         .expect("write .git file");
 

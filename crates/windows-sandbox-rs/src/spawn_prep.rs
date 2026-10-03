@@ -29,7 +29,7 @@ use crate::token::get_current_token_for_restriction;
 use crate::token::get_logon_sid_bytes;
 use crate::workspace_acl::is_command_cwd_root;
 use crate::workspace_acl::protect_workspace_agents_dir;
-use crate::workspace_acl::protect_workspace_codex_dir;
+use crate::workspace_acl::protect_workspace_genex_dir;
 use anyhow::Context;
 use anyhow::Result;
 use genex_protocol::models::PermissionProfile;
@@ -337,7 +337,7 @@ pub(crate) fn apply_legacy_session_acl_rules(
         {
             let canonical_cwd = canonicalize_path(current_dir);
             if is_command_cwd_root(&workspace_sid.root, &canonical_cwd) {
-                let _ = protect_workspace_codex_dir(current_dir, workspace_sid.sid.as_ptr());
+                let _ = protect_workspace_genex_dir(current_dir, workspace_sid.sid.as_ptr());
                 let _ = protect_workspace_agents_dir(current_dir, workspace_sid.sid.as_ptr());
             }
         }

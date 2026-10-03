@@ -445,8 +445,8 @@ fn validate_package(root: &Path) -> Result<()> {
     ];
     if cfg!(windows) {
         names.extend([
-            "genex-resources/codex-command-runner.exe",
-            "genex-resources/codex-windows-sandbox-setup.exe",
+            "genex-resources/genex-command-runner.exe",
+            "genex-resources/genex-windows-sandbox-setup.exe",
         ]);
     } else if cfg!(target_os = "linux") {
         names.push("genex-resources/bwrap");
