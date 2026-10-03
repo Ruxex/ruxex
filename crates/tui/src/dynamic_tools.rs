@@ -62,7 +62,7 @@ use tokio::sync::broadcast;
 use tokio::time::Instant;
 use uuid::Uuid;
 
-pub(crate) const NAMESPACE: &str = "codex_tui";
+pub(crate) const NAMESPACE: &str = "genex_tui";
 pub(crate) const DELEGATION_TOOLS: [&str; 3] =
     ["create_thread", "send_message_to_thread", "fork_thread"];
 const DEFAULT_LIST_LIMIT: u32 = 10;
@@ -1167,16 +1167,16 @@ fn delegated_prompt(source_thread_id: &str, prompt: &str) -> String {
             .replace('>', "&gt;")
     };
     format!(
-        "<codex_delegation>\n  <source_thread_id>{}</source_thread_id>\n  <input>{}</input>\n</codex_delegation>",
+        "<genex_delegation>\n  <source_thread_id>{}</source_thread_id>\n  <input>{}</input>\n</genex_delegation>",
         escape(source_thread_id),
         escape(prompt)
     )
 }
 
 fn parse_delegated_prompt(prompt: &str) -> Option<(String, String)> {
-    let delegation = prompt.strip_prefix("<codex_delegation>\n  <source_thread_id>")?;
+    let delegation = prompt.strip_prefix("<genex_delegation>\n  <source_thread_id>")?;
     let (source, delegated) = delegation.split_once("</source_thread_id>\n  <input>")?;
-    let delegated = delegated.strip_suffix("</input>\n</codex_delegation>")?;
+    let delegated = delegated.strip_suffix("</input>\n</genex_delegation>")?;
     let unescape = |value: &str| {
         value
             .replace("&lt;", "<")
@@ -1333,7 +1333,7 @@ fn turn_summary(turn: &Turn, include_outputs: bool, output_chars: usize) -> Valu
                         let mut input = json!({"type": "text", "text": truncate(text, DEFAULT_OUTPUT_CHARS)});
                         if let Some((source_thread_id, delegated)) = parse_delegated_prompt(text)
                         {
-                            input["codexDelegation"] = json!({
+                            input["genexDelegation"] = json!({
                                 "sourceThreadId": source_thread_id,
                                 "input": truncate(&delegated, DEFAULT_OUTPUT_CHARS)
                             });
@@ -1370,7 +1370,7 @@ fn turn_summary(turn: &Turn, include_outputs: bool, output_chars: usize) -> Valu
                 if let Some((source_thread_id, delegated)) =
                     parse_delegated_tool_output(name, namespace.as_deref(), output)
                 {
-                    item["codexDelegation"] = json!({
+                    item["genexDelegation"] = json!({
                         "sourceThreadId": source_thread_id,
                         "input": truncate(&delegated, DEFAULT_OUTPUT_CHARS)
                     });

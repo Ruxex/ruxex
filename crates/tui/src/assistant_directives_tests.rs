@@ -89,7 +89,7 @@ fn rejects_ambiguous_or_incomplete_directives() {
 #[test]
 fn malformed_retries_exhaust_the_shared_scan_budget() {
     let source = format!(
-        "codex-file-citation {} x bad}}",
+        "genex-file-citation {} x bad}}",
         ":a{k=".repeat(/*n*/ 16_000)
     );
     let mut remaining = source.len() * 4;

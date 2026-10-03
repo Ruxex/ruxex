@@ -53,7 +53,7 @@ async fn test_server() -> color_eyre::Result<(TempDir, AppServerSession, String,
             "item": {
                 "type": "DynamicToolCall",
                 "id": "persisted-tool",
-                "namespace": "codex_tui",
+                "namespace": "genex_tui",
                 "tool": "list_threads",
                 "arguments": {},
                 "status": "completed",
@@ -228,7 +228,7 @@ fn oversized_read_pages_preserve_turns_and_pagination() {
                     .map(|item_index| json!({
                         "id": format!("00000000-0000-0000-{turn_index:04}-{item_index:012}"),
                         "type": "dynamicToolCall",
-                        "namespace": "codex_tui",
+                        "namespace": "genex_tui",
                         "tool": "read_thread",
                         "status": "completed"
                     }))
@@ -262,7 +262,7 @@ fn oversized_read_pages_preserve_turns_and_pagination() {
 #[test]
 fn delegated_prompts_match_desktop_xml_contract() {
     let output = FunctionCallOutputBody::Text(delegated_prompt("thread-1", "Check status"));
-    for namespace in ["codex_tui", "codex_app"] {
+    for namespace in ["genex_tui", "codex_app"] {
         assert_eq!(
             parse_delegated_tool_output("send_message_to_thread", Some(namespace), &output),
             Some(("thread-1".to_string(), "Check status".to_string()))
@@ -274,7 +274,7 @@ fn delegated_prompts_match_desktop_xml_contract() {
     );
     assert_eq!(
         delegated_prompt("thread-1", "Check <main> & report > status"),
-        "<codex_delegation>\n  <source_thread_id>thread-1</source_thread_id>\n  <input>Check &lt;main&gt; &amp; report &gt; status</input>\n</codex_delegation>"
+        "<genex_delegation>\n  <source_thread_id>thread-1</source_thread_id>\n  <input>Check &lt;main&gt; &amp; report &gt; status</input>\n</genex_delegation>"
     );
     assert!(
         validate_prompt(
@@ -310,7 +310,7 @@ fn activity_metadata_is_retained_without_including_outputs() -> color_eyre::Resu
                 "revisedPrompt": "a cat", "result": "image bytes"},
             {"type": "enteredReviewMode", "id": "review-1", "review": "review changes"},
             {"type": "functionCallOutput", "id": "delegation-1", "name": "send_message_to_thread",
-                "namespace": "codex_tui", "output": delegated_prompt("source-2", "Follow <up> & report")}
+                "namespace": "genex_tui", "output": delegated_prompt("source-2", "Follow <up> & report")}
         ]
     }))?;
 
@@ -325,7 +325,7 @@ fn activity_metadata_is_retained_without_including_outputs() -> color_eyre::Resu
             {"type": "mcpToolCall", "id": "mcp-1", "server": "docs", "tool": "search", "arguments": {}, "status": "completed", "durationMs": null},
             {"type": "userMessage", "id": "user-1", "content": [
                 {"type": "text", "text": delegated_prompt("source-1", "Check <main> & status"),
-                    "codexDelegation": {"sourceThreadId": "source-1", "input": "Check <main> & status"}},
+                    "genexDelegation": {"sourceThreadId": "source-1", "input": "Check <main> & status"}},
                 {"type": "skill", "name": "debug", "path": "/tmp/SKILL.md"},
                 {"type": "mention", "name": "docs", "path": "app://docs"}
             ]},
@@ -336,7 +336,7 @@ fn activity_metadata_is_retained_without_including_outputs() -> color_eyre::Resu
                 "revisedPrompt": "a cat", "savedPath": null},
             {"type": "enteredReviewMode", "id": "review-1", "review": "review changes"},
             {"type": "functionCallOutput", "id": "delegation-1", "name": "send_message_to_thread",
-                "namespace": "codex_tui", "codexDelegation": {
+                "namespace": "genex_tui", "genexDelegation": {
                     "sourceThreadId": "source-2", "input": "Follow <up> & report"
                 }}
         ])

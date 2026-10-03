@@ -477,7 +477,7 @@ fn set_test_initial_prompt(app: &mut App, initial_prompt: String) {
         ),
         enhanced_keys_supported: false,
         has_managed_account: false,
-        has_codex_backend_auth: false,
+        has_genex_backend_auth: false,
         model_catalog: app.model_catalog.clone(),
         is_first_run: false,
         status_account_display: None,
@@ -1956,7 +1956,7 @@ fn selected_and_resumed_threads_use_server_capability_for_v1_and_v2_children() -
             id: root_thread_id,
             timestamp: "2026-01-01T00:00:00Z".to_string(),
             cwd: app.config.cwd.to_path_buf(),
-            originator: "codex-tui-test".to_string(),
+            originator: "genex-tui-test".to_string(),
             cli_version: "0.0.0".to_string(),
             source: RolloutSessionSource::Cli,
             model_provider: Some(app.config.model_provider_id.clone()),
@@ -1987,7 +1987,7 @@ fn selected_and_resumed_threads_use_server_capability_for_v1_and_v2_children() -
                 parent_thread_id: Some(root_thread_id),
                 timestamp: timestamp.clone(),
                 cwd: app.config.cwd.to_path_buf(),
-                originator: "codex-tui-test".to_string(),
+                originator: "genex-tui-test".to_string(),
                 cli_version: "0.0.0".to_string(),
                 source: RolloutSessionSource::SubAgent(SubAgentSource::ThreadSpawn {
                     parent_thread_id: root_thread_id,
@@ -4919,11 +4919,11 @@ async fn set_thread_goal_draft_materializes_long_objective_and_confirms_before_p
         assert!(!is_managed(&genex_home, &path));
     }
     assert!(!is_managed(
-        &AppServerPath::from_app_server("/tmp/codex\\home"),
-        &format!("/tmp/codex/home/{suffix}")
+        &AppServerPath::from_app_server("/tmp/genex\\home"),
+        &format!("/tmp/genex/home/{suffix}")
     ));
-    let unix_path = AppServerPath::from_app_server("/tmp/codex\\").join("a");
-    assert_eq!(unix_path.as_str(), "/tmp/codex\\/a");
+    let unix_path = AppServerPath::from_app_server("/tmp/genex\\").join("a");
+    assert_eq!(unix_path.as_str(), "/tmp/genex\\/a");
     let attachments_dir = app.chat_widget.config_ref().genex_home.join("attachments");
     let attachment_count = std::fs::read_dir(&attachments_dir)?.count();
     let placeholder = "[Pasted Content 5 chars]";
@@ -6710,7 +6710,7 @@ async fn replace_chat_widget_reseeds_collab_agent_metadata_for_replay() {
         initial_user_message: None,
         enhanced_keys_supported: app.enhanced_keys_supported,
         has_managed_account: app.chat_widget.has_managed_account(),
-        has_codex_backend_auth: app.chat_widget.has_codex_backend_auth(),
+        has_genex_backend_auth: app.chat_widget.has_genex_backend_auth(),
         model_catalog: app.model_catalog.clone(),
         is_first_run: false,
         status_account_display: app.chat_widget.status_account_display().cloned(),

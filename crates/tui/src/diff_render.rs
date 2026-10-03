@@ -1444,7 +1444,7 @@ mod tests {
         let cwd = if cfg!(windows) {
             PathBuf::from(r"C:\workspace\genex")
         } else {
-            PathBuf::from("/workspace/codex")
+            PathBuf::from("/workspace/genex")
         };
         let path = cwd.join("tui").join("example.png");
 

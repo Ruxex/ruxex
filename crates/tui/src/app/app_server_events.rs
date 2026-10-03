@@ -211,7 +211,7 @@ impl App {
                 // the newly authenticated identity, even when both accounts share one thread.
                 self.last_thread_usage_status_cell = None;
                 self.pending_thread_usage_history_refresh = false;
-                let has_codex_backend_auth = false;
+                let has_genex_backend_auth = false;
                 self.chat_widget.update_account_state(
                     status_account_display_from_auth_mode(
                         notification.auth_mode,
@@ -219,7 +219,7 @@ impl App {
                     ),
                     notification.plan_type,
                     false,
-                    has_codex_backend_auth,
+                    has_genex_backend_auth,
                 );
                 if self.chat_widget.has_managed_account() {
                     crate::daybreak::prefetch_notice(

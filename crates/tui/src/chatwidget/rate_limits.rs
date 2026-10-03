@@ -252,21 +252,21 @@ impl ChatWidget {
             }
             self.plan_type = snapshot.plan_type.or(self.plan_type);
 
-            let is_codex_limit = limit_id.eq_ignore_ascii_case("codex");
-            if is_codex_limit
+            let is_genex_limit = limit_id.eq_ignore_ascii_case("codex");
+            if is_genex_limit
                 && (matches!(source, RateLimitSnapshotSource::AccountUsage)
                     || snapshot.spend_control_reached.is_some())
             {
-                self.codex_spend_control_reached = snapshot.spend_control_reached;
+                self.genex_spend_control_reached = snapshot.spend_control_reached;
             }
-            if (is_codex_limit && matches!(source, RateLimitSnapshotSource::AccountUsage))
+            if (is_genex_limit && matches!(source, RateLimitSnapshotSource::AccountUsage))
                 || snapshot.rate_limit_reached_type.is_some()
             {
-                self.codex_rate_limit_reached_type = snapshot.rate_limit_reached_type;
+                self.genex_rate_limit_reached_type = snapshot.rate_limit_reached_type;
             }
-            let workspace_limit_reached = self.codex_spend_control_reached == Some(true)
+            let workspace_limit_reached = self.genex_spend_control_reached == Some(true)
                 || matches!(
-                    self.codex_rate_limit_reached_type,
+                    self.genex_rate_limit_reached_type,
                     Some(
                         RateLimitReachedType::WorkspaceOwnerCreditsDepleted
                             | RateLimitReachedType::WorkspaceMemberCreditsDepleted
@@ -279,7 +279,7 @@ impl ChatWidget {
                     .credits
                     .as_ref()
                     .is_some_and(has_usable_workspace_credits);
-            if is_codex_limit && has_workspace_credits {
+            if is_genex_limit && has_workspace_credits {
                 match self.rate_limit_switch_prompt {
                     RateLimitSwitchPromptState::Pending => {
                         self.rate_limit_switch_prompt = RateLimitSwitchPromptState::Idle;
@@ -291,7 +291,7 @@ impl ChatWidget {
                     RateLimitSwitchPromptState::Idle => {}
                 }
             }
-            let should_warn_about_rate_limit_usage = is_codex_limit && !has_workspace_credits;
+            let should_warn_about_rate_limit_usage = is_genex_limit && !has_workspace_credits;
             let warnings = if should_warn_about_rate_limit_usage {
                 self.rate_limit_warnings.take_warnings(
                     self.plan_type,
@@ -316,7 +316,7 @@ impl ChatWidget {
                 vec![]
             };
 
-            let high_usage = is_codex_limit
+            let high_usage = is_genex_limit
                 && (snapshot
                     .secondary
                     .as_ref()
@@ -361,8 +361,8 @@ impl ChatWidget {
             }
         } else {
             self.rate_limit_snapshots_by_limit_id.clear();
-            self.codex_rate_limit_reached_type = None;
-            self.codex_spend_control_reached = None;
+            self.genex_rate_limit_reached_type = None;
+            self.genex_spend_control_reached = None;
         }
         self.refresh_status_line();
     }

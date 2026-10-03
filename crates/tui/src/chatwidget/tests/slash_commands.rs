@@ -1278,7 +1278,7 @@ async fn usage_command_runs_with_backend_auth_without_managed_account_flag() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     chat.update_account_state(
         /*status_account_display*/ None, /*plan_type*/ None,
-        /*has_managed_account*/ false, /*has_codex_backend_auth*/ true,
+        /*has_managed_account*/ false, /*has_genex_backend_auth*/ true,
     );
 
     chat.dispatch_command_with_args(SlashCommand::Usage, "daily".to_string(), Vec::new());
@@ -1297,7 +1297,7 @@ async fn usage_command_runs_with_backend_auth_from_widget_init() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual_with_auth(
         /*model_override*/ None,
         /*has_managed_account*/ false,
-        /*has_codex_backend_auth*/ true,
+        /*has_genex_backend_auth*/ true,
         FrameRequester::test_dummy(),
     )
     .await;
@@ -1311,7 +1311,7 @@ async fn usage_command_runs_with_backend_auth_from_widget_init() {
         })
     );
     assert!(!chat.has_managed_account());
-    assert!(chat.has_codex_backend_auth());
+    assert!(chat.has_genex_backend_auth());
 }
 
 #[tokio::test]
@@ -2715,7 +2715,7 @@ async fn rejected_queued_cd_drains_following_input() {
 #[tokio::test]
 async fn slash_rollout_displays_current_path() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    let rollout_path = PathBuf::from("/tmp/codex-test-rollout.jsonl");
+    let rollout_path = PathBuf::from("/tmp/genex-test-rollout.jsonl");
     chat.current_rollout_path = Some(rollout_path.clone());
 
     chat.dispatch_command(SlashCommand::Rollout);

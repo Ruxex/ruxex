@@ -161,7 +161,7 @@ pub(super) async fn make_chatwidget_manual(
     make_chatwidget_manual_with_auth(
         model_override,
         /*has_managed_account*/ false,
-        /*has_codex_backend_auth*/ false,
+        /*has_genex_backend_auth*/ false,
         FrameRequester::test_dummy(),
     )
     .await
@@ -170,7 +170,7 @@ pub(super) async fn make_chatwidget_manual(
 pub(super) async fn make_chatwidget_manual_with_auth(
     model_override: Option<&str>,
     has_managed_account: bool,
-    has_codex_backend_auth: bool,
+    has_genex_backend_auth: bool,
     frame_requester: FrameRequester,
 ) -> (
     ChatWidget,
@@ -199,7 +199,7 @@ pub(super) async fn make_chatwidget_manual_with_auth(
         initial_user_message: None,
         enhanced_keys_supported: false,
         has_managed_account,
-        has_codex_backend_auth,
+        has_genex_backend_auth,
         model_catalog,
         is_first_run: true,
         status_account_display: None,
@@ -258,7 +258,7 @@ pub(super) fn assert_no_submit_op(op_rx: &mut tokio::sync::mpsc::UnboundedReceiv
 
 pub(crate) fn set_managed_auth(chat: &mut ChatWidget) {
     chat.has_managed_account = true;
-    chat.has_codex_backend_auth = true;
+    chat.has_genex_backend_auth = true;
     chat.model_catalog = test_model_catalog(&chat.config);
 }
 
@@ -1365,7 +1365,7 @@ pub(super) fn strip_osc8_for_snapshot(text: &str) -> String {
 
 pub(super) fn plugins_test_absolute_path(path: &str) -> AbsolutePathBuf {
     std::env::temp_dir()
-        .join("codex-plugin-menu-tests")
+        .join("genex-plugin-menu-tests")
         .join(path)
         .abs()
 }

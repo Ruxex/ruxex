@@ -22,11 +22,11 @@ argv
 | 段階 | 主な担当 | 担当するもの |
 | --- | --- | --- |
 | 解析とディスパッチ | [`genex-cli`](../../../crates/cli/src/main.rs) | `MultitoolCli`、`Subcommand`、ルート検証、ディスパッチ |
-| 対話用引数モデル | [`codex-tui`](../../../crates/tui/src/cli.rs) | TUI 固有のフラグと、resume/fork/agents 用のラッパー状態 |
+| 対話用引数モデル | [`genex-tui`](../../../crates/tui/src/cli.rs) | TUI 固有のフラグと、resume/fork/agents 用のラッパー状態 |
 | 非対話用引数モデル | [`genex-exec`](../../../crates/exec/src/cli.rs) | `genex exec` のオプションと exec サブコマンド |
 | 設定 | [`genex-core`](../../../crates/core/src/config/mod.rs) と [`genex-config`](../../../crates/config/src/lib.rs) | 読み込み、上書き、プロファイル、検証、実行時設定 |
 | エージェントのオーケストレーション | [`genex-core`](../../../crates/core/src/lib.rs) | スレッド、ターン、ツール、承認、モデルリクエスト、共有状態 |
-| UI 表示 | [`codex-tui`](../../../crates/tui/src/lib.rs) | ターミナルのイベントループ、履歴セル、入力、レンダリング |
+| UI 表示 | [`genex-tui`](../../../crates/tui/src/lib.rs) | ターミナルのイベントループ、履歴セル、入力、レンダリング |
 | App-server の実行時処理 | [`genex-app-server`](../../../crates/app-server/src/lib.rs) | リクエスト処理、トランスポート、デーモン向けランタイム、ライフサイクル |
 | 公開プロトコル | [`genex-app-server-protocol`](../../../crates/app-server-protocol/src/lib.rs) と [`genex-protocol`](../../../crates/protocol/src/lib.rs) | ワイヤー型、通知、リクエスト、共有ドメイン型 |
 | プロバイダー/API 境界 | [`genex-api`](../../../crates/genex-api/src/lib.rs)、[`genex-client`](../../../crates/genex-client/src/lib.rs) | プロバイダーへのリクエスト、ストリーミング、再試行、認証ヘッダー、トランスポート |

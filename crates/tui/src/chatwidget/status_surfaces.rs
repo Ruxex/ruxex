@@ -968,7 +968,7 @@ impl ChatWidget {
 fn five_hour_status_window(
     snapshot: &RateLimitSnapshotDisplay,
 ) -> Option<(&RateLimitWindowDisplay, bool)> {
-    find_primary_codex_window(snapshot, "5h")
+    find_primary_genex_window(snapshot, "5h")
         .or_else(|| secondary_window_with_label_when_weekly_is_available(snapshot, "5h"))
         .or_else(|| non_weekly_primary_window(snapshot))
         .or_else(|| non_weekly_secondary_window_when_primary_is_weekly(snapshot))
@@ -977,11 +977,11 @@ fn five_hour_status_window(
 fn weekly_status_window(
     snapshot: &RateLimitSnapshotDisplay,
 ) -> Option<(&RateLimitWindowDisplay, bool)> {
-    find_codex_window(snapshot, "weekly")
+    find_genex_window(snapshot, "weekly")
         .or_else(|| snapshot.secondary.as_ref().map(|window| (window, true)))
 }
 
-fn find_codex_window<'a>(
+fn find_genex_window<'a>(
     snapshot: &'a RateLimitSnapshotDisplay,
     label: &str,
 ) -> Option<(&'a RateLimitWindowDisplay, bool)> {
@@ -1000,7 +1000,7 @@ fn find_codex_window<'a>(
     None
 }
 
-fn find_primary_codex_window<'a>(
+fn find_primary_genex_window<'a>(
     snapshot: &'a RateLimitSnapshotDisplay,
     label: &str,
 ) -> Option<(&'a RateLimitWindowDisplay, bool)> {
@@ -1016,7 +1016,7 @@ fn secondary_window_with_label_when_weekly_is_available<'a>(
     snapshot: &'a RateLimitSnapshotDisplay,
     label: &str,
 ) -> Option<(&'a RateLimitWindowDisplay, bool)> {
-    find_codex_window(snapshot, "weekly")?;
+    find_genex_window(snapshot, "weekly")?;
 
     let secondary = snapshot.secondary.as_ref()?;
     if matches_window_label(secondary, label) {

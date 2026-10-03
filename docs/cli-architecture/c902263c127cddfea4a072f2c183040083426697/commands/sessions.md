@@ -6,7 +6,7 @@
 
 ## 対話的な resume/fork
 
-`ResumeCommand` と `ForkCommand` は [`cli/src/main.rs`](../../../../crates/cli/src/main.rs#L304) で定義されています。ルートコマンドは `finalize_resume_interactive` と `finalize_fork_interactive` でそれらのフラグを `codex_tui::Cli` にまとめ、その後 `run_interactive_tui` を呼び出します。
+`ResumeCommand` と `ForkCommand` は [`cli/src/main.rs`](../../../../crates/cli/src/main.rs#L304) で定義されています。ルートコマンドは `finalize_resume_interactive` と `finalize_fork_interactive` でそれらのフラグを `genex_tui::Cli` にまとめ、その後 `run_interactive_tui` を呼び出します。
 
 - ID なし: ピッカーモード。
 - `--last`: 条件に合う最新の記録済みセッション。
@@ -18,7 +18,7 @@ Fork は新しいセッション関係を作成するもので、resume の単�
 
 ## archive/delete/unarchive
 
-ルートのディスパッチは操作を `codex_tui::SessionArchiveAction` に変換し、[main.rs#L788](../../../../crates/cli/src/main.rs#L788) の `run_session_archive_cli_command` を呼び出します。操作は [`codex-tui::session_archive_commands`](../../../../crates/tui/src/session_archive_commands.rs#L41) に実装されています。`delete_action` が強制するように、`delete --force` が確認を迂回できるのは対象が UUID の場合だけです。
+ルートのディスパッチは操作を `genex_tui::SessionArchiveAction` に変換し、[main.rs#L788](../../../../crates/cli/src/main.rs#L788) の `run_session_archive_cli_command` を呼び出します。操作は [`genex-tui::session_archive_commands`](../../../../crates/tui/src/session_archive_commands.rs#L41) に実装されています。`delete_action` が強制するように、`delete --force` が確認を迂回できるのは対象が UUID の場合だけです。
 
 ## queue
 

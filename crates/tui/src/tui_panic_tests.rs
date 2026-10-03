@@ -11,15 +11,15 @@ use crossterm::cursor::SetCursorStyle;
 use ratatui::layout::Rect;
 use ratatui::style::Style;
 
-const BEFORE_PANIC: &str = "\x1b]1337;codex-before-panic\x07";
-const BEFORE_RECOVERY: &str = "\x1b]1337;codex-before-recovery\x07";
-const BEFORE_VISIBLE_FRAME: &str = "\x1b]1337;codex-before-visible-frame\x07";
-const AFTER_VISIBLE_FRAME: &str = "\x1b]1337;codex-after-visible-frame\x07";
+const BEFORE_PANIC: &str = "\x1b]1337;genex-before-panic\x07";
+const BEFORE_RECOVERY: &str = "\x1b]1337;genex-before-recovery\x07";
+const BEFORE_VISIBLE_FRAME: &str = "\x1b]1337;genex-before-visible-frame\x07";
+const AFTER_VISIBLE_FRAME: &str = "\x1b]1337;genex-after-visible-frame\x07";
 
 #[tokio::test(flavor = "current_thread")]
 #[ignore]
 async fn caught_panic_pty_child() {
-    if std::env::var_os("CODEX_TUI_CAUGHT_PANIC_PTY_CHILD").is_none() {
+    if std::env::var_os("GENEX_TUI_CAUGHT_PANIC_PTY_CHILD").is_none() {
         return;
     }
     super::set_modes().expect("set terminal modes");

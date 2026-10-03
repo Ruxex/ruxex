@@ -62,7 +62,7 @@ impl SizeMonitor {
         }));
         let shared = state.clone();
         let worker = thread::Builder::new()
-            .name("codex-terminal-size".into())
+            .name("genex-terminal-size".into())
             .spawn(move || {
                 loop {
                     thread::park_timeout(CHECK_INTERVAL);

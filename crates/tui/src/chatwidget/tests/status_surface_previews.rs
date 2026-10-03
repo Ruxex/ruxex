@@ -126,7 +126,7 @@ async fn status_surface_thread_usage_previews_omit_unavailable_usd_estimates() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
-    chat.has_codex_backend_auth = true;
+    chat.has_genex_backend_auth = true;
     chat.plan_type = Some(PlanType::Business);
     chat.local_settings.tui.status_line = Some(vec![
         "thread-credits".to_string(),

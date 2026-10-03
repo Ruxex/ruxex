@@ -49,8 +49,8 @@ Codex is written in Rust, so it honors the `RUST_LOG` environment variable to co
 The TUI records diagnostics in bounded local stores by default. Set `log_dir` explicitly to enable a plaintext TUI log for a run:
 
 ```bash
-codex -c log_dir=./.codex-log
-tail -F ./.codex-log/codex-tui.log
+genex -c log_dir=./.genex-log
+tail -F ./.genex-log/genex-tui.log
 ```
 
 The non-interactive mode (`genex exec`) defaults to `RUST_LOG=error`, but messages are printed inline, so there is no need to monitor a separate file.

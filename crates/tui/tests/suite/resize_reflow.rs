@@ -35,7 +35,7 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
     write_config(genex_home.path(), &repo_root)?;
     write_auth(genex_home.path())?;
 
-    let session_name = format!("codex-resize-reflow-smoke-{}", std::process::id());
+    let session_name = format!("genex-resize-reflow-smoke-{}", std::process::id());
     let _session = TmuxSession {
         name: session_name.clone(),
     };
@@ -203,7 +203,7 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
     write_config(genex_home.path(), &repo_root)?;
     write_auth(genex_home.path())?;
 
-    let session_name = format!("codex-resize-width-{}", std::process::id());
+    let session_name = format!("genex-resize-width-{}", std::process::id());
     let _session = TmuxSession {
         name: session_name.clone(),
     };
@@ -334,7 +334,7 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
     write_config(genex_home.path(), &repo_root)?;
     write_auth(genex_home.path())?;
 
-    let session_name = format!("codex-resize-scrolled-composer-{}", std::process::id());
+    let session_name = format!("genex-resize-scrolled-composer-{}", std::process::id());
     let _session = TmuxSession {
         name: session_name.clone(),
     };
@@ -462,7 +462,7 @@ async fn run_repeated_resize_smoke() -> Result<()> {
     write_config(genex_home.path(), &repo_root)?;
     write_auth(genex_home.path())?;
 
-    let session_name = format!("codex-resize-repeat-{}", std::process::id());
+    let session_name = format!("genex-resize-repeat-{}", std::process::id());
     let _session = TmuxSession {
         name: session_name.clone(),
     };

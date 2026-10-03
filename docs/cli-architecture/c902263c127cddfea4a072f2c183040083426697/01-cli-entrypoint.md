@@ -6,7 +6,7 @@
 
 - `CliConfigOverrides` と機能トグル。
 - 共有リモートオプション。
-- 既定の対話経路に適用するオプションを持つ [`codex_tui::Cli`](../../../crates/tui/src/cli.rs#L11)。
+- 既定の対話経路に適用するオプションを持つ [`genex_tui::Cli`](../../../crates/tui/src/cli.rs#L11)。
 - 任意の [`Subcommand`](../../../crates/cli/src/main.rs#L122)。
 
 サブコマンドがない場合、ルートパーサーはオプションを対話 TUI に渡します。Clap はサブコマンドが存在するときに既定引数の必須性を無効化するよう設定されているため、各コマンドのパーサーが必要な値を管理できます。
@@ -28,7 +28,7 @@
 
 | ルート入力 | ディスパッチ先 |
 | --- | --- |
-| サブコマンドなし / `agents` | `run_interactive_tui` と `codex-tui` |
+| サブコマンドなし / `agents` | `run_interactive_tui` と `genex-tui` |
 | `exec` | `genex_exec::run_main` |
 | `review` | exec のレビューコマンド経路 |
 | `mcp` | `McpCli::run` in `crates/cli/src/mcp_cmd.rs` |

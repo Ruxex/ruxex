@@ -389,7 +389,7 @@ impl ChatWidget {
         // on_error can drain queued input, before the asynchronous recovery read completes.
         self.input_queue.rate_limit_recovery_pending = self.has_managed_account;
         let usage_limit_error = matches!(error_kind, RateLimitErrorKind::UsageLimit);
-        let rate_limit_reached_type = self.codex_rate_limit_reached_type.map(|kind| {
+        let rate_limit_reached_type = self.genex_rate_limit_reached_type.map(|kind| {
             if usage_limit_error {
                 match kind {
                     RateLimitReachedType::WorkspaceOwnerCreditsDepleted => {
@@ -404,7 +404,7 @@ impl ChatWidget {
                 kind
             }
         });
-        self.codex_rate_limit_reached_type = rate_limit_reached_type;
+        self.genex_rate_limit_reached_type = rate_limit_reached_type;
         let message = match rate_limit_reached_type {
             Some(RateLimitReachedType::WorkspaceOwnerCreditsDepleted) => {
                 "You're out of credits. Your workspace is out of credits. Add credits to continue using Genex."

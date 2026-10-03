@@ -134,7 +134,7 @@ fn raw_markdown_bypasses_the_rich_render_cache() {
 #[test]
 fn visualization_directives_are_not_cached() {
     for markdown in [
-        "::codex-inline-vis{file=\"chart.html\"}",
+        "::genex-inline-vis{file=\"chart.html\"}",
         "\u{e200}visualize\u{e202}{\"path\":\"/tmp/chart.html\"}\u{e201}",
     ] {
         let cell = AgentMarkdownCell::new(markdown.to_string(), Path::new("/tmp"));

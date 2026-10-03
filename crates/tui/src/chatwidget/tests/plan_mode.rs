@@ -1573,7 +1573,7 @@ async fn make_startup_chat_with_cli_overrides(
         initial_user_message: None,
         enhanced_keys_supported: false,
         has_managed_account: false,
-        has_codex_backend_auth: false,
+        has_genex_backend_auth: false,
         model_catalog: test_model_catalog(&cfg),
         is_first_run: true,
         status_account_display: None,

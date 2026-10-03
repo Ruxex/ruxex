@@ -226,7 +226,7 @@ pub(crate) async fn request_thread_start_with_history_fallback(
                     || params
                         .config
                         .as_ref()
-                        .is_some_and(|config| config.contains_key("mcp_servers.codex_tui"));
+                        .is_some_and(|config| config.contains_key("mcp_servers.genex_tui"));
                 return Ok((response, history_support, task_tools_available));
             }
             Err(TypedRequestError::Server { source, .. })
@@ -425,7 +425,7 @@ impl AppServerSession {
         {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::AlreadyExists,
-                "a user-configured MCP server already owns the codex_tui namespace",
+                "a user-configured MCP server already owns the genex_tui namespace",
             ));
         }
         let managed_requirement = config

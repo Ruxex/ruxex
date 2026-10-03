@@ -31,7 +31,7 @@ fn unterminated_visualization_preview_uses_the_stream_context() {
         HistoryRenderMode::Rich,
         Some(context),
     );
-    controller.push("::codex-inline-vis{file=\"chart.html\"}");
+    controller.push("::genex-inline-vis{file=\"chart.html\"}");
     let lines = crate::terminal_hyperlinks::visible_lines(controller.current_tail_lines());
     assert_eq!(
         line_text(&lines[0]),
@@ -96,7 +96,7 @@ fn rewrites_complete_directive_to_trusted_static_file_placeholder() {
     let (_genex_home, context) = context_with_fragment("<div>chart</div>");
 
     let rewritten = rewrite_inline_visualizations(
-        "Before\n::codex-inline-vis{file=\"chart.html\"}\nAfter",
+        "Before\n::genex-inline-vis{file=\"chart.html\"}\nAfter",
         Some(&context),
     );
 
@@ -133,7 +133,7 @@ fn rewrites_complete_directive_to_trusted_static_file_placeholder() {
 #[test]
 fn hides_incomplete_streaming_directive() {
     let rewritten = rewrite_inline_visualizations(
-        "Before\n::codex-inline-vis{file=\"chart",
+        "Before\n::genex-inline-vis{file=\"chart",
         /*context*/ None,
     );
 
@@ -183,7 +183,7 @@ fn unavailable_artifact_has_explicit_fallback() {
         .expect("UUIDv7 thread id should provide a timestamp");
 
     assert_eq!(
-        rewrite_inline_visualizations("::codex-inline-vis{file=\"missing.html\"}", Some(&context),)
+        rewrite_inline_visualizations("::genex-inline-vis{file=\"missing.html\"}", Some(&context),)
             .markdown,
         "_Visualization unavailable on this device._"
     );
@@ -196,7 +196,7 @@ fn rejects_parent_path_and_non_html_file() {
     for file in ["../chart.html", "chart.svg"] {
         assert_eq!(
             rewrite_inline_visualizations(
-                &format!("::codex-inline-vis{{file=\"{file}\"}}"),
+                &format!("::genex-inline-vis{{file=\"{file}\"}}"),
                 Some(&context),
             )
             .markdown,
@@ -217,7 +217,7 @@ fn rejects_oversized_fragment() {
         .expect("enlarge fragment");
 
     assert_eq!(
-        rewrite_inline_visualizations("::codex-inline-vis{file=\"chart.html\"}", Some(&context),)
+        rewrite_inline_visualizations("::genex-inline-vis{file=\"chart.html\"}", Some(&context),)
             .markdown,
         "_Visualization unavailable on this device._"
     );
@@ -278,7 +278,7 @@ fn streaming_hides_partial_directive_and_renders_completed_link() {
         Some(context),
     );
 
-    controller.push("Before\n::codex-inline-vis{file=\"chart");
+    controller.push("Before\n::genex-inline-vis{file=\"chart");
     assert!(
         controller
             .current_tail_lines()
@@ -290,7 +290,7 @@ fn streaming_hides_partial_directive_and_renders_completed_link() {
     let (cell, source) = controller.finalize();
     assert_eq!(
         source.as_deref(),
-        Some("Before\n::codex-inline-vis{file=\"chart.html\"}\n")
+        Some("Before\n::genex-inline-vis{file=\"chart.html\"}\n")
     );
     let cell = cell.expect("final streamed cell");
     let lines = cell.display_hyperlink_lines(/*width*/ 80);
@@ -311,7 +311,7 @@ fn visualization_link_uses_the_artifact_name() {
     .expect("rename fragment");
 
     let rewritten = rewrite_inline_visualizations(
-        "::codex-inline-vis{file=\"compound-interest-explorer.html\"}",
+        "::genex-inline-vis{file=\"compound-interest-explorer.html\"}",
         Some(&context),
     );
 
@@ -334,7 +334,7 @@ fn visualization_link_uses_the_artifact_name() {
 #[test]
 fn user_markdown_keeps_directive_literal() {
     let rendered =
-        crate::markdown_render::render_markdown_text("::codex-inline-vis{file=\"chart.html\"}");
+        crate::markdown_render::render_markdown_text("::genex-inline-vis{file=\"chart.html\"}");
     let text = rendered
         .lines
         .iter()
@@ -342,5 +342,5 @@ fn user_markdown_keeps_directive_literal() {
         .map(|span| span.content.as_ref())
         .collect::<String>();
 
-    assert_eq!(text, "::codex-inline-vis{file=\"chart.html\"}");
+    assert_eq!(text, "::genex-inline-vis{file=\"chart.html\"}");
 }

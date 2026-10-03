@@ -42,7 +42,7 @@ impl App {
         if self.reconnect.offline
             || self.agents_overview.usage_disabled
             || self.agents_overview.pending_usage.is_some()
-            || !self.chat_widget.has_codex_backend_auth()
+            || !self.chat_widget.has_genex_backend_auth()
             || !matches!(
                 self.chat_widget.current_plan_type(),
                 Some(

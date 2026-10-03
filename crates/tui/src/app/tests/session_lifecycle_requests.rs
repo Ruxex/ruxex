@@ -322,7 +322,7 @@ pub(super) async fn start_recording_app_server_with_realtime_speech(
                             serde_json::to_string(&JSONRPCMessage::Response(JSONRPCResponse {
                                 id: request.id,
                                 result: serde_json::json!({
-                                    "userAgent": "codex-tui-test",
+                                    "userAgent": "genex-tui-test",
                                     "genexHome": genex_home,
                                 }),
                             }))?
@@ -859,7 +859,7 @@ async fn external_transport_registers_dynamic_tools_and_finds_task_mentions() ->
     assert_eq!(starts.len(), 2);
     for params in starts {
         assert_eq!(params["dynamicTools"][0]["type"], "namespace");
-        assert_eq!(params["dynamicTools"][0]["name"], "codex_tui");
+        assert_eq!(params["dynamicTools"][0]["name"], "genex_tui");
         assert_eq!(
             params["dynamicTools"][0]["tools"].as_array().map(Vec::len),
             Some(6)
@@ -1035,7 +1035,7 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
     let tools = &inventory
         .data
         .iter()
-        .find(|server| server.name == "codex_tui")
+        .find(|server| server.name == "genex_tui")
         .expect("local daemon must connect to the TUI MCP server")
         .tools;
     assert_eq!(tools.len(), 9);
@@ -1055,7 +1055,7 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
     for params in &starts {
         assert_eq!(params["dynamicTools"], serde_json::Value::Null);
         assert_eq!(params["config"]["web_search"], "live");
-        let server = &params["config"]["mcp_servers.codex_tui"];
+        let server = &params["config"]["mcp_servers.genex_tui"];
         assert!(
             server["url"]
                 .as_str()
@@ -1072,7 +1072,7 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
         }
     }
 
-    let mcp_url = starts[0]["config"]["mcp_servers.codex_tui"]["url"]
+    let mcp_url = starts[0]["config"]["mcp_servers.genex_tui"]["url"]
         .as_str()
         .expect("MCP server URL");
     let unauthorized = genex_http_client::HttpClientBuilder::new()
@@ -1101,8 +1101,8 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
         .pop()
         .expect("resumed task request");
     assert_eq!(
-        resumed["config"]["mcp_servers.codex_tui"],
-        starts[0]["config"]["mcp_servers.codex_tui"]
+        resumed["config"]["mcp_servers.genex_tui"],
+        starts[0]["config"]["mcp_servers.genex_tui"]
     );
     Box::pin(app_server.resume_thread(
         &app.local_settings,
@@ -1115,8 +1115,8 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
         .pop()
         .expect("reattached task request");
     assert_eq!(
-        reattached["config"]["mcp_servers.codex_tui"],
-        starts[0]["config"]["mcp_servers.codex_tui"]
+        reattached["config"]["mcp_servers.genex_tui"],
+        starts[0]["config"]["mcp_servers.genex_tui"]
     );
     Box::pin(app_server.fork_thread(&app.local_settings, app.config.clone(), delegation_source))
         .await?;
@@ -1124,11 +1124,11 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
         .pop()
         .expect("forked task request");
     assert_eq!(
-        forked["config"]["mcp_servers.codex_tui"],
-        starts[0]["config"]["mcp_servers.codex_tui"]
+        forked["config"]["mcp_servers.genex_tui"],
+        starts[0]["config"]["mcp_servers.genex_tui"]
     );
     let authorization =
-        starts[0]["config"]["mcp_servers.codex_tui"]["http_headers"]["Authorization"]
+        starts[0]["config"]["mcp_servers.genex_tui"]["http_headers"]["Authorization"]
             .as_str()
             .expect("MCP bearer token");
     let client = genex_http_client::HttpClientBuilder::new().build_direct()?;
@@ -1236,8 +1236,8 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
     assert_eq!(child["dynamicTools"], serde_json::Value::Null);
     assert!(child["config"]["web_search"].is_null());
     assert_eq!(
-        child["config"]["mcp_servers.codex_tui"],
-        starts[0]["config"]["mcp_servers.codex_tui"]
+        child["config"]["mcp_servers.genex_tui"],
+        starts[0]["config"]["mcp_servers.genex_tui"]
     );
     let forked = call_tool(
         3,
@@ -1251,8 +1251,8 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
         .pop()
         .expect("MCP-created fork request");
     assert_eq!(
-        forked["config"]["mcp_servers.codex_tui"],
-        starts[0]["config"]["mcp_servers.codex_tui"]
+        forked["config"]["mcp_servers.genex_tui"],
+        starts[0]["config"]["mcp_servers.genex_tui"]
     );
 
     app_server.shutdown().await?;
@@ -1338,13 +1338,13 @@ async fn local_mcp_respects_configured_servers_and_managed_requirements() -> Res
             .expect("fallback task start");
         if scenario == "allowed" {
             assert!(start["dynamicTools"].is_null());
-            assert!(start["config"]["mcp_servers.codex_tui"].is_object());
+            assert!(start["config"]["mcp_servers.genex_tui"].is_object());
         } else {
             assert_eq!(
                 start["dynamicTools"][0]["tools"].as_array().map(Vec::len),
                 Some(6)
             );
-            assert!(start["config"]["mcp_servers.codex_tui"].is_null());
+            assert!(start["config"]["mcp_servers.genex_tui"].is_null());
         }
         app_server.shutdown().await?;
         proxy.await??;
@@ -1487,7 +1487,7 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
                     thread_id: thread_id.clone(),
                     turn_id: "turn-1".to_string(),
                     call_id: "call-2".to_string(),
-                    namespace: Some("codex_tui".to_string()),
+                    namespace: Some("genex_tui".to_string()),
                     tool: "list_threads".to_string(),
                     arguments: serde_json::json!({}),
                 },
@@ -1544,7 +1544,7 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
                     thread_id: thread_id.clone(),
                     turn_id: "turn-1".to_string(),
                     call_id: "call-3".to_string(),
-                    namespace: Some("codex_tui".to_string()),
+                    namespace: Some("genex_tui".to_string()),
                     tool: "set_thread_title".to_string(),
                     arguments: serde_json::json!({"threadId": thread_id, "title": "Renamed"}),
                 },
@@ -1578,7 +1578,7 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
                         thread_id: thread_id.clone(),
                         turn_id: "turn-1".to_string(),
                         call_id: format!("rejected-{index}"),
-                        namespace: Some("codex_tui".to_string()),
+                        namespace: Some("genex_tui".to_string()),
                         tool: tool.to_string(),
                         arguments: serde_json::json!({}),
                     },
@@ -1654,7 +1654,7 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
             thread_id: creation_source.to_string(),
             turn_id: "turn-1".to_string(),
             call_id: "call-4".to_string(),
-            namespace: Some("codex_tui".to_string()),
+            namespace: Some("genex_tui".to_string()),
             tool: "create_thread".to_string(),
             arguments: serde_json::json!({
                 "prompt": "Check <main> & report",
@@ -1713,9 +1713,9 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
         turn["toolOutput"],
         serde_json::json!({
             "name": "create_thread",
-            "namespace": "codex_tui",
+            "namespace": "genex_tui",
             "output": format!(
-                "<codex_delegation>\n  <source_thread_id>{creation_source}</source_thread_id>\n  <input>Check &lt;main&gt; &amp; report</input>\n</codex_delegation>"
+                "<genex_delegation>\n  <source_thread_id>{creation_source}</source_thread_id>\n  <input>Check &lt;main&gt; &amp; report</input>\n</genex_delegation>"
             )
         })
     );
@@ -1743,7 +1743,7 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
             thread_id: thread_id.clone(),
             turn_id: "turn-1".to_string(),
             call_id: "call-5".to_string(),
-            namespace: Some("codex_tui".to_string()),
+            namespace: Some("genex_tui".to_string()),
             tool: "send_message_to_thread".to_string(),
             arguments: serde_json::json!({
                 "threadId": creation_source,
@@ -1787,9 +1787,9 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
         turn["toolOutput"],
         serde_json::json!({
             "name": "send_message_to_thread",
-            "namespace": "codex_tui",
+            "namespace": "genex_tui",
             "output": format!(
-                "<codex_delegation>\n  <source_thread_id>{thread_id}</source_thread_id>\n  <input>Follow &lt;up&gt; &amp; report</input>\n</codex_delegation>"
+                "<genex_delegation>\n  <source_thread_id>{thread_id}</source_thread_id>\n  <input>Follow &lt;up&gt; &amp; report</input>\n</genex_delegation>"
             )
         })
     );

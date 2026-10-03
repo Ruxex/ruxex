@@ -1069,7 +1069,7 @@ impl ChatWidget {
         BuiltinCommandFlags {
             collaboration_modes_enabled: self.collaboration_modes_enabled(),
             plugins_command_enabled: self.config.features.enabled(Feature::Plugins),
-            token_activity_command_enabled: self.has_codex_backend_auth,
+            token_activity_command_enabled: self.has_genex_backend_auth,
             goal_command_enabled: self.config.features.enabled(Feature::Goals),
             service_tier_commands_enabled: true,
             worktrees_enabled: self.config.features.enabled(Feature::Worktrees)

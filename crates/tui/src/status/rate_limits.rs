@@ -259,9 +259,9 @@ pub(crate) fn compose_rate_limit_data_many(
             .map(|label| capitalize_first(&label));
         let window_count =
             usize::from(snapshot.primary.is_some()) + usize::from(snapshot.secondary.is_some());
-        let combine_non_codex_single_limit = show_limit_prefix && window_count == 1;
+        let combine_non_genex_single_limit = show_limit_prefix && window_count == 1;
 
-        if show_limit_prefix && !combine_non_codex_single_limit {
+        if show_limit_prefix && !combine_non_genex_single_limit {
             rows.push(StatusRateLimitRow {
                 label: format!("{limit_bucket_label} limit"),
                 value: StatusRateLimitValue::Text(String::new()),
@@ -269,7 +269,7 @@ pub(crate) fn compose_rate_limit_data_many(
         }
 
         if let Some(primary) = snapshot.primary.as_ref() {
-            let label = if combine_non_codex_single_limit {
+            let label = if combine_non_genex_single_limit {
                 format!(
                     "{} {} limit",
                     limit_bucket_label,
@@ -296,7 +296,7 @@ pub(crate) fn compose_rate_limit_data_many(
         }
 
         if let Some(secondary) = snapshot.secondary.as_ref() {
-            let label = if combine_non_codex_single_limit {
+            let label = if combine_non_genex_single_limit {
                 format!(
                     "{} {} limit",
                     limit_bucket_label,

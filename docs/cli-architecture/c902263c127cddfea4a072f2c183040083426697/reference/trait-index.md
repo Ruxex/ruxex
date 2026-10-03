@@ -103,7 +103,7 @@
 
 ### `EventSource`
 
-- 定義: `codex-tui`、[`src/tui/event_stream.rs:45`](../../../../crates/tui/src/tui/event_stream.rs#L45)
+- 定義: `genex-tui`、[`src/tui/event_stream.rs:45`](../../../../crates/tui/src/tui/event_stream.rs#L45)
 - 可視性: `pub`
 - 役割: TUI イベントブローカーが利用するターミナル/イベントソース抽象化。
 

@@ -26,7 +26,7 @@ use uuid::Uuid;
 
 use self::viewer::materialize_document;
 
-const DIRECTIVE_PREFIX: &str = "::codex-inline-vis{";
+const DIRECTIVE_PREFIX: &str = "::genex-inline-vis{";
 const CONTENT_REFERENCE_PREFIX: &str = "\u{e200}visualize\u{e202}";
 const CONTENT_REFERENCE_SUFFIX: char = '\u{e201}';
 const MAX_FRAGMENT_BYTES: u64 = 2 * 1024 * 1024;
@@ -288,7 +288,7 @@ fn link_placeholder() -> String {
     let mut bytes = [0_u8; 24];
     rand::rng().fill_bytes(&mut bytes);
     let token = URL_SAFE_NO_PAD.encode(bytes);
-    format!("https://codex.invalid/inline-visualization/{token}")
+    format!("https://genex.invalid/inline-visualization/{token}")
 }
 
 fn parse_directive_file(directive: &str) -> Option<Cow<'_, str>> {

@@ -8,7 +8,7 @@
 
 - `just crate-dependency-graph` で生成した Level 0 の JSON（137 クレート、802 依存辺）
 - 各候補の `Cargo.toml`、README、公開 API、テスト
-- `genex-cli`、`codex-tui`、`genex-app-server` からの import と dispatch
+- `genex-cli`、`genex-tui`、`genex-app-server` からの import と dispatch
 - provider/ChatGPT の URL、認証方式、設定名、機能名を参照するコード
 
 ## provider 固有機能の判定基準
@@ -104,7 +104,7 @@ Feedback の削除で確認したように、provider 固有性はクレート�
 
 - **根拠:** ChatGPT 認証を要求し、Codex Cloud の environment、task、diff を ChatGPT backend の `/wham` API で操作する。
 - **機能:** `codex cloud` の TUI/CLI、task submit/list/status/diff/apply、backend client、テスト用 mock client。
-- **内部依存先:** `codex-cloud-tasks-client` は `genex-api`、`codex-backend-client`、`genex-git-utils`、`genex-http-client`、mock は client のみに依存する。`codex-cloud-tasks` は client、mock、`genex-core`、`genex-git-utils`、`genex-http-client`、`genex-login`、`genex-model-provider`、`codex-tui`、`genex-utils-cli` に依存する。
+- **内部依存先:** `codex-cloud-tasks-client` は `genex-api`、`codex-backend-client`、`genex-git-utils`、`genex-http-client`、mock は client のみに依存する。`codex-cloud-tasks` は client、mock、`genex-core`、`genex-git-utils`、`genex-http-client`、`genex-login`、`genex-model-provider`、`genex-tui`、`genex-utils-cli` に依存する。
 - **依存元:** UI クレートは `genex-cli` のみ。client は UI と mock、mock は UI のみ。3 クレート全体の外部到達点は `genex-cli` に閉じる。
 - **到達経路:** `genex-cli` の公開 `cloud` / `cloud-tasks` subcommand と dispatch。既存 TUI クレートを表示部品として使うが、通常の対話 TUI から Cloud Tasks へ入る経路ではない。
 - **影響:** CLI help・補完・dispatch、ChatGPT login/base URL、task URL、環境選択 UI、3 クレートのテスト。専用 Cargo feature flag はない。
@@ -356,7 +356,7 @@ Phase 2 の削除対象 1〜3 は完了した。4 以降は影響範囲または
 ## 調査したがクレート削除候補から除外したもの
 
 - `genex-http-client` と `genex-client`: ChatGPT cookie pool や request policy の一部に固有処理はあるが、共有 HTTP transport が主責務である。固有 module を adapter 側へ移す対象であり、クレート削除候補ではない。
-- `genex-protocol`、`genex-core`、`codex-tui`、`genex-app-server`: 多数の provider/ChatGPT 到達経路を含むが、エージェント基盤と主要 entrypoint そのものである。Level 1 のクレート削除ではなく、上記 integration の依存を外した後に Level 2/3 で到達不能コードを調べる。
+- `genex-protocol`、`genex-core`、`genex-tui`、`genex-app-server`: 多数の provider/ChatGPT 到達経路を含むが、エージェント基盤と主要 entrypoint そのものである。Level 1 のクレート削除ではなく、上記 integration の依存を外した後に Level 2/3 で到達不能コードを調べる。
 
 ## Phase 2 の検証観点
 

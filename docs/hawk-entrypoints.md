@@ -28,7 +28,7 @@ Level 3 の削除判断では通常実行の16件を主起点としつつ、対�
 | パッケージ | バイナリ | 用途 | 対象 |
 | --- | --- | --- | --- |
 | `genex-cli` | `codex` | 対話 TUI、非対話実行、MCP、app-server 管理などを提供する主 CLI。 | 全プラットフォーム |
-| `codex-tui` | `codex-tui` | TUI を単独で起動するエントリーポイント。 | 全プラットフォーム |
+| `genex-tui` | `genex-tui` | TUI を単独で起動するエントリーポイント。 | 全プラットフォーム |
 | `genex-exec` | `genex-exec` | 非対話のエージェント実行を行う CLI。 | 全プラットフォーム |
 | `genex-app-server` | `genex-app-server` | IDE・クライアント向け app-server を stdio、Unix socket、WebSocket で提供する。 | 全プラットフォーム |
 | `genex-code-mode-host` | `genex-code-mode-host` | code mode 用の stdio/gRPC ホストと任意の OTEL trace transport を提供する。 | 全プラットフォーム |
@@ -51,7 +51,7 @@ Level 3 の削除判断では通常実行の16件を主起点としつつ、対�
 | `genex-config-schema` | `genex-write-config-schema` | `config.toml` の JSON Schema fixture を生成する。 | スキーマ生成コードを評価する場合に含める。 |
 | `genex-hooks` | `write_hooks_schema_fixtures` | hooks の schema fixture を生成する。 | hooks の生成コードを評価する場合に含める。 |
 | `genex-http-client` | `custom_ca_probe` | カスタム CA を利用する HTTP 接続を検査する。 | HTTP クライアントの補助コードを評価する場合に含める。 |
-| `codex-tui` | `md-events` | Markdown 入力を pulldown-cmark のイベント列として表示する診断ツール。 | TUI の Markdown 補助コードを評価する場合に含める。 |
+| `genex-tui` | `md-events` | Markdown 入力を pulldown-cmark のイベント列として表示する診断ツール。 | TUI の Markdown 補助コードを評価する場合に含める。 |
 | `genex-app-server-test-client` | `genex-app-server-test-client` | app-server を起動・操作する手動／統合テスト用クライアント。 | app-server テスト支援コードを評価する場合に含める。 |
 
 ## テスト fixture
