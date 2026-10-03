@@ -68,9 +68,9 @@ macro_rules! record_retry {
         };
 
         ::tracing::event!(
-            target: "codex_otel.trace_safe",
+            target: "genex_otel.trace_safe",
             ::tracing::Level::TRACE,
-            event.name = "codex.retry",
+            event.name = "genex.retry",
             retry.attempt = $attempt,
             retry.delay_ms = ($delay).as_millis() as u64,
             retry.layer = layer,

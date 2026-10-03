@@ -164,7 +164,7 @@ the decider can auto-allow network requests originating from that command.
 ## OTEL Audit Events (embedded/managed)
 
 When `genex-network-proxy` is embedded in managed Codex runtime, policy decisions emit structured
-OTEL-compatible events with `target=codex_otel.network_proxy`.
+OTEL-compatible events with `target=genex_otel.network_proxy`.
 
 Event name:
 

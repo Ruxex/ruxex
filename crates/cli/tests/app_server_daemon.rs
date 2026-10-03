@@ -23,7 +23,7 @@ struct TestDaemon {
 impl TestDaemon {
     fn new() -> Result<Self> {
         let home = tempfile::Builder::new().tempdir_in("/tmp")?;
-        let codex = genex_utils_cargo_bin::cargo_bin("codex")?;
+        let codex = genex_utils_cargo_bin::cargo_bin("genex")?;
         let codex_source = std::fs::canonicalize(&codex)?;
         let target = if cfg!(target_os = "macos") {
             format!("{}-apple-darwin", std::env::consts::ARCH)

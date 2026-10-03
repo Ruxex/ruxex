@@ -41,7 +41,7 @@ fn marketplace_list_row(marketplace_name: &str, root: &Path) -> String {
 }
 
 fn genex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
-    let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("codex")?);
+    let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("genex")?);
     cmd.env("CODEX_HOME", codex_home);
     cmd.env("HOME", codex_home);
     Ok(cmd)
@@ -1231,7 +1231,7 @@ impl RemoteMarketplaceFixture {
     }
 
     async fn run(&self, args: &[&str]) -> Result<Output> {
-        Ok(Command::new(genex_utils_cargo_bin::cargo_bin("codex")?)
+        Ok(Command::new(genex_utils_cargo_bin::cargo_bin("genex")?)
             .current_dir(self.home.path())
             .env("CODEX_HOME", self.home.path())
             .env("HOME", self.home.path())

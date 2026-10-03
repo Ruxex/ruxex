@@ -228,7 +228,7 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             .unwrap_or_default();
         let status = status.map(|status| status.as_u16());
         tracing::event!(
-            target: "codex_otel.log_only",
+            target: "genex_otel.log_only",
             tracing::Level::INFO,
             event.name = "codex.api_request",
             duration_ms = %duration.as_millis(),
@@ -248,7 +248,7 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             auth.mode = self.auth_mode.as_deref(),
         );
         tracing::event!(
-            target: "codex_otel.trace_safe",
+            target: "genex_otel.trace_safe",
             tracing::Level::INFO,
             event.name = "codex.api_request",
             duration_ms = %duration.as_millis(),

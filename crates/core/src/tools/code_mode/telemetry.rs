@@ -60,7 +60,7 @@ impl Drop for NestedToolDispatchTrace {
         };
         tracing::event!(
             name: "codex.code_mode.nested_tool_dispatch_interrupted",
-            target: "codex_otel.trace_safe",
+            target: "genex_otel.trace_safe",
             parent: &self.span,
             tracing::Level::INFO,
             event.name = "codex.code_mode.nested_tool_dispatch_interrupted",

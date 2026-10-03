@@ -11,7 +11,7 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
-const AUDIT_TARGET: &str = "codex_otel.network_proxy";
+const AUDIT_TARGET: &str = "genex_otel.network_proxy";
 const POLICY_DECISION_EVENT_NAME: &str = "codex.network_proxy.policy_decision";
 const POLICY_SCOPE_DOMAIN: &str = "domain";
 const POLICY_SCOPE_NON_DOMAIN: &str = "non_domain";
@@ -783,7 +783,7 @@ mod tests {
         let event = find_event_by_name(&events, POLICY_DECISION_EVENT_NAME)
             .expect("expected policy decision audit event");
         assert_eq!(event.target, AUDIT_TARGET);
-        assert!(event.target.starts_with("codex_otel."));
+        assert!(event.target.starts_with("genex_otel."));
         assert_eq!(
             event.field("network.policy.scope"),
             Some(POLICY_SCOPE_DOMAIN)

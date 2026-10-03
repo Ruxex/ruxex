@@ -100,7 +100,7 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
         .mount(&server)
         .await;
 
-    let codex = genex_utils_cargo_bin::cargo_bin("codex")?;
+    let codex = genex_utils_cargo_bin::cargo_bin("genex")?;
     let managed_auth_base_url_override =
         format!("managed_auth_base_url=\"{managed_auth_base_url}\"");
     let output = Command::new(&codex)

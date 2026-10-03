@@ -1324,7 +1324,7 @@ impl UnifiedExecProcessManager {
             // Sandbox retries can reuse the public ID for a new executor process.
             tracing::event!(
                 name: "codex.unified_exec.process_start_requested",
-                target: "codex_otel.trace_safe",
+                target: "genex_otel.trace_safe",
                 tracing::Level::INFO,
                 event.name = "codex.unified_exec.process_start_requested",
                 unified_exec_process_id = process_id,

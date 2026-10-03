@@ -123,13 +123,13 @@ where
             return;
         }
 
-        if event.metadata().target() != "codex_otel.trace_safe" {
+        if event.metadata().target() != "genex_otel.trace_safe" {
             return;
         }
 
         let mut visitor = RetryTelemetryVisitor::default();
         event.record(&mut visitor);
-        if visitor.name.as_deref() != Some("codex.retry") {
+        if visitor.name.as_deref() != Some("genex.retry") {
             return;
         }
 

@@ -1,7 +1,7 @@
 use genex_protocol::ThreadId;
 use genex_protocol::protocol::InterAgentCommunication;
 
-const AGENT_COMMUNICATION_TARGET: &str = "codex_otel.agent_communication";
+const AGENT_COMMUNICATION_TARGET: &str = "genex_otel.agent_communication";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum AgentCommunicationKind {

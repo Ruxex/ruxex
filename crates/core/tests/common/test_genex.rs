@@ -783,7 +783,7 @@ impl TestGenexBuilder {
         config.model = Some("gpt-5.5".to_string());
         config.cwd = cwd_override;
         config.model_provider = model_provider;
-        if let Ok(path) = genex_utils_cargo_bin::cargo_bin("codex") {
+        if let Ok(path) = genex_utils_cargo_bin::cargo_bin("genex") {
             config.codex_self_exe = Some(path);
         } else if let Ok(path) = genex_utils_cargo_bin::cargo_bin("codex-exec") {
             // `genex-exec` also supports `--genex-run-as-apply-patch`, so use it

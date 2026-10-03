@@ -7,11 +7,11 @@ Run from `<reporoot>/codex-rs`.
 
 ```bash
 # 1) Build debug codex binary
-cargo build -p genex-cli --bin codex
+cargo build -p genex-cli --bin genex
 
 # 2) Start websocket app-server in background
 cargo run -p genex-app-server-test-client -- \
-  --codex-bin ./target/debug/codex \
+  --codex-bin ./target/debug/genex \
   serve --listen ws://127.0.0.1:4222 --kill
 
 # 3) Call app-server (defaults to ws://127.0.0.1:4222)
@@ -34,9 +34,9 @@ testing.
 export CODEX_HOME="$(mktemp -d)"
 printf 'cli_auth_credentials_store = "file"\n' > "$CODEX_HOME/config.toml"
 
-cargo build -p genex-cli --bin codex
+cargo build -p genex-cli --bin genex
 cargo run -p genex-app-server-test-client -- \
-  --codex-bin ./target/debug/codex \
+  --codex-bin ./target/debug/genex \
   test-login \
   --amazon-bedrock \
   --api-key "<BEDROCK_API_KEY>" \
@@ -54,7 +54,7 @@ isolated directory when testing credential cleanup.
 
 ```bash
 cargo run -p genex-app-server-test-client -- \
-  --codex-bin ./target/debug/codex \
+  --codex-bin ./target/debug/genex \
   test-logout
 ```
 

@@ -15,17 +15,17 @@ help:
 # `codex`
 alias c := codex
 codex *args:
-    cargo run --bin codex -- {args}
+    cargo run --bin genex -- {args}
 
-# `codex exec`
+# `genex exec`
 exec *args:
-    cargo run --bin codex -- exec {args}
+    cargo run --bin genex -- exec {args}
 
 # Analyze the configured production binaries with Hawk and save the JSON report.
 hawk:
     {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- cargo hawk check --output-format json > {{ justfile_directory() }}/hawk.json
 
-# Start `codex exec-server` and run codex-tui.
+# Start `genex exec-server` and run genex-tui.
 [no-cd]
 [positional-arguments]
 [unix]
@@ -43,7 +43,7 @@ code-mode-host *args:
 # Build the CLI and run the app-server test client
 app-server-test-client *args:
     cargo build -p genex-cli
-    cargo run -p genex-app-server-test-client -- --codex-bin ./target/debug/codex {args}
+    cargo run -p genex-app-server-test-client -- --codex-bin ./target/debug/genex {args}
 
 # Format the justfile and Rust sources.
 fmt:

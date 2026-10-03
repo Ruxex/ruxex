@@ -71,7 +71,7 @@ async fn sandbox_blocks_terminal_input_injection() -> anyhow::Result<()> {
     )
     .await?;
 
-    let codex = genex_utils_cargo_bin::cargo_bin("codex")?;
+    let codex = genex_utils_cargo_bin::cargo_bin("genex")?;
     run_probe(
         &codex.to_string_lossy(),
         vec![

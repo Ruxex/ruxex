@@ -159,7 +159,7 @@ fn otel_export_routing_policy_routes_user_prompt_log_and_trace_events() {
     let logs = log_exporter.get_emitted_logs().expect("log export");
     assert!(
         logs.iter()
-            .all(|log| { log.record.target().map(Cow::as_ref) == Some("codex_otel.log_only") })
+            .all(|log| { log.record.target().map(Cow::as_ref) == Some("genex_otel.log_only") })
     );
 
     let prompt_log = find_log_by_event_name(&logs, "codex.user_prompt");
@@ -327,7 +327,7 @@ fn otel_export_routing_policy_routes_tool_result_log_and_trace_events() {
     let logs = log_exporter.get_emitted_logs().expect("log export");
     assert!(
         logs.iter()
-            .all(|log| { log.record.target().map(Cow::as_ref) == Some("codex_otel.log_only") })
+            .all(|log| { log.record.target().map(Cow::as_ref) == Some("genex_otel.log_only") })
     );
 
     let tool_log = find_log_by_event_name(&logs, "codex.tool_result");

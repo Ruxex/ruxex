@@ -2,11 +2,11 @@
 
 `genex-otel` is the OpenTelemetry integration crate for Codex. It provides:
 
-- Provider wiring for log/trace/metric exporters (`codex_otel::OtelProvider`
-  and `codex_otel::provider`).
-- Session-scoped business event emission via `codex_otel::SessionTelemetry`.
-- Low-level metrics APIs via `codex_otel::metrics`.
-- Trace-context helpers via `codex_otel::trace_context` and crate-root re-exports.
+- Provider wiring for log/trace/metric exporters (`genex_otel::OtelProvider`
+  and `genex_otel::provider`).
+- Session-scoped business event emission via `genex_otel::SessionTelemetry`.
+- Low-level metrics APIs via `genex_otel::metrics`.
+- Trace-context helpers via `genex_otel::trace_context` and crate-root re-exports.
 
 ## Tracing and logs
 
@@ -15,10 +15,10 @@ metrics (when enabled), then attach its layers to your `tracing_subscriber`
 registry:
 
 ```rust
-use codex_otel::config::OtelExporter;
-use codex_otel::config::OtelHttpProtocol;
-use codex_otel::config::OtelSettings;
-use codex_otel::OtelProvider;
+use genex_otel::config::OtelExporter;
+use genex_otel::config::OtelHttpProtocol;
+use genex_otel::config::OtelSettings;
+use genex_otel::OtelProvider;
 use tracing_subscriber::prelude::*;
 
 let settings = OtelSettings {
@@ -78,7 +78,7 @@ Codex-specific session events. Rich session/business events should go through
 `SessionTelemetry`; subsystem-owned audit events can stay with the owning subsystem.
 
 ```rust
-use codex_otel::SessionTelemetry;
+use genex_otel::SessionTelemetry;
 
 let manager = SessionTelemetry::new(
     conversation_id,
@@ -142,8 +142,8 @@ This measures client send attempts, not disconnect rates or engine cache reuse.
 Trace propagation helpers remain separate from the session event emitter:
 
 ```rust
-use codex_otel::current_span_w3c_trace_context;
-use codex_otel::set_parent_from_w3c_trace_context;
+use genex_otel::current_span_w3c_trace_context;
+use genex_otel::set_parent_from_w3c_trace_context;
 ```
 
 ## Shutdown

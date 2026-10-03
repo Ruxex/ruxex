@@ -590,11 +590,11 @@ impl Drop for TmuxSession {
 }
 
 fn genex_binary(repo_root: &Path) -> Result<PathBuf> {
-    if let Ok(path) = genex_utils_cargo_bin::cargo_bin("codex") {
+    if let Ok(path) = genex_utils_cargo_bin::cargo_bin("genex") {
         return Ok(path);
     }
 
-    let fallback = repo_root.join("codex-rs/target/debug/codex");
+    let fallback = repo_root.join("genex-rs/target/debug/genex");
     anyhow::ensure!(
         fallback.is_file(),
         "codex binary is unavailable; run `cargo build -p genex-cli` first"

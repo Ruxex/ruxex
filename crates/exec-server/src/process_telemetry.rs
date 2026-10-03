@@ -55,7 +55,7 @@ impl ProcessTelemetry {
             .as_ref()
             .map(|span| span.span_id().to_string());
         tracing::event!(
-            target: "codex_otel.log_only",
+            target: "genex_otel.log_only",
             tracing::Level::INFO,
             event.name = event_name,
             launch.trace_id = trace_id.as_deref(),

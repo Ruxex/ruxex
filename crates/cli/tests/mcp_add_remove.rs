@@ -13,7 +13,7 @@ use wiremock::matchers::method;
 use wiremock::matchers::path;
 
 fn genex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
-    let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("codex")?);
+    let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("genex")?);
     cmd.env("CODEX_HOME", codex_home);
     Ok(cmd)
 }

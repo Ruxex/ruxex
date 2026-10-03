@@ -378,7 +378,7 @@ fn otlp_http_exporter_sends_logs_to_collector()
     tracing::subscriber::with_default(subscriber, || {
         tracing::callsite::rebuild_interest_cache();
         tracing::event!(
-            target: "codex_otel.log_only",
+            target: "genex_otel.log_only",
             tracing::Level::INFO,
             event.name = "codex.test.log_exported",
             "test OTEL log export"
@@ -529,7 +529,7 @@ fn otlp_http_exporter_sends_traces_to_collector()
         let propagated_trace =
             current_span_w3c_trace_context().expect("current span should have trace context");
         tracing::event!(
-            target: "codex_otel.trace_safe",
+            target: "genex_otel.trace_safe",
             tracing::Level::INFO,
             event.name = "codex.test.trace_event",
             "test OTEL trace event"
