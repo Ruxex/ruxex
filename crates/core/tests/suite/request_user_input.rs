@@ -80,7 +80,7 @@ async fn request_user_input_round_trip_for_mode(mode: ModeKind) -> anyhow::Resul
 
     let builder = test_genex();
     let TestGenex {
-        codex,
+        genex,
         cwd,
         session_configured,
         ..
@@ -131,7 +131,7 @@ async fn request_user_input_round_trip_for_mode(mode: ModeKind) -> anyhow::Resul
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd.path());
 
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "please confirm".into(),
@@ -155,7 +155,7 @@ async fn request_user_input_round_trip_for_mode(mode: ModeKind) -> anyhow::Resul
         )
         .await?;
 
-    let request = wait_for_event_match(&codex, |event| match event {
+    let request = wait_for_event_match(&genex, |event| match event {
         EventMsg::RequestUserInput(request) => Some(request.clone()),
         _ => None,
     })
@@ -168,7 +168,7 @@ async fn request_user_input_round_trip_for_mode(mode: ModeKind) -> anyhow::Resul
     assert!(
         timeout(Duration::from_millis(200), async {
             loop {
-                let event = codex
+                let event = genex
                     .next_event()
                     .await
                     .expect("event stream should stay open");
@@ -190,15 +190,15 @@ async fn request_user_input_round_trip_for_mode(mode: ModeKind) -> anyhow::Resul
         },
     );
     let response = RequestUserInputResponse { answers };
-    codex
+    genex
         .submit(Op::UserInputAnswer {
             id: request.turn_id.clone(),
             response,
         })
         .await?;
 
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TokenCount(_))).await;
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TokenCount(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let req = second_mock.single_request();
     let output_text = call_output(&req, call_id);
@@ -241,7 +241,7 @@ async fn request_user_input_interrupt_emits_deferred_token_count() -> anyhow::Re
 
     let server = start_mock_server().await;
     let TestGenex {
-        codex,
+        genex,
         cwd,
         session_configured,
         ..
@@ -273,7 +273,7 @@ async fn request_user_input_interrupt_emits_deferred_token_count() -> anyhow::Re
 
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd.path());
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "please confirm".into(),
@@ -297,15 +297,15 @@ async fn request_user_input_interrupt_emits_deferred_token_count() -> anyhow::Re
         )
         .await?;
 
-    let request = wait_for_event_match(&codex, |event| match event {
+    let request = wait_for_event_match(&genex, |event| match event {
         EventMsg::RequestUserInput(request) => Some(request.clone()),
         _ => None,
     })
     .await;
 
-    codex.submit(Op::Interrupt).await?;
+    genex.submit(Op::Interrupt).await?;
 
-    let token_count = wait_for_event_match(&codex, |event| match event {
+    let token_count = wait_for_event_match(&genex, |event| match event {
         EventMsg::TokenCount(token_count) => Some(token_count.clone()),
         _ => None,
     })
@@ -316,7 +316,7 @@ async fn request_user_input_interrupt_emits_deferred_token_count() -> anyhow::Re
             .map(|info| info.total_token_usage.total_tokens),
         Some(77)
     );
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnAborted(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnAborted(_))).await;
 
     assert_eq!(request.call_id, call_id);
     Ok(())
@@ -332,7 +332,7 @@ where
 
     let mut builder = test_genex();
     let TestGenex {
-        codex,
+        genex,
         cwd,
         session_configured,
         ..
@@ -374,7 +374,7 @@ where
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd.path());
 
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "please confirm".into(),
@@ -391,7 +391,7 @@ where
         )
         .await?;
 
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let req = second_mock.single_request();
     let (output, success) = call_output_content_and_success(&req, &call_id);

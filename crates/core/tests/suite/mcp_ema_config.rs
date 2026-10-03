@@ -73,7 +73,7 @@ async fn enterprise_activation_respects_managed_config_and_plugin_ownership(
         ))
         .build_with_auto_env(&responses_server)
         .await?;
-    let (runtime_config, _) = fixture.codex.current_mcp_config_and_runtime_context().await;
+    let (runtime_config, _) = fixture.genex.current_mcp_config_and_runtime_context().await;
     let expected_enabled = match scenario {
         ActivationScenario::FeatureDisabled | ActivationScenario::MissingIdp => Some(false),
         ActivationScenario::PluginSelfOptIn => None,
@@ -85,7 +85,7 @@ async fn enterprise_activation_respects_managed_config_and_plugin_ownership(
             .map(|server| server.enabled),
         expected_enabled,
     );
-    let startup = wait_for_event_match(&fixture.codex, |event| match event {
+    let startup = wait_for_event_match(&fixture.genex, |event| match event {
         EventMsg::McpStartupComplete(summary) => Some(summary.clone()),
         _ => None,
     })
@@ -109,7 +109,7 @@ async fn enterprise_activation_respects_managed_config_and_plugin_ownership(
         ),
         (Vec::<String>::new(), expected_failed, Vec::<String>::new()),
     );
-    fixture.codex.shutdown_and_wait().await?;
+    fixture.genex.shutdown_and_wait().await?;
     assert!(
         server
             .received_requests()

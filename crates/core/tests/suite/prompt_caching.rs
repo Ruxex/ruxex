@@ -175,7 +175,7 @@ async fn prompt_tools_are_consistent_across_requests(
     let TestGenex {
         // Keep the file-backed instructions alive across request-boundary refreshes.
         home: _home,
-        codex,
+        genex,
         config,
         thread_manager,
         ..
@@ -237,7 +237,7 @@ async fn prompt_tools_are_consistent_across_requests(
             .and_then(|preset| preset.developer_instructions.flatten())
             .expect("built-in Plan mode instructions")
     };
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello 1".into(),
@@ -256,15 +256,15 @@ async fn prompt_tools_are_consistent_across_requests(
             }),
         )
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 2".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let mut expected_tools_names = vec!["exec_command", "write_stdin"];
     if expected_update_plan_enabled {
@@ -329,7 +329,7 @@ async fn gpt_5_tools_without_apply_patch_append_apply_patch_instructions() -> an
     .await;
 
     let TestGenex {
-        home: _home, codex, ..
+        home: _home, genex, ..
     } = test_genex()
         .with_pre_build_hook(write_global_instructions)
         .with_config(|config| {
@@ -342,22 +342,22 @@ async fn gpt_5_tools_without_apply_patch_append_apply_patch_instructions() -> an
         .build(&server)
         .await?;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 1".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
-    codex
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 2".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let body0 = req1.single_request().body_json();
     let instructions0 = body0["instructions"]
@@ -400,7 +400,7 @@ async fn prefixes_context_and_instructions_once_and_consistently_across_requests
 
     let TestGenex {
         home: _home,
-        codex,
+        genex,
         config,
         ..
     } = test_genex()
@@ -414,21 +414,21 @@ async fn prefixes_context_and_instructions_once_and_consistently_across_requests
         .build(&server)
         .await?;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 1".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 2".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let body1 = req1.single_request().body_json();
     let input1 = body1["input"].as_array().expect("input array");
@@ -494,7 +494,7 @@ async fn overrides_turn_context_but_keeps_cached_prefix_and_key_constant() -> an
 
     let TestGenex {
         home: _home,
-        codex,
+        genex,
         config,
         ..
     } = test_genex()
@@ -509,13 +509,13 @@ async fn overrides_turn_context_but_keeps_cached_prefix_and_key_constant() -> an
         .await?;
 
     // First turn
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 1".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let writable = TempDir::new().unwrap();
     let permission_profile = PermissionProfile::workspace_write_with(
@@ -528,7 +528,7 @@ async fn overrides_turn_context_but_keeps_cached_prefix_and_key_constant() -> an
         .to_legacy_sandbox_policy(config.cwd.as_path())
         .expect("workspace profile should have legacy projection");
     core_test_support::submit_thread_settings(
-        &codex,
+        &genex,
         ThreadSettingsOverrides {
             approval_policy: Some(AskForApproval::Never),
             sandbox_policy: Some(sandbox_policy),
@@ -541,13 +541,13 @@ async fn overrides_turn_context_but_keeps_cached_prefix_and_key_constant() -> an
     .await?;
 
     // Second turn after overrides
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 2".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request1 = req1.single_request();
     let request2 = req2.single_request();
@@ -612,7 +612,7 @@ async fn override_before_first_turn_emits_environment_context() -> anyhow::Resul
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex().build(&server).await?;
+    let TestGenex { genex, .. } = test_genex().build(&server).await?;
 
     let collaboration_mode = CollaborationMode {
         mode: ModeKind::Default,
@@ -624,7 +624,7 @@ async fn override_before_first_turn_emits_environment_context() -> anyhow::Resul
     };
 
     core_test_support::submit_thread_settings(
-        &codex,
+        &genex,
         ThreadSettingsOverrides {
             approval_policy: Some(AskForApproval::Never),
             model: Some("gpt-5.4".to_string()),
@@ -635,14 +635,14 @@ async fn override_before_first_turn_emits_environment_context() -> anyhow::Resul
     )
     .await?;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "first message".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let body = req.single_request().body_json();
     assert_eq!(body["model"].as_str(), Some("gpt-5.4"));
@@ -766,7 +766,7 @@ async fn per_turn_overrides_keep_cached_prefix_and_key_constant() -> anyhow::Res
     .await;
 
     let TestGenex {
-        home: _home, codex, ..
+        home: _home, genex, ..
     } = test_genex()
         .with_pre_build_hook(write_global_instructions)
         .with_config(|config| {
@@ -779,13 +779,13 @@ async fn per_turn_overrides_keep_cached_prefix_and_key_constant() -> anyhow::Res
         .await?;
 
     // First turn
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 1".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     // Second turn using per-turn thread-settings overrides.
     let new_cwd = TempDir::new().unwrap();
@@ -798,7 +798,7 @@ async fn per_turn_overrides_keep_cached_prefix_and_key_constant() -> anyhow::Res
     );
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(permission_profile, new_cwd.path());
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello 2".into(),
@@ -816,7 +816,7 @@ async fn per_turn_overrides_keep_cached_prefix_and_key_constant() -> anyhow::Res
             }),
         )
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request1 = req1.single_request();
     let request2 = req2.single_request();
@@ -896,7 +896,7 @@ async fn send_user_turn_with_no_changes_does_not_send_environment_context() -> a
 
     let TestGenex {
         home: _home,
-        codex,
+        genex,
         config,
         session_configured,
         ..
@@ -918,7 +918,7 @@ async fn send_user_turn_with_no_changes_does_not_send_environment_context() -> a
     let default_effort = config.model_reasoning_effort.clone();
     let default_summary = config.model_reasoning_summary;
 
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello 1".into(),
@@ -941,9 +941,9 @@ async fn send_user_turn_with_no_changes_does_not_send_environment_context() -> a
             }),
         )
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello 2".into(),
@@ -966,7 +966,7 @@ async fn send_user_turn_with_no_changes_does_not_send_environment_context() -> a
             }),
         )
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request1 = req1.single_request();
     let request2 = req2.single_request();
@@ -1030,7 +1030,7 @@ async fn send_user_turn_with_changes_sends_environment_context() -> anyhow::Resu
     .await;
     let TestGenex {
         home: _home,
-        codex,
+        genex,
         config,
         session_configured,
         ..
@@ -1052,7 +1052,7 @@ async fn send_user_turn_with_changes_sends_environment_context() -> anyhow::Resu
     let default_effort = config.model_reasoning_effort.clone();
     let default_summary = config.model_reasoning_summary;
 
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello 1".into(),
@@ -1075,11 +1075,11 @@ async fn send_user_turn_with_changes_sends_environment_context() -> anyhow::Resu
             }),
         )
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, default_cwd.as_path());
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello 2".into(),
@@ -1103,7 +1103,7 @@ async fn send_user_turn_with_changes_sends_environment_context() -> anyhow::Resu
             }),
         )
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request1 = req1.single_request();
     let request2 = req2.single_request();

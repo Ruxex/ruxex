@@ -121,7 +121,7 @@ async fn responses_api_emits_api_request_event() {
 
     let response_mock = mount_sse_once(&server, sse(vec![ev_completed("done")])).await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_model("gpt-5.4")
         .with_config(|config| {
             config.service_tier = Some(ServiceTier::Flex.request_value().to_string());
@@ -131,7 +131,7 @@ async fn responses_api_emits_api_request_event() {
         .await
         .unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -139,7 +139,7 @@ async fn responses_api_emits_api_request_event() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request_body = response_mock.single_request().body_json();
     assert_eq!(request_body["service_tier"].as_str(), Some("flex"));
@@ -188,9 +188,9 @@ async fn process_sse_emits_tracing_for_output_item() {
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex().build(&server).await.unwrap();
+    let TestGenex { genex, .. } = test_genex().build(&server).await.unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -198,7 +198,7 @@ async fn process_sse_emits_tracing_for_output_item() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         lines
@@ -219,7 +219,7 @@ async fn process_sse_emits_failed_event_on_parse_error() {
 
     mount_sse_once(&server, "data: not-json\n\n".to_string()).await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -230,7 +230,7 @@ async fn process_sse_emits_failed_event_on_parse_error() {
         .await
         .unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -238,7 +238,7 @@ async fn process_sse_emits_failed_event_on_parse_error() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         lines
@@ -260,7 +260,7 @@ async fn process_sse_records_failed_event_when_stream_closes_without_completed()
 
     mount_sse_once(&server, sse(vec![ev_assistant_message("id", "hi")])).await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -271,7 +271,7 @@ async fn process_sse_records_failed_event_when_stream_closes_without_completed()
         .await
         .unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -279,7 +279,7 @@ async fn process_sse_records_failed_event_when_stream_closes_without_completed()
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         lines
@@ -321,7 +321,7 @@ async fn process_sse_failed_event_records_response_error_message() {
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -332,7 +332,7 @@ async fn process_sse_failed_event_records_response_error_message() {
         .await
         .unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -340,7 +340,7 @@ async fn process_sse_failed_event_records_response_error_message() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         lines
@@ -380,7 +380,7 @@ async fn process_sse_failed_event_logs_parse_error() {
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -391,7 +391,7 @@ async fn process_sse_failed_event_logs_parse_error() {
         .await
         .unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -399,7 +399,7 @@ async fn process_sse_failed_event_logs_parse_error() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         lines
@@ -426,7 +426,7 @@ async fn process_sse_failed_event_logs_missing_error() {
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -437,7 +437,7 @@ async fn process_sse_failed_event_logs_missing_error() {
         .await
         .unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -445,7 +445,7 @@ async fn process_sse_failed_event_logs_missing_error() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         lines
@@ -481,7 +481,7 @@ async fn process_sse_failed_event_logs_response_completed_parse_error() {
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -492,7 +492,7 @@ async fn process_sse_failed_event_logs_response_completed_parse_error() {
         .await
         .unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -500,7 +500,7 @@ async fn process_sse_failed_event_logs_response_completed_parse_error() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         lines
@@ -545,9 +545,9 @@ async fn process_sse_emits_completed_telemetry() {
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex().build(&server).await.unwrap();
+    let TestGenex { genex, .. } = test_genex().build(&server).await.unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -555,7 +555,7 @@ async fn process_sse_emits_completed_telemetry() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         lines
@@ -625,9 +625,9 @@ async fn turn_and_completed_response_spans_record_token_usage() {
         .await
         .unwrap();
 
-    let TestGenex { codex, .. } = test;
+    let TestGenex { genex, .. } = test;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -635,7 +635,7 @@ async fn turn_and_completed_response_spans_record_token_usage() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let logs = String::from_utf8(buffer.lock().unwrap().clone()).unwrap();
 
@@ -700,7 +700,7 @@ async fn handle_responses_span_records_response_kind_and_tool_name() {
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_config(|config| {
             config
                 .features
@@ -711,7 +711,7 @@ async fn handle_responses_span_records_response_kind_and_tool_name() {
         .await
         .unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -719,7 +719,7 @@ async fn handle_responses_span_records_response_kind_and_tool_name() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let logs = String::from_utf8(buffer.lock().unwrap().clone()).unwrap();
 
@@ -786,7 +786,7 @@ async fn record_responses_sets_span_fields_for_response_events() {
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_model("gpt-5.4")
         .with_config(|config| {
             config.model_reasoning_effort = Some(ReasoningEffort::High);
@@ -799,7 +799,7 @@ async fn record_responses_sets_span_fields_for_response_events() {
         .await
         .unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -807,7 +807,7 @@ async fn record_responses_sets_span_fields_for_response_events() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let logs = String::from_utf8(buffer.lock().unwrap().clone()).unwrap();
 
@@ -871,7 +871,7 @@ async fn handle_response_item_records_tool_result_for_custom_tool_call() {
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -882,7 +882,7 @@ async fn handle_response_item_records_tool_result_for_custom_tool_call() {
         .await
         .unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -890,7 +890,7 @@ async fn handle_response_item_records_tool_result_for_custom_tool_call() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         let line = lines
@@ -941,7 +941,7 @@ async fn handle_response_item_records_tool_result_for_function_call() {
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -952,7 +952,7 @@ async fn handle_response_item_records_tool_result_for_function_call() {
         .await
         .unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -960,7 +960,7 @@ async fn handle_response_item_records_tool_result_for_function_call() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TokenCount(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TokenCount(_))).await;
 
     logs_assert(|lines: &[&str]| {
         let line = lines
@@ -1011,7 +1011,7 @@ async fn handle_response_item_records_tool_result_for_exec_command_call() {
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_config(move |config| {
             config
                 .features
@@ -1023,7 +1023,7 @@ async fn handle_response_item_records_tool_result_for_exec_command_call() {
         .await
         .unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -1031,7 +1031,7 @@ async fn handle_response_item_records_tool_result_for_exec_command_call() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         let line = lines
@@ -1251,7 +1251,7 @@ async fn handle_exec_command_autoapprove_from_config_records_tool_decision() {
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
             config
@@ -1263,7 +1263,7 @@ async fn handle_exec_command_autoapprove_from_config_records_tool_decision() {
         .await
         .unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -1271,7 +1271,7 @@ async fn handle_exec_command_autoapprove_from_config_records_tool_decision() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(tool_decision_assertion(
         "auto_config_call",
@@ -1303,7 +1303,7 @@ async fn handle_exec_command_user_approved_records_tool_decision() {
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_config(|config| {
             config.permissions.approval_policy =
                 Constrained::allow_any(AskForApproval::UnlessTrusted);
@@ -1312,7 +1312,7 @@ async fn handle_exec_command_user_approved_records_tool_decision() {
         .await
         .unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "approved".into(),
             text_elements: Vec::new(),
@@ -1321,12 +1321,12 @@ async fn handle_exec_command_user_approved_records_tool_decision() {
         .unwrap();
 
     let approval_event =
-        wait_for_event(&codex, |ev| matches!(ev, EventMsg::ExecApprovalRequest(_))).await;
+        wait_for_event(&genex, |ev| matches!(ev, EventMsg::ExecApprovalRequest(_))).await;
     let EventMsg::ExecApprovalRequest(approval) = approval_event else {
         panic!("expected ExecApprovalRequest event");
     };
 
-    codex
+    genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
@@ -1335,7 +1335,7 @@ async fn handle_exec_command_user_approved_records_tool_decision() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TokenCount(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TokenCount(_))).await;
 
     logs_assert(tool_decision_assertion(
         "user_approved_call",
@@ -1367,7 +1367,7 @@ async fn handle_exec_command_user_approved_for_session_records_tool_decision() {
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_config(|config| {
             config.permissions.approval_policy =
                 Constrained::allow_any(AskForApproval::UnlessTrusted);
@@ -1376,7 +1376,7 @@ async fn handle_exec_command_user_approved_for_session_records_tool_decision() {
         .await
         .unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "persist".into(),
             text_elements: Vec::new(),
@@ -1385,12 +1385,12 @@ async fn handle_exec_command_user_approved_for_session_records_tool_decision() {
         .unwrap();
 
     let approval_event =
-        wait_for_event(&codex, |ev| matches!(ev, EventMsg::ExecApprovalRequest(_))).await;
+        wait_for_event(&genex, |ev| matches!(ev, EventMsg::ExecApprovalRequest(_))).await;
     let EventMsg::ExecApprovalRequest(approval) = approval_event else {
         panic!("expected ExecApprovalRequest event");
     };
 
-    codex
+    genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
@@ -1399,7 +1399,7 @@ async fn handle_exec_command_user_approved_for_session_records_tool_decision() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TokenCount(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TokenCount(_))).await;
 
     logs_assert(tool_decision_assertion(
         "user_approved_session_call",
@@ -1431,7 +1431,7 @@ async fn handle_exec_command_user_denies_records_tool_decision() {
         ]),
     )
     .await;
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_config(|config| {
             config.permissions.approval_policy =
                 Constrained::allow_any(AskForApproval::UnlessTrusted);
@@ -1440,7 +1440,7 @@ async fn handle_exec_command_user_denies_records_tool_decision() {
         .await
         .unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "deny".into(),
             text_elements: Vec::new(),
@@ -1449,12 +1449,12 @@ async fn handle_exec_command_user_denies_records_tool_decision() {
         .unwrap();
 
     let approval_event =
-        wait_for_event(&codex, |ev| matches!(ev, EventMsg::ExecApprovalRequest(_))).await;
+        wait_for_event(&genex, |ev| matches!(ev, EventMsg::ExecApprovalRequest(_))).await;
     let EventMsg::ExecApprovalRequest(approval) = approval_event else {
         panic!("expected ExecApprovalRequest event");
     };
 
-    codex
+    genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
@@ -1463,7 +1463,7 @@ async fn handle_exec_command_user_denies_records_tool_decision() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TokenCount(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TokenCount(_))).await;
 
     logs_assert(tool_decision_assertion(
         "user_denied_call",

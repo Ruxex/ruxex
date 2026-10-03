@@ -778,7 +778,7 @@ async fn agent_plugin_skill_prompt_stays_bounded_without_skills_extension() -> R
     std::fs::create_dir_all(&skill_dir)?;
     std::fs::write(
         plugin_root.join("plugin.json"),
-        r#"{"$schema":"https://agent-plugins.org/schemas/1.0.0/plugin.schema.json","name":"acme.tools","extensions":{"com.codex":{"interface":{"displayName":"Acme Developer Tools"}}}}"#,
+        r#"{"$schema":"https://agent-plugins.org/schemas/1.0.0/plugin.schema.json","name":"acme.tools","extensions":{"com.genex":{"interface":{"displayName":"Acme Developer Tools"}}}}"#,
     )?;
     std::fs::write(
         skill_dir.join("SKILL.md"),
@@ -2028,7 +2028,7 @@ async fn executor_skill_tool_reads_references_under_current_permissions(
         .with_config(configure_catalog_test);
     let test = builder.build_with_auto_env(&server).await?;
     let selection = test
-        .codex
+        .genex
         .environment_selections()
         .await
         .into_iter()

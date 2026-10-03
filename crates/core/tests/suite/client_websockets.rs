@@ -1806,7 +1806,7 @@ async fn responses_websocket_usage_limit_error_emits_rate_limit_event() {
         .expect("build websocket codex");
 
     let submission = test
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -1895,7 +1895,7 @@ async fn responses_websocket_invalid_request_error_with_status_is_forwarded() {
         .expect("build websocket codex");
 
     let submission = test
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -2835,8 +2835,8 @@ async fn responses_websocket_restored_history_metric(fork: bool) -> anyhow::Resu
     let server = start_websocket_server(vec![vec![warmup, turn]; 2]).await;
     let mut initial = test_genex().build_with_websocket_server(&server).await?;
     initial.submit_text_turn("original history marker").await?;
-    let rollout_path = initial.codex.rollout_path().expect("persisted history");
-    initial.codex.shutdown_and_wait().await?;
+    let rollout_path = initial.genex.rollout_path().expect("persisted history");
+    initial.genex.shutdown_and_wait().await?;
 
     let manager = &initial.thread_manager;
     let mut options = genex_core::StartThreadOptions::new(initial.config.clone());
@@ -2850,10 +2850,10 @@ async fn responses_websocket_restored_history_metric(fork: bool) -> anyhow::Resu
             genex_rollout::RolloutRecorder::get_rollout_history(&rollout_path).await?;
         manager.start_thread(options).await?
     };
-    initial.codex = restored.thread;
+    initial.genex = restored.thread;
     initial.submit_text_turn("continue").await?;
     assert_continuation_metrics(
-        &initial.codex.session_telemetry(),
+        &initial.genex.session_telemetry(),
         &[
             (["full", "restored_history", "warmup"], 1),
             (["incremental", "incremental", "generation"], 1),
@@ -2864,7 +2864,7 @@ async fn responses_websocket_restored_history_metric(fork: bool) -> anyhow::Resu
             .to_string()
             .contains("original history marker")
     }));
-    initial.codex.shutdown_and_wait().await?;
+    initial.genex.shutdown_and_wait().await?;
     server.shutdown().await;
     Ok(())
 }

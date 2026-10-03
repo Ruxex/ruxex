@@ -28,9 +28,9 @@ async fn emits_deprecation_notice_for_legacy_feature_flag() -> anyhow::Result<()
             .expect("test config should allow managed feature metadata updates");
     });
 
-    let TestGenex { codex, .. } = builder.build(&server).await?;
+    let TestGenex { genex, .. } = builder.build(&server).await?;
 
-    let notice = wait_for_event_match(&codex, |event| match event {
+    let notice = wait_for_event_match(&genex, |event| match event {
         EventMsg::DeprecationNotice(ev) => Some(ev.clone()),
         _ => None,
     })
@@ -69,9 +69,9 @@ async fn emits_deprecation_notice_for_web_search_feature_flag_values() -> anyhow
                 .expect("test config should allow managed feature map updates");
         });
 
-        let TestGenex { codex, .. } = builder.build(&server).await?;
+        let TestGenex { genex, .. } = builder.build(&server).await?;
 
-        let notice = wait_for_event_match(&codex, |event| match event {
+        let notice = wait_for_event_match(&genex, |event| match event {
             EventMsg::DeprecationNotice(ev)
                 if ev.summary.contains("[features].web_search_request") =>
             {
@@ -115,9 +115,9 @@ async fn emits_deprecation_notice_for_use_legacy_landlock() -> anyhow::Result<()
             .expect("test config should allow managed feature map updates");
     });
 
-    let TestGenex { codex, .. } = builder.build(&server).await?;
+    let TestGenex { genex, .. } = builder.build(&server).await?;
 
-    let notice = wait_for_event_match(&codex, |event| match event {
+    let notice = wait_for_event_match(&genex, |event| match event {
         EventMsg::DeprecationNotice(ev)
             if ev.summary.contains("[features].use_legacy_landlock") =>
         {

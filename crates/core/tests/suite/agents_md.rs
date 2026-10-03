@@ -2103,7 +2103,7 @@ async fn cold_resume_invalidates_deleted_legacy_agents_md_once() -> Result<()> {
 
     // Assert the pre-resume thread reports the source used to create its snapshot.
     assert_eq!(
-        initial.codex.instruction_sources().await,
+        initial.genex.instruction_sources().await,
         vec![PathUri::from_abs_path(&old_source)],
         "initial thread reports the creation-time global source"
     );
@@ -2113,8 +2113,8 @@ async fn cold_resume_invalidates_deleted_legacy_agents_md_once() -> Result<()> {
         .rollout_path
         .clone()
         .expect("rollout path");
-    initial.codex.submit(Op::Shutdown).await?;
-    wait_for_event(&initial.codex, |event| {
+    initial.genex.submit(Op::Shutdown).await?;
+    wait_for_event(&initial.genex, |event| {
         matches!(event, EventMsg::ShutdownComplete)
     })
     .await;
@@ -2130,7 +2130,7 @@ async fn cold_resume_invalidates_deleted_legacy_agents_md_once() -> Result<()> {
 
     // Model history still contains the old fragment, but the source no longer exists.
     assert_eq!(
-        resumed.codex.instruction_sources().await,
+        resumed.genex.instruction_sources().await,
         Vec::<PathUri>::new(),
         "resume reports no deleted instruction source"
     );
@@ -2207,14 +2207,14 @@ async fn fork_injects_changed_agents_md_once() -> Result<()> {
 
     // Assert the parent reports the source used to create its snapshot.
     assert_eq!(
-        parent.codex.instruction_sources().await,
+        parent.genex.instruction_sources().await,
         vec![PathUri::from_abs_path(&source)],
         "parent reports the creation-time global source"
     );
     parent.submit_turn("persist instructions").await?;
-    parent.codex.ensure_rollout_materialized().await;
-    parent.codex.flush_rollout().await?;
-    let rollout_path = parent.codex.rollout_path().expect("rollout path");
+    parent.genex.ensure_rollout_materialized().await;
+    parent.genex.flush_rollout().await?;
+    let rollout_path = parent.genex.rollout_path().expect("rollout path");
 
     // Add a preferred override source, then fork with freshly loaded configuration.
     let new_source = write_global_file(

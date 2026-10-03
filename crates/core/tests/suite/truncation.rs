@@ -434,7 +434,7 @@ async fn mcp_tool_call_output_exceeds_limit_truncated_for_model() -> Result<()> 
         config.tool_output_token_limit = Some(500);
     });
     let fixture = builder.build(&server).await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     fixture
         .submit_turn_with_permission_profile(
@@ -536,13 +536,13 @@ async fn mcp_image_output_preserves_image_and_no_text_summary() -> Result<()> {
             .expect("test mcp servers should accept any configuration");
     });
     let fixture = builder.build(&server).await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
     let session_model = fixture.session_configured.model.clone();
     let permission_profile = PermissionProfile::read_only();
     let sandbox_policy = permission_profile.to_legacy_sandbox_policy(fixture.cwd.path())?;
 
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "call the rmcp image tool".into(),
@@ -567,7 +567,7 @@ async fn mcp_image_output_preserves_image_and_no_text_summary() -> Result<()> {
         .await?;
 
     // Wait for completion to ensure the outbound request is captured.
-    wait_for_event(&fixture.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&fixture.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
     let output_item = final_mock.single_request().function_call_output(call_id);
     // Expect exactly the wall-time text and image item; no trailing truncation summary.
     let output = output_item.get("output").expect("output");
@@ -803,7 +803,7 @@ async fn call_mcp_echo(
             .expect("test mcp servers should accept any configuration");
     });
     let fixture = builder.build_with_auto_env(server).await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
     fixture.submit_text_turn("call the MCP echo tool").await?;
 
     let output = response
@@ -902,8 +902,8 @@ async fn mcp_tool_output_limit_survives_resume(output_token_limit: Option<usize>
     )
     .await?;
 
-    fixture.codex.ensure_rollout_materialized().await;
-    fixture.codex.flush_rollout().await?;
+    fixture.genex.ensure_rollout_materialized().await;
+    fixture.genex.flush_rollout().await?;
     let resumed_response = mount_sse_once(
         &server,
         sse(vec![

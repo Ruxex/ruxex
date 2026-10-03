@@ -40,7 +40,7 @@ async fn recover_turn_restores_cyber_access_program_without_making_it_sticky() -
     let mut builder = test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
     let initial = builder.build_with_streaming_server(&initial_server).await?;
     let TurnInputSubmission::Started { turn_id } = initial
-        .codex
+        .genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "recover this turn".to_owned(),
@@ -56,20 +56,20 @@ async fn recover_turn_restores_cyber_access_program_without_making_it_sticky() -
         panic!("expected a new turn");
     };
     initial_server.wait_for_request_count(/*count*/ 1).await;
-    initial.codex.submit(Op::Interrupt).await?;
-    wait_for_event(&initial.codex, |event| {
+    initial.genex.submit(Op::Interrupt).await?;
+    wait_for_event(&initial.genex, |event| {
         matches!(event, EventMsg::TurnAborted(_))
     })
     .await;
     drop(release_response);
     initial_server.shutdown().await;
-    initial.codex.flush_rollout().await?;
+    initial.genex.flush_rollout().await?;
 
     let server = responses::start_mock_server().await;
     let test = builder.restart(&server, &initial).await?;
     let (rollout, _, _) = RolloutRecorder::load_rollout_items(
         &test
-            .codex
+            .genex
             .rollout_path()
             .expect("recovered turn rollout path"),
     )
@@ -94,7 +94,7 @@ async fn recover_turn_restores_cyber_access_program_without_making_it_sticky() -
     let response_mock =
         responses::mount_sse_once(&server, responses::sse_completed("resp-1")).await;
     let submission = test
-        .codex
+        .genex
         .recover_turn_if_idle(RecoverTurnRequest {
             turn_id: turn_id.clone(),
             thread_settings: Default::default(),
@@ -134,7 +134,7 @@ async fn recover_turn_restores_cyber_access_program_without_making_it_sticky() -
     let TurnInputSubmission::Started {
         turn_id: next_turn_id,
     } = test
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "start a new turn".to_owned(),
             text_elements: Vec::new(),

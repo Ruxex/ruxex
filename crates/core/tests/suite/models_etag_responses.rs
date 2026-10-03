@@ -65,7 +65,7 @@ async fn refresh_models_on_models_etag_mismatch_and_avoid_duplicate_models_fetch
         });
 
     let test = builder.build(&server).await?;
-    let codex = Arc::clone(&test.genex);
+    let genex = Arc::clone(&test.genex);
     let cwd = Arc::clone(&test.cwd);
     let session_model = test.session_configured.model.clone();
     let cwd_path = cwd.abs();
@@ -109,7 +109,7 @@ async fn refresh_models_on_models_etag_mismatch_and_avoid_duplicate_models_fetch
     )
     .await;
 
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "please run a tool".into(),
@@ -134,7 +134,7 @@ async fn refresh_models_on_models_etag_mismatch_and_avoid_duplicate_models_fetch
         .await?;
 
     let _ = wait_for_event_with_timeout(
-        &codex,
+        &genex,
         |ev| matches!(ev, EventMsg::TurnComplete(_)),
         Duration::from_secs(30),
     )

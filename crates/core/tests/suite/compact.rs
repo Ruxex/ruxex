@@ -447,14 +447,14 @@ fn assert_pre_sampling_switch_compaction_requests(
     );
 }
 
-async fn assert_compaction_uses_turn_lifecycle_id(codex: &std::sync::Arc<genex_core::GenexThread>) {
+async fn assert_compaction_uses_turn_lifecycle_id(genex: &std::sync::Arc<genex_core::GenexThread>) {
     let mut turn_started_id = None;
     let mut turn_completed_id = None;
     let mut compact_started_id = None;
     let mut compact_completed_id = None;
 
     while turn_completed_id.is_none() {
-        let event = codex.next_event().await.expect("next event");
+        let event = genex.next_event().await.expect("next event");
         match event.msg {
             EventMsg::TurnStarted(_) => turn_started_id = Some(event.id.clone()),
             EventMsg::ItemStarted(ItemStartedEvent {
@@ -562,11 +562,11 @@ async fn summarize_context_three_requests_and_instructions(
         config.model_auto_compact_token_limit = Some(200_000);
     });
     let test = builder.build(&server).await?;
-    let codex = test.genex.clone();
+    let genex = test.genex.clone();
     let rollout_path = test.session_configured.rollout_path.expect("rollout path");
 
     // 1) Normal user input – should hit server once.
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
             UserInput::Text {
                 text: "hello world".into(),
@@ -578,25 +578,25 @@ async fn summarize_context_three_requests_and_instructions(
             },
         ]))
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     // 2) Summarize – second hit should include the summarization prompt.
-    codex.submit(Op::Compact).await?;
-    let warning_event = wait_for_event(&codex, |ev| matches!(ev, EventMsg::Warning(_))).await;
+    genex.submit(Op::Compact).await?;
+    let warning_event = wait_for_event(&genex, |ev| matches!(ev, EventMsg::Warning(_))).await;
     let EventMsg::Warning(WarningEvent { message }) = warning_event else {
         panic!("expected warning event after compact");
     };
     assert_eq!(message, COMPACT_WARNING_MESSAGE);
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     // 3) Next user input – third hit; history should include only the summary.
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: THIRD_USER_MSG.into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     // Inspect the three captured requests.
     let requests = request_log.requests();
@@ -697,8 +697,8 @@ async fn summarize_context_three_requests_and_instructions(
     );
 
     // Shut down Codex to flush rollout entries before inspecting the file.
-    codex.submit(Op::Shutdown).await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::ShutdownComplete)).await;
+    genex.submit(Op::Shutdown).await?;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::ShutdownComplete)).await;
 
     let replacement_history = replacement_history_from_rollout(&rollout_path)
         .expect("local compaction should persist replacement history");
@@ -804,20 +804,20 @@ async fn manual_pre_compact_block_decision_does_not_block_compaction() {
             set_test_compact_prompt(config);
         });
     let test = builder.build(&server).await.expect("create conversation");
-    let codex = test.genex.clone();
+    let genex = test.genex.clone();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello before blocked compact".to_string(),
             text_elements: Vec::new(),
         }]))
         .await
         .expect("submit first user turn");
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex.submit(Op::Compact).await.expect("trigger compact");
+    genex.submit(Op::Compact).await.expect("trigger compact");
 
-    let completed = wait_for_event_match(&codex, |ev| match ev {
+    let completed = wait_for_event_match(&genex, |ev| match ev {
         EventMsg::HookCompleted(completed)
             if completed.run.event_name == HookEventName::PreCompact =>
         {
@@ -827,8 +827,8 @@ async fn manual_pre_compact_block_decision_does_not_block_compaction() {
     })
     .await;
     assert_eq!(completed.run.status, HookRunStatus::Failed);
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::Warning(_))).await;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::Warning(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = request_log.requests();
     assert_eq!(
@@ -871,20 +871,20 @@ async fn compact_hooks_respect_matchers_and_post_runs_after_compaction() {
             set_test_compact_prompt(config);
         });
     let test = builder.build(&server).await.expect("create conversation");
-    let codex = test.genex.clone();
+    let genex = test.genex.clone();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello before matched compact".to_string(),
             text_elements: Vec::new(),
         }]))
         .await
         .expect("submit first user turn");
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex.submit(Op::Compact).await.expect("trigger compact");
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::Warning(_))).await;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    genex.submit(Op::Compact).await.expect("trigger compact");
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::Warning(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     assert_eq!(request_log.requests().len(), 2);
     assert!(
@@ -931,28 +931,28 @@ async fn manual_compact_uses_custom_prompt() {
         config.model_provider = model_provider;
         config.compact_prompt = Some(custom_prompt.to_string());
     });
-    let codex = builder
+    let genex = builder
         .build(&server)
         .await
         .expect("create conversation")
-        .codex;
+        .genex;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "USER_ONE".to_string(),
             text_elements: Vec::new(),
         }]))
         .await
         .expect("submit first user turn");
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex.submit(Op::Compact).await.expect("trigger compact");
-    let warning_event = wait_for_event(&codex, |ev| matches!(ev, EventMsg::Warning(_))).await;
+    genex.submit(Op::Compact).await.expect("trigger compact");
+    let warning_event = wait_for_event(&genex, |ev| matches!(ev, EventMsg::Warning(_))).await;
     let EventMsg::Warning(WarningEvent { message }) = warning_event else {
         panic!("expected warning event after compact");
     };
     assert_eq!(message, COMPACT_WARNING_MESSAGE);
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = request_log.requests();
     assert_eq!(
@@ -1162,13 +1162,13 @@ async fn manual_compact_records_durable_and_local_token_usage() {
     });
     let test = builder.build(&server).await.unwrap();
     let rollout_path = test.genex.rollout_path().expect("rollout path");
-    let codex = test.genex;
+    let genex = test.genex;
 
     // Trigger manual compact and collect TokenCount events for the compact turn.
-    codex.submit(Op::Compact).await.unwrap();
+    genex.submit(Op::Compact).await.unwrap();
 
     // First TokenCount: from the compact API call (usage.total_tokens = 0).
-    let first = wait_for_event_match(&codex, |ev| match ev {
+    let first = wait_for_event_match(&genex, |ev| match ev {
         EventMsg::TokenCount(tc) => tc
             .info
             .as_ref()
@@ -1178,7 +1178,7 @@ async fn manual_compact_records_durable_and_local_token_usage() {
     .await;
 
     // Second TokenCount: from the local post-compaction estimate.
-    let last = wait_for_event_match(&codex, |ev| match ev {
+    let last = wait_for_event_match(&genex, |ev| match ev {
         EventMsg::TokenCount(tc) => tc
             .info
             .as_ref()
@@ -1188,7 +1188,7 @@ async fn manual_compact_records_durable_and_local_token_usage() {
     .await;
 
     // Ensure the compact task itself completes.
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     assert_eq!(
         first, 0,
@@ -1251,18 +1251,18 @@ async fn manual_compact_emits_context_compaction_items() {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
     });
-    let codex = builder.build(&server).await.unwrap().genex;
+    let genex = builder.build(&server).await.unwrap().genex;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "manual compact".into(),
             text_elements: Vec::new(),
         }]))
         .await
         .unwrap();
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
-    codex.submit(Op::Compact).await.unwrap();
+    genex.submit(Op::Compact).await.unwrap();
 
     let mut started_item = None;
     let mut completed_item = None;
@@ -1271,7 +1271,7 @@ async fn manual_compact_emits_context_compaction_items() {
 
     while !saw_turn_complete || started_item.is_none() || completed_item.is_none() || !legacy_event
     {
-        let event = codex.next_event().await.unwrap();
+        let event = genex.next_event().await.unwrap();
         match event.msg {
             EventMsg::ItemStarted(ItemStartedEvent {
                 item: TurnItem::ContextCompaction(item),
@@ -1881,9 +1881,9 @@ async fn auto_compact_runs_after_token_limit_hit() {
         set_test_compact_prompt(config);
         config.model_auto_compact_token_limit = Some(200_000);
     });
-    let codex = builder.build(&server).await.unwrap().genex;
+    let genex = builder.build(&server).await.unwrap().genex;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: FIRST_AUTO_MSG.into(),
             text_elements: Vec::new(),
@@ -1891,9 +1891,9 @@ async fn auto_compact_runs_after_token_limit_hit() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: SECOND_AUTO_MSG.into(),
             text_elements: Vec::new(),
@@ -1901,9 +1901,9 @@ async fn auto_compact_runs_after_token_limit_hit() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: POST_AUTO_USER_MSG.into(),
             text_elements: Vec::new(),
@@ -1911,7 +1911,7 @@ async fn auto_compact_runs_after_token_limit_hit() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = request_log.requests();
     let request_bodies: Vec<String> = requests
@@ -2061,14 +2061,14 @@ async fn auto_compact_emits_context_compaction_items() {
         set_test_compact_prompt(config);
         config.model_auto_compact_token_limit = Some(200_000);
     });
-    let codex = builder.build(&server).await.unwrap().genex;
+    let genex = builder.build(&server).await.unwrap().genex;
 
     let mut started_item = None;
     let mut completed_item = None;
     let mut legacy_event = false;
 
     for user in [FIRST_AUTO_MSG, SECOND_AUTO_MSG, POST_AUTO_USER_MSG] {
-        codex
+        genex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: user.into(),
                 text_elements: Vec::new(),
@@ -2077,7 +2077,7 @@ async fn auto_compact_emits_context_compaction_items() {
             .unwrap();
 
         loop {
-            let event = codex.next_event().await.unwrap();
+            let event = genex.next_event().await.unwrap();
             match event.msg {
                 EventMsg::ItemStarted(ItemStartedEvent {
                     item: TurnItem::ContextCompaction(item),
@@ -2141,27 +2141,27 @@ async fn auto_compact_starts_after_turn_started() {
         set_test_compact_prompt(config);
         config.model_auto_compact_token_limit = Some(200_000);
     });
-    let codex = builder.build(&server).await.unwrap().genex;
+    let genex = builder.build(&server).await.unwrap().genex;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: FIRST_AUTO_MSG.into(),
             text_elements: Vec::new(),
         }]))
         .await
         .unwrap();
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: SECOND_AUTO_MSG.into(),
             text_elements: Vec::new(),
         }]))
         .await
         .unwrap();
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: POST_AUTO_USER_MSG.into(),
             text_elements: Vec::new(),
@@ -2169,7 +2169,7 @@ async fn auto_compact_starts_after_turn_started() {
         .await
         .unwrap();
 
-    let first = wait_for_event_match(&codex, |ev| match ev {
+    let first = wait_for_event_match(&genex, |ev| match ev {
         EventMsg::TurnStarted(_) => Some("turn"),
         EventMsg::ItemStarted(ItemStartedEvent {
             item: TurnItem::ContextCompaction(_),
@@ -2180,7 +2180,7 @@ async fn auto_compact_starts_after_turn_started() {
     .await;
     assert_eq!(first, "turn", "compaction started before turn started");
 
-    wait_for_event(&codex, |ev| {
+    wait_for_event(&genex, |ev| {
         matches!(
             ev,
             EventMsg::ItemStarted(ItemStartedEvent {
@@ -2191,7 +2191,7 @@ async fn auto_compact_starts_after_turn_started() {
     })
     .await;
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -2245,7 +2245,7 @@ async fn auto_compact_runs_after_resume_when_token_usage_is_over_limit() {
     let response_mock = mount_sse_sequence(&server, vec![compact_turn, sse_follow_up]).await;
 
     resumed
-        .codex
+        .genex
         .start_or_steer_turn(disabled_permission_user_turn(
             follow_up_user,
             resumed.cwd.path().to_path_buf(),
@@ -2254,11 +2254,11 @@ async fn auto_compact_runs_after_resume_when_token_usage_is_over_limit() {
         .await
         .unwrap();
 
-    wait_for_event(&resumed.codex, |event| {
+    wait_for_event(&resumed.genex, |event| {
         matches!(event, EventMsg::ContextCompacted(_))
     })
     .await;
-    wait_for_event(&resumed.codex, |event| {
+    wait_for_event(&resumed.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -2626,7 +2626,7 @@ async fn pre_sampling_compact_falls_back_from_retired_previous_model_after_renam
         .expect("rollout path");
 
     initial
-        .codex
+        .genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "before switch",
             initial.cwd.path().to_path_buf(),
@@ -2634,17 +2634,17 @@ async fn pre_sampling_compact_falls_back_from_retired_previous_model_after_renam
         ))
         .await
         .expect("submit first user turn");
-    wait_for_event(&initial.codex, |event| {
+    wait_for_event(&initial.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
     initial
-        .codex
+        .genex
         .submit(Op::Shutdown)
         .await
         .expect("shutdown initial session");
-    wait_for_event(&initial.codex, |event| {
+    wait_for_event(&initial.genex, |event| {
         matches!(event, EventMsg::ShutdownComplete)
     })
     .await;
@@ -2663,7 +2663,7 @@ async fn pre_sampling_compact_falls_back_from_retired_previous_model_after_renam
         .expect("resume codex");
 
     resumed
-        .codex
+        .genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "after switch",
             resumed.cwd.path().to_path_buf(),
@@ -2671,7 +2671,7 @@ async fn pre_sampling_compact_falls_back_from_retired_previous_model_after_renam
         ))
         .await
         .expect("submit renamed-model turn");
-    assert_compaction_uses_turn_lifecycle_id(&resumed.codex).await;
+    assert_compaction_uses_turn_lifecycle_id(&resumed.genex).await;
 
     let requests = request_log.requests();
     assert_eq!(models_mock.requests().len(), 1);
@@ -2765,7 +2765,7 @@ async fn pre_sampling_compact_falls_back_when_previous_model_is_not_found() {
         .expect("rollout path");
 
     initial
-        .codex
+        .genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "before switch",
             initial.cwd.path().to_path_buf(),
@@ -2773,17 +2773,17 @@ async fn pre_sampling_compact_falls_back_when_previous_model_is_not_found() {
         ))
         .await
         .expect("submit first user turn");
-    wait_for_event(&initial.codex, |event| {
+    wait_for_event(&initial.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
     initial
-        .codex
+        .genex
         .submit(Op::Shutdown)
         .await
         .expect("shutdown initial session");
-    wait_for_event(&initial.codex, |event| {
+    wait_for_event(&initial.genex, |event| {
         matches!(event, EventMsg::ShutdownComplete)
     })
     .await;
@@ -2803,7 +2803,7 @@ async fn pre_sampling_compact_falls_back_when_previous_model_is_not_found() {
         .expect("resume codex");
 
     resumed
-        .codex
+        .genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "after switch",
             resumed.cwd.path().to_path_buf(),
@@ -2811,7 +2811,7 @@ async fn pre_sampling_compact_falls_back_when_previous_model_is_not_found() {
         ))
         .await
         .expect("submit renamed-model turn");
-    assert_compaction_uses_turn_lifecycle_id(&resumed.codex).await;
+    assert_compaction_uses_turn_lifecycle_id(&resumed.genex).await;
 
     let requests = request_log.requests();
     assert_eq!(models_mock.requests().len(), 1);
@@ -3307,7 +3307,7 @@ async fn pre_sampling_compact_runs_after_resume_and_switch_to_smaller_model() {
         .expect("rollout path");
 
     initial
-        .codex
+        .genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "before resume",
             initial.cwd.path().to_path_buf(),
@@ -3315,17 +3315,17 @@ async fn pre_sampling_compact_runs_after_resume_and_switch_to_smaller_model() {
         ))
         .await
         .expect("submit pre-resume turn");
-    wait_for_event(&initial.codex, |event| {
+    wait_for_event(&initial.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
     initial
-        .codex
+        .genex
         .submit(Op::Shutdown)
         .await
         .expect("shutdown initial session");
-    wait_for_event(&initial.codex, |event| {
+    wait_for_event(&initial.genex, |event| {
         matches!(event, EventMsg::ShutdownComplete)
     })
     .await;
@@ -3344,7 +3344,7 @@ async fn pre_sampling_compact_runs_after_resume_and_switch_to_smaller_model() {
         .expect("resume codex");
 
     resumed
-        .codex
+        .genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "after resume",
             resumed.cwd.path().to_path_buf(),
@@ -3352,7 +3352,7 @@ async fn pre_sampling_compact_runs_after_resume_and_switch_to_smaller_model() {
         ))
         .await
         .expect("submit resumed user turn");
-    assert_compaction_uses_turn_lifecycle_id(&resumed.codex).await;
+    assert_compaction_uses_turn_lifecycle_id(&resumed.genex).await;
 
     let requests = request_log.requests();
     assert_eq!(models_mock.requests().len(), 1);
@@ -3428,7 +3428,7 @@ async fn pre_sampling_compact_recovers_comp_hash_after_resume() {
         .expect("rollout path");
 
     initial
-        .codex
+        .genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "before resume",
             initial.cwd.path().to_path_buf(),
@@ -3436,17 +3436,17 @@ async fn pre_sampling_compact_recovers_comp_hash_after_resume() {
         ))
         .await
         .expect("submit pre-resume turn");
-    wait_for_event(&initial.codex, |event| {
+    wait_for_event(&initial.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
     initial
-        .codex
+        .genex
         .submit(Op::Shutdown)
         .await
         .expect("shutdown initial session");
-    wait_for_event(&initial.codex, |event| {
+    wait_for_event(&initial.genex, |event| {
         matches!(event, EventMsg::ShutdownComplete)
     })
     .await;
@@ -3475,7 +3475,7 @@ async fn pre_sampling_compact_recovers_comp_hash_after_resume() {
         .expect("resume codex");
 
     resumed
-        .codex
+        .genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "after resume",
             resumed.cwd.path().to_path_buf(),
@@ -3483,7 +3483,7 @@ async fn pre_sampling_compact_recovers_comp_hash_after_resume() {
         ))
         .await
         .expect("submit resumed user turn");
-    assert_compaction_uses_turn_lifecycle_id(&resumed.codex).await;
+    assert_compaction_uses_turn_lifecycle_id(&resumed.genex).await;
 
     let requests = request_log.requests();
     assert_eq!(models_mock.requests().len(), 1);
@@ -3555,7 +3555,7 @@ async fn pre_sampling_compact_skips_missing_comp_hash_after_resume() {
         .expect("rollout path");
 
     initial
-        .codex
+        .genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "before resume",
             initial.cwd.path().to_path_buf(),
@@ -3563,17 +3563,17 @@ async fn pre_sampling_compact_skips_missing_comp_hash_after_resume() {
         ))
         .await
         .expect("submit pre-resume turn");
-    wait_for_event(&initial.codex, |event| {
+    wait_for_event(&initial.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
     initial
-        .codex
+        .genex
         .submit(Op::Shutdown)
         .await
         .expect("shutdown initial session");
-    wait_for_event(&initial.codex, |event| {
+    wait_for_event(&initial.genex, |event| {
         matches!(event, EventMsg::ShutdownComplete)
     })
     .await;
@@ -3600,7 +3600,7 @@ async fn pre_sampling_compact_skips_missing_comp_hash_after_resume() {
         .expect("resume codex");
 
     resumed
-        .codex
+        .genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "after resume",
             resumed.cwd.path().to_path_buf(),
@@ -3608,7 +3608,7 @@ async fn pre_sampling_compact_skips_missing_comp_hash_after_resume() {
         ))
         .await
         .expect("submit resumed user turn");
-    wait_for_event(&resumed.codex, |event| {
+    wait_for_event(&resumed.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -3692,39 +3692,39 @@ async fn auto_compact_persists_rollout_entries() {
         config.model_auto_compact_token_limit = Some(200_000);
     });
     let test = builder.build(&server).await.unwrap();
-    let codex = test.genex.clone();
+    let genex = test.genex.clone();
     let session_configured = test.session_configured;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: FIRST_AUTO_MSG.into(),
             text_elements: Vec::new(),
         }]))
         .await
         .unwrap();
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: SECOND_AUTO_MSG.into(),
             text_elements: Vec::new(),
         }]))
         .await
         .unwrap();
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: POST_AUTO_USER_MSG.into(),
             text_elements: Vec::new(),
         }]))
         .await
         .unwrap();
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    let expected_settings = codex.thread_settings_snapshot().await;
-    codex.submit(Op::Shutdown).await.unwrap();
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::ShutdownComplete)).await;
+    let expected_settings = genex.thread_settings_snapshot().await;
+    genex.submit(Op::Shutdown).await.unwrap();
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::ShutdownComplete)).await;
 
     let rollout_path = session_configured.rollout_path.expect("rollout path");
     let text = std::fs::read_to_string(&rollout_path).expect("failed to read rollout file");
@@ -3801,24 +3801,24 @@ async fn manual_compact_retries_after_context_window_error() {
         set_test_compact_prompt(config);
         config.model_auto_compact_token_limit = Some(200_000);
     });
-    let codex = builder.build(&server).await.unwrap().genex;
+    let genex = builder.build(&server).await.unwrap().genex;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "first turn".into(),
             text_elements: Vec::new(),
         }]))
         .await
         .unwrap();
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex.submit(Op::Compact).await.unwrap();
-    let warning_event = wait_for_event(&codex, |ev| matches!(ev, EventMsg::Warning(_))).await;
+    genex.submit(Op::Compact).await.unwrap();
+    let warning_event = wait_for_event(&genex, |ev| matches!(ev, EventMsg::Warning(_))).await;
     let EventMsg::Warning(WarningEvent { message }) = warning_event else {
         panic!("expected warning event after compact retry");
     };
     assert_eq!(message, COMPACT_WARNING_MESSAGE);
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = request_log.requests();
     assert_eq!(
@@ -3890,7 +3890,7 @@ async fn manual_compact_non_context_failure_retries_then_emits_task_error() {
     let mut model_provider = non_provider_model_provider(&server);
     model_provider.stream_max_retries = Some(1);
 
-    let codex = test_genex()
+    let genex = test_genex()
         .with_config(move |config| {
             config.model_provider = model_provider;
             set_test_compact_prompt(config);
@@ -3899,20 +3899,20 @@ async fn manual_compact_non_context_failure_retries_then_emits_task_error() {
         .build(&server)
         .await
         .expect("build codex")
-        .codex;
+        .genex;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "first turn".into(),
             text_elements: Vec::new(),
         }]))
         .await
         .expect("submit user input");
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex.submit(Op::Compact).await.expect("trigger compact");
+    genex.submit(Op::Compact).await.expect("trigger compact");
 
-    let reconnect_message = wait_for_event_match(&codex, |event| match event {
+    let reconnect_message = wait_for_event_match(&genex, |event| match event {
         EventMsg::StreamError(stream_error) => Some(stream_error.message.clone()),
         _ => None,
     })
@@ -3922,7 +3922,7 @@ async fn manual_compact_non_context_failure_retries_then_emits_task_error() {
         "expected reconnect stream error message, got {reconnect_message}"
     );
 
-    let task_error_message = wait_for_event_match(&codex, |event| match event {
+    let task_error_message = wait_for_event_match(&genex, |event| match event {
         EventMsg::Error(err) => Some(err.message.clone()),
         _ => None,
     })
@@ -3931,7 +3931,7 @@ async fn manual_compact_non_context_failure_retries_then_emits_task_error() {
         task_error_message.contains("Error running local compact task"),
         "expected local compact task error prefix, got {task_error_message}"
     );
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -3989,40 +3989,40 @@ async fn manual_compact_twice_preserves_latest_user_messages() {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
     });
-    let codex = builder.build(&server).await.unwrap().genex;
+    let genex = builder.build(&server).await.unwrap().genex;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: first_user_message.into(),
             text_elements: Vec::new(),
         }]))
         .await
         .unwrap();
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex.submit(Op::Compact).await.unwrap();
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    genex.submit(Op::Compact).await.unwrap();
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: second_user_message.into(),
             text_elements: Vec::new(),
         }]))
         .await
         .unwrap();
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex.submit(Op::Compact).await.unwrap();
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    genex.submit(Op::Compact).await.unwrap();
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: final_user_message.into(),
             text_elements: Vec::new(),
         }]))
         .await
         .unwrap();
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = responses_mock.requests();
     assert_eq!(
@@ -4210,11 +4210,11 @@ async fn auto_compact_allows_multiple_attempts_when_interleaved_with_other_turn_
         // Leave enough headroom for per-item request metadata before the second compaction.
         config.model_auto_compact_token_limit = Some(300);
     });
-    let codex = builder.build(&server).await.unwrap().genex;
+    let genex = builder.build(&server).await.unwrap().genex;
 
     let mut auto_compact_lifecycle_events = Vec::new();
     for user in [MULTI_AUTO_MSG, follow_up_user, final_user] {
-        codex
+        genex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: user.into(),
                 text_elements: Vec::new(),
@@ -4223,7 +4223,7 @@ async fn auto_compact_allows_multiple_attempts_when_interleaved_with_other_turn_
             .unwrap();
 
         loop {
-            let event = codex.next_event().await.unwrap();
+            let event = genex.next_event().await.unwrap();
             if event.id.starts_with("auto-compact-")
                 && matches!(
                     event.msg,
@@ -4312,9 +4312,9 @@ async fn snapshot_request_shape_mid_turn_continuation_compaction() {
         config.model_context_window = Some(context_window);
         config.model_auto_compact_token_limit = Some(limit);
     });
-    let codex = builder.build(&server).await.unwrap().genex;
+    let genex = builder.build(&server).await.unwrap().genex;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: FUNCTION_CALL_LIMIT_MSG.into(),
             text_elements: Vec::new(),
@@ -4322,7 +4322,7 @@ async fn snapshot_request_shape_mid_turn_continuation_compaction() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |msg| matches!(msg, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |msg| matches!(msg, EventMsg::TurnComplete(_))).await;
 
     // Assert first request captured expected user message that triggers function call.
     let first_request = first_turn_mock.single_request().input();
@@ -4405,10 +4405,10 @@ async fn auto_compact_clamps_config_limit_to_context_window() {
         config.model_context_window = Some(context_window);
         config.model_auto_compact_token_limit = Some(config_limit);
     });
-    let codex = builder.build(&server).await.unwrap();
+    let genex = builder.build(&server).await.unwrap();
 
-    codex.submit_turn("OVER_LIMIT_TURN").await.unwrap();
-    codex.submit_turn("FOLLOW_UP_AFTER_CLAMP").await.unwrap();
+    genex.submit_turn("OVER_LIMIT_TURN").await.unwrap();
+    genex.submit_turn("FOLLOW_UP_AFTER_CLAMP").await.unwrap();
 
     assert!(
         first_turn_mock.single_request().input().iter().any(|item| {
@@ -4710,7 +4710,7 @@ async fn auto_compact_accounts_for_encrypted_reasoning(first_response_includes_r
     )
     .await;
 
-    let codex = test_genex()
+    let genex = test_genex()
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             set_test_compact_prompt(config);
@@ -4719,20 +4719,20 @@ async fn auto_compact_accounts_for_encrypted_reasoning(first_response_includes_r
         .build(&server)
         .await
         .expect("build codex")
-        .codex;
+        .genex;
 
     for (idx, user) in [first_user, second_user, third_user]
         .into_iter()
         .enumerate()
     {
-        codex
+        genex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: user.into(),
                 text_elements: Vec::new(),
             }]))
             .await
             .expect("start user turn");
-        wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+        wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
         if idx < 2 {
             assert!(
@@ -4792,7 +4792,7 @@ async fn snapshot_request_shape_pre_turn_compaction_including_incoming_user_mess
     let request_log = mount_sse_sequence(&server, vec![sse1, sse2, sse3, sse4]).await;
 
     let model_provider = non_provider_model_provider(&server);
-    let codex = test_genex()
+    let genex = test_genex()
         .with_config(move |config| {
             config.update_plan_enabled = true;
             config.model_provider = model_provider;
@@ -4802,20 +4802,20 @@ async fn snapshot_request_shape_pre_turn_compaction_including_incoming_user_mess
         .build(&server)
         .await
         .expect("build codex")
-        .codex;
+        .genex;
 
     for user in ["USER_ONE", "USER_TWO"] {
-        codex
+        genex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: user.to_string(),
                 text_elements: Vec::new(),
             }]))
             .await
             .expect("submit user input");
-        wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+        wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
     }
     core_test_support::submit_thread_settings(
-        &codex,
+        &genex,
         ThreadSettingsOverrides {
             environments: Some(local_selections(
                 test_path_buf(PRETURN_CONTEXT_DIFF_CWD).abs(),
@@ -4827,7 +4827,7 @@ async fn snapshot_request_shape_pre_turn_compaction_including_incoming_user_mess
     .expect("override thread settings");
     let image_url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg=="
         .to_string();
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
             UserInput::Image {
                 image: ImageReference::Inline {
@@ -4842,7 +4842,7 @@ async fn snapshot_request_shape_pre_turn_compaction_including_incoming_user_mess
         ]))
         .await
         .expect("submit user input");
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = request_log.requests();
     assert_eq!(requests.len(), 4, "expected user, user, compact, follow-up");
@@ -5011,7 +5011,7 @@ async fn snapshot_request_shape_pre_turn_compaction_context_window_exceeded() {
 
     let mut model_provider = non_provider_model_provider(&server);
     model_provider.stream_max_retries = Some(0);
-    let codex = test_genex()
+    let genex = test_genex()
         .with_config(move |config| {
             config.update_plan_enabled = true;
             config.model_provider = model_provider;
@@ -5021,30 +5021,30 @@ async fn snapshot_request_shape_pre_turn_compaction_context_window_exceeded() {
         .build(&server)
         .await
         .expect("build codex")
-        .codex;
+        .genex;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "USER_ONE".to_string(),
             text_elements: Vec::new(),
         }]))
         .await
         .expect("submit first user");
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "USER_TWO".to_string(),
             text_elements: Vec::new(),
         }]))
         .await
         .expect("submit second user");
-    let error_message = wait_for_event_match(&codex, |event| match event {
+    let error_message = wait_for_event_match(&genex, |event| match event {
         EventMsg::Error(err) => Some(err.message.clone()),
         _ => None,
     })
     .await;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = request_log.requests();
     assert!(
@@ -5086,7 +5086,7 @@ async fn snapshot_request_shape_manual_compact_without_previous_user_messages() 
     let request_log = mount_sse_sequence(&server, vec![compact_turn, follow_up_turn]).await;
 
     let model_provider = non_provider_model_provider(&server);
-    let codex = test_genex()
+    let genex = test_genex()
         .with_config(move |config| {
             config.update_plan_enabled = true;
             config.model_provider = model_provider;
@@ -5095,19 +5095,19 @@ async fn snapshot_request_shape_manual_compact_without_previous_user_messages() 
         .build(&server)
         .await
         .expect("build codex")
-        .codex;
+        .genex;
 
-    codex.submit(Op::Compact).await.expect("run /compact");
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    genex.submit(Op::Compact).await.expect("run /compact");
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "AFTER_MANUAL_EMPTY_COMPACT".to_string(),
             text_elements: Vec::new(),
         }]))
         .await
         .expect("submit follow-up user input");
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = request_log.requests();
     assert_eq!(
@@ -5398,7 +5398,7 @@ async fn remote_v2_compaction_refreshes_instructions_and_preserves_them_on_cold_
         "remote-v2 cold resume should replay the complete post-compaction structured prefix"
     );
     assert_eq!(
-        resumed.codex.instruction_sources().await,
+        resumed.genex.instruction_sources().await,
         vec![PathUri::from_abs_path(&source)],
         "cold-resumed thread reports the same rewritten source path"
     );

@@ -173,7 +173,7 @@ async fn steered_input_checkpoint_controls_next_request(
         .build_with_auto_env(&config_server)
         .await?;
     let first = test
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "first prompt".to_string(),
             text_elements: Vec::new(),

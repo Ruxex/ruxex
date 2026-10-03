@@ -175,7 +175,7 @@ pub struct BackgroundTerminalInfo {
 }
 
 /// Conduit for the bidirectional stream of messages that compose a thread
-/// (formerly called a conversation) in Codex.
+/// (formerly called a conversation) in Genex.
 impl GenexThread {
     pub(crate) fn new(
         session: Arc<Session>,

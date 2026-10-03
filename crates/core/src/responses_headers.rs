@@ -1,11 +1,11 @@
-//! Header overrides for host-created threads on the Codex Responses endpoint.
+//! Header overrides for host-created threads on the Genex Responses endpoint.
 //! Headers are scoped to a model and rechecked against current auth on each attempt.
 
 use http::HeaderMap;
 
 /// Seed in `StartThreadOptions::thread_extension_init` to supply Responses headers.
 ///
-/// Applied only to the selected model with Codex backend auth and routing. The headers
+/// Applied only to the selected model with Genex-managed backend auth and routing. The headers
 /// are sent on HTTP requests and WebSocket handshakes; changes require a new socket.
 /// Other provider endpoints and unrelated threads do not inherit these headers.
 #[derive(Clone)]

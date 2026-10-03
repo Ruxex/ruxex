@@ -261,7 +261,7 @@ impl ToolOrchestrator {
             .sandbox_cwd(req)
             .cloned()
             .unwrap_or_else(|| environment.cwd().clone());
-        let codex_sandbox_exe = if cfg!(windows) {
+        let genex_sandbox_exe = if cfg!(windows) {
             turn_ctx.config.genex_self_exe.as_ref()
         } else {
             turn_ctx.config.genex_linux_sandbox_exe.as_ref()
@@ -275,7 +275,7 @@ impl ToolOrchestrator {
             manager: &sandbox_manager,
             sandbox_cwd: &sandbox_policy_cwd,
             workspace_roots,
-            sandbox_exe: codex_sandbox_exe,
+            sandbox_exe: genex_sandbox_exe,
             use_legacy_landlock: sandbox_config.use_legacy_landlock,
             windows_sandbox_level: sandbox_config.windows_sandbox_level,
             windows_sandbox_private_desktop: sandbox_config.windows_sandbox_private_desktop,
@@ -295,13 +295,13 @@ impl ToolOrchestrator {
                     deferred_network_approval: first_deferred_network_approval,
                 })
             }
-            Err(ToolError::Codex(err)) => {
+            Err(ToolError::Genex(err)) => {
                 let GenexErrorDetails::Sandbox(SandboxErr::Denied {
                     output,
                     network_policy_decision,
                 }) = err.details()
                 else {
-                    let err = ToolError::Codex(err);
+                    let err = ToolError::Genex(err);
                     if let Some(outcome) = sandbox_outcome_from_tool_error(&err) {
                         otel.sandbox_outcome(
                             &otel_tn,
@@ -328,7 +328,7 @@ impl ToolOrchestrator {
                         initial_duration,
                         /*escalated_duration*/ None,
                     );
-                    return Err(ToolError::Codex(err));
+                    return Err(ToolError::Genex(err));
                 }
                 if !tool.escalate_on_failure() {
                     otel.sandbox_outcome(
@@ -338,7 +338,7 @@ impl ToolOrchestrator {
                         initial_duration,
                         /*escalated_duration*/ None,
                     );
-                    return Err(ToolError::Codex(err));
+                    return Err(ToolError::Genex(err));
                 }
                 // Under `Never` or `OnRequest`, do not retry without sandbox;
                 // surface a concise sandbox denial that preserves the
@@ -362,7 +362,7 @@ impl ToolOrchestrator {
                             initial_duration,
                             /*escalated_duration*/ None,
                         );
-                        return Err(ToolError::Codex(err));
+                        return Err(ToolError::Genex(err));
                     }
                 }
                 if !unsandboxed_allowed && network_approval_context.is_none() {
@@ -373,7 +373,7 @@ impl ToolOrchestrator {
                         initial_duration,
                         /*escalated_duration*/ None,
                     );
-                    return Err(ToolError::Codex(err));
+                    return Err(ToolError::Genex(err));
                 }
                 let retry_reason =
                     if let Some(network_approval_context) = network_approval_context.as_ref() {
@@ -435,7 +435,7 @@ impl ToolOrchestrator {
                 let retry_sandbox_exe = if unsandboxed_allowed {
                     None
                 } else {
-                    codex_sandbox_exe
+                    genex_sandbox_exe
                 };
                 let retry_attempt = SandboxAttempt {
                     sandbox: retry_sandbox,
@@ -507,7 +507,7 @@ impl ToolOrchestrator {
 
 fn sandbox_outcome_from_tool_error(err: &ToolError) -> Option<&'static str> {
     match err {
-        ToolError::Codex(err) => match err.details() {
+        ToolError::Genex(err) => match err.details() {
             GenexErrorDetails::Sandbox(SandboxErr::Denied { .. }) => Some("denied"),
             GenexErrorDetails::Sandbox(SandboxErr::Timeout { .. }) => Some("timed_out"),
             GenexErrorDetails::Sandbox(SandboxErr::Signal(_)) => Some("signal"),

@@ -248,7 +248,7 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
     let initial = initial_builder.build_with_auto_env(&server).await?;
     let root_thread_id = initial.session_configured.thread_id;
     initial
-        .codex
+        .genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: INITIAL_PROMPT.to_string(),
@@ -260,7 +260,7 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
             }),
         )
         .await?;
-    wait_for_event(&initial.codex, |event| {
+    wait_for_event(&initial.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -300,7 +300,7 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
     }));
     assert_eq!(
         worker_thread.config().await.model_provider,
-        initial.codex.config().await.model_provider,
+        initial.genex.config().await.model_provider,
         "roles must inherit the parent's complete model provider",
     );
     let initial_worker_config = worker_thread.config_snapshot().await;
@@ -366,7 +366,7 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
     .await;
     sibling_thread.flush_rollout().await?;
     worker_thread.flush_rollout().await?;
-    initial.codex.flush_rollout().await?;
+    initial.genex.flush_rollout().await?;
     sibling_thread.shutdown_and_wait().await?;
     worker_thread.shutdown_and_wait().await?;
     drop(sibling_thread);
@@ -459,8 +459,8 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
         ]),
     )
     .await;
-    resumed.codex.submit(Op::Compact).await?;
-    wait_for_event(&resumed.codex, |event| {
+    resumed.genex.submit(Op::Compact).await?;
+    wait_for_event(&resumed.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -504,7 +504,7 @@ base_url = "{redirected_base_url}"
         .expect("queued message should lazily reload the original worker");
     assert_eq!(
         reloaded_worker.config().await.model_provider,
-        resumed.codex.config().await.model_provider,
+        resumed.genex.config().await.model_provider,
         "cold reload must preserve the parent's complete model provider",
     );
     resumed.submit_turn(FOLLOWUP_PROMPT).await?;
@@ -530,8 +530,8 @@ base_url = "{redirected_base_url}"
         ]),
     )
     .await;
-    resumed.codex.submit(Op::Compact).await?;
-    wait_for_event(&resumed.codex, |event| {
+    resumed.genex.submit(Op::Compact).await?;
+    wait_for_event(&resumed.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

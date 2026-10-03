@@ -144,7 +144,7 @@ use crate::config::permissions::BUILT_IN_READ_ONLY_PROFILE;
 use crate::config::permissions::BUILT_IN_WORKSPACE_PROFILE;
 use crate::config::permissions::apply_network_proxy_feature_config;
 use crate::config::permissions::default_builtin_permission_profile_name;
-use crate::config::permissions::get_readable_roots_required_for_codex_runtime;
+use crate::config::permissions::get_readable_roots_required_for_genex_runtime;
 use crate::config::permissions::network_proxy_config_for_profile_selection;
 use crate::config::permissions::validate_user_permission_profile_names;
 use crate::responses_metadata::validate_extra_metadata;
@@ -405,7 +405,7 @@ impl Permissions {
     }
 
     /// Workspace roots that came from user-visible configuration or runtime
-    /// selection. Internal Codex-only writable roots are intentionally excluded.
+    /// selection. Internal Genex-only writable roots are intentionally excluded.
     pub fn user_visible_workspace_roots(&self) -> &[AbsolutePathBuf] {
         &self.workspace_roots
     }
@@ -538,7 +538,7 @@ impl Permissions {
 }
 
 // A profile override only inherits the selected profile's proxy/allowlist config
-// when Codex is still responsible for the network policy. `Disabled` means no
+// when Genex is still responsible for the network policy. `Disabled` means no
 // outer sandbox, so starting the managed proxy would narrow the override.
 fn profile_allows_configured_network_proxy(permission_profile: &PermissionProfile) -> bool {
     match permission_profile {
@@ -662,23 +662,23 @@ pub struct Config {
     /// Compact prompt override.
     pub compact_prompt: Option<String>,
 
-    /// Optional external notifier command. When set, Codex will spawn this
+    /// Optional external notifier command. When set, Genex will spawn this
     /// program after each completed *turn* (i.e. when the agent finishes
     /// processing a user submission). The value must be the full command
-    /// broken into argv tokens **without** the trailing JSON argument - Codex
+    /// broken into argv tokens **without** the trailing JSON argument - Genex
     /// appends one extra argument containing a JSON payload describing the
     /// event.
     ///
     /// Example `~/.genex/config.toml` snippet:
     ///
     /// ```toml
-    /// notify = ["notify-send", "Codex"]
+    /// notify = ["notify-send", "Genex"]
     /// ```
     ///
     /// which will be invoked as:
     ///
     /// ```shell
-    /// notify-send Codex '{"type":"agent-turn-complete","turn-id":"12345"}'
+    /// notify-send Genex '{"type":"agent-turn-complete","turn-id":"12345"}'
     /// ```
     ///
     /// If unset the feature is disabled.
@@ -784,7 +784,7 @@ pub struct Config {
     /// auto: Use the OS-specific keyring service if available, otherwise use a file.
     pub cli_auth_credentials_store_mode: AuthCredentialsStoreMode,
 
-    /// Definition for MCP servers that Codex can reach out to for tool calls.
+    /// Definition for MCP servers that Genex can reach out to for tool calls.
     pub mcp_servers: Constrained<HashMap<String, McpServerConfig>>,
 
     /// Trusted IdP shared by all permitted EMA MCP registrations.
@@ -795,16 +795,16 @@ pub struct Config {
 
     /// Preferred store for MCP OAuth credentials.
     /// keyring: Use an OS-specific keyring service.
-    ///          Credentials stored in the keyring will only be readable by Codex unless the user explicitly grants access via OS-level keyring access.
+    ///          Credentials stored in the keyring will only be readable by Genex unless the user explicitly grants access via OS-level keyring access.
     ///          https://github.com/codex/codex/blob/main/codex-rs/rmcp-client/src/oauth.rs#L2
     /// file: GENEX_HOME/.credentials.json
-    ///       This file will be readable to Codex and other applications running as the same user.
+    ///       This file will be readable to Genex and other applications running as the same user.
     /// auto (default): keyring if available, otherwise file.
     pub mcp_oauth_credentials_store_mode: OAuthCredentialsStoreMode,
 
     /// Optional fixed port to use for the local HTTP callback server used during MCP OAuth login.
     ///
-    /// When unset, Codex will bind to an ephemeral port chosen by the OS.
+    /// When unset, Genex will bind to an ephemeral port chosen by the OS.
     pub mcp_oauth_callback_port: Option<u16>,
 
     /// Optional redirect URI to use during MCP OAuth login.
@@ -853,14 +853,14 @@ pub struct Config {
     /// Maximum token budget allowed for a goal and default budget for new goals.
     pub max_goal_token_budget: Option<i64>,
 
-    /// Directory containing all Codex state (defaults to `~/.genex` but can be
+    /// Directory containing all Genex state (defaults to `~/.genex` but can be
     /// overridden by the `GENEX_HOME` environment variable).
     pub genex_home: AbsolutePathBuf,
 
-    /// Resolved configuration shared by all Codex SQLite databases.
+    /// Resolved configuration shared by all Genex SQLite databases.
     pub sqlite: genex_state::SqliteConfig,
 
-    /// Directory where Codex writes log files (defaults to `$GENEX_HOME/log`).
+    /// Directory where Genex writes log files (defaults to `$GENEX_HOME/log`).
     pub log_dir: PathBuf,
 
     /// Settings that govern if and what will be written to `~/.genex/history.jsonl`.
@@ -881,7 +881,7 @@ pub struct Config {
     /// output will be hyperlinked using the specified URI scheme.
     pub file_opener: UriBasedFileOpener,
 
-    /// Path to the current Codex executable. This cannot be set in the config
+    /// Path to the current Genex executable. This cannot be set in the config
     /// file: it must be set in code via [`ConfigOverrides`].
     pub genex_self_exe: Option<PathBuf>,
 
@@ -928,7 +928,7 @@ pub struct Config {
     /// An empty value means that managed authentication is not configured.
     pub managed_auth_base_url: String,
 
-    /// Whether Codex-owned clients should respect host system proxy settings.
+    /// Whether Genex-owned clients should respect host system proxy settings.
     pub respect_system_proxy: bool,
 
     /// Bounded, product-owned metadata attached to every Responses API request.
@@ -994,8 +994,8 @@ pub struct Config {
     /// Collection of various notices we show the user
     pub notices: Notice,
 
-    /// When `true`, checks for Codex updates on startup and surfaces update prompts.
-    /// Set to `false` only if your Codex updates are centrally managed.
+    /// When `true`, checks for Genex updates on startup and surfaces update prompts.
+    /// Set to `false` only if your Genex updates are centrally managed.
     /// Defaults to `true`.
     pub check_for_update_on_startup: bool,
 
@@ -1004,7 +1004,7 @@ pub struct Config {
     /// or placeholder replacement will occur for fast keypress bursts.
     pub disable_paste_burst: bool,
 
-    /// When `false`, disables metrics across Codex product surfaces in this machine.
+    /// When `false`, disables metrics across Genex product surfaces in this machine.
     /// Voluntarily left as Optional because the default value might depend on the client.
     pub metrics_enabled: Option<bool>,
 
@@ -3720,7 +3720,7 @@ impl Config {
         {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
-                "`approval_policy = \"never\"` cannot be used because requirements do not allow `sandbox_mode = \"danger-full-access\"`; Codex would fall back to read-only permissions with approvals disabled. Choose an `approval_policy` based on what you need, such as `on-request`, or choose an allowed sandbox mode.",
+                "`approval_policy = \"never\"` cannot be used because requirements do not allow `sandbox_mode = \"danger-full-access\"`; Genex would fall back to read-only permissions with approvals disabled. Choose an `approval_policy` based on what you need, such as `on-request`, or choose an allowed sandbox mode.",
             ));
         }
         if permission_profile_was_constrained {
@@ -3746,7 +3746,7 @@ impl Config {
             &network_permission_profile,
             &shell_environment_policy.r#set,
         )?;
-        let helper_readable_roots = get_readable_roots_required_for_codex_runtime(
+        let helper_readable_roots = get_readable_roots_required_for_genex_runtime(
             &genex_home,
             zsh_path.as_ref(),
             main_execve_wrapper_exe.as_ref(),
@@ -4427,7 +4427,7 @@ fn is_permission_allowed(
         .unwrap_or(false)
 }
 
-/// Returns the path to the Codex configuration directory, which can be
+/// Returns the path to the Genex configuration directory, which can be
 /// specified by the `GENEX_HOME` environment variable. If not set, defaults to
 /// `~/.genex`.
 ///
@@ -4439,7 +4439,7 @@ pub fn find_genex_home() -> std::io::Result<AbsolutePathBuf> {
     genex_utils_home_dir::find_genex_home()
 }
 
-/// Returns the path to the folder where Codex logs are stored. Does not verify
+/// Returns the path to the folder where Genex logs are stored. Does not verify
 /// that the directory exists.
 pub fn log_dir(cfg: &Config) -> std::io::Result<PathBuf> {
     Ok(cfg.log_dir.clone())

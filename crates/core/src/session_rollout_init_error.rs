@@ -38,7 +38,7 @@ fn map_rollout_io_error(io_err: &std::io::Error, genex_home: &Path) -> Option<Ge
     let sessions_dir = genex_home.join(SESSIONS_SUBDIR);
     let hint = match io_err.kind() {
         ErrorKind::PermissionDenied => format!(
-            "Codex cannot access session files at {} (permission denied). If sessions were created using sudo, fix ownership: sudo chown -R $(whoami) {}",
+            "Genex cannot access session files at {} (permission denied). If sessions were created using sudo, fix ownership: sudo chown -R $(whoami) {}",
             sessions_dir.display(),
             genex_home.display()
         ),
@@ -47,7 +47,7 @@ fn map_rollout_io_error(io_err: &std::io::Error, genex_home: &Path) -> Option<Ge
             sessions_dir.display()
         ),
         ErrorKind::AlreadyExists => format!(
-            "Session storage path {} is blocked by an existing file. Remove or rename it so Codex can create sessions.",
+            "Session storage path {} is blocked by an existing file. Remove or rename it so Genex can create sessions.",
             sessions_dir.display()
         ),
         ErrorKind::InvalidData => format!(
@@ -55,7 +55,7 @@ fn map_rollout_io_error(io_err: &std::io::Error, genex_home: &Path) -> Option<Ge
             sessions_dir.display()
         ),
         ErrorKind::IsADirectory | ErrorKind::NotADirectory => format!(
-            "Session storage path {} has an unexpected type. Ensure it is a directory Codex can use for session files.",
+            "Session storage path {} has an unexpected type. Ensure it is a directory Genex can use for session files.",
             sessions_dir.display()
         ),
         _ => return None,

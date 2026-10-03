@@ -28,22 +28,22 @@ async fn resume_restores_windows_sandbox_override() -> Result<()> {
     let mut builder = test_genex();
     let initial = builder.build(&server).await?;
     core_test_support::submit_thread_settings(
-        &initial.codex,
+        &initial.genex,
         ThreadSettingsOverrides {
             windows_sandbox_level: Some(WindowsSandboxLevel::Elevated),
             ..Default::default()
         },
     )
     .await?;
-    initial.codex.ensure_rollout_materialized().await;
-    let settings = initial.codex.restorable_thread_settings().await;
+    initial.genex.ensure_rollout_materialized().await;
+    let settings = initial.genex.restorable_thread_settings().await;
 
     let resumed = builder.restart(&server, &initial).await?;
-    resumed.codex.restore_thread_settings(settings).await?;
+    resumed.genex.restore_thread_settings(settings).await?;
 
     assert_eq!(
         resumed
-            .codex
+            .genex
             .restorable_thread_settings()
             .await
             .windows_sandbox_level,
@@ -59,7 +59,7 @@ async fn resume_includes_initial_messages_from_rollout_events() -> Result<()> {
     let server = start_mock_server().await;
     let mut builder = test_genex();
     let initial = builder.build(&server).await?;
-    let codex = Arc::clone(&initial.codex);
+    let genex = Arc::clone(&initial.genex);
 
     let initial_sse = sse(vec![
         ev_response_created("resp-initial"),
@@ -73,14 +73,14 @@ async fn resume_includes_initial_messages_from_rollout_events() -> Result<()> {
         Some("<note>".into()),
     )];
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Record some messages".into(),
             text_elements: text_elements.clone(),
         }]))
         .await?;
 
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     let resumed = builder.restart(&server, &initial).await?;
     let initial_messages = resumed
         .session_configured
@@ -118,7 +118,7 @@ async fn resume_includes_initial_messages_from_reasoning_events() -> Result<()> 
         config.show_raw_agent_reasoning = true;
     });
     let initial = builder.build(&server).await?;
-    let codex = Arc::clone(&initial.codex);
+    let genex = Arc::clone(&initial.genex);
 
     let initial_sse = sse(vec![
         ev_response_created("resp-initial"),
@@ -128,14 +128,14 @@ async fn resume_includes_initial_messages_from_reasoning_events() -> Result<()> 
     ]);
     mount_sse_once(&server, initial_sse).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Record reasoning messages".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     let resumed = builder.restart(&server, &initial).await?;
     let initial_messages = resumed
         .session_configured
@@ -176,7 +176,7 @@ async fn resume_switches_models_preserves_base_instructions() -> Result<()> {
         config.model = Some("gpt-5.2".to_string());
     });
     let initial = builder.build(&server).await?;
-    let codex = Arc::clone(&initial.codex);
+    let genex = Arc::clone(&initial.genex);
 
     let initial_sse = sse(vec![
         ev_response_created("resp-initial"),
@@ -185,13 +185,13 @@ async fn resume_switches_models_preserves_base_instructions() -> Result<()> {
     ]);
     let initial_mock = mount_sse_once(&server, initial_sse).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Record initial instructions".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     let initial_body = initial_mock.single_request().body_json();
     let initial_instructions = initial_body
         .get("instructions")
@@ -221,25 +221,25 @@ async fn resume_switches_models_preserves_base_instructions() -> Result<()> {
     });
     let resumed = resume_builder.restart(&server, &initial).await?;
     resumed
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Resume with different model".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&resumed.codex, |event| {
+    wait_for_event(&resumed.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
     resumed
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Second turn after resume".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&resumed.codex, |event| {
+    wait_for_event(&resumed.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -283,7 +283,7 @@ async fn resume_model_switch_is_not_duplicated_after_pre_turn_override() -> Resu
         config.model = Some("gpt-5.2".to_string());
     });
     let initial = builder.build(&server).await?;
-    let codex = Arc::clone(&initial.codex);
+    let genex = Arc::clone(&initial.genex);
 
     let initial_mock = mount_sse_once(
         &server,
@@ -294,13 +294,13 @@ async fn resume_model_switch_is_not_duplicated_after_pre_turn_override() -> Resu
         ]),
     )
     .await;
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Record initial instructions".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     let _ = initial_mock.single_request();
 
     let resumed_mock = mount_sse_once(
@@ -318,7 +318,7 @@ async fn resume_model_switch_is_not_duplicated_after_pre_turn_override() -> Resu
     });
     let resumed = resume_builder.restart(&server, &initial).await?;
     core_test_support::submit_thread_settings(
-        &resumed.codex,
+        &resumed.genex,
         ThreadSettingsOverrides {
             model: Some("gpt-5.4".to_string()),
             ..Default::default()
@@ -326,13 +326,13 @@ async fn resume_model_switch_is_not_duplicated_after_pre_turn_override() -> Resu
     )
     .await?;
     resumed
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "first turn after override".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&resumed.codex, |event| {
+    wait_for_event(&resumed.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

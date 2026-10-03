@@ -46,7 +46,7 @@ async fn remote_compact_v2_token_estimate_ignores_message_bookkeeping_and_json_e
             }),
         ),
     ] {
-        let codex = harness
+        let genex = harness
             .test()
             .thread_manager
             .start_thread(StartThreadOptions {
@@ -64,14 +64,14 @@ async fn remote_compact_v2_token_estimate_ignores_message_bookkeeping_and_json_e
             "content": [{"type": "input_text", "text": text}],
             "internal_chat_message_metadata_passthrough": metadata,
         });
-        codex
+        genex
             .inject_response_items(vec![serde_json::from_value(message.clone())?])
             .await?;
         let mock = mount_sse_once(harness.server(), compact_response()).await;
-        codex.submit(Op::Compact).await?;
-        wait_for_turn_complete(&codex).await;
+        genex.submit(Op::Compact).await?;
+        wait_for_turn_complete(&genex).await;
 
-        estimates.push(codex.token_usage_info().await.context("token usage")?);
+        estimates.push(genex.token_usage_info().await.context("token usage")?);
         assert_eq!(
             mock.single_request()
                 .input()
@@ -79,7 +79,7 @@ async fn remote_compact_v2_token_estimate_ignores_message_bookkeeping_and_json_e
                 .find(|item| item["id"] == id),
             Some(message),
         );
-        codex.shutdown_and_wait().await?;
+        genex.shutdown_and_wait().await?;
     }
 
     assert_eq!(estimates[0], estimates[1]);
@@ -109,7 +109,7 @@ async fn remote_compact_v2_trims_tool_search_output_to_empty_tools_array() -> Re
                 }),
         )
         .await?;
-        let codex = &harness.test().genex;
+        let genex = &harness.test().genex;
         let history = [
             json!({"type": "message", "role": "user", "content": [{"type": "input_text", "text": "find the tool"}]}),
             json!({"type": "tool_search_call", "call_id": call_id, "execution": "client", "arguments": {"query": "oversized deferred tool"}}),
@@ -118,10 +118,10 @@ async fn remote_compact_v2_trims_tool_search_output_to_empty_tools_array() -> Re
         .into_iter()
         .map(serde_json::from_value)
         .collect::<serde_json::Result<Vec<ResponseItem>>>()?;
-        codex.inject_response_items(history).await?;
+        genex.inject_response_items(history).await?;
         let mock = mount_sse_once(harness.server(), compact_response()).await;
-        codex.submit(Op::Compact).await?;
-        wait_for_turn_complete(codex).await;
+        genex.submit(Op::Compact).await?;
+        wait_for_turn_complete(genex).await;
 
         let request = mock.single_request();
         assert_eq!(request.path(), "/v1/responses");
@@ -167,7 +167,7 @@ async fn remote_compact_v2_trim_estimate_uses_session_base_instructions() -> Res
                 }),
         )
         .await?;
-        let codex = &harness.test().genex;
+        let genex = &harness.test().genex;
         let history = [
             json!({"type": "message", "role": "user", "content": [{"type": "input_text", "text": "older user"}]}),
             json!({"type": "function_call", "call_id": "retained", "name": "exec_command", "arguments": "{}"}),
@@ -179,10 +179,10 @@ async fn remote_compact_v2_trim_estimate_uses_session_base_instructions() -> Res
         .into_iter()
         .map(serde_json::from_value)
         .collect::<serde_json::Result<Vec<ResponseItem>>>()?;
-        codex.inject_response_items(history).await?;
+        genex.inject_response_items(history).await?;
         let mock = mount_sse_once(harness.server(), compact_response()).await;
-        codex.submit(Op::Compact).await?;
-        wait_for_turn_complete(codex).await;
+        genex.submit(Op::Compact).await?;
+        wait_for_turn_complete(genex).await;
 
         let request = mock.single_request();
         assert_eq!(request.path(), "/v1/responses");

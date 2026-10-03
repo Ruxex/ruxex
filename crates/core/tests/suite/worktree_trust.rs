@@ -138,7 +138,7 @@ async fn forged_worktree_project_config_cannot_start_host_mcp() -> Result<()> {
             })
             .build_with_auto_env(&server)
             .await?;
-        let startup = wait_for_event(&fixture.codex, |event| {
+        let startup = wait_for_event(&fixture.genex, |event| {
             matches!(event, EventMsg::McpStartupComplete(_))
         })
         .await;

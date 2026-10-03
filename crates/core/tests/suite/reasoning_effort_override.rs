@@ -87,7 +87,7 @@ async fn reasoning_effort_override_recovery_reuses_trusted_tail_update() -> anyh
     };
     let test = builder().build_with_auto_env(&server).await?;
     let submission = test
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "recover this turn".to_string(),
             text_elements: Vec::new(),
@@ -129,12 +129,12 @@ async fn reasoning_effort_override_recovery_reuses_trusted_tail_update() -> anyh
         .resume(&recovery_server, Arc::clone(&test.home), rollout_path)
         .await?;
     resumed
-        .codex
+        .genex
         .restore_thread_settings(thread_settings)
         .await?;
     assert_eq!(
         resumed
-            .codex
+            .genex
             .recover_turn_if_idle(RecoverTurnRequest {
                 turn_id: turn_id.clone(),
                 thread_settings: Default::default(),
@@ -144,7 +144,7 @@ async fn reasoning_effort_override_recovery_reuses_trusted_tail_update() -> anyh
             .await?,
         StartIfIdleSubmission::Started { turn_id },
     );
-    wait_for_event(&resumed.codex, |event| {
+    wait_for_event(&resumed.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -694,8 +694,8 @@ async fn reasoning_effort_override_disabled_on_resume_retires_update_at_compacti
         .restart(&server, &initial)
         .await?;
     resumed.submit_text_turn("after resume").await?;
-    resumed.codex.submit(Op::Compact).await?;
-    wait_for_event(&resumed.codex, |event| {
+    resumed.genex.submit(Op::Compact).await?;
+    wait_for_event(&resumed.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

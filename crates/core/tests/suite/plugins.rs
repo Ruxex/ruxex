@@ -190,7 +190,7 @@ fn write_agent_plugin_skill_plugin(home: &TempDir) -> std::path::PathBuf {
     std::fs::create_dir_all(&nested_skill).expect("create nested skill");
     std::fs::write(
         plugin_root.join("plugin.json"),
-        r#"{"$schema":"https://agent-plugins.org/schemas/1.0.0/plugin.schema.json","name":"acme.tools","extensions":{"com.codex":{"interface":{"displayName":"Acme Developer Tools"}}}}"#,
+        r#"{"$schema":"https://agent-plugins.org/schemas/1.0.0/plugin.schema.json","name":"acme.tools","extensions":{"com.genex":{"interface":{"displayName":"Acme Developer Tools"}}}}"#,
     )
     .expect("write Agent Plugin manifest");
     std::fs::write(
@@ -424,12 +424,12 @@ async fn persisted_remote_plugin_command_attribution_flows_through_turn_context(
         .with_model("gpt-5.2")
         .with_config(move |config| config.managed_auth_base_url = managed_auth_base_url);
     let test_genex = builder.build_with_auto_env(&server).await?;
-    let codex = Arc::clone(&test_genex.codex);
+    let genex = Arc::clone(&test_genex.genex);
     let cwd = test_genex.config.cwd.clone();
     let session_model = test_genex.session_configured.model.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::read_only(), cwd.as_path());
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![genex_protocol::user_input::UserInput::Text {
                 text: "run the remote plugin script".into(),
@@ -453,12 +453,12 @@ async fn persisted_remote_plugin_command_attribution_flows_through_turn_context(
         )
         .await?;
 
-    let begin = wait_for_event_match(&codex, |event| match event {
+    let begin = wait_for_event_match(&genex, |event| match event {
         EventMsg::ExecCommandBegin(event) if event.call_id == call_id => Some(event.clone()),
         _ => None,
     })
     .await;
-    let end = wait_for_event_match(&codex, |event| match event {
+    let end = wait_for_event_match(&genex, |event| match event {
         EventMsg::ExecCommandEnd(event) if event.call_id == call_id => Some(event.clone()),
         _ => None,
     })
@@ -468,7 +468,7 @@ async fn persisted_remote_plugin_command_attribution_flows_through_turn_context(
         "sandboxed plugin command failed: {}",
         end.aggregated_output
     );
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     for (plugin_id, script_path) in [
         (begin.plugin_id.as_deref(), begin.script_path.as_deref()),
@@ -622,7 +622,7 @@ async fn thread_disabled_plugins_filter_skills_and_tools_without_changing_shared
         // Direct Apps RPC calls keep their existing behavior outside model tool filtering.
         for (server_name, tool, arguments) in &tool_calls {
             let result = test
-                .codex
+                .genex
                 .call_mcp_tool(server_name, tool, arguments.clone(), /*meta*/ None)
                 .await;
             assert_eq!(
@@ -660,13 +660,13 @@ async fn agent_plugin_skills_use_shared_catalog_and_direct_child_discovery() -> 
     let test_genex = builder.build_with_auto_env(&server).await?;
 
     test_genex
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Skill {
             name: "acme.tools:review".into(),
             path: skill_path,
         }]))
         .await?;
-    let warning = wait_for_event(&test_genex.codex, |ev| {
+    let warning = wait_for_event(&test_genex.genex, |ev| {
         matches!(
             ev,
             EventMsg::Warning(warning)
@@ -674,7 +674,7 @@ async fn agent_plugin_skills_use_shared_catalog_and_direct_child_discovery() -> 
         )
     })
     .await;
-    wait_for_event(&test_genex.codex, |ev| {
+    wait_for_event(&test_genex.genex, |ev| {
         matches!(ev, EventMsg::TurnComplete(_))
     })
     .await;
@@ -818,13 +818,13 @@ async fn legacy_plugin_skill_prompt_remains_complete() -> Result<()> {
     let test_genex = builder.build_with_auto_env(&server).await?;
 
     test_genex
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Skill {
             name: "sample:sample-search".into(),
             path: skill_path,
         }]))
         .await?;
-    wait_for_event(&test_genex.codex, |ev| {
+    wait_for_event(&test_genex.genex, |ev| {
         matches!(ev, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1027,7 +1027,7 @@ async fn agent_plugin_root_mcp_stdio_tool_round_trip_expands_reserved_paths_and_
     )?;
     let mut builder = test_genex().with_home(Arc::clone(&genex_home));
     let test_genex = builder.build_with_remote_and_local_env(&server).await?;
-    wait_for_mcp_server(&test_genex.codex, "agent").await?;
+    wait_for_mcp_server(&test_genex.genex, "agent").await?;
     let data_root = dunce::canonicalize(
         std::fs::read_dir(genex_home.path().join("plugins/data/agent-plugins"))?
             .next()
@@ -1041,21 +1041,21 @@ async fn agent_plugin_root_mcp_stdio_tool_round_trip_expands_reserved_paths_and_
     );
 
     test_genex
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "call the Agent Plugin echo tool".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    let end = wait_for_event(&test_genex.codex, |event| {
+    let end = wait_for_event(&test_genex.genex, |event| {
         matches!(event, EventMsg::McpToolCallEnd(_))
     })
     .await;
-    let overlay_end = wait_for_event(&test_genex.codex, |event| {
+    let overlay_end = wait_for_event(&test_genex.genex, |event| {
         matches!(event, EventMsg::McpToolCallEnd(_))
     })
     .await;
-    wait_for_event(&test_genex.codex, |event| {
+    wait_for_event(&test_genex.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1366,10 +1366,10 @@ async fn explicit_plugin_mentions_use_apps_for_managed_dual_surface_plugins(
     let test_genex =
         build_apps_enabled_plugin_test_genex(&server, genex_home, apps_server.managed_auth_base_url)
             .await?;
-    let codex = Arc::clone(&test_genex.codex);
-    wait_for_mcp_server(&codex, CODEX_APPS_MCP_SERVER_NAME).await?;
+    let genex = Arc::clone(&test_genex.genex);
+    wait_for_mcp_server(&genex, CODEX_APPS_MCP_SERVER_NAME).await?;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
             genex_protocol::user_input::UserInput::Mention {
                 name: "sample".into(),
@@ -1377,7 +1377,7 @@ async fn explicit_plugin_mentions_use_apps_for_managed_dual_surface_plugins(
             },
         ]))
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = mock.requests();
     let request = &requests[0];
@@ -1453,10 +1453,10 @@ async fn explicit_plugin_mentions_keep_non_conflicting_mcp_for_managed_auth() ->
     let test_genex =
         build_apps_enabled_plugin_test_genex(&server, genex_home, apps_server.managed_auth_base_url)
             .await?;
-    let codex = Arc::clone(&test_genex.codex);
-    wait_for_mcp_server(&codex, "sample").await?;
+    let genex = Arc::clone(&test_genex.genex);
+    wait_for_mcp_server(&genex, "sample").await?;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
             genex_protocol::user_input::UserInput::Mention {
                 name: "sample".into(),
@@ -1464,7 +1464,7 @@ async fn explicit_plugin_mentions_keep_non_conflicting_mcp_for_managed_auth() ->
             },
         ]))
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = mock.requests();
     let request = &requests[0];
@@ -1648,7 +1648,7 @@ async fn explicitly_requested_mcp_waits_for_startup(request: ExplicitMcpRequest)
                 .expect("test config should allow feature update");
         });
     let test_genex = builder.build_with_remote_and_local_env(&server).await?;
-    let codex = Arc::clone(&test_genex.codex);
+    let genex = Arc::clone(&test_genex.genex);
 
     let input = match request {
         ExplicitMcpRequest::Plugin => UserInput::Mention {
@@ -1668,7 +1668,7 @@ async fn explicitly_requested_mcp_waits_for_startup(request: ExplicitMcpRequest)
             text_elements: Vec::new(),
         },
     };
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![input]))
         .await?;
     tokio::time::sleep(Duration::from_millis(1200)).await;
@@ -1677,7 +1677,7 @@ async fn explicitly_requested_mcp_waits_for_startup(request: ExplicitMcpRequest)
         "an explicitly requested MCP should finish starting before inference"
     );
     std::fs::write(initialize_barrier, "ready")?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = mock.requests();
     let model_request = &requests[0];
@@ -1741,9 +1741,9 @@ async fn explicit_plugin_mentions_track_plugin_used_analytics() -> Result<()> {
     let genex_home = Arc::new(TempDir::new()?);
     write_plugin_skill_plugin(genex_home.as_ref());
     let test_genex = build_analytics_plugin_test_genex(&server, genex_home).await?;
-    let codex = Arc::clone(&test_genex.codex);
+    let genex = Arc::clone(&test_genex.genex);
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
             genex_protocol::user_input::UserInput::Mention {
                 name: "sample".into(),
@@ -1751,7 +1751,7 @@ async fn explicit_plugin_mentions_track_plugin_used_analytics() -> Result<()> {
             },
         ]))
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let event = wait_for_analytics_event(&server, "codex_plugin_used").await;
     assert_eq!(event["event_params"]["plugin_id"], "sample@test");
@@ -1792,15 +1792,15 @@ async fn explicit_plugin_skill_invocation_tracks_remote_plugin_id() -> Result<()
     let skill_path = dunce::canonicalize(write_remote_plugin_skill_plugin(genex_home.as_ref()))?;
     persist_sample_remote_plugin_id(genex_home.as_ref());
     let test_genex = build_analytics_plugin_test_genex(&server, genex_home).await?;
-    let codex = Arc::clone(&test_genex.codex);
+    let genex = Arc::clone(&test_genex.genex);
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Skill {
             name: "sample:sample-search".into(),
             path: skill_path,
         }]))
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let event = wait_for_analytics_event(&server, "skill_invocation").await;
     assert_eq!(
@@ -1871,15 +1871,15 @@ async fn implicit_plugin_skill_invocation_tracks_remote_plugin_id(
     )
     .await;
     let test_genex = build_analytics_plugin_test_genex(&server, genex_home).await?;
-    let codex = Arc::clone(&test_genex.codex);
+    let genex = Arc::clone(&test_genex.genex);
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "inspect the sample skill".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let event = wait_for_analytics_event(&server, "skill_invocation").await;
     assert_eq!(

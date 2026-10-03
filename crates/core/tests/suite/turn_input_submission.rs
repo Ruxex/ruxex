@@ -365,10 +365,10 @@ fn user_message_request(text: &str) -> TurnInputRequest {
 }
 
 async fn submit_user_message(
-    codex: &genex_core::GenexThread,
+    genex: &genex_core::GenexThread,
     text: &str,
 ) -> genex_protocol::error::Result<TurnInputSubmission> {
-    codex.start_or_steer_turn(user_message_request(text)).await
+    genex.start_or_steer_turn(user_message_request(text)).await
 }
 
 #[test_case(ModeKind::Default, ModeKind::Plan; "automatic input cannot enter Plan")]
@@ -401,7 +401,7 @@ async fn start_turn_if_idle_keeps_automatic_plan_rejections_atomic(
         ..Default::default()
     };
     let submission = test
-        .codex
+        .genex
         .start_turn_if_idle(
             TurnInputRequest::new(TurnInput::ResponseItem(responses::user_message_item(
                 "rejected automatic input",
@@ -429,7 +429,7 @@ async fn start_turn_if_idle_keeps_automatic_plan_rejections_atomic(
     )
     .await;
     let started = test
-        .codex
+        .genex
         .start_turn_if_idle(
             user_message_request("explicit user input").with_thread_settings(overrides),
         )
@@ -461,7 +461,7 @@ async fn recover_turn_if_idle_preserves_id_and_resumes_plan_mode() {
     let turn_id = "durable-recovered-turn";
 
     let submission = test
-        .codex
+        .genex
         .recover_turn_if_idle(RecoverTurnRequest {
             turn_id: turn_id.to_string(),
             thread_settings: ThreadSettingsOverrides {
@@ -532,7 +532,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     let TurnInputSubmission::Started {
         turn_id: previous_turn_id,
     } = test
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Do the work".to_string(),
             text_elements: Vec::new(),
@@ -553,7 +553,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     ));
     let schema = serde_json::json!({"type":"object","properties":{},"additionalProperties":false});
     let submission = test
-        .codex
+        .genex
         .continue_turn_if_idle(
             TurnInputRequest::new(TurnInput::ResponseItem(input.clone())).on_start(
                 TurnStartOptions {
@@ -658,23 +658,23 @@ async fn turn_input_submission_reports_started_and_steered_for_concurrent_submis
         .build_with_streaming_server(&server)
         .await
         .expect("build turn-input submission session");
-    let codex = Arc::clone(&test.genex);
+    let genex = Arc::clone(&test.genex);
     let barrier = Arc::new(Barrier::new(3));
 
     let first_submission = tokio::spawn({
-        let codex = Arc::clone(&codex);
+        let genex = Arc::clone(&genex);
         let barrier = Arc::clone(&barrier);
         async move {
             barrier.wait().await;
-            submit_user_message(codex.as_ref(), "first message").await
+            submit_user_message(genex.as_ref(), "first message").await
         }
     });
     let second_submission = tokio::spawn({
-        let codex = Arc::clone(&codex);
+        let genex = Arc::clone(&genex);
         let barrier = Arc::clone(&barrier);
         async move {
             barrier.wait().await;
-            submit_user_message(codex.as_ref(), "second message").await
+            submit_user_message(genex.as_ref(), "second message").await
         }
     });
     barrier.wait().await;
@@ -717,7 +717,7 @@ async fn turn_input_submission_reports_started_and_steered_for_concurrent_submis
         };
     assert_eq!(started_turn_id, steered_turn_id);
 
-    wait_for_event(codex.as_ref(), |event| {
+    wait_for_event(genex.as_ref(), |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -763,9 +763,9 @@ async fn turn_input_submission_applies_thread_settings_only_after_accepted_input
         .build_with_streaming_server(&server)
         .await
         .expect("build approval-constrained turn-input submission session");
-    let codex = &test.genex;
+    let genex = &test.genex;
 
-    let started = submit_user_message(codex, "start turn")
+    let started = submit_user_message(genex, "start turn")
         .await
         .expect("first message should start a turn");
     let TurnInputSubmission::Started { turn_id } = started else {
@@ -781,7 +781,7 @@ async fn turn_input_submission_applies_thread_settings_only_after_accepted_input
     let steered_cwd = test.config.cwd.join("steered-environment");
     let steered_environments =
         TurnEnvironmentSelections::new(steered_cwd.clone(), vec![local(steered_cwd)]);
-    let steered = codex
+    let steered = genex
         .start_or_steer_turn(
             user_message_request("steer active turn").with_thread_settings(
                 ThreadSettingsOverrides {
@@ -795,21 +795,21 @@ async fn turn_input_submission_applies_thread_settings_only_after_accepted_input
         .expect("persistent settings should not reject a steer");
     assert_eq!(steered, TurnInputSubmission::Steered { turn_id });
     assert_eq!(
-        codex.config_snapshot().await.approval_policy,
+        genex.config_snapshot().await.approval_policy,
         AskForApproval::Never
     );
     assert_eq!(
-        codex.environment_selections().await,
+        genex.environment_selections().await,
         steered_environments.environments
     );
 
     release_response
         .send(())
         .expect("response gate should remain open");
-    wait_for_event(codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let rejected_cwd = test.config.cwd.join("rejected-environment");
-    let rejected = codex
+    let rejected = genex
         .steer_turn(
             user_message_request("no active turn").with_thread_settings(ThreadSettingsOverrides {
                 approval_policy: Some(AskForApproval::OnRequest),
@@ -830,11 +830,11 @@ async fn turn_input_submission_applies_thread_settings_only_after_accepted_input
         }
     );
     assert_eq!(
-        codex.config_snapshot().await.approval_policy,
+        genex.config_snapshot().await.approval_policy,
         AskForApproval::Never
     );
     assert_eq!(
-        codex.environment_selections().await,
+        genex.environment_selections().await,
         steered_environments.environments
     );
     server.shutdown().await;
@@ -867,7 +867,7 @@ async fn start_or_steer_turn_requires_matching_active_output_schema() {
         .build_with_streaming_server(&server)
         .await
         .expect("build turn-input submission session");
-    let codex = &test.genex;
+    let genex = &test.genex;
     let active_schema: Value = serde_json::from_str(
         r#"{"type":"object","properties":{"answer":{"type":"string"},"count":{"type":"number"}},"required":["answer","count"]}"#,
     )
@@ -881,7 +881,7 @@ async fn start_or_steer_turn_requires_matching_active_output_schema() {
     )
     .expect("parse different schema");
 
-    let started = codex
+    let started = genex
         .start_or_steer_turn(
             user_message_request("start turn").on_start(TurnStartOptions {
                 final_output_json_schema: Some(active_schema),
@@ -900,7 +900,7 @@ async fn start_or_steer_turn_requires_matching_active_output_schema() {
     .await
     .expect("started turn should reach its first model request");
 
-    let rejected = codex
+    let rejected = genex
         .start_or_steer_turn(
             user_message_request("rejected steer")
                 .with_thread_settings(ThreadSettingsOverrides {
@@ -921,11 +921,11 @@ async fn start_or_steer_turn_requires_matching_active_output_schema() {
         }
     );
     assert_eq!(
-        codex.config_snapshot().await.approval_policy,
+        genex.config_snapshot().await.approval_policy,
         AskForApproval::OnRequest
     );
 
-    let steered = codex
+    let steered = genex
         .start_or_steer_turn(
             user_message_request("accepted steer").on_start(TurnStartOptions {
                 final_output_json_schema: Some(matching_schema_with_different_object_order),
@@ -939,7 +939,7 @@ async fn start_or_steer_turn_requires_matching_active_output_schema() {
     release_response
         .send(())
         .expect("response gate should remain open");
-    wait_for_event(codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let requests = server.requests().await;
     assert_eq!(requests.len(), 2);
@@ -976,7 +976,7 @@ async fn sampling_is_ready_for_daemon_recovery(
     }
     let test = builder.build_with_streaming_server(&server).await?;
     let StartIfIdleSubmission::Started { turn_id } = test
-        .codex
+        .genex
         .start_turn_if_idle(TurnInputRequest::user_input(input))
         .await?
     else {

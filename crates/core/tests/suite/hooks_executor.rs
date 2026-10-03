@@ -94,7 +94,7 @@ async fn thread_plugin_selection_disables_executor_hooks_without_disabling_their
     }
     fixture
         .test
-        .codex
+        .genex
         .call_mcp_tool(
             "node_repl",
             "js",
@@ -181,7 +181,7 @@ async fn executor_interrupt_hook_runs_after_attachment() -> Result<()> {
     fixture.attach().await?;
     fixture
         .test
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "interrupt this turn".to_string(),
             text_elements: Vec::new(),
@@ -240,7 +240,7 @@ async fn executor_interrupt_hook_skips_turn_without_step_context() -> Result<()>
     // Standalone shell turns have no model step, despite the previous turn's discovery.
     fixture
         .test
-        .codex
+        .genex
         .submit(Op::RunUserShellCommand {
             command: "sleep 60".to_string(),
             timeout_ms: None,
@@ -271,7 +271,7 @@ async fn executor_stop_hook_stops_after_disconnection() -> Result<()> {
 
     fixture
         .test
-        .codex
+        .genex
         .environment_failed(&selection, "executor disconnected".to_string())
         .await?;
     fixture
@@ -348,7 +348,7 @@ async fn executor_stop_hook_rejects_mismatched_environment() -> Result<()> {
         .await?;
     let attached_selection = fixture
         .test
-        .codex
+        .genex
         .environment_selections()
         .await
         .into_iter()
@@ -388,14 +388,14 @@ async fn executor_stop_hook_rejects_mismatched_environment() -> Result<()> {
     )?;
     fixture
         .test
-        .codex
+        .genex
         .refresh_mcp_config(mismatched_config)
         .await;
     wait_for_mcp_server(&fixture.test.genex, "node_repl").await?;
     assert_eq!(
         fixture
             .test
-            .codex
+            .genex
             .inspect_selected_capability_roots()
             .ready_roots
             .len(),
@@ -542,7 +542,7 @@ async fn executor_browser_and_computer_use_cleanup_hooks_use_separate_mcp_routes
         // Cached subagent MCP servers start on first use; cleanup must not start them.
         fixture
             .test
-            .codex
+            .genex
             .call_mcp_tool(
                 "node_repl",
                 "js",
@@ -554,7 +554,7 @@ async fn executor_browser_and_computer_use_cleanup_hooks_use_separate_mcp_routes
     if hook_event == "Interrupt" {
         fixture
             .test
-            .codex
+            .genex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "interrupt browsing".to_string(),
                 text_elements: Vec::new(),
@@ -820,14 +820,14 @@ impl ExecutorHookFixture {
     async fn attach(&self) -> Result<TurnEnvironmentSelection> {
         let selection = self
             .test
-            .codex
+            .genex
             .environment_selections()
             .await
             .into_iter()
             .next()
             .context("thread should select its executor environment")?;
         self.test
-            .codex
+            .genex
             .environment_ready(
                 &selection,
                 EnvironmentConfig {

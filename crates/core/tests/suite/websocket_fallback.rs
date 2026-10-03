@@ -149,7 +149,7 @@ async fn websocket_fallback_hides_first_websocket_retry_stream_error() -> Result
         }
     });
     let TestGenex {
-        codex,
+        genex,
         session_configured,
         cwd,
         ..
@@ -157,7 +157,7 @@ async fn websocket_fallback_hides_first_websocket_retry_stream_error() -> Result
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd.path());
 
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello".into(),
@@ -183,7 +183,7 @@ async fn websocket_fallback_hides_first_websocket_retry_stream_error() -> Result
 
     let mut stream_error_messages = Vec::new();
     loop {
-        let event = timeout(Duration::from_secs(10), codex.next_event())
+        let event = timeout(Duration::from_secs(10), genex.next_event())
             .await
             .expect("timeout waiting for event")
             .expect("event stream ended unexpectedly")

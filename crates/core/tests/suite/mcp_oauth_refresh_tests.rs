@@ -91,15 +91,15 @@ async fn http_auth_challenge_reaches_agent_tool_call_events_without_replay() -> 
         // The mock MCP endpoint stays on the host when the executor is remote.
         .build_with_remote_and_local_env(&responses_server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, "reauth").await?;
+    wait_for_mcp_server(&fixture.genex, "reauth").await?;
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn(&fixture, "List calendar events."))
         .await?;
 
     let mut end_results = Vec::new();
     let mut completed_results = Vec::new();
-    wait_for_event(&fixture.codex, |event| {
+    wait_for_event(&fixture.genex, |event| {
         match event {
             EventMsg::McpToolCallEnd(event) if event.call_id == call_id => {
                 end_results.push(event.result.clone());
@@ -132,7 +132,7 @@ async fn http_auth_challenge_reaches_agent_tool_call_events_without_replay() -> 
     );
     assert_eq!(model_requests.requests().len(), 2);
     mcp_server.verify().await;
-    fixture.codex.shutdown_and_wait().await?;
+    fixture.genex.shutdown_and_wait().await?;
     Ok(())
 }
 
@@ -195,7 +195,7 @@ async fn oauth_mode_refresh_replaces_the_live_connection(
         .await?;
 
     let initial_result = fixture
-        .codex
+        .genex
         .call_mcp_tool(
             server_name,
             "calendar_list_events",
@@ -212,15 +212,15 @@ async fn oauth_mode_refresh_replaces_the_live_connection(
             .set_enabled(Feature::McpOAuthRefreshCoordination, enabled)?;
         match refresh_path {
             ConfigRefreshPath::Runtime => {
-                fixture.codex.refresh_runtime_config(refreshed_config).await;
+                fixture.genex.refresh_runtime_config(refreshed_config).await;
             }
             ConfigRefreshPath::Mcp => {
-                fixture.codex.refresh_mcp_config(refreshed_config).await;
+                fixture.genex.refresh_mcp_config(refreshed_config).await;
             }
         }
         // A normal tool call reconciles the refreshed config without forcing a reconnect.
         let result = fixture
-            .codex
+            .genex
             .call_mcp_tool(
                 server_name,
                 "calendar_list_events",
@@ -235,6 +235,6 @@ async fn oauth_mode_refresh_replaces_the_live_connection(
         );
     }
 
-    fixture.codex.shutdown_and_wait().await?;
+    fixture.genex.shutdown_and_wait().await?;
     Ok(())
 }

@@ -1625,7 +1625,7 @@ async fn request_rule_falls_back_when_prefix_rule_does_not_approve_all_commands(
     let command = vec![
         "bash".to_string(),
         "-lc".to_string(),
-        "cargo install cargo-insta && rm -rf /tmp/codex".to_string(),
+        "cargo install cargo-insta && rm -rf /tmp/genex".to_string(),
     ];
     let manager = ExecPolicyManager::default();
 
@@ -1649,7 +1649,7 @@ async fn request_rule_falls_back_when_prefix_rule_does_not_approve_all_commands(
             proposed_execpolicy_amendment: Some(ExecPolicyAmendment::new(vec![
                 "rm".to_string(),
                 "-rf".to_string(),
-                "/tmp/codex".to_string(),
+                "/tmp/genex".to_string(),
             ])),
         }
     );

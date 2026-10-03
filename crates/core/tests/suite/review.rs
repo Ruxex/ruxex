@@ -88,10 +88,10 @@ async fn review_op_emits_lifecycle_and_review_output() {
     )
     .await;
     let genex_home = Arc::new(TempDir::new().unwrap());
-    let codex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
+    let genex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
 
     // Submit review request.
-    codex
+    genex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -105,7 +105,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
 
     // Item lifecycle events are emitted first, then the legacy review event is fanned out
     // with the same stable IDs for compatibility consumers.
-    let entered_started = wait_for_event(&codex, |ev| {
+    let entered_started = wait_for_event(&genex, |ev| {
         matches!(
             ev,
             EventMsg::ItemStarted(event)
@@ -117,7 +117,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
         EventMsg::ItemStarted(event) => (event.turn_id, event.item.id()),
         other => panic!("expected entered review item start, got {other:?}"),
     };
-    let entered_completed = wait_for_event(&codex, |ev| {
+    let entered_completed = wait_for_event(&genex, |ev| {
         matches!(
             ev,
             EventMsg::ItemCompleted(event)
@@ -132,7 +132,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
         }
         other => panic!("expected entered review item completion, got {other:?}"),
     }
-    let entered = wait_for_event(&codex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
+    let entered = wait_for_event(&genex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
     match entered {
         EventMsg::EnteredReviewMode(event) => {
             assert_eq!(event.turn_id.as_deref(), Some(review_turn_id.as_str()));
@@ -141,7 +141,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
         other => panic!("expected EnteredReviewMode(..), got {other:?}"),
     }
 
-    let exited_started = wait_for_event(&codex, |ev| {
+    let exited_started = wait_for_event(&genex, |ev| {
         matches!(
             ev,
             EventMsg::ItemStarted(event)
@@ -156,7 +156,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
         }
         other => panic!("expected exited review item start, got {other:?}"),
     };
-    let exited_completed = wait_for_event(&codex, |ev| {
+    let exited_completed = wait_for_event(&genex, |ev| {
         matches!(
             ev,
             EventMsg::ItemCompleted(event)
@@ -171,7 +171,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
         }
         other => panic!("expected exited review item completion, got {other:?}"),
     }
-    let closed = wait_for_event(&codex, |ev| matches!(ev, EventMsg::ExitedReviewMode(_))).await;
+    let closed = wait_for_event(&genex, |ev| matches!(ev, EventMsg::ExitedReviewMode(_))).await;
     let review = match closed {
         EventMsg::ExitedReviewMode(ev) => {
             assert_eq!(ev.turn_id.as_deref(), Some(review_turn_id.as_str()));
@@ -199,9 +199,9 @@ async fn review_op_emits_lifecycle_and_review_output() {
         overall_confidence_score: 0.8,
     };
     assert_eq!(expected, review);
-    let _complete = wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _complete = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    let path = codex.rollout_path().expect("rollout path");
+    let path = genex.rollout_path().expect("rollout path");
     let text = std::fs::read_to_string(&path).expect("read rollout file");
     let parent_thread_id = text
         .lines()
@@ -310,15 +310,15 @@ async fn cancelled_review_does_not_forward_delegate_mcp_startup() {
     )
     .await;
     let genex_home = Arc::new(TempDir::new().unwrap());
-    let codex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
+    let genex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
 
     // Consume the parent session's own empty startup round before starting the review.
-    wait_for_event(&codex, |event| {
+    wait_for_event(&genex, |event| {
         matches!(event, EventMsg::McpStartupComplete(_))
     })
     .await;
 
-    codex
+    genex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -332,7 +332,7 @@ async fn cancelled_review_does_not_forward_delegate_mcp_startup() {
 
     tokio::time::timeout(Duration::from_secs(5), async {
         loop {
-            match codex.next_event().await.expect("review event").msg {
+            match genex.next_event().await.expect("review event").msg {
                 event @ (EventMsg::McpStartupUpdate(_) | EventMsg::McpStartupComplete(_)) => {
                     panic!("review forwarded delegate MCP startup: {event:?}")
                 }
@@ -352,12 +352,12 @@ async fn cancelled_review_does_not_forward_delegate_mcp_startup() {
     .await
     .expect("review request did not reach the server");
 
-    codex.submit(Op::Interrupt).await.unwrap();
+    genex.submit(Op::Interrupt).await.unwrap();
 
     let mut exited_review = false;
     tokio::time::timeout(Duration::from_secs(5), async {
         loop {
-            match codex
+            match genex
                 .next_event()
                 .await
                 .expect("review cancellation event")
@@ -400,9 +400,9 @@ async fn review_op_with_plain_text_emits_review_fallback() {
     )
     .await;
     let genex_home = Arc::new(TempDir::new().unwrap());
-    let codex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
+    let genex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
 
-    codex
+    genex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -414,8 +414,8 @@ async fn review_op_with_plain_text_emits_review_fallback() {
         .await
         .unwrap();
 
-    let _entered = wait_for_event(&codex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
-    let closed = wait_for_event(&codex, |ev| matches!(ev, EventMsg::ExitedReviewMode(_))).await;
+    let _entered = wait_for_event(&genex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
+    let closed = wait_for_event(&genex, |ev| matches!(ev, EventMsg::ExitedReviewMode(_))).await;
     let review = match closed {
         EventMsg::ExitedReviewMode(ev) => ev
             .review_output
@@ -429,7 +429,7 @@ async fn review_op_with_plain_text_emits_review_fallback() {
         ..Default::default()
     };
     assert_eq!(expected, review);
-    let _complete = wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _complete = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let _genex_home_guard = genex_home;
     server.verify().await;
@@ -456,9 +456,9 @@ async fn review_filters_agent_message_related_events() {
     )
     .await;
     let genex_home = Arc::new(TempDir::new().unwrap());
-    let codex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
+    let genex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
 
-    codex
+    genex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -474,7 +474,7 @@ async fn review_filters_agent_message_related_events() {
     let mut saw_exited = false;
 
     // Drain until TurnComplete; assert streaming-related events never surface.
-    wait_for_event(&codex, |event| match event {
+    wait_for_event(&genex, |event| match event {
         EventMsg::TurnComplete(_) => true,
         EventMsg::EnteredReviewMode(_) => {
             saw_entered = true;
@@ -530,9 +530,9 @@ async fn review_does_not_emit_agent_message_on_structured_output() {
     )
     .await;
     let genex_home = Arc::new(TempDir::new().unwrap());
-    let codex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
+    let genex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
 
-    codex
+    genex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -549,7 +549,7 @@ async fn review_does_not_emit_agent_message_on_structured_output() {
     let mut saw_entered = false;
     let mut saw_exited = false;
     let mut agent_messages = 0;
-    wait_for_event(&codex, |event| match event {
+    wait_for_event(&genex, |event| match event {
         EventMsg::TurnComplete(_) => true,
         EventMsg::AgentMessage(_) => {
             agent_messages += 1;
@@ -646,7 +646,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
         .build_with_auto_env(&server)
         .await
         .expect("review conversation should be created");
-    let codex = Arc::clone(&test.genex);
+    let genex = Arc::clone(&test.genex);
     let updated_cwd = test.config.cwd.join("updated-review-workspace");
     let mut selection = test.executor_environment().selection().clone();
     selection.cwd = selection
@@ -667,7 +667,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
         .expect("updated review workspace should be created");
 
     core_test_support::submit_thread_settings(
-        &codex,
+        &genex,
         ThreadSettingsOverrides {
             environments: Some(TurnEnvironmentSelections::new(
                 updated_cwd.clone(),
@@ -690,8 +690,8 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
     .await
     .expect("updated thread permissions should be accepted");
 
-    let stored_settings = codex.thread_settings_snapshot().await;
-    codex
+    let stored_settings = genex.thread_settings_snapshot().await;
+    genex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -702,9 +702,9 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
         })
         .await
         .expect("review should start");
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
-    assert_eq!(codex.thread_settings_snapshot().await, stored_settings);
+    assert_eq!(genex.thread_settings_snapshot().await, stored_settings);
     let request = request_log.single_request();
     assert_eq!(request.body_json()["reasoning"]["effort"], "medium");
     assert_eq!(
@@ -885,7 +885,7 @@ async fn review_uses_custom_review_model_from_config() {
         .build_with_auto_env(&server)
         .await
         .expect("custom review conversation should be created");
-    let codex = Arc::clone(&test.genex);
+    let genex = Arc::clone(&test.genex);
     std::fs::remove_file(genex_home.path().join("models_cache.json"))
         .expect("initial empty model catalog should be cached");
     let mut models = genex_models_manager::test_support::test_models_response()
@@ -900,7 +900,7 @@ async fn review_uses_custom_review_model_from_config() {
     model.node_repl_disabled = true;
     let models_mock = responses::mount_models_once(&server, models).await;
 
-    codex
+    genex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -913,8 +913,8 @@ async fn review_uses_custom_review_model_from_config() {
         .unwrap();
 
     // Wait for completion
-    let _entered = wait_for_event(&codex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
-    let _closed = wait_for_event(&codex, |ev| {
+    let _entered = wait_for_event(&genex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
+    let _closed = wait_for_event(&genex, |ev| {
         matches!(
             ev,
             EventMsg::ExitedReviewMode(ExitedReviewModeEvent {
@@ -924,7 +924,7 @@ async fn review_uses_custom_review_model_from_config() {
         )
     })
     .await;
-    let _complete = wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _complete = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     // Assert the request body model equals the configured review model
     let request = request_log.single_request();
@@ -965,9 +965,9 @@ async fn review_uses_session_model_when_review_model_unset() {
         .build_with_auto_env(&server)
         .await
         .expect("same-model review conversation should be created");
-    let codex = Arc::clone(&test.genex);
+    let genex = Arc::clone(&test.genex);
 
-    codex
+    genex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -979,8 +979,8 @@ async fn review_uses_session_model_when_review_model_unset() {
         .await
         .unwrap();
 
-    let _entered = wait_for_event(&codex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
-    let _closed = wait_for_event(&codex, |ev| {
+    let _entered = wait_for_event(&genex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
+    let _closed = wait_for_event(&genex, |ev| {
         matches!(
             ev,
             EventMsg::ExitedReviewMode(ExitedReviewModeEvent {
@@ -990,7 +990,7 @@ async fn review_uses_session_model_when_review_model_unset() {
         )
     })
     .await;
-    let _complete = wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _complete = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request = request_log.single_request();
     assert_eq!(request.path(), "/v1/responses");
@@ -1084,13 +1084,13 @@ async fn review_input_isolated_from_parent_history() {
             .await
             .unwrap();
     }
-    let codex =
+    let genex =
         resume_conversation_for_server(&server, genex_home.clone(), session_file.clone(), |_| {})
             .await;
 
     // Submit review request; it must start fresh (no parent history in `input`).
     let review_prompt = "Please review only this".to_string();
-    codex
+    genex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -1102,8 +1102,8 @@ async fn review_input_isolated_from_parent_history() {
         .await
         .unwrap();
 
-    let _entered = wait_for_event(&codex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
-    let _closed = wait_for_event(&codex, |ev| {
+    let _entered = wait_for_event(&genex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
+    let _closed = wait_for_event(&genex, |ev| {
         matches!(
             ev,
             EventMsg::ExitedReviewMode(ExitedReviewModeEvent {
@@ -1113,7 +1113,7 @@ async fn review_input_isolated_from_parent_history() {
         )
     })
     .await;
-    let _complete = wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _complete = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     // Assert the request `input` contains the environment context followed by the user review prompt.
     let request = request_log.single_request();
@@ -1154,7 +1154,7 @@ async fn review_input_isolated_from_parent_history() {
     assert_eq!(instructions, REVIEW_PROMPT);
 
     // Also verify that a user interruption note was recorded in the rollout.
-    let path = codex.rollout_path().expect("rollout path");
+    let path = genex.rollout_path().expect("rollout path");
     let text = std::fs::read_to_string(&path).expect("read rollout file");
     let mut saw_interruption_message = false;
     for line in text.lines() {
@@ -1201,10 +1201,10 @@ async fn review_history_surfaces_in_parent_session() {
     )
     .await;
     let genex_home = Arc::new(TempDir::new().unwrap());
-    let codex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
+    let genex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
 
     // 1) Run a review turn that produces an assistant message (isolated in child).
-    codex
+    genex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -1215,8 +1215,8 @@ async fn review_history_surfaces_in_parent_session() {
         })
         .await
         .unwrap();
-    let _entered = wait_for_event(&codex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
-    let _closed = wait_for_event(&codex, |ev| {
+    let _entered = wait_for_event(&genex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
+    let _closed = wait_for_event(&genex, |ev| {
         matches!(
             ev,
             EventMsg::ExitedReviewMode(ExitedReviewModeEvent {
@@ -1226,18 +1226,18 @@ async fn review_history_surfaces_in_parent_session() {
         )
     })
     .await;
-    let _complete = wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _complete = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     // 2) Continue in the parent session; request input must not include any review items.
     let followup = "back to parent".to_string();
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: followup.clone(),
             text_elements: Vec::new(),
         }]))
         .await
         .unwrap();
-    let _complete = wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _complete = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     // Inspect the second request (parent turn) input contents.
     // Parent turns include session initial messages (user_instructions, environment_context).
@@ -1333,13 +1333,13 @@ async fn review_uses_overridden_cwd_for_base_branch_merge_base() {
 
     let genex_home = Arc::new(TempDir::new().unwrap());
     let initial_cwd_path = initial_cwd.path().to_path_buf();
-    let codex = new_conversation_for_server(&server, genex_home.clone(), move |config| {
+    let genex = new_conversation_for_server(&server, genex_home.clone(), move |config| {
         config.cwd = initial_cwd_path.abs();
     })
     .await;
 
     core_test_support::submit_thread_settings(
-        &codex,
+        &genex,
         ThreadSettingsOverrides {
             environments: Some(local_selections(repo_path.to_path_buf().abs())),
             ..Default::default()
@@ -1348,7 +1348,7 @@ async fn review_uses_overridden_cwd_for_base_branch_merge_base() {
     .await
     .unwrap();
 
-    codex
+    genex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::BaseBranch {
@@ -1360,8 +1360,8 @@ async fn review_uses_overridden_cwd_for_base_branch_merge_base() {
         .await
         .unwrap();
 
-    let _entered = wait_for_event(&codex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
-    let _complete = wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _entered = wait_for_event(&genex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
+    let _complete = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = request_log.requests();
     assert_eq!(requests.len(), 1);
@@ -1427,7 +1427,7 @@ where
         .build(server)
         .await
         .expect("create conversation")
-        .codex
+        .genex
 }
 
 /// Create a conversation resuming from a rollout file, configured to talk to the provided mock server.
@@ -1451,5 +1451,5 @@ where
         .resume(server, genex_home, resume_path)
         .await
         .expect("resume conversation")
-        .codex
+        .genex
 }

@@ -48,7 +48,7 @@ pub(crate) fn exec_env_for_sandbox_permissions(
 ) -> HashMap<String, String> {
     let mut env = env.clone();
     // Escalated commands intentionally use the original, unbrokered environment. This branch is
-    // defensive cleanup for a caller that passes an environment already prepared by Codex.
+    // defensive cleanup for a caller that passes an environment already prepared by Genex.
     if sandbox_permissions.requires_escalated_permissions()
         && env.contains_key(PROXY_ACTIVE_ENV_KEY)
     {
@@ -83,7 +83,7 @@ fn prepend_path_entry(env: &mut HashMap<String, String>, path_entry: &str) -> Op
     }
 }
 
-/// PATH entries owned by Codex runtime setup.
+/// PATH entries owned by Genex runtime setup.
 ///
 /// These are applied to the live exec environment immediately and replayed after
 /// restoring a shell snapshot, unless the user explicitly overrides `PATH`.
@@ -291,7 +291,7 @@ pub(crate) fn prepare_brokered_shell_snapshot_env(
 /// runtime-only vars like `CODEX_THREAD_ID` without pretending they came from
 /// the explicit override policy.
 ///
-/// `runtime_path_prepends` contains Codex-owned PATH entries already applied to
+/// `runtime_path_prepends` contains Genex-owned PATH entries already applied to
 /// the live `env`; snapshot wrapping replays them after restoring the snapshot
 /// PATH unless the user explicitly overrides `PATH`.
 pub(crate) fn maybe_wrap_shell_lc_with_snapshot(
@@ -420,13 +420,13 @@ __GENEX_SNAPSHOT_REPLAYED_PROTECTED_ENV=$(
 )
 unset -f __genex_snapshot_expand_env __genex_snapshot_expand_env_with_zdotdir
 __genex_snapshot_env_is_protected() (
-  for __codex_protected_env in \
+  for __genex_protected_env in \
     "$__GENEX_SNAPSHOT_PROTECTED_ENV" \
     "$__GENEX_SNAPSHOT_ALTERNATE_PROTECTED_ENV" \
     "$__GENEX_SNAPSHOT_REPLAYED_PROTECTED_ENV"; do
-    if [ -n "$__codex_protected_env" ] &&
-      {{ [ "$1" = "$__codex_protected_env" ] ||
-        [ "$1" -ef "$__codex_protected_env" ] 2>/dev/null; }}; then
+    if [ -n "$__genex_protected_env" ] &&
+      {{ [ "$1" = "$__genex_protected_env" ] ||
+        [ "$1" -ef "$__genex_protected_env" ] 2>/dev/null; }}; then
       return 0
     fi
   done
@@ -623,7 +623,7 @@ fn build_proxy_env_exports(env: &HashMap<String, String>) -> (String, String) {
             "if [ -n \"$__GENEX_SNAPSHOT_PROXY_ENV_SET\" ] || [ -n \"${{{key}+x}}\" ]; then\n{restores}\nfi"
         ),
     );
-    let git_blocks = build_codex_proxy_git_ssh_command_exports();
+    let git_blocks = build_genex_proxy_git_ssh_command_exports();
     (
         join_shell_blocks([proxy_blocks.0, git_blocks.0]),
         join_shell_blocks([proxy_blocks.1, git_blocks.1]),
@@ -631,7 +631,7 @@ fn build_proxy_env_exports(env: &HashMap<String, String>) -> (String, String) {
 }
 
 #[cfg(target_os = "macos")]
-fn build_codex_proxy_git_ssh_command_exports() -> (String, String) {
+fn build_genex_proxy_git_ssh_command_exports() -> (String, String) {
     let key = PROXY_GIT_SSH_COMMAND_ENV_KEY;
     let marker_pattern = format!("{}\\ *", GENEX_PROXY_GIT_SSH_COMMAND_MARKER.trim_end());
     (
@@ -645,7 +645,7 @@ fn build_codex_proxy_git_ssh_command_exports() -> (String, String) {
 }
 
 #[cfg(not(target_os = "macos"))]
-fn build_codex_proxy_git_ssh_command_exports() -> (String, String) {
+fn build_genex_proxy_git_ssh_command_exports() -> (String, String) {
     (String::new(), String::new())
 }
 

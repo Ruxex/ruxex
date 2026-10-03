@@ -128,10 +128,10 @@ fn stage_windows_sandbox_cli(fixture_bin: &Path) -> anyhow::Result<(PathBuf, Pat
     let resources_dir = fixture_bin.join("genex-resources");
     std::fs::create_dir_all(&resources_dir)?;
 
-    let codex_source = genex_utils_cargo_bin::cargo_bin("genex")?;
-    let codex = fixture_bin.join("genex.exe");
-    std::fs::copy(&codex_source, &codex)
-        .with_context(|| format!("copy {} to {}", codex_source.display(), codex.display()))?;
+    let genex_source = genex_utils_cargo_bin::cargo_bin("genex")?;
+    let genex = fixture_bin.join("genex.exe");
+    std::fs::copy(&genex_source, &genex)
+        .with_context(|| format!("copy {} to {}", genex_source.display(), genex.display()))?;
     for helper_name in ["genex-windows-sandbox-setup", "genex-command-runner"] {
         let helper = genex_utils_cargo_bin::cargo_bin(helper_name)?;
         let destination = resources_dir.join(Path::new(helper_name).with_extension("exe"));
@@ -143,7 +143,7 @@ fn stage_windows_sandbox_cli(fixture_bin: &Path) -> anyhow::Result<(PathBuf, Pat
     let probe = fixture_bin.join("managed-deny-probe.exe");
     std::fs::copy(&probe_source, &probe)
         .with_context(|| format!("copy {} to {}", probe_source.display(), probe.display()))?;
-    Ok((codex, probe))
+    Ok((genex, probe))
 }
 
 fn assert_managed_deny_probe(output: &std::process::Output, launch: usize) -> anyhow::Result<()> {
@@ -183,7 +183,7 @@ fn windows_sandbox_cli_preserves_managed_deny_reads_across_launches() -> anyhow:
     let bin = fixture_root.join("bin");
     std::fs::create_dir_all(&work)?;
     std::fs::create_dir_all(&denied)?;
-    let (codex, probe) = stage_windows_sandbox_cli(&bin)?;
+    let (genex, probe) = stage_windows_sandbox_cli(&bin)?;
 
     let allowed_text = runtime.join("allowed.txt");
     let denied_text = denied.join("secret.txt");
@@ -235,7 +235,7 @@ fn windows_sandbox_cli_preserves_managed_deny_reads_across_launches() -> anyhow:
     )?;
 
     for launch in 1..=2 {
-        let output = Command::new(&codex)
+        let output = Command::new(&genex)
             .current_dir(&work)
             .env("GENEX_HOME", genex_home.path())
             .env("GENEX_WINDOWS_ALLOWED_TEXT", &allowed_text)

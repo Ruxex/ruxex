@@ -50,24 +50,24 @@ async fn fork_thread_twice_drops_to_first_message() {
 
     let mut builder = test_genex();
     let test = builder.build(&server).await.expect("create conversation");
-    let codex = test.genex.clone();
+    let genex = test.genex.clone();
     let thread_manager = test.thread_manager.clone();
     let config_for_fork = test.config.clone();
 
     // Send three user messages; wait for three completed turns.
     for text in ["first", "second", "third"] {
-        codex
+        genex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: text.to_string(),
                 text_elements: Vec::new(),
             }]))
             .await
             .unwrap();
-        let _ = wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+        let _ = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
     }
 
     // Request history from the base conversation to obtain rollout path.
-    let base_path = codex.rollout_path().expect("rollout path");
+    let base_path = genex.rollout_path().expect("rollout path");
 
     // GetHistory flushes before returning the path; no wait needed.
 
@@ -273,19 +273,19 @@ async fn assert_copied_fork_persists_inherited_history(history_mode: ThreadHisto
 
     let mut builder = test_genex().with_history_mode(history_mode);
     let test = builder.build(&server).await.expect("create conversation");
-    let codex = test.genex.clone();
+    let genex = test.genex.clone();
     let thread_manager = test.thread_manager.clone();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "fork me from stored history".to_string(),
             text_elements: Vec::new(),
         }]))
         .await
         .expect("submit initial user turn");
-    let _ = wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _ = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    let source_path = codex.rollout_path().expect("source rollout path");
+    let source_path = genex.rollout_path().expect("source rollout path");
     let source_items = read_rollout_items(&source_path);
     let source_meta = genex_rollout::read_session_meta_line(source_path.as_path())
         .await

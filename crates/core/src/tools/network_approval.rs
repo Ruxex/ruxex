@@ -846,7 +846,7 @@ impl NetworkApprovalService {
                 pending_owner.complete(PendingApprovalDecision::Deny);
                 return NetworkDecision::deny(REASON_NOT_ALLOWED);
             }
-            Err(ToolError::Codex(err)) => {
+            Err(ToolError::Genex(err)) => {
                 let telemetry_decision = if matches!(
                     err.details(),
                     genex_protocol::error::GenexErrorDetails::TurnAborted
@@ -1206,7 +1206,7 @@ pub(crate) async fn begin_network_approval(
             fallback_policy_decider,
         )
         .map_err(|err| {
-            ToolError::Codex(genex_protocol::error::GenexErr::Io(io::Error::other(
+            ToolError::Genex(genex_protocol::error::GenexErr::Io(io::Error::other(
                 format!("failed to create execution-scoped network proxy: {err}"),
             )))
         })?;

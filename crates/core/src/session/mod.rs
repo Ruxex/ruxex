@@ -4423,11 +4423,11 @@ impl Session {
         &self,
         turn_context: &TurnContext,
         message: impl Into<String>,
-        codex_error: GenexErr,
+        genex_error: GenexErr,
     ) {
-        let additional_details = codex_error.to_string();
+        let additional_details = genex_error.to_string();
         let genex_error_info = GenexErrorInfo::ResponseStreamDisconnected {
-            http_status_code: codex_error.http_status_code_value(),
+            http_status_code: genex_error.http_status_code_value(),
         };
         let event = EventMsg::StreamError(StreamErrorEvent {
             message: message.into(),

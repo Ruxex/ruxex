@@ -513,7 +513,7 @@ async fn snapshot_model_visible_layout_resume_with_model_change() -> Result<()> 
             config.model = Some("gpt-5.5".to_string());
         });
     let initial = initial_builder.build(&server).await?;
-    let codex = Arc::clone(&initial.codex);
+    let genex = Arc::clone(&initial.genex);
 
     let initial_mock = mount_sse_once(
         &server,
@@ -524,13 +524,13 @@ async fn snapshot_model_visible_layout_resume_with_model_change() -> Result<()> 
         ]),
     )
     .await;
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "seed resume history".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     let initial_request = initial_mock.single_request();
 
     let resumed_mock = mount_sse_once(
@@ -558,7 +558,7 @@ async fn snapshot_model_visible_layout_resume_with_model_change() -> Result<()> 
         resume_override_cwd.as_path(),
     );
     resumed
-        .codex
+        .genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "resume and change model".into(),
@@ -581,7 +581,7 @@ async fn snapshot_model_visible_layout_resume_with_model_change() -> Result<()> 
             }),
         )
         .await?;
-    wait_for_event(&resumed.codex, |event| {
+    wait_for_event(&resumed.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -619,7 +619,7 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
             config.model = Some("gpt-5.2".to_string());
         });
     let initial = initial_builder.build(&server).await?;
-    let codex = Arc::clone(&initial.codex);
+    let genex = Arc::clone(&initial.genex);
 
     let initial_mock = mount_sse_once(
         &server,
@@ -630,13 +630,13 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
         ]),
     )
     .await;
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "seed resume history".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     let initial_request = initial_mock.single_request();
 
     let resumed_mock = mount_sse_once(
@@ -660,7 +660,7 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
     fs::create_dir_all(&resume_override_cwd)?;
     let resume_override_cwd = resume_override_cwd.abs();
     core_test_support::submit_thread_settings(
-        &resumed.codex,
+        &resumed.genex,
         ThreadSettingsOverrides {
             environments: Some(local_selections(resume_override_cwd)),
             model: Some("gpt-5.2".to_string()),
@@ -669,13 +669,13 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
     )
     .await?;
     resumed
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "first resumed turn after model override".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&resumed.codex, |event| {
+    wait_for_event(&resumed.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

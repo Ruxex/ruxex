@@ -167,7 +167,7 @@ async fn optional_mcp_startup_grace_controls_initial_turn_tool_catalog(
         ),
     }
 
-    fixture.codex.shutdown_and_wait().await?;
+    fixture.genex.shutdown_and_wait().await?;
     Ok(())
 }
 
@@ -247,14 +247,14 @@ async fn running_thread_uses_refreshed_optional_mcp_startup_grace(
     refreshed_config.mcp_optional_startup_grace = refreshed_grace;
     match refresh_path {
         ConfigRefreshPath::Runtime => {
-            fixture.codex.refresh_runtime_config(refreshed_config).await;
+            fixture.genex.refresh_runtime_config(refreshed_config).await;
         }
         ConfigRefreshPath::Mcp => {
-            fixture.codex.refresh_mcp_config(refreshed_config).await;
+            fixture.genex.refresh_mcp_config(refreshed_config).await;
         }
     }
     assert_eq!(
-        fixture.codex.config().await.mcp_optional_startup_grace,
+        fixture.genex.config().await.mcp_optional_startup_grace,
         refreshed_grace,
         "the existing thread should retain the refreshed optional MCP startup grace"
     );
@@ -291,6 +291,6 @@ async fn running_thread_uses_refreshed_optional_mcp_startup_grace(
         "the refreshed optional MCP startup grace should expose the ready tool"
     );
 
-    fixture.codex.shutdown_and_wait().await?;
+    fixture.genex.shutdown_and_wait().await?;
     Ok(())
 }

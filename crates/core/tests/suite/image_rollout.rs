@@ -148,7 +148,7 @@ async fn copy_paste_local_image_persists_rollout_request_shape() -> anyhow::Resu
     let server = start_mock_server().await;
 
     let TestGenex {
-        codex,
+        genex,
         cwd,
         session_configured,
         home: _home,
@@ -170,7 +170,7 @@ async fn copy_paste_local_image_persists_rollout_request_shape() -> anyhow::Resu
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd.path());
 
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![
                 UserInput::LocalImage {
@@ -200,11 +200,11 @@ async fn copy_paste_local_image_persists_rollout_request_shape() -> anyhow::Resu
         )
         .await?;
 
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
-    codex.submit(Op::Shutdown).await?;
-    wait_for_event(&codex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    genex.submit(Op::Shutdown).await?;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
 
-    let rollout_path = codex.rollout_path().expect("rollout path");
+    let rollout_path = genex.rollout_path().expect("rollout path");
     let rollout_text = read_rollout_text(&rollout_path).await?;
     let actual = find_user_message_with_image(&rollout_text)
         .expect("expected user message with input image in rollout");
@@ -246,7 +246,7 @@ async fn drag_drop_image_persists_rollout_request_shape() -> anyhow::Result<()> 
     let server = start_mock_server().await;
 
     let TestGenex {
-        codex,
+        genex,
         cwd,
         session_configured,
         home: _home,
@@ -266,7 +266,7 @@ async fn drag_drop_image_persists_rollout_request_shape() -> anyhow::Result<()> 
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd.path());
 
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![
                 UserInput::Image {
@@ -298,11 +298,11 @@ async fn drag_drop_image_persists_rollout_request_shape() -> anyhow::Result<()> 
         )
         .await?;
 
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
-    codex.submit(Op::Shutdown).await?;
-    wait_for_event(&codex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    genex.submit(Op::Shutdown).await?;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
 
-    let rollout_path = codex.rollout_path().expect("rollout path");
+    let rollout_path = genex.rollout_path().expect("rollout path");
     let rollout_text = read_rollout_text(&rollout_path).await?;
     let actual = find_user_message_with_image(&rollout_text)
         .expect("expected user message with input image in rollout");
@@ -428,7 +428,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
         .rollout_path
         .clone()
         .context("initial rollout path")?;
-    initial.codex.shutdown_and_wait().await?;
+    initial.genex.shutdown_and_wait().await?;
 
     let image_path = initial.cwd.path().join("large-image.png");
     ImageBuffer::from_pixel(
@@ -497,7 +497,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
     )
     .await;
     resumed
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Image {
             image: ImageReference::Inline {
                 image_url: original_image_url.clone(),
@@ -505,7 +505,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
             detail: Some(ImageDetail::High),
         }]))
         .await?;
-    wait_for_event(&resumed.codex, |event| {
+    wait_for_event(&resumed.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -589,7 +589,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
         Some(expected_notice)
     );
 
-    resumed.codex.shutdown_and_wait().await?;
+    resumed.genex.shutdown_and_wait().await?;
     let replayed = resume_builder
         .resume(&server, resumed.home.clone(), rollout_path.clone())
         .await?;
@@ -631,7 +631,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
         .await?;
     let existing_rollout_lines = fs::read_to_string(&rollout_path)?.lines().count();
     replayed
-        .codex
+        .genex
         .inject_response_items(vec![
             ResponseInputItem::Message {
                 role: "user".to_string(),

@@ -477,7 +477,7 @@ async fn exec_command_uses_installed_environment_shell_policy_with_explicit_over
     let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
     let selection = harness
         .test()
-        .codex
+        .genex
         .environment_selections()
         .await
         .into_iter()
@@ -485,7 +485,7 @@ async fn exec_command_uses_installed_environment_shell_policy_with_explicit_over
         .context("thread should select its executor environment")?;
     harness
         .test()
-        .codex
+        .genex
         .environment_ready(
             &selection,
             EnvironmentConfig {
@@ -598,13 +598,13 @@ async fn unified_exec_intercepts_apply_patch_exec_command() -> Result<()> {
     mount_sse_sequence(harness.server(), responses).await;
 
     let test = harness.test();
-    let codex = test.genex.clone();
+    let genex = test.genex.clone();
     let cwd = test.config.cwd.clone();
     let session_model = test.session_configured.model.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, &cwd);
 
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "apply patch via unified exec".into(),
@@ -632,7 +632,7 @@ async fn unified_exec_intercepts_apply_patch_exec_command() -> Result<()> {
     let mut patch_end = None;
     let mut saw_exec_begin = false;
     let mut saw_exec_end = false;
-    wait_for_event(&codex, |event| match event {
+    wait_for_event(&genex, |event| match event {
         EventMsg::PatchApplyBegin(begin) if begin.call_id == call_id => {
             saw_patch_begin = true;
             assert!(
@@ -2858,7 +2858,7 @@ async fn unified_exec_keeps_long_running_session_after_turn_end() -> Result<()> 
 
     let mut builder = test_genex();
     let TestGenex {
-        codex,
+        genex,
         cwd,
         session_configured,
         ..
@@ -2894,7 +2894,7 @@ async fn unified_exec_keeps_long_running_session_after_turn_end() -> Result<()> 
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, turn_cwd.as_path());
 
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "keep unified exec process after turn end".into(),
@@ -2918,7 +2918,7 @@ async fn unified_exec_keeps_long_running_session_after_turn_end() -> Result<()> 
         )
         .await?;
 
-    let begin_event = wait_for_event_match(&codex, |msg| match msg {
+    let begin_event = wait_for_event_match(&genex, |msg| match msg {
         EventMsg::ExecCommandBegin(ev) if ev.call_id == call_id => Some(ev.clone()),
         _ => None,
     })
@@ -2935,15 +2935,15 @@ async fn unified_exec_keeps_long_running_session_after_turn_end() -> Result<()> 
         "expected numeric pid, got {pid:?}"
     );
 
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     assert!(
         process_is_alive(&pid)?,
         "expected unified exec process to remain alive after turn completion"
     );
 
-    codex.submit(Op::Shutdown).await?;
-    wait_for_event(&codex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
+    genex.submit(Op::Shutdown).await?;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
     wait_for_process_exit(&pid).await?;
 
     Ok(())
@@ -2959,7 +2959,7 @@ async fn unified_exec_interrupt_preserves_long_running_session() -> Result<()> {
 
     let mut builder = test_genex();
     let TestGenex {
-        codex,
+        genex,
         cwd,
         session_configured,
         ..
@@ -2988,7 +2988,7 @@ async fn unified_exec_interrupt_preserves_long_running_session() -> Result<()> {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, turn_cwd.as_path());
 
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "interrupt long-running unified exec".into(),
@@ -3012,7 +3012,7 @@ async fn unified_exec_interrupt_preserves_long_running_session() -> Result<()> {
         )
         .await?;
 
-    let _begin_event = wait_for_event_match(&codex, |msg| match msg {
+    let _begin_event = wait_for_event_match(&genex, |msg| match msg {
         EventMsg::ExecCommandBegin(ev) if ev.call_id == call_id => Some(ev.clone()),
         _ => None,
     })
@@ -3024,15 +3024,15 @@ async fn unified_exec_interrupt_preserves_long_running_session() -> Result<()> {
         "expected numeric pid, got {pid:?}"
     );
 
-    codex.submit(Op::Interrupt).await?;
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnAborted(_))).await;
+    genex.submit(Op::Interrupt).await?;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnAborted(_))).await;
 
     assert!(
         process_is_alive(&pid)?,
         "expected unified exec process to remain alive after interrupt"
     );
 
-    codex.submit(Op::CleanBackgroundTerminals).await?;
+    genex.submit(Op::CleanBackgroundTerminals).await?;
     wait_for_process_exit(&pid).await?;
 
     Ok(())
@@ -3559,7 +3559,7 @@ async fn unified_exec_runs_under_sandbox() -> Result<()> {
 
     let mut builder = test_genex();
     let TestGenex {
-        codex,
+        genex,
         cwd,
         session_configured,
         ..
@@ -3589,7 +3589,7 @@ async fn unified_exec_runs_under_sandbox() -> Result<()> {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::read_only(), turn_cwd.as_path());
 
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "summarize large output".into(),
@@ -3613,7 +3613,7 @@ async fn unified_exec_runs_under_sandbox() -> Result<()> {
         )
         .await?;
 
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let requests = request_log.requests();
     assert!(!requests.is_empty(), "expected at least one POST request");
@@ -3664,7 +3664,7 @@ async fn unified_exec_enforces_glob_deny_read_policy() -> Result<()> {
             .expect("set permission profile");
     });
     let TestGenex {
-        codex,
+        genex,
         cwd,
         session_configured,
         ..
@@ -3705,7 +3705,7 @@ async fn unified_exec_enforces_glob_deny_read_policy() -> Result<()> {
     let turn_cwd = cwd.abs();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::read_only(), turn_cwd.as_path());
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "read the fixture files".into(),
@@ -3729,7 +3729,7 @@ async fn unified_exec_enforces_glob_deny_read_policy() -> Result<()> {
         )
         .await?;
 
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let requests = request_log.requests();
     assert!(!requests.is_empty(), "expected at least one POST request");
@@ -3782,7 +3782,7 @@ async fn unified_exec_python_prompt_under_seatbelt() -> Result<()> {
 
     let mut builder = test_genex();
     let TestGenex {
-        codex,
+        genex,
         cwd,
         session_configured,
         ..
@@ -3834,7 +3834,7 @@ async fn unified_exec_python_prompt_under_seatbelt() -> Result<()> {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::read_only(), turn_cwd.as_path());
 
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "start python under seatbelt".into(),
@@ -3858,7 +3858,7 @@ async fn unified_exec_python_prompt_under_seatbelt() -> Result<()> {
         )
         .await?;
 
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let requests = request_log.requests();
     assert!(!requests.is_empty(), "expected at least one POST request");

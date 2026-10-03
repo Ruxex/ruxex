@@ -427,15 +427,15 @@ async fn call_structured_tool(
     .await;
 
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn(fixture, "call the requested rmcp tool"))
         .await?;
 
-    wait_for_event(&fixture.codex, |ev| {
+    wait_for_event(&fixture.genex, |ev| {
         matches!(ev, EventMsg::McpToolCallBegin(_))
     })
     .await;
-    let end_event = wait_for_event(&fixture.codex, |ev| {
+    let end_event = wait_for_event(&fixture.genex, |ev| {
         matches!(ev, EventMsg::McpToolCallEnd(_))
     })
     .await;
@@ -451,7 +451,7 @@ async fn call_structured_tool(
         .expect("structured content")
         .clone();
 
-    wait_for_event(&fixture.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&fixture.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
     Ok(structured_content)
 }
 
@@ -486,7 +486,7 @@ async fn assert_provider_form_capability_advertisement(expected: bool) -> anyhow
         builder = builder.with_provider_form_elicitation();
     }
     let fixture = builder.build(&server).await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     let structured = call_structured_tool(
         &server,
@@ -574,13 +574,13 @@ async fn mcp_namespace_instructions_are_preserved_without_hiding_tools() -> anyh
         })
         .build_with_auto_env(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, "bounded").await?;
+    wait_for_mcp_server(&fixture.genex, "bounded").await?;
 
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn(&fixture, "show the bounded MCP tools"))
         .await?;
-    wait_for_event(&fixture.codex, |event| {
+    wait_for_event(&fixture.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -657,13 +657,13 @@ async fn text_only_mcp_content_uses_content_items() -> anyhow::Result<()> {
         })
         .build_with_auto_env(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn(&fixture, "return content items"))
         .await?;
-    wait_for_event(&fixture.codex, |event| {
+    wait_for_event(&fixture.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -766,14 +766,14 @@ async fn environment_mcp_policy_filters_runtime_config_and_model_tools(
         .await?;
 
     let selection = fixture
-        .codex
+        .genex
         .environment_selections()
         .await
         .into_iter()
         .next()
         .expect("thread should select its executor environment");
     submit_thread_settings(
-        &fixture.codex,
+        &fixture.genex,
         ThreadSettingsOverrides {
             environments: Some(TurnEnvironmentSelections::new(
                 fixture.config.cwd.clone(),
@@ -786,7 +786,7 @@ async fn environment_mcp_policy_filters_runtime_config_and_model_tools(
         },
     )
     .await?;
-    let (pending_config, _) = fixture.codex.current_mcp_config_and_runtime_context().await;
+    let (pending_config, _) = fixture.genex.current_mcp_config_and_runtime_context().await;
     let pending_servers = pending_config.mcp_server_catalog.configured_servers();
     assert!(!pending_servers["allowed"].enabled);
     assert!(!pending_servers["unselected"].enabled);
@@ -817,7 +817,7 @@ async fn environment_mcp_policy_filters_runtime_config_and_model_tools(
     };
 
     fixture
-        .codex
+        .genex
         .environment_ready(
             &selection,
             EnvironmentConfig {
@@ -841,12 +841,12 @@ async fn environment_mcp_policy_filters_runtime_config_and_model_tools(
         )
         .await?;
 
-    let (runtime_config, _) = fixture.codex.current_mcp_config_and_runtime_context().await;
+    let (runtime_config, _) = fixture.genex.current_mcp_config_and_runtime_context().await;
     let runtime_servers = runtime_config.mcp_server_catalog.configured_servers();
     assert!(!runtime_servers["blocked"].enabled);
     assert!(!runtime_servers["unselected"].enabled);
     fixture
-        .codex
+        .genex
         .call_mcp_tool(
             "allowed",
             "echo",
@@ -863,10 +863,10 @@ async fn environment_mcp_policy_filters_runtime_config_and_model_tools(
     assert!(responses::namespace_child_tool(&body, "mcp__blocked", "echo").is_none());
 
     fixture
-        .codex
+        .genex
         .environment_failed(&selection, "environment policy unavailable".to_string())
         .await?;
-    let (failed_config, _) = fixture.codex.current_mcp_config_and_runtime_context().await;
+    let (failed_config, _) = fixture.genex.current_mcp_config_and_runtime_context().await;
     let failed_servers = failed_config.mcp_server_catalog.configured_servers();
     assert!(!failed_servers["allowed"].enabled);
     Ok(())
@@ -951,14 +951,14 @@ async fn stdio_server_round_trip(server_name: &'static str, namespace: &str) -> 
         })
         .build_with_auto_env(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn(&fixture, "call the rmcp echo tool"))
         .await?;
 
-    let begin_event = wait_for_event(&fixture.codex, |ev| {
+    let begin_event = wait_for_event(&fixture.genex, |ev| {
         matches!(ev, EventMsg::McpToolCallBegin(_))
     })
     .await;
@@ -969,7 +969,7 @@ async fn stdio_server_round_trip(server_name: &'static str, namespace: &str) -> 
     assert_eq!(begin.invocation.server, server_name);
     assert_eq!(begin.invocation.tool, "echo");
 
-    let end_event = wait_for_event(&fixture.codex, |ev| {
+    let end_event = wait_for_event(&fixture.genex, |ev| {
         matches!(ev, EventMsg::McpToolCallEnd(_))
     })
     .await;
@@ -1005,7 +1005,7 @@ async fn stdio_server_round_trip(server_name: &'static str, namespace: &str) -> 
         .expect("env snapshot inserted");
     assert_eq!(env_value, expected_env_value);
 
-    wait_for_event(&fixture.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&fixture.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let search_request = search_mock.single_request().body_json();
     let search_description = search_request
@@ -1138,7 +1138,7 @@ server_names = ["history", "notes"]
         })
         .build_with_auto_env(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, "history").await?;
+    wait_for_mcp_server(&fixture.genex, "history").await?;
 
     fixture
         .submit_turn_with_permission_profile(
@@ -1235,7 +1235,7 @@ async fn modern_mcp_pagination_preserves_valid_tools_and_rejects_oversized_curso
         .await?;
 
     let startup = loop {
-        let event = fixture.codex.next_event().await?;
+        let event = fixture.genex.next_event().await?;
         if let EventMsg::McpStartupComplete(startup) = event.msg {
             break startup;
         }
@@ -1255,13 +1255,13 @@ async fn modern_mcp_pagination_preserves_valid_tools_and_rejects_oversized_curso
     );
 
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn(
             &fixture,
             "show the paginated MCP tools",
         ))
         .await?;
-    wait_for_event(&fixture.codex, |event| {
+    wait_for_event(&fixture.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1314,7 +1314,7 @@ async fn shutdown_cancels_startup_prewarm_waiting_for_mcp_startup() -> anyhow::R
         tokio::time::timeout(Duration::from_secs(5), pending_mcp_listener.accept())
             .await
             .context("startup prewarm should start the MCP connection")??;
-    tokio::time::timeout(Duration::from_secs(2), fixture.codex.shutdown_and_wait())
+    tokio::time::timeout(Duration::from_secs(2), fixture.genex.shutdown_and_wait())
         .await
         .context("shutdown should not wait for startup prewarm MCP startup")??;
     tokio::time::sleep(Duration::from_millis(100)).await;
@@ -1409,15 +1409,15 @@ async fn interrupt_during_mcp_startup_preserves_user_input_in_history(
         },
         detail: Some(ImageDetail::High),
     });
-    fixture.codex.start_or_steer_turn(input).await?;
-    let turn_id = core_test_support::wait_for_event_match(&fixture.codex, |event| match event {
+    fixture.genex.start_or_steer_turn(input).await?;
+    let turn_id = core_test_support::wait_for_event_match(&fixture.genex, |event| match event {
         EventMsg::TurnStarted(started) => Some(started.turn_id.clone()),
         _ => None,
     })
     .await;
     let (reply, outcome) = tokio::sync::oneshot::channel();
     fixture
-        .codex
+        .genex
         .submit(Op::TurnSettings {
             turn_id,
             update: TurnSettingsUpdate {
@@ -1432,14 +1432,14 @@ async fn interrupt_during_mcp_startup_preserves_user_input_in_history(
         TurnSettingsUpdateOutcome::Applied
     );
 
-    fixture.codex.submit(Op::Interrupt).await?;
-    wait_for_event(&fixture.codex, |event| {
+    fixture.genex.submit(Op::Interrupt).await?;
+    wait_for_event(&fixture.genex, |event| {
         matches!(event, EventMsg::TurnAborted(_))
     })
     .await;
 
     let history = fixture
-        .codex
+        .genex
         .load_history(/*include_archived*/ false)
         .await?;
     let user_prompt_index = history
@@ -1553,7 +1553,7 @@ async fn stdio_server_uses_configured_cwd_before_runtime_fallback() -> anyhow::R
         })
         .build_with_auto_env(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     let expected_cwd = expected_cwd
         .lock()
@@ -1616,7 +1616,7 @@ async fn local_stdio_server_uses_runtime_fallback_cwd_when_config_omits_cwd() ->
         })
         .build(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     let expected_cwd = expected_cwd
         .lock()
@@ -1739,7 +1739,7 @@ async fn stdio_mcp_tool_call_includes_sandbox_state_meta(
         .build_with_auto_env(&server)
         .await?;
 
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
     let owner_permission_profile = if attachment_owned_permissions {
         PermissionProfile::from_runtime_permissions(
             &FileSystemSandboxPolicy::restricted(vec![
@@ -1769,7 +1769,7 @@ async fn stdio_mcp_tool_call_includes_sandbox_state_meta(
     };
     let owner_workspace_roots = if attachment_owned_permissions {
         let selection = fixture
-            .codex
+            .genex
             .environment_selections()
             .await
             .into_iter()
@@ -1781,7 +1781,7 @@ async fn stdio_mcp_tool_call_includes_sandbox_state_meta(
             "file:///C:/workspace"
         })?];
         submit_thread_settings(
-            &fixture.codex,
+            &fixture.genex,
             ThreadSettingsOverrides {
                 environments: Some(TurnEnvironmentSelections::new(
                     fixture.config.cwd.clone(),
@@ -1795,7 +1795,7 @@ async fn stdio_mcp_tool_call_includes_sandbox_state_meta(
         )
         .await?;
         fixture
-            .codex
+            .genex
             .environment_ready(
                 &selection,
                 EnvironmentConfig {
@@ -1999,10 +1999,10 @@ async fn stdio_mcp_parallel_tool_calls_default_false_runs_serially() -> anyhow::
         })
         .build_with_auto_env(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     fixture
-        .codex
+        .genex
         // Keep this baseline on the mutable sync tool so read-only hints do not
         // make the call parallel-safe. Bypass read-only turn permissions so
         // approval behavior does not block the scheduling assertion.
@@ -2014,7 +2014,7 @@ async fn stdio_mcp_parallel_tool_calls_default_false_runs_serially() -> anyhow::
 
     let mut call_events = Vec::new();
     while call_events.len() < 4 {
-        let event = wait_for_event(&fixture.codex, |ev| {
+        let event = wait_for_event(&fixture.genex, |ev| {
             matches!(
                 ev,
                 EventMsg::McpToolCallBegin(_) | EventMsg::McpToolCallEnd(_)
@@ -2047,7 +2047,7 @@ async fn stdio_mcp_parallel_tool_calls_default_false_runs_serially() -> anyhow::
         "default MCP tool calls should run serially; saw events: {call_events:?}"
     );
 
-    wait_for_event(&fixture.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&fixture.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request = final_mock.single_request();
     for call_id in [first_call_id, second_call_id] {
@@ -2140,17 +2140,17 @@ async fn stdio_mcp_read_only_tool_calls_run_concurrently_without_server_opt_in()
         })
         .build_with_auto_env(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn(
             &fixture,
             "call the rmcp sync_readonly tool twice",
         ))
         .await?;
 
-    wait_for_event(&fixture.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&fixture.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request = final_mock.single_request();
     for call_id in [first_call_id, second_call_id] {
@@ -2230,10 +2230,10 @@ async fn stdio_mcp_parallel_tool_calls_opt_in_runs_concurrently() -> anyhow::Res
         })
         .build_with_auto_env(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     fixture
-        .codex
+        .genex
         // Exercise the server opt-in with the mutable sync tool rather than the
         // read-only sync_readonly tool. Bypass read-only turn permissions so
         // approval behavior does not block the scheduling assertion.
@@ -2243,7 +2243,7 @@ async fn stdio_mcp_parallel_tool_calls_opt_in_runs_concurrently() -> anyhow::Res
         ))
         .await?;
 
-    wait_for_event(&fixture.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&fixture.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request = final_mock.single_request();
     for call_id in [first_call_id, second_call_id] {
@@ -2313,16 +2313,16 @@ async fn stdio_encrypted_content_responses_round_trip() -> anyhow::Result<()> {
         })
         .build_with_auto_env(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn(
             &fixture,
             "call the rmcp encrypted output tool",
         ))
         .await?;
-    wait_for_event(&fixture.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&fixture.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let output_item = final_mock.single_request().function_call_output(call_id);
     let output = output_item["output"]
@@ -2412,21 +2412,21 @@ async fn stdio_image_responses_round_trip() -> anyhow::Result<()> {
         })
         .build_with_auto_env(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn(&fixture, "call the rmcp image tool"))
         .await?;
 
-    let turn_id = core_test_support::wait_for_event_match(&fixture.codex, |event| match event {
+    let turn_id = core_test_support::wait_for_event_match(&fixture.genex, |event| match event {
         EventMsg::TurnStarted(started) => Some(started.turn_id.clone()),
         _ => None,
     })
     .await;
 
     // Wait for tool begin/end and final completion.
-    let begin_event = wait_for_event(&fixture.codex, |ev| {
+    let begin_event = wait_for_event(&fixture.genex, |ev| {
         matches!(ev, EventMsg::McpToolCallBegin(_))
     })
     .await;
@@ -2454,7 +2454,7 @@ async fn stdio_image_responses_round_trip() -> anyhow::Result<()> {
         },
     );
 
-    let end_event = wait_for_event(&fixture.codex, |ev| {
+    let end_event = wait_for_event(&fixture.genex, |ev| {
         matches!(ev, EventMsg::McpToolCallEnd(_))
     })
     .await;
@@ -2482,7 +2482,7 @@ async fn stdio_image_responses_round_trip() -> anyhow::Result<()> {
     assert_eq!(entry.get("mimeType"), Some(&json!("image/png")));
     assert_eq!(entry.get("data"), Some(&json!(base64_only)));
 
-    wait_for_event(&fixture.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&fixture.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let output_item = final_mock.single_request().function_call_output(call_id);
     assert_eq!(output_item["type"], "function_call_output");
@@ -2578,16 +2578,16 @@ async fn stdio_image_responses_resize_large_image() -> anyhow::Result<()> {
         })
         .build_with_auto_env(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn(
             &fixture,
             "call the rmcp image_scenario tool",
         ))
         .await?;
-    wait_for_event(&fixture.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&fixture.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let output_item = final_mock.single_request().function_call_output(call_id);
     assert_eq!(output_item["call_id"], call_id);
@@ -2666,17 +2666,17 @@ async fn stdio_image_responses_preserve_original_detail_metadata() -> anyhow::Re
         })
         .build_with_auto_env(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn(
             &fixture,
             "call the rmcp image_scenario tool",
         ))
         .await?;
 
-    wait_for_event(&fixture.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&fixture.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let output_item = final_mock.single_request().function_call_output(call_id);
     let output = output_item["output"]
@@ -2819,7 +2819,7 @@ async fn stdio_image_responses_are_sanitized_for_text_only_model() -> anyhow::Re
         })
         .build_with_auto_env(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     fixture
         .thread_manager
@@ -2832,7 +2832,7 @@ async fn stdio_image_responses_are_sanitized_for_text_only_model() -> anyhow::Re
     assert_eq!(models_mock.requests().len(), 1);
 
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn_with_model(
             &fixture,
             "call the rmcp image tool",
@@ -2840,15 +2840,15 @@ async fn stdio_image_responses_are_sanitized_for_text_only_model() -> anyhow::Re
         ))
         .await?;
 
-    wait_for_event(&fixture.codex, |ev| {
+    wait_for_event(&fixture.genex, |ev| {
         matches!(ev, EventMsg::McpToolCallBegin(_))
     })
     .await;
-    wait_for_event(&fixture.codex, |ev| {
+    wait_for_event(&fixture.genex, |ev| {
         matches!(ev, EventMsg::McpToolCallEnd(_))
     })
     .await;
-    wait_for_event(&fixture.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&fixture.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let output_item = final_mock.single_request().function_call_output(call_id);
     let header = output_item["output"][0]["text"]
@@ -2930,14 +2930,14 @@ async fn stdio_server_propagates_whitelisted_env_vars() -> anyhow::Result<()> {
         })
         .build_with_auto_env(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn(&fixture, "call the rmcp echo tool"))
         .await?;
 
-    let begin_event = wait_for_event(&fixture.codex, |ev| {
+    let begin_event = wait_for_event(&fixture.genex, |ev| {
         matches!(ev, EventMsg::McpToolCallBegin(_))
     })
     .await;
@@ -2948,7 +2948,7 @@ async fn stdio_server_propagates_whitelisted_env_vars() -> anyhow::Result<()> {
     assert_eq!(begin.invocation.server, server_name);
     assert_eq!(begin.invocation.tool, "echo");
 
-    let end_event = wait_for_event(&fixture.codex, |ev| {
+    let end_event = wait_for_event(&fixture.genex, |ev| {
         matches!(ev, EventMsg::McpToolCallEnd(_))
     })
     .await;
@@ -2984,7 +2984,7 @@ async fn stdio_server_propagates_whitelisted_env_vars() -> anyhow::Result<()> {
         .expect("env snapshot inserted");
     assert_eq!(env_value, expected_env_value);
 
-    wait_for_event(&fixture.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&fixture.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     server.verify().await;
 
@@ -3055,18 +3055,18 @@ async fn stdio_server_propagates_explicit_local_env_var_source() -> anyhow::Resu
         })
         .build_with_auto_env(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn(&fixture, "call the rmcp echo tool"))
         .await?;
 
-    wait_for_event(&fixture.codex, |ev| {
+    wait_for_event(&fixture.genex, |ev| {
         matches!(ev, EventMsg::McpToolCallBegin(_))
     })
     .await;
-    let end_event = wait_for_event(&fixture.codex, |ev| {
+    let end_event = wait_for_event(&fixture.genex, |ev| {
         matches!(ev, EventMsg::McpToolCallEnd(_))
     })
     .await;
@@ -3082,7 +3082,7 @@ async fn stdio_server_propagates_explicit_local_env_var_source() -> anyhow::Resu
         .expect("structured content");
     assert_eq!(structured["env"], expected_env_value);
 
-    wait_for_event(&fixture.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&fixture.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
     server.verify().await;
     Ok(())
 }
@@ -3151,18 +3151,18 @@ async fn remote_stdio_env_var_source_does_not_copy_local_env() -> anyhow::Result
         })
         .build_with_auto_env(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn(&fixture, "call the rmcp echo tool"))
         .await?;
 
-    wait_for_event(&fixture.codex, |ev| {
+    wait_for_event(&fixture.genex, |ev| {
         matches!(ev, EventMsg::McpToolCallBegin(_))
     })
     .await;
-    let end_event = wait_for_event(&fixture.codex, |ev| {
+    let end_event = wait_for_event(&fixture.genex, |ev| {
         matches!(ev, EventMsg::McpToolCallEnd(_))
     })
     .await;
@@ -3178,7 +3178,7 @@ async fn remote_stdio_env_var_source_does_not_copy_local_env() -> anyhow::Result
         .expect("structured content");
     assert_eq!(structured["env"], Value::Null);
 
-    wait_for_event(&fixture.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&fixture.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
     server.verify().await;
     Ok(())
 }
@@ -3382,7 +3382,7 @@ async fn streamable_http_tool_call_round_trip(mode: HeadersHelperMode) -> anyhow
         })
         .build_with_auto_env(&server)
         .await?;
-    wait_for_mcp_server(&fixture.codex, server_name).await?;
+    wait_for_mcp_server(&fixture.genex, server_name).await?;
 
     if refresh_rejected_call {
         let control_url = http_server
@@ -3400,7 +3400,7 @@ async fn streamable_http_tool_call_round_trip(mode: HeadersHelperMode) -> anyhow
 
     // Phase 4: submit the user turn that should trigger the MCP tool call.
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn(
             &fixture,
             "call the rmcp streamable http echo tool",
@@ -3408,7 +3408,7 @@ async fn streamable_http_tool_call_round_trip(mode: HeadersHelperMode) -> anyhow
         .await?;
 
     // Phase 5: assert Codex begins the expected tool invocation.
-    let begin_event = wait_for_event(&fixture.codex, |ev| {
+    let begin_event = wait_for_event(&fixture.genex, |ev| {
         matches!(ev, EventMsg::McpToolCallBegin(_))
     })
     .await;
@@ -3421,7 +3421,7 @@ async fn streamable_http_tool_call_round_trip(mode: HeadersHelperMode) -> anyhow
 
     // Phase 6: assert the tool result proves the server handled the request and
     // propagated the expected environment value.
-    let end_event = wait_for_event(&fixture.codex, |ev| {
+    let end_event = wait_for_event(&fixture.genex, |ev| {
         matches!(ev, EventMsg::McpToolCallEnd(_))
     })
     .await;
@@ -3461,7 +3461,7 @@ async fn streamable_http_tool_call_round_trip(mode: HeadersHelperMode) -> anyhow
     }
     // Phase 7: verify the scripted model calls were consumed and clean up the
     // placement-aware MCP server.
-    wait_for_event(&fixture.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&fixture.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     server.verify().await;
 
@@ -3649,7 +3649,7 @@ async fn streamable_http_with_oauth_round_trip_impl() -> anyhow::Result<()> {
         Some(McpStartupFailureReason::ReauthenticationRequired),
     );
     let mut failure = None;
-    let startup = wait_for_event(&fixture.codex, |event| {
+    let startup = wait_for_event(&fixture.genex, |event| {
         if let EventMsg::McpStartupUpdate(update) = event
             && update.server == server_name
             && let McpStartupStatus::Failed { error, reason } = &update.status
@@ -3672,7 +3672,7 @@ async fn streamable_http_with_oauth_round_trip_impl() -> anyhow::Result<()> {
         .open(temp_home.path().join("mcp-oauth-locks/file-store.lock"))?;
     store_lock.try_lock()?;
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn(
             &fixture,
             "continue while OAuth credentials are locked",
@@ -3688,7 +3688,7 @@ async fn streamable_http_with_oauth_round_trip_impl() -> anyhow::Result<()> {
                 || refreshed_failure.is_none()
                 || refreshed_failed_servers.is_none()
             {
-                match fixture.codex.next_event().await?.msg {
+                match fixture.genex.next_event().await?.msg {
                     EventMsg::McpStartupUpdate(update) if update.server == server_name => {
                         match update.status {
                             McpStartupStatus::Starting => refreshed_starting = true,
@@ -3745,18 +3745,18 @@ async fn streamable_http_with_oauth_round_trip_impl() -> anyhow::Result<()> {
         .expect("test MCP servers should accept the discovered OAuth server");
     let discovered_turn = tokio::time::timeout(Duration::from_secs(5), async {
         fixture
-            .codex
+            .genex
             .refresh_runtime_config(refreshed_config.clone())
             .await;
         fixture
-            .codex
+            .genex
             .start_or_steer_turn(read_only_user_turn(
                 &fixture,
                 "continue while a newly discovered OAuth server is starting",
             ))
             .await?;
         loop {
-            if let EventMsg::TurnComplete(turn) = fixture.codex.next_event().await?.msg {
+            if let EventMsg::TurnComplete(turn) = fixture.genex.next_event().await?.msg {
                 return Ok::<_, anyhow::Error>(turn);
             }
         }
@@ -3776,7 +3776,7 @@ async fn streamable_http_with_oauth_round_trip_impl() -> anyhow::Result<()> {
 
     tokio::time::timeout(
         Duration::from_secs(5),
-        wait_for_mcp_server(&fixture.codex, discovered_server_name),
+        wait_for_mcp_server(&fixture.genex, discovered_server_name),
     )
     .await
     .context("the newly discovered OAuth server did not recover after its store was unlocked")??;
@@ -3790,10 +3790,10 @@ async fn streamable_http_with_oauth_round_trip_impl() -> anyhow::Result<()> {
         )
         .await?
     );
-    fixture.codex.refresh_runtime_config(refreshed_config).await;
+    fixture.genex.refresh_runtime_config(refreshed_config).await;
     let logged_out_startup = tokio::time::timeout(
         Duration::from_secs(5),
-        wait_for_event(&fixture.codex, |event| {
+        wait_for_event(&fixture.genex, |event| {
             matches!(event, EventMsg::McpStartupComplete(_))
         }),
     )
@@ -3822,7 +3822,7 @@ async fn streamable_http_with_oauth_round_trip_impl() -> anyhow::Result<()> {
 
     // Phase 6: submit the user turn that should invoke the OAuth-backed tool.
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(read_only_user_turn(
             &fixture,
             "call the rmcp streamable http oauth echo tool",
@@ -3830,7 +3830,7 @@ async fn streamable_http_with_oauth_round_trip_impl() -> anyhow::Result<()> {
         .await?;
 
     // Phase 7: assert Codex begins the expected tool invocation.
-    let begin_event = wait_for_event(&fixture.codex, |ev| {
+    let begin_event = wait_for_event(&fixture.genex, |ev| {
         matches!(
             ev,
             EventMsg::McpToolCallBegin(_)
@@ -3849,7 +3849,7 @@ async fn streamable_http_with_oauth_round_trip_impl() -> anyhow::Result<()> {
 
     // Phase 8: assert the tool result proves the authenticated request reached
     // the server and preserved the expected environment value.
-    let end_event = wait_for_event(&fixture.codex, |ev| {
+    let end_event = wait_for_event(&fixture.genex, |ev| {
         matches!(ev, EventMsg::McpToolCallEnd(_))
     })
     .await;
@@ -3887,7 +3887,7 @@ async fn streamable_http_with_oauth_round_trip_impl() -> anyhow::Result<()> {
 
     // Phase 9: verify the scripted model calls were consumed and clean up the
     // placement-aware MCP server.
-    wait_for_event(&fixture.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&fixture.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request = response_mock.single_request().body_json();
     assert!(

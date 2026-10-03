@@ -40,7 +40,7 @@ use genex_protocol::turn_input::TurnStartOptions;
 #[cfg(test)]
 use crate::session::completed_session_loop_termination;
 
-/// Start an interactive sub-Codex thread and return its runtime and IO channels.
+/// Start an interactive sub-Genex thread and return its runtime and IO channels.
 ///
 /// Delegates never request approvals, and the returned IO yields their public events.
 /// Its submission channel accepts additional `Op`s for the sub-agent.
@@ -61,7 +61,7 @@ pub(crate) async fn run_genex_thread_interactive(
 ) -> Result<(Arc<Session>, SessionIo), GenexErr> {
     if config.permissions.approval_policy.value() != AskForApproval::Never {
         return Err(GenexErr::InvalidRequest(
-            "Codex delegates require approval policy `never`".to_string(),
+            "Genex delegates require approval policy `never`".to_string(),
         ));
     }
     config.permissions.approval_policy = Constrained::allow_only(AskForApproval::Never);

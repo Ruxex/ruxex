@@ -50,7 +50,7 @@ async fn dropping_startup_cleans_up_while_required_mcp_is_stalled() -> anyhow::R
     let thread_id = fixture.thread_manager.reserve_thread_id();
     let mut options = StartThreadOptions::new(config);
     options.reserved_thread_id = Some(thread_id);
-    options.environments = Some(fixture.codex.environment_selections().await);
+    options.environments = Some(fixture.genex.environment_selections().await);
     options
         .thread_extension_init
         .insert(SessionIsolation::Isolated);
@@ -85,7 +85,7 @@ async fn dropping_startup_cleans_up_while_required_mcp_is_stalled() -> anyhow::R
         Err(ThreadStoreError::ThreadNotFound { .. })
     ));
     drop(release);
-    fixture.codex.shutdown_and_wait().await?;
+    fixture.genex.shutdown_and_wait().await?;
     Ok(())
 }
 
@@ -106,7 +106,7 @@ async fn dropping_startup_before_receiving_the_agent_finishes_cleanup() -> anyho
     let mut options = StartThreadOptions::new(fixture.config.clone());
     let thread_id = fixture.thread_manager.reserve_thread_id();
     options.reserved_thread_id = Some(thread_id);
-    options.environments = Some(fixture.codex.environment_selections().await);
+    options.environments = Some(fixture.genex.environment_selections().await);
     options
         .thread_extension_init
         .insert(SessionIsolation::Isolated);
@@ -139,7 +139,7 @@ async fn dropping_startup_before_receiving_the_agent_finishes_cleanup() -> anyho
         fixture.thread_store.flush_thread(thread_id).await,
         Err(ThreadStoreError::ThreadNotFound { .. })
     ));
-    fixture.codex.shutdown_and_wait().await?;
+    fixture.genex.shutdown_and_wait().await?;
     Ok(())
 }
 
@@ -150,7 +150,7 @@ async fn owner_cancellation_closes_agent_and_preserves_history_and_parent() -> a
     let server = responses::start_mock_server().await;
     let fixture = test_genex().build_with_auto_env(&server).await?;
     let mut options = StartThreadOptions::new(fixture.config.clone());
-    options.environments = Some(fixture.codex.environment_selections().await);
+    options.environments = Some(fixture.genex.environment_selections().await);
     options
         .thread_extension_init
         .insert(SessionIsolation::Isolated);
@@ -163,7 +163,7 @@ async fn owner_cancellation_closes_agent_and_preserves_history_and_parent() -> a
     // A failed startup with the same ID must leave the original agent's writer intact.
     let mut duplicate = StartThreadOptions::new(fixture.config.clone());
     duplicate.reserved_thread_id = Some(agent.thread_id);
-    duplicate.environments = Some(fixture.codex.environment_selections().await);
+    duplicate.environments = Some(fixture.genex.environment_selections().await);
     duplicate
         .thread_extension_init
         .insert(SessionIsolation::Isolated);
@@ -242,7 +242,7 @@ async fn owner_cancellation_closes_agent_and_preserves_history_and_parent() -> a
             .single_request()
             .body_contains_text("parent still works")
     );
-    fixture.codex.shutdown_and_wait().await?;
+    fixture.genex.shutdown_and_wait().await?;
     Ok(())
 }
 
@@ -266,7 +266,7 @@ async fn startup_allowlist_controls_advertising_and_execution(
         .build_with_auto_env(&server)
         .await?;
     let mut options = StartThreadOptions::new(fixture.config.clone());
-    options.environments = Some(fixture.codex.environment_selections().await);
+    options.environments = Some(fixture.genex.environment_selections().await);
     options
         .thread_extension_init
         .insert(SessionIsolation::Isolated);
@@ -344,6 +344,6 @@ async fn startup_allowlist_controls_advertising_and_execution(
     cancelled.cancel();
     tasks.close();
     tasks.wait().await;
-    fixture.codex.shutdown_and_wait().await?;
+    fixture.genex.shutdown_and_wait().await?;
     Ok(())
 }

@@ -73,7 +73,7 @@ impl SessionTask for ReviewTask {
             }
         }
 
-        // Start sub-codex conversation and get the receiver for events.
+        // Start a sub-Genex conversation and get the receiver for events.
         let output = match start_review_conversation(
             session.clone(),
             ctx.clone(),

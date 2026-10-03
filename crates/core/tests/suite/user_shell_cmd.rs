@@ -60,22 +60,22 @@ async fn user_shell_cmd_ls_and_cat_in_temp_dir() {
     let mut builder = test_genex().with_config(move |config| {
         config.cwd = cwd_path.abs();
     });
-    let codex = builder
+    let genex = builder
         .build(&server)
         .await
         .expect("create new conversation")
-        .codex;
+        .genex;
 
     // 1) shell command should list the file
     let list_cmd = "ls".to_string();
-    codex
+    genex
         .submit(Op::RunUserShellCommand {
             command: list_cmd,
             timeout_ms: None,
         })
         .await
         .unwrap();
-    let msg = wait_for_event(&codex, |ev| matches!(ev, EventMsg::ExecCommandEnd(_))).await;
+    let msg = wait_for_event(&genex, |ev| matches!(ev, EventMsg::ExecCommandEnd(_))).await;
     let EventMsg::ExecCommandEnd(ExecCommandEndEvent {
         stdout, exit_code, ..
     }) = msg
@@ -90,14 +90,14 @@ async fn user_shell_cmd_ls_and_cat_in_temp_dir() {
 
     // 2) shell command should print the file contents verbatim
     let cat_cmd = format!("cat {file_name}");
-    codex
+    genex
         .submit(Op::RunUserShellCommand {
             command: cat_cmd,
             timeout_ms: None,
         })
         .await
         .unwrap();
-    let msg = wait_for_event(&codex, |ev| matches!(ev, EventMsg::ExecCommandEnd(_))).await;
+    let msg = wait_for_event(&genex, |ev| matches!(ev, EventMsg::ExecCommandEnd(_))).await;
     let EventMsg::ExecCommandEnd(ExecCommandEndEvent {
         mut stdout,
         exit_code,
@@ -158,10 +158,10 @@ async fn user_shell_cmd_can_be_interrupted() {
         .build(&server)
         .await
         .expect("create new conversation");
-    let codex = &fixture.codex;
+    let genex = &fixture.genex;
 
     // Start a long-running command and then interrupt it before its deadline.
-    codex
+    genex
         .submit(Op::RunUserShellCommand {
             command: slow_user_shell_command().to_string(),
             timeout_ms: Some(28_800_000),
@@ -170,16 +170,16 @@ async fn user_shell_cmd_can_be_interrupted() {
         .unwrap();
 
     // Output proves that the process was spawned before cancellation.
-    wait_for_event(codex, |event| {
+    wait_for_event(genex, |event| {
         matches!(event, EventMsg::ExecCommandOutputDelta(delta)
             if String::from_utf8_lossy(&delta.chunk).contains("shell-timeout-ready"))
     })
     .await;
-    codex.submit(Op::Interrupt).await.unwrap();
+    genex.submit(Op::Interrupt).await.unwrap();
 
     // Expect a TurnAborted(Interrupted) notification.
     let msg = wait_for_event_with_timeout(
-        codex,
+        genex,
         |ev| matches!(ev, EventMsg::TurnAborted(_)),
         Duration::from_secs(60),
     )
@@ -207,7 +207,7 @@ async fn user_shell_command_honors_default_and_extended_deadlines() -> anyhow::R
             );
         }
         submit_thread_settings(
-            &fixture.codex,
+            &fixture.genex,
             ThreadSettingsOverrides {
                 environments: Some(TurnEnvironmentSelections::new(local_cwd, environments)),
                 ..Default::default()
@@ -215,13 +215,13 @@ async fn user_shell_command_honors_default_and_extended_deadlines() -> anyhow::R
         )
         .await?;
         fixture
-            .codex
+            .genex
             .submit(Op::RunUserShellCommand {
                 command: slow_user_shell_command().to_string(),
                 timeout_ms,
             })
             .await?;
-        wait_for_event(&fixture.codex, |event| {
+        wait_for_event(&fixture.genex, |event| {
             matches!(event, EventMsg::ExecCommandOutputDelta(delta)
                 if String::from_utf8_lossy(&delta.chunk).contains("shell-timeout-ready"))
         })
@@ -229,7 +229,7 @@ async fn user_shell_command_honors_default_and_extended_deadlines() -> anyhow::R
 
         let completed = async {
             loop {
-                let event = fixture.codex.next_event().await.expect("read shell event");
+                let event = fixture.genex.next_event().await.expect("read shell event");
                 if let EventMsg::ExecCommandEnd(end) = event.msg {
                     break end;
                 }
@@ -255,7 +255,7 @@ async fn user_shell_command_honors_default_and_extended_deadlines() -> anyhow::R
         assert_eq!(end.exit_code, -1);
         assert!(end.aggregated_output.contains("Timeout"));
         assert!(end.aggregated_output.contains("shell-timeout-ready"));
-        wait_for_event(&fixture.codex, |event| {
+        wait_for_event(&fixture.genex, |event| {
             matches!(event, EventMsg::TurnComplete(_))
         })
         .await;
@@ -305,7 +305,7 @@ async fn user_shell_command_does_not_replace_active_turn() -> anyhow::Result<()>
         turn_permission_fields(PermissionProfile::Disabled, cwd.as_path());
 
     fixture
-        .codex
+        .genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "run model shell command".to_string(),
@@ -329,7 +329,7 @@ async fn user_shell_command_does_not_replace_active_turn() -> anyhow::Result<()>
         )
         .await?;
 
-    let _ = wait_for_event_match(&fixture.codex, |ev| match ev {
+    let _ = wait_for_event_match(&fixture.genex, |ev| match ev {
         EventMsg::ExecCommandBegin(event)
             if event.source == ExecCommandSource::UnifiedExecStartup =>
         {
@@ -344,7 +344,7 @@ async fn user_shell_command_does_not_replace_active_turn() -> anyhow::Result<()>
     #[cfg(not(windows))]
     let user_shell_command = "printf user-shell".to_string();
     fixture
-        .codex
+        .genex
         .submit(Op::RunUserShellCommand {
             command: user_shell_command,
             timeout_ms: None,
@@ -355,7 +355,7 @@ async fn user_shell_command_does_not_replace_active_turn() -> anyhow::Result<()>
     let mut saw_user_shell_end = false;
     let mut saw_turn_complete = false;
     for _ in 0..200 {
-        let event = timeout(Duration::from_secs(20), fixture.codex.next_event())
+        let event = timeout(Duration::from_secs(20), fixture.genex.next_event())
             .await
             .context("timed out waiting for event")?
             .context("event stream ended unexpectedly")?;

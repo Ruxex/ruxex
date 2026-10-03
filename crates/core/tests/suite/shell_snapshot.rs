@@ -185,14 +185,14 @@ async fn run_snapshot_command_with_options(
     mount_sse_sequence(harness.server(), responses).await;
 
     let test = harness.test();
-    let codex = test.genex.clone();
+    let genex = test.genex.clone();
     let genex_home = test.home.path().to_path_buf();
     let session_model = test.session_configured.model.clone();
     let cwd = test.config.cwd.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd.as_path());
 
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "run unified exec with shell snapshot".into(),
@@ -216,7 +216,7 @@ async fn run_snapshot_command_with_options(
         )
         .await?;
 
-    let begin = wait_for_event_match(&codex, |ev| match ev {
+    let begin = wait_for_event_match(&genex, |ev| match ev {
         EventMsg::ExecCommandBegin(ev) if ev.call_id == call_id => Some(ev.clone()),
         _ => None,
     })
@@ -224,13 +224,13 @@ async fn run_snapshot_command_with_options(
     let snapshot_path = wait_for_snapshot(&genex_home).await?;
     let snapshot_content = fs::read_to_string(&snapshot_path).await?;
 
-    let end = wait_for_event_match(&codex, |ev| match ev {
+    let end = wait_for_event_match(&genex, |ev| match ev {
         EventMsg::ExecCommandEnd(ev) if ev.call_id == call_id => Some(ev.clone()),
         _ => None,
     })
     .await;
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     Ok(SnapshotRun {
         begin,
@@ -263,12 +263,12 @@ async fn run_tool_turn_on_harness(
     mount_sse_sequence(harness.server(), responses).await;
 
     let test = harness.test();
-    let codex = test.genex.clone();
+    let genex = test.genex.clone();
     let session_model = test.session_configured.model.clone();
     let cwd = test.config.cwd.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd.as_path());
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.into(),
@@ -292,17 +292,17 @@ async fn run_tool_turn_on_harness(
         )
         .await?;
 
-    wait_for_event_match(&codex, |ev| match ev {
+    wait_for_event_match(&genex, |ev| match ev {
         EventMsg::ExecCommandBegin(ev) if ev.call_id == call_id => Some(ev.clone()),
         _ => None,
     })
     .await;
-    let end = wait_for_event_match(&codex, |ev| match ev {
+    let end = wait_for_event_match(&genex, |ev| match ev {
         EventMsg::ExecCommandEnd(ev) if ev.call_id == call_id => Some(ev.clone()),
         _ => None,
     })
     .await;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
     Ok(end)
 }
 
@@ -360,14 +360,14 @@ async fn run_no_shell_turn(harness: &TestGenexHarness) -> Result<()> {
         ]),
     )
     .await;
-    let codex = &harness.test().genex;
-    codex
+    let genex = &harness.test().genex;
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(codex, |event| {
+    wait_for_event(genex, |event| {
         assert!(
             !matches!(event, EventMsg::ExecApprovalRequest(_) | EventMsg::Error(_)),
             "unexpected event: {event:?}"
@@ -548,9 +548,9 @@ async fn shell_snapshot_v2_prewarm_stops_on_shutdown() -> Result<()> {
     wait_for_file_contents(&profile_home.path().join("captures"), "x").await?;
     let pid = fs::read_to_string(profile_home.path().join("pid")).await?;
 
-    let codex = &harness.test().genex;
-    codex.submit(Op::Shutdown {}).await?;
-    wait_for_event(codex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
+    let genex = &harness.test().genex;
+    genex.submit(Op::Shutdown {}).await?;
+    wait_for_event(genex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
     tokio::time::timeout(Duration::from_secs(2), async {
         while tokio::process::Command::new("/bin/kill")
             .args(["-0", &pid])
@@ -841,14 +841,14 @@ async fn shell_snapshot_v2_preserves_legacy_snapshots_for_user_shell() -> Result
     let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
     let snapshot_path = wait_for_snapshot(harness.test().home.path()).await?;
     assert_posix_snapshot_sections(&fs::read_to_string(snapshot_path).await?);
-    let codex = &harness.test().genex;
-    codex
+    let genex = &harness.test().genex;
+    genex
         .submit(Op::RunUserShellCommand {
             command: "printf legacy".to_string(),
             timeout_ms: None,
         })
         .await?;
-    let end = wait_for_event_match(codex, |event| match event {
+    let end = wait_for_event_match(genex, |event| match event {
         EventMsg::ExecCommandEnd(event) => Some(event.clone()),
         _ => None,
     })
@@ -941,7 +941,7 @@ async fn unified_exec_snapshot_still_intercepts_apply_patch() -> Result<()> {
     let harness = TestGenexHarness::with_builder(builder).await?;
 
     let test = harness.test();
-    let codex = test.genex.clone();
+    let genex = test.genex.clone();
     let cwd = test.config.cwd.clone();
     let genex_home = test.home.path().to_path_buf();
     let target = cwd.join("snapshot-apply.txt");
@@ -971,7 +971,7 @@ async fn unified_exec_snapshot_still_intercepts_apply_patch() -> Result<()> {
     let model = test.session_configured.model.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd.as_path());
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "apply patch via unified_exec with snapshot".into(),
@@ -997,7 +997,7 @@ async fn unified_exec_snapshot_still_intercepts_apply_patch() -> Result<()> {
 
     let mut saw_patch_begin = false;
     let mut patch_end = None;
-    wait_for_event(&codex, |ev| match ev {
+    wait_for_event(&genex, |ev| match ev {
         EventMsg::PatchApplyBegin(begin) if begin.call_id == call_id => {
             saw_patch_begin = true;
             false
@@ -1043,15 +1043,15 @@ async fn shell_snapshot_deleted_after_shutdown_with_skills() -> Result<()> {
     let harness = TestGenexHarness::with_builder(builder).await?;
     let home = harness.test().home.clone();
     let genex_home = home.path().to_path_buf();
-    let codex = harness.test().genex.clone();
+    let genex = harness.test().genex.clone();
 
     let snapshot_path = wait_for_snapshot(&genex_home).await?;
     assert!(snapshot_path.exists());
 
-    codex.submit(Op::Shutdown {}).await?;
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::ShutdownComplete)).await;
+    genex.submit(Op::Shutdown {}).await?;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::ShutdownComplete)).await;
 
-    drop(codex);
+    drop(genex);
     drop(harness);
     sleep(Duration::from_millis(150)).await;
 

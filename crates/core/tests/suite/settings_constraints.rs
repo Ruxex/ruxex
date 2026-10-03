@@ -41,13 +41,13 @@ enum SettingsOperation {
 impl SettingsOperation {
     async fn submit(
         self,
-        codex: &GenexThread,
+        genex: &GenexThread,
         thread_settings: ThreadSettingsOverrides,
     ) -> Result<ThreadSettingsSnapshot> {
         let id = match self {
-            Self::Standalone => codex.submit(Op::ThreadSettings { thread_settings }).await?,
+            Self::Standalone => genex.submit(Op::ThreadSettings { thread_settings }).await?,
             Self::TurnStart => {
-                let result = codex
+                let result = genex
                     .start_or_steer_turn(
                         TurnInputRequest::user_input(vec![UserInput::Text {
                             text: "use the protected model".to_string(),
@@ -64,7 +64,7 @@ impl SettingsOperation {
         };
         timeout(Duration::from_secs(10), async {
             loop {
-                let event = codex.next_event().await?;
+                let event = genex.next_event().await?;
                 if event.id != id {
                     continue;
                 }

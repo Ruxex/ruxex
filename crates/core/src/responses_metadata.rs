@@ -256,9 +256,9 @@ pub(crate) enum TurnToolSource {
     Mcp { server_name: String },
 }
 
-/// Caller-owned snapshot of Codex metadata sent to ResponsesAPI.
+/// Caller-owned snapshot of Genex metadata sent to ResponsesAPI.
 ///
-/// The full Codex turn metadata blob is transported canonically as
+/// The full Genex turn metadata blob is transported canonically as
 /// `client_metadata["x-codex-turn-metadata"]`. Flat `client_metadata` keys and direct HTTP/ws
 /// headers are generated compatibility projections of this snapshot, not separate sources of
 /// truth.
@@ -441,9 +441,9 @@ impl GenexResponsesMetadata {
             turn_started_at_unix_ms: self.turn_started_at_unix_ms,
             history_ingest_requested: self.history_ingest_requested,
             compaction,
-            // Extra metadata enriches the Codex turn metadata blob, not literal top-level
+            // Extra metadata enriches the Genex turn metadata blob, not literal top-level
             // Responses client_metadata. Product metadata is validated while loading config;
-            // app-server metadata has reserved Codex-owned keys filtered when it enters turn state.
+            // app-server metadata has reserved Genex-owned keys filtered when it enters turn state.
             extra: &self.extra,
         }
     }

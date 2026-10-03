@@ -84,7 +84,7 @@ async fn continue_after_stream_error() {
         supports_standalone_web_search: false,
     };
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_config(move |config| {
             config.base_instructions = Some("You are a helpful assistant".to_string());
             config.model_provider = provider;
@@ -93,7 +93,7 @@ async fn continue_after_stream_error() {
         .await
         .unwrap();
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "first message".into(),
             text_elements: Vec::new(),
@@ -103,13 +103,13 @@ async fn continue_after_stream_error() {
 
     // Expect an Error followed by TurnComplete so the session is released.
     let EventMsg::Error(error) =
-        wait_for_event(&codex, |ev| matches!(ev, EventMsg::Error(_))).await
+        wait_for_event(&genex, |ev| matches!(ev, EventMsg::Error(_))).await
     else {
         unreachable!("predicate guarantees an error event");
     };
 
     let EventMsg::TurnComplete(completed) =
-        wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await
+        wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await
     else {
         unreachable!("predicate guarantees a turn complete event");
     };
@@ -118,7 +118,7 @@ async fn continue_after_stream_error() {
     // 2) Second turn: now send another prompt that should succeed using the
     // mock server SSE stream. If the agent failed to clear the running task on
     // error above, this submission would be rejected/queued indefinitely.
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "follow up".into(),
             text_elements: Vec::new(),
@@ -126,5 +126,5 @@ async fn continue_after_stream_error() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 }

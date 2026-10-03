@@ -84,7 +84,7 @@ async fn observed_response_usage_accumulates_per_turn_and_thread() -> Result<()>
     for prompt in ["second", "third"] {
         resumed.submit_turn(prompt).await?;
     }
-    resumed.codex.shutdown_and_wait().await?;
+    resumed.genex.shutdown_and_wait().await?;
 
     let records = token_usage_records(&rollout_path);
     assert_eq!(records.len(), 3);

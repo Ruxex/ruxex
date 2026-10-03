@@ -94,8 +94,8 @@ async fn start_remote_realtime_server() -> responses::WebSocketTestServer {
     .await
 }
 
-async fn start_realtime_conversation(codex: &genex_core::GenexThread) -> Result<()> {
-    codex
+async fn start_realtime_conversation(genex: &genex_core::GenexThread) -> Result<()> {
+    genex
         .submit(Op::RealtimeConversationStart(ConversationStartParams {
             client_managed_handoffs: false,
             delegation_ack_filler: None,
@@ -119,7 +119,7 @@ async fn start_realtime_conversation(codex: &genex_core::GenexThread) -> Result<
         }))
         .await?;
 
-    wait_for_event_match(codex, |msg| match msg {
+    wait_for_event_match(genex, |msg| match msg {
         EventMsg::RealtimeConversationStarted(started) => Some(Ok(started.clone())),
         EventMsg::Error(err) => Some(Err(err.clone())),
         _ => None,
@@ -127,7 +127,7 @@ async fn start_realtime_conversation(codex: &genex_core::GenexThread) -> Result<
     .await
     .expect("conversation start failed");
 
-    wait_for_event_match(codex, |msg| match msg {
+    wait_for_event_match(genex, |msg| match msg {
         EventMsg::RealtimeConversationRealtime(RealtimeConversationRealtimeEvent {
             payload:
                 RealtimeEvent::SessionUpdated {
@@ -142,9 +142,9 @@ async fn start_realtime_conversation(codex: &genex_core::GenexThread) -> Result<
     Ok(())
 }
 
-async fn close_realtime_conversation(codex: &genex_core::GenexThread) -> Result<()> {
-    codex.submit(Op::RealtimeConversationClose).await?;
-    wait_for_event_match(codex, |msg| match msg {
+async fn close_realtime_conversation(genex: &genex_core::GenexThread) -> Result<()> {
+    genex.submit(Op::RealtimeConversationClose).await?;
+    wait_for_event_match(genex, |msg| match msg {
         EventMsg::RealtimeConversationClosed(closed) => Some(closed.clone()),
         _ => None,
     })
@@ -171,9 +171,9 @@ fn assert_request_contains_custom_realtime_start(
     );
 }
 
-async fn wait_for_turn_complete(codex: &genex_core::GenexThread) {
+async fn wait_for_turn_complete(genex: &genex_core::GenexThread) {
     wait_for_event_with_timeout(
-        codex,
+        genex,
         |ev| matches!(ev, EventMsg::TurnComplete(_)),
         REMOTE_COMPACT_TURN_COMPLETE_TIMEOUT,
     )
@@ -313,16 +313,16 @@ async fn remote_compact_v2_retains_metadata_from_resumed_history() -> Result<()>
         .rollout_path
         .clone()
         .context("rollout path")?;
-    initial.codex.shutdown_and_wait().await?;
+    initial.genex.shutdown_and_wait().await?;
     annotate_retained_user_in_rollout(&rollout_path, retained_text)?;
 
     let resumed = builder()
         .resume(&server, home, rollout_path.clone())
         .await?;
-    resumed.codex.submit(Op::Compact).await?;
-    wait_for_turn_complete(&resumed.codex).await;
+    resumed.genex.submit(Op::Compact).await?;
+    wait_for_turn_complete(&resumed.genex).await;
     resumed.submit_turn("continue after compaction").await?;
-    resumed.codex.shutdown_and_wait().await?;
+    resumed.genex.shutdown_and_wait().await?;
 
     let requests = response_mock.requests();
     let compact_request = &requests[1];
@@ -371,9 +371,9 @@ async fn remote_compact_v2_retains_only_client_developer_messages_when_enabled(
         phase: None,
         internal_chat_message_metadata_passthrough: None,
     };
-    let codex = &harness.test().genex;
-    let rollout_path = codex.rollout_path().context("rollout path")?;
-    codex
+    let genex = &harness.test().genex;
+    let rollout_path = genex.rollout_path().context("rollout path")?;
+    genex
         .inject_response_items(vec![developer("INJECTED_CLIENT_DEVELOPER")])
         .await?;
     let response_mock = responses::mount_sse_sequence(
@@ -396,8 +396,8 @@ async fn remote_compact_v2_retains_only_client_developer_messages_when_enabled(
     .await;
 
     harness.test().submit_turn("before compact").await?;
-    codex.submit(Op::Compact).await?;
-    wait_for_turn_complete(codex).await;
+    genex.submit(Op::Compact).await?;
+    wait_for_turn_complete(genex).await;
     harness.test().submit_turn("after compact").await?;
 
     let requests = response_mock.requests();
@@ -410,7 +410,7 @@ async fn remote_compact_v2_retains_only_client_developer_messages_when_enabled(
         .iter()
         .for_each(assert_compact_request_omits_harness_metadata);
 
-    codex.shutdown_and_wait().await?;
+    genex.shutdown_and_wait().await?;
     let replacement_history = fs::read_to_string(&rollout_path)?
         .lines()
         .filter_map(|line| genex_rollout::parse_rollout_line(line).ok())
@@ -444,8 +444,8 @@ async fn remote_compact_v2_records_usage_before_output_validation() -> Result<()
             }),
     )
     .await?;
-    let codex = &harness.test().genex;
-    let rollout_path = codex.rollout_path().context("rollout path")?;
+    let genex = &harness.test().genex;
+    let rollout_path = genex.rollout_path().context("rollout path")?;
     let responses_mock = responses::mount_sse_sequence(
         harness.server(),
         vec![
@@ -475,14 +475,14 @@ async fn remote_compact_v2_records_usage_before_output_validation() -> Result<()
     .await;
 
     harness.test().submit_turn("before compact").await?;
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "turn that triggers auto compact".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
     let mut preserved_prompts = Vec::new();
-    wait_for_event(codex, |event| {
+    wait_for_event(genex, |event| {
         if let EventMsg::UserMessage(message) = event {
             preserved_prompts.push(message.message.clone());
         }
@@ -490,11 +490,11 @@ async fn remote_compact_v2_records_usage_before_output_validation() -> Result<()
     })
     .await;
     assert_eq!(preserved_prompts, vec!["turn that triggers auto compact"]);
-    wait_for_event(codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     assert_eq!(responses_mock.requests().len(), 2);
 
-    codex.flush_rollout().await?;
-    let history = codex.load_history(/*include_archived*/ false).await?;
+    genex.flush_rollout().await?;
+    let history = genex.load_history(/*include_archived*/ false).await?;
     assert_eq!(
         history
             .items
@@ -511,7 +511,7 @@ async fn remote_compact_v2_records_usage_before_output_validation() -> Result<()
         1,
         "the accepted prompt should be saved exactly once after compaction fails"
     );
-    codex.shutdown_and_wait().await?;
+    genex.shutdown_and_wait().await?;
 
     let record = fs::read_to_string(&rollout_path)?
         .lines()
@@ -629,7 +629,7 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
             }),
     )
     .await?;
-    let codex = &harness.test().genex;
+    let genex = &harness.test().genex;
     // Each original-detail image costs 10,000 estimated patch tokens.
     let image_inputs = (1..=8)
         .map(|number| {
@@ -672,10 +672,10 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
         ]),
     )
     .await;
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(input))
         .await?;
-    wait_for_turn_complete(codex).await;
+    wait_for_turn_complete(genex).await;
     let initial_request = initial_mock.single_request();
     let prepared_images = initial_request
         .inputs_of_type("message")
@@ -709,8 +709,8 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
             ]),
         )
         .await;
-        codex.submit(Op::Compact).await?;
-        wait_for_turn_complete(codex).await;
+        genex.submit(Op::Compact).await?;
+        wait_for_turn_complete(genex).await;
         let compact_request = compact_mock.single_request();
         assert_eq!(compact_request.path(), "/v1/responses");
         assert_eq!(
@@ -726,13 +726,13 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
             ]),
         )
         .await;
-        codex
+        genex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "after compact".to_string(),
                 text_elements: Vec::new(),
             }]))
             .await?;
-        wait_for_turn_complete(codex).await;
+        wait_for_turn_complete(genex).await;
         let follow_up = follow_up_mock.single_request();
         assert_eq!(
             follow_up.inputs_of_type("compaction")[0]["encrypted_content"],
@@ -788,10 +788,10 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
                 ]),
             )
             .await;
-            codex
+            genex
                 .start_or_steer_turn(TurnInputRequest::user_input(vec![image_inputs[7].clone()]))
                 .await?;
-            wait_for_turn_complete(codex).await;
+            wait_for_turn_complete(genex).await;
             let _ = append_mock.single_request();
         }
     }
@@ -847,7 +847,7 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
             .map(|item| RolloutItem::ResponseItem(item.into()))
     })
     .collect::<serde_json::Result<Vec<_>>>()?;
-    let codex = harness
+    let genex = harness
         .test()
         .thread_manager
         .start_thread(StartThreadOptions {
@@ -891,15 +891,15 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
     )
     .await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello remote compact".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_turn_complete(&codex).await;
+    wait_for_turn_complete(&genex).await;
 
-    codex
+    genex
         .submit(Op::InterAgentCommunication {
             communication: InterAgentCommunication::new(
                 AgentPath::root().join("child").expect("valid child path"),
@@ -912,7 +912,7 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
             start_options: Default::default(),
         })
         .await?;
-    codex
+    genex
         .submit(Op::InterAgentCommunication {
             communication: InterAgentCommunication::new(
                 AgentPath::root().join("child").expect("valid child path"),
@@ -925,7 +925,7 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
         })
         .await?;
     let delegated_task_ciphertext = format!("delegated compact task{}", "x".repeat(40_000));
-    codex
+    genex
         .submit(Op::InterAgentCommunication {
             communication: InterAgentCommunication::new_encrypted(
                 AgentPath::root(),
@@ -937,11 +937,11 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
             start_options: Default::default(),
         })
         .await?;
-    wait_for_turn_complete(&codex).await;
+    wait_for_turn_complete(&genex).await;
 
     let descendant_followup_ciphertext = "descendant follow-up task";
     let worker_path = AgentPath::root().join("worker").expect("valid worker path");
-    codex
+    genex
         .submit(Op::InterAgentCommunication {
             communication: InterAgentCommunication::new_encrypted(
                 worker_path.join("child").expect("valid grandchild path"),
@@ -953,18 +953,18 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
             start_options: Default::default(),
         })
         .await?;
-    wait_for_turn_complete(&codex).await;
+    wait_for_turn_complete(&genex).await;
 
-    let compact_turn_id = codex.submit(Op::Compact).await?;
-    wait_for_turn_complete(&codex).await;
+    let compact_turn_id = genex.submit(Op::Compact).await?;
+    wait_for_turn_complete(&genex).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "after compact".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_turn_complete(&codex).await;
+    wait_for_turn_complete(&genex).await;
 
     let response_requests = responses_mock.requests();
     let compact_request = &response_requests[3];
@@ -1162,7 +1162,7 @@ async fn remote_compact_v2_retries_failures_with_stream_retry_budget() -> Result
             }),
     )
     .await?;
-    let codex = harness.test().genex.clone();
+    let genex = harness.test().genex.clone();
 
     let responses_mock = responses::mount_response_sequence(
         harness.server(),
@@ -1197,24 +1197,24 @@ async fn remote_compact_v2_retries_failures_with_stream_retry_budget() -> Result
     )
     .await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello remote compact".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_turn_complete(&codex).await;
+    wait_for_turn_complete(&genex).await;
 
-    codex.submit(Op::Compact).await?;
-    wait_for_turn_complete(&codex).await;
+    genex.submit(Op::Compact).await?;
+    wait_for_turn_complete(&genex).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "after compact".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_turn_complete(&codex).await;
+    wait_for_turn_complete(&genex).await;
 
     let response_requests = responses_mock.requests();
     assert_eq!(
@@ -1278,7 +1278,7 @@ async fn remote_compact_v2_rewrites_multiple_trailing_function_call_outputs(
             }),
     )
     .await?;
-    let codex = harness.test().genex.clone();
+    let genex = harness.test().genex.clone();
 
     let initial_mock = mount_sse_once(
         harness.server(),
@@ -1303,7 +1303,7 @@ async fn remote_compact_v2_rewrites_multiple_trailing_function_call_outputs(
     .into_iter()
     .map(serde_json::from_value)
     .collect::<serde_json::Result<Vec<ResponseItem>>>()?;
-    codex.inject_response_items(history).await?;
+    genex.inject_response_items(history).await?;
 
     let mut response_bodies = vec![sse(vec![
         json!({
@@ -1320,8 +1320,8 @@ async fn remote_compact_v2_rewrites_multiple_trailing_function_call_outputs(
     if automatic {
         harness.test().submit_text_turn("after compact").await?;
     } else {
-        codex.submit(Op::Compact).await?;
-        wait_for_turn_complete(&codex).await;
+        genex.submit(Op::Compact).await?;
+        wait_for_turn_complete(&genex).await;
     }
 
     let requests = compact_mock.requests();
@@ -1432,11 +1432,11 @@ async fn active_realtime_refreshes_changed_start_instructions_only_after_compact
     )
     .await;
 
-    start_realtime_conversation(initial.codex.as_ref()).await?;
+    start_realtime_conversation(initial.genex.as_ref()).await?;
     initial.submit_turn("USER_ONE").await?;
-    close_realtime_conversation(initial.codex.as_ref()).await?;
-    initial.codex.submit(Op::Shutdown).await?;
-    wait_for_event(&initial.codex, |ev| {
+    close_realtime_conversation(initial.genex.as_ref()).await?;
+    initial.genex.submit(Op::Shutdown).await?;
+    wait_for_event(&initial.genex, |ev| {
         matches!(ev, EventMsg::ShutdownComplete)
     })
     .await;
@@ -1453,10 +1453,10 @@ async fn active_realtime_refreshes_changed_start_instructions_only_after_compact
         });
     let resumed = resume_builder.resume(&server, home, rollout_path).await?;
 
-    start_realtime_conversation(resumed.codex.as_ref()).await?;
+    start_realtime_conversation(resumed.genex.as_ref()).await?;
     resumed.submit_turn("USER_TWO").await?;
-    resumed.codex.submit(Op::Compact).await?;
-    wait_for_turn_complete(&resumed.codex).await;
+    resumed.genex.submit(Op::Compact).await?;
+    wait_for_turn_complete(&resumed.genex).await;
     resumed.submit_turn("USER_THREE").await?;
 
     let requests = responses_mock.requests();
@@ -1479,7 +1479,7 @@ async fn active_realtime_refreshes_changed_start_instructions_only_after_compact
     assert_request_contains_custom_realtime_start(&requests[3], changed_instructions);
     assert!(!requests[3].body_contains_text(initial_instructions));
 
-    close_realtime_conversation(resumed.codex.as_ref()).await?;
+    close_realtime_conversation(resumed.genex.as_ref()).await?;
     resumed_realtime_server.shutdown().await;
     Ok(())
 }
@@ -1496,7 +1496,7 @@ async fn remote_mid_turn_compact_v2_sends_turn_state_over_http() -> Result<()> {
             }),
     )
     .await?;
-    let codex = harness.test().genex.clone();
+    let genex = harness.test().genex.clone();
     let responses_mock = responses::mount_response_sequence(
         harness.server(),
         vec![
@@ -1530,13 +1530,13 @@ async fn remote_mid_turn_compact_v2_sends_turn_state_over_http() -> Result<()> {
     .await;
 
     // Phase 1: sampling mints state and schedules inline v2 compaction.
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "RUN_WITH_MID_TURN_COMPACT_V2".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_turn_complete(&codex).await;
+    wait_for_turn_complete(&genex).await;
 
     let requests = responses_mock.requests();
     assert_eq!(requests.len(), 4);

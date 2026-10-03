@@ -362,7 +362,7 @@ impl ApprovalResolution {
             ReviewDecision::TimedOut => Err(ToolError::Rejected(
                 "approval request timed out".to_string(),
             )),
-            ReviewDecision::Abort => Err(ToolError::Codex(GenexErr::TurnAborted)),
+            ReviewDecision::Abort => Err(ToolError::Genex(GenexErr::TurnAborted)),
             decision => Ok(decision),
         }
     }

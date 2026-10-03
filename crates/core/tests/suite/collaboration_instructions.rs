@@ -955,7 +955,7 @@ async fn resume_replays_collaboration_instructions() -> Result<()> {
     let collab_text = "resume instructions";
     let mode = collab_mode_for_model(ModeKind::Plan, "gpt-5.5", Some(collab_text));
     core_test_support::submit_thread_settings(
-        &initial.codex,
+        &initial.genex,
         ThreadSettingsOverrides {
             collaboration_mode: Some(mode),
             ..Default::default()
@@ -964,18 +964,18 @@ async fn resume_replays_collaboration_instructions() -> Result<()> {
     .await?;
 
     initial
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&initial.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&initial.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let resumed = builder.restart(&server, &initial).await?;
     assert_eq!(
         resumed
-            .codex
+            .genex
             .config_snapshot()
             .await
             .collaboration_mode
@@ -983,13 +983,13 @@ async fn resume_replays_collaboration_instructions() -> Result<()> {
         ModeKind::Plan
     );
     resumed
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "after resume".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&resumed.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&resumed.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let input = req2.single_request().input();
     let dev_texts = developer_texts(&input);
@@ -1040,7 +1040,7 @@ async fn cold_resume_refreshes_legacy_collaboration_snapshot_once(
         .rollout_path
         .clone()
         .expect("initial session should have a rollout path");
-    initial.codex.shutdown_and_wait().await?;
+    initial.genex.shutdown_and_wait().await?;
     let mut rewrote_snapshot = false;
     let legacy_rollout = std::fs::read_to_string(&rollout_path)?
         .lines()

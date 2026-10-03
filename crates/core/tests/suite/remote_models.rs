@@ -238,7 +238,7 @@ async fn remote_models_config_context_window_override_clamps_to_max_context_wind
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(requested_model.to_string());
@@ -247,14 +247,14 @@ async fn remote_models_config_context_window_override_clamps_to_max_context_wind
         .build(&server)
         .await?;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "check context window".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let turn_started_event = wait_for_event(&codex, |event| {
+    let turn_started_event = wait_for_event(&genex, |event| {
         matches!(
             event,
             EventMsg::TurnStarted(started)
@@ -299,7 +299,7 @@ async fn remote_models_config_override_above_max_uses_max_context_window() -> Re
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(requested_model.to_string());
@@ -308,14 +308,14 @@ async fn remote_models_config_override_above_max_uses_max_context_window() -> Re
         .build(&server)
         .await?;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "check context window".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let turn_started_event = wait_for_event(&codex, |event| {
+    let turn_started_event = wait_for_event(&genex, |event| {
         matches!(
             event,
             EventMsg::TurnStarted(started)
@@ -360,7 +360,7 @@ async fn remote_models_use_context_window_when_config_override_is_absent() -> Re
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(requested_model.to_string());
@@ -368,14 +368,14 @@ async fn remote_models_use_context_window_when_config_override_is_absent() -> Re
         .build(&server)
         .await?;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "check context window".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let turn_started_event = wait_for_event(&codex, |event| {
+    let turn_started_event = wait_for_event(&genex, |event| {
         matches!(
             event,
             EventMsg::TurnStarted(started)
@@ -447,7 +447,7 @@ async fn remote_models_long_model_slug_is_sent_with_supported_reasoning(
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(requested_model.to_string());
@@ -456,14 +456,14 @@ async fn remote_models_long_model_slug_is_sent_with_supported_reasoning(
         .build_with_auto_env(&server)
         .await?;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "check model slug".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let request = response_mock.single_request();
     let body = request.body_json();
@@ -523,12 +523,12 @@ async fn namespaced_model_slug_uses_catalog_metadata_without_fallback_warning() 
     )
     .await;
 
-    let TestGenex { codex, .. } = test_genex()
+    let TestGenex { genex, .. } = test_genex()
         .with_model(requested_model)
         .build(&server)
         .await?;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "check namespaced model metadata".into(),
             text_elements: Vec::new(),
@@ -537,7 +537,7 @@ async fn namespaced_model_slug_uses_catalog_metadata_without_fallback_warning() 
 
     let mut fallback_warning_count = 0;
     loop {
-        let event = wait_for_event(&codex, |_| true).await;
+        let event = wait_for_event(&genex, |_| true).await;
         match event {
             EventMsg::Warning(warning)
                 if warning.message.contains("Defaulting to fallback metadata") =>
@@ -635,7 +635,7 @@ async fn remote_models_remote_model_uses_unified_exec() -> Result<()> {
             config.model = Some("gpt-5.4".to_string());
         });
     let TestGenex {
-        codex,
+        genex,
         cwd,
         config,
         thread_manager,
@@ -653,7 +653,7 @@ async fn remote_models_remote_model_uses_unified_exec() -> Result<()> {
     assert_eq!(model_info.shell_type, ConfigShellToolType::UnifiedExec);
 
     core_test_support::submit_thread_settings(
-        &codex,
+        &genex,
         ThreadSettingsOverrides {
             model: Some(REMOTE_MODEL_SLUG.to_string()),
             ..Default::default()
@@ -683,7 +683,7 @@ async fn remote_models_remote_model_uses_unified_exec() -> Result<()> {
     let cwd_path = cwd.abs();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd_path.as_path());
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "run call".into(),
@@ -700,7 +700,7 @@ async fn remote_models_remote_model_uses_unified_exec() -> Result<()> {
         )
         .await?;
 
-    let begin_event = wait_for_event_match(&codex, |msg| match msg {
+    let begin_event = wait_for_event_match(&genex, |msg| match msg {
         EventMsg::ExecCommandBegin(event) if event.call_id == call_id => Some(event.clone()),
         _ => None,
     })
@@ -708,7 +708,7 @@ async fn remote_models_remote_model_uses_unified_exec() -> Result<()> {
 
     assert_eq!(begin_event.source, ExecCommandSource::UnifiedExecStartup);
 
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let request = response_mock
         .requests()
@@ -932,7 +932,7 @@ async fn remote_models_apply_legacy_instructions(auth: GenexAuth) -> Result<()> 
         config.model = Some("gpt-5.2".to_string());
     });
     let TestGenex {
-        codex,
+        genex,
         cwd,
         config,
         thread_manager,
@@ -945,7 +945,7 @@ async fn remote_models_apply_legacy_instructions(auth: GenexAuth) -> Result<()> 
     let cwd_path = cwd.abs();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd_path.as_path());
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello base".into(),
@@ -962,10 +962,10 @@ async fn remote_models_apply_legacy_instructions(auth: GenexAuth) -> Result<()> 
         )
         .await?;
 
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     core_test_support::submit_thread_settings(
-        &codex,
+        &genex,
         ThreadSettingsOverrides {
             model: Some(model.to_string()),
             ..Default::default()
@@ -975,7 +975,7 @@ async fn remote_models_apply_legacy_instructions(auth: GenexAuth) -> Result<()> 
 
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd_path.as_path());
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello remote".into(),
@@ -992,7 +992,7 @@ async fn remote_models_apply_legacy_instructions(auth: GenexAuth) -> Result<()> 
         )
         .await?;
 
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let base_model_info = models_manager
         .get_model_info("gpt-5.2", &config.to_models_manager_config())

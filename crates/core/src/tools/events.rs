@@ -384,7 +384,7 @@ impl ToolEmitter {
                 };
                 (event, result)
             }
-            Err(ToolError::Codex(err)) => match err.details() {
+            Err(ToolError::Genex(err)) => match err.details() {
                 GenexErrorDetails::Sandbox(SandboxErr::Timeout { output }) => {
                     let output = output.as_ref().clone();
                     let response = self.format_exec_output_for_model(&output, ctx);

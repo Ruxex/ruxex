@@ -154,7 +154,7 @@ impl Drop for TempGenexHomeGuard {
     }
 }
 
-/// Represents a newly created Codex thread (formerly called a conversation), including the first event
+/// Represents a newly created Genex thread (formerly called a conversation), including the first event
 /// (which is [`EventMsg::SessionConfigured`]).
 pub struct NewThread {
     pub thread_id: ThreadId,
@@ -586,7 +586,7 @@ impl ThreadManager {
     ) -> Self {
         set_thread_manager_test_mode_for_tests(/*enabled*/ true);
         let genex_home = std::env::temp_dir().join(format!(
-            "codex-thread-manager-test-{}",
+            "genex-thread-manager-test-{}",
             uuid::Uuid::new_v4()
         ));
         std::fs::create_dir_all(&genex_home)

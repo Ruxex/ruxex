@@ -123,7 +123,7 @@ pub(crate) struct SessionConfiguration {
     pub(super) legacy_fallback_cwd: AbsolutePathBuf,
     /// Top-level runtime workspace roots, independent of explicit environment selections.
     pub(super) runtime_workspace_roots: Vec<AbsolutePathBuf>,
-    /// Directory containing all Codex state for this session.
+    /// Directory containing all Genex state for this session.
     pub(super) genex_home: AbsolutePathBuf,
     /// Optional user-facing name for the thread, updated during the session.
     pub(super) thread_name: Option<String>,
@@ -1535,7 +1535,7 @@ impl Session {
                 &config.features,
                 &initial_history,
             );
-            let codex_responses_headers = thread_extension_data.get::<crate::GenexResponsesHeaders>();
+            let genex_responses_headers = thread_extension_data.get::<crate::GenexResponsesHeaders>();
             let services = SessionServices {
                 // Start with an empty connection set. The initialized set is
                 // published after SessionConfigured so MCP events follow it.
@@ -1604,7 +1604,7 @@ impl Session {
                 .with_session_context(
                     fork_cache_key,
                     tx_event.clone(),
-                    codex_responses_headers,
+                    genex_responses_headers,
                 ),
                 executed_tool_calls: executed_tool_calls.clone(),
                 code_mode_service: crate::tools::code_mode::CodeModeService::new(

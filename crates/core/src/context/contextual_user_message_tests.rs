@@ -85,7 +85,7 @@ fn detects_internal_model_context_fragment() {
     );
     assert_eq!(
         text,
-        "<codex_internal_context source=\"extension\">\nInternal steering.\n</codex_internal_context>"
+        "<genex_internal_context source=\"extension\">\nInternal steering.\n</genex_internal_context>"
     );
     assert!(is_contextual_user_fragment(&ContentItem::InputText {
         text
@@ -118,7 +118,7 @@ fn does_not_hide_arbitrary_context_tags() {
 #[test]
 fn rejects_invalid_internal_model_context_source() {
     assert!(!is_contextual_user_fragment(&ContentItem::InputText {
-        text: "<codex_internal_context source=\"Extension\">\nbody\n</codex_internal_context>"
+        text: "<genex_internal_context source=\"Extension\">\nbody\n</genex_internal_context>"
             .to_string(),
     }));
 }
@@ -132,7 +132,7 @@ fn contextual_user_fragment_is_dyn_compatible() {
 
     assert_eq!(
         fragment.render(),
-        "<codex_internal_context source=\"extension\">\nInternal steering.\n</codex_internal_context>"
+        "<genex_internal_context source=\"extension\">\nInternal steering.\n</genex_internal_context>"
     );
 }
 

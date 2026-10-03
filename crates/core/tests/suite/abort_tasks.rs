@@ -49,10 +49,10 @@ async fn interrupt_long_running_tool_emits_turn_aborted() {
         .build(&server)
         .await
         .unwrap();
-    let codex = Arc::clone(&fixture.codex);
+    let genex = Arc::clone(&fixture.genex);
 
     // Kick off a turn that triggers the function call.
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "start sleep".into(),
             text_elements: Vec::new(),
@@ -61,13 +61,13 @@ async fn interrupt_long_running_tool_emits_turn_aborted() {
         .unwrap();
 
     // Wait until the exec begins to avoid a race, then interrupt.
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::ExecCommandBegin(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::ExecCommandBegin(_))).await;
 
-    codex.submit(Op::Interrupt).await.unwrap();
+    genex.submit(Op::Interrupt).await.unwrap();
 
     // Expect TurnAborted soon after.
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnAborted(_))).await;
-    codex.submit(Op::CleanBackgroundTerminals).await.unwrap();
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnAborted(_))).await;
+    genex.submit(Op::CleanBackgroundTerminals).await.unwrap();
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -89,7 +89,7 @@ async fn root_turn_suspension_preserves_unfinished_turn_history() {
         .build_with_auto_env(&server)
         .await
         .expect("start persistent root thread");
-    let codex = Arc::clone(&test.genex);
+    let genex = Arc::clone(&test.genex);
     let descendant = test
         .thread_manager
         .start_thread(StartThreadOptions {
@@ -104,7 +104,7 @@ async fn root_turn_suspension_preserves_unfinished_turn_history() {
         })
         .await
         .expect("start a currently loaded descendant");
-    let submitted = codex
+    let submitted = genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "preserve this exact unfinished turn".into(),
             text_elements: Vec::new(),
@@ -114,10 +114,10 @@ async fn root_turn_suspension_preserves_unfinished_turn_history() {
     let genex_core::TurnInputSubmission::Started { turn_id } = submitted else {
         panic!("expected a started root turn");
     };
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnStarted(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnStarted(_))).await;
 
     assert_eq!(
-        codex
+        genex
             .suspend_turn_and_shutdown()
             .await
             .expect("reject handoff while a descendant remains loaded"),
@@ -136,7 +136,7 @@ async fn root_turn_suspension_preserves_unfinished_turn_history() {
     // A previously admitted descendant no longer blocks handoff once it is stopped
     // and removed; suspension only consults the current live subtree.
     assert_eq!(
-        codex
+        genex
             .suspend_turn_and_shutdown()
             .await
             .expect("stop and close the old writer"),
@@ -144,7 +144,7 @@ async fn root_turn_suspension_preserves_unfinished_turn_history() {
             turn_id: turn_id.clone(),
         },
     );
-    let rollout_path = codex.rollout_path().expect("rollout path");
+    let rollout_path = genex.rollout_path().expect("rollout path");
     let rollout = tokio::fs::read_to_string(&rollout_path)
         .await
         .expect("read durable rollout");
@@ -181,7 +181,7 @@ async fn root_turn_suspension_preserves_unfinished_turn_history() {
 
     assert_eq!(
         resumed
-            .codex
+            .genex
             .recover_turn_if_idle(genex_core::RecoverTurnRequest {
                 turn_id: turn_id.clone(),
                 thread_settings: Default::default(),
@@ -194,7 +194,7 @@ async fn root_turn_suspension_preserves_unfinished_turn_history() {
             turn_id: turn_id.clone(),
         },
     );
-    let completed = wait_for_event(&resumed.codex, |event| {
+    let completed = wait_for_event(&resumed.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -236,9 +236,9 @@ async fn interrupt_tool_records_history_entries() {
         .build(&server)
         .await
         .unwrap();
-    let codex = Arc::clone(&fixture.codex);
+    let genex = Arc::clone(&fixture.genex);
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "start history recording".into(),
             text_elements: Vec::new(),
@@ -246,14 +246,14 @@ async fn interrupt_tool_records_history_entries() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::ExecCommandBegin(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::ExecCommandBegin(_))).await;
 
     tokio::time::sleep(Duration::from_secs_f32(0.1)).await;
-    codex.submit(Op::Interrupt).await.unwrap();
+    genex.submit(Op::Interrupt).await.unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnAborted(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnAborted(_))).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "follow up".into(),
             text_elements: Vec::new(),
@@ -261,7 +261,7 @@ async fn interrupt_tool_records_history_entries() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = response_mock.requests();
     assert!(
@@ -296,7 +296,7 @@ async fn interrupt_tool_records_history_entries() {
         secs >= 0.1,
         "expected at least one tenth of a second of elapsed time, got {secs}"
     );
-    codex.submit(Op::CleanBackgroundTerminals).await.unwrap();
+    genex.submit(Op::CleanBackgroundTerminals).await.unwrap();
 }
 
 /// After an interrupt we persist a model-visible `<turn_aborted>` marker in the conversation
@@ -329,9 +329,9 @@ async fn interrupt_persists_turn_aborted_marker_in_next_request() {
         .build(&server)
         .await
         .unwrap();
-    let codex = Arc::clone(&fixture.codex);
+    let genex = Arc::clone(&fixture.genex);
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "start interrupt marker".into(),
             text_elements: Vec::new(),
@@ -339,14 +339,14 @@ async fn interrupt_persists_turn_aborted_marker_in_next_request() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::ExecCommandBegin(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::ExecCommandBegin(_))).await;
 
     tokio::time::sleep(Duration::from_secs_f32(0.1)).await;
-    codex.submit(Op::Interrupt).await.unwrap();
+    genex.submit(Op::Interrupt).await.unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnAborted(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnAborted(_))).await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "follow up".into(),
             text_elements: Vec::new(),
@@ -354,7 +354,7 @@ async fn interrupt_persists_turn_aborted_marker_in_next_request() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = response_mock.requests();
     assert_eq!(requests.len(), 2, "expected two calls to the responses API");
@@ -367,5 +367,5 @@ async fn interrupt_persists_turn_aborted_marker_in_next_request() {
             .any(|text| text.contains("<turn_aborted>")),
         "expected <turn_aborted> marker in follow-up request"
     );
-    codex.submit(Op::CleanBackgroundTerminals).await.unwrap();
+    genex.submit(Op::CleanBackgroundTerminals).await.unwrap();
 }

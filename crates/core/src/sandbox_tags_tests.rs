@@ -138,8 +138,8 @@ fn managed_network_enforcement_tags_unrestricted_profiles_as_sandboxed() {
 
 #[test]
 fn profile_policy_tag_reports_closest_legacy_mode() {
-    let cwd = AbsolutePathBuf::from_absolute_path(Path::new("/tmp/codex")).expect("absolute cwd");
-    let writable_root = AbsolutePathBuf::from_absolute_path(Path::new("/tmp/codex/work"))
+    let cwd = AbsolutePathBuf::from_absolute_path(Path::new("/tmp/genex")).expect("absolute cwd");
+    let writable_root = AbsolutePathBuf::from_absolute_path(Path::new("/tmp/genex/work"))
         .expect("absolute writable root");
     let profile = PermissionProfile::from_runtime_permissions(
         &FileSystemSandboxPolicy {

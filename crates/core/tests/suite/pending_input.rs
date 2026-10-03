@@ -82,7 +82,7 @@ async fn idle_response_items_include_pending_mailbox_in_first_request() -> anyho
 
     submit_queue_only_agent_mail(test.genex.as_ref(), "pending mailbox input").await;
     let submission = test
-        .codex
+        .genex
         .start_turn_if_idle(TurnInputRequest::new(TurnInput::ResponseItem(
             responses::user_message_item("automatic response item"),
         )))
@@ -139,7 +139,7 @@ async fn standalone_tool_output_starts_instruction_turn() -> anyhow::Result<()> 
     let output = serde_json::from_value(expected_output.clone())?;
 
     let submission = test
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::new(TurnInput::ResponseItem(output)))
         .await?;
     let TurnInputSubmission::Started { turn_id } = submission else {
@@ -195,7 +195,7 @@ async fn assert_idle_user_input_reaches_the_first_model_request(
         text_elements: Vec::new(),
     }];
     let submission = test
-        .codex
+        .genex
         .start_turn_if_idle(TurnInputRequest::new(TurnInput::UserInput {
             content: expected_input.clone(),
             client_id: Some("queued-user-message".to_string()),
@@ -323,11 +323,11 @@ async fn build_codex(server: &StreamingSseServer) -> Arc<GenexThread> {
         .build_with_streaming_server(server)
         .await
         .expect("build streaming Codex test session")
-        .codex
+        .genex
 }
 
-async fn submit_user_input(codex: &GenexThread, text: &str) {
-    codex
+async fn submit_user_input(genex: &GenexThread, text: &str) {
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: text.to_string(),
             text_elements: Vec::new(),
@@ -365,8 +365,8 @@ async fn submit_danger_full_access_user_turn(test: &TestGenex, text: &str) {
         .expect("submit user turn");
 }
 
-async fn steer_user_input(codex: &GenexThread, text: &str) {
-    let submission = codex
+async fn steer_user_input(genex: &GenexThread, text: &str) {
+    let submission = genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: text.to_string(),
             text_elements: Vec::new(),
@@ -376,8 +376,8 @@ async fn steer_user_input(codex: &GenexThread, text: &str) {
     assert!(matches!(submission, TurnInputSubmission::Steered { .. }));
 }
 
-async fn enqueue_queue_only_agent_mail(codex: &GenexThread, text: &str) {
-    codex
+async fn enqueue_queue_only_agent_mail(genex: &GenexThread, text: &str) {
+    genex
         .submit(Op::InterAgentCommunication {
             communication: InterAgentCommunication::new(
                 AgentPath::try_from("/root/worker").expect("worker path should parse"),
@@ -392,20 +392,20 @@ async fn enqueue_queue_only_agent_mail(codex: &GenexThread, text: &str) {
         .expect("submit queue-only agent mail");
 }
 
-async fn submit_queue_only_agent_mail(codex: &GenexThread, text: &str) {
-    enqueue_queue_only_agent_mail(codex, text).await;
-    codex
+async fn submit_queue_only_agent_mail(genex: &GenexThread, text: &str) {
+    enqueue_queue_only_agent_mail(genex, text).await;
+    genex
         .submit(Op::RealtimeConversationListVoices)
         .await
         .expect("submit list-voices barrier");
-    wait_for_event(codex, |event| {
+    wait_for_event(genex, |event| {
         matches!(event, EventMsg::RealtimeConversationListVoicesResponse(_))
     })
     .await;
 }
 
-async fn wait_for_reasoning_item_started(codex: &GenexThread) {
-    wait_for_event(codex, |event| {
+async fn wait_for_reasoning_item_started(genex: &GenexThread) {
+    wait_for_event(genex, |event| {
         matches!(
             event,
             EventMsg::ItemStarted(item_started)
@@ -415,21 +415,21 @@ async fn wait_for_reasoning_item_started(codex: &GenexThread) {
     .await;
 }
 
-async fn wait_for_agent_message(codex: &GenexThread, text: &str) {
+async fn wait_for_agent_message(genex: &GenexThread, text: &str) {
     let final_message = wait_for_event(
-        codex,
+        genex,
         |event| matches!(event, EventMsg::AgentMessage(message) if message.message == text),
     )
     .await;
     assert!(matches!(final_message, EventMsg::AgentMessage(_)));
 }
 
-async fn wait_for_turn_complete(codex: &GenexThread) {
-    wait_for_event(codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+async fn wait_for_turn_complete(genex: &GenexThread) {
+    wait_for_event(genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 }
 
-async fn wait_for_sleep_item_started(codex: &GenexThread, call_id: &str, duration_ms: u64) {
-    let event = wait_for_event(codex, |event| {
+async fn wait_for_sleep_item_started(genex: &GenexThread, call_id: &str, duration_ms: u64) {
+    let event = wait_for_event(genex, |event| {
         matches!(
             event,
             EventMsg::ItemStarted(started)
@@ -455,8 +455,8 @@ async fn wait_for_sleep_item_started(codex: &GenexThread, call_id: &str, duratio
     );
 }
 
-async fn wait_for_sleep_item_completed(codex: &GenexThread, call_id: &str, duration_ms: u64) {
-    let event = wait_for_event(codex, |event| {
+async fn wait_for_sleep_item_completed(genex: &GenexThread, call_id: &str, duration_ms: u64) {
+    let event = wait_for_event(genex, |event| {
         matches!(
             event,
             EventMsg::ItemCompleted(completed)
@@ -516,16 +516,16 @@ async fn queue_only_agent_mail_wakes_sleeping_root_with_previous_turn_context() 
     let mut extensions =
         genex_extension_api::ExtensionRegistryBuilder::<genex_core::config::Config>::new();
     extensions.thread_lifecycle_contributor(Arc::new(SleepingRootExtension));
-    let codex = test_genex()
+    let genex = test_genex()
         .with_model("gpt-5.4")
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await
         .expect("build Codex test session")
-        .codex;
+        .genex;
 
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "wait for the worker".to_string(),
@@ -538,9 +538,9 @@ async fn queue_only_agent_mail_wakes_sleeping_root_with_previous_turn_context() 
         )
         .await
         .expect("start initial turn");
-    wait_for_turn_complete(&codex).await;
-    enqueue_queue_only_agent_mail(&codex, CHILD_MESSAGE).await;
-    wait_for_turn_complete(&codex).await;
+    wait_for_turn_complete(&genex).await;
+    enqueue_queue_only_agent_mail(&genex, CHILD_MESSAGE).await;
+    wait_for_turn_complete(&genex).await;
 
     assert_eq!(
         requests
@@ -550,7 +550,7 @@ async fn queue_only_agent_mail_wakes_sleeping_root_with_previous_turn_context() 
             .collect::<Vec<_>>(),
         vec![json!({"cyber": "standard"}); 2],
     );
-    let history = codex
+    let history = genex
         .load_history(/*include_archived*/ true)
         .await
         .expect("load persisted thread history");
@@ -590,7 +590,7 @@ async fn steer_interrupts_wait_agent_and_is_sent_in_follow_up_request() {
     ];
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, response_completed_chunks("resp-2")]).await;
-    let codex = test_genex()
+    let genex = test_genex()
         .with_model("gpt-5.4")
         .with_config(|config| {
             config
@@ -601,16 +601,16 @@ async fn steer_interrupts_wait_agent_and_is_sent_in_follow_up_request() {
         .build_with_streaming_server(&server)
         .await
         .expect("build Codex test session")
-        .codex;
+        .genex;
 
-    submit_user_input(&codex, INITIAL_PROMPT).await;
-    wait_for_event(&codex, |event| {
+    submit_user_input(&genex, INITIAL_PROMPT).await;
+    wait_for_event(&genex, |event| {
         matches!(event, EventMsg::CollabWaitingBegin(_))
     })
     .await;
 
-    steer_user_input(&codex, STEER_PROMPT).await;
-    wait_for_turn_complete(&codex).await;
+    steer_user_input(&genex, STEER_PROMPT).await;
+    wait_for_turn_complete(&genex).await;
 
     let requests = server.requests().await;
     assert_eq!(requests.len(), 2);
@@ -670,7 +670,7 @@ async fn any_new_input_interrupts_sleep() {
         response_completed_chunks("resp-3"),
     ])
     .await;
-    let codex = test_genex()
+    let genex = test_genex()
         .with_model("gpt-5.4")
         .with_config(|config| {
             config
@@ -685,18 +685,18 @@ async fn any_new_input_interrupts_sleep() {
         .build_with_streaming_server(&server)
         .await
         .expect("build Codex test session")
-        .codex;
+        .genex;
 
-    submit_user_input(&codex, INITIAL_PROMPT).await;
-    wait_for_sleep_item_started(&codex, FIRST_SLEEP_CALL_ID, SLEEP_DURATION_MS).await;
+    submit_user_input(&genex, INITIAL_PROMPT).await;
+    wait_for_sleep_item_started(&genex, FIRST_SLEEP_CALL_ID, SLEEP_DURATION_MS).await;
 
-    steer_user_input(&codex, STEER_PROMPT).await;
-    wait_for_sleep_item_completed(&codex, FIRST_SLEEP_CALL_ID, SLEEP_DURATION_MS).await;
-    wait_for_sleep_item_started(&codex, SECOND_SLEEP_CALL_ID, SLEEP_DURATION_MS).await;
+    steer_user_input(&genex, STEER_PROMPT).await;
+    wait_for_sleep_item_completed(&genex, FIRST_SLEEP_CALL_ID, SLEEP_DURATION_MS).await;
+    wait_for_sleep_item_started(&genex, SECOND_SLEEP_CALL_ID, SLEEP_DURATION_MS).await;
 
-    submit_queue_only_agent_mail(&codex, "new mailbox input").await;
-    wait_for_sleep_item_completed(&codex, SECOND_SLEEP_CALL_ID, SLEEP_DURATION_MS).await;
-    wait_for_turn_complete(&codex).await;
+    submit_queue_only_agent_mail(&genex, "new mailbox input").await;
+    wait_for_sleep_item_completed(&genex, SECOND_SLEEP_CALL_ID, SLEEP_DURATION_MS).await;
+    wait_for_turn_complete(&genex).await;
 
     let requests = server.requests().await;
     assert_eq!(requests.len(), 3);
@@ -714,10 +714,10 @@ async fn any_new_input_interrupts_sleep() {
     let third: Value = from_slice(&requests[2]).expect("parse third request");
     assert_interrupted_sleep_output(function_call_output_text(&third, SECOND_SLEEP_CALL_ID));
 
-    codex.submit(Op::Shutdown).await.expect("shutdown session");
-    wait_for_event(&codex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
+    genex.submit(Op::Shutdown).await.expect("shutdown session");
+    wait_for_event(&genex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
 
-    let rollout_path = codex.rollout_path().expect("rollout path");
+    let rollout_path = genex.rollout_path().expect("rollout path");
     let rollout = tokio::fs::read_to_string(rollout_path)
         .await
         .expect("read rollout");
@@ -811,14 +811,14 @@ async fn injected_user_input_triggers_follow_up_request_with_deltas() {
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, second_chunks]).await;
 
-    let codex = test_genex()
+    let genex = test_genex()
         .with_model("gpt-5.4")
         .build_with_streaming_server(&server)
         .await
         .unwrap()
-        .codex;
+        .genex;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "first prompt".into(),
             text_elements: Vec::new(),
@@ -826,12 +826,12 @@ async fn injected_user_input_triggers_follow_up_request_with_deltas() {
         .await
         .unwrap();
 
-    wait_for_event(&codex, |event| {
+    wait_for_event(&genex, |event| {
         matches!(event, EventMsg::AgentMessageContentDelta(_))
     })
     .await;
 
-    codex
+    genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "second prompt".into(),
             text_elements: Vec::new(),
@@ -841,7 +841,7 @@ async fn injected_user_input_triggers_follow_up_request_with_deltas() {
 
     let _ = gate_completed_tx.send(());
 
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let requests = server.requests().await;
     assert_eq!(requests.len(), 2);
@@ -887,17 +887,17 @@ async fn queued_inter_agent_mail_triggers_follow_up_after_reasoning_item() {
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, response_completed_chunks("resp-2")]).await;
 
-    let codex = build_codex(&server).await;
+    let genex = build_codex(&server).await;
 
-    submit_user_input(&codex, "first prompt").await;
+    submit_user_input(&genex, "first prompt").await;
 
-    wait_for_reasoning_item_started(&codex).await;
+    wait_for_reasoning_item_started(&genex).await;
 
-    submit_queue_only_agent_mail(&codex, "queued child update").await;
+    submit_queue_only_agent_mail(&genex, "queued child update").await;
 
     let _ = gate_reasoning_done_tx.send(());
 
-    wait_for_turn_complete(&codex).await;
+    wait_for_turn_complete(&genex).await;
 
     let requests = server.requests().await;
     assert_two_responses_input_snapshot("pending_input_queued_mail_after_reasoning", &requests);
@@ -942,11 +942,11 @@ async fn queued_inter_agent_mail_triggers_follow_up_after_commentary_message_ite
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, response_completed_chunks("resp-2")]).await;
 
-    let codex = build_codex(&server).await;
+    let genex = build_codex(&server).await;
 
-    submit_user_input(&codex, "first prompt").await;
+    submit_user_input(&genex, "first prompt").await;
 
-    wait_for_event(&codex, |event| {
+    wait_for_event(&genex, |event| {
         matches!(
             event,
             EventMsg::ItemStarted(item_started)
@@ -955,13 +955,13 @@ async fn queued_inter_agent_mail_triggers_follow_up_after_commentary_message_ite
     })
     .await;
 
-    submit_queue_only_agent_mail(&codex, "queued child update").await;
+    submit_queue_only_agent_mail(&genex, "queued child update").await;
 
     let _ = gate_message_done_tx.send(());
 
-    wait_for_agent_message(&codex, "first answer").await;
+    wait_for_agent_message(&genex, "first answer").await;
 
-    wait_for_turn_complete(&codex).await;
+    wait_for_turn_complete(&genex).await;
 
     let requests = server.requests().await;
     assert_two_responses_input_snapshot("pending_input_queued_mail_after_commentary", &requests);
@@ -993,11 +993,11 @@ async fn queued_inter_agent_mail_does_not_restart_after_final_answer() {
         response_completed_chunks("unexpected-resp-2"),
     ])
     .await;
-    let codex = build_codex(&server).await;
+    let genex = build_codex(&server).await;
 
-    submit_queue_only_agent_mail(&codex, "queued child update").await;
-    submit_user_input(&codex, "first prompt").await;
-    wait_for_turn_complete(&codex).await;
+    submit_queue_only_agent_mail(&genex, "queued child update").await;
+    submit_user_input(&genex, "first prompt").await;
+    wait_for_turn_complete(&genex).await;
 
     let mut requests = server.requests().await;
     assert_eq!(requests.len(), 1);
@@ -1010,8 +1010,8 @@ async fn queued_inter_agent_mail_does_not_restart_after_final_answer() {
             .all(|item| item.get("type").and_then(Value::as_str) != Some("agent_message"))
     );
 
-    submit_user_input(&codex, "second prompt").await;
-    wait_for_turn_complete(&codex).await;
+    submit_user_input(&genex, "second prompt").await;
+    wait_for_turn_complete(&genex).await;
 
     requests = server.requests().await;
     assert_eq!(requests.len(), 2);
@@ -1068,24 +1068,24 @@ async fn injected_response_item_reopens_turn_after_final_answer() {
     ];
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, response_completed_chunks("resp-2")]).await;
-    let codex = build_codex(&server).await;
+    let genex = build_codex(&server).await;
 
-    submit_user_input(&codex, INITIAL_PROMPT).await;
-    wait_for_reasoning_item_started(&codex).await;
+    submit_user_input(&genex, INITIAL_PROMPT).await;
+    wait_for_reasoning_item_started(&genex).await;
 
     assert!(
-        codex
+        genex
             .inject_if_running(vec![responses::user_message_item(INJECTED_CONTEXT)])
             .await
             .is_ok()
     );
-    codex
+    genex
         .inject_response_items(vec![responses::user_message_item(EXTERNAL_CONTEXT)])
         .await
         .expect("external context should be injected");
     let _ = gate_completed_tx.send(());
 
-    wait_for_turn_complete(&codex).await;
+    wait_for_turn_complete(&genex).await;
 
     let requests = server.requests().await;
     assert_eq!(requests.len(), 2);
@@ -1139,19 +1139,19 @@ async fn user_input_does_not_preempt_after_reasoning_item() {
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, response_completed_chunks("resp-2")]).await;
 
-    let codex = build_codex(&server).await;
+    let genex = build_codex(&server).await;
 
-    submit_user_input(&codex, "first prompt").await;
+    submit_user_input(&genex, "first prompt").await;
 
-    wait_for_reasoning_item_started(&codex).await;
+    wait_for_reasoning_item_started(&genex).await;
 
-    steer_user_input(&codex, "second prompt").await;
+    steer_user_input(&genex, "second prompt").await;
 
     let _ = gate_reasoning_done_tx.send(());
 
-    wait_for_agent_message(&codex, "first answer").await;
+    wait_for_agent_message(&genex, "first answer").await;
 
-    wait_for_turn_complete(&codex).await;
+    wait_for_turn_complete(&genex).await;
 
     let requests = server.requests().await;
     assert_two_responses_input_snapshot(
@@ -1253,26 +1253,26 @@ async fn terminal_compaction_error_does_not_retry_pending_input(
         })
         .build_with_auto_env(&config_server)
         .await?;
-    let codex = &test.genex;
+    let genex = &test.genex;
 
     if failure_point == CompactionFailurePoint::PreTurn {
-        submit_user_input(codex, "initial prompt").await;
-        wait_for_turn_complete(codex).await;
+        submit_user_input(genex, "initial prompt").await;
+        wait_for_turn_complete(genex).await;
     }
     if pending_input == PendingInputAfterFailure::QueuedMail {
-        submit_queue_only_agent_mail(codex, PENDING_MESSAGE).await;
+        submit_queue_only_agent_mail(genex, PENDING_MESSAGE).await;
     }
-    submit_user_input(codex, "prompt that needs compaction").await;
+    submit_user_input(genex, "prompt that needs compaction").await;
     tokio::time::timeout(
         std::time::Duration::from_secs(/*secs*/ 10),
         server.wait_for_request_count(/*count*/ 2),
     )
     .await?;
     match pending_input {
-        PendingInputAfterFailure::Steer => steer_user_input(codex, PENDING_MESSAGE).await,
+        PendingInputAfterFailure::Steer => steer_user_input(genex, PENDING_MESSAGE).await,
         PendingInputAfterFailure::QueuedMail => {}
         PendingInputAfterFailure::TriggeringMail => {
-            codex
+            genex
                 .submit(Op::InterAgentCommunication {
                     communication: InterAgentCommunication::new(
                         AgentPath::root().join("worker").expect("valid worker path"),
@@ -1284,8 +1284,8 @@ async fn terminal_compaction_error_does_not_retry_pending_input(
                     start_options: Default::default(),
                 })
                 .await?;
-            codex.submit(Op::RealtimeConversationListVoices).await?;
-            wait_for_event(codex, |event| {
+            genex.submit(Op::RealtimeConversationListVoices).await?;
+            wait_for_event(genex, |event| {
                 matches!(event, EventMsg::RealtimeConversationListVoicesResponse(_))
             })
             .await;
@@ -1295,7 +1295,7 @@ async fn terminal_compaction_error_does_not_retry_pending_input(
 
     let mut errors = Vec::new();
     let mut completed_turns = 0;
-    wait_for_event(codex, |event| {
+    wait_for_event(genex, |event| {
         match event {
             EventMsg::Error(error) => {
                 assert_eq!(
@@ -1328,8 +1328,8 @@ async fn terminal_compaction_error_does_not_retry_pending_input(
         );
     }
 
-    codex.flush_rollout().await?;
-    let history = codex.load_history(/*include_archived*/ false).await?;
+    genex.flush_rollout().await?;
+    let history = genex.load_history(/*include_archived*/ false).await?;
     let saved_pending_messages = history
         .items
         .iter()
@@ -1361,9 +1361,9 @@ async fn terminal_compaction_error_does_not_retry_pending_input(
     assert_eq!(saved_pending_messages, vec![PENDING_MESSAGE]);
 
     // The failed turn must not poison a later explicit retry once compaction can succeed.
-    submit_user_input(codex, "retry after quota resets").await;
-    wait_for_agent_message(codex, "recovered answer").await;
-    let completed = wait_for_event(codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    submit_user_input(genex, "retry after quota resets").await;
+    wait_for_agent_message(genex, "recovered answer").await;
+    let completed = wait_for_event(genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     let EventMsg::TurnComplete(completed) = completed else {
         unreachable!("expected turn completion");
     };
@@ -1423,7 +1423,7 @@ async fn steered_user_input_waits_for_model_continuation_after_mid_turn_compact(
     ])
     .await;
 
-    let codex = test_genex()
+    let genex = test_genex()
         .with_model("gpt-5.4")
         .with_config(|config| {
             config.model_provider.name = "provider (test)".to_string();
@@ -1433,13 +1433,13 @@ async fn steered_user_input_waits_for_model_continuation_after_mid_turn_compact(
         .build_with_streaming_server(&server)
         .await
         .expect("build streaming Codex test session")
-        .codex;
+        .genex;
 
-    submit_user_input(&codex, "first prompt").await;
-    submit_user_input(&codex, "second prompt").await;
+    submit_user_input(&genex, "first prompt").await;
+    submit_user_input(&genex, "second prompt").await;
 
-    wait_for_agent_message(&codex, "resumed old task").await;
-    wait_for_turn_complete(&codex).await;
+    wait_for_agent_message(&genex, "resumed old task").await;
+    wait_for_turn_complete(&genex).await;
 
     let requests = server.requests().await;
     assert_eq!(requests.len(), 4);
@@ -1508,7 +1508,7 @@ async fn steered_user_input_follows_compact_when_only_the_steer_needs_follow_up(
         start_streaming_sse_server(vec![first_chunks, compact_chunks, steered_follow_up_chunks])
             .await;
 
-    let codex = test_genex()
+    let genex = test_genex()
         .with_model("gpt-5.4")
         .with_config(|config| {
             config.model_provider.name = "provider (test)".to_string();
@@ -1518,15 +1518,15 @@ async fn steered_user_input_follows_compact_when_only_the_steer_needs_follow_up(
         .build_with_streaming_server(&server)
         .await
         .expect("build streaming Codex test session")
-        .codex;
+        .genex;
 
-    submit_user_input(&codex, "first prompt").await;
-    wait_for_agent_message(&codex, "first answer").await;
-    steer_user_input(&codex, "second prompt").await;
+    submit_user_input(&genex, "first prompt").await;
+    wait_for_agent_message(&genex, "first answer").await;
+    steer_user_input(&genex, "second prompt").await;
     let _ = gate_first_completed_tx.send(());
 
-    wait_for_agent_message(&codex, "processed steered prompt").await;
-    wait_for_turn_complete(&codex).await;
+    wait_for_agent_message(&genex, "processed steered prompt").await;
+    wait_for_turn_complete(&genex).await;
 
     let requests = server.requests().await;
     assert_eq!(requests.len(), 3);
@@ -1635,14 +1635,14 @@ async fn steered_user_input_waits_when_tool_output_triggers_compact_before_next_
         .build_with_streaming_server(&server)
         .await
         .expect("build streaming Codex test session");
-    let codex = test.genex.clone();
+    let genex = test.genex.clone();
 
     submit_danger_full_access_user_turn(&test, "first prompt").await;
-    wait_for_event(&codex, |event| matches!(event, EventMsg::TurnStarted(_))).await;
-    steer_user_input(&codex, "second prompt").await;
+    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnStarted(_))).await;
+    steer_user_input(&genex, "second prompt").await;
     let _ = gate_first_completed_tx.send(());
 
-    wait_for_turn_complete(&codex).await;
+    wait_for_turn_complete(&genex).await;
 
     let requests = server.requests().await;
     assert_eq!(requests.len(), 4);

@@ -82,7 +82,7 @@ async fn initial_plugin_ids_use_turn_context_without_extra_settings_checkpoints(
     .await?;
     let response = responses::mount_sse_once(&server, responses::sse_completed("first turn")).await;
     let submission = test
-        .codex
+        .genex
         .start_turn_if_idle(TurnInputRequest::user_input(Vec::new()))
         .await?;
     let StartIfIdleSubmission::Started { turn_id } = submission else {
@@ -206,11 +206,11 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
         ..Default::default()
     };
     let submission = tokio::spawn({
-        let codex = Arc::clone(&test.genex);
+        let genex = Arc::clone(&test.genex);
         async move {
             match operation {
                 SettingsOperation::TurnStart => {
-                    let result = codex
+                    let result = genex
                         .start_or_steer_turn(
                             TurnInputRequest::user_input(vec![UserInput::Text {
                                 text: "use the committed model".to_string(),
@@ -225,7 +225,7 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
                     Ok(turn_id)
                 }
                 SettingsOperation::Standalone => {
-                    codex.submit(Op::ThreadSettings { thread_settings }).await
+                    genex.submit(Op::ThreadSettings { thread_settings }).await
                 }
             }
         }

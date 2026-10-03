@@ -162,12 +162,12 @@ fn write_token_budget_compact_hooks(home: &Path) {
     std::fs::write(home.join("hooks.json"), hooks.to_string()).expect("write hooks.json");
 }
 
-async fn assert_context_compaction_item_lifecycle(codex: &std::sync::Arc<genex_core::GenexThread>) {
+async fn assert_context_compaction_item_lifecycle(genex: &std::sync::Arc<genex_core::GenexThread>) {
     let mut saw_compaction_started = false;
     let mut saw_compaction_completed = false;
 
     loop {
-        let event = codex.next_event().await.expect("next event");
+        let event = genex.next_event().await.expect("next event");
         match event.msg {
             EventMsg::ItemStarted(ItemStartedEvent {
                 item: TurnItem::ContextCompaction(_),

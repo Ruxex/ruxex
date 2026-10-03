@@ -241,7 +241,7 @@ async fn assert_user_turn_local_image_resizes_to(
     });
     let test = builder.build_with_auto_env(&server).await?;
     let TestGenex {
-        codex,
+        genex,
         session_configured,
         ..
     } = &test;
@@ -261,7 +261,7 @@ async fn assert_user_turn_local_image_resizes_to(
 
     let session_model = session_configured.model.clone();
 
-    codex
+    genex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::LocalImage {
@@ -273,7 +273,7 @@ async fn assert_user_turn_local_image_resizes_to(
         .await?;
 
     wait_for_event_with_timeout(
-        codex,
+        genex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         // Empirically, image attachment can be slow in CI.
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
@@ -426,7 +426,7 @@ async fn view_image_tool_attaches_local_image() -> anyhow::Result<()> {
     });
     let test = builder.build_with_auto_env(&server).await?;
     let TestGenex {
-        codex,
+        genex,
         session_configured,
         ..
     } = &test;
@@ -461,7 +461,7 @@ async fn view_image_tool_attaches_local_image() -> anyhow::Result<()> {
 
     let session_model = session_configured.model.clone();
 
-    codex
+    genex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -476,7 +476,7 @@ async fn view_image_tool_attaches_local_image() -> anyhow::Result<()> {
     let mut item_completed = None;
     let mut legacy_event = None;
     wait_for_event_with_timeout(
-        codex,
+        genex,
         |event| match event {
             EventMsg::ItemStarted(event) => {
                 if matches!(&event.item, genex_protocol::items::TurnItem::ImageView(_)) {
@@ -847,7 +847,7 @@ async fn view_image_tool_can_preserve_original_resolution_when_requested_on_gpt5
     let mut builder = test_genex().with_model("gpt-5.4");
     let test = builder.build_with_auto_env(&server).await?;
     let TestGenex {
-        codex,
+        genex,
         session_configured,
         ..
     } = &test;
@@ -882,7 +882,7 @@ async fn view_image_tool_can_preserve_original_resolution_when_requested_on_gpt5
 
     let session_model = session_configured.model.clone();
 
-    codex
+    genex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -894,7 +894,7 @@ async fn view_image_tool_can_preserve_original_resolution_when_requested_on_gpt5
         .await?;
 
     wait_for_event_with_timeout(
-        codex,
+        genex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )
@@ -1014,7 +1014,7 @@ async fn view_image_tool_errors_clearly_for_unsupported_detail_values() -> anyho
     let mut builder = test_genex().with_model("gpt-5.4");
     let test = builder.build_with_auto_env(&server).await?;
     let TestGenex {
-        codex,
+        genex,
         session_configured,
         ..
     } = &test;
@@ -1047,7 +1047,7 @@ async fn view_image_tool_errors_clearly_for_unsupported_detail_values() -> anyho
 
     let session_model = session_configured.model.clone();
 
-    codex
+    genex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1059,7 +1059,7 @@ async fn view_image_tool_errors_clearly_for_unsupported_detail_values() -> anyho
         .await?;
 
     wait_for_event_with_timeout(
-        codex,
+        genex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )
@@ -1092,7 +1092,7 @@ async fn view_image_tool_treats_null_detail_as_omitted() -> anyhow::Result<()> {
     let mut builder = test_genex().with_model("gpt-5.4");
     let test = builder.build_with_auto_env(&server).await?;
     let TestGenex {
-        codex,
+        genex,
         session_configured,
         ..
     } = &test;
@@ -1127,7 +1127,7 @@ async fn view_image_tool_treats_null_detail_as_omitted() -> anyhow::Result<()> {
 
     let session_model = session_configured.model.clone();
 
-    codex
+    genex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1139,7 +1139,7 @@ async fn view_image_tool_treats_null_detail_as_omitted() -> anyhow::Result<()> {
         .await?;
 
     wait_for_event_with_timeout(
-        codex,
+        genex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )
@@ -1201,7 +1201,7 @@ async fn assert_view_image_tool_resizes_without_original_support(
         });
     let test = builder.build_with_auto_env(&server).await?;
     let TestGenex {
-        codex,
+        genex,
         session_configured,
         ..
     } = &test;
@@ -1236,7 +1236,7 @@ async fn assert_view_image_tool_resizes_without_original_support(
 
     let session_model = session_configured.model.clone();
 
-    codex
+    genex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1248,7 +1248,7 @@ async fn assert_view_image_tool_resizes_without_original_support(
         .await?;
 
     wait_for_event_with_timeout(
-        codex,
+        genex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )
@@ -1295,7 +1295,7 @@ async fn view_image_tool_does_not_force_original_resolution_with_capability_only
     let mut builder = test_genex().with_model("gpt-5.4");
     let test = builder.build_with_auto_env(&server).await?;
     let TestGenex {
-        codex,
+        genex,
         session_configured,
         ..
     } = &test;
@@ -1330,7 +1330,7 @@ async fn view_image_tool_does_not_force_original_resolution_with_capability_only
 
     let session_model = session_configured.model.clone();
 
-    codex
+    genex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1342,7 +1342,7 @@ async fn view_image_tool_does_not_force_original_resolution_with_capability_only
         .await?;
 
     wait_for_event_with_timeout(
-        codex,
+        genex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )
@@ -1386,7 +1386,7 @@ async fn view_image_tool_errors_when_path_is_directory() -> anyhow::Result<()> {
     let mut builder = test_genex();
     let test = builder.build_with_auto_env(&server).await?;
     let TestGenex {
-        codex,
+        genex,
         session_configured,
         ..
     } = &test;
@@ -1412,7 +1412,7 @@ async fn view_image_tool_errors_when_path_is_directory() -> anyhow::Result<()> {
 
     let session_model = session_configured.model.clone();
 
-    codex
+    genex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1424,7 +1424,7 @@ async fn view_image_tool_errors_when_path_is_directory() -> anyhow::Result<()> {
         .await?;
 
     wait_for_event_with_timeout(
-        codex,
+        genex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )
@@ -1456,7 +1456,7 @@ async fn view_image_tool_rejects_invalid_image_before_tool_output() -> anyhow::R
     let mut builder = test_genex();
     let test = builder.build_with_auto_env(&server).await?;
     let TestGenex {
-        codex,
+        genex,
         session_configured,
         ..
     } = &test;
@@ -1484,7 +1484,7 @@ async fn view_image_tool_rejects_invalid_image_before_tool_output() -> anyhow::R
     )
     .await;
 
-    codex
+    genex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1495,7 +1495,7 @@ async fn view_image_tool_rejects_invalid_image_before_tool_output() -> anyhow::R
         ))
         .await?;
     wait_for_event_with_timeout(
-        codex,
+        genex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )
@@ -1528,7 +1528,7 @@ async fn view_image_tool_errors_when_file_missing() -> anyhow::Result<()> {
     let mut builder = test_genex();
     let test = builder.build_with_auto_env(&server).await?;
     let TestGenex {
-        codex,
+        genex,
         session_configured,
         ..
     } = &test;
@@ -1556,7 +1556,7 @@ async fn view_image_tool_errors_when_file_missing() -> anyhow::Result<()> {
 
     let session_model = session_configured.model.clone();
 
-    codex
+    genex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1568,7 +1568,7 @@ async fn view_image_tool_errors_when_file_missing() -> anyhow::Result<()> {
         .await?;
 
     wait_for_event_with_timeout(
-        codex,
+        genex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )
@@ -1671,7 +1671,7 @@ async fn view_image_tool_returns_unsupported_message_for_text_only_model() -> an
             config.model = Some(model_slug.to_string());
         });
     let test = builder.build_with_auto_env(&server).await?;
-    let TestGenex { codex, .. } = &test;
+    let TestGenex { genex, .. } = &test;
 
     let rel_path = "assets/example.png";
     write_workspace_png(
@@ -1698,7 +1698,7 @@ async fn view_image_tool_returns_unsupported_message_for_text_only_model() -> an
     ]);
     let mock = responses::mount_sse_once(&server, second_response).await;
 
-    codex
+    genex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1710,7 +1710,7 @@ async fn view_image_tool_returns_unsupported_message_for_text_only_model() -> an
         .await?;
 
     wait_for_event_with_timeout(
-        codex,
+        genex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )

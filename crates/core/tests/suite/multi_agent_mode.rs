@@ -108,11 +108,11 @@ fn count_containing(texts: &[&str], target: &str) -> usize {
 }
 
 async fn submit_turn(
-    codex: &genex_core::GenexThread,
+    genex: &genex_core::GenexThread,
     prompt: &str,
     effort: Option<ReasoningEffort>,
 ) -> Result<()> {
-    codex
+    genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.to_string(),
@@ -124,7 +124,7 @@ async fn submit_turn(
             }),
         )
         .await?;
-    wait_for_event(codex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     Ok(())
 }
 
@@ -452,7 +452,7 @@ async fn changing_configured_mode_hint_to_empty_emits_no_update() -> Result<()> 
         .build(&server)
         .await?;
 
-    submit_turn(&initial.codex, "before resume", /*effort*/ None).await?;
+    submit_turn(&initial.genex, "before resume", /*effort*/ None).await?;
 
     let mut resume_builder = test_genex().with_config(|config| {
         configure_multi_agent_v2(config);
@@ -460,7 +460,7 @@ async fn changing_configured_mode_hint_to_empty_emits_no_update() -> Result<()> 
     });
     let resumed = resume_builder.restart(&server, &initial).await?;
     drop(initial);
-    submit_turn(&resumed.codex, "after resume", /*effort*/ None).await?;
+    submit_turn(&resumed.genex, "after resume", /*effort*/ None).await?;
 
     let requests = responses.requests();
     let first_input = requests[0].input();
@@ -583,14 +583,14 @@ async fn leaving_ultra_after_cold_resume_emits_explicit_mode() -> Result<()> {
         .build(&server)
         .await?;
 
-    submit_turn(&initial.codex, "before resume", /*effort*/ None).await?;
+    submit_turn(&initial.genex, "before resume", /*effort*/ None).await?;
 
     let mut resume_builder = test_genex()
         .with_model_info_override("gpt-5.4", add_ultra_reasoning)
         .with_config(configure_ultra);
     let resumed = resume_builder.restart(&server, &initial).await?;
     drop(initial);
-    submit_turn(&resumed.codex, "after resume", Some(ReasoningEffort::High)).await?;
+    submit_turn(&resumed.genex, "after resume", Some(ReasoningEffort::High)).await?;
 
     let requests = responses.requests();
     assert_eq!(

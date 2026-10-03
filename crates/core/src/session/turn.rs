@@ -624,9 +624,9 @@ pub(crate) async fn run_turn(
             Err(err) if matches!(err.details(), GenexErrorDetails::TurnAborted) => {
                 return Err(err);
             }
-            Err(codex_error)
+            Err(genex_error)
                 if matches!(
-                    codex_error.details(),
+                    genex_error.details(),
                     GenexErrorDetails::InvalidImageRequest()
                 ) =>
             {
