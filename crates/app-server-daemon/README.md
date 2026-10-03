@@ -3,9 +3,9 @@
 > `genex-app-server-daemon` is experimental and its lifecycle contract may
 > change while the daemon lifecycle flow is still being developed.
 
-`genex-app-server-daemon` backs the machine-readable `codex app-server`
+`genex-app-server-daemon` backs the machine-readable `genex app-server`
 lifecycle commands used by local and remote app-server clients.
-It is intended for Codex instances launched over SSH, including fresh developer
+It is intended for Genex instances launched over SSH, including fresh developer
 machines that should expose app-server through the managed local socket.
 
 ## Platform support
@@ -84,8 +84,8 @@ On Windows, use a non-elevated PowerShell terminal whose host allows breakaway:
 ```powershell
 The installer endpoint is provider-specific; configure it through
 `CODEX_INSTALLER_URL` rather than relying on a built-in hosted URL.
-$codexHome = if ($env:GENEX_HOME) { $env:GENEX_HOME } else { Join-Path $HOME '.genex' }
-& "$codexHome\packages\standalone\current\bin\codex.exe" app-server daemon bootstrap
+$genexHome = if ($env:GENEX_HOME) { $env:GENEX_HOME } else { Join-Path $HOME '.genex' }
+& "$genexHome\packages\standalone\current\bin\codex.exe" app-server daemon bootstrap
 ```
 
 `bootstrap` can use any complete CLI package. If no daemon package is installed,

@@ -639,7 +639,7 @@ impl Daemon {
             }
             return Ok(false);
         }
-        let Ok(codex_bin) =
+        let Ok(genex_bin) =
             managed_install::resolved_managed_genex_bin(&self.managed_genex_bin).await
         else {
             if !self.has_latest_selection_marker() {
@@ -647,18 +647,18 @@ impl Daemon {
             }
             return Ok(false);
         };
-        if !managed_install::supports_daemon_update_loop(&codex_bin).await
+        if !managed_install::supports_daemon_update_loop(&genex_bin).await
             || !self.is_stable_standalone_release()?
             || !managed_install::resolved_managed_genex_bin(&self.managed_genex_bin)
                 .await
-                .is_ok_and(|selected| selected == codex_bin)
+                .is_ok_and(|selected| selected == genex_bin)
         {
             if !self.has_latest_selection_marker() {
                 updater.stop().await?;
             }
             return Ok(false);
         }
-        backend::pid_update_loop_backend(self.backend_paths_with_bin(settings, &codex_bin))
+        backend::pid_update_loop_backend(self.backend_paths_with_bin(settings, &genex_bin))
             .start()
             .await?;
         Ok(true)
@@ -741,7 +741,7 @@ impl Daemon {
         managed_genex_bin: &Path,
     ) -> BackendPaths {
         BackendPaths {
-            codex_bin: managed_genex_bin.to_path_buf(),
+            genex_bin: managed_genex_bin.to_path_buf(),
             pid_file: self.pid_file.clone(),
             update_pid_file: self.update_pid_file.clone(),
         }

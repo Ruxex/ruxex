@@ -583,13 +583,13 @@ async fn run_installer_script(
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
-        .context("failed to invoke standalone Codex updater")?;
+        .context("failed to invoke standalone Genex updater")?;
     #[cfg(windows)]
     let _installer_job = crate::backend::windows::installer_job(&child)?;
     let mut stdin = child
         .stdin
         .take()
-        .context("standalone Codex updater stdin was unavailable")?;
+        .context("standalone Genex updater stdin was unavailable")?;
     #[cfg(unix)]
     let mut terminate = std::pin::pin!(terminate);
     #[cfg(unix)]
@@ -607,7 +607,7 @@ async fn run_installer_script(
     }
     write_result
         .context("installer write was cancelled")?
-        .context("failed to pass standalone Codex updater to shell")?;
+        .context("failed to pass standalone Genex updater to shell")?;
     #[cfg(unix)]
     let status = tokio::select! {
         result = child.wait() => result,
@@ -618,12 +618,12 @@ async fn run_installer_script(
     };
     #[cfg(windows)]
     let status = child.wait().await;
-    let status = status.context("failed to wait for standalone Codex updater")?;
+    let status = status.context("failed to wait for standalone Genex updater")?;
 
     if status.success() {
         Ok(UpdateLoopControl::Continue)
     } else {
-        anyhow::bail!("standalone Codex updater exited with status {status}")
+        anyhow::bail!("standalone Genex updater exited with status {status}")
     }
 }
 
@@ -653,7 +653,7 @@ async fn fetch_installer_script(http: &impl InstallerHttp) -> Result<Vec<u8>> {
     match http.get(&url).await? {
         InstallerResponse::Success(body) => Ok(body),
         InstallerResponse::Unsuccessful { status } => {
-            anyhow::bail!("standalone Codex updater request failed with status {status}")
+            anyhow::bail!("standalone Genex updater request failed with status {status}")
         }
     }
 }
@@ -667,7 +667,7 @@ fn configured_installer_url() -> Result<String> {
     #[cfg(not(test))]
     std::env::var(INSTALLER_URL_ENV).with_context(|| {
         format!(
-            "standalone Codex updates require a configured provider installer URL in {INSTALLER_URL_ENV}"
+            "standalone Genex updates require a configured provider installer URL in {INSTALLER_URL_ENV}"
         )
     })
 }
@@ -694,7 +694,7 @@ impl InstallerHttp for RouteAwareClientPool {
         let response = RouteAwareClientPool::get(self, url)
             .send()
             .await
-            .context("failed to fetch standalone Codex updater")?;
+            .context("failed to fetch standalone Genex updater")?;
         if !response.status().is_success() {
             return Ok(InstallerResponse::Unsuccessful {
                 status: response.status().as_u16(),
@@ -703,7 +703,7 @@ impl InstallerHttp for RouteAwareClientPool {
         let body = response
             .bytes()
             .await
-            .context("failed to read standalone Codex updater")?
+            .context("failed to read standalone Genex updater")?
             .to_vec();
         Ok(InstallerResponse::Success(body))
     }

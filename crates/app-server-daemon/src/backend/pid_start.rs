@@ -69,16 +69,16 @@ impl PidBackend {
             }
         }
         // Pin the selected release across installer symlink/junction retargeting.
-        let codex_bin = fs::canonicalize(&self.codex_bin)
+        let genex_bin = fs::canonicalize(&self.genex_bin)
             .await
-            .unwrap_or_else(|_| self.codex_bin.clone());
+            .unwrap_or_else(|_| self.genex_bin.clone());
         let launched_identity =
             if matches!(self.command_kind, super::PidCommandKind::AppServer { .. }) {
-                executable_identity(&codex_bin).await.ok()
+                executable_identity(&genex_bin).await.ok()
             } else {
                 None
             };
-        let mut command = Command::new(&codex_bin);
+        let mut command = Command::new(&genex_bin);
         let stderr_log = match self.open_stderr_log().await {
             Ok(stderr_log) => stderr_log,
             Err(err) => {
@@ -101,7 +101,7 @@ impl PidBackend {
             && matches!(
                 tokio::time::timeout(
                     std::time::Duration::from_secs(5),
-                    Command::new(&codex_bin)
+                    Command::new(&genex_bin)
                         .args(["app-server", "--managed-daemon", "--help"])
                         .stdin(Stdio::null())
                         .stdout(Stdio::null())
@@ -244,7 +244,7 @@ impl PidBackend {
                     };
                     format!(
                         "failed to spawn detached app-server process using {}{job_hint}",
-                        self.codex_bin.display()
+                        self.genex_bin.display()
                     )
                 });
             }

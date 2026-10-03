@@ -71,7 +71,7 @@ pub(crate) fn managed_genex_bin(genex_home: &Path) -> PathBuf {
 }
 
 /// Only latest-channel stable releases may run the public latest-version updater.
-pub(crate) fn is_stable_standalone_release(genex_home: &Path, codex_bin: &Path) -> bool {
+pub(crate) fn is_stable_standalone_release(genex_home: &Path, genex_bin: &Path) -> bool {
     let standalone = package_root(genex_home);
     let Ok(releases) = std::fs::canonicalize(standalone.join("releases")) else {
         return false;
@@ -112,17 +112,17 @@ pub(crate) fn is_stable_standalone_release(genex_home: &Path, codex_bin: &Path) 
         })
         && std::fs::read_to_string(standalone.join("auto-update-version"))
             .is_ok_and(|selected| selected == release_name)
-        && std::fs::canonicalize(codex_bin).is_ok_and(|bin| bin.starts_with(&release))
+        && std::fs::canonicalize(genex_bin).is_ok_and(|bin| bin.starts_with(&release))
 }
 
 /// Older managed binaries can serve app-server requests without owning an updater.
-pub(crate) async fn supports_daemon_update_loop(codex_bin: &Path) -> bool {
-    supports_daemon_command(codex_bin, &["pid-update-loop", "--help"]).await
+pub(crate) async fn supports_daemon_update_loop(genex_bin: &Path) -> bool {
+    supports_daemon_command(genex_bin, &["pid-update-loop", "--help"]).await
 }
 
 /// Probe an internal daemon command without running a long-lived process.
-pub(crate) async fn supports_daemon_command(codex_bin: &Path, args: &[&str]) -> bool {
-    let mut command = Command::new(codex_bin);
+pub(crate) async fn supports_daemon_command(genex_bin: &Path, args: &[&str]) -> bool {
+    let mut command = Command::new(genex_bin);
     #[cfg(windows)]
     command.creation_flags(windows_sys::Win32::System::Threading::CREATE_NO_WINDOW);
     timeout(
@@ -140,17 +140,17 @@ pub(crate) async fn supports_daemon_command(codex_bin: &Path, args: &[&str]) -> 
     .is_ok_and(|result| result.is_ok_and(|status| status.success()))
 }
 
-pub(crate) async fn resolved_managed_genex_bin(codex_bin: &Path) -> Result<PathBuf> {
-    fs::canonicalize(codex_bin).await.with_context(|| {
+pub(crate) async fn resolved_managed_genex_bin(genex_bin: &Path) -> Result<PathBuf> {
+    fs::canonicalize(genex_bin).await.with_context(|| {
         format!(
             "failed to resolve managed Genex binary {}",
-            codex_bin.display()
+            genex_bin.display()
         )
     })
 }
 
-pub(crate) async fn managed_genex_version(codex_bin: &Path) -> Result<String> {
-    let mut command = Command::new(codex_bin);
+pub(crate) async fn managed_genex_version(genex_bin: &Path) -> Result<String> {
+    let mut command = Command::new(genex_bin);
     #[cfg(windows)]
     command.creation_flags(windows_sys::Win32::System::Threading::CREATE_NO_WINDOW);
     let output = command
@@ -161,13 +161,13 @@ pub(crate) async fn managed_genex_version(codex_bin: &Path) -> Result<String> {
         .with_context(|| {
             format!(
                 "failed to invoke managed Genex binary {}",
-                codex_bin.display()
+                genex_bin.display()
             )
         })?;
     if !output.status.success() {
         return Err(anyhow!(
             "managed Genex binary {} exited with status {}",
-            codex_bin.display(),
+            genex_bin.display(),
             output.status
         ));
     }
@@ -175,7 +175,7 @@ pub(crate) async fn managed_genex_version(codex_bin: &Path) -> Result<String> {
     let stdout = String::from_utf8(output.stdout).with_context(|| {
         format!(
             "managed Genex version was not utf-8: {}",
-            codex_bin.display()
+            genex_bin.display()
         )
     })?;
     parse_genex_version(&stdout)

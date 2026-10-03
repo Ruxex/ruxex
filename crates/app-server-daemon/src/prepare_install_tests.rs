@@ -27,7 +27,7 @@ fn package(root: &Path, version: &str) -> PathBuf {
         std::fs::create_dir_all(root.join(dir)).expect("package directory");
     }
     let bin = root.join("bin/genex");
-    std::fs::write(&bin, format!("#!/bin/sh\necho 'codex {version}'\n")).expect("codex executable");
+    std::fs::write(&bin, format!("#!/bin/sh\necho 'genex {version}'\n")).expect("genex executable");
     for file in [
         "bin/genex-code-mode-host",
         "genex-path/rg",
@@ -119,7 +119,7 @@ async fn provisioned_macos_bundle_seeds_from_its_running_executable() {
     let temp = tempfile::TempDir::new().expect("temp");
     let source = temp.path().join("package");
     let launcher = package(&source, "0.1.0-internal-test.202609091200.1");
-    std::fs::write(&launcher, b"#!/bin/sh\necho codex 0.0.0\n").expect("launcher");
+    std::fs::write(&launcher, b"#!/bin/sh\necho genex 0.0.0\n").expect("launcher");
     let bundle = source.join("GenexCLI.app/Contents/MacOS/codex");
     std::fs::create_dir_all(bundle.parent().expect("bundle parent")).expect("bundle dir");
     std::fs::write(&bundle, b"provisioned executable").expect("bundle executable");

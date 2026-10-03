@@ -7,7 +7,7 @@ use windows_sys::Win32::System::Threading::TerminateProcess;
 
 #[test]
 fn detached_launch_preflight_rejects_restrictive_job() {
-    const CHILD: &str = "CODEX_TEST_RESTRICTIVE_LAUNCH_JOB";
+    const CHILD: &str = "GENEX_TEST_RESTRICTIVE_LAUNCH_JOB";
     let executable = std::env::current_exe().expect("test executable");
     if std::env::var_os(CHILD).is_some() {
         let job = unsafe { super::CreateJobObjectW(std::ptr::null(), std::ptr::null()) };

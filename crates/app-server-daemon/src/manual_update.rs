@@ -77,7 +77,7 @@ pub(crate) async fn request(daemon: &Daemon) -> Result<UpdateOutput> {
                             Some(selected_release(daemon)?.2)
                         };
                         let worker = crate::backend::PidBackend::new_update_loop(
-                            paths.codex_bin,
+                            paths.genex_bin,
                             paths.update_pid_file,
                             restore_release,
                         );

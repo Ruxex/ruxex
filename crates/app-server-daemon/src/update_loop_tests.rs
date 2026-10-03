@@ -129,7 +129,7 @@ test "$CODEX_INSTALL_DAEMON_ONLY" = 1
 test "$CODEX_INSTALL_IF_LATEST" = 0
 root="$GENEX_HOME/packages/app-server-daemon"
 mkdir -p "$root/releases/{release}/bin"
-printf '#!/bin/sh\nif [ "$1" = --version ]; then echo codex 1.0.0; else exit 2; fi\n' > "$root/releases/{release}/bin/genex"
+printf '#!/bin/sh\nif [ "$1" = --version ]; then echo genex 1.0.0; else exit 2; fi\n' > "$root/releases/{release}/bin/genex"
 chmod +x "$root/releases/{release}/bin/genex"
 ln -sfn 'releases/{release}' "$root/.migration-current"
 printf '{release}' > "$root/auto-update-version"
@@ -286,7 +286,7 @@ fn manual_update_daemon(home: &TempDir) -> (Daemon, String) {
     std::fs::create_dir_all(bin.parent().expect("binary parent")).expect("release directory");
     std::fs::write(
         &bin,
-        b"#!/bin/sh\nif [ \"$1\" = '--version' ]; then echo codex 1.0.0; else exec sleep 30; fi\n",
+        b"#!/bin/sh\nif [ \"$1\" = '--version' ]; then echo genex 1.0.0; else exec sleep 30; fi\n",
     )
     .expect("managed binary");
     std::fs::set_permissions(&bin, std::fs::Permissions::from_mode(0o755))
@@ -607,7 +607,7 @@ async fn check_manual_update_restart(package_directory: &str) {
         )
     } else {
         format!(
-            r#"printf '#!/bin/sh\nif [ "$1" = --version ]; then echo codex 1.1.0; else exec sleep 30; fi\n' > '{root}/releases/{next}/bin/genex'"#,
+            r#"printf '#!/bin/sh\nif [ "$1" = --version ]; then echo genex 1.1.0; else exec sleep 30; fi\n' > '{root}/releases/{next}/bin/genex'"#,
             root = standalone.display()
         )
     };

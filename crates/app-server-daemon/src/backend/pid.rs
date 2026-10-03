@@ -31,7 +31,7 @@ const STDERR_LOG_TAIL_BYTES: u64 = 4096;
 #[derive(Debug)]
 #[cfg_attr(not(any(unix, windows)), allow(dead_code))]
 pub(crate) struct PidBackend {
-    codex_bin: PathBuf,
+    genex_bin: PathBuf,
     pid_file: PathBuf,
     lock_file: PathBuf,
     command_kind: PidCommandKind,
@@ -93,10 +93,10 @@ impl PidBackend {
         }
     }
 
-    pub(crate) fn new(codex_bin: PathBuf, pid_file: PathBuf) -> Self {
+    pub(crate) fn new(genex_bin: PathBuf, pid_file: PathBuf) -> Self {
         let lock_file = pid_file.with_extension("pid.lock");
         Self {
-            codex_bin,
+            genex_bin,
             pid_file,
             lock_file,
             command_kind: PidCommandKind::AppServer,
@@ -104,13 +104,13 @@ impl PidBackend {
     }
 
     pub(crate) fn new_update_loop(
-        codex_bin: PathBuf,
+        genex_bin: PathBuf,
         pid_file: PathBuf,
         restore_release: Option<String>,
     ) -> Self {
         let lock_file = pid_file.with_extension("pid.lock");
         Self {
-            codex_bin,
+            genex_bin,
             pid_file,
             lock_file,
             command_kind: PidCommandKind::UpdateLoop { restore_release },

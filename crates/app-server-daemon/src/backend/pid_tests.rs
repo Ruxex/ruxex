@@ -205,8 +205,8 @@ async fn pid_record_captures_the_resolved_launch_binary() {
     use std::os::unix::fs::PermissionsExt;
 
     let temp = TempDir::new().expect("temp dir");
-    let original = temp.path().join("original-codex");
-    let replacement = temp.path().join("replacement-codex");
+    let original = temp.path().join("original-genex");
+    let replacement = temp.path().join("replacement-genex");
     for (path, bytes) in [
         (&original, b"#!/bin/sh\nexec sleep 30\n".as_slice()),
         (
@@ -217,7 +217,7 @@ async fn pid_record_captures_the_resolved_launch_binary() {
         std::fs::write(path, bytes).expect("binary");
         std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755)).expect("executable");
     }
-    let selected = temp.path().join("current-codex");
+    let selected = temp.path().join("current-genex");
     std::os::unix::fs::symlink(&original, &selected).expect("selected binary");
     let backend = PidBackend::new(selected.clone(), temp.path().join("app-server.pid"));
     backend.start().await.expect("start daemon");
@@ -323,7 +323,7 @@ async fn stop_reaps_untracked_app_server_child() {
 #[cfg(any(unix, windows))]
 #[tokio::test]
 async fn shutdown_grace_child() {
-    let Some(ready) = std::env::var_os("CODEX_TEST_SHUTDOWN_GRACE_READY") else {
+    let Some(ready) = std::env::var_os("GENEX_TEST_SHUTDOWN_GRACE_READY") else {
         return;
     };
     let ready = std::path::PathBuf::from(ready);
@@ -341,7 +341,7 @@ async fn shutdown_grace_child() {
             }
             sleep(Duration::from_millis(10)).await;
         }
-        if std::env::var_os("CODEX_TEST_SHUTDOWN_GRACE_EXIT").is_some() {
+        if std::env::var_os("GENEX_TEST_SHUTDOWN_GRACE_EXIT").is_some() {
             sleep(Duration::from_millis(150)).await;
             tokio::fs::write(ready.with_extension("exited"), "")
                 .await
@@ -365,8 +365,8 @@ async fn shutdown_grace_handles_process_exit() {
         let ready = temp.path().join(format!("{name}.ready"));
         let mut child = std::process::Command::new(std::env::current_exe().expect("test binary"))
             .args(["--exact", "backend::pid::tests::shutdown_grace_child"])
-            .env("CODEX_TEST_SHUTDOWN_GRACE_READY", &ready)
-            .envs(exits.then_some(("CODEX_TEST_SHUTDOWN_GRACE_EXIT", "1")))
+            .env("GENEX_TEST_SHUTDOWN_GRACE_READY", &ready)
+            .envs(exits.then_some(("GENEX_TEST_SHUTDOWN_GRACE_EXIT", "1")))
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn()
@@ -541,7 +541,7 @@ async fn exited_unreaped_updater_is_reaped() {
 #[test]
 fn update_loop_uses_hidden_app_server_subcommand() {
     let backend = PidBackend {
-        codex_bin: "codex".into(),
+        genex_bin: "codex".into(),
         pid_file: "updater.pid".into(),
         lock_file: "updater.pid.lock".into(),
         command_kind: PidCommandKind::UpdateLoop {
