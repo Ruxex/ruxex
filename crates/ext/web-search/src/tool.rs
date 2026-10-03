@@ -126,7 +126,7 @@ impl WebSearchTool {
         };
         let extra_headers = search_request_headers(
             self.originator.as_deref(),
-            call.codex_turn_metadata.as_deref(),
+            call.turn_metadata.as_deref(),
         );
         call.turn_item_emitter
             .emit_started(extension_turn_item(

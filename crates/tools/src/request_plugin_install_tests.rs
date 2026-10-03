@@ -24,7 +24,7 @@ fn build_request_plugin_install_elicitation_request_injects_plugin_metadata() {
         request,
         ElicitationRequest::Form {
             meta: Some(json!(RequestPluginInstallMeta {
-                codex_approval_kind: REQUEST_PLUGIN_INSTALL_APPROVAL_KIND_VALUE,
+                approval_kind: REQUEST_PLUGIN_INSTALL_APPROVAL_KIND_VALUE,
                 persist: REQUEST_PLUGIN_INSTALL_PERSIST_ALWAYS_VALUE,
                 tool_type: DiscoverableToolType::Plugin,
                 suggest_type: DiscoverableToolAction::Install,

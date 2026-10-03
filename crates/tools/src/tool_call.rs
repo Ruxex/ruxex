@@ -110,7 +110,7 @@ pub struct ToolCall<'call> {
     pub call_id: String,
     pub tool_name: ToolName,
     pub model: String,
-    pub codex_turn_metadata: Option<String>,
+    pub turn_metadata: Option<String>,
     pub truncation_policy: TruncationPolicy,
     pub source: ToolCallSource,
     pub conversation_history: ConversationHistory,
@@ -127,8 +127,8 @@ impl std::fmt::Debug for ToolCall<'_> {
             .field("tool_name", &self.tool_name)
             .field("model", &self.model)
             .field(
-                "has_codex_turn_metadata",
-                &self.codex_turn_metadata.is_some(),
+                "has_turn_metadata",
+                &self.turn_metadata.is_some(),
             )
             .field("truncation_policy", &self.truncation_policy)
             .field("source", &self.source)

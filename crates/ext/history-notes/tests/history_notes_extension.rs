@@ -427,7 +427,7 @@ fn tool_call(tool_name: ToolName, arguments: serde_json::Value) -> ToolCall<'sta
         call_id: "call-read-file".to_string(),
         tool_name,
         model: "gpt-test".to_string(),
-        codex_turn_metadata: None,
+        turn_metadata: None,
         truncation_policy: TruncationPolicy::Bytes(1024),
         source: ToolCallSource::Direct,
         conversation_history: ConversationHistory::default(),

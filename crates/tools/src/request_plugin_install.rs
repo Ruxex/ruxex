@@ -32,7 +32,8 @@ pub struct RequestPluginInstallResult {
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 pub struct RequestPluginInstallMeta<'a> {
-    pub codex_approval_kind: &'static str,
+    #[serde(rename = "codex_approval_kind")]
+    pub approval_kind: &'static str,
     pub persist: &'static str,
     pub tool_type: DiscoverableToolType,
     pub suggest_type: DiscoverableToolAction,
@@ -81,7 +82,7 @@ fn build_request_plugin_install_meta<'a>(
         ),
     };
     RequestPluginInstallMeta {
-        codex_approval_kind: REQUEST_PLUGIN_INSTALL_APPROVAL_KIND_VALUE,
+        approval_kind: REQUEST_PLUGIN_INSTALL_APPROVAL_KIND_VALUE,
         persist: REQUEST_PLUGIN_INSTALL_PERSIST_ALWAYS_VALUE,
         tool_type,
         suggest_type: DiscoverableToolAction::Install,

@@ -2884,7 +2884,7 @@ impl<'call> ToolExecutor<ToolCall<'call>> for SettingsEcho {
     {
         Box::pin(async move {
             let metadata: Value = serde_json::from_str(
-                call.codex_turn_metadata
+                call.turn_metadata
                     .as_deref()
                     .expect("extension metadata"),
             )

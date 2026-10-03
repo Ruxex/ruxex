@@ -167,7 +167,7 @@ async fn to_extension_call(invocation: &ToolInvocation) -> ExtensionToolCall<'_>
     let conversation_history =
         ConversationHistory::new(invocation.session.clone_history().await.into_raw_items());
     let settings = &invocation.step_context.settings;
-    let codex_turn_metadata = invocation
+    let turn_metadata = invocation
         .turn
         .turn_metadata_state
         .current_meta_value_for_mcp_request(ExecutionMetadata::from_settings(
@@ -204,7 +204,7 @@ async fn to_extension_call(invocation: &ToolInvocation) -> ExtensionToolCall<'_>
         call_id: invocation.call_id.clone(),
         tool_name: invocation.tool_name.clone(),
         model: settings.model_info.slug.clone(),
-        codex_turn_metadata,
+        turn_metadata,
         truncation_policy: settings.model_info.truncation_policy.into(),
         source: extension_tool_call_source(invocation.source.clone()),
         conversation_history,
