@@ -31,7 +31,7 @@ pub enum StandalonePlatform {
 pub struct GenexPackageLayout {
     /// The package root that contains the metadata file and layout directories.
     pub package_dir: AbsolutePathBuf,
-    /// Directory containing the Codex entrypoint executable.
+    /// Directory containing the Genex entrypoint executable.
     pub bin_dir: AbsolutePathBuf,
     /// Directory containing managed helper binaries and data files, when present.
     pub resources_dir: Option<AbsolutePathBuf>,
@@ -39,7 +39,7 @@ pub struct GenexPackageLayout {
     pub path_dir: Option<AbsolutePathBuf>,
 }
 
-/// Version metadata recorded in a bundled Codex runtime package.
+/// Version metadata recorded in a bundled Genex runtime package.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct GenexPackageManifest {
     pub version: Version,
@@ -65,20 +65,20 @@ pub enum InstallMethod {
         /// The platform of the standalone release, either `Unix` or `Windows`.
         platform: StandalonePlatform,
     },
-    /// A Codex binary launched through the npm-managed `codex.js` shim.
+    /// A Genex binary launched through the npm-managed `codex.js` shim.
     Npm,
-    /// A Codex binary launched through the bun-managed `codex.js` shim.
+    /// A Genex binary launched through the bun-managed `codex.js` shim.
     Bun,
-    /// A Codex binary launched through the pnpm-managed `codex.js` shim.
+    /// A Genex binary launched through the pnpm-managed `codex.js` shim.
     Pnpm,
-    /// A Codex binary launched through the Vite+-managed `codex.js` shim.
+    /// A Genex binary launched through the Vite+-managed `codex.js` shim.
     VitePlus,
     /// A Codex binary that appears to come from a Homebrew install prefix.
     Brew,
     /// Any other execution environment.
     ///
-    /// This commonly covers `cargo run`, app-bundled Codex binaries, custom
-    /// internal launchers, and tests that execute Codex from an arbitrary path.
+    /// This commonly covers `cargo run`, app-bundled Genex binaries, custom
+    /// internal launchers, and tests that execute Genex from an arbitrary path.
     Other,
 }
 
@@ -385,7 +385,7 @@ mod tests {
     use pretty_assertions::assert_eq;
     use std::fs;
 
-    const TEST_RESOURCE_NAME: &str = "codex-test-helper";
+    const TEST_RESOURCE_NAME: &str = "genex-test-helper";
 
     #[test]
     fn code_mode_host_program_prefers_package_resource_over_legacy_binary() -> std::io::Result<()> {
@@ -395,7 +395,7 @@ mod tests {
         fs::create_dir_all(&bin_dir)?;
         fs::create_dir_all(&resources_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = bin_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
         let resource_host = resources_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME);
         fs::write(&exe_path, "")?;
         fs::write(bin_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME), "legacy host")?;
@@ -422,7 +422,7 @@ mod tests {
         fs::create_dir_all(&bin_dir)?;
         fs::create_dir_all(&resources_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = bin_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
         let resource_host = resources_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME);
         fs::write(&exe_path, "")?;
         fs::write(&resource_host, "managed host")?;
@@ -449,7 +449,7 @@ mod tests {
         fs::create_dir_all(&bin_dir)?;
         fs::create_dir_all(resources_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME))?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = bin_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
         let legacy_host = bin_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME);
         fs::write(&exe_path, "")?;
         fs::write(&legacy_host, "legacy host")?;
@@ -475,7 +475,7 @@ mod tests {
             .join("packages/standalone/releases/1.2.3-x86_64-unknown-linux-musl");
         let resources_dir = release_dir.join(RESOURCES_DIRNAME);
         fs::create_dir_all(&resources_dir)?;
-        let exe_path = release_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = release_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
         fs::write(&exe_path, "")?;
         fs::write(release_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME), "")?;
         fs::write(
@@ -532,7 +532,7 @@ mod tests {
             .path()
             .join("packages/standalone/releases/1.2.3-x86_64-unknown-linux-musl");
         fs::create_dir_all(&release_dir)?;
-        let exe_path = release_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = release_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
         fs::write(&exe_path, "")?;
 
         let context = InstallContext::from_exe_with_genex_home(
@@ -560,14 +560,14 @@ mod tests {
   "layoutVersion": 1,
   "version": "1.2.3",
   "target": "x86_64-unknown-linux-musl",
-  "variant": "codex",
+  "variant": "genex",
   "entrypoint": "bin/genex",
   "resourcesDir": "genex-resources",
   "pathDir": "genex-path"
 }
 "#,
         )?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = bin_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
         fs::write(&exe_path, "")?;
         fs::write(bin_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME), "")?;
         fs::write(resources_dir.join(TEST_RESOURCE_NAME), "")?;
@@ -690,7 +690,7 @@ mod tests {
         fs::create_dir_all(&resources_dir)?;
         fs::create_dir_all(&path_dir)?;
         fs::write(package_dir.join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = bin_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
         fs::write(&exe_path, "")?;
         fs::write(resources_dir.join(TEST_RESOURCE_NAME), "")?;
         fs::write(path_dir.join(default_rg_command()), "")?;
@@ -744,7 +744,7 @@ mod tests {
         fs::create_dir_all(&bin_dir)?;
         fs::create_dir_all(&path_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = bin_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
         fs::write(&exe_path, "")?;
         fs::write(path_dir.join(default_rg_command()), "")?;
         let canonical_path_dir = AbsolutePathBuf::from_absolute_path(path_dir.canonicalize()?)?;
@@ -766,12 +766,12 @@ mod tests {
     }
 
     #[test]
-    fn standalone_package_rg_falls_back_when_codex_path_is_missing() -> std::io::Result<()> {
+    fn standalone_package_rg_falls_back_when_genex_path_is_missing() -> std::io::Result<()> {
         let package_dir = tempfile::tempdir()?;
         let bin_dir = package_dir.path().join(BIN_DIRNAME);
         fs::create_dir_all(&bin_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = bin_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
         fs::write(&exe_path, "")?;
 
         let context = InstallContext::from_exe_with_genex_home(
@@ -795,7 +795,7 @@ mod tests {
         fs::create_dir_all(resources_dir.join(TEST_RESOURCE_NAME))?;
         fs::create_dir_all(path_dir.join(default_rg_command()))?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = bin_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
         fs::write(&exe_path, "")?;
         let fallback_exe_path = package_dir.path().join("fallback-genex");
         fs::write(&fallback_exe_path, "")?;
@@ -823,8 +823,8 @@ mod tests {
         };
 
         assert_eq!(
-            context.code_mode_host_program_from_exe(Some(Path::new("/opt/codex/bin/genex"))),
-            PathBuf::from("/opt/codex/bin").join(CODE_MODE_HOST_EXECUTABLE_NAME)
+            context.code_mode_host_program_from_exe(Some(Path::new("/opt/genex/bin/genex"))),
+            PathBuf::from("/opt/genex/bin").join(CODE_MODE_HOST_EXECUTABLE_NAME)
         );
     }
 
@@ -845,7 +845,7 @@ mod tests {
     fn package_manager_method_overrides_take_precedence() {
         let vite_plus_context = InstallContext::from_exe(
             /*is_macos*/ false,
-            /*current_exe*/ Some(Path::new("/tmp/codex")),
+            /*current_exe*/ Some(Path::new("/tmp/genex")),
             /*method_override*/ Some(InstallMethod::VitePlus),
         );
         assert_eq!(
@@ -858,7 +858,7 @@ mod tests {
 
         let pnpm_context = InstallContext::from_exe(
             /*is_macos*/ false,
-            /*current_exe*/ Some(Path::new("/tmp/codex")),
+            /*current_exe*/ Some(Path::new("/tmp/genex")),
             /*method_override*/ Some(InstallMethod::Pnpm),
         );
         assert_eq!(
@@ -871,7 +871,7 @@ mod tests {
 
         let npm_context = InstallContext::from_exe(
             /*is_macos*/ false,
-            /*current_exe*/ Some(Path::new("/tmp/codex")),
+            /*current_exe*/ Some(Path::new("/tmp/genex")),
             /*method_override*/ Some(InstallMethod::Npm),
         );
         assert_eq!(
@@ -884,7 +884,7 @@ mod tests {
 
         let bun_context = InstallContext::from_exe(
             /*is_macos*/ false,
-            /*current_exe*/ Some(Path::new("/tmp/codex")),
+            /*current_exe*/ Some(Path::new("/tmp/genex")),
             /*method_override*/ Some(InstallMethod::Bun),
         );
         assert_eq!(
