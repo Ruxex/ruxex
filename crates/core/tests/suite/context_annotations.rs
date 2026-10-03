@@ -73,7 +73,7 @@ async fn first_request_item_types_roles_and_content_annotations() -> Result<()> 
         .build_with_auto_env(&server)
         .await?;
 
-    test.codex
+    test.genex
         .submit(Op::ApproveGuardianDeniedAction {
             event: GuardianAssessmentEvent {
                 review_reason: None,
@@ -100,12 +100,12 @@ async fn first_request_item_types_roles_and_content_annotations() -> Result<()> 
             },
         })
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::RawResponseItem(_))
     })
     .await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![
                 UserInput::Text {
@@ -140,7 +140,7 @@ async fn first_request_item_types_roles_and_content_annotations() -> Result<()> 
             ])),
         )
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

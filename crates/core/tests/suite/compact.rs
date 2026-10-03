@@ -562,7 +562,7 @@ async fn summarize_context_three_requests_and_instructions(
         config.model_auto_compact_token_limit = Some(200_000);
     });
     let test = builder.build(&server).await?;
-    let codex = test.codex.clone();
+    let codex = test.genex.clone();
     let rollout_path = test.session_configured.rollout_path.expect("rollout path");
 
     // 1) Normal user input – should hit server once.
@@ -804,7 +804,7 @@ async fn manual_pre_compact_block_decision_does_not_block_compaction() {
             set_test_compact_prompt(config);
         });
     let test = builder.build(&server).await.expect("create conversation");
-    let codex = test.codex.clone();
+    let codex = test.genex.clone();
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
@@ -871,7 +871,7 @@ async fn compact_hooks_respect_matchers_and_post_runs_after_compaction() {
             set_test_compact_prompt(config);
         });
     let test = builder.build(&server).await.expect("create conversation");
-    let codex = test.codex.clone();
+    let codex = test.genex.clone();
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
@@ -1053,7 +1053,7 @@ async fn reasoning_effort_override_remote_v2_compaction_resets_pinned_effort(
 
     test.submit_text_turn("first message").await?;
     core_test_support::submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             effort: Some(Some(ReasoningEffort::High)),
             ..Default::default()
@@ -1061,18 +1061,18 @@ async fn reasoning_effort_override_remote_v2_compaction_resets_pinned_effort(
     )
     .await?;
     test.submit_text_turn("second message").await?;
-    test.codex.submit(Op::Compact).await?;
+    test.genex.submit(Op::Compact).await?;
     if fail_compaction {
-        wait_for_event(&test.codex, |event| matches!(event, EventMsg::Error(_))).await;
+        wait_for_event(&test.genex, |event| matches!(event, EventMsg::Error(_))).await;
     }
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
     test.submit_text_turn("after compaction").await?;
     test.submit_text_turn("unchanged effort").await?;
     core_test_support::submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             effort: Some(Some(ReasoningEffort::Low)),
             ..Default::default()
@@ -1161,8 +1161,8 @@ async fn manual_compact_records_durable_and_local_token_usage() {
         set_test_compact_prompt(config);
     });
     let test = builder.build(&server).await.unwrap();
-    let rollout_path = test.codex.rollout_path().expect("rollout path");
-    let codex = test.codex;
+    let rollout_path = test.genex.rollout_path().expect("rollout path");
+    let codex = test.genex;
 
     // Trigger manual compact and collect TokenCount events for the compact turn.
     codex.submit(Op::Compact).await.unwrap();
@@ -1413,7 +1413,7 @@ async fn multiple_auto_compact_per_task_runs_after_token_limit_hit() {
     let request_log = mount_sse_sequence(&server, bodies).await;
 
     // Start the conversation with the user message
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
             user_message,
             test.cwd.path().to_path_buf(),
@@ -1421,7 +1421,7 @@ async fn multiple_auto_compact_per_task_runs_after_token_limit_hit() {
         ))
         .await
         .expect("submit user input");
-    wait_for_event(&test.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     // collect the requests payloads from the model
     let requests_payloads = request_log.requests();
@@ -2329,7 +2329,7 @@ async fn pre_sampling_compact_runs_on_switch_to_smaller_context_model() {
         });
     let test = builder.build(&server).await.expect("build test codex");
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "before switch",
             test.cwd.path().to_path_buf(),
@@ -2337,12 +2337,12 @@ async fn pre_sampling_compact_runs_on_switch_to_smaller_context_model() {
         ))
         .await
         .expect("submit first user turn");
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "after switch",
             test.cwd.path().to_path_buf(),
@@ -2350,7 +2350,7 @@ async fn pre_sampling_compact_runs_on_switch_to_smaller_context_model() {
         ))
         .await
         .expect("submit second user turn");
-    assert_compaction_uses_turn_lifecycle_id(&test.codex).await;
+    assert_compaction_uses_turn_lifecycle_id(&test.genex).await;
 
     let requests = request_log.requests();
     assert_eq!(models_mock.requests().len(), 1);
@@ -2431,7 +2431,7 @@ async fn pre_sampling_compact_runs_when_comp_hash_changes() {
         });
     let test = builder.build(&server).await.expect("build test codex");
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "before switch",
             test.cwd.path().to_path_buf(),
@@ -2439,12 +2439,12 @@ async fn pre_sampling_compact_runs_when_comp_hash_changes() {
         ))
         .await
         .expect("submit first user turn");
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "after switch",
             test.cwd.path().to_path_buf(),
@@ -2452,7 +2452,7 @@ async fn pre_sampling_compact_runs_when_comp_hash_changes() {
         ))
         .await
         .expect("submit second user turn");
-    assert_compaction_uses_turn_lifecycle_id(&test.codex).await;
+    assert_compaction_uses_turn_lifecycle_id(&test.genex).await;
 
     let requests = request_log.requests();
     assert_eq!(models_mock.requests().len(), 1);
@@ -2515,7 +2515,7 @@ async fn previous_model_compaction_resolves_selected_settings() -> Result<()> {
         .build_with_auto_env(&server)
         .await?;
     test.submit_text_turn("before switch").await?;
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "after switch".to_string(),
@@ -2527,7 +2527,7 @@ async fn previous_model_compaction_resolves_selected_settings() -> Result<()> {
             }),
         )
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -2900,7 +2900,7 @@ async fn pre_sampling_compact_falls_back_after_previous_model_invalid_request_on
         });
     let test = builder.build(&server).await.expect("build test codex");
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "before switch",
             test.cwd.path().to_path_buf(),
@@ -2908,12 +2908,12 @@ async fn pre_sampling_compact_falls_back_after_previous_model_invalid_request_on
         ))
         .await
         .expect("submit first user turn");
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "after switch",
             test.cwd.path().to_path_buf(),
@@ -2921,7 +2921,7 @@ async fn pre_sampling_compact_falls_back_after_previous_model_invalid_request_on
         ))
         .await
         .expect("submit smaller-model turn");
-    assert_compaction_uses_turn_lifecycle_id(&test.codex).await;
+    assert_compaction_uses_turn_lifecycle_id(&test.genex).await;
 
     let requests = request_log.requests();
     assert_eq!(models_mock.requests().len(), 1);
@@ -3008,7 +3008,7 @@ async fn pre_sampling_compact_keeps_unknown_previous_model_for_api_key_auth_and_
         });
     let test = builder.build(&server).await.expect("build test codex");
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "before switch",
             test.cwd.path().to_path_buf(),
@@ -3016,12 +3016,12 @@ async fn pre_sampling_compact_keeps_unknown_previous_model_for_api_key_auth_and_
         ))
         .await
         .expect("submit first user turn");
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "after switch",
             test.cwd.path().to_path_buf(),
@@ -3029,7 +3029,7 @@ async fn pre_sampling_compact_keeps_unknown_previous_model_for_api_key_auth_and_
         ))
         .await
         .expect("submit next-model turn");
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -3098,7 +3098,7 @@ async fn pre_sampling_compact_skips_when_either_comp_hash_is_missing() {
         });
     let test = builder.build(&server).await.expect("build test codex");
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "before hash",
             test.cwd.path().to_path_buf(),
@@ -3106,12 +3106,12 @@ async fn pre_sampling_compact_skips_when_either_comp_hash_is_missing() {
         ))
         .await
         .expect("submit first user turn");
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "hash introduced",
             test.cwd.path().to_path_buf(),
@@ -3119,12 +3119,12 @@ async fn pre_sampling_compact_skips_when_either_comp_hash_is_missing() {
         ))
         .await
         .expect("submit second user turn");
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "hash removed",
             test.cwd.path().to_path_buf(),
@@ -3132,7 +3132,7 @@ async fn pre_sampling_compact_skips_when_either_comp_hash_is_missing() {
         ))
         .await
         .expect("submit third user turn");
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -3207,7 +3207,7 @@ async fn body_after_prefix_model_switch_budget_compacts_with_next_model() {
         });
     let test = builder.build(&server).await.expect("build test codex");
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "before switch",
             test.cwd.path().to_path_buf(),
@@ -3215,12 +3215,12 @@ async fn body_after_prefix_model_switch_budget_compacts_with_next_model() {
         ))
         .await
         .expect("submit first user turn");
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "after switch",
             test.cwd.path().to_path_buf(),
@@ -3228,7 +3228,7 @@ async fn body_after_prefix_model_switch_budget_compacts_with_next_model() {
         ))
         .await
         .expect("submit second user turn");
-    assert_compaction_uses_turn_lifecycle_id(&test.codex).await;
+    assert_compaction_uses_turn_lifecycle_id(&test.genex).await;
 
     let requests = request_log.requests();
     assert_eq!(models_mock.requests().len(), 1);
@@ -3692,7 +3692,7 @@ async fn auto_compact_persists_rollout_entries() {
         config.model_auto_compact_token_limit = Some(200_000);
     });
     let test = builder.build(&server).await.unwrap();
-    let codex = test.codex.clone();
+    let codex = test.genex.clone();
     let session_configured = test.session_configured;
 
     codex
@@ -4925,7 +4925,7 @@ async fn snapshot_request_shape_pre_turn_compaction_strips_incoming_model_switch
         .await
         .expect("build codex");
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "BEFORE_SWITCH_USER",
             test.cwd.path().to_path_buf(),
@@ -4933,12 +4933,12 @@ async fn snapshot_request_shape_pre_turn_compaction_strips_incoming_model_switch
         ))
         .await
         .expect("submit first user turn");
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
             "AFTER_SWITCH_USER",
             test.cwd.path().to_path_buf(),
@@ -4946,7 +4946,7 @@ async fn snapshot_request_shape_pre_turn_compaction_strips_incoming_model_switch
         ))
         .await
         .expect("submit second user turn");
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -5169,7 +5169,7 @@ async fn manual_compaction_refreshes_global_instructions_for_next_turn() -> Resu
 
     // Assert the pre-compaction source list points at the creation-time file.
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         vec![PathUri::from_abs_path(&source)],
         "thread reports the creation-time global source before compaction"
     );
@@ -5183,8 +5183,8 @@ async fn manual_compaction_refreshes_global_instructions_for_next_turn() -> Resu
     )?;
     assert_eq!(source, rewritten_source);
 
-    test.codex.submit(Op::Compact).await?;
-    wait_for_event(&test.codex, |event| {
+    test.genex.submit(Op::Compact).await?;
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -5199,7 +5199,7 @@ async fn manual_compaction_refreshes_global_instructions_for_next_turn() -> Resu
     assert_single_instruction_fragment(&requests[1], &old_fragment);
     assert_single_instruction_fragment(&requests[2], &new_fragment);
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         vec![PathUri::from_abs_path(&source)],
         "refreshing same-path instructions preserves their source"
     );
@@ -5249,7 +5249,7 @@ async fn mid_turn_compaction_uses_refreshed_global_instructions() -> Result<()> 
 
     // Assert the pre-compaction source list points at the creation-time file.
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         vec![PathUri::from_abs_path(&source)],
         "thread reports the creation-time global source before mid-turn compaction"
     );
@@ -5271,7 +5271,7 @@ async fn mid_turn_compaction_uses_refreshed_global_instructions() -> Result<()> 
     assert_single_instruction_fragment(&requests[1], &expected_fragment);
     assert_single_instruction_fragment(&requests[2], &expected_fragment);
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         vec![PathUri::from_abs_path(&new_source)],
         "thread reports the refreshed global override after mid-turn compaction"
     );
@@ -5324,13 +5324,13 @@ async fn remote_v2_compaction_refreshes_instructions_and_preserves_them_on_cold_
         NEW_GLOBAL_INSTRUCTIONS,
     )?;
     assert_eq!(source, rewritten_source);
-    test.codex.submit(Op::Compact).await?;
-    wait_for_event(&test.codex, |event| {
+    test.genex.submit(Op::Compact).await?;
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
     test.submit_turn("after remote v2 compaction").await?;
-    test.codex.flush_rollout().await?;
+    test.genex.flush_rollout().await?;
 
     // Compaction summarizes the existing history; the follow-up injects the refreshed instructions.
     let requests = response_mock.requests();
@@ -5345,7 +5345,7 @@ async fn remote_v2_compaction_refreshes_instructions_and_preserves_them_on_cold_
         Some(&json!({"type": "compaction_trigger"})),
         "remote-v2 compact request should append exactly one compaction trigger"
     );
-    let rollout_path = test.codex.rollout_path().expect("rollout path");
+    let rollout_path = test.genex.rollout_path().expect("rollout path");
     let replacement_history = replacement_history_from_rollout(&rollout_path)?;
     assert_eq!(
         instruction_fragments_in_items(&replacement_history),
@@ -5353,7 +5353,7 @@ async fn remote_v2_compaction_refreshes_instructions_and_preserves_them_on_cold_
         "remote-v2 replacement history currently omits the global-instruction fragment"
     );
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         vec![PathUri::from_abs_path(&source)],
         "running thread retains the selected same-path source"
     );
@@ -5364,8 +5364,8 @@ async fn remote_v2_compaction_refreshes_instructions_and_preserves_them_on_cold_
     );
 
     // Cold-resume the persisted replacement history with freshly loaded same-path configuration.
-    test.codex.submit(Op::Shutdown).await?;
-    wait_for_event(&test.codex, |event| {
+    test.genex.submit(Op::Shutdown).await?;
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::ShutdownComplete)
     })
     .await;

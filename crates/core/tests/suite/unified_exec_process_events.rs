@@ -736,7 +736,7 @@ timeout = 900
     };
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(turn_permission_profile, test.config.cwd.as_path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "run a one-shot remote command".into(),
@@ -790,7 +790,7 @@ timeout = 900
     let mut saw_patch_denial_approval = false;
     if !managed_network_enabled {
         loop {
-            let event = timeout(Duration::from_secs(5), test.codex.next_event())
+            let event = timeout(Duration::from_secs(5), test.genex.next_event())
                 .await
                 .context("turn should complete")??
                 .msg;
@@ -806,7 +806,7 @@ timeout = 900
                     ) =>
                 {
                     saw_patch_denial_approval = true;
-                    test.codex
+                    test.genex
                         .submit(Op::PatchApproval {
                             id: approval.call_id,
                             decision: if matches!(

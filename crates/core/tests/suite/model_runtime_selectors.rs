@@ -125,14 +125,14 @@ async fn response_for_remote_model(
     assert_eq!(models_mock.requests().len(), 1);
 
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             model: Some(model_slug),
             ..Default::default()
         },
     )
     .await?;
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "list tools".into(),
             text_elements: Vec::new(),
@@ -140,7 +140,7 @@ async fn response_for_remote_model(
         .await?;
     let mut warnings = Vec::new();
     loop {
-        match wait_for_event(&test.codex, |_| true).await {
+        match wait_for_event(&test.genex, |_| true).await {
             EventMsg::Warning(warning) => warnings.push(warning.message),
             EventMsg::TurnComplete(_) => break,
             _ => {}
@@ -312,7 +312,7 @@ async fn unsupported_code_mode_warning_is_emitted_each_turn() -> Result<()> {
     assert_eq!(models_mock.requests().len(), 1);
 
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             model: Some(model_slug.to_string()),
             ..Default::default()
@@ -322,7 +322,7 @@ async fn unsupported_code_mode_warning_is_emitted_each_turn() -> Result<()> {
 
     let mut warning_counts = Vec::new();
     for prompt in ["first turn", "second turn"] {
-        test.codex
+        test.genex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.to_string(),
                 text_elements: Vec::new(),
@@ -331,7 +331,7 @@ async fn unsupported_code_mode_warning_is_emitted_each_turn() -> Result<()> {
 
         let mut warning_count = 0;
         loop {
-            match wait_for_event(&test.codex, |_| true).await {
+            match wait_for_event(&test.genex, |_| true).await {
                 EventMsg::Warning(warning)
                     if warning.message.contains(UNSUPPORTED_CODE_MODE_WARNING) =>
                 {
@@ -443,28 +443,28 @@ async fn remote_multi_agent_selector_uses_model_selected_before_first_turn() -> 
     assert_eq!(
         (
             models_mock.requests().len(),
-            test.codex.multi_agent_version(),
+            test.genex.multi_agent_version(),
         ),
         (1, None)
     );
 
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             model: Some(CHILD_MODEL.to_string()),
             ..Default::default()
         },
     )
     .await?;
-    assert_eq!(test.codex.multi_agent_version(), None);
+    assert_eq!(test.genex.multi_agent_version(), None);
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: ROOT_PROMPT.into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -472,7 +472,7 @@ async fn remote_multi_agent_selector_uses_model_selected_before_first_turn() -> 
     assert_eq!(
         (
             models_mock.requests().len(),
-            test.codex.multi_agent_version(),
+            test.genex.multi_agent_version(),
             tool_names(
                 &response_mock
                     .last_request()

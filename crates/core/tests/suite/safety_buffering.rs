@@ -47,14 +47,14 @@ async fn emits_safety_buffering_from_response_metadata_with_the_header_fallback_
     .await;
 
     let test = test_genex().build(&server).await?;
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Check this request".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let event = wait_for_event_match(&test.codex, |event| match event {
+    let event = wait_for_event_match(&test.genex, |event| match event {
         EventMsg::SafetyBuffering(event) => Some(event.clone()),
         _ => None,
     })
@@ -69,7 +69,7 @@ async fn emits_safety_buffering_from_response_metadata_with_the_header_fallback_
             faster_model: Some(FASTER_MODEL.to_string()),
         }
     );
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -96,14 +96,14 @@ async fn emits_safety_buffering_with_the_responses_api_model_without_header_gati
     .await;
 
     let test = test_genex().build(&server).await?;
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Check this request".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let event = wait_for_event_match(&test.codex, |event| match event {
+    let event = wait_for_event_match(&test.genex, |event| match event {
         EventMsg::SafetyBuffering(event) => Some(event.clone()),
         _ => None,
     })
@@ -118,7 +118,7 @@ async fn emits_safety_buffering_with_the_responses_api_model_without_header_gati
             faster_model: Some(FASTER_MODEL.to_string()),
         }
     );
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

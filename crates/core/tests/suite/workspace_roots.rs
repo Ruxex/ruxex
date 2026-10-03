@@ -266,7 +266,7 @@ async fn workspace_roots_allow_file_and_command_writes_in_secondary_root(
             .into_iter()
             .next()
             .context("thread should select its executor environment")?;
-        test.codex
+        test.genex
             .environment_ready(
                 &selection,
                 EnvironmentConfig {

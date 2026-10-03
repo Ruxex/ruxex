@@ -1410,7 +1410,7 @@ async fn stop_hook_can_block_multiple_times_in_same_turn() -> Result<()> {
         vec![false, true, true],
     );
 
-    let rollout_path = test.codex.rollout_path().expect("rollout path");
+    let rollout_path = test.genex.rollout_path().expect("rollout path");
     let rollout_text = fs::read_to_string(&rollout_path)?;
     let hook_prompt_texts = rollout_hook_prompt_texts(&rollout_text)?;
     assert!(
@@ -1514,7 +1514,7 @@ async fn session_end_flushes_transcript_and_ignores_control_output() -> Result<(
     let test = builder.build(&server).await?;
 
     test.submit_turn("persist this before shutdown").await?;
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
 
     let inputs = read_hook_inputs_from_log(
         test.genex_home_path()
@@ -1674,14 +1674,14 @@ print(json.dumps({"hookSpecificOutput": {
     let test = builder.build(&server).await?;
     test.submit_turn("first prompt").await?;
     test.submit_turn("second prompt").await?;
-    test.codex.flush_rollout().await?;
+    test.genex.flush_rollout().await?;
 
     let forked = test
         .thread_manager
         .fork_thread(
             ForkSnapshot::TruncateBeforeNthUserMessage(1),
             StartThreadOptions::new(test.config.clone()),
-            test.codex.rollout_path().expect("parent rollout path"),
+            test.genex.rollout_path().expect("parent rollout path"),
         )
         .await?
         .thread;
@@ -1816,7 +1816,7 @@ async fn async_hook_context_is_injected_into_the_active_turn() -> Result<()> {
 
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "observe async context immediately".to_string(),
@@ -1842,7 +1842,7 @@ async fn async_hook_context_is_injected_into_the_active_turn() -> Result<()> {
     assert!(
         timeout(
             Duration::from_millis(150),
-            wait_for_event(&test.codex, |event| {
+            wait_for_event(&test.genex, |event| {
                 matches!(
                     event,
                     EventMsg::Warning(warning)
@@ -1857,7 +1857,7 @@ async fn async_hook_context_is_injected_into_the_active_turn() -> Result<()> {
     fs::write(release_path, "ready").context("release gated shell command")?;
     timeout(
         Duration::from_secs(5),
-        wait_for_event(&test.codex, |event| {
+        wait_for_event(&test.genex, |event| {
             matches!(
                 event,
                 EventMsg::Warning(warning)
@@ -1867,7 +1867,7 @@ async fn async_hook_context_is_injected_into_the_active_turn() -> Result<()> {
     )
     .await
     .context("timed out waiting for the async hook warning after sampling")?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1951,7 +1951,7 @@ async fn async_hook_finishing_while_idle_waits_for_the_next_turn(
         .context("timed out waiting for the async hook to finish")?;
 
     assert!(
-        timeout(Duration::from_millis(150), test.codex.next_event())
+        timeout(Duration::from_millis(150), test.genex.next_event())
             .await
             .is_err(),
         "an async hook result from the previous turn must not emit warnings or raw response items"
@@ -1979,12 +1979,12 @@ async fn async_hook_finishing_while_idle_waits_for_the_next_turn(
             text_elements: Vec::new(),
         }])
     };
-    test.codex.start_turn_if_idle(next_turn).await?;
+    test.genex.start_turn_if_idle(next_turn).await?;
 
     let mut warning_event = None;
     timeout(Duration::from_secs(5), async {
         loop {
-            let event = test.codex.next_event().await?;
+            let event = test.genex.next_event().await?;
             if matches!(
                 &event.msg,
                 EventMsg::Warning(warning)
@@ -2237,8 +2237,8 @@ async fn compact_session_start_hook_records_additional_context_for_next_turn() -
     let test = builder.build(&server).await?;
 
     test.submit_turn("hello before compact").await?;
-    test.codex.submit(Op::Compact).await?;
-    wait_for_event(&test.codex, |event| {
+    test.genex.submit(Op::Compact).await?;
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -2723,7 +2723,7 @@ async fn multiple_blocking_stop_hooks_persist_multiple_hook_prompt_fragments() -
         "second request should receive one user hook prompt message with both fragments",
     );
 
-    let rollout_path = test.codex.rollout_path().expect("rollout path");
+    let rollout_path = test.genex.rollout_path().expect("rollout path");
     let rollout_text = fs::read_to_string(&rollout_path)?;
     assert_eq!(
         rollout_hook_prompt_texts(&rollout_text)?,
@@ -2869,20 +2869,20 @@ async fn blocked_queued_prompt_does_not_strand_earlier_accepted_prompt(
         });
     let test = builder.build_with_streaming_server(&server).await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "initial prompt".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::AgentMessageContentDelta(_))
     })
     .await;
 
     for text in ["accepted queued prompt", "blocked queued prompt"] {
-        test.codex
+        test.genex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: text.to_string(),
                 text_elements: Vec::new(),
@@ -2921,7 +2921,7 @@ async fn blocked_queued_prompt_does_not_strand_earlier_accepted_prompt(
         "second request should not include the blocked queued prompt",
     );
 
-    let history = test.codex.conversation_history_snapshot().await;
+    let history = test.genex.conversation_history_snapshot().await;
     assert_eq!(history.retained_context().is_some(), thread_context_enabled);
     let retained = serde_json::to_value(history.retained_context().cloned().unwrap_or_default())?;
     assert_eq!(
@@ -3156,7 +3156,7 @@ async fn permission_request_hook_allow_bypasses_strict_auto_review() -> Result<(
         .context("create strict auto-review marker")?;
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "request strict review, then run the shell command".into(),
@@ -3171,7 +3171,7 @@ async fn permission_request_hook_allow_bypasses_strict_auto_review() -> Result<(
         )
         .await?;
 
-    let request = wait_for_event(&test.codex, |event| {
+    let request = wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::RequestPermissions(_))
     })
     .await;
@@ -3179,7 +3179,7 @@ async fn permission_request_hook_allow_bypasses_strict_auto_review() -> Result<(
         panic!("expected request permissions event");
     };
     assert_eq!(request.call_id, permission_call_id);
-    test.codex
+    test.genex
         .submit(Op::RequestPermissionsResponse {
             id: permission_call_id.to_string(),
             response: RequestPermissionsResponse {
@@ -3190,7 +3190,7 @@ async fn permission_request_hook_allow_bypasses_strict_auto_review() -> Result<(
         })
         .await?;
 
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -3478,7 +3478,7 @@ allow_local_binding = true
         assert!(
             timeout(
                 Duration::from_secs(2),
-                wait_for_event(&test.codex, |event| matches!(
+                wait_for_event(&test.genex, |event| matches!(
                     event,
                     EventMsg::ExecApprovalRequest(_)
                 ))
@@ -3512,8 +3512,8 @@ allow_local_binding = true
             .expect("expected denied tool output");
         assert!(tool_output.contains(expected_denial));
     } else {
-        test.codex.submit(Op::Shutdown {}).await?;
-        wait_for_event(&test.codex, |event| {
+        test.genex.submit(Op::Shutdown {}).await?;
+        wait_for_event(&test.genex, |event| {
             matches!(event, EventMsg::ShutdownComplete)
         })
         .await;
@@ -3691,7 +3691,7 @@ async fn pre_tool_use_hook_model_tracks_step_after_a_turn_update() -> Result<()>
 
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "run the blocked shell command".to_string(),
@@ -3706,14 +3706,14 @@ async fn pre_tool_use_hook_model_tracks_step_after_a_turn_update() -> Result<()>
         )
         .await?;
 
-    let request = wait_for_event_match(&test.codex, |event| match event {
+    let request = wait_for_event_match(&test.genex, |event| match event {
         EventMsg::RequestUserInput(request) => Some(request.clone()),
         _ => None,
     })
     .await;
     assert_eq!(request.call_id, request_user_input_call_id);
     let (reply, outcome) = oneshot::channel();
-    test.codex
+    test.genex
         .submit(Op::TurnSettings {
             turn_id: request.turn_id.clone(),
             update: TurnSettingsUpdate {
@@ -3725,7 +3725,7 @@ async fn pre_tool_use_hook_model_tracks_step_after_a_turn_update() -> Result<()>
         })
         .await?;
     assert_eq!(outcome.await?, TurnSettingsUpdateOutcome::Applied);
-    test.codex
+    test.genex
         .submit(Op::UserInputAnswer {
             id: request.turn_id,
             response: RequestUserInputResponse {
@@ -3738,7 +3738,7 @@ async fn pre_tool_use_hook_model_tracks_step_after_a_turn_update() -> Result<()>
             },
         })
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -3974,7 +3974,7 @@ Path(r"{hook_finished_path}").write_text("finished", encoding="utf-8")
 
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "run the original command with async pre-tool hooks".to_string(),
@@ -3998,7 +3998,7 @@ Path(r"{hook_finished_path}").write_text("finished", encoding="utf-8")
         timeout(
             Duration::from_millis(150),
             wait_for_event(
-                &test.codex,
+                &test.genex,
                 |event| matches!(event, EventMsg::Warning(warning) if warning.message == pre_context),
             ),
         )
@@ -4010,13 +4010,13 @@ Path(r"{hook_finished_path}").write_text("finished", encoding="utf-8")
     timeout(
         Duration::from_secs(5),
         wait_for_event(
-            &test.codex,
+            &test.genex,
             |event| matches!(event, EventMsg::Warning(warning) if warning.message == pre_context),
         ),
     )
     .await
     .context("timed out waiting for the async pre-tool warning after sampling")?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -4596,15 +4596,15 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
         genex_hooks::hook_states_from_stack(Some(&test.config.config_layer_stack)),
         expected_hook_states
     );
-    wait_for_mcp_server(&test.codex, mcp_server_name).await?;
-    test.codex
+    wait_for_mcp_server(&test.genex, mcp_server_name).await?;
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "finish this turn".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
     let mut hook_notifications = Vec::new();
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         if matches!(event, EventMsg::HookStarted(_) | EventMsg::HookCompleted(_)) {
             hook_notifications.push(event.clone());
         }

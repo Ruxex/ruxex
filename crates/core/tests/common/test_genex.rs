@@ -87,7 +87,7 @@ type PreBuildHook = dyn FnOnce(&Path) + Send + 'static;
 type WorkspaceSetup = dyn FnOnce(AbsolutePathBuf, Arc<dyn ExecutorFileSystem>) -> BoxFuture<'static, Result<()>>
     + Send;
 const TEST_MODEL_WITH_EXPERIMENTAL_TOOLS: &str = "test-gpt-5.1-codex";
-const REMOTE_EXEC_SERVER_URL_ENV_VAR: &str = "CODEX_TEST_REMOTE_EXEC_SERVER_URL";
+const REMOTE_EXEC_SERVER_URL_ENV_VAR: &str = "GENEX_TEST_REMOTE_EXEC_SERVER_URL";
 static REMOTE_TEST_INSTANCE_COUNTER: AtomicU64 = AtomicU64::new(0);
 const SUBMIT_TURN_COMPLETE_TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -435,10 +435,10 @@ impl TestGenexBuilder {
 
     /// Builds a test runtime using the execution environment selected by the test process.
     ///
-    /// With no remote test configuration, or with `CODEX_TEST_ENVIRONMENT=local`, this uses a
-    /// temporary local environment just like [`Self::build`]. `CODEX_TEST_ENVIRONMENT=docker` or
-    /// `CODEX_TEST_ENVIRONMENT=wine-exec` selects the remote exec server configured by
-    /// `CODEX_TEST_REMOTE_EXEC_SERVER_URL`; the legacy `CODEX_TEST_REMOTE_ENV` Docker-container
+    /// With no remote test configuration, or with `GENEX_TEST_ENVIRONMENT=local`, this uses a
+    /// temporary local environment just like [`Self::build`]. `GENEX_TEST_ENVIRONMENT=docker` or
+    /// `GENEX_TEST_ENVIRONMENT=wine-exec` selects the remote exec server configured by
+    /// `GENEX_TEST_REMOTE_EXEC_SERVER_URL`; the legacy `GENEX_TEST_REMOTE_ENV` Docker-container
     /// configuration does the same. Only the automatically selected environment is registered.
     /// Use [`Self::build_with_remote_and_local_env`] when a remote test also needs the local
     /// environment to be selectable explicitly.
@@ -553,7 +553,7 @@ impl TestGenexBuilder {
             .rollout_path
             .clone()
             .context("rollout path")?;
-        previous.codex.shutdown_and_wait().await?;
+        previous.genex.shutdown_and_wait().await?;
         self.resume(server, Arc::clone(&previous.home), rollout_path)
             .await
     }
@@ -752,7 +752,7 @@ impl TestGenexBuilder {
             home,
             cwd,
             config,
-            codex: new_conversation.thread,
+            genex: new_conversation.thread,
             session_configured: new_conversation.session_configured,
             thread_manager,
             thread_store,
@@ -792,12 +792,12 @@ impl TestGenexBuilder {
         } else if let Ok(exe) = std::env::current_exe()
             && let Some(bin_dir) = exe.parent().and_then(|parent| parent.parent())
         {
-            let codex = bin_dir.join("genex");
-            let codex_exec = bin_dir.join("codex-exec");
-            if codex.is_file() {
-                config.genex_self_exe = Some(codex);
-            } else if codex_exec.is_file() {
-                config.genex_self_exe = Some(codex_exec);
+            let genex = bin_dir.join("genex");
+            let genex_exec = bin_dir.join("codex-exec");
+            if genex.is_file() {
+                config.genex_self_exe = Some(genex);
+            } else if genex_exec.is_file() {
+                config.genex_self_exe = Some(genex_exec);
             }
         }
 
@@ -845,7 +845,7 @@ fn ensure_test_model_catalog(config: &mut Config) -> Result<()> {
 pub struct TestGenex {
     pub home: Arc<TempDir>,
     pub cwd: Arc<TempDir>,
-    pub codex: Arc<GenexThread>,
+    pub genex: Arc<GenexThread>,
     pub session_configured: SessionConfiguredEvent,
     pub config: Config,
     pub thread_manager: Arc<ThreadManager>,
@@ -889,14 +889,14 @@ impl TestGenex {
 
     /// Submits a text turn without changing the current thread settings.
     pub async fn submit_text_turn(&self, prompt: &str) -> Result<()> {
-        self.codex
+        self.genex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.into(),
                 text_elements: Vec::new(),
             }]))
             .await?;
 
-        wait_for_event(&self.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+        wait_for_event(&self.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
         Ok(())
     }
 
@@ -1020,7 +1020,7 @@ impl TestGenex {
         let turn_environment_selections = environments.map(|environments| {
             TurnEnvironmentSelections::new(self.config.cwd.clone(), environments)
         });
-        self.codex
+        self.genex
             .start_or_steer_turn(
                 TurnInputRequest::user_input(vec![UserInput::Text {
                     text: prompt.into(),
@@ -1045,13 +1045,13 @@ impl TestGenex {
             )
             .await?;
 
-        let turn_id = wait_for_event_match(&self.codex, |event| match event {
+        let turn_id = wait_for_event_match(&self.genex, |event| match event {
             EventMsg::TurnStarted(event) => Some(event.turn_id.clone()),
             _ => None,
         })
         .await;
         wait_for_event_with_timeout(
-            &self.codex,
+            &self.genex,
             |event| match event {
                 EventMsg::TurnComplete(event) => event.turn_id == turn_id,
                 _ => false,

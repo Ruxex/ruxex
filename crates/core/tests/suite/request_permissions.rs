@@ -167,7 +167,7 @@ async fn submit_turn(
     let session_model = test.session_configured.model.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(permission_profile, test.cwd.path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.into(),
@@ -195,7 +195,7 @@ async fn submit_turn(
 }
 
 async fn wait_for_completion(test: &TestGenex) {
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -205,7 +205,7 @@ async fn expect_exec_approval(
     test: &TestGenex,
     expected_command: &str,
 ) -> ExecApprovalRequestEvent {
-    let event = wait_for_event(&test.codex, |event| {
+    let event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -231,7 +231,7 @@ async fn expect_exec_approval(
 async fn wait_for_exec_approval_or_completion(
     test: &TestGenex,
 ) -> Option<ExecApprovalRequestEvent> {
-    let event = wait_for_event(&test.codex, |event| {
+    let event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -250,7 +250,7 @@ async fn expect_request_permissions_event(
     test: &TestGenex,
     expected_call_id: &str,
 ) -> RequestPermissionProfile {
-    let event = wait_for_event(&test.codex, |event| {
+    let event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::RequestPermissions(_) | EventMsg::TurnComplete(_)
@@ -355,7 +355,7 @@ async fn with_additional_permissions_requires_approval_under_on_request() -> Res
         approval.additional_permissions,
         Some(requested_permissions.clone())
     );
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
@@ -445,7 +445,7 @@ async fn request_permissions_tool_is_auto_denied_when_granular_request_permissio
     )
     .await?;
 
-    let event = wait_for_event(&test.codex, |event| {
+    let event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::RequestPermissions(_) | EventMsg::TurnComplete(_)
@@ -532,7 +532,7 @@ async fn request_permissions_auto_review_applies_guardian_decision(outcome: &str
     )
     .await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "request Guardian-reviewed directory permissions".into(),
@@ -546,7 +546,7 @@ async fn request_permissions_auto_review_applies_guardian_decision(outcome: &str
         )
         .await?;
 
-    let event = wait_for_event(&test.codex, |event| {
+    let event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::RequestPermissions(_) | EventMsg::TurnComplete(_)
@@ -653,7 +653,7 @@ async fn interrupted_request_permissions_auto_review_aborts_guardian_review() ->
     )
     .await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "interrupt a Guardian-reviewed permissions request".into(),
@@ -675,11 +675,11 @@ async fn interrupted_request_permissions_auto_review_aborts_guardian_review() ->
     .await
     .context("timed out waiting for the request_permissions Guardian review")?;
 
-    test.codex.submit(Op::Interrupt).await?;
+    test.genex.submit(Op::Interrupt).await?;
     let mut saw_turn_aborted = false;
     let mut saw_guardian_aborted = false;
     while !saw_turn_aborted || !saw_guardian_aborted {
-        let event = tokio::time::timeout(Duration::from_secs(5), test.codex.next_event())
+        let event = tokio::time::timeout(Duration::from_secs(5), test.genex.next_event())
             .await
             .context("timed out waiting for parent and Guardian cancellation")?
             .context("event stream ended while waiting for cancellation")?;
@@ -704,7 +704,7 @@ async fn interrupted_request_permissions_auto_review_aborts_guardian_review() ->
         ]),
     )
     .await;
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "verify interrupted permissions review left the next turn clean".into(),
             text_elements: Vec::new(),
@@ -805,7 +805,7 @@ async fn relative_additional_permissions_resolve_against_tool_workdir() -> Resul
         approval.additional_permissions,
         Some(expected_permissions.clone())
     );
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
@@ -903,7 +903,7 @@ async fn read_only_with_additional_permissions_does_not_widen_to_unrequested_cwd
         approval.additional_permissions,
         Some(requested_permissions.clone())
     );
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
@@ -1008,7 +1008,7 @@ async fn read_only_with_additional_permissions_does_not_widen_to_unrequested_tmp
         approval.additional_permissions,
         Some(requested_permissions.clone())
     );
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
@@ -1112,7 +1112,7 @@ async fn workspace_write_with_additional_permissions_can_write_outside_cwd() -> 
         approval.additional_permissions,
         Some(normalized_requested_permissions.into())
     );
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
@@ -1210,7 +1210,7 @@ async fn with_additional_permissions_denied_approval_blocks_execution() -> Resul
         approval.additional_permissions,
         Some(normalized_requested_permissions)
     );
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
@@ -1319,7 +1319,7 @@ async fn request_permissions_grants_apply_to_later_exec_command_calls() -> Resul
         granted_permissions,
         normalized_requested_permissions.clone()
     );
-    test.codex
+    test.genex
         .submit(Op::RequestPermissionsResponse {
             id: "permissions-call".to_string(),
             response: RequestPermissionsResponse {
@@ -1335,7 +1335,7 @@ async fn request_permissions_grants_apply_to_later_exec_command_calls() -> Resul
             approval.additional_permissions,
             Some(normalized_requested_permissions.clone().into())
         );
-        test.codex
+        test.genex
             .submit(Op::ExecApproval {
                 id: approval.effective_approval_id(),
                 turn_id: None,
@@ -1437,7 +1437,7 @@ async fn request_permissions_preapprove_explicit_exec_permissions_outside_on_req
         granted_permissions,
         normalized_requested_permissions.clone()
     );
-    test.codex
+    test.genex
         .submit(Op::RequestPermissionsResponse {
             id: "permissions-call".to_string(),
             response: RequestPermissionsResponse {
@@ -1449,7 +1449,7 @@ async fn request_permissions_preapprove_explicit_exec_permissions_outside_on_req
         .await?;
 
     if let Some(approval) = wait_for_exec_approval_or_completion(&test).await {
-        test.codex
+        test.genex
             .submit(Op::ExecApproval {
                 id: approval.effective_approval_id(),
                 turn_id: None,
@@ -1553,7 +1553,7 @@ async fn request_permissions_grants_apply_to_later_exec_command_calls_without_in
         granted_permissions,
         normalized_requested_permissions.clone()
     );
-    test.codex
+    test.genex
         .submit(Op::RequestPermissionsResponse {
             id: "permissions-call".to_string(),
             response: RequestPermissionsResponse {
@@ -1565,7 +1565,7 @@ async fn request_permissions_grants_apply_to_later_exec_command_calls_without_in
         .await?;
 
     if let Some(approval) = wait_for_exec_approval_or_completion(&test).await {
-        test.codex
+        test.genex
             .submit(Op::ExecApproval {
                 id: approval.effective_approval_id(),
                 turn_id: None,
@@ -1685,7 +1685,7 @@ async fn partial_request_permissions_grants_do_not_preapprove_new_permissions() 
 
     let initial_request = expect_request_permissions_event(&test, "permissions-call").await;
     assert_eq!(initial_request, normalized_requested_permissions);
-    test.codex
+    test.genex
         .submit(Op::RequestPermissionsResponse {
             id: "permissions-call".to_string(),
             response: RequestPermissionsResponse {
@@ -1729,7 +1729,7 @@ async fn partial_request_permissions_grants_do_not_preapprove_new_permissions() 
     expected_writes.sort_by_key(|path| path.display().to_string());
 
     assert_eq!(approval_writes, expected_writes);
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
@@ -1816,7 +1816,7 @@ async fn request_permissions_grants_do_not_carry_across_turns() -> Result<()> {
         granted_permissions,
         normalized_requested_permissions.clone()
     );
-    test.codex
+    test.genex
         .submit(Op::RequestPermissionsResponse {
             id: "permissions-call".to_string(),
             response: RequestPermissionsResponse {
@@ -1937,7 +1937,7 @@ async fn request_permissions_session_grants_carry_across_turns() -> Result<()> {
         granted_permissions,
         normalized_requested_permissions.clone()
     );
-    test.codex
+    test.genex
         .submit(Op::RequestPermissionsResponse {
             id: "permissions-call".to_string(),
             response: RequestPermissionsResponse {
@@ -1974,7 +1974,7 @@ async fn request_permissions_session_grants_carry_across_turns() -> Result<()> {
     )
     .await?;
 
-    let completion_event = wait_for_event(&test.codex, |event| {
+    let completion_event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -1982,7 +1982,7 @@ async fn request_permissions_session_grants_carry_across_turns() -> Result<()> {
     })
     .await;
     if let EventMsg::ExecApprovalRequest(approval) = completion_event {
-        test.codex
+        test.genex
             .submit(Op::ExecApproval {
                 id: approval.effective_approval_id(),
                 turn_id: None,
@@ -2125,7 +2125,7 @@ async fn denied_child_permissions_require_fresh_approval(
     ]);
     let responses = mount_sse_sequence(harness.server(), response_sequence).await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "request constrained permissions, then try the denied child".into(),
             text_elements: Vec::new(),
@@ -2135,7 +2135,7 @@ async fn denied_child_permissions_require_fresh_approval(
         expect_request_permissions_event(test, PERMISSIONS_CALL_ID).await,
         requested_permissions
     );
-    test.codex
+    test.genex
         .submit(Op::RequestPermissionsResponse {
             id: PERMISSIONS_CALL_ID.to_string(),
             response: approved_response.clone(),
@@ -2148,7 +2148,7 @@ async fn denied_child_permissions_require_fresh_approval(
             ApprovalMode::Never => AskForApproval::Never,
             ApprovalMode::Prompt | ApprovalMode::InlineFeatureDisabled => AskForApproval::OnRequest,
         };
-        test.codex
+        test.genex
             .start_or_steer_turn(
                 TurnInputRequest::user_input(vec![UserInput::Text {
                     text: "try the denied child using the stored session grant".into(),
@@ -2167,7 +2167,7 @@ async fn denied_child_permissions_require_fresh_approval(
         ApprovalMode::Never => Some("approval policy is Never"),
         ApprovalMode::InlineFeatureDisabled => Some("additional permissions are disabled"),
     };
-    let event = wait_for_event(&test.codex, |event| {
+    let event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::ExecApprovalRequest(_)
@@ -2232,7 +2232,7 @@ async fn denied_child_permissions_require_fresh_approval(
         (_, event) => panic!("expected fresh {tool:?} permission approval, got {event:?}"),
     };
     let content_before_denial = harness.read_file_text(SENTINEL_PATH).await?;
-    test.codex.submit(decision).await?;
+    test.genex.submit(decision).await?;
     wait_for_completion(test).await;
 
     assert_eq!(

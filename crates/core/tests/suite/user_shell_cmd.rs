@@ -120,7 +120,7 @@ async fn user_shell_command_without_local_environment_emits_error() -> anyhow::R
     let mut builder = test_genex();
     let test = builder.build(&server).await?;
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             environments: Some(genex_protocol::protocol::TurnEnvironmentSelections::new(
                 test.config.cwd.clone(),
@@ -131,7 +131,7 @@ async fn user_shell_command_without_local_environment_emits_error() -> anyhow::R
     )
     .await?;
 
-    test.codex
+    test.genex
         .submit(Op::RunUserShellCommand {
             command: "echo shell".to_string(),
             timeout_ms: None,
@@ -139,7 +139,7 @@ async fn user_shell_command_without_local_environment_emits_error() -> anyhow::R
         .await?;
 
     let EventMsg::Error(error) =
-        wait_for_event(&test.codex, |event| matches!(event, EventMsg::Error(_))).await
+        wait_for_event(&test.genex, |event| matches!(event, EventMsg::Error(_))).await
     else {
         unreachable!()
     };
@@ -410,14 +410,14 @@ async fn user_shell_command_history_is_persisted_and_shared_with_model() -> anyh
     #[cfg(not(windows))]
     let command = r#"sh -c "printf '%s' \"${CODEX_SANDBOX:-not-set}\"""#.to_string();
 
-    test.codex
+    test.genex
         .submit(Op::RunUserShellCommand {
             command: command.clone(),
             timeout_ms: None,
         })
         .await?;
 
-    let begin_event = wait_for_event_match(&test.codex, |ev| match ev {
+    let begin_event = wait_for_event_match(&test.genex, |ev| match ev {
         EventMsg::ExecCommandBegin(event) => Some(event.clone()),
         _ => None,
     })
@@ -431,7 +431,7 @@ async fn user_shell_command_history_is_persisted_and_shared_with_model() -> anyh
         begin_event.command
     );
 
-    let delta_event = wait_for_event_match(&test.codex, |ev| match ev {
+    let delta_event = wait_for_event_match(&test.genex, |ev| match ev {
         EventMsg::ExecCommandOutputDelta(event) => Some(event.clone()),
         _ => None,
     })
@@ -441,7 +441,7 @@ async fn user_shell_command_history_is_persisted_and_shared_with_model() -> anyh
         String::from_utf8(delta_event.chunk.clone()).expect("user command chunk is valid utf-8");
     assert_eq!(chunk_text.trim(), "not-set");
 
-    let end_event = wait_for_event_match(&test.codex, |ev| match ev {
+    let end_event = wait_for_event_match(&test.genex, |ev| match ev {
         EventMsg::ExecCommandEnd(event) => Some(event.clone()),
         _ => None,
     })
@@ -449,7 +449,7 @@ async fn user_shell_command_history_is_persisted_and_shared_with_model() -> anyh
     assert_eq!(end_event.exit_code, 0);
     assert_eq!(end_event.stdout.trim(), "not-set");
 
-    let _ = wait_for_event(&test.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _ = wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let responses = vec![responses::sse(vec![
         responses::ev_response_created("resp-1"),
@@ -498,7 +498,7 @@ async fn user_shell_command_does_not_set_network_sandbox_env_var() -> anyhow::Re
     let command =
         r#"sh -c "printf '%s' \"${CODEX_SANDBOX_NETWORK_DISABLED:-not-set}\"""#.to_string();
 
-    test.codex
+    test.genex
         .submit(Op::RunUserShellCommand {
             command,
             timeout_ms: None,
@@ -510,7 +510,7 @@ async fn user_shell_command_does_not_set_network_sandbox_env_var() -> anyhow::Re
         stdout,
         stderr,
         ..
-    } = wait_for_event_match(&test.codex, |ev| match ev {
+    } = wait_for_event_match(&test.genex, |ev| match ev {
         EventMsg::ExecCommandEnd(event) => Some(event.clone()),
         _ => None,
     })
@@ -542,21 +542,21 @@ async fn user_shell_command_output_is_truncated_in_history() -> anyhow::Result<(
     #[cfg(not(windows))]
     let command = "seq 1 400".to_string();
 
-    test.codex
+    test.genex
         .submit(Op::RunUserShellCommand {
             command: command.clone(),
             timeout_ms: None,
         })
         .await?;
 
-    let end_event = wait_for_event_match(&test.codex, |ev| match ev {
+    let end_event = wait_for_event_match(&test.genex, |ev| match ev {
         EventMsg::ExecCommandEnd(event) => Some(event.clone()),
         _ => None,
     })
     .await;
     assert_eq!(end_event.exit_code, 0);
 
-    let _ = wait_for_event(&test.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _ = wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let responses = vec![responses::sse(vec![
         responses::ev_response_created("resp-1"),

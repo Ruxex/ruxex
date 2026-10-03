@@ -138,7 +138,7 @@ async fn submit_turn(
     let session_model = test.session_configured.model.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(permission_profile, test.config.cwd.as_path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.into(),
@@ -166,7 +166,7 @@ async fn submit_turn(
 }
 
 async fn wait_for_completion(test: &TestGenex) {
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -176,7 +176,7 @@ async fn expect_request_permissions_event(
     test: &TestGenex,
     expected_call_id: &str,
 ) -> RequestPermissionProfile {
-    let event = wait_for_event(&test.codex, |event| {
+    let event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::RequestPermissions(_) | EventMsg::TurnComplete(_)
@@ -273,7 +273,7 @@ async fn approved_folder_write_request_permissions_unblocks_later_exec_without_s
         granted_permissions,
         normalized_requested_permissions.clone()
     );
-    test.codex
+    test.genex
         .submit(Op::RequestPermissionsResponse {
             id: "permissions-call".to_string(),
             response: RequestPermissionsResponse {
@@ -284,7 +284,7 @@ async fn approved_folder_write_request_permissions_unblocks_later_exec_without_s
         })
         .await?;
 
-    let completion_event = wait_for_event(&test.codex, |event| {
+    let completion_event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -292,14 +292,14 @@ async fn approved_folder_write_request_permissions_unblocks_later_exec_without_s
     })
     .await;
     if let EventMsg::ExecApprovalRequest(approval) = completion_event {
-        test.codex
+        test.genex
             .submit(Op::ExecApproval {
                 id: approval.effective_approval_id(),
                 turn_id: None,
                 decision: ReviewDecision::Approved,
             })
             .await?;
-        wait_for_event(&test.codex, |event| {
+        wait_for_event(&test.genex, |event| {
             matches!(event, EventMsg::TurnComplete(_))
         })
         .await;
@@ -432,7 +432,7 @@ async fn apply_patch_after_request_permissions(strict_auto_review: bool) -> Resu
         granted_permissions,
         normalized_requested_permissions.clone()
     );
-    test.codex
+    test.genex
         .submit(Op::RequestPermissionsResponse {
             id: "permissions-call".to_string(),
             response: RequestPermissionsResponse {
@@ -453,7 +453,7 @@ async fn apply_patch_after_request_permissions(strict_auto_review: bool) -> Resu
         assert!(guardian_request.body_contains_text(requested_file_name));
         assert!(guardian_request.body_contains_text(patch_content));
     } else {
-        let event = wait_for_event(&test.codex, |event| {
+        let event = wait_for_event(&test.genex, |event| {
             matches!(
                 event,
                 EventMsg::ApplyPatchApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -501,7 +501,7 @@ async fn apply_patch_after_request_permissions(strict_auto_review: bool) -> Resu
         format!("{patch_content}\n")
     );
 
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
 
     Ok(())
 }

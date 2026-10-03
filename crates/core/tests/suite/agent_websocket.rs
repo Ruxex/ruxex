@@ -44,7 +44,7 @@ async fn websocket_model_switch_to_responses_lite_omits_top_level_tools() -> Res
     let test = builder.build_with_websocket_server(&server).await?;
 
     test.submit_turn("non-lite turn").await?;
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "lite turn".into(),
@@ -56,7 +56,7 @@ async fn websocket_model_switch_to_responses_lite_omits_top_level_tools() -> Res
             }),
         )
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

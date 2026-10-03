@@ -168,7 +168,7 @@ async fn mcp_app_ui_survives_tool_events_and_resume(
     let expected_uri = expected_ui.as_ref().map(|ui| ui.resource_uri.clone());
     let mut observed = Vec::new();
     let mut completed = None;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         match event {
             EventMsg::ItemStarted(ItemStartedEvent {
                 item: TurnItem::McpToolCall(item),
@@ -319,7 +319,7 @@ async fn auto_session_approval_is_scoped_to_tool_link_id() -> Result<()> {
     for (index, (selected_link_id, expects_prompt)) in cases.into_iter().enumerate() {
         *has_link_selector.lock().unwrap() = selected_link_id.is_some();
         // Reconnect to publish the account selector or legacy metadata without a link.
-        test.codex.submit(Op::RefreshMcpServers).await?;
+        test.genex.submit(Op::RefreshMcpServers).await?;
         submit_user_turn(
             &test,
             "Use [$calendar](app://calendar) to create a calendar event.",
@@ -328,7 +328,7 @@ async fn auto_session_approval_is_scoped_to_tool_link_id() -> Result<()> {
             /*collaboration_mode*/ None,
         )
         .await?;
-        let event = wait_for_event(&test.codex, |event| {
+        let event = wait_for_event(&test.genex, |event| {
             matches!(
                 event,
                 EventMsg::ElicitationRequest(_) | EventMsg::TurnComplete(_)
@@ -341,7 +341,7 @@ async fn auto_session_approval_is_scoped_to_tool_link_id() -> Result<()> {
             "unexpected approval for call {index} with link {selected_link_id:?}"
         );
         if let EventMsg::ElicitationRequest(request) = event {
-            test.codex
+            test.genex
                 .submit(Op::ResolveElicitation {
                     server_name: request.server_name,
                     request_id: request.id,
@@ -350,7 +350,7 @@ async fn auto_session_approval_is_scoped_to_tool_link_id() -> Result<()> {
                     meta: Some(json!({ "persist": "session" })),
                 })
                 .await?;
-            wait_for_event(&test.codex, |event| {
+            wait_for_event(&test.genex, |event| {
                 matches!(event, EventMsg::TurnComplete(_))
             })
             .await;
@@ -439,7 +439,7 @@ async fn submit_user_turn(
     let session_model = test.session_configured.model.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(permission_profile, test.cwd.path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: text.to_string(),
@@ -492,7 +492,7 @@ async fn apply_turn_attribution_update(
     request_user_input_call_id: &str,
     model: &str,
 ) -> Result<()> {
-    let request = wait_for_event_match(&test.codex, |event| match event {
+    let request = wait_for_event_match(&test.genex, |event| match event {
         EventMsg::RequestUserInput(request) => Some(request.clone()),
         _ => None,
     })
@@ -500,7 +500,7 @@ async fn apply_turn_attribution_update(
     assert_eq!(request.call_id, request_user_input_call_id);
 
     let (reply, outcome) = tokio::sync::oneshot::channel();
-    test.codex
+    test.genex
         .submit(Op::TurnSettings {
             turn_id: request.turn_id.clone(),
             update: TurnSettingsUpdate {
@@ -513,7 +513,7 @@ async fn apply_turn_attribution_update(
         .await?;
     assert_eq!(outcome.await?, TurnSettingsUpdateOutcome::Applied);
 
-    test.codex
+    test.genex
         .submit(Op::UserInputAnswer {
             id: request.turn_id,
             response: RequestUserInputResponse {
@@ -534,7 +534,7 @@ async fn wait_for_mcp_tool_call_item(
     call_id: &str,
     status: McpToolCallStatus,
 ) -> Option<bool> {
-    wait_for_event_match(&test.codex, |event| {
+    wait_for_event_match(&test.genex, |event| {
         let item = match event {
             EventMsg::ItemStarted(event) => &event.item,
             EventMsg::ItemCompleted(event) => &event.item,
@@ -657,7 +657,7 @@ async fn approved_mcp_tool_call_metadata_records_prior_user_input_request(
     .await?;
 
     if strict_auto_review {
-        let event = wait_for_event(&test.codex, |event| {
+        let event = wait_for_event(&test.genex, |event| {
             matches!(
                 event,
                 EventMsg::RequestPermissions(_) | EventMsg::TurnComplete(_)
@@ -668,7 +668,7 @@ async fn approved_mcp_tool_call_metadata_records_prior_user_input_request(
             panic!("expected permission request before MCP approval, received {event:?}");
         };
         assert_eq!(request.call_id, "calendar-strict-permissions");
-        test.codex
+        test.genex
             .submit(Op::RequestPermissionsResponse {
                 id: request.call_id,
                 response: RequestPermissionsResponse {
@@ -680,7 +680,7 @@ async fn approved_mcp_tool_call_metadata_records_prior_user_input_request(
             .await?;
     }
 
-    let EventMsg::McpToolCallBegin(begin) = wait_for_event(&test.codex, |event| {
+    let EventMsg::McpToolCallBegin(begin) = wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::McpToolCallBegin(_))
     })
     .await
@@ -690,7 +690,7 @@ async fn approved_mcp_tool_call_metadata_records_prior_user_input_request(
     assert_eq!(begin.call_id, call_id);
 
     if !strict_auto_review {
-        let EventMsg::ElicitationRequest(request) = wait_for_event(&test.codex, |event| {
+        let EventMsg::ElicitationRequest(request) = wait_for_event(&test.genex, |event| {
             matches!(
                 event,
                 EventMsg::ElicitationRequest(_) | EventMsg::TurnComplete(_)
@@ -701,7 +701,7 @@ async fn approved_mcp_tool_call_metadata_records_prior_user_input_request(
             panic!("expected apps._default user to route the app approval to the user");
         };
 
-        test.codex
+        test.genex
             .submit(Op::ResolveElicitation {
                 server_name: request.server_name,
                 request_id: request.id,
@@ -712,7 +712,7 @@ async fn approved_mcp_tool_call_metadata_records_prior_user_input_request(
             .await?;
     }
 
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -911,7 +911,7 @@ approvals_reviewer = "auto_review"
     )
     .await?;
 
-    let route_event = wait_for_event(&test.codex, |event| {
+    let route_event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::ElicitationRequest(_) | EventMsg::TurnComplete(_)
@@ -1129,7 +1129,7 @@ default_tools_approval_mode = "{selected_link_mode}"
             completed_links.push(item.link_id.clone());
         }
     };
-    let event = wait_for_event(&test.codex, |event| {
+    let event = wait_for_event(&test.genex, |event| {
         record_link(event);
         matches!(
             event,
@@ -1155,7 +1155,7 @@ default_tools_approval_mode = "{selected_link_mode}"
             ),
             (expected_link_id, Some(expected_link_is_implicit)),
         );
-        test.codex
+        test.genex
             .submit(Op::ResolveElicitation {
                 server_name: request.server_name,
                 request_id: request.id,
@@ -1164,7 +1164,7 @@ default_tools_approval_mode = "{selected_link_mode}"
                 meta: None,
             })
             .await?;
-        wait_for_event(&test.codex, |event| {
+        wait_for_event(&test.genex, |event| {
             record_link(event);
             matches!(event, EventMsg::TurnComplete(_))
         })
@@ -1297,7 +1297,7 @@ async fn apps_missing_link_respects_advertised_selector(
             completed_calls.push((item.status, item.link_id.clone()));
         }
     };
-    let event = wait_for_event(&test.codex, |event| {
+    let event = wait_for_event(&test.genex, |event| {
         record_call(event);
         matches!(
             event,
@@ -1313,7 +1313,7 @@ async fn apps_missing_link_respects_advertised_selector(
     );
     if let EventMsg::ElicitationRequest(request) = event {
         assert_eq!(recorded_apps_tool_calls(&server).await, Vec::<Value>::new());
-        test.codex
+        test.genex
             .submit(Op::ResolveElicitation {
                 server_name: request.server_name,
                 request_id: request.id,
@@ -1322,7 +1322,7 @@ async fn apps_missing_link_respects_advertised_selector(
                 meta: None,
             })
             .await?;
-        wait_for_event(&test.codex, |event| {
+        wait_for_event(&test.genex, |event| {
             record_call(event);
             matches!(event, EventMsg::TurnComplete(_))
         })
@@ -1428,7 +1428,7 @@ async fn apps_default_writes_prompts_for_writes_but_not_reads() -> Result<()> {
         wait_for_mcp_tool_call_item(&test, read_call_id, McpToolCallStatus::InProgress).await,
         Some(true)
     );
-    let EventMsg::McpToolCallBegin(read_begin) = wait_for_event(&test.codex, |event| {
+    let EventMsg::McpToolCallBegin(read_begin) = wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::McpToolCallBegin(_))
     })
     .await
@@ -1446,7 +1446,7 @@ async fn apps_default_writes_prompts_for_writes_but_not_reads() -> Result<()> {
         wait_for_mcp_tool_call_item(&test, write_call_id, McpToolCallStatus::InProgress).await,
         Some(false)
     );
-    let next_route = wait_for_event(&test.codex, |event| {
+    let next_route = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::McpToolCallBegin(_) | EventMsg::ElicitationRequest(_)
@@ -1459,7 +1459,7 @@ async fn apps_default_writes_prompts_for_writes_but_not_reads() -> Result<()> {
     assert_eq!(write_begin.call_id, write_call_id);
     assert_eq!(write_begin.read_only_hint, Some(false));
 
-    let EventMsg::ElicitationRequest(request) = wait_for_event(&test.codex, |event| {
+    let EventMsg::ElicitationRequest(request) = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::ElicitationRequest(_) | EventMsg::TurnComplete(_)
@@ -1470,7 +1470,7 @@ async fn apps_default_writes_prompts_for_writes_but_not_reads() -> Result<()> {
         panic!("write app action should prompt in writes mode");
     };
 
-    test.codex
+    test.genex
         .submit(Op::ResolveElicitation {
             server_name: request.server_name,
             request_id: request.id,
@@ -1484,7 +1484,7 @@ async fn apps_default_writes_prompts_for_writes_but_not_reads() -> Result<()> {
         wait_for_mcp_tool_call_item(&test, write_call_id, McpToolCallStatus::Completed).await,
         Some(false)
     );
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1493,9 +1493,9 @@ async fn apps_default_writes_prompts_for_writes_but_not_reads() -> Result<()> {
     recorded_apps_tool_call_by_call_id(&server, read_call_id).await;
     recorded_apps_tool_call_by_call_id(&server, write_call_id).await;
 
-    test.codex.ensure_rollout_materialized().await;
-    test.codex.flush_rollout().await?;
-    let rollout_path = test.codex.rollout_path().expect("rollout path");
+    test.genex.ensure_rollout_materialized().await;
+    test.genex.flush_rollout().await?;
+    let rollout_path = test.genex.rollout_path().expect("rollout path");
     let persisted_hints = tokio::fs::read_to_string(rollout_path)
         .await?
         .lines()
@@ -1614,7 +1614,7 @@ async fn mcp_tool_call_metadata_uses_captured_step_after_request_user_input() ->
 
     apply_turn_attribution_update(&test, request_user_input_call_id, model_b).await?;
 
-    let EventMsg::McpToolCallBegin(begin) = wait_for_event(&test.codex, |event| {
+    let EventMsg::McpToolCallBegin(begin) = wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::McpToolCallBegin(_))
     })
     .await
@@ -1623,7 +1623,7 @@ async fn mcp_tool_call_metadata_uses_captured_step_after_request_user_input() ->
     };
     assert_eq!(begin.call_id, calendar_call_id);
 
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

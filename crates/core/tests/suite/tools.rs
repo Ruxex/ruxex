@@ -209,7 +209,7 @@ async fn strict_tool_collisions_do_not_duplicate_unrelated_compaction_errors() -
     });
     let test = builder.build_with_auto_env(&server).await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "trigger compaction".to_string(),
             text_elements: Vec::new(),
@@ -217,7 +217,7 @@ async fn strict_tool_collisions_do_not_duplicate_unrelated_compaction_errors() -
         .await?;
 
     let mut errors = Vec::new();
-    wait_for_event(&test.codex, |event| match event {
+    wait_for_event(&test.genex, |event| match event {
         EventMsg::Error(error) => {
             errors.push(error.message.clone());
             false
@@ -580,7 +580,7 @@ async fn exec_command_escalated_permissions_rejected_then_ok() -> Result<()> {
         });
     let test = builder.build(&server).await?;
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             approval_policy: Some(AskForApproval::Never),
             permission_profile: Some(PermissionProfile::Disabled),

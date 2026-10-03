@@ -73,7 +73,7 @@ async fn unreviewable_stdin_is_rejected_before_approval_or_execution(
     }
     sequence.push(sse(vec![ev_completed("done")]));
     let responses = mount_sse_sequence(&server, sequence).await;
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "send terminal input".to_string(),
@@ -90,11 +90,11 @@ async fn unreviewable_stdin_is_rejected_before_approval_or_execution(
         .await?;
     let mut approvals = Vec::new();
     loop {
-        match wait_for_event(&test.codex, |_| true).await {
+        match wait_for_event(&test.genex, |_| true).await {
             EventMsg::ExecApprovalRequest(request) => {
                 let id = request.effective_approval_id();
                 approvals.push((request.kind, id.clone()));
-                test.codex
+                test.genex
                     .submit(Op::ExecApproval {
                         id,
                         turn_id: Some(request.turn_id),
@@ -119,8 +119,8 @@ async fn unreviewable_stdin_is_rejected_before_approval_or_execution(
     assert!(rejected.to_string().contains(expected_error), "{rejected}");
     let allowed = last.function_call_output("allowed");
     assert!(allowed.to_string().contains("STDIN_REVIEW_OK"), "{allowed}");
-    test.codex.submit(Op::Shutdown).await?;
-    wait_for_event(&test.codex, |event| {
+    test.genex.submit(Op::Shutdown).await?;
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::ShutdownComplete)
     })
     .await;

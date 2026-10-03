@@ -212,7 +212,7 @@ async fn responses_lite_includes_tool_namespaces_info_when_enabled() -> Result<(
             config.tool_registry.turn_metadata_includes_tool_info = true;
         });
     let test = builder.build_with_auto_env(&server).await?;
-    wait_for_mcp_server(&test.codex, CODEX_APPS_MCP_SERVER_NAME).await?;
+    wait_for_mcp_server(&test.genex, CODEX_APPS_MCP_SERVER_NAME).await?;
 
     test.submit_turn("hello").await?;
 
@@ -272,7 +272,7 @@ async fn responses_lite_prepares_images() -> Result<()> {
     });
     let test = builder.build(&server).await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
             UserInput::Image {
                 image: ImageReference::Inline {
@@ -288,7 +288,7 @@ async fn responses_lite_prepares_images() -> Result<()> {
             },
         ]))
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -528,8 +528,8 @@ async fn responses_lite_compact_request_uses_lite_transport_contract() -> Result
     let test = builder.build(&server).await?;
 
     test.submit_turn("Compact this conversation").await?;
-    test.codex.submit(Op::Compact).await?;
-    wait_for_event(&test.codex, |event| {
+    test.genex.submit(Op::Compact).await?;
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

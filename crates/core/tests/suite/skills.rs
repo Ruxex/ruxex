@@ -129,7 +129,7 @@ async fn user_turn_includes_skill_instructions() -> Result<()> {
     let session_model = test.session_configured.model.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![
                 UserInput::Text {
@@ -159,7 +159,7 @@ async fn user_turn_includes_skill_instructions() -> Result<()> {
         )
         .await?;
 
-    core_test_support::wait_for_event(test.codex.as_ref(), |event| {
+    core_test_support::wait_for_event(test.genex.as_ref(), |event| {
         matches!(event, genex_protocol::protocol::EventMsg::TurnComplete(_))
     })
     .await;
@@ -262,7 +262,7 @@ async fn user_turn_selects_symlinked_skill_by_advertised_discovery_path() -> Res
         .await?;
     assert!(matches!(submission, StartIfIdleSubmission::Started { .. }));
 
-    core_test_support::wait_for_event(test.codex.as_ref(), |event| {
+    core_test_support::wait_for_event(test.genex.as_ref(), |event| {
         matches!(event, genex_protocol::protocol::EventMsg::TurnComplete(_))
     })
     .await;
@@ -349,7 +349,7 @@ async fn idle_user_turn_includes_skill_instructions_in_the_first_request() -> Re
         .await?;
     assert!(matches!(submission, StartIfIdleSubmission::Started { .. }));
 
-    core_test_support::wait_for_event(test.codex.as_ref(), |event| {
+    core_test_support::wait_for_event(test.genex.as_ref(), |event| {
         matches!(event, genex_protocol::protocol::EventMsg::TurnComplete(_))
     })
     .await;

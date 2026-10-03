@@ -222,7 +222,7 @@ async fn wait_for_retry(
 }
 
 async fn submit_user_input(test: &TestGenex, text: &str) -> Result<()> {
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: text.to_string(),
             text_elements: Vec::new(),
@@ -232,7 +232,7 @@ async fn submit_user_input(test: &TestGenex, text: &str) -> Result<()> {
 }
 
 async fn wait_for_turn_completion(test: &TestGenex) {
-    let EventMsg::TurnComplete(completed) = wait_for_event(&test.codex, |event| {
+    let EventMsg::TurnComplete(completed) = wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await
@@ -373,7 +373,7 @@ async fn responses_http_overload_without_retry_after_exhausts_request_retries() 
     let mut stream_error_events = 0;
     tokio::time::timeout(Duration::from_secs(10), async {
         loop {
-            match wait_for_event(&test.codex, |_| true).await {
+            match wait_for_event(&test.genex, |_| true).await {
                 EventMsg::Error(error) => {
                     error_events += 1;
                     assert_eq!(
@@ -458,7 +458,7 @@ async fn compact_v2_uses_local_backoff_despite_retry_after() -> Result<()> {
         .await?;
     test.submit_turn("seed history for compaction").await?;
 
-    test.codex.submit(Op::Compact).await?;
+    test.genex.submit(Op::Compact).await?;
     let retry = telemetry.next_retry().await;
     assert!((FIRST_RETRY_MIN_DELAY..FIRST_RETRY_MAX_DELAY).contains(&retry.delay));
     assert_eq!(
@@ -533,7 +533,7 @@ async fn compact_v2_stream_failure_uses_local_backoff_despite_retry_after() -> R
         .await?;
     test.submit_turn("seed history for compaction").await?;
 
-    test.codex.submit(Op::Compact).await?;
+    test.genex.submit(Op::Compact).await?;
     let retry = telemetry.next_retry().await;
     assert!((FIRST_RETRY_MIN_DELAY..FIRST_RETRY_MAX_DELAY).contains(&retry.delay));
     assert_eq!(
@@ -602,7 +602,7 @@ async fn compact_v2_stream_failure_without_retry_after_exhausts_stream_retries()
         .await?;
     test.submit_turn("seed history for compaction").await?;
 
-    test.codex.submit(Op::Compact).await?;
+    test.genex.submit(Op::Compact).await?;
     let retry = telemetry.next_retry().await;
     assert!((FIRST_RETRY_MIN_DELAY..FIRST_RETRY_MAX_DELAY).contains(&retry.delay));
     assert_eq!(
@@ -619,7 +619,7 @@ async fn compact_v2_stream_failure_without_retry_after_exhausts_stream_retries()
     let mut error_events = 0;
     let mut stream_error_events = 0;
     loop {
-        match wait_for_event(&test.codex, |_| true).await {
+        match wait_for_event(&test.genex, |_| true).await {
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(
@@ -703,7 +703,7 @@ async fn compact_v2_rate_limit_message_uses_server_advised_retry_delay() -> Resu
         .await?;
     test.submit_turn("seed history for compaction").await?;
 
-    test.codex.submit(Op::Compact).await?;
+    test.genex.submit(Op::Compact).await?;
     let retry = telemetry.next_retry().await;
     assert_eq!(
         retry,
@@ -777,7 +777,7 @@ async fn compact_v2_rate_limit_message_without_retry_after_uses_server_advised_d
         .await?;
     test.submit_turn("seed history for compaction").await?;
 
-    test.codex.submit(Op::Compact).await?;
+    test.genex.submit(Op::Compact).await?;
     let retry = telemetry.next_retry().await;
     assert_eq!(
         retry,
@@ -841,7 +841,7 @@ async fn compact_v2_overload_without_retry_after_exhausts_request_retries() -> R
         .await?;
     test.submit_turn("seed history for compaction").await?;
 
-    test.codex.submit(Op::Compact).await?;
+    test.genex.submit(Op::Compact).await?;
     let first_retry = telemetry.next_retry().await;
     assert!((FIRST_RETRY_MIN_DELAY..FIRST_RETRY_MAX_DELAY).contains(&first_retry.delay));
     assert_eq!(
@@ -869,7 +869,7 @@ async fn compact_v2_overload_without_retry_after_exhausts_request_retries() -> R
     let mut error_events = 0;
     let mut stream_error_events = 0;
     loop {
-        match wait_for_event(&test.codex, |_| true).await {
+        match wait_for_event(&test.genex, |_| true).await {
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(
@@ -1038,7 +1038,7 @@ async fn sse_failure_without_retry_after_exhausts_stream_retries(code: &str) -> 
     let mut error_events = 0;
     let mut stream_error_events = 0;
     loop {
-        match wait_for_event(&test.codex, |_| true).await {
+        match wait_for_event(&test.genex, |_| true).await {
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(
@@ -1211,7 +1211,7 @@ async fn sse_overload_with_retry_after_is_terminal() -> Result<()> {
     let mut error_events = 0;
     let mut stream_error_events = 0;
     loop {
-        match wait_for_event(&test.codex, |_| true).await {
+        match wait_for_event(&test.genex, |_| true).await {
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(
@@ -1283,7 +1283,7 @@ async fn sse_overload_without_retry_after_is_terminal() -> Result<()> {
     let mut error_events = 0;
     let mut stream_error_events = 0;
     loop {
-        match wait_for_event(&test.codex, |_| true).await {
+        match wait_for_event(&test.genex, |_| true).await {
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(
@@ -1499,7 +1499,7 @@ async fn websocket_rate_limit_with_nested_retry_after_is_terminal() -> Result<()
     let mut error_events = 0;
     let mut stream_error_events = 0;
     loop {
-        match wait_for_event(&test.codex, |_| true).await {
+        match wait_for_event(&test.genex, |_| true).await {
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(
@@ -1571,7 +1571,7 @@ async fn websocket_rate_limit_without_retry_after_is_terminal() -> Result<()> {
     let mut error_events = 0;
     let mut stream_error_events = 0;
     loop {
-        match wait_for_event(&test.codex, |_| true).await {
+        match wait_for_event(&test.genex, |_| true).await {
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(
@@ -1648,7 +1648,7 @@ async fn websocket_overload_with_nested_retry_after_is_terminal() -> Result<()> 
     let mut stream_error_events = 0;
     let mut fallback_warning_events = 0;
     loop {
-        match wait_for_event(&test.codex, |_| true).await {
+        match wait_for_event(&test.genex, |_| true).await {
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(
@@ -1732,7 +1732,7 @@ async fn websocket_overload_without_retry_after_is_terminal() -> Result<()> {
     let mut stream_error_events = 0;
     let mut fallback_warning_events = 0;
     loop {
-        match wait_for_event(&test.codex, |_| true).await {
+        match wait_for_event(&test.genex, |_| true).await {
             EventMsg::Error(error) => {
                 error_events += 1;
                 assert_eq!(

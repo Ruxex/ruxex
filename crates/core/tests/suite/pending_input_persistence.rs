@@ -182,7 +182,7 @@ async fn steered_input_checkpoint_controls_next_request(
     let TurnInputSubmission::Started { turn_id } = first else {
         panic!("first input should start a turn");
     };
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::AgentMessageContentDelta(_))
     })
     .await;
@@ -202,7 +202,7 @@ async fn steered_input_checkpoint_controls_next_request(
         }
     };
     assert_eq!(
-        test.codex.start_or_steer_turn(input).await?,
+        test.genex.start_or_steer_turn(input).await?,
         TurnInputSubmission::Steered { turn_id }
     );
     // Steering still waits for the existing inference stream to finish.
@@ -242,11 +242,11 @@ async fn steered_input_checkpoint_controls_next_request(
     second_completed
         .send(())
         .expect("finish follow-up inference");
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
     server.shutdown().await;
     Ok(())
 }

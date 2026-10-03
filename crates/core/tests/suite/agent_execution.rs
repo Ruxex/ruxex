@@ -408,7 +408,7 @@ async fn v2_residency_reload_preserves_inherited_environment_and_tools(
     let mut created_threads = test.thread_manager.subscribe_thread_created();
 
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             environments: Some(TurnEnvironmentSelections::new(
                 test.config.cwd.clone(),
@@ -437,7 +437,7 @@ async fn v2_residency_reload_preserves_inherited_environment_and_tools(
     }
     if reload == ResidencyReload::Sender {
         submit_thread_settings(
-            &test.codex,
+            &test.genex,
             ThreadSettingsOverrides {
                 environments: Some(TurnEnvironmentSelections::new(
                     test.config.cwd.clone(),
@@ -467,7 +467,7 @@ async fn v2_residency_reload_preserves_inherited_environment_and_tools(
 
     if reload != ResidencyReload::Sender {
         submit_thread_settings(
-            &test.codex,
+            &test.genex,
             ThreadSettingsOverrides {
                 environments: Some(TurnEnvironmentSelections::new(
                     test.config.cwd.clone(),
@@ -478,7 +478,7 @@ async fn v2_residency_reload_preserves_inherited_environment_and_tools(
         )
         .await?;
         assert_eq!(
-            test.codex.config_snapshot().await.environments.environments,
+            test.genex.config_snapshot().await.environments.environments,
             vec![parent_environment]
         );
         let result = test

@@ -75,11 +75,11 @@ async fn provider_model_header_mismatch_emits_warning_event() -> Result<()> {
     let mut builder = test_genex().with_model(REQUESTED_MODEL);
     let test = builder.build(&server).await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_text_turn(&test, "trigger safety check"))
         .await?;
 
-    let reroute = wait_for_event(&test.codex, |event| {
+    let reroute = wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::ModelReroute(_))
     })
     .await;
@@ -90,14 +90,14 @@ async fn provider_model_header_mismatch_emits_warning_event() -> Result<()> {
     assert_eq!(reroute.to_model, SERVER_MODEL);
     assert_eq!(reroute.reason, ModelRerouteReason::HighRiskCyberActivity);
 
-    let warning = wait_for_event(&test.codex, |event| matches!(event, EventMsg::Warning(_))).await;
+    let warning = wait_for_event(&test.genex, |event| matches!(event, EventMsg::Warning(_))).await;
     let EventMsg::Warning(warning) = warning else {
         panic!("expected warning event");
     };
     assert!(warning.message.contains(REQUESTED_MODEL));
     assert!(warning.message.contains(SERVER_MODEL));
 
-    let _ = wait_for_event(&test.codex, |event| {
+    let _ = wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -123,11 +123,11 @@ async fn cyber_policy_response_emits_typed_error_without_retry() -> Result<()> {
     let mut builder = test_genex().with_model(REQUESTED_MODEL);
     let test = builder.build(&server).await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_text_turn(&test, "trigger cyber policy error"))
         .await?;
 
-    let error = wait_for_event(&test.codex, |event| matches!(event, EventMsg::Error(_))).await;
+    let error = wait_for_event(&test.genex, |event| matches!(event, EventMsg::Error(_))).await;
     let EventMsg::Error(error) = error else {
         panic!("expected error event");
     };
@@ -162,11 +162,11 @@ async fn response_model_field_mismatch_emits_warning_when_header_matches_request
     let mut builder = test_genex().with_model(REQUESTED_MODEL);
     let test = builder.build(&server).await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_text_turn(&test, "trigger response model check"))
         .await?;
 
-    let reroute = wait_for_event(&test.codex, |event| {
+    let reroute = wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::ModelReroute(_))
     })
     .await;
@@ -177,7 +177,7 @@ async fn response_model_field_mismatch_emits_warning_when_header_matches_request
     assert_eq!(reroute.to_model, SERVER_MODEL);
     assert_eq!(reroute.reason, ModelRerouteReason::HighRiskCyberActivity);
 
-    let warning = wait_for_event(&test.codex, |event| {
+    let warning = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::Warning(warning)
@@ -193,7 +193,7 @@ async fn response_model_field_mismatch_emits_warning_when_header_matches_request
     assert!(warning.message.contains(REQUESTED_MODEL));
     assert!(warning.message.contains(SERVER_MODEL));
 
-    let _ = wait_for_event(&test.codex, |event| {
+    let _ = wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -232,13 +232,13 @@ async fn provider_model_header_mismatch_only_emits_one_warning_per_turn() -> Res
     let mut builder = test_genex().with_model(REQUESTED_MODEL);
     let test = builder.build(&server).await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_text_turn(&test, "trigger follow-up turn"))
         .await?;
 
     let mut warning_count = 0;
     loop {
-        let event = wait_for_event(&test.codex, |_| true).await;
+        let event = wait_for_event(&test.genex, |_| true).await;
         match event {
             EventMsg::Warning(warning)
                 if warning
@@ -270,14 +270,14 @@ async fn provider_model_header_casing_only_mismatch_does_not_warn() -> Result<()
     let mut builder = test_genex().with_model(REQUESTED_MODEL);
     let test = builder.build(&server).await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_text_turn(&test, "trigger casing check"))
         .await?;
 
     let mut reroute_count = 0;
     let mut warning_count = 0;
     loop {
-        let event = wait_for_event(&test.codex, |_| true).await;
+        let event = wait_for_event(&test.genex, |_| true).await;
         match event {
             EventMsg::ModelReroute(_) => reroute_count += 1,
             EventMsg::Warning(warning)
@@ -313,7 +313,7 @@ async fn model_verification_emits_structured_event_without_reroute_or_warning() 
     let mut builder = test_genex().with_model("gpt-5.5");
     let test = builder.build(&server).await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_text_turn(&test, "trigger model verification"))
         .await?;
 
@@ -322,7 +322,7 @@ async fn model_verification_emits_structured_event_without_reroute_or_warning() 
     let mut warning_count = 0;
     let mut warning_item_count = 0;
     loop {
-        let event = wait_for_event(&test.codex, |_| true).await;
+        let event = wait_for_event(&test.genex, |_| true).await;
         match event {
             EventMsg::ModelVerification(event) => {
                 assert_eq!(
@@ -389,7 +389,7 @@ async fn model_verification_only_emits_once_per_turn() -> Result<()> {
     let mut builder = test_genex().with_model(SERVER_MODEL);
     let test = builder.build(&server).await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(disabled_text_turn(
             &test,
             "trigger follow-up model verification",
@@ -398,7 +398,7 @@ async fn model_verification_only_emits_once_per_turn() -> Result<()> {
 
     let mut verification_count = 0;
     loop {
-        let event = wait_for_event(&test.codex, |_| true).await;
+        let event = wait_for_event(&test.genex, |_| true).await;
         match event {
             EventMsg::ModelVerification(_) => verification_count += 1,
             EventMsg::Warning(warning) if warning.message.contains("high-risk cyber activity") => {

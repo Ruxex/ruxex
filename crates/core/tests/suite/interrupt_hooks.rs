@@ -118,13 +118,13 @@ async fn start_interruptible_turn(test: &TestGenex, server: &MockServer) -> Resu
     )
     .await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "interrupt me".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    let _ = wait_for_event_match(&test.codex, |event| match event {
+    let _ = wait_for_event_match(&test.genex, |event| match event {
         EventMsg::ExecCommandBegin(begin) => Some(begin.clone()),
         _ => None,
     })
@@ -145,16 +145,16 @@ async fn interrupt_hook_runs_before_turn_aborted_and_records_payload() -> Result
     let test = build_test(&server, Some("watch the tide")).await?;
     start_interruptible_turn(&test, &server).await?;
 
-    test.codex.submit(Op::Interrupt).await?;
+    test.genex.submit(Op::Interrupt).await?;
 
-    let started = wait_for_event_match(&test.codex, |event| match event {
+    let started = wait_for_event_match(&test.genex, |event| match event {
         EventMsg::HookStarted(started) if started.run.event_name == HookEventName::Interrupt => {
             Some(started.clone())
         }
         _ => None,
     })
     .await;
-    let completed = wait_for_event_match(&test.codex, |event| match event {
+    let completed = wait_for_event_match(&test.genex, |event| match event {
         EventMsg::HookCompleted(completed)
             if completed.run.event_name == HookEventName::Interrupt =>
         {
@@ -163,7 +163,7 @@ async fn interrupt_hook_runs_before_turn_aborted_and_records_payload() -> Result
         _ => None,
     })
     .await;
-    let _aborted = wait_for_event_match(&test.codex, |event| match event {
+    let _aborted = wait_for_event_match(&test.genex, |event| match event {
         EventMsg::TurnAborted(aborted) if aborted.reason == TurnAbortReason::Interrupted => {
             Some(aborted.clone())
         }
@@ -239,10 +239,10 @@ async fn timed_out_interrupt_hook_fails_before_turn_aborted() -> Result<()> {
     )?;
     start_interruptible_turn(&test, &server).await?;
 
-    test.codex.submit(Op::Interrupt).await?;
+    test.genex.submit(Op::Interrupt).await?;
     let completed = timeout(
         Duration::from_secs(5),
-        wait_for_event_match(&test.codex, |event| match event {
+        wait_for_event_match(&test.genex, |event| match event {
             EventMsg::HookCompleted(completed)
                 if completed.run.event_name == HookEventName::Interrupt =>
             {
@@ -265,7 +265,7 @@ async fn timed_out_interrupt_hook_fails_before_turn_aborted() -> Result<()> {
 
     timeout(
         Duration::from_secs(5),
-        wait_for_event_match(&test.codex, |event| match event {
+        wait_for_event_match(&test.genex, |event| match event {
             EventMsg::TurnAborted(aborted) if aborted.reason == TurnAbortReason::Interrupted => {
                 Some(aborted.clone())
             }
@@ -316,10 +316,10 @@ async fn async_interrupt_hook_runs_without_delaying_turn_aborted() -> Result<()>
         .await?;
     start_interruptible_turn(&test, &server).await?;
 
-    test.codex.submit(Op::Interrupt).await?;
+    test.genex.submit(Op::Interrupt).await?;
     timeout(
         Duration::from_secs(5),
-        wait_for_event_match(&test.codex, |event| match event {
+        wait_for_event_match(&test.genex, |event| match event {
             EventMsg::TurnAborted(aborted) if aborted.reason == TurnAbortReason::Interrupted => {
                 Some(aborted.clone())
             }
@@ -384,8 +384,8 @@ async fn self_aborted_turn_runs_interrupt_hook_before_turn_aborted() -> Result<(
         .build_with_auto_env(&server)
         .await?;
 
-    test.codex.submit(Op::Compact).await?;
-    let pre_compact = wait_for_event_match(&test.codex, |event| match event {
+    test.genex.submit(Op::Compact).await?;
+    let pre_compact = wait_for_event_match(&test.genex, |event| match event {
         EventMsg::HookCompleted(completed)
             if completed.run.event_name == HookEventName::PreCompact =>
         {
@@ -396,7 +396,7 @@ async fn self_aborted_turn_runs_interrupt_hook_before_turn_aborted() -> Result<(
     .await;
     assert_eq!(pre_compact.run.status, HookRunStatus::Stopped);
 
-    let interrupt = wait_for_event_match(&test.codex, |event| match event {
+    let interrupt = wait_for_event_match(&test.genex, |event| match event {
         EventMsg::HookCompleted(completed)
             if completed.run.event_name == HookEventName::Interrupt =>
         {
@@ -407,7 +407,7 @@ async fn self_aborted_turn_runs_interrupt_hook_before_turn_aborted() -> Result<(
     .await;
     assert_eq!(interrupt.run.status, HookRunStatus::Completed);
 
-    let _aborted = wait_for_event_match(&test.codex, |event| match event {
+    let _aborted = wait_for_event_match(&test.genex, |event| match event {
         EventMsg::TurnAborted(aborted) if aborted.reason == TurnAbortReason::Interrupted => {
             Some(aborted.clone())
         }
@@ -426,8 +426,8 @@ async fn startup_interrupt_without_active_turn_does_not_run_interrupt_hook() -> 
     let server = start_mock_server().await;
     let test = build_test(&server, Some("should not run")).await?;
 
-    test.codex.submit(Op::Interrupt).await?;
-    test.codex.shutdown_and_wait().await?;
+    test.genex.submit(Op::Interrupt).await?;
+    test.genex.shutdown_and_wait().await?;
 
     assert!(
         !test

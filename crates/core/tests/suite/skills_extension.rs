@@ -538,14 +538,14 @@ async fn rendered_catalogs_for_turns(
 
     let mut client_warning_messages = Vec::new();
     for _ in 0..turn_count {
-        test.codex
+        test.genex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "Inspect the available skills.".to_string(),
                 text_elements: Vec::new(),
             }]))
             .await?;
         loop {
-            match core_test_support::wait_for_event(&test.codex, |_| true).await {
+            match core_test_support::wait_for_event(&test.genex, |_| true).await {
                 EventMsg::Warning(warning) => client_warning_messages.push(warning.message),
                 EventMsg::TurnComplete(_) => break,
                 _ => {}
@@ -670,7 +670,7 @@ async fn capability_sections_render_in_order_with_host_repo_and_plugin_skills() 
         .to_abs_path()?
         .to_path_buf();
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
             UserInput::Text {
                 text: "use all skills".to_string(),
@@ -691,7 +691,7 @@ async fn capability_sections_render_in_order_with_host_repo_and_plugin_skills() 
         ]))
         .await?;
 
-    core_test_support::wait_for_event(&test.codex, |event| {
+    core_test_support::wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -795,13 +795,13 @@ async fn agent_plugin_skill_prompt_stays_bounded_without_skills_extension() -> R
     let mut builder = test_genex().with_home(genex_home);
     let test = builder.build_with_auto_env(&server).await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Skill {
             name: "acme.tools:review".into(),
             path: skill_path,
         }]))
         .await?;
-    let warning = core_test_support::wait_for_event(&test.codex, |event| {
+    let warning = core_test_support::wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::Warning(warning)
@@ -809,7 +809,7 @@ async fn agent_plugin_skill_prompt_stays_bounded_without_skills_extension() -> R
         )
     })
     .await;
-    core_test_support::wait_for_event(&test.codex, |event| {
+    core_test_support::wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -863,7 +863,7 @@ async fn explicit_skill_prompt_precedes_plugin_instructions() -> Result<()> {
         .with_extensions(extensions);
     let test = builder.build_with_auto_env(&server).await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
             UserInput::Skill {
                 name: "sample:sample-search".to_string(),
@@ -875,7 +875,7 @@ async fn explicit_skill_prompt_precedes_plugin_instructions() -> Result<()> {
             },
         ]))
         .await?;
-    core_test_support::wait_for_event(&test.codex, |event| {
+    core_test_support::wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1063,7 +1063,7 @@ text({ names: result.skills.map(skill => skill.name), warnings: result.warnings,
                 .expect("code mode should be configurable in tests");
         });
     let test = builder.build_with_auto_env(&server).await?;
-    wait_for_mcp_server(&test.codex, CODEX_APPS_MCP_SERVER_NAME).await?;
+    wait_for_mcp_server(&test.genex, CODEX_APPS_MCP_SERVER_NAME).await?;
 
     test.submit_turn("Use $demo:explicit-only.").await?;
 
@@ -1446,7 +1446,7 @@ async fn production_turn_reuses_orchestrator_skills_until_mcp_invalidation() -> 
                 .expect("orchestrator skills must not depend on host discovery");
         });
     let test = builder.build_with_auto_env(&server).await?;
-    wait_for_mcp_server(&test.codex, CODEX_APPS_MCP_SERVER_NAME).await?;
+    wait_for_mcp_server(&test.genex, CODEX_APPS_MCP_SERVER_NAME).await?;
 
     test.submit_turn("Use $demo:search.").await?;
 
@@ -1506,7 +1506,7 @@ async fn production_turn_reuses_orchestrator_skills_until_mcp_invalidation() -> 
     );
 
     // A forced reconnect must also refresh the skills snapshot.
-    test.codex.submit(Op::RefreshMcpServers).await?;
+    test.genex.submit(Op::RefreshMcpServers).await?;
     test.submit_text_turn("Use $demo:search after reconnecting.")
         .await?;
     assert_eq!(startup.initialize_attempts(), 2);
@@ -1819,7 +1819,7 @@ async fn opted_in_executor_provider_skips_host_discovery_but_injects_discovered_
     }
 
     executor_thread.thread.shutdown_and_wait().await?;
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
     websocket_server.shutdown().await;
 
     let logs = String::from_utf8(buffer.lock().unwrap().clone())?;
@@ -1904,7 +1904,7 @@ async fn executor_only_provider_preserves_structured_repo_skill_without_discover
         .with_config(configure_catalog_test);
     let test = builder.build_with_auto_env(&server).await?;
     assert!(
-        test.codex
+        test.genex
             .inspect_selected_capability_roots()
             .ready_roots
             .is_empty(),
@@ -1927,7 +1927,7 @@ async fn executor_only_provider_preserves_structured_repo_skill_without_discover
         .to_abs_path()?
         .to_path_buf();
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
             UserInput::Text {
                 text: format!("Use ${AMBIENT_SKILL_NAME}."),
@@ -1939,7 +1939,7 @@ async fn executor_only_provider_preserves_structured_repo_skill_without_discover
             },
         ]))
         .await?;
-    core_test_support::wait_for_event(&test.codex, |event| {
+    core_test_support::wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -2727,7 +2727,7 @@ async fn assert_catalog_model_switch(max_context_tokens: Option<usize>) -> Resul
             });
         });
     let test = builder.build_with_auto_env(&server).await?;
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Inspect the available skills.".to_string(),
             text_elements: Vec::new(),
@@ -2737,7 +2737,7 @@ async fn assert_catalog_model_switch(max_context_tokens: Option<usize>) -> Resul
         .await?
         .expect("A catalog discovery started");
     let (reply, outcome) = tokio::sync::oneshot::channel();
-    test.codex
+    test.genex
         .submit(Op::TurnSettings {
             turn_id,
             update: TurnSettingsUpdate {
@@ -2752,7 +2752,7 @@ async fn assert_catalog_model_switch(max_context_tokens: Option<usize>) -> Resul
         TurnSettingsUpdateOutcome::Applied
     );
     provider.resume.add_permits(/*n*/ 1);
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -3132,7 +3132,7 @@ async fn production_turn_uses_provider_host_catalog_and_core_snapshot_injection(
         .with_extensions(Arc::new(extensions.build()))
         .with_config(configure_catalog_test);
     let test = builder.build_with_auto_env(&server).await?;
-    wait_for_mcp_server(&test.codex, CODEX_APPS_MCP_SERVER_NAME).await?;
+    wait_for_mcp_server(&test.genex, CODEX_APPS_MCP_SERVER_NAME).await?;
 
     test.submit_turn(&format!("Use ${skill_name}.")).await?;
     let request = response.single_request();
@@ -3314,7 +3314,7 @@ async fn production_turn_warns_and_omits_unreadable_host_skill() -> Result<()> {
     let test = builder.build_with_auto_env(&server).await?;
 
     std::fs::remove_file(&missing_skill_path)?;
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
             UserInput::Skill {
                 name: "missing-host".to_string(),
@@ -3329,7 +3329,7 @@ async fn production_turn_warns_and_omits_unreadable_host_skill() -> Result<()> {
 
     let mut warnings = Vec::new();
     loop {
-        match core_test_support::wait_for_event(&test.codex, |_| true).await {
+        match core_test_support::wait_for_event(&test.genex, |_| true).await {
             EventMsg::Warning(warning) => warnings.push(warning.message),
             EventMsg::TurnComplete(_) => break,
             _ => {}

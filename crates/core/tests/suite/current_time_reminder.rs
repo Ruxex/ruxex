@@ -597,8 +597,8 @@ async fn current_time_reminder_is_refreshed_after_compaction() -> Result<()> {
         .await?;
 
     test.submit_turn("before compact").await?;
-    test.codex.submit(Op::Compact).await?;
-    wait_for_event(&test.codex, |event| {
+    test.genex.submit(Op::Compact).await?;
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -637,7 +637,7 @@ async fn time_provider_failure_stops_before_inference() -> Result<()> {
         .build_with_auto_env(&server)
         .await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "fail before inference".into(),
             text_elements: Vec::new(),
@@ -645,7 +645,7 @@ async fn time_provider_failure_stops_before_inference() -> Result<()> {
         .await?;
 
     let EventMsg::Error(error) =
-        wait_for_event(&test.codex, |event| matches!(event, EventMsg::Error(_))).await
+        wait_for_event(&test.genex, |event| matches!(event, EventMsg::Error(_))).await
     else {
         unreachable!();
     };
@@ -655,7 +655,7 @@ async fn time_provider_failure_stops_before_inference() -> Result<()> {
     );
     assert_eq!(error.genex_error_info, Some(GenexErrorInfo::Other));
 
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

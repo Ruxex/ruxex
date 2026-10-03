@@ -277,7 +277,7 @@ async fn start_gated_step_preparation(test: &TestGenex, server: &MockServer) -> 
         .count();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "prepare MCP and plugin recommendations".to_string(),
@@ -323,7 +323,7 @@ async fn start_gated_step_preparation(test: &TestGenex, server: &MockServer) -> 
 async fn start_install_turn(test: &TestGenex, prompt: &str) -> Result<ElicitationRequestEvent> {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.to_string(),
@@ -346,7 +346,7 @@ async fn start_install_turn(test: &TestGenex, prompt: &str) -> Result<Elicitatio
         )
         .await?;
 
-    Ok(wait_for_event_match(&test.codex, |event| match event {
+    Ok(wait_for_event_match(&test.genex, |event| match event {
         EventMsg::ElicitationRequest(request) => Some(request.clone()),
         _ => None,
     })
@@ -358,7 +358,7 @@ async fn resolve_install_elicitation(
     elicitation: ElicitationRequestEvent,
     decision: ElicitationAction,
 ) -> Result<()> {
-    test.codex
+    test.genex
         .submit(Op::ResolveElicitation {
             server_name: elicitation.server_name,
             request_id: elicitation.id,
@@ -367,7 +367,7 @@ async fn resolve_install_elicitation(
             meta: None,
         })
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -562,7 +562,7 @@ async fn startup_recommendations(
             .any(|name| name == REQUEST_PLUGIN_INSTALL_TOOL_NAME),
         expect_recommendations && feature == Feature::ToolSuggest,
     );
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
     server.verify().await;
     Ok(())
 }
@@ -613,7 +613,7 @@ async fn mcp_discovery_overlaps_endpoint_plugin_recommendations() -> Result<()> 
             /*sandbox*/ None,
         )
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -633,7 +633,7 @@ async fn mcp_discovery_overlaps_endpoint_plugin_recommendations() -> Result<()> 
         "the completed request should expose the live gated MCP tool"
     );
 
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
     Ok(())
 }
 
@@ -665,8 +665,8 @@ async fn interrupting_concurrent_step_preparation_prevents_sampling() -> Result<
 
     let barrier = start_gated_step_preparation(&test, &server).await?;
     assert!(response.requests().is_empty());
-    test.codex.submit(Op::Interrupt).await?;
-    wait_for_event(&test.codex, |event| {
+    test.genex.submit(Op::Interrupt).await?;
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnAborted(_))
     })
     .await;
@@ -683,7 +683,7 @@ async fn interrupting_concurrent_step_preparation_prevents_sampling() -> Result<
             /*sandbox*/ None,
         )
         .await?;
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
     assert!(
         response.requests().is_empty(),
         "releasing the cancelled MCP startup must not revive the aborted turn"
@@ -856,7 +856,7 @@ async fn subagent_install_request_returns_root_only_error(
         Some("request_plugin_install can only be used by the root thread")
     );
     subagent.shutdown_and_wait().await?;
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
     Ok(())
 }
 
@@ -1262,7 +1262,7 @@ async fn run_remote_plugin_install_refresh_case(refreshed_tools: RefreshedAppsTo
         "the refreshed installed-plugin cache should filter the cached recommendation"
     );
     drop(requests);
-    test.codex.refresh_runtime_config(test.config.clone()).await;
+    test.genex.refresh_runtime_config(test.config.clone()).await;
     test.submit_turn("check whether Calendar is still installed")
         .await?;
     let requests = mock.requests();

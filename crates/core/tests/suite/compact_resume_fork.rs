@@ -633,7 +633,7 @@ async fn start_test_conversation(
     let test = Box::pin(builder.build(server))
         .await
         .expect("create conversation");
-    (test.home, test.config, test.thread_manager, test.codex)
+    (test.home, test.config, test.thread_manager, test.genex)
 }
 
 async fn user_turn(conversation: &Arc<GenexThread>, text: &str) {

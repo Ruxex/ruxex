@@ -234,7 +234,7 @@ async fn unified_exec_zsh_fork_parent_approval_keeps_explicit_prompt_rule() -> R
     let mut intercepted_approval_ids = Vec::new();
     for _ in 0..2 {
         let approval_event = wait_for_event_with_timeout(
-            &test.codex,
+            &test.genex,
             |event| {
                 matches!(
                     event,
@@ -376,7 +376,7 @@ async fn unified_exec_zsh_fork_guardian_reviews_intercepted_execve() -> Result<(
 
     let mut intercepted_assessments = Vec::new();
     loop {
-        let event = tokio::time::timeout(Duration::from_secs(30), test.codex.next_event())
+        let event = tokio::time::timeout(Duration::from_secs(30), test.genex.next_event())
             .await
             .context("timed out waiting for intercepted execve Guardian review")??;
         match event.msg {
@@ -547,7 +547,7 @@ async fn unified_exec_zsh_fork_guardian_reviews_persistent_terminal_in_current_t
     )
     .await?;
     approve_expected_exec(&test, open_command).await?;
-    let first_completion = wait_for_event(&test.codex, |event| {
+    let first_completion = wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -567,7 +567,7 @@ async fn unified_exec_zsh_fork_guardian_reviews_persistent_terminal_in_current_t
     let mut stdin_assessment = None;
     let mut intercepted_assessment = None;
     loop {
-        let event = tokio::time::timeout(Duration::from_secs(30), test.codex.next_event())
+        let event = tokio::time::timeout(Duration::from_secs(30), test.genex.next_event())
             .await
             .context("timed out waiting for current-turn intercepted execve Guardian review")??;
         match event.msg {
@@ -795,7 +795,7 @@ async fn submit_turn_with_session_permissions(
         test.session_configured.permission_profile.clone(),
         test.cwd.path(),
     );
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.into(),
@@ -829,7 +829,7 @@ async fn approve_expected_exec(test: &TestGenex, expected_command: &str) -> Resu
 }
 
 async fn approve_exec(test: &TestGenex, approval_id: String) -> Result<()> {
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval_id,
             turn_id: None,
@@ -906,7 +906,7 @@ async fn expect_exec_approval(
     test: &TestGenex,
     expected_command: &str,
 ) -> ExecApprovalRequestEvent {
-    let event = wait_for_event(&test.codex, |event| {
+    let event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -933,7 +933,7 @@ async fn expect_exec_approval(
 }
 
 async fn wait_for_completion_without_approval(test: &TestGenex) {
-    let event = wait_for_event(&test.codex, |event| {
+    let event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -951,7 +951,7 @@ async fn wait_for_completion_without_approval(test: &TestGenex) {
 }
 
 async fn wait_for_completion(test: &TestGenex) {
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

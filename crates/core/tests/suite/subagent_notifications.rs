@@ -502,7 +502,7 @@ async fn setup_turn_one_with_custom_spawned_child(
         config.model_reasoning_effort = Some(configured_reasoning_effort);
     }));
     let test = builder.build_with_auto_env(server).await?;
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: TURN_1_PROMPT.to_string(),
@@ -514,7 +514,7 @@ async fn setup_turn_one_with_custom_spawned_child(
             }),
         )
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1161,7 +1161,7 @@ async fn spawned_child_receives_forked_parent_context(
 }
 
 async fn submit_turn_with_trigger(test: &TestGenex, prompt: &str, trigger: &str) -> Result<()> {
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.to_string(),
@@ -1173,7 +1173,7 @@ async fn submit_turn_with_trigger(test: &TestGenex, prompt: &str, trigger: &str)
             }),
         )
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1685,8 +1685,8 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
     }
     let test = builder.build(&server).await?;
     if matches!(selection, FullHistoryV2ModelSelection::WorldStateIdentity) {
-        test.codex.submit(Op::Compact).await?;
-        wait_for_event(&test.codex, |event| {
+        test.genex.submit(Op::Compact).await?;
+        wait_for_event(&test.genex, |event| {
             matches!(event, EventMsg::TurnComplete(_))
         })
         .await;
@@ -1703,7 +1703,7 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
             ),
             (FULL_HISTORY_EXPLICIT_PROMPT, ReasoningEffort::High, None),
         ] {
-            test.codex
+            test.genex
                 .start_or_steer_turn(
                     TurnInputRequest::user_input(vec![UserInput::Text {
                         text: prompt.to_string(),
@@ -1716,7 +1716,7 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
                     }),
                 )
                 .await?;
-            wait_for_event(&test.codex, |event| {
+            wait_for_event(&test.genex, |event| {
                 matches!(event, EventMsg::TurnComplete(_))
             })
             .await;
@@ -2622,7 +2622,7 @@ async fn plaintext_multi_agent_v2_completion_sends_agent_message(
     } else {
         None
     };
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: TURN_2_NO_WAIT_PROMPT.to_string(),
             text_elements: Vec::new(),
@@ -2723,10 +2723,10 @@ async fn plaintext_multi_agent_v2_completion_sends_agent_message(
         );
         assert_eq!(started.turn_id, parent_turn_id);
 
-        test.codex.ensure_rollout_materialized().await;
-        test.codex.flush_rollout().await?;
+        test.genex.ensure_rollout_materialized().await;
+        test.genex.flush_rollout().await?;
         let rollout = genex_rollout::RolloutRecorder::get_rollout_history(
-            &test.codex.rollout_path().expect("parent rollout path"),
+            &test.genex.rollout_path().expect("parent rollout path"),
         )
         .await?;
         assert!(

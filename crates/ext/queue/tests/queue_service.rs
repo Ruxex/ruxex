@@ -191,7 +191,7 @@ async fn test_queue() -> anyhow::Result<(Arc<dyn QueueStore>, TempDir)> {
 }
 
 fn loaded_thread_queue(test: &TestGenex) -> anyhow::Result<Arc<dyn QueueStore>> {
-    let runtime = test.codex.state_db().context("state runtime unavailable")?;
+    let runtime = test.genex.state_db().context("state runtime unavailable")?;
     Ok(Arc::new(LocalQueueStore::new(runtime)))
 }
 
@@ -279,7 +279,7 @@ async fn drain_leaves_persisted_queued_message_for_a_later_start() -> anyhow::Re
 
     admission.0.store(false, Ordering::SeqCst);
     emit_idle(&service, thread_id).await;
-    wait_for_event_match(test.codex.as_ref(), |event| {
+    wait_for_event_match(test.genex.as_ref(), |event| {
         matches!(event, EventMsg::TurnComplete(_)).then_some(())
     })
     .await;
@@ -385,7 +385,7 @@ async fn starting_a_selected_item_preserves_the_remaining_queue() -> anyhow::Res
 
     let submission = service
         .start(
-            test.codex.as_ref(),
+            test.genex.as_ref(),
             Some(second.id.clone()),
             /*trace*/ None,
         )
@@ -396,7 +396,7 @@ async fn starting_a_selected_item_preserves_the_remaining_queue() -> anyhow::Res
         StartIfIdleSubmission::Started { turn_id } if !turn_id.is_empty()
     ));
     assert_eq!(vec![first], service.list(thread_id).await?);
-    wait_for_event_match(test.codex.as_ref(), |event| match event {
+    wait_for_event_match(test.genex.as_ref(), |event| match event {
         EventMsg::TurnComplete(_) => Some(()),
         _ => None,
     })
@@ -438,7 +438,7 @@ async fn starting_a_selected_item_while_active_leaves_it_queued() -> anyhow::Res
         .await?;
 
     let active_turn = test
-        .codex
+        .genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "active turn".to_string(),
             text_elements: Vec::new(),
@@ -453,7 +453,7 @@ async fn starting_a_selected_item_while_active_leaves_it_queued() -> anyhow::Res
 
     let submission = service
         .start(
-            test.codex.as_ref(),
+            test.genex.as_ref(),
             Some(queued.id.clone()),
             /*trace*/ None,
         )
@@ -469,7 +469,7 @@ async fn starting_a_selected_item_while_active_leaves_it_queued() -> anyhow::Res
     release_response
         .send(())
         .expect("active response gate should remain open");
-    wait_for_event_match(test.codex.as_ref(), |event| {
+    wait_for_event_match(test.genex.as_ref(), |event| {
         matches!(event, EventMsg::TurnComplete(_)).then_some(())
     })
     .await;
@@ -498,7 +498,7 @@ async fn interrupted_turns_pause_queued_messages_but_failed_turns_drain_them() -
     assert_eq!(vec![queued], service.list(thread_id).await?);
 
     emit_idle_with_cause(&service, thread_id, ThreadIdleCause::Failed).await;
-    wait_for_event_match(test.codex.as_ref(), |event| {
+    wait_for_event_match(test.genex.as_ref(), |event| {
         matches!(event, EventMsg::TurnComplete(_)).then_some(())
     })
     .await;
@@ -545,7 +545,7 @@ async fn registered_queue_lifecycle_starts_messages_in_fifo_order() -> anyhow::R
     tokio::time::timeout(Duration::from_secs(10), async {
         test.submit_text_turn("A").await?;
         for _ in 0..2 {
-            wait_for_event_match(test.codex.as_ref(), |event| {
+            wait_for_event_match(test.genex.as_ref(), |event| {
                 matches!(event, EventMsg::TurnComplete(_)).then_some(())
             })
             .await;
@@ -598,7 +598,7 @@ async fn externally_changed_queues_dispatch_independently_and_retry_failed_wakes
         .start_thread(StartThreadOptions::new(test.config.clone()))
         .await?;
     let external_runtime = StateRuntime::init(
-        test.codex
+        test.genex
             .state_db()
             .context("state runtime unavailable")?
             .sqlite()
@@ -648,7 +648,7 @@ async fn externally_changed_queues_dispatch_independently_and_retry_failed_wakes
     assert_eq!(vec![updated], queue.list(thread_id).await?);
 
     wait_for_event_with_timeout(
-        test.codex.as_ref(),
+        test.genex.as_ref(),
         |event| matches!(event, EventMsg::TurnComplete(_)),
         Duration::from_secs(/*secs*/ 25),
     )
@@ -658,8 +658,8 @@ async fn externally_changed_queues_dispatch_independently_and_retry_failed_wakes
     assert!(queue.list(thread_id).await?.is_empty());
     assert!(queue.list(independent_thread.thread_id).await?.is_empty());
 
-    let rollout_path = test.codex.rollout_path().context("rollout path missing")?;
-    test.codex.shutdown_and_wait().await?;
+    let rollout_path = test.genex.rollout_path().context("rollout path missing")?;
+    test.genex.shutdown_and_wait().await?;
     test.thread_manager.remove_thread(&thread_id).await;
     external_queue
         .enqueue(thread_id, user_input("queued before ordinary resume"))
@@ -733,7 +733,7 @@ async fn rejected_queue_messages_are_consumed_without_retrying_or_blocking_follo
     tokio::time::timeout(Duration::from_secs(10), async {
         test.submit_text_turn("A").await?;
         for _ in 0..2 {
-            wait_for_event_match(test.codex.as_ref(), |event| {
+            wait_for_event_match(test.genex.as_ref(), |event| {
                 matches!(event, EventMsg::TurnComplete(_)).then_some(())
             })
             .await;
@@ -784,12 +784,12 @@ async fn explicitly_started_rejected_queue_messages_are_consumed() -> anyhow::Re
     let rejected = queue.enqueue(thread_id, user_input("blocked")).await?;
     let submission = tokio::time::timeout(
         Duration::from_secs(10),
-        queue.start(test.codex.as_ref(), Some(rejected.id), /*trace*/ None),
+        queue.start(test.genex.as_ref(), Some(rejected.id), /*trace*/ None),
     )
     .await?
     .expect("explicitly started input should be submitted");
     assert!(matches!(submission, StartIfIdleSubmission::Started { .. }));
-    wait_for_event_match(test.codex.as_ref(), |event| {
+    wait_for_event_match(test.genex.as_ref(), |event| {
         matches!(event, EventMsg::TurnComplete(_)).then_some(())
     })
     .await;
@@ -1034,7 +1034,7 @@ async fn invalid_head_is_skipped_and_a_live_user_turn_is_accepted() -> anyhow::R
         .enqueue(thread_id, structured_user_input("durable follow-up"))
         .await?;
     emit_idle(&service, thread_id).await;
-    let client_id = wait_for_event_match(test.codex.as_ref(), |event| match event {
+    let client_id = wait_for_event_match(test.genex.as_ref(), |event| match event {
         EventMsg::ItemCompleted(event) => match &event.item {
             TurnItem::UserMessage(item) => Some(item.client_id.clone()),
             _ => None,
@@ -1043,7 +1043,7 @@ async fn invalid_head_is_skipped_and_a_live_user_turn_is_accepted() -> anyhow::R
     })
     .await;
     assert_eq!(Some("stable-client-message".to_string()), client_id);
-    wait_for_event_match(test.codex.as_ref(), |event| match event {
+    wait_for_event_match(test.genex.as_ref(), |event| match event {
         EventMsg::TurnComplete(_) => Some(()),
         _ => None,
     })

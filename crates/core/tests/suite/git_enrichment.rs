@@ -160,7 +160,7 @@ async fn startup_prewarm_skips_git_enrichment_and_user_turn_observes_fresh_state
         expected_workspace(repo.path(), &head, /*has_changes*/ true)
     );
 
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
     server.shutdown().await;
     Ok(())
 }
@@ -220,7 +220,7 @@ async fn user_turn_git_enrichment_redacts_remote_credentials() -> Result<()> {
         expected_workspace(repo.path(), &head, /*has_changes*/ false)
     );
 
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
     server.shutdown().await;
     Ok(())
 }
@@ -283,7 +283,7 @@ async fn guardian_prewarm_and_review_skip_redundant_git_enrichment() -> Result<(
     }
 
     std::fs::write(repo.path().join("untracked.txt"), "dirty\n")?;
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "run a command that requires Guardian review".into(),
             text_elements: Vec::new(),
@@ -322,7 +322,7 @@ async fn guardian_prewarm_and_review_skip_redundant_git_enrichment() -> Result<(
     );
     assert!(turn_metadata(&guardian_turn)?.get("workspaces").is_none());
 
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
     server.shutdown().await;
     Ok(())
 }
@@ -418,7 +418,7 @@ async fn ephemeral_system_thread_prewarm_skips_and_turn_observes_fresh_state(
     );
 
     system_thread.thread.shutdown_and_wait().await?;
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
     server.shutdown().await;
     Ok(())
 }
@@ -536,7 +536,7 @@ async fn concurrent_turns_keep_distinct_worktree_and_repository_metadata() -> Re
         }])
     };
     tokio::try_join!(
-        test.codex
+        test.genex
             .start_or_steer_turn(user_turn("inspect the main worktree")),
         worktree_thread
             .thread
@@ -546,7 +546,7 @@ async fn concurrent_turns_keep_distinct_worktree_and_repository_metadata() -> Re
             .start_or_steer_turn(user_turn("inspect the other repository"))
     )?;
     tokio::join!(
-        wait_for_event(test.codex.as_ref(), |event| matches!(
+        wait_for_event(test.genex.as_ref(), |event| matches!(
             event,
             EventMsg::TurnComplete(_)
         )),
@@ -596,7 +596,7 @@ async fn concurrent_turns_keep_distinct_worktree_and_repository_metadata() -> Re
 
     worktree_thread.thread.shutdown_and_wait().await?;
     other_thread.thread.shutdown_and_wait().await?;
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
     server.shutdown().await;
     Ok(())
 }

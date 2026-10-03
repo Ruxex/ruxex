@@ -50,7 +50,7 @@ async fn fork_thread_twice_drops_to_first_message() {
 
     let mut builder = test_genex();
     let test = builder.build(&server).await.expect("create conversation");
-    let codex = test.codex.clone();
+    let codex = test.genex.clone();
     let thread_manager = test.thread_manager.clone();
     let config_for_fork = test.config.clone();
 
@@ -178,7 +178,7 @@ async fn fork_thread_restores_history_selection_and_preserves_explicit_clear() -
     let test = builder.build_with_auto_env(&server).await?;
     let selected = vec!["slack@provider".to_string()];
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             disabled_plugin_ids: Some(selected.clone()),
             ..Default::default()
@@ -189,12 +189,12 @@ async fn fork_thread_restores_history_selection_and_preserves_explicit_clear() -
         conversation_id: test.session_configured.thread_id,
         history: Arc::new(vec![thread_settings_applied_item(
             test.session_configured.thread_id,
-            test.codex.thread_settings_snapshot().await,
+            test.genex.thread_settings_snapshot().await,
         )]),
         rollout_path: None,
     });
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             disabled_plugin_ids: Some(Vec::new()),
             ..Default::default()
@@ -273,7 +273,7 @@ async fn assert_copied_fork_persists_inherited_history(history_mode: ThreadHisto
 
     let mut builder = test_genex().with_history_mode(history_mode);
     let test = builder.build(&server).await.expect("create conversation");
-    let codex = test.codex.clone();
+    let codex = test.genex.clone();
     let thread_manager = test.thread_manager.clone();
 
     codex

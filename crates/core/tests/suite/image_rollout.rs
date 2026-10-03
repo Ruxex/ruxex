@@ -346,7 +346,7 @@ async fn file_image_passes_through_request_and_rollout() -> anyhow::Result<()> {
     )
     .await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
             UserInput::Image {
                 image: ImageReference::File {
@@ -360,7 +360,7 @@ async fn file_image_passes_through_request_and_rollout() -> anyhow::Result<()> {
             },
         ]))
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -377,8 +377,8 @@ async fn file_image_passes_through_request_and_rollout() -> anyhow::Result<()> {
             })
     }));
 
-    test.codex.shutdown_and_wait().await?;
-    let rollout_path = test.codex.rollout_path().expect("rollout path");
+    test.genex.shutdown_and_wait().await?;
+    let rollout_path = test.genex.rollout_path().expect("rollout path");
     let rollout_text = read_rollout_text(&rollout_path).await?;
     let actual = find_user_message_with_image(&rollout_text)
         .expect("expected user message with file image in rollout");

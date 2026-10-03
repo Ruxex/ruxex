@@ -556,7 +556,7 @@ async fn symlinked_cwd_uses_logical_parent_for_agents_discovery() -> Result<()> 
         .expect("symlink should have a parent");
 
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         vec![
             PathUri::from_abs_path(&logical_root.join("AGENTS.md")),
             PathUri::from_abs_path(&test.config.cwd.join("AGENTS.md"))
@@ -606,7 +606,7 @@ async fn selected_environment_sources_match_model_visible_instructions() -> Resu
     let global_agents = global_agents.abs();
 
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         vec![
             PathUri::from_abs_path(&global_agents),
             test.workspace_path_uri("AGENTS.md")?,
@@ -655,7 +655,7 @@ async fn untrusted_project_excludes_project_instructions() -> Result<()> {
     let test = builder.build_with_auto_env(&server).await?;
 
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         vec![PathUri::from_abs_path(&global_agents)]
     );
 
@@ -708,25 +708,25 @@ async fn runtime_trust_reload_refreshes_project_instructions() -> Result<()> {
 
     test.submit_turn("trusted project").await?;
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         vec![global_agents.clone(), project_agents.clone()]
     );
 
-    let mut untrusted_config = (*test.codex.config().await).clone();
+    let mut untrusted_config = (*test.genex.config().await).clone();
     untrusted_config.active_project.trust_level = Some(TrustLevel::Untrusted);
-    test.codex.refresh_runtime_config(untrusted_config).await;
+    test.genex.refresh_runtime_config(untrusted_config).await;
     test.submit_turn("untrusted project").await?;
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         vec![global_agents.clone()]
     );
 
-    let mut trusted_config = (*test.codex.config().await).clone();
+    let mut trusted_config = (*test.genex.config().await).clone();
     trusted_config.active_project.trust_level = Some(TrustLevel::Trusted);
-    test.codex.refresh_runtime_config(trusted_config).await;
+    test.genex.refresh_runtime_config(trusted_config).await;
     test.submit_turn("trusted again").await?;
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         vec![global_agents, project_agents]
     );
 
@@ -775,7 +775,7 @@ async fn restricted_project_without_instructions_starts_successfully() -> Result
     let test = builder.build_with_auto_env(&server).await?;
 
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         Vec::<PathUri>::new()
     );
     test.submit_text_turn("continue without project instructions")
@@ -938,7 +938,7 @@ async fn tightening_environment_read_permissions_invalidates_cached_project_inst
     let test = builder.build_with_auto_env(&server).await?;
 
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         vec![
             PathUri::from_abs_path(&global_source),
             test.workspace_path_uri(GLOBAL_AGENTS_FILENAME)?
@@ -959,7 +959,7 @@ async fn tightening_environment_read_permissions_invalidates_cached_project_inst
     );
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(permission_profile, test.config.cwd.as_path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "inspect instructions after tightening permissions".to_string(),
@@ -974,7 +974,7 @@ async fn tightening_environment_read_permissions_invalidates_cached_project_inst
         .await?;
 
     let mut warnings_before_error = Vec::new();
-    let EventMsg::Error(error) = wait_for_event(&test.codex, |event| {
+    let EventMsg::Error(error) = wait_for_event(&test.genex, |event| {
         if let EventMsg::Warning(warning) = event {
             warnings_before_error.push(warning.message.clone());
         }
@@ -992,7 +992,7 @@ async fn tightening_environment_read_permissions_invalidates_cached_project_inst
     );
 
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         Vec::<PathUri>::new()
     );
     assert!(
@@ -1670,7 +1670,7 @@ async fn fresh_thread_composes_global_before_project_and_reports_sources() -> Re
     ];
 
     // Confirm the thread records both creation-time sources in composition order.
-    assert_eq!(test.codex.instruction_sources().await, creation_sources);
+    assert_eq!(test.genex.instruction_sources().await, creation_sources);
 
     // Materialize the initial snapshot, then rewrite both selected files in place before another
     // ordinary turn.
@@ -1739,7 +1739,7 @@ async fn fresh_thread_composes_global_before_project_and_reports_sources() -> Re
         "expected rendered instructions to contain {PROJECT_SEPARATOR:?}; observed: {rendered}"
     );
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         creation_sources,
         "same-path global refresh preserves source paths and composition order"
     );
@@ -1989,7 +1989,7 @@ async fn global_instruction_warnings_reappear_only_after_recovery() -> Result<()
     let mut builder = test_genex().with_home(Arc::clone(&home));
     let test = builder.build_with_auto_env(&server).await?;
     wait_for_event(
-        &test.codex,
+        &test.genex,
         |event| matches!(event, EventMsg::Warning(warning) if warning.message == expected_warning),
     )
     .await;
@@ -2006,14 +2006,14 @@ async fn global_instruction_warnings_reappear_only_after_recovery() -> Result<()
         } else {
             std::fs::write(&override_path, "")?;
         }
-        test.codex
+        test.genex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "check the instructions".to_string(),
                 text_elements: Vec::new(),
             }]))
             .await?;
         let mut warnings = Vec::new();
-        wait_for_event(&test.codex, |event| {
+        wait_for_event(&test.genex, |event| {
             if let EventMsg::Warning(warning) = event {
                 warnings.push(warning.message.clone());
             }
@@ -2057,7 +2057,7 @@ async fn invalid_utf8_global_instructions_are_lossy() -> Result<()> {
         .await?;
 
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         vec![PathUri::from_abs_path(&source)]
     );
     let expected_fragment =
@@ -2382,7 +2382,7 @@ async fn run_subagent_global_instruction_case(fork_context: bool) -> Result<()> 
 
     // Assert the parent reports the creation-time source before spawning.
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         vec![PathUri::from_abs_path(&source)],
         "parent reports the creation-time global source before spawning"
     );
@@ -2437,7 +2437,7 @@ async fn run_subagent_global_instruction_case(fork_context: bool) -> Result<()> 
         );
     }
     assert_eq!(
-        test.codex.instruction_sources().await,
+        test.genex.instruction_sources().await,
         vec![PathUri::from_abs_path(&new_source)],
         "parent reports the refreshed global source"
     );

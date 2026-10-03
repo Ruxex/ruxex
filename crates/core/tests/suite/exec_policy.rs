@@ -66,7 +66,7 @@ async fn submit_user_turn(
     let session_model = test.session_configured.model.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(permission_profile, test.config.cwd.as_path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.into(),
@@ -143,13 +143,13 @@ async fn git_status_requires_approval_under_unless_trusted() -> Result<()> {
     )
     .await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "check git status".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    let event = wait_for_event(&test.codex, |event| {
+    let event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -163,14 +163,14 @@ async fn git_status_requires_approval_under_unless_trusted() -> Result<()> {
         );
     };
     assert_eq!(approval.call_id, call_id);
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
             decision: ReviewDecision::denied("git status was not approved"),
         })
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -285,7 +285,7 @@ async fn granular_complex_forced_rm_denial_explains_why_the_command_was_rejected
     )
     .await?;
 
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -349,7 +349,7 @@ async fn granular_complex_forced_rm_requests_approval_when_allowed() -> Result<(
     )
     .await?;
 
-    let approval_event = wait_for_event(&test.codex, |event| {
+    let approval_event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -364,14 +364,14 @@ async fn granular_complex_forced_rm_requests_approval_when_allowed() -> Result<(
         Some(COMPLEX_FORCED_RM_COMMAND)
     );
 
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
             decision: ReviewDecision::denied("rejected by user"),
         })
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -422,7 +422,7 @@ async fn deeply_nested_forced_rm_is_rejected_before_execution_when_approvals_are
     )
     .await?;
 
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -495,7 +495,7 @@ async fn unified_exec_disabled_windows_sandbox_rejects_managed_read_only_command
     )
     .await?;
 
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -559,7 +559,7 @@ async fn execpolicy_blocks_shell_invocation() -> Result<()> {
     let session_model = test.session_configured.model.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "run shell command".into(),
@@ -583,7 +583,7 @@ async fn execpolicy_blocks_shell_invocation() -> Result<()> {
         )
         .await?;
 
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -741,7 +741,7 @@ async fn environment_command_restrictions_override_saved_prefix_approvals() -> R
 
     let mut environment_policy = Policy::empty();
     environment_policy.add_prefix_rule(&["echo".to_string()], Decision::Forbidden)?;
-    test.codex
+    test.genex
         .environment_ready(
             &selection,
             EnvironmentConfig {
@@ -850,7 +850,7 @@ async fn environment_command_policy_changes_invalidate_session_approvals() -> Re
         if attempt == "after-owner-policy" {
             let mut policy = Policy::empty();
             policy.add_prefix_rule(&["echo".to_string()], Decision::Prompt)?;
-            test.codex
+            test.genex
                 .environment_ready(
                     &selection,
                     EnvironmentConfig {
@@ -894,13 +894,13 @@ async fn environment_command_policy_changes_invalidate_session_approvals() -> Re
         )
         .await;
 
-        test.codex
+        test.genex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: attempt.into(),
                 text_elements: Vec::new(),
             }]))
             .await?;
-        let event = wait_for_event(&test.codex, |event| {
+        let event = wait_for_event(&test.genex, |event| {
             matches!(
                 event,
                 EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -910,14 +910,14 @@ async fn environment_command_policy_changes_invalidate_session_approvals() -> Re
         let EventMsg::ExecApprovalRequest(approval) = event else {
             panic!("expected a fresh command approval {attempt}");
         };
-        test.codex
+        test.genex
             .submit(Op::ExecApproval {
                 id: approval.effective_approval_id(),
                 turn_id: None,
                 decision,
             })
             .await?;
-        wait_for_event(&test.codex, |event| {
+        wait_for_event(&test.genex, |event| {
             matches!(event, EventMsg::TurnComplete(_))
         })
         .await;
@@ -974,7 +974,7 @@ async fn unified_exec_empty_script_with_collaboration_mode_does_not_panic() -> R
     )
     .await?;
 
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1033,7 +1033,7 @@ async fn unified_exec_whitespace_script_with_collaboration_mode_does_not_panic()
     )
     .await?;
 
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

@@ -4,9 +4,9 @@
 #
 # Usage (source-only):
 #   source scripts/test-remote-env.sh
-#   cd /path/to/codex
+#   cd /path/to/genex
 #   just test -p genex-core --test all remote_test_env_can_connect_and_use_filesystem
-#   codex_remote_env_cleanup
+#   genex_remote_env_cleanup
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -17,15 +17,15 @@ is_sourced() {
 
 setup_remote_env() {
   local container_name
-  local codex_binary_path
+  local genex_binary_path
   local container_ip
-  local remote_codex_path
+  local remote_genex_path
   local remote_exec_server_pid
   local remote_exec_server_port
   local remote_exec_server_stdout_path
 
-  container_name="${CODEX_TEST_REMOTE_ENV_CONTAINER_NAME:-codex-remote-test-env-local-$(date +%s)-${RANDOM}}"
-  codex_binary_path="${CARGO_TARGET_DIR:-${REPO_ROOT}/target}/debug/codex"
+  container_name="${GENEX_TEST_REMOTE_ENV_CONTAINER_NAME:-genex-remote-test-env-local-$(date +%s)-${RANDOM}}"
+  genex_binary_path="${CARGO_TARGET_DIR:-${REPO_ROOT}/target}/debug/codex"
 
   if ! command -v docker >/dev/null 2>&1; then
     echo "docker is required (Colima or Docker Desktop)" >&2
@@ -38,7 +38,7 @@ setup_remote_env() {
   fi
 
   if ! command -v cargo >/dev/null 2>&1; then
-    echo "cargo is required to build codex" >&2
+    echo "cargo is required to build Genex" >&2
     return 1
   fi
 
@@ -47,8 +47,8 @@ setup_remote_env() {
     cargo build -p genex-cli --bin codex
   )
 
-  if [[ ! -f "${codex_binary_path}" ]]; then
-    echo "codex binary not found at ${codex_binary_path}" >&2
+  if [[ ! -f "${genex_binary_path}" ]]; then
+    echo "Genex binary not found at ${genex_binary_path}" >&2
     return 1
   fi
 
@@ -64,16 +64,16 @@ setup_remote_env() {
     return 1
   fi
 
-  if [[ -z "${CODEX_TEST_REMOTE_EXEC_SERVER_URL:-}" ]]; then
-    remote_codex_path="/tmp/codex-remote-env/codex"
+  if [[ -z "${GENEX_TEST_REMOTE_EXEC_SERVER_URL:-}" ]]; then
+    remote_genex_path="/tmp/genex-remote-env/codex"
     remote_exec_server_port="31987"
-    remote_exec_server_stdout_path="/tmp/codex-remote-env/exec-server.stdout"
-    docker exec "${container_name}" sh -lc "mkdir -p /tmp/codex-remote-env"
-    docker cp "${codex_binary_path}" "${container_name}:${remote_codex_path}"
-    docker exec "${container_name}" chmod +x "${remote_codex_path}"
+    remote_exec_server_stdout_path="/tmp/genex-remote-env/exec-server.stdout"
+    docker exec "${container_name}" sh -lc "mkdir -p /tmp/genex-remote-env"
+    docker cp "${genex_binary_path}" "${container_name}:${remote_genex_path}"
+    docker exec "${container_name}" chmod +x "${remote_genex_path}"
     remote_exec_server_pid="$(
       docker exec "${container_name}" sh -lc \
-        "rm -f ${remote_exec_server_stdout_path}; nohup ${remote_codex_path} exec-server --listen ws://0.0.0.0:${remote_exec_server_port} > ${remote_exec_server_stdout_path} 2>&1 & echo \$!"
+        "rm -f ${remote_exec_server_stdout_path}; nohup ${remote_genex_path} exec-server --listen ws://0.0.0.0:${remote_exec_server_port} > ${remote_exec_server_stdout_path} 2>&1 & echo \$!"
     )"
     wait_for_remote_exec_server_port "${container_name}" "${remote_exec_server_port}" "${remote_exec_server_stdout_path}"
     container_ip="$(
@@ -84,13 +84,13 @@ setup_remote_env() {
       docker rm -f "${container_name}" >/dev/null 2>&1 || true
       return 1
     fi
-    export CODEX_TEST_REMOTE_EXEC_SERVER_PID="${remote_exec_server_pid}"
-    export CODEX_TEST_REMOTE_EXEC_SERVER_URL="ws://${container_ip}:${remote_exec_server_port}"
+    export GENEX_TEST_REMOTE_EXEC_SERVER_PID="${remote_exec_server_pid}"
+    export GENEX_TEST_REMOTE_EXEC_SERVER_URL="ws://${container_ip}:${remote_exec_server_port}"
   fi
 
-  export CODEX_TEST_REMOTE_ENV="${container_name}"
-  export CODEX_TEST_REMOTE_ENV_CONTAINER_NAME="${container_name}"
-  export CODEX_TEST_ENVIRONMENT="docker"
+  export GENEX_TEST_REMOTE_ENV="${container_name}"
+  export GENEX_TEST_REMOTE_ENV_CONTAINER_NAME="${container_name}"
+  export GENEX_TEST_ENVIRONMENT="docker"
 }
 
 wait_for_remote_exec_server_port() {
@@ -111,15 +111,15 @@ wait_for_remote_exec_server_port() {
   return 1
 }
 
-codex_remote_env_cleanup() {
-  if [[ -n "${CODEX_TEST_REMOTE_ENV:-}" ]]; then
-    docker rm -f "${CODEX_TEST_REMOTE_ENV}" >/dev/null 2>&1 || true
-    unset CODEX_TEST_REMOTE_ENV
+genex_remote_env_cleanup() {
+  if [[ -n "${GENEX_TEST_REMOTE_ENV:-}" ]]; then
+    docker rm -f "${GENEX_TEST_REMOTE_ENV}" >/dev/null 2>&1 || true
+    unset GENEX_TEST_REMOTE_ENV
   fi
-  unset CODEX_TEST_REMOTE_ENV_CONTAINER_NAME
-  unset CODEX_TEST_REMOTE_EXEC_SERVER_PID
-  unset CODEX_TEST_REMOTE_EXEC_SERVER_URL
-  unset CODEX_TEST_ENVIRONMENT
+  unset GENEX_TEST_REMOTE_ENV_CONTAINER_NAME
+  unset GENEX_TEST_REMOTE_EXEC_SERVER_PID
+  unset GENEX_TEST_REMOTE_EXEC_SERVER_URL
+  unset GENEX_TEST_ENVIRONMENT
 }
 
 if ! is_sourced; then
@@ -131,10 +131,10 @@ old_shell_options="$(set +o)"
 set -euo pipefail
 if setup_remote_env; then
   status=0
-  echo "CODEX_TEST_REMOTE_ENV=${CODEX_TEST_REMOTE_ENV}"
-  echo "CODEX_TEST_ENVIRONMENT=${CODEX_TEST_ENVIRONMENT}"
-  echo "CODEX_TEST_REMOTE_EXEC_SERVER_URL=${CODEX_TEST_REMOTE_EXEC_SERVER_URL}"
-  echo "Remote env ready. Run your command, then call: codex_remote_env_cleanup"
+  echo "GENEX_TEST_REMOTE_ENV=${GENEX_TEST_REMOTE_ENV}"
+  echo "GENEX_TEST_ENVIRONMENT=${GENEX_TEST_ENVIRONMENT}"
+  echo "GENEX_TEST_REMOTE_EXEC_SERVER_URL=${GENEX_TEST_REMOTE_EXEC_SERVER_URL}"
+  echo "Remote env ready. Run your command, then call: genex_remote_env_cleanup"
 else
   status=$?
 fi

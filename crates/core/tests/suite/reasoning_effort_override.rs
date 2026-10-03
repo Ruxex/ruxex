@@ -96,19 +96,19 @@ async fn reasoning_effort_override_recovery_reuses_trusted_tail_update() -> anyh
     let TurnInputSubmission::Started { turn_id } = submission else {
         panic!("expected a new turn");
     };
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::RawResponseItem(raw)
             if matches!(&raw.item, ResponseItem::ConfigurationUpdate { .. }))
     })
     .await;
-    let thread_settings = test.codex.restorable_thread_settings().await;
+    let thread_settings = test.genex.restorable_thread_settings().await;
     assert_eq!(
-        test.codex.suspend_turn_and_shutdown().await?,
+        test.genex.suspend_turn_and_shutdown().await?,
         SuspendTurnOutcome::Suspended {
             turn_id: turn_id.clone(),
         },
     );
-    let rollout_path = test.codex.rollout_path().expect("rollout path");
+    let rollout_path = test.genex.rollout_path().expect("rollout path");
     test.thread_manager
         .remove_thread(&test.session_configured.thread_id)
         .await
@@ -193,7 +193,7 @@ async fn reasoning_effort_override_persistent_transitions(
         initial_effort,
     ] {
         submit_thread_settings(
-            &test.codex,
+            &test.genex,
             ThreadSettingsOverrides {
                 effort: Some(Some(effort)),
                 ..Default::default()
@@ -240,7 +240,7 @@ async fn reasoning_effort_override_preserves_prefix_and_only_appends_on_change()
     let test = override_builder().build_with_auto_env(&server).await?;
     test.submit_text_turn("first message").await?;
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             effort: Some(Some(ReasoningEffort::High)),
             ..Default::default()
@@ -250,7 +250,7 @@ async fn reasoning_effort_override_preserves_prefix_and_only_appends_on_change()
     test.submit_text_turn("second message").await?;
     test.submit_text_turn("third message").await?;
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             effort: Some(Some(ReasoningEffort::Low)),
             ..Default::default()
@@ -341,7 +341,7 @@ async fn reasoning_effort_override_normalizes_ultra_before_comparing_updates(
         .await?;
     test.submit_text_turn("ultra selection").await?;
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             effort: Some(Some(resolved_effort.clone())),
             ..Default::default()
@@ -434,7 +434,7 @@ async fn reasoning_effort_override_websocket_prewarm_preserves_baseline(
             Some("previous turn"),
         );
         if matches!(startup, PrewarmStartup::Fork) {
-            previous.codex.shutdown_and_wait().await?;
+            previous.genex.shutdown_and_wait().await?;
             let mut config = previous.config.clone();
             configure_prewarm(&mut config);
             let forked = previous
@@ -442,10 +442,10 @@ async fn reasoning_effort_override_websocket_prewarm_preserves_baseline(
                 .fork_thread(
                     ForkSnapshot::Interrupted,
                     genex_core::StartThreadOptions::new(config.clone()),
-                    previous.codex.rollout_path().expect("rollout path"),
+                    previous.genex.rollout_path().expect("rollout path"),
                 )
                 .await?;
-            previous.codex = forked.thread;
+            previous.genex = forked.thread;
             previous.session_configured = forked.session_configured;
             previous.config = config;
             previous
@@ -463,7 +463,7 @@ async fn reasoning_effort_override_websocket_prewarm_preserves_baseline(
     assert_eq!(warmup.body_json()["generate"], false);
     assert_eq!(warmup.body_json()["reasoning"]["effort"], "medium");
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             effort: Some(Some(ReasoningEffort::High)),
             ..Default::default()
@@ -540,7 +540,7 @@ async fn reasoning_effort_override_websocket_appends_then_replays_after_reconnec
     assert_eq!(warmup.body_json()["generate"], false);
     test.submit_text_turn("first message").await?;
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             effort: Some(Some(ReasoningEffort::High)),
             ..Default::default()
@@ -631,7 +631,7 @@ async fn reasoning_effort_override_unavailable_uses_request_effort(
     let test = builder.build_with_auto_env(&server).await?;
     test.submit_text_turn("first").await?;
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             effort: Some(Some(ReasoningEffort::High)),
             ..Default::default()
@@ -764,7 +764,7 @@ async fn reasoning_effort_override_model_switch_reestablishes_selected_effort(
         .await?;
     test.submit_text_turn("first model").await?;
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             model: Some("gpt-5.5".to_string()),
             effort: Some(Some(effort.clone())),
@@ -821,7 +821,7 @@ async fn reasoning_effort_override_resume_refreshes_selected_effort(
     let test = override_builder().build_with_auto_env(&server).await?;
     test.submit_text_turn("medium turn").await?;
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             effort: Some(Some(ReasoningEffort::High)),
             ..Default::default()
@@ -913,7 +913,7 @@ async fn reasoning_effort_override_compaction_fallback_uses_each_models_effort()
         .await?;
     test.submit_text_turn("first").await?;
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             effort: Some(Some(ReasoningEffort::High)),
             ..Default::default()
@@ -922,7 +922,7 @@ async fn reasoning_effort_override_compaction_fallback_uses_each_models_effort()
     .await?;
     test.submit_text_turn("second").await?;
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             model: Some("gpt-5.2".to_string()),
             ..Default::default()

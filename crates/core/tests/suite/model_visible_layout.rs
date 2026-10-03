@@ -217,7 +217,7 @@ async fn model_visible_environment_context_preserves_foreign_workspace_roots() -
     let test = test_genex().build(&server).await?;
     let foreign_root = PathUri::parse("file:///C:/workspace")?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "inspect the workspace".into(),
@@ -238,7 +238,7 @@ async fn model_visible_environment_context_preserves_foreign_workspace_roots() -
             }),
         )
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -297,7 +297,7 @@ async fn snapshot_model_visible_layout_turn_overrides() -> Result<()> {
     let (first_sandbox_policy, first_permission_profile) =
         turn_permission_fields(PermissionProfile::read_only(), first_turn_cwd.as_path());
 
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "first turn".into(),
@@ -320,7 +320,7 @@ async fn snapshot_model_visible_layout_turn_overrides() -> Result<()> {
             }),
         )
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -329,7 +329,7 @@ async fn snapshot_model_visible_layout_turn_overrides() -> Result<()> {
         PermissionProfile::read_only(),
         preturn_context_diff_cwd.as_path(),
     );
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "second turn with context updates".into(),
@@ -352,7 +352,7 @@ async fn snapshot_model_visible_layout_turn_overrides() -> Result<()> {
             }),
         )
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -417,7 +417,7 @@ async fn snapshot_model_visible_layout_cwd_change_refreshes_agents() -> Result<(
     let (first_sandbox_policy, first_permission_profile) =
         turn_permission_fields(PermissionProfile::read_only(), cwd_one.as_path());
 
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "first turn in agents_one".into(),
@@ -440,14 +440,14 @@ async fn snapshot_model_visible_layout_cwd_change_refreshes_agents() -> Result<(
             }),
         )
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
     let (second_sandbox_policy, second_permission_profile) =
         turn_permission_fields(PermissionProfile::read_only(), cwd_two.as_path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "second turn in agents_two".into(),
@@ -470,7 +470,7 @@ async fn snapshot_model_visible_layout_cwd_change_refreshes_agents() -> Result<(
             }),
         )
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

@@ -1626,13 +1626,13 @@ async fn remote_mid_turn_compact_v2_sends_turn_state_over_websocket() -> Result<
 
     // Phase 1: startup prewarm stays empty, then WebSocket sampling mints state and schedules
     // inline v2 compaction.
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "RUN_WITH_WS_MID_TURN_COMPACT_V2".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_turn_complete(&test.codex).await;
+    wait_for_turn_complete(&test.genex).await;
 
     let requests = server.single_connection();
     assert_eq!(requests.len(), 5);

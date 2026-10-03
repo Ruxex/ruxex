@@ -89,7 +89,7 @@ async fn root_turn_suspension_preserves_unfinished_turn_history() {
         .build_with_auto_env(&server)
         .await
         .expect("start persistent root thread");
-    let codex = Arc::clone(&test.codex);
+    let codex = Arc::clone(&test.genex);
     let descendant = test
         .thread_manager
         .start_thread(StartThreadOptions {

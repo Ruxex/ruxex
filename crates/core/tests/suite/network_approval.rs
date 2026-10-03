@@ -315,7 +315,7 @@ async fn strict_auto_review_routes_network_approval_to_guardian_when_user_review
         AskForApproval::OnRequest,
     )
     .await?;
-    let EventMsg::RequestPermissions(request) = wait_for_event(&test.codex, |event| {
+    let EventMsg::RequestPermissions(request) = wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::RequestPermissions(_))
     })
     .await
@@ -323,7 +323,7 @@ async fn strict_auto_review_routes_network_approval_to_guardian_when_user_review
         unreachable!("matched request permissions event")
     };
     assert_eq!(request.call_id, permission_call_id);
-    test.codex
+    test.genex
         .submit(Op::RequestPermissionsResponse {
             id: permission_call_id.to_string(),
             response: RequestPermissionsResponse {
@@ -399,11 +399,11 @@ async fn cancelled_guardian_network_review_fails_closed_without_rewriting_turn_s
     )
     .await?;
     wait_for_guardian_request(&pending_guardian).await;
-    test.codex.submit(Op::Interrupt).await?;
+    test.genex.submit(Op::Interrupt).await?;
     let mut saw_turn_aborted = false;
     let mut saw_guardian_aborted = false;
     while !saw_turn_aborted || !saw_guardian_aborted {
-        let event = tokio::time::timeout(Duration::from_secs(5), test.codex.next_event())
+        let event = tokio::time::timeout(Duration::from_secs(5), test.genex.next_event())
             .await
             .context("timed out waiting for parent and Guardian cancellation")?
             .context("event stream ended while waiting for cancellation")?;
@@ -790,7 +790,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
         AskForApproval::OnRequest,
     )
     .await?;
-    let EventMsg::TurnStarted(first_turn) = wait_for_event(&test.codex, |event| {
+    let EventMsg::TurnStarted(first_turn) = wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnStarted(_))
     })
     .await
@@ -803,8 +803,8 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
         first_turn.turn_id.clone()
     } else {
         wait_for_turn_complete(&test).await;
-        assert_eq!(test.codex.list_background_terminals().await.len(), 1);
-        test.codex
+        assert_eq!(test.genex.list_background_terminals().await.len(), 1);
+        test.genex
             .start_or_steer_turn(
                 TurnInputRequest::user_input(vec![UserInput::Text {
                     text: "review the existing terminal under B".to_string(),
@@ -829,7 +829,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
                 }),
             )
             .await?;
-        let EventMsg::TurnStarted(active_turn) = wait_for_event(&test.codex, |event| {
+        let EventMsg::TurnStarted(active_turn) = wait_for_event(&test.genex, |event| {
             matches!(event, EventMsg::TurnStarted(_))
         })
         .await
@@ -839,7 +839,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
         assert_ne!(active_turn.turn_id, first_turn.turn_id);
         active_turn.turn_id
     };
-    let EventMsg::RequestPermissions(request) = wait_for_event(&test.codex, |event| {
+    let EventMsg::RequestPermissions(request) = wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::RequestPermissions(_))
     })
     .await
@@ -849,7 +849,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
     assert_eq!(request.call_id, permission_call_id);
     if same_turn {
         let (reply, outcome) = tokio::sync::oneshot::channel();
-        test.codex
+        test.genex
             .submit(Op::TurnSettings {
                 turn_id: active_turn_id.clone(),
                 update: genex_protocol::protocol::TurnSettingsUpdate {
@@ -865,7 +865,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
             genex_protocol::protocol::TurnSettingsUpdateOutcome::Applied,
         );
     }
-    test.codex
+    test.genex
         .submit(Op::RequestPermissionsResponse {
             id: permission_call_id.to_string(),
             response: RequestPermissionsResponse {
@@ -875,7 +875,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
             },
         })
         .await?;
-    let assessment = wait_for_event(&test.codex, |event| {
+    let assessment = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::GuardianAssessment(assessment)
@@ -959,11 +959,11 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
     );
     assert!(stdin_output.contains("CROSS-TURN-NETWORK-COMPLETE"));
     assert_eq!(
-        test.codex.list_background_terminals().await.len(),
+        test.genex.list_background_terminals().await.len(),
         1,
         "approved network access must not terminate the background process"
     );
-    test.codex.submit(Op::CleanBackgroundTerminals).await?;
+    test.genex.submit(Op::CleanBackgroundTerminals).await?;
 
     Ok(())
 }
@@ -1012,7 +1012,7 @@ async fn user_network_approval_once_session_and_denial_semantics() -> Result<()>
         approval.reason.as_deref(),
         Some("codex-network-test.invalid is not in the allowed_domains")
     );
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
@@ -1039,7 +1039,7 @@ async fn user_network_approval_once_session_and_denial_semantics() -> Result<()>
     let approval = expect_network_approval(&test, LOCAL_ENVIRONMENT_ID).await?;
     assert_eq!(approval.approval_id.as_deref(), None);
     assert_ne!(approval.call_id, first_approval_call_id);
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
@@ -1091,7 +1091,7 @@ async fn user_network_approval_once_session_and_denial_semantics() -> Result<()>
         NetworkApprovalProtocol::Http,
     )
     .await?;
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
@@ -1139,14 +1139,14 @@ async fn user_network_approval_once_session_and_denial_semantics() -> Result<()>
         NetworkApprovalProtocol::Socks5Tcp,
     )
     .await?;
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
             decision: ReviewDecision::Abort,
         })
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnAborted(_))
     })
     .await;
@@ -1244,7 +1244,7 @@ PY"#
     let mut approvals = Vec::new();
     for _ in 0..2 {
         let event = wait_for_event_with_timeout(
-            &test.codex,
+            &test.genex,
             |event| {
                 matches!(
                     event,
@@ -1259,7 +1259,7 @@ PY"#
         };
         approvals.push(approval);
     }
-    assert_eq!(test.codex.list_background_terminals().await.len(), 1);
+    assert_eq!(test.genex.list_background_terminals().await.len(), 1);
     // The child holds this lock until exit, including across the sandbox's PID namespace.
     let process_lock = fs::File::open(local_cwd.join("network-process-lock"))?;
     assert!(matches!(
@@ -1285,7 +1285,7 @@ PY"#
         OtherNetworkReview::ApprovedForSession => Some(ReviewDecision::ApprovedForSession),
     };
     if let Some(decision) = first_decision {
-        test.codex
+        test.genex
             .submit(Op::ExecApproval {
                 id: first_approval.effective_approval_id(),
                 turn_id: Some(first_approval.turn_id.clone()),
@@ -1301,7 +1301,7 @@ PY"#
         assert!(result.starts_with("HTTP/1.1 200") || result.starts_with("HTTP/1.1 502"));
     }
     let final_approval = &approvals[1];
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: final_approval.effective_approval_id(),
             turn_id: Some(final_approval.turn_id.clone()),
@@ -1322,7 +1322,7 @@ PY"#
     })
     .await
     .context("background process remained alive after network rejection")??;
-    assert!(test.codex.list_background_terminals().await.is_empty());
+    assert!(test.genex.list_background_terminals().await.is_empty());
 
     let output = responses
         .requests()
@@ -1410,7 +1410,7 @@ async fn allowing_network_policy_amendment_persists_context_and_bypasses_prompt(
             },
         ]
     );
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
@@ -1479,7 +1479,7 @@ async fn denying_network_policy_amendment_persists_and_blocks_request() -> Resul
     )
     .await?;
     let approval = expect_network_approval(&test, LOCAL_ENVIRONMENT_ID).await?;
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
@@ -1536,7 +1536,7 @@ async fn failed_network_policy_amendment_denies_request_and_does_not_approve_hos
     )
     .await?;
     let approval = expect_network_approval(&test, LOCAL_ENVIRONMENT_ID).await?;
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
@@ -1572,7 +1572,7 @@ async fn failed_network_policy_amendment_denies_request_and_does_not_approve_hos
     )
     .await?;
     let approval = expect_network_approval(&test, LOCAL_ENVIRONMENT_ID).await?;
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
@@ -1679,7 +1679,7 @@ async fn unattributed_network_request_uses_active_turn_environment_fallback(
         })
         .await
         .context("Guardian reviewer did not finish its rate-limited turn")??;
-        tokio::time::timeout(Duration::from_secs(5), test.codex.shutdown_and_wait())
+        tokio::time::timeout(Duration::from_secs(5), test.genex.shutdown_and_wait())
             .await
             .context("parent shutdown waited for Guardian's 60-second retry")??;
         let response = tokio::time::timeout(Duration::from_secs(5), proxy_request).await???;
@@ -1691,7 +1691,7 @@ async fn unattributed_network_request_uses_active_turn_environment_fallback(
     let approval = expect_network_approval(&test, LOCAL_ENVIRONMENT_ID).await?;
     assert_eq!(approval.command, ["network-access", NETWORK_TEST_TARGET]);
     assert_eq!(approval.cwd, test.config.cwd.clone().into());
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
@@ -1703,8 +1703,8 @@ async fn unattributed_network_request_uses_active_turn_environment_fallback(
         .context("unattributed proxy request did not finish")???;
     assert!(response.starts_with("HTTP/1.1 200") || response.starts_with("HTTP/1.1 502"));
 
-    test.codex.submit(Op::Interrupt).await?;
-    wait_for_event(&test.codex, |event| {
+    test.genex.submit(Op::Interrupt).await?;
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnAborted(_))
     })
     .await;
@@ -1779,7 +1779,7 @@ async fn ambiguous_unattributed_network_request_is_not_assigned_to_active_calls(
     assert!(
         tokio::time::timeout(
             Duration::from_secs(1),
-            wait_for_event(&test.codex, |event| matches!(
+            wait_for_event(&test.genex, |event| matches!(
                 event,
                 EventMsg::ExecApprovalRequest(_)
             ))
@@ -1789,15 +1789,15 @@ async fn ambiguous_unattributed_network_request_is_not_assigned_to_active_calls(
         "ambiguous request was incorrectly assigned to an active call"
     );
 
-    test.codex.submit(Op::Interrupt).await?;
-    wait_for_event(&test.codex, |event| {
+    test.genex.submit(Op::Interrupt).await?;
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnAborted(_))
     })
     .await;
-    test.codex.submit(Op::CleanBackgroundTerminals).await?;
+    test.genex.submit(Op::CleanBackgroundTerminals).await?;
     tokio::time::timeout(Duration::from_secs(10), async {
         loop {
-            if test.codex.list_background_terminals().await.is_empty() {
+            if test.genex.list_background_terminals().await.is_empty() {
                 break;
             }
             tokio::time::sleep(Duration::from_millis(10)).await;
@@ -1903,7 +1903,7 @@ async fn thread_turnover_closes_managed_proxy_tunnels() -> Result<()> {
         }
         drop(upstream);
     }
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
     Ok(())
 }
 
@@ -2240,7 +2240,7 @@ async fn remote_guardian_network_decisions_are_scoped_to_each_request_and_enviro
             )
             .await?;
             let approval = expect_network_approval(&test, REMOTE_ENVIRONMENT_ID).await?;
-            test.codex
+            test.genex
                 .submit(Op::ExecApproval {
                     id: approval.effective_approval_id(),
                     turn_id: Some(approval.turn_id),
@@ -2506,7 +2506,7 @@ async fn owner_network_policy_follows_the_selected_remote_command() -> Result<()
             )
             .await?;
             if suffix == "GRANTED_DENIED" {
-                let event = wait_for_event(&test.codex, |event| {
+                let event = wait_for_event(&test.genex, |event| {
                     matches!(
                         event,
                         EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -2516,7 +2516,7 @@ async fn owner_network_policy_follows_the_selected_remote_command() -> Result<()
                 let EventMsg::ExecApprovalRequest(approval) = event else {
                     anyhow::bail!("expected additional permissions approval before completion")
                 };
-                test.codex
+                test.genex
                     .submit(Op::ExecApproval {
                         id: approval.effective_approval_id(),
                         turn_id: Some(approval.turn_id),
@@ -2597,7 +2597,7 @@ async fn approved_network_host_for_one_environment_still_prompts_in_another() ->
     )
     .await?;
     let approval = expect_network_approval(&test, LOCAL_ENVIRONMENT_ID).await?;
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
@@ -2623,7 +2623,7 @@ async fn approved_network_host_for_one_environment_still_prompts_in_another() ->
     .await?;
     let approval = expect_network_approval(&test, REMOTE_ENVIRONMENT_ID).await?;
     let rejection = "approval request failed because the client disconnected";
-    test.codex
+    test.genex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
@@ -2812,7 +2812,7 @@ async fn submit_managed_network_turn(
     let turn_environment_selections =
         TurnEnvironmentSelections::new(test.config.cwd.clone(), environments);
 
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.into(),
@@ -2978,7 +2978,7 @@ async fn expect_network_approval_target(
         .checked_duration_since(std::time::Instant::now())
         .context("timed out waiting for network approval request")?;
     let event = wait_for_event_with_timeout(
-        &test.codex,
+        &test.genex,
         |event| {
             matches!(
                 event,
@@ -3015,7 +3015,7 @@ async fn expect_network_approval_target(
 }
 
 async fn wait_for_completion_without_network_prompt(test: &TestGenex) {
-    let event = wait_for_event(&test.codex, |event| {
+    let event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -3090,7 +3090,7 @@ async fn wait_for_paths(paths: &[&std::path::Path]) -> Result<()> {
 }
 
 async fn wait_for_turn_complete(test: &TestGenex) {
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

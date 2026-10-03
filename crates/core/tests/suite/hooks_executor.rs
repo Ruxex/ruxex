@@ -79,7 +79,7 @@ async fn thread_plugin_selection_disables_executor_hooks_without_disabling_their
     ] {
         let enabled = disabled_plugin_ids.is_empty();
         submit_thread_settings(
-            &fixture.test.codex,
+            &fixture.test.genex,
             ThreadSettingsOverrides {
                 disabled_plugin_ids: Some(disabled_plugin_ids),
                 ..Default::default()
@@ -196,8 +196,8 @@ async fn executor_interrupt_hook_runs_after_attachment() -> Result<()> {
     })
     .await
     .context("interrupted turn should reach the model request")?;
-    fixture.test.codex.submit(Op::Interrupt).await?;
-    wait_for_event(&fixture.test.codex, |event| {
+    fixture.test.genex.submit(Op::Interrupt).await?;
+    wait_for_event(&fixture.test.genex, |event| {
         matches!(event, EventMsg::TurnAborted(_))
     })
     .await;
@@ -355,7 +355,7 @@ async fn executor_stop_hook_rejects_mismatched_environment() -> Result<()> {
         .next()
         .context("attached executor environment should remain selected")?;
     submit_thread_settings(
-        &fixture.test.codex,
+        &fixture.test.genex,
         ThreadSettingsOverrides {
             environments: Some(TurnEnvironmentSelections::new(
                 fixture.test.config.cwd.clone(),
@@ -391,7 +391,7 @@ async fn executor_stop_hook_rejects_mismatched_environment() -> Result<()> {
         .codex
         .refresh_mcp_config(mismatched_config)
         .await;
-    wait_for_mcp_server(&fixture.test.codex, "node_repl").await?;
+    wait_for_mcp_server(&fixture.test.genex, "node_repl").await?;
     assert_eq!(
         fixture
             .test
@@ -530,11 +530,11 @@ async fn executor_browser_and_computer_use_cleanup_hooks_use_separate_mcp_routes
                     agent_role: None,
                 })),
                 thread_source: Some(ThreadSource::Subagent),
-                environments: Some(fixture.test.codex.environment_selections().await),
+                environments: Some(fixture.test.genex.environment_selections().await),
                 ..StartThreadOptions::new(fixture.test.config.clone())
             })
             .await?;
-        fixture.test.codex = child.thread;
+        fixture.test.genex = child.thread;
         fixture.test.session_configured = child.session_configured;
     }
     fixture.attach().await?;
@@ -567,8 +567,8 @@ async fn executor_browser_and_computer_use_cleanup_hooks_use_separate_mcp_routes
         })
         .await
         .context("interrupted turn should reach the model request")?;
-        fixture.test.codex.submit(Op::Interrupt).await?;
-        wait_for_event(&fixture.test.codex, |event| {
+        fixture.test.genex.submit(Op::Interrupt).await?;
+        wait_for_event(&fixture.test.genex, |event| {
             matches!(event, EventMsg::TurnAborted(_))
         })
         .await;
@@ -767,7 +767,7 @@ async fn executor_plugin_hook_fixture(
             .expect("configure Node REPL MCP server");
     });
     let test = builder.build_with_auto_env(&server).await?;
-    wait_for_mcp_server(&test.codex, "node_repl").await?;
+    wait_for_mcp_server(&test.genex, "node_repl").await?;
 
     let mut plugin_roots = Vec::new();
     let filesystem = test.fs();
@@ -866,12 +866,12 @@ impl ExecutorHookFixture {
     }
 
     async fn interrupt_running_command(&self) -> Result<()> {
-        wait_for_event(&self.test.codex, |event| {
+        wait_for_event(&self.test.genex, |event| {
             matches!(event, EventMsg::ExecCommandBegin(_))
         })
         .await;
-        self.test.codex.submit(Op::Interrupt).await?;
-        wait_for_event(&self.test.codex, |event| {
+        self.test.genex.submit(Op::Interrupt).await?;
+        wait_for_event(&self.test.genex, |event| {
             matches!(event, EventMsg::TurnAborted(_))
         })
         .await;

@@ -355,7 +355,7 @@ async fn apps_cache_filled_during_binding_capture_reaches_the_model() -> anyhow:
             .build_with_auto_env(&server)
             .await?;
         // Startup emits one summary for both servers, not one event per server.
-        let EventMsg::McpStartupComplete(startup) = wait_for_event(&test.codex, |event| {
+        let EventMsg::McpStartupComplete(startup) = wait_for_event(&test.genex, |event| {
             matches!(event, EventMsg::McpStartupComplete(_))
         })
         .await

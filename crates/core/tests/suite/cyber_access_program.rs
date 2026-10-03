@@ -108,7 +108,7 @@ async fn recover_turn_restores_cyber_access_program_without_making_it_sticky() -
             turn_id: turn_id.clone(),
         }
     );
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -144,7 +144,7 @@ async fn recover_turn_restores_cyber_access_program_without_making_it_sticky() -
         panic!("expected a new turn");
     };
     assert_ne!(next_turn_id, turn_id);
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -155,7 +155,7 @@ async fn recover_turn_restores_cyber_access_program_without_making_it_sticky() -
             .get("access_programs"),
         None
     );
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
     Ok(())
 }
 
@@ -454,13 +454,13 @@ async fn cyber_access_program_changes_on_one_websocket_with_response_reuse() -> 
             .map(|id| Some(json!(id)))
             .collect::<Vec<_>>()
     );
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
     server.shutdown().await;
     Ok(())
 }
 
 async fn submit(test: &TestGenex, program: Option<CyberAccessProgram>) -> Result<()> {
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello".to_owned(),
@@ -472,7 +472,7 @@ async fn submit(test: &TestGenex, program: Option<CyberAccessProgram>) -> Result
             }),
         )
         .await?;
-    let event = wait_for_event(&test.codex, |event| {
+    let event = wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_) | EventMsg::Error(_))
     })
     .await;

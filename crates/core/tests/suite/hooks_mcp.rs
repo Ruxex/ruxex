@@ -370,7 +370,7 @@ async fn run_mcp_permission_request_hook_test(outcome: PermissionRequestHookOutc
             );
         });
     let test = builder.build_with_remote_and_local_env(&server).await?;
-    wait_for_mcp_server(&test.codex, RMCP_SERVER).await?;
+    wait_for_mcp_server(&test.genex, RMCP_SERVER).await?;
 
     let responses = mount_sse_sequence(
         &server,
@@ -486,7 +486,7 @@ async fn mcp_tool_hook_interpolates_prompt_and_runs_without_tool_approval() -> R
         })
         .build(&server)
         .await?;
-    wait_for_mcp_server(&test.codex, RMCP_SERVER).await?;
+    wait_for_mcp_server(&test.genex, RMCP_SERVER).await?;
 
     tokio::time::timeout(
         Duration::from_secs(15),
@@ -548,7 +548,7 @@ async fn mcp_tool_hook_passes_thread_metadata_to_model_hidden_tools() -> Result<
         })
         .build(&server)
         .await?;
-    wait_for_mcp_server(&test.codex, RMCP_SERVER).await?;
+    wait_for_mcp_server(&test.genex, RMCP_SERVER).await?;
 
     test.submit_turn("load thread context").await?;
 
@@ -623,7 +623,7 @@ async fn mcp_tool_hook_blocks_model_tool_without_recursive_hooks_or_approval() -
         })
         .build(&server)
         .await?;
-    wait_for_mcp_server(&test.codex, RMCP_SERVER).await?;
+    wait_for_mcp_server(&test.genex, RMCP_SERVER).await?;
 
     tokio::time::timeout(
         Duration::from_secs(15),
@@ -749,7 +749,7 @@ async fn pre_tool_use_blocks_mcp_tool_before_execution(
         })
         .build(&server)
         .await?;
-    wait_for_mcp_server(&test.codex, RMCP_SERVER).await?;
+    wait_for_mcp_server(&test.genex, RMCP_SERVER).await?;
 
     test.submit_turn("call the rmcp echo tool with the MCP pre hook")
         .await?;
@@ -846,7 +846,7 @@ async fn pre_tool_use_rewrites_mcp_tool_before_execution() -> Result<()> {
         })
         .build(&server)
         .await?;
-    wait_for_mcp_server(&test.codex, RMCP_SERVER).await?;
+    wait_for_mcp_server(&test.genex, RMCP_SERVER).await?;
 
     test.submit_turn("call the rmcp echo tool with the MCP pre hook rewrite")
         .await?;
@@ -943,7 +943,7 @@ async fn post_tool_use_records_mcp_tool_payload_and_context(
         })
         .build(&server)
         .await?;
-    wait_for_mcp_server(&test.codex, RMCP_SERVER).await?;
+    wait_for_mcp_server(&test.genex, RMCP_SERVER).await?;
 
     test.submit_turn("call the rmcp echo tool with the MCP post hook")
         .await?;

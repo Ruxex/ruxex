@@ -80,7 +80,7 @@ async fn idle_response_items_include_pending_mailbox_in_first_request() -> anyho
     .await;
     let test = test_genex().build_with_auto_env(&server).await?;
 
-    submit_queue_only_agent_mail(test.codex.as_ref(), "pending mailbox input").await;
+    submit_queue_only_agent_mail(test.genex.as_ref(), "pending mailbox input").await;
     let submission = test
         .codex
         .start_turn_if_idle(TurnInputRequest::new(TurnInput::ResponseItem(
@@ -90,7 +90,7 @@ async fn idle_response_items_include_pending_mailbox_in_first_request() -> anyho
     let StartIfIdleSubmission::Started { turn_id } = submission else {
         panic!("automatic input should start a turn");
     };
-    wait_for_turn_complete(test.codex.as_ref()).await;
+    wait_for_turn_complete(test.genex.as_ref()).await;
 
     let request = response.single_request();
     let request_body = request.body_json();
@@ -145,7 +145,7 @@ async fn standalone_tool_output_starts_instruction_turn() -> anyhow::Result<()> 
     let TurnInputSubmission::Started { turn_id } = submission else {
         panic!("standalone output should start a turn");
     };
-    wait_for_turn_complete(test.codex.as_ref()).await;
+    wait_for_turn_complete(test.genex.as_ref()).await;
 
     let request = response.single_request();
     responses::assert_root_turn(&request.body_json(), Some(&turn_id))?;
@@ -174,7 +174,7 @@ async fn assert_idle_user_input_reaches_the_first_model_request(
 
     if mode == ModeKind::Plan {
         core_test_support::submit_thread_settings(
-            test.codex.as_ref(),
+            test.genex.as_ref(),
             ThreadSettingsOverrides {
                 collaboration_mode: Some(CollaborationMode {
                     mode,
@@ -203,7 +203,7 @@ async fn assert_idle_user_input_reaches_the_first_model_request(
         .await?;
     assert!(matches!(submission, StartIfIdleSubmission::Started { .. }));
 
-    let user_message = core_test_support::wait_for_event_match(test.codex.as_ref(), |event| {
+    let user_message = core_test_support::wait_for_event_match(test.genex.as_ref(), |event| {
         let EventMsg::ItemCompleted(event) = event else {
             return None;
         };
@@ -218,7 +218,7 @@ async fn assert_idle_user_input_reaches_the_first_model_request(
         user_message.client_id
     );
     assert_eq!(expected_input, user_message.content);
-    wait_for_turn_complete(test.codex.as_ref()).await;
+    wait_for_turn_complete(test.genex.as_ref()).await;
 
     let request = response.single_request();
     let request_body = request.body_json();
@@ -339,7 +339,7 @@ async fn submit_user_input(codex: &GenexThread, text: &str) {
 async fn submit_danger_full_access_user_turn(test: &TestGenex, text: &str) {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: text.to_string(),
@@ -1253,7 +1253,7 @@ async fn terminal_compaction_error_does_not_retry_pending_input(
         })
         .build_with_auto_env(&config_server)
         .await?;
-    let codex = &test.codex;
+    let codex = &test.genex;
 
     if failure_point == CompactionFailurePoint::PreTurn {
         submit_user_input(codex, "initial prompt").await;
@@ -1635,7 +1635,7 @@ async fn steered_user_input_waits_when_tool_output_triggers_compact_before_next_
         .build_with_streaming_server(&server)
         .await
         .expect("build streaming Codex test session");
-    let codex = test.codex.clone();
+    let codex = test.genex.clone();
 
     submit_danger_full_access_user_turn(&test, "first prompt").await;
     wait_for_event(&codex, |event| matches!(event, EventMsg::TurnStarted(_))).await;

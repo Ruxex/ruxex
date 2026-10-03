@@ -220,14 +220,14 @@ async fn run_agent_with_model(models_manager: SharedModelsManager, model_slug: &
     );
 
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             model: Some(model_slug.to_string()),
             ..Default::default()
         },
     )
     .await?;
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".to_string(),
             text_elements: Vec::new(),
@@ -235,7 +235,7 @@ async fn run_agent_with_model(models_manager: SharedModelsManager, model_slug: &
         .await?;
     loop {
         if matches!(
-            wait_for_event(&test.codex, |_| true).await,
+            wait_for_event(&test.genex, |_| true).await,
             EventMsg::TurnComplete(_)
         ) {
             break;

@@ -96,18 +96,18 @@ async fn stdin_reviews_retained_grants_after_turn_permissions_expire() -> Result
         "exec_command",
     )
     .await;
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "open terminal".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    let request = wait_for_event_match(&test.codex, |event| match event {
+    let request = wait_for_event_match(&test.genex, |event| match event {
         EventMsg::RequestPermissions(request) => Some(request.clone()),
         _ => None,
     })
     .await;
-    test.codex
+    test.genex
         .submit(Op::RequestPermissionsResponse {
             id: request.call_id,
             response: RequestPermissionsResponse {
@@ -117,7 +117,7 @@ async fn stdin_reviews_retained_grants_after_turn_permissions_expire() -> Result
             },
         })
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -139,7 +139,7 @@ async fn stdin_reviews_retained_grants_after_turn_permissions_expire() -> Result
         tool_response("allowed", "write_stdin", json!({"session_id":1000, "chars":"test -z \"${REJECTED-}\" && printf allowed > allowed/result; exit\n"})),
         sse(vec![ev_completed("done")]),
     ]).await;
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "send input".into(),
             text_elements: Vec::new(),
@@ -149,7 +149,7 @@ async fn stdin_reviews_retained_grants_after_turn_permissions_expire() -> Result
         ("denied", ReviewDecision::denied("blocked input")),
         ("allowed", ReviewDecision::Approved),
     ] {
-        let request = wait_for_event_match(&test.codex, |event| match event {
+        let request = wait_for_event_match(&test.genex, |event| match event {
             EventMsg::ExecApprovalRequest(request) => Some(request.clone()),
             _ => None,
         })
@@ -168,7 +168,7 @@ async fn stdin_reviews_retained_grants_after_turn_permissions_expire() -> Result
                 permissions.clone()
             )?)
         );
-        test.codex
+        test.genex
             .submit(Op::ExecApproval {
                 id: id.into(),
                 turn_id: Some(request.turn_id),
@@ -176,7 +176,7 @@ async fn stdin_reviews_retained_grants_after_turn_permissions_expire() -> Result
             })
             .await?;
     }
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -256,7 +256,7 @@ async fn strict_stdin_review_reaches_guardian_with_sandbox_prompts_disabled() ->
         decision("allow"),
         sse(vec![ev_completed("done")]),
     ]).await;
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "send input".into(),
@@ -274,12 +274,12 @@ async fn strict_stdin_review_reaches_guardian_with_sandbox_prompts_disabled() ->
             }),
         )
         .await?;
-    let request = wait_for_event_match(&test.codex, |event| match event {
+    let request = wait_for_event_match(&test.genex, |event| match event {
         EventMsg::RequestPermissions(request) => Some(request.clone()),
         _ => None,
     })
     .await;
-    test.codex
+    test.genex
         .submit(Op::RequestPermissionsResponse {
             id: request.call_id,
             response: RequestPermissionsResponse {
@@ -289,7 +289,7 @@ async fn strict_stdin_review_reaches_guardian_with_sandbox_prompts_disabled() ->
             },
         })
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

@@ -535,7 +535,7 @@ async fn thread_disabled_plugins_filter_skills_and_tools_without_changing_shared
     for (phase, enabled, injection_count) in [(0, true, 1), (1, false, 1), (2, true, 2)] {
         if !enabled {
             submit_thread_settings(
-                &test.codex,
+                &test.genex,
                 ThreadSettingsOverrides {
                     disabled_plugin_ids: Some(vec![SAMPLE_PLUGIN_CONFIG_NAME.to_string()]),
                     ..Default::default()
@@ -544,7 +544,7 @@ async fn thread_disabled_plugins_filter_skills_and_tools_without_changing_shared
             .await?;
             // Saving pending settings must not change the admitted runtime.
             for (server_name, tool, arguments) in &tool_calls {
-                test.codex
+                test.genex
                     .call_mcp_tool(server_name, tool, arguments.clone(), /*meta*/ None)
                     .await?;
             }
@@ -567,7 +567,7 @@ async fn thread_disabled_plugins_filter_skills_and_tools_without_changing_shared
             ],
         )
         .await;
-        test.codex
+        test.genex
             .start_or_steer_turn(
                 TurnInputRequest::user_input(vec![
                     UserInput::Skill {
@@ -585,7 +585,7 @@ async fn thread_disabled_plugins_filter_skills_and_tools_without_changing_shared
                 }),
             )
             .await?;
-        wait_for_event(&test.codex, |event| {
+        wait_for_event(&test.genex, |event| {
             matches!(event, EventMsg::TurnComplete(_))
         })
         .await;
@@ -769,13 +769,13 @@ async fn plugin_skill_product_policy_and_migrated_command_precedence_reach_agent
             .collect::<Vec<_>>()
     );
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Inspect the available plugin skills.".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -924,13 +924,13 @@ enabled = true
         .reconcile_remote_installed_plugins(&test.config.plugins_config_input(), auth.as_ref())
         .await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Inspect the available Sites skills.".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1568,7 +1568,7 @@ async fn system_marketplace_plugin_honors_layered_activation_and_mcp_policy(
         .with_home(genex_home)
         .with_config(move |config| config.config_layer_stack = layered_config.config_layer_stack);
     let test = builder.build_with_remote_and_local_env(&server).await?;
-    let startup = wait_for_event_match(&test.codex, |event| match event {
+    let startup = wait_for_event_match(&test.genex, |event| match event {
         EventMsg::McpStartupComplete(summary) => Some(summary.clone()),
         _ => None,
     })
@@ -1582,13 +1582,13 @@ async fn system_marketplace_plugin_honors_layered_activation_and_mcp_policy(
         serde_json::to_value(startup)?,
         serde_json::json!({"ready": expected_ready, "failed": [], "cancelled": []}),
     );
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Mention {
             name: "sample".into(),
             path: format!("plugin://{SAMPLE_PLUGIN_CONFIG_NAME}"),
         }]))
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

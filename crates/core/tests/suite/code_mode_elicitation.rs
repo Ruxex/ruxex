@@ -80,7 +80,7 @@ impl CodeModeElicitationHarness {
 
     async fn finish(self) {
         wait_for_event_with_timeout(
-            &self.test.codex,
+            &self.test.genex,
             |event| match event {
                 EventMsg::TurnComplete(event) => event.turn_id == self.turn_id,
                 _ => false,
@@ -115,7 +115,7 @@ async fn mount_code_mode_responses(server: &MockServer, code: &str) -> ResponseM
 async fn submit_turn(test: &TestGenex, permission_profile: PermissionProfile) -> Result<String> {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(permission_profile, test.config.cwd.as_path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "run a code-mode tool that needs user input".into(),
@@ -138,7 +138,7 @@ async fn submit_turn(test: &TestGenex, permission_profile: PermissionProfile) ->
         )
         .await?;
 
-    Ok(wait_for_event_match(&test.codex, |event| match event {
+    Ok(wait_for_event_match(&test.genex, |event| match event {
         EventMsg::TurnStarted(event) => Some(event.turn_id.clone()),
         _ => None,
     })
@@ -165,7 +165,7 @@ await tools.exec_command({
         |_| {},
     )
     .await?;
-    let approval = wait_for_event_match(&harness.test.codex, |event| match event {
+    let approval = wait_for_event_match(&harness.test.genex, |event| match event {
         EventMsg::ExecApprovalRequest(approval) => Some(approval.clone()),
         _ => None,
     })
@@ -196,7 +196,7 @@ await tools.apply_patch("*** Begin Patch\n*** Add File: code_mode_patch_approval
         |_| {},
     )
     .await?;
-    let approval = wait_for_event_match(&harness.test.codex, |event| match event {
+    let approval = wait_for_event_match(&harness.test.genex, |event| match event {
         EventMsg::ApplyPatchApprovalRequest(approval) => Some(approval.clone()),
         _ => None,
     })
@@ -235,7 +235,7 @@ await tools.request_permissions({
         },
     )
     .await?;
-    let request = wait_for_event(&harness.test.codex, |event| {
+    let request = wait_for_event(&harness.test.genex, |event| {
         matches!(
             event,
             EventMsg::RequestPermissions(_) | EventMsg::TurnComplete(_) | EventMsg::Error(_)

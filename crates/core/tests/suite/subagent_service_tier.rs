@@ -230,7 +230,7 @@ async fn root_service_tier_change_updates_existing_subagent(
     assert_request_service_tier(&initial_child_request, initial_service_tier);
 
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             service_tier: Some(updated_service_tier.map(str::to_string)),
             ..Default::default()
@@ -364,7 +364,7 @@ async fn evicted_role_subagent_uses_root_service_tier_after_reload() -> Result<(
     );
 
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             service_tier: Some(None),
             ..Default::default()
@@ -377,7 +377,7 @@ async fn evicted_role_subagent_uses_root_service_tier_after_reload() -> Result<(
     let reloaded_thread = test.thread_manager.get_thread(original_thread_id).await?;
     assert_eq!(
         reloaded_thread.config_snapshot().await.service_tier,
-        test.codex.config_snapshot().await.service_tier,
+        test.genex.config_snapshot().await.service_tier,
         "reload ignores the role tier and preserves the root-owned preference"
     );
 
@@ -391,7 +391,7 @@ async fn evicted_role_subagent_uses_root_service_tier_after_reload() -> Result<(
     wait_for_turn_complete(&reloaded_thread).await;
     assert_request_service_tier(&reloaded_request, /*expected*/ None);
     reloaded_thread.shutdown_and_wait().await?;
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
 
     Ok(())
 }

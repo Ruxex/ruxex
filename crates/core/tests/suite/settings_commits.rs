@@ -39,7 +39,7 @@ const COMMITTED_MODEL: &str = "gpt-5.2";
 const TIMEOUT: Duration = Duration::from_secs(10);
 
 fn assert_checkpoints(test: &TestGenex, expected: &[ThreadSettingsSnapshot]) -> Result<()> {
-    let rollout_path = test.codex.rollout_path().expect("rollout path");
+    let rollout_path = test.genex.rollout_path().expect("rollout path");
     let rollout: Vec<RolloutLine> = std::fs::read_to_string(rollout_path)?
         .lines()
         .map(genex_rollout::parse_rollout_line)
@@ -73,7 +73,7 @@ async fn initial_plugin_ids_use_turn_context_without_extra_settings_checkpoints(
         .await?;
     let selected = vec!["slack@provider".to_string()];
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             disabled_plugin_ids: Some(selected.clone()),
             ..Default::default()
@@ -89,13 +89,13 @@ async fn initial_plugin_ids_use_turn_context_without_extra_settings_checkpoints(
         panic!("expected an accepted first turn, got {submission:?}");
     };
     wait_for_event(
-        &test.codex,
+        &test.genex,
         |event| matches!(event, EventMsg::TurnComplete(completed) if completed.turn_id == turn_id),
     )
     .await;
-    test.codex.flush_rollout().await?;
+    test.genex.flush_rollout().await?;
     assert_checkpoints(&test, &[])?;
-    let rollout_path = test.codex.rollout_path().expect("rollout path");
+    let rollout_path = test.genex.rollout_path().expect("rollout path");
     let (items, _, parse_errors) =
         genex_rollout::RolloutRecorder::load_rollout_items(&rollout_path).await?;
     assert_eq!(parse_errors, 0);
@@ -116,24 +116,24 @@ async fn initial_plugin_ids_use_turn_context_without_extra_settings_checkpoints(
     assert_eq!(response.requests().len(), 1);
 
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             disabled_plugin_ids: Some(vec![]),
             ..Default::default()
         },
     )
     .await?;
-    let expected = vec![test.codex.thread_settings_snapshot().await];
+    let expected = vec![test.genex.thread_settings_snapshot().await];
     assert!(expected[0].disabled_plugin_ids.is_empty());
-    test.codex.flush_rollout().await?;
+    test.genex.flush_rollout().await?;
     assert_checkpoints(&test, &expected)?;
     let response =
         responses::mount_sse_once(&server, responses::sse_completed("second turn")).await;
     test.submit_text_turn("second turn").await?;
-    test.codex.flush_rollout().await?;
+    test.genex.flush_rollout().await?;
     assert_eq!(response.requests().len(), 1);
     assert_checkpoints(&test, &expected)?;
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
     Ok(())
 }
 
@@ -197,7 +197,7 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await?;
-    let mut initial = test.codex.restorable_thread_settings().await;
+    let mut initial = test.genex.restorable_thread_settings().await;
     // Restore only runtime model settings, without overwriting the committed plugin selection.
     initial.disabled_plugin_ids = None;
     let thread_settings = ThreadSettingsOverrides {
@@ -206,7 +206,7 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
         ..Default::default()
     };
     let submission = tokio::spawn({
-        let codex = Arc::clone(&test.codex);
+        let codex = Arc::clone(&test.genex);
         async move {
             match operation {
                 SettingsOperation::TurnStart => {
@@ -232,13 +232,13 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
     });
 
     timeout(TIMEOUT, entered_rx).await??;
-    let expected = test.codex.thread_settings_snapshot().await;
+    let expected = test.genex.thread_settings_snapshot().await;
     assert_eq!(expected.model, COMMITTED_MODEL);
     assert_eq!(expected.disabled_plugin_ids, vec!["slack@provider"]);
     // Submitted operations are serialized. Runtime restoration is an existing
     // direct writer, so it can overlap the first operation's post-commit work.
-    timeout(TIMEOUT, test.codex.restore_thread_settings(initial)).await??;
-    let restored = test.codex.thread_settings_snapshot().await;
+    timeout(TIMEOUT, test.genex.restore_thread_settings(initial)).await??;
+    let restored = test.genex.thread_settings_snapshot().await;
     assert_eq!(restored.model, INITIAL_MODEL);
     assert_eq!(restored.disabled_plugin_ids, vec!["slack@provider"]);
     release_tx.send(())?;
@@ -246,7 +246,7 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
 
     let applied = timeout(TIMEOUT, async {
         loop {
-            let event = test.codex.next_event().await?;
+            let event = test.genex.next_event().await?;
             match event.msg {
                 EventMsg::ThreadSettingsApplied(applied) if event.id == submission_id => {
                     return Ok::<_, anyhow::Error>((applied.thread_id, applied.thread_settings));
@@ -265,7 +265,7 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
         SettingsOperation::TurnStart => COMMITTED_MODEL,
         SettingsOperation::Standalone => {
             assert!(response.requests().is_empty());
-            test.codex
+            test.genex
                 .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                     text: "use the restored settings".to_string(),
                     text_elements: Vec::new(),
@@ -274,7 +274,7 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
             INITIAL_MODEL
         }
     };
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -282,7 +282,7 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
         response.single_request().body_json()["model"],
         expected_request_model
     );
-    assert_eq!(test.codex.thread_settings_snapshot().await, restored);
+    assert_eq!(test.genex.thread_settings_snapshot().await, restored);
     Ok(())
 }
 
@@ -318,7 +318,7 @@ async fn compaction_checkpoints_settings_changed_during_its_model_request() -> R
         .build_with_streaming_server(&server)
         .await?;
     test.submit_text_turn("before compaction").await?;
-    test.codex.submit(Op::Compact).await?;
+    test.genex.submit(Op::Compact).await?;
     timeout(TIMEOUT, server.wait_for_request_count(/*count*/ 2)).await?;
 
     let request: serde_json::Value = serde_json::from_slice(&server.requests().await[1])?;
@@ -326,7 +326,7 @@ async fn compaction_checkpoints_settings_changed_during_its_model_request() -> R
     let updated_cwd = TempDir::new()?;
     let updated_cwd_path = AbsolutePathBuf::try_from(updated_cwd.path())?;
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             environments: Some(local_selections(updated_cwd_path.clone())),
             model: Some(COMMITTED_MODEL.to_string()),
@@ -335,17 +335,17 @@ async fn compaction_checkpoints_settings_changed_during_its_model_request() -> R
         },
     )
     .await?;
-    let expected = test.codex.thread_settings_snapshot().await;
+    let expected = test.genex.thread_settings_snapshot().await;
     assert_eq!(
         (&expected.cwd, expected.model.as_str()),
         (&updated_cwd_path, COMMITTED_MODEL)
     );
     release_compaction.send(()).expect("compaction is waiting");
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
 
     let rollout_path = test.session_configured.rollout_path.expect("rollout path");
     let rollout: Vec<RolloutLine> = std::fs::read_to_string(rollout_path)?

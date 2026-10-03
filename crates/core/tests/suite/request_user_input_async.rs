@@ -262,19 +262,19 @@ async fn freeform_async_message_emits_an_item_without_ending_the_turn(
         })
         .build_with_auto_env(&server)
         .await?;
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Keep me updated.".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let started = wait_for_event_match(test.codex.as_ref(), |event| match event {
+    let started = wait_for_event_match(test.genex.as_ref(), |event| match event {
         EventMsg::ItemStarted(event) if event.item.id() == CALL_ID => Some(event.item.clone()),
         _ => None,
     })
     .await;
-    let completed = wait_for_event_match(test.codex.as_ref(), |event| match event {
+    let completed = wait_for_event_match(test.genex.as_ref(), |event| match event {
         EventMsg::ItemCompleted(event) if event.item.id() == CALL_ID => Some(event.item.clone()),
         _ => None,
     })
@@ -290,7 +290,7 @@ async fn freeform_async_message_emits_an_item_without_ending_the_turn(
     }))?;
     assert_eq!(serde_json::to_value(started)?, expected);
     assert_eq!(serde_json::to_value(completed)?, expected);
-    wait_for_event(test.codex.as_ref(), |event| {
+    wait_for_event(test.genex.as_ref(), |event| {
         let item = match event {
             EventMsg::ItemStarted(event) => Some(&event.item),
             EventMsg::ItemCompleted(event) => Some(&event.item),
@@ -419,14 +419,14 @@ async fn request_user_input_async_emits_item_and_does_not_end_the_turn(
         .build_with_auto_env(&server)
         .await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Keep me updated.".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let started = wait_for_event_match(test.codex.as_ref(), |event| {
+    let started = wait_for_event_match(test.genex.as_ref(), |event| {
         let EventMsg::ItemStarted(event) = event else {
             return None;
         };
@@ -452,7 +452,7 @@ async fn request_user_input_async_emits_item_and_does_not_end_the_turn(
         })?
     );
 
-    let completed = wait_for_event_match(test.codex.as_ref(), |event| {
+    let completed = wait_for_event_match(test.genex.as_ref(), |event| {
         let EventMsg::ItemCompleted(event) = event else {
             return None;
         };
@@ -470,7 +470,7 @@ async fn request_user_input_async_emits_item_and_does_not_end_the_turn(
         serde_json::to_value(started)?
     );
 
-    wait_for_event(test.codex.as_ref(), |event| {
+    wait_for_event(test.genex.as_ref(), |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -555,13 +555,13 @@ async fn invalid_async_questions_do_not_emit_an_item(
         })
         .build_with_auto_env(&server)
         .await?;
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Get clarification.".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(test.codex.as_ref(), |event| {
+    wait_for_event(test.genex.as_ref(), |event| {
         let item = match event {
             EventMsg::ItemStarted(event) => Some(&event.item),
             EventMsg::ItemCompleted(event) => Some(&event.item),

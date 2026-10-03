@@ -71,7 +71,7 @@ async fn host_drain_rejects_turn_start_paths_without_recording_input() -> anyhow
         .build_with_auto_env(&server)
         .await?;
     assert_eq!(
-        test.codex
+        test.genex
             .start_or_steer_turn(user_message_request("rejected direct input"))
             .await?,
         TurnInputSubmission::NotSubmitted {
@@ -86,7 +86,7 @@ async fn host_drain_rejects_turn_start_paths_without_recording_input() -> anyhow
         ))),
     ] {
         assert_eq!(
-            test.codex.start_turn_if_idle(request).await?,
+            test.genex.start_turn_if_idle(request).await?,
             StartIfIdleSubmission::NotSubmitted {
                 reason: NotSubmittedReason::ServerDraining
             },
@@ -94,10 +94,10 @@ async fn host_drain_rejects_turn_start_paths_without_recording_input() -> anyhow
     }
     assert!(response.requests().is_empty());
     admission.0.store(false, Ordering::SeqCst);
-    test.codex
+    test.genex
         .start_turn_if_idle(user_message_request("allowed input"))
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -129,7 +129,7 @@ async fn host_drain_allows_spawned_agent_input_but_not_automatic_work() -> anyho
                 agent_nickname: None,
                 agent_role: None,
             })),
-            environments: Some(test.codex.environment_selections().await),
+            environments: Some(test.genex.environment_selections().await),
             ..StartThreadOptions::new(test.config.clone())
         })
         .await?
@@ -200,7 +200,7 @@ async fn host_drain_allows_running_review_to_finish_its_delegate() -> anyhow::Re
         .build_with_auto_env(&server)
         .await?;
     // The host already admitted the parent review; only its child start hits Core admission.
-    test.codex
+    test.genex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -210,7 +210,7 @@ async fn host_drain_allows_running_review_to_finish_its_delegate() -> anyhow::Re
             },
         })
         .await?;
-    let event = wait_for_event(&test.codex, |event| {
+    let event = wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::ExitedReviewMode(_))
     })
     .await;
@@ -259,7 +259,7 @@ async fn host_drain_closes_realtime_after_handoff_error() -> anyhow::Result<()> 
         })
         .build_with_auto_env(&server)
         .await?;
-    test.codex
+    test.genex
         .submit(Op::RealtimeConversationStart(ConversationStartParams {
             client_managed_handoffs: false,
             delegation_ack_filler: None,
@@ -303,7 +303,7 @@ async fn host_drain_closes_realtime_after_handoff_error() -> anyhow::Result<()> 
             reason: Some("error".to_string()),
         }),
     ] {
-        let event = wait_for_event(&test.codex, |event| match event {
+        let event = wait_for_event(&test.genex, |event| match event {
             EventMsg::RealtimeConversationRealtime(RealtimeConversationRealtimeEvent {
                 payload: RealtimeEvent::HandoffRequested(_) | RealtimeEvent::Error(_),
             })
@@ -333,7 +333,7 @@ async fn host_drain_allows_mailbox_work_to_start_a_turn() -> anyhow::Result<()> 
         .build_with_auto_env(&server)
         .await?;
     // Mailbox input is memory-only and must be processed before the host exits.
-    test.codex
+    test.genex
         .submit(Op::InterAgentCommunication {
             communication: InterAgentCommunication::new(
                 AgentPath::try_from("/root/worker").expect("valid agent path"),
@@ -345,7 +345,7 @@ async fn host_drain_allows_mailbox_work_to_start_a_turn() -> anyhow::Result<()> 
             start_options: Default::default(),
         })
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -383,10 +383,10 @@ async fn start_turn_if_idle_keeps_automatic_plan_rejections_atomic(
         .build_with_auto_env(&server)
         .await
         .expect("build turn-input submission session");
-    let mut collaboration_mode = test.codex.config_snapshot().await.collaboration_mode;
+    let mut collaboration_mode = test.genex.config_snapshot().await.collaboration_mode;
     collaboration_mode.mode = current_mode;
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             collaboration_mode: Some(collaboration_mode.clone()),
             ..Default::default()
@@ -394,7 +394,7 @@ async fn start_turn_if_idle_keeps_automatic_plan_rejections_atomic(
     )
     .await
     .expect("set the current collaboration mode");
-    let current_settings = test.codex.thread_settings_snapshot().await;
+    let current_settings = test.genex.thread_settings_snapshot().await;
     collaboration_mode.mode = proposed_mode;
     let overrides = ThreadSettingsOverrides {
         collaboration_mode: Some(collaboration_mode.clone()),
@@ -417,7 +417,7 @@ async fn start_turn_if_idle_keeps_automatic_plan_rejections_atomic(
         }
     );
     assert_eq!(
-        test.codex.thread_settings_snapshot().await,
+        test.genex.thread_settings_snapshot().await,
         current_settings
     );
 
@@ -436,12 +436,12 @@ async fn start_turn_if_idle_keeps_automatic_plan_rejections_atomic(
         .await
         .expect("rejection must release the idle reservation for explicit user input");
     assert!(matches!(started, StartIfIdleSubmission::Started { .. }));
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
     assert_eq!(
-        test.codex.config_snapshot().await.collaboration_mode,
+        test.genex.config_snapshot().await.collaboration_mode,
         collaboration_mode
     );
     let request = response_mock.single_request();
@@ -487,11 +487,11 @@ async fn recover_turn_if_idle_preserves_id_and_resumes_plan_mode() {
         }
     );
     assert_eq!(
-        test.codex.config_snapshot().await.collaboration_mode.mode,
+        test.genex.config_snapshot().await.collaboration_mode.mode,
         ModeKind::Plan
     );
 
-    let started = wait_for_event(&test.codex, |event| {
+    let started = wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnStarted(_))
     })
     .await;
@@ -499,7 +499,7 @@ async fn recover_turn_if_idle_preserves_id_and_resumes_plan_mode() {
         unreachable!("wait_for_event returned unexpected event");
     };
     assert_eq!(started.turn_id, turn_id);
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -542,7 +542,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     else {
         panic!("original turn did not start")
     };
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -570,7 +570,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     let TurnInputSubmission::Started { turn_id } = submission else {
         panic!("continuation did not start")
     };
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         assert!(!matches!(event, EventMsg::UserMessage(_)));
         assert!(!matches!(event, EventMsg::ItemCompleted(event)
             if matches!(event.item, genex_protocol::items::TurnItem::UserMessage(_))));
@@ -591,7 +591,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     assert_eq!(body["service_tier"], "flex");
     // The continuation has completed, but the saved previous ID is still stale.
     assert_eq!(
-        test.codex
+        test.genex
             .continue_turn_if_idle(
                 TurnInputRequest::new(TurnInput::ResponseItem(ContextualUserFragment::into(
                     InternalModelContextFragment::new(
@@ -609,7 +609,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     );
     assert_eq!(mock.requests().len(), 1);
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             approval_policy: Some(AskForApproval::OnRequest),
             ..Default::default()
@@ -618,7 +618,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     .await
     .expect("update permissions before continuation admission");
     assert_eq!(
-        test.codex
+        test.genex
             .continue_turn_if_idle(
                 TurnInputRequest::new(TurnInput::ResponseItem(input)),
                 turn_id,
@@ -658,7 +658,7 @@ async fn turn_input_submission_reports_started_and_steered_for_concurrent_submis
         .build_with_streaming_server(&server)
         .await
         .expect("build turn-input submission session");
-    let codex = Arc::clone(&test.codex);
+    let codex = Arc::clone(&test.genex);
     let barrier = Arc::new(Barrier::new(3));
 
     let first_submission = tokio::spawn({
@@ -763,7 +763,7 @@ async fn turn_input_submission_applies_thread_settings_only_after_accepted_input
         .build_with_streaming_server(&server)
         .await
         .expect("build approval-constrained turn-input submission session");
-    let codex = &test.codex;
+    let codex = &test.genex;
 
     let started = submit_user_message(codex, "start turn")
         .await
@@ -867,7 +867,7 @@ async fn start_or_steer_turn_requires_matching_active_output_schema() {
         .build_with_streaming_server(&server)
         .await
         .expect("build turn-input submission session");
-    let codex = &test.codex;
+    let codex = &test.genex;
     let active_schema: Value = serde_json::from_str(
         r#"{"type":"object","properties":{"answer":{"type":"string"},"count":{"type":"number"}},"required":["answer","count"]}"#,
     )
@@ -987,13 +987,13 @@ async fn sampling_is_ready_for_daemon_recovery(
         server.wait_for_request_count(/*count*/ 1),
     )
     .await?;
-    let active = test.codex.interrupted_turn().await;
+    let active = test.genex.interrupted_turn().await;
     assert_eq!(
         active.map(|(id, _, _)| id),
         (executor == "local").then_some(turn_id)
     );
     release.send(()).expect("sampling is waiting");
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

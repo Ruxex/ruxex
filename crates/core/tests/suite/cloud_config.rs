@@ -109,14 +109,14 @@ async fn managed_deny_read_requirements_follow_thread_permission_updates() -> Re
     let test = builder.build_with_auto_env(&server).await?;
 
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             permission_profile: Some(PermissionProfile::read_only()),
             ..Default::default()
         },
     )
     .await?;
-    let snapshot = test.codex.config_snapshot().await;
+    let snapshot = test.genex.config_snapshot().await;
     assert!(
         !snapshot
             .permission_profile

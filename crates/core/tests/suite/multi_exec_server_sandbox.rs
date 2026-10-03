@@ -201,7 +201,7 @@ async fn two_exec_servers_isolate_workspace_write_roots() -> Result<()> {
     );
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(permission_profile, test.config.cwd.as_path());
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "write one file in each environment".into(),
@@ -220,7 +220,7 @@ async fn two_exec_servers_isolate_workspace_write_roots() -> Result<()> {
         )
         .await?;
     wait_for_event_with_timeout(
-        &test.codex,
+        &test.genex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         TURN_COMPLETE_TIMEOUT,
     )

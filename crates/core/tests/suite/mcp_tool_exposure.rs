@@ -328,7 +328,7 @@ async fn rapid_mcp_refreshes_coalesce_to_the_latest_config() -> Result<()> {
         .await?;
 
     contributor.block_next.store(true, Ordering::SeqCst);
-    test.codex
+    test.genex
         .refresh_runtime_config(config_with_mcp_marker(&test.config, "config-a"))
         .await;
     tokio::time::timeout(Duration::from_secs(5), contributor.entered.acquire())
@@ -337,10 +337,10 @@ async fn rapid_mcp_refreshes_coalesce_to_the_latest_config() -> Result<()> {
         .expect("entered semaphore should remain open")
         .forget();
 
-    test.codex
+    test.genex
         .refresh_runtime_config(config_with_mcp_marker(&test.config, "config-b"))
         .await;
-    test.codex
+    test.genex
         .refresh_runtime_config(config_with_mcp_marker(&test.config, "config-c"))
         .await;
     contributor.release.add_permits(1);

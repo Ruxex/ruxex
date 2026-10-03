@@ -142,7 +142,7 @@ async fn invalid_provider_rollout_budget_units_fail_without_retry() -> Result<()
         .build(&server)
         .await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "reject invalid provider budget units".to_string(),
             text_elements: Vec::new(),
@@ -150,7 +150,7 @@ async fn invalid_provider_rollout_budget_units_fail_without_retry() -> Result<()
         .await?;
 
     let EventMsg::Error(error) =
-        wait_for_event(&test.codex, |event| matches!(event, EventMsg::Error(_))).await
+        wait_for_event(&test.genex, |event| matches!(event, EventMsg::Error(_))).await
     else {
         unreachable!();
     };
@@ -159,7 +159,7 @@ async fn invalid_provider_rollout_budget_units_fail_without_retry() -> Result<()
         "Fatal error: response.completed usage.codex_rollout_budget_units must be finite and non-negative"
     );
     assert_eq!(error.genex_error_info, Some(GenexErrorInfo::Other));
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -307,14 +307,14 @@ async fn exhausted_budget_fails_current_and_later_turns() -> Result<()> {
         .await?;
 
     for prompt in ["exhaust the budget", "try another turn"] {
-        test.codex
+        test.genex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.to_string(),
                 text_elements: Vec::new(),
             }]))
             .await?;
 
-        wait_for_event(&test.codex, |event| {
+        wait_for_event(&test.genex, |event| {
             matches!(
                 event,
                 EventMsg::Error(error)
@@ -322,7 +322,7 @@ async fn exhausted_budget_fails_current_and_later_turns() -> Result<()> {
             )
         })
         .await;
-        wait_for_event(&test.codex, |event| {
+        wait_for_event(&test.genex, |event| {
             matches!(event, EventMsg::TurnComplete(_))
         })
         .await;
@@ -383,8 +383,8 @@ async fn compaction_budget_exhaustion_fails_without_retry(
         .build(&server)
         .await?;
 
-    test.codex.submit(Op::Compact).await?;
-    wait_for_event(&test.codex, |event| {
+    test.genex.submit(Op::Compact).await?;
+    wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::Error(error)
@@ -392,7 +392,7 @@ async fn compaction_budget_exhaustion_fails_without_retry(
         )
     })
     .await;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -438,8 +438,8 @@ async fn restates_the_current_remainder_after_compaction() -> Result<()> {
         .await?;
 
     test.submit_turn("first turn").await?;
-    test.codex.submit(Op::Compact).await?;
-    wait_for_event(&test.codex, |event| {
+    test.genex.submit(Op::Compact).await?;
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

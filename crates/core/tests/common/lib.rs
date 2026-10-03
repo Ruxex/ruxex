@@ -234,24 +234,24 @@ pub fn find_genex_linux_sandbox_exe() -> Result<PathBuf, CargoBinError> {
 }
 
 pub async fn wait_for_event<F>(
-    codex: &GenexThread,
+    genex: &GenexThread,
     predicate: F,
 ) -> genex_protocol::protocol::EventMsg
 where
     F: FnMut(&genex_protocol::protocol::EventMsg) -> bool,
 {
     use tokio::time::Duration;
-    wait_for_event_with_timeout(codex, predicate, Duration::from_secs(1)).await
+    wait_for_event_with_timeout(genex, predicate, Duration::from_secs(1)).await
 }
 
 /// Waits for a configured MCP server to finish startup and requires it to be ready.
-pub async fn wait_for_mcp_server(codex: &GenexThread, server_name: &str) -> anyhow::Result<()> {
+pub async fn wait_for_mcp_server(genex: &GenexThread, server_name: &str) -> anyhow::Result<()> {
     use genex_protocol::protocol::EventMsg;
 
     // Wait for the startup summary regardless of outcome, then interpret the
     // requested server's ready, failed, or cancelled entry below.
     let summary = loop {
-        let event = codex
+        let event = genex
             .next_event()
             .await
             .expect("stream ended unexpectedly while waiting for MCP startup");
@@ -278,7 +278,7 @@ pub async fn wait_for_mcp_server(codex: &GenexThread, server_name: &str) -> anyh
 }
 
 pub async fn submit_thread_settings(
-    codex: &GenexThread,
+    genex: &GenexThread,
     thread_settings: genex_protocol::protocol::ThreadSettingsOverrides,
 ) -> anyhow::Result<()> {
     use genex_protocol::protocol::EventMsg;
@@ -286,9 +286,9 @@ pub async fn submit_thread_settings(
     use tokio::time::Duration;
     use tokio::time::timeout;
 
-    let submission_id = codex.submit(Op::ThreadSettings { thread_settings }).await?;
+    let submission_id = genex.submit(Op::ThreadSettings { thread_settings }).await?;
     loop {
-        let ev = timeout(Duration::from_secs(10), codex.next_event())
+        let ev = timeout(Duration::from_secs(10), genex.next_event())
             .await
             .expect("timeout waiting for thread settings update")
             .expect("stream ended unexpectedly");
@@ -336,16 +336,16 @@ impl ThreadIdle {
     }
 }
 
-pub async fn wait_for_event_match<T, F>(codex: &GenexThread, matcher: F) -> T
+pub async fn wait_for_event_match<T, F>(genex: &GenexThread, matcher: F) -> T
 where
     F: Fn(&genex_protocol::protocol::EventMsg) -> Option<T>,
 {
-    let ev = wait_for_event(codex, |ev| matcher(ev).is_some()).await;
+    let ev = wait_for_event(genex, |ev| matcher(ev).is_some()).await;
     matcher(&ev).expect("EventMsg should match matcher predicate")
 }
 
 pub async fn wait_for_event_with_timeout<F>(
-    codex: &GenexThread,
+    genex: &GenexThread,
     mut predicate: F,
     wait_time: tokio::time::Duration,
 ) -> genex_protocol::protocol::EventMsg
@@ -356,7 +356,7 @@ where
     use tokio::time::timeout;
     loop {
         // Allow a bit more time to accommodate async startup work (e.g. config IO, tool discovery)
-        let ev = timeout(wait_time.max(Duration::from_secs(10)), codex.next_event())
+        let ev = timeout(wait_time.max(Duration::from_secs(10)), genex.next_event())
             .await
             .expect("timeout waiting for event")
             .expect("stream ended unexpectedly");
@@ -572,7 +572,7 @@ macro_rules! skip_if_no_network {
     () => {{
         if ::std::env::var($crate::sandbox_network_env_var()).is_ok() {
             println!(
-                "Skipping test because it cannot execute when network is disabled in a Codex sandbox."
+                "Skipping test because it cannot execute when network is disabled in a Genex sandbox."
             );
             return;
         }
@@ -580,7 +580,7 @@ macro_rules! skip_if_no_network {
     ($return_value:expr $(,)?) => {{
         if ::std::env::var($crate::sandbox_network_env_var()).is_ok() {
             println!(
-                "Skipping test because it cannot execute when network is disabled in a Codex sandbox."
+                "Skipping test because it cannot execute when network is disabled in a Genex sandbox."
             );
             return $return_value;
         }

@@ -58,10 +58,10 @@ async fn compaction_preserves_updated_summary(mode: CompactionMode) -> Result<()
         })
         .build_with_auto_env(&server)
         .await?;
-    let pause = start_paused_turn(&test.codex).await?;
+    let pause = start_paused_turn(&test.genex).await?;
     assert_eq!(
         submit_turn_settings(
-            &test.codex,
+            &test.genex,
             &pause.turn_id,
             TurnSettingsUpdate {
                 summary: Some(ReasoningSummary::Detailed),
@@ -71,12 +71,12 @@ async fn compaction_preserves_updated_summary(mode: CompactionMode) -> Result<()
         .await?,
         TurnSettingsUpdateOutcome::Applied
     );
-    answer_paused_turn(&test.codex, &pause.turn_id).await?;
-    wait_for_event(&test.codex, |event| {
+    answer_paused_turn(&test.genex, &pause.turn_id).await?;
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
 
     let requests = responses.requests();
     assert_eq!(

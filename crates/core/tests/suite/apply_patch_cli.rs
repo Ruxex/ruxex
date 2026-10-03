@@ -113,7 +113,7 @@ async fn submit_without_wait_with_turn_permissions(
 ) -> Result<()> {
     let test = harness.test();
     let session_model = test.session_configured.model.clone();
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.into(),
@@ -638,7 +638,7 @@ async fn apply_patch_cli_move_without_content_change_has_no_turn_diff() -> Resul
 
     let harness = apply_patch_harness().await?;
     let test = harness.test();
-    let codex = test.codex.clone();
+    let codex = test.genex.clone();
 
     harness.write_file("old/name.txt", "same\n").await?;
 
@@ -1039,7 +1039,7 @@ async fn intercepted_apply_patch_updates_absolute_target_after_turn_cwd_is_remov
     )
     .await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "remove the turn cwd, then update the allowed and denied files".into(),
@@ -1057,7 +1057,7 @@ async fn intercepted_apply_patch_updates_absolute_target_after_turn_cwd_is_remov
             }),
         )
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1120,7 +1120,7 @@ async fn escalated_patch_rejects_symlink_swapped_after_approval_request() -> Res
         restrictive_workspace_write_profile(),
         test.config.cwd.as_path(),
     );
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "apply the patch".to_string(),
@@ -1135,7 +1135,7 @@ async fn escalated_patch_rejects_symlink_swapped_after_approval_request() -> Res
             }),
         )
         .await?;
-    let event = wait_for_event(&test.codex, |event| {
+    let event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::ApplyPatchApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -1149,13 +1149,13 @@ async fn escalated_patch_rejects_symlink_swapped_after_approval_request() -> Res
     let target = harness.path("file.txt");
     fs::remove_file(&target)?;
     create_file_symlink(&outside, &target)?;
-    test.codex
+    test.genex
         .submit(Op::PatchApproval {
             id: approval.call_id,
             decision: ReviewDecision::Approved,
         })
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1167,7 +1167,7 @@ async fn escalated_patch_rejects_symlink_swapped_after_approval_request() -> Res
         output.contains("Failed to read file to update"),
         "{output:?}"
     );
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
     Ok(())
 }
 
@@ -1669,7 +1669,7 @@ async fn apply_patch_custom_tool_streaming_emits_updated_changes() -> Result<()>
     })
     .await?;
     let test = harness.test();
-    let codex = test.codex.clone();
+    let codex = test.genex.clone();
     let call_id = "apply-patch-streaming";
     let patch = "*** Begin Patch\n*** Add File: streamed.txt\n+hello\n+world\n*** End Patch";
     mount_sse_sequence(
@@ -1767,7 +1767,7 @@ async fn apply_patch_exec_command_heredoc_with_cd_emits_turn_diff() -> Result<()
 
     let harness = apply_patch_harness_with(|builder| builder.with_model("gpt-5.4")).await?;
     let test = harness.test();
-    let codex = test.codex.clone();
+    let codex = test.genex.clone();
 
     // Prepare a file inside a subdir; update it via cd && apply_patch heredoc form.
     harness.write_file("sub/in_sub.txt", "before\n").await?;
@@ -1868,7 +1868,7 @@ async fn apply_patch_turn_diff_paths_stay_repo_relative_when_session_cwd_is_nest
     })
     .await?;
     let test = harness.test();
-    let codex = test.codex.clone();
+    let codex = test.genex.clone();
     let repo_root = harness
         .test()
         .config
@@ -1970,7 +1970,7 @@ async fn apply_patch_turn_diff_skips_git_root_when_feature_is_enabled(
         .thread_manager
         .start_thread(StartThreadOptions {
             metrics_service_name: Some(originator.to_string()),
-            environments: Some(test.codex.environment_selections().await),
+            environments: Some(test.genex.environment_selections().await),
             ..StartThreadOptions::new(test.config.clone())
         })
         .await?
@@ -2019,7 +2019,7 @@ async fn apply_patch_exec_command_failure_propagates_error_and_skips_diff() -> R
 
     let harness = apply_patch_harness_with(|builder| builder.with_model("gpt-5.4")).await?;
     let test = harness.test();
-    let codex = test.codex.clone();
+    let codex = test.genex.clone();
 
     harness.write_file("invalid.txt", "ok\n").await?;
 
@@ -2163,7 +2163,7 @@ async fn apply_patch_emits_turn_diff_event_with_unified_diff() -> Result<()> {
 
     let harness = apply_patch_harness().await?;
     let test = harness.test();
-    let codex = test.codex.clone();
+    let codex = test.genex.clone();
 
     let call_id = "apply-diff-event";
     let file = "udiff.txt";
@@ -2198,7 +2198,7 @@ async fn apply_patch_turn_diff_emits_portable_paths_for_remote_cwd() -> Result<(
 
     let harness = apply_patch_harness().await?;
     let test = harness.test();
-    let codex = test.codex.clone();
+    let codex = test.genex.clone();
 
     let call_id = "apply-foreign-windows-diff";
     let file = "nested/foreign.txt";
@@ -2331,7 +2331,7 @@ async fn apply_patch_turn_diff_tracks_local_and_remote_environment_paths() -> Re
             config: EnvironmentConfigState::FromThread,
         },
     ];
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "apply matching patches to local and remote environments".into(),
@@ -2359,7 +2359,7 @@ async fn apply_patch_turn_diff_tracks_local_and_remote_environment_paths() -> Re
         .await?;
 
     let mut last_diff = None;
-    wait_for_event(&test.codex, |event| match event {
+    wait_for_event(&test.genex, |event| match event {
         EventMsg::TurnDiff(ev) => {
             last_diff = Some(ev.unified_diff.clone());
             false
@@ -2422,7 +2422,7 @@ async fn apply_patch_aggregates_diff_across_multiple_tool_calls() -> Result<()> 
 
     let harness = apply_patch_harness().await?;
     let test = harness.test();
-    let codex = test.codex.clone();
+    let codex = test.genex.clone();
 
     let call1 = "agg-1";
     let call2 = "agg-2";
@@ -2472,7 +2472,7 @@ async fn apply_patch_aggregates_diff_preserves_success_after_failure() -> Result
 
     let harness = apply_patch_harness().await?;
     let test = harness.test();
-    let codex = test.codex.clone();
+    let codex = test.genex.clone();
 
     let call_success = "agg-success";
     let call_failure = "agg-failure";
@@ -2558,7 +2558,7 @@ async fn apply_patch_clears_aggregated_diff_after_inexact_delta() -> Result<()> 
     })
     .await?;
     let test = harness.test();
-    let codex = test.codex.clone();
+    let codex = test.genex.clone();
 
     let call_success = "agg-success";
     let call_inexact = "agg-inexact";

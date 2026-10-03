@@ -144,7 +144,7 @@ async fn ultra_reasoning_uses_highest_non_ultra_and_proactive_mode() -> Result<(
         .build(&server)
         .await?;
 
-    submit_turn(&test.codex, "hello", /*effort*/ None).await?;
+    submit_turn(&test.genex, "hello", /*effort*/ None).await?;
 
     let request = response.single_request();
     assert_eq!(
@@ -200,8 +200,8 @@ async fn mode_hints_override_reasoning_effort(source: ModeHintSource) -> Result<
         })
         .build(&server)
         .await?;
-    submit_turn(&test.codex, "explicit", Some(ReasoningEffort::High)).await?;
-    submit_turn(&test.codex, "proactive", Some(ReasoningEffort::Ultra)).await?;
+    submit_turn(&test.genex, "explicit", Some(ReasoningEffort::High)).await?;
+    submit_turn(&test.genex, "proactive", Some(ReasoningEffort::Ultra)).await?;
 
     let requests = responses.requests();
     let first_input = requests[0].input();
@@ -262,7 +262,7 @@ async fn catalog_proactive_mode_is_ultra_only(
         .build_with_auto_env(&server)
         .await?;
 
-    submit_turn(&test.codex, "hello", Some(effort)).await?;
+    submit_turn(&test.genex, "hello", Some(effort)).await?;
 
     let input = response.single_request().input();
     let texts = developer_texts(&input);
@@ -327,16 +327,16 @@ async fn model_switch_refreshes_catalog_role_and_mode(
         .with_config(configure_multi_agent_v2)
         .build_with_auto_env(&server)
         .await?;
-    submit_turn(&test.codex, "first model", Some(effort.clone())).await?;
+    submit_turn(&test.genex, "first model", Some(effort.clone())).await?;
     core_test_support::submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             model: Some("gpt-5.2".to_string()),
             ..Default::default()
         },
     )
     .await?;
-    submit_turn(&test.codex, "second model", Some(effort)).await?;
+    submit_turn(&test.genex, "second model", Some(effort)).await?;
 
     let requests = responses.requests();
     for (index, request) in requests.iter().enumerate() {
@@ -414,7 +414,7 @@ async fn empty_configured_mode_hint_emits_no_mode_message(effort: ReasoningEffor
         .build_with_auto_env(&server)
         .await?;
 
-    submit_turn(&test.codex, "hello", Some(effort)).await?;
+    submit_turn(&test.genex, "hello", Some(effort)).await?;
 
     let input = response.single_request().input();
     let texts = developer_texts(&input);
@@ -511,8 +511,8 @@ async fn live_mode_change_appends_mode_without_reappending_usage_hint() -> Resul
         .clone()
         .expect("rollout path");
 
-    submit_turn(&test.codex, "proactive", /*effort*/ None).await?;
-    submit_turn(&test.codex, "explicit", Some(ReasoningEffort::High)).await?;
+    submit_turn(&test.genex, "proactive", /*effort*/ None).await?;
+    submit_turn(&test.genex, "explicit", Some(ReasoningEffort::High)).await?;
 
     let requests = responses.requests();
     let first_input = requests[0].input();
@@ -537,8 +537,8 @@ async fn live_mode_change_appends_mode_without_reappending_usage_hint() -> Resul
         ),
         (1, 1, 1),
     );
-    test.codex.ensure_rollout_materialized().await;
-    test.codex.flush_rollout().await?;
+    test.genex.ensure_rollout_materialized().await;
+    test.genex.flush_rollout().await?;
     let rollout_values = std::fs::read_to_string(rollout_path)?
         .lines()
         .map(serde_json::from_str::<Value>)
@@ -636,7 +636,7 @@ async fn ultra_on_multi_agent_v1_uses_highest_non_ultra_without_mode_instruction
         .build(&server)
         .await?;
 
-    submit_turn(&test.codex, "hello", /*effort*/ None).await?;
+    submit_turn(&test.genex, "hello", /*effort*/ None).await?;
 
     let request = response.single_request();
     assert_eq!(

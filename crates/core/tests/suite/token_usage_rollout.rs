@@ -72,11 +72,11 @@ async fn observed_response_usage_accumulates_per_turn_and_thread() -> Result<()>
     )
     .await;
     let test = test_genex().build_with_auto_env(&server).await?;
-    let rollout_path = test.codex.rollout_path().expect("rollout path");
+    let rollout_path = test.genex.rollout_path().expect("rollout path");
     let home = test.home.clone();
 
     test.submit_turn("first").await?;
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
 
     let resumed = test_genex()
         .resume(&server, home, rollout_path.clone())

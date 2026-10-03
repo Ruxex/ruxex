@@ -52,7 +52,7 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
         .await?;
     turn(
         &server,
-        &test.codex,
+        &test.genex,
         "Create a checkpoint",
         "OBSOLETE_PRE_CHECKPOINT_REPLY",
     )
@@ -65,14 +65,14 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
         ]),
     )
     .await;
-    test.codex.submit(Op::Compact).await?;
-    wait_for_event(&test.codex, |event| {
+    test.genex.submit(Op::Compact).await?;
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
     turn(
         &server,
-        &test.codex,
+        &test.genex,
         "shared-compression: inherited parent turn",
         "INHERITED_COMPRESSION_REPLY",
     )
@@ -94,7 +94,7 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
         .await?;
     turn(
         &server,
-        &test.codex,
+        &test.genex,
         "shared-compression: parent AFTER fork cutoff",
         "POST_FORK_COMPRESSION_REPLY",
     )
@@ -107,9 +107,9 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
     )
     .await?;
 
-    let parent_path = test.codex.rollout_path().context("parent rollout")?;
+    let parent_path = test.genex.rollout_path().context("parent rollout")?;
     let child_path = child.thread.rollout_path().context("child rollout")?;
-    test.codex.shutdown_and_wait().await?;
+    test.genex.shutdown_and_wait().await?;
     child.thread.shutdown_and_wait().await?;
     assert_eq!(
         genex_rollout::read_session_meta_line(&child_path)

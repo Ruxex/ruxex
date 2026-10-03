@@ -182,7 +182,7 @@ async fn first_turn_model_change_appends_model_instructions_developer_message() 
     let next_model = "gpt-5.5";
 
     submit_model_turn(
-        &test.codex,
+        &test.genex,
         next_model,
         ThreadSettingsOverrides::default(),
     )
@@ -227,9 +227,9 @@ async fn first_turn_after_empty_prefix_fork_preserves_inherited_base_instruction
             config.base_instructions = custom_base_instructions.map(str::to_string);
         });
     let test = builder.build_with_auto_env(&server).await?;
-    test.codex.ensure_rollout_materialized().await;
-    test.codex.flush_rollout().await?;
-    let source_rollout_path = test.codex.rollout_path().expect("rollout path");
+    test.genex.ensure_rollout_materialized().await;
+    test.genex.flush_rollout().await?;
+    let source_rollout_path = test.genex.rollout_path().expect("rollout path");
     let source_history =
         genex_rollout::RolloutRecorder::get_rollout_history(&source_rollout_path).await?;
     let expected_provenance = match custom_base_instructions {
@@ -293,7 +293,7 @@ async fn model_change_appends_model_instructions_developer_message() -> Result<(
     let test = builder.build(&server).await?;
     let next_model = "gpt-5.5";
 
-    test.codex
+    test.genex
         .start_or_steer_turn(read_only_user_turn(
             &test,
             vec![UserInput::Text {
@@ -303,10 +303,10 @@ async fn model_change_appends_model_instructions_developer_message() -> Result<(
             test.session_configured.model.clone(),
         ))
         .await?;
-    wait_for_event(&test.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     core_test_support::submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             model: Some(next_model.to_string()),
             ..Default::default()
@@ -314,7 +314,7 @@ async fn model_change_appends_model_instructions_developer_message() -> Result<(
     )
     .await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(read_only_user_turn(
             &test,
             vec![UserInput::Text {
@@ -324,7 +324,7 @@ async fn model_change_appends_model_instructions_developer_message() -> Result<(
             next_model.to_string(),
         ))
         .await?;
-    wait_for_event(&test.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = resp_mock.requests();
     assert_eq!(requests.len(), 2, "expected two model requests");
@@ -341,9 +341,9 @@ async fn model_change_appends_model_instructions_developer_message() -> Result<(
         "expected model switch preamble, got: {model_switch_text:?}"
     );
 
-    test.codex.ensure_rollout_materialized().await;
-    test.codex.flush_rollout().await?;
-    let rollout_path = test.codex.rollout_path().expect("rollout path");
+    test.genex.ensure_rollout_materialized().await;
+    test.genex.flush_rollout().await?;
+    let rollout_path = test.genex.rollout_path().expect("rollout path");
     let model_states = std::fs::read_to_string(rollout_path)?
         .lines()
         .map(genex_rollout::parse_rollout_line)
@@ -427,20 +427,20 @@ async fn settings_update_during_active_turn_applies_to_next_turn_only() -> Resul
         });
     let test = builder.build_with_auto_env(&server).await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "pause before continuing".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    let request = wait_for_event_match(&test.codex, |event| match event {
+    let request = wait_for_event_match(&test.genex, |event| match event {
         EventMsg::RequestUserInput(request) => Some(request.clone()),
         _ => None,
     })
     .await;
 
     core_test_support::submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             model: Some("gpt-5.5".to_string()),
             effort: Some(Some(ReasoningEffort::High)),
@@ -453,7 +453,7 @@ async fn settings_update_during_active_turn_applies_to_next_turn_only() -> Resul
     )
     .await?;
 
-    test.codex
+    test.genex
         .submit(Op::UserInputAnswer {
             id: request.turn_id,
             response: RequestUserInputResponse {
@@ -466,7 +466,7 @@ async fn settings_update_during_active_turn_applies_to_next_turn_only() -> Resul
             },
         })
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -638,7 +638,7 @@ async fn unsupported_configured_service_tier_warns_at_session_start() -> Result<
         });
     let test = builder.build(&server).await?;
 
-    let warning = wait_for_event(&test.codex, |event| {
+    let warning = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::Warning(warning)
@@ -806,7 +806,7 @@ async fn model_change_projects_media_without_changing_live_or_replayed_history(
         .write_to(&mut png, image::ImageFormat::Png)?;
     let image_url = genex_utils_image::data_url_from_bytes("image/png", &png.into_inner());
 
-    test.codex
+    test.genex
         .start_or_steer_turn(read_only_user_turn(
             &test,
             vec![
@@ -827,9 +827,9 @@ async fn model_change_projects_media_without_changing_live_or_replayed_history(
             multimodal_model_slug.to_string(),
         ))
         .await?;
-    wait_for_event(&test.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(read_only_user_turn(
             &test,
             vec![UserInput::Text {
@@ -839,7 +839,7 @@ async fn model_change_projects_media_without_changing_live_or_replayed_history(
             text_model_slug.to_string(),
         ))
         .await?;
-    wait_for_event(&test.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = responses.requests();
     assert_eq!(requests.len(), 2, "expected two model requests");
@@ -893,11 +893,11 @@ async fn model_change_projects_media_without_changing_live_or_replayed_history(
         })
         .expect("original media message");
     if !matches!(source, MediaHistorySource::Live) {
-        test.codex.shutdown_and_wait().await?;
+        test.genex.shutdown_and_wait().await?;
     }
-    let rollout_path = test.codex.rollout_path().expect("rollout path");
+    let rollout_path = test.genex.rollout_path().expect("rollout path");
     let thread = match source {
-        MediaHistorySource::Live => Arc::clone(&test.codex),
+        MediaHistorySource::Live => Arc::clone(&test.genex),
         MediaHistorySource::Resume => {
             test.thread_manager
                 .resume_thread_from_rollout(
@@ -986,7 +986,7 @@ async fn generated_image_is_replayed_for_image_capable_models() -> Result<()> {
         )
         .await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(read_only_user_turn(
             &test,
             vec![UserInput::Text {
@@ -996,9 +996,9 @@ async fn generated_image_is_replayed_for_image_capable_models() -> Result<()> {
             image_model_slug.to_string(),
         ))
         .await?;
-    wait_for_event(&test.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(read_only_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1008,7 +1008,7 @@ async fn generated_image_is_replayed_for_image_capable_models() -> Result<()> {
             image_model_slug.to_string(),
         ))
         .await?;
-    wait_for_event(&test.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = responses.requests();
     assert_eq!(requests.len(), 2, "expected two model requests");
@@ -1083,7 +1083,7 @@ async fn model_change_from_generated_image_to_text_preserves_prior_generated_ima
         )
         .await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(read_only_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1093,9 +1093,9 @@ async fn model_change_from_generated_image_to_text_preserves_prior_generated_ima
             image_model_slug.to_string(),
         ))
         .await?;
-    wait_for_event(&test.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(read_only_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1105,7 +1105,7 @@ async fn model_change_from_generated_image_to_text_preserves_prior_generated_ima
             text_model_slug.to_string(),
         ))
         .await?;
-    wait_for_event(&test.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = responses.requests();
     assert_eq!(requests.len(), 2, "expected two model requests");
@@ -1261,7 +1261,7 @@ async fn model_switch_to_smaller_model_updates_token_context_window() -> Result<
         Some(smaller_context_window)
     );
 
-    test.codex
+    test.genex
         .start_or_steer_turn(read_only_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1272,7 +1272,7 @@ async fn model_switch_to_smaller_model_updates_token_context_window() -> Result<
         ))
         .await?;
 
-    let large_window_event = wait_for_event(&test.codex, |event| {
+    let large_window_event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::TokenCount(token_count)
@@ -1293,10 +1293,10 @@ async fn model_switch_to_smaller_model_updates_token_context_window() -> Result<
             .and_then(|info| info.model_context_window),
         Some(large_effective_window)
     );
-    wait_for_event(&test.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     core_test_support::submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             model: Some(smaller_model_slug.to_string()),
             ..Default::default()
@@ -1304,7 +1304,7 @@ async fn model_switch_to_smaller_model_updates_token_context_window() -> Result<
     )
     .await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(read_only_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1315,7 +1315,7 @@ async fn model_switch_to_smaller_model_updates_token_context_window() -> Result<
         ))
         .await?;
 
-    let smaller_turn_started_event = wait_for_event(&test.codex, |event| {
+    let smaller_turn_started_event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::TurnStarted(started)
@@ -1331,7 +1331,7 @@ async fn model_switch_to_smaller_model_updates_token_context_window() -> Result<
         Some(smaller_effective_window)
     );
 
-    let smaller_window_event = wait_for_event(&test.codex, |event| {
+    let smaller_window_event = wait_for_event(&test.genex, |event| {
         matches!(
             event,
             EventMsg::TokenCount(token_count)
@@ -1351,7 +1351,7 @@ async fn model_switch_to_smaller_model_updates_token_context_window() -> Result<
         .and_then(|info| info.model_context_window);
     assert_eq!(smaller_window, Some(smaller_effective_window));
     assert_ne!(smaller_window, Some(large_effective_window));
-    wait_for_event(&test.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     Ok(())
 }

@@ -44,7 +44,7 @@ async fn quota_exceeded_emits_single_error_event(code: &str) -> Result<()> {
 
     let test = builder.build_with_auto_env(&server).await?;
 
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "quota?".into(),
             text_elements: Vec::new(),
@@ -54,7 +54,7 @@ async fn quota_exceeded_emits_single_error_event(code: &str) -> Result<()> {
     let mut error_events = 0;
 
     loop {
-        let event = wait_for_event(&test.codex, |_| true).await;
+        let event = wait_for_event(&test.genex, |_| true).await;
 
         match event {
             EventMsg::Error(err) => {

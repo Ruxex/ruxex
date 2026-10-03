@@ -646,7 +646,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
         .build_with_auto_env(&server)
         .await
         .expect("review conversation should be created");
-    let codex = Arc::clone(&test.codex);
+    let codex = Arc::clone(&test.genex);
     let updated_cwd = test.config.cwd.join("updated-review-workspace");
     let mut selection = test.executor_environment().selection().clone();
     selection.cwd = selection
@@ -822,7 +822,7 @@ async fn review_resolves_inherited_summary_preferences() -> anyhow::Result<()> {
     for summary in [None, Some(ReasoningSummary::Concise)] {
         if let Some(summary) = summary {
             core_test_support::submit_thread_settings(
-                &test.codex,
+                &test.genex,
                 ThreadSettingsOverrides {
                     summary: Some(summary),
                     ..Default::default()
@@ -830,8 +830,8 @@ async fn review_resolves_inherited_summary_preferences() -> anyhow::Result<()> {
             )
             .await?;
         }
-        let stored_settings = test.codex.thread_settings_snapshot().await;
-        test.codex
+        let stored_settings = test.genex.thread_settings_snapshot().await;
+        test.genex
             .submit(Op::Review {
                 review_request: ReviewRequest {
                     target: ReviewTarget::Custom {
@@ -841,11 +841,11 @@ async fn review_resolves_inherited_summary_preferences() -> anyhow::Result<()> {
                 },
             })
             .await?;
-        wait_for_event(&test.codex, |event| {
+        wait_for_event(&test.genex, |event| {
             matches!(event, EventMsg::TurnComplete(_))
         })
         .await;
-        assert_eq!(test.codex.thread_settings_snapshot().await, stored_settings);
+        assert_eq!(test.genex.thread_settings_snapshot().await, stored_settings);
     }
     let actual = request_log
         .requests()
@@ -885,7 +885,7 @@ async fn review_uses_custom_review_model_from_config() {
         .build_with_auto_env(&server)
         .await
         .expect("custom review conversation should be created");
-    let codex = Arc::clone(&test.codex);
+    let codex = Arc::clone(&test.genex);
     std::fs::remove_file(genex_home.path().join("models_cache.json"))
         .expect("initial empty model catalog should be cached");
     let mut models = genex_models_manager::test_support::test_models_response()
@@ -965,7 +965,7 @@ async fn review_uses_session_model_when_review_model_unset() {
         .build_with_auto_env(&server)
         .await
         .expect("same-model review conversation should be created");
-    let codex = Arc::clone(&test.codex);
+    let codex = Arc::clone(&test.genex);
 
     codex
         .submit(Op::Review {

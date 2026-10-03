@@ -84,21 +84,21 @@ async fn ordinary_settings_updates_keep_the_running_turn_snapshot() -> Result<()
         })
         .build_with_auto_env(&server)
         .await?;
-    test.codex
+    test.genex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "pause before continuing".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    let paused = wait_for_event_match(&test.codex, |event| match event {
+    let paused = wait_for_event_match(&test.genex, |event| match event {
         EventMsg::RequestUserInput(request) => Some(request.clone()),
         _ => None,
     })
     .await;
 
-    let mut expected = test.codex.thread_settings_snapshot().await;
+    let mut expected = test.genex.thread_settings_snapshot().await;
     submit_thread_settings(
-        &test.codex,
+        &test.genex,
         ThreadSettingsOverrides {
             model: Some("snapshot-model-b".to_string()),
             effort: Some(Some(ReasoningEffort::High)),
@@ -117,8 +117,8 @@ async fn ordinary_settings_updates_keep_the_running_turn_snapshot() -> Result<()
         Some(expected.reasoning_effort.clone()),
         /*developer_instructions*/ None,
     );
-    assert_eq!(test.codex.thread_settings_snapshot().await, expected);
-    test.codex
+    assert_eq!(test.genex.thread_settings_snapshot().await, expected);
+    test.genex
         .submit(Op::UserInputAnswer {
             id: paused.turn_id.clone(),
             response: RequestUserInputResponse {
@@ -131,7 +131,7 @@ async fn ordinary_settings_updates_keep_the_running_turn_snapshot() -> Result<()
             },
         })
         .await?;
-    wait_for_event(&test.codex, |event| {
+    wait_for_event(&test.genex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

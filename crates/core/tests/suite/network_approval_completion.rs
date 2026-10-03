@@ -183,7 +183,7 @@ allow_local_binding = true
         test.session_configured.permission_profile.clone(),
         test.config.cwd.as_path(),
     );
-    test.codex
+    test.genex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "build the site".into(),
@@ -200,7 +200,7 @@ allow_local_binding = true
         .await?;
     let completed = timeout(Duration::from_secs(/*secs*/ 15), async {
         loop {
-            match test.codex.next_event().await?.msg {
+            match test.genex.next_event().await?.msg {
                 EventMsg::ItemCompleted(event) => {
                     if let TurnItem::CommandExecution(item) = event.item {
                         return Ok::<_, anyhow::Error>(item);

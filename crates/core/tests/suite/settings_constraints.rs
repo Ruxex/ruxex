@@ -136,7 +136,7 @@ async fn protected_model_settings_use_the_proposed_permissions(
         })
         .build_with_auto_env(&server)
         .await?;
-    let initial = test.codex.thread_settings_snapshot().await;
+    let initial = test.genex.thread_settings_snapshot().await;
     assert_eq!(initial.permission_profile, PermissionProfile::Disabled);
     let model_update = ThreadSettingsOverrides {
         model: Some(PROTECTED_MODEL.to_string()),
@@ -144,14 +144,14 @@ async fn protected_model_settings_use_the_proposed_permissions(
     };
 
     let error = operation
-        .submit(&test.codex, model_update.clone())
+        .submit(&test.genex, model_update.clone())
         .await
         .expect_err("the protected model requires restricted permissions");
     assert!(
         error.to_string().contains("you need to use auto review"),
         "{error}"
     );
-    assert_eq!(test.codex.thread_settings_snapshot().await, initial);
+    assert_eq!(test.genex.thread_settings_snapshot().await, initial);
     assert!(response.requests().is_empty());
 
     let expected = ThreadSettingsSnapshot {
@@ -168,7 +168,7 @@ async fn protected_model_settings_use_the_proposed_permissions(
     };
     let applied = operation
         .submit(
-            &test.codex,
+            &test.genex,
             ThreadSettingsOverrides {
                 permission_profile: Some(PermissionProfile::read_only()),
                 ..model_update
@@ -176,9 +176,9 @@ async fn protected_model_settings_use_the_proposed_permissions(
         )
         .await?;
     assert_eq!(applied, expected);
-    assert_eq!(test.codex.thread_settings_snapshot().await, expected);
+    assert_eq!(test.genex.thread_settings_snapshot().await, expected);
     if let SettingsOperation::TurnStart = operation {
-        wait_for_event(&test.codex, |event| {
+        wait_for_event(&test.genex, |event| {
             matches!(event, EventMsg::TurnComplete(_))
         })
         .await;
@@ -188,7 +188,7 @@ async fn protected_model_settings_use_the_proposed_permissions(
     // protected model against the proposed permissions.
     let error = operation
         .submit(
-            &test.codex,
+            &test.genex,
             ThreadSettingsOverrides {
                 permission_profile: Some(PermissionProfile::Disabled),
                 ..Default::default()
@@ -200,7 +200,7 @@ async fn protected_model_settings_use_the_proposed_permissions(
         error.to_string().contains("you need to use auto review"),
         "{error}"
     );
-    assert_eq!(test.codex.thread_settings_snapshot().await, expected);
+    assert_eq!(test.genex.thread_settings_snapshot().await, expected);
 
     if let SettingsOperation::Standalone = operation {
         test.submit_text_turn("use the committed settings").await?;
