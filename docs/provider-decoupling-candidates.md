@@ -12,6 +12,28 @@
 - `just check`：成功、エラーなし、未使用警告 114 件
 - `just check --tests`：成功
 
+## Genex 全クレート監査の基準更新（2026-10-03）
+
+Genex 命名移行では、repository-owned の protocol/schema、永続化識別子、
+CLI/config、UI、package/build 名も、producer/consumer 監査後に
+`migrate-in-place` または `remove` の対象とする。public、高 fan-out、
+serialized という理由だけで `retain` や `defer` にはしない。
+
+`cargo metadata --no-deps` で 123 package を確認し、各 package directory を
+`rg -ni 'codex'` で再走査した結果、76 member に match、47 member は
+`no-match` だった。Rust source の識別子走査では 74 member に match、49 member
+は `no-match` だった。以前の 82/41 の Rust coverage 記録は stale として、
+`target/genex-symbol-audit/workspace-coverage.tsv`、
+`target/genex-symbol-audit/rust-symbols.tsv`、
+`target/genex-symbol-audit/dependency-order.tsv` の結果で置き換える。
+
+保持できるのは、OpenAI endpoint 固有の URL/request-response field/auth/model、
+外部 OpenAI/upstream・第三者 protocol/package、歴史的・法的記録、別単語内の
+部分文字列、外部 repository URL、または変更により既存の外部/security stateを
+壊す識別子に限る。命名監査中に provider-specific capability、endpoint、auth、
+telemetry、hosted assumption を見つけた場合は、命名変更へ混ぜず本メモの独立
+follow-up と compatibility inventory の decision に記録する。
+
 既存の計画書・インベントリには、現在のソースツリーに残る実装を完了済みと記載している箇所もある。以下の候補は、その差分を解消するための再監査対象として扱う。
 
 互換性クリーンアップ計画の Task 1〜8 は完了している。削除済み feature

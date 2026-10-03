@@ -21,6 +21,31 @@ Related references: [design spec](superpowers/specs/2026-09-19-remove-pre-releas
   representation will be made explicit before the compatibility path is
   removed.
 
+### Genex all-crate migration baseline (2026-10-03)
+
+The naming migration now treats repository-owned protocol, schema, persisted,
+CLI/configuration, UI, package, and build names as migration candidates after
+their producers and consumers are audited. High fan-out, public visibility,
+or the fact that a name is serialized is not, by itself, a reason to retain
+the Codex spelling in this pre-release fork.
+
+The refreshed Cargo metadata audit contains 123 workspace packages. A
+case-insensitive `rg` scan of each package directory found Codex matches in 76
+members and no matches in 47 members. A Rust-only identifier scan found
+Codex-shaped matches in 74 members and no Rust matches in 49 members. The
+previous 82/41 Rust coverage counts were stale and are superseded by
+`target/genex-symbol-audit/workspace-coverage.tsv` and
+`target/genex-symbol-audit/rust-symbols.tsv`.
+
+Rows previously labeled `defer` or `retain/defer` are provisional execution
+labels, not final retention decisions. Each must be reclassified as
+`migrate-in-place`, `remove`, or `retain`. `retain` is limited to OpenAI
+endpoint-required fields/URLs/auth/model identifiers, external
+OpenAI/upstream or third-party identifiers, historical/legal records, names
+where `codex` is only a substring of another word, external repository URLs,
+and active external/security namespaces whose replacement would strand state.
+Provider-specific capability findings remain separate follow-up candidates.
+
 The search is intentionally broad:
 
 ```bash
@@ -84,7 +109,7 @@ earlier one being free of obsolete persisted data:
 
 | Coverage scope | Producer/consumer audit | Decision | Verification |
 |---|---|---|---|
-| All 123 workspace members from `cargo metadata --no-deps` | 82 members contain a Rust source match for `Codex` / `codex_*`; 41 members were searched and have no such match. Symbol-bearing members are assigned to the leaf/private, low-fan-out public, crate-local model, high-fan-out core/API, or protocol/auth/CLI/UI wave. | `migrate-in-place`, `retain`, `defer`, or `no-match` per member/symbol; no workspace member remains unreviewed | `target/genex-symbol-audit/rust-symbols.tsv`; `target/genex-symbol-audit/workspace-coverage.tsv`; `cargo metadata --no-deps` |
+| All 123 workspace members from `cargo metadata --no-deps` | The refreshed package-directory scan found Codex matches in 76 members and no matches in 47. The Rust identifier scan found matches in 74 members and no Rust matches in 49. Package members are assigned to dependency-ordered waves; repository-owned protocol, persisted, CLI/config, UI, package, and build names are not excluded merely because they are high fan-out. | `migrate-in-place`, `remove`, `retain`, or `no-match` per member/symbol; no workspace member remains unreviewed | `target/genex-symbol-audit/rust-symbols.tsv`; `target/genex-symbol-audit/workspace-coverage.tsv`; `target/genex-symbol-audit/dependency-order.tsv`; `cargo metadata --no-deps` |
 | 41 `no-match` members: `genex-agent-roles`, `genex-ansi-escape`, `genex-app-server-protocol-noop-macros`, `genex-attachment-store`, `genex-aws-auth`, `genex-code-mode`, `genex-code-mode-runtime`, `genex-collaboration-mode-templates`, `genex-config-schema`, `genex-context-fragments`, `genex-diagnostics`, `genex-exec-server-test-support`, `genex-experimental-api-macros`, `genex-file-search`, `genex-file-system`, `genex-file-watcher`, `genex-home`, `genex-keyring-store`, `genex-mermaid`, `genex-otel-trace-websocket`, `genex-response-debug-context`, `genex-shell-escalation`, `genex-stdio-to-uds`, `genex-tcp-tunnel`, `genex-terminal-detection`, `genex-uds`, `genex-user-verification`, `genex-utils-absolute-path`, `genex-utils-audio`, `genex-utils-cache`, `genex-utils-elapsed`, `genex-utils-fuzzy-match`, `genex-utils-git-discovery`, `genex-utils-image`, `genex-utils-json-to-toml`, `genex-utils-output-truncation`, `genex-utils-pty`, `genex-utils-redacted-string`, `genex-utils-sandbox-summary`, `genex-utils-stream-parser`, `genex-utils-string` | No Rust `Codex` / `codex_*` producer or consumer was found in these members. Their non-Rust paths remain subject to the separate file/protocol audit. | `no-match` | Exact Rust-source `rg` scan; coverage TSV |
 
 ### Genex Rust symbol waves (2026-10-02)
@@ -101,7 +126,7 @@ earlier one being free of obsolete persisted data:
 | `GenexTurn` / `GenexTurnId` / `GenexTurnTraceEvent` | rollout-trace writer/reducer、trace viewer/search/replay、保存済み rollout trace | serialized trace・永続化（リネーム済み） |
 | `GenexHarnessMetadata` | history/rollout/core の writer/reader、保存済み thread history、JSON Schema consumer | JSON Schema・永続化（リネーム済み） |
 
-この分類により、単なる crate 内 private symbol は `migrate-in-place` とし、上記 consumer に影響する名前は `retain` / `defer` としている。
+この分類により、単なる crate 内 private symbol は `migrate-in-place` とし、上記 consumer に影響する名前も repository-owned であれば producer/consumer を横断して `migrate-in-place` とする。`retain` は、OpenAI endpoint、外部識別子、部分文字列、法的記録、または外部/security state の保持が必要な場合だけに限定する。
 
 | Exact symbol/path | Current producer/consumer audit | Canonical replacement | Decision | Verification |
 |---|---|---|---|---|
