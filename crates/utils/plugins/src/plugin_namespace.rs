@@ -279,9 +279,9 @@ mod tests {
     fn rejects_nonregular_legacy_plugin_manifest_before_lower_precedence_manifest() {
         let tmp = tempdir().expect("tempdir");
         let plugin_root = tmp.path().join("plugins/sample");
-        let codex_path = plugin_root.join(".codex-plugin/plugin.json");
+        let primary_path = plugin_root.join(".codex-plugin/plugin.json");
         let claude_path = plugin_root.join(ALTERNATE_PLUGIN_CLA_MANIFEST_RELATIVE_PATH);
-        fs::create_dir_all(&codex_path).expect("nonregular Codex manifest");
+        fs::create_dir_all(&primary_path).expect("nonregular primary manifest");
         fs::create_dir_all(claude_path.parent().expect("Claude manifest parent"))
             .expect("Claude manifest parent");
         fs::write(&claude_path, r#"{"name":"sample"}"#).expect("Claude manifest");
@@ -294,16 +294,17 @@ mod tests {
     fn rejects_symlinked_legacy_plugin_manifest_before_lower_precedence_manifest() {
         let tmp = tempdir().expect("tempdir");
         let plugin_root = tmp.path().join("plugins/sample");
-        let codex_path = plugin_root.join(".codex-plugin/plugin.json");
+        let primary_path = plugin_root.join(".codex-plugin/plugin.json");
         let claude_path = plugin_root.join(ALTERNATE_PLUGIN_CLA_MANIFEST_RELATIVE_PATH);
-        fs::create_dir_all(codex_path.parent().expect("Codex manifest parent"))
-            .expect("Codex manifest parent");
+        fs::create_dir_all(primary_path.parent().expect("primary manifest parent"))
+            .expect("primary manifest parent");
         fs::create_dir_all(claude_path.parent().expect("Claude manifest parent"))
             .expect("Claude manifest parent");
         fs::write(plugin_root.join("benign.json"), r#"{"name":"sample"}"#)
             .expect("benign manifest");
         fs::write(&claude_path, r#"{"name":"sample"}"#).expect("Claude manifest");
-        std::os::unix::fs::symlink("../benign.json", &codex_path).expect("Codex manifest symlink");
+        std::os::unix::fs::symlink("../benign.json", &primary_path)
+            .expect("primary manifest symlink");
 
         assert_eq!(find_plugin_manifest_path(&plugin_root), None);
     }
@@ -325,7 +326,7 @@ mod tests {
         .expect("benign manifest");
         fs::write(&claude_path, r#"{"name":"sample"}"#).expect("Claude manifest");
         std::os::unix::fs::symlink(&manifest_directory, plugin_root.join(".codex-plugin"))
-            .expect("Codex manifest directory symlink");
+            .expect("primary manifest directory symlink");
 
         assert_eq!(find_plugin_manifest_path(&plugin_root), None);
     }
@@ -351,22 +352,22 @@ mod tests {
     }
 
     #[test]
-    fn preserves_codex_claude_cursor_legacy_precedence() {
+    fn preserves_primary_claude_cursor_legacy_precedence() {
         let tmp = tempdir().expect("tempdir");
         let plugin_root = tmp.path().join("plugins/sample");
-        let codex_path = plugin_root.join(".codex-plugin/plugin.json");
+        let primary_path = plugin_root.join(".codex-plugin/plugin.json");
         let claude_path = plugin_root.join(".claude-plugin/plugin.json");
         let cursor_path = plugin_root.join(".cursor-plugin/plugin.json");
-        for path in [&codex_path, &claude_path, &cursor_path] {
+        for path in [&primary_path, &claude_path, &cursor_path] {
             fs::create_dir_all(path.parent().expect("parent")).expect("mkdir");
             fs::write(path, r#"{"name":"sample"}"#).expect("write manifest");
         }
 
         assert_eq!(
             find_plugin_manifest_path(&plugin_root),
-            Some(codex_path.clone())
+            Some(primary_path.clone())
         );
-        fs::remove_file(codex_path).expect("remove Codex manifest");
+        fs::remove_file(primary_path).expect("remove primary manifest");
         assert_eq!(find_plugin_manifest_path(&plugin_root), Some(claude_path));
     }
 }

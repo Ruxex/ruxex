@@ -1,4 +1,4 @@
-//! Plugin path resolution and plaintext mention sigils shared across Codex crates.
+//! Plugin path resolution and plaintext mention sigils shared across Genex crates.
 
 use genex_utils_absolute_path::AbsolutePathBuf;
 
