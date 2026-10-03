@@ -42,8 +42,8 @@ follow-up と compatibility inventory の decision に記録する。
 - `genex-shell-escalation` の wrapper binary、内部 escalation socket env、test
   variable、in-repository zsh helper/release labels は producer/consumer が全て
   repository 内にあるため Genex へ移行した。execve/escalation protocolの挙動は変更しない。
-- `genex-tcp-tunnel` の README に残る `codex tcp-tunnel` は CLI producer と一体で
-  `migrate-in-place` とする。`genex-user-verification` の `com.codex.codex` は OS
+- `genex-tcp-tunnel` の README に残っていた `codex tcp-tunnel` は CLI producer と一体で
+  `genex tcp-tunnel` に移行済み。`genex-user-verification` の `com.codex.codex` は OS
   keychain/lock namespaceのため `retain` とする。
 - `CODEX_HOME` / `.codex` / `find_codex_home` は high fan-out を理由に保留せず、
   home/config/persisted consumerを同じ横断 waveで `migrate-in-place` する対象とした。
