@@ -1,6 +1,6 @@
 # genex-otel
 
-`genex-otel` is the OpenTelemetry integration crate for Codex. It provides:
+`genex-otel` is the OpenTelemetry integration crate for Genex. It provides:
 
 - Provider wiring for log/trace/metric exporters (`genex_otel::OtelProvider`
   and `genex_otel::provider`).
@@ -65,7 +65,7 @@ beta = "two"
 
 Configured tracestate members and encoded values must be valid W3C tracestate.
 Each nested table is encoded as semicolon-separated `key:value` fields inside
-that member. If propagated trace context already has the named member, Codex
+that member. If propagated trace context already has the named member, Genex
 upserts configured fields and preserves other fields in that member. This
 config shape does not support setting opaque tracestate member values. Invalid
 trace metadata entries are ignored during config load and reported as startup
@@ -74,7 +74,7 @@ warnings.
 ## SessionTelemetry (events)
 
 `SessionTelemetry` adds consistent metadata to tracing events and helps record
-Codex-specific session events. Rich session/business events should go through
+Genex-specific session events. Rich session/business events should go through
 `SessionTelemetry`; subsystem-owned audit events can stay with the owning subsystem.
 
 ```rust

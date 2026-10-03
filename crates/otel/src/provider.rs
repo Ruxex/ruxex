@@ -112,7 +112,7 @@ impl OtelProvider {
     fn prepare_shutdown_worker(&mut self) -> io::Result<()> {
         self.prepare_shutdown_worker_with_spawner(|startup| {
             std::thread::Builder::new()
-                .name("codex-otel-shutdown".to_string())
+                .name("genex-otel-shutdown".to_string())
                 .spawn(move || {
                     if startup.ready_tx.send(()).is_err() {
                         return;
@@ -313,7 +313,7 @@ impl OtelProvider {
             ))
     }
 
-    pub fn codex_export_filter(meta: &tracing::Metadata<'_>) -> bool {
+    pub fn genex_export_filter(meta: &tracing::Metadata<'_>) -> bool {
         Self::log_export_filter(meta)
     }
 
@@ -667,7 +667,7 @@ mod tests {
         let initial =
             crate::metrics::install_global(MetricsClient::new(MetricsConfig::in_memory(
                 "test",
-                "codex-test",
+                "genex-test",
                 env!("CARGO_PKG_VERSION"),
                 InMemoryMetricExporter::default(),
             ))?);
@@ -677,7 +677,7 @@ mod tests {
         let replacement =
             crate::metrics::install_global(MetricsClient::new(MetricsConfig::in_memory(
                 "test",
-                "codex-test",
+                "genex-test",
                 env!("CARGO_PKG_VERSION"),
                 exporter.clone(),
             ))?);
@@ -702,7 +702,7 @@ mod tests {
     fn test_otel_settings() -> OtelSettings {
         OtelSettings {
             environment: "test".to_string(),
-            service_name: "codex-test".to_string(),
+            service_name: "genex-test".to_string(),
             service_version: "0.0.0".to_string(),
             genex_home: PathBuf::from("."),
             exporter: OtelExporter::None,

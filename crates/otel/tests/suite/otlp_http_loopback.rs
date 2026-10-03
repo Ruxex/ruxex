@@ -176,7 +176,7 @@ fn otlp_http_exporter_sends_metrics_to_collector() -> Result<()> {
 
     let metrics = MetricsClient::new(MetricsConfig::otlp(
         "test",
-        "codex-cli",
+        "genex-cli",
         env!("CARGO_PKG_VERSION"),
         OtelExporter::OtlpHttp {
             endpoint: format!("http://{addr}/v1/metrics"),
@@ -228,7 +228,7 @@ fn otlp_http_exporter_sends_metrics_to_collector() -> Result<()> {
     )?;
     metrics.gauge_with_description(
         "codex.active",
-        "Number of active Codex operations.",
+        "Number of active Genex operations.",
         /*value*/ 1,
         &[("component", "test")],
     )?;
@@ -356,7 +356,7 @@ fn otlp_http_exporter_sends_logs_to_collector()
 
     let otel = OtelProvider::try_new(&OtelSettings {
         environment: "test".to_string(),
-        service_name: "codex-cli".to_string(),
+        service_name: "genex-cli".to_string(),
         service_version: env!("CARGO_PKG_VERSION").to_string(),
         genex_home: PathBuf::from("."),
         exporter: OtelExporter::OtlpHttp {
@@ -415,7 +415,7 @@ fn otlp_http_exporter_sends_logs_to_collector()
 fn otel_provider_rejects_header_unsafe_configured_tracestate() {
     let result = OtelProvider::try_new(&OtelSettings {
         environment: "test".to_string(),
-        service_name: "codex-cli".to_string(),
+        service_name: "genex-cli".to_string(),
         service_version: env!("CARGO_PKG_VERSION").to_string(),
         genex_home: PathBuf::from("."),
         exporter: OtelExporter::None,
@@ -480,7 +480,7 @@ fn otlp_http_exporter_sends_traces_to_collector()
 
     let otel = OtelProvider::try_new(&OtelSettings {
         environment: "test".to_string(),
-        service_name: "codex-cli".to_string(),
+        service_name: "genex-cli".to_string(),
         service_version: env!("CARGO_PKG_VERSION").to_string(),
         genex_home: PathBuf::from("."),
         exporter: OtelExporter::None,
@@ -567,7 +567,7 @@ fn otlp_http_exporter_sends_traces_to_collector()
         &body.chars().take(2000).collect::<String>()
     );
     assert!(
-        body.contains("codex-cli"),
+        body.contains("genex-cli"),
         "expected service name not found; body prefix: {}",
         &body.chars().take(2000).collect::<String>()
     );
@@ -625,7 +625,7 @@ async fn otlp_http_exporter_sends_traces_to_collector_with_bounded_shutdown_in_t
 
     let otel = OtelProvider::try_new(&OtelSettings {
         environment: "test".to_string(),
-        service_name: "codex-cli".to_string(),
+        service_name: "genex-cli".to_string(),
         service_version: env!("CARGO_PKG_VERSION").to_string(),
         genex_home: PathBuf::from("."),
         exporter: OtelExporter::None,
@@ -683,7 +683,7 @@ async fn otlp_http_exporter_sends_traces_to_collector_with_bounded_shutdown_in_t
         &body.chars().take(2000).collect::<String>()
     );
     assert!(
-        body.contains("codex-cli"),
+        body.contains("genex-cli"),
         "expected service name not found; body prefix: {}",
         &body.chars().take(2000).collect::<String>()
     );
@@ -718,7 +718,7 @@ fn otlp_http_exporter_times_out_when_collector_stalls_during_bounded_shutdown() 
     let (result, elapsed) = runtime.block_on(async move {
         let otel = OtelProvider::try_new(&OtelSettings {
             environment: "test".to_string(),
-            service_name: "codex-cli".to_string(),
+            service_name: "genex-cli".to_string(),
             service_version: env!("CARGO_PKG_VERSION").to_string(),
             genex_home: PathBuf::from("."),
             exporter: OtelExporter::None,
@@ -817,7 +817,7 @@ fn otlp_http_exporter_sends_traces_to_collector_in_current_thread_tokio_runtime(
         let result = runtime.block_on(async move {
             let otel = OtelProvider::try_new(&OtelSettings {
                 environment: "test".to_string(),
-                service_name: "codex-cli".to_string(),
+                service_name: "genex-cli".to_string(),
                 service_version: env!("CARGO_PKG_VERSION").to_string(),
                 genex_home: PathBuf::from("."),
                 exporter: OtelExporter::None,
@@ -883,7 +883,7 @@ fn otlp_http_exporter_sends_traces_to_collector_in_current_thread_tokio_runtime(
         &body.chars().take(2000).collect::<String>()
     );
     assert!(
-        body.contains("codex-cli"),
+        body.contains("genex-cli"),
         "expected service name not found; body prefix: {}",
         &body.chars().take(2000).collect::<String>()
     );

@@ -11,11 +11,11 @@ use std::collections::BTreeMap;
 #[test]
 fn send_builds_payload_with_tags_and_histograms() -> Result<()> {
     let (metrics, exporter) =
-        build_metrics_with_defaults(&[("service", "codex-cli"), ("env", "prod")])?;
+        build_metrics_with_defaults(&[("service", "genex-cli"), ("env", "prod")])?;
 
     metrics.counter_with_description(
         "codex.turns",
-        "Total number of Codex turns.",
+        "Total number of Genex turns.",
         /*inc*/ 1,
         &[("model", "gpt-5.1"), ("env", "dev")],
     )?;
@@ -26,7 +26,7 @@ fn send_builds_payload_with_tags_and_histograms() -> Result<()> {
     )?;
     metrics.gauge_with_description(
         "codex.active",
-        "Number of active Codex operations.",
+        "Number of active Genex operations.",
         /*value*/ 2,
         &[("component", "test")],
     )?;
@@ -35,7 +35,7 @@ fn send_builds_payload_with_tags_and_histograms() -> Result<()> {
     let resource_metrics = latest_metrics(&exporter);
 
     let counter = find_metric(&resource_metrics, "codex.turns").expect("counter metric missing");
-    assert_eq!(counter.description(), "Total number of Codex turns.");
+    assert_eq!(counter.description(), "Total number of Genex turns.");
     let counter_attributes = match counter.data() {
         opentelemetry_sdk::metrics::data::AggregatedMetrics::U64(data) => match data {
             opentelemetry_sdk::metrics::data::MetricData::Sum(sum) => {
@@ -50,7 +50,7 @@ fn send_builds_payload_with_tags_and_histograms() -> Result<()> {
     };
 
     let expected_counter_attributes = BTreeMap::from([
-        ("service".to_string(), "codex-cli".to_string()),
+        ("service".to_string(), "genex-cli".to_string()),
         ("env".to_string(), "dev".to_string()),
         ("model".to_string(), "gpt-5.1".to_string()),
     ]);
@@ -77,14 +77,14 @@ fn send_builds_payload_with_tags_and_histograms() -> Result<()> {
             .expect("codex.tool_latency histogram attributes should exist"),
     );
     let expected_histogram_attributes = BTreeMap::from([
-        ("service".to_string(), "codex-cli".to_string()),
+        ("service".to_string(), "genex-cli".to_string()),
         ("env".to_string(), "prod".to_string()),
         ("tool".to_string(), "shell".to_string()),
     ]);
     assert_eq!(histogram_attrs, expected_histogram_attributes);
 
     let gauge = find_metric(&resource_metrics, "codex.active").expect("gauge metric missing");
-    assert_eq!(gauge.description(), "Number of active Codex operations.");
+    assert_eq!(gauge.description(), "Number of active Genex operations.");
     let gauge_point = match gauge.data() {
         opentelemetry_sdk::metrics::data::AggregatedMetrics::I64(data) => match data {
             opentelemetry_sdk::metrics::data::MetricData::Gauge(gauge) => {
@@ -100,7 +100,7 @@ fn send_builds_payload_with_tags_and_histograms() -> Result<()> {
         BTreeMap::from([
             ("component".to_string(), "test".to_string()),
             ("env".to_string(), "prod".to_string()),
-            ("service".to_string(), "codex-cli".to_string()),
+            ("service".to_string(), "genex-cli".to_string()),
         ])
     );
 
@@ -131,7 +131,7 @@ fn histogram_uses_explicit_bucket_boundaries() -> Result<()> {
 #[test]
 fn send_merges_default_tags_per_line() -> Result<()> {
     let (metrics, exporter) = build_metrics_with_defaults(&[
-        ("service", "codex-cli"),
+        ("service", "genex-cli"),
         ("env", "prod"),
         ("region", "us"),
     ])?;
@@ -168,7 +168,7 @@ fn send_merges_default_tags_per_line() -> Result<()> {
         ("component".to_string(), "alpha".to_string()),
         ("env".to_string(), "dev".to_string()),
         ("region".to_string(), "us".to_string()),
-        ("service".to_string(), "codex-cli".to_string()),
+        ("service".to_string(), "genex-cli".to_string()),
     ]);
     assert_eq!(alpha_attrs, expected_alpha_attrs);
 
