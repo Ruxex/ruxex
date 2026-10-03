@@ -41,7 +41,7 @@ pub enum RemoteCompactionSupport {
     V2,
 }
 
-/// Optional provider-backed features that Codex may expose at runtime.
+/// Optional provider-backed features that Genex may expose at runtime.
 ///
 /// These capabilities are a provider-owned upper bound. Callers can disable
 /// more functionality through normal config, but should not expose a feature
@@ -173,7 +173,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
     ///
     /// TODO(celia-oai): Make auth manager access internal to this crate so callers
     /// resolve provider-specific auth only through `ModelProvider`. We first need
-    /// to think through whether Codex should have a unified provider-specific auth
+    /// to think through whether Genex should have a unified provider-specific auth
     /// manager throughout the codebase; that is a larger refactor than this change.
     fn auth_manager(&self) -> Option<Arc<AuthManager>>;
 
@@ -237,7 +237,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
         })
     }
 
-    /// Returns request credentials, optionally scoped to a Codex session task.
+    /// Returns request credentials, optionally scoped to a Genex session task.
     fn api_auth_for_scope(
         &self,
         scope: ProviderAuthScope,
@@ -542,7 +542,7 @@ mod tests {
     }
 
     fn test_genex_home() -> std::path::PathBuf {
-        std::env::temp_dir().join(format!("codex-model-provider-test-{}", std::process::id()))
+        std::env::temp_dir().join(format!("genex-model-provider-test-{}", std::process::id()))
     }
 
     fn provider_for(base_url: String) -> ModelProviderInfo {
@@ -741,8 +741,8 @@ mod tests {
     #[tokio::test]
     async fn shared_bedrock_auth_refresh_is_reused_only_for_matching_configuration() {
         const TEST_NAME: &str = "provider::tests::shared_bedrock_auth_refresh_is_reused_only_for_matching_configuration";
-        const HELPER_ARG: &str = "CODEX_BEDROCK_SHARED_AUTH_REFRESH_COMMAND";
-        const SUBPROCESS_ARG: &str = "CODEX_BEDROCK_SHARED_AUTH_REFRESH_SUBPROCESS";
+        const HELPER_ARG: &str = "GENEX_BEDROCK_SHARED_AUTH_REFRESH_COMMAND";
+        const SUBPROCESS_ARG: &str = "GENEX_BEDROCK_SHARED_AUTH_REFRESH_SUBPROCESS";
         let arguments = std::env::args().collect::<Vec<_>>();
         if let Some(index) = arguments.iter().position(|argument| argument == HELPER_ARG) {
             let counter = &arguments[index + 2];

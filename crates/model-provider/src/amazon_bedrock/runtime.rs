@@ -20,7 +20,7 @@ pub(super) fn aws_auth_config(aws: &ModelProviderAwsAuthInfo) -> AwsAuthConfig {
 
 pub(super) fn base_url(region: &str) -> String {
     // Amazon Bedrock exposes its Responses-compatible API under this exact path.
-    // The `openai/v1` segment is an external AWS wire contract, not a Codex naming choice.
+    // The `openai/v1` segment is an external AWS wire contract, not a Genex naming choice.
     format!("https://bedrock-runtime.{region}.amazonaws.com/openai/v1")
 }
 
