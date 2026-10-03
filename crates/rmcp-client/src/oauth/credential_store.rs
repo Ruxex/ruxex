@@ -1,4 +1,4 @@
-//! Adapts Codex's pinned credential storage to RMCP-owned OAuth refreshes.
+//! Adapts Genex's pinned credential storage to RMCP-owned OAuth refreshes.
 //!
 //! Attach this store only after `AuthorizationManager::initialize_from_store` completes
 //! against an in-memory store. Initialization may save tokenless client credentials, which
@@ -6,7 +6,7 @@
 //!
 //! Ordinary token reads use the cached credentials. Refresh-guard acquisition rereads
 //! the pinned store before RMCP exchanges the token and saves the result. Codex
-//! preparation rechecks freshness under that guard before asking RMCP to refresh.
+//! Genex preparation rechecks freshness under that guard before asking RMCP to refresh.
 //! Saves and clears require an active guard; no store operation reacquires the lock.
 //! The runtime snapshot advances only for credentials compatible with this connection,
 //! so replacement logins still cause a rebuild.
@@ -192,7 +192,7 @@ impl<K: KeyringStore + Clone + 'static> CredentialStore for OAuthCredentialStore
             let mut token_response = credentials
                 .token_response
                 .ok_or(AuthError::AuthorizationRequired)?;
-            // Codex stores granted scopes in the token response rather than a separate field.
+            // Genex stores granted scopes in the token response rather than a separate field.
             if token_response.scopes().is_none() && !credentials.granted_scopes.is_empty() {
                 token_response.set_scopes(Some(
                     credentials

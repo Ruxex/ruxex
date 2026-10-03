@@ -44,7 +44,7 @@ async fn initialize_modern_client(server: &MockServer) -> anyhow::Result<RmcpCli
 
     let params = InitializeRequestParams::new(
         ClientCapabilities::default(),
-        Implementation::new("codex-sse-discovery-test", "0.0.0"),
+        Implementation::new("genex-sse-discovery-test", "0.0.0"),
     )
     .with_protocol_version(ProtocolVersion::V_2025_06_18);
 

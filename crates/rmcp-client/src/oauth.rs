@@ -89,7 +89,7 @@ pub(crate) use self::resolved_store::resolve_oauth_tokens_from_store_policy;
 use self::resolved_store::try_resolve_oauth_tokens_from_store_policy;
 pub(crate) use self::runtime::OAuthRuntime;
 
-const KEYRING_SERVICE: &str = "Codex MCP Credentials";
+const KEYRING_SERVICE: &str = "Genex MCP Credentials";
 const MCP_OAUTH_SECRET_PREFIX: &str = "MCP_OAUTH";
 const REFRESH_SKEW_MILLIS: u64 = 30_000;
 
@@ -1022,7 +1022,7 @@ fn compute_store_key(server_name: &str, server_url: &str) -> Result<String> {
     payload.insert("headers".to_string(), Value::Object(JsonMap::new()));
     let payload = if enterprise_owned {
         // The OS keyring is shared across homes. Keep enterprise sessions
-        // isolated by Codex profile as well as authenticated user and workspace.
+        // isolated by Genex profile as well as authenticated user and workspace.
         let genex_home = find_genex_home()?;
         fs::create_dir_all(&genex_home)?;
         payload.insert(
